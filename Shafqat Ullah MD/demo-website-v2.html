@@ -1,0 +1,1355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HUNAR — Home Services Platform (Theme v2: Indigo Luxe)</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-400: #818CF8;
+            --primary-500: #6366F1;
+            --primary-600: #4F46E5;
+            --primary-700: #4338CA;
+            --primary-800: #3730A3;
+            --primary-900: #312E81;
+            --accent-400: #FB7185;
+            --accent-500: #F43F5E;
+            --accent-600: #E11D48;
+            --accent-100: #FFE4E6;
+            --accent-50: #FFF1F2;
+            --teal-400: #2DD4BF;
+            --teal-500: #14B8A6;
+            --teal-100: #CCFBF1;
+            --amber-400: #FBBF24;
+            --amber-500: #F59E0B;
+            --amber-100: #FEF3C7;
+            --slate-50: #F8FAFC;
+            --slate-100: #F1F5F9;
+            --slate-200: #E2E8F0;
+            --slate-300: #CBD5E1;
+            --slate-400: #94A3B8;
+            --slate-500: #64748B;
+            --slate-600: #475569;
+            --slate-700: #334155;
+            --slate-800: #1E293B;
+            --slate-900: #0F172A;
+            --slate-950: #020617;
+            --dark-bg: #0A0E1A;
+            --dark-card: #111827;
+            --dark-surface: #1A2332;
+            --dark-border: #1E293B;
+            --dark-hover: #1F2937;
+            --success-500: #10B981;
+            --success-100: #D1FAE5;
+            --error-500: #EF4444;
+            --error-100: #FEE2E2;
+            --shadow-glow: 0 0 40px rgba(99,102,241,0.15);
+            --shadow-card: 0 4px 24px rgba(0,0,0,0.25);
+            --shadow-lg: 0 20px 40px rgba(0,0,0,0.3);
+            --radius-sm: 8px;
+            --radius-md: 12px;
+            --radius-lg: 16px;
+            --radius-xl: 24px;
+            --radius-full: 9999px;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--dark-bg);
+            color: var(--slate-200);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* ===== ANIMATED GRADIENT BG ===== */
+        .hero-bg-orbs {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            overflow: hidden;
+            z-index: 0;
+        }
+        .hero-bg-orbs .orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(80px);
+            opacity: 0.3;
+            animation: float 8s ease-in-out infinite;
+        }
+        .hero-bg-orbs .orb-1 {
+            width: 500px; height: 500px;
+            background: var(--primary-500);
+            top: -10%; left: -5%;
+            animation-delay: 0s;
+        }
+        .hero-bg-orbs .orb-2 {
+            width: 400px; height: 400px;
+            background: var(--accent-500);
+            top: 20%; right: -10%;
+            animation-delay: 2s;
+        }
+        .hero-bg-orbs .orb-3 {
+            width: 300px; height: 300px;
+            background: var(--teal-500);
+            bottom: -5%; left: 30%;
+            animation-delay: 4s;
+        }
+        @keyframes float {
+            0%, 100% { transform: translateY(0) scale(1); }
+            50% { transform: translateY(-30px) scale(1.05); }
+        }
+
+        /* ===== NAVBAR ===== */
+        .navbar {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            padding: 0 2rem;
+            height: 72px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: rgba(10, 14, 26, 0.85);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--dark-border);
+        }
+
+        .nav-logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none;
+        }
+
+        .logo-icon {
+            width: 42px; height: 42px;
+            background: linear-gradient(135deg, var(--primary-500), var(--accent-500));
+            border-radius: var(--radius-sm);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.3rem;
+            box-shadow: 0 0 20px rgba(99,102,241,0.3);
+        }
+
+        .logo-text {
+            font-size: 1.5rem;
+            font-weight: 900;
+            background: linear-gradient(135deg, var(--primary-400), var(--accent-400));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 2rem;
+            list-style: none;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: var(--slate-400);
+            font-weight: 500;
+            font-size: 0.95rem;
+            transition: color 0.2s;
+        }
+
+        .nav-links a:hover { color: white; }
+
+        .nav-actions { display: flex; align-items: center; gap: 1rem; }
+
+        .btn {
+            padding: 10px 24px;
+            border-radius: var(--radius-full);
+            font-weight: 600;
+            font-size: 0.95rem;
+            cursor: pointer;
+            border: none;
+            transition: all 0.3s;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-family: inherit;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-500), var(--primary-600));
+            color: white;
+            box-shadow: 0 4px 15px rgba(99,102,241,0.4);
+        }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 25px rgba(99,102,241,0.5); }
+
+        .btn-accent {
+            background: linear-gradient(135deg, var(--accent-500), var(--accent-600));
+            color: white;
+            box-shadow: 0 4px 15px rgba(244,63,94,0.4);
+        }
+        .btn-accent:hover { transform: translateY(-2px); box-shadow: 0 6px 25px rgba(244,63,94,0.5); }
+
+        .btn-ghost {
+            background: transparent;
+            color: var(--slate-300);
+            border: 1px solid var(--dark-border);
+        }
+        .btn-ghost:hover { background: var(--dark-surface); color: white; border-color: var(--slate-600); }
+
+        .btn-outline {
+            background: transparent;
+            color: var(--primary-400);
+            border: 2px solid var(--primary-500);
+        }
+        .btn-outline:hover { background: rgba(99,102,241,0.1); }
+
+        .btn-lg { padding: 14px 32px; font-size: 1.05rem; }
+
+        .btn-glow {
+            background: linear-gradient(135deg, var(--primary-500), var(--accent-500));
+            color: white;
+            box-shadow: 0 0 30px rgba(99,102,241,0.4), 0 0 60px rgba(244,63,94,0.2);
+        }
+        .btn-glow:hover { transform: translateY(-2px) scale(1.02); box-shadow: 0 0 40px rgba(99,102,241,0.5), 0 0 80px rgba(244,63,94,0.3); }
+
+        /* ===== HERO ===== */
+        .hero {
+            position: relative;
+            padding: 6rem 2rem 8rem;
+            text-align: center;
+            overflow: hidden;
+        }
+
+        .hero-content { max-width: 850px; margin: 0 auto; position: relative; z-index: 1; }
+
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(99,102,241,0.15);
+            border: 1px solid rgba(99,102,241,0.3);
+            color: var(--primary-400);
+            padding: 8px 20px;
+            border-radius: var(--radius-full);
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-bottom: 2rem;
+            backdrop-filter: blur(10px);
+        }
+
+        .hero-badge .pulse {
+            width: 8px; height: 8px;
+            background: var(--success-500);
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(1.5); }
+        }
+
+        .hero h1 {
+            font-size: 3.5rem;
+            font-weight: 900;
+            line-height: 1.15;
+            margin-bottom: 1.5rem;
+            color: white;
+        }
+
+        .hero h1 .gradient-text {
+            background: linear-gradient(135deg, var(--primary-400), var(--accent-400), var(--teal-400));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero p {
+            font-size: 1.2rem;
+            color: var(--slate-400);
+            max-width: 620px;
+            margin: 0 auto 2.5rem;
+            line-height: 1.7;
+        }
+
+        .hero-actions { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+
+        .hero-stats {
+            display: flex;
+            justify-content: center;
+            gap: 3rem;
+            margin-top: 4rem;
+        }
+
+        .stat {
+            text-align: center;
+            padding: 1.5rem;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid var(--dark-border);
+            border-radius: var(--radius-md);
+            backdrop-filter: blur(10px);
+            min-width: 140px;
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: 900;
+            background: linear-gradient(135deg, var(--primary-400), var(--accent-400));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .stat-label { font-size: 0.85rem; color: var(--slate-400); margin-top: 0.25rem; }
+
+        /* ===== SEARCH ===== */
+        .search-section {
+            max-width: 900px;
+            margin: -3rem auto 0;
+            padding: 0 2rem;
+            position: relative;
+            z-index: 10;
+        }
+
+        .search-bar {
+            background: var(--dark-card);
+            border: 1px solid var(--dark-border);
+            border-radius: var(--radius-lg);
+            padding: 0.75rem;
+            display: flex;
+            gap: 0.5rem;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .search-bar input {
+            flex: 1;
+            border: none;
+            padding: 14px 18px;
+            font-size: 1rem;
+            outline: none;
+            background: var(--dark-surface);
+            border-radius: var(--radius-sm);
+            color: white;
+            font-family: inherit;
+        }
+
+        .search-bar input::placeholder { color: var(--slate-500); }
+
+        .search-bar select {
+            border: none;
+            padding: 14px 18px;
+            font-size: 1rem;
+            background: var(--dark-surface);
+            border-radius: var(--radius-sm);
+            color: var(--slate-300);
+            font-family: inherit;
+            cursor: pointer;
+            outline: none;
+        }
+
+        .search-bar select option { background: var(--dark-card); }
+
+        /* ===== SECTIONS ===== */
+        .section {
+            padding: 6rem 2rem;
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 3.5rem;
+        }
+
+        .section-tag {
+            display: inline-block;
+            background: rgba(99,102,241,0.1);
+            color: var(--primary-400);
+            padding: 6px 16px;
+            border-radius: var(--radius-full);
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 1rem;
+        }
+
+        .section-header h2 {
+            font-size: 2.2rem;
+            font-weight: 800;
+            color: white;
+            margin-bottom: 0.75rem;
+        }
+
+        .section-header p {
+            color: var(--slate-400);
+            font-size: 1.05rem;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        /* ===== CATEGORIES ===== */
+        .categories-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(155px, 1fr));
+            gap: 1.25rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .category-card {
+            background: var(--dark-card);
+            border: 1px solid var(--dark-border);
+            border-radius: var(--radius-md);
+            padding: 1.75rem 1rem;
+            text-align: center;
+            transition: all 0.3s;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .category-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--primary-500), var(--accent-500));
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .category-card:hover::before { opacity: 1; }
+
+        .category-card:hover {
+            border-color: var(--primary-500);
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-glow);
+        }
+
+        .category-icon {
+            width: 56px; height: 56px;
+            background: rgba(99,102,241,0.1);
+            border-radius: var(--radius-sm);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.5rem;
+            margin: 0 auto 1rem;
+            transition: all 0.3s;
+        }
+
+        .category-card:hover .category-icon {
+            background: linear-gradient(135deg, var(--primary-500), var(--accent-500));
+            box-shadow: 0 0 20px rgba(99,102,241,0.3);
+        }
+
+        .category-card h3 { font-size: 0.95rem; font-weight: 600; color: white; margin-bottom: 0.25rem; }
+        .category-card p { font-size: 0.8rem; color: var(--slate-500); }
+
+        /* ===== HOW IT WORKS ===== */
+        .how-section { background: var(--dark-card); border-top: 1px solid var(--dark-border); border-bottom: 1px solid var(--dark-border); }
+
+        .steps-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+
+        .step-card {
+            text-align: center;
+            padding: 2rem 1rem;
+            position: relative;
+        }
+
+        .step-card::after {
+            content: '→';
+            position: absolute;
+            right: -12px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 1.5rem;
+            color: var(--slate-600);
+        }
+
+        .step-card:last-child::after { display: none; }
+
+        .step-number {
+            width: 52px; height: 52px;
+            background: linear-gradient(135deg, var(--primary-500), var(--primary-600));
+            color: white;
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 800;
+            font-size: 1.2rem;
+            margin: 0 auto 1.25rem;
+            box-shadow: 0 0 20px rgba(99,102,241,0.3);
+        }
+
+        .step-card h3 { font-size: 1.05rem; font-weight: 700; color: white; margin-bottom: 0.5rem; }
+        .step-card p { color: var(--slate-400); font-size: 0.9rem; line-height: 1.6; }
+
+        /* ===== JOBS ===== */
+        .jobs-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+            gap: 1.5rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .job-card {
+            background: var(--dark-card);
+            border: 1px solid var(--dark-border);
+            border-radius: var(--radius-md);
+            overflow: hidden;
+            transition: all 0.3s;
+        }
+
+        .job-card:hover {
+            border-color: var(--primary-500);
+            box-shadow: var(--shadow-glow);
+            transform: translateY(-3px);
+        }
+
+        .job-card-header {
+            padding: 1.25rem 1.25rem 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .job-tag {
+            padding: 5px 12px;
+            border-radius: var(--radius-full);
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .tag-electrical { background: rgba(99,102,241,0.15); color: var(--primary-400); }
+        .tag-plumbing { background: rgba(20,184,166,0.15); color: var(--teal-400); }
+        .tag-ac { background: rgba(59,130,246,0.15); color: #60A5FA; }
+        .tag-carpentry { background: rgba(245,158,11,0.15); color: var(--amber-400); }
+        .tag-painting { background: rgba(168,85,247,0.15); color: #C084FC; }
+        .tag-cleaning { background: rgba(34,197,94,0.15); color: #4ADE80; }
+
+        .job-urgency {
+            padding: 4px 10px;
+            border-radius: var(--radius-full);
+            font-size: 0.7rem;
+            font-weight: 600;
+        }
+
+        .urgency-high { background: rgba(239,68,68,0.15); color: var(--error-500); }
+        .urgency-normal { background: rgba(148,163,184,0.1); color: var(--slate-400); }
+
+        .job-card-body { padding: 1rem 1.25rem; }
+        .job-card-body h3 { font-size: 1.05rem; font-weight: 700; color: white; margin-bottom: 0.5rem; }
+        .job-card-body p { font-size: 0.9rem; color: var(--slate-400); margin-bottom: 1rem; }
+
+        .job-meta { display: flex; gap: 1rem; flex-wrap: wrap; }
+
+        .job-meta-item {
+            display: flex; align-items: center; gap: 6px;
+            font-size: 0.85rem; color: var(--slate-500);
+        }
+
+        .job-card-footer {
+            padding: 1rem 1.25rem;
+            border-top: 1px solid var(--dark-border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .job-budget {
+            font-size: 1.1rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--teal-400), var(--teal-500));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .job-offers { font-size: 0.85rem; color: var(--slate-500); }
+
+        /* ===== WORKERS ===== */
+        .workers-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .worker-card {
+            background: var(--dark-card);
+            border: 1px solid var(--dark-border);
+            border-radius: var(--radius-md);
+            padding: 2rem 1.5rem;
+            text-align: center;
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        .worker-card:hover {
+            border-color: var(--primary-500);
+            box-shadow: var(--shadow-glow);
+            transform: translateY(-4px);
+        }
+
+        .worker-avatar {
+            width: 80px; height: 80px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary-500), var(--accent-500));
+            display: flex; align-items: center; justify-content: center;
+            font-size: 2rem;
+            margin: 0 auto 1rem;
+            box-shadow: 0 0 25px rgba(99,102,241,0.3);
+        }
+
+        .worker-card h3 { font-size: 1.1rem; font-weight: 700; color: white; }
+
+        .worker-skill {
+            color: var(--primary-400);
+            font-size: 0.9rem;
+            font-weight: 500;
+            margin: 0.25rem 0;
+        }
+
+        .worker-location { color: var(--slate-500); font-size: 0.85rem; margin-bottom: 1rem; }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 10px;
+            border-radius: var(--radius-full);
+            font-size: 0.7rem;
+            font-weight: 600;
+        }
+
+        .badge-verified { background: rgba(16,185,129,0.15); color: var(--success-500); }
+        .badge-top { background: rgba(251,191,36,0.15); color: var(--amber-400); }
+
+        .worker-rating {
+            display: flex; align-items: center; justify-content: center;
+            gap: 6px; margin-bottom: 1.25rem;
+        }
+
+        .stars { color: var(--amber-400); font-size: 0.9rem; }
+        .rating-text { font-size: 0.9rem; font-weight: 600; color: white; }
+        .rating-count { font-size: 0.8rem; color: var(--slate-500); }
+
+        .worker-stats {
+            display: flex; justify-content: center; gap: 2.5rem;
+            padding-top: 1.25rem;
+            border-top: 1px solid var(--dark-border);
+        }
+
+        .worker-stat { text-align: center; }
+        .worker-stat strong { display: block; font-size: 1.05rem; color: white; }
+        .worker-stat span { font-size: 0.75rem; color: var(--slate-500); }
+
+        /* ===== PRICING CARDS ===== */
+        .pricing-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .pricing-card {
+            background: var(--dark-card);
+            border: 1px solid var(--dark-border);
+            border-radius: var(--radius-lg);
+            padding: 2.5rem 2rem;
+            text-align: center;
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        .pricing-card.featured {
+            border-color: var(--primary-500);
+            box-shadow: var(--shadow-glow);
+        }
+
+        .pricing-card.featured::before {
+            content: 'MOST POPULAR';
+            position: absolute;
+            top: -12px; left: 50%; transform: translateX(-50%);
+            background: linear-gradient(135deg, var(--primary-500), var(--accent-500));
+            color: white;
+            padding: 4px 16px;
+            border-radius: var(--radius-full);
+            font-size: 0.7rem;
+            font-weight: 700;
+            letter-spacing: 1px;
+        }
+
+        .pricing-card:hover { transform: translateY(-4px); }
+
+        .pricing-card h3 { font-size: 1.2rem; font-weight: 700; color: white; margin-bottom: 0.5rem; }
+        .pricing-card .price { font-size: 2.5rem; font-weight: 900; color: white; margin: 1rem 0; }
+        .pricing-card .price span { font-size: 1rem; color: var(--slate-500); font-weight: 500; }
+
+        .pricing-features {
+            list-style: none;
+            text-align: left;
+            margin: 1.5rem 0;
+        }
+
+        .pricing-features li {
+            padding: 0.6rem 0;
+            font-size: 0.9rem;
+            color: var(--slate-300);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .pricing-features li .check { color: var(--success-500); font-weight: 700; }
+        .pricing-features li .cross { color: var(--slate-600); }
+
+        /* ===== TESTIMONIALS ===== */
+        .testimonials-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 1.5rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .testimonial-card {
+            background: var(--dark-card);
+            border: 1px solid var(--dark-border);
+            border-radius: var(--radius-md);
+            padding: 2rem;
+            transition: all 0.3s;
+        }
+
+        .testimonial-card:hover {
+            border-color: var(--primary-500);
+            box-shadow: var(--shadow-glow);
+        }
+
+        .testimonial-stars { color: var(--amber-400); margin-bottom: 1rem; font-size: 1rem; }
+        .testimonial-text { font-size: 0.95rem; color: var(--slate-300); margin-bottom: 1.5rem; line-height: 1.7; font-style: italic; }
+
+        .testimonial-author { display: flex; align-items: center; gap: 12px; }
+
+        .testimonial-avatar {
+            width: 44px; height: 44px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary-500), var(--accent-500));
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 700;
+            color: white;
+            font-size: 0.85rem;
+        }
+
+        .testimonial-name { font-weight: 600; font-size: 0.95rem; color: white; }
+        .testimonial-role { font-size: 0.8rem; color: var(--slate-500); }
+
+        /* ===== CTA ===== */
+        .cta-section {
+            position: relative;
+            padding: 6rem 2rem;
+            text-align: center;
+            overflow: hidden;
+        }
+
+        .cta-bg {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, var(--primary-900) 0%, var(--dark-bg) 50%, var(--slate-900) 100%);
+            z-index: 0;
+        }
+
+        .cta-bg::before {
+            content: '';
+            position: absolute;
+            width: 400px; height: 400px;
+            background: var(--primary-500);
+            border-radius: 50%;
+            filter: blur(120px);
+            opacity: 0.2;
+            top: -20%; left: 20%;
+        }
+
+        .cta-bg::after {
+            content: '';
+            position: absolute;
+            width: 300px; height: 300px;
+            background: var(--accent-500);
+            border-radius: 50%;
+            filter: blur(100px);
+            opacity: 0.15;
+            bottom: -10%; right: 20%;
+        }
+
+        .cta-content { position: relative; z-index: 1; }
+
+        .cta-section h2 {
+            font-size: 2.5rem;
+            font-weight: 900;
+            color: white;
+            margin-bottom: 1rem;
+        }
+
+        .cta-section p {
+            font-size: 1.1rem;
+            color: var(--slate-400);
+            max-width: 500px;
+            margin: 0 auto 2.5rem;
+        }
+
+        .cta-actions { display: flex; gap: 1rem; justify-content: center; }
+
+        /* ===== PALETTE SHOWCASE ===== */
+        .palette-section { background: var(--dark-card); border-top: 1px solid var(--dark-border); }
+
+        .palette-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 1.5rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .palette-group h4 {
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin-bottom: 1rem;
+            color: var(--slate-500);
+        }
+
+        .color-swatch {
+            display: flex; align-items: center; gap: 12px;
+            margin-bottom: 0.5rem;
+            background: var(--dark-surface);
+            border-radius: var(--radius-sm);
+            padding: 8px 12px;
+            border: 1px solid var(--dark-border);
+        }
+
+        .swatch-box {
+            width: 40px; height: 40px;
+            border-radius: 8px;
+            flex-shrink: 0;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .swatch-info { flex: 1; }
+        .swatch-name { font-size: 0.8rem; font-weight: 600; color: var(--slate-200); }
+        .swatch-hex { font-size: 0.75rem; color: var(--slate-500); font-family: monospace; }
+
+        /* ===== FOOTER ===== */
+        .footer {
+            background: var(--slate-950);
+            border-top: 1px solid var(--dark-border);
+            padding: 4rem 2rem 2rem;
+        }
+
+        .footer-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr;
+            gap: 3rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .footer-brand p { color: var(--slate-500); margin-top: 1rem; font-size: 0.9rem; line-height: 1.7; }
+
+        .footer-col h4 {
+            font-size: 0.85rem; font-weight: 600;
+            text-transform: uppercase; letter-spacing: 1px;
+            margin-bottom: 1rem; color: var(--primary-400);
+        }
+
+        .footer-col a {
+            display: block; color: var(--slate-500);
+            text-decoration: none; font-size: 0.9rem;
+            margin-bottom: 0.75rem; transition: color 0.2s;
+        }
+
+        .footer-col a:hover { color: white; }
+
+        .footer-bottom {
+            max-width: 1200px;
+            margin: 3rem auto 0;
+            padding-top: 2rem;
+            border-top: 1px solid var(--dark-border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.85rem;
+            color: var(--slate-600);
+        }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 768px) {
+            .hero h1 { font-size: 2.2rem; }
+            .hero-stats { flex-wrap: wrap; gap: 1rem; }
+            .steps-grid { grid-template-columns: 1fr 1fr; }
+            .step-card::after { display: none; }
+            .footer-grid { grid-template-columns: 1fr; }
+            .search-bar { flex-direction: column; }
+            .nav-links { display: none; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ===== NAVBAR ===== -->
+<nav class="navbar">
+    <a href="#" class="nav-logo">
+        <div class="logo-icon">&#127968;</div>
+        <span class="logo-text">HUNAR</span>
+    </a>
+    <ul class="nav-links">
+        <li><a href="#">Find Workers</a></li>
+        <li><a href="#">Post a Job</a></li>
+        <li><a href="#">How it Works</a></li>
+        <li><a href="#">Pricing</a></li>
+    </ul>
+    <div class="nav-actions">
+        <a href="#" class="btn btn-ghost">Log In</a>
+        <a href="#" class="btn btn-primary">Get Started</a>
+    </div>
+</nav>
+
+<!-- ===== HERO ===== -->
+<section class="hero">
+    <div class="hero-bg-orbs">
+        <div class="orb orb-1"></div>
+        <div class="orb orb-2"></div>
+        <div class="orb orb-3"></div>
+    </div>
+    <div class="hero-content">
+        <div class="hero-badge">
+            <div class="pulse"></div>
+            Trusted by 10,000+ homeowners across Pakistan
+        </div>
+        <h1>Your Home Deserves<br><span class="gradient-text">Verified Professionals</span></h1>
+        <p>From electricians to plumbers, AC technicians to carpenters — hire skilled workers at fair prices. Negotiate directly. Pay securely. All in one platform.</p>
+        <div class="hero-actions">
+            <a href="#" class="btn btn-glow btn-lg">&#9889; Post a Job — Free</a>
+            <a href="#" class="btn btn-ghost btn-lg">&#128104; Become a Worker</a>
+        </div>
+        <div class="hero-stats">
+            <div class="stat">
+                <div class="stat-number">10K+</div>
+                <div class="stat-label">Jobs Completed</div>
+            </div>
+            <div class="stat">
+                <div class="stat-number">2,500+</div>
+                <div class="stat-label">Verified Workers</div>
+            </div>
+            <div class="stat">
+                <div class="stat-number">4.8</div>
+                <div class="stat-label">Avg Rating</div>
+            </div>
+            <div class="stat">
+                <div class="stat-number">15+</div>
+                <div class="stat-label">Cities</div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ===== SEARCH ===== -->
+<div class="search-section">
+    <div class="search-bar">
+        <input type="text" placeholder="What service do you need? e.g. AC repair, plumbing...">
+        <select>
+            <option>All Cities</option>
+            <option>Lahore</option>
+            <option>Karachi</option>
+            <option>Islamabad</option>
+            <option>Faisalabad</option>
+        </select>
+        <button class="btn btn-primary">Search</button>
+    </div>
+</div>
+
+<!-- ===== CATEGORIES ===== -->
+<section class="section">
+    <div class="section-header">
+        <div class="section-tag">Services</div>
+        <h2>What Do You Need Help With?</h2>
+        <p>Browse from 20+ home service categories</p>
+    </div>
+    <div class="categories-grid">
+        <div class="category-card">
+            <div class="category-icon"><span>&#9889;</span></div>
+            <h3>Electrician</h3>
+            <p>320+ workers</p>
+        </div>
+        <div class="category-card">
+            <div class="category-icon"><span>&#128167;</span></div>
+            <h3>Plumber</h3>
+            <p>280+ workers</p>
+        </div>
+        <div class="category-card">
+            <div class="category-icon"><span>&#10052;</span></div>
+            <h3>AC Repair</h3>
+            <p>210+ workers</p>
+        </div>
+        <div class="category-card">
+            <div class="category-icon"><span>&#129692;</span></div>
+            <h3>Carpentry</h3>
+            <p>180+ workers</p>
+        </div>
+        <div class="category-card">
+            <div class="category-icon"><span>&#127912;</span></div>
+            <h3>Painting</h3>
+            <p>150+ workers</p>
+        </div>
+        <div class="category-card">
+            <div class="category-icon"><span>&#129529;</span></div>
+            <h3>Handyman</h3>
+            <p>400+ workers</p>
+        </div>
+        <div class="category-card">
+            <div class="category-icon"><span>&#128367;</span></div>
+            <h3>Cleaning</h3>
+            <p>250+ workers</p>
+        </div>
+    </div>
+</section>
+
+<!-- ===== HOW IT WORKS ===== -->
+<section class="section how-section">
+    <div class="section-header">
+        <div class="section-tag">Process</div>
+        <h2>How HUNAR Works</h2>
+        <p>Four simple steps to get your home fixed</p>
+    </div>
+    <div class="steps-grid">
+        <div class="step-card">
+            <div class="step-number">1</div>
+            <h3>Post Your Job</h3>
+            <p>Describe the problem, add photos or voice notes, set your location.</p>
+        </div>
+        <div class="step-card">
+            <div class="step-number">2</div>
+            <h3>Get Offers</h3>
+            <p>Verified workers nearby send their visit charges. Compare and choose.</p>
+        </div>
+        <div class="step-card">
+            <div class="step-number">3</div>
+            <h3>Inspect & Negotiate</h3>
+            <p>Worker visits, inspects the issue, and you negotiate the repair price.</p>
+        </div>
+        <div class="step-card">
+            <div class="step-number">4</div>
+            <h3>Get It Fixed</h3>
+            <p>Approve repair, pay securely through the platform, leave a review.</p>
+        </div>
+    </div>
+</section>
+
+<!-- ===== FEATURED JOBS ===== -->
+<section class="section">
+    <div class="section-header">
+        <div class="section-tag">Jobs</div>
+        <h2>Recent Job Listings</h2>
+        <p>See what homeowners are posting near you</p>
+    </div>
+    <div class="jobs-grid">
+        <div class="job-card">
+            <div class="job-card-header">
+                <span class="job-tag tag-electrical">&#9889; Electrical</span>
+                <span class="job-urgency urgency-high">&#128308; Urgent</span>
+            </div>
+            <div class="job-card-body">
+                <h3>Faulty Wiring in Kitchen — sparking outlets</h3>
+                <p>Two outlets sparking when plugged in. Need an emergency electrician check.</p>
+                <div class="job-meta">
+                    <div class="job-meta-item">&#128205; Gulberg III, Lahore</div>
+                    <div class="job-meta-item">&#128197; 2h ago</div>
+                </div>
+            </div>
+            <div class="job-card-footer">
+                <div class="job-budget">Rs. 3,000 - 5,000</div>
+                <div class="job-offers">6 offers</div>
+            </div>
+        </div>
+
+        <div class="job-card">
+            <div class="job-card-header">
+                <span class="job-tag tag-plumbing">&#128167; Plumbing</span>
+                <span class="job-urgency urgency-normal">Normal</span>
+            </div>
+            <div class="job-card-body">
+                <h3>Bathroom pipe leak — wall water damage</h3>
+                <p>Leak from pipe causing dampness in bedroom wall. Needs repair.</p>
+                <div class="job-meta">
+                    <div class="job-meta-item">&#128205; DHA Phase 5, Lahore</div>
+                    <div class="job-meta-item">&#128197; 5h ago</div>
+                </div>
+            </div>
+            <div class="job-card-footer">
+                <div class="job-budget">Rs. 2,000 - 4,000</div>
+                <div class="job-offers">4 offers</div>
+            </div>
+        </div>
+
+        <div class="job-card">
+            <div class="job-card-header">
+                <span class="job-tag tag-ac">&#10052; AC Repair</span>
+                <span class="job-urgency urgency-normal">Normal</span>
+            </div>
+            <div class="job-card-body">
+                <h3>Split AC not cooling — gas refilling needed</h3>
+                <p>Unit runs but no cooling. Probably needs gas. 2 years old Daikin.</p>
+                <div class="job-meta">
+                    <div class="job-meta-item">&#128205; F-8, Islamabad</div>
+                    <div class="job-meta-item">&#128197; 1d ago</div>
+                </div>
+            </div>
+            <div class="job-card-footer">
+                <div class="job-budget">Rs. 4,000 - 6,000</div>
+                <div class="job-offers">8 offers</div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ===== TOP WORKERS ===== -->
+<section class="section" style="background: var(--dark-card); border-top: 1px solid var(--dark-border); border-bottom: 1px solid var(--dark-border);">
+    <div class="section-header">
+        <div class="section-tag">Workers</div>
+        <h2>Top Rated Professionals</h2>
+        <p>Hire the best workers in your area</p>
+    </div>
+    <div class="workers-grid">
+        <div class="worker-card">
+            <div class="worker-avatar">&#128104;</div>
+            <h3>Ahmad Khan <span class="badge badge-verified">&#10003; Verified</span></h3>
+            <div class="worker-skill">Electrician</div>
+            <div class="worker-location">&#128205; Gulberg, Lahore</div>
+            <div class="worker-rating">
+                <span class="stars">&#9733;&#9733;&#9733;&#9733;&#9733;</span>
+                <span class="rating-text">4.9</span>
+                <span class="rating-count">(127 reviews)</span>
+            </div>
+            <div class="worker-stats">
+                <div class="worker-stat"><strong>340</strong><span>Jobs Done</span></div>
+                <div class="worker-stat"><strong>8 yrs</strong><span>Experience</span></div>
+            </div>
+        </div>
+
+        <div class="worker-card">
+            <div class="worker-avatar">&#128104;</div>
+            <h3>Hassan Ali <span class="badge badge-top">&#11088; Top Rated</span></h3>
+            <div class="worker-skill">Plumber</div>
+            <div class="worker-location">&#128205; DHA, Karachi</div>
+            <div class="worker-rating">
+                <span class="stars">&#9733;&#9733;&#9733;&#9733;&#9733;</span>
+                <span class="rating-text">4.8</span>
+                <span class="rating-count">(98 reviews)</span>
+            </div>
+            <div class="worker-stats">
+                <div class="worker-stat"><strong>285</strong><span>Jobs Done</span></div>
+                <div class="worker-stat"><strong>12 yrs</strong><span>Experience</span></div>
+            </div>
+        </div>
+
+        <div class="worker-card">
+            <div class="worker-avatar">&#128104;</div>
+            <h3>Bilal Ahmed <span class="badge badge-verified">&#10003; Verified</span></h3>
+            <div class="worker-skill">AC Technician</div>
+            <div class="worker-location">&#128205; F-10, Islamabad</div>
+            <div class="worker-rating">
+                <span class="stars">&#9733;&#9733;&#9733;&#9733;&#9734;</span>
+                <span class="rating-text">4.6</span>
+                <span class="rating-count">(74 reviews)</span>
+            </div>
+            <div class="worker-stats">
+                <div class="worker-stat"><strong>198</strong><span>Jobs Done</span></div>
+                <div class="worker-stat"><strong>5 yrs</strong><span>Experience</span></div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ===== TESTIMONIALS ===== -->
+<section class="section">
+    <div class="section-header">
+        <div class="section-tag">Reviews</div>
+        <h2>What People Say</h2>
+        <p>Real feedback from our community</p>
+    </div>
+    <div class="testimonials-grid">
+        <div class="testimonial-card">
+            <div class="testimonial-stars">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
+            <div class="testimonial-text">"HUNAR made finding a reliable electrician so easy. Posted at 10pm, had 5 offers by morning. The negotiation feature saved me Rs. 2,000!"</div>
+            <div class="testimonial-author">
+                <div class="testimonial-avatar">FK</div>
+                <div>
+                    <div class="testimonial-name">Fatima Khan</div>
+                    <div class="testimonial-role">Homeowner, Lahore</div>
+                </div>
+            </div>
+        </div>
+        <div class="testimonial-card">
+            <div class="testimonial-stars">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
+            <div class="testimonial-text">"As a plumber, HUNAR changed my life. I used to wait at shops for work. Now jobs come to my phone. The verified badge builds real trust."</div>
+            <div class="testimonial-author">
+                <div class="testimonial-avatar">MS</div>
+                <div>
+                    <div class="testimonial-name">Muhammad Saeed</div>
+                    <div class="testimonial-role">Plumber, Karachi</div>
+                </div>
+            </div>
+        </div>
+        <div class="testimonial-card">
+            <div class="testimonial-stars">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
+            <div class="testimonial-text">"Voice note feature is genius. My mother described the problem in Urdu and the worker understood everything before visiting. Truly built for Pakistan."</div>
+            <div class="testimonial-author">
+                <div class="testimonial-avatar">AR</div>
+                <div>
+                    <div class="testimonial-name">Ali Raza</div>
+                    <div class="testimonial-role">Homeowner, Islamabad</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ===== PRICING ===== -->
+<section class="section palette-section">
+    <div class="section-header">
+        <div class="section-tag">Pricing</div>
+        <h2>Simple, Transparent Pricing</h2>
+        <p>No hidden fees. You only pay what you agree on.</p>
+    </div>
+    <div class="pricing-grid">
+        <div class="pricing-card">
+            <h3>Customer</h3>
+            <p style="color: var(--slate-400); font-size: 0.9rem;">Post jobs and hire workers</p>
+            <div class="price">Free</div>
+            <ul class="pricing-features">
+                <li><span class="check">&#10003;</span> Post unlimited jobs</li>
+                <li><span class="check">&#10003;</span> Receive worker offers</li>
+                <li><span class="check">&#10003;</span> In-app messaging</li>
+                <li><span class="check">&#10003;</span> Secure payments</li>
+                <li><span class="cross">&#10007;</span> Priority support</li>
+            </ul>
+            <a href="#" class="btn btn-outline" style="width:100%; justify-content:center;">Get Started</a>
+        </div>
+
+        <div class="pricing-card featured">
+            <h3>Worker</h3>
+            <p style="color: var(--slate-400); font-size: 0.9rem;">Get jobs and grow your business</p>
+            <div class="price">15% <span>per job</span></div>
+            <ul class="pricing-features">
+                <li><span class="check">&#10003;</span> View nearby jobs</li>
+                <li><span class="check">&#10003;</span> Send offers to customers</li>
+                <li><span class="check">&#10003;</span> Verified worker badge</li>
+                <li><span class="check">&#10003;</span> Payment protection</li>
+                <li><span class="check">&#10003;</span> Priority support</li>
+            </ul>
+            <a href="#" class="btn btn-glow" style="width:100%; justify-content:center;">Join as Worker</a>
+        </div>
+    </div>
+</section>
+
+<!-- ===== CTA ===== -->
+<section class="cta-section">
+    <div class="cta-bg"></div>
+    <div class="cta-content">
+        <h2>Ready to Get Started?</h2>
+        <p>Join thousands of homeowners and workers using HUNAR every day across Pakistan.</p>
+        <div class="cta-actions">
+            <a href="#" class="btn btn-glow btn-lg">&#9889; Post Your First Job</a>
+            <a href="#" class="btn btn-ghost btn-lg">&#128104; Join as Worker</a>
+        </div>
+    </div>
+</section>
+
+<!-- ===== COLOR PALETTE SHOWCASE ===== -->
+<section class="section palette-section">
+    <div class="section-header">
+        <div class="section-tag">Theme</div>
+        <h2>Color Theme — "Indigo Luxe"</h2>
+        <p>Selected by Shafqat Ullah for HUNAR platform</p>
+    </div>
+    <div class="palette-grid">
+        <div class="palette-group">
+            <h4>Primary</h4>
+            <div class="color-swatch"><div class="swatch-box" style="background:#312E81"></div><div class="swatch-info"><div class="swatch-name">Primary 900</div><div class="swatch-hex">#312E81</div></div></div>
+            <div class="color-swatch"><div class="swatch-box" style="background:#4338CA"></div><div class="swatch-info"><div class="swatch-name">Primary 700</div><div class="swatch-hex">#4338CA</div></div></div>
+            <div class="color-swatch"><div class="swatch-box" style="background:#6366F1"></div><div class="swatch-info"><div class="swatch-name">Primary 500</div><div class="swatch-hex">#6366F1</div></div></div>
+            <div class="color-swatch"><div class="swatch-box" style="background:#818CF8"></div><div class="swatch-info"><div class="swatch-name">Primary 400</div><div class="swatch-hex">#818CF8</div></div></div>
+        </div>
+        <div class="palette-group">
+            <h4>Accent</h4>
+            <div class="color-swatch"><div class="swatch-box" style="background:#E11D48"></div><div class="swatch-info"><div class="swatch-name">Accent 600</div><div class="swatch-hex">#E11D48</div></div></div>
+            <div class="color-swatch"><div class="swatch-box" style="background:#F43F5E"></div><div class="swatch-info"><div class="swatch-name">Accent 500</div><div class="swatch-hex">#F43F5E</div></div></div>
+            <div class="color-swatch"><div class="swatch-box" style="background:#FB7185"></div><div class="swatch-info"><div class="swatch-name">Accent 400</div><div class="swatch-hex">#FB7185</div></div></div>
+            <div class="color-swatch"><div class="swatch-box" style="background:#FFE4E6"></div><div class="swatch-info"><div class="swatch-name">Accent 100</div><div class="swatch-hex">#FFE4E6</div></div></div>
+        </div>
+        <div class="palette-group">
+            <h4>Dark Mode</h4>
+            <div class="color-swatch"><div class="swatch-box" style="background:#0A0E1A"></div><div class="swatch-info"><div class="swatch-name">Background</div><div class="swatch-hex">#0A0E1A</div></div></div>
+            <div class="color-swatch"><div class="swatch-box" style="background:#111827"></div><div class="swatch-info"><div class="swatch-name">Card</div><div class="swatch-hex">#111827</div></div></div>
+            <div class="color-swatch"><div class="swatch-box" style="background:#1A2332"></div><div class="swatch-info"><div class="swatch-name">Surface</div><div class="swatch-hex">#1A2332</div></div></div>
+            <div class="color-swatch"><div class="swatch-box" style="background:#1E293B"></div><div class="swatch-info"><div class="swatch-name">Border</div><div class="swatch-hex">#1E293B</div></div></div>
+        </div>
+        <div class="palette-group">
+            <h4>Text & Semantic</h4>
+            <div class="color-swatch"><div class="swatch-box" style="background:#FFFFFF"></div><div class="swatch-info"><div class="swatch-name">Text Primary</div><div class="swatch-hex">#FFFFFF</div></div></div>
+            <div class="color-swatch"><div class="swatch-box" style="background:#CBD5E1"></div><div class="swatch-info"><div class="swatch-name">Text Secondary</div><div class="swatch-hex">#CBD5E1</div></div></div>
+            <div class="color-swatch"><div class="swatch-box" style="background:#10B981"></div><div class="swatch-info"><div class="swatch-name">Success</div><div class="swatch-hex">#10B981</div></div></div>
+            <div class="color-swatch"><div class="swatch-box" style="background:#EF4444"></div><div class="swatch-info"><div class="swatch-name">Error</div><div class="swatch-hex">#EF4444</div></div></div>
+        </div>
+    </div>
+</section>
+
+<!-- ===== FOOTER ===== -->
+<footer class="footer">
+    <div class="footer-grid">
+        <div class="footer-brand">
+            <a href="#" class="nav-logo">
+                <div class="logo-icon">&#127968;</div>
+                <span class="logo-text">HUNAR</span>
+            </a>
+            <p>Pakistan's most trusted home services platform. Connecting homeowners with verified workers for every home repair and maintenance need.</p>
+        </div>
+        <div class="footer-col">
+            <h4>Services</h4>
+            <a href="#">Electrician</a>
+            <a href="#">Plumber</a>
+            <a href="#">AC Repair</a>
+            <a href="#">Carpentry</a>
+            <a href="#">Painting</a>
+        </div>
+        <div class="footer-col">
+            <h4>Company</h4>
+            <a href="#">About Us</a>
+            <a href="#">Careers</a>
+            <a href="#">Blog</a>
+            <a href="#">Press</a>
+            <a href="#">Contact</a>
+        </div>
+        <div class="footer-col">
+            <h4>Support</h4>
+            <a href="#">Help Center</a>
+            <a href="#">Safety</a>
+            <a href="#">Terms</a>
+            <a href="#">Privacy</a>
+            <a href="#">Disputes</a>
+        </div>
+    </div>
+    <div class="footer-bottom">
+        <span>&copy; 2026 HUNAR. All rights reserved.</span>
+        <span>Made with &#10084; in Pakistan</span>
+    </div>
+</footer>
+
+</body>
+</html>
