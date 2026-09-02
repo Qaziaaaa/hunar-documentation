@@ -1,16 +1,16 @@
-# System Architecture — Home Services Platform
+# System Architecture — Home Services Platform (MERN Web)
 
 **Author:** Shafqat Ullah  
 **Document Type:** System Architecture Design  
-**Version:** 1.0  
-**Date:** September 1, 2026  
+**Version:** 2.0  
+**Date:** September 2, 2026  
 **Status:** Draft — Pending Team Review
 
 ---
 
 ## 1. Overview
 
-This document defines the overall system architecture for the Home Services Platform — a marketplace connecting customers who need home repair/maintenance services with verified workers (electricians, plumbers, AC technicians, handymen, etc.).
+This document defines the overall system architecture for the Home Services Platform — a **MERN-stack website** (MongoDB, Express.js, React, Node.js) that connects customers who need home repair/maintenance services with verified workers (electricians, plumbers, AC technicians, handymen, etc.). This is a **web application — no mobile app**.
 
 ---
 
@@ -33,15 +33,16 @@ This document defines the overall system architecture for the Home Services Plat
 ┌─────────────────────────────────────────────────────────────────────┐
 │                          CLIENT LAYER                              │
 │                                                                     │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────────────────┐  │
-│  │  Customer App │  │  Worker App  │  │     Admin Dashboard      │  │
-│  │  (React Native│  │  (React Native│  │     (React / Next.js)    │  │
-│  │   or Flutter) │  │   or Flutter) │  │                          │  │
-│  └──────┬───────┘  └──────┬───────┘  └────────────┬─────────────┘  │
-│         │                  │                        │                │
-└─────────┼──────────────────┼────────────────────────┼────────────────┘
-          │                  │                        │
-          ▼                  ▼                        ▼
+│    ┌──────────────────────────────────────────────────────────────┐ │
+│    │                    React.js Web Application (SPA)             │ │
+│    │                    (Customer + Worker + Admin)                │ │
+│    │                    Vite + React Router + Redux Toolkit        │ │
+│    │                    Tailwind CSS + Material-UI                 │ │
+│    └─────────────────────────────┬────────────────────────────────┘ │
+│                                  │                                  │
+└──────────────────────────────────┼──────────────────────────────────┘
+                                   │
+                                   ▼
 ┌─────────────────────────────────────────────────────────────────────┐
 │                        API GATEWAY / LOAD BALANCER                  │
 │                                                                     │
@@ -89,10 +90,10 @@ This document defines the overall system architecture for the Home Services Plat
 │                         DATA LAYER                                  │
 │                                                                     │
 │  ┌──────────────┐  ┌──────────────┐  ┌──────────────────────────┐  │
-│  │  PostgreSQL   │  │    Redis     │  │    Elasticsearch         │  │
-│  │  (Primary DB) │  │  (Cache +    │  │   (Search + Geospatial)  │  │
-│  │               │  │   Sessions + │  │                          │  │
-│  │               │  │   Pub/Sub)   │  │                          │  │
+│  │   MongoDB    │  │    Redis     │  │  MongoDB Atlas Search /   │  │
+│  │ (Primary DB) │  │  (Cache +    │  │  Elasticsearch (optional) │  │
+│  │  + GeoJSON   │  │   Sessions + │  │  (Full-text + Geospatial) │  │
+│  │  2dsphere    │  │   Pub/Sub)   │  │                          │  │
 │  └──────────────┘  └──────────────┘  └──────────────────────────┘  │
 │                                                                     │
 └─────────────────────────────────────────────────────────────────────┘
@@ -103,7 +104,7 @@ This document defines the overall system architecture for the Home Services Plat
 │                                                                     │
 │  ┌──────────────┐  ┌──────────────┐  ┌──────────────────────────┐  │
 │  │   AWS S3 /   │  │  CloudFront  │  │   Backup Storage         │  │
-│  │   MinIO      │  │  / BunnyCDN  │  │   (S3 Glacier / Local)   │  │
+│  │   Cloudinary │  │  / BunnyCDN  │  │   (S3 Glacier / Local)   │  │
 │  │              │  │  (CDN)       │  │                          │  │
 │  │  - Images    │  │              │  │                          │  │
 │  │  - Voice     │  │              │  │                          │  │
@@ -117,9 +118,9 @@ This document defines the overall system architecture for the Home Services Plat
 │                    EXTERNAL SERVICES                                │
 │                                                                     │
 │  ┌────────────┐ ┌────────────┐ ┌────────────┐ ┌─────────────────┐  │
-│  │  Firebase   │ │  SMS       │ │  Payment   │ │  Maps           │  │
-│  │  (Push      │ │  Gateway   │ │  Gateway   │ │  (Google Maps   │  │
-│  │  Notifs)    │ │  (Twilio / │ │  (Stripe / │ │   / Mapbox)     │  │
+│  │  Web Push   │ │  SMS       │ │  Payment   │ │  Maps           │  │
+│  │  (Service   │ │  Gateway   │ │  Gateway   │ │  (Google Maps   │  │
+│  │  Workers)   │ │  (Twilio / │ │  (Stripe / │ │   / Leaflet)    │  │
 │  │             │ │  Local PK) │ │  JazzCash /│ │                 │  │
 │  │             │ │            │ │  Easypaisa)│ │                 │  │
 │  └────────────┘ └────────────┘ └────────────┘ └─────────────────┘  │
@@ -205,28 +206,21 @@ This document defines the overall system architecture for the Home Services Plat
 
 ## 5. Frontend Architecture
 
-### 5.1 Mobile Apps (Customer + Worker)
+### 5.1 Web Application (Customer + Worker + Admin)
+
+A single **React.js SPA** (Vite) serving customers, workers, and admin via role-based routing.
 
 | Aspect | Decision |
 |---|---|
-| **Framework** | React Native (Expo) or Flutter |
-| **State Management** | Redux Toolkit / Riverpod |
-| **Navigation** | React Navigation / GoRouter |
-| **Maps** | react-native-maps / google_maps_flutter |
+| **Framework** | React.js 18+ (Vite SPA) |
+| **State Management** | Redux Toolkit + React Query |
+| **Routing** | React Router |
+| **Maps** | Leaflet / @react-google-maps/api |
 | **Real-time** | Socket.IO client |
-| **Offline** | AsyncStorage + network state detection |
-| **Push Notifications** | Firebase Cloud Messaging (FCM) |
-| **UI Kit** | React Native Paper / Material 3 |
-
-### 5.2 Admin Dashboard
-
-| Aspect | Decision |
-|---|---|
-| **Framework** | Next.js 14+ (App Router) |
-| **UI** | Tailwind CSS + Shadcn/UI |
-| **State** | Server Components + React Query |
-| **Charts** | Recharts / Chart.js |
-| **Maps** | Leaflet / Google Maps JS API |
+| **Web Push** | Service Workers + Web Push API |
+| **UI Kit** | Tailwind CSS + Material-UI (MUI) |
+| **Geolocation** | Browser Geolocation API |
+| **File upload** | Axios + Multer / pre-signed S3 URLs
 
 ---
 
@@ -276,7 +270,7 @@ This document defines the overall system architecture for the Home Services Plat
 ```
 ┌──────────┐     ┌──────────────┐     ┌──────────┐
 │ Customer │◄───►│  Socket.IO   │◄───►│  Worker  │
-│   App    │     │   Server     │     │   App    │
+│  (Web)   │     │   Server     │     │  (Web)   │
 └──────────┘     │              │     └──────────┘
                  │  - Rooms     │
                  │  - Events    │
@@ -303,7 +297,6 @@ This document defines the overall system architecture for the Home Services Plat
 | `job:offer:accepted` | Customer → Worker | Customer accepts offer |
 | `job:status:changed` | Both ways | Job state update |
 | `chat:message` | Both ways | New chat message |
-| `location:update` | Worker → Customer | Live location during visit |
 | `payment:completed` | Server → Both | Payment confirmation |
 
 ---
@@ -319,14 +312,16 @@ This document defines the overall system architecture for the Home Services Plat
 │         │                                        │
 │         ▼                                        │
 │  ┌──────────────┐                                │
-│  │ PostGIS /    │                                │
-│  │ Elasticsearch│                                │
-│  │ Geo-query    │                                │
+│  │   MongoDB    │                                │
+│  │ Geospatial   │                                │
+│  │  Geo-query   │                                │
 │  │              │                                │
-│  │ ST_DWithin(  │                                │
-│  │   worker_loc,│                                │
-│  │   job_loc,   │                                │
-│  │   radius_km) │                                │
+│  │  $geoNear({  │                                │
+│  │   near: job, │                                │
+│  │   maxDistance│                                │
+│  │   radius_km  │                                │
+│  │  }) on       │                                │
+│  │  2dsphere idx│                                │
 │  └──────┬───────┘                                │
 │         │                                        │
 │         ▼                                        │
@@ -343,11 +338,11 @@ This document defines the overall system architecture for the Home Services Plat
 
 | Option | Pros | Cons |
 |---|---|---|
-| **PostGIS (PostgreSQL)** | Integrated, powerful, mature | Requires extension |
-| **Elasticsearch Geo** | Fast search, full-text + geo | Extra service |
+| **MongoDB GeoJSON (`2dsphere`)** | Native, integrated with MERN | — |
+| **MongoDB Atlas Search** | Full-text + geo combined | Paid tier for advanced |
 | **Google S2 / Uber H3** | Grid-based, efficient | Complexity |
 
-**Recommendation:** PostGIS for database queries + Elasticsearch for advanced search/filtering.
+**Recommendation:** MongoDB `2dsphere` geospatial index with `$geoNear`/`$near` for database queries. MongoDB Atlas Search only if advanced search/filtering is needed later.
 
 ---
 
@@ -356,13 +351,14 @@ This document defines the overall system architecture for the Home Services Plat
 ```
 ┌──────────────┐     ┌──────────────┐     ┌──────────────┐
 │    Client    │────►│   Backend    │────►│   AWS S3 /   │
-│              │     │   (Pre-signed│     │   MinIO      │
-│  Upload File │     │    URL)      │     │              │
-│              │     │              │     │  Buckets:    │
-│              │     │  - Validate  │     │  - images/   │
-│              │     │  - Resize    │     │  - voice/    │
-│              │     │  - Generate  │     │  - docs/     │
-│              │     │    pre-sign  │     │  - avatar/   │
+│              │     │   (Multer /  │     │   Cloudinary │
+│  Upload File │     │    Pre-signed│     │              │
+│              │     │    URL)      │     │  Buckets:    │
+│              │     │              │     │  - images/   │
+│              │     │  - Validate  │     │  - voice/    │
+│              │     │  - Resize    │     │  - docs/     │
+│              │     │  - Generate  │     │  - avatar/   │
+│              │     │    pre-sign  │     │              │
 └──────────────┘     └──────────────┘     └──────────────┘
 ```
 
@@ -371,7 +367,7 @@ This document defines the overall system architecture for the Home Services Plat
 | File Type | Max Size | Processing |
 |---|---|---|
 | Images (job) | 5MB | Resize to 3 variants (thumb, medium, large) |
-| Profile photos | 2MB | Crop + resize to标准 avatar sizes |
+| Profile photos | 2MB | Crop + resize to standard avatar sizes |
 | Voice notes | 10MB | Store original + convert to waveform data |
 | Documents (ID verification) | 5MB | Store original, extract metadata |
 
@@ -385,7 +381,7 @@ This document defines the overall system architecture for the Home Services Plat
 │                                                          │
 │  ┌──────────┐    ┌──────────┐    ┌───────────────────┐   │
 │  │ Customer │───►│ Payment  │───►│  Payment Gateway  │   │
-│  │   App    │    │  Service │    │  (JazzCash /      │   │
+│  │  (Web)   │    │  Service │    │  (JazzCash /      │   │
 │  └──────────┘    │          │    │   Easypaisa /     │   │
 │                  │  - Create│    │   Stripe)         │   │
 │                  │  - Verify│    └────────┬──────────┘   │
@@ -426,8 +422,10 @@ This document defines the overall system architecture for the Home Services Plat
 │          │         │          │                    │
 │          ▼         ▼          ▼                    │
 │  ┌──────────┐ ┌──────────┐ ┌──────────┐          │
-│  │  Push    │ │   SMS    │ │  In-App  │          │
-│  │ (FCM)   │ │ (Twilio) │ │ (Socket) │          │
+│  │  Web     │ │   SMS    │ │  In-App  │          │
+│  │  Push    │ │ (Twilio) │ │ (Socket) │          │
+│  │(Service  │ │          │ │          │          │
+│  │ Workers) │ │          │ │          │          │
 │  └──────────┘ └──────────┘ └──────────┘          │
 │                                                    │
 │  Channels per notification type:                   │
@@ -474,8 +472,8 @@ This document defines the overall system architecture for the Home Services Plat
 │                    └─────────────────────┘           │
 │                                                       │
 │  ┌──────────────────────────────────────────────┐    │
-│  │           RDS PostgreSQL (Multi-AZ)          │    │
-│  │           + Read Replicas                     │    │
+│  │        MongoDB Atlas (Replica Set)            │    │
+│  │        + Read Replicas                        │    │
 │  └──────────────────────────────────────────────┘    │
 │                                                       │
 │  ┌──────────────────────────────────────────────┐    │
@@ -484,6 +482,10 @@ This document defines the overall system architecture for the Home Services Plat
 │                                                       │
 │  ┌──────────────────────────────────────────────┐    │
 │  │       CloudWatch + PagerDuty (Monitoring)    │    │
+│  └──────────────────────────────────────────────┘    │
+│                                                       │
+│  ┌──────────────────────────────────────────────┐    │
+│  │        Vercel / Netlify (React Frontend)      │    │
 │  └──────────────────────────────────────────────┘    │
 └──────────────────────────────────────────────────────┘
 ```
@@ -498,7 +500,7 @@ This document defines the overall system architecture for the Home Services Plat
 |---|---|
 | **Network** | VPC, Security Groups, WAF, DDoS protection |
 | **Transport** | TLS 1.3 everywhere, HSTS |
-| **Application** | Input validation, parameterized queries, RBAC |
+| **Application** | Input validation, object/query filtering, RBAC, NoSQL injection protection (Mongoose sanitization) |
 | **Data** | Encryption at rest (AES-256), sensitive field masking |
 | **API** | Rate limiting, request signing, API key rotation |
 | **File Upload** | Type validation, size limits, virus scanning |
@@ -519,7 +521,7 @@ This document defines the overall system architecture for the Home Services Plat
 ## 14. Data Flow — Complete Job Lifecycle
 
 ```
-Customer App                  Backend                    Worker App
+Customer (Web)                 Backend                    Worker (Web)
      │                           │                           │
      │── Create Job ────────────►│                           │
      │                           │── Notify nearby workers ──►
@@ -577,14 +579,14 @@ Customer App                  Backend                    Worker App
 | Decision | Choice | Rationale |
 |---|---|---|
 | Backend style | Modular Monolith | Fast MVP, easy to split later |
-| Database | PostgreSQL + PostGIS | Geo queries, ACID, mature |
+| Database | MongoDB (+ 2dsphere geo) | MERN alignment, flexible, native geo supports |
 | Cache / PubSub | Redis | Fast, versatile, Socket.IO adapter |
-| Search | Elasticsearch | Full-text + geo search |
+| Search | MongoDB $text / Atlas Search | Built-in full-text + geospatial |
 | Real-time | Socket.IO | Proven, fallback support |
-| File storage | AWS S3 / MinIO | Scalable, CDN integration |
-| Mobile | React Native or Flutter | Cross-platform, single codebase |
-| Admin | Next.js | SSR, fast development |
+| File storage | AWS S3 / Cloudinary | Scalable, CDN integration |
+| Frontend | React.js (Vite SPA) | MERN alignment, single codebase |
 | Auth | OTP + JWT | Simple, Pakistan phone market |
+| Web Push | Web Push API / Service Workers | Browser-native notifications |
 | Payments | JazzCash / Easypaisa + Stripe | Local + international |
 
 ---

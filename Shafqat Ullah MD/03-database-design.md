@@ -1,40 +1,42 @@
-# Database Design Proposal — Home Services Platform
+# Database Design Proposal — Home Services Platform (MERN / MongoDB)
 
 **Author:** Shafqat Ullah  
 **Document Type:** Database Design Proposal  
-**Version:** 1.0  
-**Date:** September 1, 2026  
+**Version:** 2.0  
+**Date:** September 2, 2026  
 **Status:** Draft — Pending Team Review
+
+> **Note:** This is a **MERN-stack website** (MongoDB, Express, React, Node.js). The database is **MongoDB** using **Mongoose** as the ODM. Collections and Mongoose schemas below replace the SQL tables from the previous version.
 
 ---
 
 ## 1. Overview
 
-This document proposes the complete database design including technology choice, schema design, indexing strategy, partitioning, backup, and performance considerations.
+This document proposes the complete MongoDB database design including collection choice, schema design, indexing strategy, backup, and performance considerations for the Home Services Platform.
 
 ---
 
 ## 2. Database Technology Selection
 
-| Criteria | PostgreSQL | MySQL | MongoDB |
+| Criteria | PostgreSQL | MySQL | **MongoDB** |
 |---|---|---|---|
-| ACID Compliance | ✅ Full | ✅ Full | ❌ Limited |
-| Geospatial (GIS) | ✅ PostGIS (best) | ⚠️ Basic | ⚠️ Basic |
-| JSON Support | ✅ JSONB (indexed) | ⚠️ JSON | ✅ Native |
-| Full-text Search | ✅ Built-in | ✅ Built-in | ✅ Built-in |
-| Complex Joins | ✅ Excellent | ✅ Good | ❌ Limited |
+| ACID Compliance | ✅ Full | ✅ Full | ✅ (document-level transactions) |
+| Geospatial (GIS) | ✅ PostGIS | ⚠️ Basic | ✅ Native `2dsphere` / GeoJSON |
+| JSON Support | ✅ JSONB | ⚠️ JSON | ✅ Native (BSON documents) |
+| Full-text Search | ✅ Built-in | ✅ Built-in | ✅ `$text` index + Atlas Search |
+| Complex Joins | ✅ Excellent | ✅ Good | ⚠️ References / `$lookup` |
 | Maturity / Ecosystem | ✅ Excellent | ✅ Excellent | ✅ Good |
-| Scalability (Read) | ✅ Replicas | ✅ Replicas | ✅ Native |
-| Schema Migrations | ✅ Strong tooling | ✅ Good tooling | ⚠️ Flexible but risky |
+| Schema Flexibility | ❌ Rigid | ❌ Rigid | ✅ Flexible / dynamic |
+| Scalability | ✅ Replicas | ✅ Replicas | ✅ Native horizontal (sharding) |
 
-### Decision: PostgreSQL + PostGIS
+### Decision: MongoDB
 
 **Reasons:**
-- PostGIS is the industry standard for geospatial queries
-- Native JSONB for flexible data (e.g., negotiation history, item breakdowns)
-- Strong data integrity with foreign keys and constraints
-- Excellent ecosystem (Prisma, TypeORM, Knex.js)
-- Multi-AZ support on AWS RDS for high availability
+- **MERN alignment** — MongoDB is the "M" in MERN, pairs naturally with Node.js/Express and JavaScript objects (via Mongoose)
+- **Native geospatial** — built-in `2dsphere` index + `$geoNear` for nearby-worker matching
+- **Flexible schema** — job/worker/negotiation data fits JSON documents naturally (arrays, nested objects)
+- **Single language across stack** — JavaScript/TypeScript everywhere reduces complexity and hiring burden
+- **MongoDB Atlas** — managed hosting with free tier, automatic scaling, built-in monitoring
 
 ---
 
@@ -43,392 +45,385 @@ This document proposes the complete database design including technology choice,
 | Store | Purpose | Why |
 |---|---|---|
 | **Redis** | Session cache, OTP storage, rate limiting, Socket.IO adapter, real-time pub/sub | Speed, TTL support, pub/sub |
-| **Elasticsearch** | Advanced job search, worker search, full-text + geo combined queries | Complex search beyond PostGIS |
-| **AWS S3 / MinIO** | Image, voice note, document file storage | Scalable, CDN-integrated |
+| **MongoDB Atlas Search** | Advanced job search, worker search, full-text + geo combined queries | Optional upgrade from `$text` |
+| **AWS S3 / Cloudinary** | Image, voice note, document file storage | Scalable, CDN-integrated |
 
 ---
 
-## 4. Schema Design
+## 4. Collection Design (Mongoose Schemas)
 
-### 4.1 Table: users
+### 4.1 Collection: users
 
-```sql
-CREATE TABLE users (
-    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    phone           VARCHAR(20) NOT NULL UNIQUE,
-    email           VARCHAR(255) UNIQUE,
-    name            VARCHAR(100) NOT NULL,
-    role            VARCHAR(20) NOT NULL DEFAULT 'customer'
-                    CHECK (role IN ('customer', 'worker', 'admin', 'super_admin')),
-    avatar_url      TEXT,
-    password_hash   VARCHAR(255),  -- optional, for email login
-    latitude        DECIMAL(10, 8),
-    longitude       DECIMAL(11, 8),
-    fcm_token       TEXT,
-    is_active       BOOLEAN NOT NULL DEFAULT true,
-    is_verified     BOOLEAN NOT NULL DEFAULT false,
-    last_login_at   TIMESTAMPTZ,
-    created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
+```js
+const userSchema = new mongoose.Schema({
+  phone:      { type: String, required: true, unique: true },   // E.164 format
+  email:      { type: String, sparse: true },
+  name:       { type: String, required: true },
+  role:       { type: String, enum: ['customer', 'worker', 'admin', 'super_admin'], default: 'customer' },
+  avatar_url: { type: String },
+  password_hash: { type: String },                              // optional, for email login
+  location: {
+    type: { type: String, enum: ['Point'], default: 'Point' },
+    coordinates: { type: [Number], default: [0, 0] }            // [lng, lat]
+  },
+  is_active:   { type: Boolean, default: true },
+  is_verified: { type: Boolean, default: false },
+  push_sub:    { type: Object },                                // Web Push subscription
+  last_login_at: { type: Date },
+  created_at:  { type: Date, default: Date.now },
+  updated_at:  { type: Date, default: Date.now }
+});
 
-CREATE INDEX idx_users_phone ON users(phone);
-CREATE INDEX idx_users_role ON users(role);
-CREATE INDEX idx_users_location ON users(latitude, longitude);
-CREATE INDEX idx_users_active ON users(is_active) WHERE is_active = true;
+userSchema.index({ phone: 1 }, { unique: true });
+userSchema.index({ role: 1 });
+userSchema.index({ location: '2dsphere' });       // geospatial
+userSchema.index({ is_active: 1 });
 ```
 
-### 4.2 Table: worker_profiles
+### 4.2 Collection: worker_profiles
 
-```sql
-CREATE TABLE worker_profiles (
-    user_id             UUID PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
-    skills              TEXT[] NOT NULL DEFAULT '{}',
-    experience_years    INTEGER DEFAULT 0,
-    bio                 TEXT,
-    hourly_rate         DECIMAL(10, 2),
-    is_verified         BOOLEAN DEFAULT false,
-    verification_doc_url TEXT,
-    verification_notes  TEXT,
-    rating_avg          DECIMAL(3, 2) DEFAULT 0.00,
-    rating_count        INTEGER DEFAULT 0,
-    total_jobs          INTEGER DEFAULT 0,
-    total_earnings      DECIMAL(12, 2) DEFAULT 0.00,
-    is_available        BOOLEAN DEFAULT true,
-    service_radius_km   INTEGER DEFAULT 10,
-    verified_at         TIMESTAMPTZ,
-    created_at          TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_at          TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
+```js
+const workerProfileSchema = new mongoose.Schema({
+  user_id: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, unique: true },
+  skills:       { type: [String], default: [] },              // skill/category IDs
+  experience_years: { type: Number, default: 0 },
+  bio:          { type: String },
+  hourly_rate:  { type: Number },
+  is_verified:  { type: Boolean, default: false },
+  verification_doc_url: { type: String },
+  verification_notes:   { type: String },
+  rating_avg:   { type: Number, default: 0 },
+  rating_count: { type: Number, default: 0 },
+  total_jobs:   { type: Number, default: 0 },
+  total_earnings: { type: Number, default: 0 },
+  is_available: { type: Boolean, default: true },
+  service_radius_km: { type: Number, default: 10 },
+  service_location: {
+    type: { type: String, enum: ['Point'], default: 'Point' },
+    coordinates: { type: [Number], default: [0, 0] }
+  },
+  verified_at:  { type: Date },
+  created_at:   { type: Date, default: Date.now },
+  updated_at:   { type: Date, default: Date.now }
+});
 
-CREATE INDEX idx_wp_skills ON worker_profiles USING GIN(skills);
-CREATE INDEX idx_wp_verified ON worker_profiles(is_verified) WHERE is_verified = true;
-CREATE INDEX idx_wp_available ON worker_profiles(is_available) WHERE is_available = true;
-CREATE INDEX idx_wp_rating ON worker_profiles(rating_avg DESC);
+workerProfileSchema.index({ skills: 1 });
+workerProfileSchema.index({ is_verified: 1 });
+workerProfileSchema.index({ is_available: 1 });
+workerProfileSchema.index({ rating_avg: -1 });
+workerProfileSchema.index({ service_location: '2dsphere' });
 ```
 
-### 4.3 Table: customer_profiles
+### 4.3 Collection: customer_profiles
 
-```sql
-CREATE TABLE customer_profiles (
-    user_id             UUID PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
-    default_address     TEXT,
-    default_latitude    DECIMAL(10, 8),
-    default_longitude   DECIMAL(11, 8),
-    total_jobs_posted   INTEGER DEFAULT 0,
-    total_spent         DECIMAL(12, 2) DEFAULT 0.00,
-    created_at          TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_at          TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
+```js
+const customerProfileSchema = new mongoose.Schema({
+  user_id: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, unique: true },
+  default_address: { type: String },
+  default_location: {
+    type: { type: String, enum: ['Point'], default: 'Point' },
+    coordinates: { type: [Number], default: [0, 0] }
+  },
+  total_jobs_posted: { type: Number, default: 0 },
+  total_spent:   { type: Number, default: 0 },
+  created_at:    { type: Date, default: Date.now },
+  updated_at:    { type: Date, default: Date.now }
+});
 ```
 
-### 4.4 Table: service_categories
+### 4.4 Collection: service_categories
 
-```sql
-CREATE TABLE service_categories (
-    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    name            VARCHAR(100) NOT NULL,
-    name_urdu       VARCHAR(100),
-    description     TEXT,
-    icon_url        TEXT,
-    parent_id       UUID REFERENCES service_categories(id) ON DELETE SET NULL,
-    is_active       BOOLEAN DEFAULT true,
-    sort_order      INTEGER DEFAULT 0,
-    created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
+```js
+const serviceCategorySchema = new mongoose.Schema({
+  name:       { type: String, required: true },
+  name_urdu:  { type: String },
+  description: { type: String },
+  icon_url:   { type: String },
+  parent_id:  { type: mongoose.Schema.Types.ObjectId, ref: 'ServiceCategory', default: null },
+  is_active:  { type: Boolean, default: true },
+  sort_order: { type: Number, default: 0 },
+  created_at: { type: Date, default: Date.now }
+});
 
-CREATE INDEX idx_sc_parent ON service_categories(parent_id);
-CREATE INDEX idx_sc_active ON service_categories(is_active) WHERE is_active = true;
+serviceCategorySchema.index({ parent_id: 1 });
+serviceCategorySchema.index({ is_active: 1 });
 ```
 
-### 4.5 Table: service_requests (Jobs)
+### 4.5 Collection: service_requests (Jobs)
 
-```sql
-CREATE TABLE service_requests (
-    id                  UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    customer_id         UUID NOT NULL REFERENCES users(id),
-    category_id         UUID NOT NULL REFERENCES service_categories(id),
-    title               VARCHAR(200) NOT NULL,
-    description         TEXT,
-    voice_note_url      TEXT,
-    images              TEXT[] DEFAULT '{}',
-    latitude            DECIMAL(10, 8) NOT NULL,
-    longitude           DECIMAL(11, 8) NOT NULL,
-    address             TEXT NOT NULL,
-    city                VARCHAR(100) NOT NULL,
-    area                VARCHAR(100),
-    status              VARCHAR(30) NOT NULL DEFAULT 'open'
-                        CHECK (status IN (
-                            'open',
-                            'offers_received',
-                            'offer_accepted',
-                            'worker_assigned',
-                            'visit_scheduled',
-                            'visit_in_progress',
-                            'visit_completed',
-                            'inspection_done',
-                            'repair_negotiating',
-                            'repair_approved',
-                            'in_progress',
-                            'completed',
-                            'paid',
-                            'reviewed',
-                            'cancelled',
-                            'disputed'
-                        )),
-    urgency             VARCHAR(20) DEFAULT 'normal'
-                        CHECK (urgency IN ('low', 'normal', 'high', 'emergency')),
-    estimated_budget    DECIMAL(10, 2),
-    selected_worker_id  UUID REFERENCES users(id),
-    cancel_reason       TEXT,
-    cancelled_by        UUID REFERENCES users(id),
-    cancelled_at        TIMESTAMPTZ,
-    completed_at        TIMESTAMPTZ,
-    created_at          TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_at          TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
+```js
+const serviceRequestSchema = new mongoose.Schema({
+  customer_id: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  category_id: { type: mongoose.Schema.Types.ObjectId, ref: 'ServiceCategory', required: true },
+  title:        { type: String, required: true },
+  description:  { type: String },
+  voice_note_url: { type: String },
+  images:       { type: [String], default: [] },
+  location: {
+    type: { type: String, enum: ['Point'], required: true, default: 'Point' },
+    coordinates: { type: [Number], required: true }           // [lng, lat]
+  },
+  address:      { type: String, required: true },
+  city:         { type: String, required: true },
+  area:         { type: String },
+  status: {
+    type: String,
+    enum: ['open','offers_received','offer_accepted','worker_assigned','visit_scheduled',
+           'visit_in_progress','visit_completed','inspection_done','repair_negotiating',
+           'repair_approved','in_progress','completed','paid','reviewed','cancelled','disputed'],
+    default: 'open'
+  },
+  urgency:      { type: String, enum: ['low','normal','high','emergency'], default: 'normal' },
+  estimated_budget: { type: Number },
+  selected_worker_id: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+  cancel_reason: { type: String },
+  cancelled_by: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+  cancelled_at: { type: Date },
+  completed_at: { type: Date },
+  created_at:   { type: Date, default: Date.now },
+  updated_at:   { type: Date, default: Date.now }
+});
 
--- PostGIS geometry column for geospatial queries
-ALTER TABLE service_requests ADD COLUMN location GEOMETRY(POINT, 4326);
-UPDATE service_requests SET location = ST_SetSRID(ST_MakePoint(longitude, latitude), 4326);
-CREATE INDEX idx_sr_location_gist ON service_requests USING GIST(location);
-
-CREATE INDEX idx_sr_customer ON service_requests(customer_id);
-CREATE INDEX idx_sr_category ON service_requests(category_id);
-CREATE INDEX idx_sr_status ON service_requests(status);
-CREATE INDEX idx_sr_city_area ON service_requests(city, area);
-CREATE INDEX idx_sr_created ON service_requests(created_at DESC);
-CREATE INDEX idx_sr_urgency ON service_requests(urgency);
+serviceRequestSchema.index({ customer_id: 1 });
+serviceRequestSchema.index({ category_id: 1 });
+serviceRequestSchema.index({ status: 1 });
+serviceRequestSchema.index({ location: '2dsphere' });        // nearby worker matching
+serviceRequestSchema.index({ city: 1, area: 1 });
+serviceRequestSchema.index({ created_at: -1 });
+serviceRequestSchema.index({ urgency: 1 });
 ```
 
-### 4.6 Table: job_offers
+### 4.6 Collection: job_offers
 
-```sql
-CREATE TABLE job_offers (
-    id                      UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    job_id                  UUID NOT NULL REFERENCES service_requests(id) ON DELETE CASCADE,
-    worker_id               UUID NOT NULL REFERENCES users(id),
-    visit_charge            DECIMAL(10, 2) NOT NULL,
-    message                 TEXT,
-    estimated_repair_cost   DECIMAL(10, 2),
-    status                  VARCHAR(20) NOT NULL DEFAULT 'pending'
-                            CHECK (status IN ('pending', 'accepted', 'rejected', 'withdrawn')),
-    created_at              TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_at              TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    
-    UNIQUE(job_id, worker_id)
-);
+```js
+const jobOfferSchema = new mongoose.Schema({
+  job_id:   { type: mongoose.Schema.Types.ObjectId, ref: 'ServiceRequest', required: true },
+  worker_id:{ type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  visit_charge:       { type: Number, required: true },
+  message:            { type: String },
+  estimated_repair_cost: { type: Number },
+  status:   { type: String, enum: ['pending','accepted','rejected','withdrawn'], default: 'pending' },
+  created_at: { type: Date, default: Date.now },
+  updated_at: { type: Date, default: Date.now }
+});
 
-CREATE INDEX idx_jo_job ON job_offers(job_id);
-CREATE INDEX idx_jo_worker ON job_offers(worker_id);
-CREATE INDEX idx_jo_status ON job_offers(status);
+// one offer per worker per job
+jobOfferSchema.index({ job_id: 1, worker_id: 1 }, { unique: true });
+jobOfferSchema.index({ job_id: 1 });
+jobOfferSchema.index({ worker_id: 1 });
+jobOfferSchema.index({ status: 1 });
 ```
 
-### 4.7 Table: visits
+### 4.7 Collection: visits
 
-```sql
-CREATE TABLE visits (
-    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    job_id          UUID NOT NULL REFERENCES service_requests(id),
-    worker_id       UUID NOT NULL REFERENCES users(id),
-    offer_id        UUID NOT NULL REFERENCES job_offers(id),
-    scheduled_date  TIMESTAMPTZ NOT NULL,
-    actual_date     TIMESTAMPTZ,
-    status          VARCHAR(20) NOT NULL DEFAULT 'scheduled'
-                    CHECK (status IN ('scheduled', 'in_progress', 'completed', 'cancelled', 'no_show')),
-    visit_notes     TEXT,
-    images          TEXT[] DEFAULT '{}',
-    latitude        DECIMAL(10, 8),
-    longitude       DECIMAL(11, 8),
-    created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
+```js
+const visitSchema = new mongoose.Schema({
+  job_id:    { type: mongoose.Schema.Types.ObjectId, ref: 'ServiceRequest', required: true },
+  worker_id: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  offer_id:  { type: mongoose.Schema.Types.ObjectId, ref: 'JobOffer', required: true },
+  scheduled_date: { type: Date, required: true },
+  actual_date:    { type: Date },
+  status:    { type: String, enum: ['scheduled','in_progress','completed','cancelled','no_show'], default: 'scheduled' },
+  visit_notes: { type: String },
+  images:    { type: [String], default: [] },
+  created_at: { type: Date, default: Date.now },
+  updated_at: { type: Date, default: Date.now }
+});
 
-CREATE INDEX idx_v_job ON visits(job_id);
-CREATE INDEX idx_v_worker ON visits(worker_id);
-CREATE INDEX idx_v_scheduled ON visits(scheduled_date);
-CREATE INDEX idx_v_status ON visits(status);
+visitSchema.index({ job_id: 1 });
+visitSchema.index({ worker_id: 1 });
+visitSchema.index({ scheduled_date: 1 });
+visitSchema.index({ status: 1 });
 ```
 
-### 4.8 Table: repair_estimates
+### 4.8 Collection: repair_estimates
 
-```sql
-CREATE TABLE repair_estimates (
-    id                      UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    visit_id                UUID NOT NULL REFERENCES visits(id),
-    worker_id               UUID NOT NULL REFERENCES users(id),
-    description             TEXT NOT NULL,
-    amount                  DECIMAL(10, 2) NOT NULL,
-    items_breakdown         JSONB DEFAULT '[]',
-    status                  VARCHAR(20) NOT NULL DEFAULT 'proposed'
-                            CHECK (status IN ('proposed', 'countered', 'accepted', 'rejected')),
-    negotiation_history     JSONB DEFAULT '[]',
-    created_at              TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_at              TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
+```js
+const repairEstimateSchema = new mongoose.Schema({
+  visit_id:  { type: mongoose.Schema.Types.ObjectId, ref: 'Visit', required: true },
+  worker_id: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  description: { type: String, required: true },
+  amount:    { type: Number, required: true },
+  items_breakdown: { type: [Object], default: [] },
+  status:    { type: String, enum: ['proposed','countered','accepted','rejected'], default: 'proposed' },
+  negotiation_history: {
+    type: [{
+      by: { type: String, enum: ['customer','worker'] },
+      amount: Number,
+      note: String,
+      at: Date
+    }],
+    default: []
+  },
+  created_at: { type: Date, default: Date.now },
+  updated_at: { type: Date, default: Date.now }
+});
 
-CREATE INDEX idx_re_visit ON repair_estimates(visit_id);
-CREATE INDEX idx_re_status ON repair_estimates(status);
+repairEstimateSchema.index({ visit_id: 1 });
+repairEstimateSchema.index({ status: 1 });
 ```
 
-### 4.9 Table: payments
-
-```sql
-CREATE TABLE payments (
-    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    job_id          UUID NOT NULL REFERENCES service_requests(id),
-    customer_id     UUID NOT NULL REFERENCES users(id),
-    worker_id       UUID NOT NULL REFERENCES users(id),
-    amount          DECIMAL(10, 2) NOT NULL,
-    platform_fee    DECIMAL(10, 2) NOT NULL,
-    worker_payout   DECIMAL(10, 2) NOT NULL,
-    method          VARCHAR(30) NOT NULL
-                    CHECK (method IN ('jazzcash', 'easypaisa', 'stripe', 'cash', 'card')),
-    status          VARCHAR(20) NOT NULL DEFAULT 'pending'
-                    CHECK (status IN ('pending', 'processing', 'completed', 'failed', 'refunded')),
-    gateway_ref     VARCHAR(255),
-    gateway_response JSONB,
-    paid_at         TIMESTAMPTZ,
-    refunded_at     TIMESTAMPTZ,
-    refund_reason   TEXT,
-    created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
-
-CREATE INDEX idx_pay_job ON payments(job_id);
-CREATE INDEX idx_pay_customer ON payments(customer_id);
-CREATE INDEX idx_pay_worker ON payments(worker_id);
-CREATE INDEX idx_pay_status ON payments(status);
-CREATE INDEX idx_pay_gateway_ref ON payments(gateway_ref);
+**negotiation_history example:**
+```json
+[
+  { "by": "customer", "amount": 5000, "note": "Can you reduce?", "at": "2026-09-01T10:00:00Z" },
+  { "by": "worker", "amount": 4500, "note": "Final price", "at": "2026-09-01T10:30:00Z" }
+]
 ```
 
-### 4.10 Table: reviews
+### 4.9 Collection: payments
 
-```sql
-CREATE TABLE reviews (
-    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    job_id          UUID NOT NULL REFERENCES service_requests(id),
-    reviewer_id     UUID NOT NULL REFERENCES users(id),
-    reviewee_id     UUID NOT NULL REFERENCES users(id),
-    rating          INTEGER NOT NULL CHECK (rating BETWEEN 1 AND 5),
-    comment         TEXT,
-    images          TEXT[] DEFAULT '{}',
-    is_visible      BOOLEAN DEFAULT true,
-    created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    
-    UNIQUE(job_id, reviewer_id)
-);
+```js
+const paymentSchema = new mongoose.Schema({
+  job_id:      { type: mongoose.Schema.Types.ObjectId, ref: 'ServiceRequest', required: true },
+  customer_id: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  worker_id:   { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  amount:       { type: Number, required: true },
+  platform_fee: { type: Number, required: true },
+  worker_payout:{ type: Number, required: true },
+  method:       { type: String, enum: ['jazzcash','easypaisa','stripe','cash','card'], required: true },
+  status:       { type: String, enum: ['pending','processing','completed','failed','refunded'], default: 'pending' },
+  gateway_ref:  { type: String },
+  gateway_response: { type: Object },
+  paid_at:      { type: Date },
+  refunded_at:  { type: Date },
+  refund_reason: { type: String },
+  created_at:   { type: Date, default: Date.now },
+  updated_at:   { type: Date, default: Date.now }
+});
 
-CREATE INDEX idx_rv_job ON reviews(job_id);
-CREATE INDEX idx_rv_reviewee ON reviews(reviewee_id);
-CREATE INDEX idx_rv_rating ON reviews(rating);
+paymentSchema.index({ job_id: 1 });
+paymentSchema.index({ customer_id: 1 });
+paymentSchema.index({ worker_id: 1 });
+paymentSchema.index({ status: 1 });
+paymentSchema.index({ gateway_ref: 1 }, { unique: true, sparse: true });
 ```
 
-### 4.11 Table: notifications
+### 4.10 Collection: reviews
 
-```sql
-CREATE TABLE notifications (
-    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id         UUID NOT NULL REFERENCES users(id),
-    type            VARCHAR(50) NOT NULL,
-    title           VARCHAR(200) NOT NULL,
-    body            TEXT NOT NULL,
-    data            JSONB DEFAULT '{}',
-    channel         VARCHAR(20) NOT NULL
-                    CHECK (channel IN ('push', 'sms', 'in_app', 'email')),
-    is_read         BOOLEAN DEFAULT false,
-    sent_at         TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    read_at         TIMESTAMPTZ,
-    created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
+```js
+const reviewSchema = new mongoose.Schema({
+  job_id:     { type: mongoose.Schema.Types.ObjectId, ref: 'ServiceRequest', required: true },
+  reviewer_id:{ type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  reviewee_id:{ type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  rating:     { type: Number, min: 1, max: 5, required: true },
+  comment:    { type: String },
+  images:     { type: [String], default: [] },
+  is_visible: { type: Boolean, default: true },
+  created_at: { type: Date, default: Date.now }
+});
 
-CREATE INDEX idx_n_user ON notifications(user_id);
-CREATE INDEX idx_n_read ON notifications(is_read) WHERE is_read = false;
-CREATE INDEX idx_n_created ON notifications(created_at DESC);
-CREATE INDEX idx_n_type ON notifications(type);
+// one review per reviewer per job
+reviewSchema.index({ job_id: 1, reviewer_id: 1 }, { unique: true });
+reviewSchema.index({ job_id: 1 });
+reviewSchema.index({ reviewee_id: 1 });
+reviewSchema.index({ rating: 1 });
 ```
 
-### 4.12 Table: conversations
+### 4.11 Collection: notifications
 
-```sql
-CREATE TABLE conversations (
-    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    job_id          UUID NOT NULL REFERENCES service_requests(id),
-    customer_id     UUID NOT NULL REFERENCES users(id),
-    worker_id       UUID NOT NULL REFERENCES users(id),
-    last_message    TEXT,
-    last_message_at TIMESTAMPTZ,
-    is_active       BOOLEAN DEFAULT true,
-    created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    
-    UNIQUE(job_id)
-);
+```js
+const notificationSchema = new mongoose.Schema({
+  user_id: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  type:    { type: String, required: true },
+  title:   { type: String, required: true },
+  body:    { type: String, required: true },
+  data:    { type: Object, default: {} },
+  channel: { type: String, enum: ['push','sms','in_app','email'], required: true },
+  is_read: { type: Boolean, default: false },
+  sent_at: { type: Date, default: Date.now },
+  read_at: { type: Date },
+  created_at: { type: Date, default: Date.now }
+});
 
-CREATE INDEX idx_conv_job ON conversations(job_id);
-CREATE INDEX idx_conv_customer ON conversations(customer_id);
-CREATE INDEX idx_conv_worker ON conversations(worker_id);
+notificationSchema.index({ user_id: 1, is_read: 1 });
+notificationSchema.index({ created_at: -1 });
+notificationSchema.index({ type: 1 });
 ```
 
-### 4.13 Table: messages
+**Notification Types:**
+- `job.new`, `job.offer_received`, `job.offer_accepted`, `job.offer_rejected`
+- `visit.scheduled`, `visit.reminder`, `visit.completed`
+- `repair.proposed`, `repair.negotiated`, `repair.approved`
+- `payment.completed`, `review.received`
+- `dispute.opened`, `dispute.resolved`
+- `system.verification`
 
-```sql
-CREATE TABLE messages (
-    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    conversation_id UUID NOT NULL REFERENCES conversations(id) ON DELETE CASCADE,
-    sender_id       UUID NOT NULL REFERENCES users(id),
-    text            TEXT,
-    image_url       TEXT,
-    voice_url       TEXT,
-    is_read         BOOLEAN DEFAULT false,
-    created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
+### 4.12 Collection: conversations
 
-CREATE INDEX idx_msg_conv ON messages(conversation_id);
-CREATE INDEX idx_msg_created ON messages(created_at DESC);
+```js
+const conversationSchema = new mongoose.Schema({
+  job_id:     { type: mongoose.Schema.Types.ObjectId, ref: 'ServiceRequest', required: true },
+  customer_id:{ type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  worker_id:  { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  last_message:    { type: String },
+  last_message_at: { type: Date },
+  is_active:  { type: Boolean, default: true },
+  created_at: { type: Date, default: Date.now }
+});
+
+conversationSchema.index({ job_id: 1 }, { unique: true });
+conversationSchema.index({ customer_id: 1 });
+conversationSchema.index({ worker_id: 1 });
 ```
 
-### 4.14 Table: disputes
+### 4.13 Collection: messages
 
-```sql
-CREATE TABLE disputes (
-    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    job_id          UUID NOT NULL REFERENCES service_requests(id),
-    filed_by        UUID NOT NULL REFERENCES users(id),
-    reason          VARCHAR(100) NOT NULL,
-    description     TEXT NOT NULL,
-    evidence_urls   TEXT[] DEFAULT '{}',
-    status          VARCHAR(20) NOT NULL DEFAULT 'open'
-                    CHECK (status IN ('open', 'under_review', 'resolved', 'escalated')),
-    resolution      TEXT,
-    resolved_by     UUID REFERENCES users(id),
-    created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    resolved_at     TIMESTAMPTZ
-);
+```js
+const messageSchema = new mongoose.Schema({
+  conversation_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Conversation', required: true },
+  sender_id:       { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  text:      { type: String },
+  image_url: { type: String },
+  voice_url: { type: String },
+  is_read:   { type: Boolean, default: false },
+  created_at:{ type: Date, default: Date.now }
+});
 
-CREATE INDEX idx_disp_job ON disputes(job_id);
-CREATE INDEX idx_disp_status ON disputes(status);
+messageSchema.index({ conversation_id: 1, created_at: 1 });
 ```
 
-### 4.15 Table: location_tracking
+### 4.14 Collection: disputes
 
-```sql
-CREATE TABLE location_tracking (
-    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id         UUID NOT NULL REFERENCES users(id),
-    job_id          UUID REFERENCES service_requests(id),
-    latitude        DECIMAL(10, 8) NOT NULL,
-    longitude       DECIMAL(11, 8) NOT NULL,
-    accuracy        FLOAT,
-    recorded_at     TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
+```js
+const disputeSchema = new mongoose.Schema({
+  job_id:     { type: mongoose.Schema.Types.ObjectId, ref: 'ServiceRequest', required: true },
+  filed_by:   { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  reason:     { type: String, required: true },
+  description:{ type: String, required: true },
+  evidence_urls: { type: [String], default: [] },
+  status:     { type: String, enum: ['open','under_review','resolved','escalated'], default: 'open' },
+  resolution: { type: String },
+  resolved_by:{ type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+  created_at: { type: Date, default: Date.now },
+  resolved_at:{ type: Date }
+});
 
-CREATE INDEX idx_lt_user ON location_tracking(user_id);
-CREATE INDEX idx_lt_job ON location_tracking(job_id);
-CREATE INDEX idx_lt_time ON location_tracking(recorded_at DESC);
-
--- Partition by month for performance
--- (Implementation: create partitioned table in production)
+disputeSchema.index({ job_id: 1 });
+disputeSchema.index({ status: 1 });
 ```
+
+### 4.15 Collection: location_tracking
+
+```js
+const locationTrackingSchema = new mongoose.Schema({
+  user_id: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  job_id:  { type: mongoose.Schema.Types.ObjectId, ref: 'ServiceRequest' },
+  location: {
+    type: { type: String, enum: ['Point'], default: 'Point' },
+    coordinates: { type: [Number], required: true }        // [lng, lat]
+  },
+  accuracy:   { type: Number },
+  recorded_at:{ type: Date, default: Date.now }
+});
+
+locationTrackingSchema.index({ user_id: 1 });
+locationTrackingSchema.index({ job_id: 1 });
+locationTrackingSchema.index({ recorded_at: -1 });
+locationTrackingSchema.index({ location: '2dsphere' });
+```
+
+> **Note:** This is a high-volume collection. Enable TTL index on `recorded_at` to auto-delete records older than 90 days, or archive cold data to S3/Glacier.
 
 ---
 
@@ -452,48 +447,40 @@ CREATE INDEX idx_lt_time ON location_tracking(recorded_at DESC);
 
 ### 6.1 Principles
 
-1. **Index all foreign keys** — FK columns used in JOINs
-2. **Index status columns** — filtered in WHERE clauses
-3. **Index timestamp columns** — used in ORDER BY and range queries
-4. **GIN indexes** — for array columns (skills) and JSONB
-5. **GiST indexes** — for PostGIS geometry columns
-6. **Partial indexes** — for boolean flags with low cardinality (is_active, is_read)
+1. **Index geospatial fields** — GeoJSON fields with `2dsphere` indexes (nearby matching)
+2. **Index reference fields** — ObjectId fields used in filters/`populate`
+3. **Index status/enum fields** — used in WHERE filters
+4. **Compound indexes** — for common query patterns (e.g., `{ user_id, is_read }`)
+5. **TTL indexes** — for expiring documents (notifications, location_tracking)
+6. **Unique indexes** — for identity fields (phone, gateway_ref) and one-per constraints
 
 ### 6.2 Query Patterns → Indexes
 
 | Query Pattern | Index Needed |
 |---|---|
-| "Find nearby jobs for worker" | GiST on `service_requests.location` |
-| "Find workers with skill X in area" | GIN on `worker_profiles.skills` + location |
-| "Get open jobs in city" | Composite on `(city, status, created_at)` |
-| "Get offers for a job" | On `job_offers(job_id)` |
-| "Unread notifications" | Partial on `notifications(user_id, created_at) WHERE is_read = false` |
-| "Worker's active jobs" | On `service_requests(selected_worker_id, status)` |
+| "Find nearby workers for job" | `2dsphere` on `worker_profiles.service_location` via `$geoNear` |
+| "Find workers with skill X in area" | Index on `skills` + `2dsphere` |
+| "Get open jobs in city" | Compound on `{ city, status, created_at }` |
+| "Get offers for a job" | On `job_offers.{ job_id }` |
+| "Unread notifications" | Compound on `{ user_id, is_read }` |
+| "Worker's active jobs" | On `service_requests.{ selected_worker_id, status }` |
 
 ---
 
-## 7. Data Partitioning
+## 7. Data Retention / TTL
 
-### 7.1 Tables Requiring Partitioning
+| Collection | Field | Strategy |
+|---|---|---|
+| `location_tracking` | `recorded_at` | TTL 90 days, archive to S3/Glacier |
+| `notifications` | `created_at` | TTL 6 months (keep read ones archived) |
+| `messages` | `created_at` | TTL 12 months, archive old conversations |
+| `otp:{phone}` (Redis) | TTL | 5 min |
 
-| Table | Partition Key | Strategy | Reason |
-|---|---|---|---|
-| `location_tracking` | `recorded_at` | Monthly range | High volume, time-series data |
-| `notifications` | `created_at` | Monthly range | High volume, old data rarely accessed |
-| `messages` | `created_at` | Monthly range | High volume for active conversations |
+### 7.1 TTL Index Example
 
-### 7.2 Partition Example (location_tracking)
-
-```sql
-CREATE TABLE location_tracking (
-    ...
-) PARTITION BY RANGE (recorded_at);
-
-CREATE TABLE location_tracking_2026_09 PARTITION OF location_tracking
-    FOR VALUES FROM ('2026-09-01') TO ('2026-10-01');
-
-CREATE TABLE location_tracking_2026_10 PARTITION OF location_tracking
-    FOR VALUES FROM ('2026-10-01') TO ('2026-11-01');
+```js
+// auto-delete location records after 90 days
+locationTrackingSchema.index({ recorded_at: 1 }, { expireAfterSeconds: 90 * 24 * 60 * 60 });
 ```
 
 ---
@@ -502,10 +489,10 @@ CREATE TABLE location_tracking_2026_10 PARTITION OF location_tracking
 
 | Strategy | Frequency | Retention |
 |---|---|---|
-| **RDS Automated Backups** | Daily | 30 days |
-| **Transaction Log Shipping** | Continuous (5 min) | Point-in-time recovery |
+| **MongoDB Atlas Automated Backups** | Continuous + daily snapshot | 30 days |
+| **Oplog / Change Stream** | Continuous | Point-in-time recovery |
 | **Manual Snapshot** | Before major deployments | 7 days |
-| **Cross-Region Backup** | Weekly | 90 days |
+| **Cross-Region / Cluster-Backup** | Weekly | 90 days |
 
 ### Recovery Targets
 
@@ -518,22 +505,23 @@ CREATE TABLE location_tracking_2026_10 PARTITION OF location_tracking
 
 ## 9. Performance Considerations
 
-### 9.1 Connection Pooling
+### 9.1 Connection Pooling (Mongoose)
 
-| Tool | Configuration |
+| Setting | Configuration |
 |---|---|
-| **PgBouncer** | Transaction pooling mode |
-| **Max connections** | 100 (PgBouncer) → 20 (PostgreSQL) |
-| **Idle timeout** | 300 seconds |
+| **Pool size** | 10 (Mongoose default), scale with load |
+| **Server selection timeout** | 30 seconds |
+| **Socket timeout** | 45 seconds |
 
 ### 9.2 Query Optimization
 
 | Technique | When to Use |
 |---|---|
-| **EXPLAIN ANALYZE** | Every new query during development |
-| **Materialized Views** | Worker ratings aggregation, city-wise stats |
-| **Read Replicas** | Separate read-heavy queries (search, analytics) |
-| **Cursor Pagination** | Instead of OFFSET for large result sets |
+| **Explain / `explain()`** | Every new query during development |
+| **Aggregation pipeline** | Worker ratings, city stats, reporting |
+| **Read preference / Read Replicas** | Separate read-heavy queries (search, analytics) |
+| **Cursor pagination** | Instead of `skip` for large result sets |
+| **Selective fields** | Use `.select()` to return only needed fields |
 
 ### 9.3 Caching Strategy (Redis)
 
@@ -547,28 +535,30 @@ CREATE TABLE location_tracking_2026_10 PARTITION OF location_tracking
 
 ---
 
-## 10. Migration Strategy
+## 10. Schema / Migration Strategy (Mongoose)
 
-### 10.1 Tool: Prisma Migrate (recommended)
+### 10.1 Approach: Mongoose Schemas + Data Migrations
+
+MongoDB is schema-flexible, so **no ALTER TABLE** is required. Schema changes are handled by:
+- Evolving Mongoose schema definitions
+- **Mongoose versioning** (using `versionKey` / `__v`)
+- **Idempotent data-migration scripts** (Node.js) for backfilling
 
 ```
-prisma/migrations/
-├── 20260901_init/
-│   └── migration.sql
-├── 20260905_add_worker_profiles/
-│   └── migration.sql
-├── 20260910_add_payments/
-│   └── migration.sql
+scripts/migrations/
+├── 20260901-init.js
+├── 20260905-add-worker-profiles.js
+├── 20260910-add-payments.js
 └── ...
 ```
 
 ### 10.2 Migration Rules
 
 1. Never modify production data in migrations without backup
-2. All migrations must be reversible (up + down)
+2. Migrations must be idempotent (safe to re-run)
 3. Test migrations on staging before production
 4. Large data migrations run in background jobs
-5. Schema changes use `ALTER TABLE` with minimal locking
+5. Add new fields with sensible defaults so existing docs remain valid
 
 ---
 
@@ -576,24 +566,26 @@ prisma/migrations/
 
 ### 11.1 Service Categories (seed script)
 
-```sql
-INSERT INTO service_categories (name, name_urdu, sort_order) VALUES
-('Electrical', 'الیکٹریکل', 1),
-('Plumbing', 'پلمبرنگ', 2),
-('AC & Refrigeration', 'ای سی اور ریفریجریٹر', 3),
-('Carpentry', 'لکڑ کا کام', 4),
-('Painting', 'پینٹنگ', 5),
-('Cleaning', 'صفائی', 6),
-('Masonry', 'ritos', 7),
-('Pest Control', 'کیڑے مار دوا', 8),
-('General Handyman', 'عمومی مہارت', 9);
+```js
+const categories = [
+  { name: 'Electrical',        name_urdu: 'الیکٹریکل',         sort_order: 1 },
+  { name: 'Plumbing',          name_urdu: 'پلمبرنگ',           sort_order: 2 },
+  { name: 'AC & Refrigeration',name_urdu: 'ای سی اور ریفریجریٹر', sort_order: 3 },
+  { name: 'Carpentry',         name_urdu: 'لکڑ کا کام',        sort_order: 4 },
+  { name: 'Painting',          name_urdu: 'پینٹنگ',            sort_order: 5 },
+  { name: 'Cleaning',          name_urdu: 'صفائی',             sort_order: 6 },
+  { name: 'Masonry',           name_urdu: 'راج مزدوری',        sort_order: 7 },
+  { name: 'Pest Control',      name_urdu: 'کیڑے مار دوا',      sort_order: 8 },
+  { name: 'General Handyman',  name_urdu: 'عمومی مہارت',      sort_order: 9 }
+];
+await ServiceCategory.insertMany(categories);
 ```
 
 ---
 
 ## 12. Estimated Storage
 
-| Table | Estimated Rows (Year 1) | Avg Row Size | Storage |
+| Collection | Estimated Docs (Year 1) | Avg Doc Size | Storage |
 |---|---|---|---|
 | users | 50,000 | 500 B | 25 MB |
 | worker_profiles | 20,000 | 800 B | 16 MB |
@@ -607,7 +599,7 @@ INSERT INTO service_categories (name, name_urdu, sort_order) VALUES
 | location_tracking | 50,000,000 | 200 B | 10 GB |
 | **Total** | | | **~13 GB** |
 
-> **Note:** With partitioning and archival of old data, active data will be much smaller.
+> **Note:** With TTL expiry and archival of old data, active data will be much smaller.
 
 ---
 

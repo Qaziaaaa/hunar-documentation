@@ -1,16 +1,18 @@
-# Technology Recommendations — Home Services Platform
+# Technology Recommendations — Home Services Platform (MERN Web)
 
 **Author:** Shafqat Ullah  
 **Document Type:** Technology Stack Recommendations  
-**Version:** 1.0  
-**Date:** September 1, 2026  
+**Version:** 2.0  
+**Date:** September 2, 2026  
 **Status:** Draft — Pending Team Review
+
+> **Note:** This is a **MERN-stack website** (MongoDB, Express.js, React, Node.js). There is **no mobile app**.
 
 ---
 
 ## 1. Overview
 
-This document recommends the complete technology stack for the Home Services Platform with justifications, alternatives considered, and risk assessment.
+This document recommends the complete technology stack for the Home Services Platform — a **MERN-stack web application** — with justifications, alternatives considered, and risk assessment.
 
 ---
 
@@ -22,26 +24,24 @@ This document recommends the complete technology stack for the Home Services Pla
 | **Language** | TypeScript | 5.x |
 | **Backend Framework** | Express.js | 4.x |
 | **API Style** | REST (+ WebSocket) | — |
-| **Database** | PostgreSQL | 16 |
-| **GIS Extension** | PostGIS | 3.4 |
+| **Database** | MongoDB | 7.x |
+| **ODM** | Mongoose | 8.x |
 | **Cache / Queue** | Redis | 7.x |
-| **Search** | Elasticsearch | 8.x |
-| **File Storage** | AWS S3 (or MinIO) | — |
-| **CDN** | CloudFront / BunnyCDN | — |
-| **Mobile Framework** | React Native (Expo) | SDK 51+ |
-| **Admin Dashboard** | Next.js | 14+ |
-| **UI Library** | Tailwind CSS + Shadcn/UI | — |
+| **Frontend** | React.js (SPA) | 18+ |
+| **Build Tool** | Vite | 5.x |
+| **State Management** | Redux Toolkit + React Query | — |
+| **UI Library** | Tailwind CSS + Material-UI (MUI) | — |
 | **Real-time** | Socket.IO | 4.x |
-| **ORM** | Prisma | 5.x |
+| **File Storage** | AWS S3 (or Cloudinary / Multer-local) | — |
 | **Auth** | JWT + OTP | — |
-| **Push Notifications** | Firebase Cloud Messaging | — |
+| **Web Push Notifications** | Web Push API / Service Workers | — |
 | **SMS** | Twilio / Local Provider | — |
-| **Maps** | Google Maps Platform | — |
+| **Maps** | Google Maps JavaScript API / Leaflet | — |
 | **Payment Gateways** | JazzCash, Easypaisa, Stripe | — |
 | **Containerization** | Docker | — |
 | **Orchestration** | Docker Compose (dev) / ECS (prod) | — |
 | **CI/CD** | GitHub Actions | — |
-| **Monitoring** | CloudWatch + Sentry | — |
+| **Monitoring** | CloudWatch / Sentry | — |
 
 ---
 
@@ -90,17 +90,20 @@ This document recommends the complete technology stack for the Home Services Pla
 
 ## 4. Database Technology
 
-### 4.1 Primary: PostgreSQL 16 + PostGIS
+### 4.1 Primary: MongoDB 7 + Geospatial Indexes
 
 | Criteria | Assessment |
 |---|---|
-| ACID | Full compliance |
-| GIS | PostGIS — best-in-class geospatial |
-| JSON | JSONB with indexing |
-| Full-text | Built-in tsvector/tsquery |
-| Maturity | 30+ years, extremely reliable |
-| Cloud | AWS RDS, Google Cloud SQL |
-| Cost | Free (open source) |
+| Document Model | Flexible schema, ideal for varied job/worker data |
+| Geospatial | Native `2dsphere` indexes, `$near` / `$geoNear` queries |
+| Scalability | Horizontal scaling via sharding |
+| JSON | Native JSON storage (BSON) |
+| Full-text | Basic text search built-in (`$text`) |
+| Aggregation | Powerful aggregation pipeline |
+| Cloud | MongoDB Atlas (managed) |
+| Cost | Free tier + open source |
+
+> **MERN alignment:** MongoDB is the "M" in MERN and pairs naturally with Node.js/Express and JavaScript objects (via Mongoose ODM), keeping a single language (JavaScript/TypeScript) across the stack.
 
 ### 4.2 Cache: Redis 7
 
@@ -117,79 +120,87 @@ This document recommends the complete technology stack for the Home Services Pla
 | Use Case | Redis Feature |
 |---|---|
 | OTP storage | String + TTL (5 min) |
-| Session management | Hash + TTL (30 days) |
+| JWT refresh tokens | String + TTL (30 days) |
 | Rate limiting | String + TTL (1 min) |
 | Socket.IO scaling | Redis Adapter (pub/sub) |
 | Worker online status | String + TTL (heartbeat) |
 | Nearby workers cache | GEO radius query |
 | Job offer count cache | Sorted Set |
 
-### 4.3 Search: Elasticsearch 8
+### 4.3 Search
 
-| Criteria | Assessment |
+| Option | Assessment |
 |---|---|
-| Full-text search | Excellent |
-| Geo queries | Built-in geo_point, geo_distance |
-| Faceted search | Aggregations |
-| Speed | Fast for read-heavy queries |
-| Fallback | PostgreSQL can handle basic search |
+| MongoDB `$text` index | Built-in basic full-text search — enough for MVP |
+| MongoDB geospatial (`2dsphere`) | Nearby worker matching directly in MongoDB |
+| MongoDB Atlas Search | Full-text search (Lucene-based) when needed |
+| Elasticsearch | Optional — only if advanced search/analytics required later |
+
+> **Recommendation:** Start with MongoDB's built-in `$text` index and `2dsphere` geospatial queries for MVP. Add MongoDB Atlas Search or Elasticsearch only when search complexity grows.
 
 ---
 
 ## 5. Frontend Technology
 
-### 5.1 Mobile: React Native (Expo)
+### 5.1 Customer + Worker Web UI: React.js (SPA)
 
 | Criteria | Assessment |
 |---|---|
-| Cross-platform | iOS + Android from single codebase |
-| Expo | Managed workflow, easier setup |
-| React ecosystem | Huge community, many libraries |
-| Hot reload | Fast development iteration |
-| Native APIs | Maps, camera, location, push notifications |
-| Performance | Near-native for most use cases |
+| Single codebase | One React SPA serves customers, workers, and admin |
+| MERN alignment | React is the "R" in MERN — JavaScript everywhere |
+| Build tool | Vite for fast dev + build |
+| Routing | React Router for SPA navigation |
+| State | Redux Toolkit + React Query (server state) |
+| Real-time | Socket.IO client for live job updates |
+| Maps | Leaflet / @react-google-maps/api |
+| File upload | Axios + Multer / pre-signed S3 URLs |
+| Geolocation | Browser Geolocation API |
+| Web Push | Service Workers + Web Push API |
 
 **Alternatives Considered:**
 
 | Alternative | Pros | Cons | Verdict |
 |---|---|---|---|
-| Flutter | Better performance, Material 3 | Dart language, smaller community | ⚠️ Strong alternative |
-| Native (Swift/Kotlin) | Best performance | 2x codebase, 2x cost | ❌ |
-| Ionic | Web-based | Performance issues | ❌ |
+| Next.js | SSR/SSG, SEO | Heavier than SPA, more complex | ⚠️ Use if SEO critical |
+| Vue.js | Simple, readable | Smaller ecosystem than React | ❌ |
+| Angular | Batteries-included | Steeper learning curve | ❌ |
 
-> **Recommendation:** React Native (Expo) for faster development. Flutter is equally valid — team preference matters.
+> **Recommendation:** Use **React.js (Vite SPA)** for the full marketplace website. This keeps the stack uniformly MERN (JavaScript/TypeScript across frontend and backend), simplifying development and hiring.
 
-### 5.2 Admin Dashboard: Next.js 14+
+### 5.2 Admin Dashboard
 
-| Criteria | Assessment |
+Use the same React.js app with a role-based admin section, or a separate React (Vite) app sharing the backend.
+
+| Aspect | Decision |
 |---|---|
-| SSR/SSG | Fast initial loads |
-| App Router | Modern routing |
-| Server Components | Reduced client JS |
-| API Routes | Backend for admin-specific endpoints |
-| TypeScript | First-class support |
-| Tailwind CSS | Rapid styling |
+| Framework | React.js (Vite SPA) |
+| UI | Tailwind CSS + Material-UI (MUI) |
+| State | Redux Toolkit + React Query |
+| Charts | Recharts |
+| Maps | Leaflet / Google Maps JS API |
 
 ---
 
-## 6. ORM: Prisma
+## 6. ODM: Mongoose
 
 | Criteria | Assessment |
 |---|---|
-| Type Safety | Full TypeScript type generation |
-| Migrations | Excellent migration tooling |
-| Query Builder | Intuitive API |
-| Relations | Handles complex joins well |
-| PostgreSQL Support | First-class |
-| Studio | Visual database browser |
+| Type Safety | Works with TypeScript schema typing |
+| Schema | Flexible JSON schema for documents |
+| Middleware | Hooks for validation, hashing, etc. |
+| Population | Reference / populate across collections |
+| Queries | Chainable query builder |
+| MongoDB | First-class support |
 
 **Alternatives Considered:**
 
 | Alternative | Pros | Cons | Verdict |
 |---|---|---|---|
-| TypeORM | Decorators, active record | Less type-safe, bugs | ❌ |
-| Knex.js | Flexible, raw SQL friendly | No type generation | ⚠️ |
-| Drizzle | Fast, SQL-like API | Newer, less mature | ⚠️ |
+| Prisma (MongoDB) | Type-safe, migrations | Modern/relational style, less native | ⚠️ |
+| MongoDB native driver | Lightweight, no abstraction | More boilerplate | ⚠️ |
+| TypeORM (Mongo) | Decorators | Less reliable for Mongo | ❌ |
+
+> **Recommendation:** Use **Mongoose** — the standard, mature ODM for MongoDB + Express.
 
 ---
 
@@ -312,17 +323,20 @@ This document recommends the complete technology stack for the Home Services Pla
 
 ---
 
-## 12. Push Notifications
+## 12. Web Push Notifications
 
-### Firebase Cloud Messaging (FCM)
+### Web Push API + Service Workers
 
 | Criteria | Assessment |
 |---|---|
-| Cost | Free |
-| Platforms | iOS + Android |
-| Topics | Subscribe workers to city/category topics |
-| Priority | High priority for job alerts |
-| Data payload | Custom data for deep linking |
+| Cost | Free (browser native) |
+| Platforms | All desktop browsers (Chrome, Firefox, Edge) |
+| Background | Works when tab is closed / in background |
+| Topics | Subscribe workers to city/category via `PushManager` |
+| Payload | Custom data payload for deep linking |
+| Library | `web-push` (Node.js) for server-side sending |
+
+> **Recommendation:** Use the **Web Push API** with Service Workers for browser notifications, and **`web-push`** npm package on the Express backend. This is the web-native equivalent of FCM and requires no mobile platform setup.
 
 ---
 
@@ -363,17 +377,14 @@ services:
   api:
     build: .
     ports: ["3000:3000"]
-    depends_on: [postgres, redis, elasticsearch]
-  postgres:
-    image: postgis/postgis:16-3.4
-    ports: ["5432:5432"]
-    volumes: [pgdata:/var/lib/postgresql/data]
+    depends_on: [mongodb, redis]
+  mongodb:
+    image: mongo:7
+    ports: ["27017:27017"]
+    volumes: [mongodata:/data/db]
   redis:
     image: redis:7-alpine
     ports: ["6379:6379"]
-  elasticsearch:
-    image: elasticsearch:8.11.0
-    ports: ["9200:9200"]
 ```
 
 ### 15.2 CI/CD: GitHub Actions
@@ -390,12 +401,12 @@ services:
 8. Deploy to ECS (production)
 ```
 
-### 15.3 Infrastructure (AWS)
+### 15.3 Infrastructure (AWS / MongoDB Atlas)
 
 | Service | Usage |
 |---|---|
-| ECS Fargate | Container hosting (serverless) |
-| RDS PostgreSQL | Managed database |
+| ECS Fargate | Backend container hosting (serverless) |
+| MongoDB Atlas | Managed MongoDB database |
 | ElastiCache Redis | Managed Redis |
 | S3 | File storage |
 | CloudFront | CDN |
@@ -404,6 +415,7 @@ services:
 | WAF | Web application firewall |
 | CloudWatch | Logs + metrics |
 | Secrets Manager | API keys, secrets |
+| Vercel / Netlify | React frontend static hosting |
 
 ---
 
@@ -418,7 +430,7 @@ services:
 | **Supertest** | API testing |
 | **Docker Desktop** | Local containers |
 | **Postman / Insomnia** | API development |
-| **Prisma Studio** | Database browser |
+| **MongoDB Compass / Atlas** | Database browser |
 | **GitHub** | Version control |
 
 ---
@@ -431,7 +443,7 @@ services:
 {
   "express": "^4.18.0",
   "typescript": "^5.3.0",
-  "@prisma/client": "^5.8.0",
+  "mongoose": "^8.0.0",
   "socket.io": "^4.7.0",
   "jsonwebtoken": "^9.0.0",
   "bcryptjs": "^2.4.3",
@@ -439,6 +451,7 @@ services:
   "sharp": "^0.33.0",
   "axios": "^1.6.0",
   "multer": "^1.4.5-lts.1",
+  "web-push": "^3.6.0",
   "helmet": "^7.1.0",
   "cors": "^2.8.5",
   "express-rate-limit": "^7.1.0",
@@ -453,7 +466,6 @@ services:
 
 ```json
 {
-  "prisma": "^5.8.0",
   "@types/express": "^4.17.0",
   "@types/jsonwebtoken": "^9.0.0",
   "ts-node": "^10.9.0",
@@ -471,31 +483,31 @@ services:
 
 ---
 
-## 18. Cost Estimate (Monthly — AWS)
+## 18. Cost Estimate (Monthly — Cloud)
 
 ### MVP / Early Stage
 
 | Service | Configuration | Est. Cost |
 |---|---|---|
-| ECS Fargate | 2 tasks, 0.5 vCPU, 1GB | $30 |
-| RDS PostgreSQL | db.t3.micro, Multi-AZ | $25 |
+| Backend (Render / Railway / ECS) | 1-2 instances, 0.5 vCPU, 1GB | $15-30 |
+| MongoDB Atlas | M0 / M10 free-or-near-free tier | $0-10 |
 | ElastiCache Redis | cache.t3.micro | $15 |
 | S3 | 10GB storage | $1 |
 | CloudFront | 50GB transfer | $5 |
-| ALB | Basic | $10 |
+| Vercel / Netlify (frontend) | Free tier | $0 |
 | Route 53 | 1 hosted zone | $1 |
 | CloudWatch | Basic monitoring | $5 |
 | **SMS (Twilio)** | 1,000 SMS | $50 |
 | **Google Maps** | Within free credit | $0 |
-| **Firebase** | Free tier | $0 |
-| **Total** | | **~$142/month** |
+| **Web Push** | Free (browser native) | $0 |
+| **Total** | | **~$90-120/month** |
 
 ### Growth Stage
 
 | Service | Configuration | Est. Cost |
 |---|---|---|
-| ECS Fargate | 4 tasks, 1 vCPU, 2GB | $120 |
-| RDS PostgreSQL | db.t3.medium, Read Replica | $100 |
+| Backend (ECS Fargate) | 4 tasks, 1 vCPU, 2GB | $120 |
+| MongoDB Atlas | M20 (replicas) | $100 |
 | ElastiCache Redis | cache.t3.small | $30 |
 | S3 + CloudFront | 100GB + 500GB transfer | $25 |
 | **SMS** | 10,000 SMS | $500 |
@@ -508,34 +520,34 @@ services:
 | Technology | Risk | Mitigation |
 |---|---|---|
 | Node.js | Single-threaded CPU bottleneck | Offload heavy tasks to worker threads / queues |
-| PostgreSQL | Connection limits | PgBouncer connection pooling |
+| MongoDB | No strict schema | Use Mongoose schema validation |
 | Redis | Single point of failure | Redis Sentinel / Cluster |
-| Elasticsearch | Resource heavy | Start without ES, add when needed |
 | Socket.IO | Scaling across instances | Redis adapter |
-| S3 | Vendor lock-in | MinIO compatible alternative |
-| FCM | No delivery guarantee | Fallback to SMS |
+| S3 | Vendor lock-in | Cloudinary / local storage alternative |
+| Web Push | Browser permission / support | Fallback to SMS + in-app Socket.IO |
 
 ---
 
-## 20. Recommended MVP Tech Stack (Simplified)
+## 20. Recommended MVP Tech Stack (Simplified — MERN Web)
 
 For MVP, reduce complexity:
 
 ```
-✅ Keep:        Node.js, TypeScript, Express, PostgreSQL, Redis, Prisma
-✅ Keep:        React Native, Next.js, Socket.IO
-✅ Keep:        JWT + OTP Auth, FCM
-⚠️ Optional:    Elasticsearch (use PostGIS + pg full-text initially)
-⚠️ Optional:    MinIO (use local S3-compatible storage)
+✅ Keep:        Node.js, TypeScript, Express, MongoDB, Mongoose, Redis
+✅ Keep:        React (Vite SPA), Socket.IO
+✅ Keep:        JWT + OTP Auth, Web Push API
+⚠️ Optional:    Mongo Atlas Search (use $text + 2dsphere initially)
+⚠️ Optional:    S3 (use Multer local storage initially)
 ❌ Skip:        Complex microservices, heavy monitoring
 ❌ Skip:        Multiple payment gateways (start with JazzCash only)
 ```
 
 **MVP Infrastructure:**
-- Single server (or 2 Fargate tasks)
-- RDS PostgreSQL (single AZ)
+- Single backend server (Render / Railway / ECS)
+- MongoDB Atlas (free M0 tier) or local MongoDB
 - Redis (single instance)
-- S3 for files
+- S3 or Multer local storage for files
+- Vercel / Netlify for React frontend
 - Docker Compose for local dev
 
 This keeps costs under $100/month during MVP phase.

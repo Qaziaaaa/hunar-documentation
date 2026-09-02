@@ -1,16 +1,18 @@
-# Major Backend Modules — Home Services Platform
+# Major Backend Modules — Home Services Platform (MERN Web)
 
 **Author:** Shafqat Ullah  
 **Document Type:** Backend Module Design  
-**Version:** 1.0  
-**Date:** September 1, 2026  
+**Version:** 2.0  
+**Date:** September 2, 2026  
 **Status:** Draft — Pending Team Review
+
+> **Note:** This is a **MERN-stack website** (MongoDB, Express.js, React, Node.js). The backend is Node.js/Express with **MongoDB** (via Mongoose) and **Redis**. There is **no mobile app** — notifications use the **Web Push API / Service Workers**.
 
 ---
 
 ## 1. Overview
 
-This document defines all major backend modules, their responsibilities, internal structure, key functions, and inter-module communication for the Home Services Platform.
+This document defines all major backend modules, their responsibilities, internal structure, key functions, and inter-module communication for the Home Services Platform (MERN stack).
 
 ---
 
@@ -484,7 +486,7 @@ src/modules/chat/
 - Conversation created automatically when offer is accepted
 - Messages support text, image, and voice note
 - Unread message count shown in UI badge
-- Messages stored in PostgreSQL + optionally synced to Elasticsearch
+- Messages stored in MongoDB (`messages` collection, indexed by `conversation_id`) + optionally synced to Atlas Search
 
 ---
 
@@ -528,9 +530,9 @@ src/modules/notifications/
 | `sendOTP(phone, otp)` | Auth request | SMS |
 
 **Key Decisions:**
-- Push notifications via Firebase Cloud Messaging (FCM)
+- Push notifications via **Web Push API / Service Workers** (`web-push` npm package) for browser notifications
 - SMS via Twilio or local Pakistani provider
-- In-app notifications stored in PostgreSQL
+- In-app notifications stored in MongoDB (`notifications` collection)
 - Notification preferences per user (opt-out for promotional)
 - Batch push for new job alerts (not individual sends)
 
@@ -554,45 +556,40 @@ src/modules/location/
 
 | Function | Description |
 |---|---|
-| `findNearbyWorkers(lat, lng, radius, category)` | Find workers within radius using PostGIS |
+| `findNearbyWorkers(lat, lng, radius, category)` | Find workers within radius using MongoDB `$geoNear` on `2dsphere` index |
 | `calculateDistance(loc1, loc2)` | Haversine distance between two points |
 | `geocodeAddress(address)` | Convert address to coordinates |
 | `reverseGeocode(lat, lng)` | Convert coordinates to address |
 | `updateWorkerLocation(userId, lat, lng)` | Update and cache worker location |
 | `getWorkerLocation(userId)` | Get last known worker location |
 
-**PostGIS Query Example:**
+**MongoDB Query Example (`$geoNear`):**
 
-```sql
-SELECT 
-    u.id, u.name, u.avatar_url,
-    wp.rating_avg, wp.skills,
-    ST_Distance(
-        wp.location::geography,
-        ST_SetSRID(ST_MakePoint(:lng, :lat), 4326)::geography
-    ) AS distance_meters
-FROM users u
-JOIN worker_profiles wp ON wp.user_id = u.id
-WHERE 
-    u.is_active = true
-    AND wp.is_verified = true
-    AND wp.is_available = true
-    AND wp.skills && ARRAY[:categoryId]
-    AND ST_DWithin(
-        wp.location::geography,
-        ST_SetSRID(ST_MakePoint(:lng, :lat), 4326)::geography,
-        :radiusMeters
-    )
-ORDER BY distance_meters ASC
-LIMIT 50;
+```js
+// Find verified, available workers matching a category within radius
+const workers = await WorkerProfile.aggregate([
+  {
+    $geoNear: {
+      near: { type: 'Point', coordinates: [lng, lat] },
+      distanceField: 'distance_meters',
+      maxDistance: radiusMeters,
+      spherical: true
+    }
+  },
+  { $match: { is_verified: true, is_available: true, skills: categoryId } },
+  { $sort: { distance_meters: 1 } },
+  { $limit: 50 }
+]);
 ```
+
+> Requires a `2dsphere` index on `worker_profiles.service_location`.
 
 **Key Decisions:**
 - Worker location cached in Redis for fast reads (2 min TTL)
-- PostGIS used for initial radius query
-- Elasticsearch used for combined text + geo search
+- MongoDB `$geoNear` / `2dsphere` index used for the radius query (native to MERN)
+- MongoDB Atlas Search used for combined text + geo search (optional)
 - Location precision: ~100m (sufficient for city-level matching)
-- Worker location updated every 30 seconds when active
+- Worker location updated every 30 seconds when active on the web app
 
 ---
 
@@ -656,12 +653,12 @@ Upload → Validate Type/Size → Virus Scan (optional)
 
 **Path:** `src/modules/search/`
 
-**Responsibility:** Advanced job and worker search, Elasticsearch integration.
+**Responsibility:** Advanced job and worker search, MongoDB Atlas Search / `$text` integration.
 
 ```
 src/modules/search/
 ├── search.service.ts
-├── elasticsearch.client.ts
+├── atlasSearch.client.ts
 ├── indexers/
 │   ├── job.indexer.ts
 │   └── worker.indexer.ts
@@ -674,52 +671,33 @@ src/modules/search/
 |---|---|
 | `searchJobs(filters)` | Search jobs by category, location, status, date |
 | `searchWorkers(filters)` | Search workers by skill, location, rating, availability |
-| `indexJob(job)` | Index/update job in Elasticsearch |
-| `indexWorker(worker)` | Index/update worker in Elasticsearch |
+| `indexJob(job)` | Index/update job in Atlas Search / `$text` |
+| `indexWorker(worker)` | Index/update worker in Atlas Search / `$text` |
 | `removeFromIndex(type, id)` | Remove document from index |
 
-**Elasticsearch Index Mappings:**
+**MongoDB Search Example:**
 
-```json
-// jobs index
-{
-  "mappings": {
-    "properties": {
-      "title": { "type": "text", "analyzer": "standard" },
-      "description": { "type": "text" },
-      "category": { "type": "keyword" },
-      "city": { "type": "keyword" },
-      "area": { "type": "text" },
-      "status": { "type": "keyword" },
-      "location": { "type": "geo_point" },
-      "urgency": { "type": "keyword" },
-      "created_at": { "type": "date" }
-    }
-  }
-}
+```js
+// Full-text + geospatial search on jobs using $text and $geoNear
+const jobs = await ServiceRequest.find(
+  { $text: { $search: query } },
+  { score: { $meta: 'textScore' } }
+)
+  .where('status').equals('open')
+  .sort({ score: { $meta: 'textScore' } })
+  .limit(50);
 
-// workers index
-{
-  "mappings": {
-    "properties": {
-      "name": { "type": "text" },
-      "skills": { "type": "keyword" },
-      "rating_avg": { "type": "float" },
-      "total_jobs": { "type": "integer" },
-      "location": { "type": "geo_point" },
-      "is_verified": { "type": "boolean" },
-      "is_available": { "type": "boolean" },
-      "experience_years": { "type": "integer" }
-    }
-  }
-}
+// Create a text index at schema level
+serviceRequestSchema.index({ title: 'text', description: 'text', city: 'text' });
 ```
 
+> For more advanced relevance, faceted filtering, and combined text + geo queries, upgrade to **MongoDB Atlas Search** (Lucene-based).
+
 **Key Decisions:**
-- Elasticsearch used for complex search queries (beyond PostGIS)
-- Sync between PostgreSQL → Elasticsearch via event-driven approach
-- Fallback to PostgreSQL queries if Elasticsearch unavailable
+- Start with MongoDB `$text` index + `2dsphere` geospatial for MVP
+- Optionally upgrade to MongoDB Atlas Search for complex queries
 - Search results cached in Redis (30 seconds TTL)
+- Fallback to MongoDB queries if Atlas Search unavailable
 
 ---
 
@@ -767,7 +745,7 @@ src/modules/admin/
 
 | Event | Emitter | Consumer | Action |
 |---|---|---|---|
-| `job.created` | Jobs | Notifications, Search | Notify workers, index in ES |
+| `job.created` | Jobs | Notifications, Search | Notify workers, index in Atlas/$text |
 | `job.statusChanged` | Jobs | Notifications, Chat | Send status notifications |
 | `offer.submitted` | Offers | Notifications | Notify customer |
 | `offer.accepted` | Offers | Jobs, Visits, Notifications | Create conversation, schedule visit |
@@ -849,7 +827,7 @@ Standardized error response format:
 ## 7. Module Dependency Matrix
 
 | Module | Depends On |
-|---|---|
+|---|---|---|
 | Auth | Redis, SMS Gateway |
 | Users | Auth, File Upload |
 | Jobs | Users, Categories, Location |
@@ -859,10 +837,10 @@ Standardized error response format:
 | Payments | Jobs, Users, Payment Gateways |
 | Reviews | Jobs, Users |
 | Chat | Users, File Upload |
-| Notifications | Redis (pub/sub), FCM, SMS |
-| Location | PostGIS, Redis |
+| Notifications | Redis (pub/sub), Web Push, SMS |
+| Location | MongoDB (2dsphere), Redis |
 | File Upload | S3, Sharp (image processing) |
-| Search | Elasticsearch, PostgreSQL |
+| Search | MongoDB $text / Atlas Search |
 | Admin | All modules (read access) |
 
 ---
