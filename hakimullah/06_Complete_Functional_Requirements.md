@@ -19,9 +19,9 @@
 | FR-13 | Give admin user/worker/category controls. | MVP |
 | FR-14 | Suspend/deactivate accounts. | MVP |
 | FR-15 | Record important request actions. | MVP |
-| FR-16 | Support ratings/reviews. | LATER |
-| FR-17 | Support customer-worker chat. | FUTURE |
-| FR-18 | Support online payments. | FUTURE |
+| FR-16 | Support ratings/reviews. | MVP |
+| FR-17 | Support customer-worker chat. | MVP |
+| FR-18 | Support online payments. | MVP |
 
 ## Easy Meaning
 Functional requirements are simply the list of things the software must be able to do.
