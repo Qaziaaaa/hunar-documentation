@@ -523,22 +523,22 @@ Architecture
 
 # One-Line Explanation of Every Technology
 
-| Technology | Simple Meaning |
-|---|---|
-| Next.js | Builds the user interface |
-| TypeScript | Makes JavaScript safer and easier to maintain |
-| Tailwind CSS | Styles the interface quickly and consistently |
-| NestJS | Runs backend business logic |
-| PostgreSQL | Stores the main application data |
-| PostGIS | Finds workers by location/distance |
-| Redis | Handles fast temporary data and support tasks |
-| Socket.IO | Sends real-time updates |
-| FCM | Sends push notifications |
-| S3 Storage | Stores images and audio |
-| Google Maps / Mapbox | Handles maps and directions |
-| Payment Gateway | Processes online payments |
-| Payment Ledger | Records financial events |
-| Modular Monolith | Keeps the MVP architecture simple and organized |
+| Technology           | Simple Meaning                                  |
+| -------------------- | ----------------------------------------------- |
+| Next.js              | Builds the user interface                       |
+| TypeScript           | Makes JavaScript safer and easier to maintain   |
+| Tailwind CSS         | Styles the interface quickly and consistently   |
+| NestJS               | Runs backend business logic                     |
+| PostgreSQL           | Stores the main application data                |
+| PostGIS              | Finds workers by location/distance              |
+| Redis                | Handles fast temporary data and support tasks   |
+| Socket.IO            | Sends real-time updates                         |
+| FCM                  | Sends push notifications                        |
+| S3 Storage           | Stores images and audio                         |
+| Google Maps / Mapbox | Handles maps and directions                     |
+| Payment Gateway      | Processes online payments                       |
+| Payment Ledger       | Records financial events                        |
+| Modular Monolith     | Keeps the MVP architecture simple and organized |
 
 ---
 
@@ -592,3 +592,58 @@ Each technology solves a specific Fixora problem:
 **Payment Gateway** → Payments  
 **Ledger** → Financial records  
 **Modular Monolith** → Manageable MVP architecture
+
+# Technologies pricing status
+
+## Free-10
+
+**Next.js**
+
+**TypeScript**
+
+**Tailwind CSS**
+
+**NestJS**
+
+**PostgreSQL**
+
+**PostGIS**
+
+**Socket.IO**
+
+**Firebase Cloud Messaging**
+
+**Payment Ledger**
+
+**Modular Monolith**
+
+##### Software/license cost: generally $0
+
+## Hybrid-3
+
+**Redis**
+
+**S3-Compatible Storage**
+
+**Google Maps / Mapbox**
+
+###### At initial stage its free
+
+## Paid-1
+
+**Payment Gateway**
+
+##### It depends on per transaction, and also, if users and cost will be increasing than payment of this platform is also increasing
+
+###### Note: Development
+
+→ Almost entirely FREE
+
+Initial MVP
+→ Mostly FREE / Free Tier
+
+Growing Users
+→ Hybrid + usage-based costs
+
+Large Scale
+→ Paid infrastructure + transaction costs
