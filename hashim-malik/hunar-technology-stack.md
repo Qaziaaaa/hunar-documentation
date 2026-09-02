@@ -605,7 +605,13 @@ Each technology solves a specific Fixora problem:
 
 **NestJS**
 
-**PostgreSQL**
+**PostgreSQL** -> Region
+AWS US East 2 (Ohio)
+Your free plan includes:
+0.5 GB storage
+Scales to zero when inactive
+Autoscaling up to 2 CU
+10 branches per project
 
 **PostGIS**
 
