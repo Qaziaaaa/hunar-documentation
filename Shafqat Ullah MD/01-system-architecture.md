@@ -1,8 +1,8 @@
-# System Architecture — Home Services Platform (MERN Web)
+# System Architecture — Fixora (Home Services Platform)
 
 **Author:** Shafqat Ullah  
 **Document Type:** System Architecture Design  
-**Version:** 2.0  
+**Version:** 3.0  
 **Date:** September 2, 2026  
 **Status:** Draft — Pending Team Review
 
@@ -10,7 +10,7 @@
 
 ## 1. Overview
 
-This document defines the overall system architecture for the Home Services Platform — a **MERN-stack website** (MongoDB, Express.js, React, Node.js) that connects customers who need home repair/maintenance services with verified workers (electricians, plumbers, AC technicians, handymen, etc.). This is a **web application — no mobile app**.
+This document defines the overall system architecture for **Fixora** — a home-services marketplace connecting customers who need home repair/maintenance services with verified workers (electricians, plumbers, AC technicians, handymen, etc.). The stack follows the team-approved decisions: **Next.js + NestJS + PostgreSQL/PostGIS + Redis + Socket.IO + FCM + S3 + Maps + Payment Gateway/Ledger + Modular Monolith**. It is a **web application**.
 
 ---
 
@@ -34,10 +34,9 @@ This document defines the overall system architecture for the Home Services Plat
 │                          CLIENT LAYER                              │
 │                                                                     │
 │    ┌──────────────────────────────────────────────────────────────┐ │
-│    │                    React.js Web Application (SPA)             │ │
+│    │                    Next.js Web Application                    │ │
 │    │                    (Customer + Worker + Admin)                │ │
-│    │                    Vite + React Router + Redux Toolkit        │ │
-│    │                    Tailwind CSS + Material-UI                 │ │
+│    │                    TypeScript + Tailwind CSS                  │ │
 │    └─────────────────────────────┬────────────────────────────────┘ │
 │                                  │                                  │
 └──────────────────────────────────┼──────────────────────────────────┘
@@ -58,7 +57,8 @@ This document defines the overall system architecture for the Home Services Plat
 │                        APPLICATION LAYER                            │
 │                                                                     │
 │  ┌────────────────────────────────────────────────────────────────┐ │
-│  │                   Node.js / Express Backend                    │ │
+│  │                    NestJS Backend (Modular Monolith)            │ │
+│  │                    TypeScript                                   │ │
 │  │                                                                │ │
 │  │  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────────────┐  │ │
 │  │  │  Auth    │ │   Jobs   │ │  Users   │ │   Payments       │  │ │
@@ -69,8 +69,8 @@ This document defines the overall system architecture for the Home Services Plat
 │  │  │  Module  │ │  Module  │ │ Module   │ │   Module         │  │ │
 │  │  └──────────┘ └──────────┘ └──────────┘ └──────────────────┘  │ │
 │  │  ┌──────────┐ ┌──────────┐ ┌──────────┐                       │ │
-│  │  │  File    │ │ Search/  │ │ Admin    │                       │ │
-│  │  │  Upload  │ │ Matching │ │ Module   │                       │ │
+│  │  │  File    │ │ Search/  │ │  Admin   │                       │ │
+│  │  │  Upload  │ │ Matching │ │  Module  │                       │ │
 │  │  │  Module  │ │ Module   │ │          │                       │ │
 │  │  └──────────┘ └──────────┘ └──────────┘                       │ │
 │  └────────────────────────────────────────────────────────────────┘ │
@@ -90,10 +90,10 @@ This document defines the overall system architecture for the Home Services Plat
 │                         DATA LAYER                                  │
 │                                                                     │
 │  ┌──────────────┐  ┌──────────────┐  ┌──────────────────────────┐  │
-│  │   MongoDB    │  │    Redis     │  │  MongoDB Atlas Search /   │  │
-│  │ (Primary DB) │  │  (Cache +    │  │  Elasticsearch (optional) │  │
-│  │  + GeoJSON   │  │   Sessions + │  │  (Full-text + Geospatial) │  │
-│  │  2dsphere    │  │   Pub/Sub)   │  │                          │  │
+│  │ PostgreSQL   │  │    Redis     │  │   Elasticsearch          │  │
+│  │   + PostGIS  │  │  (Cache +    │  │   (Optional: Search +    │  │
+│  │ (Primary DB) │  │   Sessions + │  │    Geospatial)           │  │
+│  │              │  │   Pub/Sub)   │  │                          │  │
 │  └──────────────┘  └──────────────┘  └──────────────────────────┘  │
 │                                                                     │
 └─────────────────────────────────────────────────────────────────────┘
@@ -118,9 +118,9 @@ This document defines the overall system architecture for the Home Services Plat
 │                    EXTERNAL SERVICES                                │
 │                                                                     │
 │  ┌────────────┐ ┌────────────┐ ┌────────────┐ ┌─────────────────┐  │
-│  │  Web Push   │ │  SMS       │ │  Payment   │ │  Maps           │  │
-│  │  (Service   │ │  Gateway   │ │  Gateway   │ │  (Google Maps   │  │
-│  │  Workers)   │ │  (Twilio / │ │  (Stripe / │ │   / Leaflet)    │  │
+│  │   FCM       │ │  SMS       │ │  Payment   │ │  Maps           │  │
+│  │  (Push      │ │  Gateway   │ │  Gateway   │ │  (Google Maps   │  │
+│  │  Notifs)    │ │  (Twilio / │ │  (Stripe / │ │   / Mapbox)     │  │
 │  │             │ │  Local PK) │ │  JazzCash /│ │                 │  │
 │  │             │ │            │ │  Easypaisa)│ │                 │  │
 │  └────────────┘ └────────────┘ └────────────┘ └─────────────────┘  │
@@ -208,19 +208,19 @@ This document defines the overall system architecture for the Home Services Plat
 
 ### 5.1 Web Application (Customer + Worker + Admin)
 
-A single **React.js SPA** (Vite) serving customers, workers, and admin via role-based routing.
+A single **Next.js** web app (App Router) serving customers, workers, and admin via role-based routing.
 
 | Aspect | Decision |
 |---|---|
-| **Framework** | React.js 18+ (Vite SPA) |
-| **State Management** | Redux Toolkit + React Query |
-| **Routing** | React Router |
-| **Maps** | Leaflet / @react-google-maps/api |
+| **Framework** | Next.js (App Router, TypeScript) |
+| **State Management** | Redux Toolkit / Zustand + TanStack Query |
+| **Routing** | Next.js App Router |
+| **Maps** | Google Maps / Mapbox |
 | **Real-time** | Socket.IO client |
-| **Web Push** | Service Workers + Web Push API |
-| **UI Kit** | Tailwind CSS + Material-UI (MUI) |
+| **Push Notifications** | Firebase Cloud Messaging (FCM) |
+| **UI Kit** | Tailwind CSS + shadcn/ui |
 | **Geolocation** | Browser Geolocation API |
-| **File upload** | Axios + Multer / pre-signed S3 URLs
+| **File upload** | Pre-signed S3 URLs |
 
 ---
 
@@ -312,16 +312,16 @@ A single **React.js SPA** (Vite) serving customers, workers, and admin via role-
 │         │                                        │
 │         ▼                                        │
 │  ┌──────────────┐                                │
-│  │   MongoDB    │                                │
-│  │ Geospatial   │                                │
+│  │  PostgreSQL  │                                │
+│  │  + PostGIS   │                                │
 │  │  Geo-query   │                                │
 │  │              │                                │
-│  │  $geoNear({  │                                │
-│  │   near: job, │                                │
-│  │   maxDistance│                                │
-│  │   radius_km  │                                │
-│  │  }) on       │                                │
-│  │  2dsphere idx│                                │
+│  │ ST_DWithin(  │                                │
+│  │  location,   │                                │
+│  │  job point,  │                                │
+│  │  radius_km   │                                │
+│  │ ) on GiST    │                                │
+│  │  index        │                                │
 │  └──────┬───────┘                                │
 │         │                                        │
 │         ▼                                        │
@@ -338,11 +338,11 @@ A single **React.js SPA** (Vite) serving customers, workers, and admin via role-
 
 | Option | Pros | Cons |
 |---|---|---|
-| **MongoDB GeoJSON (`2dsphere`)** | Native, integrated with MERN | — |
-| **MongoDB Atlas Search** | Full-text + geo combined | Paid tier for advanced |
+| **PostGIS (PostgreSQL)** | Best-in-class geo, integrated | Requires PostGIS extension |
+| **Elasticsearch Geo** | Fast search, full-text + geo | Extra service |
 | **Google S2 / Uber H3** | Grid-based, efficient | Complexity |
 
-**Recommendation:** MongoDB `2dsphere` geospatial index with `$geoNear`/`$near` for database queries. MongoDB Atlas Search only if advanced search/filtering is needed later.
+**Recommendation:** PostgreSQL **PostGIS** (`ST_DWithin` / GiST index) for database queries. Add Elasticsearch only if advanced search/filtering is needed later.
 
 ---
 
@@ -472,8 +472,8 @@ A single **React.js SPA** (Vite) serving customers, workers, and admin via role-
 │                    └─────────────────────┘           │
 │                                                       │
 │  ┌──────────────────────────────────────────────┐    │
-│  │        MongoDB Atlas (Replica Set)            │    │
-│  │        + Read Replicas                        │    │
+│  │        RDS PostgreSQL (Multi-AZ)              │    │
+│  │        + PostGIS + Read Replicas             │    │
 │  └──────────────────────────────────────────────┘    │
 │                                                       │
 │  ┌──────────────────────────────────────────────┐    │
@@ -485,7 +485,8 @@ A single **React.js SPA** (Vite) serving customers, workers, and admin via role-
 │  └──────────────────────────────────────────────┘    │
 │                                                       │
 │  ┌──────────────────────────────────────────────┐    │
-│  │        Vercel / Netlify (React Frontend)      │    │
+│  │            Vercel / Netlify                   │    │
+│  │          (Next.js Frontend)                   │    │
 │  └──────────────────────────────────────────────┘    │
 └──────────────────────────────────────────────────────┘
 ```
@@ -500,7 +501,7 @@ A single **React.js SPA** (Vite) serving customers, workers, and admin via role-
 |---|---|
 | **Network** | VPC, Security Groups, WAF, DDoS protection |
 | **Transport** | TLS 1.3 everywhere, HSTS |
-| **Application** | Input validation, object/query filtering, RBAC, NoSQL injection protection (Mongoose sanitization) |
+| **Application** | Input validation, parameterized queries (SQL), RBAC, SQL injection protection (ORM/Prisma/TypeORM) |
 | **Data** | Encryption at rest (AES-256), sensitive field masking |
 | **API** | Rate limiting, request signing, API key rotation |
 | **File Upload** | Type validation, size limits, virus scanning |
@@ -579,15 +580,17 @@ Customer (Web)                 Backend                    Worker (Web)
 | Decision | Choice | Rationale |
 |---|---|---|
 | Backend style | Modular Monolith | Fast MVP, easy to split later |
-| Database | MongoDB (+ 2dsphere geo) | MERN alignment, flexible, native geo supports |
+| Backend framework | NestJS (TypeScript) | Structured modules, maintainable |
+| Database | PostgreSQL + PostGIS | Reliable relationships + best-in-class geo |
 | Cache / PubSub | Redis | Fast, versatile, Socket.IO adapter |
-| Search | MongoDB $text / Atlas Search | Built-in full-text + geospatial |
+| Search | PostgreSQL full-text / Elasticsearch (optional) | Built-in + geo via PostGIS |
 | Real-time | Socket.IO | Proven, fallback support |
-| File storage | AWS S3 / Cloudinary | Scalable, CDN integration |
-| Frontend | React.js (Vite SPA) | MERN alignment, single codebase |
+| File storage | AWS S3 / MinIO | Scalable, CDN integration |
+| Frontend | Next.js + Tailwind CSS | SSR, SEO, consistent UI |
 | Auth | OTP + JWT | Simple, Pakistan phone market |
-| Web Push | Web Push API / Service Workers | Browser-native notifications |
-| Payments | JazzCash / Easypaisa + Stripe | Local + international |
+| Push Notifications | Firebase Cloud Messaging (FCM) | Reliable push delivery |
+| Maps | Google Maps / Mapbox | Location, distance, directions |
+| Payments | JazzCash / Easypaisa + Payment Ledger | Local + compliant financial records |
 
 ---
 

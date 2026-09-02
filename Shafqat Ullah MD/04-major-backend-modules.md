@@ -1,18 +1,18 @@
-# Major Backend Modules — Home Services Platform (MERN Web)
+# Major Backend Modules — Fixora (Home Services Platform)
 
 **Author:** Shafqat Ullah  
 **Document Type:** Backend Module Design  
-**Version:** 2.0  
+**Version:** 3.0  
 **Date:** September 2, 2026  
 **Status:** Draft — Pending Team Review
 
-> **Note:** This is a **MERN-stack website** (MongoDB, Express.js, React, Node.js). The backend is Node.js/Express with **MongoDB** (via Mongoose) and **Redis**. There is **no mobile app** — notifications use the **Web Push API / Service Workers**.
+> **Note:** This aligns with the team-approved **Fixora stack**: **NestJS** (TypeScript) modular monolith with **PostgreSQL + PostGIS** (via Prisma), **Redis**, **Socket.IO**, and **Firebase Cloud Messaging (FCM)** for push notifications. It is a **web application**.
 
 ---
 
 ## 1. Overview
 
-This document defines all major backend modules, their responsibilities, internal structure, key functions, and inter-module communication for the Home Services Platform (MERN stack).
+This document defines all major backend modules, their responsibilities, internal structure, key functions, and inter-module communication for Fixora — built as a **NestJS modular monolith** with **PostgreSQL**.
 
 ---
 
@@ -65,7 +65,6 @@ This document defines all major backend modules, their responsibilities, interna
 src/modules/auth/
 ├── auth.controller.ts
 ├── auth.service.ts
-├── auth.routes.ts
 ├── auth.validation.ts
 ├── auth.middleware.ts
 └── __tests__/
@@ -105,7 +104,6 @@ src/modules/auth/
 src/modules/users/
 ├── users.controller.ts
 ├── users.service.ts
-├── users.routes.ts
 ├── users.validation.ts
 ├── workerProfile.service.ts
 ├── customerProfile.service.ts
@@ -141,7 +139,6 @@ src/modules/users/
 src/modules/jobs/
 ├── jobs.controller.ts
 ├── jobs.service.ts
-├── jobs.routes.ts
 ├── jobs.validation.ts
 ├── jobs.stateMachine.ts
 ├── jobs.events.ts
@@ -239,7 +236,6 @@ src/modules/jobs/
 src/modules/offers/
 ├── offers.controller.ts
 ├── offers.service.ts
-├── offers.routes.ts
 ├── offers.validation.ts
 └── __tests__/
 ```
@@ -273,7 +269,6 @@ src/modules/offers/
 src/modules/visits/
 ├── visits.controller.ts
 ├── visits.service.ts
-├── visits.routes.ts
 ├── visits.validation.ts
 └── __tests__/
 ```
@@ -307,7 +302,6 @@ src/modules/visits/
 src/modules/repair/
 ├── repair.controller.ts
 ├── repair.service.ts
-├── repair.routes.ts
 ├── repair.validation.ts
 └── __tests__/
 ```
@@ -365,7 +359,6 @@ src/modules/repair/
 src/modules/payments/
 ├── payments.controller.ts
 ├── payments.service.ts
-├── payments.routes.ts
 ├── payments.validation.ts
 ├── gateways/
 │   ├── jazzcash.gateway.ts
@@ -425,7 +418,6 @@ Worker Payout:             Rs.  8,500
 src/modules/reviews/
 ├── reviews.controller.ts
 ├── reviews.service.ts
-├── reviews.routes.ts
 ├── reviews.validation.ts
 └── __tests__/
 ```
@@ -459,7 +451,6 @@ src/modules/chat/
 ├── chat.controller.ts
 ├── chat.service.ts
 ├── chat.socket.ts      ← Socket.IO event handlers
-├── chat.routes.ts
 └── __tests__/
 ```
 
@@ -486,7 +477,7 @@ src/modules/chat/
 - Conversation created automatically when offer is accepted
 - Messages support text, image, and voice note
 - Unread message count shown in UI badge
-- Messages stored in MongoDB (`messages` collection, indexed by `conversation_id`) + optionally synced to Atlas Search
+- Messages stored in PostgreSQL (`messages` table, indexed by `conversation_id`) + optionally synced to Elasticsearch
 
 ---
 
@@ -500,7 +491,6 @@ src/modules/chat/
 src/modules/notifications/
 ├── notifications.controller.ts
 ├── notifications.service.ts
-├── notifications.routes.ts
 ├── templates/
 │   ├── job-alert.template.ts
 │   ├── offer-received.template.ts
@@ -530,9 +520,9 @@ src/modules/notifications/
 | `sendOTP(phone, otp)` | Auth request | SMS |
 
 **Key Decisions:**
-- Push notifications via **Web Push API / Service Workers** (`web-push` npm package) for browser notifications
+- Push notifications via **Firebase Cloud Messaging (FCM)** (`firebase-admin` npm package in NestJS)
 - SMS via Twilio or local Pakistani provider
-- In-app notifications stored in MongoDB (`notifications` collection)
+- In-app notifications stored in PostgreSQL (`notifications` table)
 - Notification preferences per user (opt-out for promotional)
 - Batch push for new job alerts (not individual sends)
 
@@ -555,39 +545,47 @@ src/modules/location/
 **Key Functions:**
 
 | Function | Description |
-|---|---|
-| `findNearbyWorkers(lat, lng, radius, category)` | Find workers within radius using MongoDB `$geoNear` on `2dsphere` index |
+|---|---|---|
+| `findNearbyWorkers(lat, lng, radius, category)` | Find workers within radius using **PostGIS** `ST_DWithin` on GiST index |
 | `calculateDistance(loc1, loc2)` | Haversine distance between two points |
 | `geocodeAddress(address)` | Convert address to coordinates |
 | `reverseGeocode(lat, lng)` | Convert coordinates to address |
 | `updateWorkerLocation(userId, lat, lng)` | Update and cache worker location |
 | `getWorkerLocation(userId)` | Get last known worker location |
 
-**MongoDB Query Example (`$geoNear`):**
+**PostGIS Query Example:**
 
-```js
-// Find verified, available workers matching a category within radius
-const workers = await WorkerProfile.aggregate([
-  {
-    $geoNear: {
-      near: { type: 'Point', coordinates: [lng, lat] },
-      distanceField: 'distance_meters',
-      maxDistance: radiusMeters,
-      spherical: true
-    }
-  },
-  { $match: { is_verified: true, is_available: true, skills: categoryId } },
-  { $sort: { distance_meters: 1 } },
-  { $limit: 50 }
-]);
+```sql
+-- Find verified, available workers matching a category within radius
+SELECT
+    u.id, u.name, u.avatar_url,
+    wp.rating_avg, wp.skills,
+    ST_Distance(
+        wp.location::geography,
+        ST_SetSRID(ST_MakePoint(:lng, :lat), 4326)::geography
+    ) AS distance_meters
+FROM users u
+JOIN worker_profiles wp ON wp.user_id = u.id
+WHERE
+    u.is_active = true
+    AND wp.is_verified = true
+    AND wp.is_available = true
+    AND wp.skills && ARRAY[:categoryId]
+    AND ST_DWithin(
+        wp.location::geography,
+        ST_SetSRID(ST_MakePoint(:lng, :lat), 4326)::geography,
+        :radiusMeters
+    )
+ORDER BY distance_meters ASC
+LIMIT 50;
 ```
 
-> Requires a `2dsphere` index on `worker_profiles.service_location`.
+> Requires a **GiST** index on `worker_profiles.location` (PostGIS).
 
 **Key Decisions:**
 - Worker location cached in Redis for fast reads (2 min TTL)
-- MongoDB `$geoNear` / `2dsphere` index used for the radius query (native to MERN)
-- MongoDB Atlas Search used for combined text + geo search (optional)
+- PostgreSQL **PostGIS** `ST_DWithin` / GiST index used for the radius query (team-approved stack)
+- Elasticsearch used for combined text + geo search (optional)
 - Location precision: ~100m (sufficient for city-level matching)
 - Worker location updated every 30 seconds when active on the web app
 
@@ -603,7 +601,6 @@ const workers = await WorkerProfile.aggregate([
 src/modules/uploads/
 ├── uploads.controller.ts
 ├── uploads.service.ts
-├── uploads.routes.ts
 ├── processors/
 │   ├── image.processor.ts
 │   └── voice.processor.ts
@@ -653,12 +650,12 @@ Upload → Validate Type/Size → Virus Scan (optional)
 
 **Path:** `src/modules/search/`
 
-**Responsibility:** Advanced job and worker search, MongoDB Atlas Search / `$text` integration.
+**Responsibility:** Advanced job and worker search, PostgreSQL full-text / Elasticsearch integration.
 
 ```
 src/modules/search/
 ├── search.service.ts
-├── atlasSearch.client.ts
+├── search.client.ts
 ├── indexers/
 │   ├── job.indexer.ts
 │   └── worker.indexer.ts
@@ -671,33 +668,39 @@ src/modules/search/
 |---|---|
 | `searchJobs(filters)` | Search jobs by category, location, status, date |
 | `searchWorkers(filters)` | Search workers by skill, location, rating, availability |
-| `indexJob(job)` | Index/update job in Atlas Search / `$text` |
-| `indexWorker(worker)` | Index/update worker in Atlas Search / `$text` |
+| `indexJob(job)` | Index/update job in Elasticsearch / PostgreSQL FTS |
+| `indexWorker(worker)` | Index/update worker in Elasticsearch / PostgreSQL FTS |
 | `removeFromIndex(type, id)` | Remove document from index |
 
-**MongoDB Search Example:**
+**PostgreSQL Full-Text Search Example:**
 
-```js
-// Full-text + geospatial search on jobs using $text and $geoNear
-const jobs = await ServiceRequest.find(
-  { $text: { $search: query } },
-  { score: { $meta: 'textScore' } }
-)
-  .where('status').equals('open')
-  .sort({ score: { $meta: 'textScore' } })
-  .limit(50);
+```sql
+-- Full-text search on open jobs (PostgreSQL tsvector + GIN index)
+SELECT id, title, description, city, status,
+       ts_rank(to_tsvector('english', title || ' ' || description), query) AS rank
+FROM service_requests,
+     plainto_tsquery('english', :query) AS query
+WHERE to_tsvector('english', title || ' ' || description) @@ query
+  AND status = 'open'
+ORDER BY rank DESC
+LIMIT 50;
 
-// Create a text index at schema level
-serviceRequestSchema.index({ title: 'text', description: 'text', city: 'text' });
+-- Generated column + GIN index for performance
+ALTER TABLE service_requests
+    ADD COLUMN search_vector tsvector
+    GENERATED ALWAYS AS
+        (to_tsvector('english', coalesce(title, '') || ' ' || coalesce(description, '')))
+    STORED;
+CREATE INDEX idx_sr_search_gin ON service_requests USING GIN(search_vector);
 ```
 
-> For more advanced relevance, faceted filtering, and combined text + geo queries, upgrade to **MongoDB Atlas Search** (Lucene-based).
+> For more advanced relevance, faceted filtering, and combined text + geo queries, upgrade to **Elasticsearch** (optional).
 
 **Key Decisions:**
-- Start with MongoDB `$text` index + `2dsphere` geospatial for MVP
-- Optionally upgrade to MongoDB Atlas Search for complex queries
+- Start with PostgreSQL full-text (`tsvector`) + PostGIS for MVP
+- Optionally upgrade to Elasticsearch for complex queries
 - Search results cached in Redis (30 seconds TTL)
-- Fallback to MongoDB queries if Atlas Search unavailable
+- Fallback to PostgreSQL queries if Elasticsearch unavailable
 
 ---
 
@@ -711,7 +714,6 @@ serviceRequestSchema.index({ title: 'text', description: 'text', city: 'text' })
 src/modules/admin/
 ├── admin.controller.ts
 ├── admin.service.ts
-├── admin.routes.ts
 ├── admin.middleware.ts   ← admin role check
 └── __tests__/
 ```
@@ -745,7 +747,7 @@ src/modules/admin/
 
 | Event | Emitter | Consumer | Action |
 |---|---|---|---|
-| `job.created` | Jobs | Notifications, Search | Notify workers, index in Atlas/$text |
+| `job.created` | Jobs | Notifications, Search | Notify workers, index in Elasticsearch/FTS |
 | `job.statusChanged` | Jobs | Notifications, Chat | Send status notifications |
 | `offer.submitted` | Offers | Notifications | Notify customer |
 | `offer.accepted` | Offers | Jobs, Visits, Notifications | Create conversation, schedule visit |
@@ -837,10 +839,10 @@ Standardized error response format:
 | Payments | Jobs, Users, Payment Gateways |
 | Reviews | Jobs, Users |
 | Chat | Users, File Upload |
-| Notifications | Redis (pub/sub), Web Push, SMS |
-| Location | MongoDB (2dsphere), Redis |
+| Notifications | Redis (pub/sub), FCM, SMS |
+| Location | PostgreSQL + PostGIS, Redis |
 | File Upload | S3, Sharp (image processing) |
-| Search | MongoDB $text / Atlas Search |
+| Search | PostgreSQL full-text / Elasticsearch |
 | Admin | All modules (read access) |
 
 ---

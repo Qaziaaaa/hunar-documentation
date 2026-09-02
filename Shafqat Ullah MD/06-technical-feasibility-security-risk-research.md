@@ -24,10 +24,10 @@ The platform needs the customer's location and the worker's service area/locatio
 
 Use customer-provided location plus device location as an optional convenience. Store coordinates with the service request and reveal the exact customer address only after the worker is selected/confirmed.
 
-**Web Implementation (MERN):**
-- Use **HTML5 Geolocation API** (`navigator.geolocation.getCurrentPosition()`) in the React frontend
-- Use **Leaflet.js** or **Google Maps JavaScript API** for interactive map selection
-- Store coordinates (latitude/longitude) as a **GeoJSON / 2dsphere** field in **MongoDB**
+**Web Implementation (Fixora):**
+- Use **HTML5 Geolocation API** (`navigator.geolocation.getCurrentPosition()`) in the Next.js frontend
+- Use **Google Maps / Mapbox** for interactive map selection
+- Store coordinates (latitude/longitude) as a **PostGIS `POINT`** (geometry) column in **PostgreSQL**
 - Require **HTTPS** for geolocation to work in browsers [1]
 
 ### Reason
@@ -69,13 +69,13 @@ Use a multi-stage matching process:
 Start with a configurable service radius. Expand the radius if too few suitable workers are found.
 
 **Web Implementation:**
-- Backend performs geospatial queries using **MongoDB Geospatial Queries** (`$near`, `$geoNear`, `2dsphere` index)
-- Frontend **(React.js)** displays matched workers on an interactive map
-- Use **React using Fetch API / Axios** to load matches dynamically without page reload
+- Backend performs geospatial queries using **PostgreSQL PostGIS** (`ST_DWithin` + GiST index)
+- Frontend **(Next.js + Mapbox/Google Maps)** displays matched workers on an interactive map
+- Use **Next.js with TanStack Query / Fetch API** to load matches dynamically without page reload
 
 ### Reason
 
-This reduces irrelevant job notifications and improves the chance of getting a useful response quickly. MongoDB geospatial indexes (`2dsphere`) efficiently find records within a chosen radius on a sphere of the earth. [2]
+This reduces irrelevant job notifications and improves the chance of getting a useful response quickly. PostGIS indexes efficiently find records within a chosen radius on a sphere of the earth. [2]
 
 ### Risks
 
@@ -99,7 +99,7 @@ Workers should know quickly when a relevant nearby job becomes available.
 ### Possible Solutions
 
 - In-browser notifications.
-- Web Push Notifications (Service Workers).
+- Push notifications (Firebase Cloud Messaging — FCM).
 - Real-time events while the website is open.
 - Email/SMS fallback for critical cases.
 
@@ -107,19 +107,19 @@ Workers should know quickly when a relevant nearby job becomes available.
 
 Use a combination:
 
-1. **Real-time in-browser updates** using WebSockets or Server-Sent Events (SSE) when the user is active.
-2. **Web Push Notifications** via Service Workers when the browser tab is in the background.
+1. **Real-time in-browser updates** using WebSockets / **Socket.IO** when the user is active.
+2. **Push notifications** via **Firebase Cloud Messaging (FCM)** when the browser tab is in the background.
 3. Notification retry/fallback rules for important events.
 
 **Web Implementation:**
-- Use **Service Workers** for background push notifications [3]
-- Use **WebSocket API** or **Socket.io** for real-time updates
-- Use **Notification API** for browser permission and display
+- Use **FCM** (`firebase-admin` in NestJS) for push notifications [3]
+- Use **Socket.IO** for real-time updates
+- Use the browser **Notification API** for permission and display
 - Requires **HTTPS** and user permission for push notifications
 
 ### Reason
 
-The worker should not need to repeatedly refresh the website. Web Push notifications can work for foreground and background browser scenarios with appropriate browser support and HTTPS. [3]
+The worker should not need to repeatedly refresh the website. FCM push notifications work for foreground and background browser scenarios with appropriate browser support and HTTPS. [3]
 
 ### Risks
 
@@ -269,10 +269,10 @@ Users need to choose locations, understand approximate distance, and later navig
 Use map-based location selection for customers and navigation/directions after the booking is confirmed.
 
 **Web Implementation:**
-- Use **Leaflet.js** (free, open-source) or **Google Maps JavaScript API** for interactive maps
-- Use **OpenStreetMap** or **Google Maps Geocoding API** for address lookup
-- Use **Google Maps Directions API** or **OpenRouteService** for navigation
-- Display approximate distance using **Haversine formula** or geospatial queries
+- Use **Google Maps / Mapbox** (GL JS) for interactive maps
+- Use **Google Maps Geocoding / Mapbox Geocoding** for address lookup
+- Use **Google Maps Directions / Mapbox Directions** for navigation
+- Display approximate distance using **Haversine formula** or **PostGIS** queries
 
 ### Reason
 
@@ -429,8 +429,8 @@ Basic roles:
 Every protected action must be checked on the backend, not only hidden in the frontend.
 
 **Web Implementation:**
-- Use **middleware-based authorization** on the backend (e.g., Express.js middleware, Django decorators)
-- Use **role-based route guards** on frontend (e.g., Angular guards, React protected routes)
+- Use **Guards / middleware-based authorization** on the backend (e.g., NestJS guards, Express.js middleware)
+- Use **role-based route guards** on frontend (e.g., Next.js middleware, React protected routes)
 - Validate JWT tokens and roles on every protected API endpoint
 - Use **CORS policies** to restrict API access to trusted origins
 
@@ -700,7 +700,7 @@ Do not expose sensitive internal information through error messages.
 
 All web traffic must be encrypted using HTTPS. This is required for:
 - Browser Geolocation API
-- Service Workers / Web Push Notifications
+- Service Workers / FCM Push Notifications
 - Secure cookie handling
 - Payment processing compliance
 
@@ -801,23 +801,24 @@ The basic marketplace flow is comparatively manageable:
 
 The team should finalize the business rules and payment model before beginning major development, because payment, dispute, cancellation, and worker/customer state transitions affect multiple parts of the system.
 
-## Recommended Web Technology Stack (MERN)
+## Recommended Technology Stack (Fixora)
 
-The platform is a **MERN-stack website** (MongoDB, Express, React, Node.js) — **no mobile app**.
+The platform is built with the team-approved **Fixora stack** — a **web application** built on **Next.js + NestJS + PostgreSQL/PostGIS**.
 
 | Layer | Technology |
 |-------|------------|
-| Frontend | **React.js** (SPA with Vite / Create React App) |
-| Backend | **Node.js + Express.js** (REST API) |
-| Database | **MongoDB** (+ MongoDB Geospatial Queries `$near` / `$geoNear`) |
-| ORM/ODM | **Mongoose** |
-| State Management | **Redux Toolkit / React Query** |
+| Frontend | **Next.js** (App Router, TypeScript) + Tailwind CSS |
+| Backend | **NestJS** (TypeScript, modular monolith) REST API |
+| Database | **PostgreSQL + PostGIS** (`ST_DWithin` geospatial queries) |
+| ORM | **Prisma** |
+| State Management | **Redux Toolkit / TanStack Query** |
 | Real-time | **Socket.IO** |
-| File Storage | **AWS S3 / Cloudinary / Multer** (local) |
-| Maps | **Leaflet.js / Google Maps JS API** |
-| Payments | **Stripe / JazzCash / Easypaisa** |
+| File Storage | **AWS S3 / MinIO** (pre-signed URLs) |
+| Maps | **Google Maps / Mapbox** |
+| Payments | **Stripe / JazzCash / Easypaisa + Payment Ledger** |
+| Push Notifications | **Firebase Cloud Messaging (FCM)** |
 | Authentication | **JWT + OTP** (Twilio / local SMS) |
-| Hosting | **Vercel / Netlify** (frontend), **Render / AWS EC2** (backend), **Atlas** (MongoDB) |
+| Hosting | **Vercel / Netlify** (frontend), **AWS EC2 / Render** (backend), **RDS PostgreSQL** (database) |
 
 ---
 
@@ -826,13 +827,12 @@ The platform is a **MERN-stack website** (MongoDB, Express, React, Node.js) — 
 [1] MDN — Geolocation API  
 https://developer.mozilla.org/en-US/docs/Web/API/Geolocation_API
 
-[2] MongoDB — Geospatial Queries  
-https://www.mongodb.com/docs/manual/geospatial-queries/  
-https://www.mongodb.com/docs/manual/reference/operator/query-geospatial/
+[2] PostGIS — Spatial and Geographic Objects  
+https://postgis.net/  
+https://postgis.net/docs/ST_DWithin.html
 
-[3] MDN — Web Push Notifications / Service Workers  
-https://developer.mozilla.org/en-US/docs/Web/API/Push_API  
-https://developer.mozilla.org/en-US/docs/Web/API/Service_Worker_API
+[3] Firebase — Cloud Messaging  
+https://firebase.google.com/docs/cloud-messaging
 
 [4] OWASP — Authentication Cheat Sheet  
 https://cheatsheetseries.owasp.org/cheatsheets/Authentication_Cheat_Sheet.html
