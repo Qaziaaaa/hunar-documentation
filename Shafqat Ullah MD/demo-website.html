@@ -1,0 +1,1102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HUNAR — Home Services Platform</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-50: #F0FDFA;
+            --primary-100: #CCFBF1;
+            --primary-500: #0D9488;
+            --primary-600: #0B7F74;
+            --primary-700: #096B62;
+            --accent-50: #FFFBEB;
+            --accent-100: #FEF3C7;
+            --accent-500: #F59E0B;
+            --accent-600: #D97706;
+            --accent-700: #B45309;
+            --neutral-50: #FAFAFA;
+            --neutral-100: #F3F4F6;
+            --neutral-200: #E5E7EB;
+            --neutral-400: #9CA3AF;
+            --neutral-500: #6B7280;
+            --neutral-700: #4A4A68;
+            --neutral-800: #2D2D44;
+            --neutral-900: #1A1A2E;
+            --surface-warm: #F5F0EB;
+            --surface-light: #FAF8F5;
+            --surface-card: #FFFFFF;
+            --success-500: #10B981;
+            --success-100: #D1FAE5;
+            --error-500: #EF4444;
+            --error-100: #FEE2E2;
+            --warning-500: #F97316;
+            --warning-100: #FFEDD5;
+            --info-500: #3B82F6;
+            --info-100: #DBEAFE;
+            --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.1);
+            --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.1);
+            --shadow-xl: 0 20px 25px -5px rgba(0,0,0,0.1);
+            --radius-sm: 8px;
+            --radius-md: 12px;
+            --radius-lg: 16px;
+            --radius-xl: 24px;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--neutral-50);
+            color: var(--neutral-900);
+            line-height: 1.6;
+        }
+
+        /* ===== NAVBAR ===== */
+        .navbar {
+            background: var(--surface-card);
+            border-bottom: 1px solid var(--neutral-200);
+            padding: 0 2rem;
+            height: 70px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .nav-logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: var(--primary-500);
+            text-decoration: none;
+        }
+
+        .nav-logo .logo-icon {
+            width: 40px;
+            height: 40px;
+            background: var(--primary-500);
+            border-radius: var(--radius-sm);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.2rem;
+        }
+
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 2rem;
+            list-style: none;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: var(--neutral-700);
+            font-weight: 500;
+            font-size: 0.95rem;
+            transition: color 0.2s;
+        }
+
+        .nav-links a:hover { color: var(--primary-500); }
+
+        .nav-actions {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .btn {
+            padding: 10px 24px;
+            border-radius: var(--radius-sm);
+            font-weight: 600;
+            font-size: 0.95rem;
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: var(--primary-500);
+            color: white;
+        }
+        .btn-primary:hover { background: var(--primary-600); transform: translateY(-1px); box-shadow: var(--shadow-md); }
+
+        .btn-accent {
+            background: var(--accent-500);
+            color: var(--neutral-900);
+        }
+        .btn-accent:hover { background: var(--accent-600); transform: translateY(-1px); box-shadow: var(--shadow-md); }
+
+        .btn-outline {
+            background: transparent;
+            color: var(--primary-500);
+            border: 2px solid var(--primary-500);
+        }
+        .btn-outline:hover { background: var(--primary-50); }
+
+        .btn-ghost {
+            background: transparent;
+            color: var(--neutral-700);
+        }
+        .btn-ghost:hover { background: var(--neutral-100); }
+
+        .btn-lg { padding: 14px 32px; font-size: 1.05rem; }
+
+        /* ===== HERO ===== */
+        .hero {
+            background: linear-gradient(135deg, var(--primary-50) 0%, var(--surface-warm) 50%, var(--accent-50) 100%);
+            padding: 5rem 2rem;
+            text-align: center;
+        }
+
+        .hero-content { max-width: 800px; margin: 0 auto; }
+
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--primary-100);
+            color: var(--primary-700);
+            padding: 8px 20px;
+            border-radius: 50px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+        }
+
+        .hero h1 {
+            font-size: 3.2rem;
+            font-weight: 800;
+            line-height: 1.2;
+            margin-bottom: 1.5rem;
+            color: var(--neutral-900);
+        }
+
+        .hero h1 span { color: var(--primary-500); }
+
+        .hero p {
+            font-size: 1.2rem;
+            color: var(--neutral-500);
+            max-width: 600px;
+            margin: 0 auto 2.5rem;
+        }
+
+        .hero-actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .hero-stats {
+            display: flex;
+            justify-content: center;
+            gap: 4rem;
+            margin-top: 3rem;
+        }
+
+        .stat { text-align: center; }
+        .stat-number { font-size: 2rem; font-weight: 800; color: var(--primary-500); }
+        .stat-label { font-size: 0.9rem; color: var(--neutral-500); }
+
+        /* ===== SEARCH BAR ===== */
+        .search-section {
+            max-width: 900px;
+            margin: -2rem auto 0;
+            padding: 0 2rem;
+            position: relative;
+            z-index: 10;
+        }
+
+        .search-bar {
+            background: var(--surface-card);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-xl);
+            padding: 1rem;
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .search-bar input {
+            flex: 1;
+            border: none;
+            padding: 12px 16px;
+            font-size: 1rem;
+            outline: none;
+            background: var(--neutral-50);
+            border-radius: var(--radius-sm);
+            font-family: inherit;
+        }
+
+        .search-bar select {
+            border: none;
+            padding: 12px 16px;
+            font-size: 1rem;
+            background: var(--neutral-50);
+            border-radius: var(--radius-sm);
+            font-family: inherit;
+            color: var(--neutral-700);
+            cursor: pointer;
+        }
+
+        /* ===== CATEGORIES ===== */
+        .section {
+            padding: 5rem 2rem;
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .section-header h2 {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .section-header p {
+            color: var(--neutral-500);
+            font-size: 1.05rem;
+        }
+
+        .categories-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1.5rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .category-card {
+            background: var(--surface-card);
+            border-radius: var(--radius-md);
+            padding: 1.5rem;
+            text-align: center;
+            border: 1px solid var(--neutral-200);
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .category-card:hover {
+            border-color: var(--primary-500);
+            box-shadow: var(--shadow-lg);
+            transform: translateY(-4px);
+        }
+
+        .category-icon {
+            width: 56px;
+            height: 56px;
+            background: var(--primary-50);
+            border-radius: var(--radius-sm);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            margin: 0 auto 1rem;
+        }
+
+        .category-card:hover .category-icon {
+            background: var(--primary-500);
+        }
+
+        .category-card:hover .category-icon span {
+            filter: brightness(0) invert(1);
+        }
+
+        .category-card h3 { font-size: 0.95rem; font-weight: 600; margin-bottom: 0.25rem; }
+        .category-card p { font-size: 0.8rem; color: var(--neutral-500); }
+
+        /* ===== HOW IT WORKS ===== */
+        .how-it-works { background: var(--surface-warm); }
+
+        .steps-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .step-card {
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .step-number {
+            width: 48px;
+            height: 48px;
+            background: var(--primary-500);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1.2rem;
+            margin: 0 auto 1rem;
+        }
+
+        .step-card h3 { font-size: 1.1rem; font-weight: 700; margin-bottom: 0.5rem; }
+        .step-card p { color: var(--neutral-500); font-size: 0.95rem; }
+
+        /* ===== FEATURED JOBS ===== */
+        .jobs-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 1.5rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .job-card {
+            background: var(--surface-card);
+            border-radius: var(--radius-md);
+            border: 1px solid var(--neutral-200);
+            overflow: hidden;
+            transition: all 0.3s;
+        }
+
+        .job-card:hover {
+            box-shadow: var(--shadow-lg);
+            transform: translateY(-2px);
+        }
+
+        .job-card-header {
+            padding: 1.25rem 1.25rem 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .job-tag {
+            padding: 4px 12px;
+            border-radius: 50px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .tag-electrical { background: var(--info-100); color: var(--info-500); }
+        .tag-plumbing { background: var(--success-100); color: var(--success-500); }
+        .tag-ac { background: var(--accent-100); color: var(--accent-700); }
+        .tag-carpentry { background: var(--warning-100); color: var(--warning-500); }
+        .tag-painting { background: #EDE9FE; color: #7C3AED; }
+        .tag-cleaning { background: var(--primary-100); color: var(--primary-700); }
+
+        .job-urgency {
+            padding: 4px 10px;
+            border-radius: 50px;
+            font-size: 0.7rem;
+            font-weight: 600;
+        }
+
+        .urgency-high { background: var(--error-100); color: var(--error-500); }
+        .urgency-normal { background: var(--neutral-100); color: var(--neutral-500); }
+
+        .job-card-body { padding: 1rem 1.25rem; }
+        .job-card-body h3 { font-size: 1.05rem; font-weight: 700; margin-bottom: 0.5rem; }
+        .job-card-body p { font-size: 0.9rem; color: var(--neutral-500); margin-bottom: 1rem; }
+
+        .job-meta {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .job-meta-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.85rem;
+            color: var(--neutral-500);
+        }
+
+        .job-card-footer {
+            padding: 1rem 1.25rem;
+            border-top: 1px solid var(--neutral-200);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .job-budget {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--primary-500);
+        }
+
+        .job-offers {
+            font-size: 0.85rem;
+            color: var(--neutral-500);
+        }
+
+        /* ===== WORKERS SECTION ===== */
+        .workers-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .worker-card {
+            background: var(--surface-card);
+            border-radius: var(--radius-md);
+            border: 1px solid var(--neutral-200);
+            padding: 1.5rem;
+            text-align: center;
+            transition: all 0.3s;
+        }
+
+        .worker-card:hover {
+            box-shadow: var(--shadow-lg);
+            transform: translateY(-4px);
+        }
+
+        .worker-avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: var(--primary-100);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            margin: 0 auto 1rem;
+            border: 3px solid var(--primary-500);
+        }
+
+        .worker-card h3 { font-size: 1.1rem; font-weight: 700; }
+        .worker-card .worker-skill { color: var(--primary-500); font-size: 0.9rem; font-weight: 500; margin-bottom: 0.5rem; }
+        .worker-card .worker-location { color: var(--neutral-500); font-size: 0.85rem; margin-bottom: 1rem; }
+
+        .worker-rating {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            margin-bottom: 1rem;
+        }
+
+        .stars { color: var(--accent-500); font-size: 0.9rem; }
+        .rating-text { font-size: 0.9rem; font-weight: 600; }
+        .rating-count { font-size: 0.8rem; color: var(--neutral-500); }
+
+        .worker-stats {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--neutral-200);
+        }
+
+        .worker-stat { text-align: center; }
+        .worker-stat strong { display: block; font-size: 1rem; color: var(--neutral-900); }
+        .worker-stat span { font-size: 0.75rem; color: var(--neutral-500); }
+
+        /* ===== TESTIMONIALS ===== */
+        .testimonials { background: var(--primary-50); }
+
+        .testimonials-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 1.5rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .testimonial-card {
+            background: var(--surface-card);
+            border-radius: var(--radius-md);
+            padding: 1.5rem;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .testimonial-stars { color: var(--accent-500); margin-bottom: 1rem; font-size: 1rem; }
+        .testimonial-text { font-size: 0.95rem; color: var(--neutral-700); margin-bottom: 1.5rem; line-height: 1.7; }
+
+        .testimonial-author {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .testimonial-avatar {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: var(--accent-100);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            color: var(--accent-700);
+        }
+
+        .testimonial-name { font-weight: 600; font-size: 0.95rem; }
+        .testimonial-role { font-size: 0.8rem; color: var(--neutral-500); }
+
+        /* ===== CTA SECTION ===== */
+        .cta-section {
+            background: linear-gradient(135deg, var(--primary-500) 0%, var(--primary-700) 100%);
+            padding: 5rem 2rem;
+            text-align: center;
+            color: white;
+        }
+
+        .cta-section h2 { font-size: 2.2rem; font-weight: 800; margin-bottom: 1rem; }
+        .cta-section p { font-size: 1.1rem; opacity: 0.9; max-width: 500px; margin: 0 auto 2rem; }
+
+        .cta-actions { display: flex; gap: 1rem; justify-content: center; }
+
+        .btn-white {
+            background: white;
+            color: var(--primary-500);
+            font-weight: 700;
+        }
+        .btn-white:hover { background: var(--neutral-100); transform: translateY(-1px); }
+
+        .btn-outline-white {
+            background: transparent;
+            color: white;
+            border: 2px solid rgba(255,255,255,0.5);
+        }
+        .btn-outline-white:hover { background: rgba(255,255,255,0.1); border-color: white; }
+
+        /* ===== COLOR PALETTE SHOWCASE ===== */
+        .palette-section { background: var(--surface-warm); }
+
+        .palette-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .palette-group h4 { font-size: 0.85rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 1rem; color: var(--neutral-500); }
+
+        .color-swatch {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 0.5rem;
+            background: var(--surface-card);
+            border-radius: var(--radius-sm);
+            padding: 8px 12px;
+            border: 1px solid var(--neutral-200);
+        }
+
+        .swatch-box {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            flex-shrink: 0;
+            border: 1px solid rgba(0,0,0,0.05);
+        }
+
+        .swatch-info { flex: 1; }
+        .swatch-name { font-size: 0.8rem; font-weight: 600; }
+        .swatch-hex { font-size: 0.75rem; color: var(--neutral-500); font-family: monospace; }
+
+        /* ===== FOOTER ===== */
+        .footer {
+            background: var(--neutral-900);
+            color: white;
+            padding: 4rem 2rem 2rem;
+        }
+
+        .footer-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr;
+            gap: 3rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .footer-brand p { color: var(--neutral-400); margin-top: 1rem; font-size: 0.9rem; line-height: 1.7; }
+
+        .footer-col h4 { font-size: 0.9rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 1rem; color: var(--primary-500); }
+        .footer-col a { display: block; color: var(--neutral-400); text-decoration: none; font-size: 0.9rem; margin-bottom: 0.75rem; transition: color 0.2s; }
+        .footer-col a:hover { color: white; }
+
+        .footer-bottom {
+            max-width: 1200px;
+            margin: 3rem auto 0;
+            padding-top: 2rem;
+            border-top: 1px solid var(--neutral-800);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.85rem;
+            color: var(--neutral-500);
+        }
+
+        /* ===== BADGES ===== */
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 10px;
+            border-radius: 50px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .badge-verified { background: var(--success-100); color: var(--success-500); }
+        .badge-top { background: var(--accent-100); color: var(--accent-700); }
+
+        /* ===== NOTIFICATION DOT ===== */
+        .notif-dot {
+            width: 8px;
+            height: 8px;
+            background: var(--error-500);
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 768px) {
+            .hero h1 { font-size: 2rem; }
+            .hero-stats { gap: 2rem; }
+            .footer-grid { grid-template-columns: 1fr; }
+            .search-bar { flex-direction: column; }
+            .nav-links { display: none; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ===== NAVBAR ===== -->
+<nav class="navbar">
+    <a href="#" class="nav-logo">
+        <div class="logo-icon">&#127968;</div>
+        HUNAR
+    </a>
+    <ul class="nav-links">
+        <li><a href="#">Find Workers</a></li>
+        <li><a href="#">Post a Job</a></li>
+        <li><a href="#">How it Works</a></li>
+        <li><a href="#">Services</a></li>
+    </ul>
+    <div class="nav-actions">
+        <a href="#" class="btn btn-ghost">Log In</a>
+        <a href="#" class="btn btn-primary">Sign Up</a>
+    </div>
+</nav>
+
+<!-- ===== HERO ===== -->
+<section class="hero">
+    <div class="hero-content">
+        <div class="hero-badge">&#9889; Trusted by 10,000+ homeowners in Pakistan</div>
+        <h1>Find <span>Trusted Workers</span> For Every Home Service</h1>
+        <p>From electricians to plumbers, AC technicians to painters — hire verified professionals at fair prices. Negotiate directly. Pay securely.</p>
+        <div class="hero-actions">
+            <a href="#" class="btn btn-primary btn-lg">&#128196; Post a Job — Free</a>
+            <a href="#" class="btn btn-accent btn-lg">&#128269; Find Work as a Worker</a>
+        </div>
+        <div class="hero-stats">
+            <div class="stat">
+                <div class="stat-number">10K+</div>
+                <div class="stat-label">Jobs Completed</div>
+            </div>
+            <div class="stat">
+                <div class="stat-number">2,500+</div>
+                <div class="stat-label">Verified Workers</div>
+            </div>
+            <div class="stat">
+                <div class="stat-number">4.8</div>
+                <div class="stat-label">Average Rating</div>
+            </div>
+            <div class="stat">
+                <div class="stat-number">15+</div>
+                <div class="stat-label">Cities Covered</div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ===== SEARCH ===== -->
+<div class="search-section">
+    <div class="search-bar">
+        <input type="text" placeholder="What service do you need? (e.g., AC repair, plumbing)">
+        <select>
+            <option>All Cities</option>
+            <option>Lahore</option>
+            <option>Karachi</option>
+            <option>Islamabad</option>
+            <option>Faisalabad</option>
+            <option>Rawalpindi</option>
+        </select>
+        <button class="btn btn-primary">Search</button>
+    </div>
+</div>
+
+<!-- ===== CATEGORIES ===== -->
+<section class="section">
+    <div class="section-header">
+        <h2>Our Services</h2>
+        <p>Choose from a wide range of home services</p>
+    </div>
+    <div class="categories-grid">
+        <div class="category-card">
+            <div class="category-icon"><span>&#9889;</span></div>
+            <h3>Electrician</h3>
+            <p>320+ workers</p>
+        </div>
+        <div class="category-card">
+            <div class="category-icon"><span>&#128167;</span></div>
+            <h3>Plumber</h3>
+            <p>280+ workers</p>
+        </div>
+        <div class="category-card">
+            <div class="category-icon"><span>&#10052;</span></div>
+            <h3>AC Repair</h3>
+            <p>210+ workers</p>
+        </div>
+        <div class="category-card">
+            <div class="category-icon"><span>&#129692;</span></div>
+            <h3>Carpentry</h3>
+            <p>180+ workers</p>
+        </div>
+        <div class="category-card">
+            <div class="category-icon"><span>&#127912;</span></div>
+            <h3>Painting</h3>
+            <p>150+ workers</p>
+        </div>
+        <div class="category-card">
+            <div class="category-icon"><span>&#129529;</span></div>
+            <h3>Handyman</h3>
+            <p>400+ workers</p>
+        </div>
+        <div class="category-card">
+            <div class="category-icon"><span>&#128367;</span></div>
+            <h3>Cleaning</h3>
+            <p>250+ workers</p>
+        </div>
+    </div>
+</section>
+
+<!-- ===== HOW IT WORKS ===== -->
+<section class="section how-it-works">
+    <div class="section-header">
+        <h2>How HUNAR Works</h2>
+        <p>Simple, transparent, and secure</p>
+    </div>
+    <div class="steps-grid">
+        <div class="step-card">
+            <div class="step-number">1</div>
+            <h3>Post Your Job</h3>
+            <p>Describe the problem, add photos or voice notes, and set your location. It takes less than 2 minutes.</p>
+        </div>
+        <div class="step-card">
+            <div class="step-number">2</div>
+            <h3>Get Offers</h3>
+            <p>Verified workers nearby will review your job and send you their visit charges. Compare and choose.</p>
+        </div>
+        <div class="step-card">
+            <div class="step-number">3</div>
+            <h3>Visit & Inspect</h3>
+            <p>The worker visits, inspects the problem, and provides a detailed repair estimate. Negotiate the price.</p>
+        </div>
+        <div class="step-card">
+            <div class="step-number">4</div>
+            <h3>Get It Fixed</h3>
+            <p>Approve the repair, track progress in real-time, pay securely through the platform, and leave a review.</p>
+        </div>
+    </div>
+</section>
+
+<!-- ===== FEATURED JOBS ===== -->
+<section class="section">
+    <div class="section-header">
+        <h2>Recent Job Listings</h2>
+        <p>See what homeowners are posting in your area</p>
+    </div>
+    <div class="jobs-grid">
+        <div class="job-card">
+            <div class="job-card-header">
+                <span class="job-tag tag-electrical">&#9889; Electrical</span>
+                <span class="job-urgency urgency-high">&#128308; Urgent</span>
+            </div>
+            <div class="job-card-body">
+                <h3>Faulty Wiring in Kitchen — sparking outlets</h3>
+                <p>Two outlets in the kitchen are sparking when plugged in. Need an emergency check.</p>
+                <div class="job-meta">
+                    <div class="job-meta-item">&#128205; Gulberg III, Lahore</div>
+                    <div class="job-meta-item">&#128197; Posted 2h ago</div>
+                </div>
+            </div>
+            <div class="job-card-footer">
+                <div class="job-budget">Est. Rs. 3,000 - 5,000</div>
+                <div class="job-offers">6 offers</div>
+            </div>
+        </div>
+
+        <div class="job-card">
+            <div class="job-card-header">
+                <span class="job-tag tag-plumbing">&#128167; Plumbing</span>
+                <span class="job-urgency urgency-normal">Normal</span>
+            </div>
+            <div class="job-card-body">
+                <h3>Bathroom pipe leak — water damage to wall</h3>
+                <p>Leak from bathroom pipe causing dampness in the bedroom wall. Need urgent repair.</p>
+                <div class="job-meta">
+                    <div class="job-meta-item">&#128205; DHA Phase 5, Lahore</div>
+                    <div class="job-meta-item">&#128197; Posted 5h ago</div>
+                </div>
+            </div>
+            <div class="job-card-footer">
+                <div class="job-budget">Est. Rs. 2,000 - 4,000</div>
+                <div class="job-offers">4 offers</div>
+            </div>
+        </div>
+
+        <div class="job-card">
+            <div class="job-card-header">
+                <span class="job-tag tag-ac">&#10052; AC Repair</span>
+                <span class="job-urgency urgency-normal">Normal</span>
+            </div>
+            <div class="job-card-body">
+                <h3>AC not cooling — needs gas refilling</h3>
+                <p>Split AC unit is running but not cooling. Probably needs gas. Unit is 2 years old.</p>
+                <div class="job-meta">
+                    <div class="job-meta-item">&#128205; F-8, Islamabad</div>
+                    <div class="job-meta-item">&#128197; Posted 1d ago</div>
+                </div>
+            </div>
+            <div class="job-card-footer">
+                <div class="job-budget">Est. Rs. 4,000 - 6,000</div>
+                <div class="job-offers">8 offers</div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ===== TOP WORKERS ===== -->
+<section class="section" style="background: var(--surface-warm);">
+    <div class="section-header">
+        <h2>Top Rated Workers</h2>
+        <p>Hire the best professionals in your area</p>
+    </div>
+    <div class="workers-grid">
+        <div class="worker-card">
+            <div class="worker-avatar">&#128104;</div>
+            <h3>Ahmad Khan <span class="badge badge-verified">&#10003; Verified</span></h3>
+            <div class="worker-skill">Electrician</div>
+            <div class="worker-location">&#128205; Gulberg, Lahore</div>
+            <div class="worker-rating">
+                <span class="stars">&#9733;&#9733;&#9733;&#9733;&#9733;</span>
+                <span class="rating-text">4.9</span>
+                <span class="rating-count">(127 reviews)</span>
+            </div>
+            <div class="worker-stats">
+                <div class="worker-stat">
+                    <strong>340</strong>
+                    <span>Jobs Done</span>
+                </div>
+                <div class="worker-stat">
+                    <strong>8 yrs</strong>
+                    <span>Experience</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="worker-card">
+            <div class="worker-avatar">&#128104;</div>
+            <h3>Hassan Ali <span class="badge badge-top">&#11088; Top Rated</span></h3>
+            <div class="worker-skill">Plumber</div>
+            <div class="worker-location">&#128205; DHA, Karachi</div>
+            <div class="worker-rating">
+                <span class="stars">&#9733;&#9733;&#9733;&#9733;&#9733;</span>
+                <span class="rating-text">4.8</span>
+                <span class="rating-count">(98 reviews)</span>
+            </div>
+            <div class="worker-stats">
+                <div class="worker-stat">
+                    <strong>285</strong>
+                    <span>Jobs Done</span>
+                </div>
+                <div class="worker-stat">
+                    <strong>12 yrs</strong>
+                    <span>Experience</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="worker-card">
+            <div class="worker-avatar">&#128104;</div>
+            <h3>Bilal Ahmed <span class="badge badge-verified">&#10003; Verified</span></h3>
+            <div class="worker-skill">AC Technician</div>
+            <div class="worker-location">&#128205; F-10, Islamabad</div>
+            <div class="worker-rating">
+                <span class="stars">&#9733;&#9733;&#9733;&#9733;&#9734;</span>
+                <span class="rating-text">4.6</span>
+                <span class="rating-count">(74 reviews)</span>
+            </div>
+            <div class="worker-stats">
+                <div class="worker-stat">
+                    <strong>198</strong>
+                    <span>Jobs Done</span>
+                </div>
+                <div class="worker-stat">
+                    <strong>5 yrs</strong>
+                    <span>Experience</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ===== TESTIMONIALS ===== -->
+<section class="section testimonials">
+    <div class="section-header">
+        <h2>What People Say</h2>
+        <p>Real reviews from real customers</p>
+    </div>
+    <div class="testimonials-grid">
+        <div class="testimonial-card">
+            <div class="testimonial-stars">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
+            <div class="testimonial-text">"HUNAR made it so easy to find a reliable electrician. I posted my job at 10pm and had 5 offers by morning. The negotiation feature saved me Rs. 2,000 compared to market rate!"</div>
+            <div class="testimonial-author">
+                <div class="testimonial-avatar">FK</div>
+                <div>
+                    <div class="testimonial-name">Fatima Khan</div>
+                    <div class="testimonial-role">Homeowner, Lahore</div>
+                </div>
+            </div>
+        </div>
+        <div class="testimonial-card">
+            <div class="testimonial-stars">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
+            <div class="testimonial-text">"As a plumber, HUNAR has changed my life. I used to wait at shops for work. Now I get jobs delivered to my phone. The verified badge gives customers confidence."</div>
+            <div class="testimonial-author">
+                <div class="testimonial-avatar">MS</div>
+                <div>
+                    <div class="testimonial-name">Muhammad Saeed</div>
+                    <div class="testimonial-role">Plumber, Karachi</div>
+                </div>
+            </div>
+        </div>
+        <div class="testimonial-card">
+            <div class="testimonial-stars">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
+            <div class="testimonial-text">"The voice note feature is genius. My mother described the plumbing problem in Urdu and the worker understood everything before even visiting. Truly built for Pakistan."</div>
+            <div class="testimonial-author">
+                <div class="testimonial-avatar">AR</div>
+                <div>
+                    <div class="testimonial-name">Ali Raza</div>
+                    <div class="testimonial-role">Homeowner, Islamabad</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ===== CTA ===== -->
+<section class="cta-section">
+    <h2>Ready to Get Started?</h2>
+    <p>Join thousands of homeowners and workers using HUNAR every day.</p>
+    <div class="cta-actions">
+        <a href="#" class="btn btn-white btn-lg">&#128196; Post Your First Job</a>
+        <a href="#" class="btn btn-outline-white btn-lg">&#128104; Join as a Worker</a>
+    </div>
+</section>
+
+<!-- ===== COLOR PALETTE SHOWCASE ===== -->
+<section class="section palette-section">
+    <div class="section-header">
+        <h2>Color Theme — "Trust & Warmth"</h2>
+        <p>Selected by Shafqat Ullah for HUNAR platform</p>
+    </div>
+    <div class="palette-grid">
+        <div class="palette-group">
+            <h4>Primary</h4>
+            <div class="color-swatch"><div class="swatch-box" style="background:#096B62"></div><div class="swatch-info"><div class="swatch-name">Primary 700</div><div class="swatch-hex">#096B62</div></div></div>
+            <div class="color-swatch"><div class="swatch-box" style="background:#0B7F74"></div><div class="swatch-info"><div class="swatch-name">Primary 600</div><div class="swatch-hex">#0B7F74</div></div></div>
+            <div class="color-swatch"><div class="swatch-box" style="background:#0D9488"></div><div class="swatch-info"><div class="swatch-name">Primary 500</div><div class="swatch-hex">#0D9488</div></div></div>
+            <div class="color-swatch"><div class="swatch-box" style="background:#CCFBF1"></div><div class="swatch-info"><div class="swatch-name">Primary 100</div><div class="swatch-hex">#CCFBF1</div></div></div>
+            <div class="color-swatch"><div class="swatch-box" style="background:#F0FDFA"></div><div class="swatch-info"><div class="swatch-name">Primary 50</div><div class="swatch-hex">#F0FDFA</div></div></div>
+        </div>
+        <div class="palette-group">
+            <h4>Accent</h4>
+            <div class="color-swatch"><div class="swatch-box" style="background:#B45309"></div><div class="swatch-info"><div class="swatch-name">Accent 700</div><div class="swatch-hex">#B45309</div></div></div>
+            <div class="color-swatch"><div class="swatch-box" style="background:#D97706"></div><div class="swatch-info"><div class="swatch-name">Accent 600</div><div class="swatch-hex">#D97706</div></div></div>
+            <div class="color-swatch"><div class="swatch-box" style="background:#F59E0B"></div><div class="swatch-info"><div class="swatch-name">Accent 500</div><div class="swatch-hex">#F59E0B</div></div></div>
+            <div class="color-swatch"><div class="swatch-box" style="background:#FEF3C7"></div><div class="swatch-info"><div class="swatch-name">Accent 100</div><div class="swatch-hex">#FEF3C7</div></div></div>
+            <div class="color-swatch"><div class="swatch-box" style="background:#FFFBEB"></div><div class="swatch-info"><div class="swatch-name">Accent 50</div><div class="swatch-hex">#FFFBEB</div></div></div>
+        </div>
+        <div class="palette-group">
+            <h4>Neutral</h4>
+            <div class="color-swatch"><div class="swatch-box" style="background:#1A1A2E"></div><div class="swatch-info"><div class="swatch-name">Neutral 900</div><div class="swatch-hex">#1A1A2E</div></div></div>
+            <div class="color-swatch"><div class="swatch-box" style="background:#4A4A68"></div><div class="swatch-info"><div class="swatch-name">Neutral 700</div><div class="swatch-hex">#4A4A68</div></div></div>
+            <div class="color-swatch"><div class="swatch-box" style="background:#6B7280"></div><div class="swatch-info"><div class="swatch-name">Neutral 500</div><div class="swatch-hex">#6B7280</div></div></div>
+            <div class="color-swatch"><div class="swatch-box" style="background:#E5E7EB"></div><div class="swatch-info"><div class="swatch-name">Neutral 200</div><div class="swatch-hex">#E5E7EB</div></div></div>
+            <div class="color-swatch"><div class="swatch-box" style="background:#F5F0EB"></div><div class="swatch-info"><div class="swatch-name">Surface Warm</div><div class="swatch-hex">#F5F0EB</div></div></div>
+        </div>
+        <div class="palette-group">
+            <h4>Semantic</h4>
+            <div class="color-swatch"><div class="swatch-box" style="background:#10B981"></div><div class="swatch-info"><div class="swatch-name">Success</div><div class="swatch-hex">#10B981</div></div></div>
+            <div class="color-swatch"><div class="swatch-box" style="background:#EF4444"></div><div class="swatch-info"><div class="swatch-name">Error</div><div class="swatch-hex">#EF4444</div></div></div>
+            <div class="color-swatch"><div class="swatch-box" style="background:#F97316"></div><div class="swatch-info"><div class="swatch-name">Warning</div><div class="swatch-hex">#F97316</div></div></div>
+            <div class="color-swatch"><div class="swatch-box" style="background:#3B82F6"></div><div class="swatch-info"><div class="swatch-name">Info</div><div class="swatch-hex">#3B82F6</div></div></div>
+        </div>
+    </div>
+</section>
+
+<!-- ===== FOOTER ===== -->
+<footer class="footer">
+    <div class="footer-grid">
+        <div class="footer-brand">
+            <div class="nav-logo" style="color:white;">
+                <div class="logo-icon">&#127968;</div>
+                HUNAR
+            </div>
+            <p>Pakistan's most trusted home services platform. Connecting homeowners with verified workers for electrical, plumbing, AC repair, carpentry, and more.</p>
+        </div>
+        <div class="footer-col">
+            <h4>Services</h4>
+            <a href="#">Electrician</a>
+            <a href="#">Plumber</a>
+            <a href="#">AC Repair</a>
+            <a href="#">Carpentry</a>
+            <a href="#">Painting</a>
+            <a href="#">Cleaning</a>
+        </div>
+        <div class="footer-col">
+            <h4>Company</h4>
+            <a href="#">About Us</a>
+            <a href="#">Careers</a>
+            <a href="#">Blog</a>
+            <a href="#">Press</a>
+            <a href="#">Contact</a>
+        </div>
+        <div class="footer-col">
+            <h4>Support</h4>
+            <a href="#">Help Center</a>
+            <a href="#">Safety</a>
+            <a href="#">Terms of Service</a>
+            <a href="#">Privacy Policy</a>
+            <a href="#">Dispute Resolution</a>
+        </div>
+    </div>
+    <div class="footer-bottom">
+        <span>&copy; 2026 HUNAR. All rights reserved.</span>
+        <span>Made with &#10084; in Pakistan</span>
+    </div>
+</footer>
+
+</body>
+</html>
