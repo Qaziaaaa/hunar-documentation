@@ -19,22 +19,27 @@ Every pixel, every animation, every color, every transition must serve one purpo
 Every decision a user makes on your platform is driven by **four psychological forces**:
 
 ### 1. DOPAMINE (Desire & Reward)
+
 The user's brain releases dopamine when they:
+
 - See something beautiful for the first time (hero section)
 - Discover something unexpected (animated stats, live job counters)
 - Complete an action and see instant feedback (posting a job, getting an offer)
 - Receive social proof (worker ratings, "247 jobs completed")
 
 **Application:**
+
 - Every screen must have a **micro-reward** — a small animation, a satisfying transition, a confirmation toast that feels good
 - When a customer posts a job, the confirmation must feel like an **achievement** — not just text, but a celebration animation
 - When offers arrive, they should **slide in with animation** so the user feels the excitement of receiving something
 - Dashboard numbers should **count up with animation** when the page loads — don't just show static numbers
 
 ### 2. TRUST (Safety & Credibility)
+
 The user must feel safe within **0.5 seconds** of landing on any page.
 
 **Application:**
+
 - The verified badge must be **green teal (#0F8B8D)** with a shield icon — this color must become synonymous with trust across the entire platform
 - Worker profiles must show: photo, rating, verification badge, completed jobs count, and location — **all visible without scrolling**
 - The color hierarchy must be consistent: Navy = Authority, Teal = Safe Action, Orange = Attention, Green = Success, Red = Danger
@@ -43,9 +48,11 @@ The user must feel safe within **0.5 seconds** of landing on any page.
 - Payment screens must feel **minimal and secure** — no distractions, no competing CTAs
 
 ### 3. URGENCY (FOMO & Scarcity)
+
 The user must feel that **inaction has a cost.**
 
 **Application:**
+
 - Show **"3 workers viewing this job right now"** on active job cards
 - Show **"Average response time: 12 minutes"** on the landing page
 - On worker cards, show **"Last active: 2 minutes ago"** — creates immediacy
@@ -54,9 +61,11 @@ The user must feel that **inaction has a cost.**
 - Emergency services must have a **pulsing orange accent** — signals urgency without panic
 
 ### 4. PROGRESS (Momentum & Completion)
+
 Humans are wired to complete things they start. **Show progress always.**
 
 **Application:**
+
 - Job creation must be a **multi-step progress bar** (Step 1 of 6) — users are 73% more likely to complete multi-step forms with visible progress
 - The job status timeline must show **completed steps as green checkmarks** and upcoming steps as gray circles — creates a visual "pull" to complete
 - Dashboard must show **"You're 3 steps away from completing this job"** type nudges
@@ -72,6 +81,7 @@ Humans are wired to complete things they start. **Show progress always.**
 A user's brain decides whether to stay or leave within **0.3 seconds**. Not 3 seconds. Not 1 second. **0.3 seconds.**
 
 In that time, the brain answers three questions:
+
 1. **What is this?** (Recognition)
 2. **Is this for me?** (Relevance)
 3. **What should I do?** (Action)
@@ -101,6 +111,7 @@ On the dashboard, the **active job card** is the hero. Not the stats. Not the si
 **The Rule:** Before designing any screen, ask: "If the user sees only ONE thing on this screen, what should it be?" Design that thing first. Then add everything else around it, making sure nothing competes with it.
 
 **How to make one element the hero:**
+
 - Make it **larger** than everything else
 - Give it **more white space** around it than anything else
 - Use **higher contrast** — if everything is gray, make the hero Navy or Teal
@@ -114,6 +125,7 @@ On the dashboard, the **active job card** is the hero. Not the stats. Not the si
 Amateurs fill every pixel. Masters leave space.
 
 White space is the most powerful tool in design. It does three things:
+
 1. **Creates importance** — an element surrounded by space feels more important than an element surrounded by other elements
 2. **Reduces cognitive load** — the brain processes fewer things at once, so each thing gets more attention
 3. **Feels premium** — luxury brands use massive white space because it signals quality
@@ -139,6 +151,7 @@ Can a user understand the screen in **0.5 seconds** by just glancing at it?
 If they need to read text to understand what the screen is about, the design has failed at visual communication.
 
 **How to pass the Glance Test:**
+
 - **Size** tells importance — the biggest thing on screen should be the most important
 - **Color** tells action — the only colored element should be the thing to click
 - **Position** tells priority — top-center is seen first, bottom-right is seen last
@@ -147,17 +160,20 @@ If they need to read text to understand what the screen is about, the design has
 **Apply to HUNAR:**
 
 Landing page glance test:
+
 - User sees: Big Navy heading → understands "this is about finding professionals"
 - User sees: Teal button → understands "I should click this"
 - Pass ✅
 
 Worker profile glance test:
+
 - User sees: Large face photo → understands "this is a person"
 - User sees: Rating stars → understands "this person is good"
 - User sees: Teal "Book Now" → understands "I can hire this person"
 - Pass ✅
 
 Dashboard glance test:
+
 - User sees: Active job card with status badge → understands "I have something in progress"
 - User sees: Orange pending badge → understands "something needs my attention"
 - Pass ✅
@@ -171,6 +187,7 @@ Dashboard glance test:
 The human eye follows a predictable path across a screen. Understanding this path lets you **control what the user sees first, second, and third.**
 
 ### The F-Pattern (For Text-Heavy Screens — Dashboard, Job Details)
+
 ```
 ┌─────────────────────────┐
 │ ●●●●●●●●●●●●●●●●●●●●●●●● │  ← Eye starts here (top-left)
@@ -185,12 +202,14 @@ The human eye follows a predictable path across a screen. Understanding this pat
 ```
 
 **Apply to HUNAR Dashboard:**
+
 - **Top-left**: Most important stat (Active Jobs)
 - **Top-right**: Least important stat (Total Spent)
 - **Below stats**: Active job cards (the eye naturally drops down after scanning stats)
 - **Right side**: Secondary info (upcoming visits, recent activity)
 
 ### The Z-Pattern (For Visual Screens — Landing Page, Worker Profile)
+
 ```
 ┌─────────────────────────┐
 │ ●●●●●●●●→→→→→→→→→●●●●●●●│  ← Eye: top-left to top-right
@@ -202,15 +221,18 @@ The human eye follows a predictable path across a screen. Understanding this pat
 ```
 
 **Apply to HUNAR Landing Page:**
+
 - **Top-left**: Logo (brand recognition)
 - **Top-right**: Navigation + Login (secondary action)
 - **Center**: Hero heading + CTA (the diagonal draws eye here)
 - **Bottom-right**: "Find Professionals" (secondary CTA lands here naturally)
 
 ### The Center-Weight Pattern (For Mobile)
+
 On mobile, the eye goes to the **center of the screen first**, then scans up and down.
 
 **Apply to HUNAR Mobile:**
+
 - **Center**: Primary action (Post a Job button, or active job card)
 - **Above center**: Status information
 - **Below center**: Secondary options
@@ -224,24 +246,26 @@ The most important visual tool in design is **contrast**. Not color contrast alo
 
 **Types of contrast that create attention:**
 
-| Contrast Type | Example on HUNAR | Effect |
-|---|---|---|
-| Size contrast | Hero heading 48px vs body 16px | Heading feels 3x more important |
-| Weight contrast | Bold heading vs regular body | Heading feels more authoritative |
-| Color contrast | Teal button on white background | Button becomes the focal point |
-| Spacing contrast | Element with 40px margin vs element with 8px margin | Spacious element feels premium |
-| Animation contrast | Animated element on static page | Animated element grabs all attention |
-| Shadow contrast | Elevated card vs flat background | Card feels like it's "above" the page |
+| Contrast Type      | Example on HUNAR                                    | Effect                                |
+| ------------------ | --------------------------------------------------- | ------------------------------------- |
+| Size contrast      | Hero heading 48px vs body 16px                      | Heading feels 3x more important       |
+| Weight contrast    | Bold heading vs regular body                        | Heading feels more authoritative      |
+| Color contrast     | Teal button on white background                     | Button becomes the focal point        |
+| Spacing contrast   | Element with 40px margin vs element with 8px margin | Spacious element feels premium        |
+| Animation contrast | Animated element on static page                     | Animated element grabs all attention  |
+| Shadow contrast    | Elevated card vs flat background                    | Card feels like it's "above" the page |
 
 **Apply to HUNAR:**
 
 On the landing page:
+
 - The "Post a Job" button is the ONLY teal element in the hero section
 - This single point of color makes the eye go straight to it
 - If you made the secondary button teal too, the eye wouldn't know where to go
 - **One color accent = one focal point = one clear action**
 
 On worker cards:
+
 - The worker's face is the largest element
 - The name is the second largest
 - The rating is the third (in orange for contrast)
@@ -249,6 +273,7 @@ On worker cards:
 - Everything else is gray or Navy — receding into the background
 
 On the dashboard:
+
 - Active job cards have a **colored left border** (teal for active, orange for pending)
 - This single line of color makes the user's eye go to that card first
 - Stats without color accents feel secondary — which is correct
@@ -262,6 +287,7 @@ Humans process images **60,000 faster than text.** A single photograph can creat
 **What this means for HUNAR:**
 
 ### Worker Photos
+
 - Must show **real faces** — not illustrations, not icons, not silhouettes
 - Face should be **clearly visible** — no sunglasses, no distant shots
 - Photo should have **warm, natural lighting** — not harsh flash, not dark shadows
@@ -269,17 +295,20 @@ Humans process images **60,000 faster than text.** A single photograph can creat
 - Photo should be **cropped to show face + shoulders** — this is the most trustworthy framing (same as LinkedIn, same as passport photos — humans trust this framing instinctively)
 
 ### Portfolio Images
+
 - Show **before/after** when possible — this is the most compelling visual proof
 - Images should be **large** — small thumbnails don't create emotional impact
 - **Full-width images** on desktop (within the card/container)
 - On mobile, images should be **swipeable** — full-screen experience
 
 ### Category Icons
+
 - Use **realistic illustrations**, not abstract icons
 - An electrician icon should show a person with tools, not just a lightning bolt
 - This creates **immediate recognition** — the brain processes "person with tools" faster than "abstract symbol"
 
 ### Hero Illustration/Photo
+
 - Show a **real scene** — a professional working, a happy customer, a home being repaired
 - The image should tell the story of HUNAR **without any text**
 - If you remove all text from the hero, the image alone should communicate: "This platform connects you with workers"
@@ -324,36 +353,36 @@ The words on the screen create emotion **before** the design does. A user reads 
 
 **Button Text Psychology:**
 
-| Bad Text | Better Text | Why |
-|---|---|---|
-| Submit | Post My Job | Personal, action-oriented, specific |
-| Search | Find Professionals | Benefit-focused, not task-focused |
-| Continue | Next Step | Implies progress, not just moving forward |
-| Cancel | Go Back | Less anxiety-inducing than "Cancel" |
-| Delete | Remove | Less scary, more reversible feeling |
-| Login | Welcome Back | Warm, personal, acknowledges return |
-| Register | Join HUNAR | Community, belonging, not just "signing up" |
-| Send Offer | Offer My Services | Worker feels empowered, not submissive |
-| Accept | Hire Ali Khan | Personal, makes the action feel significant |
-| Pay Now | Complete Payment | Feels like finishing, not spending |
+| Bad Text   | Better Text        | Why                                         |
+| ---------- | ------------------ | ------------------------------------------- |
+| Submit     | Post My Job        | Personal, action-oriented, specific         |
+| Search     | Find Professionals | Benefit-focused, not task-focused           |
+| Continue   | Next Step          | Implies progress, not just moving forward   |
+| Cancel     | Go Back            | Less anxiety-inducing than "Cancel"         |
+| Delete     | Remove             | Less scary, more reversible feeling         |
+| Login      | Welcome Back       | Warm, personal, acknowledges return         |
+| Register   | Join HUNAR         | Community, belonging, not just "signing up" |
+| Send Offer | Offer My Services  | Worker feels empowered, not submissive      |
+| Accept     | Hire Ali Khan      | Personal, makes the action feel significant |
+| Pay Now    | Complete Payment   | Feels like finishing, not spending          |
 
 **Helper Text Psychology:**
 
-| Screen | Bad Helper Text | Better Helper Text |
-|---|---|---|
-| Job creation | "Enter description" | "Describe what's broken — the more detail, the better offers you'll get" |
-| Worker profile | "Add your bio" | "Tell customers why they should choose you" |
-| Payment | "Select payment method" | "Your payment is protected until the job is complete" |
-| Review | "Rate this worker" | "Your review helps other customers find great professionals" |
+| Screen         | Bad Helper Text         | Better Helper Text                                                       |
+| -------------- | ----------------------- | ------------------------------------------------------------------------ |
+| Job creation   | "Enter description"     | "Describe what's broken — the more detail, the better offers you'll get" |
+| Worker profile | "Add your bio"          | "Tell customers why they should choose you"                              |
+| Payment        | "Select payment method" | "Your payment is protected until the job is complete"                    |
+| Review         | "Rate this worker"      | "Your review helps other customers find great professionals"             |
 
 **Error Text Psychology:**
 
-| Bad Error | Better Error | Why |
-|---|---|---|
-| "Invalid input" | "This field needs a valid phone number" | Tells user exactly what to fix |
-| "Error occurred" | "Something went wrong on our end — we're fixing it" | Takes blame away from user |
-| "Password too short" | "Your password needs at least 8 characters" | Positive framing, not negative |
-| "Required field" | "We need this to find workers near you" | Explains WHY it's required |
+| Bad Error            | Better Error                                        | Why                            |
+| -------------------- | --------------------------------------------------- | ------------------------------ |
+| "Invalid input"      | "This field needs a valid phone number"             | Tells user exactly what to fix |
+| "Error occurred"     | "Something went wrong on our end — we're fixing it" | Takes blame away from user     |
+| "Password too short" | "Your password needs at least 8 characters"         | Positive framing, not negative |
+| "Required field"     | "We need this to find workers near you"             | Explains WHY it's required     |
 
 ---
 
@@ -366,6 +395,7 @@ A screen where elements vary in size, spacing, and visual weight creates **rhyth
 **How to create rhythm on HUNAR screens:**
 
 ### Dashboard Rhythm
+
 ```
 ┌──────────────────────────────────────────────────┐
 │  STAT CARD (large)  STAT CARD  STAT CARD  STAT   │  ← Beat 1: Quick scan
@@ -393,6 +423,7 @@ A screen where elements vary in size, spacing, and visual weight creates **rhyth
 The rhythm is: **Quick → Deep → Medium → Quick**. This matches how the eye naturally works — it starts fast, slows down for important content, then speeds up again.
 
 ### Landing Page Rhythm
+
 ```
 Section 1: Hero — LARGE, dramatic, emotional (slow beat)
 Section 2: How It Works — THREE equal cards (medium beat)
@@ -436,17 +467,17 @@ Every color in this system is psychologically chosen. Follow it exactly.
 
 ## Color Palette
 
-| Color | Hex | Psychological Role | Where to Use |
-|-------|-----|-------------------|--------------|
-| Navy | #123B5D | Trust, Authority, Identity | Logo, navbar text, headings, important text, professional identity, dashboard numbers |
-| Teal | #0F8B8D | Action, Safety, Progress | Primary buttons, active states, verified badges, links, booking CTAs, accept actions |
-| Orange | #F59E0B | Attention, Excitement, Urgency | Star ratings, offer highlights, pending status, emergency accents, attention-grabbers |
-| Background | #F8FAFC | Clean, Open, Breathing | Main website background — never pure white for backgrounds |
-| White | #FFFFFF | Purity, Focus, Simplicity | Cards, navbar, modals, forms, input fields |
-| Dark | #172033 | Readability, Strength | Body text |
-| Gray | #64748B | Subtlety, Secondary | Secondary text, placeholders, helper text, timestamps |
-| Success Green | #16A34A | Completion, Approval | Completed jobs, approved states, online indicators, successful payments |
-| Error Red | #DC2626 | Danger, Rejection | Cancelled states, errors, delete actions, rejected offers |
+| Color         | Hex     | Psychological Role             | Where to Use                                                                          |
+| ------------- | ------- | ------------------------------ | ------------------------------------------------------------------------------------- |
+| Navy          | #123B5D | Trust, Authority, Identity     | Logo, navbar text, headings, important text, professional identity, dashboard numbers |
+| Teal          | #0F8B8D | Action, Safety, Progress       | Primary buttons, active states, verified badges, links, booking CTAs, accept actions  |
+| Orange        | #F59E0B | Attention, Excitement, Urgency | Star ratings, offer highlights, pending status, emergency accents, attention-grabbers |
+| Background    | #F8FAFC | Clean, Open, Breathing         | Main website background — never pure white for backgrounds                            |
+| White         | #FFFFFF | Purity, Focus, Simplicity      | Cards, navbar, modals, forms, input fields                                            |
+| Dark          | #172033 | Readability, Strength          | Body text                                                                             |
+| Gray          | #64748B | Subtlety, Secondary            | Secondary text, placeholders, helper text, timestamps                                 |
+| Success Green | #16A34A | Completion, Approval           | Completed jobs, approved states, online indicators, successful payments               |
+| Error Red     | #DC2626 | Danger, Rejection              | Cancelled states, errors, delete actions, rejected offers                             |
 
 ## Color Psychology Rule — Memorize This
 
@@ -461,6 +492,7 @@ RED   = "Warning. Danger. Something went wrong."
 ## Component-Level Color Application
 
 ### Navbar
+
 - Background: **White (#FFFFFF)**
 - Logo "HUNAR": **Navy (#123B5D)**
 - Nav links: **Dark (#172033)**
@@ -470,6 +502,7 @@ RED   = "Warning. Danger. Something went wrong."
 - On scroll: Add a **subtle shadow** (0 2px 8px rgba(0,0,0,0.06)) — creates depth and modernity
 
 ### Hero Section
+
 - Background: **#F8FAFC** — clean and open
 - Heading: **Navy (#123B5D)**, large, bold
 - Subheading: **Gray (#64748B)**, readable, not too small
@@ -479,6 +512,7 @@ RED   = "Warning. Danger. Something went wrong."
 - Hero illustration or image should use the **Navy-Teal-Orange** palette
 
 ### Category Cards
+
 - Card background: **White**
 - Icon container: **Light Teal background (#E6F7F7)**
 - Icon: **Teal (#0F8B8D)**
@@ -488,6 +522,7 @@ RED   = "Warning. Danger. Something went wrong."
 - **DO NOT** give each category a different color — it creates visual chaos. Uniformity = professionalism
 
 ### Professional/Worker Cards
+
 - Card: **White**
 - Name: **Navy**
 - Profession: **Gray**
@@ -500,29 +535,33 @@ RED   = "Warning. Danger. Something went wrong."
 - Card hover: **Subtle lift + teal border glow**
 
 ### Job Status Badges
-| Status | Background | Text | Icon |
-|--------|-----------|------|------|
-| Pending | Orange bg (#FEF3C7) | Orange text (#D97706) | Clock |
-| Accepted | Teal bg (#E6F7F7) | Teal text (#0F8B8D) | Check |
-| In Progress | Navy bg (#E8EDF2) | Navy text (#123B5D) | Gear |
-| Completed | Green bg (#DCFCE7) | Green text (#16A34A) | Checkmark circle |
-| Cancelled | Red bg (#FEE2E2) | Red text (#DC2626) | X circle |
+
+| Status      | Background          | Text                  | Icon             |
+| ----------- | ------------------- | --------------------- | ---------------- |
+| Pending     | Orange bg (#FEF3C7) | Orange text (#D97706) | Clock            |
+| Accepted    | Teal bg (#E6F7F7)   | Teal text (#0F8B8D)   | Check            |
+| In Progress | Navy bg (#E8EDF2)   | Navy text (#123B5D)   | Gear             |
+| Completed   | Green bg (#DCFCE7)  | Green text (#16A34A)  | Checkmark circle |
+| Cancelled   | Red bg (#FEE2E2)    | Red text (#DC2626)    | X circle         |
 
 ### Reviews & Ratings
+
 - Stars: **Orange (#F59E0B)** — never deviate, gold/orange is universally understood as ratings
 - Rating number: **Navy**, bold
 - Review text: **Gray**
 - Reviewer name: **Dark**
 
 ### Dashboard Statistics Cards
-| Stat | Icon Color | Accent |
-|------|-----------|--------|
-| Active Jobs | Teal | Teal left border |
-| Pending Offers | Orange | Orange left border |
-| Completed Jobs | Green | Green left border |
-| Total Spent / Earnings | Navy | Navy left border |
+
+| Stat                   | Icon Color | Accent             |
+| ---------------------- | ---------- | ------------------ |
+| Active Jobs            | Teal       | Teal left border   |
+| Pending Offers         | Orange     | Orange left border |
+| Completed Jobs         | Green      | Green left border  |
+| Total Spent / Earnings | Navy       | Navy left border   |
 
 ### Payment Screen
+
 - Total amount: **Navy**, large, bold
 - Payment method cards: **White** with border
 - Selected method: **Teal border**
@@ -531,12 +570,14 @@ RED   = "Warning. Danger. Something went wrong."
 - Keep this screen **extremely clean** — no competing elements, maximum trust
 
 ### Emergency Services
+
 - Accent: **Orange** — stronger usage allowed here
 - Icon background: **Light orange (#FEF3C7)**
 - Icon: **Orange (#F59E0B)**
 - **DO NOT** make the entire page orange — use orange as accent only
 
 ### Chat/Messages
+
 - Your messages: **Teal background, white text**
 - Other person's messages: **White background, dark text**
 - Chat background: **#F8FAFC**
@@ -544,6 +585,7 @@ RED   = "Warning. Danger. Something went wrong."
 - Avoid navy message bubbles — they become visually heavy at scale
 
 ### Forms & Inputs
+
 - Labels: **Dark (#172033)**
 - Placeholder: **Gray (#64748B)**
 - Input border: **Light Gray (#E2E8F0)**
@@ -558,6 +600,7 @@ RED   = "Warning. Danger. Something went wrong."
 ## First Impression Rule (0.5 Second Rule)
 
 When a user opens HUNAR, within 0.5 seconds they must feel:
+
 1. **This is professional** (clean layout, good typography, proper spacing)
 2. **This is trustworthy** (Navy + Teal palette, verified badges, real numbers)
 3. **This is for me** (clear value proposition, obvious next step)
@@ -565,6 +608,7 @@ When a user opens HUNAR, within 0.5 seconds they must feel:
 ## Hero Section — The Make-or-Break Screen
 
 The hero section must:
+
 - Have a **clear, bold heading** in Navy — no more than 8 words
 - A **supporting subheading** in Gray — explain what HUNAR does in one sentence
 - A **primary CTA button** in Teal — "Post a Job" or "Find a Professional"
@@ -587,12 +631,14 @@ Step 5 → Eye wanders to HERO IMAGE (visual reinforcement)
 ```
 
 **Why this order matters:**
+
 - If the user sees the CTA before the heading, they don't know what they're clicking
 - If the user sees the image before the heading, they might think it's a decorative site, not a service
 - If the user sees social proof before the CTA, they might scroll past without acting
 - The heading MUST be seen first — it answers "What is this?" in 0.3 seconds
 
 **How to enforce this hierarchy:**
+
 - Heading: **48-56px, weight 800, Navy** — this is the most visually heavy element
 - Subheading: **18-20px, weight 400, Gray** — clearly subordinate to heading
 - CTA: **Teal button** — the ONLY colored element in the hero section
@@ -619,12 +665,14 @@ Social proof numbers should be positioned **below the CTA but above the fold.** 
 - User sees social proof → "500+ professionals, 4.8 rating" → trust increases → click likelihood doubles
 
 **The psychology:** The brain needs **two confirmations** before taking action:
+
 1. "This looks legitimate" (heading + design quality)
 2. "Other people use this" (social proof numbers)
 
 Both must be visible **without scrolling.** If the social proof is below the fold, the user might leave before seeing it.
 
 ### Hero Animation (Enhanced)
+
 - The heading should **fade in from bottom** (0.6s ease)
 - The subheading should **fade in 0.2s after** the heading
 - The buttons should **fade in 0.2s after** the subheading
@@ -635,16 +683,17 @@ Both must be visible **without scrolling.** If the social proof is below the fol
 
 ## Typography System
 
-| Element | Font | Size | Weight | Color | Line Height |
-|---------|------|------|--------|-------|-------------|
-| H1 (Hero) | Inter / Poppins | 48-56px | 800 | Navy | 1.1 |
-| H2 (Section) | Inter / Poppins | 32-36px | 700 | Navy | 1.2 |
-| H3 (Card title) | Inter / Poppins | 20-24px | 600 | Navy | 1.3 |
-| Body | Inter | 16px | 400 | Dark | 1.6 |
-| Small / Label | Inter | 14px | 500 | Gray | 1.4 |
-| Badge | Inter | 12px | 600 | Teal/Orange | 1.0 |
+| Element         | Font            | Size    | Weight | Color       | Line Height |
+| --------------- | --------------- | ------- | ------ | ----------- | ----------- |
+| H1 (Hero)       | Inter / Poppins | 48-56px | 800    | Navy        | 1.1         |
+| H2 (Section)    | Inter / Poppins | 32-36px | 700    | Navy        | 1.2         |
+| H3 (Card title) | Inter / Poppins | 20-24px | 600    | Navy        | 1.3         |
+| Body            | Inter           | 16px    | 400    | Dark        | 1.6         |
+| Small / Label   | Inter           | 14px    | 500    | Gray        | 1.4         |
+| Badge           | Inter           | 12px    | 600    | Teal/Orange | 1.0         |
 
 **Rules:**
+
 - Never use more than **2 font families** — one for headings (bold), one for body (clean)
 - Font sizes must create **clear hierarchy** — the user's eye must naturally flow from heading → subheading → body → CTA
 - Line height of 1.5-1.6 for body text — **readability is non-negotiable**
@@ -663,6 +712,7 @@ Both must be visible **without scrolling.** If the social proof is below the fol
 ## Card Design System
 
 All cards must follow this structure:
+
 ```
 ┌──────────────────────────┐
 │  [Icon/Avatar]  [Badge]  │
@@ -691,6 +741,7 @@ All cards must follow this structure:
 Every card must have an **internal hierarchy** — not all elements inside a card are equal. The eye should enter the card at a specific point and exit at the CTA.
 
 **Worker Card Internal Flow:**
+
 ```
 Eye enters → FACE (largest element, human connection)
           → NAME (Navy, bold — confirms identity)
@@ -702,6 +753,7 @@ Eye enters → FACE (largest element, human connection)
 ```
 
 **Job Card Internal Flow:**
+
 ```
 Eye enters → STATUS BADGE (colored — tells you the state immediately)
           → JOB TITLE (Navy, bold — what is this about)
@@ -712,6 +764,7 @@ Eye enters → STATUS BADGE (colored — tells you the state immediately)
 ```
 
 **Category Card Internal Flow:**
+
 ```
 Eye enters → ICON (Teal, in light teal circle — visual anchor)
           → CATEGORY NAME (Navy — what service is this)
@@ -733,6 +786,7 @@ Each card should have **exactly one accent color element** that draws the eye. T
 ### Card Hover Psychology
 
 When a user hovers over a card, the brain expects **feedback that confirms interactivity.** The hover effect should:
+
 1. **Lift the card** (translateY(-4px)) — feels like it's "raising its hand" to be noticed
 2. **Grow the shadow** — creates depth, the card feels "above" the page
 3. **Shift the border** to light teal — subtle color change signals "this is active"
@@ -743,6 +797,7 @@ When a user hovers over a card, the brain expects **feedback that confirms inter
 ## Button Design System
 
 ### Primary Button (Teal)
+
 ```css
 background: #0F8B8D
 color: white
@@ -756,6 +811,7 @@ active: transform translateY(0), box-shadow none
 ```
 
 ### Secondary Button (White + Navy)
+
 ```css
 background: white
 color: #123B5D
@@ -767,6 +823,7 @@ hover: background #123B5D, color white
 ```
 
 ### Ghost Button
+
 ```css
 background: transparent
 color: #0F8B8D
@@ -774,6 +831,7 @@ hover: background #E6F7F7
 ```
 
 **Button Rules:**
+
 - Only **ONE primary button** per screen — too many teal buttons dilute the action
 - Primary CTA must be the **most visually prominent** element on the screen
 - Button text must be **action-oriented**: "Post a Job" not "Submit", "Find Professionals" not "Search", "Book Now" not "Continue"
@@ -798,6 +856,7 @@ hover: background #E6F7F7
 ## The Psychology of Animation
 
 Animation is NOT decoration. Animation is **communication**. It tells the user:
+
 - "Something happened" (feedback)
 - "This is ready" (completion)
 - "Look here" (attention)
@@ -806,6 +865,7 @@ Animation is NOT decoration. Animation is **communication**. It tells the user:
 ## Required Animations
 
 ### Page Load Sequence
+
 1. **Navbar** slides down from top (0.3s ease)
 2. **Hero heading** fades in + slides up (0.5s ease, 0.1s delay)
 3. **Hero subheading** fades in + slides up (0.5s ease, 0.3s delay)
@@ -817,56 +877,69 @@ Animation is NOT decoration. Animation is **communication**. It tells the user:
 This creates a **cinematic, premium feel** — the user perceives the product as high-quality within the first 2 seconds.
 
 ### Button Interactions
+
 - **Hover**: translateY(-1px) + box-shadow grows + background darkens slightly (0.3s)
 - **Click**: translateY(0) + shadow reduces + slight scale(0.98) (0.1s)
 - **Success**: Button text changes to checkmark icon + green background (0.3s)
 
 ### Card Interactions
+
 - **Hover**: translateY(-4px) + shadow grows + border changes to light teal (0.3s)
 - **Click**: Quick scale(0.98) then back (0.2s)
 
 ### Form Interactions
+
 - **Input focus**: Border transitions from gray to teal (0.2s) + subtle glow ring appears
 - **Input error**: Border transitions to red + shake animation (0.4s)
 - **Input success**: Border transitions to green + small checkmark appears (0.3s)
 - **Label**: Floats up when input is focused (0.2s)
 
 ### Notification Toast
+
 - **Entry**: Slides in from top-right + fades in (0.4s ease)
 - **Exit**: Slides out to right + fades out (0.3s ease)
 - **Types**: Success (green accent), Error (red accent), Info (teal accent), Warning (orange accent)
 
 ### Job Status Transitions
+
 When a job status changes:
+
 1. Old badge **fades out** (0.2s)
 2. Brief **pulse animation** on the status area (0.3s)
 3. New badge **fades in + scales from 0.9 to 1** (0.3s)
 4. A subtle **toast notification** confirms the change
 
 ### Offer Arrival Animation
+
 When a new worker offer arrives:
+
 1. The offer card **slides in from the right** (0.4s ease)
 2. The **offer count** on the job page **increments with animation** (number scales up briefly)
 3. A **subtle sound cue** (optional, can be a soft "ding")
 4. The card has a **brief teal glow** that fades after 1 second
 
 ### Dashboard Number Animation
+
 When the dashboard loads, all stat numbers **count up from 0**:
+
 ```
 Active Jobs:     0 → 3  (0.8s)
 Pending Offers:  0 → 5  (0.8s, 0.1s delay)
 Completed Jobs:  0 → 47 (1.0s, 0.2s delay)
 Total Spent:     0 → 12,450 (1.2s, 0.3s delay)
 ```
+
 This creates a sense of **momentum and accomplishment**.
 
 ### Progress Bar (Job Creation)
+
 - Each step completion triggers a **smooth fill animation** on the progress bar
 - The bar color transitions from **Teal** (completed steps) to **Gray** (upcoming)
 - Step numbers **pulse briefly** when completed
 - A **confetti burst** (subtle, small particles) on final step completion
 
 ### Scroll Animations
+
 - Content sections **fade in + slide up** when they enter the viewport (0.6s ease, triggered once)
 - Category cards **stagger in** from bottom (0.1s apart)
 - Stats sections **count up** when visible
@@ -874,15 +947,15 @@ This creates a sense of **momentum and accomplishment**.
 
 ## Animation Timing Guidelines
 
-| Animation Type | Duration | Easing |
-|---------------|----------|--------|
-| Micro-interaction (hover, click) | 0.2-0.3s | ease |
-| Page transition | 0.3-0.4s | ease-in-out |
-| Element entrance | 0.4-0.6s | ease-out |
-| Number counter | 0.8-1.2s | ease-out |
-| Modal/popup | 0.3s | ease |
-| Toast notification | 0.4s entry, 0.3s exit | ease |
-| Success celebration | 0.6-0.8s | ease |
+| Animation Type                   | Duration              | Easing      |
+| -------------------------------- | --------------------- | ----------- |
+| Micro-interaction (hover, click) | 0.2-0.3s              | ease        |
+| Page transition                  | 0.3-0.4s              | ease-in-out |
+| Element entrance                 | 0.4-0.6s              | ease-out    |
+| Number counter                   | 0.8-1.2s              | ease-out    |
+| Modal/popup                      | 0.3s                  | ease        |
+| Toast notification               | 0.4s entry, 0.3s exit | ease        |
+| Success celebration              | 0.6-0.8s              | ease        |
 
 **Golden Rule**: If an animation makes the user wait, it's too slow. If an animation is so fast the user misses it, it's too fast. The sweet spot is **0.3-0.5s** for most interactions.
 
@@ -891,6 +964,7 @@ This creates a sense of **momentum and accomplishment**.
 # PART 5 — LANDING PAGE DESIGN (STOP-SCROLLING)
 
 ## Section 1: Hero
+
 - **Navy heading** (48-56px): "Find the Right Professional for Your Job"
 - **Gray subheading** (18-20px): "Trusted workers for plumbing, electrical, AC repair and more."
 - **Teal CTA**: "Post a Job"
@@ -900,6 +974,7 @@ This creates a sense of **momentum and accomplishment**.
 - **Visual**: Illustration or photo showing a professional at work, positioned right side
 
 ## Section 2: How It Works (3 Steps)
+
 - **Heading**: "How HUNAR Works" (Navy)
 - **Three step cards** in a row:
   1. Icon (Teal) + "Post Your Job" + "Describe your problem in 30 seconds"
@@ -909,6 +984,7 @@ This creates a sense of **momentum and accomplishment**.
 - Each card **stagger animates** on scroll
 
 ## Section 3: Popular Categories
+
 - **Heading**: "Popular Services" (Navy)
 - **Category cards grid** (3 columns on desktop, 2 on mobile):
   - Electrician, Plumber, Carpenter, AC Technician, Painter, Mechanic
@@ -917,6 +993,7 @@ This creates a sense of **momentum and accomplishment**.
 - **"View All Services"** link in Teal at bottom
 
 ## Section 4: Featured Professionals
+
 - **Heading**: "Top-Rated Professionals" (Navy)
 - **Horizontal scrollable cards** or grid:
   - Worker photo, name (Navy), profession (Gray), rating (Orange stars), verified badge (Teal), completed jobs, location
@@ -925,6 +1002,7 @@ This creates a sense of **momentum and accomplishment**.
 - **Subtle auto-scroll** on desktop (stops on hover) — creates "living" feel
 
 ## Section 5: Trust & Safety
+
 - **Heading**: "Why Trust HUNAR?" (Navy)
 - **Four trust pillars** (icon + text):
   1. ✓ Verified Professionals — "Every worker is background-checked"
@@ -933,6 +1011,7 @@ This creates a sense of **momentum and accomplishment**.
   4. 🔒 Secure Payments — "Pay only after job completion"
 
 ## Section 6: Stats Bar
+
 - **Dark Navy background** (#172033) or **Teal background** (#0F8B8D)
 - **Four large animated numbers**:
   - "500+" Professionals
@@ -942,6 +1021,7 @@ This creates a sense of **momentum and accomplishment**.
 - Numbers **count up** when section enters viewport
 
 ## Section 7: Testimonials
+
 - **Heading**: "What Our Customers Say" (Navy)
 - **Carousel of 3-4 testimonials**:
   - Quote text (Gray, italic)
@@ -951,12 +1031,14 @@ This creates a sense of **momentum and accomplishment**.
 - Auto-rotating with manual dots
 
 ## Section 8: CTA Banner
+
 - **Teal background** (#0F8B8D)
 - **White text**: "Need a Professional? Post Your Job Now."
 - **White button**: "Post a Job Now"
 - **Subtle pattern** or gradient overlay for visual depth
 
 ## Section 9: Footer
+
 - **Navy background** (#123B5D)
 - **White text** links
 - Logo, about, services, support, legal, social icons
@@ -969,6 +1051,7 @@ This creates a sense of **momentum and accomplishment**.
 ## The Dashboard Attention Principle
 
 The dashboard is the **most-visited screen** in HUNAR. Users come here multiple times a day. It must feel:
+
 - **Immediately useful** — the most important thing is visible in 0.5 seconds
 - **Never overwhelming** — if it feels cluttered, the user will stop coming
 - **Alive** — numbers, badges, and statuses should feel current and real
@@ -985,6 +1068,7 @@ Everything on the dashboard must serve this question. If it doesn't, remove it.
 The dashboard must have a **clear visual focal point** — one area that gets the eye first.
 
 **Customer Dashboard Focal Point: The "Action Required" Card**
+
 ```
 ┌─────────────────────────────────────────────────────┐
 │  ┌───────────────────────────────────────────────┐  │
@@ -1006,12 +1090,14 @@ The dashboard must have a **clear visual focal point** — one area that gets th
 ```
 
 The "Action Required" card is the **hero of the dashboard.** It's:
+
 - The first thing the eye sees (top of content area, full width)
 - The only element with an **orange or teal accent** that's large
 - The only element with a **CTA button**
 - Everything else is secondary
 
 **Worker Dashboard Focal Point: The "New Jobs Near You" Card**
+
 ```
 ┌─────────────────────────────────────────────────────┐
 │  ┌───────────────────────────────────────────────┐  │
@@ -1044,6 +1130,7 @@ Step 4 → Eye scans DOWN the job list (reads each card's details)
 ```
 
 **This means:**
+
 - The hero card must be at the **very top** of the content area
 - Stats must be **directly below** the hero card
 - Active jobs must be **below the stats**
@@ -1062,6 +1149,7 @@ The dashboard uses **tighter spacing** than the landing page because it's a **ut
 - Section headings: **24px top margin, 12px bottom margin**
 
 **The principle:** On utility screens, **information density is more important than aesthetics.** The user is here to DO something, not admire the design.
+
 ```
 ┌─────────────┐ ┌─────────────┐ ┌─────────────┐ ┌─────────────┐
 │ Active Jobs │ │  Pending    │ │ Completed   │ │ Total Spent │
@@ -1071,11 +1159,13 @@ The dashboard uses **tighter spacing** than the landing page because it's a **ut
 │   accent]   │ │   accent]   │ │   accent]   │ │   accent]   │
 └─────────────┘ └─────────────┘ └─────────────┘ └─────────────┘
 ```
+
 - Numbers **count up** on load
 - Left border accent in respective color
 - **White card, subtle shadow**
 
 ### Active Jobs Section
+
 - **Heading**: "Active Jobs" (Navy)
 - **Job cards** showing:
   - Job title (Navy)
@@ -1086,6 +1176,7 @@ The dashboard uses **tighter spacing** than the landing page because it's a **ut
 - **Empty state** if no active jobs: illustration + "No active jobs yet" + "Post Your First Job" CTA
 
 ### Upcoming Visits
+
 - **Timeline-style cards**:
   - Worker avatar + name
   - Date + time (prominent)
@@ -1094,6 +1185,7 @@ The dashboard uses **tighter spacing** than the landing page because it's a **ut
 - **Countdown feel** — "Tomorrow at 4:00 PM" or "In 2 hours"
 
 ### Recent Activity Feed
+
 - **Vertical timeline** with dots and lines
 - Each event: icon + description + timestamp
 - Events: "Job posted", "3 offers received", "Worker selected", etc.
@@ -1101,6 +1193,7 @@ The dashboard uses **tighter spacing** than the landing page because it's a **ut
 ## Worker Dashboard
 
 ### Stats Row
+
 ```
 ┌─────────────┐ ┌─────────────┐ ┌─────────────┐ ┌─────────────┐
 │  Available  │ │   Pending   │ │  Completed  │ │  Earnings   │
@@ -1111,6 +1204,7 @@ The dashboard uses **tighter spacing** than the landing page because it's a **ut
 ```
 
 ### Nearby Jobs Feed
+
 - **Cards** with:
   - Category icon + name
   - Problem title (Navy)
@@ -1128,6 +1222,7 @@ The dashboard uses **tighter spacing** than the landing page because it's a **ut
 ## Multi-Step Form Design
 
 ### Progress Bar
+
 - **Fixed at top** of the form area
 - Shows: Step 1 of 6 → Step 2 of 6 → etc.
 - **Teal fill** for completed steps, **Gray** for upcoming
@@ -1135,11 +1230,13 @@ The dashboard uses **tighter spacing** than the landing page because it's a **ut
 - **Smooth animation** when transitioning between steps
 
 ### Step Transitions
+
 - Current step **slides out to left** (0.3s)
 - New step **slides in from right** (0.3s)
 - Creates a sense of **forward momentum**
 
 ### Step 1: Service Category
+
 - **Heading**: "What do you need help with?"
 - **Grid of category cards** (2-3 columns)
 - Each card: Icon + Category name
@@ -1147,6 +1244,7 @@ The dashboard uses **tighter spacing** than the landing page because it's a **ut
 - **Single selection** only
 
 ### Step 2: Problem Description
+
 - **Heading**: "Describe your problem"
 - **Problem title input**: Large, prominent
 - **Description textarea**: Multi-line, with character count
@@ -1154,6 +1252,7 @@ The dashboard uses **tighter spacing** than the landing page because it's a **ut
 - **Helper text** in Gray: "The more detail you provide, the better offers you'll receive"
 
 ### Step 3: Media Upload
+
 - **Heading**: "Add photos or voice description"
 - **Image upload zone**: Dashed border, Teal icon, "Drag photos here or click to upload"
 - **Voice recorder button**: Large circular Teal button with microphone icon
@@ -1162,6 +1261,7 @@ The dashboard uses **tighter spacing** than the landing page because it's a **ut
 - **Uploaded images grid**: Thumbnail previews with delete (X) buttons
 
 ### Step 4: Location
+
 - **Heading**: "Where do you need the service?"
 - **Map integration** or **location input** with autocomplete
 - **Current location button**: Teal, with GPS icon
@@ -1169,12 +1269,14 @@ The dashboard uses **tighter spacing** than the landing page because it's a **ut
 - **Selected location display**: Address text + small map preview
 
 ### Step 5: Preferred Visit Time
+
 - **Heading**: "When would you like the visit?"
 - **Date picker**: Calendar-style, today highlighted
 - **Time slot picker**: Grid of time slots (9 AM - 6 PM)
 - **"ASAP" option**: Orange accent — "Get offers faster"
 
 ### Step 6: Review & Submit
+
 - **Heading**: "Review your job posting"
 - **Summary card** showing all entered information:
   - Category with icon
@@ -1188,6 +1290,7 @@ The dashboard uses **tighter spacing** than the landing page because it's a **ut
 - **Subtle animation** when button is clicked — loading spinner → success celebration
 
 ### Success State
+
 - **Full-screen overlay** (not just a toast)
 - **Large animated checkmark** (green, drawing animation)
 - **Heading**: "Job Posted Successfully!"
@@ -1200,6 +1303,7 @@ The dashboard uses **tighter spacing** than the landing page because it's a **ut
 # PART 8 — WORKER PROFILE DESIGN
 
 ## Profile Header
+
 ```
 ┌──────────────────────────────────────────────────┐
 │  [Large Avatar]   Ali Khan                       │
@@ -1222,6 +1326,7 @@ The dashboard uses **tighter spacing** than the landing page because it's a **ut
 - Action buttons: Message (Navy outline) + Book Now (Teal solid)
 
 ## Profile Sections
+
 - **About**: Short bio (Gray text)
 - **Skills**: Tag pills (Teal background, white text)
 - **Experience**: Years + job count
@@ -1237,11 +1342,14 @@ The dashboard uses **tighter spacing** than the landing page because it's a **ut
 ## Visit Charge Negotiation
 
 ### Layout
+
 Split-screen feel (or stacked on mobile):
+
 - **Left/Top**: Worker's offer card
 - **Right/Bottom**: Customer's response area
 
 ### Worker Offer Card
+
 ```
 ┌─────────────────────────┐
 │  Visit Charge Offer     │
@@ -1257,6 +1365,7 @@ Split-screen feel (or stacked on mobile):
 ```
 
 ### Negotiation Chat
+
 - **Timeline style** with alternating bubbles:
   - Worker: "My visit charge is Rs. 300" (White bubble, left)
   - Customer: "Can you do Rs. 275?" (Teal bubble, right)
@@ -1265,6 +1374,7 @@ Split-screen feel (or stacked on mobile):
   - **AGREED** badge (Green) — "Visit charge agreed: Rs. 285"
 
 ### Counter Offer Input
+
 - **Amount input**: Large, prominent, with Rs. prefix
 - **"Send Counter Offer"** button: Teal
 - **"Accept Original"** button: Navy outline
@@ -1275,11 +1385,13 @@ Split-screen feel (or stacked on mobile):
 # PART 10 — MOBILE-FIRST RESPONSIVE DESIGN
 
 ## Breakpoints
+
 - Mobile: 0-640px
 - Tablet: 641-1024px
 - Desktop: 1025px+
 
 ## Mobile Navigation
+
 - **Bottom tab bar** (5 tabs max):
   - Home (House icon)
   - Jobs (Briefcase icon)
@@ -1289,6 +1401,7 @@ Split-screen feel (or stacked on mobile):
 - **Post Job button** must be the **most prominent** in the tab bar — larger, Teal, elevated
 
 ## Mobile-Specific Adjustments
+
 - Hero heading: **32-36px** (not 48px)
 - Section padding: **40px vertical** (not 80px)
 - Cards: **Full width** with 16px horizontal padding
@@ -1299,6 +1412,7 @@ Split-screen feel (or stacked on mobile):
 - Modals: **Full screen** on mobile (not centered popups)
 
 ## Touch Interactions
+
 - **Swipeable cards** for worker offers
 - **Pull to refresh** on job feeds
 - **Long press** for context menus (optional)
@@ -1309,24 +1423,29 @@ Split-screen feel (or stacked on mobile):
 # PART 11 — EMPTY STATES, LOADING STATES, ERROR STATES
 
 ## Empty States
+
 Every empty state must have:
+
 1. A **friendly illustration** (not just text)
 2. A **helpful message** in Gray
 3. A **clear CTA** in Teal
 
 Examples:
+
 - **No jobs**: "No active jobs yet" + illustration of empty clipboard + "Post Your First Job" button
 - **No offers**: "Waiting for professionals to respond" + illustration of clock + "This usually takes 10-15 minutes"
 - **No notifications**: "You're all caught up" + illustration of checkmark + nothing else
 - **No reviews**: "Reviews appear after completing jobs" + illustration of stars
 
 ## Loading States
+
 - **Skeleton screens** — not spinners. Show gray placeholder blocks that match the layout of the content
 - **Pulse animation** on skeleton blocks
 - **Never show a spinning loader** for more than 2 seconds — show a progress indication instead
 - **Page transitions**: Brief loading bar at top (Teal, thin, animated)
 
 ## Error States
+
 - **Inline errors**: Red text below the input field, red border on input
 - **Toast errors**: Slide in from top-right, red accent, auto-dismiss after 5 seconds
 - **Page errors**: Center-aligned, friendly message, illustration, "Try Again" button (Teal)
@@ -1338,6 +1457,7 @@ Examples:
 # PART 12 — PSYCHOLOGICAL TRIGGERS THROUGHOUT THE PLATFORM
 
 ## Social Proof Triggers
+
 - "247 professionals online right now" — live counter in navbar
 - "Ali completed 312 jobs this month" — on worker cards
 - "4.9 stars from 127 reviews" — on worker profiles
@@ -1345,21 +1465,25 @@ Examples:
 - Worker photos with real faces — not stock images
 
 ## Loss Aversion Triggers
+
 - "3 workers are viewing this job right now" — on active job cards
 - "Job posted 2 minutes ago — 5 professionals already viewed it" — on job status
 - "Last offer received 5 minutes ago" — creates urgency
 
 ## Commitment & Consistency
+
 - Multi-step forms that show progress — users feel invested
 - "Your profile is 65% complete" — drives completion
 - "You're 1 step away from posting your first job" — near-completion motivation
 
 ## reciprocity
+
 - "Free inspection" highlighted in Teal — give before asking
 - "No booking fee" badge on worker cards
 - "Free estimate" on worker profiles
 
 ## Anchoring
+
 - Show **"Rs. 1,500"** crossed out next to **"Rs. 1,000"** on worker cards (if applicable)
 - Show **"Average visit charge: Rs. 300"** before showing a specific worker's charge
 - Show **"Premium workers start at Rs. 500"** to set a reference point
@@ -1369,6 +1493,7 @@ Examples:
 # PART 13 — TECHNICAL IMPLEMENTATION RULES
 
 ## Technology Stack
+
 - **Frontend**: Next.js + TypeScript + Tailwind CSS
 - **Backend**: NestJS + TypeScript
 - **Database**: PostgreSQL + PostGIS
@@ -1378,6 +1503,7 @@ Examples:
 - **Fonts**: Inter (body) + Poppins (headings) from Google Fonts
 
 ## Tailwind Configuration
+
 ```javascript
 // Extend the Tailwind config with HUNAR colors
 colors: {
@@ -1399,12 +1525,14 @@ colors: {
 ```
 
 ## Animation Library Rules
+
 - Use **Framer Motion** for complex page transitions and scroll animations
 - Use **CSS transitions** for simple hover states and micro-interactions
 - Use **CSS keyframes** for loading animations and repetitive animations
 - **Never use JavaScript for simple opacity/transform animations** — CSS is smoother
 
 ## Performance Rules
+
 - **Lazy load** all images and below-the-fold content
 - **Preload** hero images and fonts
 - **Optimize** all images to WebP format
@@ -1431,6 +1559,7 @@ colors: {
 Before any screen is considered complete, verify:
 
 ## Color Compliance
+
 - [ ] Navy is used for trust elements (headings, identity, important text)
 - [ ] Teal is used for actions (buttons, CTAs, active states, verified badges)
 - [ ] Orange is used for attention (ratings, offers, pending, highlights)
@@ -1439,6 +1568,7 @@ Before any screen is considered complete, verify:
 - [ ] White background is NEVER used for the main page background (#F8FAFC instead)
 
 ## Visual Hierarchy & Attention
+
 - [ ] Every screen has ONE hero element that is the most visually prominent
 - [ ] The hero element is the largest, most contrasting, or most colorful element
 - [ ] No more than ONE accent color per card/component
@@ -1450,12 +1580,14 @@ Before any screen is considered complete, verify:
 - [ ] No competing focal points — the eye knows exactly where to go first
 
 ## Typography & Readability
+
 - [ ] Typography hierarchy is clear (H1 > H2 > H3 > Body > Small)
 - [ ] Font sizes create obvious visual weight differences
 - [ ] Line height is 1.5-1.6 for body text
 - [ ] Letter spacing is slightly tighter for headings (-0.02em)
 
 ## Spacing & Layout
+
 - [ ] Spacing follows the 8px grid
 - [ ] Hero section has at least 80px vertical padding
 - [ ] Cards have consistent border-radius (12px), padding (24px), and shadow
@@ -1463,6 +1595,7 @@ Before any screen is considered complete, verify:
 - [ ] No cramming — when in doubt, add more space
 
 ## Interaction Design
+
 - [ ] Buttons have proper hover/active states
 - [ ] Only ONE primary teal button per screen
 - [ ] Card hover creates lift + shadow (translateY(-4px))
@@ -1471,6 +1604,7 @@ Before any screen is considered complete, verify:
 - [ ] 16px minimum gap between tappable elements
 
 ## Animation & Micro-interaction
+
 - [ ] Animations are smooth (0.2-0.5s), not jarring
 - [ ] Staggered entrance animations on page load
 - [ ] Dashboard numbers count up on load
@@ -1478,18 +1612,21 @@ Before any screen is considered complete, verify:
 - [ ] Status transitions have fade-out → pulse → fade-in sequence
 
 ## Content & Copy
+
 - [ ] Button text is action-oriented ("Post My Job" not "Submit")
 - [ ] Helper text explains benefits, not just instructions
 - [ ] Error messages tell users how to fix the problem
 - [ ] Social proof is visible on key screens without scrolling
 
 ## State Design
+
 - [ ] Empty states have illustrations and CTAs
 - [ ] Loading states use skeletons, not spinners
 - [ ] Error states are human-friendly
 - [ ] Success states feel celebratory (animation, not just text)
 
 ## Mobile
+
 - [ ] Mobile layout works at 375px width
 - [ ] Bottom tab bar has max 5 items
 - [ ] Primary action is in thumb zone
@@ -1497,6 +1634,7 @@ Before any screen is considered complete, verify:
 - [ ] Forms have full-width inputs with large touch targets
 
 ## Emotional Design
+
 - [ ] Worker photos show real faces with warm lighting
 - [ ] The landing page hero tells the HUNAR story without text
 - [ ] The payment screen feels safe (minimal, clean, no competing elements)
@@ -1511,7 +1649,7 @@ Before any screen is considered complete, verify:
 
 Before designing any screen, write this sentence:
 
-**"On this screen, the user should ________ within 0.5 seconds."**
+**"On this screen, the user should **\_\_\_\_** within 0.5 seconds."**
 
 - Landing page: "...understand that HUNAR connects them with nearby professionals"
 - Dashboard: "...see what needs their attention right now"
@@ -1536,21 +1674,25 @@ If the user needs more than 3 seconds to understand the screen and know what to 
 **Apply this to every HUNAR screen:**
 
 ### Landing Page
+
 - 0-0.5s: Hero heading → "Find the Right Professional"
 - 0.5-1.5s: Teal CTA → "Post a Job" (the action)
 - 1.5-3s: Social proof + categories + trust (the confidence builders)
 
 ### Worker Profile
+
 - 0-0.5s: Worker's face → "This is a real person"
 - 0.5-1.5s: Rating + verified badge + "Book Now" → "This person is good and I can hire them"
 - 1.5-3s: Reviews + portfolio + skills → "This person has done good work before"
 
 ### Job Creation
+
 - 0-0.5s: Progress bar → "I'm on step 2 of 6"
 - 0.5-1.5s: Form heading → "Describe your problem"
 - 1.5-3s: Input field + helper text → "I need to type what's wrong"
 
 ### Negotiation Screen
+
 - 0-0.5s: Current offer amount → "They want Rs. 300"
 - 0.5-1.5s: Accept/Counter buttons → "I can accept or negotiate"
 - 1.5-3s: Chat history → "We've been going back and forth"
@@ -1560,6 +1702,7 @@ If the user needs more than 3 seconds to understand the screen and know what to 
 Every screen should communicate its purpose **in a single glance** — without reading any text.
 
 **How to achieve this:**
+
 - **Icon + color** communicates meaning faster than text
   - Orange badge = something needs attention
   - Green badge = success/completed
@@ -1572,6 +1715,7 @@ Every screen should communicate its purpose **in a single glance** — without r
   - Split screen = comparison or dual context
 
 **The test:** Squint your eyes until the screen is blurry. You should still be able to tell:
+
 1. Where the most important element is (it should be the biggest/darkest/most colorful)
 2. What action to take (the teal button should still be visible)
 3. Whether something needs attention (colored badges should still pop)
@@ -1582,16 +1726,16 @@ If the blurry version of the screen looks like a uniform gray blob, the hierarch
 
 Not all screens should have the same information density. Some screens should be **sparse and emotional**, others should be **dense and functional.**
 
-| Screen Type | Density | Purpose | Example |
-|---|---|---|---|
-| Marketing (Landing) | LOW | Emotion, trust, conversion | Hero + 2 CTAs + social proof |
-| Onboarding | LOW | Reduce anxiety, guide step-by-step | One question per screen |
-| Dashboard | MEDIUM-HIGH | Quick scan, action-oriented | Stats + cards + feeds |
-| Job Creation | LOW-MEDIUM | Focus, no distractions | One form step at a time |
-| Worker Profile | MEDIUM | Trust building, information gathering | Photo + stats + portfolio + reviews |
-| Negotiation | LOW | Focus on the deal, no clutter | Current offer + 2 buttons |
-| Payment | VERY LOW | Maximum trust, zero distraction | Amount + method + pay button |
-| Job Details/History | MEDIUM-HIGH | Timeline + context + actions | Status timeline + details + CTA |
+| Screen Type         | Density     | Purpose                               | Example                             |
+| ------------------- | ----------- | ------------------------------------- | ----------------------------------- |
+| Marketing (Landing) | LOW         | Emotion, trust, conversion            | Hero + 2 CTAs + social proof        |
+| Onboarding          | LOW         | Reduce anxiety, guide step-by-step    | One question per screen             |
+| Dashboard           | MEDIUM-HIGH | Quick scan, action-oriented           | Stats + cards + feeds               |
+| Job Creation        | LOW-MEDIUM  | Focus, no distractions                | One form step at a time             |
+| Worker Profile      | MEDIUM      | Trust building, information gathering | Photo + stats + portfolio + reviews |
+| Negotiation         | LOW         | Focus on the deal, no clutter         | Current offer + 2 buttons           |
+| Payment             | VERY LOW    | Maximum trust, zero distraction       | Amount + method + pay button        |
+| Job Details/History | MEDIUM-HIGH | Timeline + context + actions          | Status timeline + details + CTA     |
 
 **The principle:** Marketing screens are **wide open** — they need to create emotion. Utility screens are **denser** — they need to present information efficiently. Payment screens are **minimal** — they need to build trust through simplicity.
 
@@ -1614,6 +1758,7 @@ Success:          CELEBRATORY (release, reward, satisfaction)
 ```
 
 This gradient mirrors the user's mental state:
+
 - On the landing page, they're **curious and open** — give them space to explore
 - On the dashboard, they're **purposeful and scanning** — give them information efficiently
 - During job creation, they're **focused and committed** — remove all distractions
@@ -1674,6 +1819,7 @@ Every second a user spends trying to figure out a screen is a second they're not
 HUNAR is not just a service marketplace. It's a platform that people **enjoy checking** — not just when they need a service, but because the experience of using it feels good.
 
 The design makes people feel:
+
 - **On the landing page:** "Wow, this looks professional. I can trust this."
 - **While posting a job:** "This is easy. I feel in control. I'm making progress."
 - **When offers arrive:** "People want to help me. This is exciting."
@@ -1687,4 +1833,4 @@ This is not achieved by one feature. It's achieved by **every pixel** working to
 
 ---
 
-*This prompt is the single source of truth for HUNAR's visual design, psychological triggers, attention mechanics, and interaction patterns. Every screen, every component, every animation must align with this document.*
+_This prompt is the single source of truth for HUNAR's visual design, psychological triggers, attention mechanics, and interaction patterns. Every screen, every component, every animation must align with this document._
