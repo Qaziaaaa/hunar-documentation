@@ -1,4 +1,4 @@
-🎨 HUNAR Color Reference
+🎨 HUNAR Color References
 
 The color system behind the Freeio-inspired UI.
 
