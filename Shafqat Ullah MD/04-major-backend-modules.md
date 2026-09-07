@@ -1,16 +1,18 @@
-# Major Backend Modules — Home Services Platform
+# Major Backend Modules — Fixora (Home Services Platform)
 
 **Author:** Shafqat Ullah  
 **Document Type:** Backend Module Design  
-**Version:** 1.0  
-**Date:** September 1, 2026  
+**Version:** 3.0  
+**Date:** September 2, 2026  
 **Status:** Draft — Pending Team Review
+
+> **Note:** This aligns with the team-approved **Fixora stack**: **NestJS** (TypeScript) modular monolith with **PostgreSQL + PostGIS** (via Prisma), **Redis**, **Socket.IO**, and **Firebase Cloud Messaging (FCM)** for push notifications. It is a **web application**.
 
 ---
 
 ## 1. Overview
 
-This document defines all major backend modules, their responsibilities, internal structure, key functions, and inter-module communication for the Home Services Platform.
+This document defines all major backend modules, their responsibilities, internal structure, key functions, and inter-module communication for Fixora — built as a **NestJS modular monolith** with **PostgreSQL**.
 
 ---
 
@@ -63,7 +65,6 @@ This document defines all major backend modules, their responsibilities, interna
 src/modules/auth/
 ├── auth.controller.ts
 ├── auth.service.ts
-├── auth.routes.ts
 ├── auth.validation.ts
 ├── auth.middleware.ts
 └── __tests__/
@@ -103,7 +104,6 @@ src/modules/auth/
 src/modules/users/
 ├── users.controller.ts
 ├── users.service.ts
-├── users.routes.ts
 ├── users.validation.ts
 ├── workerProfile.service.ts
 ├── customerProfile.service.ts
@@ -139,7 +139,6 @@ src/modules/users/
 src/modules/jobs/
 ├── jobs.controller.ts
 ├── jobs.service.ts
-├── jobs.routes.ts
 ├── jobs.validation.ts
 ├── jobs.stateMachine.ts
 ├── jobs.events.ts
@@ -237,7 +236,6 @@ src/modules/jobs/
 src/modules/offers/
 ├── offers.controller.ts
 ├── offers.service.ts
-├── offers.routes.ts
 ├── offers.validation.ts
 └── __tests__/
 ```
@@ -271,7 +269,6 @@ src/modules/offers/
 src/modules/visits/
 ├── visits.controller.ts
 ├── visits.service.ts
-├── visits.routes.ts
 ├── visits.validation.ts
 └── __tests__/
 ```
@@ -305,7 +302,6 @@ src/modules/visits/
 src/modules/repair/
 ├── repair.controller.ts
 ├── repair.service.ts
-├── repair.routes.ts
 ├── repair.validation.ts
 └── __tests__/
 ```
@@ -363,7 +359,6 @@ src/modules/repair/
 src/modules/payments/
 ├── payments.controller.ts
 ├── payments.service.ts
-├── payments.routes.ts
 ├── payments.validation.ts
 ├── gateways/
 │   ├── jazzcash.gateway.ts
@@ -423,7 +418,6 @@ Worker Payout:             Rs.  8,500
 src/modules/reviews/
 ├── reviews.controller.ts
 ├── reviews.service.ts
-├── reviews.routes.ts
 ├── reviews.validation.ts
 └── __tests__/
 ```
@@ -457,7 +451,6 @@ src/modules/chat/
 ├── chat.controller.ts
 ├── chat.service.ts
 ├── chat.socket.ts      ← Socket.IO event handlers
-├── chat.routes.ts
 └── __tests__/
 ```
 
@@ -484,7 +477,7 @@ src/modules/chat/
 - Conversation created automatically when offer is accepted
 - Messages support text, image, and voice note
 - Unread message count shown in UI badge
-- Messages stored in PostgreSQL + optionally synced to Elasticsearch
+- Messages stored in PostgreSQL (`messages` table, indexed by `conversation_id`) + optionally synced to Elasticsearch
 
 ---
 
@@ -498,7 +491,6 @@ src/modules/chat/
 src/modules/notifications/
 ├── notifications.controller.ts
 ├── notifications.service.ts
-├── notifications.routes.ts
 ├── templates/
 │   ├── job-alert.template.ts
 │   ├── offer-received.template.ts
@@ -528,9 +520,9 @@ src/modules/notifications/
 | `sendOTP(phone, otp)` | Auth request | SMS |
 
 **Key Decisions:**
-- Push notifications via Firebase Cloud Messaging (FCM)
+- Push notifications via **Firebase Cloud Messaging (FCM)** (`firebase-admin` npm package in NestJS)
 - SMS via Twilio or local Pakistani provider
-- In-app notifications stored in PostgreSQL
+- In-app notifications stored in PostgreSQL (`notifications` table)
 - Notification preferences per user (opt-out for promotional)
 - Batch push for new job alerts (not individual sends)
 
@@ -553,8 +545,8 @@ src/modules/location/
 **Key Functions:**
 
 | Function | Description |
-|---|---|
-| `findNearbyWorkers(lat, lng, radius, category)` | Find workers within radius using PostGIS |
+|---|---|---|
+| `findNearbyWorkers(lat, lng, radius, category)` | Find workers within radius using **PostGIS** `ST_DWithin` on GiST index |
 | `calculateDistance(loc1, loc2)` | Haversine distance between two points |
 | `geocodeAddress(address)` | Convert address to coordinates |
 | `reverseGeocode(lat, lng)` | Convert coordinates to address |
@@ -564,7 +556,8 @@ src/modules/location/
 **PostGIS Query Example:**
 
 ```sql
-SELECT 
+-- Find verified, available workers matching a category within radius
+SELECT
     u.id, u.name, u.avatar_url,
     wp.rating_avg, wp.skills,
     ST_Distance(
@@ -573,7 +566,7 @@ SELECT
     ) AS distance_meters
 FROM users u
 JOIN worker_profiles wp ON wp.user_id = u.id
-WHERE 
+WHERE
     u.is_active = true
     AND wp.is_verified = true
     AND wp.is_available = true
@@ -587,12 +580,14 @@ ORDER BY distance_meters ASC
 LIMIT 50;
 ```
 
+> Requires a **GiST** index on `worker_profiles.location` (PostGIS).
+
 **Key Decisions:**
 - Worker location cached in Redis for fast reads (2 min TTL)
-- PostGIS used for initial radius query
-- Elasticsearch used for combined text + geo search
+- PostgreSQL **PostGIS** `ST_DWithin` / GiST index used for the radius query (team-approved stack)
+- Elasticsearch used for combined text + geo search (optional)
 - Location precision: ~100m (sufficient for city-level matching)
-- Worker location updated every 30 seconds when active
+- Worker location updated every 30 seconds when active on the web app
 
 ---
 
@@ -606,7 +601,6 @@ LIMIT 50;
 src/modules/uploads/
 ├── uploads.controller.ts
 ├── uploads.service.ts
-├── uploads.routes.ts
 ├── processors/
 │   ├── image.processor.ts
 │   └── voice.processor.ts
@@ -656,12 +650,12 @@ Upload → Validate Type/Size → Virus Scan (optional)
 
 **Path:** `src/modules/search/`
 
-**Responsibility:** Advanced job and worker search, Elasticsearch integration.
+**Responsibility:** Advanced job and worker search, PostgreSQL full-text / Elasticsearch integration.
 
 ```
 src/modules/search/
 ├── search.service.ts
-├── elasticsearch.client.ts
+├── search.client.ts
 ├── indexers/
 │   ├── job.indexer.ts
 │   └── worker.indexer.ts
@@ -674,52 +668,39 @@ src/modules/search/
 |---|---|
 | `searchJobs(filters)` | Search jobs by category, location, status, date |
 | `searchWorkers(filters)` | Search workers by skill, location, rating, availability |
-| `indexJob(job)` | Index/update job in Elasticsearch |
-| `indexWorker(worker)` | Index/update worker in Elasticsearch |
+| `indexJob(job)` | Index/update job in Elasticsearch / PostgreSQL FTS |
+| `indexWorker(worker)` | Index/update worker in Elasticsearch / PostgreSQL FTS |
 | `removeFromIndex(type, id)` | Remove document from index |
 
-**Elasticsearch Index Mappings:**
+**PostgreSQL Full-Text Search Example:**
 
-```json
-// jobs index
-{
-  "mappings": {
-    "properties": {
-      "title": { "type": "text", "analyzer": "standard" },
-      "description": { "type": "text" },
-      "category": { "type": "keyword" },
-      "city": { "type": "keyword" },
-      "area": { "type": "text" },
-      "status": { "type": "keyword" },
-      "location": { "type": "geo_point" },
-      "urgency": { "type": "keyword" },
-      "created_at": { "type": "date" }
-    }
-  }
-}
+```sql
+-- Full-text search on open jobs (PostgreSQL tsvector + GIN index)
+SELECT id, title, description, city, status,
+       ts_rank(to_tsvector('english', title || ' ' || description), query) AS rank
+FROM service_requests,
+     plainto_tsquery('english', :query) AS query
+WHERE to_tsvector('english', title || ' ' || description) @@ query
+  AND status = 'open'
+ORDER BY rank DESC
+LIMIT 50;
 
-// workers index
-{
-  "mappings": {
-    "properties": {
-      "name": { "type": "text" },
-      "skills": { "type": "keyword" },
-      "rating_avg": { "type": "float" },
-      "total_jobs": { "type": "integer" },
-      "location": { "type": "geo_point" },
-      "is_verified": { "type": "boolean" },
-      "is_available": { "type": "boolean" },
-      "experience_years": { "type": "integer" }
-    }
-  }
-}
+-- Generated column + GIN index for performance
+ALTER TABLE service_requests
+    ADD COLUMN search_vector tsvector
+    GENERATED ALWAYS AS
+        (to_tsvector('english', coalesce(title, '') || ' ' || coalesce(description, '')))
+    STORED;
+CREATE INDEX idx_sr_search_gin ON service_requests USING GIN(search_vector);
 ```
 
+> For more advanced relevance, faceted filtering, and combined text + geo queries, upgrade to **Elasticsearch** (optional).
+
 **Key Decisions:**
-- Elasticsearch used for complex search queries (beyond PostGIS)
-- Sync between PostgreSQL → Elasticsearch via event-driven approach
-- Fallback to PostgreSQL queries if Elasticsearch unavailable
+- Start with PostgreSQL full-text (`tsvector`) + PostGIS for MVP
+- Optionally upgrade to Elasticsearch for complex queries
 - Search results cached in Redis (30 seconds TTL)
+- Fallback to PostgreSQL queries if Elasticsearch unavailable
 
 ---
 
@@ -733,7 +714,6 @@ src/modules/search/
 src/modules/admin/
 ├── admin.controller.ts
 ├── admin.service.ts
-├── admin.routes.ts
 ├── admin.middleware.ts   ← admin role check
 └── __tests__/
 ```
@@ -767,7 +747,7 @@ src/modules/admin/
 
 | Event | Emitter | Consumer | Action |
 |---|---|---|---|
-| `job.created` | Jobs | Notifications, Search | Notify workers, index in ES |
+| `job.created` | Jobs | Notifications, Search | Notify workers, index in Elasticsearch/FTS |
 | `job.statusChanged` | Jobs | Notifications, Chat | Send status notifications |
 | `offer.submitted` | Offers | Notifications | Notify customer |
 | `offer.accepted` | Offers | Jobs, Visits, Notifications | Create conversation, schedule visit |
@@ -849,7 +829,7 @@ Standardized error response format:
 ## 7. Module Dependency Matrix
 
 | Module | Depends On |
-|---|---|
+|---|---|---|
 | Auth | Redis, SMS Gateway |
 | Users | Auth, File Upload |
 | Jobs | Users, Categories, Location |
@@ -860,9 +840,9 @@ Standardized error response format:
 | Reviews | Jobs, Users |
 | Chat | Users, File Upload |
 | Notifications | Redis (pub/sub), FCM, SMS |
-| Location | PostGIS, Redis |
+| Location | PostgreSQL + PostGIS, Redis |
 | File Upload | S3, Sharp (image processing) |
-| Search | Elasticsearch, PostgreSQL |
+| Search | PostgreSQL full-text / Elasticsearch |
 | Admin | All modules (read access) |
 
 ---

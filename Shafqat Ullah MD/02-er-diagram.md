@@ -1,16 +1,18 @@
-# ER Diagram — Home Services Platform
+# ER Diagram — Fixora (Home Services Platform)
 
 **Author:** Shafqat Ullah  
 **Document Type:** Entity-Relationship Diagram  
-**Version:** 1.0  
-**Date:** September 1, 2026  
+**Version:** 3.0  
+**Date:** September 2, 2026  
 **Status:** Draft — Pending Team Review
+
+> **Note:** This models the database for the **Fixora** stack (**PostgreSQL + PostGIS**). The "tables/columns" map to PostgreSQL **relational tables**. Arrays and nested objects (e.g., `skills[]`, `images[]`, `negotiation_history`) are stored as PostgreSQL array / JSONB types.
 
 ---
 
 ## 1. Overview
 
-This document defines all entities, their attributes, and relationships for the Home Services Platform database.
+This document defines all entities, their attributes, and relationships for the Fixora (Home Services Platform) database, implemented with **PostgreSQL + PostGIS** (via Prisma/TypeORM in NestJS).
 
 ---
 
@@ -168,28 +170,27 @@ This document defines all entities, their attributes, and relationships for the 
 
 The core authentication and identity entity.
 
-| Column | Type | Constraints | Description |
+| Field | SQL Type | Constraints | Description |
 |---|---|---|---|
-| id | UUID | PK | Unique identifier |
-| phone | VARCHAR(20) | UNIQUE, NOT NULL | Phone number (E.164 format) |
-| email | VARCHAR(255) | UNIQUE, nullable | Email address |
-| name | VARCHAR(100) | NOT NULL | Full name |
-| role | ENUM | NOT NULL | `customer`, `worker`, `admin`, `super_admin` |
+| _id | UUID | PK | Unique identifier |
+| phone | TEXT | UNIQUE, NOT NULL | Phone NUMERIC (E.164 format) |
+| email | TEXT | UNIQUE, nullable | Email address |
+| name | TEXT | NOT NULL | Full name |
+| role | TEXT (enum) | NOT NULL | `customer`, `worker`, `admin`, `super_admin` |
 | avatar_url | TEXT | nullable | Profile picture URL |
-| latitude | DECIMAL(10,8) | nullable | Last known latitude |
-| longitude | DECIMAL(11,8) | nullable | Last known longitude |
+| location | POINT (PostGIS) | nullable | Last known location `{ type:"Point", coordinates:[lng,lat] }` |
 | is_active | BOOLEAN | DEFAULT true | Account active status |
 | is_verified | BOOLEAN | DEFAULT false | Phone verified |
-| fcm_token | TEXT | nullable | Firebase push token |
-| last_login_at | TIMESTAMP | | Last login timestamp |
-| created_at | TIMESTAMP | NOT NULL | Account creation |
-| updated_at | TIMESTAMP | NOT NULL | Last update |
+| push_sub | JSONB | nullable | FCM token / push subscription (endpoint + keys) |
+| last_login_at | TIMESTAMPTZ | | Last login timestamp |
+| created_at | TIMESTAMPTZ | NOT NULL | Account creation |
+| updated_at | TIMESTAMPTZ | NOT NULL | Last update |
 
 **Indexes:**
-- `idx_user_phone` on `phone`
-- `idx_user_role` on `role`
-- `idx_user_location` on `(latitude, longitude)` — for geo queries
-- `idx_user_active` on `is_active`
+- `phone` (unique)
+- `role`
+- `location` — PostGIS GiST index for geo queries
+- `is_active`
 
 ---
 
@@ -197,28 +198,28 @@ The core authentication and identity entity.
 
 Extended profile for workers with skills and availability.
 
-| Column | Type | Constraints | Description |
+| Field | SQL Type | Constraints | Description |
 |---|---|---|---|
-| user_id | UUID | PK, FK → User | References user |
-| skills | TEXT[] | NOT NULL | Array of skill/category IDs |
-| experience_years | INTEGER | DEFAULT 0 | Years of experience |
+| user_id | UUID | PK (ref User) | References user |
+| skills | Array<TEXT> | NOT NULL | Array of skill/category IDs |
+| experience_years | NUMERIC | DEFAULT 0 | Years of experience |
 | bio | TEXT | nullable | Worker bio/description |
-| hourly_rate | DECIMAL(10,2) | nullable | Preferred hourly rate |
+| hourly_rate | NUMERIC | nullable | Preferred hourly rate |
 | is_verified | BOOLEAN | DEFAULT false | Admin-verified status |
 | verification_doc_url | TEXT | nullable | ID document URL |
-| rating_avg | DECIMAL(3,2) | DEFAULT 0 | Average rating |
-| total_jobs | INTEGER | DEFAULT 0 | Completed jobs count |
+| rating_avg | NUMERIC | DEFAULT 0 | Average rating |
+| total_jobs | NUMERIC | DEFAULT 0 | Completed jobs count |
 | is_available | BOOLEAN | DEFAULT true | Currently accepting jobs |
-| service_radius_km | INTEGER | DEFAULT 10 | Max distance willing to travel |
-| verified_at | TIMESTAMP | nullable | When verified by admin |
-| created_at | TIMESTAMP | NOT NULL | Profile creation |
-| updated_at | TIMESTAMP | NOT NULL | Last update |
+| service_radius_km | NUMERIC | DEFAULT 10 | Max distance willing to travel |
+| verified_at | TIMESTAMPTZ | nullable | When verified by admin |
+| created_at | TIMESTAMPTZ | NOT NULL | Profile creation |
+| updated_at | TIMESTAMPTZ | NOT NULL | Last update |
 
 **Indexes:**
-- `idx_worker_skills` GIN on `skills`
-- `idx_worker_verified` on `is_verified`
-- `idx_worker_available` on `is_available`
-- `idx_worker_rating` on `rating_avg DESC`
+- `skills`
+- `is_verified`
+- `is_available`
+- `rating_avg` (desc)
 
 ---
 
@@ -226,13 +227,13 @@ Extended profile for workers with skills and availability.
 
 Extended profile for customers.
 
-| Column | Type | Constraints | Description |
+| Field | SQL Type | Constraints | Description |
 |---|---|---|---|
-| user_id | UUID | PK, FK → User | References user |
+| user_id | UUID | PK (ref User) | References user |
 | default_address | TEXT | nullable | Preferred address |
-| total_jobs_posted | INTEGER | DEFAULT 0 | Total jobs created |
-| created_at | TIMESTAMP | NOT NULL | Profile creation |
-| updated_at | TIMESTAMP | NOT NULL | Last update |
+| total_jobs_posted | NUMERIC | DEFAULT 0 | Total jobs created |
+| created_at | TIMESTAMPTZ | NOT NULL | Profile creation |
+| updated_at | TIMESTAMPTZ | NOT NULL | Last update |
 
 ---
 
@@ -240,17 +241,17 @@ Extended profile for customers.
 
 Categories of services offered on the platform.
 
-| Column | Type | Constraints | Description |
+| Field | SQL Type | Constraints | Description |
 |---|---|---|---|
-| id | UUID | PK | Unique identifier |
-| name | VARCHAR(100) | NOT NULL | Category name (English) |
-| name_urdu | VARCHAR(100) | nullable | Category name (Urdu) |
+| _id | UUID | PK | Unique identifier |
+| name | TEXT | NOT NULL | Category name (English) |
+| name_urdu | TEXT | nullable | Category name (Urdu) |
 | description | TEXT | nullable | Category description |
 | icon_url | TEXT | nullable | Category icon |
-| parent_id | UUID | FK → self, nullable | Parent category (for sub-categories) |
+| parent_id | UUID | ref self, nullable | Parent category (for sub-categories) |
 | is_active | BOOLEAN | DEFAULT true | Category active |
-| sort_order | INTEGER | DEFAULT 0 | Display order |
-| created_at | TIMESTAMP | NOT NULL | Creation time |
+| sort_order | NUMERIC | DEFAULT 0 | Display order |
+| created_at | TIMESTAMPTZ | NOT NULL | Creation time |
 
 **Pre-seeded categories:**
 - Electrical (Electrician)
@@ -269,28 +270,27 @@ Categories of services offered on the platform.
 
 The core job listing created by a customer.
 
-| Column | Type | Constraints | Description |
+| Field | SQL Type | Constraints | Description |
 |---|---|---|---|
-| id | UUID | PK | Unique identifier |
-| customer_id | UUID | FK → User, NOT NULL | Customer who posted |
-| category_id | UUID | FK → ServiceCategory, NOT NULL | Service type |
-| title | VARCHAR(200) | NOT NULL | Job title |
+| _id | UUID | PK | Unique identifier |
+| customer_id | UUID | ref User, NOT NULL | Customer who posted |
+| category_id | UUID | ref ServiceCategory, NOT NULL | Service type |
+| title | TEXT | NOT NULL | Job title |
 | description | TEXT | nullable | Detailed description |
 | voice_note_url | TEXT | nullable | Voice note URL |
-| images | TEXT[] | DEFAULT '{}' | Array of image URLs |
-| latitude | DECIMAL(10,8) | NOT NULL | Job location lat |
-| longitude | DECIMAL(11,8) | NOT NULL | Job location lng |
+| images | Array<TEXT> | DEFAULT [] | Array of image URLs |
+| location | POINT (PostGIS) | NOT NULL | Job location `{ type:"Point", coordinates:[lng,lat] }` |
 | address | TEXT | NOT NULL | Full address |
-| city | VARCHAR(100) | NOT NULL | City name |
-| area | VARCHAR(100) | nullable | Area / locality |
-| status | ENUM | NOT NULL | Job status (see state machine) |
-| urgency | ENUM | DEFAULT 'normal' | `low`, `normal`, `high`, `emergency` |
-| estimated_budget | DECIMAL(10,2) | nullable | Customer's budget estimate |
-| selected_worker_id | UUID | FK → User, nullable | Worker selected by customer |
-| created_at | TIMESTAMP | NOT NULL | Job creation |
-| updated_at | TIMESTAMP | NOT NULL | Last update |
-| completed_at | TIMESTAMP | nullable | Completion timestamp |
-| cancelled_at | TIMESTAMP | nullable | Cancellation timestamp |
+| city | TEXT | NOT NULL | City name |
+| area | TEXT | nullable | Area / locality |
+| status | TEXT (enum) | NOT NULL | Job status (see state machine) |
+| urgency | TEXT (enum) | DEFAULT 'normal' | `low`, `normal`, `high`, `emergency` |
+| estimated_budget | NUMERIC | nullable | Customer's budget estimate |
+| selected_worker_id | UUID | ref User, nullable | Worker selected by customer |
+| created_at | TIMESTAMPTZ | NOT NULL | Job creation |
+| updated_at | TIMESTAMPTZ | NOT NULL | Last update |
+| completed_at | TIMESTAMPTZ | nullable | Completion timestamp |
+| cancelled_at | TIMESTAMPTZ | nullable | Cancellation timestamp |
 
 **Job Status Enum:**
 ```
@@ -304,12 +304,12 @@ disputed (from in_progress or completed)
 ```
 
 **Indexes:**
-- `idx_job_customer` on `customer_id`
-- `idx_job_category` on `category_id`
-- `idx_job_status` on `status`
-- `idx_job_location` on `(latitude, longitude)` — PostGIS GiST
-- `idx_job_created` on `created_at DESC`
-- `idx_job_city_area` on `(city, area)`
+- `customer_id`
+- `category_id`
+- `status`
+- `location` — PostGIS GiST index (nearby worker matching)
+- `created_at` (desc)
+- `{ city, area }`
 
 ---
 
@@ -317,25 +317,25 @@ disputed (from in_progress or completed)
 
 Offers made by workers for a specific job.
 
-| Column | Type | Constraints | Description |
+| Field | SQL Type | Constraints | Description |
 |---|---|---|---|
-| id | UUID | PK | Unique identifier |
-| job_id | UUID | FK → ServiceRequest, NOT NULL | Target job |
-| worker_id | UUID | FK → User, NOT NULL | Offering worker |
-| visit_charge | DECIMAL(10,2) | NOT NULL | Proposed visit/inspection fee |
+| _id | UUID | PK | Unique identifier |
+| job_id | UUID | ref ServiceRequest, NOT NULL | Target job |
+| worker_id | UUID | ref User, NOT NULL | Offering worker |
+| visit_charge | NUMERIC | NOT NULL | Proposed visit/inspection fee |
 | message | TEXT | nullable | Message to customer |
-| estimated_repair_cost | DECIMAL(10,2) | nullable | Rough repair estimate |
-| status | ENUM | NOT NULL | `pending`, `accepted`, `rejected`, `withdrawn` |
-| created_at | TIMESTAMP | NOT NULL | Offer creation |
-| updated_at | TIMESTAMP | NOT NULL | Last update |
+| estimated_repair_cost | NUMERIC | nullable | Rough repair estimate |
+| status | TEXT (enum) | NOT NULL | `pending`, `accepted`, `rejected`, `withdrawn` |
+| created_at | TIMESTAMPTZ | NOT NULL | Offer creation |
+| updated_at | TIMESTAMPTZ | NOT NULL | Last update |
 
 **Constraints:**
-- UNIQUE(job_id, worker_id) — one offer per worker per job
+- Compound unique `{ job_id, worker_id }` — one offer per worker per job
 
 **Indexes:**
-- `idx_offer_job` on `job_id`
-- `idx_offer_worker` on `worker_id`
-- `idx_offer_status` on `status`
+- `job_id`
+- `worker_id`
+- `status`
 
 ---
 
@@ -343,25 +343,25 @@ Offers made by workers for a specific job.
 
 Scheduled visit/inspection after offer acceptance.
 
-| Column | Type | Constraints | Description |
+| Field | SQL Type | Constraints | Description |
 |---|---|---|---|
-| id | UUID | PK | Unique identifier |
-| job_id | UUID | FK → ServiceRequest, NOT NULL | Related job |
-| worker_id | UUID | FK → User, NOT NULL | Visiting worker |
-| offer_id | UUID | FK → JobOffer, NOT NULL | Accepted offer |
-| scheduled_date | TIMESTAMP | NOT NULL | Planned visit date/time |
-| actual_date | TIMESTAMP | nullable | Actual visit time |
-| status | ENUM | NOT NULL | `scheduled`, `in_progress`, `completed`, `cancelled`, `no_show` |
+| _id | UUID | PK | Unique identifier |
+| job_id | UUID | ref ServiceRequest, NOT NULL | Related job |
+| worker_id | UUID | ref User, NOT NULL | Visiting worker |
+| offer_id | UUID | ref JobOffer, NOT NULL | Accepted offer |
+| scheduled_date | TIMESTAMPTZ | NOT NULL | Planned visit date/time |
+| actual_date | TIMESTAMPTZ | nullable | Actual visit time |
+| status | TEXT (enum) | NOT NULL | `scheduled`, `in_progress`, `completed`, `cancelled`, `no_show` |
 | visit_notes | TEXT | nullable | Worker's notes after inspection |
-| images | TEXT[] | DEFAULT '{}' | Inspection images |
-| created_at | TIMESTAMP | NOT NULL | Creation |
-| updated_at | TIMESTAMP | NOT NULL | Last update |
+| images | Array<TEXT> | DEFAULT [] | Inspection images |
+| created_at | TIMESTAMPTZ | NOT NULL | Creation |
+| updated_at | TIMESTAMPTZ | NOT NULL | Last update |
 
 **Indexes:**
-- `idx_visit_job` on `job_id`
-- `idx_visit_worker` on `worker_id`
-- `idx_visit_scheduled` on `scheduled_date`
-- `idx_visit_status` on `status`
+- `job_id`
+- `worker_id`
+- `scheduled_date`
+- `status`
 
 ---
 
@@ -369,18 +369,18 @@ Scheduled visit/inspection after offer acceptance.
 
 Repair cost estimate and negotiation after inspection.
 
-| Column | Type | Constraints | Description |
+| Field | SQL Type | Constraints | Description |
 |---|---|---|---|
-| id | UUID | PK | Unique identifier |
-| visit_id | UUID | FK → Visit, NOT NULL | Related visit |
-| worker_id | UUID | FK → User, NOT NULL | Estimating worker |
+| _id | UUID | PK | Unique identifier |
+| visit_id | UUID | ref Visit, NOT NULL | Related visit |
+| worker_id | UUID | ref User, NOT NULL | Estimating worker |
 | description | TEXT | NOT NULL | Repair description |
-| amount | DECIMAL(10,2) | NOT NULL | Proposed amount |
-| items_breakdown | JSONB | DEFAULT '[]' | Itemized cost breakdown |
-| status | ENUM | NOT NULL | `proposed`, `countered`, `accepted`, `rejected` |
-| negotiation_history | JSONB | DEFAULT '[]` | Array of counter-offers |
-| created_at | TIMESTAMP | NOT NULL | Creation |
-| updated_at | TIMESTAMP | NOT NULL | Last update |
+| amount | NUMERIC | NOT NULL | Proposed amount |
+| items_breakdown | JSONB | DEFAULT [] | Itemized cost breakdown |
+| status | TEXT (enum) | NOT NULL | `proposed`, `countered`, `accepted`, `rejected` |
+| negotiation_history | JSONB | DEFAULT [] | Array of counter-offers |
+| created_at | TIMESTAMPTZ | NOT NULL | Creation |
+| updated_at | TIMESTAMPTZ | NOT NULL | Last update |
 
 **negotiation_history format:**
 ```json
@@ -396,30 +396,30 @@ Repair cost estimate and negotiation after inspection.
 
 Payment records for completed jobs.
 
-| Column | Type | Constraints | Description |
+| Field | SQL Type | Constraints | Description |
 |---|---|---|---|
-| id | UUID | PK | Unique identifier |
-| job_id | UUID | FK → ServiceRequest, NOT NULL | Related job |
-| customer_id | UUID | FK → User, NOT NULL | Payer |
-| worker_id | UUID | FK → User, NOT NULL | Payee |
-| amount | DECIMAL(10,2) | NOT NULL | Total amount |
-| platform_fee | DECIMAL(10,2) | NOT NULL | Platform commission |
-| worker_payout | DECIMAL(10,2) | NOT NULL | Worker's share |
-| method | ENUM | NOT NULL | `jazzcash`, `easypaisa`, `stripe`, `cash`, `card` |
-| status | ENUM | NOT NULL | `pending`, `processing`, `completed`, `failed`, `refunded` |
-| gateway_ref | VARCHAR(255) | nullable | Payment gateway reference |
+| _id | UUID | PK | Unique identifier |
+| job_id | UUID | ref ServiceRequest, NOT NULL | Related job |
+| customer_id | UUID | ref User, NOT NULL | Payer |
+| worker_id | UUID | ref User, NOT NULL | Payee |
+| amount | NUMERIC | NOT NULL | Total amount |
+| platform_fee | NUMERIC | NOT NULL | Platform commission |
+| worker_payout | NUMERIC | NOT NULL | Worker's share |
+| method | TEXT (enum) | NOT NULL | `jazzcash`, `easypaisa`, `stripe`, `cash`, `card` |
+| status | TEXT (enum) | NOT NULL | `pending`, `processing`, `completed`, `failed`, `refunded` |
+| gateway_ref | TEXT | nullable | Payment gateway reference |
 | gateway_response | JSONB | nullable | Raw gateway response |
-| paid_at | TIMESTAMP | nullable | Payment completion time |
-| refunded_at | TIMESTAMP | nullable | Refund time |
-| created_at | TIMESTAMP | NOT NULL | Record creation |
-| updated_at | TIMESTAMP | NOT NULL | Last update |
+| paid_at | TIMESTAMPTZ | nullable | Payment completion time |
+| refunded_at | TIMESTAMPTZ | nullable | Refund time |
+| created_at | TIMESTAMPTZ | NOT NULL | Record creation |
+| updated_at | TIMESTAMPTZ | NOT NULL | Last update |
 
 **Indexes:**
-- `idx_payment_job` on `job_id`
-- `idx_payment_customer` on `customer_id`
-- `idx_payment_worker` on `worker_id`
-- `idx_payment_status` on `status`
-- `idx_payment_gateway_ref` on `gateway_ref`
+- `job_id`
+- `customer_id`
+- `worker_id`
+- `status`
+- `gateway_ref`
 
 ---
 
@@ -427,46 +427,46 @@ Payment records for completed jobs.
 
 Post-job reviews by customers and workers.
 
-| Column | Type | Constraints | Description |
+| Field | SQL Type | Constraints | Description |
 |---|---|---|---|
-| id | UUID | PK | Unique identifier |
-| job_id | UUID | FK → ServiceRequest, NOT NULL | Related job |
-| reviewer_id | UUID | FK → User, NOT NULL | Who wrote the review |
-| reviewee_id | UUID | FK → User, NOT NULL | Who is being reviewed |
-| rating | INTEGER | NOT NULL | 1-5 rating |
+| _id | UUID | PK | Unique identifier |
+| job_id | UUID | ref ServiceRequest, NOT NULL | Related job |
+| reviewer_id | UUID | ref User, NOT NULL | Who wrote the review |
+| reviewee_id | UUID | ref User, NOT NULL | Who is being reviewed |
+| rating | NUMERIC | NOT NULL | 1-5 rating |
 | comment | TEXT | nullable | Review text |
-| images | TEXT[] | DEFAULT '{}' | Review images |
+| images | Array<TEXT> | DEFAULT [] | Review images |
 | is_visible | BOOLEAN | DEFAULT true | Visibility flag |
-| created_at | TIMESTAMP | NOT NULL | Review creation |
+| created_at | TIMESTAMPTZ | NOT NULL | Review creation |
 
 **Constraints:**
-- CHECK: rating BETWEEN 1 AND 5
-- UNIQUE(job_id, reviewer_id) — one review per person per job
+- Rating between 1 and 5
+- Unique `{ job_id, reviewer_id }` — one review per person per job
 
 **Indexes:**
-- `idx_review_job` on `job_id`
-- `idx_review_reviewee` on `reviewee_id`
-- `idx_review_rating` on `rating`
+- `job_id`
+- `reviewee_id`
+- `rating`
 
 ---
 
 ### 3.11 Notification
 
-In-app and push notification records.
+In-app and FCM push notification records.
 
-| Column | Type | Constraints | Description |
+| Field | SQL Type | Constraints | Description |
 |---|---|---|---|
-| id | UUID | PK | Unique identifier |
-| user_id | UUID | FK → User, NOT NULL | Recipient |
-| type | VARCHAR(50) | NOT NULL | Notification type |
-| title | VARCHAR(200) | NOT NULL | Notification title |
+| _id | UUID | PK | Unique identifier |
+| user_id | UUID | ref User, NOT NULL | Recipient |
+| type | TEXT | NOT NULL | Notification type |
+| title | TEXT | NOT NULL | Notification title |
 | body | TEXT | NOT NULL | Notification body |
-| data | JSONB | DEFAULT '{}' | Additional data (deep links, IDs) |
-| channel | ENUM | NOT NULL | `push`, `sms`, `in_app`, `email` |
+| data | JSONB | DEFAULT {} | Additional data (deep links, IDs) |
+| channel | TEXT (enum) | NOT NULL | `push`, `sms`, `in_app`, `email` |
 | is_read | BOOLEAN | DEFAULT false | Read status |
-| sent_at | TIMESTAMP | NOT NULL | When sent |
-| read_at | TIMESTAMP | nullable | When read |
-| created_at | TIMESTAMP | NOT NULL | Record creation |
+| sent_at | TIMESTAMPTZ | NOT NULL | When sent |
+| read_at | TIMESTAMPTZ | nullable | When read |
+| created_at | TIMESTAMPTZ | NOT NULL | Record creation |
 
 **Notification Types:**
 - `job.new` — New job in area (for workers)
@@ -486,10 +486,10 @@ In-app and push notification records.
 - `system.verification` — Verification status update
 
 **Indexes:**
-- `idx_notif_user` on `user_id`
-- `idx_notif_read` on `is_read`
-- `idx_notif_created` on `created_at DESC`
-- `idx_notif_type` on `type`
+- `user_id`
+- `is_read`
+- `created_at` (desc)
+- `type`
 
 ---
 
@@ -499,33 +499,33 @@ Chat between customer and worker for a specific job.
 
 **Conversation:**
 
-| Column | Type | Constraints | Description |
+| Field | SQL Type | Constraints | Description |
 |---|---|---|---|
-| id | UUID | PK | Unique identifier |
-| job_id | UUID | FK → ServiceRequest, NOT NULL | Related job |
-| customer_id | UUID | FK → User, NOT NULL | Customer participant |
-| worker_id | UUID | FK → User, NOT NULL | Worker participant |
+| _id | UUID | PK | Unique identifier |
+| job_id | UUID | ref ServiceRequest, NOT NULL | Related job |
+| customer_id | UUID | ref User, NOT NULL | Customer participant |
+| worker_id | UUID | ref User, NOT NULL | Worker participant |
 | last_message | TEXT | nullable | Preview of last message |
-| last_message_at | TIMESTAMP | nullable | Timestamp of last message |
+| last_message_at | TIMESTAMPTZ | nullable | Timestamp of last message |
 | is_active | BOOLEAN | DEFAULT true | Conversation active |
-| created_at | TIMESTAMP | NOT NULL | Creation |
+| created_at | TIMESTAMPTZ | NOT NULL | Creation |
 
 **Message:**
 
-| Column | Type | Constraints | Description |
+| Field | SQL Type | Constraints | Description |
 |---|---|---|---|
-| id | UUID | PK | Unique identifier |
-| conversation_id | UUID | FK → Conversation, NOT NULL | Parent conversation |
-| sender_id | UUID | FK → User, NOT NULL | Message sender |
+| _id | UUID | PK | Unique identifier |
+| conversation_id | UUID | ref Conversation, NOT NULL | Parent conversation |
+| sender_id | UUID | ref User, NOT NULL | Message sender |
 | text | TEXT | nullable | Message text |
 | image_url | TEXT | nullable | Attached image |
 | voice_url | TEXT | nullable | Voice message |
 | is_read | BOOLEAN | DEFAULT false | Read status |
-| created_at | TIMESTAMP | NOT NULL | Message time |
+| created_at | TIMESTAMPTZ | NOT NULL | Message time |
 
 **Indexes:**
-- `idx_msg_conversation` on `conversation_id`
-- `idx_msg_created` on `created_at DESC`
+- `conversation_id`
+- `created_at` (desc)
 
 ---
 
@@ -533,42 +533,41 @@ Chat between customer and worker for a specific job.
 
 Dispute/complaint filed for a job.
 
-| Column | Type | Constraints | Description |
+| Field | SQL Type | Constraints | Description |
 |---|---|---|---|
-| id | UUID | PK | Unique identifier |
-| job_id | UUID | FK → ServiceRequest, NOT NULL | Related job |
-| filed_by | UUID | FK → User, NOT NULL | Who filed |
-| reason | VARCHAR(100) | NOT NULL | Dispute reason |
+| _id | UUID | PK | Unique identifier |
+| job_id | UUID | ref ServiceRequest, NOT NULL | Related job |
+| filed_by | UUID | ref User, NOT NULL | Who filed |
+| reason | TEXT | NOT NULL | Dispute reason |
 | description | TEXT | NOT NULL | Detailed description |
-| evidence_urls | TEXT[] | DEFAULT '{}' | Supporting evidence |
-| status | ENUM | NOT NULL | `open`, `under_review`, `resolved`, `escalated` |
+| evidence_urls | Array<TEXT> | DEFAULT [] | Supporting evidence |
+| status | TEXT (enum) | NOT NULL | `open`, `under_review`, `resolved`, `escalated` |
 | resolution | TEXT | nullable | Resolution description |
-| resolved_by | UUID | FK → User, nullable | Admin who resolved |
-| created_at | TIMESTAMP | NOT NULL | Filing time |
-| resolved_at | TIMESTAMP | nullable | Resolution time |
+| resolved_by | UUID | ref User, nullable | Admin who resolved |
+| created_at | TIMESTAMPTZ | NOT NULL | Filing time |
+| resolved_at | TIMESTAMPTZ | nullable | Resolution time |
 
 ---
 
 ### 3.14 Location (Tracking Log)
 
-Historical location records for workers (for tracking during visits).
+Historical location records for workers (for tracking during visits). In a web app, this is populated only when the worker is actively using the browser with location permission.
 
-| Column | Type | Constraints | Description |
+| Field | SQL Type | Constraints | Description |
 |---|---|---|---|
-| id | UUID | PK | Unique identifier |
-| user_id | UUID | FK → User, NOT NULL | Worker being tracked |
-| job_id | UUID | FK → ServiceRequest, nullable | Active job being tracked for |
-| latitude | DECIMAL(10,8) | NOT NULL | Latitude |
-| longitude | DECIMAL(11,8) | NOT NULL | Longitude |
-| accuracy | FLOAT | nullable | GPS accuracy in meters |
-| recorded_at | TIMESTAMP | NOT NULL | When recorded |
+| _id | UUID | PK | Unique identifier |
+| user_id | UUID | ref User, NOT NULL | Worker being tracked |
+| job_id | UUID | ref ServiceRequest, nullable | Active job being tracked for |
+| location | POINT (PostGIS) | NOT NULL | `{ type:"Point", coordinates:[lng,lat] }` |
+| accuracy | NUMERIC | nullable | GPS accuracy in meters |
+| recorded_at | TIMESTAMPTZ | NOT NULL | When recorded |
 
 **Indexes:**
-- `idx_loc_user` on `user_id`
-- `idx_loc_job` on `job_id`
-- `idx_loc_time` on `recorded_at DESC`
+- `user_id`
+- `job_id`
+- `recorded_at` (desc)
 
-> **Note:** This is a high-volume table. Consider partitioning by month and auto-deleting records older than 90 days.
+> **Note:** This is a high-volume collection. Consider auto-deleting records older than 90 days.
 
 ---
 

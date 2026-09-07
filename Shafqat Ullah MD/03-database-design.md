@@ -1,40 +1,42 @@
-# Database Design Proposal — Home Services Platform
+# Database Design Proposal — Fixora (PostgreSQL + PostGIS)
 
 **Author:** Shafqat Ullah  
 **Document Type:** Database Design Proposal  
-**Version:** 1.0  
-**Date:** September 1, 2026  
+**Version:** 3.0  
+**Date:** September 2, 2026  
 **Status:** Draft — Pending Team Review
+
+> **Note:** This aligns with the team-approved **Fixora stack**: **PostgreSQL + PostGIS** as the primary database, with **Redis** for cache/fast data. The database is relational — tables and columns below map directly to the ER diagram and the NestJS backend modules.
 
 ---
 
 ## 1. Overview
 
-This document proposes the complete database design including technology choice, schema design, indexing strategy, partitioning, backup, and performance considerations.
+This document proposes the complete PostgreSQL database design including schema, indexing strategy, PostGIS geospatial setup, partitioning, backup, and performance considerations for Fixora (Home Services Platform).
 
 ---
 
 ## 2. Database Technology Selection
 
-| Criteria | PostgreSQL | MySQL | MongoDB |
+| Criteria | **PostgreSQL + PostGIS** | MongoDB | MySQL |
 |---|---|---|---|
-| ACID Compliance | ✅ Full | ✅ Full | ❌ Limited |
+| ACID Compliance | ✅ Full | ✅ (limited) | ✅ Full |
 | Geospatial (GIS) | ✅ PostGIS (best) | ⚠️ Basic | ⚠️ Basic |
-| JSON Support | ✅ JSONB (indexed) | ⚠️ JSON | ✅ Native |
-| Full-text Search | ✅ Built-in | ✅ Built-in | ✅ Built-in |
-| Complex Joins | ✅ Excellent | ✅ Good | ❌ Limited |
-| Maturity / Ecosystem | ✅ Excellent | ✅ Excellent | ✅ Good |
-| Scalability (Read) | ✅ Replicas | ✅ Replicas | ✅ Native |
-| Schema Migrations | ✅ Strong tooling | ✅ Good tooling | ⚠️ Flexible but risky |
+| JSON Support | ✅ JSONB (indexed) | ✅ Native | ⚠️ JSON |
+| Full-text Search | ✅ Built-in | ⚠️ Basic | ✅ Built-in |
+| Complex Joins / Relations | ✅ Excellent | ❌ Limited | ✅ Good |
+| Referential Integrity (FK) | ✅ Strong | ❌ Weak | ✅ Strong |
+| Maturity / Ecosystem | ✅ Excellent | ✅ Good | ✅ Excellent |
+| Cost | ✅ Free | ✅ Free | ✅ Free |
 
 ### Decision: PostgreSQL + PostGIS
 
 **Reasons:**
-- PostGIS is the industry standard for geospatial queries
-- Native JSONB for flexible data (e.g., negotiation history, item breakdowns)
-- Strong data integrity with foreign keys and constraints
-- Excellent ecosystem (Prisma, TypeORM, Knex.js)
-- Multi-AZ support on AWS RDS for high availability
+- **Strong relationships** — Fixora data is highly connected: `User → Job → Worker → Payment → Review`. PostgreSQL enforces referential integrity with foreign keys.
+- **PostGIS** — best-in-class geospatial for nearby-worker matching (`ST_DWithin`).
+- **JSONB** — stores flexible data (negotiation_history, items_breakdown, skills[]).
+- **ACID** — reliable transactions for payments and disputes.
+- **Team-approved** — the Fixora stack explicitly chose PostgreSQL + PostGIS.
 
 ---
 
@@ -43,12 +45,12 @@ This document proposes the complete database design including technology choice,
 | Store | Purpose | Why |
 |---|---|---|
 | **Redis** | Session cache, OTP storage, rate limiting, Socket.IO adapter, real-time pub/sub | Speed, TTL support, pub/sub |
-| **Elasticsearch** | Advanced job search, worker search, full-text + geo combined queries | Complex search beyond PostGIS |
-| **AWS S3 / MinIO** | Image, voice note, document file storage | Scalable, CDN-integrated |
+| **Elasticsearch (optional)** | Advanced search, full-text + geo combined | Only if search complexity grows |
+| **S3 / MinIO** | Image, voice note, document file storage | Scalable, CDN-integrated |
 
 ---
 
-## 4. Schema Design
+## 4. Schema Design (SQL)
 
 ### 4.1 Table: users
 
@@ -61,7 +63,6 @@ CREATE TABLE users (
     role            VARCHAR(20) NOT NULL DEFAULT 'customer'
                     CHECK (role IN ('customer', 'worker', 'admin', 'super_admin')),
     avatar_url      TEXT,
-    password_hash   VARCHAR(255),  -- optional, for email login
     latitude        DECIMAL(10, 8),
     longitude       DECIMAL(11, 8),
     fcm_token       TEXT,
@@ -89,7 +90,6 @@ CREATE TABLE worker_profiles (
     hourly_rate         DECIMAL(10, 2),
     is_verified         BOOLEAN DEFAULT false,
     verification_doc_url TEXT,
-    verification_notes  TEXT,
     rating_avg          DECIMAL(3, 2) DEFAULT 0.00,
     rating_count        INTEGER DEFAULT 0,
     total_jobs          INTEGER DEFAULT 0,
@@ -136,9 +136,6 @@ CREATE TABLE service_categories (
     sort_order      INTEGER DEFAULT 0,
     created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
-
-CREATE INDEX idx_sc_parent ON service_categories(parent_id);
-CREATE INDEX idx_sc_active ON service_categories(is_active) WHERE is_active = true;
 ```
 
 ### 4.5 Table: service_requests (Jobs)
@@ -159,29 +156,16 @@ CREATE TABLE service_requests (
     area                VARCHAR(100),
     status              VARCHAR(30) NOT NULL DEFAULT 'open'
                         CHECK (status IN (
-                            'open',
-                            'offers_received',
-                            'offer_accepted',
-                            'worker_assigned',
-                            'visit_scheduled',
-                            'visit_in_progress',
-                            'visit_completed',
-                            'inspection_done',
-                            'repair_negotiating',
-                            'repair_approved',
-                            'in_progress',
-                            'completed',
-                            'paid',
-                            'reviewed',
-                            'cancelled',
-                            'disputed'
+                            'open','offers_received','offer_accepted','worker_assigned',
+                            'visit_scheduled','visit_in_progress','visit_completed',
+                            'inspection_done','repair_negotiating','repair_approved',
+                            'in_progress','completed','paid','reviewed','cancelled','disputed'
                         )),
     urgency             VARCHAR(20) DEFAULT 'normal'
-                        CHECK (urgency IN ('low', 'normal', 'high', 'emergency')),
+                        CHECK (urgency IN ('low','normal','high','emergency')),
     estimated_budget    DECIMAL(10, 2),
     selected_worker_id  UUID REFERENCES users(id),
     cancel_reason       TEXT,
-    cancelled_by        UUID REFERENCES users(id),
     cancelled_at        TIMESTAMPTZ,
     completed_at        TIMESTAMPTZ,
     created_at          TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -198,7 +182,6 @@ CREATE INDEX idx_sr_category ON service_requests(category_id);
 CREATE INDEX idx_sr_status ON service_requests(status);
 CREATE INDEX idx_sr_city_area ON service_requests(city, area);
 CREATE INDEX idx_sr_created ON service_requests(created_at DESC);
-CREATE INDEX idx_sr_urgency ON service_requests(urgency);
 ```
 
 ### 4.6 Table: job_offers
@@ -212,16 +195,14 @@ CREATE TABLE job_offers (
     message                 TEXT,
     estimated_repair_cost   DECIMAL(10, 2),
     status                  VARCHAR(20) NOT NULL DEFAULT 'pending'
-                            CHECK (status IN ('pending', 'accepted', 'rejected', 'withdrawn')),
+                            CHECK (status IN ('pending','accepted','rejected','withdrawn')),
     created_at              TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at              TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    
     UNIQUE(job_id, worker_id)
 );
 
 CREATE INDEX idx_jo_job ON job_offers(job_id);
 CREATE INDEX idx_jo_worker ON job_offers(worker_id);
-CREATE INDEX idx_jo_status ON job_offers(status);
 ```
 
 ### 4.7 Table: visits
@@ -235,19 +216,11 @@ CREATE TABLE visits (
     scheduled_date  TIMESTAMPTZ NOT NULL,
     actual_date     TIMESTAMPTZ,
     status          VARCHAR(20) NOT NULL DEFAULT 'scheduled'
-                    CHECK (status IN ('scheduled', 'in_progress', 'completed', 'cancelled', 'no_show')),
+                    CHECK (status IN ('scheduled','in_progress','completed','cancelled','no_show')),
     visit_notes     TEXT,
     images          TEXT[] DEFAULT '{}',
-    latitude        DECIMAL(10, 8),
-    longitude       DECIMAL(11, 8),
-    created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
-
-CREATE INDEX idx_v_job ON visits(job_id);
-CREATE INDEX idx_v_worker ON visits(worker_id);
-CREATE INDEX idx_v_scheduled ON visits(scheduled_date);
-CREATE INDEX idx_v_status ON visits(status);
 ```
 
 ### 4.8 Table: repair_estimates
@@ -261,17 +234,13 @@ CREATE TABLE repair_estimates (
     amount                  DECIMAL(10, 2) NOT NULL,
     items_breakdown         JSONB DEFAULT '[]',
     status                  VARCHAR(20) NOT NULL DEFAULT 'proposed'
-                            CHECK (status IN ('proposed', 'countered', 'accepted', 'rejected')),
+                            CHECK (status IN ('proposed','countered','accepted','rejected')),
     negotiation_history     JSONB DEFAULT '[]',
-    created_at              TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_at              TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    created_at              TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
-
-CREATE INDEX idx_re_visit ON repair_estimates(visit_id);
-CREATE INDEX idx_re_status ON repair_estimates(status);
 ```
 
-### 4.9 Table: payments
+### 4.9 Table: payments (Payment Ledger)
 
 ```sql
 CREATE TABLE payments (
@@ -283,24 +252,22 @@ CREATE TABLE payments (
     platform_fee    DECIMAL(10, 2) NOT NULL,
     worker_payout   DECIMAL(10, 2) NOT NULL,
     method          VARCHAR(30) NOT NULL
-                    CHECK (method IN ('jazzcash', 'easypaisa', 'stripe', 'cash', 'card')),
+                    CHECK (method IN ('jazzcash','easypaisa','stripe','cash','card')),
     status          VARCHAR(20) NOT NULL DEFAULT 'pending'
-                    CHECK (status IN ('pending', 'processing', 'completed', 'failed', 'refunded')),
+                    CHECK (status IN ('pending','processing','completed','failed','refunded')),
     gateway_ref     VARCHAR(255),
     gateway_response JSONB,
     paid_at         TIMESTAMPTZ,
     refunded_at     TIMESTAMPTZ,
-    refund_reason   TEXT,
-    created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 CREATE INDEX idx_pay_job ON payments(job_id);
-CREATE INDEX idx_pay_customer ON payments(customer_id);
-CREATE INDEX idx_pay_worker ON payments(worker_id);
 CREATE INDEX idx_pay_status ON payments(status);
 CREATE INDEX idx_pay_gateway_ref ON payments(gateway_ref);
 ```
+
+> **Note:** This `payments` table is Fixora's **Payment Ledger** stored in PostgreSQL.
 
 ### 4.10 Table: reviews
 
@@ -315,13 +282,11 @@ CREATE TABLE reviews (
     images          TEXT[] DEFAULT '{}',
     is_visible      BOOLEAN DEFAULT true,
     created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    
     UNIQUE(job_id, reviewer_id)
 );
 
 CREATE INDEX idx_rv_job ON reviews(job_id);
 CREATE INDEX idx_rv_reviewee ON reviews(reviewee_id);
-CREATE INDEX idx_rv_rating ON reviews(rating);
 ```
 
 ### 4.11 Table: notifications
@@ -335,20 +300,18 @@ CREATE TABLE notifications (
     body            TEXT NOT NULL,
     data            JSONB DEFAULT '{}',
     channel         VARCHAR(20) NOT NULL
-                    CHECK (channel IN ('push', 'sms', 'in_app', 'email')),
+                    CHECK (channel IN ('push','sms','in_app','email')),
     is_read         BOOLEAN DEFAULT false,
     sent_at         TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    read_at         TIMESTAMPTZ,
     created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 CREATE INDEX idx_n_user ON notifications(user_id);
 CREATE INDEX idx_n_read ON notifications(is_read) WHERE is_read = false;
 CREATE INDEX idx_n_created ON notifications(created_at DESC);
-CREATE INDEX idx_n_type ON notifications(type);
 ```
 
-### 4.12 Table: conversations
+### 4.12 Table: conversations & messages
 
 ```sql
 CREATE TABLE conversations (
@@ -360,18 +323,9 @@ CREATE TABLE conversations (
     last_message_at TIMESTAMPTZ,
     is_active       BOOLEAN DEFAULT true,
     created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    
     UNIQUE(job_id)
 );
 
-CREATE INDEX idx_conv_job ON conversations(job_id);
-CREATE INDEX idx_conv_customer ON conversations(customer_id);
-CREATE INDEX idx_conv_worker ON conversations(worker_id);
-```
-
-### 4.13 Table: messages
-
-```sql
 CREATE TABLE messages (
     id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     conversation_id UUID NOT NULL REFERENCES conversations(id) ON DELETE CASCADE,
@@ -387,7 +341,7 @@ CREATE INDEX idx_msg_conv ON messages(conversation_id);
 CREATE INDEX idx_msg_created ON messages(created_at DESC);
 ```
 
-### 4.14 Table: disputes
+### 4.13 Table: disputes
 
 ```sql
 CREATE TABLE disputes (
@@ -398,18 +352,15 @@ CREATE TABLE disputes (
     description     TEXT NOT NULL,
     evidence_urls   TEXT[] DEFAULT '{}',
     status          VARCHAR(20) NOT NULL DEFAULT 'open'
-                    CHECK (status IN ('open', 'under_review', 'resolved', 'escalated')),
+                    CHECK (status IN ('open','under_review','resolved','escalated')),
     resolution      TEXT,
     resolved_by     UUID REFERENCES users(id),
     created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     resolved_at     TIMESTAMPTZ
 );
-
-CREATE INDEX idx_disp_job ON disputes(job_id);
-CREATE INDEX idx_disp_status ON disputes(status);
 ```
 
-### 4.15 Table: location_tracking
+### 4.14 Table: location_tracking
 
 ```sql
 CREATE TABLE location_tracking (
@@ -420,14 +371,10 @@ CREATE TABLE location_tracking (
     longitude       DECIMAL(11, 8) NOT NULL,
     accuracy        FLOAT,
     recorded_at     TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
+) PARTITION BY RANGE (recorded_at);
 
 CREATE INDEX idx_lt_user ON location_tracking(user_id);
-CREATE INDEX idx_lt_job ON location_tracking(job_id);
 CREATE INDEX idx_lt_time ON location_tracking(recorded_at DESC);
-
--- Partition by month for performance
--- (Implementation: create partitioned table in production)
 ```
 
 ---
@@ -444,22 +391,19 @@ CREATE INDEX idx_lt_time ON location_tracking(recorded_at DESC);
 | `worker:location:{userId}` | Hash | — | Real-time worker location |
 | `nearby:workers:{city}` | Geo | — | Worker geo-indexed locations |
 | `socket:user:{userId}` | String | — | Socket connection mapping |
-| `pubsub:job:{jobId}` | Channel | — | Real-time job updates |
 
 ---
 
 ## 6. Indexing Strategy
 
-### 6.1 Principles
-
-1. **Index all foreign keys** — FK columns used in JOINs
+1. **Index all foreign keys** — used in JOINs
 2. **Index status columns** — filtered in WHERE clauses
-3. **Index timestamp columns** — used in ORDER BY and range queries
-4. **GIN indexes** — for array columns (skills) and JSONB
+3. **Index timestamp columns** — used in ORDER BY / range queries
+4. **GIN indexes** — for arrays (`skills`) and JSONB
 5. **GiST indexes** — for PostGIS geometry columns
-6. **Partial indexes** — for boolean flags with low cardinality (is_active, is_read)
+6. **Partial indexes** — for boolean flags (`is_active`, `is_read`)
 
-### 6.2 Query Patterns → Indexes
+### Query Patterns → Indexes
 
 | Query Pattern | Index Needed |
 |---|---|
@@ -468,37 +412,48 @@ CREATE INDEX idx_lt_time ON location_tracking(recorded_at DESC);
 | "Get open jobs in city" | Composite on `(city, status, created_at)` |
 | "Get offers for a job" | On `job_offers(job_id)` |
 | "Unread notifications" | Partial on `notifications(user_id, created_at) WHERE is_read = false` |
-| "Worker's active jobs" | On `service_requests(selected_worker_id, status)` |
 
 ---
 
-## 7. Data Partitioning
-
-### 7.1 Tables Requiring Partitioning
-
-| Table | Partition Key | Strategy | Reason |
-|---|---|---|---|
-| `location_tracking` | `recorded_at` | Monthly range | High volume, time-series data |
-| `notifications` | `created_at` | Monthly range | High volume, old data rarely accessed |
-| `messages` | `created_at` | Monthly range | High volume for active conversations |
-
-### 7.2 Partition Example (location_tracking)
+## 7. PostGIS Nearby-Worker Query
 
 ```sql
-CREATE TABLE location_tracking (
-    ...
-) PARTITION BY RANGE (recorded_at);
-
-CREATE TABLE location_tracking_2026_09 PARTITION OF location_tracking
-    FOR VALUES FROM ('2026-09-01') TO ('2026-10-01');
-
-CREATE TABLE location_tracking_2026_10 PARTITION OF location_tracking
-    FOR VALUES FROM ('2026-10-01') TO ('2026-11-01');
+SELECT
+    u.id, u.name, u.avatar_url,
+    wp.rating_avg, wp.skills,
+    ST_Distance(
+        wp.location::geography,
+        ST_SetSRID(ST_MakePoint(:lng, :lat), 4326)::geography
+    ) AS distance_meters
+FROM users u
+JOIN worker_profiles wp ON wp.user_id = u.id
+WHERE
+    u.is_active = true
+    AND wp.is_verified = true
+    AND wp.is_available = true
+    AND wp.skills && ARRAY[:categoryId]
+    AND ST_DWithin(
+        wp.location::geography,
+        ST_SetSRID(ST_MakePoint(:lng, :lat), 4326)::geography,
+        :radiusMeters
+    )
+ORDER BY distance_meters ASC
+LIMIT 50;
 ```
 
 ---
 
-## 8. Backup & Recovery
+## 8. Data Partitioning
+
+| Table | Partition Key | Strategy | Reason |
+|---|---|---|---|
+| `location_tracking` | `recorded_at` | Monthly range | High volume, time-series |
+| `notifications` | `created_at` | Monthly range | High volume |
+| `messages` | `created_at` | Monthly range | High volume |
+
+---
+
+## 9. Backup & Recovery
 
 | Strategy | Frequency | Retention |
 |---|---|---|
@@ -507,74 +462,23 @@ CREATE TABLE location_tracking_2026_10 PARTITION OF location_tracking
 | **Manual Snapshot** | Before major deployments | 7 days |
 | **Cross-Region Backup** | Weekly | 90 days |
 
-### Recovery Targets
-
-| Metric | Target |
-|---|---|
-| **RPO (Recovery Point Objective)** | < 5 minutes |
-| **RTO (Recovery Time Objective)** | < 30 minutes |
+**Recovery Targets:** RPO < 5 min, RTO < 30 min.
 
 ---
 
-## 9. Performance Considerations
+## 10. ORM Choice (NestJS)
 
-### 9.1 Connection Pooling
-
-| Tool | Configuration |
+| ORM | Why |
 |---|---|
-| **PgBouncer** | Transaction pooling mode |
-| **Max connections** | 100 (PgBouncer) → 20 (PostgreSQL) |
-| **Idle timeout** | 300 seconds |
+| **Prisma** (recommended) | Type-safe, great migrations, TypeScript-first, PostGIS support |
+| TypeORM | Decorator-based, mature |
+| Knex.js | Lower-level SQL builder |
 
-### 9.2 Query Optimization
-
-| Technique | When to Use |
-|---|---|
-| **EXPLAIN ANALYZE** | Every new query during development |
-| **Materialized Views** | Worker ratings aggregation, city-wise stats |
-| **Read Replicas** | Separate read-heavy queries (search, analytics) |
-| **Cursor Pagination** | Instead of OFFSET for large result sets |
-
-### 9.3 Caching Strategy (Redis)
-
-| Data | Cache Duration | Invalidation |
-|---|---|---|
-| User profile | 5 min | On profile update |
-| Service categories | 1 hour | On admin change |
-| Worker ratings | 10 min | On new review |
-| Nearby workers (geo) | 2 min | On location update |
-| Job offer count | Real-time | On new offer |
+> **Recommendation:** Use **Prisma** with NestJS for type-safe PostgreSQL access.
 
 ---
 
-## 10. Migration Strategy
-
-### 10.1 Tool: Prisma Migrate (recommended)
-
-```
-prisma/migrations/
-├── 20260901_init/
-│   └── migration.sql
-├── 20260905_add_worker_profiles/
-│   └── migration.sql
-├── 20260910_add_payments/
-│   └── migration.sql
-└── ...
-```
-
-### 10.2 Migration Rules
-
-1. Never modify production data in migrations without backup
-2. All migrations must be reversible (up + down)
-3. Test migrations on staging before production
-4. Large data migrations run in background jobs
-5. Schema changes use `ALTER TABLE` with minimal locking
-
----
-
-## 11. Seed Data
-
-### 11.1 Service Categories (seed script)
+## 11. Seed Data — Service Categories
 
 ```sql
 INSERT INTO service_categories (name, name_urdu, sort_order) VALUES
@@ -584,30 +488,10 @@ INSERT INTO service_categories (name, name_urdu, sort_order) VALUES
 ('Carpentry', 'لکڑ کا کام', 4),
 ('Painting', 'پینٹنگ', 5),
 ('Cleaning', 'صفائی', 6),
-('Masonry', 'ritos', 7),
+('Masonry', 'دھاتی', 7),
 ('Pest Control', 'کیڑے مار دوا', 8),
 ('General Handyman', 'عمومی مہارت', 9);
 ```
-
----
-
-## 12. Estimated Storage
-
-| Table | Estimated Rows (Year 1) | Avg Row Size | Storage |
-|---|---|---|---|
-| users | 50,000 | 500 B | 25 MB |
-| worker_profiles | 20,000 | 800 B | 16 MB |
-| service_requests | 100,000 | 2 KB | 200 MB |
-| job_offers | 300,000 | 400 B | 120 MB |
-| visits | 100,000 | 600 B | 60 MB |
-| payments | 100,000 | 800 B | 80 MB |
-| reviews | 80,000 | 500 B | 40 MB |
-| notifications | 2,000,000 | 300 B | 600 MB |
-| messages | 5,000,000 | 400 B | 2 GB |
-| location_tracking | 50,000,000 | 200 B | 10 GB |
-| **Total** | | | **~13 GB** |
-
-> **Note:** With partitioning and archival of old data, active data will be much smaller.
 
 ---
 
