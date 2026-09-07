@@ -1,53 +1,52 @@
-🎨 HUNAR Color References
+# HUNAR Color System
 
-The color system behind the Freeio-inspired UI.
+## Palette
 
-Palette
-Navy	#1A1A2E
-Green	#1DB954
-Orange	#F59E0B
-Background	#F8FAFC
-White	#FFFFFF
-Dark	#1A1A2E
-Gray	#64748B
-Success	#22C55E
-Error	#EF4444
+| Color      | Hex       | Use                                     |
+| ---------- | --------- | --------------------------------------- |
+| Navy       | #1A1A2E | Brand, headings, prices, important text |
+| Teal       | #0F766E | Primary actions, trust, verified        |
+| Teal Dark  | #115E59 | Hover / active states                   |
+| Orange     | #F59E0B | Pending, offers, ratings, attention     |
+| Success    | #16A34A | Completed, successful, online           |
+| Error      | #DC2626 | Cancelled, rejected, failed             |
+| Gray       | #64748B | Secondary text, descriptions            |
+| Background | #F8FAFC | Main page background                    |
+| White      | #FFFFFF | Cards, forms, navbar, modals            |
+| Border     | #E2E8F0 | Borders and dividers                    |
 
-1. Action buttons (primary)
-Green = action & trust. Every main CTA in HUNAR.
+## Usage Rules
 
-- Post a Job
-- Accept Offer
-- Approve Repair
-- Pay Rs. 0
+**Navy = Brand + Information**
+Logo, headings, prices, important text.
 
-2. Secondary & outline buttons
-White + green accent = calm, trust-based options.
+**Teal = Action + Trust**
+Post a Job, Accept Offer, Pay, Approve, Book, Verified.
 
-- Join as a Worker
-- Verified
+**Orange = Attention**
+Pending, offers, ratings, warnings.
 
-3. Status & semantic colors
-Green draws the eye for success, orange for attention.
+**Green = Success**
+Completed, successful, online.
 
-- Pending offer → Orange
-- Verified → Green
-- Completed → Green
-- Cancelled → Red
+**Red = Problem**
+Cancelled, rejected, failed, destructive actions.
 
-4. Quick rule
+## Buttons
 
-Navy = TRUST → logo, headings, numbers, prices
-Green = ACTION → buttons, accept, pay, verified
-Orange = ATTENTION → ratings, offers, pending
-Success = COMPLETED → approved, online
-Error = PROBLEM → cancelled, rejected
+**Primary:** #0F766E → white text
+**Hover:** #115E59
+**Secondary:** white background + teal border/text
+**Destructive:** #DC2626 → white text
 
-5. Backgrounds
-Main website background: #F8FAFC
-Cards, navbar, modals, forms: #FFFFFF
+## Typography
 
-6. Typography
-Font: DM Sans
-Body text: #1A1A2E (Dark)
-Secondary text: #64748B (Gray)
+**Font:** Inter
+**Primary text:** #1A1A2E
+**Secondary text:** #64748B
+
+## Design Direction
+
+Clean, modern, professional and spacious.
+Avoid excessive cards, heavy shadows, gradients, and random colors.
+Use color primarily for **brand identity and semantic meaning**.
