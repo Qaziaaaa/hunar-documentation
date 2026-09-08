@@ -9,6 +9,7 @@ Fixora has **one source of earning**:
 Customer se Fixora ki koi separate service commission is flow mein nahi li ja rahi.
 
 ### Example
+
 - Visiting Charge = Rs. 500
 - Fixora Commission = 10%
 - Fixora Revenue = Rs. 50
@@ -25,6 +26,7 @@ Worker ka wallet balance uski online/offline availability determine karta hai.
 `Wallet Balance >= -500`
 
 Examples:
+
 - Rs. 500 → Online
 - Rs. 0 → Online
 - Rs. -100 → Online
@@ -36,6 +38,7 @@ Examples:
 `Wallet Balance < -500`
 
 Examples:
+
 - Rs. -501 → Offline
 - Rs. -550 → Offline
 - Rs. -600 → Offline
@@ -75,6 +78,7 @@ Worker Offline
 ### Step 1 — Customer ko worker ki zaroorat hoti hai
 
 Customer ko koi service issue hota hai, for example:
+
 - Pipe leakage
 - Electric issue
 - AC problem
@@ -171,6 +175,7 @@ Fixora:
 **Worker → Visiting Charge → 10% Commission → Fixora**
 
 Is flow mein:
+
 - Customer se separate platform commission nahi.
 - Worker ki service fee ka percentage nahi.
 - Product/service sale commission nahi.
@@ -229,29 +234,34 @@ Status:
 `Fixora Revenue = Visiting Charge × 0.10`
 
 | Visiting Charge | 10% Fixora Revenue |
-|---:|---:|
-| Rs. 300 | Rs. 30 |
-| Rs. 500 | Rs. 50 |
-| Rs. 800 | Rs. 80 |
-| Rs. 1,000 | Rs. 100 |
-| Rs. 2,000 | Rs. 200 |
+| --------------: | -----------------: |
+|         Rs. 300 |             Rs. 30 |
+|         Rs. 500 |             Rs. 50 |
+|         Rs. 800 |             Rs. 80 |
+|       Rs. 1,000 |            Rs. 100 |
+|       Rs. 2,000 |            Rs. 200 |
 
 ---
 
 ## 8. Wallet & Revenue Separation
 
 ### Worker Wallet
+
 Worker ka balance:
+
 - Top-up
 - Commission deductions
 - Withdrawals
 - Online/offline eligibility
 
 ### Fixora Revenue
+
 Fixora ki earning:
+
 - Har successful `Arrive` event par visiting charge ka 10%
 
 Internal database mein har commission transaction ka record rakhna chahiye:
+
 - Worker ID
 - Booking ID
 - Visiting charge
@@ -311,15 +321,15 @@ Balance < -500?
 
 ## 11. Core Rules — Quick Reference
 
-| Rule | Decision |
-|---|---|
-| Initial worker wallet | Rs. 0 |
-| Wallet top-up | Easypaisa / JazzCash / Bank Transfer |
-| Online condition | Balance >= -500 |
-| Offline condition | Balance < -500 |
-| Commission trigger | Worker presses `Arrive` |
-| Commission | 10% of visiting charge |
-| Revenue source | Worker visiting charge commission only |
-| Customer platform commission | None in this model |
-| Worker wallet can go negative | Yes |
-| Minimum allowed online balance | -500 |
+| Rule                           | Decision                               |
+| ------------------------------ | -------------------------------------- |
+| Initial worker wallet          | Rs. 0                                  |
+| Wallet top-up                  | Easypaisa / JazzCash / Bank Transfer   |
+| Online condition               | Balance >= -500                        |
+| Offline condition              | Balance < -500                         |
+| Commission trigger             | Worker presses `Arrive`                |
+| Commission                     | 10% of visiting charge                 |
+| Revenue source                 | Worker visiting charge commission only |
+| Customer platform commission   | None in this model                     |
+| Worker wallet can go negative  | Yes                                    |
+| Minimum allowed online balance | -500                                   |
