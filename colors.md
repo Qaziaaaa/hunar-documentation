@@ -1,52 +1,53 @@
-# HUNAR Color System
+🎨 HUNAR Color References
 
-## Palette
+The color system behind the Freeio-inspired UI.
 
-| Color      | Hex       | Use                                     |
-| ---------- | --------- | --------------------------------------- |
-| Navy       | #1A1A2E | Brand, headings, prices, important text |
-| Teal       | #0F766E | Primary actions, trust, verified        |
-| Teal Dark  | #115E59 | Hover / active states                   |
-| Orange     | #F59E0B | Pending, offers, ratings, attention     |
-| Success    | #16A34A | Completed, successful, online           |
-| Error      | #DC2626 | Cancelled, rejected, failed             |
-| Gray       | #64748B | Secondary text, descriptions            |
-| Background | #F8FAFC | Main page background                    |
-| White      | #FFFFFF | Cards, forms, navbar, modals            |
-| Border     | #E2E8F0 | Borders and dividers                    |
+Palette
+Navy	#123B5D
+Teal	#0F8B8D
+Orange	#F59E0B
+Background	#F8FAFC
+White	#FFFFFF
+Dark	#172033
+Gray	#64748B
+Success	#16A34A
+Error	#DC2626
 
-## Usage Rules
+1. Action buttons (primary)
+Teal = action & trust. Every main CTA in HUNAR.
 
-**Navy = Brand + Information**
-Logo, headings, prices, important text.
+- Post a Job
+- Accept Offer
+- Approve Repair
+- Pay Rs. 0
 
-**Teal = Action + Trust**
-Post a Job, Accept Offer, Pay, Approve, Book, Verified.
+2. Secondary & outline buttons
+White + teal accent = calm, trust-based options.
 
-**Orange = Attention**
-Pending, offers, ratings, warnings.
+- Join as a Worker
+- Verified
 
-**Green = Success**
-Completed, successful, online.
+3. Status & semantic colors
+Teal draws the eye for success, orange for attention.
 
-**Red = Problem**
-Cancelled, rejected, failed, destructive actions.
+- Pending offer → Orange
+- Verified → Teal
+- Completed → Teal
+- Cancelled → Red
 
-## Buttons
+4. Quick rule
 
-**Primary:** #0F766E → white text
-**Hover:** #115E59
-**Secondary:** white background + teal border/text
-**Destructive:** #DC2626 → white text
+Navy = TRUST → logo, headings, numbers, prices
+Teal = ACTION → buttons, accept, pay, verified
+Orange = ATTENTION → ratings, offers, pending
+Success = COMPLETED → approved, online
+Error = PROBLEM → cancelled, rejected
 
-## Typography
+5. Backgrounds
+Main website background: #F8FAFC
+Cards, navbar, modals, forms: #FFFFFF
 
-**Font:** Inter
-**Primary text:** #1A1A2E
-**Secondary text:** #64748B
-
-## Design Direction
-
-Clean, modern, professional and spacious.
-Avoid excessive cards, heavy shadows, gradients, and random colors.
-Use color primarily for **brand identity and semantic meaning**.
+6. Typography
+Font: Inter
+Body text: #172033 (Dark)
+Secondary text: #64748B (Gray)

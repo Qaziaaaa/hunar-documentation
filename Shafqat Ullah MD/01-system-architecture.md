@@ -1,4 +1,4 @@
-# System Architecture — Fixora (Home Services Platform)
+# System Architecture — Hunar (Home Services Platform)
 
 **Author:** Shafqat Ullah  
 **Document Type:** System Architecture Design  
@@ -10,7 +10,7 @@
 
 ## 1. Overview
 
-This document defines the overall system architecture for **Fixora** — a home-services marketplace connecting customers who need home repair/maintenance services with verified workers (electricians, plumbers, AC technicians, handymen, etc.). The stack follows the team-approved decisions: **Next.js + NestJS + PostgreSQL/PostGIS + Redis + Socket.IO + FCM + S3 + Maps + Payment Gateway/Ledger + Modular Monolith**. It is a **web application**.
+This document defines the overall system architecture for **Hunar** — a home-services marketplace connecting customers who need home repair/maintenance services with verified workers (electricians, plumbers, AC technicians, handymen, etc.). The stack follows the team-approved decisions: **Next.js + NestJS + PostgreSQL/PostGIS + Redis + Socket.IO + FCM + S3 + Maps + Payment Gateway/Ledger + Modular Monolith**. It is a **web application**.
 
 ---
 

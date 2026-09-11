@@ -1,4 +1,4 @@
-# ER Diagram — Fixora (Home Services Platform)
+# ER Diagram — Hunar (Home Services Platform)
 
 **Author:** Shafqat Ullah  
 **Document Type:** Entity-Relationship Diagram  
@@ -6,13 +6,13 @@
 **Date:** September 2, 2026  
 **Status:** Draft — Pending Team Review
 
-> **Note:** This models the database for the **Fixora** stack (**PostgreSQL + PostGIS**). The "tables/columns" map to PostgreSQL **relational tables**. Arrays and nested objects (e.g., `skills[]`, `images[]`, `negotiation_history`) are stored as PostgreSQL array / JSONB types.
+> **Note:** This models the database for the **Hunar** stack (**PostgreSQL + PostGIS**). The "tables/columns" map to PostgreSQL **relational tables**. Arrays and nested objects (e.g., `skills[]`, `images[]`, `negotiation_history`) are stored as PostgreSQL array / JSONB types.
 
 ---
 
 ## 1. Overview
 
-This document defines all entities, their attributes, and relationships for the Fixora (Home Services Platform) database, implemented with **PostgreSQL + PostGIS** (via Prisma/TypeORM in NestJS).
+This document defines all entities, their attributes, and relationships for the Hunar (Home Services Platform) database, implemented with **PostgreSQL + PostGIS** (via Prisma/TypeORM in NestJS).
 
 ---
 
@@ -600,7 +600,7 @@ Historical location records for workers (for tracking during visits). In a web a
 
 ```
                         ┌──────────────────┐
-                        │   User            │
+                        │        User      │
                         └────────┬─────────┘
                     ┌────────────┼────────────────────┐
                     │            │                    │

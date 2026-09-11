@@ -1,21 +1,21 @@
-# Fixora Technology Stack
+# Hunar Technology Stack
 
 ## What are we building?
 
-Fixora is a home-services marketplace where customers can find verified professionals such as plumbers, electricians, AC technicians, carpenters, etc.
+Hunar is a home-services marketplace where customers can find verified professionals such as plumbers, electricians, AC technicians, carpenters, etc.
 
-The stack is chosen to solve Fixora's actual needs: user accounts, jobs, nearby-worker matching, real-time updates, notifications, maps, files, and payments.
+The stack is chosen to solve Hunar's actual needs: user accounts, jobs, nearby-worker matching, real-time updates, notifications, maps, files, and payments.
 
 ---
 
 ## 1. Frontend — Next.js
 
 **What is it?**  
-A React framework used to build the part of Fixora that users see.
+A React framework used to build the part of Hunar that users see.
 
 **Why use it?**
 
-Fixora will have many screens:
+Hunar will have many screens:
 
 - Home page
 - Login/Register
@@ -41,7 +41,7 @@ JavaScript with types.
 
 **Why use it?**
 
-Fixora will have lots of data such as users, jobs, payments, workers and reviews. TypeScript helps catch many mistakes early and makes the code easier to understand and maintain.
+Hunar will have lots of data such as users, jobs, payments, workers and reviews. TypeScript helps catch many mistakes early and makes the code easier to understand and maintain.
 
 **Simple idea:**
 
@@ -79,7 +79,7 @@ A Node.js backend framework built with TypeScript.
 
 **Why use it?**
 
-The backend will handle Fixora's business logic:
+The backend will handle Hunar's business logic:
 
 - Authentication
 - Users
@@ -109,7 +109,7 @@ Admin
 
 **Simple idea:**
 
-> NestJS = The brain of Fixora.
+> NestJS = The brain of Hunar.
 
 ---
 
@@ -120,7 +120,7 @@ A relational database.
 
 **Why use it?**
 
-Fixora has data that is strongly connected:
+Hunar has data that is strongly connected:
 
 ```text
 User → Job → Worker → Payment → Review
@@ -152,7 +152,7 @@ A PostgreSQL extension for location and geographic queries.
 
 **Why use it?**
 
-Location is one of Fixora's core features.
+Location is one of Hunar's core features.
 
 When a customer needs a plumber, we need to find:
 
@@ -204,7 +204,7 @@ Technology for real-time communication between the browser/app and server.
 
 **Why use it?**
 
-Fixora needs instant updates.
+Hunar needs instant updates.
 
 Example:
 
@@ -242,7 +242,7 @@ A push-notification service.
 
 **Why use it?**
 
-A worker may not have the Fixora screen open.
+A worker may not have the Hunar screen open.
 
 For example:
 
@@ -253,7 +253,7 @@ Worker is away from app
         ↓
 Push notification arrives
         ↓
-Worker opens Fixora
+Worker opens Hunar
 ```
 
 Useful notifications include:
@@ -311,7 +311,7 @@ Mapping and location services.
 
 **Why use it?**
 
-Fixora needs:
+Hunar needs:
 
 - Location selection
 - Worker distance
@@ -346,7 +346,7 @@ A service that processes online payments.
 
 **Why use it?**
 
-Fixora needs customers to pay for services through a secure payment system.
+Hunar needs customers to pay for services through a secure payment system.
 
 Basic flow:
 
@@ -364,7 +364,7 @@ Platform commission
 
 **Important:**
 
-We should not assume that Fixora can simply hold customer money itself. Escrow, custody, settlement, KYC and payouts can have regulatory requirements. The final design should use a compliant provider and proper legal/regulatory review.
+We should not assume that Hunar can simply hold customer money itself. Escrow, custody, settlement, KYC and payouts can have regulatory requirements. The final design should use a compliant provider and proper legal/regulatory review.
 
 **Simple idea:**
 
@@ -379,7 +379,7 @@ A record of all money-related events inside our system.
 
 **Why use it?**
 
-Even when an external payment provider handles the actual payment, Fixora still needs clear internal records.
+Even when an external payment provider handles the actual payment, Hunar still needs clear internal records.
 
 Example:
 
@@ -414,7 +414,7 @@ One backend application divided into clear internal modules.
 Example:
 
 ```text
-Fixora Backend
+Hunar Backend
 │
 ├── Auth
 ├── Users
@@ -545,7 +545,7 @@ Architecture
 # Example: Customer Needs a Plumber
 
 ```text
-1. Customer opens Fixora
+1. Customer opens Hunar
         ↓
 2. Next.js shows the form
         ↓
@@ -578,7 +578,7 @@ Architecture
 
 We are not choosing these technologies just because they are popular.
 
-Each technology solves a specific Fixora problem:
+Each technology solves a specific Hunar problem:
 
 **Next.js** → UI  
 **NestJS** → Business logic  
