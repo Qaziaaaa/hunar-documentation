@@ -24,7 +24,7 @@ The platform needs the customer's location and the worker's service area/locatio
 
 Use customer-provided location plus device location as an optional convenience. Store coordinates with the service request and reveal the exact customer address only after the worker is selected/confirmed.
 
-**Web Implementation (Fixora):**
+**Web Implementation (Hunar):**
 - Use **HTML5 Geolocation API** (`navigator.geolocation.getCurrentPosition()`) in the Next.js frontend
 - Use **Google Maps / Mapbox** for interactive map selection
 - Store coordinates (latitude/longitude) as a **PostGIS `POINT`** (geometry) column in **PostgreSQL**
@@ -801,9 +801,9 @@ The basic marketplace flow is comparatively manageable:
 
 The team should finalize the business rules and payment model before beginning major development, because payment, dispute, cancellation, and worker/customer state transitions affect multiple parts of the system.
 
-## Recommended Technology Stack (Fixora)
+## Recommended Technology Stack (Hunar)
 
-The platform is built with the team-approved **Fixora stack** — a **web application** built on **Next.js + NestJS + PostgreSQL/PostGIS**.
+The platform is built with the team-approved **Hunar stack** — a **web application** built on **Next.js + NestJS + PostgreSQL/PostGIS**.
 
 | Layer | Technology |
 |-------|------------|

@@ -30,7 +30,7 @@
 14. [Docker & Local Development](#14-docker--local-development)
 15. [CI/CD Pipeline](#15-cicd-pipeline)
 16. [Environment Strategy](#16-environment-strategy)
-17. [API Response Conventions](#17-api-response-conventions)
+17. [API Response Conventions](#17-api-response-conventions)  
 18. [Security Checklist](#18-security-checklist)
 19. [File Naming Conventions](#19-file-naming-conventions)
 20. [Development Workflow](#20-development-workflow)

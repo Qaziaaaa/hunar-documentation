@@ -42,7 +42,7 @@ The MVP should avoid unnecessary complexity and focus on successfully completing
 # 2. Product Scope
 
 ## 2.1 In Scope
-
+  
 The MVP includes the following features:
 
 ### Customer Features
