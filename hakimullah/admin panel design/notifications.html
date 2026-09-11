@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#0F766E" />
+  <title>HUNAR Admin Panel — Notifications</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='24' fill='%230F766E'/%3E%3Ctext x='50' y='70' font-size='56' text-anchor='middle' fill='white' font-family='Arial' font-weight='bold'%3EH%3C/text%3E%3C/svg%3E" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="pages.css" />
+  <style>
+    .notif-del-btn {
+      width: 28px; height: 28px; border-radius: 6px; border: none; background: none;
+      color: var(--text-muted); cursor: pointer; display: grid; place-items: center;
+      opacity: 0; transition: all .15s; flex-shrink: 0; margin-top: 2px;
+    }
+    .notif-item:hover .notif-del-btn { opacity: 1; }
+    .notif-del-btn:hover { background: var(--red-light); color: var(--red); }
+    .notif-del-btn svg { width: 16px; height: 16px; }
+    .day-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin: 18px 6px 10px;
+      font-size: 11.5px; font-weight: 800; text-transform: uppercase; letter-spacing: .08em;
+      color: var(--text-muted);
+    }
+    .day-header:first-child { margin-top: 8px; }
+    .day-header::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: linear-gradient(90deg, var(--border), transparent);
+    }
+    .stats-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
+    .stat-chip {
+      display: inline-flex; align-items: center; gap: 7px;
+      background: var(--border-light); border-radius: var(--radius-pill);
+      padding: 6px 14px; font-size: 12.5px; font-weight: 600; color: var(--text-secondary);
+    }
+    .stat-chip b { color: var(--navy); font-weight: 800; }
+    .stat-chip .dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+    .badge-type {
+      display: inline-flex; align-items: center; gap: 4px; font-size: 11px;
+      font-weight: 650; padding: 2px 8px; border-radius: var(--radius-pill); white-space: nowrap;
+    }
+    .badge-type.jobs { background: var(--teal-bg); color: var(--teal); }
+    .badge-type.payments { background: var(--orange-light); color: #B45309; }
+    .badge-type.system { background: #E2E8F0; color: var(--navy); }
+    #toast-container {
+      position: fixed; top: 72px; right: 20px; z-index: 500;
+      display: flex; flex-direction: column; max-width: 360px; gap: 8px;
+    }
+    .toast-item {
+      background: #fff; color: var(--text-primary); border-radius: var(--radius);
+      padding: 12px 18px; box-shadow: 0 10px 25px rgba(0,0,0,.1), 0 4px 10px rgba(0,0,0,.05);
+      font-size: 13.5px; font-weight: 600; display: flex; align-items: center; gap: 10px;
+      border-left: 3px solid var(--teal);
+      animation: toastIn .25s ease;
+    }
+    @keyframes toastIn { from { opacity: 0; transform: translateX(30px); } to { opacity: 1; transform: translateX(0); } }
+    .toast-item svg { width: 18px; height: 18px; color: var(--teal); flex-shrink: 0; }
+    .empty-panel {
+      background: var(--surface); border-radius: var(--radius-lg);
+      box-shadow: 0 2px 6px rgba(0,0,0,.07), 0 2px 8px rgba(0,0,0,.04);
+      text-align: center; padding: 56px 24px;
+    }
+    .empty-panel .empty-icon {
+      width: 64px; height: 64px; border-radius: 18px; background: var(--teal-bg);
+      color: var(--teal); display: grid; place-items: center; margin: 0 auto 16px;
+    }
+    .empty-panel .empty-icon svg { width: 28px; height: 28px; }
+    .empty-panel h3 { font-size: 17px; font-weight: 750; color: var(--navy); margin-bottom: 6px; }
+    .empty-panel p { font-size: 13.5px; color: var(--text-secondary); margin: 0 auto 18px; max-width: 340px; }
+    .notif-item { position: relative; }
+    .unread-indicator {
+      position: absolute; left: 0; top: 0; bottom: 0; width: 3px;
+      background: var(--teal); border-radius: 0 3px 3px 0; opacity: 0; transition: opacity .15s;
+    }
+    .notif-item.unread .unread-indicator { opacity: 1; }
+
+    /* ============================================================
+       NOTIFICATION LIST — CARD STYLE
+       ============================================================ */
+    #notif-panel.panel {
+      border: 1px solid var(--border-light);
+      background: #F8FAFC;
+      box-shadow: 0 8px 24px rgba(0,0,0,.04);
+    }
+    #notif-panel .panel-body { padding: 8px 12px 12px; }
+
+    .notif-list { padding-bottom: 4px; }
+
+    .notif-item {
+      background: var(--surface);
+      border: 1px solid var(--border-light);
+      border-bottom: 1px solid var(--border-light);
+      border-radius: 12px;
+      margin-bottom: 8px;
+      padding: 14px 16px;
+      box-shadow: 0 1px 3px rgba(0,0,0,.04);
+      transition: transform .15s, box-shadow .15s, border-color .15s, background .15s;
+    }
+    .notif-item:last-child { border-bottom: 1px solid var(--border-light); }
+    .notif-item:hover {
+      background: var(--surface);
+      border-color: var(--border);
+      box-shadow: 0 6px 16px rgba(0,0,0,.07);
+      transform: translateY(-1px);
+    }
+
+    .notif-item.unread {
+      background: linear-gradient(90deg, var(--teal-bg) 0%, #FFFFFF 55%);
+      border-color: rgba(15,118,110,.16);
+    }
+    .notif-item.unread:hover {
+      background: linear-gradient(90deg, var(--teal-bg) 0%, #FFFFFF 70%);
+    }
+    .notif-item.unread .unread-indicator {
+      background: var(--teal);
+      box-shadow: 0 0 6px rgba(15,118,110,.35);
+    }
+
+    .notif-icon {
+      width: 40px; height: 40px;
+      border-radius: 12px;
+      box-shadow: 0 2px 6px rgba(0,0,0,.06);
+    }
+    .notif-icon svg { width: 18px; height: 18px; }
+
+    .unread-dot {
+      width: 9px; height: 9px;
+      margin-top: 8px;
+      box-shadow: 0 0 0 3px var(--teal-bg);
+    }
+
+    .stat-chip {
+      background: #fff;
+      border: 1px solid var(--border-light);
+      padding: 7px 14px;
+      box-shadow: 0 1px 2px rgba(0,0,0,.04);
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+
+    <div class="scrim" id="scrim" onclick="closeSidebar()"></div>
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-brand">
+        <div class="brand-icon">H</div>
+        <div class="brand-text">HU<b>NAR</b></div>
+      </div>
+      <div class="sidebar-label">Main</div>
+      <nav class="sidebar-nav">
+        <a class="nav-item" href="dashboard.html">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>
+          Dashboard
+        </a>
+        <a class="nav-item" href="index.html">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          Workers
+          <span class="nav-badge">16</span>
+        </a>
+        <a class="nav-item" href="customers.html">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+          Customers
+        </a>
+        <a class="nav-item" href="payments.html">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>
+          Payments
+        </a>
+        <a class="nav-item" href="reports.html">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 16 4 4 4-4"/><path d="M7 20V4"/><path d="m21 8-4-4-4 4"/><path d="M17 4v16"/></svg>
+          Reports
+        </a>
+        <div class="sidebar-label" style="padding-top:14px">Management</div>
+        <a class="nav-item" href="settings.html">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+          Settings
+        </a>
+        <a class="nav-item active" href="notifications.html">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+          Notifications
+          <span class="nav-badge" id="sidebar-badge">5</span>
+        </a>
+      </nav>
+      <div class="sidebar-footer">
+        <div class="sidebar-user">
+          <div class="su-avatar">AH</div>
+          <div class="su-info">
+            <div class="su-name">Admin HUNAR</div>
+            <div class="su-role">Super Admin</div>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <div class="main">
+      <header class="topbar">
+        <button class="menu-toggle" onclick="toggleSidebar()">
+          <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="18" y2="18"/></svg>
+        </button>
+        <span class="topbar-title">Notifications</span>
+        <span class="topbar-spacer"></span>
+        <button class="topbar-btn">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+        </button>
+        <button class="topbar-btn">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+          <span class="notif-dot"></span>
+        </button>
+        <div class="topbar-avatar">AH</div>
+      </header>
+
+      <div class="page">
+
+        <div class="breadcrumb">
+          <a href="dashboard.html">Administration</a>
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+          <span>Notifications</span>
+        </div>
+
+        <div class="page-header">
+          <div class="page-header-left">
+            <h1>Notifications <span id="unread-counter" style="font-size:14px;font-weight:700;color:var(--teal);background:var(--teal-bg);padding:3px 10px;border-radius:var(--radius-pill);margin-left:6px;vertical-align:middle;"></span></h1>
+            <p>Stay on top of bookings, payments, and important updates.</p>
+          </div>
+          <div class="page-header-actions">
+            <button class="btn btn-outline" onclick="markAllRead()">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              Mark all as read
+            </button>
+            <button class="btn btn-danger" onclick="openClearModal()">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+              Clear all
+            </button>
+          </div>
+        </div>
+
+        <div class="stats-row" id="stats-row">
+          <span class="stat-chip"><span class="dot" style="background:var(--teal)"></span> Total <b id="stat-total">12</b></span>
+          <span class="stat-chip"><span class="dot" style="background:var(--red)"></span> Unread <b id="stat-unread">5</b></span>
+          <span class="stat-chip"><span class="dot" style="background:var(--green)"></span> Jobs <b id="stat-jobs">5</b></span>
+          <span class="stat-chip"><span class="dot" style="background:var(--orange)"></span> Payments <b id="stat-payments">4</b></span>
+        </div>
+
+        <div class="toolbar" style="margin-bottom:4px">
+          <span class="toolbar-spacer"></span>
+          <div class="tabs" id="filter-tabs">
+            <button class="tab active" onclick="setFilter(this,'all')">All <span id="tab-all" style="font-size:11px;opacity:.6;margin-left:3px"></span></button>
+            <button class="tab" onclick="setFilter(this,'unread')">Unread <span id="tab-unread" style="font-size:11px;opacity:.6;margin-left:3px"></span></button>
+            <button class="tab" onclick="setFilter(this,'job')">Jobs <span id="tab-job" style="font-size:11px;opacity:.6;margin-left:3px"></span></button>
+            <button class="tab" onclick="setFilter(this,'payment')">Payments <span id="tab-payment" style="font-size:11px;opacity:.6;margin-left:3px"></span></button>
+            <button class="tab" onclick="setFilter(this,'system')">System <span id="tab-system" style="font-size:11px;opacity:.6;margin-left:3px"></span></button>
+          </div>
+        </div>
+
+        <div class="panel" id="notif-panel">
+          <div id="notif-list"></div>
+        </div>
+
+        <div class="empty-panel" id="empty-state" style="display:none">
+          <div class="empty-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+          </div>
+          <h3>You're all caught up</h3>
+          <p>No notifications to show. Enjoy your clean dashboard.</p>
+          <button class="btn btn-primary" onclick="restoreData()">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>
+            Restore demo data
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <div id="toast-container"></div>
+
+  <div class="modal-overlay" id="confirm-modal">
+    <div class="modal">
+      <div class="modal-body" style="padding-top:28px">
+        <div class="confirm-icon danger">
+          <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>
+        </div>
+        <div class="confirm-content">
+          <h3>Delete all notifications?</h3>
+          <p>This will permanently remove all notifications from your inbox. You can restore them later.</p>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" onclick="closeClearModal()">Cancel</button>
+        <button class="btn btn-danger" onclick="confirmClearAll()">Delete all</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    var now = Date.now();
+    var minute = 60 * 1000, hour = 60 * minute, day = 24 * hour;
+
+    var ICONS = {
+      check: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/></svg>',
+      calendar: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M16 2v4"/><path d="M8 2v4"/><path d="M3 10h18"/></svg>',
+      userPlus: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6"/><path d="M22 11h-6"/></svg>',
+      xCircle: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m4.9 4.9 14.2 14.2"/></svg>',
+      bell: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>',
+      shield: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/></svg>',
+      trending: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>',
+      trash: '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>'
+    };
+
+    var SEED = [
+      { id:1, type:'payment', iconColor:'green', iconKey:'check', title:'Payout approved — <b>PKR 24,000</b> to Muhammad Usman', desc:'Weekly payout has been transferred to JazzCash and is on its way.', timeOffset: 2*minute, unread:true, badgeText:'Payment', badgeCls:'badge-verified' },
+      { id:2, type:'job', iconColor:'teal', iconKey:'calendar', title:'New booking <b>#BK-22091</b> — AC repair', desc:'Ayesha Khan booked Muhammad Usman for an AC repair in Lahore.', timeOffset: 18*minute, unread:true, badgeText:'Booking', badgeCls:'badge-verified' },
+      { id:3, type:'job', iconColor:'orange', iconKey:'userPlus', title:'New worker signup — <b>Saif Ullah</b>', desc:'A mechanic from Peshawar registered and is waiting for verification.', timeOffset: 34*minute, unread:true, badgeText:'Verification', badgeCls:'badge-pending' },
+      { id:4, type:'payment', iconColor:'red', iconKey:'xCircle', title:'Payment failed for <b>TXN-88225</b>', desc:'Card payment of PKR 1,250 could not be processed. Customer was notified.', timeOffset: 1*hour, unread:true, badgeText:'Payment', badgeCls:'badge-suspended' },
+      { id:5, type:'system', iconColor:'navy', iconKey:'bell', title:'System update scheduled', desc:'Maintenance is planned on Sunday 02:00\u201304:00 AM PKT. Expect brief downtime.', timeOffset: 2*hour, unread:true, badgeText:'System', badgeCls:'badge-neutral' },
+      { id:6, type:'job', iconColor:'teal', iconKey:'shield', title:'Worker verified — <b>Bilal Ahmed</b>', desc:'The plumber from Islamabad passed document verification.', timeOffset: 5*hour, unread:false, badgeText:'Verification', badgeCls:'badge-verified' },
+      { id:7, type:'payment', iconColor:'green', iconKey:'check', title:'Refund processed for <b>TXN-88228</b>', desc:'PKR 5,000 refunded to Hassan Munir for cancelled booking.', timeOffset: day+3*hour, unread:false, badgeText:'Payment', badgeCls:'badge-neutral' },
+      { id:8, type:'job', iconColor:'orange', iconKey:'calendar', title:'Booking rescheduled — <b>#BK-22045</b>', desc:'Sana Riaz moved her wiring job to Thursday at 10:00 AM.', timeOffset: day+6*hour, unread:false, badgeText:'Booking', badgeCls:'badge-pending' },
+      { id:9, type:'system', iconColor:'navy', iconKey:'trending', title:'Weekly report is ready', desc:'The performance summary for last week is available in Reports.', timeOffset: 2*day, unread:false, badgeText:'System', badgeCls:'badge-neutral' },
+      { id:10, type:'job', iconColor:'green', iconKey:'check', title:'Booking completed — <b>#BK-22090</b>', desc:'Ali Raza Khan finished the wiring job and received a 4.9 rating.', timeOffset: 3*day, unread:false, badgeText:'Booking', badgeCls:'badge-verified' },
+      { id:11, type:'payment', iconColor:'orange', iconKey:'trending', title:'Commission earned — <b>PKR 3,200</b>', desc:'Platform commission from 4 completed bookings this week.', timeOffset: 3*day+5*hour, unread:false, badgeText:'Payment', badgeCls:'badge-verified' },
+      { id:12, type:'system', iconColor:'navy', iconKey:'shield', title:'Security audit passed', desc:'Routine security scan completed with no issues found.', timeOffset: 5*day, unread:false, badgeText:'System', badgeCls:'badge-verified' }
+    ];
+
+    var data = JSON.parse(JSON.stringify(SEED));
+    var currentFilter = 'all';
+
+    function relativeTime(ts) {
+      var diff = now - ts;
+      if (diff < minute) return 'just now';
+      if (diff < hour) { var m = Math.floor(diff / minute); return m + ' min' + (m > 1 ? 's' : '') + ' ago'; }
+      if (diff < day) { var h = Math.floor(diff / hour); return h + ' hour' + (h > 1 ? 's' : '') + ' ago'; }
+      var d = Math.floor(diff / day);
+      if (d === 1) return 'yesterday';
+      if (d < 7) return d + ' days ago';
+      var w = Math.floor(d / 7);
+      return w + ' week' + (w > 1 ? 's' : '') + ' ago';
+    }
+
+    function groupLabel(ts) {
+      var diff = now - ts;
+      if (diff < day) return 'Today';
+      if (diff < 2 * day) return 'Yesterday';
+      return 'This Week';
+    }
+
+    function getFiltered() {
+      return data.filter(function(n) {
+        if (currentFilter === 'all') return true;
+        if (currentFilter === 'unread') return n.unread;
+        return n.type === currentFilter;
+      });
+    }
+
+    function updateCounters() {
+      var total = data.length;
+      var unread = data.filter(function(n) { return n.unread; }).length;
+      var jobs = data.filter(function(n) { return n.type === 'job'; }).length;
+      var payments = data.filter(function(n) { return n.type === 'payment'; }).length;
+      var systems = data.filter(function(n) { return n.type === 'system'; }).length;
+
+      document.getElementById('stat-total').textContent = total;
+      document.getElementById('stat-unread').textContent = unread;
+      document.getElementById('stat-jobs').textContent = jobs;
+      document.getElementById('stat-payments').textContent = payments;
+
+      var counterEl = document.getElementById('unread-counter');
+      counterEl.textContent = unread > 0 ? unread + ' unread' : '';
+      counterEl.style.display = unread > 0 ? '' : 'none';
+
+      var badge = document.getElementById('sidebar-badge');
+      if (unread > 0) {
+        badge.textContent = unread;
+        badge.style.display = '';
+      } else {
+        badge.textContent = '0';
+        badge.style.display = 'none';
+      }
+
+      var tabs = { all: data.length, unread: unread, job: jobs, payment: payments, system: systems };
+      Object.keys(tabs).forEach(function(k) {
+        var el = document.getElementById('tab-' + k);
+        if (el) el.textContent = tabs[k];
+      });
+    }
+
+    function renderList() {
+      var list = document.getElementById('notif-list');
+      var filtered = getFiltered();
+
+      if (filtered.length === 0) {
+        document.getElementById('notif-panel').style.display = 'none';
+        document.getElementById('empty-state').style.display = '';
+        return;
+      }
+
+      document.getElementById('notif-panel').style.display = '';
+      document.getElementById('empty-state').style.display = 'none';
+
+      var groups = {};
+      var order = [];
+      filtered.forEach(function(n) {
+        var g = groupLabel(n.time);
+        if (!groups[g]) { groups[g] = []; order.push(g); }
+        groups[g].push(n);
+      });
+
+      var html = '<div class="notif-list">';
+      order.forEach(function(g) {
+        html += '<div class="day-header">' + g + '</div>';
+        groups[g].forEach(function(n) {
+          html += '<div class="notif-item' + (n.unread ? ' unread' : '') + '" data-id="' + n.id + '" onclick="handleNotifClick(event,' + n.id + ')">';
+          html += '<div class="unread-indicator"></div>';
+          html += '<div class="notif-icon ' + n.iconColor + '">' + ICONS[n.iconKey] + '</div>';
+          html += '<div class="notif-main">';
+          html += '<div class="notif-title">' + n.title + '</div>';
+          html += '<div class="notif-desc">' + n.desc + '</div>';
+          html += '<div class="notif-meta">';
+          html += '<span class="badge-type ' + n.type + '">' + n.badgeText + '</span>';
+          html += '<span class="notif-time">' + relativeTime(n.timeOffset) + '</span>';
+          html += '</div>';
+          html += '</div>';
+          if (n.unread) html += '<span class="unread-dot"></span>';
+          html += '<button class="notif-del-btn" onclick="deleteNotif(event,' + n.id + ')" title="Delete">' + ICONS.trash + '</button>';
+          html += '</div>';
+        });
+      });
+      html += '</div>';
+      list.innerHTML = html;
+    }
+
+    function handleNotifClick(e, id) {
+      if (e.target.closest('.notif-del-btn')) return;
+      var n = data.find(function(x) { return x.id === id; });
+      if (!n) return;
+      if (n.unread) {
+        n.unread = false;
+        renderList();
+        updateCounters();
+        showToast('Marked as read');
+      } else {
+        showToast('No new updates in this notification');
+      }
+    }
+
+    function deleteNotif(e, id) {
+      e.stopPropagation();
+      data = data.filter(function(x) { return x.id !== id; });
+      renderList();
+      updateCounters();
+    }
+
+    function markAllRead() {
+      var changed = false;
+      data.forEach(function(n) { if (n.unread) { n.unread = false; changed = true; } });
+      if (!changed && data.length === 0) {
+        showToast('No notifications to mark');
+        return;
+      }
+      renderList();
+      updateCounters();
+      showToast('All notifications marked as read');
+    }
+
+    function openClearModal() {
+      if (data.length === 0) { showToast('No notifications to clear'); return; }
+      document.getElementById('confirm-modal').classList.add('open');
+    }
+    function closeClearModal() { document.getElementById('confirm-modal').classList.remove('open'); }
+    function confirmClearAll() {
+      data = [];
+      closeClearModal();
+      renderList();
+      updateCounters();
+      showToast('All notifications cleared');
+    }
+
+    function restoreData() {
+      data = JSON.parse(JSON.stringify(SEED));
+      now = Date.now();
+      currentFilter = 'all';
+      document.querySelectorAll('.tabs .tab').forEach(function(t) { t.classList.remove('active'); });
+      document.querySelector('.tabs .tab').classList.add('active');
+      renderList();
+      updateCounters();
+      showToast('Demo data restored');
+    }
+
+    function setFilter(btn, type) {
+      currentFilter = type;
+      document.querySelectorAll('.tabs .tab').forEach(function(t) { t.classList.remove('active'); });
+      btn.classList.add('active');
+      renderList();
+    }
+
+    function showToast(msg) {
+      var c = document.getElementById('toast-container');
+      var el = document.createElement('div');
+      el.className = 'toast-item';
+      el.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>' + msg;
+      c.appendChild(el);
+      setTimeout(function() {
+        el.style.opacity = '0';
+        el.style.transform = 'translateX(30px)';
+        el.style.transition = 'all .3s ease';
+        setTimeout(function() { el.remove(); }, 300);
+      }, 2800);
+    }
+
+    function toggleSidebar() {
+      document.getElementById('sidebar').classList.toggle('open');
+      document.getElementById('scrim').classList.toggle('show');
+    }
+    function closeSidebar() {
+      document.getElementById('sidebar').classList.remove('open');
+      document.getElementById('scrim').classList.remove('show');
+    }
+
+    renderList();
+    updateCounters();
+  </script>
+</body>
+</html>

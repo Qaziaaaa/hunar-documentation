@@ -1,0 +1,861 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#0F766E" />
+  <title>HUNAR Admin Panel — Settings</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='24' fill='%230F766E'/%3E%3Ctext x='50' y='70' font-size='56' text-anchor='middle' fill='white' font-family='Arial' font-weight='bold'%3EH%3C/text%3E%3C/svg%3E" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="pages.css" />
+  <style>
+    .avatar-wrap { position: relative; width: 72px; height: 72px; flex-shrink: 0; }
+    .avatar-circle { width: 72px; height: 72px; border-radius: 50%; display: grid; place-items: center; font-weight: 800; font-size: 24px; color: #fff; background: var(--navy); overflow: hidden; }
+    .avatar-circle img { width: 100%; height: 100%; object-fit: cover; }
+    .avatar-upload-btn { position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); }
+    .set-panel-footer { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--border-light); }
+    .notif-summary { font-size: 13px; font-weight: 600; color: var(--text-secondary); padding: 10px 0 0; }
+    .notif-summary b { color: var(--teal); font-weight: 700; }
+    .field-error { font-size: 12px; color: var(--red); font-weight: 600; margin-top: 4px; display: none; }
+    .field-error.show { display: block; }
+    .field-valid { border-color: var(--green) !important; }
+    .backup-codes { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 14px; }
+    .backup-code { font-family: 'Courier New', monospace; font-size: 14px; font-weight: 700; letter-spacing: .05em; padding: 8px 12px; border: 1.5px dashed var(--border); border-radius: var(--radius); background: var(--border-light); color: var(--text-primary); text-align: center; }
+    .backup-note { font-size: 12px; color: var(--text-muted); margin-top: 10px; }
+    .session-empty { font-size: 13px; color: var(--text-muted); padding: 14px 0; text-align: center; }
+    .session-list { display: flex; flex-direction: column; }
+    .session-row { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--border-light); }
+    .session-row:last-child { border-bottom: none; }
+    .session-info { flex: 1; min-width: 0; }
+    .session-device { font-weight: 700; font-size: 13.5px; color: var(--text-primary); }
+    .session-meta { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+    .payment-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
+    @media (max-width: 900px) { .payment-grid { grid-template-columns: 1fr; } }
+    .pay-card { border: 1.5px solid var(--border); border-radius: var(--radius-lg); padding: 18px; display: flex; flex-direction: column; gap: 12px; transition: border-color .15s, box-shadow .15s; }
+    .pay-card:hover { border-color: #CBD5E1; box-shadow: var(--shadow-sm); }
+    .pay-card-top { display: flex; align-items: center; gap: 12px; }
+    .pay-card-info { flex: 1; min-width: 0; }
+    .pay-card-title { font-weight: 700; font-size: 14px; color: var(--text-primary); }
+    .pay-card-number { font-size: 12.5px; color: var(--text-muted); margin-top: 2px; font-family: 'Courier New', monospace; letter-spacing: .03em; }
+    .pay-card-bottom { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+    .pay-status { font-size: 11.5px; font-weight: 700; padding: 3px 10px; border-radius: var(--radius-pill); }
+    .pay-status.active { background: var(--green-light); color: var(--green); }
+    .pay-status.disabled { background: var(--border-light); color: var(--text-muted); }
+    .pay-default-pill { font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: var(--radius-pill); background: var(--teal-bg); color: var(--teal); }
+    .add-pay-card { border: 1.5px dashed var(--border); border-radius: var(--radius-lg); padding: 18px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; min-height: 120px; cursor: pointer; transition: all .15s; color: var(--text-muted); }
+    .add-pay-card:hover { border-color: var(--teal); color: var(--teal); background: var(--teal-bg); }
+    .add-pay-card svg { width: 28px; height: 28px; }
+    .add-pay-card span { font-size: 13px; font-weight: 650; }
+    .modal-close { width: 32px; height: 32px; border-radius: var(--radius-sm); border: none; background: none; cursor: pointer; display: grid; place-items: center; color: var(--text-muted); transition: all .12s; }
+    .modal-close:hover { background: var(--border-light); color: var(--text-primary); }
+    .modal-close svg { width: 18px; height: 18px; }
+    .pay-card-trash { width: 28px; height: 28px; border-radius: var(--radius-sm); border: none; background: none; cursor: pointer; display: grid; place-items: center; color: var(--text-muted); transition: all .12s; flex-shrink: 0; }
+    .pay-card-trash:hover { background: var(--red-light); color: var(--red); }
+    .pay-card-trash svg { width: 15px; height: 15px; }
+
+    /* ============================================================
+       SETTINGS — DESIGN POLISH
+       ============================================================ */
+    .set-nav {
+      padding: 10px;
+      border: 1px solid var(--border-light);
+      border-radius: 14px;
+    }
+    .set-nav-item {
+      padding: 10px 12px;
+      gap: 12px;
+      border-radius: 10px;
+      font-weight: 600;
+    }
+    .set-nav-item svg {
+      width: 17px; height: 17px;
+      padding: 7px;
+      box-sizing: content-box;
+      border-radius: 8px;
+      background: var(--border-light);
+      opacity: 1;
+      transition: background .15s, color .15s;
+    }
+    .set-nav-item:hover svg { background: var(--teal-bg); color: var(--teal); }
+    .set-nav-item.active {
+      background: linear-gradient(90deg, var(--teal-bg) 0%, rgba(15,118,110,.04) 100%);
+      color: var(--teal);
+      font-weight: 700;
+      box-shadow: inset 0 0 0 1px rgba(15,118,110,.06);
+    }
+    .set-nav-item.active svg { background: var(--teal); color: #fff; }
+
+    .set-panel {
+      border: 1px solid var(--border-light);
+      padding: 28px;
+      background: linear-gradient(180deg, #fff 0%, #FCFDFD 100%);
+      animation: setFade .25s ease;
+    }
+    @keyframes setFade {
+      from { opacity: 0; transform: translateY(8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .set-head {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 6px;
+    }
+    .set-head-icon {
+      width: 44px; height: 44px;
+      border-radius: 12px;
+      display: grid;
+      place-items: center;
+      flex-shrink: 0;
+    }
+    .set-head-icon svg { width: 20px; height: 20px; }
+    .set-head-icon.teal   { background: var(--teal-bg); color: var(--teal); }
+    .set-head-icon.orange { background: var(--orange-light); color: #B45309; }
+    .set-head-icon.green  { background: var(--green-light); color: var(--green); }
+    .set-head-icon.navy   { background: #E2E8F0; color: var(--navy); }
+    .set-head h3 { margin-bottom: 2px; }
+
+    .set-section { border-color: var(--border-light); }
+    .set-row-title {
+      display: flex;
+      align-items: center;
+      font-weight: 750;
+    }
+    .set-row-title svg { opacity: .55 !important; }
+  </style>
+</head>
+<body>
+  <div class="shell">
+
+    <div class="scrim" id="scrim" onclick="closeSidebar()"></div>
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-brand">
+        <div class="brand-icon">H</div>
+        <div class="brand-text">HU<b>NAR</b></div>
+      </div>
+      <div class="sidebar-label">Main</div>
+      <nav class="sidebar-nav">
+        <a class="nav-item" href="dashboard.html">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>
+          Dashboard
+        </a>
+        <a class="nav-item" href="index.html">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          Workers
+          <span class="nav-badge">16</span>
+        </a>
+        <a class="nav-item" href="customers.html">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+          Customers
+        </a>
+        <a class="nav-item" href="payments.html">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>
+          Payments
+        </a>
+        <a class="nav-item" href="reports.html">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 16 4 4 4-4"/><path d="M7 20V4"/><path d="m21 8-4-4-4 4"/><path d="M17 4v16"/></svg>
+          Reports
+        </a>
+        <div class="sidebar-label" style="padding-top:14px">Management</div>
+        <a class="nav-item active" href="settings.html">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+          Settings
+        </a>
+        <a class="nav-item" href="notifications.html">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+          Notifications
+          <span class="nav-badge">5</span>
+        </a>
+      </nav>
+      <div class="sidebar-footer">
+        <div class="sidebar-user">
+          <div class="su-avatar">AH</div>
+          <div class="su-info">
+            <div class="su-name">Admin HUNAR</div>
+            <div class="su-role">Super Admin</div>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <div class="main">
+      <header class="topbar">
+        <button class="menu-toggle" onclick="toggleSidebar()">
+          <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="18" y2="18"/></svg>
+        </button>
+        <span class="topbar-title">Settings</span>
+        <span class="topbar-spacer"></span>
+        <button class="topbar-btn">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+        </button>
+        <a class="topbar-btn" href="notifications.html">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+          <span class="notif-dot"></span>
+        </a>
+        <div class="topbar-avatar">AH</div>
+      </header>
+
+      <div class="page">
+
+        <div class="breadcrumb">
+          <a href="dashboard.html">Administration</a>
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+          <span>Settings</span>
+        </div>
+
+        <div class="page-header">
+          <div class="page-header-left">
+            <h1>Settings</h1>
+            <p>Manage your profile, notifications, security, and payment methods.</p>
+          </div>
+        </div>
+
+        <div class="settings-layout">
+
+          <!-- LEFT NAV -->
+          <div class="set-nav">
+            <button class="set-nav-item active" data-target="panel-general" onclick="switchPanel(this)">
+              <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg>
+              General
+            </button>
+            <button class="set-nav-item" data-target="panel-notifications" onclick="switchPanel(this)">
+              <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+              Notifications
+            </button>
+            <button class="set-nav-item" data-target="panel-security" onclick="switchPanel(this)">
+              <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/></svg>
+              Security
+            </button>
+            <button class="set-nav-item" data-target="panel-payments" onclick="switchPanel(this)">
+              <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>
+              Payment Methods
+            </button>
+          </div>
+
+          <!-- GENERAL PANEL -->
+          <div class="set-panel" id="panel-general">
+            <div class="set-head">
+              <div class="set-head-icon teal">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="5"/><path d="M20 21a8 8 0 0 0-16 0"/></svg>
+              </div>
+              <div>
+                <h3>General</h3>
+                <div class="set-panel-desc">Basic information about your admin profile and workspace.</div>
+              </div>
+            </div>
+
+            <!-- Avatar Section -->
+            <div class="set-section">
+              <div class="set-row">
+                <div class="set-row-main">
+                  <div class="set-row-title">Profile Photo</div>
+                  <div class="set-row-desc">This will be shown across the admin panel.</div>
+                </div>
+                <div class="set-row-control" style="display:flex;align-items:center;gap:14px">
+                  <div class="avatar-wrap">
+                    <div class="avatar-circle" id="avatar-circle">AH</div>
+                  </div>
+                  <div style="display:flex;flex-direction:column;gap:6px">
+                    <button class="btn btn-outline btn-sm" onclick="document.getElementById('avatar-file-input').click()">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/></svg>
+                      Upload photo
+                    </button>
+                    <input type="file" id="avatar-file-input" accept="image/*" style="display:none" onchange="handleAvatarUpload(event)" />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Profile Form -->
+            <div class="set-section">
+              <div class="set-row-title" style="margin-bottom:14px">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-2px;margin-right:6px;opacity:.5"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                Profile Information
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label">Full Name</label>
+                  <input type="text" class="form-input" id="inp-fullname" value="Admin HUNAR" />
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Email Address</label>
+                  <input type="email" class="form-input" id="inp-email" value="admin@hunar.pk" />
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label">Phone</label>
+                  <input type="tel" class="form-input" id="inp-phone" value="+92 300 000 0000" />
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Business Name</label>
+                  <input type="text" class="form-input" id="inp-business" value="HUNAR Platform" />
+                </div>
+              </div>
+            </div>
+
+            <!-- Save -->
+            <div class="set-panel-footer">
+              <button class="btn btn-primary" onclick="saveGeneral()">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                Save Changes
+              </button>
+            </div>
+          </div>
+
+          <!-- NOTIFICATIONS PANEL -->
+          <div class="set-panel" id="panel-notifications" style="display:none">
+            <div class="set-head">
+              <div class="set-head-icon orange">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+              </div>
+              <div>
+                <h3>Notifications</h3>
+                <div class="set-panel-desc">Choose what alerts you receive and how they are delivered.</div>
+              </div>
+            </div>
+
+            <div class="set-section">
+              <div class="set-row-title" style="margin-bottom:4px">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-2px;margin-right:6px;opacity:.5"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+                Notification Preferences
+              </div>
+            </div>
+
+            <div class="set-section">
+              <div class="set-row">
+                <div class="set-row-main">
+                  <div class="set-row-title">Booking Updates</div>
+                  <div class="set-row-desc">New bookings, reschedules, and cancellations.</div>
+                </div>
+                <div class="set-row-control"><label class="switch"><input type="checkbox" checked onchange="updateNotifSummary()"><span class="slider"></span></label></div>
+              </div>
+            </div>
+            <div class="set-section">
+              <div class="set-row">
+                <div class="set-row-main">
+                  <div class="set-row-title">New Worker Registrations</div>
+                  <div class="set-row-desc">Get notified when a new worker registers on the platform.</div>
+                </div>
+                <div class="set-row-control"><label class="switch"><input type="checkbox" checked onchange="updateNotifSummary()"><span class="slider"></span></label></div>
+              </div>
+            </div>
+            <div class="set-section">
+              <div class="set-row">
+                <div class="set-row-main">
+                  <div class="set-row-title">Payment Confirmations</div>
+                  <div class="set-row-desc">Payout approvals, successful transfers, and receipts.</div>
+                </div>
+                <div class="set-row-control"><label class="switch"><input type="checkbox" checked onchange="updateNotifSummary()"><span class="slider"></span></label></div>
+              </div>
+            </div>
+            <div class="set-section">
+              <div class="set-row">
+                <div class="set-row-main">
+                  <div class="set-row-title">Refunds &amp; Disputes</div>
+                  <div class="set-row-desc">Alerts for refund requests and customer disputes.</div>
+                </div>
+                <div class="set-row-control"><label class="switch"><input type="checkbox" checked onchange="updateNotifSummary()"><span class="slider"></span></label></div>
+              </div>
+            </div>
+            <div class="set-section">
+              <div class="set-row">
+                <div class="set-row-main">
+                  <div class="set-row-title">Marketing Emails</div>
+                  <div class="set-row-desc">Promotional offers and platform announcements.</div>
+                </div>
+                <div class="set-row-control"><label class="switch"><input type="checkbox" onchange="updateNotifSummary()"><span class="slider"></span></label></div>
+              </div>
+            </div>
+            <div class="set-section">
+              <div class="set-row">
+                <div class="set-row-main">
+                  <div class="set-row-title">Weekly Summary</div>
+                  <div class="set-row-desc">A digest of platform activity delivered every Monday.</div>
+                </div>
+                <div class="set-row-control"><label class="switch"><input type="checkbox" onchange="updateNotifSummary()"><span class="slider"></span></label></div>
+              </div>
+            </div>
+
+            <div class="notif-summary" id="notif-summary">You'll receive <b>4</b> of 6 notifications</div>
+
+            <!-- Alert Email -->
+            <div class="set-section" style="margin-top:16px">
+              <div class="set-row-title" style="margin-bottom:10px">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-2px;margin-right:6px;opacity:.5"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+                Alert Email
+              </div>
+              <div style="display:flex;gap:10px;align-items:flex-end">
+                <div class="form-group" style="flex:1;margin-bottom:0">
+                  <label class="form-label">Send notifications to</label>
+                  <input type="email" class="form-input" id="inp-alert-email" value="admin@hunar.pk" />
+                </div>
+                <button class="btn btn-outline btn-sm" onclick="sendTestEmail()" style="margin-bottom:0;height:42px">Send test email</button>
+              </div>
+            </div>
+
+            <div class="set-panel-footer">
+              <button class="btn btn-primary" onclick="showToast('Notification preferences saved')">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                Save Preferences
+              </button>
+            </div>
+          </div>
+
+          <!-- SECURITY PANEL -->
+          <div class="set-panel" id="panel-security" style="display:none">
+            <div class="set-head">
+              <div class="set-head-icon green">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/></svg>
+              </div>
+              <div>
+                <h3>Security</h3>
+                <div class="set-panel-desc">Protect your admin account and review active sessions.</div>
+              </div>
+            </div>
+
+            <!-- Change Password -->
+            <div class="set-section">
+              <div class="set-row-title" style="margin-bottom:14px">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-2px;margin-right:6px;opacity:.5"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                Change Password
+              </div>
+              <div class="form-group">
+                <label class="form-label">Current Password</label>
+                <input type="password" class="form-input" id="sec-current-pw" placeholder="Enter current password" />
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label">New Password</label>
+                  <input type="password" class="form-input" id="sec-new-pw" placeholder="Minimum 8 characters" oninput="validateNewPw()" />
+                  <div class="field-error" id="err-new-pw">Password must be at least 8 characters</div>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Confirm New Password</label>
+                  <input type="password" class="form-input" id="sec-confirm-pw" placeholder="Re-enter new password" oninput="validateConfirmPw()" />
+                  <div class="field-error" id="err-confirm-pw">Passwords do not match</div>
+                </div>
+              </div>
+              <button class="btn btn-primary btn-sm" onclick="savePassword()">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                Update Password
+              </button>
+            </div>
+
+            <!-- Two-Factor Auth -->
+            <div class="set-section">
+              <div class="set-row">
+                <div class="set-row-main">
+                  <div class="set-row-title">Two-Factor Authentication</div>
+                  <div class="set-row-desc">Require a one-time code on every sign-in for extra security.</div>
+                </div>
+                <div class="set-row-control"><label class="switch"><input type="checkbox" id="toggle-2fa" onchange="toggle2FA()"><span class="slider"></span></label></div>
+              </div>
+              <div id="twofa-codes" style="display:none;margin-top:16px">
+                <div style="font-size:13px;font-weight:700;color:var(--text-primary);margin-bottom:6px">Backup Codes</div>
+                <div style="font-size:12.5px;color:var(--text-secondary);margin-bottom:10px">Store these codes somewhere safe. Each code can only be used once.</div>
+                <div class="backup-codes" id="backup-codes-grid">
+                  <div class="backup-code">A7K2-M9X1</div>
+                  <div class="backup-code">B3L8-N4Y6</div>
+                  <div class="backup-code">C5P1-Q2R7</div>
+                  <div class="backup-code">D8T4-S6V3</div>
+                  <div class="backup-code">E2W9-U1Z5</div>
+                  <div class="backup-code">F6Y3-V8J2</div>
+                </div>
+                <div class="backup-note">Keep these codes in a secure location. They will not be shown again.</div>
+              </div>
+            </div>
+
+            <!-- Active Sessions -->
+            <div class="set-section">
+              <div class="set-row-title" style="margin-bottom:10px">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-2px;margin-right:6px;opacity:.5"><rect width="20" height="14" x="2" y="3" rx="2"/><line x1="8" x2="16" y1="21" y2="21"/><line x1="12" x2="12" y1="17" y2="21"/></svg>
+                Active Sessions
+              </div>
+              <div class="session-list" id="session-list">
+                <div class="session-row" data-session="1">
+                  <div class="method-icon bank" style="width:34px;height:34px;border-radius:8px">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M16 2v4"/><path d="M8 2v4"/><path d="M3 10h18"/></svg>
+                  </div>
+                  <div class="session-info">
+                    <div class="session-device">Lahore &middot; Chrome on Windows</div>
+                    <div class="session-meta">Last active: Just now &middot; Current session</div>
+                  </div>
+                  <span class="badge badge-verified">Current</span>
+                </div>
+                <div class="session-row" data-session="2">
+                  <div class="method-icon card" style="width:34px;height:34px;border-radius:8px">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="20" x="5" y="2" rx="2" ry="2"/><path d="M12 18h.01"/></svg>
+                  </div>
+                  <div class="session-info">
+                    <div class="session-device">Islamabad &middot; Android app</div>
+                    <div class="session-meta">Last active: 2 hours ago</div>
+                  </div>
+                  <button class="btn btn-outline btn-sm" onclick="revokeSession(this)">Revoke</button>
+                </div>
+                <div class="session-row" data-session="3">
+                  <div class="method-icon jazzcash" style="width:34px;height:34px;border-radius:8px">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="20" x="5" y="2" rx="2" ry="2"/><path d="M12 18h.01"/></svg>
+                  </div>
+                  <div class="session-info">
+                    <div class="session-device">Karachi &middot; iPhone</div>
+                    <div class="session-meta">Last active: 1 day ago</div>
+                  </div>
+                  <button class="btn btn-outline btn-sm" onclick="revokeSession(this)">Revoke</button>
+                </div>
+              </div>
+              <div class="session-empty" id="session-empty" style="display:none">No other active sessions.</div>
+            </div>
+          </div>
+
+          <!-- PAYMENT METHODS PANEL -->
+          <div class="set-panel" id="panel-payments" style="display:none">
+            <div class="set-head">
+              <div class="set-head-icon navy">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>
+              </div>
+              <div>
+                <h3>Payment Methods</h3>
+                <div class="set-panel-desc">Manage the accounts HUNAR uses to send and receive money.</div>
+              </div>
+            </div>
+
+            <div class="set-section">
+              <div class="set-row-title" style="margin-bottom:14px">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-2px;margin-right:6px;opacity:.5"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>
+                Configured Methods
+              </div>
+              <div class="payment-grid" id="payment-grid">
+                <!-- JazzCash -->
+                <div class="pay-card" data-method="jazzcash">
+                  <div class="pay-card-top">
+                    <div class="method-icon jazzcash">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M16 2v4"/><path d="M8 2v4"/><path d="M3 10h18"/></svg>
+                    </div>
+                    <div class="pay-card-info">
+                      <div class="pay-card-title">JazzCash Wallet</div>
+                      <div class="pay-card-number">0300 &#x25CF;&#x25CF;&#x25CF;&#x25CF; 4567</div>
+                    </div>
+                  </div>
+                  <div class="pay-card-bottom">
+                    <span class="pay-status active">Active</span>
+                    <label class="switch"><input type="checkbox" checked onchange="togglePayMethod(this)"><span class="slider"></span></label>
+                  </div>
+                </div>
+                <!-- EasyPaisa -->
+                <div class="pay-card" data-method="easypaisa">
+                  <div class="pay-card-top">
+                    <div class="method-icon easypaisa">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+                    </div>
+                    <div class="pay-card-info">
+                      <div class="pay-card-title">EasyPaisa</div>
+                      <div class="pay-card-number">0321 &#x25CF;&#x25CF;&#x25CF;&#x25CF; 9090</div>
+                    </div>
+                  </div>
+                  <div class="pay-card-bottom">
+                    <span class="pay-status disabled">Disabled</span>
+                    <label class="switch"><input type="checkbox" onchange="togglePayMethod(this)"><span class="slider"></span></label>
+                  </div>
+                </div>
+                <!-- Bank Transfer -->
+                <div class="pay-card" data-method="bank">
+                  <div class="pay-card-top">
+                    <div class="method-icon bank">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"/><path d="M5 21V7"/><path d="M19 21V7"/><path d="M3 7 12 3l9 4"/></svg>
+                    </div>
+                    <div class="pay-card-info">
+                      <div class="pay-card-title">Bank Transfer &mdash; HBL</div>
+                      <div class="pay-card-number">&#x25CF;&#x25CF;&#x25CF;&#x25CF; 4521 &middot; PKR</div>
+                    </div>
+                  </div>
+                  <div class="pay-card-bottom">
+                    <span class="pay-status active">Active</span>
+                    <span class="pay-default-pill">Default</span>
+                  </div>
+                </div>
+                <!-- Card -->
+                <div class="pay-card" data-method="card">
+                  <div class="pay-card-top">
+                    <div class="method-icon card">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>
+                    </div>
+                    <div class="pay-card-info">
+                      <div class="pay-card-title">Credit / Debit Card</div>
+                      <div class="pay-card-number">&#x25CF;&#x25CF;&#x25CF;&#x25CF; &#x25CF;&#x25CF;&#x25CF;&#x25CF; &#x25CF;&#x25CF;&#x25CF;&#x25CF; 7890</div>
+                    </div>
+                  </div>
+                  <div class="pay-card-bottom">
+                    <span class="pay-status active">Active</span>
+                    <label class="switch"><input type="checkbox" checked onchange="togglePayMethod(this)"><span class="slider"></span></label>
+                  </div>
+                </div>
+                <!-- Add Card -->
+                <div class="add-pay-card" onclick="openAddPaymentModal()">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="16"/><line x1="8" x2="16" y1="12" y2="12"/></svg>
+                  <span>Add Payment Method</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ADD PAYMENT MODAL -->
+  <div class="modal-overlay" id="add-pay-modal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>Add Payment Method</h3>
+        <button class="modal-close" onclick="closeAddPaymentModal()">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" x2="6" y1="6" y2="18"/><line x1="6" x2="18" y1="6" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">Method Type</label>
+          <select class="form-select" id="add-pay-type">
+            <option value="jazzcash">JazzCash</option>
+            <option value="easypaisa">EasyPaisa</option>
+            <option value="card">Credit / Debit Card</option>
+            <option value="bank">Bank Transfer</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Account Title</label>
+          <input type="text" class="form-input" id="add-pay-title" placeholder="e.g. Admin HUNAR" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Account Number</label>
+          <input type="text" class="form-input" id="add-pay-number" placeholder="e.g. 0300 123 4567" />
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="closeAddPaymentModal()">Cancel</button>
+        <button class="btn btn-primary" onclick="addPaymentMethod()">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" x2="12" y1="5" y2="19"/><line x1="5" x2="19" y1="12" y2="12"/></svg>
+          Save Method
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOAST CONTAINER -->
+  <div id="toast-container" style="position:fixed;top:72px;right:20px;z-index:500;display:flex;flex-direction:column;max-width:340px"></div>
+
+  <script>
+    /* ============================================================
+       PANEL SWITCHING
+       ============================================================ */
+    function switchPanel(btn) {
+      document.querySelectorAll('.set-nav-item').forEach(function(x) { x.classList.remove('active'); });
+      btn.classList.add('active');
+      document.querySelectorAll('.set-panel').forEach(function(p) { p.style.display = 'none'; });
+      document.getElementById(btn.getAttribute('data-target')).style.display = '';
+    }
+
+    /* ============================================================
+       SIDEBAR (mobile)
+       ============================================================ */
+    function toggleSidebar() { document.getElementById('sidebar').classList.toggle('open'); document.getElementById('scrim').classList.toggle('show'); }
+    function closeSidebar() { document.getElementById('sidebar').classList.remove('open'); document.getElementById('scrim').classList.remove('show'); }
+
+    /* ============================================================
+       TOAST
+       ============================================================ */
+    function showToast(msg) {
+      var c = document.getElementById('toast-container');
+      var el = document.createElement('div');
+      el.style.cssText = 'background:#fff;color:#1A1A2E;border-radius:8px;padding:14px 20px;box-shadow:0 10px 15px -3px rgba(0,0,0,.08),0 4px 6px -4px rgba(0,0,0,.04);font-size:13.5px;font-weight:600;display:flex;align-items:center;gap:10px;margin-bottom:8px;border-left:3px solid #0F766E;animation:toastIn .3s ease both;';
+      el.textContent = msg;
+      c.appendChild(el);
+      setTimeout(function() { el.style.opacity = '0'; el.style.transform = 'translateX(20px)'; el.style.transition = 'all .3s ease'; setTimeout(function() { el.remove(); }, 300); }, 2800);
+    }
+
+    /* ============================================================
+       GENERAL — AVATAR UPLOAD
+       ============================================================ */
+    function handleAvatarUpload(e) {
+      var file = e.target.files[0];
+      if (!file) return;
+      if (!file.type.startsWith('image/')) { showToast('Please select an image file'); return; }
+      var reader = new FileReader();
+      reader.onload = function(ev) {
+        var circle = document.getElementById('avatar-circle');
+        circle.innerHTML = '<img src="' + ev.target.result + '" alt="Avatar" />';
+        showToast('Profile photo updated');
+      };
+      reader.readAsDataURL(file);
+      e.target.value = '';
+    }
+
+    /* ============================================================
+       GENERAL — SAVE
+       ============================================================ */
+    function saveGeneral() {
+      var name = document.getElementById('inp-fullname').value.trim();
+      var email = document.getElementById('inp-email').value.trim();
+      if (!name || !email) { showToast('Please fill in all required fields'); return; }
+      showToast('Settings saved');
+    }
+
+    /* ============================================================
+       NOTIFICATIONS — LIVE SUMMARY
+       ============================================================ */
+    function updateNotifSummary() {
+      var checkboxes = document.querySelectorAll('#panel-notifications .switch input[type="checkbox"]');
+      var count = 0;
+      checkboxes.forEach(function(cb) { if (cb.checked) count++; });
+      var el = document.getElementById('notif-summary');
+      el.innerHTML = "You'll receive <b>" + count + "</b> of " + checkboxes.length + " notifications";
+    }
+
+    function sendTestEmail() {
+      var email = document.getElementById('inp-alert-email').value.trim();
+      if (!email) { showToast('Please enter an email address'); return; }
+      showToast('Test email sent to ' + email);
+    }
+
+    /* ============================================================
+       SECURITY — PASSWORD VALIDATION
+       ============================================================ */
+    function validateNewPw() {
+      var val = document.getElementById('sec-new-pw').value;
+      var err = document.getElementById('err-new-pw');
+      var input = document.getElementById('sec-new-pw');
+      if (val.length > 0 && val.length < 8) { err.classList.add('show'); input.style.borderColor = 'var(--red)'; }
+      else { err.classList.remove('show'); input.style.borderColor = ''; }
+      validateConfirmPw();
+    }
+    function validateConfirmPw() {
+      var nw = document.getElementById('sec-new-pw').value;
+      var cf = document.getElementById('sec-confirm-pw').value;
+      var err = document.getElementById('err-confirm-pw');
+      var input = document.getElementById('sec-confirm-pw');
+      if (cf.length > 0 && cf !== nw) { err.classList.add('show'); input.style.borderColor = 'var(--red)'; }
+      else if (cf.length > 0 && cf === nw && nw.length >= 8) { err.classList.remove('show'); input.style.borderColor = 'var(--green)'; }
+      else { err.classList.remove('show'); input.style.borderColor = ''; }
+    }
+    function savePassword() {
+      var cur = document.getElementById('sec-current-pw').value.trim();
+      var nw = document.getElementById('sec-new-pw').value;
+      var cf = document.getElementById('sec-confirm-pw').value;
+      if (!cur) { showToast('Please enter your current password'); return; }
+      if (nw.length < 8) { document.getElementById('err-new-pw').classList.add('show'); return; }
+      if (nw !== cf) { document.getElementById('err-confirm-pw').classList.add('show'); return; }
+      document.getElementById('sec-current-pw').value = '';
+      document.getElementById('sec-new-pw').value = '';
+      document.getElementById('sec-confirm-pw').value = '';
+      document.getElementById('err-new-pw').classList.remove('show');
+      document.getElementById('err-confirm-pw').classList.remove('show');
+      document.getElementById('sec-new-pw').style.borderColor = '';
+      document.getElementById('sec-confirm-pw').style.borderColor = '';
+      showToast('Password updated');
+    }
+
+    /* ============================================================
+       SECURITY — TWO-FACTOR
+       ============================================================ */
+    function toggle2FA() {
+      var on = document.getElementById('toggle-2fa').checked;
+      document.getElementById('twofa-codes').style.display = on ? '' : 'none';
+      showToast(on ? 'Two-factor authentication enabled' : 'Two-factor authentication disabled');
+    }
+
+    /* ============================================================
+       SECURITY — REVOKE SESSION
+       ============================================================ */
+    function revokeSession(btn) {
+      var row = btn.closest('.session-row');
+      row.style.opacity = '0';
+      row.style.transform = 'translateX(20px)';
+      row.style.transition = 'all .25s ease';
+      setTimeout(function() {
+        row.remove();
+        var remaining = document.querySelectorAll('#session-list .session-row');
+        if (remaining.length === 0) { document.getElementById('session-empty').style.display = ''; }
+      }, 250);
+      showToast('Session revoked');
+    }
+
+    /* ============================================================
+       PAYMENT METHODS — TOGGLE
+       ============================================================ */
+    function togglePayMethod(cb) {
+      var card = cb.closest('.pay-card');
+      var statusEl = card.querySelector('.pay-status');
+      if (cb.checked) { statusEl.className = 'pay-status active'; statusEl.textContent = 'Active'; }
+      else { statusEl.className = 'pay-status disabled'; statusEl.textContent = 'Disabled'; }
+      showToast(cb.checked ? 'Payment method enabled' : 'Payment method disabled');
+    }
+
+    /* ============================================================
+       PAYMENT METHODS — ADD MODAL
+       ============================================================ */
+    function openAddPaymentModal() { document.getElementById('add-pay-modal').classList.add('open'); }
+    function closeAddPaymentModal() {
+      document.getElementById('add-pay-modal').classList.remove('open');
+      document.getElementById('add-pay-type').selectedIndex = 0;
+      document.getElementById('add-pay-title').value = '';
+      document.getElementById('add-pay-number').value = '';
+    }
+
+    var payIconMap = {
+      jazzcash: '<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M16 2v4"/><path d="M8 2v4"/><path d="M3 10h18"/></svg>',
+      easypaisa: '<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>',
+      card: '<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>',
+      bank: '<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"/><path d="M5 21V7"/><path d="M19 21V7"/><path d="M3 7 12 3l9 4"/></svg>'
+    };
+    var payNameMap = { jazzcash: 'JazzCash', easypaisa: 'EasyPaisa', card: 'Credit / Debit Card', bank: 'Bank Transfer' };
+    var trashSvg = '<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>';
+
+    function addPaymentMethod() {
+      var type = document.getElementById('add-pay-type').value;
+      var title = document.getElementById('add-pay-title').value.trim();
+      var number = document.getElementById('add-pay-number').value.trim();
+      if (!title || !number) { showToast('Please fill in all fields'); return; }
+
+      var masked = number.length > 4 ? '&#x25CF;&#x25CF;&#x25CF;&#x25CF; ' + number.slice(-4) : number;
+
+      var html = '<div class="pay-card" data-method="' + type + '">' +
+        '<div class="pay-card-top">' +
+          '<div class="method-icon ' + type + '">' + payIconMap[type] + '</div>' +
+          '<div class="pay-card-info">' +
+            '<div class="pay-card-title">' + title + '</div>' +
+            '<div class="pay-card-number">' + masked + '</div>' +
+          '</div>' +
+          '<button class="pay-card-trash" onclick="removePayCard(this)" title="Remove">' + trashSvg + '</button>' +
+        '</div>' +
+        '<div class="pay-card-bottom">' +
+          '<span class="pay-status active">Active</span>' +
+          '<label class="switch"><input type="checkbox" checked onchange="togglePayMethod(this)"><span class="slider"></span></label>' +
+        '</div>' +
+      '</div>';
+
+      var grid = document.getElementById('payment-grid');
+      var addCard = grid.querySelector('.add-pay-card');
+      var temp = document.createElement('div');
+      temp.innerHTML = html;
+      grid.insertBefore(temp.firstElementChild, addCard);
+
+      closeAddPaymentModal();
+      showToast('Payment method added');
+    }
+
+    function removePayCard(btn) {
+      var card = btn.closest('.pay-card');
+      card.style.opacity = '0';
+      card.style.transform = 'scale(.95)';
+      card.style.transition = 'all .2s ease';
+      setTimeout(function() { card.remove(); }, 200);
+      showToast('Payment method removed');
+    }
+  </script>
+</body>
+</html>
