@@ -1,0 +1,41 @@
+:root {
+  /* Brand palette */
+  --brand: #0f8b8d;
+  --brand-2: #0c7c7e;
+  --brand-3: #e6f7f7;
+  --brand-ink: #0c5f62;
+  --brand-grad: linear-gradient(135deg, #0f8b8d 0%, #0c7c7e 100%);
+
+  /* Navy & neutrals */
+  --navy: #123b5d;
+  --navy-bg: #e2e8f0;
+  --navy-grad: linear-gradient(135deg, #123b5d 0%, #1a4a72 100%);
+  --ink: #172033;
+  --ink-2: #334155;
+  --muted: #64748b;
+  --faint: #94a3b8;
+
+  /* Surfaces & borders */
+  --bg: #f8fafc;
+  --card: #ffffff;
+  --line: #e6eaef;
+  --line-2: #d9e0e7;
+
+  /* Semantic status colors */
+  --amber: #f59e0b;
+  --amber-bg: #fdf1dc;
+  --danger: #dc2626;
+  --danger-bg: #fee2e2;
+  --ok: #16a34a;
+  --ok-bg: #e9f7ef;
+  --info: #2563eb;
+  --info-bg: #e8f0fe;
+
+  /* Elevation & shapes */
+  --shadow: 0 1px 2px rgba(23, 33, 43, 0.05), 0 6px 22px rgba(23, 33, 43, 0.06);
+  --shadow-lg: 0 8px 40px rgba(23, 33, 43, 0.14);
+  --r: 14px;
+  --r-sm: 10px;
+  --r-lg: 20px;
+  --font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+}
