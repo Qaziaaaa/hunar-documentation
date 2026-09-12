@@ -6,6 +6,7 @@
 <link href="https://fonts.googleapis.com" rel="preconnect">
 <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
 <!-- Tailwind CSS v3 with forms & container queries -->
 <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
 <script>
@@ -70,7 +71,8 @@ html, body {
 </div>
 <div class="flex items-center space-x-6 text-[11px] sm:text-xs text-slate-200">
 <span class="flex items-center gap-1 text-slate-300">Currency: <strong class="text-white font-medium">PKR (Rs.)</strong></span>
-<a class="hover:text-white transition-colors" href="#help">Help Center</a>
+<a class="hover:text-white transition-colors" href="../scheduled_visits_arrival_tracker_hunar/code.html">Live Order Tracking</a>
+<a class="hover:text-white transition-colors" href="../dispute_resolution_help_center_hunar/code.html">Help Center</a>
 <a class="hover:text-white transition-colors flex items-center gap-1" href="#lang">
 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
         English / Urdu
@@ -85,26 +87,31 @@ html, body {
 <!-- Left: Brand Logo & Categories Button -->
 <div class="flex items-center space-x-6">
 <a class="flex items-center" href="#">
-<img alt="HUNAR Logo" class="h-10 w-auto object-contain" src="https://lh3.googleusercontent.com/aida/AEtjO1WP5TaDTqi2Td33jsa5rcU5JMa96C9tEPOFTWDkfzhqfQMHNVASmguztAqEWCj84yPE-W3cAI2H7D4R8jvFM2WUNCPLGVAeuw2onZbGAPdKD9Q6xyqctAfBINh3NSw9xvku0khCh-wJTDrak6FWUbRKYzzfrrwG5CpV-t9Cg66hsrE7dllMuMF49FMV2R_KWCJfq-hrzNnCnsBKk3zX4J3dBmj7oeKvbKd-3TvxSwn4HRerRC8hSjWNpXmU">
+<img alt="HUNAR Logo" class="h-10 w-auto object-contain" src="images/hunar-logo-alt.png">
 </a>
 <!-- Categories Button with 4-square grid icon -->
-<button class="hidden lg:flex items-center space-x-2.5 bg-white/10 hover:bg-white/15 text-white text-xs font-semibold px-4 py-2.5 rounded-full border border-white/15 transition duration-150">
+<a href="#services" class="hidden lg:flex items-center space-x-2.5 bg-white/10 hover:bg-white/15 text-white text-xs font-semibold px-4 py-2.5 rounded-full border border-white/15 transition duration-150 cursor-pointer">
 <svg class="w-3.5 h-3.5 text-white" fill="currentColor" viewBox="0 0 20 20">
 <path d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5zM5 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2H5zM11 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V5zM11 13a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path>
 </svg>
 <span class="">Categories</span>
 <svg class="w-3 h-3 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"></path></svg>
-</button>
+</a>
 </div>
 <!-- Center Navigation Links -->
 <nav aria-label="Main Navigation" class="hidden xl:flex items-center space-x-7 text-sm font-medium text-slate-200">
+  <a class="hover:text-white transition" href="#services">Services</a>
+  <a class="hover:text-white transition" href="#how-it-works">How It Works</a>
+  <a class="hover:text-white transition" href="#online-pros">Available Pros</a>
+  <a class="hover:text-white transition" href="#pros">Top Rated</a>
+  <a class="hover:text-[#5BBB7B] transition font-semibold" href="../hunar_customer_dashboard/code.html">Dashboard</a>
 </nav>
 <!-- Right Actions -->
 <div class="flex items-center space-x-5">
-<button aria-label="Search" class="text-slate-200 hover:text-white transition">
+<a aria-label="Search" href="#services" class="text-slate-200 hover:text-white transition p-1">
 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
-</button>
-<a class="bg-white hover:bg-slate-100 text-[#1F4B3F] text-xs sm:text-sm font-bold px-5 py-2.5 rounded-full shadow transition-all duration-200" href="#post-job">Get started</a>
+</a>
+<a class="bg-white hover:bg-slate-100 text-[#1F4B3F] text-xs sm:text-sm font-bold px-5 py-2.5 rounded-full shadow transition-all duration-200" href="../hunar_customer_dashboard/code.html">Get started</a>
 </div>
 </div>
 </header>
@@ -122,30 +129,30 @@ html, body {
           Work with talented certified tradespeople at the most affordable price to get the most out of your time and cost.
         </p>
 <!-- Freeio Iconic Rounded Search Pill -->
-<div class="bg-white p-2 rounded-2xl sm:rounded-full shadow-2xl flex flex-col sm:flex-row items-center gap-2 max-w-2xl">
+<form onsubmit="event.preventDefault(); window.location.href='../post_a_job_step_1_modern_service_selection/code.html';" class="bg-white p-2 rounded-2xl sm:rounded-full shadow-2xl flex flex-col sm:flex-row items-center gap-2 max-w-2xl">
 <!-- Keyword Input -->
 <div class="flex items-center w-full px-4 py-2">
 <svg class="w-5 h-5 text-slate-400 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"></path></svg>
-<input class="w-full bg-transparent border-0 text-slate-800 placeholder-slate-400 text-sm focus:ring-0 p-0 font-medium" placeholder="What are you looking for?" type="text">
+<input class="w-full bg-transparent border-0 text-slate-800 placeholder-slate-400 text-sm focus:ring-0 p-0 font-medium" placeholder="What service do you need? (e.g. AC Repair, Electrician)" type="text">
 </div>
 <!-- Divider -->
 <div class="hidden sm:block w-px h-8 bg-slate-200"></div>
 <!-- Category Selector -->
 <div class="flex items-center w-full sm:w-auto px-4 py-2">
-<select class="w-full sm:w-44 bg-transparent border-0 text-slate-700 text-sm focus:ring-0 p-0 font-medium cursor-pointer">
+<select onchange="if(this.value) window.location.href='../post_a_job_step_1_modern_service_selection/code.html';" class="w-full sm:w-44 bg-transparent border-0 text-slate-700 text-sm focus:ring-0 p-0 font-medium cursor-pointer">
 <option value="">Choose Category</option>
-<option>HVAC &amp; AC Cooling</option>
-<option>Electrical &amp; Solar</option>
-<option>Plumbing &amp; Sanitary</option>
-<option>Woodwork &amp; Fitout</option>
-<option>House Paint &amp; Polish</option>
+<option value="ac">HVAC &amp; AC Cooling</option>
+<option value="electric">Electrical &amp; Solar</option>
+<option value="plumb">Plumbing &amp; Sanitary</option>
+<option value="wood">Woodwork &amp; Fitout</option>
+<option value="paint">House Paint &amp; Polish</option>
 </select>
 </div>
 <!-- Search Button -->
-<button class="w-full sm:w-auto bg-[#5BBB7B] hover:bg-[#4faa6f] text-white text-sm font-semibold px-8 py-3.5 rounded-xl sm:rounded-full transition-all duration-200 flex-shrink-0 flex items-center justify-center shadow-md">
+<button type="submit" class="w-full sm:w-auto bg-[#5BBB7B] hover:bg-[#4faa6f] text-white text-sm font-semibold px-8 py-3.5 rounded-xl sm:rounded-full transition-all duration-200 flex-shrink-0 flex items-center justify-center shadow-md cursor-pointer">
             Search
           </button>
-</div>
+</form>
 <!-- 4-Counter Metrics Row (Exact Freeio numbers & structure) -->
 <div class="pt-6 grid grid-cols-2 sm:grid-cols-4 gap-6 max-w-2xl"><div class="">
 <div class="text-2xl sm:text-3xl font-extrabold text-white">834M</div>
@@ -168,25 +175,25 @@ html, body {
 <div class="lg:col-span-5 relative flex justify-center items-center">
 <div class="relative w-full max-w-lg flex items-end justify-center gap-4">
 <!-- Left Foreground Arch: Pakistani AC Technician Tariq Mehmood -->
-<div class="w-1/2 arch-card-left overflow-hidden shadow-2xl border-4 border-white/20 bg-slate-800 relative z-20 aspect-[3/4.6] group">
-<img alt="Pakistani AC Specialist Tariq Mehmood" class="w-full h-full object-cover group-hover:scale-105 transition duration-500" src="https://lh3.googleusercontent.com/aida/AEtjO1X60Jg_25HShTAnk_AFw6WozyWFHtrcq5Vuu-PFRlv6Lso3CZI-KH7532vok6n7pph72NkpVZOjri6IVNfZCNicLdMqDJbI_IP2TMWZBBgX18EiCAsJN1U00Lc3yH60AkIdIY62WDr1CvKES00cuqsKLHW2rK1UROgv2X38dcoBfjSpXuPRSeV1k6PtP2r_U2-QML_0FCLaImpGO4NDwrWtiD9D5dkHCn6fwnwTbZGttnEdoi4iCVZ4_XuI">
+<a href="../job_details_worker_profile_selection_modal_hunar/code.html" class="w-1/2 arch-card-left overflow-hidden shadow-2xl border-4 border-white/20 bg-slate-800 relative z-20 aspect-[3/4.6] group block" title="View Tariq Mehmood Profile">
+<img alt="Pakistani AC Specialist Tariq Mehmood" class="w-full h-full object-cover object-top group-hover:scale-105 transition duration-500" src="images/tariq-mehmood-hero2.png">
 <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent"></div>
 <div class="absolute bottom-4 left-4 right-4 text-white">
 <span class="text-xs font-semibold text-[#5BBB7B]">Tariq Mehmood</span>
 <p class="text-[11px] text-slate-200">Senior HVAC Specialist</p>
 </div>
-</div>
+</a>
 <!-- Right Background Arch: Maqsood Raza - Certified DB Expert & Wiring -->
-<div class="w-1/2 arch-card-right overflow-hidden shadow-2xl border-4 border-white/20 bg-slate-800 relative z-10 aspect-[3/5] -translate-y-8 group">
-<img alt="Maqsood Raza - Certified DB Expert &amp; Wiring" class="w-full h-full object-cover group-hover:scale-105 transition duration-500" src="https://lh3.googleusercontent.com/aida/AEtjO1XNw8-iVrsaCh9ZAcBy3RyivQL9SmwSW6OZHFa87l08iKWwr-13T-pm1YQCFhaAq3mUiWDdWBeOLHjW3VXPyXmo9iunSB8BYUpVY-NV19sd-pkT0u-fElYJ3B98u0mUNlRRrvkDerFup1Zr4tdT_oiLvgPXt8gfj210B6tBUSkHc_dcThjURwEtSVnz__31UXq2HKA8Ll8gELpzA_VeOrPX4UyCObfxqo4qjuRrRn8ip0ZYMIZiQgkvKs4">
+<a href="../job_details_worker_profile_selection_modal_hunar/code.html" class="w-1/2 arch-card-right overflow-hidden shadow-2xl border-4 border-white/20 bg-slate-800 relative z-10 aspect-[3/5] -translate-y-8 group block" title="View Maqsood Raza Profile">
+<img alt="Maqsood Raza - Certified DB Expert &amp; Wiring" class="w-full h-full object-cover group-hover:scale-105 transition duration-500" src="images/maqsood-raza-hero.png">
 <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent"></div>
 <div class="absolute bottom-4 left-4 right-4 text-white">
 <span class="text-xs font-semibold text-[#5BBB7B]">Maqsood Raza</span>
 <p class="text-[11px] text-slate-200">Certified DB Expert &amp; Wiring</p>
 </div>
-</div>
+</a>
 <!-- Top-Left Floating Badge: Proof of quality -->
-<div class="absolute -top-4 -left-4 z-30 bg-white/95 backdrop-blur text-slate-800 px-4 py-2.5 rounded-2xl shadow-xl border border-slate-100 flex items-center space-x-3">
+<a href="../dispute_resolution_help_center_hunar/code.html" class="absolute -top-4 -left-4 z-30 bg-white/95 backdrop-blur text-slate-800 px-4 py-2.5 rounded-2xl shadow-xl border border-slate-100 flex items-center space-x-3 hover:scale-105 transition-transform">
 <div class="w-9 h-9 rounded-full bg-emerald-100 text-[#5BBB7B] flex items-center justify-center flex-shrink-0">
 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"></path></svg>
 </div>
@@ -194,9 +201,9 @@ html, body {
 <p class="text-xs font-bold text-slate-900 leading-tight">Proof of quality</p>
 <p class="text-[11px] text-slate-500">100% CNIC &amp; Police Verified</p>
 </div>
-</div>
+</a>
 <!-- Bottom-Right Floating Badge: Safe and secure -->
-<div class="absolute -bottom-6 -right-2 z-30 bg-white/95 backdrop-blur text-slate-800 px-4 py-2.5 rounded-2xl shadow-xl border border-slate-100 flex items-center space-x-3">
+<a href="../payments_escrow_wallet_hunar/code.html" class="absolute -bottom-6 -right-2 z-30 bg-white/95 backdrop-blur text-slate-800 px-4 py-2.5 rounded-2xl shadow-xl border border-slate-100 flex items-center space-x-3 hover:scale-105 transition-transform">
 <div class="w-9 h-9 rounded-full bg-teal-50 text-[#1F4B3F] flex items-center justify-center flex-shrink-0">
 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"></path></svg>
 </div>
@@ -204,17 +211,17 @@ html, body {
 <p class="text-xs font-bold text-slate-900 leading-tight">Safe and secure</p>
 <p class="text-[11px] text-slate-500">Escrow milestone release</p>
 </div>
-</div>
+</a>
 <!-- Bottom Floating Pro Avatar Pill -->
-<div class="absolute -bottom-4 left-6 z-30 bg-white/95 backdrop-blur border border-slate-100 text-slate-800 px-3.5 py-2 rounded-full shadow-2xl flex items-center space-x-2.5">
+<a href="../job_details_offers_hunar/code.html" class="absolute -bottom-4 left-6 z-30 bg-white/95 backdrop-blur border border-slate-100 text-slate-800 px-3.5 py-2 rounded-full shadow-2xl flex items-center space-x-2.5 hover:scale-105 transition-transform" title="Explore Verified Pros">
 <span class="text-xs font-bold text-slate-900">58M+ Professionals</span>
 <div class="flex -space-x-2 overflow-hidden">
-<img alt="pro" class="inline-block h-6 w-6 rounded-full ring-2 ring-white object-cover" src="https://lh3.googleusercontent.com/aida/AEtjO1WlUxdgskkRmngrQvI64wmtYGu4IcBFFtFivbOmX-LMyqHHZZa-qPUnxcd1WYcWPE2MGwE8zh8Nz5t2yf3SLYN3EOspGivibDxTF_rK_m3nVwj0y7Fe3hpBI5NCXY_DsfGx8wV5bHTyASuvcauN5AOKWPKt32uZQSB8jmMRBOeEI--1Q5pOJCP6voDvQRsuYInge7-Hk3symj7pkpX-Zb-sGOLPBPmtwISkBFhyVuWCysl3PrXHSnlO4HY">
-<img alt="pro" class="inline-block h-6 w-6 rounded-full ring-2 ring-white object-cover" src="https://lh3.googleusercontent.com/aida/AEtjO1WYMHNHLhCwTSUk_WPfNMrRKnLuzSLVYcOCPX0wlpB7UMjp0nc9omJWvdvQWwVETla6a0CL4r64pE0wFFLYQUUnCkYvkrT0jVoftomJ4zy2wuV90DWdbSCnEBYCqgGmuEwuLGkCaZqFgVIeldifvSlmvQCzdwlkqXAdJ67wVT7eutUHKjlIzaFf6itgvuObiZAjab1M-tjhYF3f7qKaf1DmCiInKYTvLFMncIGa_kqrUEvmyVw5ocG8Fb51">
-<img alt="pro" class="inline-block h-6 w-6 rounded-full ring-2 ring-white object-cover" src="https://lh3.googleusercontent.com/aida/AEtjO1Xl5vnZ-maILw2JkZaq-pQXWcSp2uYcAez3cpBSSmTCWXpFcr0Cp74E5R2u0HJbejIpe8XIAqvGskNQi9lPYCDHwVVPAPWj5s67uUvd_SVB0gcKDSvJRPQAYQbVcC2HJwWdAovvPtdyqvh9gvKVr2OqEVGUqhDMDiSRb0fsL-O1lVoU1tsBxco8gBDQMAjLNp-NjOm54Evx2-l5JkHWu81U1rhUs3O2YPWxjZQbhrU6yiHTn_ocgpKwMNE">
+<img alt="pro" class="inline-block h-6 w-6 rounded-full ring-2 ring-white object-cover" src="images/pro-avatar-1-alt.png">
+<img alt="pro" class="inline-block h-6 w-6 rounded-full ring-2 ring-white object-cover" src="images/pro-avatar-2-alt.png">
+<img alt="pro" class="inline-block h-6 w-6 rounded-full ring-2 ring-white object-cover" src="images/pro-avatar-3-alt.png">
 <div class="inline-block h-6 w-6 rounded-full ring-2 ring-white bg-[#5BBB7B] flex items-center justify-center text-[10px] font-bold text-white">+</div>
 </div>
-</div>
+</a>
 </div>
 </div>
 </div>
@@ -227,41 +234,45 @@ html, body {
 <div class="text-center max-w-3xl mx-auto mb-10"><h2 class="text-3xl sm:text-4xl md:text-5xl font-bold text-slate-900 tracking-tight leading-tight mb-3">Need something done?</h2><p class="text-slate-500 text-sm sm:text-base leading-relaxed font-normal">Most viewed and all-time top-selling skilled trade services in Pakistan</p></div>
 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
 <!-- Step 1: Post a job -->
-<div class="border border-slate-100 rounded-2xl p-6 hover:shadow-md transition-shadow bg-white text-center flex flex-col items-center">
-<div class="w-full h-44 flex items-center justify-center mb-4">
-<img alt="Post a job" class="h-40 w-auto object-contain mix-blend-multiply" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAJRYC4W-Q9P_mvM5rU7EE4I45kKL5CYcsQX1ApZHMOk7HCyGn2UtvZu4Y_fGPefqkXJsqtvrPOqy_rvPT1JMmu7w9Ggf12aNBf2jeSmQe5A3SMChiQ5B_MQ333fiISM11TiVmRwCpFHEmwuOvN_452KU_PqLbAK3cYa8mUVz0mPf8QUofnUzLuWZzFpoN7GLlLUoNjJkm4qtvHVBGyKJjXPS6GkO63OW7DYwV9Jz_SznuXsz1dfmDNDtFRdYRLqGhdb80">
+<a href="../post_a_job_step_1_modern_service_selection/code.html" class="border border-slate-100 rounded-2xl p-6 hover:shadow-xl hover:border-[#5BBB7B] transition-all bg-white text-center flex flex-col items-center group cursor-pointer block">
+<div class="w-full h-44 flex items-center justify-center mb-4 group-hover:scale-105 transition-transform">
+<img alt="Post a job" class="h-40 w-auto object-contain mix-blend-multiply" src="images/post-a-job.png">
 </div>
 <div class="inline-block px-2.5 py-0.5 rounded-full bg-emerald-100 text-[#1F4B3F] text-[11px] font-bold mb-2">Step 1</div>
 <h3 class="text-lg font-bold text-slate-900 mb-2">Post a job</h3>
 <p class="text-slate-600 text-xs sm:text-sm leading-relaxed font-normal">Describe your home repair or skilled service need in under a minute with photos or details.</p>
-</div>
+<span class="mt-3 text-xs font-bold text-[#5BBB7B] flex items-center gap-1">Start Posting <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"></path></svg></span>
+</a>
 <!-- Step 2: Choose Worker -->
-<div class="border border-slate-100 rounded-2xl p-6 hover:shadow-md transition-shadow bg-white text-center flex flex-col items-center">
-<div class="w-full h-44 flex items-center justify-center mb-4">
-<img alt="Choose Worker" class="h-40 w-auto object-contain mix-blend-multiply" src="https://lh3.googleusercontent.com/aida/AEtjO1V2j5HnSk7KPYoccbh-ZVKuxCTpvscfP1dFp2h5WSNQwB-Vq1LhVtCatyBN5SSZYi47ymrPVkVOy5jR_qVD29ue7Gu9_Bo6sDoiS7HfBtXugSihCiRJnHz2LuswEf1JXR2EOe-dWKubX1GoL4oF5Mpa4G-cTTwQqJA6T2Xkuo4YOmjEIssCM03dNLgqtEtaXeKN-JulOsBiNEhYXhh2b1Jl5liVCxWX2T1hnWUAYe6EQDxYzaJduQz5X-s">
+<a href="../job_details_offers_hunar/code.html" class="border border-slate-100 rounded-2xl p-6 hover:shadow-xl hover:border-[#5BBB7B] transition-all bg-white text-center flex flex-col items-center group cursor-pointer block">
+<div class="w-full h-44 flex items-center justify-center mb-4 group-hover:scale-105 transition-transform">
+<img alt="Choose Worker" class="h-40 w-auto object-contain mix-blend-multiply" src="images/choose-worker.png">
 </div>
 <div class="inline-block px-2.5 py-0.5 rounded-full bg-emerald-100 text-[#1F4B3F] text-[11px] font-bold mb-2">Step 2</div>
 <h3 class="text-lg font-bold text-slate-900 mb-2">Choose Worker</h3>
 <p class="text-slate-600 text-xs sm:text-sm leading-relaxed font-normal">Compare verified tradespeople, check real ratings, CNIC verification, and transparent upfront quotes.</p>
-</div>
+<span class="mt-3 text-xs font-bold text-[#5BBB7B] flex items-center gap-1">View Offers Hub <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"></path></svg></span>
+</a>
 <!-- Step 3: Pay safely -->
-<div class="border border-slate-100 rounded-2xl p-6 hover:shadow-md transition-shadow bg-white text-center flex flex-col items-center">
-<div class="w-full h-44 flex items-center justify-center mb-4">
-<img alt="Pay safely" class="h-40 w-auto object-contain mix-blend-multiply" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCCuieR0SJmPpWlyZWjQPHTDARN3yAhTrin_5Ej0N7qQNFUd9Gr3DIFXnxKhZ2pMl0lqq2mBTGiuxi-vVnt3MvifmVUHo9V3SF4rbx-zrq6stcTktqHzQ2SZmQeDSvO1HqW8Sc2xqfYTCD3_ee-nP3MfRvuNbnetNq6FYKFd5wSC19Pgm8fF7IDubJEhar6FxLn1sVwOwUYZfvj4hhr3cHLuC08bbZr2udi3Cv_wyfRad1KWndmKSwwxD-khRLx5J_5BZWB1DAOTd6NgRA">
+<a href="../payments_escrow_wallet_hunar/code.html" class="border border-slate-100 rounded-2xl p-6 hover:shadow-xl hover:border-[#5BBB7B] transition-all bg-white text-center flex flex-col items-center group cursor-pointer block">
+<div class="w-full h-44 flex items-center justify-center mb-4 group-hover:scale-105 transition-transform">
+<img alt="Pay safely" class="h-40 w-auto object-contain mix-blend-multiply" src="images/pay-safely.png">
 </div>
 <div class="inline-block px-2.5 py-0.5 rounded-full bg-emerald-100 text-[#1F4B3F] text-[11px] font-bold mb-2">Step 3</div>
 <h3 class="text-lg font-bold text-slate-900 mb-2">Pay safely</h3>
 <p class="text-slate-600 text-xs sm:text-sm leading-relaxed font-normal">Pay with complete confidence using secure milestone escrow. Funds released only when you're 100% satisfied.</p>
-</div>
+<span class="mt-3 text-xs font-bold text-[#5BBB7B] flex items-center gap-1">Escrow & Wallet <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"></path></svg></span>
+</a>
 <!-- Step 4: Work done -->
-<div class="border border-slate-100 rounded-2xl p-6 hover:shadow-md transition-shadow bg-white text-center flex flex-col items-center">
-<div class="w-full h-44 flex items-center justify-center mb-4">
-<img alt="Work done" class="h-40 w-auto object-contain mix-blend-multiply" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDTljjM4Q99JZYHIlIqLa42SeQuzvPNCi0T8vg_p8_FUWoPqRgSgcZ0dfEhu5Y00aRoPYOIXY_jwG5CESL8Dl7JpDXFuS5CuVD96HzQt7hTcdwIZyl2ItNRbljwEMNaelmzKCCvgt38UyeffGZnes2TMiMbzcUqSFsgulF_PJYIjLxE8sCnO9BLYT947-dljCcpGk9BOiZOc2XTN0vmC1yIlqxk7elXRymX1LNM28m116NBPzxIpPraw1BGBff8BzgGdolNjOIo8s-L40A">
+<a href="../job_completion_escrow_release_hunar/code.html" class="border border-slate-100 rounded-2xl p-6 hover:shadow-xl hover:border-[#5BBB7B] transition-all bg-white text-center flex flex-col items-center group cursor-pointer block">
+<div class="w-full h-44 flex items-center justify-center mb-4 group-hover:scale-105 transition-transform">
+<img alt="Work done" class="h-40 w-auto object-contain mix-blend-multiply" src="images/work-done.png">
 </div>
 <div class="inline-block px-2.5 py-0.5 rounded-full bg-emerald-100 text-[#1F4B3F] text-[11px] font-bold mb-2">Step 4</div>
 <h3 class="text-lg font-bold text-slate-900 mb-2">Work done</h3>
 <p class="text-slate-600 text-xs sm:text-sm leading-relaxed font-normal">The certified local artisan completes the job with guaranteed craft quality and 5-day rework warranty.</p>
-</div>
+<span class="mt-3 text-xs font-bold text-[#5BBB7B] flex items-center gap-1">Completion Flow <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"></path></svg></span>
+</a>
 </div>
 </div>
 </section>
@@ -280,13 +291,13 @@ html, body {
 </div>
 <p class="text-sm text-slate-500">Find skilled professionals ready to help.</p>
 </div>
-<a class="text-sm font-semibold text-slate-700 hover:text-[#5BBB7B] flex items-center gap-1 transition" href="#all-online-pros">All Available Professionals <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg></a>
+<a class="text-sm font-semibold text-slate-700 hover:text-[#5BBB7B] flex items-center gap-1 transition" href="../job_details_offers_hunar/code.html">All Available Professionals <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg></a>
 </div>
 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
 <!-- Pro 1: Kamran Siddiqui -->
 <div class="bg-white rounded-2xl border border-slate-200 p-6 text-center shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col justify-between relative">
 <div>
-<div class="relative w-20 h-20 mx-auto mb-4"><div class="w-full h-full rounded-full overflow-hidden"><img alt="Kamran Siddiqui" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida/AEtjO1Xl5vnZ-maILw2JkZaq-pQXWcSp2uYcAez3cpBSSmTCWXpFcr0Cp74E5R2u0HJbejIpe8XIAqvGskNQi9lPYCDHwVVPAPWj5s67uUvd_SVB0gcKDSvJRPQAYQbVcC2HJwWdAovvPtdyqvh9gvKVr2OqEVGUqhDMDiSRb0fsL-O1lVoU1tsBxco8gBDQMAjLNp-NjOm54Evx2-l5JkHWu81U1rhUs3O2YPWxjZQbhrU6yiHTn_ocgpKwMNE"></div><span class="absolute bottom-0 right-0 z-10 flex h-5 w-5"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span><span class="relative inline-flex rounded-full h-5 w-5 bg-emerald-500 border-2 border-white"></span></span></div>
+<div class="relative w-20 h-20 mx-auto mb-4"><div class="w-full h-full rounded-full overflow-hidden"><img alt="Kamran Siddiqui" class="w-full h-full object-cover" src="images/kamran-siddiqui-avatar-alt.png"></div><span class="absolute bottom-0 right-0 z-10 flex h-5 w-5"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span><span class="relative inline-flex rounded-full h-5 w-5 bg-emerald-500 border-2 border-white"></span></span></div>
 <div class="flex items-center justify-center gap-1">
 <h3 class="text-base font-bold text-slate-900">Kamran Siddiqui</h3>
 <svg class="w-4 h-4 text-[#5BBB7B]" fill="currentColor" viewBox="0 0 20 20"><path clip-rule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" fill-rule="evenodd"></path></svg>
@@ -304,13 +315,13 @@ html, body {
 </div>
 <div class="mt-6 pt-5 border-t border-slate-100">
 <div class="grid grid-cols-2 text-center text-xs mb-4"><div class="relative"><span class="text-slate-400 block text-[10px]">Location</span><span class="font-bold text-slate-800">Peshawar</span></div><div class="relative"><span class="text-slate-400 block text-[10px]">Job Success</span><span class="font-bold text-emerald-600">100%</span></div></div>
-<button class="w-full py-2.5 rounded-xl bg-[#5BBB7B] text-white text-xs font-bold hover:bg-[#4faa6f] transition flex items-center justify-center gap-1.5 shadow-sm">Hire</button>
+<a href="../job_details_select_worker_confirm_booking_modal_hunar/code.html" class="w-full py-2.5 rounded-xl bg-[#5BBB7B] text-white text-xs font-bold hover:bg-[#4faa6f] transition flex items-center justify-center gap-1.5 shadow-sm cursor-pointer">Hire Now</a>
 </div>
 </div>
 <!-- Pro 2: Hashim Mansoor -->
 <div class="bg-white rounded-2xl border border-slate-200 p-6 text-center shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col justify-between relative">
 <div>
-<div class="relative w-20 h-20 mx-auto mb-4"><div class="w-full h-full rounded-full overflow-hidden"><img alt="Hashim Mansoor" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida/AEtjO1WlUxdgskkRmngrQvI64wmtYGu4IcBFFtFivbOmX-LMyqHHZZa-qPUnxcd1WYcWPE2MGwE8zh8Nz5t2yf3SLYN3EOspGivibDxTF_rK_m3nVwj0y7Fe3hpBI5NCXY_DsfGx8wV5bHTyASuvcauN5AOKWPKt32uZQSB8jmMRBOeEI--1Q5pOJCP6voDvQRsuYInge7-Hk3symj7pkpX-Zb-sGOLPBPmtwISkBFhyVuWCysl3PrXHSnlO4HY"></div><span class="absolute bottom-0 right-0 z-10 flex h-5 w-5"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span><span class="relative inline-flex rounded-full h-5 w-5 bg-emerald-500 border-2 border-white"></span></span></div>
+<div class="relative w-20 h-20 mx-auto mb-4"><div class="w-full h-full rounded-full overflow-hidden"><img alt="Hashim Mansoor" class="w-full h-full object-cover" src="images/hashim-mansoor-avatar-alt.png"></div><span class="absolute bottom-0 right-0 z-10 flex h-5 w-5"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span><span class="relative inline-flex rounded-full h-5 w-5 bg-emerald-500 border-2 border-white"></span></span></div>
 <div class="flex items-center justify-center gap-1">
 <h3 class="text-base font-bold text-slate-900">Hashim Mansoor</h3>
 <svg class="w-4 h-4 text-[#5BBB7B]" fill="currentColor" viewBox="0 0 20 20"><path clip-rule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" fill-rule="evenodd"></path></svg>
@@ -328,13 +339,13 @@ html, body {
 </div>
 <div class="mt-6 pt-5 border-t border-slate-100">
 <div class="grid grid-cols-2 text-center text-xs mb-4"><div class="relative"><span class="text-slate-400 block text-[10px]">Location</span><span class="font-bold text-slate-800">Peshawar</span></div><div class="relative"><span class="text-slate-400 block text-[10px]">Job Success</span><span class="font-bold text-emerald-600">99%</span></div></div>
-<button class="w-full py-2.5 rounded-xl bg-[#5BBB7B] text-white text-xs font-bold hover:bg-[#4faa6f] transition flex items-center justify-center gap-1.5 shadow-sm">Hire</button>
+<a href="../job_details_select_worker_confirm_booking_modal_hunar/code.html" class="w-full py-2.5 rounded-xl bg-[#5BBB7B] text-white text-xs font-bold hover:bg-[#4faa6f] transition flex items-center justify-center gap-1.5 shadow-sm cursor-pointer">Hire Now</a>
 </div>
 </div>
 <!-- Pro 3: Bilal Tariq -->
 <div class="bg-white rounded-2xl border border-slate-200 p-6 text-center shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col justify-between relative">
 <div>
-<div class="relative w-20 h-20 mx-auto mb-4"><div class="w-full h-full rounded-full overflow-hidden"><img alt="Bilal Tariq" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida/AEtjO1WYMHNHLhCwTSUk_WPfNMrRKnLuzSLVYcOCPX0wlpB7UMjp0nc9omJWvdvQWwVETla6a0CL4r64pE0wFFLYQUUnCkYvkrT0jVoftomJ4zy2wuV90DWdbSCnEBYCqgGmuEwuLGkCaZqFgVIeldifvSlmvQCzdwlkqXAdJ67wVT7eutUHKjlIzaFf6itgvuObiZAjab1M-tjhYF3f7qKaf1DmCiInKYTvLFMncIGa_kqrUEvmyVw5ocG8Fb51"></div><span class="absolute bottom-0 right-0 z-10 flex h-5 w-5"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span><span class="relative inline-flex rounded-full h-5 w-5 bg-emerald-500 border-2 border-white"></span></span></div>
+<div class="relative w-20 h-20 mx-auto mb-4"><div class="w-full h-full rounded-full overflow-hidden"><img alt="Bilal Tariq" class="w-full h-full object-cover" src="images/bilal-tariq-avatar-alt.png"></div><span class="absolute bottom-0 right-0 z-10 flex h-5 w-5"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span><span class="relative inline-flex rounded-full h-5 w-5 bg-emerald-500 border-2 border-white"></span></span></div>
 <div class="flex items-center justify-center gap-1">
 <h3 class="text-base font-bold text-slate-900">Bilal Tariq</h3>
 <svg class="w-4 h-4 text-[#5BBB7B]" fill="currentColor" viewBox="0 0 20 20"><path clip-rule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" fill-rule="evenodd"></path></svg>
@@ -352,13 +363,13 @@ html, body {
 </div>
 <div class="mt-6 pt-5 border-t border-slate-100">
 <div class="grid grid-cols-2 text-center text-xs mb-4"><div class="relative"><span class="text-slate-400 block text-[10px]">Location</span><span class="font-bold text-slate-800">Peshawar</span></div><div class="relative"><span class="text-slate-400 block text-[10px]">Job Success</span><span class="font-bold text-emerald-600">98%</span></div></div>
-<button class="w-full py-2.5 rounded-xl bg-[#5BBB7B] text-white text-xs font-bold hover:bg-[#4faa6f] transition flex items-center justify-center gap-1.5 shadow-sm">Hire</button>
+<a href="../job_details_select_worker_confirm_booking_modal_hunar/code.html" class="w-full py-2.5 rounded-xl bg-[#5BBB7B] text-white text-xs font-bold hover:bg-[#4faa6f] transition flex items-center justify-center gap-1.5 shadow-sm cursor-pointer">Hire Now</a>
 </div>
 </div>
 <!-- Pro 4: Riaz Ali -->
 <div class="bg-white rounded-2xl border border-slate-200 p-6 text-center shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col justify-between relative">
 <div>
-<div class="relative w-20 h-20 mx-auto mb-4"><div class="w-full h-full rounded-full overflow-hidden"><img alt="Riaz Ali" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida/AEtjO1VsqbqJoYxRVtRBoxBm43nZ77vRogC5uOhgGB1ll1e4p7Bjr-WmdnV81Xm7fkDZDsCBJqZ18-4L7WjTKn2hY8BrwO3PmLybn_uEGlfcYXlgvYVztZkWyxGE_VwwZQx7fbQuaGa6eeg-a-DFP10XnI1a2HugaIMd6H7gi6hXdK49VIpON5PR_mVc9e2OtX6lujmiFp3eBSqh3QmEh5KTUFR4PfRKQuW5Qod5ahK7n2T4cIuLI9LAj8TSmEfo"></div><span class="absolute bottom-0 right-0 z-10 flex h-5 w-5"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span><span class="relative inline-flex rounded-full h-5 w-5 bg-emerald-500 border-2 border-white"></span></span></div>
+<div class="relative w-20 h-20 mx-auto mb-4"><div class="w-full h-full rounded-full overflow-hidden"><img alt="Riaz Ali" class="w-full h-full object-cover" src="images/riaz-ali-avatar.png"></div><span class="absolute bottom-0 right-0 z-10 flex h-5 w-5"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span><span class="relative inline-flex rounded-full h-5 w-5 bg-emerald-500 border-2 border-white"></span></span></div>
 <div class="flex items-center justify-center gap-1">
 <h3 class="text-base font-bold text-slate-900">Riaz Ali</h3>
 <svg class="w-4 h-4 text-[#5BBB7B]" fill="currentColor" viewBox="0 0 20 20"><path clip-rule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" fill-rule="evenodd"></path></svg>
@@ -376,7 +387,7 @@ html, body {
 </div>
 <div class="mt-6 pt-5 border-t border-slate-100">
 <div class="grid grid-cols-2 text-center text-xs mb-4"><div class="relative"><span class="text-slate-400 block text-[10px]">Location</span><span class="font-bold text-slate-800">Peshawar</span></div><div class="relative"><span class="text-slate-400 block text-[10px]">Job Success</span><span class="font-bold text-emerald-600">100%</span></div></div>
-<button class="w-full py-2.5 rounded-xl bg-[#5BBB7B] text-white text-xs font-bold hover:bg-[#4faa6f] transition flex items-center justify-center gap-1.5 shadow-sm">Hire</button>
+<a href="../job_details_select_worker_confirm_booking_modal_hunar/code.html" class="w-full py-2.5 rounded-xl bg-[#5BBB7B] text-white text-xs font-bold hover:bg-[#4faa6f] transition flex items-center justify-center gap-1.5 shadow-sm cursor-pointer">Hire Now</a>
 </div>
 </div>
 </div>
@@ -395,17 +406,17 @@ html, body {
 <!-- Filter Tabs -->
 <div class="flex flex-wrap items-center gap-2 text-xs font-semibold">
 <button class="px-4 py-2 rounded-full bg-[#1F4B3F] text-white">All Trades</button>
-<button class="px-4 py-2 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 transition">Electrical &amp; Power</button>
-<button class="px-4 py-2 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 transition">Cooling &amp; AC</button>
-<button class="px-4 py-2 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 transition">Plumbing &amp; Sanitary</button>
-<button class="px-4 py-2 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 transition">Carpentry &amp; Fitout</button>
+<a href="../post_a_job_step_1_modern_service_selection/code.html" class="px-4 py-2 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 transition">Electrical &amp; Power</a>
+<a href="../job_details_offers_hunar/code.html" class="px-4 py-2 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 transition">Cooling &amp; AC</a>
+<a href="../direct_chat_negotiation_hunar_customer_hub/code.html" class="px-4 py-2 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 transition">Plumbing &amp; Sanitary</a>
+<a href="../job_details_offers_hunar/code.html" class="px-4 py-2 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 transition">Carpentry &amp; Fitout</a>
 </div>
 </div>
 <!-- 2 Rows x 4 Columns Cards -->
 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
 <!-- Card 1: AC Wash -->
-<article class="group rounded-2xl border border-slate-200 bg-white hover:shadow-xl transition-all duration-300 flex flex-col overflow-hidden">
-<div class="relative aspect-[16/10] overflow-hidden bg-slate-100"><img alt="AC Deep Chemical Wash" class="w-full h-full object-cover group-hover:scale-105 transition duration-300" src="https://lh3.googleusercontent.com/aida/AEtjO1W89ijeoTPlQIxDGkJQZeAr9KAkGPuUxQhZH3R7pnx8jwvYizgPH3ATuJybrLhIHk6YKiwmlJ_3GPP2lAyp1mERB2Rg-CdFlEQSILUnc2VMehzii-s3LZsW2wawMZ1W84RZdtEStWj8Fil_U41c3eqtb9EoaVW6O5AKLmG_HWZ6i_t1p5FFo7tN2gEWyv-zaclq-MG5ot4R5-36K2a0fUWps-xzyGUrL0YzsDOvyC82QHH5Ww57NDScMKGc">
+<a href="../post_a_job_step_1_modern_service_selection/code.html" class="group rounded-2xl border border-slate-200 bg-white hover:shadow-xl hover:border-[#5BBB7B] transition-all duration-300 flex flex-col overflow-hidden cursor-pointer block">
+<div class="relative aspect-[16/10] overflow-hidden bg-slate-100"><img alt="AC Deep Chemical Wash" class="w-full h-full object-cover group-hover:scale-105 transition duration-300" src="images/ac-deep-wash-alt.png">
 <button aria-label="Favorite" class="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/90 backdrop-blur text-slate-400 hover:text-red-500 flex items-center justify-center shadow transition">
 <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"></path></svg>
 </button></div>
@@ -422,15 +433,16 @@ html, body {
 </div>
 <div class="pt-4 mt-4 border-t border-slate-100 flex items-center justify-between">
 <div class="flex items-center space-x-2">
-<img alt="Tariq M." class="w-7 h-7 rounded-full object-cover border border-slate-200" src="https://lh3.googleusercontent.com/aida/AEtjO1X60Jg_25HShTAnk_AFw6WozyWFHtrcq5Vuu-PFRlv6Lso3CZI-KH7532vok6n7pph72NkpVZOjri6IVNfZCNicLdMqDJbI_IP2TMWZBBgX18EiCAsJN1U00Lc3yH60AkIdIY62WDr1CvKES00cuqsKLHW2rK1UROgv2X38dcoBfjSpXuPRSeV1k6PtP2r_U2-QML_0FCLaImpGO4NDwrWtiD9D5dkHCn6fwnwTbZGttnEdoi4iCVZ4_XuI">
+<img alt="Tariq M." class="w-7 h-7 rounded-full object-cover border border-slate-200" src="images/tariq-m-avatar-alt.png">
 <span class="text-xs text-slate-600 font-medium">Tariq M.</span>
 </div>
+<span class="text-xs font-bold text-[#5BBB7B]">Book Service →</span>
 </div>
 </div>
-</article>
+</a>
 <!-- Card 2: DB Panel Wiring -->
-<article class="group rounded-2xl border border-slate-200 bg-white hover:shadow-xl transition-all duration-300 flex flex-col overflow-hidden">
-<div class="relative aspect-[16/10] overflow-hidden bg-slate-100"><img alt="DB Panel Wiring" class="w-full h-full object-cover group-hover:scale-105 transition duration-300" src="https://lh3.googleusercontent.com/aida/AEtjO1XNw8-iVrsaCh9ZAcBy3RyivQL9SmwSW6OZHFa87l08iKWwr-13T-pm1YQCFhaAq3mUiWDdWBeOLHjW3VXPyXmo9iunSB8BYUpVY-NV19sd-pkT0u-fElYJ3B98u0mUNlRRrvkDerFup1Zr4tdT_oiLvgPXt8gfj210B6tBUSkHc_dcThjURwEtSVnz__31UXq2HKA8Ll8gELpzA_VeOrPX4UyCObfxqo4qjuRrRn8ip0ZYMIZiQgkvKs4">
+<a href="../job_details_offers_hunar/code.html" class="group rounded-2xl border border-slate-200 bg-white hover:shadow-xl hover:border-[#5BBB7B] transition-all duration-300 flex flex-col overflow-hidden cursor-pointer block">
+<div class="relative aspect-[16/10] overflow-hidden bg-slate-100"><img alt="DB Panel Wiring" class="w-full h-full object-cover group-hover:scale-105 transition duration-300" src="images/db-panel-wiring.png">
 <button aria-label="Favorite" class="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/90 backdrop-blur text-slate-400 hover:text-red-500 flex items-center justify-center shadow transition">
 <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"></path></svg>
 </button></div>
@@ -447,15 +459,16 @@ html, body {
 </div>
 <div class="pt-4 mt-4 border-t border-slate-100 flex items-center justify-between">
 <div class="flex items-center space-x-2">
-<img alt="Ahmad Khan" class="w-7 h-7 rounded-full object-cover border border-slate-200" src="https://lh3.googleusercontent.com/aida/AEtjO1XN-3mfLb_hNWKE8AdGkc3IgttlL1yHoMwE5Dzh6q7VwuhYCczh_8RhEl-88gW6CYfTHDuX-2-eN_XrTmA-ZbHdlbE5Gq5IUnDatKNDPo-5WgQw8GbyL0X5ZYqAsLitUDoxEChXEHsTVL2InsGk8J-Sz7g3fE8udsb3pxvo5FUXFnkqA2d-HDww2-3GXZkgcUy0lXVPYlPotUDgTb-E7BIINXAhCjOzVgheac4Yy302x1QxDo93gCH9PgA">
+<img alt="Ahmad Khan" class="w-7 h-7 rounded-full object-cover border border-slate-200" src="images/ahmad-khan-avatar-alt.png">
 <span class="text-xs text-slate-600 font-medium">Ahmad Khan</span>
 </div>
+<span class="text-xs font-bold text-[#5BBB7B]">Book Service →</span>
 </div>
 </div>
-</article>
+</a>
 <!-- Card 3: Plumbing Detection -->
-<article class="group rounded-2xl border border-slate-200 bg-white hover:shadow-xl transition-all duration-300 flex flex-col overflow-hidden">
-<div class="relative aspect-[16/10] overflow-hidden bg-slate-100"><img alt="Plumbing Leakage Detection" class="w-full h-full object-cover group-hover:scale-105 transition duration-300" src="https://lh3.googleusercontent.com/aida/AEtjO1UNtXIeluASda6spgcrqgq6CTukYowo7TvjH6ldL4XOJTZbJKg-dW1Mo-_f2hCVMDCwxppMIXI2NOBAc7IvSy8whfepM7Vn6kzCPYh5UeXMlfPwNLqooppOTKnXkadaakszOe2nAXIcyMbSk-QDym5SdaMDZN2txAWle7Z5CnXoa07NyCkS8WUmTaiqE0N-MTyCcG5w5bYg5a6qC_mKKGQZqVIjtqbBU4CGAXwPBecdoISPlWS0YvS15i0k">
+<a href="../direct_chat_negotiation_hunar_customer_hub/code.html" class="group rounded-2xl border border-slate-200 bg-white hover:shadow-xl hover:border-[#5BBB7B] transition-all duration-300 flex flex-col overflow-hidden cursor-pointer block">
+<div class="relative aspect-[16/10] overflow-hidden bg-slate-100"><img alt="Plumbing Leakage Detection" class="w-full h-full object-cover group-hover:scale-105 transition duration-300" src="images/plumbing-leakage-alt.png">
 <button aria-label="Favorite" class="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/90 backdrop-blur text-slate-400 hover:text-red-500 flex items-center justify-center shadow transition">
 <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"></path></svg>
 </button></div>
@@ -472,15 +485,16 @@ html, body {
 </div>
 <div class="pt-4 mt-4 border-t border-slate-100 flex items-center justify-between">
 <div class="flex items-center space-x-2">
-<img alt="Rashid Ali" class="w-7 h-7 rounded-full object-cover border border-slate-200" src="https://lh3.googleusercontent.com/aida/AEtjO1VjQ9a2fS36cIj_XC_cgy4NIWDmAt7_pjDeP3_TdPmXBMr_7pdy8l9jdXGULYWy60_RpK-sKnqcRkiQ3MS6uE1MdnZWOS7oTrXLI5R8xDPY4MrHOLBdPYBUj0uAB-U5o2xXmDNg25DVfOPT5PtOQUcD_mss5vtOKR5fSyXzSmsOW_NverdjK5-PgfIJx84skhNxkfve0ksvtlbNUNbqNl7Keb9QRdSoKSWEhstqtscHvvVhHwTaA28GrY2O">
+<img alt="Rashid Ali" class="w-7 h-7 rounded-full object-cover border border-slate-200" src="images/rashid-ali-avatar.png">
 <span class="text-xs text-slate-600 font-medium">Rashid Ali</span>
 </div>
+<span class="text-xs font-bold text-[#5BBB7B]">Book Service →</span>
 </div>
 </div>
-</article>
+</a>
 <!-- Card 4: Kitchen Cabinetry -->
-<article class="group rounded-2xl border border-slate-200 bg-white hover:shadow-xl transition-all duration-300 flex flex-col overflow-hidden">
-<div class="relative aspect-[16/10] overflow-hidden bg-slate-100"><img alt="Kitchen Cabinetry &amp; Woodwork" class="w-full h-full object-cover group-hover:scale-105 transition duration-300" src="https://lh3.googleusercontent.com/aida/AEtjO1XlgfNRkaNq0hRhoR53Q5I1Uj5o3i4sSSzdZUgrmY4NqniKlrnAi-H3b8o-WPr2zAUF1GynLW6k5e5qApzlpded-ow5J_5QGX1x26WZLBVRSyUVhA-nOV11iA5_jseDwcDPn10uXjkLAInZwZr1KWbIFVvVwjymGTyuXMgMvVc0S1FzkNKBibVF9heMO9njUpjFJy02S-dSnyv_AR1pQGaL8m2_uqb56AKRSz9drk0qX_38MAMGp0HwxmoT">
+<a href="../job_details_offers_hunar/code.html" class="group rounded-2xl border border-slate-200 bg-white hover:shadow-xl hover:border-[#5BBB7B] transition-all duration-300 flex flex-col overflow-hidden cursor-pointer block">
+<div class="relative aspect-[16/10] overflow-hidden bg-slate-100"><img alt="Kitchen Cabinetry &amp; Woodwork" class="w-full h-full object-cover group-hover:scale-105 transition duration-300" src="images/kitchen-cabinetry-alt.png">
 <button aria-label="Favorite" class="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/90 backdrop-blur text-slate-400 hover:text-red-500 flex items-center justify-center shadow transition">
 <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"></path></svg>
 </button></div>
@@ -497,15 +511,16 @@ html, body {
 </div>
 <div class="pt-4 mt-4 border-t border-slate-100 flex items-center justify-between">
 <div class="flex items-center space-x-2">
-<img alt="Usman Woodcraft" class="w-7 h-7 rounded-full object-cover border border-slate-200" src="https://lh3.googleusercontent.com/aida/AEtjO1WlUxdgskkRmngrQvI64wmtYGu4IcBFFtFivbOmX-LMyqHHZZa-qPUnxcd1WYcWPE2MGwE8zh8Nz5t2yf3SLYN3EOspGivibDxTF_rK_m3nVwj0y7Fe3hpBI5NCXY_DsfGx8wV5bHTyASuvcauN5AOKWPKt32uZQSB8jmMRBOeEI--1Q5pOJCP6voDvQRsuYInge7-Hk3symj7pkpX-Zb-sGOLPBPmtwISkBFhyVuWCysl3PrXHSnlO4HY">
+<img alt="Usman Woodcraft" class="w-7 h-7 rounded-full object-cover border border-slate-200" src="images/usman-woodcraft-avatar-alt.png">
 <span class="text-xs text-slate-600 font-medium">Usman Woodcraft</span>
 </div>
+<span class="text-xs font-bold text-[#5BBB7B]">Book Service →</span>
 </div>
 </div>
-</article>
+</a>
 <!-- Card 5: Full House Painting -->
-<article class="group rounded-2xl border border-slate-200 bg-white hover:shadow-xl transition-all duration-300 flex flex-col overflow-hidden">
-<div class="relative aspect-[16/10] overflow-hidden bg-slate-100"><img alt="House Painting &amp; Polish" class="w-full h-full object-cover group-hover:scale-105 transition duration-300" src="https://lh3.googleusercontent.com/aida/AEtjO1WGVqTyEUdoquloLdVZCRv11CmUx_t9MD_H3Q_9eTEYyoDw-6bXkMlTBWhg_9P7x3LecjHD2QnxTGrw1M3qkt36ynJ3teIa3cIKVDFxCrY-_rt_5qOb_EcgKvqN5shEzzhEHXH6yy8tGSbwESZjHg7L2X4BYuDBowMGOD3Cud4I5KMRN0GakSERj5hEuRnB8OtQ76-DxOqSxxk73ef5m2MTBfApzLvFGF8qIXVOEYi7o4d1GLH68TIstsxI">
+<a href="../post_a_job_step_1_modern_service_selection/code.html" class="group rounded-2xl border border-slate-200 bg-white hover:shadow-xl hover:border-[#5BBB7B] transition-all duration-300 flex flex-col overflow-hidden cursor-pointer block">
+<div class="relative aspect-[16/10] overflow-hidden bg-slate-100"><img alt="House Painting &amp; Polish" class="w-full h-full object-cover group-hover:scale-105 transition duration-300" src="images/house-painting-alt.png">
 <button aria-label="Favorite" class="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/90 backdrop-blur text-slate-400 hover:text-red-500 flex items-center justify-center shadow transition">
 <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"></path></svg>
 </button></div>
@@ -522,15 +537,16 @@ html, body {
 </div>
 <div class="pt-4 mt-4 border-t border-slate-100 flex items-center justify-between">
 <div class="flex items-center space-x-2">
-<img alt="Farhan Painters" class="w-7 h-7 rounded-full object-cover border border-slate-200" src="https://lh3.googleusercontent.com/aida/AEtjO1WYMHNHLhCwTSUk_WPfNMrRKnLuzSLVYcOCPX0wlpB7UMjp0nc9omJWvdvQWwVETla6a0CL4r64pE0wFFLYQUUnCkYvkrT0jVoftomJ4zy2wuV90DWdbSCnEBYCqgGmuEwuLGkCaZqFgVIeldifvSlmvQCzdwlkqXAdJ67wVT7eutUHKjlIzaFf6itgvuObiZAjab1M-tjhYF3f7qKaf1DmCiInKYTvLFMncIGa_kqrUEvmyVw5ocG8Fb51">
+<img alt="Farhan Painters" class="w-7 h-7 rounded-full object-cover border border-slate-200" src="images/farhan-painters-avatar-alt.png">
 <span class="text-xs text-slate-600 font-medium">Farhan Painters</span>
 </div>
+<span class="text-xs font-bold text-[#5BBB7B]">Book Service →</span>
 </div>
 </div>
-</article>
+</a>
 <!-- Card 6: Water Tank Disinfection -->
-<article class="group rounded-2xl border border-slate-200 bg-white hover:shadow-xl transition-all duration-300 flex flex-col overflow-hidden">
-<div class="relative aspect-[16/10] overflow-hidden bg-slate-100"><img alt="Water Tank Disinfection" class="w-full h-full object-cover group-hover:scale-105 transition duration-300" src="https://lh3.googleusercontent.com/aida/AEtjO1XMvI-QY_oPw5rlZ93iGGSTRMI_NxHAjlcalzLkTbH7qOS0_4xYBPEyIgyYTLxEhuM7lRhQ1br9IWmEgCL2hXb_prKfl8jZL3xnKHA8CSgvN_s_CDouivG7KDgfQJ2hV3AyGgruesXJc8ZBt7mONlCFa-3n67NEAGhIPZ0zasR9UmxPbUygOAVRrrSP7ilAdYqRB1B_Tlz1cwJDxJVkAOACz5wYT78bzZaltk-0yRRi_6glYDom3paDfYDY"><button aria-label="Favorite" class="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/90 backdrop-blur text-slate-400 hover:text-red-500 flex items-center justify-center shadow transition"><svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"></path></svg></button></div>
+<a href="../job_details_offers_hunar/code.html" class="group rounded-2xl border border-slate-200 bg-white hover:shadow-xl hover:border-[#5BBB7B] transition-all duration-300 flex flex-col overflow-hidden cursor-pointer block">
+<div class="relative aspect-[16/10] overflow-hidden bg-slate-100"><img alt="Water Tank Disinfection" class="w-full h-full object-cover group-hover:scale-105 transition duration-300" src="images/water-tank-disinfection.png"><button aria-label="Favorite" class="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/90 backdrop-blur text-slate-400 hover:text-red-500 flex items-center justify-center shadow transition"><svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"></path></svg></button></div>
 <div class="p-4 flex-1 flex flex-col justify-between">
 <div>
 <p class="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Home Care</p>
@@ -544,15 +560,16 @@ html, body {
 </div>
 <div class="pt-4 mt-4 border-t border-slate-100 flex items-center justify-between">
 <div class="flex items-center space-x-2">
-<img alt="CleanPro PK" class="w-7 h-7 rounded-full object-cover border border-slate-200" src="https://lh3.googleusercontent.com/aida/AEtjO1Xl5vnZ-maILw2JkZaq-pQXWcSp2uYcAez3cpBSSmTCWXpFcr0Cp74E5R2u0HJbejIpe8XIAqvGskNQi9lPYCDHwVVPAPWj5s67uUvd_SVB0gcKDSvJRPQAYQbVcC2HJwWdAovvPtdyqvh9gvKVr2OqEVGUqhDMDiSRb0fsL-O1lVoU1tsBxco8gBDQMAjLNp-NjOm54Evx2-l5JkHWu81U1rhUs3O2YPWxjZQbhrU6yiHTn_ocgpKwMNE">
+<img alt="CleanPro PK" class="w-7 h-7 rounded-full object-cover border border-slate-200" src="images/cleanpro-pk-avatar-alt.png">
 <span class="text-xs text-slate-600 font-medium">CleanPro PK</span>
 </div>
+<span class="text-xs font-bold text-[#5BBB7B]">Book Service →</span>
 </div>
 </div>
-</article>
+</a>
 <!-- Card 7: Solar Inverter Hybrid -->
-<article class="group rounded-2xl border border-slate-200 bg-white hover:shadow-xl transition-all duration-300 flex flex-col overflow-hidden">
-<div class="relative aspect-[16/10] overflow-hidden bg-slate-100"><img alt="Solar Inverter Hybrid Net-Metering" class="w-full h-full object-cover group-hover:scale-105 transition duration-300" src="https://lh3.googleusercontent.com/aida/AEtjO1Umj3yOMQc4dMU6I2t1bNi6COn3EtXSwW-eV1QjfgBLPvRh-EK5ZiLfxjC1i2lIyxaF0BGs5gi6elhQ1g6_GmmYpTpSKIGFKpzqJ3H7tb2BRX5F2B-3h_nbL6cRSj_f2rvnKRypxVGsGuIOiZ6uGiQzYJjO6YkwAwHbzI5X9FiO31MYxm56NFowCyFWDNc5l_Fr9FwjHTl1bd_hzpcR8uPbcZcXz-JNT9-Qgy0Wk1ok5qPbLOvN6I2Dns0"><button aria-label="Favorite" class="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/90 backdrop-blur text-slate-400 hover:text-red-500 flex items-center justify-center shadow transition"><svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"></path></svg></button></div>
+<a href="../post_a_job_step_1_modern_service_selection/code.html" class="group rounded-2xl border border-slate-200 bg-white hover:shadow-xl hover:border-[#5BBB7B] transition-all duration-300 flex flex-col overflow-hidden cursor-pointer block">
+<div class="relative aspect-[16/10] overflow-hidden bg-slate-100"><img alt="Solar Inverter Hybrid Net-Metering" class="w-full h-full object-cover group-hover:scale-105 transition duration-300" src="images/solar-inverter.png"><button aria-label="Favorite" class="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/90 backdrop-blur text-slate-400 hover:text-red-500 flex items-center justify-center shadow transition"><svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"></path></svg></button></div>
 <div class="p-4 flex-1 flex flex-col justify-between">
 <div>
 <p class="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Solar &amp; Renewable</p>
@@ -566,15 +583,16 @@ html, body {
 </div>
 <div class="pt-4 mt-4 border-t border-slate-100 flex items-center justify-between">
 <div class="flex items-center space-x-2">
-<img alt="Solaronics PK" class="w-7 h-7 rounded-full object-cover border border-slate-200" src="https://lh3.googleusercontent.com/aida/AEtjO1VsqbqJoYxRVtRBoxBm43nZ77vRogC5uOhgGB1ll1e4p7Bjr-WmdnV81Xm7fkDZDsCBJqZ18-4L7WjTKn2hY8BrwO3PmLybn_uEGlfcYXlgvYVztZkWyxGE_VwwZQx7fbQuaGa6eeg-a-DFP10XnI1a2HugaIMd6H7gi6hXdK49VIpON5PR_mVc9e2OtX6lujmiFp3eBSqh3QmEh5KTUFR4PfRKQuW5Qod5ahK7n2T4cIuLI9LAj8TSmEfo">
+<img alt="Solaronics PK" class="w-7 h-7 rounded-full object-cover border border-slate-200" src="images/solaronics-pk-avatar.png">
 <span class="text-xs text-slate-600 font-medium">Solaronics PK</span>
 </div>
+<span class="text-xs font-bold text-[#5BBB7B]">Book Service →</span>
 </div>
 </div>
-</article>
+</a>
 <!-- Card 8: Appliance Repair -->
-<article class="group rounded-2xl border border-slate-200 bg-white hover:shadow-xl transition-all duration-300 flex flex-col overflow-hidden">
-<div class="relative aspect-[16/10] overflow-hidden bg-slate-100"><img alt="Washing Machine &amp; Refrigerator Repair" class="w-full h-full object-cover group-hover:scale-105 transition duration-300" src="https://lh3.googleusercontent.com/aida/AEtjO1WPPGa1ojexSkWu3-1b5rZ2K2ge3aa385efSYioWlntRUBSfai6PYWOH3cbHFOGifwwOdGZ6ON3at6HjXmRFe-fpgFsYtHKGUs_OSCPziSdCRpfswfmL9Fsots-wFpOmXpfdxeM8znVpsbw2RCMSPMUwrOoS9Pwy3qemwRgeFf53M4ZoLNFdNxjPeD4aVszIf3jGLdL1nCjsSRraJV4rgX1NqN5e8ZtgGISV7Wu2i85DVNDSb3n5DT3QqX5"><button aria-label="Favorite" class="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/90 backdrop-blur text-slate-400 hover:text-red-500 flex items-center justify-center shadow transition"><svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"></path></svg></button></div>
+<a href="../job_details_offers_hunar/code.html" class="group rounded-2xl border border-slate-200 bg-white hover:shadow-xl hover:border-[#5BBB7B] transition-all duration-300 flex flex-col overflow-hidden cursor-pointer block">
+<div class="relative aspect-[16/10] overflow-hidden bg-slate-100"><img alt="Washing Machine &amp; Refrigerator Repair" class="w-full h-full object-cover group-hover:scale-105 transition duration-300" src="images/washing-machine-repair.png"><button aria-label="Favorite" class="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/90 backdrop-blur text-slate-400 hover:text-red-500 flex items-center justify-center shadow transition"><svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"></path></svg></button></div>
 <div class="p-4 flex-1 flex flex-col justify-between">
 <div>
 <p class="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Appliance Repair</p>
@@ -588,16 +606,17 @@ html, body {
 </div>
 <div class="pt-4 mt-4 border-t border-slate-100 flex items-center justify-between">
 <div class="flex items-center space-x-2">
-<img alt="QuickFix PK" class="w-7 h-7 rounded-full object-cover border border-slate-200" src="https://lh3.googleusercontent.com/aida/AEtjO1U9mi-0AG1mS5XzHLOH6vqzJX6QbcumoxQ1uvk_mVlOXm5VxonZ5sfJ75IOhdAUIt5mLMebYKPYb03H-p_XQinE9A0ehnJSl34sA-HiHX4AFEUe_vWjaRlVvynZBOCBtOm9D7Idy6NJQT9kV4OnHp-CSV6fHfvyhcQuLk9mjm-nPOzRP2ElYmPab43ARulLJf6aJ62-mtkF8QJYeCDNXxyteJi9zL40p3S7cpil89_HJJIoHq1zOlhRKPo">
+<img alt="QuickFix PK" class="w-7 h-7 rounded-full object-cover border border-slate-200" src="images/quickfix-pk-avatar.png">
 <span class="text-xs text-slate-600 font-medium">QuickFix PK</span>
 </div>
+<span class="text-xs font-bold text-[#5BBB7B]">Book Service →</span>
 </div>
 </div>
-</article>
+</a>
 </div>
 <!-- Centered All Services Action Button -->
 <div class="mt-12 text-center">
-<a class="inline-flex items-center space-x-2 px-8 py-3.5 rounded-full border border-slate-300 hover:border-[#1F4B3F] text-slate-700 hover:text-[#1F4B3F] font-semibold text-sm transition" href="#all-services">
+<a class="inline-flex items-center space-x-2 px-8 py-3.5 rounded-full border border-slate-300 hover:border-[#1F4B3F] text-slate-700 hover:text-[#1F4B3F] font-semibold text-sm transition" href="../post_a_job_step_1_modern_service_selection/code.html">
 <span class="">All Services</span>
 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M14 5l7 7m0 0l-7 7m7-7H3" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
 </a>
@@ -610,7 +629,7 @@ html, body {
 <h2 class="text-2xl sm:text-3xl font-bold text-slate-900">Highest Rated Professionals</h2>
 <p class="text-sm text-slate-500 mt-1">Verified background checks, CNIC authenticated, and client recommended</p>
 </div>
-<a class="text-sm font-semibold text-slate-700 hover:text-[#5BBB7B] flex items-center gap-1 transition" href="#all-freelancers">All Professionals <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg></a>
+<a class="text-sm font-semibold text-slate-700 hover:text-[#5BBB7B] flex items-center gap-1 transition" href="../job_details_offers_hunar/code.html">All Professionals <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg></a>
 </div>
 <!-- 4 Pro Cards with Online Green Dot and Tags -->
 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -618,7 +637,7 @@ html, body {
 <div class="bg-white rounded-2xl border border-slate-200 p-6 text-center shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col justify-between">
 <div>
 <div class="relative w-20 h-20 mx-auto mb-4 rounded-full overflow-hidden ring-4 ring-emerald-50">
-<img alt="Ahmad Khan" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida/AEtjO1XN-3mfLb_hNWKE8AdGkc3IgttlL1yHoMwE5Dzh6q7VwuhYCczh_8RhEl-88gW6CYfTHDuX-2-eN_XrTmA-ZbHdlbE5Gq5IUnDatKNDPo-5WgQw8GbyL0X5ZYqAsLitUDoxEChXEHsTVL2InsGk8J-Sz7g3fE8udsb3pxvo5FUXFnkqA2d-HDww2-3GXZkgcUy0lXVPYlPotUDgTb-E7BIINXAhCjOzVgheac4Yy302x1QxDo93gCH9PgA">
+<img alt="Ahmad Khan" class="w-full h-full object-cover" src="images/ahmad-khan-large-alt.png">
 <span class="absolute bottom-0 right-1 w-3.5 h-3.5 bg-emerald-500 border-2 border-white rounded-full"></span>
 </div>
 <h3 class="text-base font-bold text-slate-900">Ahmad Khan</h3>
@@ -635,16 +654,16 @@ html, body {
 </div>
 <div class="mt-6 pt-5 border-t border-slate-100">
 <div class="grid grid-cols-2 text-center text-xs mb-4"><div><span class="text-slate-400 block text-[10px]">Location</span><span class="font-bold text-slate-800">Lahore</span></div><div><span class="text-slate-400 block text-[10px]">Job Success</span><span class="font-bold text-emerald-600">99%</span></div></div>
-<button class="w-full py-2.5 rounded-xl border border-slate-200 hover:border-[#5BBB7B] hover:bg-[#5BBB7B] text-slate-700 hover:text-white text-xs font-bold transition">
+<a href="../job_details_worker_profile_selection_modal_hunar/code.html" class="w-full py-2.5 rounded-xl border border-slate-200 hover:border-[#5BBB7B] hover:bg-[#5BBB7B] text-slate-700 hover:text-white text-xs font-bold transition flex items-center justify-center cursor-pointer">
             View Profile
-          </button>
+          </a>
 </div>
 </div>
 <!-- Pro 2: Tariq Mehmood -->
 <div class="bg-white rounded-2xl border border-slate-200 p-6 text-center shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col justify-between">
 <div>
 <div class="relative w-20 h-20 mx-auto mb-4 rounded-full overflow-hidden ring-4 ring-emerald-50">
-<img alt="Tariq Mehmood" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida/AEtjO1X60Jg_25HShTAnk_AFw6WozyWFHtrcq5Vuu-PFRlv6Lso3CZI-KH7532vok6n7pph72NkpVZOjri6IVNfZCNicLdMqDJbI_IP2TMWZBBgX18EiCAsJN1U00Lc3yH60AkIdIY62WDr1CvKES00cuqsKLHW2rK1UROgv2X38dcoBfjSpXuPRSeV1k6PtP2r_U2-QML_0FCLaImpGO4NDwrWtiD9D5dkHCn6fwnwTbZGttnEdoi4iCVZ4_XuI">
+<img alt="Tariq Mehmood" class="w-full h-full object-cover" src="images/tariq-mehmood-large-alt.png">
 <span class="absolute bottom-0 right-1 w-3.5 h-3.5 bg-emerald-500 border-2 border-white rounded-full"></span>
 </div>
 <h3 class="text-base font-bold text-slate-900">Tariq Mehmood</h3>
@@ -661,15 +680,15 @@ html, body {
 </div>
 <div class="mt-6 pt-5 border-t border-slate-100">
 <div class="grid grid-cols-2 text-center text-xs mb-4"><div><span class="text-slate-400 block text-[10px]">Location</span><span class="font-bold text-slate-800">Karachi</span></div><div><span class="text-slate-400 block text-[10px]">Job Success</span><span class="font-bold text-emerald-600">98%</span></div></div>
-<button class="w-full py-2.5 rounded-xl border border-slate-200 hover:border-[#5BBB7B] hover:bg-[#5BBB7B] text-slate-700 hover:text-white text-xs font-bold transition">
+<a href="../job_details_worker_profile_selection_modal_hunar/code.html" class="w-full py-2.5 rounded-xl border border-slate-200 hover:border-[#5BBB7B] hover:bg-[#5BBB7B] text-slate-700 hover:text-white text-xs font-bold transition flex items-center justify-center cursor-pointer">
             View Profile
-          </button>
+          </a>
 </div>
 </div>
 <!-- Pro 3: Mansoor -->
 <div class="bg-white rounded-2xl border border-slate-200 p-6 text-center shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col justify-between">
 <div>
-<div class="relative w-20 h-20 mx-auto mb-4 rounded-full overflow-hidden ring-4 ring-emerald-50"><img alt="Mansoor" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida/AEtjO1U9mi-0AG1mS5XzHLOH6vqzJX6QbcumoxQ1uvk_mVlOXm5VxonZ5sfJ75IOhdAUIt5mLMebYKPYb03H-p_XQinE9A0ehnJSl34sA-HiHX4AFEUe_vWjaRlVvynZBOCBtOm9D7Idy6NJQT9kV4OnHp-CSV6fHfvyhcQuLk9mjm-nPOzRP2ElYmPab43ARulLJf6aJ62-mtkF8QJYeCDNXxyteJi9zL40p3S7cpil89_HJJIoHq1zOlhRKPo">
+<div class="relative w-20 h-20 mx-auto mb-4 rounded-full overflow-hidden ring-4 ring-emerald-50"><img alt="Mansoor" class="w-full h-full object-cover" src="images/mansoor-avatar.png">
 <span class="absolute bottom-0 right-1 w-3.5 h-3.5 bg-emerald-500 border-2 border-white rounded-full"></span></div>
 <h3 class="text-base font-bold text-slate-900">Mansoor</h3>
 <p class="text-xs text-slate-500 font-medium">Architectural Consultant</p>
@@ -685,15 +704,15 @@ html, body {
 </div>
 <div class="mt-6 pt-5 border-t border-slate-100">
 <div class="grid grid-cols-2 text-center text-xs mb-4"><div><span class="text-slate-400 block text-[10px]">Location</span><span class="font-bold text-slate-800">Islamabad</span></div><div><span class="text-slate-400 block text-[10px]">Job Success</span><span class="font-bold text-emerald-600">100%</span></div></div>
-<button class="w-full py-2.5 rounded-xl border border-slate-200 hover:border-[#5BBB7B] hover:bg-[#5BBB7B] text-slate-700 hover:text-white text-xs font-bold transition">
+<a href="../job_details_worker_profile_selection_modal_hunar/code.html" class="w-full py-2.5 rounded-xl border border-slate-200 hover:border-[#5BBB7B] hover:bg-[#5BBB7B] text-slate-700 hover:text-white text-xs font-bold transition flex items-center justify-center cursor-pointer">
             View Profile
-          </button>
+          </a>
 </div>
 </div>
 <!-- Pro 4: Rashid Ali -->
 <div class="bg-white rounded-2xl border border-slate-200 p-6 text-center shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col justify-between">
 <div>
-<div class="relative w-20 h-20 mx-auto mb-4 rounded-full overflow-hidden ring-4 ring-emerald-50 bg-[#1F4B3F] flex items-center justify-center text-xl font-bold text-white"><img alt="Rashid Ali" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida/AEtjO1VjQ9a2fS36cIj_XC_cgy4NIWDmAt7_pjDeP3_TdPmXBMr_7pdy8l9jdXGULYWy60_RpK-sKnqcRkiQ3MS6uE1MdnZWOS7oTrXLI5R8xDPY4MrHOLBdPYBUj0uAB-U5o2xXmDNg25DVfOPT5PtOQUcD_mss5vtOKR5fSyXzSmsOW_NverdjK5-PgfIJx84skhNxkfve0ksvtlbNUNbqNl7Keb9QRdSoKSWEhstqtscHvvVhHwTaA28GrY2O"><span class="absolute bottom-0 right-1 w-3.5 h-3.5 bg-emerald-500 border-2 border-white rounded-full"></span></div>
+<div class="relative w-20 h-20 mx-auto mb-4 rounded-full overflow-hidden ring-4 ring-emerald-50 bg-[#1F4B3F] flex items-center justify-center text-xl font-bold text-white"><img alt="Rashid Ali" class="w-full h-full object-cover" src="images/rashid-ali-large.png"><span class="absolute bottom-0 right-1 w-3.5 h-3.5 bg-emerald-500 border-2 border-white rounded-full"></span></div>
 <h3 class="text-base font-bold text-slate-900">Rashid Ali</h3>
 <p class="text-xs text-slate-500 font-medium">Master Plumber &amp; Pipefitter</p>
 <div class="flex items-center justify-center gap-1 mt-2 text-xs font-semibold text-slate-700">
@@ -708,9 +727,9 @@ html, body {
 </div>
 <div class="mt-6 pt-5 border-t border-slate-100">
 <div class="grid grid-cols-2 text-center text-xs mb-4"><div><span class="text-slate-400 block text-[10px]">Location</span><span class="font-bold text-slate-800">Rawalpindi</span></div><div><span class="text-slate-400 block text-[10px]">Job Success</span><span class="font-bold text-emerald-600">97%</span></div></div>
-<button class="w-full py-2.5 rounded-xl border border-slate-200 hover:border-[#5BBB7B] hover:bg-[#5BBB7B] text-slate-700 hover:text-white text-xs font-bold transition">
+<a href="../job_details_worker_profile_selection_modal_hunar/code.html" class="w-full py-2.5 rounded-xl border border-slate-200 hover:border-[#5BBB7B] hover:bg-[#5BBB7B] text-slate-700 hover:text-white text-xs font-bold transition flex items-center justify-center cursor-pointer">
             View Profile
-          </button>
+          </a>
 </div>
 </div>
 </div>
@@ -726,18 +745,18 @@ html, body {
 <!-- Left Photographic Showcase -->
 <div class="lg:col-span-6 relative">
 <div class="rounded-3xl overflow-hidden shadow-2xl border-4 border-white aspect-[4/3] bg-slate-200">
-<img alt="Professional Electrician &amp; DB Technician" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDKiXz7NtJvhEnFVoaFRPm6hEjK44f_OHdo-cKC7CIisCRL_hYP1lj86n-b2szgajUvGcr85FmVVaAokQXvQyEqT7vqJxUx1G4hDM5b7H4vOU6DDbMiAjQTHLwxVvTbZtCpCigKVxsL7F2JaiB-VgmXAxkvx07i9FX4mP8qOAh_kWJKQ1dOXS6HlNjBUl33_48_so9IoI_bkSh2aV_xXiyaqD6ajqIRHbDwGRkiPDD0TSyMzraZIzAzcw">
+<img alt="Professional Electrician &amp; DB Technician" class="w-full h-full object-cover" src="images/electrician-db-technician.png">
 </div>
 <!-- Floating Pro Overlay Badge -->
-<div class="absolute -bottom-6 -right-2 sm:right-6 bg-white p-4 rounded-2xl shadow-xl border border-slate-100 flex items-center gap-3">
+<a href="../job_details_worker_profile_selection_modal_hunar/code.html" class="absolute -bottom-6 -right-2 sm:right-6 bg-white p-4 rounded-2xl shadow-xl border border-slate-100 flex items-center gap-3 hover:scale-105 transition-transform">
 <div class="w-12 h-12 rounded-xl overflow-hidden bg-slate-200 flex-shrink-0">
-<img alt="Maqsood Raza" class="w-full h-full object-cover rounded-xl" src="https://lh3.googleusercontent.com/aida/AEtjO1XNw8-iVrsaCh9ZAcBy3RyivQL9SmwSW6OZHFa87l08iKWwr-13T-pm1YQCFhaAq3mUiWDdWBeOLHjW3VXPyXmo9iunSB8BYUpVY-NV19sd-pkT0u-fElYJ3B98u0mUNlRRrvkDerFup1Zr4tdT_oiLvgPXt8gfj210B6tBUSkHc_dcThjURwEtSVnz__31UXq2HKA8Ll8gELpzA_VeOrPX4UyCObfxqo4qjuRrRn8ip0ZYMIZiQgkvKs4">
+<img alt="Maqsood Raza" class="w-full h-full object-cover rounded-xl" src="images/maqsood-raza-large.png">
 </div>
 <div>
 <p class="text-xs font-bold text-slate-900">Maqsood Raza (Verified Engineer)</p>
 <p class="text-[11px] text-emerald-600 font-medium">● Available for immediate visit</p>
 </div>
-</div>
+</a>
 </div>
 <!-- Right Feature Copy & Dark Teal Badges List -->
 <div class="lg:col-span-6 space-y-6">
@@ -776,7 +795,7 @@ html, body {
 </div>
 </div>
 <div>
-<a class="inline-flex items-center px-8 py-3.5 rounded-full bg-[#5BBB7B] hover:bg-[#4faa6f] text-white font-semibold text-sm transition shadow-md" href="#post-job">
+<a class="inline-flex items-center px-8 py-3.5 rounded-full bg-[#5BBB7B] hover:bg-[#4faa6f] text-white font-semibold text-sm transition shadow-md" href="../post_a_job_step_1_modern_service_selection/code.html">
             Post a Job
           </a>
 </div>
@@ -825,7 +844,7 @@ html, body {
         </p>
 <div class="flex items-center space-x-3">
 <div class="w-11 h-11 rounded-full overflow-hidden bg-slate-200">
-<img alt="Maryam Nawaz" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida/AEtjO1UIPov1VoKhtWJoKeXmDXRCpbZOGMpsqIFqqaClw8ySzmGRdng91el5J4n3oJDtyF_YTa2T1rd2KRZraQsWRK94sbmgmMI5zkCIcLdfW-viUH2EtiA8BLXrcN-HB05IAf2-EtewlxVWqdoLiACkEECmo6g5z5QjgHWnI8cJKY8-1x_nsuFvQjiBfiJw4oYqtmFN6v5bm7PlcccTEnU6JmPa5Rx52M5sSe_3rrqstLbsDt-CoG4n29d_paIX">
+<img alt="Maryam Nawaz" class="w-full h-full object-cover" src="images/maryam-nawaz-alt.png">
 </div>
 <div>
 <p class="text-sm font-bold text-slate-900">Faryal</p>
@@ -848,10 +867,10 @@ html, body {
       Post your requirements today to receive quotes in minutes, or register as a certified artisan to expand your craft business.
     </p>
 <div class="flex flex-wrap items-center justify-center gap-4">
-<a class="inline-flex items-center px-7 py-3 rounded-full bg-[#5BBB7B] hover:bg-[#4faa6f] text-white font-bold text-sm shadow-lg transition-all duration-200" href="#post-job">
-        Post a Job&nbsp;</a>
-<a class="inline-flex items-center px-7 py-3 rounded-full bg-white/10 hover:bg-white/20 text-white font-semibold text-sm border border-white/20 transition-all duration-200" href="#join-artisan">
-        Register as Professional</a>
+<a class="inline-flex items-center px-7 py-3 rounded-full bg-[#5BBB7B] hover:bg-[#4faa6f] text-white font-bold text-sm shadow-lg transition-all duration-200" href="../post_a_job_step_1_modern_service_selection/code.html">
+        Post a Job</a>
+<a class="inline-flex items-center px-7 py-3 rounded-full bg-white/10 hover:bg-white/20 text-white font-semibold text-sm border border-white/20 transition-all duration-200" href="../hunar_customer_dashboard/code.html">
+        Customer Dashboard</a>
 </div>
 </div>
 </section><footer class="bg-[#163E34] text-slate-300 pt-16 pb-12 border-t border-[#2A4D47]" data-purpose="marketplace-footer">
@@ -859,9 +878,9 @@ html, body {
 <!-- Top links & social bar -->
 <div class="flex flex-col md:flex-row items-center justify-between pb-10 border-b border-white/10 gap-4">
 <div class="flex flex-wrap items-center gap-6 text-xs text-slate-300 font-medium">
-<a class="hover:text-white transition" href="#tos">Terms of Service</a>
-<a class="hover:text-white transition" href="#privacy">Privacy Policy</a>
-<a class="hover:text-white transition" href="#sitemap">Site Map</a>
+<a class="hover:text-white transition" href="../dispute_resolution_help_center_hunar/code.html">Terms of Service</a>
+<a class="hover:text-white transition" href="../customer_profile_settings_hunar/code.html">Privacy Policy</a>
+<a class="hover:text-white transition" href="../my_jobs_hunar_customer_hub/code.html">My Jobs Hub</a>
 </div>
 <div class="flex items-center space-x-4 text-slate-400">
 <span class="text-xs font-medium text-slate-300">Follow Us:</span>
@@ -885,36 +904,36 @@ html, body {
 <div>
 <h4 class="text-sm font-bold text-white mb-4">About</h4>
 <ul class="space-y-2.5">
-<li class=""><a class="hover:text-white transition" href="#">About Us</a></li>
-<li class=""><a class="hover:text-white transition" href="#">Careers</a></li>
-<li class=""><a class="hover:text-white transition" href="#">Press &amp; News</a></li>
-<li class=""><a class="hover:text-white transition" href="#">Partnerships</a></li>
-<li class=""><a class="hover:text-white transition" href="#">Privacy Policy</a></li>
-<li class=""><a class="hover:text-white transition" href="#">Terms of Service</a></li>
-<li class=""><a class="hover:text-white transition" href="#">Investor Relations</a></li>
+<li class=""><a class="hover:text-white transition" href="../hunar_customer_dashboard/code.html">Customer Dashboard</a></li>
+<li class=""><a class="hover:text-white transition" href="../my_jobs_hunar_customer_hub/code.html">My Work Orders</a></li>
+<li class=""><a class="hover:text-white transition" href="../scheduled_visits_arrival_tracker_hunar/code.html">Live GPS Arrival Tracker</a></li>
+<li class=""><a class="hover:text-white transition" href="../job_details_offers_hunar/code.html">Offers &amp; Worker Selection</a></li>
+<li class=""><a class="hover:text-white transition" href="../payments_escrow_wallet_hunar/code.html">Secure Escrow Protection</a></li>
+<li class=""><a class="hover:text-white transition" href="../customer_profile_settings_hunar/code.html">Account Settings</a></li>
+<li class=""><a class="hover:text-white transition" href="../dispute_resolution_help_center_hunar/code.html">24/7 Help &amp; Support</a></li>
 </ul>
 </div>
 <!-- Categories -->
 <div>
 <h4 class="text-sm font-bold text-white mb-4">Categories</h4>
-<ul class="space-y-2.5"><li class=""><a class="hover:text-white transition" href="#cat-electrical">Electrical &amp; Power</a></li>
-<li class=""><a class="hover:text-white transition" href="#cat-hvac">HVAC &amp; Air Conditioning</a></li>
-<li class=""><a class="hover:text-white transition" href="#cat-plumbing">Plumbing &amp; Sanitary</a></li>
-<li class=""><a class="hover:text-white transition" href="#cat-woodwork">Carpentry &amp; Fitout</a></li>
-<li class=""><a class="hover:text-white transition" href="#cat-painting">Painting &amp; Renovation</a></li>
-<li class=""><a class="hover:text-white transition" href="#cat-solar">Solar &amp; Renewable Energy</a></li>
-<li class=""><a class="hover:text-white transition" href="#cat-cleaning">Water Tank &amp; Deep Cleaning</a></li>
-<li class=""><a class="hover:text-white transition" href="#cat-appliances">Home Appliance Repair</a></li>
-<li class=""><a class="hover:text-white transition" href="#cat-civil">Civil Work &amp; Masonry</a></li></ul>
+<ul class="space-y-2.5"><li class=""><a class="hover:text-white transition" href="../post_a_job_step_1_modern_service_selection/code.html">Electrical &amp; Power</a></li>
+<li class=""><a class="hover:text-white transition" href="../job_details_offers_hunar/code.html">HVAC &amp; Air Conditioning</a></li>
+<li class=""><a class="hover:text-white transition" href="../direct_chat_negotiation_hunar_customer_hub/code.html">Plumbing &amp; Sanitary</a></li>
+<li class=""><a class="hover:text-white transition" href="../job_details_offers_hunar/code.html">Carpentry &amp; Fitout</a></li>
+<li class=""><a class="hover:text-white transition" href="../post_a_job_step_1_modern_service_selection/code.html">Painting &amp; Renovation</a></li>
+<li class=""><a class="hover:text-white transition" href="../post_a_job_step_1_modern_service_selection/code.html">Solar &amp; Renewable Energy</a></li>
+<li class=""><a class="hover:text-white transition" href="../job_details_offers_hunar/code.html">Water Tank &amp; Deep Cleaning</a></li>
+<li class=""><a class="hover:text-white transition" href="../job_details_offers_hunar/code.html">Home Appliance Repair</a></li>
+<li class=""><a class="hover:text-white transition" href="../post_a_job_step_1_modern_service_selection/code.html">Civil Work &amp; Masonry</a></li></ul>
 </div>
 <!-- Support -->
 <div>
 <h4 class="text-sm font-bold text-white mb-4">Support</h4>
 <ul class="space-y-2.5">
-<li class=""><a class="hover:text-white transition" href="#">Help &amp; Support</a></li>
-<li class=""><a class="hover:text-white transition" href="#">Trust &amp; Safety</a></li>
-<li class=""><a class="hover:text-white transition" href="#">Selling on Freeio</a></li>
-<li class=""><a class="hover:text-white transition" href="#">Buying on Freeio</a></li>
+<li class=""><a class="hover:text-white transition" href="../dispute_resolution_help_center_hunar/code.html">Help &amp; Support 24/7</a></li>
+<li class=""><a class="hover:text-white transition" href="../payments_escrow_wallet_hunar/code.html">Escrow Trust &amp; Money-Back Guarantee</a></li>
+<li class=""><a class="hover:text-white transition" href="../post_a_job_step_1_modern_service_selection/code.html">Post a Service Request</a></li>
+<li class=""><a class="hover:text-white transition" href="../hunar_customer_dashboard/code.html">Customer Portal</a></li>
 </ul>
 </div>
 <!-- Subscribe -->
@@ -950,4 +969,5 @@ html, body {
 
 
 
-</body></html>
+
+  </body></html>
