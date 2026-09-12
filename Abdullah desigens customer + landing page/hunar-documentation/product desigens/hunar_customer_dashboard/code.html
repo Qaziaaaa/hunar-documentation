@@ -1,0 +1,210 @@
+<!DOCTYPE html><html lang="en" style=""><head><meta charset="utf-8"><meta content="width=device-width, initial-scale=1.0" name="viewport"><title>HUNAR Customer Hub - Dashboard</title><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&amp;display=swap" rel="stylesheet">
+<style>
+  html {
+    overflow-y: scroll;
+    scrollbar-gutter: stable;
+  }
+  body {
+    font-family: 'Inter', sans-serif;
+    background-color: #FFFFFF;
+    color: #1A1A2E;
+    margin: 0;
+    padding: 0;
+  }
+  aside {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  aside::-webkit-scrollbar {
+    display: none;
+  }
+</style>
+<script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">
+tailwind.config = {
+  darkMode: "class",
+  theme: {
+    extend: {
+      colors: {
+        navy: "#1A1A2E",
+        teal: {
+          DEFAULT: "#0F766E",
+          dark: "#115E59",
+          light: "rgba(15, 118, 110, 0.1)"
+        },
+        orange: "#F59E0B",
+        success: "#16A34A",
+        error: "#DC2626",
+        gray: "#64748B",
+        background: "#F8FAFC",
+        border: "#E2E8F0",
+        surface: "#FFFFFF",
+        primary: "#0F766E",
+        "primary-dark": "#115E59",
+        secondary: "#1A1A2E",
+        
+        // Aliases used in templates
+        appBg: "#F8FAFC",
+        darkText: "#1A1A2E",
+        mutedText: "#64748B",
+        borderLine: "#E2E8F0",
+        "text-main": "#1A1A2E",
+        "surface-muted": "#F8FAFC",
+        "outline-border": "#E2E8F0",
+        
+        // Material Theme 3 Aliases
+        "on-surface": "#1A1A2E",
+        "on-surface-variant": "#64748B",
+        "on-background": "#1A1A2E",
+        "on-primary": "#FFFFFF",
+        "on-secondary": "#FFFFFF",
+        "on-error": "#FFFFFF",
+        "surface-container-lowest": "#FFFFFF",
+        "surface-container-low": "#F8FAFC",
+        "surface-container": "#F8FAFC",
+        "surface-container-high": "#F8FAFC",
+        "surface-container-highest": "#F8FAFC",
+        "surface-variant": "#F8FAFC",
+        "surface-tint": "#0F766E",
+        "surface-dim": "#E2E8F0",
+        "surface-bright": "#FFFFFF",
+        outline: "#64748B",
+        "outline-variant": "#E2E8F0",
+        "primary-container": "rgba(15, 118, 110, 0.1)",
+        "on-primary-container": "#0F766E",
+        "secondary-container": "rgba(26, 26, 46, 0.08)",
+        "on-secondary-container": "#1A1A2E",
+        "secondary-fixed": "rgba(15, 118, 110, 0.1)",
+        "secondary-fixed-dim": "rgba(15, 118, 110, 0.1)",
+        "on-secondary-fixed": "#1A1A2E",
+        "on-secondary-fixed-variant": "#115E59",
+        "primary-fixed": "rgba(15, 118, 110, 0.1)",
+        "primary-fixed-dim": "rgba(15, 118, 110, 0.1)",
+        "on-primary-fixed": "#1A1A2E",
+        "on-primary-fixed-variant": "#115E59",
+        "tertiary": "#F59E0B",
+        "tertiary-container": "rgba(245, 158, 11, 0.1)",
+        "on-tertiary-container": "#F59E0B",
+        "tertiary-fixed": "rgba(245, 158, 11, 0.1)",
+        "on-tertiary-fixed": "#1A1A2E",
+        "error-container": "rgba(220, 38, 38, 0.1)",
+        "on-error-container": "#DC2626",
+        "inverse-primary": "#0F766E",
+        "inverse-surface": "#1A1A2E",
+        "inverse-on-surface": "#F8FAFC"
+      },
+      spacing: {
+        "margin-desktop": "2rem",
+        "margin-tablet": "1.5rem",
+        "margin-mobile": "1rem",
+        "gutter-desktop": "1.5rem",
+        "gutter-mobile": "1rem",
+        "space-3xl": "4rem",
+        "space-2xl": "3rem",
+        "space-xl": "2rem",
+        "space-lg": "1.5rem",
+        "space-md": "1rem",
+        "space-base": "1rem",
+        "space-sm": "0.75rem",
+        "space-xs": "0.5rem",
+        "space-2xs": "0.25rem",
+        "space-xxs": "0.25rem",
+        "space-1": "0.25rem",
+        "space-2": "0.5rem",
+        "space-3": "0.75rem",
+        "space-4": "1rem",
+        "space-5": "1.25rem",
+        "space-6": "1.5rem",
+        "space-8": "2rem",
+        "space-12": "3rem",
+        "space-16": "4rem",
+        "space-20": "5rem",
+        "space-24": "6rem",
+        "space-stack-sm": "0.5rem",
+        "space-stack-md": "1rem",
+        "space-stack-lg": "1.5rem",
+        "section-gap": "2rem",
+        "gutter": "1.5rem"
+      },
+      fontSize: {
+        "stat-lg": ["28px", { lineHeight: "36px", letterSpacing: "-0.02em", fontWeight: "700" }],
+        "button-text": ["14px", { lineHeight: "20px", letterSpacing: "0.01em", fontWeight: "600" }],
+
+        "display-hero": ["48px", { lineHeight: "56px", letterSpacing: "-0.025em", fontWeight: "700" }],
+        "display-hero-mobile": ["32px", { lineHeight: "40px", letterSpacing: "-0.02em", fontWeight: "700" }],
+        "display-kpi": ["36px", { lineHeight: "44px", letterSpacing: "-0.02em", fontWeight: "700" }],
+        "display-kpi-mobile": ["28px", { lineHeight: "34px", letterSpacing: "-0.02em", fontWeight: "700" }],
+        "display-lg": ["36px", { lineHeight: "44px", letterSpacing: "-0.02em", fontWeight: "700" }],
+        "headline-page": ["28px", { lineHeight: "36px", letterSpacing: "-0.015em", fontWeight: "600" }],
+        "headline-page-mobile": ["24px", { lineHeight: "32px", letterSpacing: "-0.015em", fontWeight: "600" }],
+        "headline-section": ["20px", { lineHeight: "28px", letterSpacing: "-0.01em", fontWeight: "600" }],
+        "headline-subsection": ["16px", { lineHeight: "24px", letterSpacing: "-0.005em", fontWeight: "600" }],
+        "headline-lg": ["28px", { lineHeight: "36px", letterSpacing: "-0.015em", fontWeight: "600" }],
+        "headline-lg-mobile": ["24px", { lineHeight: "32px", letterSpacing: "-0.015em", fontWeight: "600" }],
+        "headline-md": ["20px", { lineHeight: "28px", letterSpacing: "-0.01em", fontWeight: "600" }],
+        "headline-sm": ["16px", { lineHeight: "24px", letterSpacing: "-0.005em", fontWeight: "600" }],
+        "headline-xl-mobile": ["26px", { lineHeight: "34px", letterSpacing: "-0.015em", fontWeight: "600" }],
+        "body-default": ["14px", { lineHeight: "22px", letterSpacing: "0em", fontWeight: "400" }],
+        "body-compact": ["13px", { lineHeight: "18px", letterSpacing: "0em", fontWeight: "400" }],
+        "body-strong": ["14px", { lineHeight: "22px", letterSpacing: "0em", fontWeight: "600" }],
+        "body-lg": ["16px", { lineHeight: "24px", letterSpacing: "0em", fontWeight: "400" }],
+        "body-md": ["14px", { lineHeight: "22px", letterSpacing: "0em", fontWeight: "400" }],
+        "body-md-medium": ["14px", { lineHeight: "22px", letterSpacing: "0em", fontWeight: "500" }],
+        "body-sm": ["12px", { lineHeight: "16px", letterSpacing: "0em", fontWeight: "400" }],
+        "label-badge": ["11px", { lineHeight: "14px", letterSpacing: "0.02em", fontWeight: "600" }],
+        "label-regular": ["12px", { lineHeight: "16px", letterSpacing: "0.01em", fontWeight: "500" }],
+        "label-md": ["12px", { lineHeight: "16px", letterSpacing: "0.01em", fontWeight: "500" }],
+        "label-sm": ["11px", { lineHeight: "14px", letterSpacing: "0.02em", fontWeight: "500" }],
+        "label-uppercase": ["10px", { lineHeight: "12px", letterSpacing: "0.05em", fontWeight: "700" }]
+      },
+      fontFamily: {
+        "stat-lg": ["Inter", "sans-serif"],
+        "button-text": ["Inter", "sans-serif"],
+
+        sans: ["Inter", "sans-serif"],
+        "body-default": ["Inter", "sans-serif"],
+        "body-compact": ["Inter", "sans-serif"],
+        "body-strong": ["Inter", "sans-serif"],
+        "body-md": ["Inter", "sans-serif"],
+        "body-sm": ["Inter", "sans-serif"],
+        "display-kpi": ["Inter", "sans-serif"],
+        "headline-page": ["Inter", "sans-serif"],
+        "headline-section": ["Inter", "sans-serif"],
+        "headline-subsection": ["Inter", "sans-serif"],
+        "headline-md": ["Inter", "sans-serif"],
+        "headline-sm": ["Inter", "sans-serif"],
+        "headline-lg": ["Inter", "sans-serif"],
+        "label-badge": ["Inter", "sans-serif"],
+        "label-regular": ["Inter", "sans-serif"],
+        "label-md": ["Inter", "sans-serif"],
+        "label-sm": ["Inter", "sans-serif"]
+      },
+      borderRadius: {
+        DEFAULT: "0.375rem",
+        sm: "0.25rem",
+        md: "0.375rem",
+        lg: "0.5rem",
+        xl: "0.75rem",
+        "2xl": "1rem",
+        full: "9999px"
+      }
+    }
+  }
+};
+</script>
+</head>
+<body class="bg-white font-body-default text-on-surface antialiased">
+  <aside class="fixed left-0 top-0 h-screen w-[260px] bg-white border-r border-[#E2E8F0] z-50 hidden lg:flex flex-col justify-between overflow-y-auto" style="scrollbar-width: none; -ms-overflow-style: none;"><div class="p-5"><a href="../landing page/code.html" class="flex items-center gap-3 pb-5 border-b border-[#E2E8F0] mb-4 group cursor-pointer hover:opacity-90 transition-opacity" title="Back to Landing Page"><div class="w-9 h-9 rounded-xl bg-[#1A1A2E] flex items-center justify-center text-white text-[16px] font-bold"><span>H</span><span class="w-1.5 h-1.5 rounded-full bg-[#0F766E] ml-0.5"></span></div><div><div class="flex items-center gap-1.5"><span class="text-[16px] font-bold tracking-tight text-[#1A1A2E]">HUNAR</span><span class="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold bg-[#0F766E]/10 text-[#0F766E] uppercase tracking-wider">PK</span></div><p class="text-[12px] font-medium text-[#64748B]">Certified Pro Marketplace</p></div></a><nav class="flex flex-col gap-1"><a aria-current="page" class="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-[#0F766E] text-white font-semibold text-[13px] shadow-sm transition-colors" data-path="customer-dashboard" href="../hunar_customer_dashboard/code.html"><span class="material-symbols-outlined text-[20px] text-white">grid_view</span><span class="text-white">Dashboard</span></a><a class="flex items-center justify-between px-3 py-2.5 rounded-lg text-[13px] font-medium text-[#64748B] hover:bg-[#F8FAFC] hover:text-[#1A1A2E] transition-colors" data-path="my-jobs" href="../my_jobs_hunar_customer_hub/code.html"><div class="flex items-center gap-3"><span class="material-symbols-outlined text-[20px]">assignment</span><span>My Jobs</span></div><span class="px-2 py-0.5 rounded-full bg-[#F8FAFC] text-[#1A1A2E] text-[11px] font-bold">2</span></a><a class="flex items-center justify-between px-3 py-2.5 rounded-lg text-[13px] font-medium text-[#64748B] hover:bg-[#F8FAFC] hover:text-[#1A1A2E] transition-colors" data-path="offers-and-bids" href="../offers_inquiries_hunar_customer_hub/code.html"><div class="flex items-center gap-3"><span class="material-symbols-outlined text-[20px]">local_offer</span><span>Offers</span></div><span class="px-2 py-0.5 rounded-full bg-[#F59E0B]/10 text-[#F59E0B] text-[11px] font-bold">3</span></a><a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] font-medium text-[#64748B] hover:bg-[#F8FAFC] hover:text-[#1A1A2E] transition-colors" data-path="service-bookings" href="../scheduled_visits_arrival_tracker_hunar/code.html"><span class="material-symbols-outlined text-[20px]">calendar_today</span><span>Visits</span></a><a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] font-medium text-[#64748B] hover:bg-[#F8FAFC] hover:text-[#1A1A2E] transition-colors" data-path="messages" href="../direct_chat_negotiation_hunar_customer_hub/code.html"><span class="material-symbols-outlined text-[20px]">chat</span><span>Messages</span></a><a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] font-medium text-[#64748B] hover:bg-[#F8FAFC] hover:text-[#1A1A2E] transition-colors" data-path="payments-and-escrow" href="../payments_escrow_wallet_hunar/code.html"><span class="material-symbols-outlined text-[20px]">payments</span><span>Payments</span></a><a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] font-medium text-[#64748B] hover:bg-[#F8FAFC] hover:text-[#1A1A2E] transition-colors" data-path="customer-profile" href="../customer_profile_settings_hunar/code.html"><span class="material-symbols-outlined text-[20px]">person</span><span>Profile</span></a><a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] font-medium text-[#64748B] hover:bg-[#F8FAFC] hover:text-[#1A1A2E] transition-colors" data-path="help-center" href="../dispute_resolution_help_center_hunar/code.html"><span class="material-symbols-outlined text-[20px]">help_center</span><span>Help Center</span></a></nav></div><div class="p-4 border-t border-[#E2E8F0] flex flex-col gap-3"><div class="bg-[#1A1A2E] text-white p-3.5 rounded-xl flex flex-col gap-2"><div class="flex items-center gap-2"><span class="material-symbols-outlined text-[#0F766E] text-[18px]">verified</span><span class="text-[11px] font-bold uppercase tracking-wider text-[#0F766E]">HUNAR Escrow</span></div><p class="text-[11px] leading-snug text-slate-300">100% NADRA CNIC Verified Pros &amp; safe Raast dispute guarantee.</p><a class="inline-flex items-center justify-center py-1.5 px-3 bg-[#0F766E] text-white text-[11px] font-bold rounded-lg hover:bg-[#115E59] transition-colors" data-path="guarantee-policy" href="../dispute_resolution_help_center_hunar/code.html">View Escrow Rules</a></div><div class="flex items-center justify-between pt-1"><div class="flex items-center gap-2.5"><div class="w-8 h-8 rounded-full bg-[#1A1A2E] flex items-center justify-center text-white font-bold text-xs">AK</div><div class="flex flex-col"><span class="text-[13px] font-semibold text-[#1A1A2E] leading-tight">Ahmed Khan</span><span class="text-[11px] font-medium text-[#64748B]">University Town, Peshawar</span></div></div><a class="text-[#64748B] hover:text-[#DC2626] transition-colors" data-path="sign-in" href="../customer_profile_settings_hunar/code.html"><span class="material-symbols-outlined text-[20px]">logout</span></a></div></div></aside>
+  <div class="w-full lg:pl-[260px] min-h-screen flex flex-col bg-white"><header class="fixed top-0 left-0 lg:left-[260px] right-0 h-16 bg-white border-b border-[#E2E8F0] z-40 px-4 sm:px-6 lg:px-8 flex items-center justify-between gap-4"><div class="flex items-center gap-3 flex-1 max-w-lg"><button aria-label="Open Menu" onclick="const s=document.querySelector('aside'); s.classList.toggle('hidden'); s.classList.toggle('flex');" class="lg:hidden p-1.5 rounded-lg text-[#64748B] hover:text-[#1A1A2E] hover:bg-[#F8FAFC] transition-colors focus:outline-none shrink-0"><span class="material-symbols-outlined text-[24px]">menu</span></button><a href="../landing page/code.html" class="flex items-center gap-1.5 lg:hidden shrink-0 hover:scale-105 transition-transform" title="Back to Landing Page"><div class="w-8 h-8 rounded-lg bg-[#1A1A2E] flex items-center justify-center text-white font-bold text-[14px]">H</div></a><div class="relative w-full"><span class="material-symbols-outlined absolute left-3 top-2.5 text-[#64748B] text-[20px]">search</span><input class="w-full h-10 pl-10 pr-4 text-[#1A1A2E] font-body-compact text-xs rounded-lg border border-[#E2E8F0] focus:border-[#0F766E] focus:bg-white focus:outline-none transition-all placeholder:text-[#64748B] bg-[#F8FAFC]" placeholder="Search jobs, verified technicians, booking IDs (PKR)..." type="search"></div></div><div class="flex items-center gap-3 shrink-0"><a href="../post_a_job_step_1_modern_service_selection/code.html" class="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-[#0F766E] hover:bg-[#115E59] text-white text-xs font-semibold shadow-sm transition-all active:scale-[0.99]"><span class="material-symbols-outlined text-[16px]">add</span><span>Post a Job</span></a><a href="../offers_inquiries_hunar_customer_hub/code.html" class="relative text-[#64748B] hover:text-[#1A1A2E] transition-colors p-2 rounded-lg hover:bg-[#F8FAFC]" title="Offers &amp; Notifications"><span class="material-symbols-outlined text-[22px]">notifications</span><span class="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-[#F59E0B]"></span></a><a href="../direct_chat_negotiation_hunar_customer_hub/code.html" class="text-[#64748B] hover:text-[#1A1A2E] transition-colors p-2 rounded-lg hover:bg-[#F8FAFC]" title="Messages"><span class="material-symbols-outlined text-[22px]">chat</span></a><div class="h-6 w-[1px] bg-[#E2E8F0] hidden sm:block"></div><a href="../customer_profile_settings_hunar/code.html" class="flex items-center gap-2.5 p-1 rounded-lg hover:bg-[#F8FAFC] transition-colors cursor-pointer" title="Profile Settings"><div class="w-8 h-8 rounded-full bg-[#1A1A2E] flex items-center justify-center text-white font-bold text-xs">AK</div><div class="hidden xl:flex flex-col text-left"><span class="text-xs font-semibold text-[#1A1A2E] leading-tight">Ahmed Khan</span><span class="text-[10px] font-medium text-[#64748B] leading-tight">University Town, Peshawar</span></div><span class="material-symbols-outlined text-[#64748B] text-[18px] hidden sm:inline-block">expand_more</span></a></div></header>
+    <main class="w-full pt-16 pb-16 bg-white flex-1"><div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex flex-col gap-6"><!-- Top Greeting & Header Bar -->
+        <section class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 pb-2"><div class="flex flex-col gap-1"><div class="flex items-center gap-3"><h1 class="font-headline-page text-headline-page text-[#1A1A2E] tracking-tight font-bold">Good morning, Ahmed Khan</h1><span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-white border border-[#E2E8F0] text-[#64748B] font-label-badge text-label-badge"><span class="w-1.5 h-1.5 rounded-full bg-[#0F766E]"></span>Peshawar Hub</span></div><p class="font-body-default text-body-default text-[#64748B] flex items-center gap-1.5"><span class="material-symbols-outlined text-[18px] text-[#64748B]">location_on</span>Here's what's happening with your services today in University Town, Peshawar.</p></div><div class="flex items-center gap-3"><a href="../payments_escrow_wallet_hunar/code.html" class="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-white border border-[#E2E8F0] text-[#1A1A2E] font-body-strong text-body-strong shadow-sm hover:bg-[#F8FAFC] transition-colors"><span class="material-symbols-outlined text-[18px] text-[#64748B]">receipt_long</span><span>Invoices &amp; Receipts</span></a><a href="../post_a_job_step_1_modern_service_selection/code.html" class="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg bg-[#0F766E] text-white font-body-strong text-body-strong shadow-sm hover:bg-[#115E59] transition-all active:scale-[0.99]"><span class="material-symbols-outlined text-[20px]">add</span><span>+ Post a Job</span></a></div></section>
+
+        <!-- KPI Metric Summary -->
+        <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6"><!-- Card 1 --><div class="bg-white border border-[#E2E8F0] rounded-lg p-5 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow"><div class="flex items-center justify-between"><span class="font-body-compact text-body-compact text-[#64748B] font-medium">Active Jobs</span><div class="w-9 h-9 rounded-lg bg-[#F8FAFC] flex items-center justify-center text-[#1A1A2E]"><span class="material-symbols-outlined text-[20px]">work</span></div></div><div class="my-3 flex items-baseline gap-2"><span class="font-display-kpi text-display-kpi text-[#1A1A2E]">2</span><span class="font-label-badge text-label-badge text-[#0F766E] bg-[#0F766E]/10 px-1.5 py-0.5 rounded font-medium">+1 this week</span></div><p class="font-label-regular text-label-regular text-[#64748B]">In-progress repairs</p></div><!-- Card 2 --><div class="bg-white border border-[#E2E8F0] rounded-lg p-5 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow"><div class="flex items-center justify-between"><span class="font-body-compact text-body-compact text-[#64748B] font-medium">Pending Offers</span><div class="w-9 h-9 rounded-lg bg-[#F59E0B]/10 flex items-center justify-center text-[#F59E0B]"><span class="material-symbols-outlined text-[20px]">local_offer</span></div></div><div class="my-3 flex items-baseline gap-2"><span class="font-display-kpi text-display-kpi text-[#1A1A2E]">4</span><span class="font-label-badge text-label-badge text-[#F59E0B] bg-[#F59E0B]/10 px-1.5 py-0.5 rounded font-semibold">+2 new bids</span></div><p class="font-label-regular text-label-regular text-[#64748B]">Action required</p></div><!-- Card 3 --><div class="bg-white border border-[#E2E8F0] rounded-lg p-5 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow"><div class="flex items-center justify-between"><span class="font-body-compact text-body-compact text-[#64748B] font-medium">Upcoming Bookings</span><div class="w-9 h-9 rounded-lg bg-[#0F766E]/10 flex items-center justify-center text-[#0F766E]"><span class="material-symbols-outlined text-[20px]">event_available</span></div></div><div class="my-3 flex items-baseline gap-2"><span class="font-display-kpi text-display-kpi text-[#1A1A2E]">1</span><span class="font-label-badge text-label-badge text-[#1A1A2E] bg-[#F8FAFC] px-1.5 py-0.5 rounded font-medium">Tomorrow</span></div><p class="font-label-regular text-label-regular text-[#64748B]">Confirmed technician visit</p></div><!-- Card 4 --><div class="bg-white border border-[#E2E8F0] rounded-lg p-5 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow"><div class="flex items-center justify-between"><span class="font-body-compact text-body-compact text-[#64748B] font-medium">Completed Jobs</span><div class="w-9 h-9 rounded-lg bg-[#16A34A]/10 flex items-center justify-center text-[#16A34A]"><span class="material-symbols-outlined text-[20px]">verified</span></div></div><div class="my-3 flex items-baseline gap-2"><span class="font-display-kpi text-display-kpi text-[#1A1A2E]">14</span><span class="font-label-badge text-label-badge text-[#16A34A] bg-[#16A34A]/10 px-1.5 py-0.5 rounded font-semibold">100% verified</span></div><p class="font-label-regular text-label-regular text-[#64748B]">All-time completed</p></div><!-- Card 5 --><div class="bg-white border border-[#E2E8F0] rounded-lg p-5 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow"><div class="flex items-center justify-between"><span class="font-body-compact text-body-compact text-[#64748B] font-medium">Total Spent</span><div class="w-9 h-9 rounded-lg bg-[#1A1A2E] flex items-center justify-center text-white"><span class="material-symbols-outlined text-[20px]">account_balance_wallet</span></div></div><div class="my-3 flex items-baseline gap-1"><span class="font-headline-page text-headline-page text-[#1A1A2E] font-bold">Rs. 46,200</span></div><div class="flex items-center justify-between text-[11px] text-[#64748B] pt-2.5 border-t border-[#E2E8F0] mt-1"><span class="font-label-regular text-[#64748B]">Via Escrow</span><span class="font-medium text-[#1A1A2E] font-label-badge"><span class="text-[#0F766E] font-semibold">Rs. 8,500</span> <span class="text-[#64748B] font-normal">Oct</span></span></div></div></section>
+
+        <!-- Main Grid Workspace (8 Columns vs 4 Columns) -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start"><!-- Left Column (8 cols) --><div class="lg:col-span-8 flex flex-col gap-8"><!-- My Active Jobs Table Card --><div class="bg-white border border-[#E2E8F0] rounded-lg p-6 shadow-sm flex flex-col gap-5"><div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2"><div><div class="flex items-center gap-2"><h2 class="font-headline-subsection text-headline-subsection font-bold text-[#1A1A2E]">My Active Jobs</h2><span class="px-2 py-0.5 rounded-full bg-[#F8FAFC] text-[#1A1A2E] font-label-badge text-label-badge font-semibold">3 Total</span></div><p class="font-body-compact text-body-compact text-[#64748B]">Track quotes, technician dispatches, and milestone completions</p></div><a class="text-[#0F766E] hover:text-[#115E59] font-label-badge text-label-badge inline-flex items-center gap-1 self-start sm:self-auto font-semibold" href="../my_jobs_hunar_customer_hub/code.html"><span>View All Past Jobs</span><span class="material-symbols-outlined text-[16px]">arrow_forward</span></a></div><!-- Status Flow Visualizer --><div class="p-3 border border-[#E2E8F0] rounded-lg flex items-center justify-between overflow-x-auto text-[11px] font-medium text-[#64748B] bg-white"><div class="flex items-center gap-1.5 text-[#0F766E] font-semibold min-w-max"><span class="w-5 h-5 rounded-full bg-[#0F766E] text-white flex items-center justify-center text-[10px]">1</span><span>Job Posted</span></div><span class="material-symbols-outlined text-[14px] text-[#64748B]">chevron_right</span><div class="flex items-center gap-1.5 text-[#0F766E] font-semibold min-w-max"><span class="w-5 h-5 rounded-full bg-[#0F766E] text-white flex items-center justify-center text-[10px]">2</span><span>Receiving Bids</span></div><span class="material-symbols-outlined text-[14px] text-[#64748B]">chevron_right</span><div class="flex items-center gap-1.5 text-[#1A1A2E] font-semibold min-w-max"><span class="w-5 h-5 rounded-full bg-[#1A1A2E] text-white flex items-center justify-center text-[10px]">3</span><span>Pro Selected</span></div><span class="material-symbols-outlined text-[14px] text-[#64748B]">chevron_right</span><div class="flex items-center gap-1.5 text-[#64748B] min-w-max"><span class="w-5 h-5 rounded-full bg-[#F8FAFC] text-[#64748B] flex items-center justify-center text-[10px]">4</span><span>On-Site Visit</span></div><span class="material-symbols-outlined text-[14px] text-[#64748B]">chevron_right</span><div class="flex items-center gap-1.5 text-[#64748B] min-w-max"><span class="w-5 h-5 rounded-full bg-[#F8FAFC] text-[#64748B] flex items-center justify-center text-[10px]">5</span><span>Completion</span></div></div><!-- Structured Job Data Table --><div class="overflow-x-auto"><table class="w-full text-left"><thead><tr class="text-[#64748B] border-b border-[#E2E8F0] font-label-badge text-label-badge uppercase tracking-wider bg-white"><th class="py-3 px-4 rounded-l">Job Title &amp; Category</th><th class="py-3 px-4">Offers &amp; Assignment</th><th class="py-3 px-4">Posted Date</th><th class="py-3 px-4">Status</th><th class="py-3 px-4 text-right rounded-r">Action</th></tr></thead><tbody class="divide-y-0 text-body-compact"><!-- Job Row 1 --><tr class="hover:bg-[#F8FAFC] transition-colors"><td class="py-4 px-4"><div class="flex flex-col"><span class="font-body-strong text-body-strong text-[#1A1A2E]">Master Bedroom Inverter AC Diagnostic &amp; Gas Fill</span><div class="flex items-center gap-2 mt-1"><span class="inline-flex items-center px-1.5 py-0.5 rounded bg-[#F8FAFC] text-[#64748B] text-[11px] font-medium">AC &amp; Cooling</span><span class="text-[#64748B] text-[12px]">• Kenwood 1.5 Ton DC Inverter</span></div></div></td><td class="py-4 px-4"><span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#F59E0B]/10 text-[#F59E0B] font-semibold text-[11px]"><span class="material-symbols-outlined text-[14px]">local_offer</span>3 Offers</span></td><td class="py-4 px-4 text-[#64748B] whitespace-nowrap">Oct 24, 2024</td><td class="py-4 px-4"><span class="inline-flex items-center px-2.5 py-1 rounded-full bg-[#F59E0B]/10 text-[#F59E0B] font-label-badge text-label-badge font-semibold">Receiving Offers</span></td><td class="py-4 px-4 text-right"><a href="../offers_inquiries_hunar_customer_hub/code.html" class="inline-block px-3 py-1.5 rounded-md bg-[#0F766E] text-white font-label-badge text-label-badge hover:bg-[#115E59] transition-colors whitespace-nowrap">View Offers (3)</a></td></tr><!-- Job Row 2 --><tr class="hover:bg-[#F8FAFC] transition-colors"><td class="py-4 px-4"><div class="flex flex-col"><span class="font-body-strong text-body-strong text-[#1A1A2E]">Kitchen Concealed PPRC Pipe Leak &amp; Pressure Valve</span><div class="flex items-center gap-2 mt-1"><span class="inline-flex items-center px-1.5 py-0.5 rounded bg-[#F8FAFC] text-[#64748B] text-[11px] font-medium">Plumbing &amp; Sanitary</span><span class="text-[#64748B] text-[12px]">• Ground Floor Main Line</span></div></div></td><td class="py-4 px-4"><div class="flex items-center gap-2"><div class="w-6 h-6 rounded-full bg-[#1A1A2E] text-white flex items-center justify-center font-bold text-[10px]">AK</div><span class="font-body-compact text-body-compact font-medium text-[#1A1A2E]">Ali Khan</span></div></td><td class="py-4 px-4 text-[#64748B] whitespace-nowrap">Oct 22, 2024</td><td class="py-4 px-4"><span class="inline-flex items-center px-2.5 py-1 rounded-full bg-[#0F766E]/10 text-[#0F766E] font-label-badge text-label-badge font-semibold">Visit Scheduled</span></td><td class="py-4 px-4 text-right"><a href="../scheduled_visits_arrival_tracker_hunar/code.html" class="inline-block px-3 py-1.5 rounded-md bg-[#F8FAFC] border border-[#E2E8F0] text-[#1A1A2E] font-label-badge text-label-badge hover:bg-[#E2E8F0] transition-colors whitespace-nowrap font-medium">Track Arrival</a></td></tr><!-- Job Row 3 --><tr class="hover:bg-[#F8FAFC] transition-colors"><td class="py-4 px-4"><div class="flex flex-col"><span class="font-body-strong text-body-strong text-[#1A1A2E]">Main Distribution Box (DB) Breaker Tripping Fix</span><div class="flex items-center gap-2 mt-1"><span class="inline-flex items-center px-1.5 py-0.5 rounded bg-[#F8FAFC] text-[#64748B] text-[11px] font-medium">Electrical</span><span class="text-[#64748B] text-[12px]">• Schneider 63A 3-Phase</span></div></div></td><td class="py-4 px-4"><span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#F8FAFC] text-[#64748B] font-semibold text-[11px]"><span class="material-symbols-outlined text-[14px]">bolt</span>4 Offers</span></td><td class="py-4 px-4 text-[#64748B] whitespace-nowrap">Oct 20, 2024</td><td class="py-4 px-4"><span class="inline-flex items-center px-2.5 py-1 rounded-full bg-[#F8FAFC] text-[#1A1A2E] font-label-badge text-label-badge font-semibold">In Progress</span></td><td class="py-4 px-4 text-right"><a class="text-[#0F766E] hover:underline font-label-badge text-label-badge font-medium" href="../my_jobs_hunar_customer_hub/code.html">Manage</a></td></tr></tbody></table></div></div><!-- Escrow Protection Info Banner --><div class="bg-[#1A1A2E] text-white p-5 rounded-lg flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-sm"><div class="flex items-start gap-3.5"><div class="w-10 h-10 rounded-full bg-[#0F766E] flex items-center justify-center shrink-0"><span class="material-symbols-outlined text-[24px] text-white">gavel</span></div><div><h3 class="font-headline-subsection text-headline-subsection font-semibold text-white">How HUNAR Escrow Protects Your Budget</h3><p class="font-body-compact text-body-compact text-slate-200 mt-0.5">Your funds remain safely deposited in the State Bank-regulated trust account until you verify on-site completion and release the OTP.</p></div></div><div class="flex items-center gap-2 shrink-0"><a href="../dispute_resolution_help_center_hunar/code.html" class="inline-block px-4 py-2 rounded-lg bg-white text-[#1A1A2E] font-body-strong text-body-compact hover:bg-[#F8FAFC] transition-colors font-semibold shadow-xs">Payment Dispute Rules</a></div></div></div><!-- Right Column (4 cols) --><div class="lg:col-span-4 flex flex-col gap-6"><!-- Confirmed Upcoming Booking Highlight --><div class="bg-white border border-[#E2E8F0] rounded-lg p-6 shadow-sm flex flex-col gap-4"><div class="flex items-center justify-between"><span class="font-label-badge text-label-badge uppercase tracking-wider text-[#64748B]">Immediate Booking</span><span class="inline-flex items-center gap-1 text-[#0F766E] font-label-badge text-label-badge bg-[#0F766E]/10 px-2 py-0.5 rounded border border-[#0F766E]/20 font-medium"><span class="material-symbols-outlined text-[14px]">verified_user</span>OTP Secured</span></div><!-- Schedule Appointment Card --><div class="border border-[#E2E8F0] p-4 rounded-lg flex flex-col gap-3 bg-white"><div class="flex items-center gap-3"><div class="bg-[#1A1A2E] text-white rounded-lg p-2.5 flex flex-col items-center justify-center min-w-[56px]"><span class="text-[10px] uppercase font-bold tracking-wider text-[#0F766E]">OCT</span><span class="font-headline-section text-headline-section leading-none font-bold text-white">25</span></div><div class="flex flex-col"><span class="font-body-strong text-body-strong text-[#1A1A2E]">10:00 AM – 11:30 AM</span><span class="font-label-regular text-label-regular text-[#64748B]">Tomorrow • Service Slot</span></div></div><div class="h-[1px] bg-[#E2E8F0] my-1"></div><div class="flex flex-col gap-1"><span class="font-label-regular text-label-regular text-[#64748B] font-medium">Service Item:</span><p class="font-body-compact text-body-compact font-semibold text-[#1A1A2E]">AC Diagnostics &amp; Servicing</p></div><!-- Assigned Pro Profile Micro-Card --><div class="bg-white border border-[#E2E8F0] p-3 rounded-lg flex items-center justify-between"><div class="flex items-center gap-3"><img class="w-10 h-10 rounded-full object-cover shrink-0" data-alt="Professional Pakistani HVAC technician" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCYEPOMAftM6KGAI2vfCulHhEtr81uQHFdubHBQhVhfUK3zCEMqlUBq4t4YgULTkNYvRVKsMqSKvjkKaQJ6IwH_FSalxvlGZLHpFKjVuiA-ESsT0FpOqibSFITYw2jBsGL7-7M0brNw7QT9TqDDLmwWtdqT0-WrTzJbp9emFkfY1nH7aKV6XOmCFSwG1ECzvjS0lKzNlD6mLk0RiAgbNJAzwNv84umh0BiofR06tr5023LW7N2t8sGZ"><div class="flex flex-col"><div class="flex items-center gap-1.5"><span class="font-body-strong text-body-strong text-[#1A1A2E] text-[13px]">Ali Khan</span><span class="material-symbols-outlined text-[16px] text-[#16A34A]" title="NADRA CNIC Verified">verified</span></div><span class="font-label-regular text-label-regular text-[#64748B] text-[11px]">HVAC Certified Pro • 4.9 <span class="text-[#F59E0B]">★</span> (124)</span></div></div><div class="text-right"><span class="font-label-badge text-label-badge text-[#0F766E] font-bold">Rs. 1,500</span><span class="block text-[10px] text-[#64748B]">Base Service</span></div></div><div class="flex items-start gap-2 pt-1"><span class="material-symbols-outlined text-[18px] text-[#64748B] shrink-0 mt-0.5">pin_drop</span><p class="font-label-regular text-label-regular text-[#64748B]">House 45, Street 12, University Town, Peshawar</p></div><!-- Security OTP Pill --><div class="bg-[#F8FAFC] border border-[#E2E8F0] p-2.5 rounded flex items-center justify-between text-[12px]"><span class="text-[#64748B] font-medium">Completion OTP:</span><span class="font-mono font-bold tracking-widest text-[#1A1A2E] bg-white border border-[#E2E8F0] px-2 py-0.5 rounded shadow-xs">8 4 2 1</span></div></div><div class="grid grid-cols-2 gap-2 pt-1"><a href="../scheduled_visits_arrival_tracker_hunar/code.html" class="w-full py-2 px-3 rounded-md bg-[#0F766E] text-white font-label-badge text-label-badge hover:bg-[#115E59] transition-colors flex items-center justify-center gap-1.5 font-semibold"><span class="material-symbols-outlined text-[16px]">visibility</span><span>Details</span></a><a href="../direct_chat_negotiation_hunar_customer_hub/code.html" class="w-full py-2 px-3 rounded-md bg-white border border-[#E2E8F0] text-[#1A1A2E] font-label-badge text-label-badge hover:bg-[#F8FAFC] transition-colors flex items-center justify-center gap-1.5 font-semibold"><span class="material-symbols-outlined text-[16px] text-[#64748B]">chat</span><span>Message</span></a></div></div><!-- Recent Activity Feed / Timeline --><div class="bg-white border border-[#E2E8F0] rounded-lg p-6 shadow-sm flex flex-col gap-4"><h3 class="font-headline-subsection text-headline-subsection font-bold text-[#1A1A2E]">Activity Log</h3><div class="relative pl-6 flex flex-col gap-5"><!-- Vertical Line --><div class="absolute left-2.5 top-2 bottom-2 w-[1.5px] bg-[#E2E8F0]"></div><!-- Log 1 --><div class="relative flex flex-col"><span class="absolute -left-6 top-1 w-2 h-2 rounded-full bg-[#0F766E]"></span><p class="font-body-compact text-body-compact text-[#1A1A2E] font-medium">New quote received from Ali Khan for AC Diagnostic</p><span class="font-label-regular text-label-regular text-[#64748B] text-[11px] mt-0.5">25 minutes ago</span></div><!-- Log 2 --><div class="relative flex flex-col"><span class="absolute -left-6 top-1 w-2 h-2 rounded-full bg-[#64748B]"></span><p class="font-body-compact text-body-compact text-[#1A1A2E] font-medium">Escrow reserve of Rs. 2,200 locked via Raast</p><span class="font-label-regular text-label-regular text-[#64748B] text-[11px] mt-0.5">2 hours ago • Trans ID #HUN-9921</span></div><!-- Log 3 --><div class="relative flex flex-col"><span class="absolute -left-6 top-1 w-2 h-2 rounded-full bg-[#64748B]"></span><p class="font-body-compact text-body-compact text-[#1A1A2E] font-medium">Visit appointment confirmed for tomorrow 10:00 AM</p><span class="font-label-regular text-label-regular text-[#64748B] text-[11px] mt-0.5">Yesterday • Technician Accepted</span></div><!-- Log 4 --><div class="relative flex flex-col"><span class="absolute -left-6 top-1 w-2 h-2 rounded-full bg-[#16A34A]"></span><p class="font-body-compact text-body-compact text-[#1A1A2E] font-medium">Job #4102 marked complete &amp; funds released</p><span class="font-label-regular text-label-regular text-[#64748B] text-[11px] mt-0.5">3 days ago • Rated 5.0 <span class="text-[#F59E0B]">★</span></span></div></div></div></div></div></div></main>
+  </div>
+</body>
+</html>
