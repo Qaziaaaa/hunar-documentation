@@ -66,6 +66,7 @@ function freshState() {
     notifications: {},
     reviews: reviews,
     payments: [],
+    disputes: [],
     draft: null
   };
   return state;
@@ -84,6 +85,7 @@ const Store = {
       if (!s.users || s.users.length === 0) s = freshState();
       if (!s.reviews) s.reviews = [];
       if (!s.payments) s.payments = [];
+      if (!s.disputes) s.disputes = [];
       if (!s.notifications) s.notifications = {};
       if (s.jobs) s.jobs.forEach(function (j) { if (!j.extras) j.extras = []; if (j.completion === undefined) j.completion = null; });
     }
@@ -399,6 +401,59 @@ const Store = {
     this.emit();
   },
 
+  /* ---------- offer negotiation / counter ---------- */
+  customerCounterOffer: function (jobId, offerId, amount) {
+    const s = this._state;
+    const j = s.jobs.find(function (x) { return x.id === jobId; });
+    if (!j) return { error: 'Job not found.' };
+    const u = this.currentUser();
+    if (!u || u.role !== 'customer') return { error: 'Only customers can counter an offer.' };
+    if (j.customerId !== u.id) return { error: 'This job is not yours.' };
+    const of = j.offers.find(function (o) { return o.id === offerId; });
+    if (!of) return { error: 'Offer not found.' };
+    if (of.status === 'rejected') return { error: 'This offer was already rejected.' };
+    if (j.selectedOffer) return { error: 'A worker has already been selected for this job.' };
+    amount = Math.round(Number(amount));
+    if (!amount || amount < 50) return { error: 'Please enter a valid counter amount (minimum Rs. 50).' };
+    of.counter = amount;
+    of.counterAt = Date.now();
+    of.negotiating = true;
+    const w = this.userById(of.workerId);
+    this.notify(of.workerId, 'chat', 'Customer countered your offer', 'Counter for ' + j.title + ' — new visit charge ' + fmtRs(amount) + '. Accept or decline to keep negotiating.', '/worker/offers/' + j.id);
+    this.emit();
+    return { offer: of };
+  },
+  workerAcceptCounter: function (jobId, offerId) {
+    const j = this.jobById(jobId);
+    const of = j ? j.offers.find(function (o) { return o.id === offerId; }) : null;
+    if (!j || !of) return { error: 'Offer not found.' };
+    const u = this.currentUser();
+    if (!u || u.role !== 'worker') return { error: 'Only workers can respond to a counter.' };
+    if (of.workerId !== u.id) return { error: 'This offer is not yours.' };
+    if (!of.counter) return { error: 'There is no counter to accept.' };
+    of.amount = of.counter;
+    of.counterAgreed = true;
+    of.negotiating = false;
+    this.notify(j.customerId, 'checkC', 'Worker accepted your counter', (u.name || 'Your worker') + ' accepted your counter of ' + fmtRs(of.amount) + ' for ' + j.title + '. Go ahead and confirm this worker.', '/customer/jobs/' + j.id);
+    this.emit();
+    return { offer: of };
+  },
+  workerDeclineCounter: function (jobId, offerId) {
+    const j = this.jobById(jobId);
+    const of = j ? j.offers.find(function (o) { return o.id === offerId; }) : null;
+    if (!j || !of) return { error: 'Offer not found.' };
+    const u = this.currentUser();
+    if (!u || u.role !== 'worker') return { error: 'Only workers can respond to a counter.' };
+    if (of.workerId !== u.id) return { error: 'This offer is not yours.' };
+    if (!of.counter) return { error: 'There is no counter to decline.' };
+    of.counter = null;
+    of.counterAt = null;
+    of.negotiating = false;
+    this.notify(j.customerId, 'alert', 'Worker declined your counter', (u.name || 'Your worker') + ' declined your counter for ' + j.title + '. The original offer still stands.', '/customer/jobs/' + j.id);
+    this.emit();
+    return { offer: of };
+  },
+
   /* ---------- travel & inspection ---------- */
   workerTransition: function (jobId, to) {
     const j = this.jobById(jobId);
@@ -584,6 +639,44 @@ const Store = {
 
   reviewsFor: function (workerId) {
     return this._state.reviews.filter(function (r) { return r.workerId === workerId; });
+  },
+
+  /* ---------- disputes ---------- */
+  disputesFor: function (workerId) {
+    const s = this._state;
+    const w = workerId || (this.currentUser() ? this.currentUser().id : null);
+    return s.disputes.filter(function (d) { return d.workerId === w; });
+  },
+  disputedJobIds: function (workerId) {
+    const w = workerId || (this.currentUser() ? this.currentUser().id : null);
+    return this.disputesFor(w).map(function (d) { return d.jobId; });
+  },
+  submitDispute: function (jobId, reason, description) {
+    const s = this._state;
+    const j = this.jobById(jobId);
+    const u = this.currentUser();
+    if (!j) return { error: 'Job not found.' };
+    if (!u || u.role !== 'worker') return { error: 'Only workers can raise a dispute.' };
+    if (j.workerId !== u.id) return { error: 'You are not assigned to this job.' };
+    if (!reason || !reason.trim()) return { error: 'Please choose a dispute reason.' };
+    if (!description || !description.trim()) return { error: 'Please describe what happened.' };
+    if (s.disputes.some(function (d) { return d.jobId === jobId; })) return { error: 'A dispute is already open for this job.' };
+    const d = {
+      id: uid('d'),
+      jobId: jobId,
+      jobTitle: j.title,
+      workerId: u.id,
+      customerId: j.customerId,
+      reason: reason.trim(),
+      description: description.trim(),
+      submittedOn: Date.now(),
+      status: 'under-review',
+      adminMessage: null
+    };
+    s.disputes.push(d);
+    this.notify(j.customerId, 'alert', 'Dispute raised on a job', 'A dispute was raised on "' + j.title + '". HUNAR support will review it and keep both sides updated.', '/customer/jobs/' + jobId);
+    this.emit();
+    return { dispute: d };
   },
 
   earnings: function () {
