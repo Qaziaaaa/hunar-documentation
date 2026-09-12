@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>HUNAR Partner Ops - Stage 2 Repair Execution &amp; Completion</title>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "primary": "#006768",
+            "primary-container": "#E6F7F7",
+            "on-primary": "#ffffff",
+            "on-primary-container": "#0B6365",
+            "secondary": "#3d6185",
+            "secondary-container": "#b1d5ff",
+            "on-secondary": "#ffffff",
+            "on-secondary-container": "#123B5D",
+            "surface": "#F8FAFC",
+            "surface-bright": "#FFFFFF",
+            "surface-dim": "#E2E8F0",
+            "surface-container-lowest": "#FFFFFF",
+            "surface-container-low": "#eff4ff",
+            "surface-container": "#e5eeff",
+            "surface-container-high": "#E2E8F0",
+            "surface-container-highest": "#d3e4fe",
+            "on-surface": "#0b1c30",
+            "on-surface-variant": "#64748B",
+            "outline": "#E2E8F0",
+            "outline-variant": "#CBD5E1",
+            "error": "#DC2626",
+            "error-container": "#ffdad6",
+            "on-error": "#ffffff",
+            "tertiary": "#825100",
+            "tertiary-container": "#FEF3C7",
+            "on-tertiary-container": "#B45309",
+            "inverse-surface": "#123B5D",
+            "inverse-on-surface": "#eaf1ff"
+          },
+          fontFamily: {
+            sans: ["Inter", "sans-serif"],
+            mono: ["Inter", "monospace"]
+          }
+        }
+      }
+    };
+  </script>
+<style>
+    @layer base {
+      html, body {
+        margin: 0;
+        padding: 0;
+        background-color: #F8FAFC;
+        color: #0b1c30;
+      }
+    }
+    /* Clean zero-shadow aesthetic with explicit borders */
+    * {
+      box-shadow: none !important;
+    }
+  </style>
+</head>
+<body class="font-sans antialiased bg-surface text-on-surface flex min-h-screen">
+<!-- Fixed Left Sidebar (w-64, 256px) matching HUNAR Partner Ops standard -->
+<aside class="w-64 min-h-screen bg-surface-container-lowest border-r border-outline flex flex-col shrink-0 sticky top-0 h-screen z-30">
+<!-- Brand / Ops Tag -->
+<div class="p-4 border-b border-outline flex items-center justify-between">
+<div class="flex items-center gap-1.5">
+<span class="text-xl font-bold tracking-tight text-on-surface flex items-center">
+          HUNAR<span class="inline-block w-2 h-2 rounded-full bg-primary ml-1"></span>
+</span>
+<span class="bg-surface-container-low text-on-surface-variant text-[11px] px-2 py-0.5 rounded border border-outline font-semibold">Partner Ops</span>
+</div>
+</div>
+<!-- Navigation Menu -->
+<div class="flex-1 py-4 px-3 flex flex-col gap-5 overflow-y-auto">
+<!-- Section: Work Dispatch -->
+<div class="flex flex-col gap-1">
+<span class="px-3 text-[11px] font-semibold uppercase tracking-wider text-on-surface-variant">Work Dispatch</span>
+<a class="flex items-center gap-2.5 px-3 py-2 rounded text-sm text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low transition-colors" href="#">
+<span class="material-symbols-outlined text-[20px]">dashboard</span> Dashboard
+        </a>
+<a class="flex items-center gap-2.5 px-3 py-2 rounded text-sm text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low transition-colors" href="#">
+<span class="material-symbols-outlined text-[20px]">near_me</span> Nearby Jobs
+        </a>
+<a class="flex items-center justify-between px-3 py-2 rounded text-sm bg-primary-container text-on-primary-container font-semibold border border-primary/20" href="#">
+<span class="flex items-center gap-2.5">
+<span class="material-symbols-outlined text-[20px] text-primary">handyman</span> Active Jobs
+          </span>
+<span class="px-1.5 py-0.5 rounded-full bg-primary text-on-primary text-[10px] font-bold">2</span>
+</a>
+<a class="flex items-center gap-2.5 px-3 py-2 rounded text-sm text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low transition-colors" href="#">
+<span class="material-symbols-outlined text-[20px]">local_offer</span> My Offers
+        </a>
+<a class="flex items-center gap-2.5 px-3 py-2 rounded text-sm text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low transition-colors" href="#">
+<span class="material-symbols-outlined text-[20px]">calendar_month</span> Upcoming Visits
+        </a>
+<a class="flex items-center gap-2.5 px-3 py-2 rounded text-sm text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low transition-colors" href="#">
+<span class="material-symbols-outlined text-[20px]">task_alt</span> Completed Jobs
+        </a>
+</div>
+<!-- Section: Finances & Reputation -->
+<div class="flex flex-col gap-1">
+<span class="px-3 text-[11px] font-semibold uppercase tracking-wider text-on-surface-variant">Finances &amp; Reputation</span>
+<a class="flex items-center gap-2.5 px-3 py-2 rounded text-sm text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low transition-colors" href="#">
+<span class="material-symbols-outlined text-[20px]">account_balance_wallet</span> Earnings
+        </a>
+<a class="flex items-center gap-2.5 px-3 py-2 rounded text-sm text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low transition-colors" href="#">
+<span class="material-symbols-outlined text-[20px]">grade</span> Reviews
+        </a>
+</div>
+<!-- Section: Account & Setup -->
+<div class="flex flex-col gap-1">
+<span class="px-3 text-[11px] font-semibold uppercase tracking-wider text-on-surface-variant">Account &amp; Setup</span>
+<a class="flex items-center gap-2.5 px-3 py-2 rounded text-sm text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low transition-colors" href="#">
+<span class="material-symbols-outlined text-[20px]">badge</span> Profile
+        </a>
+<a class="flex items-center gap-2.5 px-3 py-2 rounded text-sm text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low transition-colors" href="#">
+<span class="material-symbols-outlined text-[20px]">home_repair_service</span> My Services
+        </a>
+<a class="flex items-center gap-2.5 px-3 py-2 rounded text-sm text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low transition-colors" href="#">
+<span class="material-symbols-outlined text-[20px]">pin_drop</span> My Location
+        </a>
+</div>
+</div>
+<!-- Verified Badge Footer -->
+<div class="p-3 border-t border-outline bg-surface-container-lowest">
+<div class="p-2.5 rounded bg-surface-container-low border border-outline flex items-center gap-2.5">
+<span class="material-symbols-outlined text-[22px] text-primary">verified_user</span>
+<div class="flex flex-col">
+<span class="text-xs font-bold text-on-surface leading-tight">NADRA Verified</span>
+<span class="text-[11px] text-on-surface-variant">Level 2 Master Tech</span>
+</div>
+</div>
+</div>
+</aside>
+<!-- Main Content Wrapper -->
+<main class="w-full bg-surface min-h-screen flex-1 flex flex-col min-w-0">
+<!-- Top Utility Bar -->
+<header class="w-full bg-surface-container-lowest border-b border-outline px-6 py-2.5 flex items-center justify-between gap-4 sticky top-0 z-20">
+<div class="flex items-center gap-3">
+<span class="text-sm font-semibold text-on-surface">Skilled Worker Portal</span>
+<span class="text-outline-variant">|</span>
+<div class="flex items-center gap-1.5 text-on-surface-variant text-xs">
+<span class="material-symbols-outlined text-[16px] text-primary">location_on</span>
+<span>Serving: <strong class="text-on-surface font-semibold">F-10, Islamabad</strong></span>
+</div>
+</div>
+<div class="flex items-center gap-3">
+<!-- Live Online Status -->
+<div class="flex items-center gap-2 px-2.5 py-1 rounded-full bg-primary-container/70 border border-primary/20">
+<span class="w-2 h-2 rounded-full bg-primary animate-pulse"></span>
+<span class="text-xs font-semibold text-on-primary-container">Online</span>
+</div>
+<!-- Notification Trigger -->
+<button aria-label="Notifications" class="relative p-1.5 rounded text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low transition-colors" type="button">
+<span class="material-symbols-outlined text-[20px]">notifications</span>
+<span class="absolute top-1 right-1 w-3.5 h-3.5 bg-error text-on-error text-[9px] font-bold rounded-full flex items-center justify-center">2</span>
+</button>
+<!-- Ali Khan Profile Pill -->
+<div class="flex items-center gap-2.5 pl-3 border-l border-outline">
+<div class="hidden sm:flex flex-col text-right">
+<div class="flex items-center justify-end gap-1">
+<span class="text-xs font-semibold text-on-surface">Ali Khan</span>
+<span class="material-symbols-outlined text-[14px] text-primary" title="Verified Worker">verified</span>
+</div>
+<div class="flex items-center justify-end gap-1 text-[11px] text-on-surface-variant">
+<span>AC Technician</span>
+<span>•</span>
+<span class="flex items-center gap-0.5 text-on-tertiary-container font-medium">
+<span class="material-symbols-outlined text-[12px] text-tertiary-container">star</span> 4.9
+              </span>
+</div>
+</div>
+<div class="w-8 h-8 rounded-full bg-primary text-on-primary flex items-center justify-center font-bold text-xs">
+            AK
+          </div>
+</div>
+</div>
+</header>
+<!-- Main Workspace Container -->
+<div class="max-w-7xl mx-auto w-full px-6 py-6 flex flex-col gap-6 flex-1 min-w-0">
+<!-- Sub-header & Breadcrumb Navigation -->
+<div class="bg-surface-container-lowest rounded border border-outline p-4 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+<div class="flex flex-col gap-1">
+<div class="flex items-center gap-2 text-xs text-on-surface-variant font-medium">
+<a class="hover:text-primary transition-colors flex items-center gap-1" href="#">
+<span class="material-symbols-outlined text-[14px]">arrow_back</span> Active Jobs
+            </a>
+<span class="text-outline-variant">/</span>
+<span class="font-mono text-on-surface font-semibold">Job #HN-8492</span>
+<span class="text-outline-variant">/</span>
+<span class="text-on-surface">Repair Execution &amp; Completion</span>
+</div>
+<div class="flex flex-wrap items-center gap-3 mt-1">
+<h1 class="text-xl font-bold text-on-surface">Compressor Failure &amp; Dual-Run Capacitor Replacement</h1>
+<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded text-xs font-semibold bg-primary-container text-on-primary-container border border-primary/20">
+<span class="w-2 h-2 rounded-full bg-primary animate-ping"></span>
+              Stage 2: Repair In Progress
+            </span>
+<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded text-xs font-semibold bg-surface-container-low text-on-surface border border-outline">
+<span class="material-symbols-outlined text-[14px] text-primary">hvac</span> Gree Inverter 1.5 Ton
+            </span>
+</div>
+</div>
+<div class="flex items-center gap-2.5 self-start lg:self-center shrink-0">
+<div class="flex items-center gap-1.5 px-3 py-1.5 rounded bg-surface-container-low border border-outline text-xs text-on-surface font-medium">
+<span class="material-symbols-outlined text-[16px] text-primary">schedule</span>
+<span>Elapsed: <strong class="font-mono font-bold" id="elapsedCounter">33m 00s</strong></span>
+</div>
+<a class="px-3 py-1.5 rounded bg-surface-container-low hover:bg-surface-container-high border border-outline text-xs font-semibold text-secondary flex items-center gap-1.5 transition-colors" href="tel:+923005559871">
+<span class="material-symbols-outlined text-[16px]">call</span> Call Customer
+          </a>
+</div>
+</div>
+<!-- Two-Column Responsive Desktop Grid (7 cols main / 5 cols right sidebar) -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+<!-- LEFT COLUMN: Active Repair Work & Completion Proof (7 cols) -->
+<div class="lg:col-span-7 flex flex-col gap-5">
+<!-- 2. Workflow Progress Stepper -->
+<div class="bg-surface-container-lowest rounded border border-outline p-4">
+<div class="text-[11px] font-bold uppercase tracking-wider text-on-surface-variant mb-3">Milestone Progress</div>
+<div class="grid grid-cols-1 sm:grid-cols-4 gap-2 text-xs">
+<!-- Step 1 -->
+<div class="flex items-center gap-2 p-2 rounded bg-surface-container-low/60 border border-outline">
+<div class="w-6 h-6 rounded-full bg-primary text-on-primary flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[14px]">check</span>
+</div>
+<div class="flex flex-col min-w-0">
+<span class="text-[10px] text-on-surface-variant uppercase font-semibold">Stage 1</span>
+<span class="font-semibold text-on-surface truncate">Diagnostic Done</span>
+</div>
+</div>
+<!-- Step 2 -->
+<div class="flex items-center gap-2 p-2 rounded bg-surface-container-low/60 border border-outline">
+<div class="w-6 h-6 rounded-full bg-primary text-on-primary flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[14px]">check</span>
+</div>
+<div class="flex flex-col min-w-0">
+<span class="text-[10px] text-on-surface-variant uppercase font-semibold">Stage 2</span>
+<span class="font-semibold text-on-surface truncate">Quote Approved</span>
+</div>
+</div>
+<!-- Step 3 (Active) -->
+<div class="flex items-center gap-2 p-2 rounded bg-primary-container text-on-primary-container border border-primary/30">
+<div class="w-6 h-6 rounded-full bg-primary text-on-primary flex items-center justify-center shrink-0 animate-spin">
+<span class="material-symbols-outlined text-[14px]">build</span>
+</div>
+<div class="flex flex-col min-w-0">
+<span class="text-[10px] text-primary uppercase font-bold">In Progress</span>
+<span class="font-bold text-on-primary-container truncate">Repair Execution</span>
+</div>
+</div>
+<!-- Step 4 -->
+<div class="flex items-center gap-2 p-2 rounded bg-surface border border-outline opacity-60">
+<div class="w-6 h-6 rounded-full bg-surface-dim text-on-surface-variant flex items-center justify-center shrink-0 font-bold text-[11px]">
+                  04
+                </div>
+<div class="flex flex-col min-w-0">
+<span class="text-[10px] text-on-surface-variant uppercase font-semibold">Final</span>
+<span class="text-on-surface truncate">Payment &amp; Review</span>
+</div>
+</div>
+</div>
+</div>
+<!-- 3. Work Execution Checklist / Completed Tasks -->
+<div class="bg-surface-container-lowest rounded border border-outline p-5 flex flex-col gap-4">
+<div class="flex items-center justify-between">
+<div>
+<span class="text-[11px] font-bold uppercase tracking-wider text-primary">Technical Scope</span>
+<h2 class="text-base font-bold text-on-surface">Execution Checklist &amp; Validation</h2>
+</div>
+<span class="text-xs font-semibold text-on-surface-variant bg-surface-container-low px-2 py-1 rounded border border-outline">3 / 3 Tasks Validated</span>
+</div>
+<div class="flex flex-col gap-2.5">
+<!-- Task 1 -->
+<label class="flex items-start gap-3 p-3 rounded bg-surface-container-low/40 border border-outline hover:bg-surface-container-low cursor-pointer transition-colors">
+<input checked="" class="mt-0.5 w-4 h-4 rounded text-primary focus:ring-primary accent-primary" type="checkbox"/>
+<div class="flex flex-col text-xs">
+<span class="font-semibold text-sm text-on-surface">Discharge and replace faulty outdoor capacitor</span>
+<span class="text-on-surface-variant mt-0.5 leading-relaxed">Removed blown 35μF dual run capacitor. Replaced with Daikin OEM spec 40μF/450V.</span>
+</div>
+</label>
+<!-- Task 2 -->
+<label class="flex items-start gap-3 p-3 rounded bg-surface-container-low/40 border border-outline hover:bg-surface-container-low cursor-pointer transition-colors">
+<input checked="" class="mt-0.5 w-4 h-4 rounded text-primary focus:ring-primary accent-primary" type="checkbox"/>
+<div class="flex flex-col text-xs">
+<div class="flex items-center gap-2 flex-wrap">
+<span class="font-semibold text-sm text-on-surface">Test compressor starting amp draw</span>
+<span class="px-2 py-0.5 bg-surface-container-lowest border border-outline text-on-surface rounded font-mono font-bold text-[11px] text-primary">6.8A Steady</span>
+</div>
+<span class="text-on-surface-variant mt-0.5 leading-relaxed">Verified normal running load under full 1.5-ton capacity.</span>
+</div>
+</label>
+<!-- Task 3 -->
+<label class="flex items-start gap-3 p-3 rounded bg-surface-container-low/40 border border-outline hover:bg-surface-container-low cursor-pointer transition-colors">
+<input checked="" class="mt-0.5 w-4 h-4 rounded text-primary focus:ring-primary accent-primary" type="checkbox"/>
+<div class="flex flex-col text-xs">
+<span class="font-semibold text-sm text-on-surface">Clean condenser coil airflow</span>
+<span class="text-on-surface-variant mt-0.5 leading-relaxed">Cleared debris from intake fins; checked pressure relief valve clearance.</span>
+</div>
+</label>
+</div>
+</div>
+<!-- 4. Service Completion Proof & After-Photos -->
+<div class="bg-surface-container-lowest rounded border border-outline p-5 flex flex-col gap-4">
+<div class="flex items-center justify-between">
+<div>
+<span class="text-[11px] font-bold uppercase tracking-wider text-on-surface-variant">Quality Audit</span>
+<h3 class="text-base font-bold text-on-surface">Service Completion Proof (Mandatory for Payout)</h3>
+</div>
+<span class="text-xs font-bold text-on-primary-container bg-primary-container px-2.5 py-1 rounded border border-primary/20 flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">verified</span> 2 Photos Logged
+              </span>
+</div>
+<!-- Photographic Documentation Cards (Side-by-side) -->
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+<!-- Before Service -->
+<div class="flex flex-col gap-2 p-3 rounded bg-surface border border-outline">
+<div class="flex items-center justify-between text-xs">
+<span class="font-semibold text-on-surface flex items-center gap-1">
+<span class="material-symbols-outlined text-[15px] text-error">history</span> Before: capacitor_blown.jpg
+                  </span>
+<span class="font-mono text-[11px] text-on-surface-variant">11:15 AM</span>
+</div>
+<div class="relative rounded overflow-hidden h-44 bg-surface-container-low border border-outline">
+<img class="w-full h-full object-cover" data-alt="Close up photo of a damaged blown out air conditioner capacitor with oil leakage on rusted electrical mounting tray within HVAC condenser outdoor unit" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAb9horAhY35duWQ880LG3-VusG3H_bdK-S7fB1hYYXRYOXrWi3X7aIDgK2voChFfZJATCZ0a_MJY2QVquHdp6RPVM2vutKVJnJm_woA9ugzXtdHaO32eohgS7_OZlnxbjv37JDNjf_u3EDvUMEvL1K9Hc6fQzt7nQukoIZ4yYVNFok9pz-EssgD3NVnwsael-_ctgKrieLiUgbb7ZP-vt4cmCwwhw9TT-KJO-0NtZ1IEIYauQvivfk"/>
+<div class="absolute bottom-2 left-2 px-2 py-1 bg-on-surface/90 text-white rounded text-[11px] font-medium flex items-center gap-1">
+<span class="material-symbols-outlined text-[13px] text-error">warning</span> Blown 35μF Unit
+                  </div>
+</div>
+<span class="text-[11px] text-on-surface-variant">Logged during Stage 1 technical inspection.</span>
+</div>
+<!-- After Service -->
+<div class="flex flex-col gap-2 p-3 rounded bg-surface border border-outline">
+<div class="flex items-center justify-between text-xs">
+<span class="font-semibold text-primary flex items-center gap-1">
+<span class="material-symbols-outlined text-[15px] text-primary">verified</span> After: new_capacitor_installed.jpg
+                  </span>
+<span class="text-[11px] font-bold text-on-primary-container bg-primary-container px-1.5 py-0.5 rounded">Verified</span>
+</div>
+<div class="relative rounded overflow-hidden h-44 bg-surface-container-low border border-outline">
+<img class="w-full h-full object-cover" data-alt="Crisp photo showing a brand new clean metallic cylindrical dual-run capacitor installed and neatly wired with blue and red terminals inside an air conditioner chassis" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC-4poPPfct3-8kdrcjDxt1-EpZ8sUwiUEgIsXRoEMwBZJZQ1kGkS9Q8PWbE1m38m3HjrMs_qdG0ok6quZvAIPxOWnpNMpVqGxBUmlqEE6aMV-CMvEqRWJ04izdcKd3EpNPMN3GsvQX_x8EExFkNXTfbS2zkKIuOlDcdG1_AAkOcd28bpfVZxrVboJF-9tWwKxKXr1KtJdUyU8bU-zcciAQMfkdxy1k2VHG3hO9RwmEXAfBPgGbHV_8"/>
+<div class="absolute bottom-2 left-2 px-2 py-1 bg-on-surface/90 text-white rounded text-[11px] font-medium flex items-center gap-1">
+<span class="material-symbols-outlined text-[13px] text-primary">check_circle</span> New 40μF OEM Active
+                  </div>
+</div>
+<span class="text-[11px] text-on-surface-variant">High-voltage dielectric terminals isolated.</span>
+</div>
+</div>
+<!-- Add Additional Photo Action -->
+<button class="w-full py-2.5 px-3 rounded border border-dashed border-outline-variant bg-surface hover:bg-surface-container-low text-xs font-semibold text-on-surface-variant hover:text-on-surface flex items-center justify-center gap-1.5 transition-colors" type="button">
+<span class="material-symbols-outlined text-[18px]">add_a_photo</span> Add Additional Proof Photo
+            </button>
+</div>
+<!-- 5. Final Technician Diagnostic & Resolution Notes -->
+<div class="bg-surface-container-lowest rounded border border-outline p-5 flex flex-col gap-3">
+<label class="text-sm font-bold text-on-surface flex items-center justify-between" for="workerNotes">
+<span>Final Technician Diagnostic &amp; Resolution Notes</span>
+<span class="text-[11px] font-normal text-on-surface-variant">Appended to Customer Digital Invoice</span>
+</label>
+<textarea class="w-full bg-surface-container-lowest border border-outline p-3 rounded text-sm text-on-surface placeholder:text-on-surface-variant focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-all" id="workerNotes" rows="3">Replacement completed. AC cooling at 16°C vent temperature. Capacitor terminal crimps refreshed and insulated with dielectric sleeve. Customer inspected cold air output in master bedroom.</textarea>
+<div class="flex items-center gap-1.5 text-xs text-on-surface-variant">
+<span class="material-symbols-outlined text-[16px] text-primary">shield</span>
+<span>30-day HUNAR Service Warranty applied automatically upon wrap-up.</span>
+</div>
+</div>
+<!-- 6. Primary Completion Actions -->
+<div class="bg-surface-container-lowest rounded border border-outline p-4 flex flex-col sm:flex-row items-center gap-3">
+<button class="w-full sm:flex-1 py-3 px-4 bg-primary hover:bg-[#005556] text-on-primary font-bold text-sm rounded flex items-center justify-center gap-2 transition-colors" id="completeJobBtn" type="button">
+<span class="material-symbols-outlined text-[20px]">task_alt</span>
+<span>Mark Repair Complete &amp; Request Payment</span>
+</button>
+<button class="w-full sm:w-auto py-3 px-4 bg-surface-container-low hover:bg-surface-container-high text-on-surface-variant hover:text-on-surface font-semibold text-sm rounded border border-outline flex items-center justify-center gap-1.5 transition-colors" type="button">
+<span class="material-symbols-outlined text-[18px]">rule_folder</span>
+<span>Report Scope Issue / Add Variation Quote</span>
+</button>
+</div>
+</div>
+<!-- RIGHT COLUMN: Financial Summary, Customer Identity & Escrow (5 cols) -->
+<div class="lg:col-span-5 flex flex-col gap-5">
+<!-- 1. Financial Ledger Summary Card -->
+<div class="bg-surface-container-lowest rounded border border-outline p-5 flex flex-col gap-4">
+<div class="flex items-center justify-between pb-3 border-b border-outline">
+<div class="flex flex-col">
+<span class="text-[11px] font-bold uppercase tracking-wider text-on-surface-variant">Financial Ledger Summary</span>
+<span class="text-xs text-on-surface">Total Bill Payable by Customer</span>
+</div>
+<div class="text-2xl font-bold text-secondary font-mono tracking-tight">
+                Rs. 2,985
+              </div>
+</div>
+<!-- Itemized Breakdown -->
+<div class="flex flex-col gap-2.5 text-xs">
+<div class="flex items-center justify-between text-on-surface">
+<span class="flex items-center gap-1.5 text-on-surface-variant">
+<span class="material-symbols-outlined text-[16px]">inventory_2</span> Parts &amp; Materials (New 45+5 μF Dual Capacitor)
+                </span>
+<span class="font-semibold font-mono">Rs. 1,200</span>
+</div>
+<div class="flex items-center justify-between text-on-surface">
+<span class="flex items-center gap-1.5 text-on-surface-variant">
+<span class="material-symbols-outlined text-[16px]">engineering</span> Labor &amp; Service Charges
+                </span>
+<span class="font-semibold font-mono">Rs. 1,500</span>
+</div>
+<div class="flex items-center justify-between text-on-surface">
+<span class="flex items-center gap-1.5 text-on-surface-variant">
+<span class="material-symbols-outlined text-[16px]">pin_drop</span> Inspection &amp; Visit Fee (Locked Stage 1)
+                </span>
+<span class="font-semibold font-mono">Rs. 285</span>
+</div>
+<!-- Gross Total Divider -->
+<div class="pt-2 border-t border-outline flex items-center justify-between text-sm font-bold text-on-surface">
+<span>Customer Gross Invoice</span>
+<span class="font-mono text-secondary">Rs. 2,985</span>
+</div>
+</div>
+<!-- Transparency Split: Net Payout vs Platform Fee -->
+<div class="rounded bg-surface p-3.5 border border-outline flex flex-col gap-2.5">
+<div class="flex items-center justify-between text-xs">
+<span class="text-on-surface-variant">Platform Commission (15%)</span>
+<span class="font-semibold text-error font-mono">-Rs. 448</span>
+</div>
+<div class="pt-2 border-t border-outline flex items-center justify-between">
+<div class="flex flex-col">
+<span class="text-[11px] font-bold uppercase tracking-wider text-on-primary-container">Your Net Payout (85%)</span>
+<span class="text-xs text-on-surface-variant">Direct credit to wallet / cash retained</span>
+</div>
+<div class="text-xl font-bold text-primary font-mono">
+                  Rs. 2,537
+                </div>
+</div>
+</div>
+</div>
+<!-- 2. Payment Mode & Escrow Status -->
+<div class="bg-surface-container-lowest rounded border border-outline p-5 flex flex-col gap-3.5">
+<div class="flex items-center justify-between">
+<span class="text-[11px] font-bold uppercase tracking-wider text-on-surface-variant">Payment Mode &amp; Escrow</span>
+<span class="px-2 py-0.5 bg-tertiary-container text-on-tertiary-container rounded text-[11px] font-bold">Escrow Verified</span>
+</div>
+<div class="p-3 rounded bg-surface border border-outline flex items-start gap-2.5">
+<span class="material-symbols-outlined text-[20px] text-primary shrink-0 mt-0.5">lock</span>
+<div class="flex flex-col text-xs leading-relaxed">
+<span class="font-bold text-on-surface">Funds Pre-Authorized in HUNAR Escrow</span>
+<span class="text-on-surface-variant mt-0.5">Customer opted for cash settlement at doorstep or one-tap wallet transfer. Payout release occurs instantly upon worker completion signature.</span>
+</div>
+</div>
+<!-- Confirm Cash Collection CTA Button -->
+<button class="w-full py-2.5 px-3 bg-secondary hover:bg-on-secondary-container text-on-secondary font-semibold text-xs rounded border border-secondary flex items-center justify-center gap-1.5 transition-colors" id="cashReceiptBtn" type="button">
+<span class="material-symbols-outlined text-[18px]">payments</span>
+<span>Confirm Cash Received (Rs. 2,985)</span>
+</button>
+</div>
+<!-- 3. Customer Identity & On-Site Location Card -->
+<div class="bg-surface-container-lowest rounded border border-outline p-5 flex flex-col gap-3.5">
+<div class="flex items-center justify-between">
+<span class="text-[11px] font-bold uppercase tracking-wider text-on-surface-variant">Customer Details</span>
+<span class="text-xs font-semibold text-primary">On Site</span>
+</div>
+<div class="flex items-start gap-3">
+<div class="w-11 h-11 rounded-full bg-secondary-container text-on-secondary-container flex items-center justify-center font-bold text-sm shrink-0 border border-outline">
+                UT
+              </div>
+<div class="flex flex-col min-w-0">
+<div class="flex items-center gap-1.5">
+<span class="text-sm font-bold text-on-surface">Usman Tariq</span>
+<span class="flex items-center text-[11px] font-bold text-on-tertiary-container bg-tertiary-container px-1 rounded">
+<span class="material-symbols-outlined text-[12px] mr-0.5">star</span> 4.92
+                  </span>
+</div>
+<span class="text-xs text-on-surface-variant mt-0.5">14 past bookings on HUNAR</span>
+<div class="flex items-center gap-1 text-xs text-on-surface font-medium mt-2">
+<span class="material-symbols-outlined text-[16px] text-primary shrink-0">location_on</span>
+<span class="truncate">House 42, Street 18, Sector F-10/3, Islamabad</span>
+</div>
+</div>
+</div>
+<div class="grid grid-cols-2 gap-2 pt-2 border-t border-outline">
+<a class="py-2 px-3 rounded bg-surface border border-outline hover:bg-surface-container-low text-xs font-semibold text-on-surface flex items-center justify-center gap-1.5 transition-colors" href="tel:+923005559871">
+<span class="material-symbols-outlined text-[16px] text-primary">call</span> Call Customer
+              </a>
+<button class="py-2 px-3 rounded bg-surface border border-outline hover:bg-surface-container-low text-xs font-semibold text-on-surface flex items-center justify-center gap-1.5 transition-colors" type="button">
+<span class="material-symbols-outlined text-[16px] text-secondary">chat</span> Message In-App
+              </button>
+</div>
+</div>
+<!-- 4. Raise a Dispute Link (Ghost secondary button with error accent) -->
+<div class="bg-surface-container-lowest rounded border border-outline p-3.5 flex items-center justify-between">
+<div class="flex items-center gap-2 text-xs text-on-surface-variant">
+<span class="material-symbols-outlined text-[18px] text-error">report_problem</span>
+<span>Need help or experiencing an on-site issue?</span>
+</div>
+<button class="text-xs font-semibold text-error hover:text-red-700 hover:bg-error-container/40 px-2.5 py-1.5 rounded transition-colors flex items-center gap-1" type="button">
+<span>Raise a Dispute</span>
+<span class="material-symbols-outlined text-[14px]">chevron_right</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+<!-- Settlement Confirmation Notification Toast -->
+<div class="fixed bottom-6 right-6 max-w-md bg-inverse-surface text-inverse-on-surface rounded p-4 flex items-start gap-3 transform translate-y-24 opacity-0 transition-all duration-300 pointer-events-none z-50 border border-outline/20" id="confirmationToast">
+<div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-on-primary shrink-0">
+<span class="material-symbols-outlined text-[18px]">verified</span>
+</div>
+<div class="flex flex-col gap-0.5">
+<span class="text-sm font-bold text-inverse-on-surface" id="toastTitle">Job Successfully Handed Over!</span>
+<span class="text-xs text-surface-dim" id="toastMessage">Rs. 2,985 marked collected. Receipt sent to Usman Tariq. Wallet ledger credited with Rs. 2,537 net revenue.</span>
+</div>
+</div>
+<!-- Application Footer -->
+<footer class="w-full bg-surface-container-lowest border-t border-outline py-4 mt-auto">
+<div class="max-w-7xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-on-surface-variant text-xs">
+<span>© 2025 HUNAR Services Platform. Verified Vocational Network.</span>
+<div class="flex items-center gap-4">
+<a class="hover:text-on-surface transition-colors" href="#">Support Desk</a>
+<a class="hover:text-on-surface transition-colors" href="#">Safety Guidelines</a>
+<a class="hover:text-on-surface transition-colors" href="#">Terms of Service</a>
+</div>
+</div>
+</footer>
+</main>
+<!-- Interactive behavior simulation -->
+<script>
+    (function() {
+      let seconds = 0;
+      let minutes = 33;
+      const timerElem = document.getElementById('elapsedCounter');
+      
+      if (timerElem) {
+        setInterval(() => {
+          seconds++;
+          if (seconds >= 60) {
+            minutes++;
+            seconds = 0;
+          }
+          timerElem.textContent = `${minutes}m ${seconds < 10 ? '0' : ''}${seconds}s`;
+        }, 1000);
+      }
+
+      const completeBtn = document.getElementById('completeJobBtn');
+      const cashBtn = document.getElementById('cashReceiptBtn');
+      const toast = document.getElementById('confirmationToast');
+      const toastTitle = document.getElementById('toastTitle');
+      const toastMsg = document.getElementById('toastMessage');
+
+      function triggerToast(title, message) {
+        if (!toast) return;
+        toastTitle.textContent = title;
+        toastMsg.textContent = message;
+        toast.classList.remove('translate-y-24', 'opacity-0', 'pointer-events-none');
+        setTimeout(() => {
+          toast.classList.add('translate-y-24', 'opacity-0', 'pointer-events-none');
+        }, 5000);
+      }
+
+      if (completeBtn) {
+        completeBtn.addEventListener('click', () => {
+          triggerToast('Repair Marked Complete!', 'Quality proof logged. Customer prompted to release Rs. 2,985.');
+        });
+      }
+
+      if (cashBtn) {
+        cashBtn.addEventListener('click', () => {
+          cashBtn.innerHTML = `<span class="material-symbols-outlined text-[18px] text-on-primary">check_circle</span> <span>Cash Collected (Rs. 2,985 Recorded)</span>`;
+          cashBtn.classList.remove('bg-secondary');
+          cashBtn.classList.add('bg-primary');
+          triggerToast('Cash Logged Successfully', 'Rs. 2,985 received. Platform commission of Rs. 448 scheduled for settlement.');
+        });
+      }
+    })();
+  </script>
+</body></html>
