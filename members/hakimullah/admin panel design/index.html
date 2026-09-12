@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#0F766E" />
+  <title>HUNAR Admin Panel — Workers Management</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='24' fill='%230F766E'/%3E%3Ctext x='50' y='70' font-size='56' text-anchor='middle' fill='white' font-family='Arial' font-weight='bold'%3EH%3C/text%3E%3C/svg%3E" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="shell">
+
+    <!-- ======== SIDEBAR ======== -->
+    <div class="scrim" id="scrim" onclick="closeSidebar()"></div>
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-brand">
+        <div class="brand-icon">H</div>
+        <div class="brand-text">HU<b>NAR</b></div>
+      </div>
+
+      <div class="sidebar-label">Main</div>
+      <nav class="sidebar-nav">
+        <a class="nav-item" href="dashboard.html">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>
+          Dashboard
+        </a>
+        <a class="nav-item active" href="index.html">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          Workers
+          <span class="nav-badge">16</span>
+        </a>
+        <a class="nav-item" href="customers.html">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+          Customers
+        </a>
+        <a class="nav-item" href="payments.html">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>
+          Payments
+        </a>
+        <a class="nav-item" href="reports.html">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 16 4 4 4-4"/><path d="M7 20V4"/><path d="m21 8-4-4-4 4"/><path d="M17 4v16"/></svg>
+          Reports
+        </a>
+
+        <div class="sidebar-label" style="padding-top:14px">Management</div>
+
+        <a class="nav-item" href="settings.html">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+          Settings
+        </a>
+        <a class="nav-item" href="notifications.html">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+          Notifications
+          <span class="nav-badge">5</span>
+        </a>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="sidebar-user">
+          <div class="su-avatar">AH</div>
+          <div class="su-info">
+            <div class="su-name">Admin HUNAR</div>
+            <div class="su-role">Super Admin</div>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- ======== MAIN CONTENT ======== -->
+    <div class="main">
+
+      <!-- Topbar -->
+      <header class="topbar">
+        <button class="menu-toggle" onclick="toggleSidebar()">
+          <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="18" y2="18"/></svg>
+        </button>
+        <span class="topbar-title">Workers Management</span>
+        <span class="topbar-spacer"></span>
+        <button class="topbar-btn">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+        </button>
+        <a class="topbar-btn" href="notifications.html">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+          <span class="notif-dot"></span>
+        </a>
+        <div class="topbar-avatar">AH</div>
+      </header>
+
+      <!-- Page Content -->
+      <div class="page">
+
+        <!-- Breadcrumb -->
+        <div class="breadcrumb">
+          <a href="#">Administration</a>
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+          <span>Workers</span>
+        </div>
+
+        <!-- Page Header -->
+        <div class="page-header">
+          <div class="page-header-left">
+            <h1>Workers</h1>
+            <p>Manage registered skilled workers, verification status, availability, and account activity.</p>
+          </div>
+          <div class="page-header-actions">
+            <div class="export-wrap">
+              <button class="btn btn-outline" onclick="toggleExportDropdown(event)">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                Export
+              </button>
+              <div class="export-dropdown" id="export-dropdown" onclick="event.stopPropagation()">
+                <button class="action-dropdown-item" onclick="showToast('Exported as CSV')">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/></svg>
+                  Export CSV
+                </button>
+                <button class="action-dropdown-item" onclick="showToast('Exported as Excel')">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/></svg>
+                  Export Excel
+                </button>
+                <button class="action-dropdown-item" onclick="showToast('Exported filtered results')">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+                  Export Filtered
+                </button>
+              </div>
+            </div>
+            <button class="btn btn-primary" onclick="openAddWorkerModal()">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+              Add Worker
+            </button>
+          </div>
+        </div>
+
+        <!-- Overview Stats -->
+        <div class="overview">
+          <div class="overview-card">
+            <div class="overview-icon navy">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            </div>
+            <div>
+              <div class="overview-label">Total Workers</div>
+              <div class="overview-value" id="stat-total">16</div>
+              <div class="overview-change up">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m18 15-6-6-6 6"/></svg>
+                +8.4% this month
+              </div>
+            </div>
+          </div>
+          <div class="overview-card">
+            <div class="overview-icon green">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/></svg>
+            </div>
+            <div>
+              <div class="overview-label">Verified</div>
+              <div class="overview-value" id="stat-verified">0</div>
+              <div class="overview-change up">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m18 15-6-6-6 6"/></svg>
+                +3 this week
+              </div>
+            </div>
+          </div>
+          <div class="overview-card">
+            <div class="overview-icon orange">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            </div>
+            <div>
+              <div class="overview-label">Pending Verification</div>
+              <div class="overview-value" id="stat-pending">0</div>
+              <div class="overview-change down" style="color:var(--orange)">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                Needs review
+              </div>
+            </div>
+          </div>
+          <div class="overview-card">
+            <div class="overview-icon teal">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/></svg>
+            </div>
+            <div>
+              <div class="overview-label">Active</div>
+              <div class="overview-value" id="stat-active">0</div>
+              <div class="overview-change up">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m18 15-6-6-6 6"/></svg>
+                Currently available
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section: All Workers -->
+        <div class="section-header">
+          <div>
+            <div class="section-title">All Workers</div>
+            <div class="section-sub">Browse and manage registered service professionals.</div>
+          </div>
+          <div class="section-tag" id="verified-hidden-tag">Verified hidden</div>
+        </div>
+
+        <!-- Active Filter Chips -->
+        <div class="active-filters" id="active-filters"></div>
+
+        <!-- Toolbar -->
+        <div class="toolbar">
+          <div class="search-box">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+            <input type="text" id="search-input" placeholder="Search workers by name, ID, service, or location..." oninput="onSearch(this.value)" />
+          </div>
+          <span class="toolbar-spacer"></span>
+          <button class="btn btn-outline btn-sm" onclick="openFilterDrawer()">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+            Filters
+          </button>
+          <div class="export-wrap" style="position:relative">
+            <button class="btn btn-ghost btn-sm" onclick="toggleSortDropdown(event)" style="display:flex;align-items:center;gap:6px">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 16 4 4 4-4"/><path d="M7 20V4"/><path d="m21 8-4-4-4 4"/><path d="M17 4v16"/></svg>
+              Sort by
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+            </button>
+            <div class="export-dropdown" id="sort-dropdown" onclick="event.stopPropagation()">
+              <button class="action-dropdown-item" onclick="onSortChange('name-asc')">Name (A \u2192 Z)</button>
+              <button class="action-dropdown-item" onclick="onSortChange('name-desc')">Name (Z \u2192 A)</button>
+              <button class="action-dropdown-item" onclick="onSortChange('rating-desc')">Highest Rated</button>
+              <button class="action-dropdown-item" onclick="onSortChange('completed-desc')">Most Completed</button>
+              <button class="action-dropdown-item" onclick="onSortChange('joined-desc')">Recently Joined</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Table Card -->
+        <div class="table-card">
+
+          <!-- Bulk Action Bar -->
+          <div class="bulk-bar" id="bulk-bar">
+            <span class="bulk-count" id="bulk-count">0 workers selected</span>
+            <span class="bulk-divider"></span>
+            <div class="bulk-actions">
+              <button class="btn btn-sm btn-outline" onclick="showToast('Workers verified')">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/></svg>
+                Verify
+              </button>
+              <button class="btn btn-sm btn-danger" onclick="showToast('Workers suspended')">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m4.9 4.9 14.2 14.2"/></svg>
+                Suspend
+              </button>
+              <button class="btn btn-sm btn-outline" onclick="showToast('Exported selected workers')">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                Export
+              </button>
+            </div>
+            <span style="flex:1"></span>
+            <button class="btn btn-ghost btn-sm" onclick="clearSelection()">Clear selection</button>
+          </div>
+
+          <div class="table-wrapper">
+            <table class="tbl">
+              <thead>
+                <tr>
+                  <th class="col-check"><input type="checkbox" class="cbx" id="select-all-cbx" onchange="toggleSelectAll()" /></th>
+                  <th>Worker</th>
+                  <th>Service</th>
+                  <th class="col-location">Location</th>
+                  <th>Availability</th>
+                  <th>Rating</th>
+                  <th class="col-completed">Completed</th>
+                  <th class="col-joined">Joined</th>
+                  <th style="width:44px"></th>
+                </tr>
+              </thead>
+              <tbody id="workers-tbody"></tbody>
+            </table>
+          </div>
+
+          <!-- Pagination -->
+          <div class="pagination-bar">
+            <div class="pagination-info" id="pag-info">Showing 1\u201310 of 16 workers</div>
+            <div class="pagination-controls" id="pag-controls"></div>
+            <div class="rows-per-page">
+              Rows per page:
+              <select onchange="onPerPageChange(this.value)">
+                <option value="10" selected>10</option>
+                <option value="20">20</option>
+                <option value="50">50</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /page -->
+    </div><!-- /main -->
+  </div><!-- /shell -->
+
+  <!-- ======== FILTER DRAWER ======== -->
+  <div class="filter-overlay" id="filter-overlay" onclick="closeFilterDrawer()"></div>
+  <div class="filter-drawer" id="filter-drawer">
+    <div class="filter-drawer-header">
+      <h3>Filters</h3>
+      <button class="action-btn" onclick="closeFilterDrawer()">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+      </button>
+    </div>
+    <div class="filter-drawer-body">
+
+      <div class="filter-group" data-group="verification">
+        <div class="filter-group-title">Verification Status</div>
+        <div class="filter-options">
+          <div class="filter-option active" data-value="All" onclick="selectFilterOption('verification','All')"><span class="fo-dot"></span> All</div>
+          <div class="filter-option" data-value="Verified" onclick="selectFilterOption('verification','Verified')"><span class="fo-dot"></span> Verified</div>
+          <div class="filter-option" data-value="Pending" onclick="selectFilterOption('verification','Pending')"><span class="fo-dot"></span> Pending</div>
+          <div class="filter-option" data-value="Rejected" onclick="selectFilterOption('verification','Rejected')"><span class="fo-dot"></span> Rejected</div>
+        </div>
+      </div>
+
+      <div class="filter-group" data-group="availability">
+        <div class="filter-group-title">Availability</div>
+        <div class="filter-options">
+          <div class="filter-option active" data-value="All" onclick="selectFilterOption('availability','All')"><span class="fo-dot"></span> All</div>
+          <div class="filter-option" data-value="Available" onclick="selectFilterOption('availability','Available')"><span class="fo-dot"></span> Available</div>
+          <div class="filter-option" data-value="Busy" onclick="selectFilterOption('availability','Busy')"><span class="fo-dot"></span> Busy</div>
+          <div class="filter-option" data-value="Offline" onclick="selectFilterOption('availability','Offline')"><span class="fo-dot"></span> Offline</div>
+        </div>
+      </div>
+
+      <div class="filter-group" data-group="service">
+        <div class="filter-group-title">Service</div>
+        <div class="filter-options">
+          <div class="filter-option active" data-value="All" onclick="selectFilterOption('service','All')"><span class="fo-dot"></span> All Services</div>
+          <div class="filter-option" data-value="AC Technician" onclick="selectFilterOption('service','AC Technician')"><span class="fo-dot"></span> AC Technician</div>
+          <div class="filter-option" data-value="Electrician" onclick="selectFilterOption('service','Electrician')"><span class="fo-dot"></span> Electrician</div>
+          <div class="filter-option" data-value="Mechanic" onclick="selectFilterOption('service','Mechanic')"><span class="fo-dot"></span> Mechanic</div>
+          <div class="filter-option" data-value="Plumber" onclick="selectFilterOption('service','Plumber')"><span class="fo-dot"></span> Plumber</div>
+          <div class="filter-option" data-value="Carpenter" onclick="selectFilterOption('service','Carpenter')"><span class="fo-dot"></span> Carpenter</div>
+          <div class="filter-option" data-value="Painter" onclick="selectFilterOption('service','Painter')"><span class="fo-dot"></span> Painter</div>
+        </div>
+      </div>
+
+      <div class="filter-group" data-group="rating">
+        <div class="filter-group-title">Rating</div>
+        <div class="filter-options">
+          <div class="filter-option active" data-value="Any rating" onclick="selectFilterOption('rating','Any rating')"><span class="fo-dot"></span> Any rating</div>
+          <div class="filter-option" data-value="4.5+" onclick="selectFilterOption('rating','4.5+')"><span class="fo-dot"></span> 4.5+</div>
+          <div class="filter-option" data-value="4.0+" onclick="selectFilterOption('rating','4.0+')"><span class="fo-dot"></span> 4.0+</div>
+          <div class="filter-option" data-value="3.0+" onclick="selectFilterOption('rating','3.0+')"><span class="fo-dot"></span> 3.0+</div>
+        </div>
+      </div>
+
+    </div>
+    <div class="filter-drawer-footer">
+      <button class="btn btn-outline" style="flex:1" onclick="clearAllFilters()">Clear All</button>
+      <button class="btn btn-primary" style="flex:1" onclick="applyFilterDrawer()">Apply Filters</button>
+    </div>
+  </div>
+
+  <!-- ======== WORKER DETAIL DRAWER ======== -->
+  <div class="detail-overlay" id="detail-overlay" onclick="closeDetailDrawer()"></div>
+  <div class="detail-drawer" id="detail-drawer">
+    <div class="detail-header">
+      <h3>Worker Profile</h3>
+      <button class="action-btn" onclick="closeDetailDrawer()">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+      </button>
+    </div>
+    <div class="detail-body" id="detail-body"></div>
+    <div class="detail-footer">
+      <button class="btn btn-outline" style="flex:1" onclick="closeDetailDrawer()">Close</button>
+      <button class="btn btn-primary" style="flex:1">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>
+        Edit Worker
+      </button>
+    </div>
+  </div>
+
+  <!-- ======== ADD WORKER MODAL ======== -->
+  <div class="modal-overlay" id="add-worker-modal">
+    <div class="modal" onclick="event.stopPropagation()">
+      <div class="modal-header">
+        <h3>Add New Worker</h3>
+        <button class="action-btn" onclick="closeAddWorkerModal()">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Full Name</label>
+            <input type="text" class="form-input" placeholder="e.g. Muhammad Ali" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Email</label>
+            <input type="email" class="form-input" placeholder="worker@email.com" />
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Phone</label>
+            <input type="tel" class="form-input" placeholder="+92 300 0000000" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Service</label>
+            <select class="form-select">
+              <option value="">Select service...</option>
+              <option>AC Technician</option>
+              <option>Electrician</option>
+              <option>Mechanic</option>
+              <option>Plumber</option>
+              <option>Carpenter</option>
+              <option>Painter</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Location</label>
+            <input type="text" class="form-input" placeholder="e.g. Lahore, PK" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Experience</label>
+            <select class="form-select">
+              <option>1 year</option>
+              <option>2 years</option>
+              <option>3 years</option>
+              <option>5 years</option>
+              <option>8 years</option>
+              <option>10+ years</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Availability</label>
+            <select class="form-select">
+              <option>Available</option>
+              <option>Busy</option>
+              <option>Offline</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Account Status</label>
+            <select class="form-select">
+              <option>Active</option>
+              <option>Suspended</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Profile Photo</label>
+          <div style="border:1.5px dashed var(--border);border-radius:var(--radius);padding:20px;text-align:center;color:var(--text-muted);cursor:pointer;transition:border-color .15s" onmouseover="this.style.borderColor='var(--teal)'" onmouseout="this.style.borderColor='var(--border)'">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin:0 auto 8px;display:block;color:var(--text-muted)"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+            <div style="font-weight:600;font-size:13px">Click to upload</div>
+            <div style="font-size:12px;margin-top:2px">JPG, PNG up to 5MB</div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="closeAddWorkerModal()">Cancel</button>
+        <button class="btn btn-primary" onclick="closeAddWorkerModal(); showToast('Worker created successfully')">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+          Create Worker
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======== CONFIRMATION MODAL ======== -->
+  <div class="modal-overlay" id="confirm-modal">
+    <div class="modal" style="max-width:440px" onclick="event.stopPropagation()">
+      <div class="modal-body" style="padding:30px 26px 22px">
+        <div class="confirm-icon teal" id="confirm-icon-wrap">
+          <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/></svg>
+        </div>
+        <div class="confirm-content">
+          <h3 id="confirm-title">Confirm Action</h3>
+          <p id="confirm-body">Are you sure you want to proceed?</p>
+        </div>
+      </div>
+      <div class="modal-footer" style="justify-content:center">
+        <button class="btn btn-ghost" onclick="closeConfirmModal()">Cancel</button>
+        <button class="btn btn-primary" id="confirm-ok-btn" onclick="confirmAction()">Confirm</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======== TOAST CONTAINER ======== -->
+  <div id="toast-container" style="position:fixed;top:72px;right:20px;z-index:500;display:flex;flex-direction:column;max-width:340px"></div>
+
+  <script src="script.js"></script>
+</body>
+</html>
