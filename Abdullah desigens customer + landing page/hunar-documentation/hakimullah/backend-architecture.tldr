@@ -1,0 +1,906 @@
+# HUNAR Backend Architecture — TL;DR
+
+## THE BIG PICTURE
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                         THE HUNAR PLATFORM                       │
+│                                                                   │
+│   👤 CUSTOMER          🔧 WORKER           👨‍💼 ADMIN               │
+│   (Needs help)        (Gives help)        (Manages everything)   │
+│                                                                   │
+└───────────┬─────────────────┬─────────────────────┬──────────────┘
+            │                 │                     │
+            ▼                 ▼                     ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                        WEB BROWSER                               │
+└───────────────────────────┬─────────────────────────────────────┘
+                            │
+                            ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                     API GATEWAY                                  │
+│   ✓ Checks who you are  ✓ Rate limiting  ✓ Right place         │
+└───────────────────────────┬─────────────────────────────────────┘
+                            │
+                            ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                   BACKEND SERVER (NestJS)                         │
+│  ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐               │
+│  │  AUTH   │ │  JOBS   │ │  USERS  │ │ PAYMENTS│               │
+│  └─────────┘ └─────────┘ └─────────┘ └─────────┘               │
+│  ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐               │
+│  │  CHAT   │ │ REVIEWS │ │  NOTIF  │ │  SEARCH │               │
+│  └─────────┘ └─────────┘ └─────────┘ └─────────┘               │
+└───────────┬─────────────┬───────────────┬───────────────────────┘
+            │             │               │
+            ▼             ▼               ▼
+┌─────────────────────────────────────────────────────────────────┐
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐          │
+│  │  PostgreSQL   │  │    Redis     │  │   AWS S3     │          │
+│  └──────────────┘  └──────────────┘  └──────────────┘          │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## THE WALLET RULE
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                                                                   │
+│   💰 Worker must have Rs. 500 in wallet to be ONLINE            │
+│                                                                   │
+│   Rs. 500 or MORE ──▶ ONLINE (visible to customers) 🟢         │
+│   Less than Rs. 500 ──▶ OFFLINE (hidden from customers) 🔴    │
+│                                                                   │
+│   When worker presses "ARRIVED":                                │
+│   └──▶ Rs. 500 commission deducted AUTOMATICALLY               │
+│                                                                   │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## CUSTOMER WORKFLOW
+
+### Step 1: Customer Signs Up
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    CUSTOMER SIGNS UP                              │
+│                                                                   │
+│   Customer types phone number                                   │
+│         │                                                        │
+│         ▼                                                        │
+│   ┌──────────────────────────────────────────────────────┐      │
+│   │  📱 POST /api/v1/auth/otp/send                       │      │
+│   │  Backend: Sends 6-digit code to phone                │      │
+│   └──────────────────────────────────────────────────────┘      │
+│         │                                                        │
+│         ▼                                                        │
+│   Customer types the code                                       │
+│         │                                                        │
+│         ▼                                                        │
+│   ┌──────────────────────────────────────────────────────┐      │
+│   │  📱 POST /api/v1/auth/otp/verify                     │      │
+│   │  Backend: Creates account, gives JWT token           │      │
+│   └──────────────────────────────────────────────────────┘      │
+│         │                                                        │
+│         ▼                                                        │
+│   Customer picks "I Need a Service" ──▶ INSIDE HUNAR! 🎉      │
+│                                                                   │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Step 2: Customer Picks Service
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    CUSTOMER PICKS SERVICE                        │
+│                                                                   │
+│   Customer sees service categories                              │
+│         │                                                        │
+│         ▼                                                        │
+│   ┌──────────────────────────────────────────────────────┐      │
+
+│   │  📱 GET /api/v1/categories                           │      │
+│   │  Backend: Returns list: Electrical, Plumbing, AC...  │      │
+│   └──────────────────────────────────────────────────────┘      │
+│         │                                                        │
+│         ▼                                                        │
+│   Customer clicks "AC Repair"                                   │
+│                                                                   │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Step 3: Customer Finds Workers (ONLY ONLINE ONES)
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    CUSTOMER FINDS WORKERS                        │
+│               (Only sees ONLINE workers!)                        │
+│                                                                   │
+│   Customer searches for AC workers                              │
+│         │                                                        │
+│         ▼                                                        │
+│   ┌──────────────────────────────────────────────────────┐      │
+│   │  📱 GET /api/v1/workers?category=ac&lat=34.0&lng=71.5│     │
+│   │                                                        │      │
+│   │  Backend:                                             │      │
+│   │  1. Finds AC workers nearby                         │      │
+│   │  2. ⭐ ONLY shows workers with Rs. 500+ in wallet   │      │
+│   │  3. Returns ONLINE workers only                     │      │
+│   │                                                        │      │
+│   │  Customer sees: Ali ✅ (has Rs. 800)                 │      │
+│   │  Customer does NOT see: Ahmed ❌ (has Rs. 200)       │      │
+│   └──────────────────────────────────────────────────────┘      │
+│         │                                                        │
+│         ▼                                                        │
+│   Customer clicks on "Ali Khan" to see profile                  │
+│         │                                                        │
+│         ▼                                                        │
+│   ┌──────────────────────────────────────────────────────┐      │
+│   │  📱 GET /api/v1/workers/:workerId                    │      │
+│   │  Backend: Returns Ali's full profile                 │      │
+│   └──────────────────────────────────────────────────────┘      │
+│         │                                                        │
+│         ▼                                                        │
+│   Customer likes Ali and clicks "Send Request"                  │
+│                                                                   │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Step 4: Customer Sends Request
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    CUSTOMER SENDS REQUEST                        │
+│                                                                   │
+│   Customer fills form:                                          │
+│   - Title: "AC not cooling"                                     │
+│   - Location: "Hayatabad"                                       │
+│   - Budget: "Rs. 2000-3000"                                     │
+│         │                                                        │
+│         ▼                                                        │
+│   Customer clicks "Post Job"                                    │
+│         │                                                        │
+│         ▼                                                        │
+│   ┌──────────────────────────────────────────────────────┐      │
+│   │  📱 POST /api/v1/jobs                                │      │
+│   │                                                        │      │
+│   │  Backend:                                             │      │
+│   │  1. Creates job in database                         │      │
+│   │  2. Notifies all ONLINE AC workers nearby           │      │
+│   └──────────────────────────────────────────────────────┘      │
+│         │                                                        │
+│         ▼                                                        │
+│   Customer sees "Job Posted! Waiting for offers..."             │
+│                                                                   │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Step 5: Customer Accepts Offer
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    CUSTOMER ACCEPTS OFFER                        │
+│                                                                   │
+│   Customer gets notification: "Ali sent you an offer!"          │
+│         │                                                        │
+│         ▼                                                        │
+│   Customer opens HUNAR and sees the offer                       │
+│         │                                                        │
+│         ▼                                                        │
+│   ┌──────────────────────────────────────────────────────┐      │
+│   │  📱 GET /api/v1/jobs/:jobId/offers                   │      │
+│   │  Backend: Returns all offers for this job            │      │
+│   └──────────────────────────────────────────────────────┘      │
+│         │                                                        │
+│         ▼                                                        │
+│   Customer clicks "Accept" on Ali's offer                       │
+│         │                                                        │
+│         ▼                                                        │
+│   ┌──────────────────────────────────────────────────────┐      │
+│   │  📱 PUT /api/v1/offers/:offerId/accept               │      │
+│   │                                                        │      │
+│   │  Backend:                                             │      │
+│   │  1. Marks Ali's offer as "accepted"                 │      │
+│   │  2. Updates job status to "offer_accepted"          │      │
+│   │  3. Creates chat room for customer + Ali            │      │
+│   └──────────────────────────────────────────────────────┘      │
+│         │                                                        │
+│         ▼                                                        │
+│   Ali gets notification: "Ahmed accepted!" 🎉                   │
+│                                                                   │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Step 6: Customer Waits for Worker
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    CUSTOMER WAITS FOR WORKER                     │
+│                                                                   │
+│   Ali travels to customer's house                               │
+│         │                                                        │
+│         ▼                                                        │
+│   Ali arrives and presses "ARRIVED" button                     │
+│         │                                                        │
+│         ▼                                                        │
+│   ┌──────────────────────────────────────────────────────┐      │
+│   │  📱 POST /api/v1/jobs/:jobId/arrived                  │      │
+│   │                                                        │      │
+│   │  Backend:                                             │      │
+│   │  1. Updates job status to "worker_arrived"           │      │
+│   │  2. 💰 Rs. 500 commission deducted from Ali's wallet │     │
+│   │  3. Notifies customer: "Ali has arrived!"            │      │
+│   └──────────────────────────────────────────────────────┘      │
+│         │                                                        │
+│         ▼                                                        │
+│   Customer sees: "Ali has arrived! 🔧"                          │
+│         │                                                        │
+│         ▼                                                        │
+│   Ali checks the AC and sends estimate                         │
+│         │                                                        │
+│         ▼                                                        │
+│   ┌──────────────────────────────────────────────────────┐      │
+│   │  📱 POST /api/v1/visits/:visitId/estimate            │      │
+│   │  Backend: Saves estimate, notifies customer          │      │
+│   └──────────────────────────────────────────────────────┘      │
+│         │                                                        │
+│         ▼                                                        │
+│   Customer accepts estimate                                     │
+│         │                                                        │
+│         ▼                                                        │
+│   ┌──────────────────────────────────────────────────────┐      │
+│   │  📱 PUT /api/v1/repairs/:id/accept                   │      │
+│   │  Backend: Updates status, notifies worker            │      │
+│   └──────────────────────────────────────────────────────┘      │
+│         │                                                        │
+│         ▼                                                        │
+│   Ali starts fixing the AC                                      │
+│                                                                   │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Step 7: Customer Pays and Rates
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    CUSTOMER PAYS AND RATES                       │
+│                                                                   │
+│   Ali finishes fixing the AC                                    │
+│         │                                                        │
+│         ▼                                                        │
+│   Ali clicks "Job Complete"                                     │
+│         │                                                        │
+│         ▼                                                        │
+│   ┌──────────────────────────────────────────────────────┐      │
+│   │  📱 PUT /api/v1/jobs/:id/status                      │      │
+│   │  Backend: Updates status, notifies customer          │      │
+│   └──────────────────────────────────────────────────────┘      │
+│         │                                                        │
+│         ▼                                                        │
+│   Customer pays Rs. 3000 (repair cost)                         │
+│         │                                                        │
+│         ▼                                                        │
+│   ┌──────────────────────────────────────────────────────┐      │
+│   │  📱 POST /api/v1/payments/initiate                   │      │
+│   │                                                        │      │
+│   │  Backend:                                             │      │
+│   │  1. Processes payment via JazzCash/Easypaisa        │      │
+│   │  2. Full Rs. 3000 goes to Ali's bank account        │      │
+│   │  3. NO commission on repair cost!                    │      │
+│   └──────────────────────────────────────────────────────┘      │
+│         │                                                        │
+│         ▼                                                        │
+│   Customer rates Ali 5 stars ⭐                                 │
+│         │                                                        │
+│         ▼                                                        │
+│   ┌──────────────────────────────────────────────────────┐      │
+│   │  📱 POST /api/v1/jobs/:jobId/review                  │      │
+│   │  Backend: Saves review, updates Ali's rating         │      │
+│   └──────────────────────────────────────────────────────┘      │
+│         │                                                        │
+│         ▼                                                        │
+│   DONE! 🎉                                                      │
+│                                                                   │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## WORKER WORKFLOW
+
+### Step 1: Worker Signs Up
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    WORKER SIGNS UP                               │
+│                                                                   │
+│   Worker types phone number                                     │
+│         │                                                        │
+│         ▼                                                        │
+│   ┌──────────────────────────────────────────────────────┐      │
+│   │  📱 POST /api/v1/auth/otp/send                       │      │
+│   │  Backend: Sends 6-digit code to phone                │      │
+│   └──────────────────────────────────────────────────────┘      │
+│         │                                                        │
+│         ▼                                                        │
+│   Worker types the code                                         │
+│         │                                                        │
+│         ▼                                                        │
+│   ┌──────────────────────────────────────────────────────┐      │
+│   │  📱 POST /api/v1/auth/otp/verify                     │      │
+│   │  Backend: Creates account, gives JWT token           │      │
+│   └──────────────────────────────────────────────────────┘      │
+│         │                                                        │
+│         ▼                                                        │
+│   Worker picks "I'm a Professional" ──▶ INSIDE HUNAR! 🎉      │
+│                                                                   │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Step 2: Worker Builds Profile
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    WORKER BUILDS PROFILE                         │
+│                                                                   │
+│   Worker fills out profile                                      │
+│   - Skills: "AC Repair, Fridge Repair"                          │
+│   - Experience: "5 years"                                       │
+│   - Location: "Hayatabad"                                       │
+│   - Rate: "Rs. 500 visit charge"                                │
+│         │                                                        │
+│         ▼                                                        │
+│   Worker clicks "Save Profile"                                  │
+│         │                                                        │
+│         ▼                                                        │
+│   ┌──────────────────────────────────────────────────────┐      │
+│   │  📱 PUT /api/v1/users/worker/me                      │      │
+│   │                                                        │      │
+│   │  Backend:                                             │      │
+│   │  1. Saves profile in database                       │      │
+│   │  2. Marks as "pending verification"                 │      │
+│   │  3. Notifies admin                                  │      │
+│   └──────────────────────────────────────────────────────┘      │
+│         │                                                        │
+│         ▼                                                        │
+│   Admin verifies worker (see Admin section)                    │
+│         │                                                        │
+│         ▼                                                        │
+│   Worker gets notification: "You're verified!" ✓               │
+│         │                                                        │
+│         ▼                                                        │
+│   ⚠️ Still OFFLINE! Must add Rs. 500 to wallet first!         │
+│                                                                   │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Step 3: Worker Adds Money to Go Online
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    WORKER TOPS UP WALLET                         │
+│                                                                   │
+│   Worker sees: "Add Rs. 500 to start receiving jobs"            │
+│         │                                                        │
+│         ▼                                                        │
+│   Worker clicks "Add Money"                                     │
+│         │                                                        │
+│         ▼                                                        │
+│   ┌──────────────────────────────────────────────────────┐      │
+│   │  📱 POST /api/v1/wallet/topup                         │      │
+│   │                                                        │      │
+│   │  Backend:                                             │      │
+│   │  1. Connects to JazzCash/Easypaisa                  │      │
+│   │  2. Worker confirms payment                         │      │
+│   │  3. Adds Rs. 500 to worker's wallet                 │      │
+│   │  4. Worker status changes to "ONLINE"               │      │
+│   └──────────────────────────────────────────────────────┘      │
+│         │                                                        │
+│         ▼                                                        │
+│   Worker is now ONLINE and visible to customers! 🟢             │
+│                                                                   │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Step 4: Worker Gets Requests
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    WORKER GETS REQUESTS                          │
+│                                                                   │
+│   Worker is ONLINE and gets notification                       │
+│   "New job near you! AC repair in Hayatabad"                   │
+│         │                                                        │
+│         ▼                                                        │
+│   Worker clicks to see the job                                  │
+│         │                                                        │
+│         ▼                                                        │
+│   ┌──────────────────────────────────────────────────────┐      │
+│   │  📱 GET /api/v1/jobs/available                        │      │
+│   │  Backend: Returns open jobs near worker              │      │
+│   └──────────────────────────────────────────────────────┘      │
+│         │                                                        │
+│         ▼                                                        │
+│   Worker thinks "I can do this!"                                │
+│         │                                                        │
+│         ▼                                                        │
+│   Worker clicks "Send Offer"                                    │
+│                                                                   │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Step 5: Worker Sends Offer
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    WORKER SENDS OFFER                            │
+│                                                                   │
+│   Worker fills out offer                                        │
+│   - Visit charge: "Rs. 500"                                     │
+│   - Message: "I can come tomorrow at 10am"                      │
+│         │                                                        │
+│         ▼                                                        │
+│   Worker clicks "Submit Offer"                                  │
+│         │                                                        │
+│         ▼                                                        │
+│   ┌──────────────────────────────────────────────────────┐      │
+│   │  📱 POST /api/v1/jobs/:jobId/offers                  │      │
+│   │                                                        │      │
+│   │  Backend:                                             │      │
+│   │  1. Saves offer in database                         │      │
+│   │  2. Notifies customer                               │      │
+│   └──────────────────────────────────────────────────────┘      │
+│         │                                                        │
+│         ▼                                                        │
+│   Customer accepts offer (see Customer section)                │
+│         │                                                        │
+│         ▼                                                        │
+│   Worker gets notification: "Ahmed accepted!" 🎉               │
+│                                                                   │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Step 6: Worker Goes to Customer and Presses "ARRIVED"
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    WORKER ARRIVES & COMMISSION DEDUCTED          │
+│                                                                   │
+│   Worker travels to customer's house                           │
+│         │                                                        │
+│         ▼                                                        │
+│   Worker arrives and presses "ARRIVED" button                  │
+│         │                                                        │
+│         ▼                                                        │
+│   ┌──────────────────────────────────────────────────────┐      │
+│   │  📱 POST /api/v1/jobs/:jobId/arrived                  │      │
+│   │                                                        │      │
+│   │  Backend:                                             │      │
+│   │  1. Updates job status to "worker_arrived"           │      │
+│   │  2. 💰 Rs. 500 commission deducted AUTOMATICALLY    │      │
+│   │  3. Notifies customer: "Ali has arrived!"            │      │
+│   │  4. If wallet drops below Rs. 500 → OFFLINE          │      │
+│   └──────────────────────────────────────────────────────┘      │
+│         │                                                        │
+│         ▼                                                        │
+│   Customer sees: "Ali has arrived! 🔧"                          │
+│         │                                                        │
+│         ▼                                                        │
+│   Ali checks the AC and sends estimate                         │
+│         │                                                        │
+│         ▼                                                        │
+│   ┌──────────────────────────────────────────────────────┐      │
+│   │  📱 POST /api/v1/visits/:visitId/estimate            │      │
+│   │  Backend: Saves estimate, notifies customer          │      │
+│   └──────────────────────────────────────────────────────┘      │
+│         │                                                        │
+│         ▼                                                        │
+│   Customer accepts estimate                                     │
+│         │                                                        │
+│         ▼                                                        │
+│   Ali starts fixing the AC                                      │
+│                                                                   │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Step 7: Worker Finishes and Gets Paid
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    WORKER FINISHES AND GETS PAID                 │
+│                                                                   │
+│   Ali finishes fixing the AC                                    │
+│         │                                                        │
+│         ▼                                                        │
+│   Ali clicks "Job Complete"                                     │
+│         │                                                        │
+│         ▼                                                        │
+│   ┌──────────────────────────────────────────────────────┐      │
+│   │  📱 PUT /api/v1/jobs/:id/status                      │      │
+│   │  Backend: Updates status, notifies customer          │      │
+│   └──────────────────────────────────────────────────────┘      │
+│         │                                                        │
+│         ▼                                                        │
+│   Customer pays Rs. 3000 (repair cost)                         │
+│         │                                                        │
+│         ▼                                                        │
+│   ┌──────────────────────────────────────────────────────┐      │
+│   │  Backend:                                             │      │
+│   │  1. Full Rs. 3000 goes to Ali's bank account        │      │
+│   │  2. NO commission on repair cost!                    │      │
+│   └──────────────────────────────────────────────────────┘      │
+│         │                                                        │
+│         ▼                                                        │
+│   Worker gets paid! Done! 🎉                                   │
+│                                                                   │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## ADMIN WORKFLOW
+
+### Step 1: Admin Logs In
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    ADMIN LOGS IN                                 │
+│                                                                   │
+│   Admin opens admin panel                                       │
+│         │                                                        │
+│         ▼                                                        │
+│   Admin types username and password                             │
+│         │                                                        │
+│         ▼                                                        │
+│   ┌──────────────────────────────────────────────────────┐      │
+│   │  📱 POST /api/v1/auth/login                          │      │
+│   │                                                        │      │
+│   │  Backend:                                             │      │
+│   │  1. Checks username and password                    │      │
+│   │  2. Verifies role is "admin"                        │      │
+│   │  3. Returns admin JWT token                         │      │
+│   └──────────────────────────────────────────────────────┘      │
+│         │                                                        │
+│         ▼                                                        │
+│   Admin sees dashboard! 🎉                                      │
+│                                                                   │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Step 2: Admin Sees Dashboard
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    ADMIN DASHBOARD                               │
+│                                                                   │
+│   Admin opens dashboard                                         │
+│         │                                                        │
+│         ▼                                                        │
+│   ┌──────────────────────────────────────────────────────┐      │
+│   │  📱 GET /api/v1/admin/dashboard                      │      │
+│   │                                                        │      │
+│   │  Backend:                                             │      │
+│   │  1. Counts all users                                │      │
+│   │  2. Counts workers (online/offline)                 │      │
+│   │  3. Counts active jobs                              │      │
+│   │  4. Calculates total revenue                        │      │
+│   │  5. Returns stats                                   │      │
+│   │                                                        │      │
+│   │  Example:                                             │      │
+│   │  {                                                    │      │
+│   │    totalUsers: 500,                                  │      │
+│   │    totalWorkers: 200,                                │      │
+│   │    onlineWorkers: 150,                               │      │
+│   │    activeJobs: 50,                                   │      │
+│   │    totalRevenue: 500000                              │      │
+│   │  }                                                    │      │
+│   └──────────────────────────────────────────────────────┘      │
+│         │                                                        │
+│         ▼                                                        │
+│   Admin sees all the numbers!                                   │
+│                                                                   │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Step 3: Admin Verifies Workers
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    ADMIN VERIFIES WORKERS                        │
+│                                                                   │
+│   Admin clicks "Pending Verifications"                         │
+│         │                                                        │
+│         ▼                                                        │
+│   ┌──────────────────────────────────────────────────────┐      │
+│   │  📱 GET /api/v1/admin/verifications/pending          │      │
+│   │  Backend: Returns workers waiting for verification   │      │
+│   └──────────────────────────────────────────────────────┘      │
+│         │                                                        │
+│         ▼                                                        │
+│   Admin sees: "Ali Khan - AC Repair - Pending"                 │
+│         │                                                        │
+│         ▼                                                        │
+│   Admin clicks "Approve"                                        │
+│         │                                                        │
+│         ▼                                                        │
+│   ┌──────────────────────────────────────────────────────┐      │
+│   │  📱 PUT /api/v1/admin/verifications/:userId          │      │
+│   │                                                        │      │
+│   │  Backend:                                             │      │
+│   │  1. Updates Ali's status to "verified"              │      │
+│   │  2. Notifies Ali: "You're verified! Add Rs. 500"    │      │
+│   └──────────────────────────────────────────────────────┘      │
+│         │                                                        │
+│         ▼                                                        │
+│   Ali is verified but still OFFLINE until Rs. 500 added!       │
+│                                                                   │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Step 4: Admin Manages Users
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    ADMIN MANAGES USERS                           │
+│                                                                   │
+│   Admin clicks "Users"                                          │
+│         │                                                        │
+│         ▼                                                        │
+│   ┌──────────────────────────────────────────────────────┐      │
+│   │  📱 GET /api/v1/admin/users                          │      │
+│   │  Backend: Returns all users with filters             │      │
+│   └──────────────────────────────────────────────────────┘      │
+│         │                                                        │
+│         ▼                                                        │
+│   Admin sees a problem user and clicks "Disable"               │
+│         │                                                        │
+│         ▼                                                        │
+│   ┌──────────────────────────────────────────────────────┐      │
+│   │  📱 PUT /api/v1/admin/users/:id/toggle               │      │
+│   │                                                        │      │
+│   │  Backend:                                             │      │
+│   │  1. Sets user's is_active to false                  │      │
+│   │  2. User can no longer login                        │      │
+│   │  3. Notifies user: "Account suspended"              │      │
+│   └──────────────────────────────────────────────────────┘      │
+│         │                                                        │
+│         ▼                                                        │
+│   Problem user is blocked! ✓                                    │
+│                                                                   │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Step 5: Admin Handles Disputes
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    ADMIN HANDLES DISPUTES                        │
+│                                                                   │
+│   Admin gets notification: "Customer filed a dispute"          │
+│         │                                                        │
+│         ▼                                                        │
+│   Admin clicks "Disputes"                                       │
+│         │                                                        │
+│         ▼                                                        │
+│   ┌──────────────────────────────────────────────────────┐      │
+│   │  📱 GET /api/v1/admin/disputes                       │      │
+│   │  Backend: Returns all open disputes                  │      │
+│   └──────────────────────────────────────────────────────┘      │
+│         │                                                        │
+│         ▼                                                        │
+│   Admin reads the problem and clicks "Resolve"                 │
+│         │                                                        │
+│         ▼                                                        │
+│   ┌──────────────────────────────────────────────────────┐      │
+│   │  📱 PUT /api/v1/admin/disputes/:id/resolve           │      │
+│   │                                                        │      │
+│   │  Backend:                                             │      │
+│   │  1. Saves resolution                                │      │
+│   │  2. Updates dispute status to "resolved"            │      │
+│   │  3. Notifies both customer and worker               │      │
+│   └──────────────────────────────────────────────────────┘      │
+│         │                                                        │
+│         ▼                                                        │
+│   Dispute is solved! ✓                                          │
+│                                                                   │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Step 6: Admin Sees Stats
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    ADMIN SEES STATS                              │
+│                                                                   │
+│   Admin clicks "Analytics"                                      │
+│         │                                                        │
+│         ▼                                                        │
+│   ┌──────────────────────────────────────────────────────┐      │
+│   │  📱 GET /api/v1/admin/analytics                      │      │
+│   │                                                        │      │
+│   │  Backend:                                             │      │
+│   │  1. Counts jobs by status                           │      │
+│   │  2. Counts workers by online/offline                │      │
+│   │  3. Calculates revenue by month                     │      │
+│   │  4. Returns charts data                             │      │
+│   │                                                        │      │
+│   │  Example:                                             │      │
+│   │  {                                                    │      │
+│   │    jobsThisMonth: 150,                               │      │
+│   │    revenueThisMonth: 200000,                         │      │
+│   │    onlineWorkers: 150,                               │      │
+│   │    averageRating: 4.7                                │      │
+│   │  }                                                    │      │
+│   └──────────────────────────────────────────────────────┘      │
+│         │                                                        │
+│         ▼                                                        │
+│   Admin sees all the charts! 📊                                 │
+│                                                                   │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## MONEY FLOW (Complete Picture)
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    COMPLETE MONEY FLOW                           │
+│                                                                   │
+│   1. Worker adds Rs. 500 to wallet                             │
+│   ┌──────────────────────────────────────────────────────┐      │
+│   │  Worker ──Rs. 500──▶ HUNAR account                   │      │
+│   │  Worker wallet: Rs. 500 (ONLINE!)                    │      │
+│   └──────────────────────────────────────────────────────┘      │
+│                                                                   │
+│   2. Worker arrives and presses "ARRIVED"                      │
+│   ┌──────────────────────────────────────────────────────┐      │
+│   │  HUNAR takes Rs. 500 (visiting commission)           │      │
+│   │  Worker wallet: Rs. 0 (OFFLINE!)                     │      │
+│   └──────────────────────────────────────────────────────┘      │
+│                                                                   │
+│   3. Customer pays Rs. 3000 for repair                         │
+│   ┌──────────────────────────────────────────────────────┐      │
+│   │  Customer ──Rs. 3000──▶ Ali's bank account           │      │
+│   │  NO commission on repair cost!                        │      │
+│   └──────────────────────────────────────────────────────┘      │
+│                                                                   │
+│   TOTAL:                                                         │
+│   - Worker earned: Rs. 3000 (repair) + lost Rs. 500 (wallet)   │
+│   - HUNAR earned: Rs. 500 (visiting commission only)           │
+│                                                                   │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## JOB STATUS FLOW
+
+```
+┌──────┐    ┌──────┐    ┌──────┐    ┌──────┐    ┌──────┐
+│ OPEN │───▶│OFFERS│───▶│ACCEPT│───▶│WORKER│───▶│WORKER│
+│      │    │RECEIV│    │  ED  │    │ASSIGN│    │ARRIVE│
+│ 📢   │    │ 📨   │    │ ✅   │    │ 👤   │    │ 🔧   │
+└──────┘    └──────┘    └──────┘    └──────┘    └──────┘
+                                              💰 Rs. 500
+                                              COMMISSION
+                                              DEDUCTED!
+                                                      │
+                                                      ▼
+┌──────┐    ┌──────┐    ┌──────┐    ┌──────┐    ┌──────┐
+│REVIEW│◀───│ PAID │◀───│DONE! │◀───│WORK  │◀───│ESTIM│
+│      │    │      │    │      │    │START │    │ ATE │
+│ ⭐   │    │ 💰   │    │ ✅   │    │ 🔧   │    │ 📝   │
+└──────┘    └──────┘    └──────┘    └──────┘    └──────┘
+```
+
+---
+
+## ALL API ROUTES
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                                                                   │
+│   🔐 AUTH:                                                       │
+│   POST /api/v1/auth/otp/send                                    │
+│   POST /api/v1/auth/otp/verify                                  │
+│   POST /api/v1/auth/login                                       │
+│                                                                   │
+│   👤 USERS:                                                      │
+│   GET  /api/v1/users/me                                         │
+│   PUT  /api/v1/users/me                                         │
+│   PUT  /api/v1/users/worker/me                                  │
+│   PUT  /api/v1/users/location                                   │
+│                                                                   │
+│   💰 WALLET:                                                     │
+│   POST /api/v1/wallet/topup                                     │
+│   GET  /api/v1/wallet/balance                                   │
+│   GET  /api/v1/wallet/history                                   │
+│                                                                   │
+│   📋 JOBS:                                                       │
+│   POST /api/v1/jobs                                             │
+│   GET  /api/v1/jobs/my                                          │
+│   GET  /api/v1/jobs/available                                   │
+│   GET  /api/v1/jobs/:id                                         │
+│   PUT  /api/v1/jobs/:id/status                                  │
+│   POST /api/v1/jobs/:id/arrived                                 │
+│                                                                   │
+│   💰 OFFERS:                                                     │
+│   POST /api/v1/jobs/:id/offers                                  │
+│   GET  /api/v1/jobs/:id/offers                                  │
+│   PUT  /api/v1/offers/:id/accept                                │
+│   PUT  /api/v1/offers/:id/reject                                │
+│                                                                   │
+│   📅 VISITS:                                                     │
+│   PUT  /api/v1/visits/:id/status                                │
+│   PUT  /api/v1/visits/:id/inspection                            │
+│                                                                   │
+│   🔧 REPAIRS:                                                    │
+│   POST /api/v1/visits/:visitId/estimate                         │
+│   PUT  /api/v1/repairs/:id/accept                               │
+│                                                                   │
+│   💳 PAYMENTS:                                                   │
+│   POST /api/v1/payments/initiate                                │
+│   GET  /api/v1/payments/my                                      │
+│                                                                   │
+│   💬 CHAT:                                                       │
+│   GET  /api/v1/chat/conversations                               │
+│   GET  /api/v1/chat/:id/messages                                │
+│   POST /api/v1/chat/:id/messages                                │
+│                                                                   │
+│   ⭐ REVIEWS:                                                    │
+│   POST /api/v1/jobs/:id/review                                  │
+│                                                                   │
+│   🔔 NOTIFICATIONS:                                              │
+│   GET  /api/v1/notifications                                    │
+│   PUT  /api/v1/notifications/:id/read                           │
+│                                                                   │
+│   👨‍💼 ADMIN:                                                      │
+│   GET  /api/v1/admin/dashboard                                  │
+│   GET  /api/v1/admin/users                                      │
+│   PUT  /api/v1/admin/users/:id/toggle                           │
+│   GET  /api/v1/admin/verifications/pending                      │
+│   PUT  /api/v1/admin/verifications/:id                          │
+│   GET  /api/v1/admin/disputes                                   │
+│   PUT  /api/v1/admin/disputes/:id/resolve                       │
+│   GET  /api/v1/admin/analytics                                  │
+│                                                                   │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## SUMMARY
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                                                                   │
+│   👤 CUSTOMER:                                                   │
+│   Sign up ──▶ Pick service ──▶ Find ONLINE workers             │
+│   ──▶ Send request ──▶ Accept offer ──▶ Wait for worker        │
+│   ──▶ Pay for repair ──▶ Rate worker                           │
+│                                                                   │
+│   🔧 WORKER:                                                    │
+│   Sign up ──▶ Build profile ──▶ Get verified                   │
+│   ──▶ Add Rs. 500 to wallet ──▶ Go ONLINE                      │
+│   ──▶ Get requests ──▶ Send offer ──▶ Arrive & press button    │
+│   ──▶ Rs. 500 commission deducted ──▶ Do work ──▶ Get paid     │
+│                                                                   │
+│   👨‍💼 ADMIN:                                                     │
+│   Login ──▶ See dashboard ──▶ Verify workers                   │
+│   ──▶ Manage users ──▶ Handle disputes ──▶ See stats           │
+│                                                                   │
+│   💰 COMMISSION:                                                 │
+│   Only Rs. 500 visiting charge when worker arrives             │
+│   NO commission on repair/job cost                              │
+│                                                                   │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+*TL;DR: Workers need Rs. 500 in wallet to be visible. When they arrive and press "ARRIVED", Rs. 500 commission is deducted. Customer pays repair cost directly to worker. We only take visiting charge commission.*

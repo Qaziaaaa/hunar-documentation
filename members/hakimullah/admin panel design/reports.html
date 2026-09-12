@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#0F766E" />
+  <title>HUNAR Admin Panel — Reports</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='24' fill='%230F766E'/%3E%3Ctext x='50' y='70' font-size='56' text-anchor='middle' fill='white' font-family='Arial' font-weight='bold'%3EH%3C/text%3E%3C/svg%3E" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="pages.css" />
+  <style>
+    /* ============================================================
+       REPORT CARDS — redesigned
+       ============================================================ */
+    .rc-card {
+      position: relative;
+      background: var(--surface);
+      border: 1px solid var(--border-light);
+      border-radius: 14px;
+      padding-bottom: 16px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      transition: transform .2s, box-shadow .2s, border-color .2s;
+    }
+    .rc-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 12px 24px rgba(0,0,0,.09);
+      border-color: var(--border);
+    }
+
+    .rc-accent { height: 4px; width: 100%; flex-shrink: 0; }
+    .rc-accent.teal   { background: linear-gradient(90deg, var(--teal) 0%, #14B8A6 100%); }
+    .rc-accent.orange { background: linear-gradient(90deg, #F59E0B 0%, #FBBF24 100%); }
+    .rc-accent.green  { background: linear-gradient(90deg, #16A34A 0%, #4ADE80 100%); }
+    .rc-accent.navy   { background: linear-gradient(90deg, #1A1A2E 0%, #475569 100%); }
+    .rc-accent.red    { background: linear-gradient(90deg, #DC2626 0%, #F87171 100%); }
+
+    .rc-head {
+      padding: 16px 18px 0;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+    }
+
+    .rc-title { padding: 12px 18px 0; font-size: 14.5px; font-weight: 800; color: var(--navy); }
+    .rc-desc { padding: 6px 18px 0; font-size: 12.5px; color: var(--text-secondary); line-height: 1.55; }
+
+    .rc-chart {
+      margin: 12px 18px 0;
+      background: #F8FAFC;
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+
+    .rc-meta {
+      padding: 10px 18px 0;
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      font-size: 11.5px;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    .rc-foot {
+      padding: 12px 18px 0;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      margin-top: auto;
+    }
+
+    .rc-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--teal);
+      color: #fff;
+      border: none;
+      border-radius: var(--radius);
+      padding: 8px 16px;
+      font-size: 12.5px;
+      font-weight: 700;
+      font-family: inherit;
+      cursor: pointer;
+      transition: background .15s, transform .15s;
+    }
+    .rc-btn:hover { background: var(--teal-dark); transform: translateY(-1px); }
+    .rc-btn:active { transform: translateY(0); }
+    .rc-btn.done { background: var(--green); }
+    .rc-btn.done:hover { background: #15803D; }
+    .rc-btn.loading { opacity: .7; pointer-events: none; cursor: default; }
+
+    @media (max-width: 768px) {
+      .rc-head { flex-direction: column; gap: 10px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+
+    <div class="scrim" id="scrim" onclick="closeSidebar()"></div>
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-brand">
+        <div class="brand-icon">H</div>
+        <div class="brand-text">HU<b>NAR</b></div>
+      </div>
+      <div class="sidebar-label">Main</div>
+      <nav class="sidebar-nav">
+        <a class="nav-item" href="dashboard.html">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>
+          Dashboard
+        </a>
+        <a class="nav-item" href="index.html">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          Workers
+          <span class="nav-badge">16</span>
+        </a>
+        <a class="nav-item" href="customers.html">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+          Customers
+        </a>
+        <a class="nav-item" href="payments.html">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>
+          Payments
+        </a>
+        <a class="nav-item active" href="reports.html">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 16 4 4 4-4"/><path d="M7 20V4"/><path d="m21 8-4-4-4 4"/><path d="M17 4v16"/></svg>
+          Reports
+        </a>
+        <div class="sidebar-label" style="padding-top:14px">Management</div>
+        <a class="nav-item" href="settings.html">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+          Settings
+        </a>
+        <a class="nav-item" href="notifications.html">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+          Notifications
+          <span class="nav-badge">5</span>
+        </a>
+      </nav>
+      <div class="sidebar-footer">
+        <div class="sidebar-user">
+          <div class="su-avatar">AH</div>
+          <div class="su-info">
+            <div class="su-name">Admin HUNAR</div>
+            <div class="su-role">Super Admin</div>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <div class="main">
+      <header class="topbar">
+        <button class="menu-toggle" onclick="toggleSidebar()">
+          <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="18" y2="18"/></svg>
+        </button>
+        <span class="topbar-title">Reports</span>
+        <span class="topbar-spacer"></span>
+        <button class="topbar-btn">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+        </button>
+        <a class="topbar-btn" href="notifications.html">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+          <span class="notif-dot"></span>
+        </a>
+        <div class="topbar-avatar">AH</div>
+      </header>
+
+      <div class="page">
+
+        <div class="breadcrumb">
+          <a href="dashboard.html">Administration</a>
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+          <span>Reports</span>
+        </div>
+
+        <div class="page-header">
+          <div class="page-header-left">
+            <h1>Reports</h1>
+            <p>Generate detailed reports and analytics for your marketplace.</p>
+          </div>
+          <div class="page-header-actions">
+            <button class="btn btn-outline" onclick="showToast('Export scheduled for all reports')">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
+              Export All
+            </button>
+            <button class="btn btn-primary" onclick="showToast('New report scheduled')">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              Schedule Report
+            </button>
+          </div>
+        </div>
+
+        <div class="overview" id="overview-cards">
+          <div class="overview-card">
+            <div class="overview-icon teal">
+              <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M16 2v4"/><path d="M8 2v4"/><path d="M3 10h18"/></svg>
+            </div>
+            <div>
+              <div class="overview-label">Bookings This Month</div>
+              <div class="overview-value">1,284</div>
+              <div class="overview-change up">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m18 15-6-6-6 6"/></svg>
+                +12.3%
+              </div>
+            </div>
+          </div>
+          <div class="overview-card">
+            <div class="overview-icon green">
+              <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+            </div>
+            <div>
+              <div class="overview-label">Revenue</div>
+              <div class="overview-value">PKR 4.2M</div>
+              <div class="overview-change up">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m18 15-6-6-6 6"/></svg>
+                +8.7%
+              </div>
+            </div>
+          </div>
+          <div class="overview-card">
+            <div class="overview-icon orange">
+              <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            </div>
+            <div>
+              <div class="overview-label">New Workers</div>
+              <div class="overview-value">96</div>
+              <div class="overview-change down">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                -3.1%
+              </div>
+            </div>
+          </div>
+          <div class="overview-card">
+            <div class="overview-icon navy">
+              <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+            </div>
+            <div>
+              <div class="overview-label">Avg Rating</div>
+              <div class="overview-value">4.72</div>
+              <div class="overview-change up">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m18 15-6-6-6 6"/></svg>
+                +0.08
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Performance Overview -->
+        <div class="panel section-space" id="perf-panel">
+          <div class="panel-header">
+            <div>
+              <div class="panel-title">Performance Overview</div>
+              <div class="panel-sub" id="perf-sub">Bookings generated across the last 12 months</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+              <div class="tabs" id="perf-tabs">
+                <button class="tab active" data-tab="bookings">Bookings</button>
+                <button class="tab" data-tab="revenue">Revenue</button>
+                <button class="tab" data-tab="workers">Workers</button>
+              </div>
+              <select class="form-select" style="width:auto;padding:7px 12px;font-size:12.5px;border-radius:var(--radius-sm)" onchange="showToast('Date range: ' + this.value)">
+                <option>Last 12 months</option>
+                <option>Last 6 months</option>
+                <option>This quarter</option>
+                <option>This year</option>
+              </select>
+            </div>
+          </div>
+          <div class="panel-body">
+            <div class="summary-strip" id="perf-summary">
+              <div class="summary-chip"><span class="dot" style="background:var(--teal)"></span> This month: <b id="sm-this">1,284</b></div>
+              <div class="summary-chip"><span class="dot" style="background:#CBD5E1"></span> Last month: <b id="sm-last">1,143</b></div>
+              <div class="summary-chip"><span class="dot" style="background:var(--green)"></span> Change: <b id="sm-change">+12.3%</b></div>
+            </div>
+            <div style="position:relative;width:100%;overflow:hidden" id="chart-wrap">
+              <svg id="wave-chart" viewBox="0 0 780 280" preserveAspectRatio="xMidYMid meet" style="width:100%;height:auto;display:block"></svg>
+              <div id="chart-tooltip" style="position:absolute;display:none;background:#fff;border:1px solid var(--border);border-radius:var(--radius-sm);padding:6px 10px;font-size:12px;font-weight:700;color:var(--navy);box-shadow:var(--shadow-md);pointer-events:none;white-space:nowrap;z-index:10"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Second row -->
+        <div class="grid-2 section-space">
+          <div class="panel" id="donut-panel">
+            <div class="panel-header">
+              <div>
+                <div class="panel-title">Jobs by Service</div>
+                <div class="panel-sub">Distribution of bookings across service categories</div>
+              </div>
+            </div>
+            <div class="panel-body">
+              <div class="donut-wrap">
+                <div class="donut" id="donut-chart">
+                  <div class="donut-center">
+                    <span class="donut-num">1,284</span>
+                    <span class="donut-cap">Total Jobs</span>
+                  </div>
+                </div>
+                <div class="donut-legend" id="donut-legend"></div>
+              </div>
+            </div>
+          </div>
+          <div class="panel" id="bchart-panel">
+            <div class="panel-header">
+              <div>
+                <div class="panel-title">Weekly Activity</div>
+                <div class="panel-sub">Bookings per day this week</div>
+              </div>
+            </div>
+            <div class="panel-body">
+              <div class="bchart" id="weekly-chart"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Report Cards -->
+        <div class="section-header section-space-lg">
+          <div>
+            <div class="section-title">Available Reports</div>
+            <div class="section-sub">Generate detailed analytics on-demand for your marketplace.</div>
+          </div>
+        </div>
+
+        <div class="report-grid" id="report-grid"></div>
+
+        <!-- Report Library -->
+        <div class="section-header section-space-lg">
+          <div>
+            <div class="section-title">Report Library</div>
+            <div class="section-sub">Previously generated reports ready for download.</div>
+          </div>
+        </div>
+
+        <div class="panel section-space">
+          <div class="mini-list" id="library-list" style="padding:4px 20px"></div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <div id="toast-container" style="position:fixed;top:72px;right:20px;z-index:500;display:flex;flex-direction:column;max-width:340px"></div>
+
+  <script>
+    function toggleSidebar() {
+      document.getElementById('sidebar').classList.toggle('open');
+      document.getElementById('scrim').classList.toggle('show');
+    }
+    function closeSidebar() {
+      document.getElementById('sidebar').classList.remove('open');
+      document.getElementById('scrim').classList.remove('show');
+    }
+
+    function showToast(msg) {
+      var c = document.getElementById('toast-container');
+      var el = document.createElement('div');
+      el.style.cssText = 'background:#FFFFFF;color:#1A1A2E;border-radius:8px;padding:12px 18px;box-shadow:0 10px 15px -3px rgba(0,0,0,.08),0 4px 6px -4px rgba(0,0,0,.04);font-size:13.5px;font-weight:600;display:flex;align-items:center;gap:10px;margin-bottom:8px;border-left:3px solid #0F766E;font-family:Inter,-apple-system,sans-serif;';
+      el.textContent = msg;
+      c.appendChild(el);
+      setTimeout(function () {
+        el.style.opacity = '0';
+        el.style.transform = 'translateX(20px)';
+        el.style.transition = 'all .3s ease';
+        setTimeout(function () { el.remove(); }, 300);
+      }, 3000);
+    }
+
+    // ==================== DATA ====================
+    var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    var datasets = {
+      bookings: {
+        label: 'Bookings',
+        sub: 'Bookings generated across the last 12 months',
+        thisVal: 1284, lastVal: 1143, change: '+12.3%',
+        data: [420, 380, 510, 490, 620, 580, 710, 840, 790, 920, 1050, 1284]
+      },
+      revenue: {
+        label: 'Revenue',
+        sub: 'Revenue collected across the last 12 months',
+        thisVal: 'PKR 4.2M', lastVal: 'PKR 3.8M', change: '+10.5%',
+        data: [180, 160, 230, 210, 280, 260, 320, 380, 350, 410, 390, 420]
+      },
+      workers: {
+        label: 'Workers',
+        sub: 'Active workers across the last 12 months',
+        thisVal: 312, lastVal: 298, change: '+4.7%',
+        data: [180, 175, 190, 195, 210, 220, 235, 248, 260, 275, 298, 312]
+      }
+    };
+    var activeTab = 'bookings';
+
+    // ==================== WAVE CHART ====================
+    function buildWaveChart() {
+      var ds = datasets[activeTab];
+      var data = ds.data;
+      var svg = document.getElementById('wave-chart');
+      var W = 780, H = 280;
+      var padL = 52, padR = 20, padT = 16, padB = 40;
+      var chartW = W - padL - padR;
+      var chartH = H - padT - padB;
+      var maxVal = Math.max.apply(null, data);
+      var niceMax = Math.ceil(maxVal / 100) * 100;
+      if (niceMax < maxVal) niceMax = maxVal + 50;
+
+      var pts = data.map(function (v, i) {
+        return {
+          x: padL + (i / (data.length - 1)) * chartW,
+          y: padT + chartH - (v / niceMax) * chartH,
+          val: v
+        };
+      });
+
+      // Smooth path using cubic bezier
+      function smoothPath(points) {
+        if (points.length < 2) return '';
+        var d = 'M ' + points[0].x + ' ' + points[0].y;
+        for (var i = 0; i < points.length - 1; i++) {
+          var p0 = points[Math.max(i - 1, 0)];
+          var p1 = points[i];
+          var p2 = points[i + 1];
+          var p3 = points[Math.min(i + 2, points.length - 1)];
+          var cp1x = p1.x + (p2.x - p0.x) / 6;
+          var cp1y = p1.y + (p2.y - p0.y) / 6;
+          var cp2x = p2.x - (p3.x - p1.x) / 6;
+          var cp2y = p2.y - (p3.y - p1.y) / 6;
+          d += ' C ' + cp1x + ' ' + cp1y + ', ' + cp2x + ' ' + cp2y + ', ' + p2.x + ' ' + p2.y;
+        }
+        return d;
+      }
+
+      var linePath = smoothPath(pts);
+      var areaPath = linePath + ' L ' + pts[pts.length - 1].x + ' ' + (padT + chartH) + ' L ' + pts[0].x + ' ' + (padT + chartH) + ' Z';
+
+      // Gridlines & Y-axis labels
+      var gridLines = '';
+      var ySteps = 5;
+      for (var i = 0; i <= ySteps; i++) {
+        var yPos = padT + (i / ySteps) * chartH;
+        var yVal = Math.round(niceMax - (i / ySteps) * niceMax);
+        gridLines += '<line x1="' + padL + '" y1="' + yPos + '" x2="' + (W - padR) + '" y2="' + yPos + '" stroke="#E2E8F0" stroke-width="1" />';
+        gridLines += '<text x="' + (padL - 8) + '" y="' + (yPos + 4) + '" text-anchor="end" fill="#94A3B8" font-size="11" font-weight="600" font-family="Inter,sans-serif">' + yVal.toLocaleString() + '</text>';
+      }
+
+      // Month labels
+      var labels = '';
+      pts.forEach(function (p, i) {
+        labels += '<text x="' + p.x + '" y="' + (H - 8) + '" text-anchor="middle" fill="#94A3B8" font-size="11" font-weight="600" font-family="Inter,sans-serif">' + months[i] + '</text>';
+      });
+
+      // Dots with hover
+      var dots = '';
+      pts.forEach(function (p, i) {
+        dots += '<circle class="chart-dot" data-idx="' + i + '" cx="' + p.x + '" cy="' + p.y + '" r="4" fill="#0F766E" stroke="#fff" stroke-width="2" style="cursor:pointer;transition:r .15s" />';
+      });
+
+      svg.innerHTML =
+        '<defs>' +
+          '<linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">' +
+            '<stop offset="0%" stop-color="#0F766E" stop-opacity="0.35"/>' +
+            '<stop offset="100%" stop-color="#0F766E" stop-opacity="0.02"/>' +
+          '</linearGradient>' +
+        '</defs>' +
+        gridLines + labels +
+        '<path d="' + areaPath + '" fill="url(#areaGrad)" />' +
+        '<path d="' + linePath + '" fill="none" stroke="#0F766E" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />' +
+        dots;
+
+      // Tooltip behavior
+      var tooltip = document.getElementById('chart-tooltip');
+      var wrap = document.getElementById('chart-wrap');
+      svg.querySelectorAll('.chart-dot').forEach(function (dot) {
+        dot.addEventListener('mouseenter', function (e) {
+          var idx = parseInt(this.getAttribute('data-idx'));
+          this.setAttribute('r', '6');
+          var rect = svg.getBoundingClientRect();
+          var scaleX = rect.width / W;
+          var x = pts[idx].x * scaleX;
+          var y = pts[idx].y * (rect.height / H);
+          tooltip.style.display = 'block';
+          tooltip.innerHTML = months[idx] + ': <b>' + pts[idx].val.toLocaleString() + '</b>';
+          tooltip.style.left = (x - 40) + 'px';
+          tooltip.style.top = (y - 42) + 'px';
+        });
+        dot.addEventListener('mouseleave', function () {
+          this.setAttribute('r', '4');
+          tooltip.style.display = 'none';
+        });
+      });
+
+      // Update summary
+      document.getElementById('perf-sub').textContent = ds.sub;
+      document.getElementById('sm-this').textContent = typeof ds.thisVal === 'number' ? ds.thisVal.toLocaleString() : ds.thisVal;
+      document.getElementById('sm-last').textContent = typeof ds.lastVal === 'number' ? ds.lastVal.toLocaleString() : ds.lastVal;
+      document.getElementById('sm-change').textContent = ds.change;
+    }
+
+    // Tab switching
+    document.getElementById('perf-tabs').addEventListener('click', function (e) {
+      var btn = e.target.closest('.tab');
+      if (!btn) return;
+      this.querySelectorAll('.tab').forEach(function (t) { t.classList.remove('active'); });
+      btn.classList.add('active');
+      activeTab = btn.getAttribute('data-tab');
+      buildWaveChart();
+    });
+
+    // ==================== DONUT CHART ====================
+    function buildDonut() {
+      var services = [
+        { name: 'Plumbing', val: 384, color: '#0F766E' },
+        { name: 'Electrical', val: 312, color: '#F59E0B' },
+        { name: 'Cleaning', val: 276, color: '#16A34A' },
+        { name: 'Painting', val: 312, color: '#1A1A2E' }
+      ];
+      var total = services.reduce(function (s, x) { return s + x.val; }, 0);
+      var cumulative = 0;
+      var gradientParts = [];
+      services.forEach(function (svc) {
+        var start = (cumulative / total) * 360;
+        cumulative += svc.val;
+        var end = (cumulative / total) * 360;
+        gradientParts.push(svc.color + ' ' + start + 'deg ' + end + 'deg');
+      });
+      document.getElementById('donut-chart').style.background = 'conic-gradient(' + gradientParts.join(', ') + ')';
+
+      var legend = '';
+      services.forEach(function (svc) {
+        legend += '<div class="legend-item"><span class="legend-swatch" style="background:' + svc.color + '"></span><span class="legend-name">' + svc.name + '</span><span class="legend-val">' + svc.val + '</span></div>';
+      });
+      document.getElementById('donut-legend').innerHTML = legend;
+    }
+
+    // ==================== WEEKLY BAR CHART ====================
+    function buildWeeklyChart() {
+      var days = [
+        { label: 'Mon', val: 42 },
+        { label: 'Tue', val: 58 },
+        { label: 'Wed', val: 65 },
+        { label: 'Thu', val: 51 },
+        { label: 'Fri', val: 72 },
+        { label: 'Sat', val: 88 },
+        { label: 'Sun', val: 35 }
+      ];
+      var maxVal = Math.max.apply(null, days.map(function (d) { return d.val; }));
+      var html = '';
+      days.forEach(function (d, i) {
+        var pct = (d.val / maxVal) * 100;
+        html += '<div class="bcol"><div class="bar-val">' + d.val + '</div><div class="bar" style="height:' + pct + '%"></div><div class="bar-lab">' + d.label + '</div></div>';
+      });
+      document.getElementById('weekly-chart').innerHTML = html;
+    }
+
+    // ==================== REPORT CARDS ====================
+    var reportDefs = [
+      {
+        id: 'worker-perf', title: 'Worker Performance', iconColor: 'teal',
+        desc: 'Top workers, ratings, completion rates and payout summaries.',
+        sparkData: [55, 62, 58, 70, 65, 78, 82],
+        delta: '+8.1%', deltaType: 'pos'
+      },
+      {
+        id: 'cust-sat', title: 'Customer Satisfaction', iconColor: 'orange',
+        desc: 'Customer feedback scores, NPS trends and complaint analysis.',
+        sparkData: [40, 52, 48, 60, 55, 68, 72],
+        delta: '+5.4%', deltaType: 'pos'
+      },
+      {
+        id: 'top-skills', title: 'Top Skills', iconColor: 'green',
+        desc: 'Most in-demand skills, skill gap analysis and training needs.',
+        sparkData: [50, 58, 65, 72, 68, 80, 88],
+        delta: 'Trending', deltaType: 'neutral'
+      },
+      {
+        id: 'earnings-city', title: 'Earnings by City', iconColor: 'navy',
+        desc: 'Revenue distribution across cities with per-city breakdowns.',
+        sparkData: [38, 45, 50, 58, 62, 70, 75],
+        delta: '+14.2%', deltaType: 'pos'
+      },
+      {
+        id: 'service-demand', title: 'Service Demand', iconColor: 'teal',
+        desc: 'Service category demand trends and seasonal forecast analysis.',
+        sparkData: [60, 55, 70, 65, 75, 82, 78],
+        delta: '+6.8%', deltaType: 'pos'
+      },
+      {
+        id: 'verify-queue', title: 'Verification Queue', iconColor: 'red',
+        desc: 'Pending worker verifications, document reviews and approvals.',
+        sparkData: [30, 35, 42, 38, 45, 50, 48],
+        delta: '42 pending', deltaType: 'neutral'
+      }
+    ];
+
+    var cardState = {};
+
+    function buildSparkSVG(data) {
+      var w = 120, h = 32;
+      var max = Math.max.apply(null, data);
+      var pts = data.map(function (v, i) {
+        return { x: (i / (data.length - 1)) * w, y: h - (v / max) * (h - 4) - 2 };
+      });
+      var d = 'M ' + pts[0].x + ' ' + pts[0].y;
+      for (var i = 0; i < pts.length - 1; i++) {
+        var p0 = pts[Math.max(i - 1, 0)];
+        var p1 = pts[i];
+        var p2 = pts[i + 1];
+        var p3 = pts[Math.min(i + 2, pts.length - 1)];
+        var cp1x = p1.x + (p2.x - p0.x) / 6;
+        var cp1y = p1.y + (p2.y - p0.y) / 6;
+        var cp2x = p2.x - (p3.x - p1.x) / 6;
+        var cp2y = p2.y - (p3.y - p1.y) / 6;
+        d += ' C ' + cp1x + ' ' + cp1y + ', ' + cp2x + ' ' + cp2y + ', ' + p2.x + ' ' + p2.y;
+      }
+      var areaD = d + ' L ' + pts[pts.length - 1].x + ' ' + h + ' L 0 ' + h + ' Z';
+      return '<svg viewBox="0 0 ' + w + ' ' + h + '" style="width:120px;height:32px;display:block">' +
+        '<defs><linearGradient id="sg-' + Math.random().toString(36).substr(2, 5) + '" x1="0" y1="0" x2="0" y2="1">' +
+        '<stop offset="0%" stop-color="#0F766E" stop-opacity="0.3"/>' +
+        '<stop offset="100%" stop-color="#0F766E" stop-opacity="0.02"/>' +
+        '</linearGradient></defs>' +
+        '<path d="' + areaD + '" fill="url(#sg-' + Math.random().toString(36).substr(2, 5) + ')" />' +
+        '<path d="' + d + '" fill="none" stroke="#0F766E" stroke-width="1.5" stroke-linecap="round" /></svg>';
+    }
+
+    var reportIcons = {
+      'worker-perf': '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>',
+      'cust-sat': '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" x2="9.01" y1="9" y2="9"/><line x1="15" x2="15.01" y1="9" y2="9"/></svg>',
+      'top-skills': '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>',
+      'earnings-city': '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>',
+      'service-demand': '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 16 4 4 4-4"/><path d="M7 20V4"/><path d="m21 8-4-4-4 4"/><path d="M17 4v16"/></svg>',
+      'verify-queue': '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><path d="m9 12 2 2 4-4"/></svg>'
+    };
+
+    function buildReportCards() {
+      var grid = document.getElementById('report-grid');
+      var html = '';
+      reportDefs.forEach(function (r) {
+        cardState[r.id] = { generated: false };
+        var gradId = 'sp-' + r.id;
+        html += '<div class="rc-card" id="card-' + r.id + '">' +
+          '<div class="rc-accent ' + r.iconColor + '"></div>' +
+          '<div class="rc-head">' +
+            '<div class="report-icon ' + r.iconColor + '">' + reportIcons[r.id] + '</div>' +
+            '<span class="delta ' + r.deltaType + '">' + r.delta + '</span>' +
+          '</div>' +
+          '<div class="rc-title">' + r.title + '</div>' +
+          '<div class="rc-desc">' + r.desc + '</div>' +
+          '<div class="rc-chart"><svg viewBox="0 0 200 32" style="width:100%;height:32px;display:block" id="spark-' + r.id + '"></svg></div>' +
+          '<div class="rc-meta">' +
+            '<span id="genfmt-' + r.id + '">PDF &middot; Excel &middot; CSV</span>' +
+            '<span>Updated daily</span>' +
+          '</div>' +
+          '<div class="rc-foot">' +
+            '<button class="rc-btn" id="genbtn-' + r.id + '" onclick="generateReport(\'' + r.id + '\')">Generate</button>' +
+          '</div>' +
+        '</div>';
+      });
+      grid.innerHTML = html;
+
+      // Draw sparklines
+      reportDefs.forEach(function (r) {
+        var data = r.sparkData;
+        var max = Math.max.apply(null, data);
+        var w = 200, h = 32;
+        var pts = data.map(function (v, i) {
+          return { x: (i / (data.length - 1)) * w, y: h - (v / max) * (h - 4) - 2 };
+        });
+        var pathD = 'M ' + pts[0].x + ' ' + pts[0].y;
+        for (var i = 0; i < pts.length - 1; i++) {
+          var p0 = pts[Math.max(i - 1, 0)];
+          var p1 = pts[i];
+          var p2 = pts[i + 1];
+          var p3 = pts[Math.min(i + 2, pts.length - 1)];
+          var cp1x = p1.x + (p2.x - p0.x) / 6;
+          var cp1y = p1.y + (p2.y - p0.y) / 6;
+          var cp2x = p2.x - (p3.x - p1.x) / 6;
+          var cp2y = p2.y - (p3.y - p1.y) / 6;
+          pathD += ' C ' + cp1x + ' ' + cp1y + ', ' + cp2x + ' ' + cp2y + ', ' + p2.x + ' ' + p2.y;
+        }
+        var areaD = pathD + ' L ' + pts[pts.length - 1].x + ' ' + h + ' L 0 ' + h + ' Z';
+        var sparkSvg = document.getElementById('spark-' + r.id);
+        if (!sparkSvg) return;
+        sparkSvg.innerHTML =
+          '<defs><linearGradient id="' + gradId + '" x1="0" y1="0" x2="0" y2="1">' +
+          '<stop offset="0%" stop-color="#0F766E" stop-opacity="0.25"/>' +
+          '<stop offset="100%" stop-color="#0F766E" stop-opacity="0.02"/>' +
+          '</linearGradient></defs>' +
+          '<path d="' + areaD + '" fill="url(#' + gradId + ')" />' +
+          '<path d="' + pathD + '" fill="none" stroke="#0F766E" stroke-width="1.5" stroke-linecap="round" />';
+      });
+    }
+
+    function generateReport(id) {
+      var btn = document.getElementById('genbtn-' + id);
+      if (cardState[id].generated) {
+        showToast('Downloading ' + id.replace(/-/g, ' ') + ' report');
+        return;
+      }
+      btn.classList.add('loading');
+      btn.textContent = 'Generating\u2026';
+      btn.disabled = true;
+      setTimeout(function () {
+        cardState[id].generated = true;
+        btn.classList.remove('loading');
+        btn.classList.add('done');
+        btn.disabled = false;
+        btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-2px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg> Download';
+        var fmt = document.getElementById('genfmt-' + id);
+        if (fmt) { fmt.textContent = 'Generated just now'; fmt.style.color = 'var(--green)'; }
+        showToast(id.replace(/-/g, ' ').replace(/\b\w/g, function (c) { return c.toUpperCase(); }) + ' report ready');
+      }, 800);
+    }
+
+    // ==================== REPORT LIBRARY ====================
+    function buildLibrary() {
+      var reports = [
+        { name: 'Monthly Revenue Report', type: 'Revenue', typeColor: 'teal', date: 'Sep 5, 2026', size: '2.4 MB' },
+        { name: 'Worker Performance Q3', type: 'Performance', typeColor: 'orange', date: 'Sep 1, 2026', size: '1.8 MB' },
+        { name: 'Customer Segments Analysis', type: 'Analytics', typeColor: 'green', date: 'Aug 28, 2026', size: '3.1 MB' },
+        { name: 'Service Demand Forecast', type: 'Forecast', typeColor: 'navy', date: 'Aug 20, 2026', size: '1.2 MB' }
+      ];
+      var html = '';
+      reports.forEach(function (r, i) {
+        html += '<div class="mini-item">' +
+          '<div class="mini-rank' + (i === 0 ? ' top' : '') + '">' + (i + 1) + '</div>' +
+          '<div class="mini-info">' +
+            '<div class="mini-name">' + r.name + '</div>' +
+            '<div class="mini-meta">' + r.date + ' &middot; ' + r.size + '</div>' +
+          '</div>' +
+          '<span class="badge badge-' + (r.typeColor === 'teal' ? 'verified' : r.typeColor === 'orange' ? 'pending' : r.typeColor === 'green' ? 'active' : 'info') + '">' + r.type + '</span>' +
+          '<button class="action-btn" onclick="showToast(\'Viewing ' + r.name + '\')" title="View">' +
+            '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>' +
+          '</button>' +
+          '<button class="action-btn" onclick="showToast(\'Downloading ' + r.name + '\')" title="Download">' +
+            '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>' +
+          '</button>' +
+        '</div>';
+      });
+      document.getElementById('library-list').innerHTML = html;
+    }
+
+    // ==================== INIT ====================
+    buildWaveChart();
+    buildDonut();
+    buildWeeklyChart();
+    buildReportCards();
+    buildLibrary();
+  </script>
+</body>
+</html>

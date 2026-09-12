@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Dispute Resolution &amp; Customer Support - HUNAR</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<style>
+  html {
+    overflow-y: scroll;
+    scrollbar-gutter: stable;
+  }
+  body {
+    font-family: 'Inter', sans-serif;
+    background-color: #FFFFFF;
+    color: #1A1A2E;
+    margin: 0;
+    padding: 0;
+  }
+  aside {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  aside::-webkit-scrollbar {
+    display: none;
+  }
+  input[type="radio"]:checked {
+    accent-color: #0F766E;
+  }
+</style>
+<script src="https://cdn.tailwindcss.com"></script>
+<script id="tailwind-config">
+tailwind.config = {
+  darkMode: "class",
+  theme: {
+    extend: {
+      colors: {
+        navy: "#1A1A2E",
+        teal: {
+          DEFAULT: "#0F766E",
+          dark: "#115E59",
+          light: "rgba(15, 118, 110, 0.1)"
+        },
+        orange: "#F59E0B",
+        success: "#16A34A",
+        error: "#DC2626",
+        gray: "#64748B",
+        background: "#F8FAFC",
+        border: "#E2E8F0",
+        surface: "#FFFFFF",
+        primary: "#0F766E",
+        "primary-dark": "#115E59",
+        secondary: "#1A1A2E",
+        
+        // Aliases used in templates
+        appBg: "#F8FAFC",
+        darkText: "#1A1A2E",
+        mutedText: "#64748B",
+        borderLine: "#E2E8F0",
+        "text-main": "#1A1A2E",
+        "surface-muted": "#F8FAFC",
+        "outline-border": "#E2E8F0",
+        
+        // Material Theme 3 Aliases
+        "on-surface": "#1A1A2E",
+        "on-surface-variant": "#64748B",
+        "on-background": "#1A1A2E",
+        "on-primary": "#FFFFFF",
+        "on-secondary": "#FFFFFF",
+        "on-error": "#FFFFFF",
+        "surface-container-lowest": "#FFFFFF",
+        "surface-container-low": "#F8FAFC",
+        "surface-container": "#F8FAFC",
+        "surface-container-high": "#F8FAFC",
+        "surface-container-highest": "#F8FAFC",
+        "surface-variant": "#F8FAFC",
+        "surface-tint": "#0F766E",
+        "surface-dim": "#E2E8F0",
+        "surface-bright": "#FFFFFF",
+        outline: "#64748B",
+        "outline-variant": "#E2E8F0",
+        "primary-container": "rgba(15, 118, 110, 0.1)",
+        "on-primary-container": "#0F766E",
+        "secondary-container": "rgba(26, 26, 46, 0.08)",
+        "on-secondary-container": "#1A1A2E",
+        "secondary-fixed": "rgba(15, 118, 110, 0.1)",
+        "secondary-fixed-dim": "rgba(15, 118, 110, 0.1)",
+        "on-secondary-fixed": "#1A1A2E",
+        "on-secondary-fixed-variant": "#115E59",
+        "primary-fixed": "rgba(15, 118, 110, 0.1)",
+        "primary-fixed-dim": "rgba(15, 118, 110, 0.1)",
+        "on-primary-fixed": "#1A1A2E",
+        "on-primary-fixed-variant": "#115E59",
+        "tertiary": "#F59E0B",
+        "tertiary-container": "rgba(245, 158, 11, 0.1)",
+        "on-tertiary-container": "#F59E0B",
+        "tertiary-fixed": "rgba(245, 158, 11, 0.1)",
+        "on-tertiary-fixed": "#1A1A2E",
+        "error-container": "rgba(220, 38, 38, 0.1)",
+        "on-error-container": "#DC2626",
+        "inverse-primary": "#0F766E",
+        "inverse-surface": "#1A1A2E",
+        "inverse-on-surface": "#F8FAFC"
+      },
+      spacing: {
+        "margin-desktop": "2rem",
+        "margin-tablet": "1.5rem",
+        "margin-mobile": "1rem",
+        "gutter-desktop": "1.5rem",
+        "gutter-mobile": "1rem",
+        "space-3xl": "4rem",
+        "space-2xl": "3rem",
+        "space-xl": "2rem",
+        "space-lg": "1.5rem",
+        "space-md": "1rem",
+        "space-base": "1rem",
+        "space-sm": "0.75rem",
+        "space-xs": "0.5rem",
+        "space-2xs": "0.25rem",
+        "space-xxs": "0.25rem",
+        "space-1": "0.25rem",
+        "space-2": "0.5rem",
+        "space-3": "0.75rem",
+        "space-4": "1rem",
+        "space-5": "1.25rem",
+        "space-6": "1.5rem",
+        "space-8": "2rem",
+        "space-12": "3rem",
+        "space-16": "4rem",
+        "space-20": "5rem",
+        "space-24": "6rem",
+        "space-stack-sm": "0.5rem",
+        "space-stack-md": "1rem",
+        "space-stack-lg": "1.5rem",
+        "section-gap": "2rem",
+        "gutter": "1.5rem"
+      },
+      fontSize: {
+        "stat-lg": ["28px", { lineHeight: "36px", letterSpacing: "-0.02em", fontWeight: "700" }],
+        "button-text": ["14px", { lineHeight: "20px", letterSpacing: "0.01em", fontWeight: "600" }],
+
+        "display-hero": ["48px", { lineHeight: "56px", letterSpacing: "-0.025em", fontWeight: "700" }],
+        "display-hero-mobile": ["32px", { lineHeight: "40px", letterSpacing: "-0.02em", fontWeight: "700" }],
+        "display-kpi": ["36px", { lineHeight: "44px", letterSpacing: "-0.02em", fontWeight: "700" }],
+        "display-kpi-mobile": ["28px", { lineHeight: "34px", letterSpacing: "-0.02em", fontWeight: "700" }],
+        "display-lg": ["36px", { lineHeight: "44px", letterSpacing: "-0.02em", fontWeight: "700" }],
+        "headline-page": ["28px", { lineHeight: "36px", letterSpacing: "-0.015em", fontWeight: "600" }],
+        "headline-page-mobile": ["24px", { lineHeight: "32px", letterSpacing: "-0.015em", fontWeight: "600" }],
+        "headline-section": ["20px", { lineHeight: "28px", letterSpacing: "-0.01em", fontWeight: "600" }],
+        "headline-subsection": ["16px", { lineHeight: "24px", letterSpacing: "-0.005em", fontWeight: "600" }],
+        "headline-lg": ["28px", { lineHeight: "36px", letterSpacing: "-0.015em", fontWeight: "600" }],
+        "headline-lg-mobile": ["24px", { lineHeight: "32px", letterSpacing: "-0.015em", fontWeight: "600" }],
+        "headline-md": ["20px", { lineHeight: "28px", letterSpacing: "-0.01em", fontWeight: "600" }],
+        "headline-sm": ["16px", { lineHeight: "24px", letterSpacing: "-0.005em", fontWeight: "600" }],
+        "headline-xl-mobile": ["26px", { lineHeight: "34px", letterSpacing: "-0.015em", fontWeight: "600" }],
+        "body-default": ["14px", { lineHeight: "22px", letterSpacing: "0em", fontWeight: "400" }],
+        "body-compact": ["13px", { lineHeight: "18px", letterSpacing: "0em", fontWeight: "400" }],
+        "body-strong": ["14px", { lineHeight: "22px", letterSpacing: "0em", fontWeight: "600" }],
+        "body-lg": ["16px", { lineHeight: "24px", letterSpacing: "0em", fontWeight: "400" }],
+        "body-md": ["14px", { lineHeight: "22px", letterSpacing: "0em", fontWeight: "400" }],
+        "body-md-medium": ["14px", { lineHeight: "22px", letterSpacing: "0em", fontWeight: "500" }],
+        "body-sm": ["12px", { lineHeight: "16px", letterSpacing: "0em", fontWeight: "400" }],
+        "label-badge": ["11px", { lineHeight: "14px", letterSpacing: "0.02em", fontWeight: "600" }],
+        "label-regular": ["12px", { lineHeight: "16px", letterSpacing: "0.01em", fontWeight: "500" }],
+        "label-md": ["12px", { lineHeight: "16px", letterSpacing: "0.01em", fontWeight: "500" }],
+        "label-sm": ["11px", { lineHeight: "14px", letterSpacing: "0.02em", fontWeight: "500" }],
+        "label-uppercase": ["10px", { lineHeight: "12px", letterSpacing: "0.05em", fontWeight: "700" }]
+      },
+      fontFamily: {
+        "stat-lg": ["Inter", "sans-serif"],
+        "button-text": ["Inter", "sans-serif"],
+
+        sans: ["Inter", "sans-serif"],
+        "body-default": ["Inter", "sans-serif"],
+        "body-compact": ["Inter", "sans-serif"],
+        "body-strong": ["Inter", "sans-serif"],
+        "body-md": ["Inter", "sans-serif"],
+        "body-sm": ["Inter", "sans-serif"],
+        "display-kpi": ["Inter", "sans-serif"],
+        "headline-page": ["Inter", "sans-serif"],
+        "headline-section": ["Inter", "sans-serif"],
+        "headline-subsection": ["Inter", "sans-serif"],
+        "headline-md": ["Inter", "sans-serif"],
+        "headline-sm": ["Inter", "sans-serif"],
+        "headline-lg": ["Inter", "sans-serif"],
+        "label-badge": ["Inter", "sans-serif"],
+        "label-regular": ["Inter", "sans-serif"],
+        "label-md": ["Inter", "sans-serif"],
+        "label-sm": ["Inter", "sans-serif"]
+      },
+      borderRadius: {
+        DEFAULT: "0.375rem",
+        sm: "0.25rem",
+        md: "0.375rem",
+        lg: "0.5rem",
+        xl: "0.75rem",
+        "2xl": "1rem",
+        full: "9999px"
+      }
+    }
+  }
+};
+</script>
+</head>
+<body class="bg-white text-[#1A1A2E] min-h-screen">
+<!-- Desktop Sidebar -->
+<aside class="fixed left-0 top-0 h-screen w-[260px] bg-white border-r border-[#E2E8F0] z-50 hidden lg:flex flex-col justify-between overflow-y-auto" style="scrollbar-width: none; -ms-overflow-style: none;">
+  <div class="p-5">
+    <!-- Brand Header -->
+    <a href="../landing page/code.html" class="flex items-center gap-3 pb-5 border-b border-[#E2E8F0] mb-4 group cursor-pointer hover:opacity-90 transition-opacity" title="Back to Landing Page">
+      <div class="w-9 h-9 rounded-xl bg-[#1A1A2E] flex items-center justify-center text-white text-[16px] font-bold">
+        <span>H</span><span class="w-1.5 h-1.5 rounded-full bg-[#0F766E] ml-0.5"></span>
+      </div>
+      <div>
+        <div class="flex items-center gap-1.5">
+          <span class="text-[16px] font-bold tracking-tight text-[#1A1A2E]">HUNAR</span>
+          <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold bg-[#0F766E]/10 text-[#0F766E] uppercase tracking-wider">PK</span>
+        </div>
+        <p class="text-[12px] font-medium text-[#64748B]">Certified Pro Marketplace</p>
+      </div>
+    </a>
+
+    <!-- Navigation List -->
+    <nav class="flex flex-col gap-1">
+      <a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] font-medium text-[#64748B] hover:bg-[#F8FAFC] hover:text-[#1A1A2E] transition-colors" data-path="customer-dashboard" href="../hunar_customer_dashboard/code.html">
+        <span class="material-symbols-outlined text-[20px]">grid_view</span>
+        <span>Dashboard</span>
+      </a>
+      <a class="flex items-center justify-between px-3 py-2.5 rounded-lg text-[13px] font-medium text-[#64748B] hover:bg-[#F8FAFC] hover:text-[#1A1A2E] transition-colors" data-path="my-jobs" href="../my_jobs_hunar_customer_hub/code.html">
+        <div class="flex items-center gap-3">
+          <span class="material-symbols-outlined text-[20px]">assignment</span>
+          <span>My Jobs</span>
+        </div>
+        <span class="px-2 py-0.5 rounded-full bg-[#F8FAFC] text-[#1A1A2E] text-[11px] font-bold">2</span>
+      </a>
+      <a class="flex items-center justify-between px-3 py-2.5 rounded-lg text-[13px] font-medium text-[#64748B] hover:bg-[#F8FAFC] hover:text-[#1A1A2E] transition-colors" data-path="offers-and-bids" href="../offers_inquiries_hunar_customer_hub/code.html">
+        <div class="flex items-center gap-3">
+          <span class="material-symbols-outlined text-[20px]">local_offer</span>
+          <span>Offers</span>
+        </div>
+        <span class="px-2 py-0.5 rounded-full bg-[#F59E0B]/10 text-[#F59E0B] text-[11px] font-bold">3</span>
+      </a>
+      <a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] font-medium text-[#64748B] hover:bg-[#F8FAFC] hover:text-[#1A1A2E] transition-colors" data-path="service-bookings" href="../scheduled_visits_arrival_tracker_hunar/code.html">
+        <span class="material-symbols-outlined text-[20px]">calendar_today</span>
+        <span>Visits</span>
+      </a>
+      <a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] font-medium text-[#64748B] hover:bg-[#F8FAFC] hover:text-[#1A1A2E] transition-colors" data-path="messages" href="../direct_chat_negotiation_hunar_customer_hub/code.html">
+        <span class="material-symbols-outlined text-[20px]">chat</span>
+        <span>Messages</span>
+      </a>
+      <a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] font-medium text-[#64748B] hover:bg-[#F8FAFC] hover:text-[#1A1A2E] transition-colors" data-path="payments-and-escrow" href="../payments_escrow_wallet_hunar/code.html">
+        <span class="material-symbols-outlined text-[20px]">payments</span>
+        <span>Payments</span>
+      </a>
+      <a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] font-medium text-[#64748B] hover:bg-[#F8FAFC] hover:text-[#1A1A2E] transition-colors" data-path="customer-profile" href="../customer_profile_settings_hunar/code.html">
+        <span class="material-symbols-outlined text-[20px]">person</span>
+        <span>Profile</span>
+      </a>
+      <a aria-current="page" class="flex items-center justify-between px-3 py-2.5 rounded-lg bg-[#0F766E] text-white font-semibold text-[13px] shadow-sm transition-colors" data-path="help-center" href="../dispute_resolution_help_center_hunar/code.html">
+        <div class="flex items-center gap-3">
+          <span class="material-symbols-outlined text-[20px] text-white">help_center</span>
+          <span class="text-white">Help Center</span>
+        </div>
+      </a>
+    </nav>
+  </div>
+
+  <!-- Bottom Escrow Card & User Profile -->
+  <div class="p-4 border-t border-[#E2E8F0] flex flex-col gap-3">
+    <div class="bg-[#1A1A2E] text-white p-3.5 rounded-xl flex flex-col gap-2">
+      <div class="flex items-center gap-2">
+        <span class="material-symbols-outlined text-[#0F766E] text-[18px]">verified</span>
+        <span class="text-[11px] font-bold uppercase tracking-wider text-[#0F766E]">HUNAR Escrow</span>
+      </div>
+      <p class="text-[11px] leading-snug text-slate-300">100% NADRA CNIC Verified Pros &amp; safe Raast dispute guarantee.</p>
+      <a class="inline-flex items-center justify-center py-1.5 px-3 bg-[#0F766E] text-white text-[11px] font-bold rounded-lg hover:bg-[#115E59] transition-colors" data-path="guarantee-policy" href="../dispute_resolution_help_center_hunar/code.html">View Escrow Rules</a>
+    </div>
+    <div class="flex items-center justify-between pt-1">
+      <div class="flex items-center gap-2.5">
+        <div class="w-8 h-8 rounded-full bg-[#1A1A2E] flex items-center justify-center">
+          <span class="material-symbols-outlined text-white text-[18px]">person</span>
+        </div>
+        <div class="flex flex-col">
+          <span class="text-[13px] font-semibold text-[#1A1A2E] leading-tight">Ahmed Khan</span>
+          <span class="text-[11px] font-medium text-[#64748B]">University Town, Peshawar</span>
+        </div>
+      </div>
+      <a class="text-[#64748B] hover:text-[#DC2626] transition-colors" data-path="sign-in" href="../customer_profile_settings_hunar/code.html">
+        <span class="material-symbols-outlined text-[20px]">logout</span>
+      </a>
+    </div>
+  </div>
+</aside>
+  <!-- Main Content Wrapper -->
+  <div class="w-full lg:pl-[260px] min-h-screen flex flex-col bg-white">
+    <!-- Top Header Bar -->
+    <header class="fixed top-0 left-0 lg:left-[260px] right-0 h-16 bg-white border-b border-[#E2E8F0] z-40 px-4 sm:px-6 lg:px-8 flex items-center justify-between gap-4">
+      <div class="flex items-center gap-3 flex-1 max-w-lg">
+        <button aria-label="Open Menu" onclick="const s=document.querySelector('aside'); s.classList.toggle('hidden'); s.classList.toggle('flex');" class="lg:hidden p-1.5 rounded-lg text-[#64748B] hover:text-[#1A1A2E] hover:bg-[#F8FAFC] transition-colors focus:outline-none shrink-0">
+          <span class="material-symbols-outlined text-[24px]">menu</span>
+        </button>
+        <a href="../landing page/code.html" class="flex items-center gap-1.5 lg:hidden shrink-0 hover:scale-105 transition-transform" title="Back to Landing Page"><div class="w-8 h-8 rounded-lg bg-[#1A1A2E] flex items-center justify-center text-white font-bold text-[14px]">H</div></a>
+        <div class="relative w-full">
+          <span class="material-symbols-outlined absolute left-3 top-2.5 text-[#64748B] text-[20px]">search</span>
+          <input class="w-full h-10 pl-10 pr-4 text-[#1A1A2E] font-body-compact text-xs rounded-lg border border-[#E2E8F0] focus:border-[#0F766E] focus:bg-white focus:outline-none transition-all placeholder:text-[#64748B] bg-[#F8FAFC]" placeholder="Search jobs, verified technicians, booking IDs (PKR)..." type="search">
+        </div>
+      </div>
+      <div class="flex items-center gap-3 shrink-0">
+        <a href="../post_a_job_step_1_modern_service_selection/code.html" class="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-[#0F766E] hover:bg-[#115E59] text-white text-xs font-semibold shadow-sm transition-all active:scale-[0.99]">
+          <span class="material-symbols-outlined text-[16px]">add</span>
+          <span>Post a Job</span>
+        </a>
+        <a href="../offers_inquiries_hunar_customer_hub/code.html" class="relative text-[#64748B] hover:text-[#1A1A2E] transition-colors p-2 rounded-lg hover:bg-[#F8FAFC]" title="Offers & Notifications">
+          <span class="material-symbols-outlined text-[22px]">notifications</span>
+          <span class="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-[#F59E0B]"></span>
+        </a>
+        <a href="../direct_chat_negotiation_hunar_customer_hub/code.html" class="text-[#64748B] hover:text-[#1A1A2E] transition-colors p-2 rounded-lg hover:bg-[#F8FAFC]" title="Messages">
+          <span class="material-symbols-outlined text-[22px]">chat</span>
+        </a>
+        <div class="h-6 w-[1px] bg-[#E2E8F0] hidden sm:block"></div>
+        <a href="../customer_profile_settings_hunar/code.html" class="flex items-center gap-2.5 p-1 rounded-lg hover:bg-[#F8FAFC] transition-colors cursor-pointer" title="Profile Settings">
+          <div class="w-8 h-8 rounded-full bg-[#1A1A2E] flex items-center justify-center text-white font-bold text-xs">AK</div>
+          <div class="hidden xl:flex flex-col text-left">
+            <span class="text-xs font-semibold text-[#1A1A2E] leading-tight">Ahmed Khan</span>
+            <span class="text-[10px] font-medium text-[#64748B] leading-tight">University Town, Peshawar</span>
+          </div>
+          <span class="material-symbols-outlined text-[#64748B] text-[18px] hidden sm:inline-block">expand_more</span>
+        </a>
+      </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="w-full pt-16 pb-16 bg-white flex-1">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex flex-col gap-6">
+<!-- Top Notice Banner: HUNAR Guarantee Desk -->
+<div class="w-full bg-[#FFFFFF] rounded-xl p-4 sm:p-5 border border-[#E2E8F0] shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+<div class="flex items-center gap-3.5 min-w-0">
+<div class="w-10 h-10 rounded-lg bg-[#0F766E]/10 flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[#0F766E] text-[24px]">verified_user</span>
+</div>
+<div class="flex flex-col min-w-0">
+<div class="flex items-center gap-2.5 flex-wrap">
+<span class="text-base sm:text-lg font-bold text-[#1A1A2E]">HUNAR Guarantee Desk</span>
+<span class="px-2.5 py-0.5 rounded-full bg-emerald-50 text-[#16A34A] border border-emerald-200 text-[11px] uppercase tracking-wider font-bold">PROTECTED</span>
+</div>
+<p class="text-xs sm:text-sm text-[#64748B] mt-0.5">Claims are reviewed within 2 hours. Escrow payments remain frozen until full client resolution.</p>
+</div>
+</div>
+<div class="flex items-center gap-2 self-stretch sm:self-auto shrink-0">
+<div class="flex items-center gap-1.5 text-[#1A1A2E] text-xs font-semibold bg-[#F8FAFC] border border-[#E2E8F0] px-3 py-1.5 rounded-lg">
+<span class="material-symbols-outlined text-[16px] text-[#0F766E]">location_on</span>
+<span>Peshawar Ops Desk</span>
+</div>
+</div>
+</div>
+<!-- Breadcrumb & Page Heading -->
+<div class="flex flex-col gap-1">
+<div class="flex items-center gap-2 text-[#64748B] text-xs font-medium">
+<span>Customer Hub</span>
+<span>/</span>
+<span class="text-[#1A1A2E] font-semibold">Dispute Resolution</span>
+</div>
+<h1 class="text-2xl sm:text-3xl font-bold text-[#1A1A2E] tracking-tight">Dispute Resolution &amp; Customer Support</h1>
+<p class="text-sm text-[#64748B] max-w-3xl">
+            File a formal claim, freeze job escrow funds instantly, or monitor ongoing Peshawar field operations mediation.
+          </p>
+</div>
+<!-- Main Content 2-Column Grid -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+<!-- Primary Column: Case Card + Submit Form -->
+<div class="lg:col-span-8 flex flex-col gap-6">
+<!-- Active Dispute Tracker Card -->
+<div class="bg-[#FFFFFF] rounded-xl p-5 sm:p-6 border border-[#E2E8F0] shadow-sm flex flex-col gap-4 relative">
+<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-[#E2E8F0]">
+<div class="flex flex-col">
+<div class="flex items-center gap-2.5">
+<span class="text-lg sm:text-xl text-[#1A1A2E] font-bold">Case #DIS-4491</span>
+<span class="px-2.5 py-0.5 rounded-full bg-amber-50 text-[#F59E0B] border border-amber-200 text-xs font-semibold flex items-center gap-1.5">
+<span class="w-1.5 h-1.5 rounded-full bg-[#F59E0B]"></span>
+                      Under Investigation
+                    </span>
+</div>
+<span class="text-xs text-[#64748B] mt-1">
+                    Job #HN-9821 • Sanitary Plumbing Fitting • Technician: <strong class="text-[#1A1A2E] font-semibold">Rashid Ali</strong>
+</span>
+</div>
+<div class="flex items-baseline sm:flex-col sm:items-end gap-1.5 sm:gap-0 bg-[#F8FAFC] border border-[#E2E8F0] px-3.5 py-1.5 rounded-lg">
+<span class="text-[11px] uppercase tracking-wider text-[#64748B] font-semibold">Frozen Escrow</span>
+<span class="text-lg sm:text-xl text-[#DC2626] font-extrabold">Rs. 2,000</span>
+</div>
+</div>
+<!-- Incident Details Box -->
+<div class="bg-[#F8FAFC] rounded-lg p-4 border border-[#E2E8F0] flex flex-col gap-1.5">
+<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+<span class="text-xs font-semibold text-[#1A1A2E]">Incident: Unresolved Leak &amp; Incomplete Seal</span>
+<span class="text-xs font-medium text-[#0F766E]">Hayatabad Phase 3, Peshawar</span>
+</div>
+<p class="text-xs text-[#64748B] leading-relaxed">
+                  “Joint fixture underneath master bathroom was left partially sealed. Water drips onto wood vanity beneath when main water line activates.”
+                </p>
+</div>
+<!-- Investigation Progress -->
+<div class="pt-2">
+<span class="text-[11px] uppercase font-bold text-[#64748B] tracking-wider block mb-3">Investigation Progress</span>
+<div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+<!-- Step 1 -->
+<div class="flex flex-col items-start gap-1.5">
+<div class="w-7 h-7 rounded-full bg-[#16A34A] text-white flex items-center justify-center shrink-0 shadow-sm">
+<span class="material-symbols-outlined text-[16px]">check</span>
+</div>
+<div class="flex flex-col">
+<span class="text-xs text-[#1A1A2E] font-semibold">Claim Submitted</span>
+<span class="text-[11px] text-[#64748B]">Oct 24 • 3:15 PM</span>
+</div>
+</div>
+<!-- Step 2 -->
+<div class="flex flex-col items-start gap-1.5">
+<div class="w-7 h-7 rounded-full bg-[#0F766E] text-white flex items-center justify-center shrink-0 shadow-sm">
+<span class="material-symbols-outlined text-[16px]">lock</span>
+</div>
+<div class="flex flex-col">
+<span class="text-xs text-[#1A1A2E] font-semibold">Escrow Frozen</span>
+<span class="text-[11px] text-[#64748B]">Oct 24 • 3:16 PM</span>
+</div>
+</div>
+<!-- Step 3 -->
+<div class="flex flex-col items-start gap-1.5">
+<div class="w-7 h-7 rounded-full bg-amber-50 text-[#F59E0B] border border-amber-200 flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[16px]">pending</span>
+</div>
+<div class="flex flex-col">
+<span class="text-xs text-[#1A1A2E] font-semibold">Tech Review</span>
+<span class="text-[11px] text-[#F59E0B] font-semibold">Due in 45 mins</span>
+</div>
+</div>
+<!-- Step 4 -->
+<div class="flex flex-col items-start gap-1.5 opacity-60">
+<div class="w-7 h-7 rounded-full bg-[#E2E8F0] text-[#64748B] flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[16px]">gavel</span>
+</div>
+<div class="flex flex-col">
+<span class="text-xs text-[#1A1A2E] font-semibold">Final Decision</span>
+<span class="text-[11px] text-[#64748B]">Arbitration desk</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Escrow Guarantee Footer -->
+<div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-3 border-t border-[#E2E8F0]">
+<div class="flex items-center gap-2 text-[#64748B] text-xs">
+<span class="material-symbols-outlined text-[#0F766E] text-[18px]">shield</span>
+<span>Funds will not release without your one-time PIN confirmation.</span>
+</div>
+<button class="h-9 px-3.5 bg-[#F8FAFC] border border-[#E2E8F0] hover:bg-[#E2E8F0] text-[#1A1A2E] rounded-lg font-semibold text-xs flex items-center justify-center gap-1.5 transition-colors" type="button">
+<span class="material-symbols-outlined text-[16px]">chat</span>
+<span>Case Log (3)</span>
+</button>
+</div>
+</div>
+<!-- New Claim Submission Card Form -->
+<div class="bg-[#FFFFFF] rounded-xl p-5 sm:p-6 border border-[#E2E8F0] shadow-sm flex flex-col gap-5">
+<div class="flex flex-col gap-1">
+<div class="flex items-center gap-2">
+<div class="w-1.5 h-5 bg-[#1A1A2E] rounded-full"></div>
+<h2 class="text-lg font-bold text-[#1A1A2E]">Submit a New Claim</h2>
+</div>
+<p class="text-xs text-[#64748B]">
+                  Every job is protected by the HUNAR 5-Day Craftsmanship Warranty. Provide details below to instantly trigger dispute protection.
+                </p>
+</div>
+<form class="flex flex-col gap-4" onsubmit="event.preventDefault(); alert('Claim submitted successfully. Your dispute reference number has been generated and escrow funds have been frozen.');">
+<!-- Select Affected Job -->
+<div class="flex flex-col gap-1.5">
+<label class="text-xs font-semibold text-[#1A1A2E]">Select Affected Job</label>
+<div class="relative w-full">
+<select class="w-full h-10 bg-[#FFFFFF] border border-[#E2E8F0] text-[#1A1A2E] px-3 rounded-lg text-xs font-medium focus:border-[#0F766E] focus:ring-0 focus:outline-none appearance-none cursor-pointer">
+<option value="hn9821">#HN-9821 — Sanitary Plumbing Fitting (Rashid Ali) — Oct 24</option>
+<option value="hn9764">#HN-9764 — AC Gas Refill &amp; Servicing (Farhan Khattak) — Oct 21</option>
+<option value="hn9610">#HN-9610 — Main DB Breaker Replacement (Tariq Shah) — Oct 18</option>
+</select>
+<span class="material-symbols-outlined absolute right-3 top-2.5 pointer-events-none text-[#64748B] text-[20px]">expand_more</span>
+</div>
+</div>
+<!-- Dispute Reason Category Selector -->
+<div class="flex flex-col gap-1.5">
+<label class="text-xs font-semibold text-[#1A1A2E]">Reason for Dispute</label>
+<div class="grid grid-cols-2 sm:grid-cols-3 gap-2" id="dispute-reasons">
+<label class="flex items-center gap-2 p-2.5 bg-[#F8FAFC] border border-[#0F766E] rounded-lg cursor-pointer transition-colors text-[#1A1A2E]">
+<input checked="" class="accent-[#0F766E]" name="dispute_reason" type="radio" value="incomplete"/>
+<span class="text-xs font-medium">Incomplete Work</span>
+</label>
+<label class="flex items-center gap-2 p-2.5 bg-[#FFFFFF] border border-[#E2E8F0] hover:bg-[#F8FAFC] rounded-lg cursor-pointer transition-colors text-[#1A1A2E]">
+<input class="accent-[#0F766E]" name="dispute_reason" type="radio" value="damage"/>
+<span class="text-xs font-medium">Damage to Property</span>
+</label>
+<label class="flex items-center gap-2 p-2.5 bg-[#FFFFFF] border border-[#E2E8F0] hover:bg-[#F8FAFC] rounded-lg cursor-pointer transition-colors text-[#1A1A2E]">
+<input class="accent-[#0F766E]" name="dispute_reason" type="radio" value="noshow"/>
+<span class="text-xs font-medium">No-show / Abandoned</span>
+</label>
+<label class="flex items-center gap-2 p-2.5 bg-[#FFFFFF] border border-[#E2E8F0] hover:bg-[#F8FAFC] rounded-lg cursor-pointer transition-colors text-[#1A1A2E]">
+<input class="accent-[#0F766E]" name="dispute_reason" type="radio" value="mismatch"/>
+<span class="text-xs font-medium">Price Mismatch</span>
+</label>
+<label class="flex items-center gap-2 p-2.5 bg-[#FFFFFF] border border-[#E2E8F0] hover:bg-[#F8FAFC] rounded-lg cursor-pointer transition-colors text-[#1A1A2E]">
+<input class="accent-[#0F766E]" name="dispute_reason" type="radio" value="quality"/>
+<span class="text-xs font-medium">Substandard Quality</span>
+</label>
+<label class="flex items-center gap-2 p-2.5 bg-[#FFFFFF] border border-[#E2E8F0] hover:bg-[#F8FAFC] rounded-lg cursor-pointer transition-colors text-[#1A1A2E]">
+<input class="accent-[#0F766E]" name="dispute_reason" type="radio" value="other"/>
+<span class="text-xs font-medium">Other Issue</span>
+</label>
+</div>
+</div>
+<!-- Description Textarea -->
+<div class="flex flex-col gap-1.5">
+<div class="flex items-center justify-between">
+<label class="text-xs font-semibold text-[#1A1A2E]">Incident Description</label>
+<span class="text-[11px] text-[#64748B]">Urdu or English supported</span>
+</div>
+<textarea class="w-full bg-[#FFFFFF] border border-[#E2E8F0] text-[#1A1A2E] p-3 rounded-lg text-xs focus:border-[#0F766E] focus:ring-0 focus:outline-none resize-none" placeholder="Explain the issue in Urdu or English. Specify what went wrong, what was agreed upon, and any immediate hazard..." rows="4"></textarea>
+</div>
+<!-- Evidence Upload Drag & Drop Area -->
+<div class="flex flex-col gap-1.5">
+<label class="text-xs font-semibold text-[#1A1A2E]">Attach Evidence (Photo / Video Proof)</label>
+<div class="bg-[#F8FAFC] border border-dashed border-[#E2E8F0] hover:border-[#0F766E] rounded-xl p-5 flex flex-col items-center justify-center gap-2 cursor-pointer transition-colors text-center">
+<div class="w-10 h-10 rounded-full bg-[#FFFFFF] border border-[#E2E8F0] flex items-center justify-center text-[#0F766E] shadow-sm">
+<span class="material-symbols-outlined text-[24px]">add_a_photo</span>
+</div>
+<div class="flex flex-col">
+<span class="text-xs font-semibold text-[#1A1A2E]">Click to upload photos or drag and drop</span>
+<span class="text-[11px] text-[#64748B]">JPG, PNG, MP4 up to 25MB. Clear shots of the fault speed up review.</span>
+</div>
+<div class="flex items-center gap-2 mt-1">
+<span class="px-2 py-0.5 rounded bg-[#FFFFFF] border border-[#E2E8F0] text-[#64748B] text-[10px] font-medium">Before &amp; After</span>
+<span class="px-2 py-0.5 rounded bg-[#FFFFFF] border border-[#E2E8F0] text-[#64748B] text-[10px] font-medium">Invoices</span>
+<span class="px-2 py-0.5 rounded bg-[#FFFFFF] border border-[#E2E8F0] text-[#64748B] text-[10px] font-medium">Damage Close-up</span>
+</div>
+</div>
+</div>
+<!-- Desired Resolution Radio Options -->
+<div class="flex flex-col gap-1.5">
+<label class="text-xs font-semibold text-[#1A1A2E]">Desired Resolution</label>
+<div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+<label class="flex flex-col gap-1 p-3 rounded-lg bg-[#F8FAFC] border border-[#0F766E] cursor-pointer">
+<div class="flex items-center justify-between">
+<span class="text-xs font-semibold text-[#1A1A2E]">Rework by Pro</span>
+<input checked="" class="accent-[#0F766E]" name="desired_resolution" type="radio" value="rework"/>
+</div>
+<span class="text-[11px] text-[#64748B]">Technician fixes fault at zero surcharge.</span>
+</label>
+<label class="flex flex-col gap-1 p-3 rounded-lg bg-[#FFFFFF] border border-[#E2E8F0] hover:bg-[#F8FAFC] cursor-pointer transition-colors">
+<div class="flex items-center justify-between">
+<span class="text-xs font-semibold text-[#1A1A2E]">Replacement Pro</span>
+<input class="accent-[#0F766E]" name="desired_resolution" type="radio" value="replacement"/>
+</div>
+<span class="text-[11px] text-[#64748B]">Assign an Elite verified specialist.</span>
+</label>
+<label class="flex flex-col gap-1 p-3 rounded-lg bg-[#FFFFFF] border border-[#E2E8F0] hover:bg-[#F8FAFC] cursor-pointer transition-colors">
+<div class="flex items-center justify-between">
+<span class="text-xs font-semibold text-[#1A1A2E]">Full Escrow Refund</span>
+<input class="accent-[#0F766E]" name="desired_resolution" type="radio" value="refund"/>
+</div>
+<span class="text-[11px] text-[#64748B]">100% funds credit back to wallet.</span>
+</label>
+</div>
+</div>
+<!-- Submit Action Bar -->
+<div class="pt-2 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+<div class="flex items-center gap-1.5 text-[#64748B] text-xs">
+<span class="material-symbols-outlined text-[16px] text-[#0F766E]">verified</span>
+<span>Protected under HUNAR Customer Care Policy 2024</span>
+</div>
+<button class="w-full sm:w-auto h-11 px-6 bg-[#0F766E] hover:bg-[#115E59] text-white rounded-lg font-semibold text-sm flex items-center justify-center gap-2 shadow-sm transition-colors" type="submit">
+<span class="material-symbols-outlined text-[18px]">report_problem</span>
+<span>Submit Dispute &amp; Lock Escrow</span>
+</button>
+</div>
+</form>
+</div>
+</div>
+<!-- Right Column: Direct Support Channels & FAQ -->
+<div class="lg:col-span-4 flex flex-col gap-6">
+<!-- Live Peshawar Support Card -->
+<div class="bg-[#FFFFFF] rounded-xl p-5 border border-[#E2E8F0] shadow-sm flex flex-col gap-4">
+<div class="flex items-center justify-between">
+<div class="flex flex-col">
+<span class="text-base font-bold text-[#1A1A2E]">Direct Assistance</span>
+<span class="text-xs text-[#64748B]">Peshawar Operations Team</span>
+</div>
+<div class="flex items-center gap-1.5 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+<span class="w-2 h-2 rounded-full bg-[#16A34A]"></span>
+<span class="text-[11px] font-semibold text-[#16A34A]">Online</span>
+</div>
+</div>
+<div class="flex flex-col gap-2.5">
+<!-- Live Chat Button -->
+<a class="flex items-center justify-between p-3 rounded-lg bg-[#F8FAFC] border border-[#E2E8F0] hover:border-[#0F766E] transition-colors group" href="#" onclick="alert('Connecting to live support agent at Peshawar Desk...'); return false;">
+<div class="flex items-center gap-3 min-w-0">
+<div class="w-9 h-9 rounded-lg bg-[#0F766E]/10 flex items-center justify-center text-[#0F766E] shrink-0">
+<span class="material-symbols-outlined text-[20px]">forum</span>
+</div>
+<div class="flex flex-col min-w-0">
+<span class="text-xs font-semibold text-[#1A1A2E] truncate">Live Chat with Agent</span>
+<span class="text-[11px] text-[#64748B]">Available 9 AM – 10 PM PKT</span>
+</div>
+</div>
+<span class="material-symbols-outlined text-[#64748B] group-hover:text-[#0F766E] text-[18px]">chevron_right</span>
+</a>
+<!-- Phone Call Button -->
+<a class="flex items-center justify-between p-3 rounded-lg bg-[#F8FAFC] border border-[#E2E8F0] hover:border-[#0F766E] transition-colors group" href="tel:0915840000">
+<div class="flex items-center gap-3 min-w-0">
+<div class="w-9 h-9 rounded-lg bg-[#1A1A2E]/10 flex items-center justify-center text-[#1A1A2E] shrink-0">
+<span class="material-symbols-outlined text-[20px]">call</span>
+</div>
+<div class="flex flex-col min-w-0">
+<span class="text-xs font-semibold text-[#1A1A2E] truncate">091-5840000</span>
+<span class="text-[11px] text-[#64748B]">Direct Operations Hotline</span>
+</div>
+</div>
+<span class="material-symbols-outlined text-[#64748B] group-hover:text-[#0F766E] text-[18px]">chevron_right</span>
+</a>
+<!-- WhatsApp Support Button -->
+<a class="flex items-center justify-between p-3 rounded-lg bg-[#F8FAFC] border border-[#E2E8F0] hover:border-[#0F766E] transition-colors group" href="https://wa.me/923000000000" target="_blank">
+<div class="flex items-center gap-3 min-w-0">
+<div class="w-9 h-9 rounded-lg bg-[#0F766E]/10 flex items-center justify-center text-[#0F766E] shrink-0">
+<span class="material-symbols-outlined text-[20px]">chat_bubble</span>
+</div>
+<div class="flex flex-col min-w-0">
+<span class="text-xs font-semibold text-[#1A1A2E] truncate">WhatsApp Priority Desk</span>
+<span class="text-[11px] text-[#64748B]">Send video proof directly</span>
+</div>
+</div>
+<span class="material-symbols-outlined text-[#64748B] group-hover:text-[#0F766E] text-[18px]">open_in_new</span>
+</a>
+</div>
+<!-- Ops Desk Stats -->
+<div class="pt-1">
+<div class="p-3 rounded-lg bg-[#F8FAFC] border border-[#E2E8F0] flex items-center gap-3">
+<span class="material-symbols-outlined text-[#1A1A2E] text-[24px]">timer</span>
+<div class="flex flex-col min-w-0">
+<span class="text-xs font-semibold text-[#1A1A2E]">1.8 hr Average Resolution</span>
+<span class="text-[11px] text-[#64748B]">Over 94% of claims settled same day in Peshawar.</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Dispute FAQ Accordion -->
+<div class="bg-[#FFFFFF] rounded-xl p-5 border border-[#E2E8F0] shadow-sm flex flex-col gap-4">
+<div class="flex items-center gap-2">
+<div class="w-1.5 h-5 bg-[#0F766E] rounded-full"></div>
+<h3 class="text-base font-bold text-[#1A1A2E]">Frequently Asked Questions</h3>
+</div>
+<div class="flex flex-col gap-2">
+<!-- Item 1 -->
+<details class="group bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg p-3 cursor-pointer" open="">
+<summary class="flex items-center justify-between text-xs font-semibold text-[#1A1A2E] list-none select-none">
+<span>How does HUNAR protect my escrow money?</span>
+<span class="material-symbols-outlined text-[#64748B] text-[18px] transition-transform group-open:rotate-180">expand_more</span>
+</summary>
+<p class="text-xs text-[#64748B] pt-2 mt-1 leading-relaxed border-t border-[#E2E8F0]">
+                    Your payment is held in a protected bank escrow vault. Funds are only transferred to the service professional after you inspect the completed job and approve release via SMS verification code. Filing a dispute instantly freezes payout.
+                  </p>
+</details>
+<!-- Item 2 -->
+<details class="group bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg p-3 cursor-pointer">
+<summary class="flex items-center justify-between text-xs font-semibold text-[#1A1A2E] list-none select-none">
+<span>What is the 5-day craftsmanship guarantee?</span>
+<span class="material-symbols-outlined text-[#64748B] text-[18px] transition-transform group-open:rotate-180">expand_more</span>
+</summary>
+<p class="text-xs text-[#64748B] pt-2 mt-1 leading-relaxed border-t border-[#E2E8F0]">
+                    If the resolved work fails, leaks, or malfunctions within 5 calendar days of job sign-off, HUNAR mandates the original technician to return free of charge, or dispatches a Senior Pro from our Peshawar network with no additional fee.
+                  </p>
+</details>
+<!-- Item 3 -->
+<details class="group bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg p-3 cursor-pointer">
+<summary class="flex items-center justify-between text-xs font-semibold text-[#1A1A2E] list-none select-none">
+<span>How long does the investigation take?</span>
+<span class="material-symbols-outlined text-[#64748B] text-[18px] transition-transform group-open:rotate-180">expand_more</span>
+</summary>
+<p class="text-xs text-[#64748B] pt-2 mt-1 leading-relaxed border-t border-[#E2E8F0]">
+                    Our Peshawar operations desk acknowledges every ticket within 2 hours. Technicians have 3 business hours to provide their defense or evidence. If unanswered or verified faulty, escrow funds are automatically credited to your wallet.
+                  </p>
+</details>
+<!-- Item 4 -->
+<details class="group bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg p-3 cursor-pointer">
+<summary class="flex items-center justify-between text-xs font-semibold text-[#1A1A2E] list-none select-none">
+<span>Can I request a cash refund instead of wallet credit?</span>
+<span class="material-symbols-outlined text-[#64748B] text-[18px] transition-transform group-open:rotate-180">expand_more</span>
+</summary>
+<p class="text-xs text-[#64748B] pt-2 mt-1 leading-relaxed border-t border-[#E2E8F0]">
+                    Yes. Wallet refunds reflect instantly. If you paid via JazzCash, EasyPaisa, or Raast/Debit card, you may request our desk to route funds back to your original source account within 24–48 banking hours.
+                  </p>
+</details>
+</div>
+</div>
+<!-- Verified Safety Badge Info -->
+<div class="p-4 rounded-xl bg-[#FFFFFF] border border-[#E2E8F0] flex items-center gap-3.5 shadow-sm">
+<div class="w-10 h-10 rounded-full bg-[#1A1A2E] text-white flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[20px]">handshake</span>
+</div>
+<div class="flex flex-col min-w-0">
+<span class="text-xs font-semibold text-[#1A1A2E]">100% Khyber Arbitrated</span>
+<span class="text-[11px] text-[#64748B]">Local mediators who understand Peshawar home infrastructure.</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+</div>
+</body></html>
