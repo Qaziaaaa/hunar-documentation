@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">
+tailwind.config = {
+  darkMode: "class",
+  theme: {
+    extend: {
+      colors: {
+        navy: "#1A1A2E",
+        teal: {
+          DEFAULT: "#0F766E",
+          dark: "#115E59",
+          light: "rgba(15, 118, 110, 0.1)"
+        },
+        orange: "#F59E0B",
+        success: "#16A34A",
+        error: "#DC2626",
+        gray: "#64748B",
+        background: "#F8FAFC",
+        border: "#E2E8F0",
+        surface: "#FFFFFF",
+        primary: "#0F766E",
+        "primary-dark": "#115E59",
+        secondary: "#1A1A2E",
+        
+        // Aliases used in templates
+        appBg: "#F8FAFC",
+        darkText: "#1A1A2E",
+        mutedText: "#64748B",
+        borderLine: "#E2E8F0",
+        "text-main": "#1A1A2E",
+        "surface-muted": "#F8FAFC",
+        "outline-border": "#E2E8F0",
+        
+        // Material Theme 3 Aliases
+        "on-surface": "#1A1A2E",
+        "on-surface-variant": "#64748B",
+        "on-background": "#1A1A2E",
+        "on-primary": "#FFFFFF",
+        "on-secondary": "#FFFFFF",
+        "on-error": "#FFFFFF",
+        "surface-container-lowest": "#FFFFFF",
+        "surface-container-low": "#F8FAFC",
+        "surface-container": "#F8FAFC",
+        "surface-container-high": "#F8FAFC",
+        "surface-container-highest": "#F8FAFC",
+        "surface-variant": "#F8FAFC",
+        "surface-tint": "#0F766E",
+        "surface-dim": "#E2E8F0",
+        "surface-bright": "#FFFFFF",
+        outline: "#64748B",
+        "outline-variant": "#E2E8F0",
+        "primary-container": "rgba(15, 118, 110, 0.1)",
+        "on-primary-container": "#0F766E",
+        "secondary-container": "rgba(26, 26, 46, 0.08)",
+        "on-secondary-container": "#1A1A2E",
+        "secondary-fixed": "rgba(15, 118, 110, 0.1)",
+        "secondary-fixed-dim": "rgba(15, 118, 110, 0.1)",
+        "on-secondary-fixed": "#1A1A2E",
+        "on-secondary-fixed-variant": "#115E59",
+        "primary-fixed": "rgba(15, 118, 110, 0.1)",
+        "primary-fixed-dim": "rgba(15, 118, 110, 0.1)",
+        "on-primary-fixed": "#1A1A2E",
+        "on-primary-fixed-variant": "#115E59",
+        "tertiary": "#F59E0B",
+        "tertiary-container": "rgba(245, 158, 11, 0.1)",
+        "on-tertiary-container": "#F59E0B",
+        "tertiary-fixed": "rgba(245, 158, 11, 0.1)",
+        "on-tertiary-fixed": "#1A1A2E",
+        "error-container": "rgba(220, 38, 38, 0.1)",
+        "on-error-container": "#DC2626",
+        "inverse-primary": "#0F766E",
+        "inverse-surface": "#1A1A2E",
+        "inverse-on-surface": "#F8FAFC",
+        "accent-success": "#16A34A",
+        "accent-warning": "#F59E0B",
+        "accent-error": "#DC2626",
+        "accent-info": "#0F766E",
+        "border-structural": "#E2E8F0"
+      },
+      spacing: {
+        "margin-desktop": "2rem",
+        "margin-tablet": "1.5rem",
+        "margin-mobile": "1rem",
+        "gutter-desktop": "1.5rem",
+        "gutter-mobile": "1rem",
+        "space-3xl": "4rem",
+        "space-2xl": "3rem",
+        "space-xl": "2rem",
+        "space-lg": "1.5rem",
+        "space-md": "1rem",
+        "space-base": "1rem",
+        "space-sm": "0.75rem",
+        "space-xs": "0.5rem",
+        "space-2xs": "0.25rem",
+        "space-xxs": "0.25rem",
+        "space-1": "0.25rem",
+        "space-2": "0.5rem",
+        "space-3": "0.75rem",
+        "space-4": "1rem",
+        "space-5": "1.25rem",
+        "space-6": "1.5rem",
+        "space-8": "2rem",
+        "space-12": "3rem",
+        "space-16": "4rem",
+        "space-20": "5rem",
+        "space-24": "6rem",
+        "space-stack-sm": "0.5rem",
+        "space-stack-md": "1rem",
+        "space-stack-lg": "1.5rem",
+        "section-gap": "2rem",
+        "gutter": "1.5rem"
+      },
+      fontSize: {
+        "stat-lg": ["28px", { lineHeight: "36px", letterSpacing: "-0.02em", fontWeight: "700" }],
+        "button-text": ["14px", { lineHeight: "20px", letterSpacing: "0.01em", fontWeight: "600" }],
+
+        "display-hero": ["48px", { lineHeight: "56px", letterSpacing: "-0.025em", fontWeight: "700" }],
+        "display-hero-mobile": ["32px", { lineHeight: "40px", letterSpacing: "-0.02em", fontWeight: "700" }],
+        "display-kpi": ["36px", { lineHeight: "44px", letterSpacing: "-0.02em", fontWeight: "700" }],
+        "display-kpi-mobile": ["28px", { lineHeight: "34px", letterSpacing: "-0.02em", fontWeight: "700" }],
+        "display-lg": ["36px", { lineHeight: "44px", letterSpacing: "-0.02em", fontWeight: "700" }],
+        "headline-page": ["28px", { lineHeight: "36px", letterSpacing: "-0.015em", fontWeight: "600" }],
+        "headline-page-mobile": ["24px", { lineHeight: "32px", letterSpacing: "-0.015em", fontWeight: "600" }],
+        "headline-section": ["20px", { lineHeight: "28px", letterSpacing: "-0.01em", fontWeight: "600" }],
+        "headline-subsection": ["16px", { lineHeight: "24px", letterSpacing: "-0.005em", fontWeight: "600" }],
+        "headline-lg": ["28px", { lineHeight: "36px", letterSpacing: "-0.015em", fontWeight: "600" }],
+        "headline-lg-mobile": ["24px", { lineHeight: "32px", letterSpacing: "-0.015em", fontWeight: "600" }],
+        "headline-md": ["20px", { lineHeight: "28px", letterSpacing: "-0.01em", fontWeight: "600" }],
+        "headline-sm": ["16px", { lineHeight: "24px", letterSpacing: "-0.005em", fontWeight: "600" }],
+        "headline-xl-mobile": ["26px", { lineHeight: "34px", letterSpacing: "-0.015em", fontWeight: "600" }],
+        "body-default": ["14px", { lineHeight: "22px", letterSpacing: "0em", fontWeight: "400" }],
+        "body-compact": ["13px", { lineHeight: "18px", letterSpacing: "0em", fontWeight: "400" }],
+        "body-strong": ["14px", { lineHeight: "22px", letterSpacing: "0em", fontWeight: "600" }],
+        "body-lg": ["16px", { lineHeight: "24px", letterSpacing: "0em", fontWeight: "400" }],
+        "body-md": ["14px", { lineHeight: "22px", letterSpacing: "0em", fontWeight: "400" }],
+        "body-md-medium": ["14px", { lineHeight: "22px", letterSpacing: "0em", fontWeight: "500" }],
+        "body-sm": ["12px", { lineHeight: "16px", letterSpacing: "0em", fontWeight: "400" }],
+        "label-badge": ["11px", { lineHeight: "14px", letterSpacing: "0.02em", fontWeight: "600" }],
+        "label-regular": ["12px", { lineHeight: "16px", letterSpacing: "0.01em", fontWeight: "500" }],
+        "label-md": ["12px", { lineHeight: "16px", letterSpacing: "0.01em", fontWeight: "500" }],
+        "label-sm": ["11px", { lineHeight: "14px", letterSpacing: "0.02em", fontWeight: "500" }],
+        "label-uppercase": ["10px", { lineHeight: "12px", letterSpacing: "0.05em", fontWeight: "700" }],
+        "data-mono-md": ["12px", { lineHeight: "18px", letterSpacing: "0.01em", fontWeight: "500" }]
+      },
+      fontFamily: {
+        "stat-lg": ["Inter", "sans-serif"],
+        "button-text": ["Inter", "sans-serif"],
+
+        sans: ["Inter", "sans-serif"],
+        "body-default": ["Inter", "sans-serif"],
+        "body-compact": ["Inter", "sans-serif"],
+        "body-strong": ["Inter", "sans-serif"],
+        "body-md": ["Inter", "sans-serif"],
+        "body-sm": ["Inter", "sans-serif"],
+        "display-kpi": ["Inter", "sans-serif"],
+        "headline-page": ["Inter", "sans-serif"],
+        "headline-section": ["Inter", "sans-serif"],
+        "headline-subsection": ["Inter", "sans-serif"],
+        "headline-md": ["Inter", "sans-serif"],
+        "headline-sm": ["Inter", "sans-serif"],
+        "headline-lg": ["Inter", "sans-serif"],
+        "label-badge": ["Inter", "sans-serif"],
+        "label-regular": ["Inter", "sans-serif"],
+        "label-md": ["Inter", "sans-serif"],
+        "label-sm": ["Inter", "sans-serif"],
+        "data-mono-md": ["JetBrains Mono", "ui-monospace", "SFMono-Regular", "Menlo", "Consolas", "monospace"]
+      },
+      borderRadius: {
+        DEFAULT: "0.375rem",
+        sm: "0.25rem",
+        md: "0.375rem",
+        lg: "0.5rem",
+        xl: "0.75rem",
+        "2xl": "1rem",
+        full: "9999px"
+      }
+    }
+  }
+};
+</script><style>@layer base { html, body { width: 100vw; margin: 0; padding: 0; } body { overscroll-behavior: none; } .pb-safe { padding-bottom: env(safe-area-inset-bottom, 0px); } .pt-safe { padding-top: env(safe-area-inset-top, 0px); } main > :first-child { margin-top: 0 !important; } main > :last-child { margin-bottom: 0 !important; } } ::-webkit-scrollbar { display: none; }</style><style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head><body class="bg-surface font-body-md text-body-md text-on-surface flex flex-col min-h-screen"><header class="fixed top-0 w-full z-50 pt-safe bg-surface-container-lowest/80 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)]"><div class="h-28 px-space-base flex flex-col justify-between py-space-xs"><div class="flex items-center justify-between gap-space-sm h-12"><div class="flex items-center gap-space-sm min-w-0"><button aria-label="Toggle Navigation Drawer" class="w-11 h-11 flex items-center justify-center text-on-surface hover:text-primary transition-colors focus:outline-none"><span class="material-symbols-outlined text-[24px]">menu</span></button><div class="flex flex-col min-w-0"><div class="flex items-center gap-space-xs"><span class="font-headline-sm text-headline-sm tracking-tight text-on-surface">HUNAR</span><span class="font-label-sm text-label-sm uppercase tracking-wider text-primary bg-secondary-container/40 px-space-xs py-0.5 rounded-lg">Console</span></div><span class="font-label-sm text-label-sm text-on-surface-variant truncate">Admin / Payment &amp; Taxes Overview</span></div></div><div class="flex items-center gap-space-xs shrink-0"><button aria-label="Search and Filter" class="w-11 h-11 flex items-center justify-center text-on-surface-variant hover:text-on-surface transition-colors focus:outline-none"><span class="material-symbols-outlined text-[20px]">search</span></button><button aria-label="Notifications" class="w-11 h-11 flex items-center justify-center text-on-surface-variant hover:text-on-surface relative transition-colors focus:outline-none"><span class="material-symbols-outlined text-[20px]">notifications</span><span class="absolute top-2.5 right-2.5 w-2 h-2 rounded-full bg-primary-container ring-2 ring-surface-container-lowest"></span></button><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></div><div class="flex items-center gap-space-xs overflow-x-auto no-scrollbar py-space-2xs"><a class="px-space-md py-1 rounded-lg text-on-surface-variant bg-surface-container-low font-label-sm text-label-sm whitespace-nowrap" data-path="payment-taxes-overview" href="#">Overview</a><a class="px-space-md py-1 rounded-lg text-on-surface-variant bg-surface-container-low font-label-sm text-label-sm whitespace-nowrap" data-path="transactions-ledger" href="#">Transactions</a><a class="px-space-md py-1 rounded-lg text-on-surface-variant bg-surface-container-low font-label-sm text-label-sm whitespace-nowrap" data-path="payments-escrow" href="#">Payments</a><a class="px-space-md py-1 rounded-lg text-on-surface-variant bg-surface-container-low font-label-sm text-label-sm whitespace-nowrap" data-path="worker-payouts" href="#">Worker Payouts</a><a class="px-space-md py-1 rounded-lg text-on-surface-variant bg-surface-container-low font-label-sm text-label-sm whitespace-nowrap" data-path="commission-revenue" href="#">Commission</a><a class="px-space-md py-1 rounded-lg text-on-surface-variant bg-surface-container-low font-label-sm text-label-sm whitespace-nowrap" data-path="tax-reports" href="#">Taxes</a><a class="px-space-md py-1 rounded-lg text-on-surface-variant bg-surface-container-low font-label-sm text-label-sm whitespace-nowrap" data-path="refunds-disputes" href="#">Refunds</a></div></div></header><main class="flex flex-col relative w-full pt-28 pb-20 bg-surface min-h-screen"><div class="flex flex-col w-full px-space-base py-space-md gap-space-lg">
+<!-- Operational Header Block -->
+<section class="flex flex-col gap-space-sm bg-surface-container-lowest p-space-base rounded-lg shadow-sm">
+<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-space-md">
+<div class="flex flex-col">
+<div class="flex items-center gap-space-xs">
+<span class="w-2 h-2 rounded-full bg-primary"></span>
+<span class="font-label-sm text-label-sm uppercase tracking-wider text-on-surface-variant">Ledger v4.2 • Real-time</span>
+</div>
+<h1 class="font-headline-lg text-headline-lg text-on-surface tracking-tight mt-0.5">Payment &amp; Taxes</h1>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">Monitor payments, worker earnings, commissions, taxes, and escrow disbursements.</p>
+</div>
+<div class="flex items-center gap-space-xs">
+<button aria-label="Export Financial Report" class="flex items-center justify-center gap-space-xs bg-primary text-on-primary px-space-md py-2 rounded-lg font-label-md text-label-md transition-colors active:scale-95 shadow-sm" id="exportReportBtn">
+<span class="material-symbols-outlined text-[18px]">download</span>
+<span>Export Report</span>
+</button>
+</div>
+</div>
+<!-- Live Synced Timestamp Notice -->
+<div class="flex items-center justify-between pt-space-xs bg-surface-container-low px-space-sm py-1.5 rounded-lg">
+<div class="flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-primary text-[16px]">verified</span>
+<span class="font-label-sm text-label-sm text-on-surface">Audit Lock: Settled to PKR Central Bank</span>
+</div>
+<span class="font-body-sm text-body-sm text-on-surface-variant font-data-mono-md text-data-mono-md">08 Sep 2026, 14:32</span>
+</div>
+</section>
+<!-- Metric Summary Cards (2-Column Grid) -->
+<section class="grid grid-cols-2 gap-space-sm">
+<!-- Card 1: Total Revenue -->
+<div class="flex flex-col justify-between p-space-md bg-surface-container-lowest rounded-lg shadow-sm">
+<div class="flex items-start justify-between">
+<span class="font-label-sm text-label-sm uppercase text-on-surface-variant tracking-wider">Total Volume</span>
+<span class="p-1 rounded bg-secondary-container/30 text-primary">
+<span class="material-symbols-outlined text-[16px]">account_balance</span>
+</span>
+</div>
+<div class="mt-space-sm">
+<span class="font-headline-md text-headline-md text-on-surface tracking-tight block">Rs. 1,245,000</span>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-1 leading-snug">Total payment volume processed via HUNAR escrow.</p>
+</div>
+<div class="mt-space-sm pt-space-xs flex items-center gap-1 text-primary">
+<span class="material-symbols-outlined text-[14px]">arrow_upward</span>
+<span class="font-label-sm text-label-sm">+14.2% vs last mo</span>
+</div>
+</div>
+<!-- Card 2: HUNAR Commission -->
+<div class="flex flex-col justify-between p-space-md bg-surface-container-lowest rounded-lg shadow-sm">
+<div class="flex items-start justify-between">
+<span class="font-label-sm text-label-sm uppercase text-on-surface-variant tracking-wider">Commission</span>
+<span class="p-1 rounded bg-secondary-container/30 text-primary">
+<span class="material-symbols-outlined text-[16px]">pie_chart</span>
+</span>
+</div>
+<div class="mt-space-sm">
+<span class="font-headline-md text-headline-md text-primary tracking-tight block">Rs. 124,500</span>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-1 leading-snug">10% standardized institutional platform cut.</p>
+</div>
+<div class="mt-space-sm pt-space-xs flex items-center gap-1 text-on-surface-variant">
+<span class="material-symbols-outlined text-[14px]">lock</span>
+<span class="font-label-sm text-label-sm">Automated split</span>
+</div>
+</div>
+<!-- Card 3: Worker Earnings -->
+<div class="flex flex-col justify-between p-space-md bg-surface-container-lowest rounded-lg shadow-sm">
+<div class="flex items-start justify-between">
+<span class="font-label-sm text-label-sm uppercase text-on-surface-variant tracking-wider">Worker Net</span>
+<span class="p-1 rounded bg-secondary-container/30 text-secondary">
+<span class="material-symbols-outlined text-[16px]">payments</span>
+</span>
+</div>
+<div class="mt-space-sm">
+<span class="font-headline-md text-headline-md text-on-surface tracking-tight block">Rs. 1,120,500</span>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-1 leading-snug">Disbursed net earnings post-deduction.</p>
+</div>
+<div class="mt-space-sm pt-space-xs flex items-center gap-1 text-secondary">
+<span class="material-symbols-outlined text-[14px]">check_circle</span>
+<span class="font-label-sm text-label-sm">90% net yield</span>
+</div>
+</div>
+<!-- Card 4: Pending Payouts -->
+<div class="flex flex-col justify-between p-space-md bg-surface-container-lowest rounded-lg shadow-sm">
+<div class="flex items-start justify-between">
+<span class="font-label-sm text-label-sm uppercase text-on-surface-variant tracking-wider">Pending Out</span>
+<span class="p-1 rounded bg-tertiary-fixed text-tertiary">
+<span class="material-symbols-outlined text-[16px]">hourglass_top</span>
+</span>
+</div>
+<div class="mt-space-sm">
+<span class="font-headline-md text-headline-md text-tertiary tracking-tight block">Rs. 85,000</span>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-1 leading-snug">Held in 24h milestone settlement queue.</p>
+</div>
+<div class="mt-space-sm pt-space-xs flex items-center gap-1 text-tertiary">
+<span class="material-symbols-outlined text-[14px]">schedule</span>
+<span class="font-label-sm text-label-sm">Cycle: Fri 18:00</span>
+</div>
+</div>
+<!-- Card 5: Refunds & Disputes -->
+<div class="flex flex-col justify-between p-space-md bg-surface-container-lowest rounded-lg shadow-sm">
+<div class="flex items-start justify-between">
+<span class="font-label-sm text-label-sm uppercase text-on-surface-variant tracking-wider">Refunds</span>
+<span class="p-1 rounded bg-surface-container text-on-surface">
+<span class="material-symbols-outlined text-[16px]">replay</span>
+</span>
+</div>
+<div class="mt-space-sm">
+<span class="font-headline-md text-headline-md text-on-surface tracking-tight block">Rs. 24,000</span>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-1 leading-snug">Reversed via arbiter mediation.</p>
+</div>
+<div class="mt-space-sm pt-space-xs flex items-center gap-1 text-on-surface-variant">
+<span class="font-label-sm text-label-sm">1.9% total ratio</span>
+</div>
+</div>
+<!-- Card 6: Taxes -->
+<div class="flex flex-col justify-between p-space-md bg-surface-container-lowest rounded-lg shadow-sm">
+<div class="flex items-start justify-between">
+<span class="font-label-sm text-label-sm uppercase text-on-surface-variant tracking-wider">Tax Provision</span>
+<span class="p-1 rounded bg-surface-container text-outline">
+<span class="material-symbols-outlined text-[16px]">receipt_long</span>
+</span>
+</div>
+<div class="mt-space-sm">
+<span class="font-headline-md text-headline-md text-on-surface tracking-tight block">Rs. 18,500</span>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-1 leading-snug">Withholding &amp; provincial service levies.</p>
+</div>
+<div class="mt-space-sm pt-space-xs flex items-center gap-1 text-on-surface-variant">
+<span class="material-symbols-outlined text-[14px]">assignment_turned_in</span>
+<span class="font-label-sm text-label-sm">FBR compliant</span>
+</div>
+</div>
+</section>
+<!-- Interactive Revenue Overview & Chart Section -->
+<section class="flex flex-col bg-surface-container-lowest p-space-base rounded-lg shadow-sm gap-space-md">
+<div class="flex flex-col gap-space-xs">
+<div class="flex items-center justify-between">
+<h2 class="font-headline-sm text-headline-sm text-on-surface tracking-tight">Revenue Overview</h2>
+<span class="font-label-sm text-label-sm px-2 py-0.5 rounded bg-surface-container text-on-surface-variant">PKR Normalized</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Multi-stream operational flow broken down by active periods.</p>
+</div>
+<!-- Filter Pills -->
+<div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-1" id="timeFilterGroup">
+<button class="time-filter-btn px-3 py-1 rounded-lg text-on-surface-variant bg-surface-container-low hover:bg-surface-container font-label-sm text-label-sm whitespace-nowrap transition-colors" data-period="7d">7 Days</button>
+<button class="time-filter-btn px-3 py-1 rounded-lg text-on-primary bg-primary font-label-md text-label-md whitespace-nowrap shadow-sm" data-period="30d">30 Days</button>
+<button class="time-filter-btn px-3 py-1 rounded-lg text-on-surface-variant bg-surface-container-low hover:bg-surface-container font-label-sm text-label-sm whitespace-nowrap transition-colors" data-period="3m">3 Months</button>
+<button class="time-filter-btn px-3 py-1 rounded-lg text-on-surface-variant bg-surface-container-low hover:bg-surface-container font-label-sm text-label-sm whitespace-nowrap transition-colors" data-period="6m">6 Months</button>
+<button class="time-filter-btn px-3 py-1 rounded-lg text-on-surface-variant bg-surface-container-low hover:bg-surface-container font-label-sm text-label-sm whitespace-nowrap transition-colors" data-period="1y">1 Year</button>
+</div>
+<!-- SVG Bar Chart Canvas -->
+<div class="flex flex-col w-full bg-surface-container-low p-space-md rounded-lg gap-space-md">
+<!-- Legend -->
+<div class="flex flex-wrap items-center gap-x-space-md gap-y-1">
+<div class="flex items-center gap-1.5">
+<span class="w-2.5 h-2.5 rounded-sm bg-on-surface"></span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Customer Payments</span>
+</div>
+<div class="flex items-center gap-1.5">
+<span class="w-2.5 h-2.5 rounded-sm bg-primary"></span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">HUNAR Commission</span>
+</div>
+<div class="flex items-center gap-1.5">
+<span class="w-2.5 h-2.5 rounded-sm bg-secondary"></span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Worker Net</span>
+</div>
+<div class="flex items-center gap-1.5">
+<span class="w-2.5 h-2.5 rounded-sm bg-error"></span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Refunds</span>
+</div>
+</div>
+<!-- Compact Visual SVG Metric Scaffolding -->
+<div class="w-full relative h-48 flex items-end">
+<svg class="w-full h-full overflow-visible" preserveaspectratio="none" viewbox="0 0 320 160">
+<!-- Guide lines (rendered subtly without borders) -->
+<line stroke="#F8FAFC" stroke-dasharray="2 2" stroke-width="0.8" x1="0" x2="320" y1="20" y2="20"></line>
+<line stroke="#F8FAFC" stroke-dasharray="2 2" stroke-width="0.8" x1="0" x2="320" y1="60" y2="60"></line>
+<line stroke="#F8FAFC" stroke-dasharray="2 2" stroke-width="0.8" x1="0" x2="320" y1="100" y2="100"></line>
+<line stroke="#F8FAFC" stroke-width="0.8" x1="0" x2="320" y1="140" y2="140"></line>
+<!-- Group W1 (Aug 15) -->
+<g transform="translate(18, 0)">
+<rect fill="#1a1a2e" height="95" rx="1" width="8" x="0" y="45"></rect>
+<rect fill="#0F766E" height="15" rx="1" width="8" x="10" y="125"></rect>
+<rect fill="#0F766E" height="85" rx="1" width="8" x="20" y="55"></rect>
+<rect fill="#DC2626" height="4" rx="1" width="8" x="30" y="136"></rect>
+</g>
+<!-- Group W2 (Aug 22) -->
+<g transform="translate(98, 0)">
+<rect fill="#1a1a2e" height="110" rx="1" width="8" x="0" y="30"></rect>
+<rect fill="#0F766E" height="18" rx="1" width="8" x="10" y="122"></rect>
+<rect fill="#0F766E" height="98" rx="1" width="8" x="20" y="42"></rect>
+<rect fill="#DC2626" height="6" rx="1" width="8" x="30" y="134"></rect>
+</g>
+<!-- Group W3 (Aug 29) -->
+<g transform="translate(178, 0)">
+<rect fill="#1a1a2e" height="90" rx="1" width="8" x="0" y="50"></rect>
+<rect fill="#0F766E" height="13" rx="1" width="8" x="10" y="127"></rect>
+<rect fill="#0F766E" height="78" rx="1" width="8" x="20" y="62"></rect>
+<rect fill="#DC2626" height="3" rx="1" width="8" x="30" y="137"></rect>
+</g>
+<!-- Group W4 (Sep 05) -->
+<g transform="translate(258, 0)">
+<rect fill="#1a1a2e" height="125" rx="1" width="8" x="0" y="15"></rect>
+<rect fill="#0F766E" height="21" rx="1" width="8" x="10" y="119"></rect>
+<rect fill="#0F766E" height="112" rx="1" width="8" x="20" y="28"></rect>
+<rect fill="#DC2626" height="8" rx="1" width="8" x="30" y="132"></rect>
+</g>
+<!-- Trendline for HUNAR Commission Flow -->
+<path d="M 32 125 Q 112 118, 192 127 T 272 119" fill="none" stroke="#0F766E" stroke-width="2"></path>
+<circle cx="32" cy="125" fill="#0F766E" r="3"></circle>
+<circle cx="112" cy="122" fill="#0F766E" r="3"></circle>
+<circle cx="192" cy="127" fill="#0F766E" r="3"></circle>
+<circle cx="272" cy="119" fill="#0F766E" r="3"></circle>
+</svg>
+</div>
+<!-- X-Axis Labels -->
+<div class="flex justify-between px-space-xs text-on-surface-variant font-label-sm text-label-sm pt-1">
+<span>15 Aug</span>
+<span>22 Aug</span>
+<span>29 Aug</span>
+<span>05 Sep</span>
+</div>
+</div>
+</section>
+<!-- Payment Status Breakdown (Segmented Ledger Bar) -->
+<section class="flex flex-col bg-surface-container-lowest p-space-base rounded-lg shadow-sm gap-space-sm">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-space-xs">
+<h2 class="font-headline-sm text-headline-sm text-on-surface tracking-tight">Payment Status Breakdown</h2>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface-variant font-data-mono-md text-data-mono-md">4,150 Txns</span>
+</div>
+<!-- Segmented Progression Bar -->
+<div class="flex h-3 w-full rounded-full overflow-hidden bg-surface-container-highest">
+<div class="bg-secondary" style="width: 82%;" title="Completed: 82%"></div>
+<div class="bg-tertiary-container" style="width: 8%;" title="Pending: 8%"></div>
+<div class="bg-error" style="width: 5%;" title="Failed: 5%"></div>
+<div class="bg-on-surface" style="width: 5%;" title="Refunded: 5%"></div>
+</div>
+<!-- Segment Details Table/Pills -->
+<div class="grid grid-cols-2 sm:grid-cols-4 gap-space-xs pt-space-xs">
+<div class="flex items-center justify-between p-2 rounded bg-surface-container-low">
+<div class="flex items-center gap-1.5">
+<span class="w-2 h-2 rounded-full bg-secondary"></span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Completed</span>
+</div>
+<span class="font-data-mono-md text-data-mono-md text-on-surface font-semibold">82%</span>
+</div>
+<div class="flex items-center justify-between p-2 rounded bg-surface-container-low">
+<div class="flex items-center gap-1.5">
+<span class="w-2 h-2 rounded-full bg-tertiary-container"></span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Pending</span>
+</div>
+<span class="font-data-mono-md text-data-mono-md text-tertiary font-semibold">8%</span>
+</div>
+<div class="flex items-center justify-between p-2 rounded bg-surface-container-low">
+<div class="flex items-center gap-1.5">
+<span class="w-2 h-2 rounded-full bg-error"></span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Failed</span>
+</div>
+<span class="font-data-mono-md text-data-mono-md text-error font-semibold">5%</span>
+</div>
+<div class="flex items-center justify-between p-2 rounded bg-surface-container-low">
+<div class="flex items-center gap-1.5">
+<span class="w-2 h-2 rounded-full bg-on-surface"></span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Refunded</span>
+</div>
+<span class="font-data-mono-md text-data-mono-md text-on-surface font-semibold">5%</span>
+</div>
+</div>
+</section>
+<!-- Recent Transactions Section -->
+<section class="flex flex-col bg-surface-container-lowest p-space-base rounded-lg shadow-sm gap-space-md">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-space-xs">
+<h2 class="font-headline-sm text-headline-sm text-on-surface tracking-tight">Recent Transactions</h2>
+<span class="w-2 h-2 rounded-full bg-primary animate-pulse"></span>
+</div>
+<a class="font-label-md text-label-md text-primary hover:text-on-primary-fixed-variant transition-colors flex items-center gap-0.5" href="#">
+<span>View All</span>
+<span class="material-symbols-outlined text-[16px]">chevron_right</span>
+</a>
+</div>
+<!-- Transaction Cards Stack (Mobile Reflow) -->
+<div class="flex flex-col gap-space-sm">
+<!-- TXN 1 -->
+<article class="p-space-sm bg-surface-container-low rounded-lg flex flex-col gap-space-xs transition-colors hover:bg-surface-container">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-space-xs">
+<span class="font-data-mono-md text-data-mono-md font-semibold text-on-surface">TXN-10021</span>
+<span class="font-label-sm text-label-sm px-1.5 py-0.5 bg-surface-container text-on-surface-variant rounded">Visiting Charge</span>
+</div>
+<span class="px-2 py-0.5 rounded bg-secondary-container text-secondary font-label-sm text-label-sm flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>
+            Completed
+          </span>
+</div>
+<div class="grid grid-cols-2 gap-x-space-md gap-y-1 py-1 text-on-surface">
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-on-surface-variant">Customer</span>
+<span class="font-body-md text-body-md font-medium truncate">Ali Khan</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-on-surface-variant">Worker</span>
+<span class="font-body-md text-body-md font-medium truncate">Ahmed Khan</span>
+</div>
+</div>
+<div class="flex items-center justify-between pt-space-2xs bg-surface-container-lowest/60 px-2 py-1 rounded">
+<span class="font-body-sm text-body-sm text-on-surface-variant">Sep 8, 2026 • 13:45 PKT</span>
+<span class="font-data-mono-md text-data-mono-md text-on-surface font-semibold">Rs. 300</span>
+</div>
+</article>
+<!-- TXN 2 -->
+<article class="p-space-sm bg-surface-container-low rounded-lg flex flex-col gap-space-xs transition-colors hover:bg-surface-container">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-space-xs">
+<span class="font-data-mono-md text-data-mono-md font-semibold text-on-surface">TXN-10020</span>
+<span class="font-label-sm text-label-sm px-1.5 py-0.5 bg-surface-container text-on-surface-variant rounded">Visiting Charge</span>
+</div>
+<span class="px-2 py-0.5 rounded bg-secondary-container text-secondary font-label-sm text-label-sm flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>
+            Completed
+          </span>
+</div>
+<div class="grid grid-cols-2 gap-x-space-md gap-y-1 py-1 text-on-surface">
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-on-surface-variant">Customer</span>
+<span class="font-body-md text-body-md font-medium truncate">Usman Khan</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-on-surface-variant">Worker</span>
+<span class="font-body-md text-body-md font-medium truncate">Bilal Ahmed</span>
+</div>
+</div>
+<div class="flex items-center justify-between pt-space-2xs bg-surface-container-lowest/60 px-2 py-1 rounded">
+<span class="font-body-sm text-body-sm text-on-surface-variant">Sep 8, 2026 • 11:20 PKT</span>
+<span class="font-data-mono-md text-data-mono-md text-on-surface font-semibold">Rs. 300</span>
+</div>
+</article>
+<!-- TXN 3 (Refunded) -->
+<article class="p-space-sm bg-surface-container-low rounded-lg flex flex-col gap-space-xs transition-colors hover:bg-surface-container">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-space-xs">
+<span class="font-data-mono-md text-data-mono-md font-semibold text-on-surface">TXN-10019</span>
+<span class="font-label-sm text-label-sm px-1.5 py-0.5 bg-surface-container text-on-surface-variant rounded">Dispute Settlement</span>
+</div>
+<span class="px-2 py-0.5 rounded bg-surface-container text-on-surface font-label-sm text-label-sm flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-on-surface"></span>
+            Refunded
+          </span>
+</div>
+<div class="grid grid-cols-2 gap-x-space-md gap-y-1 py-1 text-on-surface">
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-on-surface-variant">Customer</span>
+<span class="font-body-md text-body-md font-medium truncate">Hamza Khan</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-on-surface-variant">Worker</span>
+<span class="font-body-md text-body-md font-medium truncate">Ali Raza</span>
+</div>
+</div>
+<div class="flex items-center justify-between pt-space-2xs bg-surface-container-lowest/60 px-2 py-1 rounded">
+<span class="font-body-sm text-body-sm text-on-surface-variant">Sep 7, 2026 • 18:02 PKT</span>
+<span class="font-data-mono-md text-data-mono-md text-error font-semibold">- Rs. 300</span>
+</div>
+</article>
+</div>
+</section>
+<!-- Interactive Export Toast Mockup Container -->
+<div class="hidden fixed bottom-20 left-1/2 -translate-x-1/2 z-50 bg-inverse-surface text-inverse-on-surface px-space-base py-space-sm rounded-lg shadow-xl flex items-center gap-space-sm" id="exportToast">
+<span class="material-symbols-outlined text-primary-fixed text-[20px]">check_circle</span>
+<span class="font-label-md text-label-md">Report generated and queued for download.</span>
+</div>
+</div>
+<script>
+  (function initOverviewInteractions() {
+    // Time filter pills micro-interaction
+    const filterButtons = document.querySelectorAll('.time-filter-btn');
+    filterButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        filterButtons.forEach(b => {
+          b.className = 'time-filter-btn px-3 py-1 rounded-lg text-on-surface-variant bg-surface-container-low hover:bg-surface-container font-label-sm text-label-sm whitespace-nowrap transition-colors';
+        });
+        btn.className = 'time-filter-btn px-3 py-1 rounded-lg text-on-primary bg-primary font-label-md text-label-md whitespace-nowrap shadow-sm';
+      });
+    });
+
+    // Export report trigger feedback
+    const exportBtn = document.getElementById('exportReportBtn');
+    const exportToast = document.getElementById('exportToast');
+    if (exportBtn && exportToast) {
+      exportBtn.addEventListener('click', () => {
+        exportToast.classList.remove('hidden');
+        setTimeout(() => {
+          exportToast.classList.add('hidden');
+        }, 3200);
+      });
+    }
+  })();
+</script></main><nav class="fixed bottom-0 w-full z-50 pb-safe bg-surface-container-lowest/85 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)]" data-active-classes="text-primary-container font-label-md"><div class="flex items-center justify-around h-16 px-space-xs overflow-x-auto no-scrollbar"><a class="flex flex-col items-center justify-center min-w-[48px] h-12 px-space-xs text-on-surface-variant transition-colors hover:text-on-surface" data-path="admin-dashboard" href="#"><span class="material-symbols-outlined text-[22px]">dashboard</span><span class="font-label-sm text-label-sm text-[10px] tracking-tight truncate">Dash</span></a><a class="flex flex-col items-center justify-center min-w-[48px] h-12 px-space-xs text-on-surface-variant transition-colors hover:text-on-surface" data-path="user-directory" href="#"><span class="material-symbols-outlined text-[22px]">group</span><span class="font-label-sm text-label-sm text-[10px] tracking-tight truncate">Users</span></a><a class="flex flex-col items-center justify-center min-w-[48px] h-12 px-space-xs text-on-surface-variant transition-colors hover:text-on-surface" data-path="worker-verification" href="#"><span class="material-symbols-outlined text-[22px]">verified</span><span class="font-label-sm text-label-sm text-[10px] tracking-tight truncate">Verify</span></a><a class="flex flex-col items-center justify-center min-w-[48px] h-12 px-space-xs text-on-surface-variant transition-colors hover:text-on-surface" data-path="marketplace-jobs" href="#"><span class="material-symbols-outlined text-[22px]">work</span><span class="font-label-sm text-label-sm text-[10px] tracking-tight truncate">Jobs</span></a><a class="flex flex-col items-center justify-center min-w-[48px] h-12 px-space-xs text-on-surface-variant transition-colors hover:text-on-surface" data-path="service-bookings" href="#"><span class="material-symbols-outlined text-[22px]">calendar_today</span><span class="font-label-sm text-label-sm text-[10px] tracking-tight truncate">Bookings</span></a><a class="flex flex-col items-center justify-center min-w-[48px] h-12 px-space-xs text-on-surface-variant transition-colors hover:text-on-surface" data-path="payment-taxes-overview" href="#"><span class="material-symbols-outlined text-[22px]">account_balance_wallet</span><span class="font-label-sm text-label-sm text-[10px] tracking-tight truncate">Finance</span></a><a class="flex flex-col items-center justify-center min-w-[48px] h-12 px-space-xs text-on-surface-variant transition-colors hover:text-on-surface" data-path="audit-reviews" href="#"><span class="material-symbols-outlined text-[22px]">rate_review</span><span class="font-label-sm text-label-sm text-[10px] tracking-tight truncate">Reviews</span></a><a class="flex flex-col items-center justify-center min-w-[48px] h-12 px-space-xs text-on-surface-variant transition-colors hover:text-on-surface" data-path="system-settings" href="#"><span class="material-symbols-outlined text-[22px]">settings</span><span class="font-label-sm text-label-sm text-[10px] tracking-tight truncate">Settings</span></a></div></nav></body></html>
