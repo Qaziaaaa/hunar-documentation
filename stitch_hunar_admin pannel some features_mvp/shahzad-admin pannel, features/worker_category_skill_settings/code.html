@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+
+<html class="h-full" lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>HUNAR Skilled Worker Portal</title><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base { html, body { margin: 0; padding: 0; } body { overscroll-behavior: none; } main > :first-child { margin-top: 0 !important; } main > :last-child { margin-bottom: 0 !important; } } ::-webkit-scrollbar { display: none; }</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = {
+    darkMode: "class",
+    theme: {
+      extend: {
+        "colors": {
+          "outline-variant": "#bdc9c9",
+          "on-secondary": "#ffffff",
+          "tertiary-fixed": "#ffddb8",
+          "tertiary-container": "#FEF3C7",
+          "secondary-fixed": "#d0e4ff",
+          "on-primary-fixed": "#002020",
+          "inverse-on-surface": "#eaf1ff",
+          "on-primary": "#ffffff",
+          "on-error-container": "#991B1B",
+          "error-container": "#ffdad6",
+          "surface-container-low": "#F1F5F9",
+          "secondary-fixed-dim": "#a6caf3",
+          "on-secondary-fixed-variant": "#24496c",
+          "tertiary": "#825100",
+          "surface-variant": "#d3e4fe",
+          "secondary-container": "#b1d5ff",
+          "on-tertiary-fixed-variant": "#653e00",
+          "inverse-surface": "#213145",
+          "on-tertiary-fixed": "#2a1700",
+          "surface-bright": "#f8f9ff",
+          "background": "#f8f9ff",
+          "on-secondary-fixed": "#0F172A",
+          "surface-container-lowest": "#ffffff",
+          "on-error": "#ffffff",
+          "surface-dim": "#cbdbf5",
+          "inverse-primary": "#72d6d8",
+          "on-primary-container": "#0B6365",
+          "surface-container-highest": "#d3e4fe",
+          "primary": "#006768",
+          "on-surface-variant": "#64748B",
+          "on-secondary-container": "#123B5D",
+          "primary-fixed": "#8ff3f4",
+          "error": "#DC2626",
+          "surface-container-high": "#E2E8F0",
+          "surface": "#F8FAFC",
+          "surface-container": "#e5eeff",
+          "on-tertiary": "#ffffff",
+          "secondary": "#3d6185",
+          "on-tertiary-container": "#B45309",
+          "on-primary-fixed-variant": "#004f51",
+          "surface-tint": "#00696b",
+          "primary-fixed-dim": "#72d6d8",
+          "outline": "#E2E8F0",
+          "tertiary-fixed-dim": "#FDE68A",
+          "on-background": "#0b1c30",
+          "on-surface": "#172033",
+          "primary-container": "#008284"
+        },
+        "borderRadius": {
+          "DEFAULT": "0.125rem",
+          "lg": "0.25rem",
+          "xl": "0.5rem",
+          "full": "0.75rem"
+        },
+        "spacing": {
+          "space-xl": "2rem",
+          "space-4xl": "6rem",
+          "space-lg": "1.5rem",
+          "space-2xl": "3rem",
+          "space-md": "1rem",
+          "space-sm": "0.75rem",
+          "space-3xl": "4.5rem",
+          "container-max": "75rem",
+          "gutter-desktop": "1.5rem",
+          "gutter-mobile": "1rem",
+          "space-2xs": "0.25rem",
+          "space-xs": "0.5rem"
+        },
+        "fontFamily": {
+          "body-lg": ["Inter"],
+          "label-md": ["Inter"],
+          "headline-lg": ["Inter"],
+          "display-hero-mobile": ["Inter"],
+          "headline-sm": ["Inter"],
+          "body-md": ["Inter"],
+          "body-sm": ["Inter"],
+          "label-sm": ["Inter"],
+          "mono-spec": ["Inter"],
+          "display-hero": ["Inter"],
+          "headline-lg-mobile": ["Inter"],
+          "headline-md": ["Inter"]
+        },
+        "fontSize": {
+          "body-lg": ["1rem", { "lineHeight": "1.5", "letterSpacing": "-0.005em", "fontWeight": "400" }],
+          "label-md": ["0.875rem", { "lineHeight": "1.25", "letterSpacing": "0.005em", "fontWeight": "500" }],
+          "headline-lg": ["1.75rem", { "lineHeight": "1.25", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+          "display-hero-mobile": ["1.875rem", { "lineHeight": "1.2", "letterSpacing": "-0.025em", "fontWeight": "700" }],
+          "headline-sm": ["1rem", { "lineHeight": "1.35", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+          "body-md": ["0.875rem", { "lineHeight": "1.5", "letterSpacing": "0em", "fontWeight": "400" }],
+          "body-sm": ["0.75rem", { "lineHeight": "1.4", "letterSpacing": "0em", "fontWeight": "400" }],
+          "label-sm": ["0.75rem", { "lineHeight": "1.2", "letterSpacing": "0.03em", "fontWeight": "600" }],
+          "mono-spec": ["0.8125rem", { "lineHeight": "1.4", "letterSpacing": "-0.01em", "fontWeight": "500" }],
+          "display-hero": ["2.25rem", { "lineHeight": "1.2", "letterSpacing": "-0.025em", "fontWeight": "700" }],
+          "headline-lg-mobile": ["1.5rem", { "lineHeight": "1.25", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+          "headline-md": ["1.25rem", { "lineHeight": "1.3", "letterSpacing": "-0.015em", "fontWeight": "600" }]
+        }
+      }
+    }
+  };</script></head><body class="bg-surface font-body-md text-on-surface antialiased min-h-screen"><aside class="fixed left-0 top-0 h-full w-64 bg-surface-container-lowest border-r border-outline z-50 flex flex-col"><div class="h-16 flex items-center gap-space-xs px-space-md border-b border-outline"><div class="w-8 h-8 rounded-xl bg-primary flex items-center justify-center text-on-primary font-headline-sm font-bold tracking-tight">H</div><div class="flex flex-col"><span class="font-headline-sm text-headline-sm font-bold text-on-secondary-fixed leading-none tracking-tight">HUNAR</span><span class="font-label-sm text-label-sm text-on-surface-variant leading-none mt-1">Partner Ops</span></div></div><div class="flex-1 overflow-y-auto py-space-sm px-space-xs"><div class="px-space-sm py-space-2xs text-[11px] font-semibold text-on-surface-variant uppercase tracking-wider">Work Dispatch</div><nav class="space-y-1 mb-space-md" data-active-classes="bg-primary text-on-primary font-medium rounded-lg shadow-none"><a class="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface font-label-md text-label-md transition-colors" data-path="dashboard" href="#"><span class="material-symbols-outlined text-[20px]">grid_view</span><span>Dashboard</span></a><a class="flex items-center justify-between px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface font-label-md text-label-md transition-colors" data-path="nearby-jobs" href="#"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-[20px]">near_me</span><span>Nearby Jobs</span></div><span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-tertiary-container text-on-tertiary-container">8 new</span></a><a class="flex items-center justify-between px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface font-label-md text-label-md transition-colors" data-path="active-jobs" href="#"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-[20px]">handyman</span><span>Active Jobs</span></div><span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-surface-container-high text-on-secondary-fixed">2</span></a><a class="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface font-label-md text-label-md transition-colors" data-path="my-offers" href="#"><span class="material-symbols-outlined text-[20px]">request_quote</span><span>My Offers</span></a><a class="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface font-label-md text-label-md transition-colors" data-path="upcoming-visits" href="#"><span class="material-symbols-outlined text-[20px]">event_available</span><span>Upcoming Visits</span></a><a class="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface font-label-md text-label-md transition-colors" data-path="completed-jobs" href="#"><span class="material-symbols-outlined text-[20px]">task_alt</span><span>Completed Jobs</span></a></nav><div class="px-space-sm py-space-2xs text-[11px] font-semibold text-on-surface-variant uppercase tracking-wider">Finances &amp; Reputation</div><nav class="space-y-1 mb-space-md" data-active-classes="bg-primary text-on-primary font-medium rounded-lg shadow-none"><a class="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface font-label-md text-label-md transition-colors" data-path="earnings" href="#"><span class="material-symbols-outlined text-[20px]">account_balance_wallet</span><span>Earnings</span></a><a class="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface font-label-md text-label-md transition-colors" data-path="reviews" href="#"><span class="material-symbols-outlined text-[20px]">star</span><span>Reviews</span></a></nav><div class="px-space-sm py-space-2xs text-[11px] font-semibold text-on-surface-variant uppercase tracking-wider">Account &amp; Setup</div><nav class="space-y-1" data-active-classes="bg-primary text-on-primary font-medium rounded-lg shadow-none"><a class="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface font-label-md text-label-md transition-colors" data-path="profile" href="#"><span class="material-symbols-outlined text-[20px]">person_outline</span><span>Profile</span></a><div class="pl-8 pr-2 space-y-1 mt-1"><a aria-current="page" class="flex items-center px-2 py-1.5 transition-colors bg-primary text-on-primary font-medium rounded-lg shadow-none" data-path="my-services" href="#"><span>My Services</span></a><a class="flex items-center px-2 py-1.5 rounded text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface font-body-sm text-body-sm transition-colors" data-path="my-location" href="#"><span>My Location</span></a></div></nav></div><div class="p-space-sm border-t border-outline bg-surface-container-low"><div class="flex items-center gap-2 p-2 rounded-lg border border-outline bg-surface-container-lowest"><span class="material-symbols-outlined text-primary text-[18px]">verified_user</span><div class="flex flex-col"><span class="font-label-sm text-label-sm font-semibold text-on-surface leading-tight">NADRA Verified</span><span class="text-[11px] text-on-surface-variant leading-none mt-0.5">Level 2 Master Tech</span></div></div></div></aside><div class="pl-64"><header class="fixed top-0 left-64 right-0 h-16 bg-surface-container-lowest border-b border-outline z-40 px-space-gutter-desktop flex items-center justify-between"><div class="flex items-center gap-space-md"><span class="inline-flex items-center px-2.5 py-1 rounded-full font-label-sm text-label-sm font-semibold bg-surface-container-low text-on-secondary-fixed border border-outline">Skilled Worker Portal</span><div class="hidden xl:flex items-center gap-1.5 px-3 py-1 rounded-lg border border-outline bg-surface text-on-surface-variant font-label-sm text-label-sm"><span class="material-symbols-outlined text-primary text-[18px]">location_on</span><span>Serving: <strong class="text-on-surface font-semibold">F-10, Islamabad</strong></span><span class="text-outline-variant">•</span><span class="text-on-surface-variant">10 km radius</span></div></div><div class="flex items-center gap-space-lg"><div class="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-outline bg-surface-container-lowest"><span class="relative flex h-2.5 w-2.5"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span><span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-primary"></span></span><span class="font-label-sm text-label-sm font-semibold text-on-surface">Online</span><span class="text-[11px] text-on-surface-variant border-l border-outline pl-2 ml-1 hidden sm:inline">Ready for Jobs</span></div><div class="flex items-center gap-space-sm"><button class="relative p-2 rounded-lg border border-outline bg-surface-container-lowest text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low transition-colors" type="button"><span class="material-symbols-outlined text-[20px]">notifications</span><span class="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-error"></span></button><div class="h-8 w-px bg-outline hidden sm:block"></div><div class="flex items-center gap-2.5"><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center flex-shrink-0"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div><div class="hidden md:flex flex-col text-left"><span class="font-label-md text-label-md font-semibold text-on-secondary-fixed leading-tight">Ali Khan</span><span class="font-body-sm text-body-sm text-on-surface-variant leading-none mt-0.5">AC Specialist</span></div></div></div></div></header><main class="w-full pt-16 bg-surface min-h-screen"><div class="flex flex-col w-full px-space-gutter-desktop py-space-xl max-w-[75rem] mx-auto">
+<div class="fixed top-20 right-6 z-50 flex items-center gap-space-sm bg-surface-container-lowest text-on-surface px-space-md py-space-sm rounded-lg shadow-md transition-all duration-300 transform translate-y-0 opacity-100 border-l-4 border-l-[#16A34A] border border-outline" id="toastNotification">
+<span class="material-symbols-outlined text-[#16A34A] text-[20px]">check_circle</span>
+<div class="flex flex-col">
+<span class="font-label-md text-label-md font-semibold text-on-surface">Categories Updated</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Your service categories have been updated successfully.</span>
+</div>
+<button class="ml-space-md text-on-surface-variant hover:text-on-surface p-1" onclick="document.getElementById('toastNotification').style.display='none'">
+<span class="material-symbols-outlined text-[18px]">close</span>
+</button>
+</div>
+<div class="flex flex-col mb-space-lg">
+<nav class="flex items-center gap-2 text-on-surface-variant font-label-sm text-label-sm mb-space-2xs">
+<a class="hover:text-primary transition-colors" href="#">Profile</a>
+<span class="text-outline-variant">/</span>
+<span class="text-on-secondary-fixed font-semibold">My Services</span>
+</nav>
+<h1 class="font-headline-md text-headline-md text-[#0F172A] tracking-tight">What services do you offer?</h1>
+<p class="font-body-sm text-body-sm text-[#64748B] mt-1">Select all trade categories you specialize in. You can update this anytime.</p>
+</div>
+<div class="flex items-start justify-between bg-[#EFF4FF] border-l-[3px] border-l-[#0F766E] p-space-md rounded-lg mb-space-lg" id="infoBanner">
+<div class="flex items-start gap-space-sm">
+<span class="material-symbols-outlined text-[#0F766E] text-[20px] mt-0.5">info</span>
+<p class="font-body-md text-body-md text-[#1E3A8A]">
+        Workers only receive job requests that match their registered categories and service area. Keep your categories accurate to see the most relevant jobs.
+      </p>
+</div>
+<button class="text-[#1E3A8A] hover:opacity-75 p-0.5 ml-space-md" onclick="document.getElementById('infoBanner').style.display='none'">
+<span class="material-symbols-outlined text-[18px]">close</span>
+</button>
+</div>
+<div class="flex items-center gap-space-sm bg-[#FFFBEB] border-l-[3px] border-l-[#F59E0B] p-space-sm px-space-md rounded-lg mb-space-xl">
+<span class="material-symbols-outlined text-[#F59E0B] text-[20px]">warning</span>
+<span class="font-body-sm text-body-sm text-[#92400E]">
+      You have an active offer in <strong class="font-semibold text-[#78350F]">Electrician</strong>. Removing it will not affect ongoing jobs.
+    </span>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-space-md mb-space-xl">
+<div class="cursor-pointer relative flex flex-col justify-between p-space-lg rounded-lg border-2 border-[#0F766E] bg-[#CCFBF1]/20 transition-all duration-150 select-none" onclick="toggleCategory(this, 'ac-specializations')">
+<div class="absolute top-3 right-3 w-6 h-6 rounded-full bg-[#0F766E] flex items-center justify-center text-white">
+<span class="material-symbols-outlined text-[16px]">check</span>
+</div>
+<div>
+<div class="w-10 h-10 rounded-lg bg-[#CCFBF1] flex items-center justify-center mb-space-sm text-[#0F766E]">
+<span class="material-symbols-outlined text-[24px]">mode_fan</span>
+</div>
+<h2 class="font-headline-sm text-headline-sm text-[#0F172A] font-semibold mb-1">AC Repair</h2>
+<p class="font-body-sm text-body-sm text-[#64748B]">Inverter diagnostics, gas refill, routine compressor servicing.</p>
+</div>
+<div class="mt-space-md flex items-center gap-1.5 text-[11px] font-semibold text-[#0F766E]">
+<span>6 Specializations Configured</span>
+<span class="material-symbols-outlined text-[16px]">tune</span>
+</div>
+</div>
+<div class="cursor-pointer relative flex flex-col justify-between p-space-lg rounded-lg border-2 border-[#0F766E] bg-[#CCFBF1]/20 transition-all duration-150 select-none" onclick="toggleCategory(this)">
+<div class="absolute top-3 right-3 w-6 h-6 rounded-full bg-[#0F766E] flex items-center justify-center text-white">
+<span class="material-symbols-outlined text-[16px]">check</span>
+</div>
+<div>
+<div class="w-10 h-10 rounded-lg bg-[#CCFBF1] flex items-center justify-center mb-space-sm text-[#0F766E]">
+<span class="material-symbols-outlined text-[24px]">plumbing</span>
+</div>
+<h2 class="font-headline-sm text-headline-sm text-[#0F172A] font-semibold mb-1">Plumbing</h2>
+<p class="font-body-sm text-body-sm text-[#64748B]">PPR/CPVC piping, geyser repairs, drainage and water pressure fixes.</p>
+</div>
+<div class="mt-space-md flex items-center gap-1.5 text-[11px] font-semibold text-[#0F766E]">
+<span>Active Category</span>
+</div>
+</div>
+<div class="cursor-pointer relative flex flex-col justify-between p-space-lg rounded-lg border-2 border-[#0F766E] bg-[#CCFBF1]/20 transition-all duration-150 select-none" onclick="toggleCategory(this)">
+<div class="absolute top-3 right-3 w-6 h-6 rounded-full bg-[#0F766E] flex items-center justify-center text-white">
+<span class="material-symbols-outlined text-[16px]">check</span>
+</div>
+<div>
+<div class="w-10 h-10 rounded-lg bg-[#CCFBF1] flex items-center justify-center mb-space-sm text-[#0F766E]">
+<span class="material-symbols-outlined text-[24px]">electric_bolt</span>
+</div>
+<h2 class="font-headline-sm text-headline-sm text-[#0F172A] font-semibold mb-1">Electrician</h2>
+<p class="font-body-sm text-body-sm text-[#64748B]">Distribution board breakers, rewiring, UPS &amp; solar inverter integration.</p>
+</div>
+<div class="mt-space-md flex items-center gap-1.5 text-[11px] font-semibold text-[#B45309]">
+<span class="material-symbols-outlined text-[14px]">bolt</span>
+<span>1 Active Offer Dispatched</span>
+</div>
+</div>
+<div class="cursor-pointer relative flex flex-col justify-between p-space-lg rounded-lg border border-[#E2E8F0] bg-surface-container-lowest transition-all duration-150 select-none hover:border-outline-variant" onclick="toggleCategory(this)">
+<div class="hidden absolute top-3 right-3 w-6 h-6 rounded-full bg-[#0F766E] items-center justify-center text-white">
+<span class="material-symbols-outlined text-[16px]">check</span>
+</div>
+<div>
+<div class="w-10 h-10 rounded-lg bg-[#CCFBF1] flex items-center justify-center mb-space-sm text-[#0F766E]">
+<span class="material-symbols-outlined text-[24px]">carpenter</span>
+</div>
+<h2 class="font-headline-sm text-headline-sm text-[#0F172A] font-semibold mb-1">Carpenter</h2>
+<p class="font-body-sm text-body-sm text-[#64748B]">Door fittings, custom shelving, hinge realignment, modular furniture.</p>
+</div>
+<div class="mt-space-md text-[11px] text-on-surface-variant">Tap to activate</div>
+</div>
+<div class="cursor-pointer relative flex flex-col justify-between p-space-lg rounded-lg border border-[#E2E8F0] bg-surface-container-lowest transition-all duration-150 select-none hover:border-outline-variant" onclick="toggleCategory(this)">
+<div class="hidden absolute top-3 right-3 w-6 h-6 rounded-full bg-[#0F766E] items-center justify-center text-white">
+<span class="material-symbols-outlined text-[16px]">check</span>
+</div>
+<div>
+<div class="w-10 h-10 rounded-lg bg-[#CCFBF1] flex items-center justify-center mb-space-sm text-[#0F766E]">
+<span class="material-symbols-outlined text-[24px]">home_repair_service</span>
+</div>
+<h2 class="font-headline-sm text-headline-sm text-[#0F172A] font-semibold mb-1">Appliance Repair</h2>
+<p class="font-body-sm text-body-sm text-[#64748B]">Washing machine drums, microwave circuits, water dispenser pumps.</p>
+</div>
+<div class="mt-space-md text-[11px] text-on-surface-variant">Tap to activate</div>
+</div>
+<div class="cursor-pointer relative flex flex-col justify-between p-space-lg rounded-lg border border-[#E2E8F0] bg-surface-container-lowest transition-all duration-150 select-none hover:border-outline-variant" onclick="toggleCategory(this)">
+<div class="hidden absolute top-3 right-3 w-6 h-6 rounded-full bg-[#0F766E] items-center justify-center text-white">
+<span class="material-symbols-outlined text-[16px]">check</span>
+</div>
+<div>
+<div class="w-10 h-10 rounded-lg bg-[#CCFBF1] flex items-center justify-center mb-space-sm text-[#0F766E]">
+<span class="material-symbols-outlined text-[24px]">format_paint</span>
+</div>
+<h2 class="font-headline-sm text-headline-sm text-[#0F172A] font-semibold mb-1">Painter</h2>
+<p class="font-body-sm text-body-sm text-[#64748B]">Interior emulsion, weather-sheet exterior, wood polishing &amp; primer.</p>
+</div>
+<div class="mt-space-md text-[11px] text-on-surface-variant">Tap to activate</div>
+</div>
+<div class="cursor-pointer relative flex flex-col justify-between p-space-lg rounded-lg border border-[#E2E8F0] bg-surface-container-lowest transition-all duration-150 select-none hover:border-outline-variant" onclick="toggleCategory(this)">
+<div class="hidden absolute top-3 right-3 w-6 h-6 rounded-full bg-[#0F766E] items-center justify-center text-white">
+<span class="material-symbols-outlined text-[16px]">check</span>
+</div>
+<div>
+<div class="w-10 h-10 rounded-lg bg-[#CCFBF1] flex items-center justify-center mb-space-sm text-[#0F766E]">
+<span class="material-symbols-outlined text-[24px]">cleaning_services</span>
+</div>
+<h2 class="font-headline-sm text-headline-sm text-[#0F172A] font-semibold mb-1">Cleaning</h2>
+<p class="font-body-sm text-body-sm text-[#64748B]">Deep sofa extraction, floor scrubbers, sanitization, overhead tanks.</p>
+</div>
+<div class="mt-space-md text-[11px] text-on-surface-variant">Tap to activate</div>
+</div>
+<div class="cursor-pointer relative flex flex-col justify-between p-space-lg rounded-lg border border-[#E2E8F0] bg-surface-container-lowest transition-all duration-150 select-none hover:border-outline-variant" onclick="toggleCategory(this)">
+<div class="hidden absolute top-3 right-3 w-6 h-6 rounded-full bg-[#0F766E] items-center justify-center text-white">
+<span class="material-symbols-outlined text-[16px]">check</span>
+</div>
+<div>
+<div class="w-10 h-10 rounded-lg bg-[#CCFBF1] flex items-center justify-center mb-space-sm text-[#0F766E]">
+<span class="material-symbols-outlined text-[24px]">more_horiz</span>
+</div>
+<h2 class="font-headline-sm text-headline-sm text-[#0F172A] font-semibold mb-1">Other</h2>
+<p class="font-body-sm text-body-sm text-[#64748B]">Masonry, glass cutting, welding, aluminum partition installations.</p>
+</div>
+<div class="mt-space-md text-[11px] text-on-surface-variant">Tap to activate</div>
+</div>
+</div>
+<section class="bg-surface-container-lowest border border-[#E2E8F0] rounded-lg p-space-lg mb-space-xl" id="ac-specializations">
+<div class="flex items-center justify-between border-b border-outline pb-space-sm mb-space-md">
+<div class="flex items-center gap-space-sm">
+<div class="w-8 h-8 rounded bg-[#CCFBF1] flex items-center justify-center text-[#0F766E]">
+<span class="material-symbols-outlined text-[20px]">mode_fan</span>
+</div>
+<div>
+<h2 class="font-headline-sm text-headline-sm text-[#0F172A] font-semibold">AC Repair Specializations</h2>
+<p class="font-body-sm text-body-sm text-[#64748B]">Select the specific diagnostic and service skills you are equipped to handle.</p>
+</div>
+</div>
+<button class="font-label-sm text-label-sm text-[#0F766E] hover:underline font-semibold" onclick="toggleAllChips(this)" type="button">
+        Deselect All
+      </button>
+</div>
+<div class="flex flex-wrap gap-space-xs pt-1">
+<button class="chip-btn px-3 py-1.5 rounded-full border border-[#0F766E] bg-[#CCFBF1] text-[#0F766E] font-label-sm text-label-sm font-semibold flex items-center gap-1.5 transition-colors" onclick="toggleChip(this)" type="button">
+<span class="material-symbols-outlined text-[16px]">check</span>
+<span>Installation</span>
+</button>
+<button class="chip-btn px-3 py-1.5 rounded-full border border-[#0F766E] bg-[#CCFBF1] text-[#0F766E] font-label-sm text-label-sm font-semibold flex items-center gap-1.5 transition-colors" onclick="toggleChip(this)" type="button">
+<span class="material-symbols-outlined text-[16px]">check</span>
+<span>Gas Refilling</span>
+</button>
+<button class="chip-btn px-3 py-1.5 rounded-full border border-[#0F766E] bg-[#CCFBF1] text-[#0F766E] font-label-sm text-label-sm font-semibold flex items-center gap-1.5 transition-colors" onclick="toggleChip(this)" type="button">
+<span class="material-symbols-outlined text-[16px]">check</span>
+<span>Servicing &amp; Cleaning</span>
+</button>
+<button class="chip-btn px-3 py-1.5 rounded-full border border-[#0F766E] bg-[#CCFBF1] text-[#0F766E] font-label-sm text-label-sm font-semibold flex items-center gap-1.5 transition-colors" onclick="toggleChip(this)" type="button">
+<span class="material-symbols-outlined text-[16px]">check</span>
+<span>Compressor Repair</span>
+</button>
+<button class="chip-btn px-3 py-1.5 rounded-full border border-[#0F766E] bg-[#CCFBF1] text-[#0F766E] font-label-sm text-label-sm font-semibold flex items-center gap-1.5 transition-colors" onclick="toggleChip(this)" type="button">
+<span class="material-symbols-outlined text-[16px]">check</span>
+<span>Thermostat Repair</span>
+</button>
+<button class="chip-btn px-3 py-1.5 rounded-full border border-[#0F766E] bg-[#CCFBF1] text-[#0F766E] font-label-sm text-label-sm font-semibold flex items-center gap-1.5 transition-colors" onclick="toggleChip(this)" type="button">
+<span class="material-symbols-outlined text-[16px]">check</span>
+<span>Inverter PCB Board Diagnostics</span>
+</button>
+<button class="chip-btn px-3 py-1.5 rounded-full border border-[#E2E8F0] bg-surface-container-lowest text-on-surface-variant font-label-sm text-label-sm font-medium flex items-center gap-1.5 transition-colors hover:border-[#0F766E]" onclick="toggleChip(this)" type="button">
+<span class="material-symbols-outlined text-[16px] hidden">check</span>
+<span>Duct Cleaning &amp; Sealing</span>
+</button>
+<button class="chip-btn px-3 py-1.5 rounded-full border border-[#E2E8F0] bg-surface-container-lowest text-on-surface-variant font-label-sm text-label-sm font-medium flex items-center gap-1.5 transition-colors hover:border-[#0F766E]" onclick="toggleChip(this)" type="button">
+<span class="material-symbols-outlined text-[16px] hidden">check</span>
+<span>Capacitor Replacement</span>
+</button>
+</div>
+</section>
+<div class="flex items-center justify-between pt-space-md border-t border-[#E2E8F0]">
+<div class="flex items-center gap-2">
+<span class="font-body-sm text-body-sm text-[#64748B]">Selected:</span>
+<span class="inline-flex items-center px-2 py-0.5 rounded-full font-label-sm text-label-sm font-semibold bg-[#CCFBF1] text-[#0F766E]">
+        3 Trade Categories Active
+      </span>
+</div>
+<div class="flex items-center gap-space-sm">
+<button class="px-space-md py-2 rounded-[0.375rem] border border-[#123B5D] bg-surface-container-lowest text-[#123B5D] font-label-md text-label-md hover:bg-surface-container-low transition-colors" type="button">
+        Cancel
+      </button>
+<button class="px-space-lg py-2 rounded-[0.375rem] bg-[#0F766E] hover:bg-[#0B6365] text-white font-label-md text-label-md font-semibold transition-colors flex items-center gap-1.5" onclick="triggerToast()" type="button">
+<span class="material-symbols-outlined text-[18px]">save</span>
+<span>Save Changes</span>
+</button>
+</div>
+</div>
+<script>
+    function toggleCategory(card, subId) {
+      const badge = card.querySelector('.absolute');
+      const isSelected = card.classList.contains('border-[#0F766E]');
+      
+      if (isSelected) {
+        card.classList.remove('border-[#0F766E]', 'bg-[#CCFBF1]/20', 'border-2');
+        card.classList.add('border-[#E2E8F0]', 'bg-surface-container-lowest', 'border');
+        if (badge) {
+          badge.classList.add('hidden');
+          badge.classList.remove('flex');
+        }
+        if (subId) {
+          const sub = document.getElementById(subId);
+          if (sub) sub.classList.add('hidden');
+        }
+      } else {
+        card.classList.add('border-[#0F766E]', 'bg-[#CCFBF1]/20', 'border-2');
+        card.classList.remove('border-[#E2E8F0]', 'bg-surface-container-lowest', 'border');
+        if (badge) {
+          badge.classList.remove('hidden');
+          badge.classList.add('flex');
+        }
+        if (subId) {
+          const sub = document.getElementById(subId);
+          if (sub) sub.classList.remove('hidden');
+        }
+      }
+    }
+
+    function toggleChip(chip) {
+      const isSelected = chip.classList.contains('bg-[#CCFBF1]');
+      const checkIcon = chip.querySelector('.material-symbols-outlined');
+      
+      if (isSelected) {
+        chip.classList.remove('bg-[#CCFBF1]', 'border-[#0F766E]', 'text-[#0F766E]', 'font-semibold');
+        chip.classList.add('bg-surface-container-lowest', 'border-[#E2E8F0]', 'text-on-surface-variant', 'font-medium');
+        if (checkIcon) checkIcon.classList.add('hidden');
+      } else {
+        chip.classList.add('bg-[#CCFBF1]', 'border-[#0F766E]', 'text-[#0F766E]', 'font-semibold');
+        chip.classList.remove('bg-surface-container-lowest', 'border-[#E2E8F0]', 'text-on-surface-variant', 'font-medium');
+        if (checkIcon) checkIcon.classList.remove('hidden');
+      }
+    }
+
+    function toggleAllChips(btn) {
+      const chips = document.querySelectorAll('.chip-btn');
+      const allSelected = btn.textContent.trim() === 'Deselect All';
+      
+      chips.forEach(chip => {
+        const checkIcon = chip.querySelector('.material-symbols-outlined');
+        if (allSelected) {
+          chip.classList.remove('bg-[#CCFBF1]', 'border-[#0F766E]', 'text-[#0F766E]', 'font-semibold');
+          chip.classList.add('bg-surface-container-lowest', 'border-[#E2E8F0]', 'text-on-surface-variant', 'font-medium');
+          if (checkIcon) checkIcon.classList.add('hidden');
+        } else {
+          chip.classList.add('bg-[#CCFBF1]', 'border-[#0F766E]', 'text-[#0F766E]', 'font-semibold');
+          chip.classList.remove('bg-surface-container-lowest', 'border-[#E2E8F0]', 'text-on-surface-variant', 'font-medium');
+          if (checkIcon) checkIcon.classList.remove('hidden');
+        }
+      });
+      
+      btn.textContent = allSelected ? 'Select All' : 'Deselect All';
+    }
+
+    function triggerToast() {
+      const toast = document.getElementById('toastNotification');
+      toast.style.display = 'flex';
+      toast.style.opacity = '1';
+      toast.style.transform = 'translateY(0)';
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateY(-10px)';
+        setTimeout(() => { toast.style.display = 'none'; }, 300);
+      }, 4000);
+    }
+  </script>
+</div></main></div></body></html>

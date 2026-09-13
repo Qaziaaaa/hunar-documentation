@@ -1,0 +1,1370 @@
+<!DOCTYPE html>
+<html class="h-full" lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Poppins:wght@600;700;800&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet" />
+
+    <style>
+        @layer base {
+            html, body {
+                margin: 0;
+                padding: 0;
+            }
+            body {
+                overscroll-behavior: none;
+            }
+            main > :first-child {
+                margin-top: 0 !important;
+            }
+            main > :last-child {
+                margin-bottom: 0 !important;
+            }
+        }
+        ::-webkit-scrollbar {
+            display: none;
+        }
+
+        /* ===== SIDEBAR FIX ===== */
+        :root {
+            --sidebar-width: 260px;
+            --header-height: 64px;
+        }
+
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: var(--sidebar-width);
+            background: #fff;
+            border-right: 1px solid #E2E8F0;
+            z-index: 50;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            user-select: none;
+            overflow: hidden;
+        }
+
+        /* Main content wrapper — pushes right of sidebar */
+        .main-wrapper {
+            margin-left: var(--sidebar-width);
+            min-height: 100vh;
+            background: #F8FAFC;
+            width: calc(100% - var(--sidebar-width));
+            transition: margin-left 0.3s ease, width 0.3s ease;
+        }
+
+        /* Header fixed — offset by sidebar width */
+        .top-header {
+            position: fixed;
+            top: 0;
+            left: var(--sidebar-width);
+            right: 0;
+            height: var(--header-height);
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid #E2E8F0;
+            z-index: 40;
+            padding: 0 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            transition: left 0.3s ease, right 0.3s ease;
+        }
+
+        /* Main content area — padded below fixed header */
+        .main-content {
+            padding-top: var(--header-height);
+            width: 100%;
+            min-height: 100vh;
+            background: #F8FAFC;
+        }
+
+        /* Ambient glow container */
+        .page-container {
+            position: relative;
+            width: 100%;
+            overflow: hidden;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        /* ===== MOBILE RESPONSIVE ===== */
+        @media (max-width: 1024px) {
+            :root {
+                --sidebar-width: 0px;
+            }
+
+            .sidebar {
+                width: 260px;
+                transform: translateX(-100%);
+                transition: transform 0.3s ease;
+                box-shadow: 4px 0 24px rgba(0, 0, 0, 0.08);
+            }
+
+            .sidebar.open {
+                transform: translateX(0);
+            }
+
+            .main-wrapper {
+                margin-left: 0;
+                width: 100%;
+            }
+
+            .top-header {
+                left: 0;
+                right: 0;
+                padding: 0 16px;
+            }
+
+            /* Mobile menu toggle */
+            .mobile-menu-toggle {
+                display: flex !important;
+            }
+
+            .sidebar-overlay {
+                display: none;
+                position: fixed;
+                inset: 0;
+                background: rgba(0, 0, 0, 0.3);
+                z-index: 45;
+            }
+            .sidebar-overlay.active {
+                display: block;
+            }
+
+            .page-container {
+                padding: 16px;
+                gap: 16px;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .top-header {
+                padding: 0 12px;
+                height: 56px;
+            }
+            :root {
+                --header-height: 56px;
+            }
+
+            .page-container {
+                padding: 12px;
+                gap: 12px;
+            }
+
+            /* Hide search on very small screens */
+            .header-search {
+                display: none;
+            }
+
+            .header-breadcrumb {
+                display: none;
+            }
+
+            .live-indicator {
+                display: none;
+            }
+
+            /* KPI cards stack */
+            .kpi-grid {
+                grid-template-columns: 1fr !important;
+            }
+        }
+
+        .mobile-menu-toggle {
+            display: none;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            background: transparent;
+            border: none;
+            color: #1A1A2E;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+        .mobile-menu-toggle:hover {
+            background: #F8FAFC;
+        }
+
+        /* ===== UTILITY OVERRIDES ===== */
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+        }
+
+        @media (max-width: 1280px) {
+            .kpi-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 640px) {
+            .kpi-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Ensure chart containers don't overflow */
+        .chart-container {
+            position: relative;
+            width: 100%;
+            height: 260px;
+        }
+        .chart-container svg {
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Table responsiveness */
+        .table-responsive {
+            width: 100%;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        .table-responsive table {
+            min-width: 600px;
+        }
+
+        /* Prevent horizontal overflow anywhere */
+        * {
+            max-width: 100%;
+            box-sizing: border-box;
+        }
+        img, svg {
+            max-width: 100%;
+        }
+    </style>
+
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        navy: "#1A1A2E",
+                        teal: {
+                            DEFAULT: "#0F766E",
+                            dark: "#115E59",
+                            light: "rgba(15, 118, 110, 0.1)"
+                        },
+                        orange: "#F59E0B",
+                        success: "#16A34A",
+                        error: "#DC2626",
+                        gray: "#64748B",
+                        background: "#F8FAFC",
+                        border: "#E2E8F0",
+                        surface: "#FFFFFF",
+                        primary: "#0F766E",
+                        "primary-dark": "#115E59",
+                        secondary: "#1A1A2E",
+                        appBg: "#F8FAFC",
+                        darkText: "#1A1A2E",
+                        mutedText: "#64748B",
+                        borderLine: "#E2E8F0",
+                        "text-main": "#1A1A2E",
+                        "surface-muted": "#F8FAFC",
+                        "outline-border": "#E2E8F0",
+                        "on-surface": "#1A1A2E",
+                        "on-surface-variant": "#64748B",
+                        "on-background": "#1A1A2E",
+                        "on-primary": "#FFFFFF",
+                        "on-secondary": "#FFFFFF",
+                        "on-error": "#FFFFFF",
+                        "surface-container-lowest": "#FFFFFF",
+                        "surface-container-low": "#F8FAFC",
+                        "surface-container": "#F8FAFC",
+                        "surface-container-high": "#F8FAFC",
+                        "surface-container-highest": "#F8FAFC",
+                        "surface-variant": "#F8FAFC",
+                        "surface-tint": "#0F766E",
+                        "surface-dim": "#E2E8F0",
+                        "surface-bright": "#FFFFFF",
+                        outline: "#64748B",
+                        "outline-variant": "#E2E8F0",
+                        "primary-container": "rgba(15, 118, 110, 0.1)",
+                        "on-primary-container": "#0F766E",
+                        "secondary-container": "rgba(26, 26, 46, 0.08)",
+                        "on-secondary-container": "#1A1A2E",
+                        "secondary-fixed": "rgba(15, 118, 110, 0.1)",
+                        "secondary-fixed-dim": "rgba(15, 118, 110, 0.1)",
+                        "on-secondary-fixed": "#1A1A2E",
+                        "on-secondary-fixed-variant": "#115E59",
+                        "primary-fixed": "rgba(15, 118, 110, 0.1)",
+                        "primary-fixed-dim": "rgba(15, 118, 110, 0.1)",
+                        "on-primary-fixed": "#1A1A2E",
+                        "on-primary-fixed-variant": "#115E59",
+                        "tertiary": "#F59E0B",
+                        "tertiary-container": "rgba(245, 158, 11, 0.1)",
+                        "on-tertiary-container": "#F59E0B",
+                        "tertiary-fixed": "rgba(245, 158, 11, 0.1)",
+                        "on-tertiary-fixed": "#1A1A2E",
+                        "error-container": "rgba(220, 38, 38, 0.1)",
+                        "on-error-container": "#DC2626",
+                        "inverse-primary": "#0F766E",
+                        "inverse-surface": "#1A1A2E",
+                        "inverse-on-surface": "#F8FAFC"
+                    },
+                    spacing: {
+                        "margin-desktop": "2rem",
+                        "margin-tablet": "1.5rem",
+                        "margin-mobile": "1rem",
+                        "gutter-desktop": "1.5rem",
+                        "gutter-mobile": "1rem",
+                        "space-3xl": "4rem",
+                        "space-2xl": "3rem",
+                        "space-xl": "2rem",
+                        "space-lg": "1.5rem",
+                        "space-md": "1rem",
+                        "space-base": "1rem",
+                        "space-sm": "0.75rem",
+                        "space-xs": "0.5rem",
+                        "space-2xs": "0.25rem",
+                        "space-xxs": "0.25rem",
+                        "space-1": "0.25rem",
+                        "space-2": "0.5rem",
+                        "space-3": "0.75rem",
+                        "space-4": "1rem",
+                        "space-5": "1.25rem",
+                        "space-6": "1.5rem",
+                        "space-8": "2rem",
+                        "space-12": "3rem",
+                        "space-16": "4rem",
+                        "space-20": "5rem",
+                        "space-24": "6rem",
+                        "space-stack-sm": "0.5rem",
+                        "space-stack-md": "1rem",
+                        "space-stack-lg": "1.5rem",
+                        "section-gap": "2rem",
+                        "gutter": "1.5rem",
+                        "sidebar-w": "260px"
+                    },
+                    fontSize: {
+                        "stat-lg": ["28px", { lineHeight: "36px", letterSpacing: "-0.02em", fontWeight: "700" }],
+                        "button-text": ["14px", { lineHeight: "20px", letterSpacing: "0.01em", fontWeight: "600" }],
+                        "display-hero": ["48px", { lineHeight: "56px", letterSpacing: "-0.025em", fontWeight: "700" }],
+                        "display-hero-mobile": ["32px", { lineHeight: "40px", letterSpacing: "-0.02em", fontWeight: "700" }],
+                        "display-kpi": ["36px", { lineHeight: "44px", letterSpacing: "-0.02em", fontWeight: "700" }],
+                        "display-kpi-mobile": ["28px", { lineHeight: "34px", letterSpacing: "-0.02em", fontWeight: "700" }],
+                        "display-lg": ["36px", { lineHeight: "44px", letterSpacing: "-0.02em", fontWeight: "700" }],
+                        "headline-page": ["28px", { lineHeight: "36px", letterSpacing: "-0.015em", fontWeight: "600" }],
+                        "headline-page-mobile": ["24px", { lineHeight: "32px", letterSpacing: "-0.015em", fontWeight: "600" }],
+                        "headline-section": ["20px", { lineHeight: "28px", letterSpacing: "-0.01em", fontWeight: "600" }],
+                        "headline-subsection": ["16px", { lineHeight: "24px", letterSpacing: "-0.005em", fontWeight: "600" }],
+                        "headline-lg": ["28px", { lineHeight: "36px", letterSpacing: "-0.015em", fontWeight: "600" }],
+                        "headline-lg-mobile": ["24px", { lineHeight: "32px", letterSpacing: "-0.015em", fontWeight: "600" }],
+                        "headline-md": ["20px", { lineHeight: "28px", letterSpacing: "-0.01em", fontWeight: "600" }],
+                        "headline-sm": ["16px", { lineHeight: "24px", letterSpacing: "-0.005em", fontWeight: "600" }],
+                        "headline-xl-mobile": ["26px", { lineHeight: "34px", letterSpacing: "-0.015em", fontWeight: "600" }],
+                        "body-default": ["14px", { lineHeight: "22px", letterSpacing: "0em", fontWeight: "400" }],
+                        "body-compact": ["13px", { lineHeight: "18px", letterSpacing: "0em", fontWeight: "400" }],
+                        "body-strong": ["14px", { lineHeight: "22px", letterSpacing: "0em", fontWeight: "600" }],
+                        "body-lg": ["16px", { lineHeight: "24px", letterSpacing: "0em", fontWeight: "400" }],
+                        "body-md": ["14px", { lineHeight: "22px", letterSpacing: "0em", fontWeight: "400" }],
+                        "body-md-medium": ["14px", { lineHeight: "22px", letterSpacing: "0em", fontWeight: "500" }],
+                        "body-sm": ["12px", { lineHeight: "16px", letterSpacing: "0em", fontWeight: "400" }],
+                        "label-badge": ["11px", { lineHeight: "14px", letterSpacing: "0.02em", fontWeight: "600" }],
+                        "label-regular": ["12px", { lineHeight: "16px", letterSpacing: "0.01em", fontWeight: "500" }],
+                        "label-md": ["12px", { lineHeight: "16px", letterSpacing: "0.01em", fontWeight: "500" }],
+                        "label-sm": ["11px", { lineHeight: "14px", letterSpacing: "0.02em", fontWeight: "500" }],
+                        "label-uppercase": ["10px", { lineHeight: "12px", letterSpacing: "0.05em", fontWeight: "700" }]
+                    },
+                    fontFamily: {
+                        sans: ["Inter", "sans-serif"],
+                        "stat-lg": ["Inter", "sans-serif"],
+                        "button-text": ["Inter", "sans-serif"],
+                        "body-default": ["Inter", "sans-serif"],
+                        "body-compact": ["Inter", "sans-serif"],
+                        "body-strong": ["Inter", "sans-serif"],
+                        "body-md": ["Inter", "sans-serif"],
+                        "body-sm": ["Inter", "sans-serif"],
+                        "display-kpi": ["Inter", "sans-serif"],
+                        "headline-page": ["Inter", "sans-serif"],
+                        "headline-section": ["Inter", "sans-serif"],
+                        "headline-subsection": ["Inter", "sans-serif"],
+                        "headline-md": ["Inter", "sans-serif"],
+                        "headline-sm": ["Inter", "sans-serif"],
+                        "headline-lg": ["Inter", "sans-serif"],
+                        "label-badge": ["Inter", "sans-serif"],
+                        "label-regular": ["Inter", "sans-serif"],
+                        "label-md": ["Inter", "sans-serif"],
+                        "label-sm": ["Inter", "sans-serif"]
+                    },
+                    borderRadius: {
+                        DEFAULT: "0.375rem",
+                        sm: "0.25rem",
+                        md: "0.375rem",
+                        lg: "0.5rem",
+                        xl: "0.75rem",
+                        "2xl": "1rem",
+                        full: "9999px"
+                    },
+                    width: {
+                        "sidebar-w": "260px"
+                    }
+                }
+            }
+        };
+    </script>
+</head>
+
+<body class="bg-[#F8FAFC] font-body-md text-[#1A1A2E] min-h-full antialiased">
+
+    <!-- ============================================================
+    SIDEBAR — FIXED
+    ============================================================ -->
+    <aside class="sidebar" id="sidebar">
+        <div class="flex flex-col h-full overflow-hidden">
+            <!-- Logo -->
+            <div class="h-16 px-6 flex items-center gap-3 border-b border-[#E2E8F0] shrink-0">
+                <div class="h-9 w-9 rounded-lg bg-[#1A1A2E] flex items-center justify-center shadow-sm shrink-0">
+                    <span class="font-heading font-extrabold text-[#0F766E] text-xl leading-none">H</span>
+                </div>
+                <div class="flex flex-col">
+                    <div class="flex items-center gap-1.5">
+                        <span class="font-heading font-bold text-[16px] text-[#1A1A2E] leading-tight tracking-tight">HUNAR</span>
+                        <span class="px-1 py-0.5 rounded text-[10px] font-bold bg-[#0F766E]/10 text-[#0F766E] tracking-wide">PRO</span>
+                    </div>
+                    <span class="text-[11px] font-medium text-[#64748B]">Admin Panel</span>
+                </div>
+            </div>
+
+            <!-- Nav Links -->
+            <div class="flex-1 overflow-y-auto px-3 py-4">
+                <nav class="flex flex-col gap-1">
+                    <a class="flex items-center gap-3 px-3 py-2 rounded-lg text-[#64748B] hover:bg-[#F8FAFC] hover:text-[#1A1A2E] transition-all group" href="#">
+                        <span class="material-symbols-outlined text-[20px] text-[#64748B] group-hover:text-[#1A1A2E] transition-colors">dashboard</span>
+                        <span class="text-[14px] font-medium">Dashboard</span>
+                    </a>
+                    <a class="flex items-center gap-3 px-3 py-2 rounded-lg text-[#64748B] hover:bg-[#F8FAFC] hover:text-[#1A1A2E] transition-all group" href="#">
+                        <span class="material-symbols-outlined text-[20px] text-[#64748B] group-hover:text-[#1A1A2E] transition-colors">group</span>
+                        <span class="text-[14px] font-medium">Users</span>
+                    </a>
+                    <a class="flex items-center gap-3 px-3 py-2 rounded-lg text-[#64748B] hover:bg-[#F8FAFC] hover:text-[#1A1A2E] transition-all group" href="#">
+                        <span class="material-symbols-outlined text-[20px] text-[#64748B] group-hover:text-[#1A1A2E] transition-colors">work</span>
+                        <span class="text-[14px] font-medium">Jobs</span>
+                    </a>
+                    <a class="flex items-center gap-3 px-3 py-2 rounded-lg text-[#64748B] hover:bg-[#F8FAFC] hover:text-[#1A1A2E] transition-all group" href="#">
+                        <span class="material-symbols-outlined text-[20px] text-[#64748B] group-hover:text-[#1A1A2E] transition-colors">verified_user</span>
+                        <span class="text-[14px] font-medium">Verification</span>
+                    </a>
+                    <a class="flex items-center gap-3 px-3 py-2 rounded-lg text-[#64748B] hover:bg-[#F8FAFC] hover:text-[#1A1A2E] transition-all group" href="#">
+                        <span class="material-symbols-outlined text-[20px] text-[#64748B] group-hover:text-[#1A1A2E] transition-colors">payments</span>
+                        <span class="text-[14px] font-medium">Payments</span>
+                    </a>
+                    <a class="flex items-center gap-3 px-3 py-2 rounded-lg text-[#64748B] hover:bg-[#F8FAFC] hover:text-[#1A1A2E] transition-all group" href="#">
+                        <span class="material-symbols-outlined text-[20px] text-[#64748B] group-hover:text-[#1A1A2E] transition-colors">gavel</span>
+                        <span class="text-[14px] font-medium">Disputes</span>
+                    </a>
+                    <a class="flex items-center gap-3 px-3 py-2 rounded-lg text-[#64748B] hover:bg-[#F8FAFC] hover:text-[#1A1A2E] transition-all group" href="#">
+                        <span class="material-symbols-outlined text-[20px] text-[#64748B] group-hover:text-[#1A1A2E] transition-colors">star_half</span>
+                        <span class="text-[14px] font-medium">Reviews</span>
+                    </a>
+                    <a class="flex items-center gap-3 px-3 py-2 rounded-lg text-[#64748B] hover:bg-[#F8FAFC] hover:text-[#1A1A2E] transition-all group" href="#">
+                        <span class="material-symbols-outlined text-[20px] text-[#64748B] group-hover:text-[#1A1A2E] transition-colors">category</span>
+                        <span class="text-[14px] font-medium">Categories</span>
+                    </a>
+                    <a class="flex items-center gap-3 px-3 py-2 rounded-lg text-[#64748B] hover:bg-[#F8FAFC] hover:text-[#1A1A2E] transition-all group" href="#">
+                        <span class="material-symbols-outlined text-[20px] text-[#64748B] group-hover:text-[#1A1A2E] transition-colors">location_on</span>
+                        <span class="text-[14px] font-medium">Locations</span>
+                    </a>
+                    <a class="flex items-center justify-between px-3 py-2 rounded-lg text-[#64748B] hover:bg-[#F8FAFC] hover:text-[#1A1A2E] transition-all group" href="#">
+                        <div class="flex items-center gap-3">
+                            <span class="material-symbols-outlined text-[20px] text-[#64748B] group-hover:text-[#1A1A2E] transition-colors">report</span>
+                            <span class="text-[14px] font-medium">Reports</span>
+                        </div>
+                        <span class="px-1.5 py-0.5 rounded-full text-[11px] font-semibold bg-[#DC2626]/10 text-[#DC2626]">3</span>
+                    </a>
+                    <a class="flex items-center gap-3 px-3 py-2 rounded-lg text-[#64748B] hover:bg-[#F8FAFC] hover:text-[#1A1A2E] transition-all group" href="#">
+                        <span class="material-symbols-outlined text-[20px] text-[#64748B] group-hover:text-[#1A1A2E] transition-colors">notifications</span>
+                        <span class="text-[14px] font-medium">Notifications</span>
+                    </a>
+                    <a aria-current="page" class="flex items-center gap-3 px-3 py-2 rounded-lg transition-all group bg-[#0F766E] text-white font-medium shadow-sm" href="#">
+                        <span class="material-symbols-outlined text-[20px] text-white">insights</span>
+                        <span class="text-[14px] font-semibold text-white">Analytics</span>
+                    </a>
+                    <a class="flex items-center gap-3 px-3 py-2 rounded-lg text-[#64748B] hover:bg-[#F8FAFC] hover:text-[#1A1A2E] transition-all group" href="#">
+                        <span class="material-symbols-outlined text-[20px] text-[#64748B] group-hover:text-[#1A1A2E] transition-colors">loyalty</span>
+                        <span class="text-[14px] font-medium">Promotions</span>
+                    </a>
+                    <a class="flex items-center gap-3 px-3 py-2 rounded-lg text-[#64748B] hover:bg-[#F8FAFC] hover:text-[#1A1A2E] transition-all group" href="#">
+                        <span class="material-symbols-outlined text-[20px] text-[#64748B] group-hover:text-[#1A1A2E] transition-colors">settings</span>
+                        <span class="text-[14px] font-medium">Settings</span>
+                    </a>
+                </nav>
+            </div>
+        </div>
+
+        <!-- Profile Footer -->
+        <div class="p-3 border-t border-[#E2E8F0] shrink-0 bg-white">
+            <div class="flex items-center justify-between p-2 rounded-lg hover:bg-[#F8FAFC] transition-colors">
+                <div class="flex items-center gap-2 min-w-0">
+                    <img alt="Profile" class="w-8 h-8 rounded-full object-cover shrink-0 border border-[#E2E8F0]"
+                        src="https://lh3.googleusercontent.com/aida-public/AB6AXuAXas7fZzpW4163X7NLUzKmhnX6gy0_Ad6BSJlRElpe-y10GJAjPCoXyyyszmqNk7-6FK6cYxvzx3TxU_uYuruvi_xLLiUGI-lxM2sLXGIgvlc1QIoxISWs7zgzM6p17w2JyJuDOxBYm96OkaRJfW4pSVpKblnMmyR5vGQuJMb8s0gsfba4AhOZUCp6GggDePRLkn8NCorg6uXak4XI85TKPLfM3pJIGQD5ji0O2W4cAPbv68AGkZhOYA" />
+                    <div class="flex flex-col min-w-0">
+                        <span class="text-[13px] font-medium text-[#1A1A2E] truncate">Abdullah</span>
+                        <span class="text-[11px] text-[#64748B] truncate">Super Admin</span>
+                    </div>
+                </div>
+                <button class="p-1 text-[#64748B] hover:text-[#DC2626] transition-colors" title="Logout" type="button">
+                    <span class="material-symbols-outlined text-[20px]">logout</span>
+                </button>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Sidebar Overlay (Mobile) -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <!-- ============================================================
+    MAIN WRAPPER — PUSHED RIGHT OF SIDEBAR
+    ============================================================ -->
+    <div class="main-wrapper" id="mainWrapper">
+
+        <!-- TOP HEADER — FIXED, OFFSET BY SIDEBAR -->
+        <header class="top-header" id="topHeader">
+            <div class="flex items-center gap-2 flex-1 min-w-0">
+                <!-- Mobile Menu Toggle -->
+                <button class="mobile-menu-toggle" id="mobileMenuToggle" aria-label="Toggle menu">
+                    <span class="material-symbols-outlined">menu</span>
+                </button>
+
+                <!-- Breadcrumb -->
+                <div class="header-breadcrumb flex items-center gap-2 text-[#64748B] text-[12px]">
+                    <span class="text-[#64748B] font-medium">HUNAR</span>
+                    <span class="text-[#E2E8F0]">/</span>
+                    <span class="text-[#1A1A2E] font-semibold text-[14px]">Management Console</span>
+                </div>
+
+                <!-- Search -->
+                <div class="header-search flex-1 max-w-md mx-4">
+                    <div class="relative w-full flex items-center">
+                        <span class="material-symbols-outlined absolute left-3 text-[18px] text-[#64748B] pointer-events-none">search</span>
+                        <input class="w-full h-9 pl-9 pr-12 bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg text-[#1A1A2E] placeholder:text-[#64748B] text-[14px] focus:outline-none focus:border-[#0F766E] focus:ring-2 focus:ring-[#0F766E]/10"
+                            placeholder="Search HUNAR..." type="search" />
+                        <kbd class="absolute right-2.5 px-1.5 py-0.5 text-[11px] bg-white border border-[#E2E8F0] rounded text-[#64748B] shadow-sm pointer-events-none">⌘K</kbd>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Actions -->
+            <div class="flex items-center gap-3 shrink-0">
+                <!-- Live Indicator -->
+                <div class="live-indicator hidden lg:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#16A34A]/10 text-[#16A34A] border border-[#16A34A]/30">
+                    <span class="w-2 h-2 rounded-full bg-[#16A34A] animate-pulse"></span>
+                    <span class="text-[11px] font-semibold tracking-tight">Live: 99.98%</span>
+                </div>
+
+                <!-- Notifications -->
+                <button class="p-2 text-[#64748B] hover:text-[#1A1A2E] hover:bg-[#F8FAFC] rounded-lg transition-colors relative" title="Notifications" type="button">
+                    <span class="material-symbols-outlined text-[22px]">notifications</span>
+                    <span class="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-[#DC2626] ring-2 ring-white"></span>
+                </button>
+
+                <div class="h-6 w-px bg-[#E2E8F0]"></div>
+
+                <!-- Profile -->
+                <div class="flex items-center gap-2 cursor-pointer group">
+                    <img alt="Profile" class="w-8 h-8 rounded-full object-cover ring-1 ring-[#E2E8F0] group-hover:ring-[#0F766E] transition-all"
+                        src="https://lh3.googleusercontent.com/aida-public/AB6AXuAXas7fZzpW4163X7NLUzKmhnX6gy0_Ad6BSJlRElpe-y10GJAjPCoXyyyszmqNk7-6FK6cYxvzx3TxU_uYuruvi_xLLiUGI-lxM2sLXGIgvlc1QIoxISWs7zgzM6p17w2JyJuDOxBYm96OkaRJfW4pSVpKblnMmyR5vGQuJMb8s0gsfba4AhOZUCp6GggDePRLkn8NCorg6uXak4XI85TKPLfM3pJIGQD5ji0O2W4cAPbv68AGkZhOYA" />
+                    <span class="material-symbols-outlined text-[18px] text-[#64748B] group-hover:text-[#1A1A2E] transition-colors hidden sm:block">expand_more</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- MAIN CONTENT — PADDED BELOW HEADER -->
+        <main class="main-content">
+            <div class="page-container">
+
+                <!-- Ambient Glow Accents -->
+                <div class="absolute -top-40 right-10 w-96 h-96 bg-[#0F766E]/5 rounded-full blur-3xl pointer-events-none"></div>
+                <div class="absolute top-80 left-20 w-80 h-80 bg-[#1A1A2E]/5 rounded-full blur-3xl pointer-events-none"></div>
+
+                <!-- ============================================================
+                HEADER SECTION
+                ============================================================ -->
+                <section class="relative z-10 flex flex-col xl:flex-row xl:items-center justify-between gap-4">
+                    <div class="flex flex-col min-w-0">
+                        <div class="flex items-center gap-2 flex-wrap">
+                            <span class="font-heading font-bold text-[28px] text-[#1A1A2E] tracking-tight">Platform Analytics</span>
+                            <span class="px-2.5 py-0.5 rounded-full text-[11px] bg-[#0F766E]/10 text-[#0F766E] font-semibold">Live Realtime</span>
+                        </div>
+                        <p class="text-[14px] text-[#64748B] max-w-2xl mt-1">
+                            In-depth metrics, marketplace liquidity, revenue performance, and category growth across Peshawar &amp; KPK service networks.
+                        </p>
+                    </div>
+
+                    <!-- Controls -->
+                    <div class="flex flex-wrap items-center gap-2 sm:gap-3">
+                        <!-- Time Range Selector -->
+                        <div class="flex items-center p-1 bg-white border border-[#E2E8F0] rounded-lg shadow-sm">
+                            <button class="px-2.5 py-1.5 rounded-lg text-[11px] text-[#64748B] hover:text-[#1A1A2E] transition-all" type="button">7D</button>
+                            <button class="px-3 py-1.5 rounded-lg text-[11px] bg-[#0F766E]/10 text-[#0F766E] font-bold shadow-sm transition-all" type="button">30D</button>
+                            <button class="px-2.5 py-1.5 rounded-lg text-[11px] text-[#64748B] hover:text-[#1A1A2E] transition-all" type="button">3M</button>
+                            <button class="hidden sm:block px-2.5 py-1.5 rounded-lg text-[11px] text-[#64748B] hover:text-[#1A1A2E] transition-all" type="button">12M</button>
+                            <button class="px-2.5 py-1.5 rounded-lg text-[11px] text-[#64748B] hover:text-[#1A1A2E] transition-all flex items-center gap-1" type="button">
+                                <span>Custom</span>
+                                <span class="material-symbols-outlined text-[14px]">calendar_today</span>
+                            </button>
+                        </div>
+
+                        <!-- Location Filter -->
+                        <div class="relative min-w-[160px]">
+                            <div class="flex items-center justify-between h-9 px-3 bg-white border border-[#E2E8F0] rounded-lg shadow-sm cursor-pointer hover:bg-[#F8FAFC] transition-colors">
+                                <div class="flex items-center gap-1.5 min-w-0">
+                                    <span class="material-symbols-outlined text-[#0F766E] text-[18px]">location_on</span>
+                                    <span class="text-[12px] text-[#1A1A2E] font-medium truncate">All Peshawar Hubs</span>
+                                </div>
+                                <span class="material-symbols-outlined text-[16px] text-[#64748B]">expand_more</span>
+                            </div>
+                        </div>
+
+                        <!-- Export -->
+                        <button class="h-9 px-4 bg-[#0F766E] hover:bg-[#115E59] text-white rounded-lg text-[12px] flex items-center gap-1.5 shadow-sm active:scale-95 transition-all font-semibold" type="button">
+                            <span class="material-symbols-outlined text-[18px]">download</span>
+                            <span class="hidden sm:inline">Export</span>
+                        </button>
+                    </div>
+                </section>
+
+                <!-- ============================================================
+                KPI GRID
+                ============================================================ -->
+                <section class="kpi-grid">
+
+                    <!-- Card 1 -->
+                    <div class="bg-white border border-[#E2E8F0] rounded-xl p-5 shadow-sm hover:shadow-md transition-all flex flex-col justify-between">
+                        <div class="flex items-center justify-between">
+                            <span class="text-[12px] text-[#64748B] uppercase tracking-wider font-semibold">Marketplace GMV</span>
+                            <div class="w-8 h-8 rounded-lg bg-[#0F766E]/10 flex items-center justify-center text-[#0F766E]">
+                                <span class="material-symbols-outlined text-[18px]">payments</span>
+                            </div>
+                        </div>
+                        <div class="mt-3">
+                            <div class="flex items-baseline gap-1.5">
+                                <span class="font-heading text-[26px] text-[#1A1A2E] font-bold">Rs. 14.82M</span>
+                                <span class="text-[11px] text-[#64748B]">PKR</span>
+                            </div>
+                            <div class="flex items-center gap-1.5 mt-2">
+                                <span class="flex items-center text-[#16A34A] text-[11px] font-semibold">
+                                    <span class="material-symbols-outlined text-[16px]">trending_up</span> +14.2%
+                                </span>
+                                <span class="text-[11px] text-[#64748B]">vs. prev 30 days</span>
+                            </div>
+                        </div>
+                        <div class="mt-3 pt-2">
+                            <svg class="w-full h-8 overflow-visible" preserveaspectratio="none" viewbox="0 0 100 25">
+                                <defs>
+                                    <lineargradient id="spark1" x1="0" x2="0" y1="0" y2="1">
+                                        <stop offset="0%" stop-color="#1A1A2E" stop-opacity="0.20"></stop>
+                                        <stop offset="100%" stop-color="#1A1A2E" stop-opacity="0.0"></stop>
+                                    </lineargradient>
+                                </defs>
+                                <path d="M0,20 Q12,18 25,12 T50,15 T75,6 T100,2 L100,25 L0,25 Z" fill="url(#spark1)"></path>
+                                <path d="M0,20 Q12,18 25,12 T50,15 T75,6 T100,2" fill="none" stroke="#1A1A2E" stroke-linecap="round" stroke-width="2"></path>
+                            </svg>
+                        </div>
+                    </div>
+
+                    <!-- Card 2 -->
+                    <div class="bg-white border border-[#E2E8F0] rounded-xl p-5 shadow-sm hover:shadow-md transition-all flex flex-col justify-between">
+                        <div class="flex items-center justify-between">
+                            <span class="text-[12px] text-[#64748B] uppercase tracking-wider font-semibold">Net Platform Revenue</span>
+                            <div class="w-8 h-8 rounded-lg bg-[#16A34A]/10 flex items-center justify-center text-[#16A34A]">
+                                <span class="material-symbols-outlined text-[18px]">account_balance_wallet</span>
+                            </div>
+                        </div>
+                        <div class="mt-3">
+                            <div class="flex items-baseline gap-1.5">
+                                <span class="font-heading text-[26px] text-[#1A1A2E] font-bold">Rs. 1.48M</span>
+                                <span class="text-[11px] text-[#64748B]">PKR</span>
+                            </div>
+                            <div class="flex items-center gap-2 mt-2 flex-wrap">
+                                <span class="px-1.5 py-0.5 rounded text-[11px] font-semibold bg-[#0F766E]/10 text-[#0F766E]">
+                                    Take rate: 10.0%
+                                </span>
+                                <span class="text-[11px] text-[#64748B]">+Rs. 184K net lift</span>
+                            </div>
+                        </div>
+                        <div class="mt-3 pt-2">
+                            <svg class="w-full h-8 overflow-visible" preserveaspectratio="none" viewbox="0 0 100 25">
+                                <defs>
+                                    <lineargradient id="spark2" x1="0" x2="0" y1="0" y2="1">
+                                        <stop offset="0%" stop-color="#0F766E" stop-opacity="0.25"></stop>
+                                        <stop offset="100%" stop-color="#0F766E" stop-opacity="0.0"></stop>
+                                    </lineargradient>
+                                </defs>
+                                <path d="M0,18 Q15,19 30,13 T60,11 T85,5 T100,4 L100,25 L0,25 Z" fill="url(#spark2)"></path>
+                                <path d="M0,18 Q15,19 30,13 T60,11 T85,5 T100,4" fill="none" stroke="#0F766E" stroke-linecap="round" stroke-width="2"></path>
+                            </svg>
+                        </div>
+                    </div>
+
+                    <!-- Card 3 -->
+                    <div class="bg-white border border-[#E2E8F0] rounded-xl p-5 shadow-sm hover:shadow-md transition-all flex flex-col justify-between">
+                        <div class="flex items-center justify-between">
+                            <span class="text-[12px] text-[#64748B] uppercase tracking-wider font-semibold">Completion Rate</span>
+                            <div class="w-8 h-8 rounded-lg bg-[#0F766E]/10 flex items-center justify-center text-[#0F766E]">
+                                <span class="material-symbols-outlined text-[18px]">verified</span>
+                            </div>
+                        </div>
+                        <div class="mt-3">
+                            <div class="flex items-baseline gap-1.5">
+                                <span class="font-heading text-[26px] text-[#1A1A2E] font-bold">91.8%</span>
+                                <span class="text-[11px] text-[#64748B]">of 1,420 jobs</span>
+                            </div>
+                            <div class="flex items-center gap-1.5 mt-2">
+                                <span class="flex items-center text-[#16A34A] text-[11px] font-semibold">
+                                    <span class="material-symbols-outlined text-[16px]">trending_up</span> +2.4%
+                                </span>
+                                <span class="text-[11px] text-[#64748B]">vs. benchmark</span>
+                            </div>
+                        </div>
+                        <div class="mt-3 pt-2">
+                            <div class="w-full bg-[#F8FAFC] h-2 rounded-full overflow-hidden">
+                                <div class="bg-[#0F766E] h-full rounded-full transition-all duration-700" style="width: 91.8%;"></div>
+                            </div>
+                            <div class="flex justify-between text-[11px] text-[#64748B] mt-1.5">
+                                <span>1,304 Done</span>
+                                <span class="text-[#DC2626] font-medium">82 Cancelled</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Card 4 -->
+                    <div class="bg-white border border-[#E2E8F0] rounded-xl p-5 shadow-sm hover:shadow-md transition-all flex flex-col justify-between">
+                        <div class="flex items-center justify-between">
+                            <span class="text-[12px] text-[#64748B] uppercase tracking-wider font-semibold">Avg. Match Speed</span>
+                            <div class="w-8 h-8 rounded-lg bg-[#F8FAFC] flex items-center justify-center text-[#1A1A2E]">
+                                <span class="material-symbols-outlined text-[18px]">timer</span>
+                            </div>
+                        </div>
+                        <div class="mt-3">
+                            <div class="flex items-baseline gap-1.5">
+                                <span class="font-heading text-[26px] text-[#1A1A2E] font-bold">4.2 mins</span>
+                            </div>
+                            <div class="flex items-center gap-1.5 mt-2">
+                                <span class="flex items-center text-[#16A34A] text-[11px] font-semibold">
+                                    <span class="material-symbols-outlined text-[16px]">arrow_downward</span> -38s faster
+                                </span>
+                                <span class="text-[11px] text-[#64748B]">post to selection</span>
+                            </div>
+                        </div>
+                        <div class="mt-3 pt-2">
+                            <div class="flex items-center justify-between text-[11px] text-[#64748B] flex-wrap gap-2">
+                                <span class="flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-[#16A34A]"></span> Fast: &lt;3m</span>
+                                <span class="flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-[#DC2626]"></span> Slow: &gt;7m</span>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ============================================================
+                ROW 1: CHARTS
+                ============================================================ -->
+                <section class="grid grid-cols-1 lg:grid-cols-12 gap-4">
+
+                    <!-- Left: Jobs Volume Chart -->
+                    <div class="lg:col-span-7 bg-white border border-[#E2E8F0] rounded-xl p-5 shadow-sm flex flex-col">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3">
+                            <div>
+                                <h3 class="font-heading font-bold text-[16px] text-[#1A1A2E]">Jobs &amp; Booking Volume Trends</h3>
+                                <p class="text-[11px] text-[#64748B] mt-0.5">Continuous 30-day monitoring across all job status transitions</p>
+                            </div>
+                            <div class="flex items-center gap-3 flex-wrap">
+                                <span class="flex items-center gap-1.5 text-[11px] text-[#1A1A2E]">
+                                    <span class="w-2.5 h-2.5 rounded-full bg-[#1A1A2E]"></span> Posted (1,420)
+                                </span>
+                                <span class="flex items-center gap-1.5 text-[11px] text-[#1A1A2E]">
+                                    <span class="w-2.5 h-2.5 rounded-full bg-[#0F766E]"></span> Done (1,304)
+                                </span>
+                                <span class="flex items-center gap-1.5 text-[11px] text-[#64748B]">
+                                    <span class="w-2.5 h-2.5 rounded-full bg-[#DC2626]"></span> Disputed (82)
+                                </span>
+                            </div>
+                        </div>
+
+                        <div class="chart-container">
+                            <!-- Tooltip -->
+                            <div class="absolute top-8 left-1/2 -translate-x-1/2 bg-[#1A1A2E] text-white px-3 py-1.5 rounded shadow-lg pointer-events-none z-20 flex flex-col gap-0.5 border border-[#1A1A2E]/40">
+                                <span class="text-[11px] font-semibold text-slate-300">Day 18 · Nov 2024</span>
+                                <div class="flex items-center gap-3 text-[12px]">
+                                    <span class="text-white font-medium">Posted: 58</span>
+                                    <span class="text-[#0F766E] font-medium">Done: 53</span>
+                                    <span class="text-[#DC2626]/50 font-medium">Disputed: 2</span>
+                                </div>
+                            </div>
+
+                            <svg fill="none" preserveaspectratio="none" viewbox="0 0 700 240">
+                                <defs>
+                                    <lineargradient id="postedArea" x1="0" x2="0" y1="0" y2="1">
+                                        <stop offset="0%" stop-color="#1A1A2E" stop-opacity="0.18"></stop>
+                                        <stop offset="100%" stop-color="#1A1A2E" stop-opacity="0.0"></stop>
+                                    </lineargradient>
+                                    <lineargradient id="doneArea" x1="0" x2="0" y1="0" y2="1">
+                                        <stop offset="0%" stop-color="#0F766E" stop-opacity="0.18"></stop>
+                                        <stop offset="100%" stop-color="#0F766E" stop-opacity="0.0"></stop>
+                                    </lineargradient>
+                                </defs>
+
+                                <line stroke="#E2E8F0" stroke-dasharray="3 3" stroke-opacity="0.9" x1="0" x2="700" y1="40" y2="40"></line>
+                                <line stroke="#E2E8F0" stroke-dasharray="3 3" stroke-opacity="0.9" x1="0" x2="700" y1="100" y2="100"></line>
+                                <line stroke="#E2E8F0" stroke-dasharray="3 3" stroke-opacity="0.9" x1="0" x2="700" y1="160" y2="160"></line>
+                                <line stroke="#E2E8F0" stroke-opacity="0.8" x1="0" x2="700" y1="210" y2="210"></line>
+
+                                <line stroke="#0F766E" stroke-dasharray="4 2" stroke-width="1.5" x1="350" x2="350" y1="20" y2="210"></line>
+
+                                <path d="M 0,160 Q 70,140 140,110 T 280,120 T 350,60 T 420,70 T 560,40 T 700,50 L 700,210 L 0,210 Z" fill="url(#postedArea)"></path>
+                                <path d="M 0,160 Q 70,140 140,110 T 280,120 T 350,60 T 420,70 T 560,40 T 700,50" stroke="#1A1A2E" stroke-linecap="round" stroke-width="2.5"></path>
+
+                                <path d="M 0,175 Q 70,155 140,125 T 280,135 T 350,75 T 420,85 T 560,55 T 700,65 L 700,210 L 0,210 Z" fill="url(#doneArea)"></path>
+                                <path d="M 0,175 Q 70,155 140,125 T 280,135 T 350,75 T 420,85 T 560,55 T 700,65" stroke="#0F766E" stroke-linecap="round" stroke-width="2.2"></path>
+
+                                <path d="M 0,204 Q 70,200 140,202 T 280,198 T 350,197 T 420,203 T 560,198 T 700,199" stroke="#DC2626" stroke-linecap="round" stroke-width="1.5"></path>
+
+                                <circle cx="350" cy="60" fill="#1A1A2E" r="4"></circle>
+                                <circle cx="350" cy="75" fill="#0F766E" r="4"></circle>
+                                <circle cx="350" cy="197" fill="#DC2626" r="3.5"></circle>
+                            </svg>
+                        </div>
+
+                        <div class="flex justify-between items-center text-[#64748B] text-[11px] pt-2 px-1">
+                            <span>Day 1</span>
+                            <span>Day 8</span>
+                            <span>Day 15</span>
+                            <span class="font-semibold text-[#0F766E]">Day 18 (Peak)</span>
+                            <span>Day 22</span>
+                            <span>Day 30</span>
+                        </div>
+                    </div>
+
+                    <!-- Right: Revenue Composition -->
+                    <div class="lg:col-span-5 bg-white border border-[#E2E8F0] rounded-xl p-5 shadow-sm flex flex-col justify-between">
+                        <div>
+                            <div class="flex items-center justify-between pb-3">
+                                <div>
+                                    <h3 class="font-heading font-bold text-[16px] text-[#1A1A2E]">Revenue Composition</h3>
+                                    <p class="text-[11px] text-[#64748B] mt-0.5">Stream breakdown of Gross Platform Inflows</p>
+                                </div>
+                                <span class="px-2.5 py-0.5 rounded text-[11px] bg-[#F8FAFC] text-[#1A1A2E] font-bold whitespace-nowrap">Rs. 5.90M</span>
+                            </div>
+
+                            <div class="mt-2">
+                                <div class="w-full h-3 rounded-full overflow-hidden flex bg-[#F8FAFC]">
+                                    <div class="bg-[#1A1A2E] h-full" style="width: 25.1%"></div>
+                                    <div class="bg-[#0F766E] h-full" style="width: 5.4%"></div>
+                                    <div class="bg-[#16A34A] h-full" style="width: 69.5%"></div>
+                                </div>
+                            </div>
+
+                            <div class="flex flex-col gap-3 mt-4">
+                                <div class="p-3 bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg flex items-center justify-between gap-2">
+                                    <div class="flex items-center gap-3 min-w-0">
+                                        <div class="w-3 h-3 rounded-full bg-[#1A1A2E] shrink-0"></div>
+                                        <div class="flex flex-col min-w-0">
+                                            <span class="text-[13px] text-[#1A1A2E] font-medium truncate">HUNAR 10% Commission</span>
+                                            <span class="text-[10px] text-[#64748B] truncate">Core take rate on labor billing</span>
+                                        </div>
+                                    </div>
+                                    <div class="flex flex-col items-end shrink-0">
+                                        <span class="font-heading text-[15px] text-[#1A1A2E] font-bold">Rs. 1.48M</span>
+                                        <span class="text-[10px] text-[#0F766E] font-semibold">25.1%</span>
+                                    </div>
+                                </div>
+
+                                <div class="p-3 bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg flex items-center justify-between gap-2">
+                                    <div class="flex items-center gap-3 min-w-0">
+                                        <div class="w-3 h-3 rounded-full bg-[#0F766E] shrink-0"></div>
+                                        <div class="flex flex-col min-w-0">
+                                            <span class="text-[13px] text-[#1A1A2E] font-medium truncate">Visiting / Diagnosis Fees</span>
+                                            <span class="text-[10px] text-[#64748B] truncate">Fixed inspection call-outs</span>
+                                        </div>
+                                    </div>
+                                    <div class="flex flex-col items-end shrink-0">
+                                        <span class="font-heading text-[15px] text-[#1A1A2E] font-bold">Rs. 320K</span>
+                                        <span class="text-[10px] text-[#64748B] font-medium">5.4%</span>
+                                    </div>
+                                </div>
+
+                                <div class="p-3 bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg flex items-center justify-between gap-2">
+                                    <div class="flex items-center gap-3 min-w-0">
+                                        <div class="w-3 h-3 rounded-full bg-[#16A34A] shrink-0"></div>
+                                        <div class="flex flex-col min-w-0">
+                                            <span class="text-[13px] text-[#1A1A2E] font-medium truncate">Additional Work Add-ons</span>
+                                            <span class="text-[10px] text-[#64748B] truncate">Verified on-site parts</span>
+                                        </div>
+                                    </div>
+                                    <div class="flex flex-col items-end shrink-0">
+                                        <span class="font-heading text-[15px] text-[#1A1A2E] font-bold">Rs. 4.10M</span>
+                                        <span class="text-[10px] text-[#16A34A] font-semibold">69.5%</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="pt-3 flex items-center justify-between text-[#64748B] text-[11px] flex-wrap gap-2">
+                            <span class="flex items-center gap-1">
+                                <span class="material-symbols-outlined text-[14px] text-[#16A34A]">check_circle</span>
+                                Escrow auto-cleared 24h
+                            </span>
+                            <a class="text-[#0F766E] hover:underline font-semibold" href="#">Payout report</a>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ============================================================
+                ROW 2: CATEGORY & GEOGRAPHY
+                ============================================================ -->
+                <section class="grid grid-cols-1 lg:grid-cols-12 gap-4">
+
+                    <!-- Left: Jobs by Service Category -->
+                    <div class="lg:col-span-6 bg-white border border-[#E2E8F0] rounded-xl p-5 shadow-sm flex flex-col justify-between">
+                        <div>
+                            <div class="flex items-center justify-between pb-3">
+                                <div>
+                                    <h3 class="font-heading font-bold text-[16px] text-[#1A1A2E]">Jobs by Service Category</h3>
+                                    <p class="text-[11px] text-[#64748B] mt-0.5">Distribution volume, demand share &amp; ticket sizes</p>
+                                </div>
+                                <span class="text-[11px] text-[#64748B] font-medium whitespace-nowrap">1,420 total</span>
+                            </div>
+
+                            <div class="flex flex-col gap-3.5 mt-2">
+                                <!-- Electrician -->
+                                <div class="flex flex-col gap-1.5">
+                                    <div class="flex items-center justify-between text-[13px] flex-wrap gap-1">
+                                        <div class="flex items-center gap-2">
+                                            <span class="w-6 h-6 rounded bg-[#0F766E]/10 flex items-center justify-center text-[#0F766E]">
+                                                <span class="material-symbols-outlined text-[14px]">bolt</span>
+                                            </span>
+                                            <span class="text-[13px] text-[#1A1A2E] font-medium">Electrician</span>
+                                            <span class="text-[11px] text-[#64748B]">412 jobs</span>
+                                        </div>
+                                        <div class="flex items-center gap-2">
+                                            <span class="text-[11px] text-[#64748B]">Avg: Rs. 2,100</span>
+                                            <span class="text-[11px] font-bold text-[#1A1A2E] min-w-[36px] text-right">29.0%</span>
+                                        </div>
+                                    </div>
+                                    <div class="w-full bg-[#F8FAFC] h-2 rounded-full overflow-hidden">
+                                        <div class="bg-[#1A1A2E] h-full rounded-full" style="width: 29.0%;"></div>
+                                    </div>
+                                </div>
+
+                                <!-- AC Technician -->
+                                <div class="flex flex-col gap-1.5">
+                                    <div class="flex items-center justify-between text-[13px] flex-wrap gap-1">
+                                        <div class="flex items-center gap-2">
+                                            <span class="w-6 h-6 rounded bg-[#0F766E]/10 flex items-center justify-center text-[#0F766E]">
+                                                <span class="material-symbols-outlined text-[14px]">mode_fan</span>
+                                            </span>
+                                            <span class="text-[13px] text-[#1A1A2E] font-medium">AC Technician</span>
+                                            <span class="text-[11px] text-[#64748B]">348 jobs</span>
+                                        </div>
+                                        <div class="flex items-center gap-2">
+                                            <span class="text-[11px] text-[#64748B]">Avg: Rs. 3,800</span>
+                                            <span class="text-[11px] font-bold text-[#1A1A2E] min-w-[36px] text-right">24.5%</span>
+                                        </div>
+                                    </div>
+                                    <div class="w-full bg-[#F8FAFC] h-2 rounded-full overflow-hidden">
+                                        <div class="bg-[#0F766E] h-full rounded-full" style="width: 24.5%;"></div>
+                                    </div>
+                                </div>
+
+                                <!-- Plumber -->
+                                <div class="flex flex-col gap-1.5">
+                                    <div class="flex items-center justify-between text-[13px] flex-wrap gap-1">
+                                        <div class="flex items-center gap-2">
+                                            <span class="w-6 h-6 rounded bg-[#F8FAFC] flex items-center justify-center text-[#1A1A2E]">
+                                                <span class="material-symbols-outlined text-[14px]">plumbing</span>
+                                            </span>
+                                            <span class="text-[13px] text-[#1A1A2E] font-medium">Plumber</span>
+                                            <span class="text-[11px] text-[#64748B]">284 jobs</span>
+                                        </div>
+                                        <div class="flex items-center gap-2">
+                                            <span class="text-[11px] text-[#64748B]">Avg: Rs. 1,950</span>
+                                            <span class="text-[11px] font-bold text-[#1A1A2E] min-w-[36px] text-right">20.0%</span>
+                                        </div>
+                                    </div>
+                                    <div class="w-full bg-[#F8FAFC] h-2 rounded-full overflow-hidden">
+                                        <div class="bg-[#1A1A2E]/80 h-full rounded-full" style="width: 20.0%;"></div>
+                                    </div>
+                                </div>
+
+                                <!-- Carpenter -->
+                                <div class="flex flex-col gap-1.5">
+                                    <div class="flex items-center justify-between text-[13px] flex-wrap gap-1">
+                                        <div class="flex items-center gap-2">
+                                            <span class="w-6 h-6 rounded bg-[#F8FAFC] flex items-center justify-center text-[#64748B]">
+                                                <span class="material-symbols-outlined text-[14px]">carpenter</span>
+                                            </span>
+                                            <span class="text-[13px] text-[#1A1A2E] font-medium">Carpenter</span>
+                                            <span class="text-[11px] text-[#64748B]">168 jobs</span>
+                                        </div>
+                                        <div class="flex items-center gap-2">
+                                            <span class="text-[11px] text-[#64748B]">Avg: Rs. 4,500</span>
+                                            <span class="text-[11px] font-bold text-[#1A1A2E] min-w-[36px] text-right">11.8%</span>
+                                        </div>
+                                    </div>
+                                    <div class="w-full bg-[#F8FAFC] h-2 rounded-full overflow-hidden">
+                                        <div class="bg-[#64748B] h-full rounded-full" style="width: 11.8%;"></div>
+                                    </div>
+                                </div>
+
+                                <!-- Appliance Repair -->
+                                <div class="flex flex-col gap-1.5">
+                                    <div class="flex items-center justify-between text-[13px] flex-wrap gap-1">
+                                        <div class="flex items-center gap-2">
+                                            <span class="w-6 h-6 rounded bg-[#16A34A]/10 flex items-center justify-center text-[#16A34A]">
+                                                <span class="material-symbols-outlined text-[14px]">home_repair_service</span>
+                                            </span>
+                                            <span class="text-[13px] text-[#1A1A2E] font-medium">Appliance Repair</span>
+                                            <span class="text-[11px] text-[#64748B]">132 jobs</span>
+                                        </div>
+                                        <div class="flex items-center gap-2">
+                                            <span class="text-[11px] text-[#64748B]">Avg: Rs. 2,800</span>
+                                            <span class="text-[11px] font-bold text-[#1A1A2E] min-w-[36px] text-right">9.3%</span>
+                                        </div>
+                                    </div>
+                                    <div class="w-full bg-[#F8FAFC] h-2 rounded-full overflow-hidden">
+                                        <div class="bg-[#16A34A] h-full rounded-full" style="width: 9.3%;"></div>
+                                    </div>
+                                </div>
+
+                                <!-- Painter & Mason -->
+                                <div class="flex flex-col gap-1.5">
+                                    <div class="flex items-center justify-between text-[13px] flex-wrap gap-1">
+                                        <div class="flex items-center gap-2">
+                                            <span class="w-6 h-6 rounded bg-[#F8FAFC] flex items-center justify-center text-[#64748B]">
+                                                <span class="material-symbols-outlined text-[14px]">format_paint</span>
+                                            </span>
+                                            <span class="text-[13px] text-[#1A1A2E] font-medium">Painter &amp; Mason</span>
+                                            <span class="text-[11px] text-[#64748B]">76 jobs</span>
+                                        </div>
+                                        <div class="flex items-center gap-2">
+                                            <span class="text-[11px] text-[#64748B]">Avg: Rs. 8,200</span>
+                                            <span class="text-[11px] font-bold text-[#1A1A2E] min-w-[36px] text-right">5.4%</span>
+                                        </div>
+                                    </div>
+                                    <div class="w-full bg-[#F8FAFC] h-2 rounded-full overflow-hidden">
+                                        <div class="bg-[#64748B] h-full rounded-full" style="width: 5.4%;"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="pt-3 flex items-center justify-between text-[#64748B] text-[11px] flex-wrap gap-2">
+                            <span>Fastest growing: <strong>AC Technician (+31%)</strong></span>
+                            <a class="text-[#0F766E] hover:underline font-semibold" href="#">Category settings</a>
+                        </div>
+                    </div>
+
+                    <!-- Right: Geographical Liquidity -->
+                    <div class="lg:col-span-6 bg-white border border-[#E2E8F0] rounded-xl p-5 shadow-sm flex flex-col justify-between">
+                        <div>
+                            <div class="flex items-center justify-between pb-3">
+                                <div>
+                                    <h3 class="font-heading font-bold text-[16px] text-[#1A1A2E]">Geographical Liquidity Index</h3>
+                                    <p class="text-[11px] text-[#64748B] mt-0.5">Supply-demand balance across Peshawar sectors</p>
+                                </div>
+                                <span class="flex items-center gap-1 text-[11px] text-[#16A34A] font-semibold whitespace-nowrap">
+                                    <span class="w-2 h-2 rounded-full bg-[#16A34A] animate-pulse"></span> Active
+                                </span>
+                            </div>
+
+                            <div class="table-responsive mt-2">
+                                <table class="w-full text-left">
+                                    <thead>
+                                        <tr class="text-[#64748B] text-[11px] uppercase tracking-wider bg-[#F8FAFC] border-y border-[#E2E8F0]">
+                                            <th class="py-2.5 px-3">Zone / Area</th>
+                                            <th class="py-2.5 px-2 text-center">Jobs</th>
+                                            <th class="py-2.5 px-2 text-center">Pros</th>
+                                            <th class="py-2.5 px-2 text-center">Match</th>
+                                            <th class="py-2.5 px-3 text-right">Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-[#E2E8F0]/60 text-[#1A1A2E] text-[13px]">
+                                        <tr class="hover:bg-[#F8FAFC] transition-colors">
+                                            <td class="py-2.5 px-3">
+                                                <div class="text-[13px] text-[#1A1A2E] font-semibold">Hayatabad</div>
+                                                <span class="text-[11px] text-[#64748B]">Phases 1 - 7</span>
+                                            </td>
+                                            <td class="py-2.5 px-2 text-center font-medium">512</td>
+                                            <td class="py-2.5 px-2 text-center text-[#64748B]">840</td>
+                                            <td class="py-2.5 px-2 text-center font-bold text-[#16A34A]">96%</td>
+                                            <td class="py-2.5 px-3 text-right">
+                                                <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-[#16A34A]/10 text-[#16A34A] whitespace-nowrap">
+                                                    <span class="w-1.5 h-1.5 rounded-full bg-[#16A34A]"></span> High
+                                                </span>
+                                            </td>
+                                        </tr>
+                                        <tr class="hover:bg-[#F8FAFC] transition-colors">
+                                            <td class="py-2.5 px-3">
+                                                <div class="text-[13px] text-[#1A1A2E] font-semibold">University Town</div>
+                                                <span class="text-[11px] text-[#64748B]">Main &amp; Campus</span>
+                                            </td>
+                                            <td class="py-2.5 px-2 text-center font-medium">280</td>
+                                            <td class="py-2.5 px-2 text-center text-[#64748B]">420</td>
+                                            <td class="py-2.5 px-2 text-center font-bold text-[#16A34A]">92%</td>
+                                            <td class="py-2.5 px-3 text-right">
+                                                <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-[#16A34A]/10 text-[#16A34A] whitespace-nowrap">
+                                                    <span class="w-1.5 h-1.5 rounded-full bg-[#16A34A]"></span> Balanced
+                                                </span>
+                                            </td>
+                                        </tr>
+                                        <tr class="hover:bg-[#F8FAFC] transition-colors">
+                                            <td class="py-2.5 px-3">
+                                                <div class="text-[13px] text-[#1A1A2E] font-semibold">Saddar &amp; Cantt</div>
+                                                <span class="text-[11px] text-[#64748B]">Commercial + Res</span>
+                                            </td>
+                                            <td class="py-2.5 px-2 text-center font-medium">310</td>
+                                            <td class="py-2.5 px-2 text-center text-[#64748B]">390</td>
+                                            <td class="py-2.5 px-2 text-center font-bold text-[#0F766E]">88%</td>
+                                            <td class="py-2.5 px-3 text-right">
+                                                <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-[#0F766E]/10 text-[#0F766E] whitespace-nowrap">
+                                                    <span class="w-1.5 h-1.5 rounded-full bg-[#0F766E]"></span> Balanced
+                                                </span>
+                                            </td>
+                                        </tr>
+                                        <tr class="hover:bg-[#F8FAFC] transition-colors">
+                                            <td class="py-2.5 px-3">
+                                                <div class="text-[13px] text-[#1A1A2E] font-semibold">Ring Road</div>
+                                                <span class="text-[11px] text-[#64748B]">South Peripheral</span>
+                                            </td>
+                                            <td class="py-2.5 px-2 text-center font-medium">198</td>
+                                            <td class="py-2.5 px-2 text-center text-[#64748B]">180</td>
+                                            <td class="py-2.5 px-2 text-center font-bold text-[#F59E0B]">78%</td>
+                                            <td class="py-2.5 px-3 text-right">
+                                                <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-[#F59E0B]/10 text-[#F59E0B] whitespace-nowrap">
+                                                    <span class="w-1.5 h-1.5 rounded-full bg-[#F59E0B]"></span> Demand
+                                                </span>
+                                            </td>
+                                        </tr>
+                                        <tr class="hover:bg-[#F8FAFC] transition-colors">
+                                            <td class="py-2.5 px-3">
+                                                <div class="text-[13px] text-[#1A1A2E] font-semibold">Warsak Road</div>
+                                                <span class="text-[11px] text-[#64748B]">Northern Suburbs</span>
+                                            </td>
+                                            <td class="py-2.5 px-2 text-center font-medium">120</td>
+                                            <td class="py-2.5 px-2 text-center text-[#64748B]">95</td>
+                                            <td class="py-2.5 px-2 text-center font-bold text-[#DC2626]">72%</td>
+                                            <td class="py-2.5 px-3 text-right">
+                                                <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-[#DC2626]/10 text-[#DC2626] whitespace-nowrap">
+                                                    <span class="w-1.5 h-1.5 rounded-full bg-[#DC2626]"></span> Shortage
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div class="pt-3 flex items-center justify-between text-[#64748B] text-[11px] flex-wrap gap-2">
+                            <span class="flex items-center gap-1 text-[#DC2626]">
+                                <span class="material-symbols-outlined text-[14px] text-[#DC2626]">warning</span>
+                                Surge in Warsak (+Rs. 250)
+                            </span>
+                            <a class="text-[#0F766E] hover:underline font-semibold" href="#">Geofencing</a>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ============================================================
+                ROW 3: FUNNEL
+                ============================================================ -->
+                <section class="bg-white border border-[#E2E8F0] rounded-xl p-5 shadow-sm flex flex-col gap-4">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                        <div>
+                            <h3 class="font-heading font-bold text-[16px] text-[#1A1A2E]">Marketplace Conversion Funnel &amp; Quality Index</h3>
+                            <p class="text-[11px] text-[#64748B] mt-0.5">End-to-end user lifecycle from job posting to client satisfaction</p>
+                        </div>
+                        <div class="flex items-center gap-3 flex-wrap">
+                            <div class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[#F59E0B]/10 border border-[#F59E0B]/30">
+                                <span class="material-symbols-outlined text-[#F59E0B] text-[18px]">star</span>
+                                <div class="flex flex-col">
+                                    <span class="text-[10px] text-[#F59E0B]">Client CSAT</span>
+                                    <span class="text-[13px] text-[#1A1A2E] font-bold leading-tight">4.82 / 5.0</span>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[#0F766E]/10 border border-[#0F766E]/20">
+                                <span class="material-symbols-outlined text-[#0F766E] text-[18px]">engineering</span>
+                                <div class="flex flex-col">
+                                    <span class="text-[10px] text-[#115E59]">Artisan</span>
+                                    <span class="text-[13px] text-[#1A1A2E] font-bold leading-tight">4.74 / 5.0</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-2 mt-1">
+                        <div class="p-3.5 bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg flex flex-col justify-between gap-3">
+                            <div class="flex items-center justify-between">
+                                <span class="text-[10px] font-bold text-[#0F766E] uppercase tracking-wide">Stage 01</span>
+                                <span class="font-heading text-[18px] font-extrabold text-[#1A1A2E]">100%</span>
+                            </div>
+                            <div>
+                                <div class="text-[13px] text-[#1A1A2E] font-bold">Job Posted</div>
+                                <div class="text-[10px] text-[#64748B] mt-0.5">1,420 Submissions</div>
+                            </div>
+                            <div class="w-full bg-[#E2E8F0] h-1.5 rounded-full overflow-hidden">
+                                <div class="bg-[#1A1A2E] h-full rounded-full" style="width: 100%;"></div>
+                            </div>
+                        </div>
+
+                        <div class="p-3.5 bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg flex flex-col justify-between gap-3">
+                            <div class="flex items-center justify-between">
+                                <span class="text-[10px] font-bold text-[#0F766E] uppercase tracking-wide">Stage 02</span>
+                                <span class="font-heading text-[18px] font-extrabold text-[#1A1A2E]">94%</span>
+                            </div>
+                            <div>
+                                <div class="text-[13px] text-[#1A1A2E] font-bold">Offers Received</div>
+                                <div class="text-[10px] text-[#64748B] mt-0.5">1,335 with ≥2 bids</div>
+                            </div>
+                            <div class="w-full bg-[#E2E8F0] h-1.5 rounded-full overflow-hidden">
+                                <div class="bg-[#1A1A2E] h-full rounded-full" style="width: 94%;"></div>
+                            </div>
+                        </div>
+
+                        <div class="p-3.5 bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg flex flex-col justify-between gap-3">
+                            <div class="flex items-center justify-between">
+                                <span class="text-[10px] font-bold text-[#0F766E] uppercase tracking-wide">Stage 03</span>
+                                <span class="font-heading text-[18px] font-extrabold text-[#1A1A2E]">88%</span>
+                            </div>
+                            <div>
+                                <div class="text-[13px] text-[#1A1A2E] font-bold">Pro Selected</div>
+                                <div class="text-[10px] text-[#64748B] mt-0.5">1,250 artisans booked</div>
+                            </div>
+                            <div class="w-full bg-[#E2E8F0] h-1.5 rounded-full overflow-hidden">
+                                <div class="bg-[#0F766E] h-full rounded-full" style="width: 88%;"></div>
+                            </div>
+                        </div>
+
+                        <div class="p-3.5 bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg flex flex-col justify-between gap-3">
+                            <div class="flex items-center justify-between">
+                                <span class="text-[10px] font-bold text-[#0F766E] uppercase tracking-wide">Stage 04</span>
+                                <span class="font-heading text-[18px] font-extrabold text-[#1A1A2E]">84%</span>
+                            </div>
+                            <div>
+                                <div class="text-[13px] text-[#1A1A2E] font-bold">Visit Completed</div>
+                                <div class="text-[10px] text-[#64748B] mt-0.5">1,192 physical visits</div>
+                            </div>
+                            <div class="w-full bg-[#E2E8F0] h-1.5 rounded-full overflow-hidden">
+                                <div class="bg-[#0F766E] h-full rounded-full" style="width: 84%;"></div>
+                            </div>
+                        </div>
+
+                        <div class="p-3.5 bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg flex flex-col justify-between gap-3">
+                            <div class="flex items-center justify-between">
+                                <span class="text-[10px] font-bold text-[#16A34A] uppercase tracking-wide">Final</span>
+                                <span class="font-heading text-[18px] font-extrabold text-[#16A34A]">82%</span>
+                            </div>
+                            <div>
+                                <div class="text-[13px] text-[#1A1A2E] font-bold">Payment Settled</div>
+                                <div class="text-[10px] text-[#64748B] mt-0.5">1,164 Escrow Released</div>
+                            </div>
+                            <div class="w-full bg-[#E2E8F0] h-1.5 rounded-full overflow-hidden">
+                                <div class="bg-[#16A34A] h-full rounded-full" style="width: 82%;"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-wrap items-center justify-between gap-3 pt-2 text-[#64748B] text-[11px]">
+                        <div class="flex items-center gap-4 flex-wrap">
+                            <span class="flex items-center gap-1.5 text-[#1A1A2E]">
+                                <span class="material-symbols-outlined text-[16px] text-[#16A34A]">thumb_up</span>
+                                Dispute SLA: <strong class="text-[#1A1A2E]">&lt; 3.2 Hours</strong>
+                            </span>
+                            <span class="flex items-center gap-1.5 text-[#1A1A2E]">
+                                <span class="material-symbols-outlined text-[16px] text-[#0F766E]">security</span>
+                                Escrow Accuracy: <strong class="text-[#1A1A2E]">99.98%</strong>
+                            </span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span>Synced: 2 min ago</span>
+                            <button class="p-1 text-[#64748B] hover:text-[#0F766E] transition-colors" title="Refresh" type="button">
+                                <span class="material-symbols-outlined text-[16px]">sync</span>
+                            </button>
+                        </div>
+                    </div>
+                </section>
+
+            </div>
+        </main>
+    </div>
+
+    <!-- ============================================================
+    MOBILE MENU TOGGLE SCRIPT
+    ============================================================ -->
+    <script>
+        (function() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebarOverlay');
+            const toggle = document.getElementById('mobileMenuToggle');
+            const mainWrapper = document.getElementById('mainWrapper');
+
+            function isMobile() {
+                return window.innerWidth <= 1024;
+            }
+
+            function openSidebar() {
+                if (!isMobile()) return;
+                sidebar.classList.add('open');
+                overlay.classList.add('active');
+                document.body.style.overflow = 'hidden';
+            }
+
+            function closeSidebar() {
+                sidebar.classList.remove('open');
+                overlay.classList.remove('active');
+                document.body.style.overflow = '';
+            }
+
+            if (toggle) {
+                toggle.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    if (sidebar.classList.contains('open')) {
+                        closeSidebar();
+                    } else {
+                        openSidebar();
+                    }
+                });
+            }
+
+            if (overlay) {
+                overlay.addEventListener('click', closeSidebar);
+            }
+
+            // Close sidebar on link click (mobile)
+            sidebar.querySelectorAll('nav a').forEach(link => {
+                link.addEventListener('click', function() {
+                    if (isMobile()) closeSidebar();
+                });
+            });
+
+            // Close on escape
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') closeSidebar();
+            });
+
+            // Handle resize — reset states
+            let resizeTimer;
+            window.addEventListener('resize', function() {
+                clearTimeout(resizeTimer);
+                resizeTimer = setTimeout(function() {
+                    if (!isMobile()) {
+                        closeSidebar();
+                    }
+                }, 150);
+            });
+        })();
+    </script>
+
+</body>
+</html>

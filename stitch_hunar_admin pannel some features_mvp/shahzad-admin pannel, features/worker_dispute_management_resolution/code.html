@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+
+<html class="h-full" lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>HUNAR Skilled Worker Portal</title><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base { html, body { margin: 0; padding: 0; } body { overscroll-behavior: none; } main > :first-child { margin-top: 0 !important; } main > :last-child { margin-bottom: 0 !important; } } ::-webkit-scrollbar { display: none; }</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = {
+    darkMode: "class",
+    theme: {
+      extend: {
+        "colors": {
+          "outline-variant": "#bdc9c9",
+          "on-secondary": "#ffffff",
+          "tertiary-fixed": "#ffddb8",
+          "tertiary-container": "#FEF3C7",
+          "secondary-fixed": "#d0e4ff",
+          "on-primary-fixed": "#002020",
+          "inverse-on-surface": "#eaf1ff",
+          "on-primary": "#ffffff",
+          "on-error-container": "#991B1B",
+          "error-container": "#ffdad6",
+          "surface-container-low": "#F1F5F9",
+          "secondary-fixed-dim": "#a6caf3",
+          "on-secondary-fixed-variant": "#24496c",
+          "tertiary": "#825100",
+          "surface-variant": "#d3e4fe",
+          "secondary-container": "#b1d5ff",
+          "on-tertiary-fixed-variant": "#653e00",
+          "inverse-surface": "#213145",
+          "on-tertiary-fixed": "#2a1700",
+          "surface-bright": "#f8f9ff",
+          "background": "#f8f9ff",
+          "on-secondary-fixed": "#0F172A",
+          "surface-container-lowest": "#ffffff",
+          "on-error": "#ffffff",
+          "surface-dim": "#cbdbf5",
+          "inverse-primary": "#72d6d8",
+          "on-primary-container": "#0B6365",
+          "surface-container-highest": "#d3e4fe",
+          "primary": "#006768",
+          "on-surface-variant": "#64748B",
+          "on-secondary-container": "#123B5D",
+          "primary-fixed": "#8ff3f4",
+          "error": "#DC2626",
+          "surface-container-high": "#E2E8F0",
+          "surface": "#F8FAFC",
+          "surface-container": "#e5eeff",
+          "on-tertiary": "#ffffff",
+          "secondary": "#3d6185",
+          "on-tertiary-container": "#B45309",
+          "on-primary-fixed-variant": "#004f51",
+          "surface-tint": "#00696b",
+          "primary-fixed-dim": "#72d6d8",
+          "outline": "#E2E8F0",
+          "tertiary-fixed-dim": "#FDE68A",
+          "on-background": "#0b1c30",
+          "on-surface": "#172033",
+          "primary-container": "#008284"
+        },
+        "borderRadius": {
+          "DEFAULT": "0.125rem",
+          "lg": "0.25rem",
+          "xl": "0.5rem",
+          "full": "0.75rem"
+        },
+        "spacing": {
+          "space-xl": "2rem",
+          "space-4xl": "6rem",
+          "space-lg": "1.5rem",
+          "space-2xl": "3rem",
+          "space-md": "1rem",
+          "space-sm": "0.75rem",
+          "space-3xl": "4.5rem",
+          "container-max": "75rem",
+          "gutter-desktop": "1.5rem",
+          "gutter-mobile": "1rem",
+          "space-2xs": "0.25rem",
+          "space-xs": "0.5rem"
+        },
+        "fontFamily": {
+          "body-lg": ["Inter"],
+          "label-md": ["Inter"],
+          "headline-lg": ["Inter"],
+          "display-hero-mobile": ["Inter"],
+          "headline-sm": ["Inter"],
+          "body-md": ["Inter"],
+          "body-sm": ["Inter"],
+          "label-sm": ["Inter"],
+          "mono-spec": ["Inter"],
+          "display-hero": ["Inter"],
+          "headline-lg-mobile": ["Inter"],
+          "headline-md": ["Inter"]
+        },
+        "fontSize": {
+          "body-lg": ["1rem", { "lineHeight": "1.5", "letterSpacing": "-0.005em", "fontWeight": "400" }],
+          "label-md": ["0.875rem", { "lineHeight": "1.25", "letterSpacing": "0.005em", "fontWeight": "500" }],
+          "headline-lg": ["1.75rem", { "lineHeight": "1.25", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+          "display-hero-mobile": ["1.875rem", { "lineHeight": "1.2", "letterSpacing": "-0.025em", "fontWeight": "700" }],
+          "headline-sm": ["1rem", { "lineHeight": "1.35", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+          "body-md": ["0.875rem", { "lineHeight": "1.5", "letterSpacing": "0em", "fontWeight": "400" }],
+          "body-sm": ["0.75rem", { "lineHeight": "1.4", "letterSpacing": "0em", "fontWeight": "400" }],
+          "label-sm": ["0.75rem", { "lineHeight": "1.2", "letterSpacing": "0.03em", "fontWeight": "600" }],
+          "mono-spec": ["0.8125rem", { "lineHeight": "1.4", "letterSpacing": "-0.01em", "fontWeight": "500" }],
+          "display-hero": ["2.25rem", { "lineHeight": "1.2", "letterSpacing": "-0.025em", "fontWeight": "700" }],
+          "headline-lg-mobile": ["1.5rem", { "lineHeight": "1.25", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+          "headline-md": ["1.25rem", { "lineHeight": "1.3", "letterSpacing": "-0.015em", "fontWeight": "600" }]
+        }
+      }
+    }
+  };</script></head><body class="bg-surface font-body-md text-on-surface antialiased min-h-screen"><aside class="fixed left-0 top-0 h-full w-64 bg-surface-container-lowest border-r border-outline z-50 flex flex-col"><div class="h-16 flex items-center gap-space-xs px-space-md border-b border-outline"><div class="w-8 h-8 rounded-xl bg-primary flex items-center justify-center text-on-primary font-headline-sm font-bold tracking-tight">H</div><div class="flex flex-col"><span class="font-headline-sm text-headline-sm font-bold text-on-secondary-fixed leading-none tracking-tight">HUNAR</span><span class="font-label-sm text-label-sm text-on-surface-variant leading-none mt-1">Partner Ops</span></div></div><div class="flex-1 overflow-y-auto py-space-sm px-space-xs"><div class="px-space-sm py-space-2xs text-[11px] font-semibold text-on-surface-variant uppercase tracking-wider">Work Dispatch</div><nav class="space-y-1 mb-space-md" data-active-classes="bg-primary text-on-primary font-medium rounded-lg shadow-none"><a class="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface font-label-md text-label-md transition-colors" data-path="dashboard" href="#"><span class="material-symbols-outlined text-[20px]">grid_view</span><span>Dashboard</span></a><a class="flex items-center justify-between px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface font-label-md text-label-md transition-colors" data-path="nearby-jobs" href="#"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-[20px]">near_me</span><span>Nearby Jobs</span></div><span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-tertiary-container text-on-tertiary-container">8 new</span></a><a aria-current="page" class="flex items-center justify-between px-space-sm py-2 transition-colors bg-primary text-on-primary font-medium rounded-lg shadow-none" data-path="active-jobs" href="#"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-[20px]">handyman</span><span>Active Jobs</span></div><span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-surface-container-high text-on-secondary-fixed">2</span></a><a class="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface font-label-md text-label-md transition-colors" data-path="my-offers" href="#"><span class="material-symbols-outlined text-[20px]">request_quote</span><span>My Offers</span></a><a class="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface font-label-md text-label-md transition-colors" data-path="upcoming-visits" href="#"><span class="material-symbols-outlined text-[20px]">event_available</span><span>Upcoming Visits</span></a><a class="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface font-label-md text-label-md transition-colors" data-path="completed-jobs" href="#"><span class="material-symbols-outlined text-[20px]">task_alt</span><span>Completed Jobs</span></a></nav><div class="px-space-sm py-space-2xs text-[11px] font-semibold text-on-surface-variant uppercase tracking-wider">Finances &amp; Reputation</div><nav class="space-y-1 mb-space-md" data-active-classes="bg-primary text-on-primary font-medium rounded-lg shadow-none"><a class="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface font-label-md text-label-md transition-colors" data-path="earnings" href="#"><span class="material-symbols-outlined text-[20px]">account_balance_wallet</span><span>Earnings</span></a><a class="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface font-label-md text-label-md transition-colors" data-path="reviews" href="#"><span class="material-symbols-outlined text-[20px]">star</span><span>Reviews</span></a></nav><div class="px-space-sm py-space-2xs text-[11px] font-semibold text-on-surface-variant uppercase tracking-wider">Account &amp; Setup</div><nav class="space-y-1" data-active-classes="bg-primary text-on-primary font-medium rounded-lg shadow-none"><a class="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface font-label-md text-label-md transition-colors" data-path="profile" href="#"><span class="material-symbols-outlined text-[20px]">person_outline</span><span>Profile</span></a><div class="pl-8 pr-2 space-y-1 mt-1"><a class="flex items-center px-2 py-1.5 rounded text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface font-body-sm text-body-sm transition-colors" data-path="my-services" href="#"><span>My Services</span></a><a class="flex items-center px-2 py-1.5 rounded text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface font-body-sm text-body-sm transition-colors" data-path="my-location" href="#"><span>My Location</span></a></div></nav></div><div class="p-space-sm border-t border-outline bg-surface-container-low"><div class="flex items-center gap-2 p-2 rounded-lg border border-outline bg-surface-container-lowest"><span class="material-symbols-outlined text-primary text-[18px]">verified_user</span><div class="flex flex-col"><span class="font-label-sm text-label-sm font-semibold text-on-surface leading-tight">NADRA Verified</span><span class="text-[11px] text-on-surface-variant leading-none mt-0.5">Level 2 Master Tech</span></div></div></div></aside><div class="pl-64"><header class="fixed top-0 left-64 right-0 h-16 bg-surface-container-lowest border-b border-outline z-40 px-space-gutter-desktop flex items-center justify-between"><div class="flex items-center gap-space-md"><span class="inline-flex items-center px-2.5 py-1 rounded-full font-label-sm text-label-sm font-semibold bg-surface-container-low text-on-secondary-fixed border border-outline">Skilled Worker Portal</span><div class="hidden xl:flex items-center gap-1.5 px-3 py-1 rounded-lg border border-outline bg-surface text-on-surface-variant font-label-sm text-label-sm"><span class="material-symbols-outlined text-primary text-[18px]">location_on</span><span>Serving: <strong class="text-on-surface font-semibold">F-10, Islamabad</strong></span><span class="text-outline-variant">•</span><span class="text-on-surface-variant">10 km radius</span></div></div><div class="flex items-center gap-space-lg"><div class="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-outline bg-surface-container-lowest"><span class="relative flex h-2.5 w-2.5"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span><span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-primary"></span></span><span class="font-label-sm text-label-sm font-semibold text-on-surface">Online</span><span class="text-[11px] text-on-surface-variant border-l border-outline pl-2 ml-1 hidden sm:inline">Ready for Jobs</span></div><div class="flex items-center gap-space-sm"><button class="relative p-2 rounded-lg border border-outline bg-surface-container-lowest text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low transition-colors" type="button"><span class="material-symbols-outlined text-[20px]">notifications</span><span class="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-error"></span></button><div class="h-8 w-px bg-outline hidden sm:block"></div><div class="flex items-center gap-2.5"><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center flex-shrink-0"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div><div class="hidden md:flex flex-col text-left"><span class="font-label-md text-label-md font-semibold text-on-secondary-fixed leading-tight">Ali Khan</span><span class="font-body-sm text-body-sm text-on-surface-variant leading-none mt-0.5">AC Specialist</span></div></div></div></div></header><main class="w-full pt-16 bg-surface min-h-screen"><div class="flex flex-col w-full">
+<div class="max-w-[75rem] mx-auto w-full px-space-gutter-desktop py-space-xl space-y-space-xl">
+<!-- Top Context Breadcrumb & Nav -->
+<div class="flex flex-col md:flex-row md:items-center justify-between gap-space-md">
+<div class="flex flex-col gap-1">
+<div class="flex items-center gap-2 text-on-surface-variant font-label-sm text-label-sm">
+<a class="hover:text-primary transition-colors" href="#">My Jobs</a>
+<span class="material-symbols-outlined text-[14px]">chevron_right</span>
+<a class="hover:text-primary transition-colors font-mono-spec text-mono-spec" href="#">Job #HN-8492</a>
+<span class="text-on-surface-variant/60">(AC Capacitor Repair)</span>
+<span class="material-symbols-outlined text-[14px]">chevron_right</span>
+<span class="text-on-surface font-semibold">Dispute Status</span>
+</div>
+<h1 class="font-headline-lg text-headline-lg text-on-surface tracking-tight">Case Docket &amp; Resolution Center</h1>
+</div>
+<!-- Segmented Navigation Filters -->
+<div class="inline-flex p-1 rounded-xl bg-surface-container-low self-start md:self-auto">
+<button class="px-space-md py-1.5 rounded-lg text-on-surface-variant hover:text-on-surface font-label-md text-label-md transition-colors" type="button">
+          All Disputes <span class="ml-1 text-[11px] px-1.5 py-0.2 rounded-full bg-surface-container-high text-on-secondary-fixed">3</span>
+</button>
+<button class="px-space-md py-1.5 rounded-lg bg-surface-container-lowest text-primary font-semibold font-label-md text-label-md shadow-sm" type="button">
+          Active Cases <span class="ml-1 text-[11px] px-1.5 py-0.2 rounded-full bg-tertiary-container text-on-tertiary-container">1</span>
+</button>
+<button class="px-space-md py-1.5 rounded-lg text-on-surface-variant hover:text-on-surface font-label-md text-label-md transition-colors" type="button">
+          Resolved <span class="ml-1 text-[11px] px-1.5 py-0.2 rounded-full bg-surface-container-high text-on-surface-variant">2</span>
+</button>
+</div>
+</div>
+<!-- Active High Priority Dispute Banner -->
+<div class="rounded-xl bg-[#FEF2F2] p-space-lg relative overflow-hidden shadow-sm">
+<div class="absolute left-0 top-0 bottom-0 w-[3px] bg-[#DC2626]"></div>
+<div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-space-md">
+<div class="flex items-start gap-space-md">
+<div class="w-10 h-10 rounded-xl bg-error-container/60 flex items-center justify-center text-error flex-shrink-0">
+<span class="material-symbols-outlined text-[24px]">gpp_maybe</span>
+</div>
+<div class="flex flex-col">
+<div class="flex items-center gap-2 flex-wrap">
+<span class="font-headline-sm text-headline-sm font-bold text-on-error-container tracking-tight">DISPUTE UNDER REVIEW</span>
+<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold bg-[#FEE2E2] text-[#991B1B]">
+                Disputed
+              </span>
+<span class="font-mono-spec text-[11px] text-on-error-container/70 bg-white/70 px-2 py-0.5 rounded">CASE-2024-0589</span>
+</div>
+<p class="font-body-md text-body-md text-on-error-container/90 mt-1 max-w-2xl">
+              Payment release is paused by HUNAR Escrow Protocol. Work logs, telemetric temperature proofs, and client transcripts have been locked for arbitration review.
+            </p>
+</div>
+</div>
+<div class="flex items-center gap-2 self-stretch sm:self-auto justify-end">
+<button class="px-space-md py-2 rounded-xl bg-white text-error font-label-md text-label-md font-semibold hover:bg-error-container/40 transition-colors flex items-center gap-1.5" id="open-escalate-btn" type="button">
+<span class="material-symbols-outlined text-[18px]">add_alert</span>
+<span>Raise New Counter</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Main Workspace Grid: Detail Docket (8 col) & Live Modal Reference / Action (4 col) -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-space-lg items-start">
+<!-- Left Column: Case Record & Verified Audit Trail (8 Cols) -->
+<div class="lg:col-span-8 space-y-space-lg">
+<!-- Dispute Detail Section Card -->
+<div class="rounded-xl bg-surface-container-lowest p-space-xl space-y-space-lg shadow-sm">
+<!-- Header Meta Strip -->
+<div class="flex flex-wrap items-center justify-between gap-space-sm pb-space-sm">
+<div class="flex items-center gap-3">
+<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-label-sm font-label-sm font-semibold bg-tertiary-container text-on-tertiary-container">
+<span class="w-1.5 h-1.5 rounded-full bg-on-tertiary-container animate-pulse"></span>
+                Under Review
+              </span>
+<span class="text-on-surface-variant font-body-sm text-body-sm flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px]">schedule</span>
+                Submitted on: <strong class="text-on-surface font-medium">14 May 2024, 04:30 PM</strong>
+</span>
+</div>
+<div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-surface-container-low text-on-surface-variant font-mono-spec text-mono-spec">
+<span>Arbitration SLA:</span>
+<span class="font-semibold text-primary">18h remaining</span>
+</div>
+</div>
+<!-- Reason Field Presentation -->
+<div class="space-y-1.5">
+<span class="text-on-surface-variant font-label-sm text-label-sm uppercase tracking-wider">Primary Dispute Ground</span>
+<div class="flex items-center justify-between px-space-md py-2.5 rounded-lg bg-surface-container-low text-on-surface font-label-md text-label-md">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-tertiary text-[20px]">money_off</span>
+<span class="font-semibold">Customer refusing to pay</span>
+</div>
+<span class="text-on-surface-variant text-[11px] font-mono-spec uppercase">Category 04 • Service Fee</span>
+</div>
+</div>
+<!-- Official Worker Statement Block -->
+<div class="space-y-1.5">
+<div class="flex items-center justify-between">
+<span class="text-on-surface-variant font-label-sm text-label-sm uppercase tracking-wider">Worker Filed Statement</span>
+<span class="text-on-surface-variant font-body-sm text-body-sm">Disputed Amount: <strong class="text-on-secondary-container font-semibold">Rs. 2,700</strong></span>
+</div>
+<div class="rounded-xl bg-surface-container-low p-space-md text-on-surface font-body-md text-body-md leading-relaxed">
+              “Customer claims cooling performance is insufficient after replacement, but digital multimeter and vent temperature readings showed 16°C cold air output verified in person. Customer refuses to pay the agreed Stage 2 repair fee of Rs. 2,700.”
+            </div>
+</div>
+<!-- Attached Supporting Evidence Matrix -->
+<div class="space-y-space-xs">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-1.5 text-on-surface font-label-md text-label-md font-semibold">
+<span class="material-symbols-outlined text-primary text-[18px]">attachment</span>
+<span>Attached Supporting Evidence (3 files)</span>
+</div>
+<span class="text-on-surface-variant text-[11px]">Tamper-Proof EXIF Verified</span>
+</div>
+<div class="grid grid-cols-1 sm:grid-cols-3 gap-space-sm pt-1">
+<!-- Evidence 1 -->
+<div class="group rounded-xl bg-surface p-2 space-y-2 hover:bg-surface-container transition-colors cursor-pointer flex flex-col justify-between">
+<div class="relative w-full h-28 rounded-lg overflow-hidden bg-surface-container-high">
+<img class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" data-alt="Close up photograph of a digital HVAC multimeter gauge showing 16 degrees Celsius vent output on an air conditioning unit in a residential Pakistani apartment setting with daylight." src="https://lh3.googleusercontent.com/aida-public/AB6AXuD_0PsT_2AGnrN-6c9_z-lLkGs_plPRr0tZ5DYjQN6ivEpTSBd6fYBWm1aC2LccsLPeUdnZkbiLAgSYevf6wqoZ9bcZ4ZKcKFzFyqnvdJH6xz9n4Vw2PFcqriJvinjN2gTAdKxnJS7ePDse7AqfmCP8XeXmIHXwWPlfHzy7uwE9q47-wGmLMQ6EWCV2LZYJJDYOD5wBkE80s0HEhflVL17IDfgPBQsFRfxbhAo7cmwKynY8LvtnpB5q"/>
+<span class="absolute bottom-1 right-1 px-1.5 py-0.5 rounded bg-on-surface/80 text-white font-mono-spec text-[10px]">16.2°C</span>
+</div>
+<div>
+<p class="font-label-sm text-label-sm font-medium text-on-surface truncate">multimeter_16C_vent.jpg</p>
+<div class="flex items-center justify-between text-on-surface-variant font-body-sm text-[11px] mt-0.5">
+<span>2.4 MB</span>
+<span class="text-primary group-hover:underline font-semibold flex items-center gap-0.5">View <span class="material-symbols-outlined text-[12px]">open_in_new</span></span>
+</div>
+</div>
+</div>
+<!-- Evidence 2 -->
+<div class="group rounded-xl bg-surface p-2 space-y-2 hover:bg-surface-container transition-colors cursor-pointer flex flex-col justify-between">
+<div class="relative w-full h-28 rounded-lg overflow-hidden bg-surface-container-high">
+<img class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" data-alt="Technical bench test shot displaying a 45 microfarad dual run AC capacitor hooked to diagnostic test leads on a technician workbench in a modern workshop with clean tools." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDnugVmQmE5BwH2JGSpuINlzoITCECFPAgmPk-A_Tu841otxzp2VODWEZjaVpKOw7Uge8KL4EJcjeSoCcaEirzAVW0P41BG3R7c6O9HZ63JwgOtgxdS1oe6WrAtKbmSQoaJ-kS_Hr0_LLGcxSz3i7lETzq7u35I4OvVqoDpnp9GlkGlFwzExAw7f4A15kOqWj5v6xs9luPHsZtOnDq5dAqv0MXZVq2oUMs-CGrAwvvSmlbYi7w-zA6B"/>
+<span class="absolute bottom-1 right-1 px-1.5 py-0.5 rounded bg-on-surface/80 text-white font-mono-spec text-[10px]">PASSED</span>
+</div>
+<div>
+<p class="font-label-sm text-label-sm font-medium text-on-surface truncate">capacitor_bench_test.png</p>
+<div class="flex items-center justify-between text-on-surface-variant font-body-sm text-[11px] mt-0.5">
+<span>1.8 MB</span>
+<span class="text-primary group-hover:underline font-semibold flex items-center gap-0.5">View <span class="material-symbols-outlined text-[12px]">open_in_new</span></span>
+</div>
+</div>
+</div>
+<!-- Evidence 3 -->
+<div class="group rounded-xl bg-surface p-2 space-y-2 hover:bg-surface-container transition-colors cursor-pointer flex flex-col justify-between">
+<div class="relative w-full h-28 rounded-lg overflow-hidden bg-surface-container-high">
+<img class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" data-alt="Document scan of handwritten customer service completion slip signed in Urdu and English with date stamp on blue carbon paper." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAXlSXp1cUQJp06KGmpq7Gyt9aNiuSoyHm92ytBgxyw4rIQK0kdNjWA67FiU7aF37HsZpYcWNJrYSguyq3Bwwskzg3hDQTwBwYBVl6pEOGLtDjUlBFVRcRZZohSvgytsvPcI4jNjAkMkybMOY4ZUs2TcDBKmwO5-m4eFhOEqmvFmfB7-Ae2YTcIrUFIhpY0g86gTe5XFHnzVkih5jUxogePMF06taz7r1opFdXg-2tp-pX70IPpsCB2"/>
+<span class="absolute bottom-1 right-1 px-1.5 py-0.5 rounded bg-on-surface/80 text-white font-mono-spec text-[10px]">SIGNED</span>
+</div>
+<div>
+<p class="font-label-sm text-label-sm font-medium text-on-surface truncate">customer_signoff.jpg</p>
+<div class="flex items-center justify-between text-on-surface-variant font-body-sm text-[11px] mt-0.5">
+<span>840 KB</span>
+<span class="text-primary group-hover:underline font-semibold flex items-center gap-0.5">View <span class="material-symbols-outlined text-[12px]">open_in_new</span></span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Admin Quoted Review Block -->
+<div class="rounded-xl bg-surface-container-low p-space-md relative overflow-hidden">
+<div class="absolute left-0 top-0 bottom-0 w-[3px] bg-[#CBD5E1]"></div>
+<div class="flex items-start gap-space-sm">
+<div class="w-7 h-7 rounded-full bg-secondary text-on-secondary flex items-center justify-center flex-shrink-0 mt-0.5">
+<span class="material-symbols-outlined text-[16px]">support_agent</span>
+</div>
+<div class="flex flex-col space-y-1">
+<div class="flex items-center gap-2">
+<span class="font-label-sm text-label-sm font-semibold text-on-secondary-fixed">HUNAR Resolution Desk Update</span>
+<span class="text-[11px] text-on-surface-variant">Today, 11:15 AM</span>
+</div>
+<p class="font-body-md text-body-md text-on-surface italic leading-relaxed">
+                  “Admin Case Officer assigned. Reached out to customer Usman Tariq for telephonic hearing. Both parties protected under HUNAR Escrow Guarantee.”
+                </p>
+<div class="flex items-center gap-3 pt-1 text-[11px] text-on-surface-variant">
+<span class="flex items-center gap-1 font-mono-spec text-mono-spec"><span class="material-symbols-outlined text-[14px] text-primary">verified</span> Officer ID: ISB-OPS-91</span>
+<span>•</span>
+<span>Target Resolution: Within 24 Hours</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Telephonic Audit Timeline Step Tracker -->
+<div class="pt-space-xs space-y-space-sm">
+<span class="text-on-surface-variant font-label-sm text-label-sm uppercase tracking-wider">Dispute Resolution Progress</span>
+<div class="grid grid-cols-1 md:grid-cols-4 gap-2">
+<div class="p-3 rounded-lg bg-surface-container-low flex flex-col gap-1">
+<div class="flex items-center gap-1.5 text-primary font-semibold text-[12px]">
+<span class="material-symbols-outlined text-[16px]">check_circle</span>
+<span>1. Ticket Lodged</span>
+</div>
+<span class="text-[11px] text-on-surface-variant">14 May • 04:30 PM</span>
+</div>
+<div class="p-3 rounded-lg bg-surface-container-low flex flex-col gap-1">
+<div class="flex items-center gap-1.5 text-primary font-semibold text-[12px]">
+<span class="material-symbols-outlined text-[16px]">check_circle</span>
+<span>2. Evidence Locked</span>
+</div>
+<span class="text-[11px] text-on-surface-variant">14 May • 05:02 PM</span>
+</div>
+<div class="p-3 rounded-lg bg-tertiary-container/50 flex flex-col gap-1">
+<div class="flex items-center gap-1.5 text-on-tertiary-container font-semibold text-[12px]">
+<span class="material-symbols-outlined text-[16px] animate-spin">sync</span>
+<span>3. Client Hearing</span>
+</div>
+<span class="text-[11px] text-on-tertiary-container">In Progress (Call queued)</span>
+</div>
+<div class="p-3 rounded-lg bg-surface-container-low/50 flex flex-col gap-1 opacity-70">
+<div class="flex items-center gap-1.5 text-on-surface-variant font-semibold text-[12px]">
+<span class="material-symbols-outlined text-[16px]">hourglass_empty</span>
+<span>4. Payout Decision</span>
+</div>
+<span class="text-[11px] text-on-surface-variant">Pending evaluation</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Right Column: Interactive "Raise Dispute" Component & Quick Stats (4 Cols) -->
+<div class="lg:col-span-4 space-y-space-lg">
+<!-- Interactive Modal Form Preview Card -->
+<div class="rounded-xl bg-surface-container-lowest p-space-lg shadow-sm space-y-space-md">
+<div class="flex items-center justify-between pb-space-2xs">
+<div class="flex items-center gap-2">
+<span class="w-2.5 h-2.5 rounded-full bg-[#DC2626]"></span>
+<span class="font-headline-sm text-headline-sm font-bold text-on-surface">Raise a Dispute</span>
+</div>
+<span class="px-2 py-0.5 rounded text-[11px] font-mono-spec bg-surface-container-low text-on-surface-variant">Step 1 of 2</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant">
+            Submit an official claim when work terms are breached or customer denies agreed compensation. Escrow holds funds safely.
+          </p>
+<form class="space-y-space-sm" id="dispute-form" onsubmit="event.preventDefault();">
+<!-- Reason Dropdown -->
+<div class="space-y-1">
+<label class="block font-label-sm text-label-sm font-semibold text-on-surface" for="dispute-reason">
+                Dispute Reason <span class="text-error">*</span>
+</label>
+<div class="relative">
+<select class="w-full bg-surface-container-low text-on-surface font-body-md text-body-md rounded-lg px-3 py-2.5 appearance-none focus:outline-none focus:bg-surface-container-lowest" id="dispute-reason">
+<option selected="" value="unpaid">Customer refusing to pay</option>
+<option value="scope">Scope creep / unpaid extra task</option>
+<option value="abuse">Unsafe work environment / harassment</option>
+<option value="cancellation">Late cancellation after arrival</option>
+<option value="parts">Customer rejected verified replacement parts</option>
+</select>
+<span class="material-symbols-outlined pointer-events-none absolute right-2.5 top-3 text-on-surface-variant text-[18px]">expand_more</span>
+</div>
+</div>
+<!-- Description Textarea with Live Counter -->
+<div class="space-y-1">
+<div class="flex items-center justify-between">
+<label class="block font-label-sm text-label-sm font-semibold text-on-surface" for="dispute-desc">
+                  Detailed Statement <span class="text-error">*</span>
+</label>
+<span class="font-mono-spec text-[11px] text-on-surface-variant" id="char-counter">248 / 500</span>
+</div>
+<textarea class="w-full bg-surface-container-low text-on-surface font-body-md text-body-md rounded-lg p-3 focus:outline-none focus:bg-surface-container-lowest leading-relaxed resize-none" id="dispute-desc" maxlength="500" rows="4">Customer claims cooling performance is insufficient after replacement, but digital multimeter and vent temperature readings showed 16°C cold air output verified in person. Customer refuses to pay the agreed Stage 2 repair fee of Rs. 2,700.</textarea>
+</div>
+<!-- Upload Zone Minimal -->
+<div class="space-y-1">
+<label class="block font-label-sm text-label-sm font-semibold text-on-surface">Add Photos / Receipts</label>
+<div class="p-3 rounded-lg bg-surface-container-low flex items-center justify-between cursor-pointer hover:bg-surface-container transition-colors">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-[20px]">add_photo_alternate</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">3 files selected (5.04 MB)</span>
+</div>
+<span class="text-primary font-label-sm text-label-sm font-semibold hover:underline">Change</span>
+</div>
+</div>
+<!-- Action Buttons -->
+<div class="pt-2 space-y-2">
+<button class="w-full py-2.5 rounded-lg bg-primary hover:bg-on-primary-container text-on-primary font-label-md text-label-md font-semibold transition-colors flex items-center justify-center gap-2 shadow-sm" id="submit-dispute-btn" type="button">
+<span class="material-symbols-outlined text-[18px]">send</span>
+<span>Submit Dispute</span>
+</button>
+<!-- Reference Secondary Trigger Button matching prompt requirement -->
+<button class="w-full py-2 rounded-lg bg-transparent text-[#DC2626] font-label-md text-label-md font-semibold hover:bg-[#FEF2F2] transition-colors flex items-center justify-center gap-1.5 shadow-[inset_0_0_0_1px_#DC2626]" type="button">
+<span class="material-symbols-outlined text-[18px]">report_problem</span>
+<span>Raise a Dispute</span>
+</button>
+</div>
+</form>
+</div>
+<!-- Protection Protocol Summary Widget -->
+<div class="rounded-xl bg-surface-container-low p-space-md space-y-space-xs shadow-sm">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-[20px]">security</span>
+<span class="font-headline-sm text-headline-sm font-semibold text-on-secondary-fixed">Escrow Protection</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant">
+            HUNAR guarantees 100% payout of confirmed diagnostic charges (Rs. 1,000) regardless of client disputes, provided photographic proof is supplied within 48h.
+          </p>
+<div class="flex items-center justify-between pt-2 border-t border-surface-container-high/60">
+<span class="font-mono-spec text-[11px] text-on-surface-variant">Escrow Lock ID: #ESC-9921</span>
+<span class="font-mono-spec text-mono-spec text-primary font-bold">Rs. 2,700.00</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Section: My Disputes Historical Summary Ledger -->
+<div class="rounded-xl bg-surface-container-lowest p-space-lg shadow-sm space-y-space-md">
+<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-space-xs">
+<div>
+<h2 class="font-headline-sm text-headline-sm font-bold text-on-surface">My Disputes Historical Record</h2>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Comprehensive tracking of arbitration outcomes, settlements, and open inquiries.</p>
+</div>
+<div class="flex items-center gap-2">
+<div class="relative">
+<input class="px-3 py-1.5 pr-8 rounded-lg bg-surface text-on-surface font-body-sm text-body-sm placeholder:text-on-surface-variant focus:outline-none focus:bg-surface-container-low" placeholder="Search case or job #..." type="text"/>
+<span class="material-symbols-outlined absolute right-2 top-2 text-on-surface-variant text-[16px]">search</span>
+</div>
+</div>
+</div>
+<!-- Ledger Table -->
+<div class="overflow-x-auto">
+<table class="w-full text-left">
+<thead>
+<tr class="bg-surface-container-low text-on-surface-variant font-label-sm text-label-sm">
+<th class="py-3 px-space-md rounded-l-lg">Case &amp; Job ID</th>
+<th class="py-3 px-space-md">Service &amp; Client</th>
+<th class="py-3 px-space-md">Dispute Reason</th>
+<th class="py-3 px-space-md">Claim Value</th>
+<th class="py-3 px-space-md">Resolution Status</th>
+<th class="py-3 px-space-md text-right rounded-r-lg">Action</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-surface-container-low font-body-md text-body-md text-on-surface">
+<!-- Row 1 (Current Active Case) -->
+<tr class="bg-surface-bright hover:bg-surface-container transition-colors">
+<td class="py-3.5 px-space-md">
+<div class="flex flex-col">
+<span class="font-mono-spec text-mono-spec font-bold text-on-surface">CASE-2024-0589</span>
+<span class="font-mono-spec text-[11px] text-on-surface-variant">Job #HN-8492</span>
+</div>
+</td>
+<td class="py-3.5 px-space-md">
+<div class="flex flex-col">
+<span class="font-label-md text-label-md font-semibold text-on-surface">AC Capacitor Repair</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Usman Tariq • F-10/2 Islamabad</span>
+</div>
+</td>
+<td class="py-3.5 px-space-md">
+<span class="text-on-surface">Customer refusing to pay</span>
+</td>
+<td class="py-3.5 px-space-md">
+<span class="font-mono-spec text-mono-spec font-semibold text-on-secondary-container">Rs. 2,700</span>
+</td>
+<td class="py-3.5 px-space-md">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold bg-tertiary-container text-on-tertiary-container">
+<span class="w-1.5 h-1.5 rounded-full bg-on-tertiary-container"></span>
+                  Under Review
+                </span>
+</td>
+<td class="py-3.5 px-space-md text-right">
+<button class="px-2.5 py-1 rounded-lg bg-surface-container-low text-primary font-label-sm text-label-sm font-semibold hover:bg-surface-container transition-colors" type="button">
+                  Details
+                </button>
+</td>
+</tr>
+<!-- Row 2 (Resolved - Worker Favored) -->
+<tr class="hover:bg-surface transition-colors">
+<td class="py-3.5 px-space-md">
+<div class="flex flex-col">
+<span class="font-mono-spec text-mono-spec font-bold text-on-surface">CASE-2024-0341</span>
+<span class="font-mono-spec text-[11px] text-on-surface-variant">Job #HN-7620</span>
+</div>
+</td>
+<td class="py-3.5 px-space-md">
+<div class="flex flex-col">
+<span class="font-label-md text-label-md font-semibold text-on-surface">Compressor Gas Recharge</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Bilal Siddiqui • G-9/1 Islamabad</span>
+</div>
+</td>
+<td class="py-3.5 px-space-md">
+<span class="text-on-surface">Customer cancelled after arrival</span>
+</td>
+<td class="py-3.5 px-space-md">
+<span class="font-mono-spec text-mono-spec font-semibold text-on-secondary-container">Rs. 1,500</span>
+</td>
+<td class="py-3.5 px-space-md">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold bg-[#E6F7F7] text-[#0B6365]">
+<span class="material-symbols-outlined text-[13px]">verified</span>
+                  Resolved - Worker Favored
+                </span>
+</td>
+<td class="py-3.5 px-space-md text-right">
+<button class="px-2.5 py-1 rounded-lg bg-surface-container-low text-on-surface-variant font-label-sm text-label-sm font-semibold hover:bg-surface-container transition-colors" type="button">
+                  Archive
+                </button>
+</td>
+</tr>
+<!-- Row 3 (Resolved - Settlement Split) -->
+<tr class="hover:bg-surface transition-colors">
+<td class="py-3.5 px-space-md">
+<div class="flex flex-col">
+<span class="font-mono-spec text-mono-spec font-bold text-on-surface">CASE-2024-0108</span>
+<span class="font-mono-spec text-[11px] text-on-surface-variant">Job #HN-6199</span>
+</div>
+</td>
+<td class="py-3.5 px-space-md">
+<div class="flex flex-col">
+<span class="font-label-md text-label-md font-semibold text-on-surface">Drainage Pipe Leak Fix</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Mrs. Yasmin • E-11/3 Islamabad</span>
+</div>
+</td>
+<td class="py-3.5 px-space-md">
+<span class="text-on-surface">Work scope disagreement</span>
+</td>
+<td class="py-3.5 px-space-md">
+<span class="font-mono-spec text-mono-spec font-semibold text-on-secondary-container">Rs. 3,200</span>
+</td>
+<td class="py-3.5 px-space-md">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold bg-[#E6F7F7] text-[#0B6365]">
+<span class="material-symbols-outlined text-[13px]">verified</span>
+                  Resolved - Worker Favored
+                </span>
+</td>
+<td class="py-3.5 px-space-md text-right">
+<button class="px-2.5 py-1 rounded-lg bg-surface-container-low text-on-surface-variant font-label-sm text-label-sm font-semibold hover:bg-surface-container transition-colors" type="button">
+                  Archive
+                </button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Historical Summary Metrics Strip -->
+<div class="pt-space-sm flex flex-wrap items-center justify-between gap-space-md text-on-surface-variant font-body-sm text-body-sm">
+<div class="flex items-center gap-4">
+<span>Worker Payout Win Rate: <strong class="text-primary font-semibold">100% (3/3 Protected)</strong></span>
+<span>•</span>
+<span>Average SLA: <strong class="text-on-surface font-medium">14.2 Hours</strong></span>
+</div>
+<div class="flex items-center gap-1">
+<span class="text-on-surface-variant text-[11px]">HUNAR Escrow Protection Policy v4.2 Active</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<script>
+  (function initDisputeInteractions() {
+    const textarea = document.getElementById('dispute-desc');
+    const counter = document.getElementById('char-counter');
+    const submitBtn = document.getElementById('submit-dispute-btn');
+    const escalateBtn = document.getElementById('open-escalate-btn');
+
+    if (textarea && counter) {
+      textarea.addEventListener('input', function() {
+        const len = textarea.value.length;
+        counter.textContent = len + ' / 500';
+      });
+    }
+
+    if (submitBtn) {
+      submitBtn.addEventListener('click', function() {
+        const originalText = submitBtn.innerHTML;
+        submitBtn.innerHTML = '<span class="material-symbols-outlined animate-spin text-[18px]">progress_activity</span><span>Submitting to Escrow...</span>';
+        submitBtn.disabled = true;
+        setTimeout(() => {
+          submitBtn.innerHTML = '<span class="material-symbols-outlined text-[18px]">check</span><span>Dispute Logged</span>';
+          submitBtn.classList.remove('bg-primary');
+          submitBtn.classList.add('bg-on-primary-container');
+          setTimeout(() => {
+            submitBtn.innerHTML = originalText;
+            submitBtn.classList.remove('bg-on-primary-container');
+            submitBtn.classList.add('bg-primary');
+            submitBtn.disabled = false;
+          }, 2400);
+        }, 1000);
+      });
+    }
+
+    if (escalateBtn && textarea) {
+      escalateBtn.addEventListener('click', function() {
+        textarea.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        textarea.focus();
+      });
+    }
+  })();
+</script></main></div></body></html>

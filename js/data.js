@@ -97,6 +97,12 @@ const WORKERS = [
 
 const DEMO_CUSTOMER = { id: 'c_demo', role: 'customer', name: 'Sara Ahmed', email: 'sara@hunar.pk', phone: '+92 321 9988776', area: 'Clifton Block 4', joined: 2024 };
 
+const REVIEW_TAGS = ['Courteous', 'Prompt Payment', 'Accurate Description', 'Respectful', 'Flexible'];
+
+const DISPUTE_REASONS = ['Customer refusing to pay', 'Price not honored as agreed', 'Unfair rating or review', 'Customer not responding', 'Damages or safety concern', 'Other'];
+
+const PLATFORM_COMMISSION = 0.15;
+
 function initialSeedReviewsFor(workerId) {
   const w = WORKERS.find(function (x) { return x.id === workerId; });
   return w ? w.reviews.map(function (r) {
