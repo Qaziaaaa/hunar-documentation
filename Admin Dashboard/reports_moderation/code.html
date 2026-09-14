@@ -233,108 +233,155 @@ tailwind.config = {
 </style>
 </head>
 
-<body class="bg-brand-bg font-sans text-brand-body min-h-full antialiased">
+<body class="bg-white font-sans text-brand-body min-h-full antialiased">
 
-<!-- ================= SIDEBAR ================= -->
-<aside class="fixed left-0 top-0 bottom-0 w-64 bg-brand-card border-r border-brand-border z-50 flex flex-col justify-between select-none">
-  <div class="flex flex-col h-full overflow-hidden">
-
-    <!-- Brand (HUNAR text logo) -->
-    <div class="h-16 px-6 flex items-center gap-3 border-b border-brand-border shrink-0">
-      <div class="flex flex-col">
-        <span class="font-heading font-bold text-lg text-brand-navy leading-tight tracking-tight flex items-center gap-1">
-          HUNAR
-          <span class="text-xs px-1.5 py-0.5 rounded bg-brand-teal text-white font-sans font-semibold">PRO</span>
-        </span>
-        <span class="text-[11px] font-medium text-brand-muted">Admin Panel</span>
-      </div>
-    </div>
-
-    <!-- Nav -->
-    <div class="flex-1 overflow-y-auto px-3 py-4">
-      <nav class="flex flex-col gap-1">
-        <a class="flex items-center gap-3 px-3 py-2 rounded-lg text-brand-muted hover:bg-slate-50 hover:text-brand-navy transition-all group" data-path="dashboard" href="#">
-          <span class="material-symbols-outlined text-[20px] text-brand-muted group-hover:text-brand-navy transition-colors">dashboard</span>
-          <span class="text-sm font-medium">Dashboard</span>
-        </a>
-        <a class="flex items-center gap-3 px-3 py-2 rounded-lg text-brand-muted hover:bg-slate-50 hover:text-brand-navy transition-all group" data-path="users" href="#">
-          <span class="material-symbols-outlined text-[20px] text-brand-muted group-hover:text-brand-navy transition-colors">group</span>
-          <span class="text-sm font-medium">Users</span>
-        </a>
-        <a class="flex items-center gap-3 px-3 py-2 rounded-lg text-brand-muted hover:bg-slate-50 hover:text-brand-navy transition-all group" data-path="jobs" href="#">
-          <span class="material-symbols-outlined text-[20px] text-brand-muted group-hover:text-brand-navy transition-colors">work</span>
-          <span class="text-sm font-medium">Jobs</span>
-        </a>
-        <a class="flex items-center gap-3 px-3 py-2 rounded-lg text-brand-muted hover:bg-slate-50 hover:text-brand-navy transition-all group" data-path="verification" href="#">
-          <span class="material-symbols-outlined text-[20px] text-brand-muted group-hover:text-brand-navy transition-colors">verified_user</span>
-          <span class="text-sm font-medium">Verification</span>
-        </a>
-        <a class="flex items-center gap-3 px-3 py-2 rounded-lg text-brand-muted hover:bg-slate-50 hover:text-brand-navy transition-all group" data-path="payments" href="#">
-          <span class="material-symbols-outlined text-[20px] text-brand-muted group-hover:text-brand-navy transition-colors">payments</span>
-          <span class="text-sm font-medium">Payments</span>
-        </a>
-        <a class="flex items-center gap-3 px-3 py-2 rounded-lg text-brand-muted hover:bg-slate-50 hover:text-brand-navy transition-all group" data-path="disputes" href="#">
-          <span class="material-symbols-outlined text-[20px] text-brand-muted group-hover:text-brand-navy transition-colors">gavel</span>
-          <span class="text-sm font-medium">Disputes</span>
-        </a>
-        <a class="flex items-center gap-3 px-3 py-2 rounded-lg text-brand-muted hover:bg-slate-50 hover:text-brand-navy transition-all group" data-path="reviews" href="#">
-          <span class="material-symbols-outlined text-[20px] text-brand-muted group-hover:text-brand-navy transition-colors">star_half</span>
-          <span class="text-sm font-medium">Reviews</span>
-        </a>
-        <a class="flex items-center gap-3 px-3 py-2 rounded-lg text-brand-muted hover:bg-slate-50 hover:text-brand-navy transition-all group" data-path="categories" href="#">
-          <span class="material-symbols-outlined text-[20px] text-brand-muted group-hover:text-brand-navy transition-colors">category</span>
-          <span class="text-sm font-medium">Categories</span>
-        </a>
-        <a class="flex items-center gap-3 px-3 py-2 rounded-lg text-brand-muted hover:bg-slate-50 hover:text-brand-navy transition-all group" data-path="locations" href="#">
-          <span class="material-symbols-outlined text-[20px] text-brand-muted group-hover:text-brand-navy transition-colors">location_on</span>
-          <span class="text-sm font-medium">Locations</span>
-        </a>
-        <a aria-current="page" class="flex items-center justify-between px-3 py-2 rounded-lg transition-all group bg-brand-teal text-white font-medium shadow-sm" data-path="reports" href="#">
-          <div class="flex items-center gap-3">
-            <span class="material-symbols-outlined text-[20px] text-white">report</span>
-            <span class="text-sm font-semibold">Reports</span>
-          </div>
-          <span class="px-2 py-0.5 rounded-full text-[11px] font-bold bg-white/20 text-white">3</span>
-        </a>
-        <a class="flex items-center gap-3 px-3 py-2 rounded-lg text-brand-muted hover:bg-slate-50 hover:text-brand-navy transition-all group" data-path="notifications" href="#">
-          <span class="material-symbols-outlined text-[20px] text-brand-muted group-hover:text-brand-navy transition-colors">notifications</span>
-          <span class="text-sm font-medium">Notifications</span>
-        </a>
-        <a class="flex items-center gap-3 px-3 py-2 rounded-lg text-brand-muted hover:bg-slate-50 hover:text-brand-navy transition-all group" data-path="analytics" href="#">
-          <span class="material-symbols-outlined text-[20px] text-brand-muted group-hover:text-brand-navy transition-colors">insights</span>
-          <span class="text-sm font-medium">Analytics</span>
-        </a>
-        <a class="flex items-center gap-3 px-3 py-2 rounded-lg text-brand-muted hover:bg-slate-50 hover:text-brand-navy transition-all group" data-path="promotions" href="#">
-          <span class="material-symbols-outlined text-[20px] text-brand-muted group-hover:text-brand-navy transition-colors">loyalty</span>
-          <span class="text-sm font-medium">Promotions</span>
-        </a>
-        <a class="flex items-center gap-3 px-3 py-2 rounded-lg text-brand-muted hover:bg-slate-50 hover:text-brand-navy transition-all group" data-path="settings" href="#">
-          <span class="material-symbols-outlined text-[20px] text-brand-muted group-hover:text-brand-navy transition-colors">settings</span>
-          <span class="text-sm font-medium">Settings</span>
-        </a>
-      </nav>
-    </div>
-  </div>
-
-  <!-- User -->
-  <div class="p-3 border-t border-brand-border shrink-0 bg-brand-card">
-    <div class="flex items-center justify-between p-2 rounded-lg hover:bg-slate-50 transition-colors">
-      <div class="flex items-center gap-2.5 min-w-0">
-        <img alt="Profile" class="w-8 h-8 rounded-full object-cover shrink-0 border border-brand-border" src="https://randomuser.me/api/portraits/men/32.jpg"/>
-        <div class="flex flex-col min-w-0">
-          <span class="text-sm font-semibold text-brand-navy truncate">Abdullah</span>
-          <span class="text-xs text-brand-muted truncate">Super Admin</span>
-        </div>
-      </div>
-      <button class="p-1 text-brand-muted hover:text-brand-red transition-colors" title="Logout" type="button">
-        <span class="material-symbols-outlined text-[20px]">logout</span>
-      </button>
-    </div>
-  </div>
+<!-- SIDEBAR (Modern, Crisp White with Brand Navy Accents & Clear Hierarchy) -->
+<aside class="hidden lg:flex fixed left-0 top-0 h-screen w-64 bg-white border-r border-[#E2E8F0] z-50 flex-col justify-between shadow-[1px_0_10px_rgba(0,0,0,0.02)]">
+<div class="flex flex-col flex-1 overflow-y-auto px-4 py-5">
+<!-- Logo Header -->
+<div class="flex items-center justify-between pb-5 border-b border-[#E2E8F0] mb-5">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-xl bg-[#123B5D] flex items-center justify-center text-white font-extrabold text-xl shadow-sm tracking-tight relative">
+<span>H</span>
+<span class="w-2.5 h-2.5 rounded-full bg-[#0F8B8D] absolute bottom-1 right-1 border-2 border-white"></span>
+</div>
+<div class="flex flex-col">
+<div class="flex items-center gap-1.5 leading-tight">
+<span class="font-extrabold text-[17px] tracking-tight text-[#172033]">HUNAR</span>
+<span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-[#123B5D]/5 text-[#123B5D] uppercase tracking-wider border border-[#123B5D]/15">ADMIN</span>
+</div>
+<p class="text-[11px] font-medium text-[#64748B]">Certified Pro Marketplace</p>
+</div>
+</div>
+</div>
+<!-- Navigation Hierarchy -->
+<nav class="space-y-6">
+<!-- Section: MAIN -->
+<div>
+<div class="px-3 pb-2 text-[10px] font-bold uppercase tracking-wider text-[#64748B]">Main</div>
+<div class="space-y-1">
+<a class="flex items-center justify-between px-3 py-2 rounded-xl text-[13px] font-medium text-[#64748B] hover:text-[#172033] hover:bg-slate-50 transition-colors" href="../stitch_hunar_marketplace_prototype/hunar_admin_operations_dashboard_modern/code.html">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-[19px]">dashboard</span>
+<span>Dashboard</span>
+</div>
+</a>
+<a class="flex items-center justify-between px-3 py-2 rounded-xl text-[13px] font-medium text-[#64748B] hover:text-[#172033] hover:bg-slate-50 transition-colors" href="#">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-[19px]">group</span>
+<span>Users</span>
+</div>
+<span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-slate-100 text-[#64748B] border border-[#E2E8F0]">2 Roles</span>
+</a>
+<a class="flex items-center justify-between px-3 py-2 rounded-xl text-[13px] font-medium text-[#64748B] hover:text-[#172033] hover:bg-slate-50 transition-colors" href="../stitch_hunar_marketplace_prototype/jobs_management_work_orders_hunar_admin/code.html">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-[19px]">assignment</span>
+<span>Jobs</span>
+</div>
+<span class="px-2 py-0.5 rounded-full text-[11px] font-bold bg-slate-100 text-[#123B5D]">428</span>
+</a>
+</div>
+</div>
+<!-- Section: OPERATIONS -->
+<div>
+<div class="px-3 pb-2 text-[10px] font-bold uppercase tracking-wider text-[#64748B]">Operations</div>
+<div class="space-y-1">
+<a class="flex items-center justify-between px-3 py-2 rounded-xl text-[13px] font-medium text-[#64748B] hover:text-[#172033] hover:bg-slate-50 transition-colors" href="#">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-[19px] text-[#F59E0B]">verified</span>
+<span>Verification</span>
+</div>
+<span class="px-2 py-0.5 rounded-full text-[11px] font-bold bg-[#FEF3C7] text-[#92400E] border border-[#F59E0B]/30">24</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-xl text-[13px] font-medium text-[#64748B] hover:text-[#172033] hover:bg-slate-50 transition-colors" href="#">
+<span class="material-symbols-outlined text-[19px]">account_balance_wallet</span>
+<span>Payments &amp; Txns</span>
+</a>
+<a class="flex items-center justify-between px-3 py-2 rounded-xl text-[13px] font-medium text-[#64748B] hover:text-[#172033] hover:bg-slate-50 transition-colors" href="#">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-[19px] text-[#DC2626]">flag</span>
+<span>Disputes</span>
+</div>
+<span class="px-2 py-0.5 rounded-full text-[11px] font-bold bg-[#FEE2E2] text-[#DC2626] border border-[#DC2626]/30">8</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-xl text-[13px] font-medium text-[#64748B] hover:text-[#172033] hover:bg-slate-50 transition-colors" href="#">
+<span class="material-symbols-outlined text-[19px]">star</span>
+<span>Reviews &amp; Ratings</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-xl text-[13px] font-medium text-[#64748B] hover:text-[#172033] hover:bg-slate-50 transition-colors" href="#">
+<span class="material-symbols-outlined text-[19px]">category</span>
+<span>Categories</span>
+</a>
+<a class="flex items-center justify-between px-3 py-2 rounded-xl text-[13px] font-medium text-[#64748B] hover:text-[#172033] hover:bg-slate-50 transition-colors" href="#">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-[19px]">location_on</span>
+<span>Locations</span>
+</div>
+<span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-[#0F8B8D]/10 text-[#0F8B8D] border border-[#0F8B8D]/20">Peshawar</span>
+</a>
+</div>
+</div>
+<!-- Section: GOVERNANCE & TELEMETRY -->
+<div>
+<div class="px-3 pb-2 text-[10px] font-bold uppercase tracking-wider text-[#64748B]">Governance</div>
+<div class="space-y-1">
+<a class="flex items-center justify-between px-3 py-2.5 rounded-xl bg-[#123B5D] text-white font-semibold text-[13px] shadow-sm group transition-all" href="code.html">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-[19px] text-[#0F8B8D]">description</span>
+<span>Reports</span>
+</div>
+<span class="w-1.5 h-1.5 rounded-full bg-[#0F8B8D]"></span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-xl text-[13px] font-medium text-[#64748B] hover:text-[#172033] hover:bg-slate-50 transition-colors" href="../notifications/code.html">
+<span class="material-symbols-outlined text-[19px]">notifications</span>
+<span>Notifications</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-xl text-[13px] font-medium text-[#64748B] hover:text-[#172033] hover:bg-slate-50 transition-colors" href="../analytics/code.html">
+<span class="material-symbols-outlined text-[19px]">monitoring</span>
+<span>Analytics</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-xl text-[13px] font-medium text-[#64748B] hover:text-[#172033] hover:bg-slate-50 transition-colors" href="../settings/code.html">
+<span class="material-symbols-outlined text-[19px]">settings</span>
+<span>Settings</span>
+</a>
+</div>
+</div>
+</nav>
+</div>
+<!-- Sidebar Bottom: Escrow Highlight Card & Super Admin Profile -->
+<div class="p-4 border-t border-[#E2E8F0] space-y-3 bg-white">
+<div class="p-3.5 rounded-xl bg-[#123B5D] text-white space-y-2 shadow-sm">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[#0F8B8D] text-[18px]">verified_user</span>
+<span class="text-[10px] font-bold tracking-wider uppercase text-teal-300">HUNAR Escrow</span>
+</div>
+<span class="w-2 h-2 rounded-full bg-[#16A34A] animate-pulse"></span>
+</div>
+<p class="text-[11px] text-slate-300 leading-relaxed">100% SBP / NADRA Verified Pros &amp; safe Raast dispute guarantee.</p>
+<a class="block text-center py-1.5 px-3 bg-[#0F8B8D] text-white text-[11px] font-semibold rounded-lg hover:bg-[#0D7A7C] transition-colors" href="#">
+View Escrow Rules
+</a>
+</div>
+<div class="flex items-center justify-between pt-1">
+<div class="flex items-center gap-2.5">
+<div class="w-8 h-8 rounded-full bg-[#123B5D] text-white flex items-center justify-center font-bold text-xs ring-2 ring-[#0F8B8D]/20">
+<span class="material-symbols-outlined text-[18px]">person</span>
+</div>
+<div class="flex flex-col">
+<span class="text-[12px] font-bold text-[#172033] leading-tight">Abdullah Khan</span>
+<span class="text-[10px] text-[#64748B] font-medium">Super Admin • Peshawar Hub</span>
+</div>
+</div>
+<a class="text-[#64748B] hover:text-[#DC2626] p-1 rounded-md transition-colors" href="#" title="Logout">
+<span class="material-symbols-outlined text-[18px]">logout</span>
+</a>
+</div>
+</div>
 </aside>
 
 <!-- ================= MAIN WRAPPER ================= -->
-<div class="pl-64">
+<div class="pl-64 bg-white min-h-screen">
 
   <!-- Header -->
   <header class="fixed top-0 left-64 right-0 h-16 bg-brand-card/90 backdrop-blur-md border-b border-brand-border z-40 px-6 flex items-center justify-between">
