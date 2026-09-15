@@ -1,0 +1,10 @@
+{
+  "description": "Connect skilled workers with customers for on-demand services, ensuring transparent pricing and seamless communication throughout the repair process.",
+  "robots": {
+    "index": false
+  },
+  "accessibility": {
+    "addBypassLinks": false,
+    "ignoreReducedMotion": false
+  }
+}

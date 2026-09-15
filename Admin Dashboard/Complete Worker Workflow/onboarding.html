@@ -1,0 +1,667 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HUNAR — Worker Onboarding</title>
+  <link rel="stylesheet" href="css/styles.css" />
+  <style>
+    .role-card {
+      width: 100%;
+      text-align: left;
+      border-radius: 8px;
+      padding: 16px;
+      background: var(--surface);
+      border: 1.5px solid var(--border);
+      transition: all 0.2s ease;
+      cursor: pointer;
+    }
+    .role-card.selected {
+      background: var(--primary-light);
+      border-color: var(--primary);
+    }
+    .cat-card {
+      border-radius: 8px;
+      padding: 12px;
+      text-align: left;
+      background: var(--surface);
+      border: 1.5px solid var(--border);
+      position: relative;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .cat-card.selected {
+      background: var(--primary-light);
+      border-color: var(--primary);
+    }
+    .radius-btn {
+      flex: 1;
+      padding: 10px 4px;
+      font-size: 12px;
+      font-weight: 600;
+      text-align: center;
+      background: var(--surface);
+      color: var(--gray);
+      border: none;
+      border-right: 1px solid var(--border);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .radius-btn:last-child {
+      border-right: none;
+    }
+    .radius-btn.active {
+      background: var(--primary);
+      color: #fff;
+    }
+  </style>
+</head>
+<body class="frame-full">
+  <div class="app-frame" id="onboarding-frame" style="display:flex;flex-direction:column;min-height:100vh;background:var(--bg)">
+    <!-- Status Bar -->
+    <div class="status-bar" style="background:var(--navy);color:#fff">
+      <span>9:41</span>
+      <div class="status-icons">
+        <div class="signal-bars">
+          <div style="width:3px;height:3px;background:#fff;border-radius:1px"></div>
+          <div style="width:3px;height:5px;background:#fff;border-radius:1px"></div>
+          <div style="width:3px;height:7px;background:#fff;border-radius:1px"></div>
+          <div style="width:3px;height:9px;background:#fff;border-radius:1px;opacity:0.4"></div>
+        </div>
+        <div style="width:16px;height:9px;border:1px solid rgba(255,255,255,0.6);border-radius:2px;position:relative;margin-left:4px">
+          <div style="position:absolute;inset:1px;right:4px;background:#fff;border-radius:1px"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ STEP 1: PHONE ═══ -->
+    <div id="step-phone" class="onboard-step" style="display:flex;flex-direction:column;flex:1">
+      <div style="background:var(--navy);padding:24px 24px 20px;color:#fff">
+        <div class="flex items-center gap-2 mb-4">
+          <div style="width:32px;height:32px;border-radius:8px;background:var(--primary);display:flex;align-items:center;justify-content:center;color:#fff">
+            <span style="width:18px;height:18px;display:inline-flex" class="icon-wrench"></span>
+          </div>
+          <span style="font-weight:700;font-size:18px;letter-spacing:-0.02em">HUNAR</span>
+        </div>
+        <h1 style="font-size:24px;font-weight:700;margin-bottom:4px;letter-spacing:-0.025em">Welcome</h1>
+        <p style="font-size:13px;color:#94A3B8">Enter your mobile number to get started</p>
+      </div>
+
+      <div class="flex-1 p-6" style="display:flex;flex-direction:column">
+        <div class="progress-dots">
+          <div class="progress-dot active"></div>
+          <div class="progress-dot"></div>
+          <div class="progress-dot"></div>
+          <div class="progress-dot"></div>
+          <div class="progress-dot"></div>
+        </div>
+
+        <div class="mt-2">
+          <label style="display:block;font-size:12px;font-weight:600;color:var(--navy);margin-bottom:6px">Mobile Number</label>
+          <div class="flex gap-2">
+            <div style="display:flex;align-items:center;padding:0 12px;border-radius:8px;border:1px solid var(--border);background:var(--surface);font-weight:600;font-size:13px;color:var(--navy)">
+              🇵🇰 +92
+            </div>
+            <input
+              id="phone-input"
+              type="tel"
+              placeholder="300 1234567"
+              value="300 1234567"
+              style="flex:1;font-size:15px;font-weight:500;padding:12px;border-radius:8px;border:1px solid var(--border);background:var(--surface);outline:none"
+            />
+          </div>
+          <p style="font-size:12px;color:var(--gray);margin-top:8px">We'll send a 6-digit verification code via SMS.</p>
+        </div>
+
+        <button id="btn-send-otp" class="btn w-full mt-6" onclick="handleSendOtp()">Send OTP →</button>
+
+        <p style="font-size:11px;color:var(--gray);text-align:center;margin-top:auto;padding-top:24px;line-height:1.5">
+          By continuing you agree to HUNAR's <span style="color:var(--primary);cursor:pointer">Terms of Service</span> and <span style="color:var(--primary);cursor:pointer">Privacy Policy</span>
+        </p>
+      </div>
+    </div>
+
+    <!-- ═══ STEP 2: OTP ═══ -->
+    <div id="step-otp" class="onboard-step" style="display:none;flex-direction:column;flex:1">
+      <div style="background:var(--navy);padding:24px 24px 20px;color:#fff">
+        <button onclick="goToStep('phone')" style="background:none;border:none;color:#94A3B8;cursor:pointer;padding:0;margin-bottom:12px;display:flex;align-items:center;gap:4px">
+          <span style="width:20px;height:20px;display:inline-flex" class="icon-back"></span> Back
+        </button>
+        <h1 style="font-size:24px;font-weight:700;margin-bottom:4px;letter-spacing:-0.025em">Verify your number</h1>
+        <p style="font-size:13px;color:#94A3B8">Enter the 6-digit code sent to <span id="otp-phone-display" style="color:#fff;font-weight:600">+92 300 1234567</span></p>
+      </div>
+
+      <div class="flex-1 p-6" style="display:flex;flex-direction:column">
+        <div class="progress-dots">
+          <div class="progress-dot done"></div>
+          <div class="progress-dot active"></div>
+          <div class="progress-dot"></div>
+          <div class="progress-dot"></div>
+          <div class="progress-dot"></div>
+        </div>
+
+        <div class="otp-container mt-4 mb-4">
+          <input type="text" inputmode="numeric" maxlength="1" class="otp-box" value="4" />
+          <input type="text" inputmode="numeric" maxlength="1" class="otp-box" value="9" />
+          <input type="text" inputmode="numeric" maxlength="1" class="otp-box" value="2" />
+          <input type="text" inputmode="numeric" maxlength="1" class="otp-box" value="8" />
+          <input type="text" inputmode="numeric" maxlength="1" class="otp-box" value="1" />
+          <input type="text" inputmode="numeric" maxlength="1" class="otp-box" value="5" />
+        </div>
+
+        <div class="text-center mt-2">
+          <p id="otp-resend-text" style="font-size:12px;color:var(--gray)">Resend code in <span id="otp-countdown" style="font-weight:600;color:var(--navy)">30</span>s</p>
+          <button id="btn-resend-otp" onclick="resetOtpTimer()" style="display:none;background:none;border:none;color:var(--primary);font-size:12px;font-weight:600;cursor:pointer;margin:0 auto">Resend OTP</button>
+        </div>
+
+        <button id="btn-verify-otp" class="btn w-full mt-6" onclick="goToStep('role')">Verify & Continue →</button>
+      </div>
+    </div>
+
+    <!-- ═══ STEP 3: ROLE ═══ -->
+    <div id="step-role" class="onboard-step" style="display:none;flex-direction:column;flex:1">
+      <div style="background:var(--navy);padding:24px 24px 20px;color:#fff">
+        <h1 style="font-size:24px;font-weight:700;margin-bottom:4px;letter-spacing:-0.025em">I want to…</h1>
+        <p style="font-size:13px;color:#94A3B8">Choose how you'll use HUNAR</p>
+      </div>
+
+      <div class="flex-1 p-6" style="display:flex;flex-direction:column">
+        <div class="progress-dots">
+          <div class="progress-dot done"></div>
+          <div class="progress-dot done"></div>
+          <div class="progress-dot active"></div>
+          <div class="progress-dot"></div>
+          <div class="progress-dot"></div>
+        </div>
+
+        <div class="flex flex-col gap-3 mt-4">
+          <div class="role-card selected" id="role-worker" onclick="selectRole('worker')">
+            <div class="flex items-start gap-3">
+              <div style="width:40px;height:40px;border-radius:8px;background:var(--bg);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">
+                🔧
+              </div>
+              <div style="flex:1">
+                <p style="font-weight:600;font-size:14px;color:var(--navy)">I am a Skilled Worker</p>
+                <p style="font-size:12px;color:var(--gray);margin-top:2px">Offer my services and get hired for local jobs</p>
+              </div>
+              <div class="role-check" style="width:20px;height:20px;border-radius:50%;background:var(--primary);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#fff">
+                <span style="width:14px;height:14px;display:inline-flex" class="icon-check"></span>
+              </div>
+            </div>
+          </div>
+
+          <div class="role-card" id="role-customer" onclick="selectRole('customer')">
+            <div class="flex items-start gap-3">
+              <div style="width:40px;height:40px;border-radius:8px;background:var(--bg);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">
+                🏠
+              </div>
+              <div style="flex:1">
+                <p style="font-weight:600;font-size:14px;color:var(--navy)">I need a service</p>
+                <p style="font-size:12px;color:var(--gray);margin-top:2px">Find verified workers for home repairs and services</p>
+              </div>
+              <div class="role-check" style="display:none;width:20px;height:20px;border-radius:50%;background:var(--primary);align-items:center;justify-content:center;flex-shrink:0;color:#fff">
+                <span style="width:14px;height:14px;display:inline-flex" class="icon-check"></span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <button class="btn w-full mt-8" onclick="goToStep('profile')">Continue →</button>
+      </div>
+    </div>
+
+    <!-- ═══ STEP 4: PROFILE ═══ -->
+    <div id="step-profile" class="onboard-step" style="display:none;flex-direction:column;flex:1">
+      <div style="background:var(--navy);padding:20px 24px;color:#fff">
+        <button onclick="goToStep('role')" style="background:none;border:none;color:#94A3B8;cursor:pointer;padding:0;margin-bottom:8px;display:flex;align-items:center;gap:4px">
+          <span style="width:20px;height:20px;display:inline-flex" class="icon-back"></span> Back
+        </button>
+        <h1 style="font-size:22px;font-weight:700;margin-bottom:2px">Your Profile</h1>
+        <p style="font-size:12px;color:#94A3B8">Set up your professional identity</p>
+      </div>
+
+      <div class="flex-1 p-5 overflow-y-auto">
+        <div class="progress-dots">
+          <div class="progress-dot done"></div>
+          <div class="progress-dot done"></div>
+          <div class="progress-dot done"></div>
+          <div class="progress-dot active"></div>
+          <div class="progress-dot"></div>
+        </div>
+
+        <!-- Avatar Upload -->
+        <div class="flex flex-col items-center mt-2 mb-5">
+          <div style="position:relative">
+            <img
+              src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=160&h=160&fit=crop"
+              alt="Profile"
+              style="width:84px;height:84px;border-radius:12px;object-fit:cover;border:2.5px solid var(--primary)"
+            />
+            <div style="position:absolute;bottom:-4px;right:-4px;width:28px;height:28px;border-radius:50%;background:var(--primary);color:#fff;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 5px rgba(0,0,0,0.2)">
+              <span style="width:16px;height:16px;display:inline-flex" class="icon-camera"></span>
+            </div>
+          </div>
+          <p style="font-size:11px;color:var(--gray);margin-top:6px">Tap to upload profile photo</p>
+        </div>
+
+        <div class="flex flex-col gap-3">
+          <div class="field">
+            <label>Full Name</label>
+            <input type="text" id="prof-name" value="Usman Malik" placeholder="e.g. Usman Malik" />
+          </div>
+
+          <div class="grid grid-cols-2 gap-3">
+            <div class="field">
+              <label>Years Experience</label>
+              <input type="number" id="prof-exp" value="8" min="0" placeholder="8" />
+            </div>
+            <div class="field">
+              <label>Visit Fee (Rs.)</label>
+              <input type="number" id="prof-fee" value="300" step="50" placeholder="300" />
+            </div>
+          </div>
+
+          <div class="field">
+            <label>Short Bio</label>
+            <textarea id="prof-bio" rows="3" placeholder="Briefly describe your expertise...">Licensed plumber with 8 years of residential and commercial experience in Islamabad. Specialise in pipe fitting, leak repair, and drainage.</textarea>
+          </div>
+
+          <!-- CNIC Upload Section -->
+          <div>
+            <label style="display:block;font-size:12px;font-weight:600;color:var(--navy);margin-bottom:6px">Identity Verification (CNIC)</label>
+            <div class="grid grid-cols-2 gap-2">
+              <div class="p-3 text-center rounded cursor-pointer" style="background:var(--surface);border:1px dashed var(--border-dim)">
+                <div style="width:20px;height:20px;margin:0 auto 4px;color:var(--gray)" class="icon-upload"></div>
+                <p style="font-size:12px;font-weight:600;color:var(--navy)">Front Side</p>
+                <p style="font-size:10px;color:var(--gray)">JPG, PNG, PDF</p>
+              </div>
+              <div class="p-3 text-center rounded cursor-pointer" style="background:var(--surface);border:1px dashed var(--border-dim)">
+                <div style="width:20px;height:20px;margin:0 auto 4px;color:var(--gray)" class="icon-upload"></div>
+                <p style="font-size:12px;font-weight:600;color:var(--navy)">Back Side</p>
+                <p style="font-size:10px;color:var(--gray)">JPG, PNG, PDF</p>
+              </div>
+            </div>
+            <p style="font-size:11px;color:var(--gray);margin-top:6px">Optional: Trade licenses or certificates</p>
+          </div>
+        </div>
+
+        <button class="btn w-full mt-6 mb-4" onclick="goToStep('categories')">Continue →</button>
+      </div>
+    </div>
+
+    <!-- ═══ STEP 5: CATEGORIES ═══ -->
+    <div id="step-categories" class="onboard-step" style="display:none;flex-direction:column;flex:1">
+      <div style="background:var(--navy);padding:20px 24px;color:#fff">
+        <button onclick="goToStep('profile')" style="background:none;border:none;color:#94A3B8;cursor:pointer;padding:0;margin-bottom:8px;display:flex;align-items:center;gap:4px">
+          <span style="width:20px;height:20px;display:inline-flex" class="icon-back"></span> Back
+        </button>
+        <h1 style="font-size:22px;font-weight:700;margin-bottom:2px">What services do you offer?</h1>
+        <p style="font-size:12px;color:#94A3B8">Select all that apply. You can update this later.</p>
+      </div>
+
+      <div class="flex-1 p-5 overflow-y-auto">
+        <div class="progress-dots">
+          <div class="progress-dot done"></div>
+          <div class="progress-dot done"></div>
+          <div class="progress-dot done"></div>
+          <div class="progress-dot done"></div>
+          <div class="progress-dot active"></div>
+        </div>
+
+        <div class="info-banner mb-4">
+          <span style="width:18px;height:18px;color:var(--primary);flex-shrink:0" class="icon-info"></span>
+          <span>Workers only receive job requests that match their registered categories and service area.</span>
+        </div>
+
+        <div class="grid grid-cols-2 gap-2" id="categories-grid">
+          <!-- Rendered dynamically -->
+        </div>
+
+        <!-- Sub-skills container -->
+        <div id="subskills-container" class="mt-4 p-3 rounded" style="background:var(--surface);border:1px solid var(--border);display:none">
+          <p style="font-size:11px;font-weight:700;color:var(--gray);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:8px">Specializations (<span id="subskills-cat-name">Plumbing</span>)</p>
+          <div class="flex flex-wrap gap-1.5" id="subskills-chips"></div>
+        </div>
+
+        <button class="btn w-full mt-6 mb-4" onclick="goToStep('location')">Continue →</button>
+      </div>
+    </div>
+
+    <!-- ═══ STEP 6: LOCATION ═══ -->
+    <div id="step-location" class="onboard-step" style="display:none;flex-direction:column;flex:1">
+      <div style="background:var(--navy);padding:20px 24px;color:#fff">
+        <button onclick="goToStep('categories')" style="background:none;border:none;color:#94A3B8;cursor:pointer;padding:0;margin-bottom:8px;display:flex;align-items:center;gap:4px">
+          <span style="width:20px;height:20px;display:inline-flex" class="icon-back"></span> Back
+        </button>
+        <h1 style="font-size:22px;font-weight:700;margin-bottom:2px">Where do you work?</h1>
+        <p style="font-size:12px;color:#94A3B8">Set your service area so customers nearby can find you.</p>
+      </div>
+
+      <div class="flex-1 p-5 overflow-y-auto">
+        <div class="progress-dots">
+          <div class="progress-dot done"></div>
+          <div class="progress-dot done"></div>
+          <div class="progress-dot done"></div>
+          <div class="progress-dot done"></div>
+          <div class="progress-dot done"></div>
+        </div>
+
+        <div class="flex flex-col gap-4 mt-2">
+          <div class="field">
+            <label>Your City or Primary Area</label>
+            <input type="text" id="loc-city" value="F-10, Islamabad" placeholder="e.g. F-10, Islamabad" />
+          </div>
+
+          <!-- Map Preview -->
+          <div>
+            <label style="display:block;font-size:12px;font-weight:600;color:var(--navy);margin-bottom:6px">Map Coverage</label>
+            <div style="position:relative;height:120px;border-radius:8px;overflow:hidden;border:1px solid var(--border)">
+              <img
+                src="https://images.unsplash.com/photo-1569336415962-a4bd9f69cd83?w=400&h=120&fit=crop"
+                alt="Map"
+                style="width:100%;height:100%;object-fit:cover"
+              />
+              <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center">
+                <div style="width:36px;height:36px;border-radius:50%;background:var(--primary);color:#fff;display:flex;align-items:center;justify-content:center;box-shadow:0 3px 10px rgba(0,0,0,0.3)">
+                  <span style="width:20px;height:20px;display:inline-flex" class="icon-pin"></span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Travel Radius Selector -->
+          <div>
+            <label style="display:block;font-size:12px;font-weight:600;color:var(--navy);margin-bottom:6px">How far are you willing to travel?</label>
+            <div class="flex rounded overflow-hidden" style="border:1px solid var(--border)">
+              <button class="radius-btn" onclick="selectRadius(2, this)">2 km</button>
+              <button class="radius-btn" onclick="selectRadius(5, this)">5 km</button>
+              <button class="radius-btn active" onclick="selectRadius(10, this)">10 km</button>
+              <button class="radius-btn" onclick="selectRadius(20, this)">20 km</button>
+              <button class="radius-btn" onclick="selectRadius(30, this)">30+ km</button>
+            </div>
+            <p style="font-size:12px;color:var(--primary);font-weight:500;margin-top:6px">Currently set to: <span id="radius-label">10</span> km radius</p>
+          </div>
+
+          <!-- Preferred Areas -->
+          <div>
+            <label style="display:block;font-size:12px;font-weight:600;color:var(--navy);margin-bottom:6px">Service Areas</label>
+            <div class="flex flex-wrap gap-2 mb-2" id="areas-list">
+              <span class="chip chip-dark flex items-center gap-1">F-10, Islamabad <span onclick="removeArea(this)" style="cursor:pointer;margin-left:4px">×</span></span>
+              <span class="chip chip-dark flex items-center gap-1">G-11, Islamabad <span onclick="removeArea(this)" style="cursor:pointer;margin-left:4px">×</span></span>
+              <span class="chip chip-dark flex items-center gap-1">Bahria Town <span onclick="removeArea(this)" style="cursor:pointer;margin-left:4px">×</span></span>
+            </div>
+            <button class="btn btn-ghost btn-sm" onclick="addAreaPrompt()" style="display:inline-flex;align-items:center;gap:4px">
+              <span style="width:14px;height:14px;display:inline-flex" class="icon-plus"></span> Add Another Area
+            </button>
+          </div>
+        </div>
+
+        <button class="btn w-full mt-6 mb-4" onclick="goToStep('pending')">Submit for Verification →</button>
+      </div>
+    </div>
+
+    <!-- ═══ STEP 7: PENDING VERIFICATION ═══ -->
+    <div id="step-pending" class="onboard-step" style="display:none;flex-direction:column;flex:1;justify-content:center;align-items:center;padding:24px;text-align:center">
+      <div style="width:68px;height:68px;border-radius:18px;background:var(--primary-light);display:flex;align-items:center;justify-content:center;margin:0 auto 20px;color:var(--primary)">
+        <span style="width:38px;height:38px;display:inline-flex" class="icon-check-circle"></span>
+      </div>
+      <h1 style="font-size:24px;font-weight:700;color:var(--navy);letter-spacing:-0.025em;margin-bottom:8px">Application Submitted</h1>
+      <p style="font-size:13px;color:var(--gray);line-height:1.6;max-width:320px;margin:0 auto">
+        Your profile is under review. Our team will verify your credentials within 24–48 hours.
+      </p>
+
+      <div class="card p-4 text-left w-full mt-6 mb-8" style="background:var(--surface);border:1px solid var(--border)">
+        <div class="flex items-center gap-3 py-2.5" style="border-bottom:1px solid var(--border)">
+          <div style="width:22px;height:22px;border-radius:50%;background:var(--primary);color:#fff;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+            <span style="width:14px;height:14px;display:inline-flex" class="icon-check"></span>
+          </div>
+          <span style="font-size:13px;font-weight:600;color:var(--navy)">Profile Submitted</span>
+        </div>
+        <div class="flex items-center gap-3 py-2.5" style="border-bottom:1px solid var(--border)">
+          <div style="width:22px;height:22px;border-radius:50%;background:var(--warning-light);color:var(--warning);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:11px;font-weight:700">
+            ⏳
+          </div>
+          <span style="font-size:13px;font-weight:500;color:var(--navy)">Identity Verification (CNIC)</span>
+        </div>
+        <div class="flex items-center gap-3 py-2.5" style="border-bottom:1px solid var(--border)">
+          <div style="width:22px;height:22px;border-radius:50%;border:1.5px solid var(--border);flex-shrink:0"></div>
+          <span style="font-size:13px;font-weight:500;color:var(--gray)">Admin Review & Approval</span>
+        </div>
+        <div class="flex items-center gap-3 py-2.5">
+          <div style="width:22px;height:22px;border-radius:50%;border:1.5px solid var(--border);flex-shrink:0"></div>
+          <span style="font-size:13px;font-weight:500;color:var(--gray)">Account Activated</span>
+        </div>
+      </div>
+
+      <button class="btn w-full" onclick="location.href='index.html'">Go to Dashboard (Preview) →</button>
+    </div>
+
+    <!-- Global Toast -->
+    <div id="toast" class="hidden" style="position:fixed;top:16px;left:16px;right:16px;z-index:9999;max-width:448px;margin:0 auto;background:#fff;border-left:4px solid var(--primary);border-radius:8px;padding:12px 16px;box-shadow:0 10px 25px rgba(0,0,0,0.15)"></div>
+  </div>
+
+  <script src="js/icons.js"></script>
+  <script src="js/data.js"></script>
+  <script src="js/app.js"></script>
+  <script>
+    // Inject Icons
+    function injectIcons() {
+      document.querySelectorAll('.icon-wrench').forEach(el => el.innerHTML = ICONS.wrench);
+      document.querySelectorAll('.icon-back').forEach(el => el.innerHTML = ICONS.arrowLeft);
+      document.querySelectorAll('.icon-check').forEach(el => el.innerHTML = ICONS.check);
+      document.querySelectorAll('.icon-camera').forEach(el => el.innerHTML = ICONS.camera);
+      document.querySelectorAll('.icon-upload').forEach(el => el.innerHTML = ICONS.upload);
+      document.querySelectorAll('.icon-info').forEach(el => el.innerHTML = ICONS.info);
+      document.querySelectorAll('.icon-pin').forEach(el => el.innerHTML = ICONS.mapPin);
+      document.querySelectorAll('.icon-plus').forEach(el => el.innerHTML = ICONS.plus);
+      document.querySelectorAll('.icon-check-circle').forEach(el => el.innerHTML = ICONS.checkCircle);
+    }
+    injectIcons();
+
+    // ─── Step Navigation ────────────────────────────────────────────────────────
+    const steps = ['phone', 'otp', 'role', 'profile', 'categories', 'location', 'pending'];
+
+    function goToStep(stepId) {
+      steps.forEach(s => {
+        const el = document.getElementById('step-' + s);
+        if (el) {
+          el.style.display = (s === stepId) ? 'flex' : 'none';
+        }
+      });
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // ─── Step 1: Phone Logic ──────────────────────────────────────────────────
+    function handleSendOtp() {
+      const phone = document.getElementById('phone-input').value.trim();
+      if (!phone || phone.replace(/\D/g, '').length < 9) {
+        App.showToast('Please enter a valid mobile number.', 'error');
+        return;
+      }
+      document.getElementById('otp-phone-display').textContent = '+92 ' + phone;
+      goToStep('otp');
+      startOtpTimer();
+      focusFirstOtp();
+    }
+
+    // ─── Step 2: OTP Logic ────────────────────────────────────────────────────
+    let otpInterval = null;
+    function startOtpTimer() {
+      clearInterval(otpInterval);
+      let count = 30;
+      const display = document.getElementById('otp-countdown');
+      const text = document.getElementById('otp-resend-text');
+      const btn = document.getElementById('btn-resend-otp');
+      text.style.display = 'block';
+      btn.style.display = 'none';
+      display.textContent = count;
+
+      otpInterval = setInterval(() => {
+        count--;
+        if (count <= 0) {
+          clearInterval(otpInterval);
+          text.style.display = 'none';
+          btn.style.display = 'block';
+        } else {
+          display.textContent = count;
+        }
+      }, 1000);
+    }
+
+    function resetOtpTimer() {
+      App.showToast('New verification code sent via SMS!', 'info');
+      startOtpTimer();
+      focusFirstOtp();
+    }
+
+    function focusFirstOtp() {
+      const boxes = document.querySelectorAll('.otp-box');
+      if (boxes.length > 0) boxes[0].focus();
+    }
+
+    const otpBoxes = document.querySelectorAll('.otp-box');
+    otpBoxes.forEach((box, idx) => {
+      box.addEventListener('input', (e) => {
+        const val = e.target.value;
+        if (val && idx < otpBoxes.length - 1) {
+          otpBoxes[idx + 1].focus();
+        }
+      });
+      box.addEventListener('keydown', (e) => {
+        if (e.key === 'Backspace' && !e.target.value && idx > 0) {
+          otpBoxes[idx - 1].focus();
+        }
+      });
+      box.addEventListener('paste', (e) => {
+        e.preventDefault();
+        const data = (e.clipboardData || window.clipboardData).getData('text').trim();
+        if (/^\d+$/.test(data)) {
+          for (let i = 0; i < otpBoxes.length; i++) {
+            if (data[i]) otpBoxes[i].value = data[i];
+          }
+          if (data.length >= otpBoxes.length) {
+            otpBoxes[otpBoxes.length - 1].focus();
+          }
+        }
+      });
+    });
+
+    // ─── Step 3: Role Selection ───────────────────────────────────────────────
+    let currentRole = 'worker';
+    function selectRole(role) {
+      currentRole = role;
+      document.getElementById('role-worker').classList.toggle('selected', role === 'worker');
+      document.getElementById('role-customer').classList.toggle('selected', role === 'customer');
+      document.querySelector('#role-worker .role-check').style.display = role === 'worker' ? 'flex' : 'none';
+      document.querySelector('#role-customer .role-check').style.display = role === 'customer' ? 'flex' : 'none';
+    }
+
+    // ─── Step 5: Categories & Sub-Skills ──────────────────────────────────────
+    const selectedCats = new Set(['plumbing']);
+    let expandedCat = 'plumbing';
+    const subSkillsSelected = { plumbing: ['Pipe Fitting', 'Leak Repair'] };
+
+    function renderCategories() {
+      const grid = document.getElementById('categories-grid');
+      const cats = MOCK.CATEGORIES || [];
+      grid.innerHTML = cats.map(c => {
+        const isSel = selectedCats.has(c.id);
+        return `
+          <div class="cat-card ${isSel ? 'selected' : ''}" onclick="toggleCategory('${c.id}')">
+            ${isSel ? `
+              <div style="position:absolute;top:8px;right:8px;width:18px;height:18px;border-radius:50%;background:var(--primary);color:#fff;display:flex;align-items:center;justify-content:center">
+                <span style="width:12px;height:12px;display:inline-flex">${ICONS.check}</span>
+              </div>
+            ` : ''}
+            <div style="font-size:24px;margin-bottom:6px">${c.icon}</div>
+            <p style="font-size:13px;font-weight:600;color:var(--navy)">${c.label}</p>
+          </div>
+        `;
+      }).join('');
+
+      renderSubSkills();
+    }
+
+    function toggleCategory(id) {
+      if (selectedCats.has(id)) {
+        if (selectedCats.size === 1) {
+          App.showToast('Please keep at least one category selected.', 'warning');
+          return;
+        }
+        selectedCats.delete(id);
+        if (expandedCat === id) expandedCat = Array.from(selectedCats)[0] || null;
+      } else {
+        selectedCats.add(id);
+        expandedCat = id;
+      }
+      renderCategories();
+    }
+
+    function renderSubSkills() {
+      const container = document.getElementById('subskills-container');
+      const title = document.getElementById('subskills-cat-name');
+      const chips = document.getElementById('subskills-chips');
+
+      if (!expandedCat || !MOCK.SUB_SKILLS || !MOCK.SUB_SKILLS[expandedCat] || MOCK.SUB_SKILLS[expandedCat].length === 0) {
+        container.style.display = 'none';
+        return;
+      }
+
+      const catObj = (MOCK.CATEGORIES || []).find(c => c.id === expandedCat);
+      title.textContent = catObj ? catObj.label : expandedCat;
+
+      const skills = MOCK.SUB_SKILLS[expandedCat] || [];
+      const currentSelected = subSkillsSelected[expandedCat] || [];
+
+      chips.innerHTML = skills.map(skill => {
+        const active = currentSelected.includes(skill);
+        return `
+          <button class="chip ${active ? 'chip-dark' : ''}" onclick="toggleSubSkill('${expandedCat}', '${skill}')">
+            ${skill}
+          </button>
+        `;
+      }).join('');
+
+      container.style.display = 'block';
+    }
+
+    function toggleSubSkill(catId, skill) {
+      if (!subSkillsSelected[catId]) subSkillsSelected[catId] = [];
+      const arr = subSkillsSelected[catId];
+      const idx = arr.indexOf(skill);
+      if (idx > -1) {
+        arr.splice(idx, 1);
+      } else {
+        arr.push(skill);
+      }
+      renderSubSkills();
+    }
+
+    renderCategories();
+
+    // ─── Step 6: Location & Radius ────────────────────────────────────────────
+    let currentRadius = 10;
+    function selectRadius(val, btn) {
+      currentRadius = val;
+      document.querySelectorAll('.radius-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('radius-label').textContent = val;
+    }
+
+    function removeArea(span) {
+      const parent = span.closest('.chip');
+      if (parent) parent.remove();
+    }
+
+    function addAreaPrompt() {
+      const newArea = prompt('Enter service sector or neighborhood:', 'I-8, Islamabad');
+      if (newArea && newArea.trim()) {
+        const div = document.createElement('span');
+        div.className = 'chip chip-dark flex items-center gap-1';
+        div.innerHTML = `${newArea.trim()} <span onclick="removeArea(this)" style="cursor:pointer;margin-left:4px">×</span>`;
+        document.getElementById('areas-list').appendChild(div);
+      }
+    }
+  </script>
+</body>
+</html>

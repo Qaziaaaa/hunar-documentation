@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HUNAR — Worker Dashboard</title>
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body class="frame-full" data-nav="dashboard">
+  <div class="app-frame">
+    <!-- Status bar -->
+    <div class="status-bar">
+      <span>9:41</span>
+      <div class="status-icons">
+        <div class="signal-bars">
+          <div style="width:3px;height:3px;background:#fff;border-radius:1px"></div>
+          <div style="width:3px;height:5px;background:#fff;border-radius:1px"></div>
+          <div style="width:3px;height:7px;background:#fff;border-radius:1px"></div>
+          <div style="width:3px;height:9px;background:#fff;border-radius:1px;opacity:0.4"></div>
+        </div>
+        <div style="width:16px;height:9px;border:1px solid rgba(255,255,255,0.6);border-radius:2px;position:relative;margin-left:4px">
+          <div style="position:absolute;inset:1px;right:4px;background:#fff;border-radius:1px"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Header -->
+    <header style="background:var(--navy);padding:24px 16px 20px">
+      <div class="flex items-center justify-between mb-3">
+        <div>
+          <p class="txt-xs" style="color:#94A3B8">Good afternoon,</p>
+          <h1 class="txt-base fw-700 c-white mt-1" style="letter-spacing:-0.015em">Usman Malik</h1>
+        </div>
+        <div class="flex items-center gap-3">
+          <a href="profile.html" class="relative" style="color:#94A3B8;display:flex">
+            <span id="bell-icon" style="width:20px;height:20px;display:inline-flex"></span>
+            <span style="position:absolute;top:-4px;right:-4px;width:16px;height:16px;background:var(--primary);border-radius:50%;color:#fff;font-size:9px;display:flex;align-items:center;justify-content:center;font-weight:700">3</span>
+          </a>
+          <a href="profile.html">
+            <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=40&h=40&fit=crop" alt="Usman Malik" style="width:36px;height:36px;border-radius:50%;object-fit:cover;border:2px solid var(--primary)" />
+          </a>
+        </div>
+      </div>
+
+      <!-- Availability toggle -->
+      <div class="rounded-md p-3 mb-3" style="background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:12px">
+        <div class="flex items-center justify-between mb-1.5">
+          <div class="flex items-center gap-2">
+            <div id="avail-dot" style="width:8px;height:8px;border-radius:50%;background:var(--success)"></div>
+            <p class="txt-sm fw-600 c-white" id="avail-label">Online — Ready for Jobs</p>
+          </div>
+          <button class="toggle on" id="avail-toggle" onclick="toggleAvailability()">
+            <span class="toggle-knob"></span>
+          </button>
+        </div>
+        <div class="flex items-center gap-1.5 mt-1" style="color:#94A3B8;font-size:11px">
+          <span style="width:14px;height:14px;display:inline-flex">${ICONS.mapPin}</span>
+          <span>Serving: F-10, Islamabad — 10 km radius</span>
+          <button style="color:var(--primary);font-size:11px;font-weight:600;margin-left:4px" onclick="App.showToast('Location radius settings')">Change</button>
+        </div>
+      </div>
+
+      <!-- Quick stats -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div id="stat-trending" class="flex justify-center mb-1" style="color:var(--primary);width:16px;height:16px;margin:0 auto"></div>
+          <p class="stat-value" style="color:var(--primary)">Rs. 2,537</p>
+          <p class="stat-label">Today's Earnings</p>
+        </div>
+        <div class="stat-card" style="cursor:pointer" onclick="location.href='active-job.html'">
+          <div id="stat-briefcase" class="flex justify-center mb-1" style="color:var(--warning);width:16px;height:16px;margin:0 auto"></div>
+          <p class="stat-value" style="color:var(--warning)">1</p>
+          <p class="stat-label">Active Job</p>
+        </div>
+        <div class="stat-card" style="cursor:pointer" onclick="location.href='reviews.html'">
+          <div id="stat-star" class="flex justify-center mb-1" style="color:var(--warning);width:16px;height:16px;margin:0 auto"></div>
+          <p class="stat-value" style="color:var(--warning)">4.8 ★</p>
+          <p class="stat-label">Rating</p>
+        </div>
+      </div>
+    </header>
+
+    <!-- Nearby jobs -->
+    <div class="screen-body">
+      <div class="section">
+        <div class="flex items-center justify-between mb-3">
+          <h2 class="txt-sm fw-700 c-navy" style="margin-top:10px">Nearby Jobs</h2>
+          <span class="txt-xs fw-600 c-primary" id="job-count" style="margin-top:10px"></span>
+        </div>
+
+        <!-- Filters -->
+        <div class="flex gap-2 mb-4" style="flex-wrap:nowrap;overflow-x:auto">
+          <button class="chip chip-dark selected" data-filter="All" onclick="setFilter('All', this)">All</button>
+          <button class="chip" data-filter="Plumbing" onclick="setFilter('Plumbing', this)">Plumbing</button>
+          <button class="chip" data-filter="Electrician" onclick="setFilter('Electrician', this)">Electrician</button>
+          <button class="chip" data-filter="AC Repair" onclick="setFilter('AC Repair', this)">AC Tech</button>
+          <button class="chip" data-filter="Carpenter" onclick="setFilter('Carpenter', this)">Carpenter</button>
+        </div>
+      </div>
+
+      <!-- Job cards render here -->
+      <div class="px-4 flex flex-col gap-3 pb-4" id="job-list"></div>
+    </div>
+
+    <!-- Bottom nav -->
+    <div id="app-nav"></div>
+
+    <!-- Toast -->
+    <div id="toast" class="hidden" style="position:absolute;top:16px;left:16px;right:16px;z-index:50;background:#fff;border-left:3px solid var(--success);border:1px solid var(--border);border-radius:8px;box-shadow:0 10px 25px rgba(0,0,0,0.15);padding:12px"></div>
+  </div>
+
+  <script src="js/icons.js"></script>
+  <script src="js/data.js"></script>
+  <script src="js/app.js"></script>
+  <script>
+    $('#bell-icon').innerHTML = ICONS.bell
+    $('#stat-trending').innerHTML = ICONS.trending
+    $('#stat-briefcase').innerHTML = ICONS.briefcase
+    $('#stat-star').innerHTML = ICONS.star
+
+    let online = true
+
+    function toggleAvailability() {
+      online = !online
+      const t = $('#avail-toggle')
+      const l = $('#avail-label')
+      const dot = $('#avail-dot')
+      t.classList.toggle('on', online)
+      l.textContent = online ? 'Online — Ready for Jobs' : 'Offline'
+      dot.style.background = online ? 'var(--success)' : 'var(--gray)'
+      App.showToast(online ? 'You are now online — nearby jobs will appear.' : 'You are now offline.')
+    }
+
+    function selectJob(jobId) {
+      const job = MOCK.NEARBY_JOBS.find((j) => j.id === jobId) || MOCK.NEARBY_JOBS[0]
+      App.Store.set('selectedJob', job)
+      location.href = 'job-details.html'
+    }
+
+    function renderJobs(filter) {
+      const jobs = MOCK.NEARBY_JOBS.filter((j) => filter === 'All' || j.category === filter)
+      $('#job-count').textContent = jobs.length + ' available'
+      if (jobs.length === 0) {
+        $('#job-list').innerHTML = `
+          <div class="card p-6 text-center">
+            <p class="txt-sm c-gray">No ${filter} jobs available nearby right now.</p>
+          </div>`
+        return
+      }
+      $('#job-list').innerHTML = jobs
+        .map(
+          (job) => `
+          <div class="job-card" onclick="selectJob('${job.id}')" style="cursor:pointer">
+            <div class="p-4">
+              <div class="job-top">
+                <div class="job-id-row">
+                  <div class="category-tile">${App.categoryIcon(job.category)}</div>
+                  <div>
+                    <h3 class="job-title">${job.title}</h3>
+                    <p class="job-cat">${job.category}</p>
+                  </div>
+                </div>
+                ${App.urgencyBadge(job.urgency)}
+              </div>
+              <p class="job-desc">${job.description}</p>
+              <div class="job-meta">
+                <span>${App.elIcon('mapPin')}${job.distance} · ${job.area.split(',')[0]}</span>
+                <span>${App.elIcon('clock')}${job.postedTime}</span>
+              </div>
+            </div>
+            <div class="job-footer">
+              <div>
+                <p class="txt-xs" style="color:var(--gray);text-transform:uppercase;font-size:10px;font-weight:600">Visit fee</p>
+                <p class="txt-sm fw-700 c-navy">Rs. ${job.visitFee}</p>
+              </div>
+              <button class="btn btn-primary btn-xs" style="background:var(--primary);border-radius:8px;color:#fff;padding:8px 16px;font-size:12px;font-weight:700" onclick="event.stopPropagation();selectJob('${job.id}')">View Job →</button>
+            </div>
+          </div>`
+        )
+        .join('')
+    }
+
+    function setFilter(filter, btn) {
+      $$('.chip[data-filter]').forEach((c) => c.classList.remove('selected', 'chip-dark'))
+      btn.classList.add('selected', 'chip-dark')
+      renderJobs(filter)
+    }
+
+    renderJobs('All')
+  </script>
+</body>
+</html>

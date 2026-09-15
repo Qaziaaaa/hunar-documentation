@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HUNAR — Reviews</title>
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body class="frame-full" data-nav="reviews">
+  <div class="app-frame">
+    <div class="status-bar">
+      <span>9:41</span>
+      <div class="status-icons">
+        <div class="signal-bars">
+          <div style="width:3px;height:3px;background:#fff;border-radius:1px"></div>
+          <div style="width:3px;height:5px;background:#fff;border-radius:1px"></div>
+          <div style="width:3px;height:7px;background:#fff;border-radius:1px"></div>
+          <div style="width:3px;height:9px;background:#fff;border-radius:1px;opacity:0.4"></div>
+        </div>
+        <div style="width:16px;height:9px;border:1px solid rgba(255,255,255,0.6);border-radius:2px;position:relative;margin-left:4px">
+          <div style="position:absolute;inset:1px;right:4px;background:#fff;border-radius:1px"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Header -->
+    <div class="page-header" style="flex-direction:column;align-items:flex-start;gap:0">
+      <h1>Reviews</h1>
+      <p class="sub" id="rev-sub">What customers say about your work</p>
+    </div>
+
+    <div class="screen-body p-4" id="rev-body">
+      <!-- Rate Customer Prompt -->
+      <div class="card p-3 mb-3 flex items-center justify-between" style="background:var(--primary-light);border:1px solid var(--primary);border-radius:8px">
+        <p class="txt-xs c-navy" style="flex:1">You can now rate your latest customer. Tap to leave a review.</p>
+        <button class="txt-xs fw-700 c-primary" style="margin-left:8px;white-space:nowrap" onclick="openReviewModal()">Rate Customer →</button>
+      </div>
+
+      <!-- Rating Summary Card -->
+      <div class="card p-4 mb-3">
+        <div class="flex items-start gap-4">
+          <div class="text-center" style="flex-shrink:0">
+            <p class="txt-2xl fw-700 c-navy" id="avg-num" style="font-size:36px;line-height:1">4.8</p>
+            <div id="avg-stars" class="mt-1"></div>
+            <p class="txt-xs c-gray mt-1" style="font-size:10px" id="rev-count-sub">Based on 5 reviews</p>
+          </div>
+          <div style="flex:1" id="bars-container"></div>
+        </div>
+      </div>
+
+      <h3 class="card-title mt-4 mb-2">Customer Feedback</h3>
+      <div class="flex flex-col gap-3 pb-4" id="review-list"></div>
+      <div class="h-10"></div>
+    </div>
+
+    <div id="app-nav"></div>
+
+    <div id="toast" class="hidden" style="position:absolute;top:16px;left:16px;right:16px;z-index:50;background:#fff;border-left:3px solid var(--success);border:1px solid var(--border);border-radius:8px;box-shadow:0 10px 25px rgba(0,0,0,0.15);padding:12px"></div>
+  </div>
+
+  <script src="js/icons.js"></script>
+  <script src="js/data.js"></script>
+  <script src="js/app.js"></script>
+  <script>
+    const reviews = MOCK.REVIEWS || []
+    const sum = reviews.reduce((acc, r) => acc + r.stars, 0)
+    const avg = (sum / (reviews.length || 1)).toFixed(1)
+
+    $('#avg-num').textContent = avg
+    $('#avg-stars').innerHTML = App.stars(Math.round(parseFloat(avg)))
+    $('#rev-count-sub').textContent = `Based on ${reviews.length} reviews`
+    $('#rev-sub').textContent = `${reviews.length} verified reviews · ${avg} average`
+
+    // Distribution
+    const distCounts = [5, 4, 3, 2, 1].map((s) => ({
+      stars: s,
+      count: reviews.filter((r) => r.stars === s).length,
+      pct: Math.round((reviews.filter((r) => r.stars === s).length / (reviews.length || 1)) * 100),
+    }))
+
+    $('#bars-container').innerHTML = distCounts
+      .map(
+        (d) => `
+        <div class="flex items-center gap-2 mb-1.5">
+          <span class="txt-xs c-gray" style="font-size:10px;min-width:20px">${d.stars}★</span>
+          <div style="flex:1;height:6px;background:var(--border);border-radius:4px;overflow:hidden">
+            <div style="height:100%;width:${d.pct}%;background:var(--primary);border-radius:4px"></div>
+          </div>
+          <span class="txt-xs c-gray" style="font-size:10px;min-width:16px;text-align:right">${d.count}</span>
+        </div>`
+      )
+      .join('')
+
+    // Render Review List
+    function renderReviewList() {
+      $('#review-list').innerHTML = reviews
+        .map(
+          (r, idx) => `
+          <div class="card p-4">
+            <div class="flex items-start gap-3 mb-2.5">
+              ${App.avatar(r.customerInitials || (r.customerName || 'U').split(' ').map((w) => w[0]).join(''), 36)}
+              <div style="flex:1;min-width:0">
+                <div class="flex items-center justify-between">
+                  <p class="txt-xs fw-700 c-navy">${r.customerName}</p>
+                  <p class="txt-xs c-gray" style="font-size:10px">${r.date}</p>
+                </div>
+                <div class="flex items-center gap-2 mt-0.5">
+                  ${App.stars(r.stars)}
+                  <span class="txt-xs fw-600 c-gray" style="font-size:10px;text-transform:uppercase">${r.jobCategory}</span>
+                </div>
+              </div>
+            </div>
+            <p class="txt-xs c-navy" style="line-height:1.6" id="rev-text-${idx}">${r.text}</p>
+            ${r.tags && r.tags.length ? `
+              <div class="flex gap-1.5 flex-wrap mt-2.5">
+                ${r.tags.map((t) => `<span class="tag" style="background:var(--bg);color:var(--gray);border:1px solid var(--border);border-radius:999px;padding:3px 8px;font-size:10px">${t}</span>`).join('')}
+              </div>` : ''}
+          </div>`
+        )
+        .join('')
+    }
+
+    renderReviewList()
+
+    // Leave Review Modal
+    let selectedStars = 5
+    let selectedTags = ['Courteous', 'Prompt Payment']
+    const AVAILABLE_TAGS = ['Courteous', 'Prompt Payment', 'Accurate Description', 'Respectful', 'Flexible']
+
+    function openReviewModal() {
+      const overlay = document.createElement('div')
+      overlay.className = 'modal-overlay'
+      overlay.id = 'review-modal'
+      overlay.innerHTML = `
+        <div class="modal-sheet" onclick="event.stopPropagation()">
+          <div class="modal-handle"><div class="bar"></div></div>
+          <div class="px-4 pb-2">
+            <h2 class="txt-base fw-700 c-navy">Rate this Customer</h2>
+            <p class="txt-xs mt-0.5 c-gray">Ahmed Raza · Leaking Main Water Valve</p>
+          </div>
+          <hr class="divider my-3" />
+          <div class="px-4 flex flex-col gap-3 pb-6">
+            <!-- Stars -->
+            <div class="flex flex-col items-center gap-1 py-1">
+              <div class="flex gap-2" id="star-picker">
+                ${[1, 2, 3, 4, 5].map((s) => `
+                  <button class="star-btn ${s <= selectedStars ? 'lit' : ''}" onclick="pickStar(${s})">★</button>
+                `).join('')}
+              </div>
+              <p class="txt-xs c-gray mt-1" id="star-feedback">${selectedStars} out of 5 stars</p>
+            </div>
+
+            <!-- Quick tags -->
+            <div>
+              <p class="txt-xs fw-600 c-navy mb-1.5">Customer Highlights</p>
+              <div class="flex gap-1.5 flex-wrap" id="modal-tags">
+                ${AVAILABLE_TAGS.map((t) => `
+                  <button class="chip ${selectedTags.includes(t) ? 'chip-dark' : ''}" onclick="toggleModalTag(this, '${t}')">${t}</button>
+                `).join('')}
+              </div>
+            </div>
+
+            <!-- Notes -->
+            <div class="field">
+              <label>Review Notes (optional)</label>
+              <textarea id="modal-comment" rows="3" placeholder="Share your experience working with this customer..." style="width:100%"></textarea>
+            </div>
+
+            <button class="btn" onclick="submitReview()">Submit Review</button>
+            <button class="btn btn-ghost" style="width:100%;text-align:center" onclick="closeReviewModal()">Cancel</button>
+          </div>
+        </div>`
+      document.querySelector('.app-frame').appendChild(overlay)
+    }
+
+    function pickStar(s) {
+      selectedStars = s
+      $$('.star-btn').forEach((btn, idx) => btn.classList.toggle('lit', idx < s))
+      $('#star-feedback').textContent = s + ' out of 5 stars'
+    }
+
+    function toggleModalTag(btn, tag) {
+      const idx = selectedTags.indexOf(tag)
+      if (idx > -1) {
+        selectedTags.splice(idx, 1)
+        btn.classList.remove('chip-dark')
+      } else {
+        selectedTags.push(tag)
+        btn.classList.add('chip-dark')
+      }
+    }
+
+    function closeReviewModal() {
+      const m = $('#review-modal')
+      if (m) m.remove()
+    }
+
+    function submitReview() {
+      closeReviewModal()
+      App.showToast('Your rating for Ahmed Raza has been submitted!')
+    }
+  </script>
+</body>
+</html>

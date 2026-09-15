@@ -1,0 +1,739 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HUNAR — Worker Web App</title>
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+  <div class="app-container">
+    <!-- ═══ SIDEBAR ═══ -->
+    <aside class="sidebar">
+      <!-- Brand Header -->
+      <div class="sidebar-brand">
+        <div class="brand-icon">
+          <span style="width:18px;height:18px;display:inline-flex" class="icon-wrench"></span>
+        </div>
+        <span class="brand-title">HUNAR</span>
+        <span class="brand-badge">WORKER</span>
+      </div>
+
+      <!-- Worker Identity Card -->
+      <div class="worker-card">
+        <div class="worker-profile-row">
+          <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=80&h=80&fit=crop" alt="Usman Malik" class="worker-avatar" />
+          <div style="min-width:0">
+            <p class="worker-name">Usman Malik</p>
+            <div class="status-indicator">
+              <span id="online-dot" class="status-dot"></span>
+              <span id="online-text" style="color:#4ADE80;font-weight:600">Online</span>
+            </div>
+          </div>
+        </div>
+        <div class="toggle-row">
+          <span class="toggle-label">Accepting Jobs</span>
+          <button id="online-switch" class="toggle-switch active" onclick="App.toggleOnline()">
+            <span class="toggle-knob"></span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Navigation Links -->
+      <nav class="sidebar-nav">
+        <button class="nav-link active" data-page="dashboard" onclick="App.navigate('dashboard')">
+          <span style="width:16px;height:16px;display:inline-flex" class="icon-home"></span>
+          <span>Dashboard</span>
+        </button>
+        <button class="nav-link" data-page="jobs" onclick="App.navigate('jobs')">
+          <span style="width:16px;height:16px;display:inline-flex" class="icon-briefcase"></span>
+          <span>My Jobs</span>
+          <span class="nav-badge">2</span>
+        </button>
+        <button class="nav-link" data-page="reviews" onclick="App.navigate('reviews')">
+          <span style="width:16px;height:16px;display:inline-flex" class="icon-star"></span>
+          <span>Reviews & Ratings</span>
+        </button>
+        <button class="nav-link" data-page="earnings" onclick="App.navigate('earnings')">
+          <span style="width:16px;height:16px;display:inline-flex" class="icon-wallet"></span>
+          <span>Earnings & Payouts</span>
+        </button>
+        <button class="nav-link" data-page="profile" onclick="App.navigate('profile')">
+          <span style="width:16px;height:16px;display:inline-flex" class="icon-user"></span>
+          <span>Profile & Settings</span>
+        </button>
+      </nav>
+
+      <!-- Sidebar Footer Widgets -->
+      <div class="sidebar-footer">
+        <div class="mini-widget">
+          <div class="mini-widget-row mb-1">
+            <span style="color:#94A3B8">Worker Rating</span>
+            <span style="color:#fff;font-weight:700">4.8 ★</span>
+          </div>
+          <div class="mini-widget-row">
+            <span style="color:#94A3B8">This Week</span>
+            <span style="color:#4ADE80;font-weight:700">Rs. 8,584</span>
+          </div>
+        </div>
+        <div class="mini-widget flex items-center gap-2" style="color:#94A3B8">
+          <span style="width:14px;height:14px;display:inline-flex" class="icon-pin"></span>
+          <span style="font-size:11px">F-10, Islamabad · 10 km</span>
+        </div>
+        <button onclick="App.navigate('profile')" class="btn btn-ghost btn-sm" style="color:#94A3B8;width:100%;justify-content:flex-start;padding:6px 8px">
+          <span style="width:14px;height:14px;display:inline-flex" class="icon-settings"></span>
+          <span style="font-size:11px">Account Settings</span>
+        </button>
+      </div>
+    </aside>
+
+    <!-- ═══ MAIN SHELL ═══ -->
+    <main class="main-shell">
+      <!-- Top Header Bar -->
+      <header class="topbar">
+        <div>
+          <h1 id="topbar-title" class="topbar-title">Dashboard</h1>
+          <p id="topbar-subtitle" class="topbar-subtitle">Thursday, 10 September 2026</p>
+        </div>
+
+        <div id="global-search-box" class="search-box">
+          <span class="search-icon"><span style="width:14px;height:14px;display:inline-flex" class="icon-search"></span></span>
+          <input id="global-search-input" type="text" class="search-input" placeholder="Search jobs, customers..." />
+        </div>
+
+        <div class="topbar-actions">
+          <!-- Active Job Quick Pill -->
+          <div class="active-job-pill" onclick="App.navigate('jobs')">
+            <span class="pulse-dot"></span>
+            <span>Active: Leaking Valve</span>
+            <span style="color:var(--gray);width:14px;height:14px;display:inline-flex" class="icon-chevron-right"></span>
+          </div>
+
+          <!-- Notification Bell -->
+          <button class="icon-button" onclick="App.showToast('You have 2 pending job requests nearby.', 'info')">
+            <span style="width:16px;height:16px;display:inline-flex" class="icon-bell"></span>
+            <span class="notification-badge"></span>
+          </button>
+
+          <!-- User Avatar -->
+          <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=80&h=80&fit=crop" alt="Usman Malik" class="avatar-top" onclick="App.navigate('profile')" />
+        </div>
+      </header>
+
+      <!-- ════════ VIEW 1: DASHBOARD ════════ -->
+      <section id="view-dashboard" class="view-container active">
+        <!-- 4 Top Stat Cards -->
+        <div class="stat-grid-4">
+          <div class="stat-card">
+            <div>
+              <p class="stat-label">Today's Earnings</p>
+              <p class="stat-value" style="color:var(--success)">Rs. 2,537</p>
+              <p class="stat-sub">+Rs. 850 pending in escrow</p>
+            </div>
+            <div class="stat-icon-wrapper" style="background:#DCFCE7;color:#166534">
+              <span style="width:20px;height:20px;display:inline-flex" class="icon-wallet"></span>
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <div>
+              <p class="stat-label">Active Jobs</p>
+              <p class="stat-value" style="color:var(--primary)">2</p>
+              <p class="stat-sub">1 awaiting your action</p>
+            </div>
+            <div class="stat-icon-wrapper" style="background:var(--primary-light);color:var(--primary)">
+              <span style="width:20px;height:20px;display:inline-flex" class="icon-briefcase"></span>
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <div>
+              <p class="stat-label">Average Rating</p>
+              <p class="stat-value" style="color:var(--warning)">4.8 ★</p>
+              <p class="stat-sub">Based on 94 verified reviews</p>
+            </div>
+            <div class="stat-icon-wrapper" style="background:#FEF9C3;color:#854D0E">
+              <span style="width:20px;height:20px;display:inline-flex" class="icon-star"></span>
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <div>
+              <p class="stat-label">Completion Rate</p>
+              <p class="stat-value" style="color:var(--navy)">96%</p>
+              <p class="stat-sub">18 jobs completed this month</p>
+            </div>
+            <div class="stat-icon-wrapper" style="background:#F1F5F9;color:var(--navy)">
+              <span style="width:20px;height:20px;display:inline-flex" class="icon-trending"></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Dashboard 2-Column Grid -->
+        <div class="dashboard-grid">
+          <!-- Left 2/3 Column -->
+          <div>
+            <!-- Nearby Jobs Panel -->
+            <div class="panel">
+              <div class="panel-header">
+                <h3 class="panel-title">Nearby Available Jobs</h3>
+                <button onclick="App.navigate('jobs')" class="btn btn-ghost btn-sm">View All in My Jobs →</button>
+              </div>
+              <div class="table-row-header" style="grid-template-columns: 5fr 2fr 2fr 2fr 1fr;">
+                <span>Job Details</span>
+                <span>Category</span>
+                <span>Distance</span>
+                <span>Visit Fee</span>
+                <span></span>
+              </div>
+              <div id="dash-nearby-tbody"></div>
+            </div>
+
+            <!-- Recent Completed Jobs Panel -->
+            <div class="panel">
+              <div class="panel-header">
+                <h3 class="panel-title">Recent Completed Jobs</h3>
+                <button onclick="App.navigate('earnings')" class="btn btn-ghost btn-sm">Full Transaction History →</button>
+              </div>
+              <div id="dash-completed-tbody"></div>
+            </div>
+          </div>
+
+          <!-- Right 1/3 Column: Active Job Card -->
+          <div>
+            <h3 class="font-700 text-sm c-navy mb-3">Currently Active Job</h3>
+            <div id="dash-active-job-card" class="panel"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ════════ VIEW 2: MY JOBS (SPLIT PANE) ════════ -->
+      <section id="view-jobs" class="view-container">
+        <!-- Left Job Selector Panel -->
+        <div class="jobs-left-panel">
+          <div class="jobs-search-bar">
+            <input type="text" placeholder="Filter jobs..." oninput="App.searchJobs(this.value)" />
+            <div class="filter-pills">
+              <button class="filter-pill active" onclick="App.filterJobs('All')">All</button>
+              <button class="filter-pill" onclick="App.filterJobs('Active')">Active</button>
+              <button class="filter-pill" onclick="App.filterJobs('Nearby')">Nearby</button>
+              <button class="filter-pill" onclick="App.filterJobs('Offer Sent')">Offer Sent</button>
+            </div>
+          </div>
+          <div id="jobs-list-container" class="job-cards-list"></div>
+        </div>
+
+        <!-- Right Detailed Workspace Panel -->
+        <div id="jobs-detail-panel" class="jobs-right-panel"></div>
+      </section>
+
+      <!-- ════════ VIEW 3: REVIEWS & RATINGS ════════ -->
+      <section id="view-reviews" class="view-container">
+        <div class="reviews-grid">
+          <!-- Left: Rating Overview & Reviews List -->
+          <div>
+            <!-- Rating Breakdown Card -->
+            <div class="panel p-5 mb-5 flex items-start gap-8">
+              <div class="text-center">
+                <div class="score-badge mb-2">4.8</div>
+                <div style="color:var(--warning);font-size:16px;margin-bottom:4px">★★★★★</div>
+                <p class="text-xs c-gray">94 Total Reviews</p>
+              </div>
+
+              <div style="flex:1">
+                <div class="flex items-center gap-3 mb-2">
+                  <span class="text-xs c-gray" style="width:28px">5 ★</span>
+                  <div class="dist-bar-track"><div class="dist-bar-fill" style="width:86%"></div></div>
+                  <span class="text-xs c-gray font-600" style="width:24px">81</span>
+                </div>
+                <div class="flex items-center gap-3 mb-2">
+                  <span class="text-xs c-gray" style="width:28px">4 ★</span>
+                  <div class="dist-bar-track"><div class="dist-bar-fill" style="width:11%"></div></div>
+                  <span class="text-xs c-gray font-600" style="width:24px">10</span>
+                </div>
+                <div class="flex items-center gap-3 mb-2">
+                  <span class="text-xs c-gray" style="width:28px">3 ★</span>
+                  <div class="dist-bar-track"><div class="dist-bar-fill" style="width:3%"></div></div>
+                  <span class="text-xs c-gray font-600" style="width:24px">3</span>
+                </div>
+                <div class="flex items-center gap-3 mb-2">
+                  <span class="text-xs c-gray" style="width:28px">2 ★</span>
+                  <div class="dist-bar-track"><div class="dist-bar-fill" style="width:0%"></div></div>
+                  <span class="text-xs c-gray font-600" style="width:24px">0</span>
+                </div>
+                <div class="flex items-center gap-3">
+                  <span class="text-xs c-gray" style="width:28px">1 ★</span>
+                  <div class="dist-bar-track"><div class="dist-bar-fill" style="width:0%"></div></div>
+                  <span class="text-xs c-gray font-600" style="width:24px">0</span>
+                </div>
+              </div>
+
+              <div class="flex flex-col gap-3 text-right">
+                <div>
+                  <p class="font-700 text-lg c-navy">94</p>
+                  <p class="text-xs c-gray">Jobs Completed</p>
+                </div>
+                <div>
+                  <p class="font-700 text-lg c-primary">97%</p>
+                  <p class="text-xs c-gray">Positive Feedback</p>
+                </div>
+                <div>
+                  <p class="font-700 text-lg c-navy">100%</p>
+                  <p class="text-xs c-gray">Response Rate</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Customer Reviews List -->
+            <div class="panel">
+              <div class="panel-header">
+                <h3 class="panel-title">Verified Customer Reviews</h3>
+                <span class="text-xs c-gray">Sorted by Most Recent</span>
+              </div>
+              <div id="reviews-list"></div>
+            </div>
+          </div>
+
+          <!-- Right Column: Sticky "Rate Customer" Form -->
+          <div>
+            <div class="panel sticky-panel">
+              <div class="p-4" style="background:var(--primary-light);border-bottom:1px solid var(--primary)">
+                <h4 class="font-700 text-sm c-primary">Rate Your Latest Customer</h4>
+                <p class="text-xs c-navy mt-0.5">Ahmed Raza · Leaking Main Water Valve</p>
+              </div>
+              <div class="p-5 flex flex-col gap-4">
+                <div>
+                  <label class="text-xs font-600 c-navy block mb-2">Your Rating</label>
+                  <div class="flex gap-2">
+                    <button class="rate-star-btn" onclick="App.setRatingStars(1)" style="font-size:28px;background:none;border:none;cursor:pointer;color:var(--border-dim)">★</button>
+                    <button class="rate-star-btn" onclick="App.setRatingStars(2)" style="font-size:28px;background:none;border:none;cursor:pointer;color:var(--border-dim)">★</button>
+                    <button class="rate-star-btn" onclick="App.setRatingStars(3)" style="font-size:28px;background:none;border:none;cursor:pointer;color:var(--border-dim)">★</button>
+                    <button class="rate-star-btn" onclick="App.setRatingStars(4)" style="font-size:28px;background:none;border:none;cursor:pointer;color:var(--border-dim)">★</button>
+                    <button class="rate-star-btn" onclick="App.setRatingStars(5)" style="font-size:28px;background:none;border:none;cursor:pointer;color:var(--border-dim)">★</button>
+                  </div>
+                  <p id="rate-star-label" class="text-xs font-600 c-primary mt-1"></p>
+                </div>
+
+                <div>
+                  <label class="text-xs font-600 c-navy block mb-2">Highlight Tags (up to 3)</label>
+                  <div class="flex flex-wrap gap-1.5">
+                    <button class="filter-pill rate-tag-btn" onclick="App.toggleRateTag(this, 'Punctual')">Punctual</button>
+                    <button class="filter-pill rate-tag-btn" onclick="App.toggleRateTag(this, 'Prompt Payment')">Prompt Payment</button>
+                    <button class="filter-pill rate-tag-btn" onclick="App.toggleRateTag(this, 'Clear Instructions')">Clear Instructions</button>
+                    <button class="filter-pill rate-tag-btn" onclick="App.toggleRateTag(this, 'Courteous')">Courteous</button>
+                    <button class="filter-pill rate-tag-btn" onclick="App.toggleRateTag(this, 'Respectful')">Respectful</button>
+                  </div>
+                </div>
+
+                <div class="field">
+                  <label>Comment / Notes (Optional)</label>
+                  <textarea id="rate-comment" rows="3" placeholder="Share your experience working with this customer..."></textarea>
+                </div>
+
+                <button onclick="App.submitCustomerRating()" class="btn btn-primary w-full">Submit Customer Review</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ════════ VIEW 4: EARNINGS & PAYOUTS ════════ -->
+      <section id="view-earnings" class="view-container">
+        <!-- 4 Top Financial Cards -->
+        <div class="stat-grid-4">
+          <div class="stat-card">
+            <div>
+              <p class="stat-label">Total Earned (This Month)</p>
+              <p class="stat-value" style="color:var(--success)">Rs. 8,584</p>
+              <p class="stat-sub">5 completed jobs</p>
+            </div>
+            <div class="stat-icon-wrapper" style="background:#DCFCE7;color:#166534">
+              <span style="width:20px;height:20px;display:inline-flex" class="icon-wallet"></span>
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <div>
+              <p class="stat-label">Pending Payout</p>
+              <p class="stat-value" style="color:var(--warning)">Rs. 2,537</p>
+              <p class="stat-sub">Held in 24h escrow</p>
+            </div>
+            <div class="stat-icon-wrapper" style="background:#FEF9C3;color:#854D0E">
+              <span style="width:20px;height:20px;display:inline-flex" class="icon-clock"></span>
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <div>
+              <p class="stat-label">Platform Fee (15%)</p>
+              <p class="stat-value" style="color:var(--error)">Rs. 1,513</p>
+              <p class="stat-sub">Hunar service commission</p>
+            </div>
+            <div class="stat-icon-wrapper" style="background:#FEE2E2;color:#991B1B">
+              <span style="width:20px;height:20px;display:inline-flex" class="icon-shield"></span>
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <div>
+              <p class="stat-label">Net Deposited</p>
+              <p class="stat-value" style="color:var(--primary)">Rs. 7,071</p>
+              <p class="stat-sub">Transferred to Bank Account</p>
+            </div>
+            <div class="stat-icon-wrapper" style="background:var(--primary-light);color:var(--primary)">
+              <span style="width:20px;height:20px;display:inline-flex" class="icon-check-circle"></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Earnings Interactive Chart Panel -->
+        <div class="panel p-5 mb-5">
+          <div class="flex items-center justify-between mb-4">
+            <div>
+              <h3 class="panel-title">Earnings Performance Chart</h3>
+              <p class="text-xs c-gray mt-0.5">Visualize your revenue trends over time</p>
+            </div>
+            <div class="flex rounded overflow-hidden" style="border:1px solid var(--border)">
+              <button class="earnings-tab-btn filter-pill" data-period="week" onclick="App.setEarningsPeriod('week')">Weekly</button>
+              <button class="earnings-tab-btn filter-pill active" data-period="month" onclick="App.setEarningsPeriod('month')">Monthly</button>
+              <button class="earnings-tab-btn filter-pill" data-period="year" onclick="App.setEarningsPeriod('year')">Yearly</button>
+            </div>
+          </div>
+          <div id="earnings-chart-container"></div>
+        </div>
+
+        <!-- Transaction Statement Table -->
+        <div class="panel">
+          <div class="panel-header">
+            <h3 class="panel-title">Transaction & Payout History</h3>
+            <button onclick="App.exportEarningsCSV()" class="btn btn-outline btn-sm">
+              <span style="width:14px;height:14px;display:inline-flex" class="icon-download"></span> Export Statement
+            </button>
+          </div>
+          <div class="table-row-header" style="grid-template-columns: 1fr 4fr 2fr 2fr 1fr 2fr 2fr 1fr">
+            <span>Job ID</span>
+            <span>Job Title</span>
+            <span>Customer</span>
+            <span>Date</span>
+            <span>Rating</span>
+            <span>Total</span>
+            <span>Net Payout</span>
+            <span>Status</span>
+          </div>
+          <div id="earnings-transactions-tbody"></div>
+        </div>
+      </section>
+
+      <!-- ════════ VIEW 5: PROFILE & SETTINGS ════════ -->
+      <section id="view-profile" class="view-container">
+        <!-- Profile Tab Switcher -->
+        <div class="flex gap-2 mb-5" style="border-bottom:1px solid var(--border);padding-bottom:10px">
+          <button class="filter-pill profile-tab-btn active" data-tab="overview" onclick="App.setProfileTab('overview')">Overview</button>
+          <button class="filter-pill profile-tab-btn" data-tab="services" onclick="App.setProfileTab('services')">My Services</button>
+          <button class="filter-pill profile-tab-btn" data-tab="location" onclick="App.setProfileTab('location')">Location & Area</button>
+          <button class="filter-pill profile-tab-btn" data-tab="disputes" onclick="App.setProfileTab('disputes')">Disputes Log</button>
+        </div>
+
+        <!-- Sub-view: Overview -->
+        <div id="prof-sub-overview" class="profile-sub-view">
+          <div class="grid grid-cols-3 gap-5">
+            <!-- Profile Identity Card -->
+            <div class="panel">
+              <div class="p-6 text-center" style="background:var(--navy);color:#fff">
+                <div style="position:relative;display:inline-block;margin-bottom:12px">
+                  <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=160&h=160&fit=crop" class="rounded-lg" style="width:96px;height:96px;object-fit:cover;border:3px solid var(--primary)" />
+                  <span class="badge badge-teal" style="position:absolute;bottom:-6px;right:-6px;box-shadow:var(--shadow)">✓ VERIFIED</span>
+                </div>
+                <h3 class="font-700 text-lg">Usman Malik</h3>
+                <p class="text-xs" style="color:#94A3B8">Plumber & Pipe Specialist · 8 yrs exp.</p>
+                <div class="flex items-center justify-center gap-1 mt-2">
+                  <span style="color:var(--warning)">★★★★★</span>
+                  <span class="text-xs" style="color:#94A3B8">4.8 (94 reviews)</span>
+                </div>
+              </div>
+              <div class="p-4 flex flex-col gap-2">
+                <div class="flex justify-between text-xs py-1.5" style="border-bottom:1px solid var(--border)">
+                  <span class="c-gray">Phone</span>
+                  <span class="font-600 c-navy">+92 321 1234567</span>
+                </div>
+                <div class="flex justify-between text-xs py-1.5" style="border-bottom:1px solid var(--border)">
+                  <span class="c-gray">CNIC</span>
+                  <span class="font-600 c-navy">61101-2345678-9</span>
+                </div>
+                <div class="flex justify-between text-xs py-1.5" style="border-bottom:1px solid var(--border)">
+                  <span class="c-gray">Default Visit Fee</span>
+                  <span class="font-600 c-navy">Rs. 300</span>
+                </div>
+                <div class="flex justify-between text-xs py-1.5">
+                  <span class="c-gray">Member Since</span>
+                  <span class="font-600 c-navy">Jan 2024</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Edit Details & Bio Form -->
+            <div class="col-span-2 panel p-5">
+              <h3 class="panel-title mb-4">Edit Profile & Contact Details</h3>
+              <div class="grid grid-cols-2 gap-4 mb-3">
+                <div class="field">
+                  <label>Full Name</label>
+                  <input type="text" id="prof-name-input" value="Usman Malik" />
+                </div>
+                <div class="field">
+                  <label>Primary Trade</label>
+                  <input type="text" id="prof-trade-input" value="Plumber & Pipe Specialist" />
+                </div>
+              </div>
+              <div class="grid grid-cols-2 gap-4 mb-3">
+                <div class="field">
+                  <label>Years of Experience</label>
+                  <input type="number" id="prof-exp-input" value="8" />
+                </div>
+                <div class="field">
+                  <label>Default Visit Fee (Rs.)</label>
+                  <input type="number" id="prof-fee-input" value="300" />
+                </div>
+              </div>
+              <div class="field mb-4">
+                <label>Professional Bio</label>
+                <textarea rows="3">Licensed plumber with 8 years of residential and commercial experience in Islamabad. Specialise in pipe fitting, leak repair, drainage, and water heater installation.</textarea>
+              </div>
+
+              <!-- Verification Checklist -->
+              <h4 class="font-600 text-xs uppercase tracking-wide c-gray mb-3">Identity & Trust Verification</h4>
+              <div class="grid grid-cols-2 gap-2 mb-4">
+                <div class="flex items-center justify-between p-2.5 rounded" style="background:var(--bg);border:1px solid var(--border)">
+                  <span class="text-xs font-500 c-navy">CNIC Verification</span>
+                  <span class="badge badge-teal">Verified</span>
+                </div>
+                <div class="flex items-center justify-between p-2.5 rounded" style="background:var(--bg);border:1px solid var(--border)">
+                  <span class="text-xs font-500 c-navy">Phone Verification</span>
+                  <span class="badge badge-teal">Verified</span>
+                </div>
+                <div class="flex items-center justify-between p-2.5 rounded" style="background:var(--bg);border:1px solid var(--border)">
+                  <span class="text-xs font-500 c-navy">Trade Certification</span>
+                  <span class="badge badge-teal">Verified</span>
+                </div>
+                <div class="flex items-center justify-between p-2.5 rounded" style="background:var(--bg);border:1px solid var(--border)">
+                  <span class="text-xs font-500 c-navy">Police Background Check</span>
+                  <span class="badge badge-teal">Verified</span>
+                </div>
+              </div>
+
+              <button onclick="App.saveProfileChanges()" class="btn btn-primary">Save Profile Changes</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sub-view: Services -->
+        <div id="prof-sub-services" class="profile-sub-view" style="display:none">
+          <div class="panel p-5">
+            <h3 class="panel-title mb-1">Service Categories & Specializations</h3>
+            <p class="text-xs c-gray mb-4">Turn on services you offer and toggle your specific skills.</p>
+            <div id="profile-services-grid" class="grid grid-cols-2 gap-4"></div>
+          </div>
+        </div>
+
+        <!-- Sub-view: Location & Area -->
+        <div id="prof-sub-location" class="profile-sub-view" style="display:none">
+          <div class="panel p-5">
+            <h3 class="panel-title mb-1">Service Coverage Area</h3>
+            <p class="text-xs c-gray mb-4">Define how far you are willing to travel for service requests.</p>
+            <div class="grid grid-cols-2 gap-5">
+              <div>
+                <div class="field mb-3">
+                  <label>Primary Base City or Sector</label>
+                  <input type="text" value="F-10, Islamabad" />
+                </div>
+                <label class="text-xs font-600 c-navy block mb-2">Travel Radius</label>
+                <div class="flex gap-2 mb-3">
+                  <button class="filter-pill radius-pill" onclick="App.selectRadius(2, this)">2 km</button>
+                  <button class="filter-pill radius-pill" onclick="App.selectRadius(5, this)">5 km</button>
+                  <button class="filter-pill radius-pill active" onclick="App.selectRadius(10, this)">10 km</button>
+                  <button class="filter-pill radius-pill" onclick="App.selectRadius(20, this)">20 km</button>
+                  <button class="filter-pill radius-pill" onclick="App.selectRadius(30, this)">30+ km</button>
+                </div>
+                <p class="text-xs c-primary font-600 mb-4">Currently serving: <span id="radius-val-label">10 km</span> radius</p>
+                <button onclick="App.saveProfileChanges()" class="btn btn-primary">Save Service Area</button>
+              </div>
+              <div>
+                <label class="text-xs font-600 c-navy block mb-2">Map Preview</label>
+                <div style="position:relative;height:160px;border-radius:var(--radius);overflow:hidden;border:1px solid var(--border)">
+                  <img src="https://images.unsplash.com/photo-1569336415962-a4bd9f69cd83?w=500&h=200&fit=crop" style="width:100%;height:100%;object-fit:cover" />
+                  <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center">
+                    <div style="width:40px;height:40px;border-radius:50%;background:var(--primary);color:#fff;display:flex;align-items:center;justify-content:center;box-shadow:var(--shadow-lg)">
+                      <span style="width:20px;height:20px;display:inline-flex" class="icon-pin"></span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sub-view: Disputes -->
+        <div id="prof-sub-disputes" class="profile-sub-view" style="display:none">
+          <div class="panel p-5">
+            <h3 class="panel-title mb-1">Disputes History</h3>
+            <p class="text-xs c-gray mb-4">Log of customer or worker raised resolution cases.</p>
+            <div class="panel p-4" style="background:var(--bg);border:1px solid var(--border)">
+              <div class="flex items-center justify-between mb-2">
+                <span class="font-600 text-sm c-navy">DSP-041 · Job J-0982 (Kamran Tariq)</span>
+                <span class="badge badge-teal">Resolved in worker favor</span>
+              </div>
+              <p class="text-xs c-gray mb-2">Date: 28 Aug 2026</p>
+              <p class="text-sm c-navy mb-2"><strong>Reason:</strong> Customer requested work outside original scope without additional payment.</p>
+              <div class="p-3 rounded" style="background:#DCFCE7;border-left:3px solid var(--success)">
+                <p class="text-xs" style="color:#166534"><strong>Hunar Admin Resolution:</strong> Admin reviewed chat logs and released full escrow payout of Rs. 1,800 to worker.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- ════════ MODAL: INSPECTION REPORT ════════ -->
+  <div id="modal-inspection" class="modal-overlay">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3 class="font-700 text-base c-navy">Inspection & Diagnostic Report</h3>
+        <button onclick="App.closeInspectionModal()" style="background:none;border:none;font-size:20px;color:var(--gray);cursor:pointer">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="p-3 mb-4 rounded" style="background:#EFF6FF;border-left:3px solid #3B82F6">
+          <p class="text-xs" style="color:#1E3A8A">Inspect the premises, document damages with photos, and itemize costs for customer approval.</p>
+        </div>
+
+        <label class="text-xs font-600 c-navy block mb-2">Inspection Photos</label>
+        <div id="inspection-gallery" class="flex gap-2 flex-wrap mb-4"></div>
+
+        <div class="field mb-3">
+          <label>Diagnostic Findings</label>
+          <textarea rows="3" placeholder="Cracked 1-inch PVC elbow joint behind wall near main inlet. Pipe shows stress fractures causing high-pressure leakage."></textarea>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3 mb-3">
+          <div class="field">
+            <label>Parts Required (Rs.)</label>
+            <input id="insp-parts-input" type="number" value="1200" oninput="App.updateInspectionTotal()" />
+          </div>
+          <div class="field">
+            <label>Labor & Repair Work (Rs.)</label>
+            <input id="insp-labor-input" type="number" value="1500" oninput="App.updateInspectionTotal()" />
+          </div>
+        </div>
+
+        <div class="p-3 rounded flex justify-between items-center" style="background:#F1F5F9">
+          <span class="text-xs font-600 c-gray">Total Estimated Repair (incl. visit fee)</span>
+          <span id="insp-total-display" class="font-700 text-base c-primary">Rs. 2,985</span>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button onclick="App.closeInspectionModal()" class="btn btn-outline">Cancel</button>
+        <button onclick="App.saveInspection()" class="btn btn-primary">Submit Inspection Report →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════ MODAL: REPAIR QUOTE ════════ -->
+  <div id="modal-repair-quote" class="modal-overlay">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3 class="font-700 text-base c-navy">Repair Quote Approval</h3>
+        <button onclick="App.closeRepairQuoteModal()" style="background:none;border:none;font-size:20px;color:var(--gray);cursor:pointer">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="panel p-4 mb-4" style="background:var(--bg)">
+          <div class="flex justify-between text-xs py-1">
+            <span class="c-gray">Diagnosis & Visit Fee</span>
+            <span class="font-600 c-navy">Rs. 285</span>
+          </div>
+          <div class="flex justify-between text-xs py-1">
+            <span class="c-gray">1-inch PVC Joint & Sealant</span>
+            <span class="font-600 c-navy">Rs. 1,200</span>
+          </div>
+          <div class="flex justify-between text-xs py-1">
+            <span class="c-gray">Pipe Replacement & Welding Labor</span>
+            <span class="font-600 c-navy">Rs. 1,500</span>
+          </div>
+          <div class="flex justify-between text-sm font-700 c-navy pt-2" style="border-top:1px solid var(--border)">
+            <span>Total Repair Quote</span>
+            <span>Rs. 2,985</span>
+          </div>
+        </div>
+        <p class="text-xs c-gray leading-relaxed mb-3">Customer Ahmed Raza has reviewed your itemized quote and authorized the escrow deposit.</p>
+      </div>
+      <div class="modal-footer">
+        <button onclick="App.closeRepairQuoteModal()" class="btn btn-outline">Close</button>
+        <button onclick="App.approveRepairQuote()" class="btn btn-primary">Customer Confirmed — Start Work →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════ MODAL: DISPUTE ════════ -->
+  <div id="modal-dispute" class="modal-overlay">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3 class="font-700 text-base" style="color:var(--error)">Raise a Dispute</h3>
+        <button onclick="App.closeDisputeModal()" style="background:none;border:none;font-size:20px;color:var(--gray);cursor:pointer">×</button>
+      </div>
+      <div class="modal-body">
+        <p class="text-xs c-gray mb-3">If the customer is unreachable or requesting work outside the agreed terms, notify Hunar support immediately.</p>
+        <div class="field">
+          <label>Reason for Dispute</label>
+          <textarea id="dispute-reason" rows="4" placeholder="Describe what happened..."></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button onclick="App.closeDisputeModal()" class="btn btn-outline">Cancel</button>
+        <button onclick="App.submitDispute()" class="btn btn-danger">Submit Dispute</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════ MODAL: COUNTER OFFER SIMULATOR ════════ -->
+  <div id="modal-counter-offer" class="modal-overlay">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3 class="font-700 text-base c-navy">Customer Counter-Offer Received</h3>
+        <button onclick="this.closest('.modal-overlay').classList.remove('open')" style="background:none;border:none;font-size:20px;color:var(--gray);cursor:pointer">×</button>
+      </div>
+      <div class="modal-body">
+        <p class="text-sm c-navy mb-2"><span id="counter-customer-name" class="font-600">Customer</span> suggests a visit fee of <strong>Rs. 250</strong> (your offer was Rs. 300).</p>
+        <p class="text-xs c-gray">Would you like to accept this counter-offer and schedule the visit?</p>
+      </div>
+      <div class="modal-footer">
+        <button onclick="this.closest('.modal-overlay').classList.remove('open')" class="btn btn-outline">Decline</button>
+        <button onclick="App.acceptCustomerCounter()" class="btn btn-primary">Accept Rs. 250 & Schedule Visit →</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/icons.js"></script>
+  <script src="js/data.js"></script>
+  <script src="js/app.js"></script>
+  <script>
+    // Inject icons into elements
+    function injectIcons() {
+      document.querySelectorAll('.icon-wrench').forEach(el => el.innerHTML = ICONS.wrench);
+      document.querySelectorAll('.icon-home').forEach(el => el.innerHTML = ICONS.home);
+      document.querySelectorAll('.icon-briefcase').forEach(el => el.innerHTML = ICONS.briefcase);
+      document.querySelectorAll('.icon-star').forEach(el => el.innerHTML = ICONS.star);
+      document.querySelectorAll('.icon-wallet').forEach(el => el.innerHTML = ICONS.wallet);
+      document.querySelectorAll('.icon-user').forEach(el => el.innerHTML = ICONS.user);
+      document.querySelectorAll('.icon-pin').forEach(el => el.innerHTML = ICONS.mapPin);
+      document.querySelectorAll('.icon-settings').forEach(el => el.innerHTML = ICONS.settings);
+      document.querySelectorAll('.icon-search').forEach(el => el.innerHTML = ICONS.search);
+      document.querySelectorAll('.icon-chevron-right').forEach(el => el.innerHTML = ICONS.chevronRight);
+      document.querySelectorAll('.icon-bell').forEach(el => el.innerHTML = ICONS.bell);
+      document.querySelectorAll('.icon-trending').forEach(el => el.innerHTML = ICONS.trending);
+      document.querySelectorAll('.icon-clock').forEach(el => el.innerHTML = ICONS.clock);
+      document.querySelectorAll('.icon-shield').forEach(el => el.innerHTML = ICONS.shield);
+      document.querySelectorAll('.icon-check-circle').forEach(el => el.innerHTML = ICONS.checkCircle);
+      document.querySelectorAll('.icon-download').forEach(el => el.innerHTML = ICONS.download);
+    }
+    injectIcons();
+  </script>
+</body>
+</html>

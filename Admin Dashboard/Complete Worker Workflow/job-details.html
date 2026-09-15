@@ -1,0 +1,238 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HUNAR — Job Details</title>
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body class="frame-full">
+  <div class="app-frame">
+    <div class="status-bar">
+      <span>9:41</span>
+      <div class="status-icons">
+        <div class="signal-bars">
+          <div style="width:3px;height:3px;background:#fff;border-radius:1px"></div>
+          <div style="width:3px;height:5px;background:#fff;border-radius:1px"></div>
+          <div style="width:3px;height:7px;background:#fff;border-radius:1px"></div>
+          <div style="width:3px;height:9px;background:#fff;border-radius:1px;opacity:0.4"></div>
+        </div>
+        <div style="width:16px;height:9px;border:1px solid rgba(255,255,255,0.6);border-radius:2px;position:relative;margin-left:4px">
+          <div style="position:absolute;inset:1px;right:4px;background:#fff;border-radius:1px"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Header -->
+    <div class="page-header">
+      <button class="back-btn" onclick="location.href='index.html'"><span id="ic-back" style="width:20px;height:20px;display:inline-flex"></span></button>
+      <div class="flex-1">
+        <h1>Job Details</h1>
+        <p class="sub">F-10, Islamabad</p>
+      </div>
+      <span class="badge badge-urgent">URGENT</span>
+    </div>
+
+    <div class="screen-body" id="job-body">
+      <!-- Job info card -->
+      <div class="mx-4 mt-4 card overflow-hidden">
+        <div class="p-4">
+          <div class="flex items-start justify-between mb-3">
+            <div class="flex items-center gap-2.5">
+              <div class="category-tile" style="width:40px;height:40px;font-size:20px"><span id="cat-icon"></span></div>
+              <div>
+                <h2 class="job-title" id="jd-title"></h2>
+                <p class="job-cat" id="jd-cat"></p>
+              </div>
+            </div>
+            <span class="badge badge-urgent">URGENT</span>
+          </div>
+          <p class="job-desc" id="jd-desc" style="-webkit-line-clamp:99;display:block"></p>
+          <div class="flex gap-4 txt-xs c-gray">
+            <span class="flex items-center gap-1"><span id="ic-pin" style="width:14px;height:14px;display:inline-flex"></span><span id="jd-dist"></span></span>
+            <span class="flex items-center gap-1"><span id="ic-clock" style="width:14px;height:14px;display:inline-flex"></span><span id="jd-time"></span></span>
+          </div>
+
+          <p class="txt-xs fw-600 c-navy mb-2 mt-3">Issue Photos</p>
+          <div class="flex gap-2">
+            <img src="https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=80&h=80&fit=crop" alt="Issue" style="width:64px;height:64px;border-radius:8px;object-fit:cover;border:1px solid var(--border)" />
+            <img src="https://images.unsplash.com/photo-1504328345606-18bbc8c9d7d1?w=80&h=80&fit=crop" alt="Issue" style="width:64px;height:64px;border-radius:8px;object-fit:cover;border:1px solid var(--border)" />
+            <div class="flex flex-col items-center justify-center" style="width:64px;height:64px;border-radius:8px;border:1px dashed var(--border-dim);background:var(--bg)">
+              <span id="ic-radio" style="color:var(--gray);width:16px;height:16px"></span>
+              <p class="txt-xs mt-1" style="color:var(--gray);font-size:9px">Voice Note</p>
+            </div>
+          </div>
+        </div>
+        <hr class="divider" />
+        <div class="px-4 py-3 flex items-center justify-between">
+          <span class="txt-xs c-gray">Preferred time</span>
+          <span class="txt-xs fw-600 c-navy" id="jd-sched"></span>
+        </div>
+      </div>
+
+      <!-- Status band (below, injected by JS) -->
+      <div id="offer-band"></div>
+
+      <!-- Offer form -->
+      <div id="offer-area"></div>
+
+      <div class="h-20"></div>
+    </div>
+
+    <div id="toast" class="hidden" style="position:absolute;top:16px;left:16px;right:16px;z-index:50;background:#fff;border-left:3px solid var(--success);border:1px solid var(--border);border-radius:8px;box-shadow:0 10px 25px rgba(0,0,0,0.15);padding:12px"></div>
+  </div>
+
+  <script src="js/icons.js"></script>
+  <script src="js/data.js"></script>
+  <script src="js/app.js"></script>
+  <script>
+    $('#ic-back').innerHTML = ICONS.arrowLeft
+    $('#ic-pin').innerHTML = ICONS.mapPin
+    $('#ic-clock').innerHTML = ICONS.clock
+    $('#ic-radio').innerHTML = ICONS.radio || ICONS.phone
+
+    const job = App.Store.get('selectedJob', MOCK.NEARBY_JOBS[0])
+    let visitFee = job.visitFee || 300
+    let phase = 'form'
+
+    $('#cat-icon').textContent = App.categoryIcon(job.category)
+    $('#jd-title').textContent = job.title
+    $('#jd-cat').textContent = job.category
+    $('#jd-desc').textContent = job.description
+    $('#jd-dist').textContent = job.distance + ' away'
+    $('#jd-time').textContent = job.postedTime
+    $('#jd-sched').textContent = job.scheduledTime || 'Today, 4:00 PM'
+
+    function renderOffer() {
+      const band = $('#offer-band')
+      const area = $('#offer-area')
+      band.innerHTML = ''
+      area.innerHTML = ''
+
+      if (phase === 'countered') {
+        band.innerHTML = `
+          <div class="mx-4 mt-3 p-4" style="background:var(--bg);border:1px solid var(--border);border-radius:8px">
+            <div class="flex items-center gap-2 mb-2">
+              <div style="width:8px;height:8px;border-radius:50%;background:var(--warning);animation:pulse 1.5s infinite"></div>
+              <p class="txt-sm fw-600 c-navy">Counter-Offer Received</p>
+            </div>
+            <p class="txt-xs c-gray mb-3">${job.customerName} suggests Rs. 250 for the visit fee.</p>
+            <div class="flex gap-2">
+              <button class="btn btn-primary btn-xs flex-1" style="height:36px" onclick="acceptCounter()">Accept Rs. 250</button>
+              <button class="btn btn-outline btn-xs flex-1" style="height:36px" onclick="counterAmount(280)">Counter Rs. 280</button>
+              <button class="btn btn-outline btn-xs" style="height:36px;border-color:#FECACA;color:var(--error)" onclick="declineOffer()">Decline</button>
+            </div>
+          </div>`
+      } else if (phase === 'accepted') {
+        band.innerHTML = `
+          <div class="mx-4 mt-3 p-4" style="background:var(--primary-light);border:1px solid var(--primary);border-radius:8px">
+            <div class="flex items-center gap-2">
+              <div style="width:24px;height:24px;border-radius:50%;background:var(--primary);display:flex;align-items:center;justify-content:center;color:#fff;flex-shrink:0">
+                <span style="width:12px;height:12px;display:inline-flex">${ICONS.check}</span>
+              </div>
+              <div>
+                <p class="txt-sm fw-600" style="color:var(--primary)">Visit Fee Locked — Rs. ${visitFee}</p>
+                <p class="txt-xs c-navy">Customer accepted. Visit is now scheduled.</p>
+              </div>
+            </div>
+          </div>
+          <div class="mx-4 mt-3 mb-4">
+            <button class="btn" onclick="goToActiveJob()">Go to Active Job →</button>
+          </div>`
+        return
+      }
+
+      if (phase === 'form') {
+        area.innerHTML = `
+          <div class="mx-4 mt-3 mb-4 card overflow-hidden">
+            <div class="px-4 pt-4 pb-1">
+              <h3 class="card-title">Submit Your Offer</h3>
+              <p class="txt-xs c-gray mt-1">One offer per job. You can withdraw before customer accepts.</p>
+            </div>
+            <hr class="divider mt-3" />
+            <div class="p-4 flex flex-col gap-3">
+              <div class="field">
+                <label>Visit / Inspection Fee (Rs.)</label>
+                <input type="number" id="fee-input" value="${visitFee}" oninput="visitFee=parseInt(this.value)||0" />
+              </div>
+              <div class="field">
+                <label>Initial Estimate Range (optional)</label>
+                <input type="text" placeholder="e.g. Rs. 1,500 – Rs. 2,500" value="${job.repairEstimate || ''}" />
+              </div>
+              <div class="field">
+                <label>Proposal Note</label>
+                <textarea rows="3" placeholder="e.g. Licensed technician with 8 years experience. Available today."></textarea>
+              </div>
+              <button class="btn" onclick="sendOffer()">Send Offer</button>
+            </div>
+          </div>`
+      } else if (phase === 'sent') {
+        area.innerHTML = `
+          <div class="mx-4 mt-3 mb-4 card overflow-hidden">
+            <div class="p-4">
+              <div class="flex items-center gap-3 mb-4">
+                <div style="width:36px;height:36px;border-radius:8px;background:#FEF9C3;display:flex;align-items:center;justify-content:center">
+                  <span style="font-size:18px">⏳</span>
+                </div>
+                <div>
+                  <p class="txt-sm fw-600 c-navy">Offer Sent — Rs. ${visitFee}</p>
+                  <p class="txt-xs c-gray">Awaiting customer decision…</p>
+                </div>
+              </div>
+              <button class="btn btn-outline btn-sm" style="width:100%" onclick="simulateCounter()">Simulate Counter-Offer (Demo)</button>
+            </div>
+          </div>`
+      }
+    }
+
+    function sendOffer() {
+      phase = 'sent'
+      App.showToast('Offer of Rs. ' + visitFee + ' sent to ' + job.customerName + '.')
+      renderOffer()
+    }
+
+    function simulateCounter() {
+      phase = 'countered'
+      renderOffer()
+    }
+
+    function counterAmount(amt) {
+      visitFee = amt
+      phase = 'sent'
+      App.showToast('Counter of Rs. ' + amt + ' sent to ' + job.customerName + '.')
+      renderOffer()
+    }
+
+    function declineOffer() {
+      App.showToast('Offer declined. Returning to dashboard…', 'error')
+      setTimeout(() => { location.href = 'index.html' }, 1000)
+    }
+
+    function acceptCounter() {
+      visitFee = 250
+      phase = 'accepted'
+      App.Store.set('visitFee', 250)
+      App.Store.set('jobStatus', 'visit-scheduled')
+      renderOffer()
+    }
+
+    function goToActiveJob() {
+      App.Store.set('visitFee', visitFee)
+      App.Store.set('jobStatus', 'visit-scheduled')
+      App.Store.set('activeJob', {
+        ...MOCK.ACTIVE_JOB,
+        title: job.title,
+        category: job.category,
+        customerName: job.customerName,
+        customerPhone: job.customerPhone,
+        area: job.area,
+        exactAddress: job.exactAddress || (job.area + ', Islamabad'),
+        visitFee: visitFee,
+      })
+      location.href = 'active-job.html'
+    }
+
+    renderOffer()
+  </script>
+</body>
+</html>
