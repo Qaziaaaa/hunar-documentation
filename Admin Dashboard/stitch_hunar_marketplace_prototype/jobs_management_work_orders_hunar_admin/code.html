@@ -1,0 +1,1045 @@
+<!DOCTYPE html><html lang="en" style=""><head><meta charset="utf-8"><meta content="width=device-width, initial-scale=1.0" name="viewport"><title>HUNAR Admin</title><link href="https://fonts.googleapis.com" rel="preconnect"><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<style>
+@layer base {
+  html, body {
+    margin: 0;
+    padding: 0;
+    background-color: #FFFFFF;
+    color: #172033;
+    font-family: 'Inter', sans-serif;
+  }
+  body {
+    overscroll-behavior: none;
+  }
+  main > :first-child {
+    margin-top: 0 !important;
+  }
+  main > :last-child {
+    margin-bottom: 0 !important;
+  }
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #CBD5E1;
+    border-radius: 9999px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #94A3B8;
+  }
+}
+</style>
+<script src="https://cdn.tailwindcss.com"></script>
+<script id="tailwind-config">
+tailwind.config = {
+  darkMode: "class",
+  theme: {
+    extend: {
+      colors: {
+        primary: {
+          DEFAULT: "#123B5D",
+          50: "#F0FDFA",
+          100: "#CCFBF1",
+          500: "#123B5D",
+          600: "#0F2E4A",
+          700: "#0A2033",
+        },
+        secondary: {
+          DEFAULT: "#0F8B8D",
+          50: "#E6F7F7",
+          500: "#0F8B8D",
+          600: "#0D7A7C",
+          700: "#096B62",
+        },
+        accent: {
+          DEFAULT: "#F59E0B",
+          50: "#FFFBEB",
+          100: "#FEF3C7",
+          500: "#F59E0B",
+          600: "#D97706",
+          700: "#B45309",
+        },
+        surface: "#F8FAFC",
+        "surface-bright": "#FFFFFF",
+        "surface-dim": "#F1F5F9",
+        "surface-container-lowest": "#FFFFFF",
+        "surface-container-low": "#F8FAFC",
+        "surface-container": "#F1F5F9",
+        "surface-container-high": "#E2E8F0",
+        "surface-container-highest": "#CBD5E1",
+        "surface-variant": "#F1F5F9",
+        "on-surface": "#172033",
+        "on-surface-variant": "#64748B",
+        "on-primary": "#FFFFFF",
+        "primary-container": "#123B5D",
+        "on-primary-container": "#FFFFFF",
+        "on-secondary": "#FFFFFF",
+        "secondary-container": "#E6F7F7",
+        "on-secondary-container": "#0F8B8D",
+        "secondary-fixed": "#FEF3C7",
+        "on-secondary-fixed": "#92400E",
+        "secondary-fixed-dim": "#FDE68A",
+        tertiary: "#F59E0B",
+        "tertiary-container": "#FEF3C7",
+        "on-tertiary-container": "#92400E",
+        outline: "#94A3B8",
+        "outline-variant": "#E2E8F0",
+        error: "#DC2626",
+        "error-container": "#FEE2E2",
+        "on-error": "#FFFFFF",
+        "on-error-container": "#991B1B",
+      },
+      borderRadius: {
+        DEFAULT: "0.5rem",
+        lg: "0.5rem",
+        xl: "0.75rem",
+        full: "9999px"
+      },
+      spacing: {
+        "space-32": "2rem",
+        "space-12": "0.75rem",
+        "gutter-tablet": "1rem",
+        "space-20": "1.25rem",
+        "space-8": "0.5rem",
+        "space-16": "1rem",
+        "sidebar-collapsed-width": "4.5rem",
+        "space-24": "1.5rem",
+        "topbar-height": "4rem",
+        "space-4": "0.25rem",
+        "space-2": "0.125rem",
+        "space-6": "0.375rem",
+        "gutter-mobile": "0.75rem",
+        "sidebar-width": "16rem",
+        "space-48": "3rem",
+        "gutter-desktop": "1.5rem",
+        "space-64": "4rem"
+      },
+      fontFamily: {
+        sans: ["Inter", "sans-serif"],
+        "body-md": ["Inter", "sans-serif"],
+        "headline-lg": ["Inter", "sans-serif"],
+        "body-lg": ["Inter", "sans-serif"],
+        "body-md-medium": ["Inter", "sans-serif"],
+        "label-uppercase": ["Inter", "sans-serif"],
+        "caption-md": ["Inter", "sans-serif"],
+        "caption-sm": ["Inter", "sans-serif"],
+        "headline-lg-mobile": ["Inter", "sans-serif"],
+        "headline-md": ["Inter", "sans-serif"],
+        "headline-sm": ["Inter", "sans-serif"]
+      },
+      fontSize: {
+        "body-md": ["14px", { lineHeight: "20px", fontWeight: "400" }],
+        "headline-lg": ["28px", { lineHeight: "36px", letterSpacing: "-0.02em", fontWeight: "700" }],
+        "body-lg": ["16px", { lineHeight: "24px", fontWeight: "400" }],
+        "body-md-medium": ["14px", { lineHeight: "20px", fontWeight: "500" }],
+        "label-uppercase": ["11px", { lineHeight: "16px", letterSpacing: "0.04em", fontWeight: "600" }],
+        "caption-md": ["13px", { lineHeight: "18px", fontWeight: "400" }],
+        "caption-sm": ["12px", { lineHeight: "16px", fontWeight: "500" }],
+        "headline-lg-mobile": ["24px", { lineHeight: "32px", letterSpacing: "-0.015em", fontWeight: "700" }],
+        "headline-md": ["20px", { lineHeight: "28px", letterSpacing: "-0.015em", fontWeight: "700" }],
+        "headline-sm": ["18px", { lineHeight: "26px", letterSpacing: "-0.01em", fontWeight: "600" }]
+      }
+    }
+  }
+};
+</script>
+</head>
+<body class="bg-white font-body-md text-body-md text-on-surface antialiased">
+<!-- SIDEBAR (Modern, Crisp White with Brand Navy Accents & Clear Hierarchy) -->
+<aside class="hidden lg:flex fixed left-0 top-0 h-screen w-64 bg-white border-r border-[#E2E8F0] z-50 flex-col justify-between shadow-[1px_0_10px_rgba(0,0,0,0.02)]">
+<div class="flex flex-col flex-1 overflow-y-auto px-4 py-5">
+<!-- Logo Header -->
+<div class="flex items-center justify-between pb-5 border-b border-[#E2E8F0] mb-5">
+<a href="../../../Abdullah desigens customer + landing page/landing page/code.html" class="flex items-center gap-3 group hover:opacity-90 transition-opacity no-underline" title="Back to Landing Page">
+<div class="w-10 h-10 rounded-xl bg-[#123B5D] flex items-center justify-center text-white font-extrabold text-xl shadow-sm tracking-tight relative group-hover:scale-105 transition-transform">
+<span>H</span>
+<span class="w-2.5 h-2.5 rounded-full bg-[#0F8B8D] absolute bottom-1 right-1 border-2 border-white"></span>
+</div>
+<div class="flex flex-col">
+<div class="flex items-center gap-1.5 leading-tight">
+<span class="font-extrabold text-[17px] tracking-tight text-[#172033]">HUNAR</span>
+<span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-[#123B5D]/5 text-[#123B5D] uppercase tracking-wider border border-[#123B5D]/15">ADMIN</span>
+</div>
+<p class="text-[11px] font-medium text-[#64748B]">Certified Pro Marketplace</p>
+</div>
+</a>
+</div>
+<!-- Navigation Hierarchy -->
+<nav class="space-y-6">
+<!-- Section: MAIN -->
+<div>
+<div class="px-3 pb-2 text-[10px] font-bold uppercase tracking-wider text-[#64748B]">Main</div>
+<div class="space-y-1">
+<a class="flex items-center justify-between px-3 py-2 rounded-xl text-[13px] font-medium text-[#64748B] hover:text-[#172033] hover:bg-slate-50 transition-colors" href="../hunar_admin_operations_dashboard_modern/code.html">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-[19px]">dashboard</span>
+<span>Dashboard</span>
+</div>
+</a>
+<a class="flex items-center justify-between px-3 py-2 rounded-xl text-[13px] font-medium text-[#64748B] hover:text-[#172033] hover:bg-slate-50 transition-colors" href="../../admin panel design/customers.html">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-[19px]">group</span>
+<span>Users</span>
+</div>
+<span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-slate-100 text-[#64748B] border border-[#E2E8F0]">2 Roles</span>
+</a>
+<a class="flex items-center justify-between px-3 py-2.5 rounded-xl bg-[#123B5D] text-white font-semibold text-[13px] shadow-sm group transition-all" href="code.html">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-[19px] text-[#0F8B8D]">assignment</span>
+<span>Jobs</span>
+</div>
+<span class="px-2 py-0.5 rounded-full text-[11px] font-bold bg-[#0F8B8D] text-white">428</span>
+</a>
+</div>
+</div>
+<!-- Section: OPERATIONS -->
+<div>
+<div class="px-3 pb-2 text-[10px] font-bold uppercase tracking-wider text-[#64748B]">Operations</div>
+<div class="space-y-1">
+<a class="flex items-center justify-between px-3 py-2 rounded-xl text-[13px] font-medium text-[#64748B] hover:text-[#172033] hover:bg-slate-50 transition-colors" href="../../admin panel design/index.html">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-[19px] text-[#F59E0B]">verified</span>
+<span>Verification</span>
+</div>
+<span class="px-2 py-0.5 rounded-full text-[11px] font-bold bg-[#FEF3C7] text-[#92400E] border border-[#F59E0B]/30">24</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-xl text-[13px] font-medium text-[#64748B] hover:text-[#172033] hover:bg-slate-50 transition-colors" href="../../admin panel design/payments.html">
+<span class="material-symbols-outlined text-[19px]">account_balance_wallet</span>
+<span>Payments &amp; Txns</span>
+</a>
+<a class="flex items-center justify-between px-3 py-2 rounded-xl text-[13px] font-medium text-[#64748B] hover:text-[#172033] hover:bg-slate-50 transition-colors" href="../../../stitch_hunar_admin pannel some features_mvp/shahzad-admin pannel, features/worker_dispute_management_resolution/code.html">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-[19px] text-[#DC2626]">flag</span>
+<span>Disputes</span>
+</div>
+<span class="px-2 py-0.5 rounded-full text-[11px] font-bold bg-[#FEE2E2] text-[#DC2626] border border-[#DC2626]/30">8</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-xl text-[13px] font-medium text-[#64748B] hover:text-[#172033] hover:bg-slate-50 transition-colors" href="../../../stitch_hunar_admin pannel some features_mvp/shahzad-admin pannel, features/worker_reviews_ratings/code.html">
+<span class="material-symbols-outlined text-[19px]">star</span>
+<span>Reviews &amp; Ratings</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-xl text-[13px] font-medium text-[#64748B] hover:text-[#172033] hover:bg-slate-50 transition-colors" href="../../../stitch_hunar_admin pannel some features_mvp/shahzad-admin pannel, features/worker_category_skill_settings/code.html">
+<span class="material-symbols-outlined text-[19px]">category</span>
+<span>Categories</span>
+</a>
+<a class="flex items-center justify-between px-3 py-2 rounded-xl text-[13px] font-medium text-[#64748B] hover:text-[#172033] hover:bg-slate-50 transition-colors" href="../../../stitch_hunar_admin pannel some features_mvp/shahzad-admin pannel, features/worker_service_area_location_settings/code.html">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-[19px]">location_on</span>
+<span>Locations</span>
+</div>
+<span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-[#0F8B8D]/10 text-[#0F8B8D] border border-[#0F8B8D]/20">Peshawar</span>
+</a>
+</div>
+</div>
+<!-- Section: GOVERNANCE & TELEMETRY -->
+<div>
+<div class="px-3 pb-2 text-[10px] font-bold uppercase tracking-wider text-[#64748B]">Governance</div>
+<div class="space-y-1">
+<a class="flex items-center gap-3 px-3 py-2 rounded-xl text-[13px] font-medium text-[#64748B] hover:text-[#172033] hover:bg-slate-50 transition-colors" href="../../reports_moderation/code.html">
+<span class="material-symbols-outlined text-[19px]">description</span>
+<span>Reports</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-xl text-[13px] font-medium text-[#64748B] hover:text-[#172033] hover:bg-slate-50 transition-colors" href="../../notifications/code.html">
+<span class="material-symbols-outlined text-[19px]">notifications</span>
+<span>Notifications</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-xl text-[13px] font-medium text-[#64748B] hover:text-[#172033] hover:bg-slate-50 transition-colors" href="../../analytics/code.html">
+<span class="material-symbols-outlined text-[19px]">monitoring</span>
+<span>Analytics</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-xl text-[13px] font-medium text-[#64748B] hover:text-[#172033] hover:bg-slate-50 transition-colors" href="../../settings/code.html">
+<span class="material-symbols-outlined text-[19px]">settings</span>
+<span>Settings</span>
+</a>
+</div>
+</div>
+</nav>
+</div>
+<!-- Sidebar Bottom: Escrow Highlight Card & Super Admin Profile -->
+<div class="p-4 border-t border-[#E2E8F0] space-y-3 bg-white">
+<div class="p-3.5 rounded-xl bg-[#123B5D] text-white space-y-2 shadow-sm">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[#0F8B8D] text-[18px]">verified_user</span>
+<span class="text-[10px] font-bold tracking-wider uppercase text-teal-300">HUNAR Escrow</span>
+</div>
+<span class="w-2 h-2 rounded-full bg-[#16A34A] animate-pulse"></span>
+</div>
+<p class="text-[11px] text-slate-300 leading-relaxed">100% SBP / NADRA Verified Pros &amp; safe Raast dispute guarantee.</p>
+<a class="block text-center py-1.5 px-3 bg-[#0F8B8D] text-white text-[11px] font-semibold rounded-lg hover:bg-[#0D7A7C] transition-colors" href="#">
+        View Escrow Rules
+      </a>
+</div>
+<div class="flex items-center justify-between pt-1">
+<div class="flex items-center gap-2.5">
+<div class="w-8 h-8 rounded-full bg-[#123B5D] text-white flex items-center justify-center font-bold text-xs ring-2 ring-[#0F8B8D]/20">
+<span class="material-symbols-outlined text-[18px]">person</span>
+</div>
+<div class="flex flex-col">
+<span class="text-[12px] font-bold text-[#172033] leading-tight">Abdullah Khan</span>
+<span class="text-[10px] text-[#64748B] font-medium">Super Admin • Peshawar Hub</span>
+</div>
+</div>
+<a class="text-[#64748B] hover:text-[#DC2626] p-1 rounded-md transition-colors" href="#" title="Logout">
+<span class="material-symbols-outlined text-[18px]">logout</span>
+</a>
+</div>
+</div>
+</aside>
+<!-- ================= MAIN WRAPPER ================= -->
+<div class="w-full lg:pl-64 flex flex-col min-h-screen bg-white min-w-0">
+<header class="sticky top-0 z-40 h-16 w-full bg-white/95 backdrop-blur-md border-b border-[#E2E8F0] px-4 sm:px-8 flex items-center justify-between gap-4">
+<div class="flex items-center gap-2 text-[#64748B] text-xs">
+<span class="hover:text-[#172033] transition-colors cursor-pointer">HUNAR</span>
+<span class="material-symbols-outlined text-[16px] text-[#94A3B8]">chevron_right</span>
+<span class="text-[#172033] font-semibold text-sm">Jobs &amp; Work Orders</span>
+</div>
+<div class="flex items-center gap-3">
+<div class="relative hidden md:flex items-center">
+<span class="material-symbols-outlined absolute left-3 text-[#64748B] text-[18px]">search</span>
+<input class="w-80 h-9 pl-9 pr-12 rounded-lg bg-[#F8FAFC] border border-[#E2E8F0] text-sm text-[#172033] placeholder:text-[#64748B] focus:outline-none focus:border-[#0F8B8D] focus:bg-white transition-colors" placeholder="Search HUNAR... Customers, Pros, Jobs" type="text">
+<kbd class="absolute right-2.5 px-1.5 py-0.5 rounded border border-[#E2E8F0] bg-white text-[#64748B] text-[11px] font-medium">⌘K</kbd>
+</div>
+<div class="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#0F8B8D]/10 text-[#0F8B8D] text-[11px] font-semibold border border-[#0F8B8D]/20">
+<span class="w-2 h-2 rounded-full bg-[#0F8B8D] animate-pulse"></span>
+<span>Operational</span>
+</div>
+<div class="relative">
+<button aria-label="Notifications" class="relative p-2 rounded-lg text-[#64748B] hover:bg-slate-100 hover:text-[#172033] transition-colors" type="button">
+<span class="material-symbols-outlined text-[20px]">notifications</span>
+<span class="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-[#F59E0B] ring-2 ring-white"></span>
+</button>
+</div>
+<div class="h-6 w-px bg-[#E2E8F0]"></div>
+<div class="flex items-center gap-2 cursor-pointer">
+<div class="w-8 h-8 rounded-full flex items-center justify-center bg-[#123B5D] text-white">
+<span class="material-symbols-outlined text-[18px]">person</span>
+</div>
+<span class="material-symbols-outlined text-[#64748B] text-[18px]">expand_more</span>
+</div>
+</div>
+</header>
+<main class="flex-1 w-full min-w-0 p-4 sm:p-6 lg:p-8 bg-white">
+<div class="max-w-7xl mx-auto w-full min-w-0 flex flex-col">
+<!-- Top Command & Action Bar -->
+<div class="flex flex-col xl:flex-row xl:items-center justify-between gap-space-16 mb-space-24">
+<div class="flex flex-col gap-1">
+<div class="flex items-center gap-space-8">
+<h1 class="font-headline-lg text-headline-lg text-[#123B5D] tracking-tight font-extrabold">Jobs &amp; Work Orders</h1>
+<div class="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#123B5D]/10 text-[#123B5D]"><span class="w-2 h-2 rounded-full bg-[#0F8B8D]"></span><span class="font-label-md text-[11px] font-semibold uppercase tracking-wider">Peshawar Grid Active</span></div>
+</div>
+<p class="font-body-md text-body-md text-[#64748B]">
+        Real-time audit, verification, and dispatch orchestration across 7 urban sectors of Peshawar.
+      </p>
+</div>
+<div class="flex items-center gap-space-12 self-start xl:self-auto">
+<button class="flex items-center gap-2 px-space-16 py-2.5 rounded-lg bg-white border border-[#E2E8F0] text-[#172033] shadow-sm hover:bg-slate-50 transition-all font-button-text text-[14px]" type="button">
+<span class="material-symbols-outlined text-[18px] text-[#64748B]">file_download</span>
+<span class="">Export CSV</span>
+</button>
+<button class="flex items-center gap-2 px-space-16 py-2.5 rounded-lg text-white shadow-md transition-all font-button-text text-[14px] bg-[#0F8B8D] hover:bg-[#0D7A7C]" type="button"><span class="material-symbols-outlined text-[18px]">add_circle</span><span class="">Manual Dispatch</span></button>
+</div>
+</div>
+<!-- Operational Metrics Bento Grid -->
+<div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-space-16 mb-space-24"><!-- Stat Card 1 -->
+<div class="p-space-20 rounded-xl bg-surface-container-lowest shadow-sm flex flex-col justify-between relative overflow-hidden group hover:shadow-md transition-shadow border border-outline-variant/30">
+<div class="flex items-start justify-between">
+<div>
+<span class="font-label-md text-caption-sm uppercase tracking-wider" style="color: #64748B;">Active Work Orders</span>
+<div class="flex items-baseline gap-2 mt-1">
+<span class="font-stat-lg text-stat-lg font-bold" style="color: #123B5D;">428</span>
+<span class="font-label-md text-[12px] font-semibold flex items-center" style="color: #0F8B8D;">
+<span class="material-symbols-outlined text-[14px]">trending_up</span>+15.3%
+</span>
+</div>
+</div>
+<div class="w-10 h-10 rounded-lg flex items-center justify-center" style="background-color: rgba(18, 59, 93, 0.08); color: #123B5D;"><span class="material-symbols-outlined text-[20px]">assignment</span></div>
+</div>
+<div class="mt-4 pt-3 flex items-center justify-between text-[12px] border-t border-outline-variant/30" style="color: #64748B;">
+<span class="">Active Escrow Value</span>
+<span class="font-semibold" style="color: #123B5D;">Rs. 1,184,200</span>
+</div>
+<div class="absolute bottom-0 left-0 right-0 h-1 opacity-20 group-hover:opacity-100 transition-opacity" style="background-color: #0F8B8D;"></div>
+</div>
+<!-- Stat Card 2 -->
+<div class="p-space-20 rounded-xl bg-surface-container-lowest shadow-sm flex flex-col justify-between relative overflow-hidden group hover:shadow-md transition-shadow border border-outline-variant/30">
+<div class="flex items-start justify-between">
+<div>
+<span class="font-label-md text-caption-sm uppercase tracking-wider" style="color: #64748B;">Dispatched &amp; In-Route</span>
+<div class="flex items-baseline gap-2 mt-1">
+<span class="font-stat-lg text-stat-lg font-bold" style="color: #123B5D;">184</span>
+<span class="font-label-md text-[12px]" style="color: #64748B;">43% load</span>
+</div>
+</div>
+<div class="w-10 h-10 rounded-lg flex items-center justify-center" style="background-color: rgba(15, 139, 141, 0.1); color: #0F8B8D;"><span class="material-symbols-outlined text-[20px]">electric_bolt</span></div>
+</div>
+<div class="mt-4 pt-3 flex items-center justify-between text-[12px] border-t border-outline-variant/30" style="color: #64748B;">
+<span class="">Average Completion</span>
+<span class="font-semibold" style="color: #123B5D;">2.8 hrs</span>
+</div>
+<div class="absolute bottom-0 left-0 right-0 h-1 opacity-20 group-hover:opacity-100 transition-opacity" style="background-color: #0F8B8D;"></div>
+</div>
+<!-- Stat Card 3 -->
+<div class="p-space-20 rounded-xl bg-surface-container-lowest shadow-sm flex flex-col justify-between relative overflow-hidden group hover:shadow-md transition-shadow border border-outline-variant/30">
+<div class="flex items-start justify-between">
+<div>
+<span class="font-label-md text-caption-sm uppercase tracking-wider" style="color: #64748B;">Pending Selection</span>
+<div class="flex items-baseline gap-2 mt-1">
+<span class="font-stat-lg text-stat-lg font-bold" style="color: #123B5D;">132</span>
+<span class="font-label-md text-[12px] font-semibold" style="color: #F59E0B;">31 biddings</span>
+</div>
+</div>
+<div class="w-10 h-10 rounded-lg flex items-center justify-center" style="background-color: rgba(245, 158, 11, 0.12); color: #F59E0B;">
+<span class="material-symbols-outlined text-[20px]">how_to_reg</span>
+</div>
+</div>
+<div class="mt-4 pt-3 flex items-center justify-between text-[12px] border-t border-outline-variant/30" style="color: #64748B;">
+<span class="">Median Pro Match</span>
+<span class="font-semibold" style="color: #123B5D;">14 mins</span>
+</div>
+<div class="absolute bottom-0 left-0 right-0 h-1 opacity-30 group-hover:opacity-100 transition-opacity" style="background-color: #F59E0B;"></div>
+</div>
+<!-- Stat Card 4 -->
+<div class="p-space-20 rounded-xl bg-surface-container-lowest shadow-sm flex flex-col justify-between relative overflow-hidden group hover:shadow-md transition-shadow border border-outline-variant/30">
+<div class="flex items-start justify-between">
+<div>
+<span class="font-label-md text-caption-sm uppercase tracking-wider" style="color: #64748B;">Disputes &amp; Audits</span>
+<div class="flex items-baseline gap-2 mt-1">
+<span class="font-stat-lg text-stat-lg font-bold" style="color: #DC2626;">8</span>
+<span class="font-label-md text-[12px] font-semibold flex items-center" style="color: #DC2626;">
+<span class="material-symbols-outlined text-[14px]">priority_high</span>Action Required
+</span>
+</div>
+</div>
+<div class="w-10 h-10 rounded-lg flex items-center justify-center" style="background-color: rgba(220, 38, 38, 0.1); color: #DC2626;">
+<span class="material-symbols-outlined text-[20px]">gavel</span>
+</div>
+</div>
+<div class="mt-4 pt-3 flex items-center justify-between text-[12px] border-t border-outline-variant/30" style="color: #64748B;">
+<span class="">Escrow Frozen</span>
+<span class="font-semibold" style="color: #DC2626;">Rs. 28,400</span>
+</div>
+<div class="absolute bottom-0 left-0 right-0 h-1 opacity-40 group-hover:opacity-100 transition-opacity" style="background-color: #DC2626;"></div>
+</div></div>
+<!-- Stage Segmented Navigation Tabs -->
+<div class="bg-surface-container-lowest rounded-xl p-1.5 shadow-sm mb-space-16 flex items-center overflow-x-auto"><div class="flex items-center gap-1.5 w-full text-[13px] font-body-md-medium select-none min-w-[760px]">
+<button class="flex items-center gap-2 px-4 py-2 rounded-lg hover:text-on-surface hover:bg-slate-100 transition-all border border-transparent" style="color: #64748B;" type="button">
+<span class="">All Jobs</span>
+<span class="px-2 py-0.5 rounded-full text-[11px] font-semibold" style="background-color: #F1F5F9; color: #64748B;">1,420</span>
+</button>
+<button class="flex items-center gap-2 px-4 py-2 rounded-lg hover:text-on-surface hover:bg-slate-100 transition-all border border-transparent" style="color: #64748B;" type="button">
+<span class="">Posted &amp; Bidding</span>
+<span class="px-2 py-0.5 rounded-full text-[11px] font-semibold" style="background-color: #F1F5F9; color: #64748B;">132</span>
+</button>
+<button class="flex items-center gap-2 px-4 py-2 rounded-lg hover:text-on-surface hover:bg-slate-100 transition-all border border-transparent" style="color: #64748B;" type="button">
+<span class="">Pro Selected</span>
+<span class="px-2 py-0.5 rounded-full text-[11px] font-semibold" style="background-color: #F1F5F9; color: #64748B;">46</span>
+</button>
+<button class="flex items-center gap-2 px-4 py-2 rounded-lg hover:text-on-surface hover:bg-slate-100 transition-all border border-transparent" style="color: #64748B;" type="button">
+<span class="">Scheduled</span>
+<span class="px-2 py-0.5 rounded-full text-[11px] font-semibold" style="background-color: #F1F5F9; color: #64748B;">66</span>
+</button>
+<button class="flex items-center gap-2 px-4 py-2 rounded-lg text-white shadow-sm font-semibold" style="background-color: #0F8B8D; color: #ffffff;" type="button">
+<span class="">In Progress</span>
+<span class="px-2 py-0.5 rounded-full text-[11px] font-semibold" style="background-color: rgba(255, 255, 255, 0.2); color: #ffffff;">184</span>
+</button>
+<button class="flex items-center gap-2 px-4 py-2 rounded-lg hover:text-on-surface hover:bg-slate-100 transition-all border border-transparent" style="color: #64748B;" type="button">
+<span class="">Completed</span>
+<span class="px-2 py-0.5 rounded-full text-[11px] font-semibold" style="background-color: #F1F5F9; color: #64748B;">984</span>
+</button>
+<button class="flex items-center gap-2 px-4 py-2 rounded-lg transition-all ml-auto" style="background-color: rgba(220, 38, 38, 0.08); color: #DC2626;" type="button">
+<span class="material-symbols-outlined text-[16px]">warning</span>
+<span class="">Disputed</span>
+<span class="px-2 py-0.5 rounded-full text-[11px] font-semibold" style="background-color: rgba(220, 38, 38, 0.16); color: #DC2626;">8</span>
+</button>
+</div></div>
+<!-- Filter & Search Toolbar Panel -->
+<div class="bg-surface-container-lowest rounded-xl p-space-16 shadow-sm mb-space-16 flex flex-col lg:flex-row items-center justify-between gap-space-12">
+<!-- Live Search -->
+<div class="relative w-full lg:w-96">
+<span class="material-symbols-outlined absolute left-3 top-2.5 text-outline text-[18px]">search</span>
+<input class="w-full h-10 pl-9 pr-4 rounded-lg bg-surface text-[14px] text-on-surface placeholder:text-outline focus:outline-none focus:ring-2 focus:ring-secondary/40 transition-all" placeholder="Filter by Job #HN, Client, Pro name..." type="text">
+</div>
+<!-- Dropdown Selector Group -->
+<div class="flex flex-wrap items-center gap-space-8 w-full lg:w-auto">
+<div class="relative flex-1 sm:flex-none">
+<select class="appearance-none w-full sm:w-auto h-10 pl-3.5 pr-8 rounded-lg bg-surface text-[13px] font-medium text-on-surface focus:outline-none focus:ring-2 focus:ring-secondary/40 cursor-pointer">
+<option>All Peshawar Sectors (Hayatabad, Saddar, Town...)</option>
+<option>Hayatabad (Phase 1-7)</option>
+<option>University Town</option>
+<option>Saddar Cantonment</option>
+<option>Ring Road Corridor</option>
+<option>Warsak Road</option>
+<option>Gulbahar / City</option>
+</select>
+<span class="material-symbols-outlined absolute right-2.5 top-3 text-[16px] text-outline pointer-events-none">expand_more</span>
+</div>
+<div class="relative flex-1 sm:flex-none">
+<select class="appearance-none w-full sm:w-auto h-10 pl-3.5 pr-8 rounded-lg bg-surface text-[13px] font-medium text-on-surface focus:outline-none focus:ring-2 focus:ring-secondary/40 cursor-pointer">
+<option>All Trades (HVAC, Electrical, Plumbing...)</option>
+<option>HVAC / AC Technicians</option>
+<option>Master Electricians</option>
+<option>Plumbing &amp; Water Systems</option>
+<option>Carpentry &amp; Woodcraft</option>
+<option>Solar &amp; Inverter Techs</option>
+</select>
+<span class="material-symbols-outlined absolute right-2.5 top-3 text-[16px] text-outline pointer-events-none">expand_more</span>
+</div>
+<div class="relative flex-1 sm:flex-none">
+<select class="appearance-none w-full sm:w-auto h-10 pl-3.5 pr-8 rounded-lg bg-surface text-[13px] font-medium text-on-surface focus:outline-none focus:ring-2 focus:ring-secondary/40 cursor-pointer">
+<option>Sort: Most Urgent First</option>
+<option>Highest Escrow Value</option>
+<option>Recently Created</option>
+<option>Longest In-Progress</option>
+</select>
+<span class="material-symbols-outlined absolute right-2.5 top-3 text-[16px] text-outline pointer-events-none">sort</span>
+</div>
+<button aria-label="Reset Filters" class="p-2 rounded-lg bg-surface text-outline hover:text-on-surface hover:bg-surface-container-low transition-colors" title="Reset Filters" type="button">
+<span class="material-symbols-outlined text-[20px]">refresh</span>
+</button>
+</div>
+</div>
+<!-- SaaS Master Data Table Container -->
+<div class="bg-surface-container-lowest rounded-xl shadow-sm overflow-hidden mb-space-24">
+<div class="w-full overflow-x-auto">
+<table class="w-full text-left text-[14px]">
+<thead>
+<tr class="bg-surface-container-low/60 text-outline text-[12px] font-semibold uppercase tracking-wider select-none">
+<th class="py-3.5 px-space-20">Job Code &amp; Trade</th>
+<th class="py-3.5 px-space-16">Customer Details</th>
+<th class="py-3.5 px-space-16">Assigned Pro</th>
+<th class="py-3.5 px-space-16">Sector &amp; Timeline</th>
+<th class="py-3.5 px-space-16">Financials / Escrow</th>
+<th class="py-3.5 px-space-16">State</th>
+<th class="py-3.5 px-space-20 text-right">Actions</th>
+</tr>
+</thead>
+<tbody class="divide-y-0 text-on-surface"><!-- Row 1: AC Diagnostic In Progress -->
+<tr class="hover:bg-slate-50 transition-colors group border-b border-outline-variant/30">
+<td class="py-space-16 px-space-20 align-top">
+<div class="flex items-start gap-3">
+<div class="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5" style="background-color: rgba(18, 59, 93, 0.08); color: #123B5D;">
+<span class="material-symbols-outlined text-[18px]">ac_unit</span>
+</div>
+<div>
+<div class="flex items-center gap-1.5">
+<span class="font-body-md-medium font-bold" style="color: #123B5D;">#HN-10482</span>
+<span class="px-1.5 py-0.2 rounded text-[11px] font-medium" style="background-color: #F1F5F9; color: #64748B;">HVAC</span>
+</div>
+<div class="text-[13px] font-medium text-on-surface mt-0.5">AC Repair &amp; Gas Refill</div>
+<div class="text-[11px] mt-0.5" style="color: #64748B;">Split Inverter 1.5 Ton Diagnostic</div>
+</div>
+</div>
+</td>
+<td class="py-space-16 px-space-16 align-top">
+<div class="font-body-md-medium text-on-surface">Muhammad Ali</div>
+<div class="text-[12px]" style="color: #64748B;">0301-8921443</div>
+<div class="text-[11px] flex items-center gap-1 mt-0.5" style="color: #0F8B8D;">
+<span class="material-symbols-outlined text-[12px]">verified</span>Verified Client
+</div>
+</td>
+<td class="py-space-16 px-space-16 align-top">
+<div class="flex items-center gap-2.5">
+<div class="w-8 h-8 rounded-full text-white flex items-center justify-center font-bold text-xs flex-shrink-0" style="background-color: #123B5D;">AK</div>
+<div>
+<div class="font-body-md-medium text-on-surface flex items-center gap-1">
+Ahmed Khan
+<span class="flex items-center text-amber-500 text-[11px] font-bold">
+<span class="material-symbols-outlined text-[12px]" style="font-variation-settings: 'FILL' 1;">star</span>4.9
+</span>
+</div>
+<div class="text-[11px] font-medium" style="color: #0F8B8D;">Certified HVAC Pro</div>
+</div>
+</div>
+</td>
+<td class="py-space-16 px-space-16 align-top">
+<div class="font-body-md-medium text-on-surface">Hayatabad Phase 4</div>
+<div class="text-[12px] flex items-center gap-1 mt-0.5" style="color: #64748B;">
+<span class="material-symbols-outlined text-[14px]">schedule</span>Today, 2:30 PM
+</div>
+<span class="inline-block mt-1 text-[11px] font-medium" style="color: #0F8B8D;">En Route (1.4 km)</span>
+</td>
+<td class="py-space-16 px-space-16 align-top">
+<div class="font-stat-lg text-[15px] font-bold" style="color: #123B5D;">Rs. 2,500</div>
+<div class="text-[11px]" style="color: #64748B;">Platform fee: Rs. 250 (10%)</div>
+<div class="inline-flex items-center gap-1 px-2 py-0.5 mt-1 rounded font-semibold text-[11px]" style="background-color: rgba(15, 139, 141, 0.12); color: #0F8B8D;">
+<span class="material-symbols-outlined text-[12px]">lock</span>Escrow Held
+</div>
+</td>
+<td class="py-space-16 px-space-16 align-top">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[12px] font-semibold" style="background-color: rgba(15, 139, 141, 0.12); color: #0F8B8D;"><span class="w-1.5 h-1.5 rounded-full animate-pulse" style="background-color: #0F8B8D;"></span>In Progress</span>
+</td>
+<td class="py-space-16 px-space-20 align-top text-right">
+<div class="flex items-center justify-end gap-1">
+<button class="px-3 py-1.5 rounded-lg border transition-all text-[12px] font-semibold shadow-sm hover:bg-slate-100" style="color: #0F8B8D; border-color: #0F8B8D;" type="button">
+Inspect
+</button>
+<button aria-label="Options" class="p-1 text-outline hover:text-on-surface rounded" type="button">
+<span class="material-symbols-outlined text-[18px]">more_vert</span>
+</button>
+</div>
+</td>
+</tr>
+
+<!-- Row 2: 3-Phase DB Short Circuit (Urgent Offers Received) -->
+<tr class="hover:bg-slate-50 transition-colors group border-b border-outline-variant/30">
+<td class="py-space-16 px-space-20 align-top">
+<div class="flex items-start gap-3">
+<div class="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5" style="background-color: rgba(245, 158, 11, 0.12); color: #F59E0B;">
+<span class="material-symbols-outlined text-[18px]">bolt</span>
+</div>
+<div>
+<div class="flex items-center gap-1.5">
+<span class="font-body-md-medium font-bold" style="color: #123B5D;">#HN-10495</span>
+<span class="px-1.5 py-0.2 rounded text-[11px] font-medium" style="background-color: #F1F5F9; color: #64748B;">Electric</span>
+</div>
+<div class="text-[13px] font-medium text-on-surface mt-0.5">DB 3-Phase Panel Short Circuit</div>
+<div class="text-[11px] font-medium flex items-center gap-0.5 mt-0.5" style="color: #DC2626;">
+<span class="material-symbols-outlined text-[12px]">alarm</span>Urgent Dispatch Priority
+</div>
+</div>
+</div>
+</td>
+<td class="py-space-16 px-space-16 align-top">
+<div class="font-body-md-medium text-on-surface">Tariq Mehmood</div>
+<div class="text-[12px]" style="color: #64748B;">0333-9182301</div>
+<div class="text-[11px]" style="color: #64748B;">Saddar Cantonment</div>
+</td>
+<td class="py-space-16 px-space-16 align-top">
+<div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full font-semibold text-[11px]" style="background-color: rgba(245, 158, 11, 0.15); color: #B45309;">
+<span class="material-symbols-outlined text-[14px]">groups</span>
+4 Offers Received
+</div>
+<div class="text-[11px] mt-1" style="color: #64748B;">Awaiting client selection</div>
+</td>
+<td class="py-space-16 px-space-16 align-top">
+<div class="font-body-md-medium text-on-surface">Saddar Peshawar</div>
+<div class="text-[12px] flex items-center gap-1 mt-0.5" style="color: #64748B;">
+<span class="material-symbols-outlined text-[14px]">schedule</span>Immediate Request
+</div>
+</td>
+<td class="py-space-16 px-space-16 align-top">
+<div class="font-stat-lg text-[15px] font-bold" style="color: #123B5D;">Est. Rs. 4,200</div>
+<div class="text-[11px]" style="color: #64748B;">Budget Range</div>
+<div class="text-[11px] font-medium mt-1" style="color: #0F8B8D;">Deposit Ready</div>
+</td>
+<td class="py-space-16 px-space-16 align-top">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[12px] font-medium" style="background-color: rgba(245, 158, 11, 0.15); color: #B45309;">
+<span class="w-1.5 h-1.5 rounded-full" style="background-color: #F59E0B;"></span>
+Offers Received
+</span>
+</td>
+<td class="py-space-16 px-space-20 align-top text-right">
+<div class="flex items-center justify-end gap-1">
+<button class="px-3 py-1.5 rounded-lg text-white transition-all text-[12px] font-semibold shadow-sm" style="background-color: #0F8B8D;" onmouseover="this.style.backgroundColor='#0d7a7c'" onmouseout="this.style.backgroundColor='#0F8B8D'" type="button">Review Offers</button>
+<button aria-label="Options" class="p-1 text-outline hover:text-on-surface rounded" type="button">
+<span class="material-symbols-outlined text-[18px]">more_vert</span>
+</button>
+</div>
+</td>
+</tr>
+
+<!-- Row 3: Water Leakage (Disputed Case) -->
+<tr class="hover:bg-rose-50/50 transition-colors group border-b border-outline-variant/30">
+<td class="py-space-16 px-space-20 align-top">
+<div class="flex items-start gap-3">
+<div class="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5" style="background-color: rgba(220, 38, 38, 0.1); color: #DC2626;">
+<span class="material-symbols-outlined text-[18px]">plumbing</span>
+</div>
+<div>
+<div class="flex items-center gap-1.5">
+<span class="font-body-md-medium font-bold" style="color: #DC2626;">#HN-10431</span>
+<span class="px-1.5 py-0.2 rounded text-[11px] font-medium" style="background-color: #F1F5F9; color: #64748B;">Plumbing</span>
+</div>
+<div class="text-[13px] font-medium text-on-surface mt-0.5">Concealed PPRC Water Leakage</div>
+<div class="text-[11px] font-medium mt-0.5" style="color: #DC2626;">Claim: Joint leakage persists</div>
+</div>
+</div>
+</td>
+<td class="py-space-16 px-space-16 align-top">
+<div class="font-body-md-medium text-on-surface">Dr. Asadullah</div>
+<div class="text-[12px]" style="color: #64748B;">0345-5550291</div>
+<div class="text-[11px]" style="color: #64748B;">University Town</div>
+</td>
+<td class="py-space-16 px-space-16 align-top">
+<div class="flex items-center gap-2.5">
+<div class="w-8 h-8 rounded-full text-white flex items-center justify-center font-bold text-xs flex-shrink-0" style="background-color: #475569;">
+TM
+</div>
+<div>
+<div class="font-body-md-medium text-on-surface flex items-center gap-1">
+Tariq M.
+<span class="flex items-center text-amber-500 text-[11px] font-bold">
+<span class="material-symbols-outlined text-[12px]" style="font-variation-settings: 'FILL' 1;">star</span>4.7
+</span>
+</div>
+<div class="text-[11px]" style="color: #64748B;">Peshawar Pipe Care</div>
+</div>
+</div>
+</td>
+<td class="py-space-16 px-space-16 align-top">
+<div class="font-body-md-medium text-on-surface">University Town</div>
+<div class="text-[12px] flex items-center gap-1 mt-0.5" style="color: #64748B;">
+<span class="material-symbols-outlined text-[14px]">history</span>Yesterday, 5:00 PM
+</div>
+</td>
+<td class="py-space-16 px-space-16 align-top">
+<div class="font-stat-lg text-[15px] font-bold" style="color: #DC2626;">Rs. 3,500</div>
+<div class="text-[11px] font-semibold" style="color: #DC2626;">Payment Frozen</div>
+<div class="inline-flex items-center gap-1 px-2 py-0.5 mt-1 rounded font-semibold text-[11px]" style="background-color: rgba(220, 38, 38, 0.1); color: #DC2626;">
+Escrow Locked
+</div>
+</td>
+<td class="py-space-16 px-space-16 align-top">
+<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[12px] font-semibold" style="background-color: rgba(220, 38, 38, 0.1); color: #DC2626;">
+<span class="w-1.5 h-1.5 rounded-full" style="background-color: #DC2626;"></span>
+Disputed
+</span>
+</td>
+<td class="py-space-16 px-space-20 align-top text-right">
+<div class="flex items-center justify-end gap-1">
+<button class="px-3 py-1.5 rounded-lg text-white transition-all text-[12px] font-semibold shadow-sm" style="background-color: #DC2626;" onmouseover="this.style.backgroundColor='#b91c1c'" onmouseout="this.style.backgroundColor='#DC2626'" type="button">
+Open Case
+</button>
+<button aria-label="Options" class="p-1 text-outline hover:text-on-surface rounded" type="button">
+<span class="material-symbols-outlined text-[18px]">more_vert</span>
+</button>
+</div>
+</td>
+</tr>
+
+<!-- Row 4: Solar Net-Metering Wire -->
+<tr class="hover:bg-slate-50 transition-colors group border-b border-outline-variant/30">
+<td class="py-space-16 px-space-20 align-top">
+<div class="flex items-start gap-3">
+<div class="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5" style="background-color: rgba(18, 59, 93, 0.08); color: #123B5D;">
+<span class="material-symbols-outlined text-[18px]">solar_power</span>
+</div>
+<div>
+<div class="flex items-center gap-1.5">
+<span class="font-body-md-medium font-bold" style="color: #123B5D;">#HN-10502</span>
+<span class="px-1.5 py-0.2 rounded text-[11px] font-medium" style="background-color: #F1F5F9; color: #64748B;">Renewable</span>
+</div>
+<div class="text-[13px] font-medium text-on-surface mt-0.5">Solar Inverter Net-Metering Wire</div>
+<div class="text-[11px] mt-0.5" style="color: #64748B;">10kW Hybrid Inverter Grounding</div>
+</div>
+</div>
+</td>
+<td class="py-space-16 px-space-16 align-top">
+<div class="font-body-md-medium text-on-surface">Farhan Afridi</div>
+<div class="text-[12px]" style="color: #64748B;">0312-4419902</div>
+<div class="text-[11px]" style="color: #64748B;">Ring Road Corridor</div>
+</td>
+<td class="py-space-16 px-space-16 align-top">
+<div class="flex items-center gap-2.5">
+<div class="w-8 h-8 rounded-full text-white flex items-center justify-center font-bold text-xs flex-shrink-0" style="background-color: #0F8B8D;">BT</div>
+<div>
+<div class="font-body-md-medium text-on-surface flex items-center gap-1">
+Bilal Tariq
+<span class="flex items-center text-amber-500 text-[11px] font-bold">
+<span class="material-symbols-outlined text-[12px]" style="font-variation-settings: 'FILL' 1;">star</span>4.9
+</span>
+</div>
+<div class="text-[11px] font-medium" style="color: #0F8B8D;">Solar Specialist</div>
+</div>
+</div>
+</td>
+<td class="py-space-16 px-space-16 align-top">
+<div class="font-body-md-medium text-on-surface">Ring Road, Peshawar</div>
+<div class="text-[12px] flex items-center gap-1 mt-0.5" style="color: #64748B;">
+<span class="material-symbols-outlined text-[14px]">event</span>Tomorrow, 10:00 AM
+</div>
+</td>
+<td class="py-space-16 px-space-16 align-top">
+<div class="font-stat-lg text-[15px] font-bold" style="color: #123B5D;">Rs. 8,500</div>
+<div class="text-[11px]" style="color: #64748B;">Fee: Rs. 850 (10%)</div>
+<div class="inline-flex items-center gap-1 px-2 py-0.5 mt-1 rounded font-semibold text-[11px]" style="background-color: rgba(15, 139, 141, 0.12); color: #0F8B8D;">
+<span class="material-symbols-outlined text-[12px]">lock</span>Escrow Held
+</div>
+</td>
+<td class="py-space-16 px-space-16 align-top">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[12px] font-medium" style="background-color: #F1F5F9; color: #123B5D;">
+<span class="w-1.5 h-1.5 rounded-full" style="background-color: #123B5D;"></span>
+Scheduled
+</span>
+</td>
+<td class="py-space-16 px-space-20 align-top text-right">
+<div class="flex items-center justify-end gap-1">
+<button class="px-3 py-1.5 rounded-lg border transition-all text-[12px] font-semibold shadow-sm hover:bg-slate-100" style="color: #0F8B8D; border-color: #0F8B8D;" type="button">
+Inspect
+</button>
+<button aria-label="Options" class="p-1 text-outline hover:text-on-surface rounded" type="button">
+<span class="material-symbols-outlined text-[18px]">more_vert</span>
+</button>
+</div>
+</td>
+</tr>
+
+<!-- Row 5: Geyser Swap (Completed) -->
+<tr class="hover:bg-slate-50 transition-colors group border-b border-outline-variant/30">
+<td class="py-space-16 px-space-20 align-top">
+<div class="flex items-start gap-3">
+<div class="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5" style="background-color: rgba(18, 59, 93, 0.08); color: #123B5D;">
+<span class="material-symbols-outlined text-[18px]">water_heater</span>
+</div>
+<div>
+<div class="flex items-center gap-1.5">
+<span class="font-body-md-medium font-bold" style="color: #123B5D;">#HN-10467</span>
+<span class="px-1.5 py-0.2 rounded text-[11px] font-medium" style="background-color: #F1F5F9; color: #64748B;">Gas &amp; Heating</span>
+</div>
+<div class="text-[13px] font-medium text-on-surface mt-0.5">Geyser Thermostat &amp; Element Swap</div>
+<div class="text-[11px] mt-0.5" style="color: #64748B;">35 Gallon Storage Geyser</div>
+</div>
+</div>
+</td>
+<td class="py-space-16 px-space-16 align-top">
+<div class="font-body-md-medium text-on-surface">Bilawal Shah</div>
+<div class="text-[12px]" style="color: #64748B;">0300-9988112</div>
+<div class="text-[11px]" style="color: #64748B;">Warsak Road</div>
+</td>
+<td class="py-space-16 px-space-16 align-top">
+<div class="flex items-center gap-2.5">
+<div class="w-8 h-8 rounded-full text-white flex items-center justify-center font-bold text-xs flex-shrink-0" style="background-color: #123B5D;">RA</div>
+<div>
+<div class="font-body-md-medium text-on-surface flex items-center gap-1">
+Rashid Ali
+<span class="flex items-center text-amber-500 text-[11px] font-bold">
+<span class="material-symbols-outlined text-[12px]" style="font-variation-settings: 'FILL' 1;">star</span>4.8
+</span>
+</div>
+<div class="text-[11px]" style="color: #64748B;">Plumbing &amp; Gas Pro</div>
+</div>
+</div>
+</td>
+<td class="py-space-16 px-space-16 align-top">
+<div class="font-body-md-medium text-on-surface">Warsak Road</div>
+<div class="text-[12px] flex items-center gap-1 mt-0.5" style="color: #64748B;">
+<span class="material-symbols-outlined text-[14px]">check_circle</span>Completed 2h ago
+</div>
+</td>
+<td class="py-space-16 px-space-16 align-top">
+<div class="font-stat-lg text-[15px] font-bold" style="color: #16A34A;">Rs. 2,800</div>
+<div class="text-[11px]" style="color: #64748B;">Fee: Rs. 280 (10%)</div>
+<div class="text-[11px] font-semibold mt-1" style="color: #16A34A;">Funds Settled (Nayapay)</div>
+</td>
+<td class="py-space-16 px-space-16 align-top">
+<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[12px] font-semibold" style="background-color: rgba(22, 163, 74, 0.12); color: #16A34A;">
+<span class="w-1.5 h-1.5 rounded-full" style="background-color: #16A34A;"></span>
+Completed
+</span>
+</td>
+<td class="py-space-16 px-space-20 align-top text-right">
+<div class="flex items-center justify-end gap-1">
+<button class="px-3 py-1.5 rounded-lg border transition-all text-[12px] font-semibold shadow-sm hover:bg-slate-100" style="color: #64748B; border-color: #CBD5E1;" type="button">
+Receipt
+</button>
+<button aria-label="Options" class="p-1 text-outline hover:text-on-surface rounded" type="button">
+<span class="material-symbols-outlined text-[18px]">more_vert</span>
+</button>
+</div>
+</td>
+</tr>
+
+<!-- Row 6: Custom Kitchen Cabinet (In Progress) -->
+<tr class="hover:bg-slate-50 transition-colors group border-b border-outline-variant/30">
+<td class="py-space-16 px-space-20 align-top">
+<div class="flex items-start gap-3">
+<div class="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5" style="background-color: rgba(18, 59, 93, 0.08); color: #123B5D;">
+<span class="material-symbols-outlined text-[18px]">carpenter</span>
+</div>
+<div>
+<div class="flex items-center gap-1.5">
+<span class="font-body-md-medium font-bold" style="color: #123B5D;">#HN-10515</span>
+<span class="px-1.5 py-0.2 rounded text-[11px] font-medium" style="background-color: #F1F5F9; color: #64748B;">Woodwork</span>
+</div>
+<div class="text-[13px] font-medium text-on-surface mt-0.5">Custom Kitchen Cabinet Fitting</div>
+<div class="text-[11px] mt-0.5" style="color: #64748B;">UV Sheet Hinges Replacement &amp; Alignment</div>
+</div>
+</div>
+</td>
+<td class="py-space-16 px-space-16 align-top">
+<div class="font-body-md-medium text-on-surface">Zainab Bibi</div>
+<div class="text-[12px]" style="color: #64748B;">0321-7890123</div>
+<div class="text-[11px]" style="color: #64748B;">Hayatabad Phase 2</div>
+</td>
+<td class="py-space-16 px-space-16 align-top">
+<div class="flex items-center gap-2.5">
+<div class="w-8 h-8 rounded-full text-white flex items-center justify-center font-bold text-xs flex-shrink-0" style="background-color: #0F8B8D;">UW</div>
+<div>
+<div class="font-body-md-medium text-on-surface flex items-center gap-1">
+Usman Woodcraft
+<span class="flex items-center text-amber-500 text-[11px] font-bold">
+<span class="material-symbols-outlined text-[12px]" style="font-variation-settings: 'FILL' 1;">star</span>4.9
+</span>
+</div>
+<div class="text-[11px] font-medium" style="color: #0F8B8D;">Master Carpenter</div>
+</div>
+</div>
+</td>
+<td class="py-space-16 px-space-16 align-top">
+<div class="font-body-md-medium text-on-surface">Hayatabad Phase 2</div>
+<div class="text-[12px] flex items-center gap-1 mt-0.5" style="color: #64748B;">
+<span class="material-symbols-outlined text-[14px]">calendar_today</span>Oct 28 · Day 2 of 3
+</div>
+</td>
+<td class="py-space-16 px-space-16 align-top">
+<div class="font-stat-lg text-[15px] font-bold" style="color: #123B5D;">Rs. 12,000</div>
+<div class="text-[11px]" style="color: #64748B;">Fee: Rs. 1,200 (10%)</div>
+<div class="inline-flex items-center gap-1 px-2 py-0.5 mt-1 rounded font-semibold text-[11px]" style="background-color: rgba(15, 139, 141, 0.12); color: #0F8B8D;">
+<span class="material-symbols-outlined text-[12px]">lock</span>Escrow Held
+</div>
+</td>
+<td class="py-space-16 px-space-16 align-top">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[12px] font-semibold" style="background-color: rgba(15, 139, 141, 0.12); color: #0F8B8D;"><span class="w-1.5 h-1.5 rounded-full animate-pulse" style="background-color: #0F8B8D;"></span>In Progress</span>
+</td>
+<td class="py-space-16 px-space-20 align-top text-right">
+<div class="flex items-center justify-end gap-1">
+<button class="px-3 py-1.5 rounded-lg border transition-all text-[12px] font-semibold shadow-sm hover:bg-slate-100" style="color: #0F8B8D; border-color: #0F8B8D;" type="button">
+Inspect
+</button>
+<button aria-label="Options" class="p-1 text-outline hover:text-on-surface rounded" type="button">
+<span class="material-symbols-outlined text-[18px]">more_vert</span>
+</button>
+</div>
+</td>
+</tr>
+
+<!-- Row 7: Automatic Washing Machine Drum (Offers Received) -->
+<tr class="hover:bg-slate-50 transition-colors group">
+<td class="py-space-16 px-space-20 align-top">
+<div class="flex items-start gap-3">
+<div class="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5" style="background-color: rgba(18, 59, 93, 0.08); color: #123B5D;">
+<span class="material-symbols-outlined text-[18px]">local_laundry_service</span>
+</div>
+<div>
+<div class="flex items-center gap-1.5">
+<span class="font-body-md-medium font-bold" style="color: #123B5D;">#HN-10520</span>
+<span class="px-1.5 py-0.2 rounded text-[11px] font-medium" style="background-color: #F1F5F9; color: #64748B;">Appliance</span>
+</div>
+<div class="text-[13px] font-medium text-on-surface mt-0.5">Washing Machine Drum Repair</div>
+<div class="text-[11px] mt-0.5" style="color: #64748B;">Front-load bearing replacement</div>
+</div>
+</div>
+</td>
+<td class="py-space-16 px-space-16 align-top">
+<div class="font-body-md-medium text-on-surface">Kamran Siddiqui</div>
+<div class="text-[12px]" style="color: #64748B;">0332-9011234</div>
+<div class="text-[11px]" style="color: #64748B;">Gulbahar Sector</div>
+</td>
+<td class="py-space-16 px-space-16 align-top">
+<div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full font-semibold text-[11px]" style="background-color: rgba(245, 158, 11, 0.15); color: #B45309;">
+<span class="material-symbols-outlined text-[14px]">groups</span>
+2 Offers Received
+</div>
+<div class="text-[11px] mt-1" style="color: #64748B;">Awaiting client decision</div>
+</td>
+<td class="py-space-16 px-space-16 align-top">
+<div class="font-body-md-medium text-on-surface">Gulbahar Peshawar</div>
+<div class="text-[12px] flex items-center gap-1 mt-0.5" style="color: #64748B;">
+<span class="material-symbols-outlined text-[14px]">schedule</span>Flexible Dispatch
+</div>
+</td>
+<td class="py-space-16 px-space-16 align-top">
+<div class="font-stat-lg text-[15px] font-bold" style="color: #123B5D;">Est. Rs. 2,200</div>
+<div class="text-[11px]" style="color: #64748B;">Estimated Cost</div>
+<div class="text-[11px] mt-1" style="color: #64748B;">No Escrow Yet</div>
+</td>
+<td class="py-space-16 px-space-16 align-top">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[12px] font-medium" style="background-color: rgba(245, 158, 11, 0.15); color: #B45309;">
+<span class="w-1.5 h-1.5 rounded-full" style="background-color: #F59E0B;"></span>
+Offers Received
+</span>
+</td>
+<td class="py-space-16 px-space-20 align-top text-right">
+<div class="flex items-center justify-end gap-1">
+<button class="px-3 py-1.5 rounded-lg text-white transition-all text-[12px] font-semibold shadow-sm" style="background-color: #0F8B8D;" onmouseover="this.style.backgroundColor='#0d7a7c'" onmouseout="this.style.backgroundColor='#0F8B8D'" type="button">Review Offers</button>
+<button aria-label="Options" class="p-1 text-outline hover:text-on-surface rounded" type="button">
+<span class="material-symbols-outlined text-[18px]">more_vert</span>
+</button>
+</div>
+</td>
+</tr></tbody>
+</table>
+</div>
+<!-- Data Table Pagination Bar -->
+<div class="py-space-16 px-space-20 bg-surface-container-lowest flex flex-col sm:flex-row items-center justify-between gap-space-12 text-[13px] text-outline">
+<div class="flex items-center gap-2">
+<span class="">Showing</span>
+<span class="font-bold text-[#123B5D]">1 to 7</span>
+<span class="">of</span>
+<span class="font-bold text-[#123B5D]">428</span>
+<span class="">active work orders</span>
+</div>
+<div class="flex items-center gap-1">
+<button class="p-2 rounded-lg bg-white border border-[#E2E8F0] text-[#64748B] hover:text-[#172033] disabled:opacity-40 transition-colors" disabled="" type="button">
+<span class="material-symbols-outlined text-[18px]">chevron_left</span>
+</button>
+<button class="w-8 h-8 rounded-lg font-bold text-xs flex items-center justify-center text-white shadow-sm bg-[#0F8B8D]" type="button">1</button>
+<button class="w-8 h-8 rounded-lg bg-white border border-[#E2E8F0] hover:bg-slate-50 text-[#172033] font-semibold text-xs flex items-center justify-center transition-colors" type="button">
+          2
+        </button>
+<button class="w-8 h-8 rounded-lg bg-white border border-[#E2E8F0] hover:bg-slate-50 text-[#172033] font-semibold text-xs flex items-center justify-center transition-colors" type="button">
+          3
+        </button>
+<span class="px-1 text-[#64748B]">...</span>
+<button class="w-8 h-8 rounded-lg bg-white border border-[#E2E8F0] hover:bg-slate-50 text-[#172033] font-semibold text-xs flex items-center justify-center transition-colors" type="button">
+          62
+        </button>
+<button class="p-2 rounded-lg bg-white border border-[#E2E8F0] text-[#64748B] hover:text-[#172033] transition-colors" type="button">
+<span class="material-symbols-outlined text-[18px]">chevron_right</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Bottom Infrastructure & Financial Audit Bar -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-space-16"><!-- Escrow Health Card -->
+<div class="p-space-20 rounded-xl bg-surface-container-lowest shadow-sm flex items-center justify-between border border-outline-variant/30">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-lg flex items-center justify-center" style="background-color: rgba(15, 139, 141, 0.1); color: #0F8B8D;">
+<span class="material-symbols-outlined text-[22px]">account_balance</span>
+</div>
+<div>
+<div class="text-[14px] font-bold" style="color: #123B5D;">Escrow Vault: 100% Locked</div>
+<div class="text-[12px]" style="color: #64748B;">Nayapay &amp; JazzCash Merchant Integration</div>
+</div>
+</div>
+<span class="material-symbols-outlined text-[24px]" style="color: #0F8B8D;">verified</span>
+</div>
+<!-- Dispatch Velocity Card -->
+<div class="p-space-20 rounded-xl bg-surface-container-lowest shadow-sm flex items-center justify-between border border-outline-variant/30">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-lg flex items-center justify-center" style="background-color: rgba(18, 59, 93, 0.08); color: #123B5D;">
+<span class="material-symbols-outlined text-[22px]">speed</span>
+</div>
+<div>
+<div class="text-[14px] font-bold" style="color: #123B5D;">Dispatch Latency: 42s</div>
+<div class="text-[12px]" style="color: #64748B;">Auto-routing pro radius: 4.5 km</div>
+</div>
+</div>
+<div class="text-right">
+<span class="text-[12px] font-bold" style="color: #0F8B8D;">Optimal</span>
+</div>
+</div>
+<!-- Peshawar Regional Node -->
+<div class="p-space-20 rounded-xl bg-surface-container-lowest shadow-sm flex items-center justify-between border border-outline-variant/30">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-lg flex items-center justify-center" style="background-color: rgba(18, 59, 93, 0.08); color: #123B5D;">
+<span class="material-symbols-outlined text-[22px]">hub</span>
+</div>
+<div>
+<div class="text-[14px] font-bold" style="color: #123B5D;">Peshawar Operational Node</div>
+<div class="text-[12px]" style="color: #64748B;">7 Sectors Synced · Hayatabad Hub #1</div>
+</div>
+</div>
+<span class="w-2.5 h-2.5 rounded-full" style="background-color: #0F8B8D;"></span>
+</div></div>
+</div></main></div>
+
+
+
+</body></html>

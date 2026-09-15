@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+  <title>HUNAR — Choose Your Portal</title>
+  <!-- Google Fonts: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
+  <!-- Tailwind CSS v3 -->
+  <script src="https://cdn.tailwindcss.com?plugins=forms"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+          },
+          colors: {
+            brand: {
+              forest: '#1F4B3F',
+              forestDark: '#163E34',
+              forestDeep: '#1B3B36',
+              mint: '#5BBB7B',
+              mintHover: '#4FAA6F',
+              mintLight: '#E8F7EE',
+              amber: '#D97706',
+              amberHover: '#B45309',
+              amberLight: '#FEF3C7',
+              navy: '#123B5D',
+              navyDark: '#0F2E4A',
+              teal: '#0F8B8D',
+              border: '#E2E8F0',
+              canvas: '#F8FAFC'
+            }
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+    .bg-mesh-pattern {
+      background-color: #F8FAFC;
+      background-image: 
+        radial-gradient(circle at 15% 15%, rgba(91, 187, 123, 0.08) 0%, transparent 40%),
+        radial-gradient(circle at 85% 20%, rgba(31, 75, 63, 0.06) 0%, transparent 45%),
+        radial-gradient(circle at 50% 85%, rgba(217, 119, 6, 0.04) 0%, transparent 50%);
+    }
+    .portal-card {
+      transition: all 0.24s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .portal-card:hover {
+      transform: translateY(-6px);
+    }
+  </style>
+</head>
+<body class="bg-mesh-pattern text-slate-800 antialiased min-h-screen flex flex-col justify-between selection:bg-[#5BBB7B] selection:text-white">
+
+  <!-- ================= TOP NAVIGATION BAR ================= -->
+  <header class="bg-[#1F4B3F] text-white border-b border-[#2A4D47] sticky top-0 z-50 shadow-xs">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <!-- Logo -->
+      <a href="../landing page/code.html" class="flex items-center gap-3 group" title="Return to Landing Page">
+        <div class="w-9 h-9 rounded-xl bg-white/10 border border-white/20 flex items-center justify-center text-white font-black text-lg tracking-tight relative group-hover:scale-105 transition-transform">
+          <span class="text-[#5BBB7B]">H</span>
+          <span class="w-2 h-2 rounded-full bg-[#5BBB7B] absolute bottom-1 right-1"></span>
+        </div>
+        <div class="flex flex-col">
+          <span class="font-extrabold text-lg tracking-tight text-white leading-tight">HUNAR</span>
+          <span class="text-[10px] font-medium text-emerald-200/80 -mt-0.5">Verified Trades Marketplace</span>
+        </div>
+      </a>
+
+      <!-- Back to Landing Page Button -->
+      <a href="../landing page/code.html" class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white text-xs font-semibold border border-white/15 transition-all">
+        <span class="material-symbols-outlined text-[16px]">arrow_back</span>
+        <span>Back to Home</span>
+      </a>
+    </div>
+  </header>
+
+  <!-- ================= MAIN CONTENT ================= -->
+  <main class="flex-1 max-w-6xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-10 sm:py-14 flex flex-col items-center justify-center">
+    
+    <!-- Hero Heading & Badge -->
+    <div class="text-center max-w-xl mx-auto mb-10 sm:mb-12">
+      <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#E8F7EE] text-[#1F4B3F] border border-[#5BBB7B]/30 text-xs font-bold tracking-wider uppercase mb-3 shadow-2xs">
+        <span class="w-1.5 h-1.5 rounded-full bg-[#5BBB7B] animate-pulse"></span>
+        <span>Portal Gateway</span>
+      </span>
+      <h1 class="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
+        Choose Your Portal
+      </h1>
+      <p class="text-slate-500 text-sm sm:text-base mt-2">
+        Select your role to access your dedicated workspace and tools.
+      </p>
+    </div>
+
+    <!-- 3 Role Cards Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8 w-full max-w-5xl items-stretch">
+
+      <!-- 1. CUSTOMER PORTAL -->
+      <a href="../hunar_customer_dashboard/code.html" class="portal-card bg-white rounded-2xl p-7 border-2 border-slate-200/90 hover:border-[#5BBB7B] hover:shadow-xl flex flex-col justify-between group cursor-pointer text-left relative overflow-hidden">
+        <!-- Colored Top Accent Line -->
+        <div class="absolute top-0 left-0 right-0 h-1.5 bg-[#1F4B3F] group-hover:bg-[#5BBB7B] transition-colors"></div>
+
+        <div>
+          <!-- Icon & Role Badge -->
+          <div class="flex items-center justify-between mb-6">
+            <div class="w-12 h-12 rounded-2xl bg-[#E8F7EE] text-[#1F4B3F] group-hover:bg-[#1F4B3F] group-hover:text-white flex items-center justify-center shadow-xs transition-colors">
+              <span class="material-symbols-outlined text-[26px]">person</span>
+            </div>
+            <span class="px-2.5 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider bg-[#E8F7EE] text-[#1F4B3F] border border-[#5BBB7B]/30">
+              Customer
+            </span>
+          </div>
+
+          <!-- Title & Clean Description -->
+          <h2 class="text-xl font-extrabold text-slate-900 group-hover:text-[#1F4B3F] transition-colors">
+            Customer Hub
+          </h2>
+          <p class="text-xs text-slate-500 mt-2 leading-relaxed">
+            Hire certified local tradespeople, compare upfront visit bids, and pay securely via escrow protection.
+          </p>
+
+          <!-- Key Benefit Badges -->
+          <div class="mt-5 space-y-2">
+            <div class="flex items-center gap-2 text-xs font-medium text-slate-700 bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-100">
+              <span class="material-symbols-outlined text-[16px] text-[#5BBB7B]">check_circle</span>
+              <span>Post jobs &amp; track live GPS arrivals</span>
+            </div>
+            <div class="flex items-center gap-2 text-xs font-medium text-slate-700 bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-100">
+              <span class="material-symbols-outlined text-[16px] text-[#5BBB7B]">check_circle</span>
+              <span>100% SBP-compliant escrow safety</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Action Button -->
+        <div class="mt-7 pt-5 border-t border-slate-100">
+          <div class="w-full py-2.5 px-4 rounded-xl bg-[#1F4B3F] group-hover:bg-[#5BBB7B] text-white text-xs font-bold flex items-center justify-center gap-2 shadow-xs transition-colors">
+            <span>Enter Customer Hub</span>
+            <span class="material-symbols-outlined text-[16px] group-hover:translate-x-1 transition-transform">arrow_forward</span>
+          </div>
+        </div>
+      </a>
+
+      <!-- 2. WORKER PORTAL -->
+      <a href="../hunar_worker_dashboard/code.html" class="portal-card bg-white rounded-2xl p-7 border-2 border-slate-200/90 hover:border-[#D97706] hover:shadow-xl flex flex-col justify-between group cursor-pointer text-left relative overflow-hidden">
+        <!-- Colored Top Accent Line -->
+        <div class="absolute top-0 left-0 right-0 h-1.5 bg-[#D97706] transition-colors"></div>
+
+        <div>
+          <!-- Icon & Role Badge -->
+          <div class="flex items-center justify-between mb-6">
+            <div class="w-12 h-12 rounded-2xl bg-amber-50 text-[#D97706] group-hover:bg-[#D97706] group-hover:text-white flex items-center justify-center shadow-xs transition-colors">
+              <span class="material-symbols-outlined text-[26px]">engineering</span>
+            </div>
+            <span class="px-2.5 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider bg-amber-50 text-[#92400E] border border-amber-200/80">
+              Worker
+            </span>
+          </div>
+
+          <!-- Title & Clean Description -->
+          <h2 class="text-xl font-extrabold text-slate-900 group-hover:text-[#D97706] transition-colors">
+            Worker Portal
+          </h2>
+          <p class="text-xs text-slate-500 mt-2 leading-relaxed">
+            Find nearby repair jobs across Peshawar, send instant visit fee offers, and withdraw earnings directly.
+          </p>
+
+          <!-- Key Benefit Badges -->
+          <div class="mt-5 space-y-2">
+            <div class="flex items-center gap-2 text-xs font-medium text-slate-700 bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-100">
+              <span class="material-symbols-outlined text-[16px] text-[#D97706]">check_circle</span>
+              <span>Instant nearby job alert radar</span>
+            </div>
+            <div class="flex items-center gap-2 text-xs font-medium text-slate-700 bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-100">
+              <span class="material-symbols-outlined text-[16px] text-[#D97706]">check_circle</span>
+              <span>Fast direct-to-bank wallet payouts</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Action Button -->
+        <div class="mt-7 pt-5 border-t border-slate-100">
+          <div class="w-full py-2.5 px-4 rounded-xl bg-[#D97706] group-hover:bg-[#B45309] text-white text-xs font-bold flex items-center justify-center gap-2 shadow-xs transition-colors">
+            <span>Enter Worker Portal</span>
+            <span class="material-symbols-outlined text-[16px] group-hover:translate-x-1 transition-transform">arrow_forward</span>
+          </div>
+        </div>
+      </a>
+
+      <!-- 3. ADMIN SUITE -->
+      <a href="../../Admin Dashboard/index.html" class="portal-card bg-white rounded-2xl p-7 border-2 border-slate-200/90 hover:border-[#123B5D] hover:shadow-xl flex flex-col justify-between group cursor-pointer text-left relative overflow-hidden">
+        <!-- Colored Top Accent Line -->
+        <div class="absolute top-0 left-0 right-0 h-1.5 bg-[#123B5D] transition-colors"></div>
+
+        <div>
+          <!-- Icon & Role Badge -->
+          <div class="flex items-center justify-between mb-6">
+            <div class="w-12 h-12 rounded-2xl bg-slate-100 text-[#123B5D] group-hover:bg-[#123B5D] group-hover:text-white flex items-center justify-center shadow-xs transition-colors">
+              <span class="material-symbols-outlined text-[26px]">admin_panel_settings</span>
+            </div>
+            <span class="px-2.5 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider bg-slate-100 text-[#123B5D] border border-slate-200">
+              Admin
+            </span>
+          </div>
+
+          <!-- Title & Clean Description -->
+          <h2 class="text-xl font-extrabold text-slate-900 group-hover:text-[#123B5D] transition-colors">
+            Admin Suite
+          </h2>
+          <p class="text-xs text-slate-500 mt-2 leading-relaxed">
+            Platform governance, live operations radar, work order dispatch, escrow audit, and dispute resolution.
+          </p>
+
+          <!-- Key Benefit Badges -->
+          <div class="mt-5 space-y-2">
+            <div class="flex items-center gap-2 text-xs font-medium text-slate-700 bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-100">
+              <span class="material-symbols-outlined text-[16px] text-[#123B5D]">check_circle</span>
+              <span>Central operations &amp; work orders</span>
+            </div>
+            <div class="flex items-center gap-2 text-xs font-medium text-slate-700 bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-100">
+              <span class="material-symbols-outlined text-[16px] text-[#123B5D]">check_circle</span>
+              <span>Dispute tribunal &amp; KYC verification</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Action Button -->
+        <div class="mt-7 pt-5 border-t border-slate-100">
+          <div class="w-full py-2.5 px-4 rounded-xl bg-[#123B5D] group-hover:bg-[#0F2E4A] text-white text-xs font-bold flex items-center justify-center gap-2 shadow-xs transition-colors">
+            <span>Enter Admin Suite</span>
+            <span class="material-symbols-outlined text-[16px] group-hover:translate-x-1 transition-transform">arrow_forward</span>
+          </div>
+        </div>
+      </a>
+
+    </div>
+
+  </main>
+
+  <!-- ================= FOOTER ================= -->
+  <footer class="bg-white border-t border-slate-200/80 py-4 text-center text-xs text-slate-400">
+    <div class="max-w-6xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
+      <span>© 2026 HUNAR Marketplace. All rights reserved.</span>
+      <span class="text-slate-400 font-medium">Certified &amp; Verified Trades Network</span>
+    </div>
+  </footer>
+
+</body>
+</html>

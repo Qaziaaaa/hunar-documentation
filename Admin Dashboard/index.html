@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HUNAR — Admin Dashboard Operations Suite</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <script>
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              navy: "#123B5D",
+              "navy-dark": "#0F2E4A",
+              teal: "#0F8B8D",
+              "teal-dark": "#0D7A7C",
+              "teal-light": "#E6F7F7",
+              amber: "#F59E0B",
+              "amber-light": "#FEF3C7",
+              "amber-dark": "#92400E",
+              dark: "#172033",
+              gray: "#64748B",
+              slate: "#94A3B8",
+              border: "#E2E8F0",
+              canvas: "#FFFFFF",
+              success: "#16A34A",
+              error: "#DC2626"
+            }
+          },
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    @layer base {
+      html, body {
+        margin: 0;
+        padding: 0;
+        font-family: 'Inter', sans-serif;
+        background-color: #FFFFFF;
+        color: #172033;
+      }
+      ::-webkit-scrollbar {
+        width: 6px;
+        height: 6px;
+      }
+      ::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #CBD5E1;
+        border-radius: 9999px;
+      }
+    }
+  </style>
+</head>
+<body class="bg-white text-brand-dark min-h-screen flex antialiased">
+
+  <!-- SIDEBAR (Modern, Crisp White with Brand Navy Accents & Clear Hierarchy) -->
+  <aside class="hidden lg:flex fixed left-0 top-0 h-screen w-64 bg-white border-r border-[#E2E8F0] z-50 flex-col justify-between shadow-[1px_0_10px_rgba(0,0,0,0.02)]">
+    <div class="flex flex-col flex-1 overflow-y-auto px-4 py-5">
+      <!-- Logo Header -->
+      <div class="flex items-center justify-between pb-5 border-b border-[#E2E8F0] mb-5">
+        <a href="../Abdullah desigens customer + landing page/landing page/code.html" class="flex items-center gap-3 group hover:opacity-90 transition-opacity no-underline" title="Back to Landing Page">
+          <div class="w-10 h-10 rounded-xl bg-[#123B5D] flex items-center justify-center text-white font-extrabold text-xl shadow-sm tracking-tight relative group-hover:scale-105 transition-transform">
+            <span>H</span>
+            <span class="w-2.5 h-2.5 rounded-full bg-[#0F8B8D] absolute bottom-1 right-1 border-2 border-white"></span>
+          </div>
+          <div class="flex flex-col">
+            <div class="flex items-center gap-1.5 leading-tight">
+              <span class="font-extrabold text-[17px] tracking-tight text-[#172033]">HUNAR</span>
+              <span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-[#123B5D]/5 text-[#123B5D] uppercase tracking-wider border border-[#123B5D]/15">ADMIN</span>
+            </div>
+            <p class="text-[11px] font-medium text-[#64748B]">Certified Pro Marketplace</p>
+          </div>
+        </a>
+      </div>
+      <!-- Navigation Hierarchy -->
+      <nav class="space-y-6">
+        <!-- Section: MAIN -->
+        <div>
+          <div class="px-3 pb-2 text-[10px] font-bold uppercase tracking-wider text-[#64748B]">Main</div>
+          <div class="space-y-1">
+            <a class="flex items-center justify-between px-3 py-2 rounded-xl text-[13px] font-medium text-[#64748B] hover:text-[#172033] hover:bg-slate-50 transition-colors" href="stitch_hunar_marketplace_prototype/hunar_admin_operations_dashboard_modern/code.html">
+              <div class="flex items-center gap-3">
+                <span class="material-symbols-outlined text-[19px]">dashboard</span>
+                <span>Dashboard</span>
+              </div>
+            </a>
+            <a class="flex items-center justify-between px-3 py-2 rounded-xl text-[13px] font-medium text-[#64748B] hover:text-[#172033] hover:bg-slate-50 transition-colors" href="admin panel design/customers.html">
+              <div class="flex items-center gap-3">
+                <span class="material-symbols-outlined text-[19px]">group</span>
+                <span>Users</span>
+              </div>
+              <span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-slate-100 text-[#64748B] border border-[#E2E8F0]">2 Roles</span>
+            </a>
+            <a class="flex items-center justify-between px-3 py-2 rounded-xl text-[13px] font-medium text-[#64748B] hover:text-[#172033] hover:bg-slate-50 transition-colors" href="stitch_hunar_marketplace_prototype/jobs_management_work_orders_hunar_admin/code.html">
+              <div class="flex items-center gap-3">
+                <span class="material-symbols-outlined text-[19px]">assignment</span>
+                <span>Jobs</span>
+              </div>
+              <span class="px-2 py-0.5 rounded-full text-[11px] font-bold bg-slate-100 text-[#123B5D]">428</span>
+            </a>
+          </div>
+        </div>
+        <!-- Section: OPERATIONS -->
+        <div>
+          <div class="px-3 pb-2 text-[10px] font-bold uppercase tracking-wider text-[#64748B]">Operations</div>
+          <div class="space-y-1">
+            <a class="flex items-center justify-between px-3 py-2 rounded-xl text-[13px] font-medium text-[#64748B] hover:text-[#172033] hover:bg-slate-50 transition-colors" href="admin panel design/index.html">
+              <div class="flex items-center gap-3">
+                <span class="material-symbols-outlined text-[19px] text-[#F59E0B]">verified</span>
+                <span>Verification</span>
+              </div>
+              <span class="px-2 py-0.5 rounded-full text-[11px] font-bold bg-[#FEF3C7] text-[#92400E] border border-[#F59E0B]/30">24</span>
+            </a>
+            <a class="flex items-center gap-3 px-3 py-2 rounded-xl text-[13px] font-medium text-[#64748B] hover:text-[#172033] hover:bg-slate-50 transition-colors" href="admin panel design/payments.html">
+              <span class="material-symbols-outlined text-[19px]">account_balance_wallet</span>
+              <span>Payments &amp; Txns</span>
+            </a>
+            <a class="flex items-center justify-between px-3 py-2 rounded-xl text-[13px] font-medium text-[#64748B] hover:text-[#172033] hover:bg-slate-50 transition-colors" href="../stitch_hunar_admin pannel some features_mvp/shahzad-admin pannel, features/worker_dispute_management_resolution/code.html">
+              <div class="flex items-center gap-3">
+                <span class="material-symbols-outlined text-[19px] text-[#DC2626]">flag</span>
+                <span>Disputes</span>
+              </div>
+              <span class="px-2 py-0.5 rounded-full text-[11px] font-bold bg-[#FEE2E2] text-[#DC2626] border border-[#DC2626]/30">8</span>
+            </a>
+            <a class="flex items-center gap-3 px-3 py-2 rounded-xl text-[13px] font-medium text-[#64748B] hover:text-[#172033] hover:bg-slate-50 transition-colors" href="../stitch_hunar_admin pannel some features_mvp/shahzad-admin pannel, features/worker_reviews_ratings/code.html">
+              <span class="material-symbols-outlined text-[19px]">star</span>
+              <span>Reviews &amp; Ratings</span>
+            </a>
+            <a class="flex items-center gap-3 px-3 py-2 rounded-xl text-[13px] font-medium text-[#64748B] hover:text-[#172033] hover:bg-slate-50 transition-colors" href="../stitch_hunar_admin pannel some features_mvp/shahzad-admin pannel, features/worker_category_skill_settings/code.html">
+              <span class="material-symbols-outlined text-[19px]">category</span>
+              <span>Categories</span>
+            </a>
+            <a class="flex items-center justify-between px-3 py-2 rounded-xl text-[13px] font-medium text-[#64748B] hover:text-[#172033] hover:bg-slate-50 transition-colors" href="../stitch_hunar_admin pannel some features_mvp/shahzad-admin pannel, features/worker_service_area_location_settings/code.html">
+              <div class="flex items-center gap-3">
+                <span class="material-symbols-outlined text-[19px]">location_on</span>
+                <span>Locations</span>
+              </div>
+              <span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-[#0F8B8D]/10 text-[#0F8B8D] border border-[#0F8B8D]/20">Peshawar</span>
+            </a>
+          </div>
+        </div>
+        <!-- Section: GOVERNANCE & TELEMETRY -->
+        <div>
+          <div class="px-3 pb-2 text-[10px] font-bold uppercase tracking-wider text-[#64748B]">Governance</div>
+          <div class="space-y-1">
+            <a class="flex items-center gap-3 px-3 py-2 rounded-xl text-[13px] font-medium text-[#64748B] hover:text-[#172033] hover:bg-slate-50 transition-colors" href="reports_moderation/code.html">
+              <span class="material-symbols-outlined text-[19px]">description</span>
+              <span>Reports</span>
+            </a>
+            <a class="flex items-center gap-3 px-3 py-2 rounded-xl text-[13px] font-medium text-[#64748B] hover:text-[#172033] hover:bg-slate-50 transition-colors" href="notifications/code.html">
+              <span class="material-symbols-outlined text-[19px]">notifications</span>
+              <span>Notifications</span>
+            </a>
+            <a class="flex items-center gap-3 px-3 py-2 rounded-xl text-[13px] font-medium text-[#64748B] hover:text-[#172033] hover:bg-slate-50 transition-colors" href="analytics/code.html">
+              <span class="material-symbols-outlined text-[19px]">monitoring</span>
+              <span>Analytics</span>
+            </a>
+            <a class="flex items-center gap-3 px-3 py-2 rounded-xl text-[13px] font-medium text-[#64748B] hover:text-[#172033] hover:bg-slate-50 transition-colors" href="settings/code.html">
+              <span class="material-symbols-outlined text-[19px]">settings</span>
+              <span>Settings</span>
+            </a>
+          </div>
+        </div>
+      </nav>
+    </div>
+    <!-- Sidebar Bottom: Escrow Highlight Card & Super Admin Profile -->
+    <div class="p-4 border-t border-[#E2E8F0] space-y-3 bg-white">
+      <div class="p-3.5 rounded-xl bg-[#123B5D] text-white space-y-2 shadow-sm">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-1.5">
+            <span class="material-symbols-outlined text-[#0F8B8D] text-[18px]">verified_user</span>
+            <span class="text-[10px] font-bold tracking-wider uppercase text-teal-300">HUNAR Escrow</span>
+          </div>
+          <span class="w-2 h-2 rounded-full bg-[#16A34A] animate-pulse"></span>
+        </div>
+        <p class="text-[11px] text-slate-300 leading-relaxed">100% SBP / NADRA Verified Pros &amp; safe Raast dispute guarantee.</p>
+        <a class="block text-center py-1.5 px-3 bg-[#0F8B8D] text-white text-[11px] font-semibold rounded-lg hover:bg-[#0D7A7C] transition-colors" href="#">
+          View Escrow Rules
+        </a>
+      </div>
+      <div class="flex items-center justify-between pt-1">
+        <div class="flex items-center gap-2.5">
+          <div class="w-8 h-8 rounded-full bg-[#123B5D] text-white flex items-center justify-center font-bold text-xs ring-2 ring-[#0F8B8D]/20">
+            <span class="material-symbols-outlined text-[18px]">person</span>
+          </div>
+          <div class="flex flex-col">
+            <span class="text-[12px] font-bold text-[#172033] leading-tight">Abdullah Khan</span>
+            <span class="text-[10px] text-[#64748B] font-medium">Super Admin • Peshawar Hub</span>
+          </div>
+        </div>
+        <a class="text-[#64748B] hover:text-[#DC2626] p-1 rounded-md transition-colors" href="#" title="Logout">
+          <span class="material-symbols-outlined text-[18px]">logout</span>
+        </a>
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN WRAPPER -->
+  <div class="w-full lg:pl-64 flex flex-col min-h-screen bg-white">
+    <!-- Top Header -->
+    <header class="sticky top-0 z-40 h-16 bg-white/95 backdrop-blur-md border-b border-[#E2E8F0] px-6 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="flex items-center gap-2 text-sm text-[#64748B]">
+          <a href="../Abdullah desigens customer + landing page/landing page/code.html" class="font-bold text-[#172033] hover:text-[#0F8B8D] transition-colors" title="Back to Landing Page">HUNAR</a>
+          <span>/</span>
+          <span class="font-semibold text-[#123B5D]">Admin Dashboard Hub</span>
+        </div>
+      </div>
+      <div class="flex items-center gap-3">
+        <span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-1.5">
+          <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+          All 6 Screens Connected
+        </span>
+      </div>
+    </header>
+
+    <!-- Page Body -->
+    <main class="flex-1 p-6 sm:p-8 space-y-8 max-w-7xl mx-auto w-full">
+      <!-- Welcome Hero Banner -->
+      <div class="p-6 sm:p-8 rounded-2xl bg-gradient-to-r from-[#123B5D] to-[#0F8B8D] text-white shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div class="space-y-2">
+          <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/15 backdrop-blur-sm text-xs font-semibold text-teal-200">
+            <span class="material-symbols-outlined text-[16px]">verified</span>
+            Unified Operations Suite
+          </div>
+          <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight">Connected Admin Operations Dashboard</h1>
+          <p class="text-sm text-slate-200 max-w-2xl leading-relaxed">
+            All screens in the Admin Dashboard system share identical standardized navigation hierarchy, pure white canvas style, and active two-way linking.
+          </p>
+        </div>
+        <div class="flex items-center gap-3 shrink-0">
+          <a href="stitch_hunar_marketplace_prototype/hunar_admin_operations_dashboard_modern/code.html" class="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-white text-[#123B5D] font-bold text-sm shadow-md hover:bg-slate-50 transition-all">
+            <span class="material-symbols-outlined text-[18px]">launch</span>
+            Launch Operations Dashboard
+          </a>
+        </div>
+      </div>
+
+      <!-- Grid of Connected Screens -->
+      <div class="space-y-4">
+        <div class="flex items-center justify-between">
+          <h2 class="text-lg font-bold text-[#172033] flex items-center gap-2">
+            <span class="material-symbols-outlined text-[#0F8B8D]">grid_view</span>
+            Core Operational Screens
+          </h2>
+          <span class="text-xs text-[#64748B] font-medium">6 Full Desktop Modules + Mobile Prototypes</span>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+          <!-- 1. Operations Dashboard -->
+          <a href="stitch_hunar_marketplace_prototype/hunar_admin_operations_dashboard_modern/code.html" class="group block p-5 rounded-2xl border border-[#E2E8F0] bg-white hover:border-[#0F8B8D] hover:shadow-md transition-all">
+            <div class="flex items-center justify-between pb-3 border-b border-[#E2E8F0]">
+              <div class="w-10 h-10 rounded-xl bg-[#123B5D] text-[#0F8B8D] flex items-center justify-center font-bold">
+                <span class="material-symbols-outlined">dashboard</span>
+              </div>
+              <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-50 text-[#123B5D] border border-blue-200">Main Hub</span>
+            </div>
+            <div class="mt-4 space-y-1">
+              <h3 class="font-bold text-[15px] text-[#172033] group-hover:text-[#0F8B8D] transition-colors flex items-center justify-between">
+                Operations Dashboard
+                <span class="material-symbols-outlined text-[18px] text-[#64748B] group-hover:translate-x-1 transition-transform">arrow_forward</span>
+              </h3>
+              <p class="text-xs text-[#64748B] leading-relaxed">Executive KPIs, live dispatch feed, Nadra verification queues, and Raast financial telemetry.</p>
+            </div>
+          </a>
+
+          <!-- 2. Jobs & Work Orders -->
+          <a href="stitch_hunar_marketplace_prototype/jobs_management_work_orders_hunar_admin/code.html" class="group block p-5 rounded-2xl border border-[#E2E8F0] bg-white hover:border-[#0F8B8D] hover:shadow-md transition-all">
+            <div class="flex items-center justify-between pb-3 border-b border-[#E2E8F0]">
+              <div class="w-10 h-10 rounded-xl bg-teal-50 text-[#0F8B8D] flex items-center justify-center font-bold">
+                <span class="material-symbols-outlined">assignment</span>
+              </div>
+              <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">428 Active</span>
+            </div>
+            <div class="mt-4 space-y-1">
+              <h3 class="font-bold text-[15px] text-[#172033] group-hover:text-[#0F8B8D] transition-colors flex items-center justify-between">
+                Work Orders &amp; Jobs
+                <span class="material-symbols-outlined text-[18px] text-[#64748B] group-hover:translate-x-1 transition-transform">arrow_forward</span>
+              </h3>
+              <p class="text-xs text-[#64748B] leading-relaxed">Work order lifecycle, technician assignment, dispatch logs, and Peshawar grid coverage.</p>
+            </div>
+          </a>
+
+          <!-- 3. Reports & Moderation -->
+          <a href="reports_moderation/code.html" class="group block p-5 rounded-2xl border border-[#E2E8F0] bg-white hover:border-[#0F8B8D] hover:shadow-md transition-all">
+            <div class="flex items-center justify-between pb-3 border-b border-[#E2E8F0]">
+              <div class="w-10 h-10 rounded-xl bg-amber-50 text-[#F59E0B] flex items-center justify-center font-bold">
+                <span class="material-symbols-outlined">description</span>
+              </div>
+              <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200">Moderation</span>
+            </div>
+            <div class="mt-4 space-y-1">
+              <h3 class="font-bold text-[15px] text-[#172033] group-hover:text-[#0F8B8D] transition-colors flex items-center justify-between">
+                Reports &amp; Moderation
+                <span class="material-symbols-outlined text-[18px] text-[#64748B] group-hover:translate-x-1 transition-transform">arrow_forward</span>
+              </h3>
+              <p class="text-xs text-[#64748B] leading-relaxed">Flagged content review, trust scoring, user safety reports, and resolution workflows.</p>
+            </div>
+          </a>
+
+          <!-- 4. Notifications & Alerts -->
+          <a href="notifications/code.html" class="group block p-5 rounded-2xl border border-[#E2E8F0] bg-white hover:border-[#0F8B8D] hover:shadow-md transition-all">
+            <div class="flex items-center justify-between pb-3 border-b border-[#E2E8F0]">
+              <div class="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold">
+                <span class="material-symbols-outlined">notifications</span>
+              </div>
+              <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200">Broadcasts</span>
+            </div>
+            <div class="mt-4 space-y-1">
+              <h3 class="font-bold text-[15px] text-[#172033] group-hover:text-[#0F8B8D] transition-colors flex items-center justify-between">
+                Notifications &amp; Alerts
+                <span class="material-symbols-outlined text-[18px] text-[#64748B] group-hover:translate-x-1 transition-transform">arrow_forward</span>
+              </h3>
+              <p class="text-xs text-[#64748B] leading-relaxed">System-wide SMS, WhatsApp &amp; Push alert dispatching, targeted technician broadcasts.</p>
+            </div>
+          </a>
+
+          <!-- 5. Analytics & Performance -->
+          <a href="analytics/code.html" class="group block p-5 rounded-2xl border border-[#E2E8F0] bg-white hover:border-[#0F8B8D] hover:shadow-md transition-all">
+            <div class="flex items-center justify-between pb-3 border-b border-[#E2E8F0]">
+              <div class="w-10 h-10 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center font-bold">
+                <span class="material-symbols-outlined">monitoring</span>
+              </div>
+              <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-purple-50 text-purple-700 border border-purple-200">Analytics</span>
+            </div>
+            <div class="mt-4 space-y-1">
+              <h3 class="font-bold text-[15px] text-[#172033] group-hover:text-[#0F8B8D] transition-colors flex items-center justify-between">
+                Analytics &amp; Performance
+                <span class="material-symbols-outlined text-[18px] text-[#64748B] group-hover:translate-x-1 transition-transform">arrow_forward</span>
+              </h3>
+              <p class="text-xs text-[#64748B] leading-relaxed">Revenue velocity, category fulfillment metrics, technician retention, and regional breakdown.</p>
+            </div>
+          </a>
+
+          <!-- 6. Settings & Config -->
+          <a href="settings/code.html" class="group block p-5 rounded-2xl border border-[#E2E8F0] bg-white hover:border-[#0F8B8D] hover:shadow-md transition-all">
+            <div class="flex items-center justify-between pb-3 border-b border-[#E2E8F0]">
+              <div class="w-10 h-10 rounded-xl bg-slate-100 text-[#172033] flex items-center justify-center font-bold">
+                <span class="material-symbols-outlined">settings</span>
+              </div>
+              <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-700 border border-slate-200">Admin Control</span>
+            </div>
+            <div class="mt-4 space-y-1">
+              <h3 class="font-bold text-[15px] text-[#172033] group-hover:text-[#0F8B8D] transition-colors flex items-center justify-between">
+                Platform Settings
+                <span class="material-symbols-outlined text-[18px] text-[#64748B] group-hover:translate-x-1 transition-transform">arrow_forward</span>
+              </h3>
+              <p class="text-xs text-[#64748B] leading-relaxed">Escrow commission rates, NADRA KYC thresholds, Raast API configs, and security policies.</p>
+            </div>
+          </a>
+        </div>
+      </div>
+
+      <!-- Mobile Views Section -->
+      <div class="p-6 rounded-2xl border border-[#E2E8F0] bg-slate-50/50 space-y-4">
+        <div class="flex items-center justify-between">
+          <div>
+            <h2 class="text-base font-bold text-[#172033]">Mobile Responsive Views</h2>
+            <p class="text-xs text-[#64748B]">Dedicated mobile viewport mockups for on-the-go admin operations</p>
+          </div>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <a href="analytics_mobile/code.html" class="p-4 rounded-xl bg-white border border-[#E2E8F0] hover:border-[#0F8B8D] text-xs font-semibold text-[#172033] flex items-center justify-between">
+            <span class="flex items-center gap-2">
+              <span class="material-symbols-outlined text-[18px] text-purple-600">smartphone</span>
+              Analytics Mobile
+            </span>
+            <span class="material-symbols-outlined text-[16px] text-[#64748B]">open_in_new</span>
+          </a>
+          <a href="notifications_mobile/code.html" class="p-4 rounded-xl bg-white border border-[#E2E8F0] hover:border-[#0F8B8D] text-xs font-semibold text-[#172033] flex items-center justify-between">
+            <span class="flex items-center gap-2">
+              <span class="material-symbols-outlined text-[18px] text-blue-600">smartphone</span>
+              Notifications Mobile
+            </span>
+            <span class="material-symbols-outlined text-[16px] text-[#64748B]">open_in_new</span>
+          </a>
+          <a href="settings_mobile/code.html" class="p-4 rounded-xl bg-white border border-[#E2E8F0] hover:border-[#0F8B8D] text-xs font-semibold text-[#172033] flex items-center justify-between">
+            <span class="flex items-center gap-2">
+              <span class="material-symbols-outlined text-[18px] text-slate-700">smartphone</span>
+              Settings Mobile
+            </span>
+            <span class="material-symbols-outlined text-[16px] text-[#64748B]">open_in_new</span>
+          </a>
+        </div>
+      </div>
+    </main>
+  </div>
+</body>
+</html>
