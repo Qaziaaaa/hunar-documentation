@@ -1,0 +1,243 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HUNAR — Inspection</title>
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body class="frame-full">
+  <div class="app-frame">
+    <div class="status-bar">
+      <span>9:41</span>
+      <div class="status-icons">
+        <div class="signal-bars">
+          <div style="width:3px;height:3px;background:#fff;border-radius:1px"></div>
+          <div style="width:3px;height:5px;background:#fff;border-radius:1px"></div>
+          <div style="width:3px;height:7px;background:#fff;border-radius:1px"></div>
+          <div style="width:3px;height:9px;background:#fff;border-radius:1px;opacity:0.4"></div>
+        </div>
+        <div style="width:16px;height:9px;border:1px solid rgba(255,255,255,0.6);border-radius:2px;position:relative;margin-left:4px">
+          <div style="position:absolute;inset:1px;right:4px;background:#fff;border-radius:1px"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Header -->
+    <div class="page-header">
+      <button class="back-btn" onclick="location.href='active-job.html'"><span id="ic-back" style="width:20px;height:20px;display:inline-flex"></span></button>
+      <div class="flex-1">
+        <h1>Inspection Report</h1>
+        <p class="sub" id="insp-subtitle">Job J-0998 · Leaking Main Water Valve</p>
+      </div>
+    </div>
+
+    <div class="screen-body p-4">
+      <!-- Safety warning -->
+      <div class="warn-banner mb-3" style="background:#FFFBEB;border:1px solid #FDE68A;border-left:3px solid var(--warning);padding:10px 12px;border-radius:8px;display:flex;gap:8px;align-items:flex-start">
+        <span style="color:var(--warning);width:16px;height:16px;flex-shrink:0;display:inline-flex">${ICONS.alertTriangle}</span>
+        <p class="txt-xs" style="color:#92400E;line-height:1.5">
+          <strong>Do not begin any repair</strong> until the customer approves the repair price.
+        </p>
+      </div>
+
+      <!-- Detected Issues -->
+      <div class="card overflow-hidden mb-3">
+        <div class="px-4 py-3.5">
+          <div class="flex items-center justify-between mb-1">
+            <h3 class="card-title">Damage / Issue Detection</h3>
+            <span class="txt-xs fw-700 c-primary">Step 2 of 4</span>
+          </div>
+          <p class="txt-xs c-gray mt-0.5">Select detected issues for customer review.</p>
+
+          <div class="field mt-3">
+            <div class="flex gap-2 flex-wrap" id="issue-tags"></div>
+            <div id="issue-list" class="mt-2"></div>
+            <input type="text" id="issue-input" placeholder="Add custom issue…" style="margin-top:8px" onkeydown="if(event.key==='Enter'){event.preventDefault();addCustomIssue();}" />
+          </div>
+        </div>
+      </div>
+
+      <!-- Photos -->
+      <div class="card overflow-hidden mb-3">
+        <div class="px-4 py-3.5">
+          <div class="flex items-center justify-between">
+            <h3 class="card-title">Inspection Photos</h3>
+            <span class="txt-xs c-gray" id="photo-count-label">2 photos</span>
+          </div>
+          <div class="flex gap-2 flex-wrap mt-3" id="photos-container"></div>
+        </div>
+      </div>
+
+      <!-- Diagnostic Notes -->
+      <div class="card overflow-hidden mb-3">
+        <div class="px-4 py-3.5">
+          <h3 class="card-title">Diagnostic Summary</h3>
+          <textarea id="diag-summary" rows="3" class="mt-2" style="width:100%;border:1px solid var(--border);border-radius:8px;padding:10px;font-size:12px" placeholder="e.g. Cracked 1-inch PVC elbow joint behind wall near main inlet. Joint needs replacement."></textarea>
+        </div>
+      </div>
+
+      <!-- Itemized Estimate -->
+      <div class="card overflow-hidden mb-4">
+        <div class="px-4 py-3.5">
+          <h3 class="card-title">Itemized Estimate</h3>
+          <p class="txt-xs c-gray mt-0.5">Enter preliminary estimate before sending quote.</p>
+          <div class="mt-3">
+            <div class="flex items-center justify-between py-2" style="border-bottom:1px solid var(--border)">
+              <div>
+                <p class="txt-xs fw-600 c-navy">Parts / Materials</p>
+                <p class="txt-xs c-gray" style="font-size:10px">PVC joints, sealant, fittings</p>
+              </div>
+              <div class="flex items-center gap-1">
+                <span class="txt-xs c-gray">Rs.</span>
+                <input type="number" id="est-parts" value="1200" min="0" style="width:80px;text-align:right;font-size:13px;font-weight:700;padding:4px 8px;border:1px solid var(--border);border-radius:6px" oninput="calcEstimate()" />
+              </div>
+            </div>
+            <div class="flex items-center justify-between py-2" style="border-bottom:1px solid var(--border)">
+              <div>
+                <p class="txt-xs fw-600 c-navy">Labor / Service</p>
+                <p class="txt-xs c-gray" style="font-size:10px">Cutting, fitting, re-plastering</p>
+              </div>
+              <div class="flex items-center gap-1">
+                <span class="txt-xs c-gray">Rs.</span>
+                <input type="number" id="est-labor" value="1500" min="0" style="width:80px;text-align:right;font-size:13px;font-weight:700;padding:4px 8px;border:1px solid var(--border);border-radius:6px" oninput="calcEstimate()" />
+              </div>
+            </div>
+            <div class="flex items-center justify-between py-2" style="border-bottom:1px solid var(--border)">
+              <div>
+                <p class="txt-xs fw-600 c-navy">Visit / Inspection Fee</p>
+                <p class="txt-xs c-gray" style="font-size:10px">Agreed amount</p>
+              </div>
+              <span class="txt-sm fw-700 c-navy" id="est-visit">Rs. 285</span>
+            </div>
+            <div class="flex items-center justify-between pt-3">
+              <span class="txt-sm fw-700 c-navy">Total Estimated Cost</span>
+              <span class="txt-base fw-700 c-primary" id="est-total">Rs. 2,985</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <button class="btn" onclick="submitInspection()">Submit Inspection & Send Quote →</button>
+      <div class="h-10"></div>
+    </div>
+
+    <div id="toast" class="hidden" style="position:absolute;top:16px;left:16px;right:16px;z-index:50;background:#fff;border-left:3px solid var(--success);border:1px solid var(--border);border-radius:8px;box-shadow:0 10px 25px rgba(0,0,0,0.15);padding:12px"></div>
+  </div>
+
+  <script src="js/icons.js"></script>
+  <script src="js/data.js"></script>
+  <script src="js/app.js"></script>
+  <script>
+    $('#ic-back').innerHTML = ICONS.arrowLeft
+
+    const job = App.Store.get('activeJob', MOCK.ACTIVE_JOB)
+    const visitFee = App.Store.get('visitFee', job.visitFee || 285)
+    $('#insp-subtitle').textContent = (job.id || 'J-0998') + ' · ' + job.title
+    $('#est-visit').textContent = 'Rs. ' + App.fmt(visitFee)
+
+    const ISSUES = ['Cracked PVC Pipe', 'Joint Seal Failure', 'Pressure Valve Leak', 'Corrosion', 'Clogged Inlet']
+    const selected = App.Store.get('detectedIssues', ['Cracked PVC Pipe', 'Joint Seal Failure'])
+
+    let photos = [
+      'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=80&h=80&fit=crop',
+      'https://images.unsplash.com/photo-1504328345606-18bbc8c9d7d1?w=80&h=80&fit=crop',
+    ]
+
+    function renderPhotos() {
+      $('#photo-count-label').textContent = photos.length + ' photos'
+      let html = photos.map((src, i) => `
+        <div style="width:64px;height:64px;border-radius:8px;overflow:hidden;border:1px solid var(--border);position:relative">
+          <img src="${src}" alt="" style="width:100%;height:100%;object-fit:cover" />
+          <button onclick="removePhoto(${i})" style="position:absolute;top:2px;right:2px;width:16px;height:16px;border-radius:50%;background:rgba(0,0,0,0.6);color:#fff;display:flex;align-items:center;justify-content:center;font-size:10px">${ICONS.x}</button>
+        </div>
+      `).join('')
+
+      html += `
+        <button onclick="addPhoto()" style="width:64px;height:64px;border-radius:8px;border:1px dashed var(--border-dim);background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--gray)">
+          <span style="width:18px;height:18px;display:inline-flex">${ICONS.camera}</span>
+          <span style="font-size:9px;margin-top:2px">Add</span>
+        </button>
+      `
+      $('#photos-container').innerHTML = html
+    }
+
+    function addPhoto() {
+      photos.push('https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=80&h=80&fit=crop')
+      renderPhotos()
+      App.showToast('Inspection photo captured.')
+    }
+
+    function removePhoto(idx) {
+      photos.splice(idx, 1)
+      renderPhotos()
+    }
+
+    renderPhotos()
+
+    $('#issue-tags').innerHTML = ISSUES.map(
+      (i) => `<button class="chip ${selected.includes(i) ? 'chip-dark' : ''}" onclick="toggleIssue(this)">${i}</button>`
+    ).join('')
+
+    function toggleIssue(btn) {
+      const issue = btn.textContent
+      const idx = selected.indexOf(issue)
+      if (idx > -1) { selected.splice(idx, 1); btn.classList.remove('chip-dark') }
+      else { selected.push(issue); btn.classList.add('chip-dark') }
+      renderIssueList()
+    }
+
+    function addCustomIssue() {
+      const input = $('#issue-input')
+      const v = input.value.trim()
+      if (!v) return
+      if (!selected.includes(v)) selected.push(v)
+      renderIssueList()
+      input.value = ''
+    }
+
+    function renderIssueList() {
+      $('#issue-list').innerHTML = selected
+        .map(
+          (i) => `<div class="tag" style="display:inline-flex;align-items:center;gap:6px;background:var(--bg);border:1px solid var(--border);border-radius:999px;padding:5px 10px;font-size:11px;margin:0 6px 6px 0">${i} <button onclick="removeIssue('${i.replace(/&/g, '&amp;').replace(/'/g, '&#39;')}')" style="color:var(--gray);width:12px;height:12px;display:inline-flex">${ICONS.x}</button></div>`
+        )
+        .join('')
+    }
+
+    function removeIssue(issue) {
+      const idx = selected.indexOf(issue)
+      if (idx > -1) selected.splice(idx, 1)
+      $$('#issue-tags .chip').forEach((c) => c.classList.toggle('chip-dark', selected.includes(c.textContent)))
+      renderIssueList()
+    }
+
+    renderIssueList()
+
+    function calcEstimate() {
+      const p = parseInt($('#est-parts').value, 10) || 0
+      const l = parseInt($('#est-labor').value, 10) || 0
+      const total = p + l + visitFee
+      $('#est-total').textContent = 'Rs. ' + App.fmt(total)
+      return { p, l, total }
+    }
+
+    calcEstimate()
+
+    function submitInspection() {
+      if (selected.length === 0) {
+        App.showToast('Please select or add at least one detected issue.', 'error')
+        return
+      }
+      const est = calcEstimate()
+      App.Store.set('jobStatus', 'repair-negotiating')
+      App.Store.set('detectedIssues', selected)
+      App.Store.set('quoteParts', est.p)
+      App.Store.set('quoteLabor', est.l)
+      App.Store.set('quoteTotal', est.total)
+      App.Store.set('diagSummary', $('#diag-summary').value.trim())
+      App.showToast('Inspection submitted — opening repair quote…')
+      setTimeout(() => { location.href = 'repair-quote.html' }, 1000)
+    }
+  </script>
+</body>
+</html>

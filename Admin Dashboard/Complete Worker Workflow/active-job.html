@@ -1,0 +1,252 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HUNAR — Active Job</title>
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body class="frame-full" data-nav="active-job">
+  <div class="app-frame">
+    <div class="status-bar">
+      <span>9:41</span>
+      <div class="status-icons">
+        <div class="signal-bars">
+          <div style="width:3px;height:3px;background:#fff;border-radius:1px"></div>
+          <div style="width:3px;height:5px;background:#fff;border-radius:1px"></div>
+          <div style="width:3px;height:7px;background:#fff;border-radius:1px"></div>
+          <div style="width:3px;height:9px;background:#fff;border-radius:1px;opacity:0.4"></div>
+        </div>
+        <div style="width:16px;height:9px;border:1px solid rgba(255,255,255,0.6);border-radius:2px;position:relative;margin-left:4px">
+          <div style="position:absolute;inset:1px;right:4px;background:#fff;border-radius:1px"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Header -->
+    <div class="page-header" style="flex-direction:column;align-items:flex-start;gap:0">
+      <h1>Active Job</h1>
+      <p class="sub">F-10, Islamabad</p>
+    </div>
+
+    <div class="screen-body p-4 flex flex-col gap-3" id="aj-body"></div>
+
+    <!-- Bottom nav -->
+    <div id="app-nav"></div>
+
+    <div id="toast" class="hidden" style="position:absolute;top:16px;left:16px;right:16px;z-index:50;background:#fff;border-left:3px solid var(--success);border:1px solid var(--border);border-radius:8px;box-shadow:0 10px 25px rgba(0,0,0,0.15);padding:12px"></div>
+  </div>
+
+  <script src="js/icons.js"></script>
+  <script src="js/data.js"></script>
+  <script src="js/app.js"></script>
+  <script>
+    const job = App.Store.get('activeJob', MOCK.ACTIVE_JOB)
+    const visitFee = App.Store.get('visitFee', job.visitFee || 285)
+    const quoteLabor = App.Store.get('quoteLabor', 1500)
+    const quoteParts = App.Store.get('quoteParts', 1200)
+    const quoteTotal = App.Store.get('quoteTotal', visitFee + quoteLabor + quoteParts)
+    const platformFee = Math.round(quoteTotal * 0.15)
+    const workerPayout = quoteTotal - platformFee
+
+    const STEPS = [
+      { key: 'visit-scheduled', label: 'Visit Scheduled', sub: `Rs. ${App.fmt(visitFee)} agreed` },
+      { key: 'on-the-way', label: 'On the Way', sub: 'Customer notified' },
+      { key: 'visit-in-progress', label: 'Arrived & Inspecting', sub: 'Diagnosing the issue' },
+      { key: 'repair-negotiating', label: 'Repair Quote Sent', sub: 'Awaiting customer approval' },
+      { key: 'repair-approved', label: 'Repair Approved', sub: `Rs. ${App.fmt(quoteTotal)} locked` },
+      { key: 'in-progress', label: 'Repair in Progress', sub: 'Work underway' },
+      { key: 'completed', label: 'Completed', sub: 'Awaiting payment' },
+      { key: 'paid', label: 'Paid', sub: `Rs. ${App.fmt(workerPayout)} payout released` },
+    ]
+    const ORDER = STEPS.map((s) => s.key)
+
+    let jobStatus = App.Store.get('jobStatus', 'visit-scheduled')
+
+    function getActionLabel() {
+      if (jobStatus === 'visit-scheduled') return { label: 'Start Visit — On My Way', next: 'on-the-way' }
+      if (jobStatus === 'on-the-way') return { label: "I've Arrived", next: 'visit-in-progress' }
+      if (jobStatus === 'visit-in-progress') return { label: 'Start Inspection', screen: 'inspection' }
+      if (jobStatus === 'repair-negotiating') return { label: 'Review Quote Status', screen: 'repair-quote' }
+      if (jobStatus === 'repair-approved') return { label: 'Start Repair', next: 'in-progress' }
+      if (jobStatus === 'in-progress') return { label: 'Mark Repair Complete', next: 'completed' }
+      if (jobStatus === 'completed') return { label: 'Confirm Cash Received', next: 'paid' }
+      return null
+    }
+
+    function canDispute() {
+      return ['repair-approved', 'in-progress', 'completed'].includes(jobStatus)
+    }
+
+    function stepper() {
+      const currentIdx = ORDER.indexOf(jobStatus)
+      let html = '<div class="card p-4"><h3 class="card-title mb-3">Job Progress</h3>'
+      STEPS.forEach((step, i) => {
+        const done = i < currentIdx
+        const active = i === currentIdx
+        html += `<div class="flex items-start gap-3">
+          <div style="display:flex;flex-direction:column;align-items:center;flex-shrink:0">
+            <div class="step-dot ${done ? 'done' : ''} ${active ? 'active' : ''}">
+              ${done ? '<span style="color:#fff;font-size:10px"><span style="width:10px;height:10px;display:inline-flex">' + ICONS.check + '</span></span>' : '<div class="dot-core"></div>'}
+            </div>
+            ${i < STEPS.length - 1 ? `<div class="step-line ${done ? 'done' : ''}"></div>` : ''}
+          </div>
+          <div style="padding-bottom:12px">
+            <p class="step-label" style="color:${active ? 'var(--navy)' : done ? 'var(--primary)' : '#CBD5E1'}">${step.label}</p>
+            <p class="step-sub" style="color:${active ? 'var(--gray)' : done ? 'var(--primary)' : '#CBD5E1'}">${step.sub}</p>
+          </div>
+        </div>`
+      })
+      return html + '</div>'
+    }
+
+    function invoice() {
+      return `
+        <div class="card" style="border-radius:8px">
+          <div class="px-4 pt-4 pb-1"><h3 class="card-title">Payment Summary</h3></div>
+          <div class="px-4 py-3">
+            <div class="flex justify-between py-2" style="border-bottom:1px solid var(--border)"><span class="txt-xs c-gray">Visit Fee</span><span class="txt-xs fw-600 c-navy">Rs. ${App.fmt(visitFee)}</span></div>
+            <div class="flex justify-between py-2" style="border-bottom:1px solid var(--border)"><span class="txt-xs c-gray">Labor</span><span class="txt-xs fw-600 c-navy">Rs. ${App.fmt(quoteLabor)}</span></div>
+            <div class="flex justify-between py-2" style="border-bottom:1px solid var(--border)"><span class="txt-xs c-gray">Parts</span><span class="txt-xs fw-600 c-navy">Rs. ${App.fmt(quoteParts)}</span></div>
+            <div class="flex justify-between pt-2 pb-1"><span class="txt-xs fw-700 c-navy">Total</span><span class="txt-sm fw-700 c-navy">Rs. ${App.fmt(quoteTotal)}</span></div>
+            <div class="flex justify-between py-1"><span class="txt-xs c-gray">Platform (15%)</span><span class="txt-xs c-gray">− Rs. ${App.fmt(platformFee)}</span></div>
+            <div class="flex justify-between py-1"><span class="txt-xs fw-700" style="color:var(--success)">Your Payout</span><span class="txt-sm fw-700" style="color:var(--success)">Rs. ${App.fmt(workerPayout)}</span></div>
+            ${jobStatus === 'paid' ? `<div class="mt-3 flex items-center gap-2 py-2 px-3" style="background:#DCFCE7;border-radius:8px">
+              <span style="width:18px;height:18px;color:var(--success)">${ICONS.checkCircle}</span>
+              <p class="txt-xs fw-600" style="color:#166534">Payment Received — Payout in 24h escrow</p>
+            </div>` : ''}
+          </div>
+        </div>`
+    }
+
+    function render() {
+      const currentIdx = ORDER.indexOf(jobStatus)
+      const a = getActionLabel()
+
+      let html = `
+        <div class="card overflow-hidden">
+          <div class="p-4">
+            <div class="flex items-start justify-between">
+              <div class="flex items-center gap-2.5">
+                <div class="category-tile" style="width:40px;height:40px;font-size:20px"><span id="aj-cat"></span></div>
+                <div>
+                  <h2 class="job-title">${job.title}</h2>
+                  <p class="job-cat">${job.customerName}</p>
+                </div>
+              </div>
+              <span id="aj-badge"></span>
+            </div>
+          </div>
+          <hr class="divider" />
+          <div class="px-4 py-3 flex gap-2">
+            <button class="btn btn-outline btn-sm flex-1" style="justify-content:center" onclick="App.showToast('Calling ${job.customerName}…')">
+              <span style="width:14px;height:14px;display:inline-flex">${ICONS.phone}</span> Call Customer
+            </button>
+            <button class="btn btn-outline btn-sm flex-1" style="justify-content:center" onclick="App.showToast('Opening chat with ${job.customerName}…')">
+              <span style="width:14px;height:14px;display:inline-flex">${ICONS.chat}</span> Chat
+            </button>
+          </div>
+          <hr class="divider" />
+          <div class="px-4 py-3 flex items-center gap-1.5 txt-xs c-gray">
+            <span style="width:14px;height:14px;display:inline-flex">${ICONS.mapPin}</span>
+            <span>${job.exactAddress || job.area}</span>
+          </div>
+        </div>`
+
+      if (jobStatus === 'repair-approved') {
+        html += `
+          <div class="warn-banner">
+            <span style="width:16px;height:16px;flex-shrink:0;color:var(--warning)">${ICONS.shield}</span>
+            <p><strong>Safety Notice:</strong> Customer has approved the repair. You may now begin work.</p>
+          </div>`
+      }
+
+      html += stepper()
+
+      if (jobStatus === 'completed' || jobStatus === 'paid') html += invoice()
+
+      if (a) {
+        const color = a.next === 'paid' ? 'var(--success)' : 'var(--primary)'
+        html += `<button class="btn" style="background:${color}" onclick="${a.screen ? `location.href='${a.screen}.html'` : `advance('${a.next}')`}">${a.label}</button>`
+      }
+
+      if (jobStatus === 'paid') {
+        html += `
+          <div class="card p-3 flex items-center justify-between" style="background:var(--primary-light);border:1px solid var(--primary);border-radius:8px;margin-top:6px">
+            <p class="txt-xs c-navy">You can now rate this customer.</p>
+            <button class="txt-xs fw-700 c-primary" onclick="location.href='reviews.html'">Rate Customer →</button>
+          </div>`
+      }
+
+      if (canDispute()) {
+        html += `<button class="btn btn-danger-outline" style="background:#fff;border-radius:8px" onclick="openDispute()"><span style="width:16px;height:16px">${ICONS.alertTriangle}</span> Raise a Dispute</button>`
+      }
+
+      $('#aj-body').innerHTML = html
+      $('#aj-cat').textContent = App.categoryIcon(job.category)
+      $('#aj-badge').innerHTML = App.statusBadge(jobStatus)
+    }
+
+    function advance(next) {
+      jobStatus = next
+      App.Store.set('jobStatus', next)
+      if (next === 'paid') App.showToast('Cash payment confirmed. Payout will be released within 24 hours.')
+      render()
+    }
+
+    function openDispute() {
+      const overlay = document.createElement('div')
+      overlay.className = 'modal-overlay'
+      overlay.id = 'dispute-modal'
+      overlay.innerHTML = `
+        <div class="modal-sheet" onclick="event.stopPropagation()">
+          <div class="modal-handle"><div class="bar"></div></div>
+          <div class="px-4 pb-2">
+            <h2 class="txt-base fw-600 c-navy">Raise a Dispute</h2>
+            <p class="txt-xs mt-1 c-gray">Describe the issue clearly. Admin will review the case and contact both parties.</p>
+          </div>
+          <hr class="divider my-3" />
+          <div class="px-4 flex flex-col gap-4 pb-6">
+            <div class="field">
+              <label>Reason for Dispute</label>
+              <select id="dispute-reason">
+                <option value="">Select a reason…</option>
+                <option>Customer refusing to pay</option>
+                <option>Customer made false claims</option>
+                <option>Scope of work disagreement</option>
+                <option>Quality dispute raised by customer</option>
+                <option>Other</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Describe the issue</label>
+              <textarea id="dispute-desc" rows="4" placeholder="Provide a clear description of the problem..." style="width:100%"></textarea>
+            </div>
+            <div class="upload-box" onclick="App.showToast('File upload is simulated in this demo.')">
+              <span style="width:24px;height:24px">${ICONS.upload}</span>
+              <p>Tap to upload files · JPG, PNG, PDF (max 5)</p>
+            </div>
+            <button class="btn" onclick="submitDispute()">Submit Dispute</button>
+            <button class="btn btn-ghost" style="width:100%;text-align:center" onclick="closeDispute()">Cancel</button>
+          </div>
+        </div>`
+      document.querySelector('.app-frame').appendChild(overlay)
+    }
+
+    function closeDispute() {
+      const m = $('#dispute-modal')
+      if (m) m.remove()
+    }
+
+    function submitDispute() {
+      const reason = $('#dispute-reason').value
+      const desc = $('#dispute-desc').value
+      if (!reason || !desc) { App.showToast('Please fill reason and description.', 'error'); return }
+      closeDispute()
+      App.showToast('Your dispute has been submitted. Admin will review within 24 hours.')
+    }
+
+    render()
+  </script>
+</body>
+</html>

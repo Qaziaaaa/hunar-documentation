@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HUNAR — Earnings</title>
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body class="frame-full" data-nav="earnings">
+  <div class="app-frame">
+    <div class="status-bar">
+      <span>9:41</span>
+      <div class="status-icons">
+        <div class="signal-bars">
+          <div style="width:3px;height:3px;background:#fff;border-radius:1px"></div>
+          <div style="width:3px;height:5px;background:#fff;border-radius:1px"></div>
+          <div style="width:3px;height:7px;background:#fff;border-radius:1px"></div>
+          <div style="width:3px;height:9px;background:#fff;border-radius:1px;opacity:0.4"></div>
+        </div>
+        <div style="width:16px;height:9px;border:1px solid rgba(255,255,255,0.6);border-radius:2px;position:relative;margin-left:4px">
+          <div style="position:absolute;inset:1px;right:4px;background:#fff;border-radius:1px"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Header -->
+    <header style="background:var(--navy);padding:24px 16px 16px;flex-shrink:0">
+      <h1 class="txt-base fw-700 c-white mb-3" style="letter-spacing:-0.015em">Earnings</h1>
+
+      <div class="rounded-md p-3.5 mb-3" style="background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.1);border-radius:8px">
+        <p class="txt-xs" style="color:#94A3B8">This Week's Earnings</p>
+        <p class="txt-2xl fw-700 c-white mt-0.5" id="weekly-total">Rs. 8,587</p>
+        <div class="flex items-center gap-1.5 mt-1">
+          <span style="width:14px;height:14px;color:#4ADE80;display:inline-flex">${ICONS.trending}</span>
+          <span class="txt-xs fw-600" style="color:#4ADE80">+23%</span>
+          <span class="txt-xs" style="color:#94A3B8">vs last week</span>
+        </div>
+      </div>
+
+      <div class="grid-3 gap-2">
+        <div class="stat-card" style="padding:8px 4px">
+          <p class="stat-value c-white">18</p>
+          <p class="stat-label">Jobs Done</p>
+        </div>
+        <div class="stat-card" style="padding:8px 4px">
+          <p class="stat-value" style="color:var(--warning)">4.8 ★</p>
+          <p class="stat-label">Avg Rating</p>
+        </div>
+        <div class="stat-card" style="padding:8px 4px">
+          <p class="stat-value" style="color:var(--success)">96%</p>
+          <p class="stat-label">Completion</p>
+        </div>
+      </div>
+    </header>
+
+    <!-- Tab Bar -->
+    <div class="tab-bar">
+      <button class="tab-btn active" id="tab-payout-btn" onclick="setTab('payout')">Payout Tracker</button>
+      <button class="tab-btn" id="tab-history-btn" onclick="setTab('history')">Completed Jobs</button>
+    </div>
+
+    <div class="screen-body p-4" id="earn-body"></div>
+
+    <div id="app-nav"></div>
+
+    <div id="toast" class="hidden" style="position:absolute;top:16px;left:16px;right:16px;z-index:50;background:#fff;border-left:3px solid var(--success);border:1px solid var(--border);border-radius:8px;box-shadow:0 10px 25px rgba(0,0,0,0.15);padding:12px"></div>
+  </div>
+
+  <script src="js/icons.js"></script>
+  <script src="js/data.js"></script>
+  <script src="js/app.js"></script>
+  <script>
+    const completedJobs = MOCK.COMPLETED_JOBS || []
+    const weeklySum = completedJobs.reduce((s, j) => s + j.amount, 0)
+    $('#weekly-total').textContent = 'Rs. ' + App.fmt(weeklySum)
+
+    let currentTab = 'payout'
+
+    const weeklyBars = [40, 65, 30, 80, 55, 90, 45, 100, 70, 85, 60, 95, 50, 75, 88]
+
+    function setTab(t) {
+      currentTab = t
+      $('#tab-payout-btn').classList.toggle('active', t === 'payout')
+      $('#tab-history-btn').classList.toggle('active', t === 'history')
+      renderContent()
+    }
+
+    function renderContent() {
+      const container = $('#earn-body')
+      if (currentTab === 'payout') {
+        container.innerHTML = `
+          <!-- Pending Escrow -->
+          <div class="card overflow-hidden mb-3">
+            <div class="px-4 pt-3.5 pb-1 flex items-center justify-between">
+              <h3 class="card-title">Pending Payout</h3>
+              <span class="badge badge-offer" style="background:#FEF9C3;color:#854D0E">IN ESCROW 22H</span>
+            </div>
+            <div class="px-4 py-3">
+              <p class="txt-xl fw-700 c-primary">Rs. 2,537</p>
+              <p class="txt-xs c-gray mt-0.5">Leaking Main Valve · Ahmed Raza</p>
+              <hr class="divider my-3" />
+              <div class="flex justify-between py-1"><span class="txt-xs c-gray">Total Job Value</span><span class="txt-xs fw-600 c-navy">Rs. 2,985</span></div>
+              <div class="flex justify-between py-1"><span class="txt-xs c-gray">Platform Commission (15%)</span><span class="txt-xs c-gray">− Rs. 448</span></div>
+              <div class="flex justify-between py-1"><span class="txt-xs fw-700 c-navy">Your Payout</span><span class="txt-xs fw-700 c-primary">Rs. 2,537</span></div>
+            </div>
+          </div>
+
+          <!-- Monthly Chart -->
+          <div class="card overflow-hidden mb-3">
+            <div class="px-4 pt-3.5 pb-1 flex items-center justify-between">
+              <h3 class="card-title">This Month</h3>
+              <span class="badge badge-success">+18%</span>
+            </div>
+            <div class="px-4 py-3">
+              <div class="flex items-end gap-1" style="height:70px">
+                ${weeklyBars.map((h, i) => `
+                  <div style="flex:1;height:${h}%;background:${i === 14 ? 'var(--primary)' : 'var(--border)'};border-top-left-radius:2px;border-top-right-radius:2px"></div>
+                `).join('')}
+              </div>
+              <div class="flex justify-between mt-2">
+                <span class="txt-xs c-gray" style="font-size:10px">Sep 1</span>
+                <span class="txt-xs c-gray" style="font-size:10px">Today</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Payment Methods -->
+          <div class="card overflow-hidden mb-4">
+            <div class="px-4 pt-3.5 pb-1 flex items-center justify-between">
+              <h3 class="card-title">Payment Methods Accepted</h3>
+              <button class="txt-xs fw-700 c-primary" onclick="App.showToast('Add payout method')">+ Add</button>
+            </div>
+            <div class="px-4 py-2">
+              <div class="flex items-center justify-between py-2.5" style="border-bottom:1px solid var(--border)">
+                <div>
+                  <p class="txt-xs fw-600 c-navy">JazzCash</p>
+                  <p class="txt-xs c-gray" style="font-size:10px">Linked · 0321-XXXXXXX</p>
+                </div>
+                <span class="badge badge-approved">ACTIVE</span>
+              </div>
+              <div class="flex items-center justify-between py-2.5" style="border-bottom:1px solid var(--border)">
+                <div>
+                  <p class="txt-xs fw-600 c-navy">Easypaisa</p>
+                  <p class="txt-xs c-gray" style="font-size:10px">Not linked</p>
+                </div>
+                <span class="badge" style="background:var(--border);color:var(--gray)">INACTIVE</span>
+              </div>
+              <div class="flex items-center justify-between py-2.5">
+                <div>
+                  <p class="txt-xs fw-600 c-navy">Bank Transfer</p>
+                  <p class="txt-xs c-gray" style="font-size:10px">MCB · XXXX-1234</p>
+                </div>
+                <span class="badge badge-approved">ACTIVE</span>
+              </div>
+            </div>
+          </div>
+
+          <button class="btn btn-outline" style="width:100%" onclick="App.showToast('Withdrawal request submitted — funds arrive within 24h.')">Withdraw Balance</button>
+          <div class="h-10"></div>
+        `
+      } else {
+        container.innerHTML = `
+          <div class="card overflow-hidden mb-4">
+            ${completedJobs.map((j, i) => `
+              <div class="px-4 py-3 flex items-center justify-between" style="${i < completedJobs.length - 1 ? 'border-bottom:1px solid var(--border)' : ''}">
+                <div style="flex:1">
+                  <p class="txt-xs fw-600 c-navy">${j.title}</p>
+                  <p class="txt-xs c-gray" style="font-size:10px;margin-top:2px">${j.customer} · ${j.date}</p>
+                  <div class="flex items-center gap-1 mt-1">${App.stars(j.rating)}</div>
+                </div>
+                <div class="text-right">
+                  <p class="txt-sm fw-700 c-primary">Rs. ${App.fmt(j.amount)}</p>
+                  <p class="txt-xs c-gray" style="font-size:10px">${j.id}</p>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+          <div class="h-10"></div>
+        `
+      }
+    }
+
+    renderContent()
+  </script>
+</body>
+</html>

@@ -1,0 +1,227 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HUNAR — Profile</title>
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body class="frame-full" data-nav="profile">
+  <div class="app-frame">
+    <div class="status-bar">
+      <span>9:41</span>
+      <div class="status-icons">
+        <div class="signal-bars">
+          <div style="width:3px;height:3px;background:#fff;border-radius:1px"></div>
+          <div style="width:3px;height:5px;background:#fff;border-radius:1px"></div>
+          <div style="width:3px;height:7px;background:#fff;border-radius:1px"></div>
+          <div style="width:3px;height:9px;background:#fff;border-radius:1px;opacity:0.4"></div>
+        </div>
+        <div style="width:16px;height:9px;border:1px solid rgba(255,255,255,0.6);border-radius:2px;position:relative;margin-left:4px">
+          <div style="position:absolute;inset:1px;right:4px;background:#fff;border-radius:1px"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Header -->
+    <div style="background:var(--navy);padding:24px 16px 20px;text-align:center;flex-shrink:0">
+      <div style="position:relative;display:inline-block;margin-bottom:10px">
+        <img
+          src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=96&h=96&fit=crop"
+          alt="Usman Malik"
+          style="width:80px;height:80px;border-radius:20px;object-fit:cover;border:2.5px solid var(--primary)"
+        />
+        <span style="position:absolute;bottom:-4px;right:-4px;width:22px;height:22px;background:var(--primary);border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:700;border:2px solid var(--navy)">
+          ✓
+        </span>
+      </div>
+      <h1 class="txt-base fw-700 c-white">Usman Malik</h1>
+      <p class="txt-xs" style="color:#94A3B8;margin-top:2px">Multi-Skill Technician · 8 years experience</p>
+      <div class="flex items-center justify-center gap-1.5 mt-2">
+        <div class="flex items-center gap-1">${App.stars(5)}</div>
+        <span class="txt-xs fw-600" style="color:#CBD5E1">4.8 (94 reviews)</span>
+      </div>
+    </div>
+
+    <div class="screen-body p-4" id="prof-body">
+      <!-- Quick Stats -->
+      <div class="grid-2 gap-2.5 mb-3">
+        <div class="card p-3 text-center">
+          <p class="txt-base fw-700 c-primary">18</p>
+          <p class="txt-xs c-gray" style="font-size:10px">Jobs Completed</p>
+        </div>
+        <div class="card p-3 text-center">
+          <p class="txt-base fw-700 c-warning">97%</p>
+          <p class="txt-xs c-gray" style="font-size:10px">Acceptance Rate</p>
+        </div>
+      </div>
+
+      <!-- Skills & Trades -->
+      <div class="card overflow-hidden mb-3">
+        <div class="px-4 py-3 flex items-center justify-between" style="border-bottom:1px solid var(--border)">
+          <h3 class="card-title">Skills & Trades</h3>
+          <button class="txt-xs fw-700 c-primary" onclick="openSkillsModal()">Edit</button>
+        </div>
+        <div class="px-4 py-3">
+          <div class="flex gap-2 flex-wrap" id="skill-tags"></div>
+        </div>
+      </div>
+
+      <!-- Service Area -->
+      <div class="card overflow-hidden mb-3">
+        <div class="px-4 py-3 flex items-center justify-between" style="border-bottom:1px solid var(--border)">
+          <h3 class="card-title">Service Area</h3>
+          <button class="txt-xs fw-700 c-primary" onclick="App.showToast('Location editor')">Edit</button>
+        </div>
+        <div class="px-4 py-3">
+          <div class="flex items-center gap-2 txt-xs c-gray mb-2.5">
+            <span style="width:14px;height:14px;color:var(--primary);display:inline-flex">${ICONS.mapPin}</span>
+            <span>F-10, G-9, I-8, F-11 — Islamabad</span>
+          </div>
+          <div style="border-radius:10px;overflow:hidden;height:84px;border:1px solid var(--border);position:relative">
+            <img
+              src="https://images.unsplash.com/photo-1569336415962-a4bd9f69cd83?w=360&h=100&fit=crop"
+              alt="Service area map"
+              style="width:100%;height:100%;object-fit:cover"
+            />
+            <div style="position:absolute;inset:0;background:rgba(15,23,42,0.15);display:flex;align-items:center;justify-content:center">
+              <span class="badge" style="background:#fff;color:var(--navy);font-weight:700">5 km radius</span>
+            </div>
+          </div>
+          <p class="txt-xs c-gray mt-2" style="font-size:10px">Default visit fee: Rs. 300 · Auto-detect GPS on</p>
+        </div>
+      </div>
+
+      <!-- Verification Status -->
+      <div class="card overflow-hidden mb-3">
+        <div class="px-4 py-3" style="border-bottom:1px solid var(--border)">
+          <h3 class="card-title">Verification & Trust</h3>
+        </div>
+        <div class="px-4 py-2 flex flex-col gap-2.5">
+          <div class="flex items-center justify-between py-1">
+            <div class="flex items-center gap-2">
+              <span style="width:18px;height:18px;color:var(--success);display:inline-flex">${ICONS.checkCircle}</span>
+              <span class="txt-xs fw-600 c-navy">CNIC Verified</span>
+            </div>
+            <span class="badge badge-approved">VERIFIED</span>
+          </div>
+          <div class="flex items-center justify-between py-1">
+            <div class="flex items-center gap-2">
+              <span style="width:18px;height:18px;color:var(--success);display:inline-flex">${ICONS.checkCircle}</span>
+              <span class="txt-xs fw-600 c-navy">Phone Verified</span>
+            </div>
+            <span class="badge badge-approved">VERIFIED</span>
+          </div>
+          <div class="flex items-center justify-between py-1">
+            <div class="flex items-center gap-2">
+              <span style="width:18px;height:18px;color:var(--success);display:inline-flex">${ICONS.checkCircle}</span>
+              <span class="txt-xs fw-600 c-navy">Trade Certificate</span>
+            </div>
+            <span class="badge badge-approved">VERIFIED</span>
+          </div>
+          <div class="flex items-center justify-between py-1">
+            <div class="flex items-center gap-2">
+              <span style="width:18px;height:18px;color:var(--success);display:inline-flex">${ICONS.checkCircle}</span>
+              <span class="txt-xs fw-600 c-navy">Background Check</span>
+            </div>
+            <span class="badge badge-approved">CLEAR</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Settings Menu -->
+      <div class="card overflow-hidden mb-3">
+        <div class="menu-row" onclick="App.showToast('Edit Profile modal')">
+          <span class="menu-icon">${ICONS.user}</span>Edit Profile
+          <span style="margin-left:auto;color:var(--gray)">${ICONS.chevronRight}</span>
+        </div>
+        <div class="menu-row" onclick="App.showToast('Notification preferences')">
+          <span class="menu-icon">${ICONS.bell}</span>Notification Settings
+          <span style="margin-left:auto;color:var(--gray)">${ICONS.chevronRight}</span>
+        </div>
+        <div class="menu-row" onclick="location.href='earnings.html'">
+          <span class="menu-icon">${ICONS.wallet}</span>Payment Account & Escrow
+          <span style="margin-left:auto;color:var(--gray)">${ICONS.chevronRight}</span>
+        </div>
+        <div class="menu-row" onclick="App.showToast('HUNAR Support Desk: support@hunar.pk')">
+          <span class="menu-icon">${ICONS.chat}</span>Help & Support
+          <span style="margin-left:auto;color:var(--gray)">${ICONS.chevronRight}</span>
+        </div>
+        <div class="menu-row" style="color:var(--error)" onclick="App.showToast('Logged out successfully.')">
+          <span class="menu-icon" style="color:var(--error)">${ICONS.alertTriangle}</span>Sign Out
+        </div>
+      </div>
+
+      <div class="h-10"></div>
+    </div>
+
+    <div id="app-nav"></div>
+
+    <div id="toast" class="hidden" style="position:absolute;top:16px;left:16px;right:16px;z-index:50;background:#fff;border-left:3px solid var(--success);border:1px solid var(--border);border-radius:8px;box-shadow:0 10px 25px rgba(0,0,0,0.15);padding:12px"></div>
+  </div>
+
+  <script src="js/icons.js"></script>
+  <script src="js/data.js"></script>
+  <script src="js/app.js"></script>
+  <script>
+    let userSkills = App.Store.get('workerSkills', ['Plumbing', 'AC Repair', 'Drain Cleaning', 'Pipe Fitting'])
+
+    function renderSkills() {
+      $('#skill-tags').innerHTML = userSkills
+        .map((s) => `<span class="tag" style="background:var(--primary-light);color:#115E59;border:1px solid #99F6E4;border-radius:999px;padding:6px 12px;font-size:11px;font-weight:600">✓ ${s}</span>`)
+        .join('')
+    }
+
+    renderSkills()
+
+    function openSkillsModal() {
+      const allSkills = ['Plumbing', 'AC Repair', 'Electrician', 'Carpenter', 'Drain Cleaning', 'Pipe Fitting', 'Appliance Repair', 'Painting']
+      const overlay = document.createElement('div')
+      overlay.className = 'modal-overlay'
+      overlay.id = 'skills-modal'
+      overlay.innerHTML = `
+        <div class="modal-sheet" onclick="event.stopPropagation()">
+          <div class="modal-handle"><div class="bar"></div></div>
+          <div class="px-4 pb-2">
+            <h2 class="txt-base fw-700 c-navy">Edit Your Skills</h2>
+            <p class="txt-xs mt-0.5 c-gray">Select the services you are certified to provide.</p>
+          </div>
+          <hr class="divider my-3" />
+          <div class="px-4 pb-6">
+            <div class="flex gap-2 flex-wrap mb-4" id="skill-chips-edit">
+              ${allSkills.map((s) => `
+                <button class="chip ${userSkills.includes(s) ? 'chip-dark' : ''}" onclick="toggleSkillTag(this, '${s}')">${s}</button>
+              `).join('')}
+            </div>
+            <button class="btn" onclick="saveSkills()">Save Skills</button>
+            <button class="btn btn-ghost" style="width:100%;text-align:center" onclick="closeSkillsModal()">Cancel</button>
+          </div>
+        </div>`
+      document.querySelector('.app-frame').appendChild(overlay)
+    }
+
+    function toggleSkillTag(btn, s) {
+      const idx = userSkills.indexOf(s)
+      if (idx > -1) {
+        userSkills.splice(idx, 1)
+        btn.classList.remove('chip-dark')
+      } else {
+        userSkills.push(s)
+        btn.classList.add('chip-dark')
+      }
+    }
+
+    function closeSkillsModal() {
+      const m = $('#skills-modal')
+      if (m) m.remove()
+    }
+
+    function saveSkills() {
+      App.Store.set('workerSkills', userSkills)
+      closeSkillsModal()
+      renderSkills()
+      App.showToast('Skills updated successfully.')
+    }
+  </script>
+</body>
+</html>
