@@ -23,197 +23,16 @@
             }
         }
         ::-webkit-scrollbar {
-            display: none;
+            width: 6px;
+            height: 6px;
         }
-
-        /* ===== SIDEBAR FIX ===== */
-        :root {
-            --sidebar-width: 260px;
-            --header-height: 64px;
-        }
-
-        .sidebar {
-            position: fixed;
-            left: 0;
-            top: 0;
-            bottom: 0;
-            width: var(--sidebar-width);
-            background: #fff;
-            border-right: 1px solid #E2E8F0;
-            z-index: 50;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            user-select: none;
-            overflow: hidden;
-        }
-
-        /* Main content wrapper — pushes right of sidebar */
-        .main-wrapper {
-            margin-left: var(--sidebar-width);
-            min-height: 100vh;
-            background: #F8FAFC;
-            width: calc(100% - var(--sidebar-width));
-            transition: margin-left 0.3s ease, width 0.3s ease;
-        }
-
-        /* Header fixed — offset by sidebar width */
-        .top-header {
-            position: fixed;
-            top: 0;
-            left: var(--sidebar-width);
-            right: 0;
-            height: var(--header-height);
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(12px);
-            border-bottom: 1px solid #E2E8F0;
-            z-index: 40;
-            padding: 0 24px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            transition: left 0.3s ease, right 0.3s ease;
-        }
-
-        /* Main content area — padded below fixed header */
-        .main-content {
-            padding-top: var(--header-height);
-            width: 100%;
-            min-height: 100vh;
-            background: #F8FAFC;
-        }
-
-        /* Ambient glow container */
-        .page-container {
-            position: relative;
-            width: 100%;
-            overflow: hidden;
-            padding: 24px;
-            display: flex;
-            flex-direction: column;
-            gap: 24px;
-        }
-
-        /* ===== MOBILE RESPONSIVE ===== */
-        @media (max-width: 1024px) {
-            :root {
-                --sidebar-width: 0px;
-            }
-
-            .sidebar {
-                width: 260px;
-                transform: translateX(-100%);
-                transition: transform 0.3s ease;
-                box-shadow: 4px 0 24px rgba(0, 0, 0, 0.08);
-            }
-
-            .sidebar.open {
-                transform: translateX(0);
-            }
-
-            .main-wrapper {
-                margin-left: 0;
-                width: 100%;
-            }
-
-            .top-header {
-                left: 0;
-                right: 0;
-                padding: 0 16px;
-            }
-
-            /* Mobile menu toggle */
-            .mobile-menu-toggle {
-                display: flex !important;
-            }
-
-            .sidebar-overlay {
-                display: none;
-                position: fixed;
-                inset: 0;
-                background: rgba(0, 0, 0, 0.3);
-                z-index: 45;
-            }
-            .sidebar-overlay.active {
-                display: block;
-            }
-
-            .page-container {
-                padding: 16px;
-                gap: 16px;
-            }
-        }
-
-        @media (max-width: 640px) {
-            .top-header {
-                padding: 0 12px;
-                height: 56px;
-            }
-            :root {
-                --header-height: 56px;
-            }
-
-            .page-container {
-                padding: 12px;
-                gap: 12px;
-            }
-
-            /* Hide search on very small screens */
-            .header-search {
-                display: none;
-            }
-
-            .header-breadcrumb {
-                display: none;
-            }
-
-            .live-indicator {
-                display: none;
-            }
-
-            /* KPI cards stack */
-            .kpi-grid {
-                grid-template-columns: 1fr !important;
-            }
-        }
-
-        .mobile-menu-toggle {
-            display: none;
-            align-items: center;
-            justify-content: center;
-            width: 40px;
-            height: 40px;
-            border-radius: 8px;
+        ::-webkit-scrollbar-track {
             background: transparent;
-            border: none;
-            color: #1A1A2E;
-            cursor: pointer;
-            flex-shrink: 0;
         }
-        .mobile-menu-toggle:hover {
-            background: #F8FAFC;
+        ::-webkit-scrollbar-thumb {
+            background: #CBD5E1;
+            border-radius: 9999px;
         }
-
-        /* ===== UTILITY OVERRIDES ===== */
-        .kpi-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 16px;
-        }
-
-        @media (max-width: 1280px) {
-            .kpi-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
-        }
-
-        @media (max-width: 640px) {
-            .kpi-grid {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        /* Ensure chart containers don't overflow */
         .chart-container {
             position: relative;
             width: 100%;
@@ -222,25 +41,6 @@
         .chart-container svg {
             width: 100%;
             height: 100%;
-        }
-
-        /* Table responsiveness */
-        .table-responsive {
-            width: 100%;
-            overflow-x: auto;
-            -webkit-overflow-scrolling: touch;
-        }
-        .table-responsive table {
-            min-width: 600px;
-        }
-
-        /* Prevent horizontal overflow anywhere */
-        * {
-            max-width: 100%;
-            box-sizing: border-box;
-        }
-        img, svg {
-            max-width: 100%;
         }
     </style>
 
@@ -417,107 +217,149 @@
     </script>
 </head>
 
-<body class="bg-[#F8FAFC] font-body-md text-[#1A1A2E] min-h-full antialiased">
+<body class="bg-white font-body-md text-[#172033] min-h-full antialiased">
 
-    <!-- ============================================================
-    SIDEBAR — FIXED
-    ============================================================ -->
-    <aside class="sidebar" id="sidebar">
-        <div class="flex flex-col h-full overflow-hidden">
-            <!-- Logo -->
-            <div class="h-16 px-6 flex items-center gap-3 border-b border-[#E2E8F0] shrink-0">
-                <div class="h-9 w-9 rounded-lg bg-[#1A1A2E] flex items-center justify-center shadow-sm shrink-0">
-                    <span class="font-heading font-extrabold text-[#0F766E] text-xl leading-none">H</span>
-                </div>
-                <div class="flex flex-col">
-                    <div class="flex items-center gap-1.5">
-                        <span class="font-heading font-bold text-[16px] text-[#1A1A2E] leading-tight tracking-tight">HUNAR</span>
-                        <span class="px-1 py-0.5 rounded text-[10px] font-bold bg-[#0F766E]/10 text-[#0F766E] tracking-wide">PRO</span>
+    <!-- SIDEBAR (Modern, Crisp White with Brand Navy Accents & Clear Hierarchy) -->
+    <aside class="hidden lg:flex fixed left-0 top-0 h-screen w-64 bg-white border-r border-[#E2E8F0] z-50 flex-col justify-between shadow-[1px_0_10px_rgba(0,0,0,0.02)]">
+        <div class="flex flex-col flex-1 overflow-y-auto px-4 py-5">
+            <!-- Logo Header -->
+            <div class="flex items-center justify-between pb-5 border-b border-[#E2E8F0] mb-5">
+                <a href="../../Abdullah desigens customer + landing page/landing page/code.html" class="flex items-center gap-3 group hover:opacity-90 transition-opacity no-underline" title="Back to Landing Page">
+                    <div class="w-10 h-10 rounded-xl bg-[#123B5D] flex items-center justify-center text-white font-extrabold text-xl shadow-sm tracking-tight relative group-hover:scale-105 transition-transform">
+                        <span>H</span>
+                        <span class="w-2.5 h-2.5 rounded-full bg-[#0F8B8D] absolute bottom-1 right-1 border-2 border-white"></span>
                     </div>
-                    <span class="text-[11px] font-medium text-[#64748B]">Admin Panel</span>
-                </div>
-            </div>
-
-            <!-- Nav Links -->
-            <div class="flex-1 overflow-y-auto px-3 py-4">
-                <nav class="flex flex-col gap-1">
-                    <a class="flex items-center gap-3 px-3 py-2 rounded-lg text-[#64748B] hover:bg-[#F8FAFC] hover:text-[#1A1A2E] transition-all group" href="#">
-                        <span class="material-symbols-outlined text-[20px] text-[#64748B] group-hover:text-[#1A1A2E] transition-colors">dashboard</span>
-                        <span class="text-[14px] font-medium">Dashboard</span>
-                    </a>
-                    <a class="flex items-center gap-3 px-3 py-2 rounded-lg text-[#64748B] hover:bg-[#F8FAFC] hover:text-[#1A1A2E] transition-all group" href="#">
-                        <span class="material-symbols-outlined text-[20px] text-[#64748B] group-hover:text-[#1A1A2E] transition-colors">group</span>
-                        <span class="text-[14px] font-medium">Users</span>
-                    </a>
-                    <a class="flex items-center gap-3 px-3 py-2 rounded-lg text-[#64748B] hover:bg-[#F8FAFC] hover:text-[#1A1A2E] transition-all group" href="#">
-                        <span class="material-symbols-outlined text-[20px] text-[#64748B] group-hover:text-[#1A1A2E] transition-colors">work</span>
-                        <span class="text-[14px] font-medium">Jobs</span>
-                    </a>
-                    <a class="flex items-center gap-3 px-3 py-2 rounded-lg text-[#64748B] hover:bg-[#F8FAFC] hover:text-[#1A1A2E] transition-all group" href="#">
-                        <span class="material-symbols-outlined text-[20px] text-[#64748B] group-hover:text-[#1A1A2E] transition-colors">verified_user</span>
-                        <span class="text-[14px] font-medium">Verification</span>
-                    </a>
-                    <a class="flex items-center gap-3 px-3 py-2 rounded-lg text-[#64748B] hover:bg-[#F8FAFC] hover:text-[#1A1A2E] transition-all group" href="#">
-                        <span class="material-symbols-outlined text-[20px] text-[#64748B] group-hover:text-[#1A1A2E] transition-colors">payments</span>
-                        <span class="text-[14px] font-medium">Payments</span>
-                    </a>
-                    <a class="flex items-center gap-3 px-3 py-2 rounded-lg text-[#64748B] hover:bg-[#F8FAFC] hover:text-[#1A1A2E] transition-all group" href="#">
-                        <span class="material-symbols-outlined text-[20px] text-[#64748B] group-hover:text-[#1A1A2E] transition-colors">gavel</span>
-                        <span class="text-[14px] font-medium">Disputes</span>
-                    </a>
-                    <a class="flex items-center gap-3 px-3 py-2 rounded-lg text-[#64748B] hover:bg-[#F8FAFC] hover:text-[#1A1A2E] transition-all group" href="#">
-                        <span class="material-symbols-outlined text-[20px] text-[#64748B] group-hover:text-[#1A1A2E] transition-colors">star_half</span>
-                        <span class="text-[14px] font-medium">Reviews</span>
-                    </a>
-                    <a class="flex items-center gap-3 px-3 py-2 rounded-lg text-[#64748B] hover:bg-[#F8FAFC] hover:text-[#1A1A2E] transition-all group" href="#">
-                        <span class="material-symbols-outlined text-[20px] text-[#64748B] group-hover:text-[#1A1A2E] transition-colors">category</span>
-                        <span class="text-[14px] font-medium">Categories</span>
-                    </a>
-                    <a class="flex items-center gap-3 px-3 py-2 rounded-lg text-[#64748B] hover:bg-[#F8FAFC] hover:text-[#1A1A2E] transition-all group" href="#">
-                        <span class="material-symbols-outlined text-[20px] text-[#64748B] group-hover:text-[#1A1A2E] transition-colors">location_on</span>
-                        <span class="text-[14px] font-medium">Locations</span>
-                    </a>
-                    <a class="flex items-center justify-between px-3 py-2 rounded-lg text-[#64748B] hover:bg-[#F8FAFC] hover:text-[#1A1A2E] transition-all group" href="#">
-                        <div class="flex items-center gap-3">
-                            <span class="material-symbols-outlined text-[20px] text-[#64748B] group-hover:text-[#1A1A2E] transition-colors">report</span>
-                            <span class="text-[14px] font-medium">Reports</span>
+                    <div class="flex flex-col">
+                        <div class="flex items-center gap-1.5 leading-tight">
+                            <span class="font-extrabold text-[17px] tracking-tight text-[#172033]">HUNAR</span>
+                            <span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-[#123B5D]/5 text-[#123B5D] uppercase tracking-wider border border-[#123B5D]/15">ADMIN</span>
                         </div>
-                        <span class="px-1.5 py-0.5 rounded-full text-[11px] font-semibold bg-[#DC2626]/10 text-[#DC2626]">3</span>
-                    </a>
-                    <a class="flex items-center gap-3 px-3 py-2 rounded-lg text-[#64748B] hover:bg-[#F8FAFC] hover:text-[#1A1A2E] transition-all group" href="#">
-                        <span class="material-symbols-outlined text-[20px] text-[#64748B] group-hover:text-[#1A1A2E] transition-colors">notifications</span>
-                        <span class="text-[14px] font-medium">Notifications</span>
-                    </a>
-                    <a aria-current="page" class="flex items-center gap-3 px-3 py-2 rounded-lg transition-all group bg-[#0F766E] text-white font-medium shadow-sm" href="#">
-                        <span class="material-symbols-outlined text-[20px] text-white">insights</span>
-                        <span class="text-[14px] font-semibold text-white">Analytics</span>
-                    </a>
-                    <a class="flex items-center gap-3 px-3 py-2 rounded-lg text-[#64748B] hover:bg-[#F8FAFC] hover:text-[#1A1A2E] transition-all group" href="#">
-                        <span class="material-symbols-outlined text-[20px] text-[#64748B] group-hover:text-[#1A1A2E] transition-colors">loyalty</span>
-                        <span class="text-[14px] font-medium">Promotions</span>
-                    </a>
-                    <a class="flex items-center gap-3 px-3 py-2 rounded-lg text-[#64748B] hover:bg-[#F8FAFC] hover:text-[#1A1A2E] transition-all group" href="#">
-                        <span class="material-symbols-outlined text-[20px] text-[#64748B] group-hover:text-[#1A1A2E] transition-colors">settings</span>
-                        <span class="text-[14px] font-medium">Settings</span>
-                    </a>
-                </nav>
+                        <p class="text-[11px] font-medium text-[#64748B]">Certified Pro Marketplace</p>
+                    </div>
+                </a>
             </div>
-        </div>
-
-        <!-- Profile Footer -->
-        <div class="p-3 border-t border-[#E2E8F0] shrink-0 bg-white">
-            <div class="flex items-center justify-between p-2 rounded-lg hover:bg-[#F8FAFC] transition-colors">
-                <div class="flex items-center gap-2 min-w-0">
-                    <img alt="Profile" class="w-8 h-8 rounded-full object-cover shrink-0 border border-[#E2E8F0]"
-                        src="https://lh3.googleusercontent.com/aida-public/AB6AXuAXas7fZzpW4163X7NLUzKmhnX6gy0_Ad6BSJlRElpe-y10GJAjPCoXyyyszmqNk7-6FK6cYxvzx3TxU_uYuruvi_xLLiUGI-lxM2sLXGIgvlc1QIoxISWs7zgzM6p17w2JyJuDOxBYm96OkaRJfW4pSVpKblnMmyR5vGQuJMb8s0gsfba4AhOZUCp6GggDePRLkn8NCorg6uXak4XI85TKPLfM3pJIGQD5ji0O2W4cAPbv68AGkZhOYA" />
-                    <div class="flex flex-col min-w-0">
-                        <span class="text-[13px] font-medium text-[#1A1A2E] truncate">Abdullah</span>
-                        <span class="text-[11px] text-[#64748B] truncate">Super Admin</span>
+            <!-- Navigation Hierarchy -->
+            <nav class="space-y-6">
+                <!-- Section: MAIN -->
+                <div>
+                    <div class="px-3 pb-2 text-[10px] font-bold uppercase tracking-wider text-[#64748B]">Main</div>
+                    <div class="space-y-1">
+                        <a class="flex items-center justify-between px-3 py-2 rounded-xl text-[13px] font-medium text-[#64748B] hover:text-[#172033] hover:bg-slate-50 transition-colors" href="../stitch_hunar_marketplace_prototype/hunar_admin_operations_dashboard_modern/code.html">
+                            <div class="flex items-center gap-3">
+                                <span class="material-symbols-outlined text-[19px]">dashboard</span>
+                                <span>Dashboard</span>
+                            </div>
+                        </a>
+                        <a class="flex items-center justify-between px-3 py-2 rounded-xl text-[13px] font-medium text-[#64748B] hover:text-[#172033] hover:bg-slate-50 transition-colors" href="../admin panel design/customers.html">
+                            <div class="flex items-center gap-3">
+                                <span class="material-symbols-outlined text-[19px]">group</span>
+                                <span>Users</span>
+                            </div>
+                            <span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-slate-100 text-[#64748B] border border-[#E2E8F0]">2 Roles</span>
+                        </a>
+                        <a class="flex items-center justify-between px-3 py-2 rounded-xl text-[13px] font-medium text-[#64748B] hover:text-[#172033] hover:bg-slate-50 transition-colors" href="../stitch_hunar_marketplace_prototype/jobs_management_work_orders_hunar_admin/code.html">
+                            <div class="flex items-center gap-3">
+                                <span class="material-symbols-outlined text-[19px]">assignment</span>
+                                <span>Jobs</span>
+                            </div>
+                            <span class="px-2 py-0.5 rounded-full text-[11px] font-bold bg-slate-100 text-[#123B5D]">428</span>
+                        </a>
                     </div>
                 </div>
-                <button class="p-1 text-[#64748B] hover:text-[#DC2626] transition-colors" title="Logout" type="button">
-                    <span class="material-symbols-outlined text-[20px]">logout</span>
-                </button>
+                <!-- Section: OPERATIONS -->
+                <div>
+                    <div class="px-3 pb-2 text-[10px] font-bold uppercase tracking-wider text-[#64748B]">Operations</div>
+                    <div class="space-y-1">
+                        <a class="flex items-center justify-between px-3 py-2 rounded-xl text-[13px] font-medium text-[#64748B] hover:text-[#172033] hover:bg-slate-50 transition-colors" href="../admin panel design/index.html">
+                            <div class="flex items-center gap-3">
+                                <span class="material-symbols-outlined text-[19px] text-[#F59E0B]">verified</span>
+                                <span>Verification</span>
+                            </div>
+                            <span class="px-2 py-0.5 rounded-full text-[11px] font-bold bg-[#FEF3C7] text-[#92400E] border border-[#F59E0B]/30">24</span>
+                        </a>
+                        <a class="flex items-center gap-3 px-3 py-2 rounded-xl text-[13px] font-medium text-[#64748B] hover:text-[#172033] hover:bg-slate-50 transition-colors" href="../admin panel design/payments.html">
+                            <span class="material-symbols-outlined text-[19px]">account_balance_wallet</span>
+                            <span>Payments &amp; Txns</span>
+                        </a>
+                        <a class="flex items-center justify-between px-3 py-2 rounded-xl text-[13px] font-medium text-[#64748B] hover:text-[#172033] hover:bg-slate-50 transition-colors" href="../../stitch_hunar_admin pannel some features_mvp/shahzad-admin pannel, features/worker_dispute_management_resolution/code.html">
+                            <div class="flex items-center gap-3">
+                                <span class="material-symbols-outlined text-[19px] text-[#DC2626]">flag</span>
+                                <span>Disputes</span>
+                            </div>
+                            <span class="px-2 py-0.5 rounded-full text-[11px] font-bold bg-[#FEE2E2] text-[#DC2626] border border-[#DC2626]/30">8</span>
+                        </a>
+                        <a class="flex items-center gap-3 px-3 py-2 rounded-xl text-[13px] font-medium text-[#64748B] hover:text-[#172033] hover:bg-slate-50 transition-colors" href="../../stitch_hunar_admin pannel some features_mvp/shahzad-admin pannel, features/worker_reviews_ratings/code.html">
+                            <span class="material-symbols-outlined text-[19px]">star</span>
+                            <span>Reviews &amp; Ratings</span>
+                        </a>
+                        <a class="flex items-center gap-3 px-3 py-2 rounded-xl text-[13px] font-medium text-[#64748B] hover:text-[#172033] hover:bg-slate-50 transition-colors" href="../../stitch_hunar_admin pannel some features_mvp/shahzad-admin pannel, features/worker_category_skill_settings/code.html">
+                            <span class="material-symbols-outlined text-[19px]">category</span>
+                            <span>Categories</span>
+                        </a>
+                        <a class="flex items-center justify-between px-3 py-2 rounded-xl text-[13px] font-medium text-[#64748B] hover:text-[#172033] hover:bg-slate-50 transition-colors" href="../../stitch_hunar_admin pannel some features_mvp/shahzad-admin pannel, features/worker_service_area_location_settings/code.html">
+                            <div class="flex items-center gap-3">
+                                <span class="material-symbols-outlined text-[19px]">location_on</span>
+                                <span>Locations</span>
+                            </div>
+                            <span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-[#0F8B8D]/10 text-[#0F8B8D] border border-[#0F8B8D]/20">Peshawar</span>
+                        </a>
+                    </div>
+                </div>
+                <!-- Section: GOVERNANCE & TELEMETRY -->
+                <div>
+                    <div class="px-3 pb-2 text-[10px] font-bold uppercase tracking-wider text-[#64748B]">Governance</div>
+                    <div class="space-y-1">
+                        <a class="flex items-center gap-3 px-3 py-2 rounded-xl text-[13px] font-medium text-[#64748B] hover:text-[#172033] hover:bg-slate-50 transition-colors" href="../reports_moderation/code.html">
+                            <span class="material-symbols-outlined text-[19px]">description</span>
+                            <span>Reports</span>
+                        </a>
+                        <a class="flex items-center gap-3 px-3 py-2 rounded-xl text-[13px] font-medium text-[#64748B] hover:text-[#172033] hover:bg-slate-50 transition-colors" href="../notifications/code.html">
+                            <span class="material-symbols-outlined text-[19px]">notifications</span>
+                            <span>Notifications</span>
+                        </a>
+                        <a class="flex items-center justify-between px-3 py-2.5 rounded-xl bg-[#123B5D] text-white font-semibold text-[13px] shadow-sm group transition-all" href="code.html">
+                            <div class="flex items-center gap-3">
+                                <span class="material-symbols-outlined text-[19px] text-[#0F8B8D]">monitoring</span>
+                                <span>Analytics</span>
+                            </div>
+                            <span class="w-1.5 h-1.5 rounded-full bg-[#0F8B8D]"></span>
+                        </a>
+                        <a class="flex items-center gap-3 px-3 py-2 rounded-xl text-[13px] font-medium text-[#64748B] hover:text-[#172033] hover:bg-slate-50 transition-colors" href="../settings/code.html">
+                            <span class="material-symbols-outlined text-[19px]">settings</span>
+                            <span>Settings</span>
+                        </a>
+                    </div>
+                </div>
+            </nav>
+        </div>
+        <!-- Sidebar Bottom: Escrow Highlight Card & Super Admin Profile -->
+        <div class="p-4 border-t border-[#E2E8F0] space-y-3 bg-white">
+            <div class="p-3.5 rounded-xl bg-[#123B5D] text-white space-y-2 shadow-sm">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-1.5">
+                        <span class="material-symbols-outlined text-[#0F8B8D] text-[18px]">verified_user</span>
+                        <span class="text-[10px] font-bold tracking-wider uppercase text-teal-300">HUNAR Escrow</span>
+                    </div>
+                    <span class="w-2 h-2 rounded-full bg-[#16A34A] animate-pulse"></span>
+                </div>
+                <p class="text-[11px] text-slate-300 leading-relaxed">100% SBP / NADRA Verified Pros &amp; safe Raast dispute guarantee.</p>
+                <a class="block text-center py-1.5 px-3 bg-[#0F8B8D] text-white text-[11px] font-semibold rounded-lg hover:bg-[#0D7A7C] transition-colors" href="#">
+                    View Escrow Rules
+                </a>
+            </div>
+            <div class="flex items-center justify-between pt-1">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-8 h-8 rounded-full bg-[#123B5D] text-white flex items-center justify-center font-bold text-xs ring-2 ring-[#0F8B8D]/20">
+                        <span class="material-symbols-outlined text-[18px]">person</span>
+                    </div>
+                    <div class="flex flex-col">
+                        <span class="text-[12px] font-bold text-[#172033] leading-tight">Abdullah Khan</span>
+                        <span class="text-[10px] text-[#64748B] font-medium">Super Admin • Peshawar Hub</span>
+                    </div>
+                </div>
+                <a class="text-[#64748B] hover:text-[#DC2626] p-1 rounded-md transition-colors" href="#" title="Logout">
+                    <span class="material-symbols-outlined text-[18px]">logout</span>
+                </a>
             </div>
         </div>
     </aside>
@@ -525,33 +367,31 @@
     <!-- Sidebar Overlay (Mobile) -->
     <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
-    <!-- ============================================================
-    MAIN WRAPPER — PUSHED RIGHT OF SIDEBAR
-    ============================================================ -->
-    <div class="main-wrapper" id="mainWrapper">
+    <!-- MAIN WRAPPER -->
+    <div class="w-full lg:pl-64 flex flex-col min-h-screen bg-white min-w-0" id="mainWrapper">
 
-        <!-- TOP HEADER — FIXED, OFFSET BY SIDEBAR -->
-        <header class="top-header" id="topHeader">
+        <!-- TOP HEADER — STICKY -->
+        <header class="sticky top-0 z-40 h-16 w-full bg-white/95 backdrop-blur-md border-b border-[#E2E8F0] px-4 sm:px-8 flex items-center justify-between gap-4" id="topHeader">
             <div class="flex items-center gap-2 flex-1 min-w-0">
                 <!-- Mobile Menu Toggle -->
-                <button class="mobile-menu-toggle" id="mobileMenuToggle" aria-label="Toggle menu">
+                <button class="lg:hidden p-2 rounded-lg text-[#172033] hover:bg-slate-100 transition-colors" id="mobileMenuToggle" aria-label="Toggle menu" type="button">
                     <span class="material-symbols-outlined">menu</span>
                 </button>
 
                 <!-- Breadcrumb -->
-                <div class="header-breadcrumb flex items-center gap-2 text-[#64748B] text-[12px]">
-                    <span class="text-[#64748B] font-medium">HUNAR</span>
+                <div class="hidden sm:flex items-center gap-2 text-[#64748B] text-[12px]">
+                    <a href="../../Abdullah desigens customer + landing page/landing page/code.html" class="text-[#64748B] hover:text-[#0F8B8D] transition-colors font-medium" title="Back to Landing Page">HUNAR</a>
                     <span class="text-[#E2E8F0]">/</span>
                     <span class="text-[#1A1A2E] font-semibold text-[14px]">Management Console</span>
                 </div>
 
                 <!-- Search -->
-                <div class="header-search flex-1 max-w-md mx-4">
+                <div class="flex-1 max-w-md mx-2 sm:mx-4">
                     <div class="relative w-full flex items-center">
                         <span class="material-symbols-outlined absolute left-3 text-[18px] text-[#64748B] pointer-events-none">search</span>
                         <input class="w-full h-9 pl-9 pr-12 bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg text-[#1A1A2E] placeholder:text-[#64748B] text-[14px] focus:outline-none focus:border-[#0F766E] focus:ring-2 focus:ring-[#0F766E]/10"
                             placeholder="Search HUNAR..." type="search" />
-                        <kbd class="absolute right-2.5 px-1.5 py-0.5 text-[11px] bg-white border border-[#E2E8F0] rounded text-[#64748B] shadow-sm pointer-events-none">⌘K</kbd>
+                        <kbd class="hidden sm:inline-block absolute right-2.5 px-1.5 py-0.5 text-[11px] bg-white border border-[#E2E8F0] rounded text-[#64748B] shadow-sm pointer-events-none">⌘K</kbd>
                     </div>
                 </div>
             </div>
@@ -559,7 +399,7 @@
             <!-- Right Actions -->
             <div class="flex items-center gap-3 shrink-0">
                 <!-- Live Indicator -->
-                <div class="live-indicator hidden lg:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#16A34A]/10 text-[#16A34A] border border-[#16A34A]/30">
+                <div class="hidden lg:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#16A34A]/10 text-[#16A34A] border border-[#16A34A]/30">
                     <span class="w-2 h-2 rounded-full bg-[#16A34A] animate-pulse"></span>
                     <span class="text-[11px] font-semibold tracking-tight">Live: 99.98%</span>
                 </div>
@@ -581,9 +421,9 @@
             </div>
         </header>
 
-        <!-- MAIN CONTENT — PADDED BELOW HEADER -->
-        <main class="main-content">
-            <div class="page-container">
+        <!-- MAIN CONTENT -->
+        <main class="flex-1 w-full min-w-0 p-4 sm:p-6 lg:p-8 bg-[#F8FAFC]">
+            <div class="max-w-7xl mx-auto w-full min-w-0 flex flex-col gap-6">
 
                 <!-- Ambient Glow Accents -->
                 <div class="absolute -top-40 right-10 w-96 h-96 bg-[#0F766E]/5 rounded-full blur-3xl pointer-events-none"></div>
