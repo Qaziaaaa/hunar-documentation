@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html class="h-full" lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+  <title>HUNAR Worker - Category & Skill Settings</title>
+  
+  <!-- Google Fonts: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  
+  <!-- Material Symbols & Icons -->
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=block" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons&display=block" rel="stylesheet" />
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <script>
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              navy: "#123B5D",
+              "navy-dark": "#0F2E4A",
+              teal: "#0F766E",
+              "teal-dark": "#0D655E",
+              "teal-light": "#CCFBF1",
+              amber: "#F59E0B",
+              "amber-light": "#FEF3C7",
+              dark: "#0F172A",
+              gray: "#64748B",
+              border: "#E2E8F0"
+            }
+          },
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+          }
+        }
+      }
+    };
+  </script>
+
+  <style>
+    @layer base {
+      html, body {
+        margin: 0;
+        padding: 0;
+        font-family: 'Inter', sans-serif;
+        -webkit-text-size-adjust: 100%;
+        background-color: #F8FAFC;
+        color: #0F172A;
+      }
+    }
+    
+    /* Robust Material Symbols & Icons rendering on Mobile & Desktop */
+    .material-symbols-outlined,
+    .material-icons {
+      font-family: 'Material Symbols Outlined', 'Material Icons', sans-serif !important;
+      font-weight: normal !important;
+      font-style: normal !important;
+      font-size: 20px;
+      line-height: 1 !important;
+      letter-spacing: normal;
+      text-transform: none;
+      display: inline-flex !important;
+      align-items: center;
+      justify-content: center;
+      white-space: nowrap;
+      word-wrap: normal;
+      direction: ltr;
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
+      -moz-osx-font-smoothing: grayscale;
+      font-feature-settings: 'liga' 1 !important;
+      -webkit-font-feature-settings: 'liga' 1 !important;
+      flex-shrink: 0 !important;
+      user-select: none;
+      vertical-align: middle;
+    }
+
+    /* Scrollbars */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 4px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+  </style>
+</head>
+<body class="bg-[#F8FAFC] font-sans text-[#0F172A] antialiased min-h-screen">
+
+    <!-- Mobile Backdrop Overlay -->
+  <div id="sidebar-backdrop" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden lg:hidden transition-opacity duration-300" onclick="toggleMobileSidebar()"></div>
+
+  <!-- UNIFIED WORKER SIDEBAR -->
+  <aside id="admin-sidebar" class="fixed inset-y-0 left-0 w-72 sm:w-64 max-w-[85vw] bg-white border-r border-[#E2E8F0] z-50 flex flex-col justify-between shadow-2xl lg:shadow-[1px_0_10px_rgba(0,0,0,0.02)] transform -translate-x-full lg:translate-x-0 transition-transform duration-300 ease-in-out">
+    <div class="flex flex-col flex-1 overflow-y-auto px-4 py-5">
+      
+      <!-- Brand Logo Header -->
+      <div class="flex items-center justify-between pb-4 border-b border-[#E2E8F0] mb-4">
+        <a href="../worker_job_proposal_visit_negotiation/code.html" class="flex items-center gap-3 group text-left no-underline min-w-0" title="Worker Portal Hub">
+          <div class="w-10 h-10 rounded-xl bg-[#0F766E] flex items-center justify-center text-white font-extrabold text-xl shadow-sm tracking-tight relative group-hover:scale-105 transition-transform shrink-0">
+            <span>H</span>
+            <span class="w-2.5 h-2.5 rounded-full bg-[#F59E0B] absolute bottom-1 right-1 border-2 border-white"></span>
+          </div>
+          <div class="flex flex-col min-w-0">
+            <div class="flex items-center gap-1.5 leading-tight">
+              <span class="font-extrabold text-[17px] tracking-tight text-[#123B5D]">HUNAR</span>
+              <span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-[#0F766E]/10 text-[#0F766E] uppercase tracking-wider border border-[#0F766E]/20">WORKER</span>
+            </div>
+            <p class="text-[11px] font-medium text-[#64748B] truncate">Skilled Technician Portal</p>
+          </div>
+        </a>
+        <button onclick="toggleMobileSidebar()" class="lg:hidden p-2 rounded-lg text-[#64748B] hover:text-[#0F172A] hover:bg-slate-100 transition-colors flex items-center justify-center shrink-0 ml-1" aria-label="Close sidebar">
+          <span class="material-symbols-outlined text-[22px]">close</span>
+        </button>
+      </div>
+
+      <!-- Worker Status & Availability Pill -->
+      <div class="p-3 mb-4 rounded-xl bg-slate-50 border border-[#E2E8F0] space-y-2">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <span class="relative flex h-2.5 w-2.5 shrink-0">
+              <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#16A34A] opacity-75"></span>
+              <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-[#16A34A]"></span>
+            </span>
+            <span class="text-[12px] font-bold text-[#0F172A]">Online &amp; Active</span>
+          </div>
+          <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-[#CCFBF1] text-[#0F766E] shrink-0">Ready for Jobs</span>
+        </div>
+        <div class="flex items-center justify-between text-[11px] text-[#64748B] pt-1.5 border-t border-[#E2E8F0]/80">
+          <span>Serving Area:</span>
+          <span class="font-semibold text-[#123B5D]">F-10 • 10 km radius</span>
+        </div>
+      </div>
+
+      <!-- Navigation Links -->
+      <nav class="space-y-5">
+        <!-- Group 1: JOBS & WORK ORDERS -->
+        <div>
+          <div class="px-3 pb-2 text-[10px] font-bold uppercase tracking-wider text-[#64748B]">Jobs &amp; Execution</div>
+          <div class="space-y-1">
+            <a class="flex items-center justify-between px-3 py-2.5 rounded-xl text-[13px] font-medium text-[#64748B] hover:text-[#0F172A] hover:bg-slate-50 transition-colors" href="../worker_job_proposal_visit_negotiation/code.html">
+              <div class="flex items-center gap-3 min-w-0">
+                <span class="material-symbols-outlined text-[20px]  shrink-0">handshake</span>
+                <span class='truncate'>Job Proposals</span>
+              </div>
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#FEF3C7] text-[#92400E] border border-[#F59E0B]/30 shrink-0 ml-2">3 New</span>
+            </a>
+            <a class="flex items-center justify-between px-3 py-2.5 rounded-xl text-[13px] font-medium text-[#64748B] hover:text-[#0F172A] hover:bg-slate-50 transition-colors" href="../worker_repair_execution_completion/code.html">
+              <div class="flex items-center gap-3 min-w-0">
+                <span class="material-symbols-outlined text-[20px]  shrink-0">handyman</span>
+                <span class='truncate'>Active Repair</span>
+              </div>
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#CCFBF1] text-[#0F766E] border border-[#0F766E]/30 shrink-0 ml-2">1 Live</span>
+            </a>
+          </div>
+        </div>
+
+        <!-- Group 2: REPUTATION & CLAIMS -->
+        <div>
+          <div class="px-3 pb-2 text-[10px] font-bold uppercase tracking-wider text-[#64748B]">Reputation &amp; Disputes</div>
+          <div class="space-y-1">
+            <a class="flex items-center justify-between px-3 py-2.5 rounded-xl text-[13px] font-medium text-[#64748B] hover:text-[#0F172A] hover:bg-slate-50 transition-colors" href="../worker_reviews_ratings/code.html">
+              <div class="flex items-center gap-3 min-w-0">
+                <span class="material-symbols-outlined text-[20px] text-[#F59E0B] shrink-0">star</span>
+                <span class='truncate'>Reviews &amp; Ratings</span>
+              </div>
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#FEF3C7] text-[#92400E] border border-[#F59E0B]/30 shrink-0 ml-2">4.9 ★</span>
+            </a>
+            <a class="flex items-center justify-between px-3 py-2.5 rounded-xl text-[13px] font-medium text-[#64748B] hover:text-[#0F172A] hover:bg-slate-50 transition-colors" href="../worker_dispute_management_resolution/code.html">
+              <div class="flex items-center gap-3 min-w-0">
+                <span class="material-symbols-outlined text-[20px] text-[#DC2626] shrink-0">gavel</span>
+                <span class='truncate'>Dispute Claims</span>
+              </div>
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#FEE2E2] text-[#DC2626] border border-[#DC2626]/30 shrink-0 ml-2">1 Open</span>
+            </a>
+          </div>
+        </div>
+
+        <!-- Group 3: SKILLS & COVERAGE -->
+        <div>
+          <div class="px-3 pb-2 text-[10px] font-bold uppercase tracking-wider text-[#64748B]">Profile &amp; Settings</div>
+          <div class="space-y-1">
+            <a class="flex items-center justify-between px-3 py-2.5 rounded-xl bg-[#0F766E] text-white font-semibold text-[13px] shadow-sm group transition-all" href="../worker_category_skill_settings/code.html">
+              <div class="flex items-center gap-3 min-w-0">
+                <span class="material-symbols-outlined text-[20px] text-white shrink-0">tune</span>
+                <span class='truncate'>My Services &amp; Skills</span>
+              </div>
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-white text-[#0F766E] shadow-sm shrink-0 ml-2">3 Trades</span>
+            </a>
+            <a class="flex items-center justify-between px-3 py-2.5 rounded-xl text-[13px] font-medium text-[#64748B] hover:text-[#0F172A] hover:bg-slate-50 transition-colors" href="../worker_service_area_location_settings/code.html">
+              <div class="flex items-center gap-3 min-w-0">
+                <span class="material-symbols-outlined text-[20px]  shrink-0">pin_drop</span>
+                <span class='truncate'>Service Location &amp; Radius</span>
+              </div>
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#123B5D]/10 text-[#123B5D] border border-[#123B5D]/20 shrink-0 ml-2">10 km</span>
+            </a>
+          </div>
+        </div>
+      </nav>
+    </div>
+
+    <!-- Sidebar Bottom: NADRA Verification & Technician Profile -->
+    <div class="p-4 border-t border-[#E2E8F0] space-y-3 bg-white">
+      <div class="p-3 rounded-xl bg-[#0F766E] text-white space-y-1.5 shadow-sm">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-1.5">
+            <span class="material-symbols-outlined text-white text-[18px] shrink-0">verified_user</span>
+            <span class="text-[10px] font-bold tracking-wider uppercase text-emerald-100">NADRA Verified Pro</span>
+          </div>
+          <span class="w-2 h-2 rounded-full bg-[#4ADE80] animate-pulse shrink-0"></span>
+        </div>
+        <p class="text-[11px] text-emerald-50 leading-relaxed">Level 2 Master Tech • 100% Escrow Protection Guarantee.</p>
+      </div>
+      <div class="flex items-center justify-between pt-1">
+        <div class="flex items-center gap-2.5 min-w-0">
+          <div class="w-8 h-8 rounded-full bg-[#123B5D] text-white flex items-center justify-center font-bold text-xs ring-2 ring-[#0F766E]/30 shrink-0">
+            AK
+          </div>
+          <div class="flex flex-col min-w-0">
+            <div class="flex items-center gap-1">
+              <span class="text-[12px] font-bold text-[#0F172A] leading-tight truncate">Ali Khan</span>
+              <span class="material-symbols-outlined text-[13px] text-[#0F766E] shrink-0" title="NADRA Verified">verified</span>
+            </div>
+            <span class="text-[10px] text-[#64748B] font-medium truncate">AC Specialist • 4.9 ★</span>
+          </div>
+        </div>
+        <a class="text-[#64748B] hover:text-[#DC2626] p-1.5 rounded-md transition-colors flex items-center justify-center shrink-0 ml-1" href="../worker_job_proposal_visit_negotiation/code.html" title="Logout">
+          <span class="material-symbols-outlined text-[20px]">logout</span>
+        </a>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ================= MAIN WRAPPER ================= -->
+  <div class="w-full lg:pl-64 flex flex-col min-h-screen bg-[#F8FAFC] min-w-0">
+    
+    <!-- Top Header Bar -->
+    <header class="sticky top-0 z-30 h-16 w-full bg-white/95 backdrop-blur-md border-b border-[#E2E8F0] px-3 sm:px-6 flex items-center justify-between gap-2 min-w-0">
+      <div class="flex items-center gap-3">
+        <!-- Mobile Menu Toggle -->
+        <button onclick="toggleMobileSidebar()" class="lg:hidden p-2 rounded-lg border border-[#E2E8F0] bg-white text-[#0F172A] hover:bg-slate-50 transition-colors" aria-label="Open Navigation">
+          <span class="material-symbols-outlined text-[20px]">menu</span>
+        </button>
+        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-[#CCFBF1] text-[#0F766E] border border-[#0F766E]/20">
+          Skilled Worker Portal
+        </span>
+        <div class="hidden sm:flex items-center gap-1.5 px-3 py-1 rounded-lg border border-[#E2E8F0] bg-slate-50 text-[#64748B] text-xs">
+          <span class="material-symbols-outlined text-[#0F766E] text-[16px]">location_on</span>
+          <span>Serving: <strong class="text-[#0F172A] font-semibold">F-10, Islamabad</strong></span>
+          <span class="text-slate-300">•</span>
+          <span class="text-[#64748B]">10 km radius</span>
+        </div>
+      </div>
+      <div class="flex items-center gap-3 sm:gap-4">
+        <div class="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-lg border border-[#E2E8F0] bg-white shadow-sm">
+          <span class="relative flex h-2.5 w-2.5">
+            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#16A34A] opacity-75"></span>
+            <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-[#16A34A]"></span>
+          </span>
+          <span class="text-xs font-semibold text-[#0F172A]">Online</span>
+          <span class="text-[11px] text-[#64748B] border-l border-[#E2E8F0] pl-2 ml-1">Ready for Jobs</span>
+        </div>
+        <button class="relative p-2 rounded-lg border border-[#E2E8F0] bg-white text-[#64748B] hover:text-[#0F172A] hover:bg-slate-50 transition-colors" title="Notifications">
+          <span class="material-symbols-outlined text-[20px]">notifications</span>
+          <span class="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-[#DC2626]"></span>
+        </button>
+        <div class="h-6 w-px bg-[#E2E8F0] hidden sm:block"></div>
+        <div class="flex items-center gap-2.5">
+          <div class="w-8 h-8 rounded-full bg-[#123B5D] text-white flex items-center justify-center text-xs font-bold ring-2 ring-[#0F766E]/20">
+            AK
+          </div>
+          <div class="hidden md:flex flex-col text-left">
+            <div class="flex items-center gap-1">
+              <span class="text-xs font-semibold text-[#0F172A] leading-tight">Ali Khan</span>
+              <span class="material-symbols-outlined text-[13px] text-[#0F766E]" title="NADRA Verified">verified</span>
+            </div>
+            <span class="text-[10px] text-[#64748B] leading-none mt-0.5">AC Specialist • 4.9 ★</span>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 w-full min-w-0 p-4 sm:p-6 lg:p-8 bg-[#F8FAFC]">
+      <div class="max-w-6xl mx-auto w-full min-w-0 flex flex-col">
+        
+        <!-- Toast Notification (Hidden by default, triggered on Save) -->
+        <div class="fixed top-20 right-6 z-50 flex items-center gap-3 bg-white text-[#0F172A] px-4 py-3 rounded-xl shadow-lg transition-all duration-300 transform translate-y-0 opacity-0 pointer-events-none border-l-4 border-l-[#16A34A] border border-[#E2E8F0]" id="toastNotification">
+          <span class="material-symbols-outlined text-[#16A34A] text-[22px]">check_circle</span>
+          <div class="flex flex-col">
+            <span class="text-xs font-bold text-[#0F172A]">Categories Updated</span>
+            <span class="text-[11px] text-[#64748B]">Your service categories and skills have been saved successfully.</span>
+          </div>
+          <button class="ml-4 text-[#64748B] hover:text-[#0F172A] p-1" onclick="document.getElementById('toastNotification').style.opacity='0'">
+            <span class="material-symbols-outlined text-[18px]">close</span>
+          </button>
+        </div>
+
+        <!-- Breadcrumb & Header Title -->
+        <div class="flex flex-col mb-6">
+          <nav class="flex items-center gap-2 text-[#64748B] text-xs font-medium mb-1">
+            <a class="hover:text-[#0F766E] transition-colors" href="#">Profile</a>
+            <span class="text-slate-300">/</span>
+            <span class="text-[#0F172A] font-semibold">My Services &amp; Skills</span>
+          </nav>
+          <h1 class="text-2xl sm:text-3xl font-bold text-[#0F172A] tracking-tight">What trade services do you offer?</h1>
+          <p class="text-sm text-[#64748B] mt-1">Select all trade categories you specialize in. You can configure individual skill specializations and update them anytime.</p>
+        </div>
+
+        <!-- Info Callout Banner -->
+        <div class="flex items-start justify-between bg-teal-50/70 border-l-[3px] border-l-[#0F766E] p-4 rounded-xl mb-5 border border-teal-100" id="infoBanner">
+          <div class="flex items-start gap-3">
+            <span class="material-symbols-outlined text-[#0F766E] text-[20px] mt-0.5">info</span>
+            <p class="text-xs sm:text-sm text-teal-950 leading-relaxed font-medium">
+              Workers only receive job requests that match their registered categories and service area. Keep your trade categories accurate to receive the most relevant and high-value customer dispatches.
+            </p>
+          </div>
+          <button class="text-teal-800 hover:opacity-75 p-0.5 ml-3 shrink-0" onclick="document.getElementById('infoBanner').style.display='none'">
+            <span class="material-symbols-outlined text-[18px]">close</span>
+          </button>
+        </div>
+
+        <!-- Warning Notice Bar -->
+        <div class="flex items-center gap-2.5 bg-amber-50 border-l-[3px] border-l-[#F59E0B] p-3 px-4 rounded-xl mb-6 border border-amber-200/70">
+          <span class="material-symbols-outlined text-[#F59E0B] text-[20px] shrink-0">warning</span>
+          <span class="text-xs text-amber-900 font-medium">
+            You have an active dispatch offer in <strong class="font-bold text-amber-950">Electrician</strong>. Removing this category will not affect ongoing contracted jobs.
+          </span>
+        </div>
+
+        <!-- Category Selection Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+          
+          <!-- Card 1: AC Repair (Selected) -->
+          <div class="cursor-pointer relative flex flex-col justify-between p-5 rounded-xl border-2 border-[#0F766E] bg-[#CCFBF1]/20 transition-all duration-150 select-none hover:shadow-sm" onclick="toggleCategory(this, 'ac-specializations')">
+            <div class="absolute top-3.5 right-3.5 w-6 h-6 rounded-full bg-[#0F766E] flex items-center justify-center text-white">
+              <span class="material-symbols-outlined text-[16px]">check</span>
+            </div>
+            <div>
+              <div class="w-11 h-11 rounded-xl bg-[#CCFBF1] flex items-center justify-center mb-3 text-[#0F766E]">
+                <span class="material-symbols-outlined text-[24px]">mode_fan</span>
+              </div>
+              <h2 class="text-base font-bold text-[#0F172A] mb-1">AC Repair &amp; Maintenance</h2>
+              <p class="text-xs text-[#64748B] leading-relaxed">Inverter diagnostics, gas refill (R410A/R32), compressor overhaul &amp; routine servicing.</p>
+            </div>
+            <div class="mt-4 pt-2 border-t border-[#0F766E]/20 flex items-center justify-between text-xs font-semibold text-[#0F766E]">
+              <span>6 Specializations Active</span>
+              <span class="material-symbols-outlined text-[16px]">tune</span>
+            </div>
+          </div>
+
+          <!-- Card 2: Plumbing (Selected) -->
+          <div class="cursor-pointer relative flex flex-col justify-between p-5 rounded-xl border-2 border-[#0F766E] bg-[#CCFBF1]/20 transition-all duration-150 select-none hover:shadow-sm" onclick="toggleCategory(this)">
+            <div class="absolute top-3.5 right-3.5 w-6 h-6 rounded-full bg-[#0F766E] flex items-center justify-center text-white">
+              <span class="material-symbols-outlined text-[16px]">check</span>
+            </div>
+            <div>
+              <div class="w-11 h-11 rounded-xl bg-[#CCFBF1] flex items-center justify-center mb-3 text-[#0F766E]">
+                <span class="material-symbols-outlined text-[24px]">plumbing</span>
+              </div>
+              <h2 class="text-base font-bold text-[#0F172A] mb-1">Plumbing &amp; Sanitary</h2>
+              <p class="text-xs text-[#64748B] leading-relaxed">PPR/CPVC concealed piping, instant geyser repairs, drainage clearance &amp; pressure pumps.</p>
+            </div>
+            <div class="mt-4 pt-2 border-t border-[#0F766E]/20 flex items-center justify-between text-xs font-semibold text-[#0F766E]">
+              <span>Active Trade Category</span>
+              <span class="material-symbols-outlined text-[16px]">check_circle</span>
+            </div>
+          </div>
+
+          <!-- Card 3: Electrician (Selected with Active Offer) -->
+          <div class="cursor-pointer relative flex flex-col justify-between p-5 rounded-xl border-2 border-[#0F766E] bg-[#CCFBF1]/20 transition-all duration-150 select-none hover:shadow-sm" onclick="toggleCategory(this)">
+            <div class="absolute top-3.5 right-3.5 w-6 h-6 rounded-full bg-[#0F766E] flex items-center justify-center text-white">
+              <span class="material-symbols-outlined text-[16px]">check</span>
+            </div>
+            <div>
+              <div class="w-11 h-11 rounded-xl bg-[#CCFBF1] flex items-center justify-center mb-3 text-[#0F766E]">
+                <span class="material-symbols-outlined text-[24px]">electric_bolt</span>
+              </div>
+              <h2 class="text-base font-bold text-[#0F172A] mb-1">Electrician &amp; Wiring</h2>
+              <p class="text-xs text-[#64748B] leading-relaxed">Distribution board breakers, short-circuit rewiring, UPS and hybrid solar inverter setup.</p>
+            </div>
+            <div class="mt-4 pt-2 border-t border-[#0F766E]/20 flex items-center justify-between text-xs font-semibold text-[#B45309]">
+              <span class="flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">bolt</span> 1 Active Dispatched Offer</span>
+              <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
+            </div>
+          </div>
+
+          <!-- Card 4: Carpenter -->
+          <div class="cursor-pointer relative flex flex-col justify-between p-5 rounded-xl border border-[#E2E8F0] bg-white transition-all duration-150 select-none hover:border-slate-400 hover:shadow-sm" onclick="toggleCategory(this)">
+            <div class="hidden absolute top-3.5 right-3.5 w-6 h-6 rounded-full bg-[#0F766E] items-center justify-center text-white">
+              <span class="material-symbols-outlined text-[16px]">check</span>
+            </div>
+            <div>
+              <div class="w-11 h-11 rounded-xl bg-slate-100 flex items-center justify-center mb-3 text-[#64748B]">
+                <span class="material-symbols-outlined text-[24px]">carpenter</span>
+              </div>
+              <h2 class="text-base font-bold text-[#0F172A] mb-1">Carpenter &amp; Woodwork</h2>
+              <p class="text-xs text-[#64748B] leading-relaxed">Door lock installations, custom cabinetry, hinge repairs, and modular kitchen alignments.</p>
+            </div>
+            <div class="mt-4 pt-2 border-t border-slate-100 text-xs text-[#64748B] flex items-center justify-between">
+              <span>Tap to activate category</span>
+              <span class="material-symbols-outlined text-[16px] text-slate-400">add_circle</span>
+            </div>
+          </div>
+
+          <!-- Card 5: Appliance Repair -->
+          <div class="cursor-pointer relative flex flex-col justify-between p-5 rounded-xl border border-[#E2E8F0] bg-white transition-all duration-150 select-none hover:border-slate-400 hover:shadow-sm" onclick="toggleCategory(this)">
+            <div class="hidden absolute top-3.5 right-3.5 w-6 h-6 rounded-full bg-[#0F766E] items-center justify-center text-white">
+              <span class="material-symbols-outlined text-[16px]">check</span>
+            </div>
+            <div>
+              <div class="w-11 h-11 rounded-xl bg-slate-100 flex items-center justify-center mb-3 text-[#64748B]">
+                <span class="material-symbols-outlined text-[24px]">home_repair_service</span>
+              </div>
+              <h2 class="text-base font-bold text-[#0F172A] mb-1">Appliance Repair</h2>
+              <p class="text-xs text-[#64748B] leading-relaxed">Automatic washing machines, microwave magnetrons, refrigerator gas and dispenser pumps.</p>
+            </div>
+            <div class="mt-4 pt-2 border-t border-slate-100 text-xs text-[#64748B] flex items-center justify-between">
+              <span>Tap to activate category</span>
+              <span class="material-symbols-outlined text-[16px] text-slate-400">add_circle</span>
+            </div>
+          </div>
+
+          <!-- Card 6: Painter -->
+          <div class="cursor-pointer relative flex flex-col justify-between p-5 rounded-xl border border-[#E2E8F0] bg-white transition-all duration-150 select-none hover:border-slate-400 hover:shadow-sm" onclick="toggleCategory(this)">
+            <div class="hidden absolute top-3.5 right-3.5 w-6 h-6 rounded-full bg-[#0F766E] items-center justify-center text-white">
+              <span class="material-symbols-outlined text-[16px]">check</span>
+            </div>
+            <div>
+              <div class="w-11 h-11 rounded-xl bg-slate-100 flex items-center justify-center mb-3 text-[#64748B]">
+                <span class="material-symbols-outlined text-[24px]">format_paint</span>
+              </div>
+              <h2 class="text-base font-bold text-[#0F172A] mb-1">Painter &amp; Polisher</h2>
+              <p class="text-xs text-[#64748B] leading-relaxed">Interior plastic emulsion, exterior weather-shield, wood varnish polish, and wall putty.</p>
+            </div>
+            <div class="mt-4 pt-2 border-t border-slate-100 text-xs text-[#64748B] flex items-center justify-between">
+              <span>Tap to activate category</span>
+              <span class="material-symbols-outlined text-[16px] text-slate-400">add_circle</span>
+            </div>
+          </div>
+
+          <!-- Card 7: Cleaning -->
+          <div class="cursor-pointer relative flex flex-col justify-between p-5 rounded-xl border border-[#E2E8F0] bg-white transition-all duration-150 select-none hover:border-slate-400 hover:shadow-sm" onclick="toggleCategory(this)">
+            <div class="hidden absolute top-3.5 right-3.5 w-6 h-6 rounded-full bg-[#0F766E] items-center justify-center text-white">
+              <span class="material-symbols-outlined text-[16px]">check</span>
+            </div>
+            <div>
+              <div class="w-11 h-11 rounded-xl bg-slate-100 flex items-center justify-center mb-3 text-[#64748B]">
+                <span class="material-symbols-outlined text-[24px]">cleaning_services</span>
+              </div>
+              <h2 class="text-base font-bold text-[#0F172A] mb-1">Deep Cleaning</h2>
+              <p class="text-xs text-[#64748B] leading-relaxed">Sofa shampoo extraction, floor scrubbing, water tank disinfection &amp; complete sanitization.</p>
+            </div>
+            <div class="mt-4 pt-2 border-t border-slate-100 text-xs text-[#64748B] flex items-center justify-between">
+              <span>Tap to activate category</span>
+              <span class="material-symbols-outlined text-[16px] text-slate-400">add_circle</span>
+            </div>
+          </div>
+
+          <!-- Card 8: Other Specialized Trades -->
+          <div class="cursor-pointer relative flex flex-col justify-between p-5 rounded-xl border border-[#E2E8F0] bg-white transition-all duration-150 select-none hover:border-slate-400 hover:shadow-sm" onclick="toggleCategory(this)">
+            <div class="hidden absolute top-3.5 right-3.5 w-6 h-6 rounded-full bg-[#0F766E] items-center justify-center text-white">
+              <span class="material-symbols-outlined text-[16px]">check</span>
+            </div>
+            <div>
+              <div class="w-11 h-11 rounded-xl bg-slate-100 flex items-center justify-center mb-3 text-[#64748B]">
+                <span class="material-symbols-outlined text-[24px]">more_horiz</span>
+              </div>
+              <h2 class="text-base font-bold text-[#0F172A] mb-1">Other Specialized Trades</h2>
+              <p class="text-xs text-[#64748B] leading-relaxed">Masonry, tile fixing, aluminum partitions, glass cutting, and iron welding repairs.</p>
+            </div>
+            <div class="mt-4 pt-2 border-t border-slate-100 text-xs text-[#64748B] flex items-center justify-between">
+              <span>Tap to activate category</span>
+              <span class="material-symbols-outlined text-[16px] text-slate-400">add_circle</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Specialization Sub-Skills Section (Linked to AC Repair) -->
+        <section class="bg-white border border-[#E2E8F0] rounded-xl p-6 mb-6 shadow-sm" id="ac-specializations">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-200 pb-4 mb-4 gap-2">
+            <div class="flex items-center gap-3">
+              <div class="w-9 h-9 rounded-lg bg-[#CCFBF1] flex items-center justify-center text-[#0F766E]">
+                <span class="material-symbols-outlined text-[22px]">tune</span>
+              </div>
+              <div>
+                <h2 class="text-base font-bold text-[#0F172A]">AC Repair Specializations</h2>
+                <p class="text-xs text-[#64748B]">Select the specific diagnostic, electrical, and mechanical skills you can handle.</p>
+              </div>
+            </div>
+            <button class="text-xs text-[#0F766E] hover:underline font-bold self-start sm:self-auto" onclick="toggleAllChips(this)" type="button">
+              Deselect All
+            </button>
+          </div>
+          <div class="flex flex-wrap gap-2.5 pt-1">
+            <button class="chip-btn px-3.5 py-1.5 rounded-full border border-[#0F766E] bg-[#CCFBF1] text-[#0F766E] text-xs font-semibold flex items-center gap-1.5 transition-colors shadow-sm" onclick="toggleChip(this)" type="button">
+              <span class="material-symbols-outlined text-[16px]">check</span>
+              <span>Installation &amp; Mounting</span>
+            </button>
+            <button class="chip-btn px-3.5 py-1.5 rounded-full border border-[#0F766E] bg-[#CCFBF1] text-[#0F766E] text-xs font-semibold flex items-center gap-1.5 transition-colors shadow-sm" onclick="toggleChip(this)" type="button">
+              <span class="material-symbols-outlined text-[16px]">check</span>
+              <span>Gas Refilling (R410A/R32/R22)</span>
+            </button>
+            <button class="chip-btn px-3.5 py-1.5 rounded-full border border-[#0F766E] bg-[#CCFBF1] text-[#0F766E] text-xs font-semibold flex items-center gap-1.5 transition-colors shadow-sm" onclick="toggleChip(this)" type="button">
+              <span class="material-symbols-outlined text-[16px]">check</span>
+              <span>Deep Servicing &amp; Jet Wash</span>
+            </button>
+            <button class="chip-btn px-3.5 py-1.5 rounded-full border border-[#0F766E] bg-[#CCFBF1] text-[#0F766E] text-xs font-semibold flex items-center gap-1.5 transition-colors shadow-sm" onclick="toggleChip(this)" type="button">
+              <span class="material-symbols-outlined text-[16px]">check</span>
+              <span>Compressor Overhaul &amp; Relay</span>
+            </button>
+            <button class="chip-btn px-3.5 py-1.5 rounded-full border border-[#0F766E] bg-[#CCFBF1] text-[#0F766E] text-xs font-semibold flex items-center gap-1.5 transition-colors shadow-sm" onclick="toggleChip(this)" type="button">
+              <span class="material-symbols-outlined text-[16px]">check</span>
+              <span>Thermostat &amp; Sensor Calibration</span>
+            </button>
+            <button class="chip-btn px-3.5 py-1.5 rounded-full border border-[#0F766E] bg-[#CCFBF1] text-[#0F766E] text-xs font-semibold flex items-center gap-1.5 transition-colors shadow-sm" onclick="toggleChip(this)" type="button">
+              <span class="material-symbols-outlined text-[16px]">check</span>
+              <span>Inverter PCB Board Diagnostics</span>
+            </button>
+            <button class="chip-btn px-3.5 py-1.5 rounded-full border border-[#E2E8F0] bg-white text-[#64748B] text-xs font-medium flex items-center gap-1.5 transition-colors hover:border-[#0F766E]" onclick="toggleChip(this)" type="button">
+              <span class="material-symbols-outlined text-[16px] hidden">check</span>
+              <span>Duct Cleaning &amp; Leak Sealing</span>
+            </button>
+            <button class="chip-btn px-3.5 py-1.5 rounded-full border border-[#E2E8F0] bg-white text-[#64748B] text-xs font-medium flex items-center gap-1.5 transition-colors hover:border-[#0F766E]" onclick="toggleChip(this)" type="button">
+              <span class="material-symbols-outlined text-[16px] hidden">check</span>
+              <span>Capacitor Replacement &amp; Wiring</span>
+            </button>
+          </div>
+        </section>
+
+        <!-- Bottom Action Bar -->
+        <div class="flex flex-col sm:flex-row items-center justify-between pt-4 pb-12 border-t border-[#E2E8F0] gap-4">
+          <div class="flex items-center gap-2">
+            <span class="text-xs text-[#64748B] font-medium">Active Configuration:</span>
+            <span class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold bg-[#CCFBF1] text-[#0F766E] border border-[#0F766E]/20">
+              <span class="material-symbols-outlined text-[14px]">verified</span>
+              3 Trade Categories Active
+            </span>
+          </div>
+          <div class="flex items-center gap-3 w-full sm:w-auto">
+            <button class="flex-1 sm:flex-none px-5 py-2.5 rounded-xl border border-[#123B5D] bg-white text-[#123B5D] text-xs font-bold hover:bg-slate-50 transition-colors" type="button">
+              Discard Changes
+            </button>
+            <button class="flex-1 sm:flex-none px-6 py-2.5 rounded-xl bg-[#0F766E] hover:bg-[#0D655E] text-white text-xs font-bold transition-all shadow-sm flex items-center justify-center gap-2 active:scale-98" onclick="triggerToast()" type="button">
+              <span class="material-symbols-outlined text-[18px]">save</span>
+              <span>Save Categories</span>
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </main>
+  </div>
+
+  <!-- Interactive JavaScript Logic -->
+  <script>
+    function toggleMobileSidebar() {
+      const sidebar = document.getElementById('admin-sidebar');
+      const backdrop = document.getElementById('sidebar-backdrop');
+      if (!sidebar || !backdrop) return;
+      const isClosed = sidebar.classList.contains('-translate-x-full');
+      if (isClosed) {
+        sidebar.classList.remove('-translate-x-full');
+        backdrop.classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+      } else {
+        sidebar.classList.add('-translate-x-full');
+        backdrop.classList.add('hidden');
+        document.body.style.overflow = '';
+      }
+    }
+
+    function toggleCategory(card, subId) {
+      const badge = card.querySelector('.absolute');
+      const isSelected = card.classList.contains('border-[#0F766E]');
+      
+      if (isSelected) {
+        card.classList.remove('border-[#0F766E]', 'bg-[#CCFBF1]/20', 'border-2');
+        card.classList.add('border-[#E2E8F0]', 'bg-white', 'border');
+        if (badge) {
+          badge.classList.add('hidden');
+          badge.classList.remove('flex');
+        }
+        if (subId) {
+          const sub = document.getElementById(subId);
+          if (sub) sub.classList.add('hidden');
+        }
+      } else {
+        card.classList.add('border-[#0F766E]', 'bg-[#CCFBF1]/20', 'border-2');
+        card.classList.remove('border-[#E2E8F0]', 'bg-white', 'border');
+        if (badge) {
+          badge.classList.remove('hidden');
+          badge.classList.add('flex');
+        }
+        if (subId) {
+          const sub = document.getElementById(subId);
+          if (sub) sub.classList.remove('hidden');
+        }
+      }
+    }
+
+    function toggleChip(chip) {
+      const isSelected = chip.classList.contains('bg-[#CCFBF1]');
+      const checkIcon = chip.querySelector('.material-symbols-outlined');
+      
+      if (isSelected) {
+        chip.classList.remove('bg-[#CCFBF1]', 'border-[#0F766E]', 'text-[#0F766E]', 'font-semibold', 'shadow-sm');
+        chip.classList.add('bg-white', 'border-[#E2E8F0]', 'text-[#64748B]', 'font-medium');
+        if (checkIcon) checkIcon.classList.add('hidden');
+      } else {
+        chip.classList.add('bg-[#CCFBF1]', 'border-[#0F766E]', 'text-[#0F766E]', 'font-semibold', 'shadow-sm');
+        chip.classList.remove('bg-white', 'border-[#E2E8F0]', 'text-[#64748B]', 'font-medium');
+        if (checkIcon) checkIcon.classList.remove('hidden');
+      }
+    }
+
+    function toggleAllChips(btn) {
+      const chips = document.querySelectorAll('.chip-btn');
+      const allSelected = btn.textContent.trim() === 'Deselect All';
+      
+      chips.forEach(chip => {
+        const checkIcon = chip.querySelector('.material-symbols-outlined');
+        if (allSelected) {
+          chip.classList.remove('bg-[#CCFBF1]', 'border-[#0F766E]', 'text-[#0F766E]', 'font-semibold', 'shadow-sm');
+          chip.classList.add('bg-white', 'border-[#E2E8F0]', 'text-[#64748B]', 'font-medium');
+          if (checkIcon) checkIcon.classList.add('hidden');
+        } else {
+          chip.classList.add('bg-[#CCFBF1]', 'border-[#0F766E]', 'text-[#0F766E]', 'font-semibold', 'shadow-sm');
+          chip.classList.remove('bg-white', 'border-[#E2E8F0]', 'text-[#64748B]', 'font-medium');
+          if (checkIcon) checkIcon.classList.remove('hidden');
+        }
+      });
+      
+      btn.textContent = allSelected ? 'Select All' : 'Deselect All';
+    }
+
+    function triggerToast() {
+      const toast = document.getElementById('toastNotification');
+      if (toast) {
+        toast.classList.remove('opacity-0', 'pointer-events-none');
+        toast.classList.add('opacity-100');
+        setTimeout(() => {
+          toast.classList.remove('opacity-100');
+          toast.classList.add('opacity-0', 'pointer-events-none');
+        }, 3500);
+      }
+    }
+  </script>
+</body>
+</html>

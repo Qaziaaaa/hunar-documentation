@@ -1,0 +1,801 @@
+<!DOCTYPE html>
+<html class="h-full" lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+  <title>HUNAR Worker - Repair Execution & Completion</title>
+  
+  <!-- Google Fonts: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  
+  <!-- Material Symbols & Icons -->
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=block" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons&display=block" rel="stylesheet" />
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <script>
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              navy: "#123B5D",
+              "navy-dark": "#0F2E4A",
+              teal: "#0F766E",
+              "teal-dark": "#0D655E",
+              "teal-light": "#CCFBF1",
+              amber: "#F59E0B",
+              "amber-light": "#FEF3C7",
+              dark: "#0F172A",
+              gray: "#64748B",
+              border: "#E2E8F0"
+            }
+          },
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+          }
+        }
+      }
+    };
+  </script>
+
+  <style>
+    @layer base {
+      html, body {
+        margin: 0;
+        padding: 0;
+        font-family: 'Inter', sans-serif;
+        -webkit-text-size-adjust: 100%;
+        background-color: #F8FAFC;
+        color: #0F172A;
+      }
+    }
+    
+    /* Robust Material Symbols & Icons rendering on Mobile & Desktop */
+    .material-symbols-outlined,
+    .material-icons {
+      font-family: 'Material Symbols Outlined', 'Material Icons', sans-serif !important;
+      font-weight: normal !important;
+      font-style: normal !important;
+      font-size: 20px;
+      line-height: 1 !important;
+      letter-spacing: normal;
+      text-transform: none;
+      display: inline-flex !important;
+      align-items: center;
+      justify-content: center;
+      white-space: nowrap;
+      word-wrap: normal;
+      direction: ltr;
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
+      -moz-osx-font-smoothing: grayscale;
+      font-feature-settings: 'liga' 1 !important;
+      -webkit-font-feature-settings: 'liga' 1 !important;
+      flex-shrink: 0 !important;
+      user-select: none;
+      vertical-align: middle;
+    }
+
+    /* Scrollbars */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 4px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+  </style>
+</head>
+<body class="bg-[#F8FAFC] font-sans text-[#0F172A] antialiased min-h-screen">
+
+    <!-- Mobile Backdrop Overlay -->
+  <div id="sidebar-backdrop" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden lg:hidden transition-opacity duration-300" onclick="toggleMobileSidebar()"></div>
+
+  <!-- UNIFIED WORKER SIDEBAR -->
+  <aside id="admin-sidebar" class="fixed inset-y-0 left-0 w-72 sm:w-64 max-w-[85vw] bg-white border-r border-[#E2E8F0] z-50 flex flex-col justify-between shadow-2xl lg:shadow-[1px_0_10px_rgba(0,0,0,0.02)] transform -translate-x-full lg:translate-x-0 transition-transform duration-300 ease-in-out">
+    <div class="flex flex-col flex-1 overflow-y-auto px-4 py-5">
+      
+      <!-- Brand Logo Header -->
+      <div class="flex items-center justify-between pb-4 border-b border-[#E2E8F0] mb-4">
+        <a href="../worker_job_proposal_visit_negotiation/code.html" class="flex items-center gap-3 group text-left no-underline min-w-0" title="Worker Portal Hub">
+          <div class="w-10 h-10 rounded-xl bg-[#0F766E] flex items-center justify-center text-white font-extrabold text-xl shadow-sm tracking-tight relative group-hover:scale-105 transition-transform shrink-0">
+            <span>H</span>
+            <span class="w-2.5 h-2.5 rounded-full bg-[#F59E0B] absolute bottom-1 right-1 border-2 border-white"></span>
+          </div>
+          <div class="flex flex-col min-w-0">
+            <div class="flex items-center gap-1.5 leading-tight">
+              <span class="font-extrabold text-[17px] tracking-tight text-[#123B5D]">HUNAR</span>
+              <span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-[#0F766E]/10 text-[#0F766E] uppercase tracking-wider border border-[#0F766E]/20">WORKER</span>
+            </div>
+            <p class="text-[11px] font-medium text-[#64748B] truncate">Skilled Technician Portal</p>
+          </div>
+        </a>
+        <button onclick="toggleMobileSidebar()" class="lg:hidden p-2 rounded-lg text-[#64748B] hover:text-[#0F172A] hover:bg-slate-100 transition-colors flex items-center justify-center shrink-0 ml-1" aria-label="Close sidebar">
+          <span class="material-symbols-outlined text-[22px]">close</span>
+        </button>
+      </div>
+
+      <!-- Worker Status & Availability Pill -->
+      <div class="p-3 mb-4 rounded-xl bg-slate-50 border border-[#E2E8F0] space-y-2">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <span class="relative flex h-2.5 w-2.5 shrink-0">
+              <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#16A34A] opacity-75"></span>
+              <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-[#16A34A]"></span>
+            </span>
+            <span class="text-[12px] font-bold text-[#0F172A]">Online &amp; Active</span>
+          </div>
+          <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-[#CCFBF1] text-[#0F766E] shrink-0">Ready for Jobs</span>
+        </div>
+        <div class="flex items-center justify-between text-[11px] text-[#64748B] pt-1.5 border-t border-[#E2E8F0]/80">
+          <span>Serving Area:</span>
+          <span class="font-semibold text-[#123B5D]">F-10 • 10 km radius</span>
+        </div>
+      </div>
+
+      <!-- Navigation Links -->
+      <nav class="space-y-5">
+        <!-- Group 1: JOBS & WORK ORDERS -->
+        <div>
+          <div class="px-3 pb-2 text-[10px] font-bold uppercase tracking-wider text-[#64748B]">Jobs &amp; Execution</div>
+          <div class="space-y-1">
+            <a class="flex items-center justify-between px-3 py-2.5 rounded-xl text-[13px] font-medium text-[#64748B] hover:text-[#0F172A] hover:bg-slate-50 transition-colors" href="../worker_job_proposal_visit_negotiation/code.html">
+              <div class="flex items-center gap-3 min-w-0">
+                <span class="material-symbols-outlined text-[20px]  shrink-0">handshake</span>
+                <span class='truncate'>Job Proposals</span>
+              </div>
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#FEF3C7] text-[#92400E] border border-[#F59E0B]/30 shrink-0 ml-2">3 New</span>
+            </a>
+            <a class="flex items-center justify-between px-3 py-2.5 rounded-xl bg-[#0F766E] text-white font-semibold text-[13px] shadow-sm group transition-all" href="../worker_repair_execution_completion/code.html">
+              <div class="flex items-center gap-3 min-w-0">
+                <span class="material-symbols-outlined text-[20px] text-white shrink-0">handyman</span>
+                <span class='truncate'>Active Repair</span>
+              </div>
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-white text-[#0F766E] shadow-sm shrink-0 ml-2">1 Live</span>
+            </a>
+          </div>
+        </div>
+
+        <!-- Group 2: REPUTATION & CLAIMS -->
+        <div>
+          <div class="px-3 pb-2 text-[10px] font-bold uppercase tracking-wider text-[#64748B]">Reputation &amp; Disputes</div>
+          <div class="space-y-1">
+            <a class="flex items-center justify-between px-3 py-2.5 rounded-xl text-[13px] font-medium text-[#64748B] hover:text-[#0F172A] hover:bg-slate-50 transition-colors" href="../worker_reviews_ratings/code.html">
+              <div class="flex items-center gap-3 min-w-0">
+                <span class="material-symbols-outlined text-[20px] text-[#F59E0B] shrink-0">star</span>
+                <span class='truncate'>Reviews &amp; Ratings</span>
+              </div>
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#FEF3C7] text-[#92400E] border border-[#F59E0B]/30 shrink-0 ml-2">4.9 ★</span>
+            </a>
+            <a class="flex items-center justify-between px-3 py-2.5 rounded-xl text-[13px] font-medium text-[#64748B] hover:text-[#0F172A] hover:bg-slate-50 transition-colors" href="../worker_dispute_management_resolution/code.html">
+              <div class="flex items-center gap-3 min-w-0">
+                <span class="material-symbols-outlined text-[20px] text-[#DC2626] shrink-0">gavel</span>
+                <span class='truncate'>Dispute Claims</span>
+              </div>
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#FEE2E2] text-[#DC2626] border border-[#DC2626]/30 shrink-0 ml-2">1 Open</span>
+            </a>
+          </div>
+        </div>
+
+        <!-- Group 3: SKILLS & COVERAGE -->
+        <div>
+          <div class="px-3 pb-2 text-[10px] font-bold uppercase tracking-wider text-[#64748B]">Profile &amp; Settings</div>
+          <div class="space-y-1">
+            <a class="flex items-center justify-between px-3 py-2.5 rounded-xl text-[13px] font-medium text-[#64748B] hover:text-[#0F172A] hover:bg-slate-50 transition-colors" href="../worker_category_skill_settings/code.html">
+              <div class="flex items-center gap-3 min-w-0">
+                <span class="material-symbols-outlined text-[20px]  shrink-0">tune</span>
+                <span class='truncate'>My Services &amp; Skills</span>
+              </div>
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#0F766E]/10 text-[#0F766E] border border-[#0F766E]/20 shrink-0 ml-2">3 Trades</span>
+            </a>
+            <a class="flex items-center justify-between px-3 py-2.5 rounded-xl text-[13px] font-medium text-[#64748B] hover:text-[#0F172A] hover:bg-slate-50 transition-colors" href="../worker_service_area_location_settings/code.html">
+              <div class="flex items-center gap-3 min-w-0">
+                <span class="material-symbols-outlined text-[20px]  shrink-0">pin_drop</span>
+                <span class='truncate'>Service Location &amp; Radius</span>
+              </div>
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#123B5D]/10 text-[#123B5D] border border-[#123B5D]/20 shrink-0 ml-2">10 km</span>
+            </a>
+          </div>
+        </div>
+      </nav>
+    </div>
+
+    <!-- Sidebar Bottom: NADRA Verification & Technician Profile -->
+    <div class="p-4 border-t border-[#E2E8F0] space-y-3 bg-white">
+      <div class="p-3 rounded-xl bg-[#0F766E] text-white space-y-1.5 shadow-sm">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-1.5">
+            <span class="material-symbols-outlined text-white text-[18px] shrink-0">verified_user</span>
+            <span class="text-[10px] font-bold tracking-wider uppercase text-emerald-100">NADRA Verified Pro</span>
+          </div>
+          <span class="w-2 h-2 rounded-full bg-[#4ADE80] animate-pulse shrink-0"></span>
+        </div>
+        <p class="text-[11px] text-emerald-50 leading-relaxed">Level 2 Master Tech • 100% Escrow Protection Guarantee.</p>
+      </div>
+      <div class="flex items-center justify-between pt-1">
+        <div class="flex items-center gap-2.5 min-w-0">
+          <div class="w-8 h-8 rounded-full bg-[#123B5D] text-white flex items-center justify-center font-bold text-xs ring-2 ring-[#0F766E]/30 shrink-0">
+            AK
+          </div>
+          <div class="flex flex-col min-w-0">
+            <div class="flex items-center gap-1">
+              <span class="text-[12px] font-bold text-[#0F172A] leading-tight truncate">Ali Khan</span>
+              <span class="material-symbols-outlined text-[13px] text-[#0F766E] shrink-0" title="NADRA Verified">verified</span>
+            </div>
+            <span class="text-[10px] text-[#64748B] font-medium truncate">AC Specialist • 4.9 ★</span>
+          </div>
+        </div>
+        <a class="text-[#64748B] hover:text-[#DC2626] p-1.5 rounded-md transition-colors flex items-center justify-center shrink-0 ml-1" href="../worker_job_proposal_visit_negotiation/code.html" title="Logout">
+          <span class="material-symbols-outlined text-[20px]">logout</span>
+        </a>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ================= MAIN WRAPPER ================= -->
+  <div class="w-full lg:pl-64 flex flex-col min-h-screen bg-[#F8FAFC] min-w-0">
+
+    <!-- Top Header Bar -->
+    <header class="sticky top-0 z-30 h-16 w-full bg-white/95 backdrop-blur-md border-b border-[#E2E8F0] px-3 sm:px-6 flex items-center justify-between gap-2 min-w-0">
+      <div class="flex items-center gap-3">
+        <!-- Mobile Menu Toggle -->
+        <button onclick="toggleMobileSidebar()"
+          class="lg:hidden p-2 rounded-lg border border-[#E2E8F0] bg-white text-[#0F172A] hover:bg-slate-50 transition-colors"
+          aria-label="Open Navigation">
+          <span class="material-symbols-outlined text-[20px]">menu</span>
+        </button>
+        <span
+          class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-[#CCFBF1] text-[#0F766E] border border-[#0F766E]/20">
+          Skilled Worker Portal
+        </span>
+        <div
+          class="hidden sm:flex items-center gap-1.5 px-3 py-1 rounded-lg border border-[#E2E8F0] bg-slate-50 text-[#64748B] text-xs">
+          <span class="material-symbols-outlined text-[#0F766E] text-[16px]">location_on</span>
+          <span>Serving: <strong class="text-[#0F172A] font-semibold">F-10, Islamabad</strong></span>
+          <span class="text-slate-300">•</span>
+          <span class="text-[#64748B]">10 km radius</span>
+        </div>
+      </div>
+      <div class="flex items-center gap-3 sm:gap-4">
+        <div
+          class="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-lg border border-[#E2E8F0] bg-white shadow-sm">
+          <span class="relative flex h-2.5 w-2.5">
+            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#16A34A] opacity-75"></span>
+            <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-[#16A34A]"></span>
+          </span>
+          <span class="text-xs font-semibold text-[#0F172A]">Online</span>
+          <span class="text-[11px] text-[#64748B] border-l border-[#E2E8F0] pl-2 ml-1">Ready for Jobs</span>
+        </div>
+        <button
+          class="relative p-2 rounded-lg border border-[#E2E8F0] bg-white text-[#64748B] hover:text-[#0F172A] hover:bg-slate-50 transition-colors"
+          title="Notifications">
+          <span class="material-symbols-outlined text-[20px]">notifications</span>
+          <span class="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-[#DC2626]"></span>
+        </button>
+        <div class="h-6 w-px bg-[#E2E8F0] hidden sm:block"></div>
+        <div class="flex items-center gap-2.5">
+          <div
+            class="w-8 h-8 rounded-full bg-[#123B5D] text-white flex items-center justify-center text-xs font-bold ring-2 ring-[#0F766E]/20">
+            AK
+          </div>
+          <div class="hidden md:flex flex-col text-left">
+            <div class="flex items-center gap-1">
+              <span class="text-xs font-semibold text-[#0F172A] leading-tight">Ali Khan</span>
+              <span class="material-symbols-outlined text-[13px] text-[#0F766E]" title="NADRA Verified">verified</span>
+            </div>
+            <span class="text-[10px] text-[#64748B] leading-none mt-0.5">AC Specialist • 4.9 ★</span>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 w-full min-w-0 p-4 sm:p-6 lg:p-8 bg-[#F8FAFC]">
+      <div class="max-w-6xl mx-auto w-full min-w-0 flex flex-col space-y-6">
+
+        <!-- Sub-header & Breadcrumb Navigation Strip -->
+        <div
+          class="bg-white rounded-xl border border-[#E2E8F0] p-4 sm:p-5 flex flex-col lg:flex-row lg:items-center justify-between gap-4 shadow-sm">
+          <div class="flex flex-col gap-1">
+            <div class="flex items-center gap-2 text-xs text-[#64748B] font-medium">
+              <a class="hover:text-[#0F766E] transition-colors flex items-center gap-1 font-bold text-[#0F172A]"
+                href="#">
+                <span class="material-symbols-outlined text-[16px]">arrow_back</span>
+                Active Jobs
+              </a>
+              <span class="text-slate-300">/</span>
+              <span class="font-mono font-bold text-[#0F172A]">Job #HN-8492</span>
+              <span class="text-slate-300">/</span>
+              <span class="text-[#64748B]">Repair Execution &amp; Completion</span>
+            </div>
+            <div class="flex flex-wrap items-center gap-2.5 mt-1">
+              <h1 class="text-xl sm:text-2xl font-bold text-[#0F172A]">Compressor Failure &amp; Dual-Run Capacitor
+                Replacement</h1>
+              <span
+                class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-[#CCFBF1] text-[#0F766E] border border-[#0F766E]/20">
+                <span class="w-2 h-2 rounded-full bg-[#0F766E] animate-ping"></span>
+                Stage 2: Repair In Progress
+              </span>
+              <span
+                class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-[#0F172A] border border-[#E2E8F0]">
+                <span class="material-symbols-outlined text-[14px] text-[#0F766E]">hvac</span>
+                Gree Inverter 1.5 Ton
+              </span>
+            </div>
+          </div>
+          <div class="flex items-center gap-3 self-start lg:self-center shrink-0">
+            <div
+              class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-50 border border-[#E2E8F0] text-xs text-[#0F172A] font-medium">
+              <span class="material-symbols-outlined text-[16px] text-[#0F766E]">schedule</span>
+              <span>Elapsed: <strong class="font-mono font-bold" id="elapsedCounter">33m 00s</strong></span>
+            </div>
+            <a class="px-3.5 py-1.5 rounded-xl bg-[#123B5D] hover:bg-slate-800 text-white text-xs font-bold flex items-center gap-1.5 transition-colors shadow-sm"
+              href="tel:+923005559871">
+              <span class="material-symbols-outlined text-[16px]">call</span>
+              <span>Call Customer</span>
+            </a>
+          </div>
+        </div>
+
+        <!-- Two-Column Responsive Grid (7 cols Left / 5 cols Right) -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+
+          <!-- LEFT COLUMN: Active Repair Execution & Proof (7 cols) -->
+          <div class="lg:col-span-7 flex flex-col gap-5">
+
+            <!-- Milestone Stepper -->
+            <div class="bg-white rounded-xl border border-[#E2E8F0] p-4 shadow-sm">
+              <div class="text-[10px] font-bold uppercase tracking-wider text-[#64748B] mb-2.5">Milestone Progress</div>
+              <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+                <!-- Step 1 -->
+                <div class="flex items-center gap-2 p-2 rounded-lg bg-slate-50 border border-[#E2E8F0]">
+                  <div class="w-6 h-6 rounded-full bg-[#0F766E] text-white flex items-center justify-center shrink-0">
+                    <span class="material-symbols-outlined text-[14px]">check</span>
+                  </div>
+                  <div class="flex flex-col min-w-0">
+                    <span class="text-[9px] text-[#64748B] uppercase font-bold">Stage 1</span>
+                    <span class="font-bold text-[#0F172A] truncate">Diagnostic Done</span>
+                  </div>
+                </div>
+
+                <!-- Step 2 -->
+                <div class="flex items-center gap-2 p-2 rounded-lg bg-slate-50 border border-[#E2E8F0]">
+                  <div class="w-6 h-6 rounded-full bg-[#0F766E] text-white flex items-center justify-center shrink-0">
+                    <span class="material-symbols-outlined text-[14px]">check</span>
+                  </div>
+                  <div class="flex flex-col min-w-0">
+                    <span class="text-[9px] text-[#64748B] uppercase font-bold">Stage 2</span>
+                    <span class="font-bold text-[#0F172A] truncate">Quote Approved</span>
+                  </div>
+                </div>
+
+                <!-- Step 3 (Active) -->
+                <div
+                  class="flex items-center gap-2 p-2 rounded-lg bg-[#CCFBF1] text-[#0F766E] border border-[#0F766E]/30">
+                  <div
+                    class="w-6 h-6 rounded-full bg-[#0F766E] text-white flex items-center justify-center shrink-0 animate-spin">
+                    <span class="material-symbols-outlined text-[14px]">build</span>
+                  </div>
+                  <div class="flex flex-col min-w-0">
+                    <span class="text-[9px] text-[#0F766E] uppercase font-bold">In Progress</span>
+                    <span class="font-bold text-[#0F766E] truncate">Repair Active</span>
+                  </div>
+                </div>
+
+                <!-- Step 4 -->
+                <div class="flex items-center gap-2 p-2 rounded-lg bg-white border border-[#E2E8F0] opacity-60">
+                  <div
+                    class="w-6 h-6 rounded-full bg-slate-100 text-[#64748B] flex items-center justify-center shrink-0 font-bold text-[10px]">
+                    04
+                  </div>
+                  <div class="flex flex-col min-w-0">
+                    <span class="text-[9px] text-[#64748B] uppercase font-semibold">Final</span>
+                    <span class="text-[#64748B] truncate">Payment &amp; Review</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Execution Checklist / Scope Validation -->
+            <div class="bg-white rounded-xl border border-[#E2E8F0] p-5 flex flex-col gap-4 shadow-sm">
+              <div class="flex items-center justify-between">
+                <div>
+                  <span class="text-[10px] font-bold uppercase tracking-wider text-[#0F766E]">Technical Scope</span>
+                  <h2 class="text-sm font-bold text-[#0F172A]">Execution Checklist &amp; Quality Checks</h2>
+                </div>
+                <span
+                  class="text-xs font-bold text-[#0F766E] bg-[#CCFBF1] px-2.5 py-0.5 rounded-full border border-[#0F766E]/20">
+                  3 / 3 Tasks Complete
+                </span>
+              </div>
+
+              <div class="flex flex-col gap-2.5">
+                <!-- Task 1 -->
+                <label
+                  class="flex items-start gap-3 p-3 rounded-xl bg-slate-50 border border-[#E2E8F0] hover:bg-slate-100/70 cursor-pointer transition-colors">
+                  <input checked="" class="mt-0.5 w-4 h-4 rounded text-[#0F766E] focus:ring-[#0F766E] accent-[#0F766E]"
+                    type="checkbox" />
+                  <div class="flex flex-col text-xs">
+                    <span class="font-bold text-[#0F172A]">Discharge and replace faulty outdoor capacitor</span>
+                    <span class="text-[#64748B] mt-0.5 leading-relaxed">Removed blown 35μF dual run capacitor. Replaced
+                      with Daikin OEM spec 40μF/450V.</span>
+                  </div>
+                </label>
+
+                <!-- Task 2 -->
+                <label
+                  class="flex items-start gap-3 p-3 rounded-xl bg-slate-50 border border-[#E2E8F0] hover:bg-slate-100/70 cursor-pointer transition-colors">
+                  <input checked="" class="mt-0.5 w-4 h-4 rounded text-[#0F766E] focus:ring-[#0F766E] accent-[#0F766E]"
+                    type="checkbox" />
+                  <div class="flex flex-col text-xs">
+                    <div class="flex items-center gap-2 flex-wrap">
+                      <span class="font-bold text-[#0F172A]">Test compressor starting current load</span>
+                      <span
+                        class="px-2 py-0.5 bg-white border border-[#E2E8F0] text-[#0F766E] rounded font-mono font-bold text-[11px]">6.8A
+                        Steady</span>
+                    </div>
+                    <span class="text-[#64748B] mt-0.5 leading-relaxed">Verified normal running current under full
+                      1.5-ton inverter capacity.</span>
+                  </div>
+                </label>
+
+                <!-- Task 3 -->
+                <label
+                  class="flex items-start gap-3 p-3 rounded-xl bg-slate-50 border border-[#E2E8F0] hover:bg-slate-100/70 cursor-pointer transition-colors">
+                  <input checked="" class="mt-0.5 w-4 h-4 rounded text-[#0F766E] focus:ring-[#0F766E] accent-[#0F766E]"
+                    type="checkbox" />
+                  <div class="flex flex-col text-xs">
+                    <span class="font-bold text-[#0F172A]">Clean condenser coil &amp; check fan clearance</span>
+                    <span class="text-[#64748B] mt-0.5 leading-relaxed">Cleared debris from intake fins; checked
+                      pressure relief valve clearance.</span>
+                  </div>
+                </label>
+              </div>
+            </div>
+
+            <!-- Service Completion Proof: Before & After Photos -->
+            <div class="bg-white rounded-xl border border-[#E2E8F0] p-5 flex flex-col gap-4 shadow-sm">
+              <div class="flex items-center justify-between">
+                <div>
+                  <span class="text-[10px] font-bold uppercase tracking-wider text-[#64748B]">Quality Audit</span>
+                  <h3 class="text-sm font-bold text-[#0F172A]">Service Completion Proof (Required for Escrow Release)
+                  </h3>
+                </div>
+                <span
+                  class="text-xs font-bold text-[#0F766E] bg-[#CCFBF1] px-2.5 py-1 rounded-full border border-[#0F766E]/20 flex items-center gap-1">
+                  <span class="material-symbols-outlined text-[14px]">verified</span>
+                  2 Photos Logged
+                </span>
+              </div>
+
+              <!-- Side-by-Side Photos -->
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <!-- Before Service -->
+                <div class="flex flex-col gap-2 p-3 rounded-xl bg-slate-50 border border-[#E2E8F0]">
+                  <div class="flex items-center justify-between text-xs">
+                    <span class="font-bold text-[#0F172A] flex items-center gap-1">
+                      <span class="material-symbols-outlined text-[15px] text-[#DC2626]">history</span>
+                      Before: capacitor_blown.jpg
+                    </span>
+                    <span class="font-mono text-[10px] text-[#64748B]">11:15 AM</span>
+                  </div>
+                  <div class="relative rounded-lg overflow-hidden h-44 bg-slate-200 border border-[#E2E8F0]">
+                    <img class="w-full h-full object-cover" alt="Damaged blown out capacitor"
+                      src="https://lh3.googleusercontent.com/aida-public/AB6AXuAb9horAhY35duWQ880LG3-VusG3H_bdK-S7fB1hYYXRYOXrWi3X7aIDgK2voChFfZJATCZ0a_MJY2QVquHdp6RPVM2vutKVJnJm_woA9ugzXtdHaO32eohgS7_OZlnxbjv37JDNjf_u3EDvUMEvL1K9Hc6fQzt7nQukoIZ4yYVNFok9pz-EssgD3NVnwsael-_ctgKrieLiUgbb7ZP-vt4cmCwwhw9TT-KJO-0NtZ1IEIYauQvivfk" />
+                    <div
+                      class="absolute bottom-2 left-2 px-2 py-0.5 bg-slate-900/80 text-white rounded text-[10px] font-bold flex items-center gap-1">
+                      <span class="material-symbols-outlined text-[13px] text-[#DC2626]">warning</span>
+                      Blown 35μF Unit
+                    </div>
+                  </div>
+                  <span class="text-[11px] text-[#64748B]">Logged during Stage 1 technical diagnosis.</span>
+                </div>
+
+                <!-- After Service -->
+                <div class="flex flex-col gap-2 p-3 rounded-xl bg-slate-50 border border-[#E2E8F0]">
+                  <div class="flex items-center justify-between text-xs">
+                    <span class="font-bold text-[#0F766E] flex items-center gap-1">
+                      <span class="material-symbols-outlined text-[15px] text-[#0F766E]">verified</span>
+                      After: new_capacitor_installed.jpg
+                    </span>
+                    <span
+                      class="text-[10px] font-bold text-[#0F766E] bg-[#CCFBF1] px-1.5 py-0.5 rounded">Verified</span>
+                  </div>
+                  <div class="relative rounded-lg overflow-hidden h-44 bg-slate-200 border border-[#E2E8F0]">
+                    <img class="w-full h-full object-cover" alt="New clean capacitor installed"
+                      src="https://lh3.googleusercontent.com/aida-public/AB6AXuC-4poPPfct3-8kdrcjDxt1-EpZ8sUwiUEgIsXRoEMwBZJZQ1kGkS9Q8PWbE1m38m3HjrMs_qdG0ok6quZvAIPxOWnpNMpVqGxBUmlqEE6aMV-CMvEqRWJ04izdcKd3EpNPMN3GsvQX_x8EExFkNXTfbS2zkKIuOlDcdG1_AAkOcd28bpfVZxrVboJF-9tWwKxKXr1KtJdUyU8bU-zcciAQMfkdxy1k2VHG3hO9RwmEXAfBPgGbHV_8" />
+                    <div
+                      class="absolute bottom-2 left-2 px-2 py-0.5 bg-slate-900/80 text-white rounded text-[10px] font-bold flex items-center gap-1">
+                      <span class="material-symbols-outlined text-[13px] text-emerald-400">check_circle</span>
+                      New 40μF OEM Active
+                    </div>
+                  </div>
+                  <span class="text-[11px] text-[#64748B]">High-voltage dielectric terminals insulated.</span>
+                </div>
+              </div>
+
+              <!-- Add Additional Photo Action -->
+              <button
+                class="w-full py-2.5 px-3 rounded-xl border border-dashed border-slate-300 bg-white hover:bg-slate-50 text-xs font-bold text-[#64748B] hover:text-[#0F172A] flex items-center justify-center gap-1.5 transition-colors"
+                type="button">
+                <span class="material-symbols-outlined text-[18px] text-[#0F766E]">add_a_photo</span>
+                <span>Add Additional Verification Photo</span>
+              </button>
+            </div>
+
+            <!-- Final Diagnostic & Notes Textarea -->
+            <div class="bg-white rounded-xl border border-[#E2E8F0] p-5 flex flex-col gap-3 shadow-sm">
+              <label class="text-xs font-bold text-[#0F172A] flex items-center justify-between" for="workerNotes">
+                <span>Final Technician Diagnostic &amp; Resolution Notes</span>
+                <span class="text-[11px] font-normal text-[#64748B]">Attached to Customer Digital Invoice</span>
+              </label>
+              <textarea
+                class="w-full bg-slate-50 border border-[#E2E8F0] p-3 rounded-xl text-xs text-[#0F172A] focus:outline-none focus:border-[#0F766E] focus:bg-white leading-relaxed resize-none"
+                id="workerNotes"
+                rows="3">Replacement completed. AC cooling at 16°C vent temperature. Capacitor terminal crimps refreshed and insulated with dielectric sleeve. Customer inspected cold air output in master bedroom.</textarea>
+              <div class="flex items-center gap-1.5 text-xs text-[#64748B]">
+                <span class="material-symbols-outlined text-[16px] text-[#0F766E]">shield</span>
+                <span>30-day HUNAR Service Warranty applied automatically upon wrap-up.</span>
+              </div>
+            </div>
+
+            <!-- Completion Action Buttons -->
+            <div
+              class="bg-white rounded-xl border border-[#E2E8F0] p-4 flex flex-col sm:flex-row items-center gap-3 shadow-sm">
+              <button
+                class="w-full sm:flex-1 py-3 px-4 bg-[#0F766E] hover:bg-[#0D655E] text-white font-bold text-xs sm:text-sm rounded-xl flex items-center justify-center gap-2 transition-all shadow-sm active:scale-98"
+                id="completeJobBtn" type="button">
+                <span class="material-symbols-outlined text-[20px]">task_alt</span>
+                <span>Mark Repair Complete &amp; Request Payment</span>
+              </button>
+              <button
+                class="w-full sm:w-auto py-3 px-4 bg-slate-100 hover:bg-slate-200 text-[#0F172A] font-bold text-xs rounded-xl border border-[#E2E8F0] flex items-center justify-center gap-1.5 transition-colors"
+                type="button">
+                <span class="material-symbols-outlined text-[18px] text-[#64748B]">rule_folder</span>
+                <span>Scope Variation Quote</span>
+              </button>
+            </div>
+
+          </div>
+
+          <!-- RIGHT COLUMN: Financial Ledger, Customer & Escrow (5 cols) -->
+          <div class="lg:col-span-5 flex flex-col gap-5 sticky top-20">
+
+            <!-- Financial Ledger Breakdown Card -->
+            <div class="bg-white rounded-xl border border-[#E2E8F0] p-6 flex flex-col gap-4 shadow-sm">
+              <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+                <div class="flex flex-col">
+                  <span class="text-[10px] font-bold uppercase tracking-wider text-[#64748B]">Financial Ledger
+                    Summary</span>
+                  <span class="text-xs text-[#0F172A] font-medium">Total Bill Payable by Customer</span>
+                </div>
+                <div class="text-2xl font-extrabold text-[#123B5D] font-mono tracking-tight">
+                  Rs. 2,985
+                </div>
+              </div>
+
+              <!-- Itemized Breakdown -->
+              <div class="flex flex-col gap-2.5 text-xs">
+                <div class="flex items-center justify-between text-[#0F172A]">
+                  <span class="flex items-center gap-1.5 text-[#64748B]">
+                    <span class="material-symbols-outlined text-[16px] text-[#0F766E]">inventory_2</span>
+                    Parts (OEM 40μF Dual-Run Capacitor)
+                  </span>
+                  <span class="font-mono font-bold">Rs. 1,200</span>
+                </div>
+                <div class="flex items-center justify-between text-[#0F172A]">
+                  <span class="flex items-center gap-1.5 text-[#64748B]">
+                    <span class="material-symbols-outlined text-[16px] text-[#0F766E]">engineering</span>
+                    Labor &amp; On-Site Technical Service
+                  </span>
+                  <span class="font-mono font-bold">Rs. 1,500</span>
+                </div>
+                <div class="flex items-center justify-between text-[#0F172A]">
+                  <span class="flex items-center gap-1.5 text-[#64748B]">
+                    <span class="material-symbols-outlined text-[16px] text-[#0F766E]">pin_drop</span>
+                    Inspection &amp; Visit Fee (Stage 1 Locked)
+                  </span>
+                  <span class="font-mono font-bold">Rs. 285</span>
+                </div>
+
+                <!-- Gross Total Divider -->
+                <div
+                  class="pt-2 border-t border-[#E2E8F0] flex items-center justify-between text-sm font-bold text-[#0F172A]">
+                  <span>Customer Gross Invoice</span>
+                  <span class="font-mono text-[#123B5D]">Rs. 2,985</span>
+                </div>
+              </div>
+
+              <!-- Transparency Split: Net Payout vs Platform Commission -->
+              <div class="rounded-xl bg-slate-50 p-4 border border-[#E2E8F0] flex flex-col gap-2">
+                <div class="flex items-center justify-between text-xs">
+                  <span class="text-[#64748B]">Platform Commission (15%)</span>
+                  <span class="font-mono font-bold text-[#DC2626]">-Rs. 448</span>
+                </div>
+                <div class="pt-2 border-t border-slate-200 flex items-center justify-between">
+                  <div class="flex flex-col">
+                    <span class="text-[10px] font-bold uppercase tracking-wider text-[#0F766E]">Your Net Take-Home
+                      Payout (85%)</span>
+                    <span class="text-[11px] text-[#64748B]">Direct wallet credit / Cash retained</span>
+                  </div>
+                  <div class="text-xl font-extrabold text-[#0F766E] font-mono">
+                    Rs. 2,537
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Payment Mode & Escrow Status -->
+            <div class="bg-white rounded-xl border border-[#E2E8F0] p-5 flex flex-col gap-3.5 shadow-sm">
+              <div class="flex items-center justify-between">
+                <span class="text-[10px] font-bold uppercase tracking-wider text-[#64748B]">Payment Mode &amp;
+                  Escrow</span>
+                <span
+                  class="px-2.5 py-0.5 bg-[#CCFBF1] text-[#0F766E] rounded-full text-[10px] font-bold border border-[#0F766E]/20">Escrow
+                  Pre-Authorized</span>
+              </div>
+              <div class="p-3.5 rounded-xl bg-teal-50/60 border border-teal-200 flex items-start gap-2.5">
+                <span class="material-symbols-outlined text-[20px] text-[#0F766E] shrink-0 mt-0.5">lock</span>
+                <div class="flex flex-col text-xs leading-relaxed">
+                  <span class="font-bold text-teal-950">Funds Protected in HUNAR Escrow</span>
+                  <span class="text-teal-900 mt-0.5">Customer opted for cash at doorstep or instant one-tap wallet
+                    transfer. Payout release unlocks upon signature.</span>
+                </div>
+              </div>
+              <!-- Cash Receipt Confirmation CTA -->
+              <button
+                class="w-full py-2.5 px-3 bg-[#123B5D] hover:bg-slate-800 text-white font-bold text-xs rounded-xl flex items-center justify-center gap-1.5 transition-all shadow-sm"
+                id="cashReceiptBtn" type="button">
+                <span class="material-symbols-outlined text-[18px]">payments</span>
+                <span>Confirm Cash Received (Rs. 2,985)</span>
+              </button>
+            </div>
+
+            <!-- Customer Details Card -->
+            <div class="bg-white rounded-xl border border-[#E2E8F0] p-5 flex flex-col gap-3.5 shadow-sm">
+              <div class="flex items-center justify-between">
+                <span class="text-[10px] font-bold uppercase tracking-wider text-[#64748B]">Customer Details</span>
+                <span class="text-xs font-bold text-[#0F766E]">On Site</span>
+              </div>
+              <div class="flex items-start gap-3">
+                <div
+                  class="w-11 h-11 rounded-full bg-[#123B5D] text-white flex items-center justify-center font-bold text-sm shrink-0">
+                  UT
+                </div>
+                <div class="flex flex-col min-w-0">
+                  <div class="flex items-center gap-1.5">
+                    <span class="text-sm font-bold text-[#0F172A]">Usman Tariq</span>
+                    <span
+                      class="flex items-center text-[11px] font-bold text-amber-800 bg-amber-100 px-1.5 py-0.2 rounded">
+                      <span class="material-symbols-outlined text-[12px] text-amber-600 mr-0.5"
+                        style="font-variation-settings: 'FILL' 1;">star</span> 4.92
+                    </span>
+                  </div>
+                  <span class="text-xs text-[#64748B] mt-0.5">14 past completed bookings</span>
+                  <div class="flex items-center gap-1 text-xs text-[#0F172A] font-medium mt-1.5">
+                    <span class="material-symbols-outlined text-[16px] text-[#0F766E] shrink-0">location_on</span>
+                    <span class="truncate">House 42, Street 18, Sector F-10/3, Islamabad</span>
+                  </div>
+                </div>
+              </div>
+              <div class="grid grid-cols-2 gap-2 pt-2 border-t border-slate-100">
+                <a class="py-2 px-3 rounded-xl bg-slate-50 border border-[#E2E8F0] hover:bg-slate-100 text-xs font-bold text-[#0F172A] flex items-center justify-center gap-1.5 transition-colors"
+                  href="tel:+923005559871">
+                  <span class="material-symbols-outlined text-[16px] text-[#0F766E]">call</span>
+                  <span>Call Customer</span>
+                </a>
+                <a class="py-2 px-3 rounded-xl bg-slate-50 border border-[#E2E8F0] hover:bg-slate-100 text-xs font-bold text-[#0F172A] flex items-center justify-center gap-1.5 transition-colors"
+                  href="../worker_dispute_management_resolution/code.html">
+                  <span class="material-symbols-outlined text-[16px] text-[#123B5D]">chat</span>
+                  <span>Message In-App</span>
+                </a>
+              </div>
+            </div>
+
+            <!-- Raise a Dispute Box -->
+            <div class="bg-white rounded-xl border border-[#E2E8F0] p-3.5 flex items-center justify-between shadow-sm">
+              <div class="flex items-center gap-2 text-xs text-[#64748B]">
+                <span class="material-symbols-outlined text-[18px] text-[#DC2626]">report_problem</span>
+                <span>Experienced an on-site problem?</span>
+              </div>
+              <a class="text-xs font-bold text-[#DC2626] hover:underline flex items-center gap-0.5"
+                href="../worker_dispute_management_resolution/code.html">
+                <span>Raise Dispute</span>
+                <span class="material-symbols-outlined text-[14px]">chevron_right</span>
+              </a>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+    </main>
+  </div>
+
+  <!-- Settlement Confirmation Notification Toast -->
+  <div
+    class="fixed bottom-6 right-6 max-w-md bg-[#123B5D] text-white rounded-2xl p-4 flex items-start gap-3 transform translate-y-24 opacity-0 transition-all duration-300 pointer-events-none z-50 border border-teal-500 shadow-2xl"
+    id="confirmationToast">
+    <div class="w-8 h-8 rounded-full bg-[#0F766E] flex items-center justify-center text-white shrink-0">
+      <span class="material-symbols-outlined text-[18px]">verified</span>
+    </div>
+    <div class="flex flex-col gap-0.5">
+      <span class="text-xs font-bold text-white" id="toastTitle">Job Completed Successfully!</span>
+      <span class="text-[11px] text-slate-300" id="toastMessage">Rs. 2,985 marked collected. Receipt delivered to Usman
+        Tariq. Wallet credited with Rs. 2,537 net take-home revenue.</span>
+    </div>
+  </div>
+
+  <!-- Interactive JS -->
+  <script>
+    function toggleMobileSidebar() {
+      const sidebar = document.getElementById('admin-sidebar');
+      const backdrop = document.getElementById('sidebar-backdrop');
+      if (!sidebar || !backdrop) return;
+      const isClosed = sidebar.classList.contains('-translate-x-full');
+      if (isClosed) {
+        sidebar.classList.remove('-translate-x-full');
+        backdrop.classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+      } else {
+        sidebar.classList.add('-translate-x-full');
+        backdrop.classList.add('hidden');
+        document.body.style.overflow = '';
+      }
+    }
+
+    // Live elapsed timer
+    let seconds = 0;
+    let minutes = 33;
+    const timerElem = document.getElementById('elapsedCounter');
+
+    if (timerElem) {
+      setInterval(() => {
+        seconds++;
+        if (seconds >= 60) {
+          minutes++;
+          seconds = 0;
+        }
+        timerElem.textContent = `${minutes}m ${seconds < 10 ? '0' : ''}${seconds}s`;
+      }, 1000);
+    }
+
+    const completeBtn = document.getElementById('completeJobBtn');
+    const cashBtn = document.getElementById('cashReceiptBtn');
+    const toast = document.getElementById('confirmationToast');
+    const toastTitle = document.getElementById('toastTitle');
+    const toastMsg = document.getElementById('toastMessage');
+
+    function triggerToast(title, message) {
+      if (!toast) return;
+      toastTitle.textContent = title;
+      toastMsg.textContent = message;
+      toast.classList.remove('translate-y-24', 'opacity-0', 'pointer-events-none');
+      setTimeout(() => {
+        toast.classList.add('translate-y-24', 'opacity-0', 'pointer-events-none');
+      }, 4500);
+    }
+
+    if (completeBtn) {
+      completeBtn.addEventListener('click', () => {
+        completeBtn.disabled = true;
+        completeBtn.innerHTML = '<span class="material-symbols-outlined text-[20px]">done_all</span><span>Repair Completed &amp; Signed</span>';
+        completeBtn.classList.remove('bg-[#0F766E]', 'hover:bg-[#0D655E]');
+        completeBtn.classList.add('bg-[#123B5D]');
+        triggerToast('Repair Marked Complete!', 'Quality proof logged. Customer prompted to release payment of Rs. 2,985.');
+      });
+    }
+
+    if (cashBtn) {
+      cashBtn.addEventListener('click', () => {
+        cashBtn.innerHTML = '<span class="material-symbols-outlined text-[18px] text-teal-300">check_circle</span> <span>Cash Collected (Rs. 2,985 Recorded)</span>';
+        cashBtn.classList.remove('bg-[#123B5D]', 'hover:bg-slate-800');
+        cashBtn.classList.add('bg-[#0F766E]');
+        triggerToast('Cash Logged Successfully', 'Rs. 2,985 received. Net Rs. 2,537 recorded to your wallet ledger.');
+      });
+    }
+  </script>
+</body>
+
+</html>
