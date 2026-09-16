@@ -1,0 +1,1609 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Scheduled Visits & Arrival Tracker | HUNAR Customer Hub</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            navy: {
+              900: "#0F172A",
+              800: "#1A1A2E",
+              700: "#22223B"
+            },
+            teal: {
+              DEFAULT: "#0F766E",
+              dark: "#115E59",
+              light: "#14B8A6",
+              surface: "rgba(15, 118, 110, 0.08)",
+              border: "rgba(15, 118, 110, 0.2)"
+            },
+            amber: {
+              DEFAULT: "#F59E0B",
+              surface: "rgba(245, 158, 11, 0.1)"
+            },
+            emerald: {
+              DEFAULT: "#16A34A",
+              surface: "rgba(22, 163, 74, 0.1)"
+            },
+            crimson: {
+              DEFAULT: "#DC2626",
+              surface: "rgba(220, 38, 38, 0.1)"
+            },
+            slate: {
+              50: "#F8FAFC",
+              100: "#F1F5F9",
+              200: "#E2E8F0",
+              300: "#CBD5E1",
+              400: "#94A3B8",
+              500: "#64748B",
+              600: "#475569",
+              700: "#334155",
+              800: "#1E293B",
+              900: "#0F172A"
+            }
+          },
+          fontFamily: {
+            sans: ["Inter", "-apple-system", "BlinkMacSystemFont", "Segoe UI", "Roboto", "sans-serif"],
+            mono: ["JetBrains Mono", "monospace"]
+          },
+          boxShadow: {
+            xs: "0 1px 2px 0 rgba(0, 0, 0, 0.05)",
+            card: "0 2px 8px -2px rgba(15, 23, 42, 0.06), 0 1px 4px -1px rgba(15, 23, 42, 0.04)",
+            elevated: "0 10px 25px -5px rgba(15, 23, 42, 0.08), 0 8px 10px -6px rgba(15, 23, 42, 0.04)"
+          },
+          animation: {
+            'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+            'ping-slow': 'ping 2s cubic-bezier(0, 0, 0.2, 1) infinite'
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    html {
+      overflow-y: scroll;
+      scrollbar-gutter: stable;
+    }
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #FFFFFF;
+      color: #1A1A2E;
+      margin: 0;
+      padding: 0;
+      -webkit-font-smoothing: antialiased;
+    }
+    
+    aside {
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+    }
+    aside::-webkit-scrollbar {
+      display: none;
+    }
+
+    /* Animated Map Route Line */
+    @keyframes dash {
+      to {
+        stroke-dashoffset: -40;
+      }
+    }
+    .route-animated {
+      stroke-dasharray: 8, 6;
+      animation: dash 1.5s linear infinite;
+    }
+
+    /* Radar Pulse Animation */
+    @keyframes radarWave {
+      0% {
+        transform: scale(0.6);
+        opacity: 0.9;
+      }
+      100% {
+        transform: scale(2.4);
+        opacity: 0;
+      }
+    }
+    .radar-pulse {
+      animation: radarWave 2s cubic-bezier(0.1, 0.8, 0.3, 1) infinite;
+    }
+
+    /* Smooth Transitions */
+    .tab-pane {
+      display: none;
+      opacity: 0;
+      transition: opacity 0.25s ease-in-out;
+    }
+    .tab-pane.active {
+      display: block;
+      opacity: 1;
+    }
+
+    /* Vector Map Pattern Grid */
+    .map-grid-bg {
+      background-color: #f1f5f9;
+      background-image: 
+        linear-gradient(to right, rgba(203, 213, 225, 0.4) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(203, 213, 225, 0.4) 1px, transparent 1px);
+      background-size: 32px 32px;
+    }
+  </style>
+</head>
+<body class="bg-white text-[#1A1A2E] antialiased min-h-screen flex flex-col selection:bg-teal selection:text-white">
+
+  <!-- Mobile Sidebar Backdrop -->
+  <div id="mobileBackdrop" onclick="toggleMobileSidebar()" class="fixed inset-0 bg-navy-800/60 backdrop-blur-sm z-50 hidden transition-opacity lg:hidden"></div>
+
+  <!-- Main Layout Container -->
+  <div class="flex min-h-screen">
+
+    <!-- ========================================================================= -->
+    <!-- DESKTOP / MOBILE SIDEBAR - STANDARDIZED DASHBOARD LAYOUT                  -->
+    <!-- ========================================================================= -->
+    <aside id="sidebar" class="fixed left-0 top-0 h-screen w-[260px] bg-white border-r border-[#E2E8F0] z-50 flex flex-col justify-between overflow-y-auto transition-transform duration-300 -translate-x-full lg:translate-x-0 shadow-sm" style="scrollbar-width: none; -ms-overflow-style: none;">
+      <div class="p-5">
+        <!-- Brand Header -->
+        <div class="flex items-center justify-between pb-5 border-b border-[#E2E8F0] mb-4">
+          <a href="../landing page/code.html" class="flex items-center gap-3 group cursor-pointer hover:opacity-90 transition-opacity" title="Back to Landing Page">
+            <div class="w-9 h-9 rounded-xl bg-[#1A1A2E] flex items-center justify-center text-white text-[16px] font-bold">
+              <span>H</span>
+              <span class="w-1.5 h-1.5 rounded-full bg-[#0F766E] ml-0.5"></span>
+            </div>
+            <div>
+              <div class="flex items-center gap-1.5">
+                <span class="text-[16px] font-bold tracking-tight text-[#1A1A2E]">HUNAR</span>
+                <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold bg-[#0F766E]/10 text-[#0F766E] uppercase tracking-wider">PK</span>
+              </div>
+              <p class="text-[12px] font-medium text-[#64748B]">Certified Pro Marketplace</p>
+            </div>
+          </a>
+          <button onclick="toggleMobileSidebar()" class="lg:hidden text-[#64748B] hover:text-[#1A1A2E] p-1.5 rounded-lg hover:bg-[#F8FAFC]" aria-label="Close Sidebar">
+            <span class="material-symbols-outlined text-[20px]">close</span>
+          </button>
+        </div>
+
+        <!-- Navigation List -->
+        <nav class="flex flex-col gap-1">
+          <a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] font-medium text-[#64748B] hover:bg-[#F8FAFC] hover:text-[#1A1A2E] transition-colors" data-path="customer-dashboard" href="../hunar_customer_dashboard/code.html">
+            <span class="material-symbols-outlined text-[20px]">grid_view</span>
+            <span>Dashboard</span>
+          </a>
+          <a class="flex items-center justify-between px-3 py-2.5 rounded-lg text-[13px] font-medium text-[#64748B] hover:bg-[#F8FAFC] hover:text-[#1A1A2E] transition-colors" data-path="my-jobs" href="../my_jobs_hunar_customer_hub/code.html">
+            <div class="flex items-center gap-3">
+              <span class="material-symbols-outlined text-[20px]">assignment</span>
+              <span>My Jobs</span>
+            </div>
+            <span class="px-2 py-0.5 rounded-full bg-[#F8FAFC] text-[#1A1A2E] text-[11px] font-bold">2</span>
+          </a>
+          <a class="flex items-center justify-between px-3 py-2.5 rounded-lg text-[13px] font-medium text-[#64748B] hover:bg-[#F8FAFC] hover:text-[#1A1A2E] transition-colors" data-path="offers-and-bids" href="../offers_inquiries_hunar_customer_hub/code.html">
+            <div class="flex items-center gap-3">
+              <span class="material-symbols-outlined text-[20px]">local_offer</span>
+              <span>Offers</span>
+            </div>
+            <span class="px-2 py-0.5 rounded-full bg-[#F59E0B]/10 text-[#F59E0B] text-[11px] font-bold">3</span>
+          </a>
+          <a aria-current="page" class="flex items-center justify-between px-3 py-2.5 rounded-lg bg-[#0F766E] text-white font-semibold text-[13px] shadow-sm transition-colors" data-path="service-bookings" href="../scheduled_visits_arrival_tracker_hunar/code.html">
+            <div class="flex items-center gap-3">
+              <span class="material-symbols-outlined text-[20px] text-white">calendar_today</span>
+              <span class="text-white">Visits</span>
+            </div>
+            <span class="px-1.5 py-0.5 rounded-full bg-white text-[#0F766E] text-[10px] font-extrabold">Live</span>
+          </a>
+          <a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] font-medium text-[#64748B] hover:bg-[#F8FAFC] hover:text-[#1A1A2E] transition-colors" data-path="messages" href="../direct_chat_negotiation_hunar_customer_hub/code.html">
+            <span class="material-symbols-outlined text-[20px]">chat</span>
+            <span>Messages</span>
+          </a>
+          <a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] font-medium text-[#64748B] hover:bg-[#F8FAFC] hover:text-[#1A1A2E] transition-colors" data-path="payments-and-escrow" href="../payments_escrow_wallet_hunar/code.html">
+            <span class="material-symbols-outlined text-[20px]">payments</span>
+            <span>Payments</span>
+          </a>
+          <a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] font-medium text-[#64748B] hover:bg-[#F8FAFC] hover:text-[#1A1A2E] transition-colors" data-path="customer-profile" href="../customer_profile_settings_hunar/code.html">
+            <span class="material-symbols-outlined text-[20px]">person</span>
+            <span>Profile</span>
+          </a>
+          <a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] font-medium text-[#64748B] hover:bg-[#F8FAFC] hover:text-[#1A1A2E] transition-colors" data-path="help-center" href="../dispute_resolution_help_center_hunar/code.html">
+            <span class="material-symbols-outlined text-[20px]">help_center</span>
+            <span>Help Center</span>
+          </a>
+        </nav>
+      </div>
+
+      <!-- Bottom Escrow Card & User Profile (Exact Match to Dashboard) -->
+      <div class="p-4 border-t border-[#E2E8F0] flex flex-col gap-3">
+        <div class="bg-[#1A1A2E] text-white p-3.5 rounded-xl flex flex-col gap-2">
+          <div class="flex items-center gap-2">
+            <span class="material-symbols-outlined text-[#0F766E] text-[18px]">verified</span>
+            <span class="text-[11px] font-bold uppercase tracking-wider text-[#0F766E]">HUNAR Escrow</span>
+          </div>
+          <p class="text-[11px] leading-snug text-slate-300">100% NADRA CNIC Verified Pros &amp; safe Raast dispute guarantee.</p>
+          <a class="inline-flex items-center justify-center py-1.5 px-3 bg-[#0F766E] text-white text-[11px] font-bold rounded-lg hover:bg-[#115E59] transition-colors" data-path="guarantee-policy" href="../dispute_resolution_help_center_hunar/code.html">View Escrow Rules</a>
+        </div>
+
+        <div class="flex items-center justify-between pt-1">
+          <div class="flex items-center gap-2.5">
+            <div class="w-8 h-8 rounded-full bg-[#1A1A2E] flex items-center justify-center">
+              <span class="material-symbols-outlined text-white text-[18px]">person</span>
+            </div>
+            <div class="flex flex-col">
+              <span class="text-[13px] font-semibold text-[#1A1A2E] leading-tight">Ahmed Khan</span>
+              <span class="text-[11px] font-medium text-[#64748B]">University Town, Peshawar</span>
+            </div>
+          </div>
+          <a class="text-[#64748B] hover:text-[#DC2626] transition-colors" data-path="sign-in" href="../customer_profile_settings_hunar/code.html">
+            <span class="material-symbols-outlined text-[20px]">logout</span>
+          </a>
+        </div>
+      </div>
+    </aside>
+
+    <!-- ========================================================================= -->
+    <!-- MAIN CONTENT WRAPPER                                                     -->
+    <!-- ========================================================================= -->
+    <div class="w-full lg:pl-[260px] min-h-screen flex flex-col bg-white">
+
+      <!-- Top Header Bar -->
+      <header class="fixed top-0 left-0 lg:left-[260px] right-0 h-16 bg-white border-b border-[#E2E8F0] z-40 px-4 sm:px-6 lg:px-8 flex items-center justify-between gap-4">
+        <div class="flex items-center gap-3 flex-1 max-w-lg">
+          <button aria-label="Open Menu" onclick="const s=document.querySelector('aside'); s.classList.toggle('hidden'); s.classList.toggle('flex');" class="lg:hidden p-1.5 rounded-lg text-[#64748B] hover:text-[#1A1A2E] hover:bg-[#F8FAFC] transition-colors focus:outline-none shrink-0">
+            <span class="material-symbols-outlined text-[24px]">menu</span>
+          </button>
+          <a href="../landing page/code.html" class="flex items-center gap-1.5 lg:hidden shrink-0 hover:scale-105 transition-transform" title="Back to Landing Page"><div class="w-8 h-8 rounded-lg bg-[#1A1A2E] flex items-center justify-center text-white font-bold text-[14px]">H</div></a>
+          <div class="relative w-full">
+            <span class="material-symbols-outlined absolute left-3 top-2.5 text-[#64748B] text-[20px]">search</span>
+            <input class="w-full h-10 pl-10 pr-4 text-[#1A1A2E] font-body-compact text-xs rounded-lg border border-[#E2E8F0] focus:border-[#0F766E] focus:bg-white focus:outline-none transition-all placeholder:text-[#64748B] bg-[#F8FAFC]" placeholder="Search jobs, verified technicians, booking IDs (PKR)..." type="search">
+          </div>
+        </div>
+        <div class="flex items-center gap-3 shrink-0">
+          <a href="../post_a_job_step_1_modern_service_selection/code.html" class="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-[#0F766E] hover:bg-[#115E59] text-white text-xs font-semibold shadow-sm transition-all active:scale-[0.99]">
+            <span class="material-symbols-outlined text-[16px]">add</span>
+            <span>Post a Job</span>
+          </a>
+          <a href="../offers_inquiries_hunar_customer_hub/code.html" class="relative text-[#64748B] hover:text-[#1A1A2E] transition-colors p-2 rounded-lg hover:bg-[#F8FAFC]" title="Offers & Notifications">
+            <span class="material-symbols-outlined text-[22px]">notifications</span>
+            <span class="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-[#F59E0B]"></span>
+          </a>
+          <a href="../direct_chat_negotiation_hunar_customer_hub/code.html" class="text-[#64748B] hover:text-[#1A1A2E] transition-colors p-2 rounded-lg hover:bg-[#F8FAFC]" title="Messages">
+            <span class="material-symbols-outlined text-[22px]">chat</span>
+          </a>
+          <div class="h-6 w-[1px] bg-[#E2E8F0] hidden sm:block"></div>
+          <a href="../customer_profile_settings_hunar/code.html" class="flex items-center gap-2.5 p-1 rounded-lg hover:bg-[#F8FAFC] transition-colors cursor-pointer" title="Profile Settings">
+            <div class="w-8 h-8 rounded-full bg-[#1A1A2E] flex items-center justify-center text-white font-bold text-xs">AK</div>
+            <div class="hidden xl:flex flex-col text-left">
+              <span class="text-xs font-semibold text-[#1A1A2E] leading-tight">Ahmed Khan</span>
+              <span class="text-[10px] font-medium text-[#64748B] leading-tight">University Town, Peshawar</span>
+            </div>
+            <span class="material-symbols-outlined text-[#64748B] text-[18px] hidden sm:inline-block">expand_more</span>
+          </a>
+        </div>
+      </header>
+
+      <!-- ===================================================================== -->
+      <!-- MAIN PAGE CONTENT BODY                                                -->
+      <!-- ===================================================================== -->
+      <main class="w-full pt-16 pb-16 bg-white flex-1">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex flex-col gap-6">
+
+        <!-- Page Header & Live Hub Status Banner -->
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 pb-4 border-b border-[#E2E8F0]">
+          <div class="space-y-1">
+            <div class="flex flex-wrap items-center gap-2">
+              <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-white text-[#1A1A2E] border border-[#E2E8F0] shadow-xs">
+                <span class="w-1.5 h-1.5 rounded-full bg-[#16A34A] animate-pulse"></span>
+                Live GPS Tracking Active
+              </span>
+              <span class="text-[#64748B] text-xs">•</span>
+              <span class="text-[#64748B] text-xs font-medium flex items-center gap-1">
+                <span class="material-symbols-outlined text-[14px] text-[#0F766E]">location_on</span>
+                Phase 6, Hayatabad, Peshawar
+              </span>
+            </div>
+            <h1 class="text-2xl sm:text-3xl font-extrabold text-[#1A1A2E] tracking-tight">
+              Scheduled Visits & Arrival Tracker
+            </h1>
+            <p class="text-sm text-[#64748B] max-w-3xl">
+              Monitor technician live dispatch in real-time, view verified doorstep safety PINs, and manage your home repair appointments across Peshawar.
+            </p>
+          </div>
+
+          <!-- Top Interactive Tab Switcher -->
+          <div class="inline-flex p-1 rounded-xl bg-[#F1F5F9] border border-[#E2E8F0] select-none self-start md:self-auto shrink-0 shadow-xs">
+            <button id="tab-btn-upcoming" onclick="switchTab('upcoming')" class="tab-button px-4 py-2 rounded-lg text-xs font-bold transition-all text-white bg-[#0F766E] shadow-sm flex items-center gap-1.5">
+              <span class="material-symbols-outlined text-[16px]">timer</span>
+              <span>Upcoming & Live (2)</span>
+            </button>
+            <button id="tab-btn-past" onclick="switchTab('past')" class="tab-button px-4 py-2 rounded-lg text-xs font-semibold text-[#64748B] hover:text-[#1A1A2E] transition-all flex items-center gap-1.5">
+              <span class="material-symbols-outlined text-[16px]">history</span>
+              <span>Past Visits (12)</span>
+            </button>
+            <button id="tab-btn-calendar" onclick="switchTab('calendar')" class="tab-button px-4 py-2 rounded-lg text-xs font-semibold text-[#64748B] hover:text-[#1A1A2E] transition-all flex items-center gap-1.5">
+              <span class="material-symbols-outlined text-[16px]">calendar_month</span>
+              <span>Calendar View</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- =================================================================== -->
+        <!-- TAB 1: UPCOMING & LIVE ARRIVAL TRACKER (DEFAULT VIEW)               -->
+        <!-- =================================================================== -->
+        <div id="tab-pane-upcoming" class="tab-pane active space-y-6">
+
+          <!-- 2-Column Responsive Layout Grid (7 Cols Left / 5 Cols Right) -->
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+
+            <!-- LEFT COLUMN: LIVE DISPATCH CARD + TOMORROW'S BOOKING + PAST SNIPPET -->
+            <div class="lg:col-span-7 space-y-6">
+
+              <!-- ============================================================= -->
+              <!-- CARD 1: LIVE ARRIVAL TRACKER (HERO)                           -->
+              <!-- ============================================================= -->
+              <div class="bg-white rounded-2xl border border-[#E2E8F0] shadow-card overflow-hidden transition-all hover:shadow-elevated">
+                <!-- Top Status Header Accent Bar -->
+                <div class="h-2 w-full bg-gradient-to-r from-[#0F766E] via-[#14B8A6] to-[#16A34A]"></div>
+
+                <div class="p-5 sm:p-6 space-y-5">
+                  <!-- Live Status Header & ETA Pill -->
+                  <div class="flex flex-wrap items-center justify-between gap-3">
+                    <div class="flex items-center gap-2.5">
+                      <span class="relative flex h-3.5 w-3.5">
+                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#16A34A] opacity-75"></span>
+                        <span class="relative inline-flex rounded-full h-3.5 w-3.5 bg-[#16A34A]"></span>
+                      </span>
+                      <div>
+                        <h2 class="text-base sm:text-lg font-bold text-[#1A1A2E] leading-tight">
+                          Technician On The Way!
+                        </h2>
+                        <span class="text-xs text-[#16A34A] font-semibold flex items-center gap-1">
+                          <span class="material-symbols-outlined text-[14px]">navigation</span>
+                          Live GPS Broadcast active • Peshawar Saddar Route
+                        </span>
+                      </div>
+                    </div>
+
+                    <!-- Dynamic Countdown ETA Box -->
+                    <div class="flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-[#0F766E]/10 border border-[#0F766E]/20 text-[#0F766E]">
+                      <span class="material-symbols-outlined text-[20px] animate-pulse">schedule</span>
+                      <div class="flex flex-col text-right">
+                        <span id="etaCountdown" class="text-xs sm:text-sm font-extrabold text-[#0F766E] leading-none">ETA ~18 mins</span>
+                        <span class="text-[10px] text-[#64748B] font-medium mt-0.5">Expected: 3:45 PM</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Job Title & Order Ref -->
+                  <div class="p-3.5 rounded-xl bg-[#F8FAFC] border border-[#E2E8F0] flex items-start gap-3">
+                    <div class="w-10 h-10 rounded-lg bg-[#0F766E]/10 text-[#0F766E] flex items-center justify-center shrink-0 mt-0.5">
+                      <span class="material-symbols-outlined text-[22px]">plumbing</span>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                      <div class="flex items-center justify-between gap-2">
+                        <h3 class="text-sm font-bold text-[#1A1A2E] truncate">
+                          Kitchen Pipe Joint Leak & Water Pressure Valve Fix
+                        </h3>
+                        <a href="../job_details_offers_hunar/code.html" class="text-[11px] font-bold text-[#0F766E] hover:underline shrink-0 flex items-center gap-0.5">
+                          <span>View Job</span>
+                          <span class="material-symbols-outlined text-[14px]">arrow_forward</span>
+                        </a>
+                      </div>
+                      <div class="flex flex-wrap items-center gap-2 text-xs text-[#64748B] mt-0.5">
+                        <span class="font-medium text-[#1A1A2E]">Order #JOB-98214</span>
+                        <span>•</span>
+                        <span>Standard Escrow Protected</span>
+                        <span>•</span>
+                        <span class="text-[#0F766E] font-semibold">PKR 2,200</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Technician Credentials Card -->
+                  <div class="p-4 rounded-xl bg-white border border-[#E2E8F0] shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div class="flex items-center gap-3.5">
+                      <!-- Pro Avatar -->
+                      <a href="../job_details_worker_profile_selection_modal_hunar/code.html" class="relative shrink-0 group block" title="View Full Pro Profile">
+                        <div class="w-14 h-14 rounded-full bg-[#1A1A2E] text-white flex items-center justify-center font-bold text-lg border-2 border-white shadow-sm ring-2 ring-[#0F766E]/30 overflow-hidden group-hover:ring-[#0F766E]">
+                          <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=160&q=80" alt="Rashid Ali" class="w-full h-full object-cover" onerror="this.style.display='none'; this.parentElement.innerText='RA';">
+                        </div>
+                        <span class="absolute bottom-0 right-0 w-4 h-4 bg-[#16A34A] border-2 border-white rounded-full" title="Active on mobile"></span>
+                      </a>
+
+                      <div class="space-y-0.5">
+                        <div class="flex items-center gap-1.5">
+                          <a href="../job_details_worker_profile_selection_modal_hunar/code.html" class="text-sm font-bold text-[#1A1A2E] hover:text-[#0F766E] transition-colors">Rashid Ali</a>
+                          <span class="material-symbols-outlined text-[16px] text-[#0F766E]" title="NADRA CNIC Verified">verified</span>
+                          <span class="text-[11px] font-bold px-2 py-0.5 rounded bg-[#F1F5F9] text-[#1A1A2E] border border-[#E2E8F0]">#HN-4821</span>
+                        </div>
+                        <p class="text-xs text-[#64748B] font-medium">Rashid & Sons Plumbing Services</p>
+                        <div class="flex items-center gap-2 text-xs text-[#64748B] pt-0.5">
+                          <span class="inline-flex items-center gap-0.5 text-[#F59E0B] font-bold">
+                            <span class="material-symbols-outlined text-[14px]">star</span>
+                            4.9 (184)
+                          </span>
+                          <span>•</span>
+                          <span class="flex items-center gap-1">
+                            <span class="material-symbols-outlined text-[14px] text-[#64748B]">two_wheeler</span>
+                            Honda CD70 (<strong class="text-[#1A1A2E]">LEB-4921</strong>)
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Direct Technician Contact Info -->
+                    <div class="flex sm:flex-col items-start sm:items-end justify-between sm:justify-center border-t sm:border-t-0 pt-2 sm:pt-0 border-[#E2E8F0]">
+                      <span class="text-[11px] font-bold uppercase tracking-wider text-[#64748B]">Technician Mobile</span>
+                      <a href="tel:+923005542198" class="text-sm font-extrabold text-[#0F766E] hover:underline flex items-center gap-1">
+                        <span class="material-symbols-outlined text-[16px]">call</span>
+                        +92 300 5542198
+                      </a>
+                      <span class="text-[11px] text-[#16A34A] font-semibold flex items-center gap-1 mt-0.5">
+                        <span class="w-1.5 h-1.5 rounded-full bg-[#16A34A]"></span> Biometric ID Checked
+                      </span>
+                    </div>
+                  </div>
+
+                  <!-- Doorstep Security OTP PIN Card -->
+                  <div class="p-4 rounded-xl bg-[#F8FAFC] border border-[#E2E8F0] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div class="flex items-start gap-3">
+                      <div class="w-9 h-9 rounded-lg bg-[#1A1A2E] text-white flex items-center justify-center shrink-0">
+                        <span class="material-symbols-outlined text-[20px]">shield_lock</span>
+                      </div>
+                      <div class="space-y-0.5">
+                        <div class="flex items-center gap-2">
+                          <span class="text-xs font-bold text-[#1A1A2E]">Doorstep Security PIN</span>
+                          <span class="px-1.5 py-0.2 rounded text-[10px] font-bold bg-[#16A34A]/10 text-[#16A34A] border border-[#16A34A]/20">Required for Entry</span>
+                        </div>
+                        <p class="text-xs text-[#64748B]">
+                          Ask the technician to recite this code before opening your gate or entrance door.
+                        </p>
+                      </div>
+                    </div>
+
+                    <!-- 4 Digit Code Block -->
+                    <div class="flex items-center gap-2 self-start sm:self-auto">
+                      <div class="flex items-center gap-1.5 bg-white px-3.5 py-2 rounded-xl border-2 border-[#0F766E] shadow-xs">
+                        <span id="securityPin" class="font-mono text-lg font-extrabold text-[#1A1A2E] tracking-widest">6 4 9 2</span>
+                        <button onclick="copyPinCode('6492')" class="ml-1 text-[#64748B] hover:text-[#0F766E] p-1 rounded transition-colors" title="Copy Security Code" aria-label="Copy Code">
+                          <span class="material-symbols-outlined text-[18px]">content_copy</span>
+                        </button>
+                      </div>
+                      <span id="copiedToast" class="text-[11px] text-[#16A34A] font-bold hidden animate-fade">Copied!</span>
+                    </div>
+                  </div>
+
+                  <!-- ========================================================= -->
+                  <!-- INTERACTIVE VECTOR GPS LIVE NAVIGATION MAP OF PESHAWAR     -->
+                  <!-- ========================================================= -->
+                  <div class="relative w-full rounded-2xl overflow-hidden border border-[#E2E8F0] shadow-inner bg-slate-100 group">
+                    
+                    <!-- Map Canvas / SVG Viewport -->
+                    <div class="relative w-full h-80 sm:h-96 map-grid-bg overflow-hidden flex items-center justify-center">
+                      
+                      <!-- Vector Styled Peshawar City Map Layout -->
+                      <svg class="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 800 450" preserveAspectRatio="xMidYMid slice" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <!-- City Land Areas & Parks -->
+                        <rect width="800" height="450" fill="#F1F5F9"/>
+                        <path d="M 0,0 L 280,0 L 220,160 L 0,120 Z" fill="#E2E8F0" opacity="0.6"/>
+                        <path d="M 520,300 L 800,260 L 800,450 L 480,450 Z" fill="#E2E8F0" opacity="0.5"/>
+                        <!-- Green Parks (Peshawar Golf / Cantonment Green) -->
+                        <path d="M 120,40 C 180,30 240,60 210,120 C 180,180 80,160 70,100 Z" fill="#D1FAE5" opacity="0.7"/>
+                        <path d="M 600,60 C 680,40 740,90 710,150 C 670,190 580,160 570,100 Z" fill="#D1FAE5" opacity="0.7"/>
+
+                        <!-- Secondary City Roads -->
+                        <path d="M 0,220 L 800,220" stroke="#CBD5E1" stroke-width="8" stroke-linecap="round"/>
+                        <path d="M 260,0 L 260,450" stroke="#CBD5E1" stroke-width="7" stroke-linecap="round"/>
+                        <path d="M 560,0 L 560,450" stroke="#CBD5E1" stroke-width="7" stroke-linecap="round"/>
+                        <path d="M 80,0 L 720,450" stroke="#CBD5E1" stroke-width="5" stroke-linecap="round"/>
+                        <path d="M 720,0 L 80,450" stroke="#CBD5E1" stroke-width="5" stroke-linecap="round"/>
+
+                        <!-- Main Arterial Highways (University Road & Khyber Road) -->
+                        <path d="M 0,340 C 220,330 380,240 500,190 C 620,140 710,90 800,80" stroke="#94A3B8" stroke-width="14" stroke-linecap="round"/>
+                        <path d="M 0,340 C 220,330 380,240 500,190 C 620,140 710,90 800,80" stroke="#FFFFFF" stroke-width="10" stroke-linecap="round"/>
+
+                        <!-- Sector Roads in Hayatabad -->
+                        <path d="M 400,100 L 780,340" stroke="#E2E8F0" stroke-width="6"/>
+                        <path d="M 300,380 L 680,140" stroke="#E2E8F0" stroke-width="6"/>
+
+                        <!-- LIVE ROUTE POLYLINE (From Saddar to Hayatabad Customer House) -->
+                        <path d="M 140,340 C 240,330 340,260 440,210 S 590,170 660,110" stroke="#0F766E" stroke-width="6" stroke-linecap="round" opacity="0.3"/>
+                        <path id="routeLine" class="route-animated" d="M 140,340 C 240,330 340,260 440,210 S 590,170 660,110" stroke="#0F766E" stroke-width="5" stroke-linecap="round"/>
+                        <path d="M 140,340 C 240,330 340,260 440,210 S 490,185 530,165" stroke="#16A34A" stroke-width="5" stroke-linecap="round"/>
+
+                        <!-- Road Names / Geo Labels -->
+                        <text x="50" y="325" fill="#475569" font-size="11" font-weight="700" font-family="sans-serif">Saddar Bazaar / Cantt</text>
+                        <text x="310" y="270" fill="#475569" font-size="11" font-weight="700" font-family="sans-serif">University Road</text>
+                        <text x="550" y="220" fill="#475569" font-size="11" font-weight="700" font-family="sans-serif">Khyber Pass Rd</text>
+                        <text x="590" y="90" fill="#0F766E" font-size="12" font-weight="800" font-family="sans-serif">Sector F-4, Phase 6</text>
+                      </svg>
+
+                      <!-- Origin Point Marker (Technician Workshop / Saddar) -->
+                      <div class="absolute bottom-16 left-12 sm:left-20 flex flex-col items-center pointer-events-none">
+                        <div class="w-7 h-7 rounded-full bg-white text-[#64748B] flex items-center justify-center shadow-md border-2 border-[#CBD5E1]">
+                          <span class="material-symbols-outlined text-[16px]">storefront</span>
+                        </div>
+                        <span class="text-[10px] font-bold bg-white/90 text-[#64748B] px-1.5 py-0.5 rounded shadow-xs mt-0.5">Workshop</span>
+                      </div>
+
+                      <!-- CUSTOMER DESTINATION MARKER (House 45, Street 12, Phase 6) -->
+                      <div class="absolute top-10 right-12 sm:right-24 flex flex-col items-center pointer-events-none z-10">
+                        <div class="relative flex items-center justify-center">
+                          <span class="w-12 h-12 rounded-full bg-[#1A1A2E]/20 absolute animate-ping-slow"></span>
+                          <div class="w-10 h-10 rounded-2xl bg-[#1A1A2E] text-white flex items-center justify-center shadow-lg border-2 border-white">
+                            <span class="material-symbols-outlined text-[22px] text-white">home_pin</span>
+                          </div>
+                        </div>
+                        <div class="bg-[#1A1A2E] text-white px-2.5 py-1 rounded-lg text-xs font-bold shadow-md mt-1 flex items-center gap-1 whitespace-nowrap">
+                          <span>Your Doorstep</span>
+                          <span class="w-1.5 h-1.5 rounded-full bg-[#16A34A]"></span>
+                        </div>
+                        <span class="text-[10px] font-medium bg-white/95 text-[#64748B] px-2 py-0.5 rounded shadow-xs mt-0.5 border border-[#E2E8F0]">Phase 6, Hayatabad</span>
+                      </div>
+
+                      <!-- LIVE MOVING TECHNICIAN MOTORCYCLE PIN -->
+                      <div id="technicianPin" class="absolute top-[42%] left-[62%] -translate-x-1/2 -translate-y-1/2 flex flex-col items-center cursor-pointer transition-all duration-700 z-20 hover:scale-110" onclick="focusTechnician()">
+                        <div class="relative flex items-center justify-center">
+                          <div class="w-16 h-16 rounded-full bg-[#0F766E]/20 absolute radar-pulse pointer-events-none"></div>
+                          <div class="w-11 h-11 rounded-full bg-[#0F766E] text-white flex items-center justify-center shadow-xl border-3 border-white ring-4 ring-[#0F766E]/30">
+                            <span class="material-symbols-outlined text-[24px]">two_wheeler</span>
+                          </div>
+                          <span class="absolute -top-2 -right-2 bg-[#16A34A] text-white text-[9px] font-extrabold px-1.5 py-0.2 rounded-full shadow-xs border border-white">26 km/h</span>
+                        </div>
+                        
+                        <div class="bg-[#1A1A2E] text-white px-2.5 py-1 rounded-xl text-xs font-bold shadow-lg mt-1 flex items-center gap-1.5 whitespace-nowrap border border-white/20">
+                          <span class="w-2 h-2 rounded-full bg-[#16A34A] animate-pulse"></span>
+                          <span>Rashid • 1.4 km away</span>
+                        </div>
+                      </div>
+
+                      <!-- Map Overlay: Current Street Landmark -->
+                      <div class="absolute top-4 left-4 bg-white/95 backdrop-blur-md px-3 py-1.5 rounded-xl border border-[#E2E8F0] shadow-sm flex items-center gap-2 z-10">
+                        <span class="w-2.5 h-2.5 rounded-full bg-[#16A34A] animate-pulse"></span>
+                        <div class="flex flex-col">
+                          <span class="text-[11px] font-bold text-[#1A1A2E]">En Route: University Rd → Phase 6</span>
+                          <span class="text-[10px] text-[#64748B]">Passing Peshawar University Campus Gate</span>
+                        </div>
+                      </div>
+
+                      <!-- Map Overlay Controls (Bottom Right) -->
+                      <div class="absolute bottom-4 right-4 flex items-center gap-2 z-10">
+                        <button onclick="simulateMovement()" class="px-2.5 py-1.5 rounded-xl bg-white/95 backdrop-blur-md border border-[#E2E8F0] text-xs font-bold text-[#0F766E] shadow-sm hover:bg-white transition-all flex items-center gap-1" title="Simulate GPS Step">
+                          <span class="material-symbols-outlined text-[16px]">play_circle</span>
+                          <span>Simulate Move</span>
+                        </button>
+                        <button onclick="centerMap()" class="p-2 rounded-xl bg-white/95 backdrop-blur-md border border-[#E2E8F0] text-[#1A1A2E] hover:text-[#0F766E] shadow-sm hover:bg-white transition-colors" title="Center Technician Position" aria-label="Center Map">
+                          <span class="material-symbols-outlined text-[18px]">my_location</span>
+                        </button>
+                        <button onclick="toggleMapLayers()" class="p-2 rounded-xl bg-white/95 backdrop-blur-md border border-[#E2E8F0] text-[#1A1A2E] hover:text-[#0F766E] shadow-sm hover:bg-white transition-colors" title="Toggle Map Layers" aria-label="Toggle Layers">
+                          <span class="material-symbols-outlined text-[18px]">layers</span>
+                        </button>
+                      </div>
+
+                      <!-- Route Distance Progress Pill (Bottom Left) -->
+                      <div class="absolute bottom-4 left-4 bg-white/95 backdrop-blur-md px-3 py-1.5 rounded-xl border border-[#E2E8F0] shadow-sm flex items-center gap-3 z-10">
+                        <div class="flex flex-col">
+                          <span class="text-[10px] uppercase font-bold text-[#64748B]">Remaining</span>
+                          <span id="remainingDist" class="text-xs font-extrabold text-[#1A1A2E]">1.4 km (6 turns)</span>
+                        </div>
+                        <div class="h-6 w-px bg-[#E2E8F0]"></div>
+                        <div class="flex flex-col">
+                          <span class="text-[10px] uppercase font-bold text-[#64748B]">Traffic</span>
+                          <span class="text-xs font-bold text-[#16A34A] flex items-center gap-0.5">
+                            <span class="material-symbols-outlined text-[14px]">traffic</span>
+                            Moderate
+                          </span>
+                        </div>
+                      </div>
+
+                    </div>
+
+                    <!-- Route Milestone Steps Progress Bar -->
+                    <div class="p-4 bg-white border-t border-[#E2E8F0] space-y-2">
+                      <div class="flex items-center justify-between text-xs font-semibold text-[#64748B]">
+                        <span class="text-[#0F766E] font-bold flex items-center gap-1">
+                          <span class="material-symbols-outlined text-[16px]">check_circle</span>
+                          1. Dispatched (1:45 PM)
+                        </span>
+                        <span class="text-[#0F766E] font-bold flex items-center gap-1">
+                          <span class="material-symbols-outlined text-[16px] animate-spin">sync</span>
+                          2. En Route (~18m)
+                        </span>
+                        <span class="text-[#64748B] flex items-center gap-1">
+                          <span class="material-symbols-outlined text-[16px]">pin_drop</span>
+                          3. At Doorstep
+                        </span>
+                        <a href="../job_completion_escrow_release_hunar/code.html" class="text-[#0F766E] hover:underline flex items-center gap-1 font-bold" title="View Completion Screen">
+                          <span class="material-symbols-outlined text-[16px]">task</span>
+                          4. Complete & Release
+                        </a>
+                      </div>
+                      <div class="w-full h-2 bg-[#F1F5F9] rounded-full overflow-hidden">
+                        <div class="h-full bg-gradient-to-r from-[#0F766E] to-[#16A34A] rounded-full transition-all duration-500" style="width: 58%"></div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- ACTION BUTTONS BAR -->
+                  <div class="flex flex-wrap items-center gap-3 pt-2">
+                    <a href="tel:+923005542198" class="flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-[#0F766E] hover:bg-[#115E59] text-white text-xs sm:text-sm font-bold shadow-sm shadow-[#0F766E]/20 transition-all active:scale-[0.98]">
+                      <span class="material-symbols-outlined text-[18px]">call</span>
+                      <span>Call Technician</span>
+                    </a>
+
+                    <!-- Live In-Page Chat Button -->
+                    <button onclick="openChatDrawer()" class="flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-white border border-[#1A1A2E] hover:bg-[#F8FAFC] text-[#1A1A2E] text-xs sm:text-sm font-bold transition-all active:scale-[0.98]">
+                      <span class="material-symbols-outlined text-[18px]">chat</span>
+                      <span>Message Pro</span>
+                    </button>
+
+                    <!-- Full Chat Page Link -->
+                    <a href="../direct_chat_negotiation_hunar_customer_hub/code.html" class="hidden md:inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-[#F8FAFC] border border-[#E2E8F0] hover:bg-white text-xs font-bold text-[#1A1A2E] transition-colors">
+                      <span class="material-symbols-outlined text-[18px]">open_in_new</span>
+                      <span>Full Chat Hub</span>
+                    </a>
+
+                    <!-- Emergency Reschedule Button -->
+                    <button onclick="openModal('rescheduleModal')" class="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-white hover:bg-crimson-surface text-crimson text-xs sm:text-sm font-bold border border-crimson/20 transition-colors ml-auto">
+                      <span class="material-symbols-outlined text-[18px]">event_repeat</span>
+                      <span>Reschedule</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- ============================================================= -->
+              <!-- CARD 2: TOMORROW'S SCHEDULED APPOINTMENT                      -->
+              <!-- ============================================================= -->
+              <div class="bg-white rounded-2xl border border-[#E2E8F0] p-5 sm:p-6 shadow-card hover:shadow-elevated transition-all space-y-4">
+                <div class="flex flex-wrap items-center justify-between gap-2">
+                  <div class="flex items-center gap-2">
+                    <span class="px-3 py-1 rounded-lg text-xs font-bold uppercase tracking-wider bg-[#F1F5F9] text-[#1A1A2E] border border-[#E2E8F0]">
+                      Tomorrow
+                    </span>
+                    <span class="text-xs sm:text-sm font-bold text-[#1A1A2E]">
+                      Friday, Oct 25 • 10:00 AM – 11:30 AM
+                    </span>
+                  </div>
+                  <span class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold bg-[#16A34A]/10 text-[#16A34A] border border-[#16A34A]/20">
+                    <span class="material-symbols-outlined text-[16px]">check_circle</span>
+                    Confirmed Slot
+                  </span>
+                </div>
+
+                <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 rounded-xl bg-[#F8FAFC] border border-[#E2E8F0]">
+                  <div class="flex items-start gap-3.5">
+                    <div class="w-12 h-12 rounded-xl bg-[#0F766E]/10 text-[#0F766E] flex items-center justify-center shrink-0">
+                      <span class="material-symbols-outlined text-[24px]">ac_unit</span>
+                    </div>
+                    <div class="space-y-0.5">
+                      <h4 class="text-sm font-bold text-[#1A1A2E]">
+                        Master Bedroom Split AC Servicing & Chemical Wash
+                      </h4>
+                      <p class="text-xs text-[#64748B]">
+                        Assigned: <strong class="text-[#1A1A2E]">Ali Khan</strong> (CoolBreeze HVAC) • ID <strong class="text-[#1A1A2E]">#HN-1092</strong>
+                      </p>
+                      <p class="text-xs text-[#64748B] flex items-center gap-1 pt-0.5">
+                        <span class="material-symbols-outlined text-[14px] text-[#0F766E]">location_on</span>
+                        House 45, Street 12, Sector F-4, Hayatabad, Peshawar
+                      </p>
+                    </div>
+                  </div>
+
+                  <div class="flex items-center sm:flex-col items-start sm:items-end gap-1 shrink-0">
+                    <span class="text-[11px] text-[#64748B]">Escrow Price</span>
+                    <span class="text-base font-extrabold text-[#1A1A2E]">PKR 3,500</span>
+                  </div>
+                </div>
+
+                <div class="flex flex-wrap items-center justify-between gap-3 pt-1">
+                  <div class="flex items-center gap-2">
+                    <button onclick="openModal('rescheduleModal')" class="px-3.5 py-2 rounded-xl bg-white border border-[#E2E8F0] hover:bg-[#F8FAFC] text-xs font-bold text-[#1A1A2E] transition-colors">
+                      Change Time Slot
+                    </button>
+                    <button onclick="confirmCancel()" class="px-3.5 py-2 rounded-xl bg-white border border-[#E2E8F0] hover:bg-crimson-surface text-xs font-bold text-[#64748B] hover:text-crimson transition-colors">
+                      Cancel Visit
+                    </button>
+                  </div>
+                  <a href="../job_details_select_worker_confirm_booking_modal_hunar/code.html" class="inline-flex items-center gap-1 text-xs font-bold text-[#0F766E] hover:underline">
+                    <span>View Booking Details</span>
+                    <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
+                  </a>
+                </div>
+              </div>
+
+              <!-- ============================================================= -->
+              <!-- CARD 3: RECENT PAST VISIT HISTORY SNIPPET                     -->
+              <!-- ============================================================= -->
+              <div class="bg-white rounded-2xl border border-[#E2E8F0] p-5 sm:p-6 shadow-card space-y-4">
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center gap-2">
+                    <span class="material-symbols-outlined text-[20px] text-[#0F766E]">history</span>
+                    <h4 class="text-sm font-bold text-[#1A1A2E]">Recent Visit Completed</h4>
+                  </div>
+                  <button onclick="switchTab('past')" class="text-xs font-bold text-[#0F766E] hover:underline">
+                    See all 12 past visits →
+                  </button>
+                </div>
+
+                <div class="p-4 rounded-xl bg-[#F8FAFC] border border-[#E2E8F0] flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-white transition-all">
+                  <div class="flex items-center gap-3.5">
+                    <div class="w-10 h-10 rounded-full bg-[#16A34A]/10 text-[#16A34A] flex items-center justify-center shrink-0 font-bold">
+                      <span class="material-symbols-outlined text-[20px]">task_alt</span>
+                    </div>
+                    <div class="space-y-0.5">
+                      <span class="text-sm font-bold text-[#1A1A2E]">Water Heater Flush & Valve Replacement</span>
+                      <p class="text-xs text-[#64748B]">Oct 22, 2024 • Rashid & Sons Plumbing</p>
+                      <div class="flex items-center gap-1 text-[#F59E0B] text-xs font-bold">
+                        <span class="material-symbols-outlined text-[14px]">star</span>
+                        <span>5.0 Rated</span>
+                        <span class="text-[#64748B] font-normal">• 7-Day Warranty Active</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="flex sm:flex-col items-end justify-between sm:justify-center gap-1.5 shrink-0">
+                    <span class="text-xs text-[#64748B]">Invoice <strong class="text-[#1A1A2E]">#HN-9082</strong></span>
+                    <a href="../job_completion_escrow_release_hunar/code.html" class="inline-flex items-center gap-1 text-xs font-bold text-[#0F766E] hover:underline">
+                      <span class="material-symbols-outlined text-[16px]">receipt_long</span>
+                      <span>Review & Release</span>
+                    </a>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+
+            <!-- =============================================================== -->
+            <!-- RIGHT COLUMN: CALENDAR WIDGET + SAFETY CHECKLIST + DISPATCH DESK -->
+            <!-- =============================================================== -->
+            <div class="lg:col-span-5 space-y-6">
+
+              <!-- ============================================================= -->
+              <!-- WIDGET 1: OCTOBER SCHEDULE INTERACTIVE MINI CALENDAR          -->
+              <!-- ============================================================= -->
+              <div class="bg-white rounded-2xl border border-[#E2E8F0] p-5 sm:p-6 shadow-card space-y-4">
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center gap-2">
+                    <span class="material-symbols-outlined text-[20px] text-[#0F766E]">calendar_month</span>
+                    <h3 class="text-sm font-bold text-[#1A1A2E]">October 2024</h3>
+                  </div>
+                  <div class="flex items-center gap-1">
+                    <button onclick="prevMonth()" class="w-8 h-8 rounded-lg hover:bg-[#F8FAFC] border border-[#E2E8F0] flex items-center justify-center text-[#1A1A2E] transition-colors" title="Previous Month">
+                      <span class="material-symbols-outlined text-[18px]">chevron_left</span>
+                    </button>
+                    <button onclick="nextMonth()" class="w-8 h-8 rounded-lg hover:bg-[#F8FAFC] border border-[#E2E8F0] flex items-center justify-center text-[#1A1A2E] transition-colors" title="Next Month">
+                      <span class="material-symbols-outlined text-[18px]">chevron_right</span>
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Calendar Days of Week Header -->
+                <div class="grid grid-cols-7 gap-1 text-center text-xs font-bold text-[#64748B] pb-2 border-b border-[#E2E8F0]">
+                  <span>Su</span><span>Mo</span><span>Tu</span><span>We</span><span>Th</span><span>Fr</span><span>Sa</span>
+                </div>
+
+                <!-- Calendar Dates Grid -->
+                <div class="grid grid-cols-7 gap-1 text-center text-xs font-medium">
+                  <span class="py-2 text-[#CBD5E1]">29</span>
+                  <span class="py-2 text-[#CBD5E1]">30</span>
+                  <span class="py-2 text-[#1A1A2E] hover:bg-[#F8FAFC] rounded-lg cursor-pointer">1</span>
+                  <span class="py-2 text-[#1A1A2E] hover:bg-[#F8FAFC] rounded-lg cursor-pointer">2</span>
+                  <span class="py-2 text-[#1A1A2E] hover:bg-[#F8FAFC] rounded-lg cursor-pointer">3</span>
+                  <span class="py-2 text-[#1A1A2E] hover:bg-[#F8FAFC] rounded-lg cursor-pointer">4</span>
+                  <span class="py-2 text-[#1A1A2E] hover:bg-[#F8FAFC] rounded-lg cursor-pointer">5</span>
+                  <span class="py-2 text-[#1A1A2E] hover:bg-[#F8FAFC] rounded-lg cursor-pointer">6</span>
+                  <span class="py-2 text-[#1A1A2E] hover:bg-[#F8FAFC] rounded-lg cursor-pointer">7</span>
+                  <span class="py-2 text-[#1A1A2E] hover:bg-[#F8FAFC] rounded-lg cursor-pointer">8</span>
+                  <span class="py-2 text-[#1A1A2E] hover:bg-[#F8FAFC] rounded-lg cursor-pointer">9</span>
+                  <span class="py-2 text-[#1A1A2E] hover:bg-[#F8FAFC] rounded-lg cursor-pointer">10</span>
+                  <span class="py-2 text-[#1A1A2E] hover:bg-[#F8FAFC] rounded-lg cursor-pointer">11</span>
+                  <span class="py-2 text-[#1A1A2E] hover:bg-[#F8FAFC] rounded-lg cursor-pointer">12</span>
+                  <span class="py-2 text-[#1A1A2E] hover:bg-[#F8FAFC] rounded-lg cursor-pointer">13</span>
+                  <span class="py-2 text-[#1A1A2E] hover:bg-[#F8FAFC] rounded-lg cursor-pointer">14</span>
+                  <span class="py-2 text-[#1A1A2E] hover:bg-[#F8FAFC] rounded-lg cursor-pointer">15</span>
+                  <span class="py-2 text-[#1A1A2E] hover:bg-[#F8FAFC] rounded-lg cursor-pointer">16</span>
+                  <span class="py-2 text-[#1A1A2E] hover:bg-[#F8FAFC] rounded-lg cursor-pointer">17</span>
+                  <span class="py-2 text-[#1A1A2E] hover:bg-[#F8FAFC] rounded-lg cursor-pointer">18</span>
+                  <span class="py-2 text-[#1A1A2E] hover:bg-[#F8FAFC] rounded-lg cursor-pointer">19</span>
+                  <span class="py-2 text-[#1A1A2E] hover:bg-[#F8FAFC] rounded-lg cursor-pointer">20</span>
+                  <span class="py-2 text-[#1A1A2E] hover:bg-[#F8FAFC] rounded-lg cursor-pointer">21</span>
+                  
+                  <!-- Past Completed Visit on 22nd -->
+                  <div class="relative py-2 font-bold text-[#1A1A2E] bg-[#F1F5F9] rounded-lg cursor-pointer hover:ring-2 hover:ring-[#0F766E]" onclick="showDateSchedule('Oct 22')">
+                    <span>22</span>
+                    <span class="absolute bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-[#64748B]"></span>
+                  </div>
+
+                  <span class="py-2 text-[#1A1A2E] hover:bg-[#F8FAFC] rounded-lg cursor-pointer">23</span>
+
+                  <!-- TODAY (24th): LIVE VISIT -->
+                  <div class="relative py-2 font-extrabold text-white bg-[#0F766E] rounded-xl shadow-md cursor-pointer ring-2 ring-[#0F766E]/40" onclick="showDateSchedule('Oct 24 (Today)')">
+                    <span>24</span>
+                    <span class="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-[#16A34A] ring-2 ring-white animate-ping"></span>
+                  </div>
+
+                  <!-- TOMORROW (25th): SCHEDULED VISIT -->
+                  <div class="relative py-2 font-extrabold text-[#0F766E] bg-[#0F766E]/10 rounded-xl border border-[#0F766E]/30 cursor-pointer hover:bg-[#0F766E]/20" onclick="showDateSchedule('Oct 25 (Tomorrow)')">
+                    <span>25</span>
+                    <span class="absolute bottom-1 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full bg-[#0F766E]"></span>
+                  </div>
+
+                  <span class="py-2 text-[#1A1A2E] hover:bg-[#F8FAFC] rounded-lg cursor-pointer">26</span>
+                  <span class="py-2 text-[#1A1A2E] hover:bg-[#F8FAFC] rounded-lg cursor-pointer">27</span>
+                  <span class="py-2 text-[#1A1A2E] hover:bg-[#F8FAFC] rounded-lg cursor-pointer">28</span>
+                  <span class="py-2 text-[#1A1A2E] hover:bg-[#F8FAFC] rounded-lg cursor-pointer">29</span>
+                  <span class="py-2 text-[#1A1A2E] hover:bg-[#F8FAFC] rounded-lg cursor-pointer">30</span>
+                  <span class="py-2 text-[#1A1A2E] hover:bg-[#F8FAFC] rounded-lg cursor-pointer">31</span>
+                  <span class="py-2 text-[#CBD5E1]">1</span>
+                  <span class="py-2 text-[#CBD5E1]">2</span>
+                </div>
+
+                <!-- Calendar Legend -->
+                <div class="flex items-center justify-between pt-3 border-t border-[#E2E8F0] text-xs">
+                  <div class="flex items-center gap-1.5">
+                    <span class="w-2.5 h-2.5 rounded-full bg-[#0F766E]"></span>
+                    <span class="text-[#1A1A2E] font-medium">Today's Live</span>
+                  </div>
+                  <div class="flex items-center gap-1.5">
+                    <span class="w-2.5 h-2.5 rounded-full bg-[#0F766E]/20 border border-[#0F766E]"></span>
+                    <span class="text-[#1A1A2E] font-medium">Upcoming (Oct 25)</span>
+                  </div>
+                  <div class="flex items-center gap-1.5">
+                    <span class="w-2.5 h-2.5 rounded-full bg-[#64748B]"></span>
+                    <span class="text-[#64748B]">Past (12)</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- ============================================================= -->
+              <!-- WIDGET 2: DOORSTEP SAFETY & ENTRY CHECKLIST                   -->
+              <!-- ============================================================= -->
+              <div class="bg-white rounded-2xl border border-[#E2E8F0] p-5 sm:p-6 shadow-card space-y-4">
+                <div class="flex items-center gap-3 pb-3 border-b border-[#E2E8F0]">
+                  <div class="w-9 h-9 rounded-xl bg-[#0F766E]/10 text-[#0F766E] flex items-center justify-center shrink-0">
+                    <span class="material-symbols-outlined text-[20px]">verified_user</span>
+                  </div>
+                  <div>
+                    <h3 class="text-sm font-bold text-[#1A1A2E]">Safety & Entry Checklist</h3>
+                    <p class="text-xs text-[#64748B]">Complete these 3 checks before opening the gate</p>
+                  </div>
+                </div>
+
+                <div class="space-y-3">
+                  <!-- Step 1 -->
+                  <label class="flex items-start gap-3 p-3 rounded-xl bg-[#F8FAFC] border border-[#E2E8F0] cursor-pointer hover:bg-white transition-all">
+                    <input type="checkbox" checked class="mt-0.5 w-4 h-4 rounded text-[#0F766E] focus:ring-[#0F766E]">
+                    <div class="space-y-0.5">
+                      <span class="text-xs font-bold text-[#1A1A2E]">1. Inspect ID Badge & CNIC</span>
+                      <p class="text-xs text-[#64748B]">
+                        Ensure facial identity and government badge match ID <strong class="text-[#1A1A2E]">#HN-4821</strong>.
+                      </p>
+                    </div>
+                  </label>
+
+                  <!-- Step 2 -->
+                  <label class="flex items-start gap-3 p-3 rounded-xl bg-[#F8FAFC] border border-[#E2E8F0] cursor-pointer hover:bg-white transition-all">
+                    <input type="checkbox" checked class="mt-0.5 w-4 h-4 rounded text-[#0F766E] focus:ring-[#0F766E]">
+                    <div class="space-y-0.5">
+                      <span class="text-xs font-bold text-[#1A1A2E]">2. Demand PIN Code: 6 4 9 2</span>
+                      <p class="text-xs text-[#64748B]">
+                        Technician must state code <strong>6 4 9 2</strong> before unlocking your premises.
+                      </p>
+                    </div>
+                  </label>
+
+                  <!-- Step 3 -->
+                  <label class="flex items-start gap-3 p-3 rounded-xl bg-[#F8FAFC] border border-[#E2E8F0] cursor-pointer hover:bg-white transition-all">
+                    <input type="checkbox" checked class="mt-0.5 w-4 h-4 rounded text-[#0F766E] focus:ring-[#0F766E]">
+                    <div class="space-y-0.5">
+                      <div class="flex items-center gap-1.5">
+                        <span class="text-xs font-bold text-[#1A1A2E]">3. Zero Cash Payment</span>
+                        <span class="px-1.5 py-0.2 rounded text-[10px] font-bold bg-[#F59E0B]/10 text-[#F59E0B]">Guarantee</span>
+                      </div>
+                      <p class="text-xs text-[#64748B]">
+                        All payments remain in HUNAR Escrow. Cash deals void your 7-day warranty.
+                      </p>
+                    </div>
+                  </label>
+                </div>
+              </div>
+
+              <!-- ============================================================= -->
+              <!-- WIDGET 3: 24/7 PRIORITY OPERATIONS DISPATCH DESK              -->
+              <!-- ============================================================= -->
+              <div class="bg-gradient-to-br from-[#1A1A2E] to-[#0F172A] rounded-2xl p-5 sm:p-6 text-white shadow-elevated space-y-4 relative overflow-hidden">
+                <div class="absolute -right-8 -bottom-8 w-36 h-36 rounded-full bg-[#0F766E]/30 blur-2xl pointer-events-none"></div>
+
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center gap-2">
+                    <span class="material-symbols-outlined text-[20px] text-[#14B8A6]">support_agent</span>
+                    <span class="text-xs font-bold uppercase tracking-wider text-white">HUNAR Dispatch 24/7</span>
+                  </div>
+                  <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#16A34A]/20 text-[#16A34A] border border-[#16A34A]/40 flex items-center gap-1">
+                    <span class="w-1.5 h-1.5 rounded-full bg-[#16A34A] animate-pulse"></span>
+                    Response &lt;2m
+                  </span>
+                </div>
+
+                <div>
+                  <h4 class="text-base font-bold text-white leading-snug">
+                    Need route assistance or technician delay support?
+                  </h4>
+                  <p class="text-xs text-slate-300 mt-1">
+                    Our Peshawar operations unit is actively monitoring your technician's live route in real-time.
+                  </p>
+                </div>
+
+                <div class="flex items-center gap-2 pt-2">
+                  <a href="tel:+929111148627" class="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[#0F766E] hover:bg-[#115E59] text-white text-xs font-bold shadow-sm transition-all">
+                    <span class="material-symbols-outlined text-[18px]">headset_mic</span>
+                    <span>Call Dispatch</span>
+                  </a>
+                  <a href="../dispute_resolution_help_center_hunar/code.html" class="px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-bold border border-white/20 transition-colors">
+                    <span>Help Center</span>
+                  </a>
+                </div>
+              </div>
+
+            </div>
+
+          </div>
+
+        </div>
+
+        <!-- =================================================================== -->
+        <!-- TAB 2: PAST VISITS FULL VIEW                                       -->
+        <!-- =================================================================== -->
+        <div id="tab-pane-past" class="tab-pane space-y-6">
+          <div class="bg-white rounded-2xl border border-[#E2E8F0] p-6 shadow-card space-y-6">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#E2E8F0]">
+              <div>
+                <h2 class="text-lg font-bold text-[#1A1A2E]">Completed Home Visits (12 Total)</h2>
+                <p class="text-xs text-[#64748B]">All past completed work orders, invoices, and technician ratings</p>
+              </div>
+
+              <!-- Filter Tags -->
+              <div class="flex items-center gap-2 overflow-x-auto">
+                <button class="px-3 py-1.5 rounded-lg text-xs font-bold bg-[#0F766E] text-white">All (12)</button>
+                <button class="px-3 py-1.5 rounded-lg text-xs font-medium bg-[#F8FAFC] border border-[#E2E8F0] text-[#64748B] hover:text-[#1A1A2E]">Plumbing (5)</button>
+                <button class="px-3 py-1.5 rounded-lg text-xs font-medium bg-[#F8FAFC] border border-[#E2E8F0] text-[#64748B] hover:text-[#1A1A2E]">AC & Cooling (4)</button>
+                <button class="px-3 py-1.5 rounded-lg text-xs font-medium bg-[#F8FAFC] border border-[#E2E8F0] text-[#64748B] hover:text-[#1A1A2E]">Electrical (3)</button>
+              </div>
+            </div>
+
+            <!-- Past Visits List -->
+            <div class="space-y-4">
+              <!-- Item 1 -->
+              <div class="p-4 rounded-xl bg-[#F8FAFC] border border-[#E2E8F0] flex flex-col md:flex-row md:items-center justify-between gap-4 hover:bg-white transition-all">
+                <div class="flex items-center gap-4">
+                  <div class="w-12 h-12 rounded-xl bg-[#16A34A]/10 text-[#16A34A] flex items-center justify-center shrink-0">
+                    <span class="material-symbols-outlined text-[24px]">task_alt</span>
+                  </div>
+                  <div>
+                    <h3 class="text-sm font-bold text-[#1A1A2E]">Water Heater Flush & Pressure Valve Replacement</h3>
+                    <p class="text-xs text-[#64748B]">Completed Oct 22, 2024 • Pro: <strong class="text-[#1A1A2E]">Rashid Ali</strong> (#HN-4821)</p>
+                    <div class="flex items-center gap-2 mt-1">
+                      <span class="text-xs font-bold text-[#F59E0B] flex items-center gap-0.5">
+                        <span class="material-symbols-outlined text-[14px]">star</span> 5.0 Rated
+                      </span>
+                      <span class="text-xs text-[#64748B]">•</span>
+                      <span class="text-xs font-semibold text-[#0F766E]">PKR 1,800 Released</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="flex items-center gap-2">
+                  <a href="../job_completion_escrow_release_hunar/code.html" class="px-3 py-1.5 rounded-lg bg-white border border-[#E2E8F0] text-xs font-bold text-[#1A1A2E] hover:bg-[#F8FAFC] flex items-center gap-1">
+                    <span class="material-symbols-outlined text-[16px]">receipt</span>
+                    <span>Invoice PDF</span>
+                  </a>
+                  <a href="../post_a_job_step_1_modern_service_selection/code.html" class="px-3 py-1.5 rounded-lg bg-[#0F766E] text-white text-xs font-bold hover:bg-[#115E59]">
+                    Book Again
+                  </a>
+                </div>
+              </div>
+
+              <!-- Item 2 -->
+              <div class="p-4 rounded-xl bg-[#F8FAFC] border border-[#E2E8F0] flex flex-col md:flex-row md:items-center justify-between gap-4 hover:bg-white transition-all">
+                <div class="flex items-center gap-4">
+                  <div class="w-12 h-12 rounded-xl bg-[#16A34A]/10 text-[#16A34A] flex items-center justify-center shrink-0">
+                    <span class="material-symbols-outlined text-[24px]">task_alt</span>
+                  </div>
+                  <div>
+                    <h3 class="text-sm font-bold text-[#1A1A2E]">Main Distribution Box (DB) Breaker Inspection</h3>
+                    <p class="text-xs text-[#64748B]">Completed Oct 14, 2024 • Pro: <strong class="text-[#1A1A2E]">Shahid Afridi Electrician</strong> (#HN-3301)</p>
+                    <div class="flex items-center gap-2 mt-1">
+                      <span class="text-xs font-bold text-[#F59E0B] flex items-center gap-0.5">
+                        <span class="material-symbols-outlined text-[14px]">star</span> 4.8 Rated
+                      </span>
+                      <span class="text-xs text-[#64748B]">•</span>
+                      <span class="text-xs font-semibold text-[#0F766E]">PKR 2,400 Released</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="flex items-center gap-2">
+                  <a href="../job_completion_escrow_release_hunar/code.html" class="px-3 py-1.5 rounded-lg bg-white border border-[#E2E8F0] text-xs font-bold text-[#1A1A2E] hover:bg-[#F8FAFC] flex items-center gap-1">
+                    <span class="material-symbols-outlined text-[16px]">receipt</span>
+                    <span>Invoice PDF</span>
+                  </a>
+                  <a href="../post_a_job_step_1_modern_service_selection/code.html" class="px-3 py-1.5 rounded-lg bg-[#0F766E] text-white text-xs font-bold hover:bg-[#115E59]">
+                    Book Again
+                  </a>
+                </div>
+              </div>
+
+              <!-- Item 3 -->
+              <div class="p-4 rounded-xl bg-[#F8FAFC] border border-[#E2E8F0] flex flex-col md:flex-row md:items-center justify-between gap-4 hover:bg-white transition-all">
+                <div class="flex items-center gap-4">
+                  <div class="w-12 h-12 rounded-xl bg-[#16A34A]/10 text-[#16A34A] flex items-center justify-center shrink-0">
+                    <span class="material-symbols-outlined text-[24px]">task_alt</span>
+                  </div>
+                  <div>
+                    <h3 class="text-sm font-bold text-[#1A1A2E]">Living Room Inverter AC Deep Coil Cleaning</h3>
+                    <p class="text-xs text-[#64748B]">Completed Sep 28, 2024 • Pro: <strong class="text-[#1A1A2E]">Ali Khan</strong> (#HN-1092)</p>
+                    <div class="flex items-center gap-2 mt-1">
+                      <span class="text-xs font-bold text-[#F59E0B] flex items-center gap-0.5">
+                        <span class="material-symbols-outlined text-[14px]">star</span> 5.0 Rated
+                      </span>
+                      <span class="text-xs text-[#64748B]">•</span>
+                      <span class="text-xs font-semibold text-[#0F766E]">PKR 3,000 Released</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="flex items-center gap-2">
+                  <a href="../job_completion_escrow_release_hunar/code.html" class="px-3 py-1.5 rounded-lg bg-white border border-[#E2E8F0] text-xs font-bold text-[#1A1A2E] hover:bg-[#F8FAFC] flex items-center gap-1">
+                    <span class="material-symbols-outlined text-[16px]">receipt</span>
+                    <span>Invoice PDF</span>
+                  </a>
+                  <a href="../post_a_job_step_1_modern_service_selection/code.html" class="px-3 py-1.5 rounded-lg bg-[#0F766E] text-white text-xs font-bold hover:bg-[#115E59]">
+                    Book Again
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- =================================================================== -->
+        <!-- TAB 3: FULL CALENDAR SCHEDULE VIEW                                  -->
+        <!-- =================================================================== -->
+        <div id="tab-pane-calendar" class="tab-pane space-y-6">
+          <div class="bg-white rounded-2xl border border-[#E2E8F0] p-6 shadow-card space-y-6">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#E2E8F0]">
+              <div>
+                <h2 class="text-lg font-bold text-[#1A1A2E]">Master Service Appointment Calendar</h2>
+                <p class="text-xs text-[#64748B]">Manage your service slots, technician arrivals, and upcoming home maintenance</p>
+              </div>
+              <a href="../post_a_job_step_1_modern_service_selection/code.html" class="px-4 py-2 rounded-xl bg-[#0F766E] text-white text-xs font-bold hover:bg-[#115E59] shadow-sm flex items-center gap-1.5">
+                <span class="material-symbols-outlined text-[18px]">add</span>
+                <span>+ Schedule New Visit</span>
+              </a>
+            </div>
+
+            <!-- Detailed Month View -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <!-- Today's Schedule -->
+              <div class="p-4 rounded-xl bg-[#0F766E]/5 border-2 border-[#0F766E] space-y-3">
+                <div class="flex items-center justify-between">
+                  <span class="text-xs font-extrabold text-[#0F766E] uppercase tracking-wider">Today • Oct 24, 2024</span>
+                  <span class="px-2 py-0.5 rounded bg-[#16A34A] text-white text-[10px] font-extrabold animate-pulse">LIVE NOW</span>
+                </div>
+                <div class="p-3 bg-white rounded-lg border border-[#E2E8F0] space-y-1">
+                  <span class="text-xs font-bold text-[#1A1A2E]">03:30 PM – 04:30 PM</span>
+                  <p class="text-xs font-medium text-[#0F766E]">Kitchen Pipe Leak Fix</p>
+                  <p class="text-[11px] text-[#64748B]">Pro: Rashid Ali • ETA 18 mins</p>
+                </div>
+              </div>
+
+              <!-- Tomorrow's Schedule -->
+              <div class="p-4 rounded-xl bg-[#F8FAFC] border border-[#E2E8F0] space-y-3">
+                <div class="flex items-center justify-between">
+                  <span class="text-xs font-bold text-[#1A1A2E] uppercase tracking-wider">Tomorrow • Oct 25, 2024</span>
+                  <span class="px-2 py-0.5 rounded bg-[#0F766E]/10 text-[#0F766E] text-[10px] font-bold">CONFIRMED</span>
+                </div>
+                <div class="p-3 bg-white rounded-lg border border-[#E2E8F0] space-y-1">
+                  <span class="text-xs font-bold text-[#1A1A2E]">10:00 AM – 11:30 AM</span>
+                  <p class="text-xs font-medium text-[#0F766E]">Master AC Servicing</p>
+                  <p class="text-[11px] text-[#64748B]">Pro: Ali Khan (CoolBreeze)</p>
+                </div>
+              </div>
+
+              <!-- Next Week -->
+              <div class="p-4 rounded-xl bg-[#F8FAFC] border border-[#E2E8F0] space-y-3">
+                <div class="flex items-center justify-between">
+                  <span class="text-xs font-bold text-[#1A1A2E] uppercase tracking-wider">Upcoming Slot</span>
+                  <span class="px-2 py-0.5 rounded bg-[#F1F5F9] text-[#64748B] text-[10px] font-bold">OPEN</span>
+                </div>
+                <a href="../post_a_job_step_1_modern_service_selection/code.html" class="p-3 bg-white rounded-lg border border-dashed border-[#CBD5E1] flex flex-col items-center justify-center py-5 text-center hover:border-[#0F766E] transition-colors block">
+                  <span class="material-symbols-outlined text-[24px] text-[#0F766E]">add_circle</span>
+                  <span class="text-xs font-bold text-[#1A1A2E] mt-1">Book Routine Inspection</span>
+                  <span class="text-[11px] text-[#64748B]">Electrical / Plumbing checkup</span>
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      </main>
+
+      <!-- ===================================================================== -->
+      <!-- FOOTER WITH QUICK LINKS                                               -->
+      <!-- ===================================================================== -->
+      <footer class="border-t border-[#E2E8F0] bg-white py-6 px-4 sm:px-6 lg:px-8 text-xs text-[#64748B]">
+        <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div class="flex items-center gap-2">
+            <span class="font-extrabold text-[#1A1A2E]">HUNAR</span>
+            <span>• Pakistan's Premier Certified Trades & Home Services Marketplace</span>
+          </div>
+          <div class="flex flex-wrap items-center gap-4">
+            <button onclick="openModal('allScreensModal')" class="font-bold text-[#0F766E] hover:underline flex items-center gap-1">
+              <span class="material-symbols-outlined text-[14px]">grid_view</span>
+              <span>All 20 Screens Map</span>
+            </button>
+            <a href="../hunar_customer_dashboard/code.html" class="hover:text-[#1A1A2E] transition-colors">Dashboard</a>
+            <a href="../payments_escrow_wallet_hunar/code.html" class="hover:text-[#1A1A2E] transition-colors">Escrow Rules</a>
+            <a href="../dispute_resolution_help_center_hunar/code.html" class="hover:text-[#1A1A2E] transition-colors">Peshawar Dispatch Helpline</a>
+          </div>
+        </div>
+      </footer>
+
+    </div>
+
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- MODAL: ALL 20 PROTOTYPE SCREENS NAVIGATOR / SITEMAP                       -->
+  <!-- ========================================================================= -->
+  <div id="allScreensModal" class="fixed inset-0 bg-navy-800/60 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] flex flex-col shadow-2xl border border-[#E2E8F0] overflow-hidden">
+      <!-- Modal Header -->
+      <div class="p-5 bg-white border-b border-[#E2E8F0] flex items-center justify-between shrink-0">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-[#0F766E]/10 text-[#0F766E] flex items-center justify-center font-bold">
+            <span class="material-symbols-outlined text-[24px]">grid_view</span>
+          </div>
+          <div>
+            <h3 class="text-base font-bold text-[#1A1A2E]">All 20 Prototype Pages & Workflows</h3>
+            <p class="text-xs text-[#64748B]">Instant one-click navigation across the entire HUNAR marketplace</p>
+          </div>
+        </div>
+        <button onclick="closeModal('allScreensModal')" class="p-2 rounded-lg text-[#64748B] hover:text-[#1A1A2E] hover:bg-[#F8FAFC]">
+          <span class="material-symbols-outlined text-[20px]">close</span>
+        </button>
+      </div>
+
+      <!-- Modal Body (Grid of all 20 pages) -->
+      <div class="p-6 overflow-y-auto space-y-6">
+        
+        <!-- Group 1: Customer Portal Core -->
+        <div class="space-y-3">
+          <div class="flex items-center gap-2">
+            <span class="text-xs font-bold uppercase tracking-wider text-[#0F766E]">Customer Portal Core</span>
+            <span class="h-px flex-1 bg-[#E2E8F0]"></span>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            <a href="../hunar_customer_dashboard/code.html" class="p-3 rounded-xl border border-[#E2E8F0] hover:border-[#0F766E] hover:bg-[#0F766E]/5 transition-all group">
+              <span class="text-xs font-bold text-[#1A1A2E] group-hover:text-[#0F766E] block">1. Customer Dashboard</span>
+              <span class="text-[11px] text-[#64748B]">Overview & Active Services</span>
+            </a>
+            <a href="../my_jobs_hunar_customer_hub/code.html" class="p-3 rounded-xl border border-[#E2E8F0] hover:border-[#0F766E] hover:bg-[#0F766E]/5 transition-all group">
+              <span class="text-xs font-bold text-[#1A1A2E] group-hover:text-[#0F766E] block">2. My Jobs Hub</span>
+              <span class="text-[11px] text-[#64748B]">Active & Finished Work Orders</span>
+            </a>
+            <a href="../offers_inquiries_hunar_customer_hub/code.html" class="p-3 rounded-xl border border-[#E2E8F0] hover:border-[#0F766E] hover:bg-[#0F766E]/5 transition-all group">
+              <span class="text-xs font-bold text-[#1A1A2E] group-hover:text-[#0F766E] block">3. Offers & Quotes Hub</span>
+              <span class="text-[11px] text-[#64748B]">Technician Bids Comparison</span>
+            </a>
+            <a href="../scheduled_visits_arrival_tracker_hunar/code.html" class="p-3 rounded-xl border-2 border-[#0F766E] bg-[#0F766E]/10 transition-all group">
+              <span class="text-xs font-bold text-[#0F766E] block">4. Visits & Tracker (Current)</span>
+              <span class="text-[11px] text-[#0F766E]/80">Live GPS & Arrival Code</span>
+            </a>
+            <a href="../direct_chat_negotiation_hunar_customer_hub/code.html" class="p-3 rounded-xl border border-[#E2E8F0] hover:border-[#0F766E] hover:bg-[#0F766E]/5 transition-all group">
+              <span class="text-xs font-bold text-[#1A1A2E] group-hover:text-[#0F766E] block">5. Messages & Chat Hub</span>
+              <span class="text-[11px] text-[#64748B]">Technician Direct Inquiries</span>
+            </a>
+            <a href="../payments_escrow_wallet_hunar/code.html" class="p-3 rounded-xl border border-[#E2E8F0] hover:border-[#0F766E] hover:bg-[#0F766E]/5 transition-all group">
+              <span class="text-xs font-bold text-[#1A1A2E] group-hover:text-[#0F766E] block">6. Payments & Escrow</span>
+              <span class="text-[11px] text-[#64748B]">Wallet & Raast Transfers</span>
+            </a>
+            <a href="../customer_profile_settings_hunar/code.html" class="p-3 rounded-xl border border-[#E2E8F0] hover:border-[#0F766E] hover:bg-[#0F766E]/5 transition-all group">
+              <span class="text-xs font-bold text-[#1A1A2E] group-hover:text-[#0F766E] block">7. Profile & Settings</span>
+              <span class="text-[11px] text-[#64748B]">Saved Addresses & KYC</span>
+            </a>
+            <a href="../dispute_resolution_help_center_hunar/code.html" class="p-3 rounded-xl border border-[#E2E8F0] hover:border-[#0F766E] hover:bg-[#0F766E]/5 transition-all group">
+              <span class="text-xs font-bold text-[#1A1A2E] group-hover:text-[#0F766E] block">8. Help & Disputes</span>
+              <span class="text-[11px] text-[#64748B]">24/7 Operations Desk</span>
+            </a>
+          </div>
+        </div>
+
+        <!-- Group 2: Job Booking & Escrow Workflows -->
+        <div class="space-y-3">
+          <div class="flex items-center gap-2">
+            <span class="text-xs font-bold uppercase tracking-wider text-[#1A1A2E]">Booking & Escrow Workflows</span>
+            <span class="h-px flex-1 bg-[#E2E8F0]"></span>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            <a href="../job_details_offers_hunar/code.html" class="p-3 rounded-xl border border-[#E2E8F0] hover:border-[#0F766E] hover:bg-[#0F766E]/5 transition-all group">
+              <span class="text-xs font-bold text-[#1A1A2E] group-hover:text-[#0F766E] block">9. Job Details & Bids</span>
+              <span class="text-[11px] text-[#64748B]">Detailed Job Breakdown</span>
+            </a>
+            <a href="../job_details_worker_profile_selection_modal_hunar/code.html" class="p-3 rounded-xl border border-[#E2E8F0] hover:border-[#0F766E] hover:bg-[#0F766E]/5 transition-all group">
+              <span class="text-xs font-bold text-[#1A1A2E] group-hover:text-[#0F766E] block">10. Worker Profile Modal</span>
+              <span class="text-[11px] text-[#64748B]">Badges, CNIC & Reviews</span>
+            </a>
+            <a href="../job_details_select_worker_confirm_booking_modal_hunar/code.html" class="p-3 rounded-xl border border-[#E2E8F0] hover:border-[#0F766E] hover:bg-[#0F766E]/5 transition-all group">
+              <span class="text-xs font-bold text-[#1A1A2E] group-hover:text-[#0F766E] block">11. Confirm Booking Modal</span>
+              <span class="text-[11px] text-[#64748B]">Lock Escrow & Set Date</span>
+            </a>
+            <a href="../job_completion_escrow_release_hunar/code.html" class="p-3 rounded-xl border border-[#E2E8F0] hover:border-[#0F766E] hover:bg-[#0F766E]/5 transition-all group">
+              <span class="text-xs font-bold text-[#1A1A2E] group-hover:text-[#0F766E] block">12. Completion & Escrow</span>
+              <span class="text-[11px] text-[#64748B]">Verify Work & Release Funds</span>
+            </a>
+            <a href="../direct_chat_negotiation_hunar/code.html" class="p-3 rounded-xl border border-[#E2E8F0] hover:border-[#0F766E] hover:bg-[#0F766E]/5 transition-all group">
+              <span class="text-xs font-bold text-[#1A1A2E] group-hover:text-[#0F766E] block">13. Negotiation Chat</span>
+              <span class="text-[11px] text-[#64748B]">Direct Pro Quote Negotiation</span>
+            </a>
+          </div>
+        </div>
+
+        <!-- Group 3: Post a Job Wizard Flow -->
+        <div class="space-y-3">
+          <div class="flex items-center gap-2">
+            <span class="text-xs font-bold uppercase tracking-wider text-[#F59E0B]">Post a Job Multi-Step Wizard</span>
+            <span class="h-px flex-1 bg-[#E2E8F0]"></span>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            <a href="../post_a_job_step_1_modern_service_selection/code.html" class="p-3 rounded-xl border border-[#E2E8F0] hover:border-[#0F766E] hover:bg-[#0F766E]/5 transition-all group">
+              <span class="text-xs font-bold text-[#1A1A2E] group-hover:text-[#0F766E] block">14. Step 1: Select Service</span>
+              <span class="text-[11px] text-[#64748B]">Plumbing, AC, Electrical</span>
+            </a>
+            <a href="../post_a_job_step_2_3_details_media/code.html" class="p-3 rounded-xl border border-[#E2E8F0] hover:border-[#0F766E] hover:bg-[#0F766E]/5 transition-all group">
+              <span class="text-xs font-bold text-[#1A1A2E] group-hover:text-[#0F766E] block">15. Step 2-3: Job Details</span>
+              <span class="text-[11px] text-[#64748B]">Descriptions & Photos</span>
+            </a>
+            <a href="../post_a_job_step_4_5_location_schedule/code.html" class="p-3 rounded-xl border border-[#E2E8F0] hover:border-[#0F766E] hover:bg-[#0F766E]/5 transition-all group">
+              <span class="text-xs font-bold text-[#1A1A2E] group-hover:text-[#0F766E] block">16. Step 4-5: Location</span>
+              <span class="text-[11px] text-[#64748B]">Peshawar Address & Time</span>
+            </a>
+            <a href="../post_a_job_step_6_review_post/code.html" class="p-3 rounded-xl border border-[#E2E8F0] hover:border-[#0F766E] hover:bg-[#0F766E]/5 transition-all group">
+              <span class="text-xs font-bold text-[#1A1A2E] group-hover:text-[#0F766E] block">17. Step 6: Review & Post</span>
+              <span class="text-[11px] text-[#64748B]">Publish to Pro Network</span>
+            </a>
+          </div>
+        </div>
+
+        <!-- Group 4: Worker & Admin Portals -->
+        <div class="space-y-3">
+          <div class="flex items-center gap-2">
+            <span class="text-xs font-bold uppercase tracking-wider text-[#16A34A]">Worker & Admin Operations</span>
+            <span class="h-px flex-1 bg-[#E2E8F0]"></span>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <a href="../hunar_worker_dashboard/code.html" class="p-3 rounded-xl border border-[#E2E8F0] hover:border-[#0F766E] hover:bg-[#0F766E]/5 transition-all group">
+              <span class="text-xs font-bold text-[#1A1A2E] group-hover:text-[#0F766E] block">18. Worker / Pro Dashboard</span>
+              <span class="text-[11px] text-[#64748B]">Lead bidding & job calendar</span>
+            </a>
+            <a href="../hunar_admin_operations_dashboard_modern/code.html" class="p-3 rounded-xl border border-[#E2E8F0] hover:border-[#0F766E] hover:bg-[#0F766E]/5 transition-all group">
+              <span class="text-xs font-bold text-[#1A1A2E] group-hover:text-[#0F766E] block">19. Admin Operations Hub</span>
+              <span class="text-[11px] text-[#64748B]">City metrics & dispatch overview</span>
+            </a>
+            <a href="../jobs_management_work_orders_hunar_admin/code.html" class="p-3 rounded-xl border border-[#E2E8F0] hover:border-[#0F766E] hover:bg-[#0F766E]/5 transition-all group">
+              <span class="text-xs font-bold text-[#1A1A2E] group-hover:text-[#0F766E] block">20. Admin Work Orders</span>
+              <span class="text-[11px] text-[#64748B]">Escrow disputes & order management</span>
+            </a>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- MODAL: LIVE CHAT DRAWER WITH TECHNICIAN                                  -->
+  <!-- ========================================================================= -->
+  <div id="chatDrawer" class="fixed inset-y-0 right-0 w-full sm:w-96 bg-white shadow-2xl border-l border-[#E2E8F0] z-50 transform translate-x-full transition-transform duration-300 flex flex-col">
+    <div class="p-4 bg-[#1A1A2E] text-white flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="relative">
+          <div class="w-10 h-10 rounded-full bg-[#0F766E] text-white flex items-center justify-center font-bold text-sm">
+            RA
+          </div>
+          <span class="w-3 h-3 rounded-full bg-[#16A34A] border-2 border-[#1A1A2E] absolute bottom-0 right-0"></span>
+        </div>
+        <div>
+          <h4 class="text-sm font-bold text-white">Rashid Ali (Technician)</h4>
+          <span class="text-[11px] text-[#14B8A6] flex items-center gap-1">
+            <span class="w-1.5 h-1.5 rounded-full bg-[#14B8A6] animate-pulse"></span>
+            En route to Hayatabad (ETA 18m)
+          </span>
+        </div>
+      </div>
+      <button onclick="closeChatDrawer()" class="text-slate-400 hover:text-white p-1 rounded-lg">
+        <span class="material-symbols-outlined text-[20px]">close</span>
+      </button>
+    </div>
+
+    <!-- Chat Messages Body -->
+    <div id="chatMessages" class="flex-1 overflow-y-auto p-4 space-y-3 bg-[#F8FAFC]">
+      <div class="text-center my-2">
+        <span class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-[#E2E8F0] text-[#64748B]">
+          JOB #98214 Dispatch Started at 01:45 PM
+        </span>
+      </div>
+
+      <div class="flex items-start gap-2 max-w-[85%]">
+        <div class="w-7 h-7 rounded-full bg-[#1A1A2E] text-white text-[10px] font-bold flex items-center justify-center shrink-0">RA</div>
+        <div class="p-3 rounded-2xl rounded-tl-none bg-white border border-[#E2E8F0] shadow-xs text-xs text-[#1A1A2E] space-y-1">
+          <p>Assalam o Alaikum Ahmed Bhai! I have collected the required PPRC joint valves and am on University Road now.</p>
+          <span class="text-[9px] text-[#64748B] block text-right">01:50 PM</span>
+        </div>
+      </div>
+
+      <div class="flex items-start gap-2 max-w-[85%] ml-auto flex-row-reverse">
+        <div class="w-7 h-7 rounded-full bg-[#0F766E] text-white text-[10px] font-bold flex items-center justify-center shrink-0">AK</div>
+        <div class="p-3 rounded-2xl rounded-tr-none bg-[#0F766E] text-white shadow-xs text-xs space-y-1">
+          <p>Walaikum Assalam! The gate is unlocked. Please call or ring the bell at House 45.</p>
+          <span class="text-[9px] text-teal-200 block text-right">01:52 PM</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick Reply Chips -->
+    <div class="p-2 border-t border-[#E2E8F0] bg-white flex items-center gap-1.5 overflow-x-auto">
+      <button onclick="sendQuickReply('I am at the gate')" class="px-2.5 py-1 rounded-full bg-[#F1F5F9] hover:bg-[#E2E8F0] text-[11px] font-medium text-[#1A1A2E] whitespace-nowrap">I'm at the gate</button>
+      <button onclick="sendQuickReply('Please call when you reach')" class="px-2.5 py-1 rounded-full bg-[#F1F5F9] hover:bg-[#E2E8F0] text-[11px] font-medium text-[#1A1A2E] whitespace-nowrap">Call when near</button>
+      <button onclick="sendQuickReply('Park inside driveway')" class="px-2.5 py-1 rounded-full bg-[#F1F5F9] hover:bg-[#E2E8F0] text-[11px] font-medium text-[#1A1A2E] whitespace-nowrap">Park inside</button>
+    </div>
+
+    <!-- Chat Input Box -->
+    <div class="p-3 border-t border-[#E2E8F0] bg-white flex items-center gap-2">
+      <input id="chatInput" type="text" placeholder="Type message to technician..." class="flex-1 h-10 px-3 text-xs bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl focus:outline-none focus:border-[#0F766E]" onkeypress="if(event.key==='Enter') sendMessage()">
+      <button onclick="sendMessage()" class="w-10 h-10 rounded-xl bg-[#0F766E] hover:bg-[#115E59] text-white flex items-center justify-center shrink-0 transition-colors">
+        <span class="material-symbols-outlined text-[18px]">send</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- MODAL: EMERGENCY RESCHEDULE                                              -->
+  <!-- ========================================================================= -->
+  <div id="rescheduleModal" class="fixed inset-0 bg-navy-800/60 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-[#E2E8F0] space-y-5 animate-scale">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-2.5">
+          <div class="w-10 h-10 rounded-xl bg-amber-surface text-amber flex items-center justify-center">
+            <span class="material-symbols-outlined text-[22px]">event_repeat</span>
+          </div>
+          <div>
+            <h3 class="text-base font-bold text-[#1A1A2E]">Reschedule Visit</h3>
+            <p class="text-xs text-[#64748B]">Select a new convenient time slot</p>
+          </div>
+        </div>
+        <button onclick="closeModal('rescheduleModal')" class="text-[#64748B] hover:text-[#1A1A2E]">
+          <span class="material-symbols-outlined text-[20px]">close</span>
+        </button>
+      </div>
+
+      <div class="space-y-3">
+        <div>
+          <label class="block text-xs font-bold text-[#1A1A2E] mb-1">Select New Date</label>
+          <input type="date" value="2024-10-25" class="w-full h-10 px-3 text-xs bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl focus:outline-none focus:border-[#0F766E]">
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-[#1A1A2E] mb-1">Select Time Window</label>
+          <select class="w-full h-10 px-3 text-xs bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl focus:outline-none focus:border-[#0F766E]">
+            <option>Morning (09:00 AM – 11:30 AM)</option>
+            <option>Afternoon (01:00 PM – 03:30 PM)</option>
+            <option>Evening (04:30 PM – 07:00 PM)</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-[#1A1A2E] mb-1">Reason for Rescheduling</label>
+          <textarea rows="2" placeholder="Brief note for the technician..." class="w-full p-3 text-xs bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl focus:outline-none focus:border-[#0F766E]"></textarea>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-3 pt-2">
+        <button onclick="closeModal('rescheduleModal')" class="flex-1 py-2.5 rounded-xl bg-[#F1F5F9] hover:bg-[#E2E8F0] text-xs font-bold text-[#1A1A2E] transition-colors">
+          Cancel
+        </button>
+        <button onclick="submitReschedule()" class="flex-1 py-2.5 rounded-xl bg-[#0F766E] hover:bg-[#115E59] text-white text-xs font-bold shadow-sm transition-colors">
+          Confirm Reschedule
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- JAVASCRIPT LOGIC & INTERACTIONS                                           -->
+  <!-- ========================================================================= -->
+  <script>
+    // Tab Switching Functionality
+    function switchTab(tabName) {
+      document.querySelectorAll('.tab-button').forEach(btn => {
+        btn.classList.remove('text-white', 'bg-[#0F766E]', 'shadow-sm');
+        btn.classList.add('text-[#64748B]');
+      });
+
+      const activeBtn = document.getElementById('tab-btn-' + tabName);
+      if (activeBtn) {
+        activeBtn.classList.add('text-white', 'bg-[#0F766E]', 'shadow-sm');
+        activeBtn.classList.remove('text-[#64748B]');
+      }
+
+      document.querySelectorAll('.tab-pane').forEach(pane => {
+        pane.classList.remove('active');
+      });
+
+      const targetPane = document.getElementById('tab-pane-' + tabName);
+      if (targetPane) {
+        targetPane.classList.add('active');
+      }
+    }
+
+    // Mobile Sidebar Drawer Toggle
+    function toggleMobileSidebar() {
+      const sidebar = document.getElementById('sidebar');
+      const backdrop = document.getElementById('mobileBackdrop');
+      if (sidebar.classList.contains('-translate-x-full')) {
+        sidebar.classList.remove('-translate-x-full');
+        backdrop.classList.remove('hidden');
+      } else {
+        sidebar.classList.add('-translate-x-full');
+        backdrop.classList.add('hidden');
+      }
+    }
+
+    // Modal Manager
+    function openModal(id) {
+      const modal = document.getElementById(id);
+      if (modal) {
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+      }
+    }
+
+    function closeModal(id) {
+      const modal = document.getElementById(id);
+      if (modal) {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+      }
+    }
+
+    // Chat Drawer Handlers
+    function openChatDrawer() {
+      document.getElementById('chatDrawer').classList.remove('translate-x-full');
+    }
+
+    function closeChatDrawer() {
+      document.getElementById('chatDrawer').classList.add('translate-x-full');
+    }
+
+    function sendQuickReply(text) {
+      appendChatMessage('AK', text, true);
+      setTimeout(() => {
+        appendChatMessage('RA', 'Theek hai Ahmed Bhai, noted!', false);
+      }, 1000);
+    }
+
+    function sendMessage() {
+      const input = document.getElementById('chatInput');
+      const text = input.value.trim();
+      if (!text) return;
+      appendChatMessage('AK', text, true);
+      input.value = '';
+      setTimeout(() => {
+        appendChatMessage('RA', 'Ji Ahmed Bhai, almost reaching in 10 minutes.', false);
+      }, 1200);
+    }
+
+    function appendChatMessage(sender, text, isMe) {
+      const container = document.getElementById('chatMessages');
+      const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      const html = isMe 
+        ? `<div class="flex items-start gap-2 max-w-[85%] ml-auto flex-row-reverse">
+             <div class="w-7 h-7 rounded-full bg-[#0F766E] text-white text-[10px] font-bold flex items-center justify-center shrink-0">AK</div>
+             <div class="p-3 rounded-2xl rounded-tr-none bg-[#0F766E] text-white shadow-xs text-xs space-y-1">
+               <p>${text}</p>
+               <span class="text-[9px] text-teal-200 block text-right">${time}</span>
+             </div>
+           </div>`
+        : `<div class="flex items-start gap-2 max-w-[85%]">
+             <div class="w-7 h-7 rounded-full bg-[#1A1A2E] text-white text-[10px] font-bold flex items-center justify-center shrink-0">RA</div>
+             <div class="p-3 rounded-2xl rounded-tl-none bg-white border border-[#E2E8F0] shadow-xs text-xs text-[#1A1A2E] space-y-1">
+               <p>${text}</p>
+               <span class="text-[9px] text-[#64748B] block text-right">${time}</span>
+             </div>
+           </div>`;
+      container.insertAdjacentHTML('beforeend', html);
+      container.scrollTop = container.scrollHeight;
+    }
+
+    // Copy PIN Functionality
+    function copyPinCode(pin) {
+      navigator.clipboard?.writeText(pin);
+      const toast = document.getElementById('copiedToast');
+      toast.classList.remove('hidden');
+      setTimeout(() => {
+        toast.classList.add('hidden');
+      }, 2000);
+    }
+
+    // Map Simulation Interaction
+    let simStep = 0;
+    function simulateMovement() {
+      simStep = (simStep + 1) % 4;
+      const pin = document.getElementById('technicianPin');
+      const dist = document.getElementById('remainingDist');
+      const eta = document.getElementById('etaCountdown');
+
+      if (simStep === 1) {
+        pin.style.top = '36%';
+        pin.style.left = '68%';
+        dist.innerText = '0.9 km (3 turns)';
+        eta.innerText = 'ETA ~12 mins';
+      } else if (simStep === 2) {
+        pin.style.top = '28%';
+        pin.style.left = '74%';
+        dist.innerText = '0.4 km (1 turn)';
+        eta.innerText = 'ETA ~5 mins';
+      } else if (simStep === 3) {
+        pin.style.top = '20%';
+        pin.style.left = '80%';
+        dist.innerText = '0.1 km (Arrived at gate)';
+        eta.innerText = 'Arrived!';
+      } else {
+        pin.style.top = '42%';
+        pin.style.left = '62%';
+        dist.innerText = '1.4 km (6 turns)';
+        eta.innerText = 'ETA ~18 mins';
+      }
+    }
+
+    function focusTechnician() {
+      alert('Technician Rashid Ali is currently driving north along Khyber Pass Road at 26 km/h towards Hayatabad Sector F-4.');
+    }
+
+    function centerMap() {
+      const pin = document.getElementById('technicianPin');
+      pin.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
+    function toggleMapLayers() {
+      alert('Toggled High-Contrast Vector Navigation View');
+    }
+
+    function showDateSchedule(dateStr) {
+      alert('Schedule Details for ' + dateStr + ':\n• 1 Technician Visit Recorded\n• All payments held in Escrow');
+    }
+
+    function confirmCancel() {
+      if (confirm('Are you sure you want to cancel the tomorrow 10:00 AM booking? You will receive 100% immediate Escrow refund to your wallet.')) {
+        alert('Booking cancelled. Funds returned to HUNAR Wallet.');
+      }
+    }
+
+    function submitReschedule() {
+      alert('Reschedule request sent to technician Ali Khan! You will receive confirmation via SMS.');
+      closeModal('rescheduleModal');
+    }
+
+    function prevMonth() {
+      alert('Showing September 2024 (10 Visits Completed)');
+    }
+
+    function nextMonth() {
+      alert('Showing November 2024 (Winterization bookings open)');
+    }
+  </script>
+</body>
+</html>

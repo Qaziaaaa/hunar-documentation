@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta content="width=device-width, initial-scale=1.0" name="viewport">
+  <title>Post a Job - HUNAR</title>
+  <link href="https://fonts.googleapis.com" rel="preconnect">
+  <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            teal: {
+              DEFAULT: "#0F766E",
+              dark: "#115E59",
+              light: "rgba(15, 118, 110, 0.08)"
+            },
+            navy: "#123B5D",
+            navyDark: "#1A1A2E",
+            border: "#E2E8F0"
+          },
+          fontFamily: {
+            sans: ["Inter", "sans-serif"]
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    html {
+      overflow-y: scroll;
+      scrollbar-gutter: stable;
+    }
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #FFFFFF;
+      color: #1A1A2E;
+      margin: 0;
+      padding: 0;
+    }
+    .category-card { transition: all 0.2s ease-in-out; }
+    .category-card.selected {
+      border-color: #0F766E !important;
+      background-color: rgba(15, 118, 110, 0.04) !important;
+      box-shadow: 0 0 0 1px #0F766E;
+    }
+  </style>
+</head>
+<body class="bg-white text-[#1A1A2E] antialiased min-h-screen flex flex-col justify-between">
+
+  <!-- Header -->
+  <header class="sticky top-0 z-40 bg-white border-b border-[#E2E8F0] px-4 sm:px-8 py-3 flex items-center justify-between">
+    <a href="../landing page/code.html" class="flex items-center gap-2 text-xl font-bold text-[#123B5D] hover:opacity-90 transition-opacity" title="Return to Landing Page">
+      <span class="material-symbols-outlined text-[#0F766E]" style="font-variation-settings: 'FILL' 1;">handyman</span>
+      <span>HUNAR</span>
+    </a>
+    <a href="../hunar_customer_dashboard/code.html" class="text-slate-400 hover:text-slate-700 p-1.5 rounded-full hover:bg-slate-100 transition-colors flex items-center justify-center">
+      <span class="material-symbols-outlined text-2xl">close</span>
+    </a>
+  </header>
+
+  <!-- Main Content -->
+  <main class="flex-grow w-full max-w-4xl mx-auto px-4 sm:px-6 py-4 flex flex-col">
+    
+    <!-- Step Progression Bar -->
+    <div class="w-full max-w-xl mx-auto mb-4 px-4">
+      <div class="relative flex items-center justify-between">
+        <!-- Connecting Track -->
+        <div class="absolute top-1/2 left-0 right-0 -translate-y-1/2 h-[2px] bg-slate-200 z-0"></div>
+        <div class="absolute top-1/2 left-0 -translate-y-1/2 h-[2px] bg-[#0F766E] z-0" style="width: 0%;"></div>
+
+        <!-- Step 1: Active -->
+        <div class="relative z-10 flex flex-col items-center">
+          <div class="w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs text-white bg-[#0F766E] shadow-sm ring-4 ring-[#0F766E]/15">
+            1
+          </div>
+          <span class="text-[11px] font-bold text-[#0F766E] mt-1 whitespace-nowrap">1. Service</span>
+        </div>
+
+        <!-- Step 2 -->
+        <div class="relative z-10 flex flex-col items-center">
+          <div class="w-8 h-8 rounded-full flex items-center justify-center font-semibold text-xs bg-white border-2 border-slate-300 text-slate-500 shadow-xs">
+            2
+          </div>
+          <span class="text-[11px] font-medium text-slate-500 mt-1 whitespace-nowrap">2. Details</span>
+        </div>
+
+        <!-- Step 3 -->
+        <div class="relative z-10 flex flex-col items-center">
+          <div class="w-8 h-8 rounded-full flex items-center justify-center font-semibold text-xs bg-white border-2 border-slate-300 text-slate-500 shadow-xs">
+            3
+          </div>
+          <span class="text-[11px] font-medium text-slate-500 mt-1 whitespace-nowrap">3. Schedule</span>
+        </div>
+
+        <!-- Step 4 -->
+        <div class="relative z-10 flex flex-col items-center">
+          <div class="w-8 h-8 rounded-full flex items-center justify-center font-semibold text-xs bg-white border-2 border-slate-300 text-slate-500 shadow-xs">
+            4
+          </div>
+          <span class="text-[11px] font-medium text-slate-500 mt-1 whitespace-nowrap">4. Review</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Header Section -->
+    <div class="text-center mb-3">
+      <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#123B5D]">What service do you need today?</h1>
+      <p class="text-xs sm:text-sm text-slate-500 max-w-md mx-auto mt-0.5">Choose from our verified local technicians with guaranteed on-time arrival and transparent pricing.</p>
+    </div>
+
+    <!-- Search & Popular Searches -->
+    <div class="w-full max-w-3xl mx-auto mb-3">
+      <div class="relative flex items-center mb-2">
+        <span class="material-symbols-outlined absolute left-3.5 text-slate-400 text-lg pointer-events-none">search</span>
+        <input class="w-full pl-10 pr-10 py-2.5 bg-white border border-slate-200 rounded-xl text-xs sm:text-sm text-[#1A1A2E] placeholder-slate-400 focus:outline-none focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E] shadow-2xs transition-all" placeholder="Search for AC repair, leaking pipe, electrical wiring, carpenter..." type="text">
+        <span class="material-symbols-outlined absolute right-3.5 text-slate-400 text-sm hover:text-slate-600 cursor-pointer">tune</span>
+      </div>
+      <div class="flex items-center gap-1.5 overflow-x-auto text-[11px]">
+        <span class="text-slate-400 font-medium whitespace-nowrap shrink-0">Popular searches:</span>
+        <button class="px-2.5 py-1 rounded-full bg-white border border-slate-200 text-slate-600 hover:border-[#0F766E] hover:text-[#0F766E] transition-colors whitespace-nowrap font-medium shadow-2xs">⚡ Emergency AC Leak</button>
+        <button class="px-2.5 py-1 rounded-full bg-white border border-slate-200 text-slate-600 hover:border-[#0F766E] hover:text-[#0F766E] transition-colors whitespace-nowrap font-medium shadow-2xs">🔧 Geyser Installation</button>
+        <button class="px-2.5 py-1 rounded-full bg-white border border-slate-200 text-slate-600 hover:border-[#0F766E] hover:text-[#0F766E] transition-colors whitespace-nowrap font-medium shadow-2xs">💡 Short Circuit Repair</button>
+        <button class="px-2.5 py-1 rounded-full bg-white border border-slate-200 text-slate-600 hover:border-[#0F766E] hover:text-[#0F766E] transition-colors whitespace-nowrap font-medium shadow-2xs">🪑 Door Lock Fix</button>
+      </div>
+    </div>
+
+    <!-- 2-Column Horizontal Category Grid (Original Design) -->
+    <div class="w-full max-w-3xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-2.5" id="categoryGrid">
+      
+      <!-- Card 1: AC Repair (Selected by default) -->
+      <div class="category-card selected group relative bg-white border-2 border-[#0F766E] rounded-xl p-3 flex items-center justify-between cursor-pointer shadow-2xs hover:shadow-sm" data-service="ac_repair">
+        <div class="flex items-center gap-3 min-w-0">
+          <div class="icon-box w-10 h-10 rounded-xl flex items-center justify-center shrink-0 text-white bg-[#0F766E] shadow-2xs">
+            <span class="material-symbols-outlined text-xl">ac_unit</span>
+          </div>
+          <div class="min-w-0">
+            <div class="flex items-center gap-2">
+              <h3 class="font-bold text-sm text-[#1A1A2E] truncate">AC Service & Repair</h3>
+              <span class="px-1.5 py-0.5 rounded-full text-[9px] font-bold tracking-wide uppercase text-white bg-[#0F766E]">POPULAR</span>
+            </div>
+            <p class="text-[11px] text-slate-500 truncate">Cooling fix, deep cleaning, gas refill • 30m</p>
+          </div>
+        </div>
+        <div class="check-box shrink-0 ml-2 flex items-center justify-center w-6 h-6 rounded-full bg-[#0F766E] text-white shadow-2xs">
+          <span class="material-symbols-outlined text-sm font-bold">check</span>
+        </div>
+      </div>
+
+      <!-- Card 2: Plumbing -->
+      <div class="category-card group relative bg-white border border-slate-200 rounded-xl p-3 flex items-center justify-between cursor-pointer shadow-2xs hover:border-[#0F766E] hover:shadow-sm" data-service="plumbing">
+        <div class="flex items-center gap-3 min-w-0">
+          <div class="icon-box w-10 h-10 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center shrink-0 text-[#123B5D] group-hover:text-[#0F766E] transition-colors">
+            <span class="material-symbols-outlined text-xl">plumbing</span>
+          </div>
+          <div class="min-w-0">
+            <div class="flex items-center gap-2">
+              <h3 class="font-bold text-sm text-[#1A1A2E] truncate">Plumbing Works</h3>
+            </div>
+            <p class="text-[11px] text-slate-500 truncate">Pipe leakages, taps, drainage, pumps</p>
+          </div>
+        </div>
+        <div class="check-box shrink-0 ml-2 flex items-center justify-center w-6 h-6 rounded-full bg-slate-50 text-slate-300 group-hover:text-[#0F766E] group-hover:bg-slate-100 transition-all">
+          <span class="material-symbols-outlined text-sm">chevron_right</span>
+        </div>
+      </div>
+
+      <!-- Card 3: Electrician -->
+      <div class="category-card group relative bg-white border border-slate-200 rounded-xl p-3 flex items-center justify-between cursor-pointer shadow-2xs hover:border-[#0F766E] hover:shadow-sm" data-service="electrician">
+        <div class="flex items-center gap-3 min-w-0">
+          <div class="icon-box w-10 h-10 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center shrink-0 text-[#123B5D] group-hover:text-[#0F766E] transition-colors">
+            <span class="material-symbols-outlined text-xl">electrical_services</span>
+          </div>
+          <div class="min-w-0">
+            <div class="flex items-center gap-2">
+              <h3 class="font-bold text-sm text-[#1A1A2E] truncate">Electrician</h3>
+              <span class="px-1.5 py-0.5 rounded-full text-[9px] font-bold tracking-wide uppercase bg-slate-100 text-slate-600">VERIFIED</span>
+            </div>
+            <p class="text-[11px] text-slate-500 truncate">Wiring, fuse box, switches, appliance install</p>
+          </div>
+        </div>
+        <div class="check-box shrink-0 ml-2 flex items-center justify-center w-6 h-6 rounded-full bg-slate-50 text-slate-300 group-hover:text-[#0F766E] group-hover:bg-slate-100 transition-all">
+          <span class="material-symbols-outlined text-sm">chevron_right</span>
+        </div>
+      </div>
+
+      <!-- Card 4: Carpenter -->
+      <div class="category-card group relative bg-white border border-slate-200 rounded-xl p-3 flex items-center justify-between cursor-pointer shadow-2xs hover:border-[#0F766E] hover:shadow-sm" data-service="carpenter">
+        <div class="flex items-center gap-3 min-w-0">
+          <div class="icon-box w-10 h-10 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center shrink-0 text-[#123B5D] group-hover:text-[#0F766E] transition-colors">
+            <span class="material-symbols-outlined text-xl">handyman</span>
+          </div>
+          <div class="min-w-0">
+            <div class="flex items-center gap-2">
+              <h3 class="font-bold text-sm text-[#1A1A2E] truncate">Carpentry & Woodwork</h3>
+            </div>
+            <p class="text-[11px] text-slate-500 truncate">Furniture assembly, locks, cabinet repairs</p>
+          </div>
+        </div>
+        <div class="check-box shrink-0 ml-2 flex items-center justify-center w-6 h-6 rounded-full bg-slate-50 text-slate-300 group-hover:text-[#0F766E] group-hover:bg-slate-100 transition-all">
+          <span class="material-symbols-outlined text-sm">chevron_right</span>
+        </div>
+      </div>
+
+      <!-- Card 5: Appliance Repair -->
+      <div class="category-card group relative bg-white border border-slate-200 rounded-xl p-3 flex items-center justify-between cursor-pointer shadow-2xs hover:border-[#0F766E] hover:shadow-sm" data-service="appliance">
+        <div class="flex items-center gap-3 min-w-0">
+          <div class="icon-box w-10 h-10 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center shrink-0 text-[#123B5D] group-hover:text-[#0F766E] transition-colors">
+            <span class="material-symbols-outlined text-xl">home_repair_service</span>
+          </div>
+          <div class="min-w-0">
+            <div class="flex items-center gap-2">
+              <h3 class="font-bold text-sm text-[#1A1A2E] truncate">Home Appliances</h3>
+            </div>
+            <p class="text-[11px] text-slate-500 truncate">Washing machines, fridge, microwave, ovens</p>
+          </div>
+        </div>
+        <div class="check-box shrink-0 ml-2 flex items-center justify-center w-6 h-6 rounded-full bg-slate-50 text-slate-300 group-hover:text-[#0F766E] group-hover:bg-slate-100 transition-all">
+          <span class="material-symbols-outlined text-sm">chevron_right</span>
+        </div>
+      </div>
+
+      <!-- Card 6: Painter -->
+      <div class="category-card group relative bg-white border border-slate-200 rounded-xl p-3 flex items-center justify-between cursor-pointer shadow-2xs hover:border-[#0F766E] hover:shadow-sm" data-service="painter">
+        <div class="flex items-center gap-3 min-w-0">
+          <div class="icon-box w-10 h-10 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center shrink-0 text-[#123B5D] group-hover:text-[#0F766E] transition-colors">
+            <span class="material-symbols-outlined text-xl">format_paint</span>
+          </div>
+          <div class="min-w-0">
+            <div class="flex items-center gap-2">
+              <h3 class="font-bold text-sm text-[#1A1A2E] truncate">Painting & Waterproofing</h3>
+            </div>
+            <p class="text-[11px] text-slate-500 truncate">Wall touch-ups, full home, water damage fix</p>
+          </div>
+        </div>
+        <div class="check-box shrink-0 ml-2 flex items-center justify-center w-6 h-6 rounded-full bg-slate-50 text-slate-300 group-hover:text-[#0F766E] group-hover:bg-slate-100 transition-all">
+          <span class="material-symbols-outlined text-sm">chevron_right</span>
+        </div>
+      </div>
+
+      <!-- Card 7: Generator -->
+      <div class="category-card group relative bg-white border border-slate-200 rounded-xl p-3 flex items-center justify-between cursor-pointer shadow-2xs hover:border-[#0F766E] hover:shadow-sm" data-service="generator">
+        <div class="flex items-center gap-3 min-w-0">
+          <div class="icon-box w-10 h-10 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center shrink-0 text-[#123B5D] group-hover:text-[#0F766E] transition-colors">
+            <span class="material-symbols-outlined text-xl">bolt</span>
+          </div>
+          <div class="min-w-0">
+            <div class="flex items-center gap-2">
+              <h3 class="font-bold text-sm text-[#1A1A2E] truncate">Generator Repair</h3>
+            </div>
+            <p class="text-[11px] text-slate-500 truncate">Troubleshooting, oil change, wiring & tuning</p>
+          </div>
+        </div>
+        <div class="check-box shrink-0 ml-2 flex items-center justify-center w-6 h-6 rounded-full bg-slate-50 text-slate-300 group-hover:text-[#0F766E] group-hover:bg-slate-100 transition-all">
+          <span class="material-symbols-outlined text-sm">chevron_right</span>
+        </div>
+      </div>
+
+      <!-- Card 8: Custom Request -->
+      <div class="category-card group relative bg-white border border-slate-200 rounded-xl p-3 flex items-center justify-between cursor-pointer shadow-2xs hover:border-[#0F766E] hover:shadow-sm" data-service="other">
+        <div class="flex items-center gap-3 min-w-0">
+          <div class="icon-box w-10 h-10 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center shrink-0 text-[#123B5D] group-hover:text-[#0F766E] transition-colors">
+            <span class="material-symbols-outlined text-xl">build</span>
+          </div>
+          <div class="min-w-0">
+            <div class="flex items-center gap-2">
+              <h3 class="font-bold text-sm text-[#1A1A2E] truncate">Custom / Other Request</h3>
+            </div>
+            <p class="text-[11px] text-slate-500 truncate">Describe custom repair or renovation need</p>
+          </div>
+        </div>
+        <div class="check-box shrink-0 ml-2 flex items-center justify-center w-6 h-6 rounded-full bg-slate-50 text-slate-300 group-hover:text-[#0F766E] group-hover:bg-slate-100 transition-all">
+          <span class="material-symbols-outlined text-sm">chevron_right</span>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Assurance Micro-Banner -->
+    <div class="w-full max-w-3xl mx-auto my-3 flex flex-wrap items-center justify-center gap-5 text-[11px] text-slate-500 py-2 border-t border-slate-200/80">
+      <div class="flex items-center gap-1.5">
+        <span class="material-symbols-outlined text-[#0F766E] text-base">verified_user</span>
+        <span>Background-checked Experts</span>
+      </div>
+      <div class="flex items-center gap-1.5">
+        <span class="material-symbols-outlined text-[#0F766E] text-base">payments</span>
+        <span>Upfront Fixed Quotes</span>
+      </div>
+      <div class="flex items-center gap-1.5">
+        <span class="material-symbols-outlined text-[#0F766E] text-base">schedule</span>
+        <span>Arrival within 30-45 mins</span>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Sticky Footer Action Area -->
+  <footer class="sticky bottom-0 left-0 w-full bg-white border-t border-slate-200 py-3 px-4 sm:px-8 shadow-sm z-40">
+    <div class="max-w-3xl mx-auto w-full flex justify-between items-center">
+      <a href="../hunar_customer_dashboard/code.html" class="px-4 py-2 rounded-full border border-slate-200 text-slate-600 font-semibold text-xs hover:bg-slate-50 transition-colors flex items-center gap-1.5">
+        <span class="material-symbols-outlined text-base">arrow_back</span>
+        <span>Back</span>
+      </a>
+
+      <div class="flex items-center gap-3">
+        <span class="text-xs text-slate-400 hidden sm:inline">Selected: <strong class="text-[#1A1A2E] font-semibold" id="selectedLabel">AC Service & Repair</strong></span>
+        <a href="../post_a_job_step_2_3_details_media/code.html" class="px-6 py-2.5 rounded-full transition-all duration-200 flex items-center gap-2 text-xs sm:text-sm font-semibold text-white shadow-sm hover:opacity-95 cursor-pointer bg-[#0F766E] hover:bg-[#115E59] active:scale-[0.99]" id="nextButton">
+          <span>Next: Job Details</span>
+          <span class="material-symbols-outlined text-base">arrow_forward</span>
+        </a>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const cards = document.querySelectorAll('.category-card');
+      const selectedLabel = document.getElementById('selectedLabel');
+
+      cards.forEach(card => {
+        card.addEventListener('click', () => {
+          cards.forEach(c => {
+            c.classList.remove('selected');
+            c.classList.remove('border-2', 'border-[#0F766E]');
+            c.classList.add('border', 'border-slate-200');
+            const icon = c.querySelector('.icon-box');
+            const check = c.querySelector('.check-box');
+            if (icon) {
+              icon.classList.remove('bg-[#0F766E]', 'text-white');
+              icon.classList.add('bg-slate-50', 'border', 'border-slate-100', 'text-[#123B5D]');
+            }
+            if (check) {
+              check.classList.remove('bg-[#0F766E]', 'text-white');
+              check.classList.add('bg-slate-50', 'text-slate-300');
+              check.innerHTML = '<span class="material-symbols-outlined text-sm">chevron_right</span>';
+            }
+          });
+
+          card.classList.add('selected');
+          card.classList.remove('border', 'border-slate-200');
+          card.classList.add('border-2', 'border-[#0F766E]');
+          const icon = card.querySelector('.icon-box');
+          const check = card.querySelector('.check-box');
+          if (icon) {
+            icon.classList.remove('bg-slate-50', 'border', 'border-slate-100', 'text-[#123B5D]');
+            icon.classList.add('bg-[#0F766E]', 'text-white');
+          }
+          if (check) {
+            check.classList.remove('bg-slate-50', 'text-slate-300');
+            check.classList.add('bg-[#0F766E]', 'text-white');
+            check.innerHTML = '<span class="material-symbols-outlined text-sm font-bold">check</span>';
+          }
+          const title = card.querySelector('h3').textContent.trim();
+          if (selectedLabel) selectedLabel.textContent = title;
+        });
+      });
+    });
+  </script>
+</body>
+</html>

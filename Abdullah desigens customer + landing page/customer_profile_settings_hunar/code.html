@@ -1,0 +1,550 @@
+<!DOCTYPE html><html lang="en" style=""><head><meta charset="utf-8"><meta content="width=device-width, initial-scale=1.0" name="viewport"><title>HUNAR Customer Hub</title><link href="https://fonts.googleapis.com" rel="preconnect"><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<style>
+  html {
+    overflow-y: scroll;
+    scrollbar-gutter: stable;
+  }
+  body {
+    font-family: 'Inter', sans-serif;
+    background-color: #FFFFFF;
+    color: #1A1A2E;
+    margin: 0;
+    padding: 0;
+  }
+  aside {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  aside::-webkit-scrollbar {
+    display: none;
+  }
+</style>
+<script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">
+tailwind.config = {
+  darkMode: "class",
+  theme: {
+    extend: {
+      colors: {
+        navy: "#1A1A2E",
+        teal: {
+          DEFAULT: "#0F766E",
+          dark: "#115E59",
+          light: "rgba(15, 118, 110, 0.1)"
+        },
+        orange: "#F59E0B",
+        success: "#16A34A",
+        error: "#DC2626",
+        gray: "#64748B",
+        background: "#F8FAFC",
+        border: "#E2E8F0",
+        surface: "#FFFFFF",
+        primary: "#0F766E",
+        "primary-dark": "#115E59",
+        secondary: "#1A1A2E",
+        
+        // Aliases used in templates
+        appBg: "#F8FAFC",
+        darkText: "#1A1A2E",
+        mutedText: "#64748B",
+        borderLine: "#E2E8F0",
+        "text-main": "#1A1A2E",
+        "surface-muted": "#F8FAFC",
+        "outline-border": "#E2E8F0",
+        
+        // Material Theme 3 Aliases
+        "on-surface": "#1A1A2E",
+        "on-surface-variant": "#64748B",
+        "on-background": "#1A1A2E",
+        "on-primary": "#FFFFFF",
+        "on-secondary": "#FFFFFF",
+        "on-error": "#FFFFFF",
+        "surface-container-lowest": "#FFFFFF",
+        "surface-container-low": "#F8FAFC",
+        "surface-container": "#F8FAFC",
+        "surface-container-high": "#F8FAFC",
+        "surface-container-highest": "#F8FAFC",
+        "surface-variant": "#F8FAFC",
+        "surface-tint": "#0F766E",
+        "surface-dim": "#E2E8F0",
+        "surface-bright": "#FFFFFF",
+        outline: "#64748B",
+        "outline-variant": "#E2E8F0",
+        "primary-container": "rgba(15, 118, 110, 0.1)",
+        "on-primary-container": "#0F766E",
+        "secondary-container": "rgba(26, 26, 46, 0.08)",
+        "on-secondary-container": "#1A1A2E",
+        "secondary-fixed": "rgba(15, 118, 110, 0.1)",
+        "secondary-fixed-dim": "rgba(15, 118, 110, 0.1)",
+        "on-secondary-fixed": "#1A1A2E",
+        "on-secondary-fixed-variant": "#115E59",
+        "primary-fixed": "rgba(15, 118, 110, 0.1)",
+        "primary-fixed-dim": "rgba(15, 118, 110, 0.1)",
+        "on-primary-fixed": "#1A1A2E",
+        "on-primary-fixed-variant": "#115E59",
+        "tertiary": "#F59E0B",
+        "tertiary-container": "rgba(245, 158, 11, 0.1)",
+        "on-tertiary-container": "#F59E0B",
+        "tertiary-fixed": "rgba(245, 158, 11, 0.1)",
+        "on-tertiary-fixed": "#1A1A2E",
+        "error-container": "rgba(220, 38, 38, 0.1)",
+        "on-error-container": "#DC2626",
+        "inverse-primary": "#0F766E",
+        "inverse-surface": "#1A1A2E",
+        "inverse-on-surface": "#F8FAFC"
+      },
+      spacing: {
+        "margin-desktop": "2rem",
+        "margin-tablet": "1.5rem",
+        "margin-mobile": "1rem",
+        "gutter-desktop": "1.5rem",
+        "gutter-mobile": "1rem",
+        "space-3xl": "4rem",
+        "space-2xl": "3rem",
+        "space-xl": "2rem",
+        "space-lg": "1.5rem",
+        "space-md": "1rem",
+        "space-base": "1rem",
+        "space-sm": "0.75rem",
+        "space-xs": "0.5rem",
+        "space-2xs": "0.25rem",
+        "space-xxs": "0.25rem",
+        "space-1": "0.25rem",
+        "space-2": "0.5rem",
+        "space-3": "0.75rem",
+        "space-4": "1rem",
+        "space-5": "1.25rem",
+        "space-6": "1.5rem",
+        "space-8": "2rem",
+        "space-12": "3rem",
+        "space-16": "4rem",
+        "space-20": "5rem",
+        "space-24": "6rem",
+        "space-stack-sm": "0.5rem",
+        "space-stack-md": "1rem",
+        "space-stack-lg": "1.5rem",
+        "section-gap": "2rem",
+        "gutter": "1.5rem"
+      },
+      fontSize: {
+        "stat-lg": ["28px", { lineHeight: "36px", letterSpacing: "-0.02em", fontWeight: "700" }],
+        "button-text": ["14px", { lineHeight: "20px", letterSpacing: "0.01em", fontWeight: "600" }],
+
+        "display-hero": ["48px", { lineHeight: "56px", letterSpacing: "-0.025em", fontWeight: "700" }],
+        "display-hero-mobile": ["32px", { lineHeight: "40px", letterSpacing: "-0.02em", fontWeight: "700" }],
+        "display-kpi": ["36px", { lineHeight: "44px", letterSpacing: "-0.02em", fontWeight: "700" }],
+        "display-kpi-mobile": ["28px", { lineHeight: "34px", letterSpacing: "-0.02em", fontWeight: "700" }],
+        "display-lg": ["36px", { lineHeight: "44px", letterSpacing: "-0.02em", fontWeight: "700" }],
+        "headline-page": ["28px", { lineHeight: "36px", letterSpacing: "-0.015em", fontWeight: "600" }],
+        "headline-page-mobile": ["24px", { lineHeight: "32px", letterSpacing: "-0.015em", fontWeight: "600" }],
+        "headline-section": ["20px", { lineHeight: "28px", letterSpacing: "-0.01em", fontWeight: "600" }],
+        "headline-subsection": ["16px", { lineHeight: "24px", letterSpacing: "-0.005em", fontWeight: "600" }],
+        "headline-lg": ["28px", { lineHeight: "36px", letterSpacing: "-0.015em", fontWeight: "600" }],
+        "headline-lg-mobile": ["24px", { lineHeight: "32px", letterSpacing: "-0.015em", fontWeight: "600" }],
+        "headline-md": ["20px", { lineHeight: "28px", letterSpacing: "-0.01em", fontWeight: "600" }],
+        "headline-sm": ["16px", { lineHeight: "24px", letterSpacing: "-0.005em", fontWeight: "600" }],
+        "headline-xl-mobile": ["26px", { lineHeight: "34px", letterSpacing: "-0.015em", fontWeight: "600" }],
+        "body-default": ["14px", { lineHeight: "22px", letterSpacing: "0em", fontWeight: "400" }],
+        "body-compact": ["13px", { lineHeight: "18px", letterSpacing: "0em", fontWeight: "400" }],
+        "body-strong": ["14px", { lineHeight: "22px", letterSpacing: "0em", fontWeight: "600" }],
+        "body-lg": ["16px", { lineHeight: "24px", letterSpacing: "0em", fontWeight: "400" }],
+        "body-md": ["14px", { lineHeight: "22px", letterSpacing: "0em", fontWeight: "400" }],
+        "body-md-medium": ["14px", { lineHeight: "22px", letterSpacing: "0em", fontWeight: "500" }],
+        "body-sm": ["12px", { lineHeight: "16px", letterSpacing: "0em", fontWeight: "400" }],
+        "label-badge": ["11px", { lineHeight: "14px", letterSpacing: "0.02em", fontWeight: "600" }],
+        "label-regular": ["12px", { lineHeight: "16px", letterSpacing: "0.01em", fontWeight: "500" }],
+        "label-md": ["12px", { lineHeight: "16px", letterSpacing: "0.01em", fontWeight: "500" }],
+        "label-sm": ["11px", { lineHeight: "14px", letterSpacing: "0.02em", fontWeight: "500" }],
+        "label-uppercase": ["10px", { lineHeight: "12px", letterSpacing: "0.05em", fontWeight: "700" }]
+      },
+      fontFamily: {
+        "stat-lg": ["Inter", "sans-serif"],
+        "button-text": ["Inter", "sans-serif"],
+
+        sans: ["Inter", "sans-serif"],
+        "body-default": ["Inter", "sans-serif"],
+        "body-compact": ["Inter", "sans-serif"],
+        "body-strong": ["Inter", "sans-serif"],
+        "body-md": ["Inter", "sans-serif"],
+        "body-sm": ["Inter", "sans-serif"],
+        "display-kpi": ["Inter", "sans-serif"],
+        "headline-page": ["Inter", "sans-serif"],
+        "headline-section": ["Inter", "sans-serif"],
+        "headline-subsection": ["Inter", "sans-serif"],
+        "headline-md": ["Inter", "sans-serif"],
+        "headline-sm": ["Inter", "sans-serif"],
+        "headline-lg": ["Inter", "sans-serif"],
+        "label-badge": ["Inter", "sans-serif"],
+        "label-regular": ["Inter", "sans-serif"],
+        "label-md": ["Inter", "sans-serif"],
+        "label-sm": ["Inter", "sans-serif"]
+      },
+      borderRadius: {
+        DEFAULT: "0.375rem",
+        sm: "0.25rem",
+        md: "0.375rem",
+        lg: "0.5rem",
+        xl: "0.75rem",
+        "2xl": "1rem",
+        full: "9999px"
+      }
+    }
+  }
+};
+</script></head><body class="bg-white font-body-md text-body-md text-[#1A1A2E]">
+  <!-- Desktop Sidebar -->
+  <aside class="fixed left-0 top-0 h-screen w-[260px] bg-white border-r border-[#E2E8F0] z-50 hidden lg:flex flex-col justify-between overflow-y-auto" style="scrollbar-width: none; -ms-overflow-style: none;">
+    <div class="p-5">
+      <!-- Brand Header -->
+      <a href="../landing page/code.html" class="flex items-center gap-3 pb-5 border-b border-[#E2E8F0] mb-4 group cursor-pointer hover:opacity-90 transition-opacity" title="Back to Landing Page">
+        <div class="w-9 h-9 rounded-xl bg-[#1A1A2E] flex items-center justify-center text-white text-[16px] font-bold">
+          <span>H</span><span class="w-1.5 h-1.5 rounded-full bg-[#0F766E] ml-0.5"></span>
+        </div>
+        <div>
+          <div class="flex items-center gap-1.5">
+            <span class="text-[16px] font-bold tracking-tight text-[#1A1A2E]">HUNAR</span>
+            <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold bg-[#0F766E]/10 text-[#0F766E] uppercase tracking-wider">PK</span>
+          </div>
+          <p class="text-[12px] font-medium text-[#64748B]">Certified Pro Marketplace</p>
+        </div>
+      </a>
+
+      <!-- Navigation List -->
+      <nav class="flex flex-col gap-1">
+        <a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] font-medium text-[#64748B] hover:bg-[#F8FAFC] hover:text-[#1A1A2E] transition-colors" data-path="customer-dashboard" href="../hunar_customer_dashboard/code.html">
+          <span class="material-symbols-outlined text-[20px]">grid_view</span>
+          <span>Dashboard</span>
+        </a>
+        <a class="flex items-center justify-between px-3 py-2.5 rounded-lg text-[13px] font-medium text-[#64748B] hover:bg-[#F8FAFC] hover:text-[#1A1A2E] transition-colors" data-path="my-jobs" href="../my_jobs_hunar_customer_hub/code.html">
+          <div class="flex items-center gap-3">
+            <span class="material-symbols-outlined text-[20px]">assignment</span>
+            <span>My Jobs</span>
+          </div>
+          <span class="px-2 py-0.5 rounded-full bg-[#F8FAFC] text-[#1A1A2E] text-[11px] font-bold">2</span>
+        </a>
+        <a class="flex items-center justify-between px-3 py-2.5 rounded-lg text-[13px] font-medium text-[#64748B] hover:bg-[#F8FAFC] hover:text-[#1A1A2E] transition-colors" data-path="offers-and-bids" href="../offers_inquiries_hunar_customer_hub/code.html">
+          <div class="flex items-center gap-3">
+            <span class="material-symbols-outlined text-[20px]">local_offer</span>
+            <span>Offers</span>
+          </div>
+          <span class="px-2 py-0.5 rounded-full bg-[#F59E0B]/10 text-[#F59E0B] text-[11px] font-bold">3</span>
+        </a>
+        <a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] font-medium text-[#64748B] hover:bg-[#F8FAFC] hover:text-[#1A1A2E] transition-colors" data-path="service-bookings" href="../scheduled_visits_arrival_tracker_hunar/code.html">
+          <span class="material-symbols-outlined text-[20px]">calendar_today</span>
+          <span>Visits</span>
+        </a>
+        <a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] font-medium text-[#64748B] hover:bg-[#F8FAFC] hover:text-[#1A1A2E] transition-colors" data-path="messages" href="../direct_chat_negotiation_hunar_customer_hub/code.html">
+          <span class="material-symbols-outlined text-[20px]">chat</span>
+          <span>Messages</span>
+        </a>
+        <a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] font-medium text-[#64748B] hover:bg-[#F8FAFC] hover:text-[#1A1A2E] transition-colors" data-path="payments-and-escrow" href="../payments_escrow_wallet_hunar/code.html">
+          <span class="material-symbols-outlined text-[20px]">payments</span>
+          <span>Payments</span>
+        </a>
+        <a aria-current="page" class="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-[#0F766E] text-white font-semibold text-[13px] shadow-sm transition-colors" data-path="customer-profile" href="../customer_profile_settings_hunar/code.html">
+          <span class="material-symbols-outlined text-[20px] text-white">person</span>
+          <span class="text-white">Profile</span>
+        </a>
+        <a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] font-medium text-[#64748B] hover:bg-[#F8FAFC] hover:text-[#1A1A2E] transition-colors" data-path="help-center" href="../dispute_resolution_help_center_hunar/code.html">
+          <span class="material-symbols-outlined text-[20px]">help_center</span>
+          <span>Help Center</span>
+        </a>
+      </nav>
+    </div>
+
+    <!-- Bottom Escrow Card & User Profile -->
+    <div class="p-4 border-t border-[#E2E8F0] flex flex-col gap-3">
+      <div class="bg-[#1A1A2E] text-white p-3.5 rounded-xl flex flex-col gap-2">
+        <div class="flex items-center gap-2">
+          <span class="material-symbols-outlined text-[#0F766E] text-[18px]">verified</span>
+          <span class="text-[11px] font-bold uppercase tracking-wider text-[#0F766E]">HUNAR Escrow</span>
+        </div>
+        <p class="text-[11px] leading-snug text-slate-300">100% NADRA CNIC Verified Pros &amp; safe Raast dispute guarantee.</p>
+        <a class="inline-flex items-center justify-center py-1.5 px-3 bg-[#0F766E] text-white text-[11px] font-bold rounded-lg hover:bg-[#115E59] transition-colors" data-path="guarantee-policy" href="../dispute_resolution_help_center_hunar/code.html">View Escrow Rules</a>
+      </div>
+      <div class="flex items-center justify-between pt-1">
+        <div class="flex items-center gap-2.5">
+          <div class="w-8 h-8 rounded-full bg-[#1A1A2E] flex items-center justify-center">
+            <span class="material-symbols-outlined text-white text-[18px]">person</span>
+          </div>
+          <div class="flex flex-col">
+            <span class="text-[13px] font-semibold text-[#1A1A2E] leading-tight">Ahmed Khan</span>
+            <span class="text-[11px] font-medium text-[#64748B]">University Town, Peshawar</span>
+          </div>
+        </div>
+        <a class="text-[#64748B] hover:text-[#DC2626] transition-colors" data-path="sign-in" href="../customer_profile_settings_hunar/code.html">
+          <span class="material-symbols-outlined text-[20px]">logout</span>
+        </a>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main Content Wrapper -->
+  <div class="w-full lg:pl-[260px] min-h-screen flex flex-col bg-white">
+    <!-- Top Header Bar -->
+    <header class="fixed top-0 left-0 lg:left-[260px] right-0 h-16 bg-white border-b border-[#E2E8F0] z-40 px-4 sm:px-6 lg:px-8 flex items-center justify-between gap-4">
+      <div class="flex items-center gap-3 flex-1 max-w-lg">
+        <button aria-label="Open Menu" onclick="const s=document.querySelector('aside'); s.classList.toggle('hidden'); s.classList.toggle('flex');" class="lg:hidden p-1.5 rounded-lg text-[#64748B] hover:text-[#1A1A2E] hover:bg-[#F8FAFC] transition-colors focus:outline-none shrink-0">
+          <span class="material-symbols-outlined text-[24px]">menu</span>
+        </button>
+        <a href="../landing page/code.html" class="flex items-center gap-1.5 lg:hidden shrink-0 hover:scale-105 transition-transform" title="Back to Landing Page"><div class="w-8 h-8 rounded-lg bg-[#1A1A2E] flex items-center justify-center text-white font-bold text-[14px]">H</div></a>
+        <div class="relative w-full">
+          <span class="material-symbols-outlined absolute left-3 top-2.5 text-[#64748B] text-[20px]">search</span>
+          <input class="w-full h-10 pl-10 pr-4 text-[#1A1A2E] font-body-compact text-xs rounded-lg border border-[#E2E8F0] focus:border-[#0F766E] focus:bg-white focus:outline-none transition-all placeholder:text-[#64748B] bg-[#F8FAFC]" placeholder="Search jobs, verified technicians, booking IDs (PKR)..." type="search">
+        </div>
+      </div>
+      <div class="flex items-center gap-3 shrink-0">
+        <a href="../post_a_job_step_1_modern_service_selection/code.html" class="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-[#0F766E] hover:bg-[#115E59] text-white text-xs font-semibold shadow-sm transition-all active:scale-[0.99]">
+          <span class="material-symbols-outlined text-[16px]">add</span>
+          <span>Post a Job</span>
+        </a>
+        <a href="../offers_inquiries_hunar_customer_hub/code.html" class="relative text-[#64748B] hover:text-[#1A1A2E] transition-colors p-2 rounded-lg hover:bg-[#F8FAFC]" title="Offers & Notifications">
+          <span class="material-symbols-outlined text-[22px]">notifications</span>
+          <span class="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-[#F59E0B]"></span>
+        </a>
+        <a href="../direct_chat_negotiation_hunar_customer_hub/code.html" class="text-[#64748B] hover:text-[#1A1A2E] transition-colors p-2 rounded-lg hover:bg-[#F8FAFC]" title="Messages">
+          <span class="material-symbols-outlined text-[22px]">chat</span>
+        </a>
+        <div class="h-6 w-[1px] bg-[#E2E8F0] hidden sm:block"></div>
+        <a href="../customer_profile_settings_hunar/code.html" class="flex items-center gap-2.5 p-1 rounded-lg hover:bg-[#F8FAFC] transition-colors cursor-pointer" title="Profile Settings">
+          <div class="w-8 h-8 rounded-full bg-[#1A1A2E] flex items-center justify-center text-white font-bold text-xs">AK</div>
+          <div class="hidden xl:flex flex-col text-left">
+            <span class="text-xs font-semibold text-[#1A1A2E] leading-tight">Ahmed Khan</span>
+            <span class="text-[10px] font-medium text-[#64748B] leading-tight">University Town, Peshawar</span>
+          </div>
+          <span class="material-symbols-outlined text-[#64748B] text-[18px] hidden sm:inline-block">expand_more</span>
+        </a>
+      </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="w-full pt-16 pb-16 bg-white flex-1">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex flex-col gap-6">
+<!-- Header Banner Section -->
+<div class="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8">
+<div>
+<div class="flex items-center gap-2 mb-2">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#1A1A2E]/5 text-[#1A1A2E] font-label-md text-label-md font-semibold">
+<span class="material-symbols-outlined text-[16px] text-[#0F766E]">verified_user</span>
+          Tier 1 Resident Account
+        </span>
+<span class="text-[#64748B] font-label-md text-label-md">• Customer ID #HN-84920</span>
+</div>
+<h1 class="font-headline-lg text-headline-lg text-[#1A1A2E] tracking-tight">Account Profile &amp; Settings</h1>
+<p class="font-body-md text-body-md text-[#64748B] mt-1">Manage your personal information, saved home service addresses, security, and notification preferences.</p>
+</div>
+<div class="flex items-center gap-3">
+
+<button class="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-[#0F766E] hover:bg-[#115E59] text-white font-button-text text-label-md shadow-sm transition-all" onclick="document.getElementById('profile-form').dispatchEvent(new Event('submit'))" type="button"><span class="material-symbols-outlined text-[18px]">save</span><span class="">Save All Changes</span></button>
+</div>
+</div>
+<!-- Interactive Sub-navigation Tabs -->
+<div class="flex items-center border-b border-[#E2E8F0] gap-8 mb-8 overflow-x-auto scrollbar-none"><button class="profile-nav-tab pb-3.5 border-b-2 border-[#0F766E] text-[#0F766E] font-headline-sm text-label-md font-bold flex items-center gap-2 whitespace-nowrap transition-all border-transparent text-[#64748B]" id="btn-tab-personal" onclick="switchTab('tab-personal')"><span class="material-symbols-outlined text-[20px]">person</span><span class="">Personal Profile</span></button><button class="profile-nav-tab pb-3.5 border-b-2 hover:text-[#1A1A2E] font-headline-sm text-label-md font-semibold flex items-center gap-2 whitespace-nowrap transition-all border-transparent text-[#64748B]" id="btn-tab-addresses" onclick="switchTab('tab-addresses')"><span class="material-symbols-outlined text-[20px]">location_on</span><span class="">Saved Addresses</span><span class="text-[11px] px-2 py-0.5 rounded-full bg-[#E2E8F0] text-[#1A1A2E] font-bold">3</span></button><button class="profile-nav-tab pb-3.5 border-b-2 hover:text-[#1A1A2E] font-headline-sm text-label-md font-semibold flex items-center gap-2 whitespace-nowrap transition-all border-transparent text-[#64748B]" id="btn-tab-notifications" onclick="switchTab('tab-notifications')"><span class="material-symbols-outlined text-[20px]">notifications_active</span><span class="">Notification Preferences</span></button><button class="profile-nav-tab pb-3.5 border-b-2 hover:text-[#1A1A2E] font-headline-sm text-label-md font-semibold flex items-center gap-2 whitespace-nowrap transition-all border-[#0F766E] text-[#0F766E]" id="btn-tab-security" onclick="switchTab('tab-security')"><span class="material-symbols-outlined text-[20px]">shield</span><span class="">Security &amp; Password</span></button></div>
+<!-- TAB PANELS CONTAINER -->
+<div class="w-full space-y-10">
+<!-- SECTION 1: PERSONAL INFORMATION TAB -->
+<div class="tab-content flex flex-col gap-6 hidden" id="tab-personal">
+<!-- Identity Card & Trust Strip -->
+<div class="bg-white rounded-xl border border-[#E2E8F0] shadow-sm p-6 sm:p-8">
+<div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6 pb-6 border-b border-[#E2E8F0]"><div class="flex items-center gap-5"><div class="relative group"><div class="w-20 h-20 rounded-full bg-[#1A1A2E] text-white flex items-center justify-center font-stat-lg text-stat-lg font-bold ring-4 ring-[#1A1A2E]/10">AK</div><label class="absolute bottom-0 right-0 w-7 h-7 rounded-full bg-[#0F766E] hover:bg-[#115E59] text-white flex items-center justify-center cursor-pointer shadow-md hover:scale-105 transition-transform" for="avatar-input"><span class="material-symbols-outlined text-[16px]">photo_camera</span><input accept="image/*" class="hidden" id="avatar-input" type="file"></label></div><div class="flex flex-col"><div class="flex items-center gap-2"><h2 class="font-headline-md text-headline-md text-[#1A1A2E] leading-tight">Ahmed Khan</h2><div class="flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-[#F59E0B]/10 text-[#F59E0B] font-label-md text-[12px] font-bold"><span class="material-symbols-outlined text-[14px]" style="font-variation-settings: 'FILL' 1;">stars</span><span class="">Gold Member</span></div></div><p class="font-label-md text-label-md text-[#64748B] mt-0.5">Customer since May 2023 • 14 Successful Jobs Completed</p><div class="mt-2.5 flex items-center gap-1.5 text-[#16A34A] font-label-md text-[13px] font-semibold"><span class="material-symbols-outlined text-[18px]">verified</span><span class="">Hunar Verified Resident (CNIC &amp; Phone Linked)</span></div></div></div><div class="flex items-center gap-6 bg-[#F8FAFC] border border-[#E2E8F0] px-6 py-3.5 rounded-xl self-center lg:self-auto shadow-sm"><div class="text-center"><div class="text-[11px] uppercase tracking-wider text-[#64748B] font-bold">Trust Score</div><div class="font-headline-sm text-label-md text-[#1A1A2E] font-bold mt-1">99.4% Reliable</div></div><div class="h-9 w-px bg-[#E2E8F0]"></div><div class="text-center"><div class="text-[11px] uppercase tracking-wider text-[#64748B] font-bold">Rating</div><div class="font-headline-sm text-label-md text-[#1A1A2E] font-bold flex items-center justify-center gap-1 mt-1"><span class="text-[#F59E0B] material-symbols-outlined text-[16px]" style="font-variation-settings: 'FILL' 1;">star</span><span class="">4.96</span></div></div></div></div>
+<!-- Personal Info Form -->
+<form class="pt-6" id="profile-form" onsubmit="event.preventDefault(); alert('Profile information successfully saved.');">
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<!-- Full Name -->
+<div class="flex flex-col gap-1.5">
+<label class="font-headline-sm text-label-md text-[#1A1A2E]" for="fullName">Full Legal Name</label>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3.5 top-3 text-[#64748B] text-[18px]">badge</span>
+<input class="w-full h-11 pl-10 pr-4 rounded-lg bg-white border border-[#E2E8F0] font-body-md text-label-md text-[#1A1A2E] focus:outline-none focus:border-[#0F766E] focus:ring-2 focus:ring-[#0F766E]/20 transition-all" id="fullName" required="" type="text" value="Ahmed Khan">
+</div>
+</div>
+<!-- Email Address -->
+<div class="flex flex-col gap-1.5">
+<div class="flex items-center justify-between">
+<label class="font-headline-sm text-label-md text-[#1A1A2E]" for="email">Email Address</label>
+<span class="inline-flex items-center gap-1 font-label-md text-[12px] text-[#0F766E] font-semibold">
+<span class="material-symbols-outlined text-[14px]">check_circle</span> Verified
+                </span>
+</div>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3.5 top-3 text-[#64748B] text-[18px]">mail</span>
+<input class="w-full h-11 pl-10 pr-4 rounded-lg bg-white border border-[#E2E8F0] font-body-md text-label-md text-[#1A1A2E] focus:outline-none focus:border-[#0F766E] focus:ring-2 focus:ring-[#0F766E]/20 transition-all" id="email" required="" type="email" value="ahmed.khan@gmail.com">
+</div>
+</div>
+<!-- Phone Number -->
+<div class="flex flex-col gap-1.5">
+<div class="flex items-center justify-between">
+<label class="font-headline-sm text-label-md text-[#1A1A2E]" for="phone">Phone Number</label>
+<span class="inline-flex items-center gap-1 font-label-md text-[12px] text-[#0F766E] font-semibold">
+<span class="material-symbols-outlined text-[14px]">verified</span> Verified via OTP
+                </span>
+</div>
+<div class="relative flex items-center">
+<span class="material-symbols-outlined absolute left-3.5 text-[#64748B] text-[18px]">smartphone</span>
+<input class="w-full h-11 pl-10 pr-20 rounded-lg bg-white border border-[#E2E8F0] font-body-md text-label-md text-[#1A1A2E] focus:outline-none focus:border-[#0F766E] focus:ring-2 focus:ring-[#0F766E]/20 transition-all" id="phone" required="" type="tel" value="+92 300 4829104">
+<button class="absolute right-2 px-2.5 py-1 text-[12px] font-semibold text-[#1A1A2E] hover:bg-[#F8FAFC] rounded border border-[#E2E8F0] transition-colors" type="button">Change</button>
+</div>
+</div>
+<!-- City / Region -->
+<div class="flex flex-col gap-1.5">
+<label class="font-headline-sm text-label-md text-[#1A1A2E]" for="city">Primary City / Region</label>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3.5 top-3 text-[#64748B] text-[18px]">apartment</span>
+<select class="w-full h-11 pl-10 pr-10 rounded-lg bg-white border border-[#E2E8F0] font-body-md text-label-md text-[#1A1A2E] appearance-none focus:outline-none focus:border-[#0F766E] focus:ring-2 focus:ring-[#0F766E]/20 transition-all" id="city"><option value="Lahore" class="">Lahore, Pakistan</option>
+<option value="Karachi" class="">Karachi, Pakistan</option>
+<option value="Islamabad" class="">Islamabad, Pakistan</option>
+<option value="Rawalpindi" class="">Rawalpindi, Pakistan</option>
+<option value="Faisalabad" class="">Faisalabad, Pakistan</option>
+<option selected="" value="Peshawar" class="">Peshawar, Pakistan</option></select>
+<span class="material-symbols-outlined absolute right-3.5 top-3 text-[#64748B] pointer-events-none text-[18px]">expand_more</span>
+</div>
+</div>
+<!-- Preferred Language Toggle -->
+<div class="flex flex-col gap-1.5">
+<label class="font-headline-sm text-label-md text-[#1A1A2E]">Preferred System Language</label>
+<div class="h-11 p-1 bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg flex items-center">
+<button class="lang-btn flex-1 h-full rounded-md font-button-text text-label-md bg-white text-[#1A1A2E] shadow-sm font-semibold transition-all" onclick="setLang('en', this)" type="button">
+                  English
+                </button>
+<button class="lang-btn flex-1 h-full rounded-md font-button-text text-label-md text-[#64748B] hover:text-[#1A1A2E] font-semibold transition-all" onclick="setLang('ur', this)" type="button">
+                  اردو (Urdu)
+                </button>
+</div>
+</div>
+<!-- Timezone & Working Hours Preference -->
+<div class="flex flex-col gap-1.5">
+<label class="font-headline-sm text-label-md text-[#1A1A2E]" for="dispatchPref">Preferred Service Hours</label>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3.5 top-3 text-[#64748B] text-[18px]">schedule</span>
+<select class="w-full h-11 pl-10 pr-10 rounded-lg bg-white border border-[#E2E8F0] font-body-md text-label-md text-[#1A1A2E] appearance-none focus:outline-none focus:border-[#0F766E] focus:ring-2 focus:ring-[#0F766E]/20 transition-all" id="dispatchPref">
+<option value="morning">Morning &amp; Afternoon (09:00 AM – 04:00 PM)</option>
+<option selected="" value="evening">Evenings &amp; Weekends (04:00 PM – 09:00 PM)</option>
+<option value="anytime">Anytime / Emergency Dispatch</option>
+</select>
+<span class="material-symbols-outlined absolute right-3.5 top-3 text-[#64748B] pointer-events-none text-[18px]">expand_more</span>
+</div>
+</div>
+</div>
+<div class="mt-8 flex items-center justify-end gap-3 pt-6 border-t border-[#E2E8F0]"><button class="px-5 py-2.5 rounded-lg border border-[#E2E8F0] text-[#1A1A2E] font-button-text text-label-md hover:bg-[#F8FAFC] transition-colors" type="reset">Reset</button><button class="inline-flex items-center gap-2 px-6 py-2.5 rounded-lg bg-[#0F766E] hover:bg-[#115E59] text-white font-button-text text-label-md shadow-sm transition-all" type="submit"><span class="material-symbols-outlined text-[18px]">done</span><span class="">Save Changes</span></button></div>
+</form>
+</div>
+</div>
+<!-- SECTION 2: SAVED SERVICE ADDRESSES -->
+<div class="tab-content flex flex-col gap-6 hidden" id="tab-addresses">
+<div class="bg-white rounded-xl border border-[#E2E8F0] shadow-sm p-6 sm:p-8">
+<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-[#E2E8F0]">
+<div>
+<h2 class="font-headline-sm text-headline-sm text-[#1A1A2E]">Saved Service Addresses</h2>
+<p class="font-body-md text-body-md text-[#64748B] mt-1">Where should pros arrive? You can select any saved address instantly when posting a job.</p>
+</div>
+<button class="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-[#0F766E] hover:bg-[#115E59] text-white font-button-text text-label-md shadow-sm transition-all whitespace-nowrap self-start sm:self-auto" onclick="document.getElementById('add-address-modal').classList.remove('hidden')" type="button"><span class="material-symbols-outlined text-[20px]">add_location_alt</span><span class="">+ Add New Address</span></button>
+</div>
+<!-- Address Cards Grid -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6 pt-6"><div class="flex flex-col justify-between p-5 rounded-xl border-2 border-[#0F766E] bg-white relative shadow-sm"><div class="space-y-3"><div class="flex items-center justify-between"><div class="flex items-center gap-2"><div class="w-8 h-8 rounded-lg bg-[#1A1A2E]/5 text-[#1A1A2E] flex items-center justify-center"><span class="material-symbols-outlined text-[20px]">home</span></div><span class="font-headline-sm text-headline-sm text-[#1A1A2E] text-[18px]">Home (Hayatabad)</span></div><span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-[#0F766E]/10 text-[#0F766E] font-label-md text-[11px] font-bold uppercase tracking-wider">Primary Residence</span></div><p class="font-body-md text-body-md text-[#1A1A2E] font-medium leading-snug">House 45, Street 12, Sector F-3, Phase 6, Hayatabad, Peshawar, Khyber Pakhtunkhwa</p><div class="flex items-center gap-1.5 text-[#64748B] font-label-md text-label-md"><span class="material-symbols-outlined text-[16px]">signpost</span><span class="">Landmark: Near Tatara Park &amp; Market</span></div><div class="w-full h-24 rounded-lg bg-[#F8FAFC] border border-[#E2E8F0] flex items-center justify-center text-[#64748B] font-label-md text-[12px] gap-2 overflow-hidden relative"><span class="material-symbols-outlined text-[20px] text-[#0F766E]">pin_drop</span><span class="">Coordinates Pinched: 33.9926° N, 71.4398° E</span></div></div><div class="mt-5 pt-4 border-t border-[#E2E8F0] flex items-center justify-between"><span class="font-label-md text-[12px] text-[#0F766E] font-bold flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">check_circle</span> Default for Bookings</span><div class="flex items-center gap-2"><button class="p-1.5 text-[#64748B] hover:text-[#1A1A2E] rounded transition-colors" title="Edit address" type="button"><span class="material-symbols-outlined text-[18px]">edit</span></button><button class="p-1.5 text-[#64748B] hover:text-[#DC2626] rounded transition-colors" title="Delete address" type="button"><span class="material-symbols-outlined text-[18px]">delete</span></button></div></div></div><div class="flex flex-col justify-between p-5 rounded-xl border border-[#E2E8F0] bg-white hover:border-[#1A1A2E]/40 transition-colors shadow-sm"><div class="space-y-3"><div class="flex items-center justify-between"><div class="flex items-center gap-2"><div class="w-8 h-8 rounded-lg bg-[#1A1A2E]/5 text-[#1A1A2E] flex items-center justify-center"><span class="material-symbols-outlined text-[20px]">family_restroom</span></div><span class="font-headline-sm text-headline-sm text-[#1A1A2E] text-[18px]">Parents' House</span></div><span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#F8FAFC] border border-[#E2E8F0] text-[#64748B] font-label-md text-[11px] font-bold">Secondary</span></div><p class="font-body-md text-body-md text-[#1A1A2E] font-medium leading-snug">House 112, Street 8, Defense Officers Colony (DHA / Cantt), Peshawar, Khyber Pakhtunkhwa</p><div class="flex items-center gap-1.5 text-[#64748B] font-label-md text-label-md"><span class="material-symbols-outlined text-[16px]">signpost</span><span class="">Landmark: Near Garrison Club &amp; Mall Road</span></div><div class="w-full h-24 rounded-lg bg-[#F8FAFC] border border-[#E2E8F0] flex items-center justify-center text-[#64748B] font-label-md text-[12px] gap-2 overflow-hidden relative"><span class="material-symbols-outlined text-[20px] text-[#1A1A2E]">pin_drop</span><span class="">Coordinates Pinched: 34.0042° N, 71.5367° E</span></div></div><div class="mt-5 pt-4 border-t border-[#E2E8F0] flex items-center justify-between"><button class="font-label-md text-[12px] text-[#1A1A2E] hover:text-[#0F766E] font-semibold underline" type="button">Make Default</button><div class="flex items-center gap-2"><button class="p-1.5 text-[#64748B] hover:text-[#1A1A2E] rounded transition-colors" title="Edit address" type="button"><span class="material-symbols-outlined text-[18px]">edit</span></button><button class="p-1.5 text-[#64748B] hover:text-[#DC2626] rounded transition-colors" title="Delete address" type="button"><span class="material-symbols-outlined text-[18px]">delete</span></button></div></div></div><div class="flex flex-col justify-between p-5 rounded-xl border border-[#E2E8F0] bg-white hover:border-[#1A1A2E]/40 transition-colors shadow-sm"><div class="space-y-3"><div class="flex items-center justify-between"><div class="flex items-center gap-2"><div class="w-8 h-8 rounded-lg bg-[#1A1A2E]/5 text-[#1A1A2E] flex items-center justify-center"><span class="material-symbols-outlined text-[20px]">corporate_fare</span></div><span class="font-headline-sm text-headline-sm text-[#1A1A2E] text-[18px]">Commercial Office</span></div><span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#F8FAFC] border border-[#E2E8F0] text-[#64748B] font-label-md text-[11px] font-bold">Workplace</span></div><p class="font-body-md text-body-md text-[#1A1A2E] font-medium leading-snug">Suite 402, Deans Trade Center, Saddar Cantt, Peshawar, Khyber Pakhtunkhwa</p><div class="flex items-center gap-1.5 text-[#64748B] font-label-md text-label-md"><span class="material-symbols-outlined text-[16px]">signpost</span><span class="">Landmark: Islamia Road &amp; Saddar Road intersection</span></div><div class="w-full h-24 rounded-lg bg-[#F8FAFC] border border-[#E2E8F0] flex items-center justify-center text-[#64748B] font-label-md text-[12px] gap-2 overflow-hidden relative"><span class="material-symbols-outlined text-[20px] text-[#1A1A2E]">pin_drop</span><span class="">Coordinates Pinched: 34.0084° N, 71.5471° E</span></div></div><div class="mt-5 pt-4 border-t border-[#E2E8F0] flex items-center justify-between"><button class="font-label-md text-[12px] text-[#1A1A2E] hover:text-[#0F766E] font-semibold underline" type="button">Make Default</button><div class="flex items-center gap-2"><button class="p-1.5 text-[#64748B] hover:text-[#1A1A2E] rounded transition-colors" title="Edit address" type="button"><span class="material-symbols-outlined text-[18px]">edit</span></button><button class="p-1.5 text-[#64748B] hover:text-[#DC2626] rounded transition-colors" title="Delete address" type="button"><span class="material-symbols-outlined text-[18px]">delete</span></button></div></div></div></div>
+</div>
+</div>
+<!-- SECTION 3: NOTIFICATION & ALERT PREFERENCES -->
+<div class="tab-content flex flex-col gap-6 hidden" id="tab-notifications">
+<div class="bg-white rounded-xl border border-[#E2E8F0] shadow-sm p-6 sm:p-8">
+<div class="pb-6 border-b border-[#E2E8F0]">
+<h2 class="font-headline-sm text-headline-sm text-[#1A1A2E]">Notification &amp; Alert Preferences</h2>
+<p class="font-body-md text-body-md text-[#64748B] mt-1">Configure channels for critical dispatch alerts, technician live tracking, and payments.</p>
+</div>
+<div class="divide-y divide-[#E2E8F0]"><div class="py-5 flex items-start justify-between gap-4"><div class="flex items-start gap-4"><div class="w-10 h-10 rounded-lg bg-[#0F766E]/10 text-[#0F766E] flex items-center justify-center flex-shrink-0 mt-0.5"><span class="material-symbols-outlined text-[22px]">request_quote</span></div><div><div class="flex items-center gap-2"><span class="font-headline-sm text-label-md text-[#1A1A2E] font-bold">Instant Pro Quotes &amp; Proposals</span><span class="px-2 py-0.5 rounded text-[11px] font-semibold bg-[#0F766E]/10 text-[#0F766E]">Recommended</span></div><p class="font-body-md text-label-md text-[#64748B] mt-0.5">Receive immediate SMS &amp; WhatsApp notifications when a verified pro submits a competitive bid on your posted tasks.</p><div class="flex items-center gap-4 mt-2 font-label-md text-[12px] text-[#64748B]"><span class="flex items-center gap-1"><span class="material-symbols-outlined text-[14px] text-[#0F766E]">check</span> SMS Enabled</span><span class="flex items-center gap-1"><span class="material-symbols-outlined text-[14px] text-[#0F766E]">check</span> WhatsApp (+92 300 4829104)</span></div></div></div><label class="relative inline-flex items-center cursor-pointer flex-shrink-0"><input checked="" class="sr-only peer" type="checkbox"><div class="w-11 h-6 bg-[#E2E8F0] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#0F766E]"></div></label></div><div class="py-5 flex items-start justify-between gap-4"><div class="flex items-start gap-4"><div class="w-10 h-10 rounded-lg bg-[#1A1A2E]/5 text-[#1A1A2E] flex items-center justify-center flex-shrink-0 mt-0.5"><span class="material-symbols-outlined text-[22px]">navigation</span></div><div><span class="font-headline-sm text-label-md text-[#1A1A2E] font-bold">Live Technician ETA &amp; Arrival Alerts</span><p class="font-body-md text-label-md text-[#64748B] mt-0.5">Instant ping when the assigned service professional starts the commute, plus door buzzer proximity alert within 5 minutes.</p><div class="flex items-center gap-4 mt-2 font-label-md text-[12px] text-[#64748B]"><span class="flex items-center gap-1"><span class="material-symbols-outlined text-[14px] text-[#0F766E]">check</span> Push Notification</span><span class="flex items-center gap-1"><span class="material-symbols-outlined text-[14px] text-[#0F766E]">check</span> In-App Live Map</span></div></div></div><label class="relative inline-flex items-center cursor-pointer flex-shrink-0"><input checked="" class="sr-only peer" type="checkbox"><div class="w-11 h-6 bg-[#E2E8F0] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#0F766E]"></div></label></div><div class="py-5 flex items-start justify-between gap-4"><div class="flex items-start gap-4"><div class="w-10 h-10 rounded-lg bg-[#0F766E]/10 text-[#0F766E] flex items-center justify-center flex-shrink-0 mt-0.5"><span class="material-symbols-outlined text-[22px]">account_balance_wallet</span></div><div><span class="font-headline-sm text-label-md text-[#1A1A2E] font-bold">Payment &amp; Escrow Milestones</span><p class="font-body-md text-label-md text-[#64748B] mt-0.5">Transactional receipt notifications on escrow deposits, job milestone completions, and final fund releases.</p><div class="flex items-center gap-4 mt-2 font-label-md text-[12px] text-[#64748B]"><span class="flex items-center gap-1"><span class="material-symbols-outlined text-[14px] text-[#0F766E]">check</span> Email Receipts (PDF)</span><span class="flex items-center gap-1"><span class="material-symbols-outlined text-[14px] text-[#0F766E]">check</span> SMS Authorization PIN</span></div></div></div><label class="relative inline-flex items-center cursor-pointer flex-shrink-0"><input checked="" class="sr-only peer" type="checkbox"><div class="w-11 h-6 bg-[#E2E8F0] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#0F766E]"></div></label></div><div class="py-5 flex items-start justify-between gap-4"><div class="flex items-start gap-4"><div class="w-10 h-10 rounded-lg bg-[#F8FAFC] border border-[#E2E8F0] text-[#64748B] flex items-center justify-center flex-shrink-0 mt-0.5"><span class="material-symbols-outlined text-[22px]">campaign</span></div><div><span class="font-headline-sm text-label-md text-[#1A1A2E] font-bold">Marketing &amp; Seasonal Home Maintenance Tips</span><p class="font-body-md text-label-md text-[#64748B] mt-0.5">Discounts, monsoon AC servicing reminders, generator maintenance alerts, and newsletter updates.</p></div></div><label class="relative inline-flex items-center cursor-pointer flex-shrink-0"><input class="sr-only peer" type="checkbox"><div class="w-11 h-6 bg-[#E2E8F0] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#0F766E]"></div></label></div></div>
+</div>
+</div>
+<!-- SECTION 4: ACCOUNT SECURITY & PASSWORD -->
+<div class="tab-content flex flex-col gap-6" id="tab-security">
+<!-- Security Overview Grid -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6"><div class="bg-white rounded-xl border border-[#E2E8F0] shadow-sm p-6 sm:p-8 flex flex-col justify-between"><div><div class="flex items-center gap-3 pb-5 border-b border-[#E2E8F0]"><div class="w-10 h-10 rounded-lg bg-[#1A1A2E]/5 text-[#1A1A2E] flex items-center justify-center"><span class="material-symbols-outlined text-[22px]">password</span></div><div><h3 class="font-headline-sm text-headline-sm text-[#1A1A2E]">Account Password</h3><p class="font-body-md text-label-md text-[#64748B]">Last updated 42 days ago</p></div></div><form class="py-5 space-y-3" onsubmit="event.preventDefault(); alert('Password update request processed.');"><div><label class="font-headline-sm text-[12px] text-[#1A1A2E]">Current Password</label><input class="w-full h-10 px-3 mt-1 rounded-lg border border-[#E2E8F0] text-[#1A1A2E] text-label-md focus:outline-none focus:border-[#0F766E]" placeholder="••••••••••••" type="password"></div><div><label class="font-headline-sm text-[12px] text-[#1A1A2E]">New Password</label><input class="w-full h-10 px-3 mt-1 rounded-lg border border-[#E2E8F0] text-[#1A1A2E] text-label-md focus:outline-none focus:border-[#0F766E]" placeholder="Minimum 8 alphanumeric characters" type="password"></div><div><label class="font-headline-sm text-[12px] text-[#1A1A2E]">Confirm New Password</label><input class="w-full h-10 px-3 mt-1 rounded-lg border border-[#E2E8F0] text-[#1A1A2E] text-label-md focus:outline-none focus:border-[#0F766E]" placeholder="Repeat new password" type="password"></div><button class="w-full mt-2 py-2 rounded-lg bg-[#1A1A2E] hover:bg-[#1A1A2E]/90 text-white font-button-text text-label-md transition-colors" type="submit">Update Password</button></form></div><div class="text-center pt-2"><a class="text-[12px] text-[#64748B] hover:text-[#1A1A2E] underline" href="#">Need assistance? Contact Hunar Trust Team</a></div></div></div>
+<!-- Active Logged-in Devices & Dangerous Area -->
+
+</div>
+</div>
+<!-- ADD NEW ADDRESS MODAL (Overlay) -->
+<div class="hidden fixed inset-0 z-50 flex items-center justify-center bg-[#1A1A2E]/40 backdrop-blur-sm p-4" id="add-address-modal">
+<div class="bg-white rounded-xl border border-[#E2E8F0] shadow-2xl max-w-lg w-full p-6 relative animate-in fade-in zoom-in duration-150">
+<div class="flex items-center justify-between pb-4 border-b border-[#E2E8F0]">
+<div class="flex items-center gap-2.5">
+<div class="w-8 h-8 rounded-lg bg-[#0F766E]/10 text-[#0F766E] flex items-center justify-center">
+<span class="material-symbols-outlined text-[20px]">add_location_alt</span>
+</div>
+<h3 class="font-headline-sm text-headline-sm text-[#1A1A2E]">Add New Service Address</h3>
+</div>
+<button class="p-1 rounded text-[#64748B] hover:text-[#1A1A2E] transition-colors" onclick="document.getElementById('add-address-modal').classList.add('hidden')" type="button">
+<span class="material-symbols-outlined text-[20px]">close</span>
+</button>
+</div>
+<form class="pt-4 space-y-4" onsubmit="event.preventDefault(); alert('New address saved successfully!'); document.getElementById('add-address-modal').classList.add('hidden');">
+<div>
+<label class="font-headline-sm text-label-md text-[#1A1A2E]">Address Label</label>
+<input class="w-full h-10 px-3 mt-1 rounded-lg border border-[#E2E8F0] text-[#1A1A2E] text-label-md focus:outline-none focus:border-[#0F766E]" placeholder="e.g. Farmhouse Bedian, Rental Studio" required="" type="text">
+</div>
+<div>
+<label class="font-headline-sm text-label-md text-[#1A1A2E]">Full Street Address</label>
+<textarea class="w-full p-3 mt-1 rounded-lg border border-[#E2E8F0] text-[#1A1A2E] text-label-md focus:outline-none focus:border-[#0F766E]" placeholder="House #, Street, Phase / Block, Sector" required="" rows="2"></textarea>
+</div>
+<div class="grid grid-cols-2 gap-3">
+<div>
+<label class="font-headline-sm text-label-md text-[#1A1A2E]">Prominent Landmark</label>
+<input class="w-full h-10 px-3 mt-1 rounded-lg border border-[#E2E8F0] text-[#1A1A2E] text-label-md focus:outline-none focus:border-[#0F766E]" placeholder="Near Masjid / Main Commercial" type="text">
+</div>
+<div>
+<label class="font-headline-sm text-label-md text-[#1A1A2E]">City</label>
+<select class="w-full h-10 px-3 mt-1 rounded-lg border border-[#E2E8F0] text-[#1A1A2E] text-label-md focus:outline-none focus:border-[#0F766E]">
+<option selected="">Lahore</option>
+<option>Karachi</option>
+<option>Islamabad</option>
+</select>
+</div>
+</div>
+<div class="pt-2">
+<label class="flex items-center gap-2 cursor-pointer">
+<input class="w-4 h-4 rounded text-[#0F766E] border-[#E2E8F0] focus:ring-[#0F766E]" type="checkbox">
+<span class="font-body-md text-label-md text-[#1A1A2E]">Set as default primary address for new jobs</span>
+</label>
+</div>
+<div class="pt-4 border-t border-[#E2E8F0] flex items-center justify-end gap-3">
+<button class="px-4 py-2 rounded-lg border border-[#E2E8F0] text-[#1A1A2E] font-button-text text-label-md hover:bg-[#F8FAFC]" onclick="document.getElementById('add-address-modal').classList.add('hidden')" type="button">
+            Cancel
+          </button>
+<button class="px-5 py-2 rounded-lg bg-[#0F766E] hover:bg-[#115E59] text-white font-button-text text-label-md shadow-sm transition-all" type="submit">Save Address</button>
+</div>
+</form>
+</div>
+</div>
+<script>
+    function switchTab(tabId) {
+      // Toggle tab buttons
+      const tabs = ['tab-personal', 'tab-addresses', 'tab-notifications', 'tab-security'];
+      tabs.forEach(t => {
+        const panel = document.getElementById(t);
+        const btn = document.getElementById('btn-' + t);
+        if (t === tabId) {
+          panel.classList.remove('hidden');
+          btn.classList.remove('border-transparent', 'text-[#64748B]');
+          btn.classList.add('border-[#0F766E]', 'text-[#0F766E]');
+        } else {
+          panel.classList.add('hidden');
+          btn.classList.remove('border-[#0F766E]', 'text-[#0F766E]');
+          btn.classList.add('border-transparent', 'text-[#64748B]');
+        }
+      });
+    }
+
+    function setLang(lang, element) {
+      document.querySelectorAll('.lang-btn').forEach(btn => {
+        btn.classList.remove('bg-white', 'text-[#1A1A2E]', 'shadow-sm');
+        btn.classList.add('text-[#64748B]');
+      });
+      element.classList.add('bg-white', 'text-[#1A1A2E]', 'shadow-sm');
+      element.classList.remove('text-[#64748B]');
+    }
+  </script>
+</div></main></div>
+
+
+
+
+
+</body></html>

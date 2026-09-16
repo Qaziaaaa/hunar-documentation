@@ -1,0 +1,911 @@
+<!DOCTYPE html><html lang="en" style=""><head><meta charset="utf-8"><meta content="width=device-width, initial-scale=1.0" name="viewport"><title>HUNAR Admin</title><link href="https://fonts.googleapis.com" rel="preconnect"><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<style>
+  html {
+    overflow-y: scroll;
+    scrollbar-gutter: stable;
+  }
+  body {
+    font-family: 'Inter', sans-serif;
+    background-color: #FFFFFF;
+    color: #1A1A2E;
+    margin: 0;
+    padding: 0;
+  }
+  aside {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  aside::-webkit-scrollbar {
+    display: none;
+  }
+</style>
+<script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">
+tailwind.config = {
+  darkMode: "class",
+  theme: {
+    extend: {
+      colors: {
+        navy: "#1A1A2E",
+        teal: {
+          DEFAULT: "#0F766E",
+          dark: "#115E59",
+          light: "rgba(15, 118, 110, 0.1)"
+        },
+        orange: "#F59E0B",
+        success: "#16A34A",
+        error: "#DC2626",
+        gray: "#64748B",
+        background: "#F8FAFC",
+        border: "#E2E8F0",
+        surface: "#FFFFFF",
+        primary: "#0F766E",
+        "primary-dark": "#115E59",
+        secondary: "#1A1A2E",
+        
+        // Aliases used in templates
+        appBg: "#F8FAFC",
+        darkText: "#1A1A2E",
+        mutedText: "#64748B",
+        borderLine: "#E2E8F0",
+        "text-main": "#1A1A2E",
+        "surface-muted": "#F8FAFC",
+        "outline-border": "#E2E8F0",
+        
+        // Material Theme 3 Aliases
+        "on-surface": "#1A1A2E",
+        "on-surface-variant": "#64748B",
+        "on-background": "#1A1A2E",
+        "on-primary": "#FFFFFF",
+        "on-secondary": "#FFFFFF",
+        "on-error": "#FFFFFF",
+        "surface-container-lowest": "#FFFFFF",
+        "surface-container-low": "#F8FAFC",
+        "surface-container": "#F8FAFC",
+        "surface-container-high": "#F8FAFC",
+        "surface-container-highest": "#F8FAFC",
+        "surface-variant": "#F8FAFC",
+        "surface-tint": "#0F766E",
+        "surface-dim": "#E2E8F0",
+        "surface-bright": "#FFFFFF",
+        outline: "#64748B",
+        "outline-variant": "#E2E8F0",
+        "primary-container": "rgba(15, 118, 110, 0.1)",
+        "on-primary-container": "#0F766E",
+        "secondary-container": "rgba(26, 26, 46, 0.08)",
+        "on-secondary-container": "#1A1A2E",
+        "secondary-fixed": "rgba(15, 118, 110, 0.1)",
+        "secondary-fixed-dim": "rgba(15, 118, 110, 0.1)",
+        "on-secondary-fixed": "#1A1A2E",
+        "on-secondary-fixed-variant": "#115E59",
+        "primary-fixed": "rgba(15, 118, 110, 0.1)",
+        "primary-fixed-dim": "rgba(15, 118, 110, 0.1)",
+        "on-primary-fixed": "#1A1A2E",
+        "on-primary-fixed-variant": "#115E59",
+        "tertiary": "#F59E0B",
+        "tertiary-container": "rgba(245, 158, 11, 0.1)",
+        "on-tertiary-container": "#F59E0B",
+        "tertiary-fixed": "rgba(245, 158, 11, 0.1)",
+        "on-tertiary-fixed": "#1A1A2E",
+        "error-container": "rgba(220, 38, 38, 0.1)",
+        "on-error-container": "#DC2626",
+        "inverse-primary": "#0F766E",
+        "inverse-surface": "#1A1A2E",
+        "inverse-on-surface": "#F8FAFC"
+      },
+      spacing: {
+        "margin-desktop": "2rem",
+        "margin-tablet": "1.5rem",
+        "margin-mobile": "1rem",
+        "gutter-desktop": "1.5rem",
+        "gutter-mobile": "1rem",
+        "space-3xl": "4rem",
+        "space-2xl": "3rem",
+        "space-xl": "2rem",
+        "space-lg": "1.5rem",
+        "space-md": "1rem",
+        "space-base": "1rem",
+        "space-sm": "0.75rem",
+        "space-xs": "0.5rem",
+        "space-2xs": "0.25rem",
+        "space-xxs": "0.25rem",
+        "space-1": "0.25rem",
+        "space-2": "0.5rem",
+        "space-3": "0.75rem",
+        "space-4": "1rem",
+        "space-5": "1.25rem",
+        "space-6": "1.5rem",
+        "space-8": "2rem",
+        "space-12": "3rem",
+        "space-16": "4rem",
+        "space-20": "5rem",
+        "space-24": "6rem",
+        "space-stack-sm": "0.5rem",
+        "space-stack-md": "1rem",
+        "space-stack-lg": "1.5rem",
+        "section-gap": "2rem",
+        "gutter": "1.5rem"
+      },
+      fontSize: {
+        "stat-lg": ["28px", { lineHeight: "36px", letterSpacing: "-0.02em", fontWeight: "700" }],
+        "button-text": ["14px", { lineHeight: "20px", letterSpacing: "0.01em", fontWeight: "600" }],
+
+        "display-hero": ["48px", { lineHeight: "56px", letterSpacing: "-0.025em", fontWeight: "700" }],
+        "display-hero-mobile": ["32px", { lineHeight: "40px", letterSpacing: "-0.02em", fontWeight: "700" }],
+        "display-kpi": ["36px", { lineHeight: "44px", letterSpacing: "-0.02em", fontWeight: "700" }],
+        "display-kpi-mobile": ["28px", { lineHeight: "34px", letterSpacing: "-0.02em", fontWeight: "700" }],
+        "display-lg": ["36px", { lineHeight: "44px", letterSpacing: "-0.02em", fontWeight: "700" }],
+        "headline-page": ["28px", { lineHeight: "36px", letterSpacing: "-0.015em", fontWeight: "600" }],
+        "headline-page-mobile": ["24px", { lineHeight: "32px", letterSpacing: "-0.015em", fontWeight: "600" }],
+        "headline-section": ["20px", { lineHeight: "28px", letterSpacing: "-0.01em", fontWeight: "600" }],
+        "headline-subsection": ["16px", { lineHeight: "24px", letterSpacing: "-0.005em", fontWeight: "600" }],
+        "headline-lg": ["28px", { lineHeight: "36px", letterSpacing: "-0.015em", fontWeight: "600" }],
+        "headline-lg-mobile": ["24px", { lineHeight: "32px", letterSpacing: "-0.015em", fontWeight: "600" }],
+        "headline-md": ["20px", { lineHeight: "28px", letterSpacing: "-0.01em", fontWeight: "600" }],
+        "headline-sm": ["16px", { lineHeight: "24px", letterSpacing: "-0.005em", fontWeight: "600" }],
+        "headline-xl-mobile": ["26px", { lineHeight: "34px", letterSpacing: "-0.015em", fontWeight: "600" }],
+        "body-default": ["14px", { lineHeight: "22px", letterSpacing: "0em", fontWeight: "400" }],
+        "body-compact": ["13px", { lineHeight: "18px", letterSpacing: "0em", fontWeight: "400" }],
+        "body-strong": ["14px", { lineHeight: "22px", letterSpacing: "0em", fontWeight: "600" }],
+        "body-lg": ["16px", { lineHeight: "24px", letterSpacing: "0em", fontWeight: "400" }],
+        "body-md": ["14px", { lineHeight: "22px", letterSpacing: "0em", fontWeight: "400" }],
+        "body-md-medium": ["14px", { lineHeight: "22px", letterSpacing: "0em", fontWeight: "500" }],
+        "body-sm": ["12px", { lineHeight: "16px", letterSpacing: "0em", fontWeight: "400" }],
+        "label-badge": ["11px", { lineHeight: "14px", letterSpacing: "0.02em", fontWeight: "600" }],
+        "label-regular": ["12px", { lineHeight: "16px", letterSpacing: "0.01em", fontWeight: "500" }],
+        "label-md": ["12px", { lineHeight: "16px", letterSpacing: "0.01em", fontWeight: "500" }],
+        "label-sm": ["11px", { lineHeight: "14px", letterSpacing: "0.02em", fontWeight: "500" }],
+        "label-uppercase": ["10px", { lineHeight: "12px", letterSpacing: "0.05em", fontWeight: "700" }]
+      },
+      fontFamily: {
+        "stat-lg": ["Inter", "sans-serif"],
+        "button-text": ["Inter", "sans-serif"],
+
+        sans: ["Inter", "sans-serif"],
+        "body-default": ["Inter", "sans-serif"],
+        "body-compact": ["Inter", "sans-serif"],
+        "body-strong": ["Inter", "sans-serif"],
+        "body-md": ["Inter", "sans-serif"],
+        "body-sm": ["Inter", "sans-serif"],
+        "display-kpi": ["Inter", "sans-serif"],
+        "headline-page": ["Inter", "sans-serif"],
+        "headline-section": ["Inter", "sans-serif"],
+        "headline-subsection": ["Inter", "sans-serif"],
+        "headline-md": ["Inter", "sans-serif"],
+        "headline-sm": ["Inter", "sans-serif"],
+        "headline-lg": ["Inter", "sans-serif"],
+        "label-badge": ["Inter", "sans-serif"],
+        "label-regular": ["Inter", "sans-serif"],
+        "label-md": ["Inter", "sans-serif"],
+        "label-sm": ["Inter", "sans-serif"]
+      },
+      borderRadius: {
+        DEFAULT: "0.375rem",
+        sm: "0.25rem",
+        md: "0.375rem",
+        lg: "0.5rem",
+        xl: "0.75rem",
+        "2xl": "1rem",
+        full: "9999px"
+      }
+    }
+  }
+};
+</script></head><body class="bg-white font-body-md text-body-md text-on-surface"><aside class="fixed left-0 top-0 h-full w-[260px] bg-surface-container-lowest border-r border-outline-variant/40 z-50 flex flex-col justify-between select-none" style="scrollbar-width: none; -ms-overflow-style: none;"><div class="flex flex-col h-[calc(100vh-73px)]"><a href="../landing page/code.html" class="h-16 px-space-20 flex items-center gap-space-12 border-b border-outline-variant/30 group cursor-pointer hover:opacity-90 transition-opacity" title="Return to Landing Page"><div class="w-8 h-8 rounded-lg bg-primary flex items-center justify-center text-on-primary font-headline-sm text-headline-sm font-bold shadow-sm" style="background-color: rgb(18, 59, 93);">H</div><div class="flex flex-col"><span class="font-headline-sm text-headline-sm text-on-surface tracking-tight leading-none">HUNAR</span><span class="font-label-uppercase text-label-uppercase text-outline uppercase tracking-wider mt-space-2">Admin Panel</span></div></a><div class="flex-1 overflow-y-auto px-space-12 py-space-16 space-y-space-4"><nav class="space-y-space-2" data-active-classes="bg-surface-container-high text-primary font-body-md-medium rounded-lg"><a class="flex items-center justify-between px-space-12 py-space-8 rounded-lg text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors" data-path="dashboard" href="../hunar_admin_operations_dashboard_modern/code.html"><div class="flex items-center gap-space-12"><span class="material-symbols-outlined text-[20px]">dashboard</span><span class="font-body-md text-body-md">Dashboard</span></div></a><a class="flex items-center justify-between px-space-12 py-space-8 rounded-lg text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors" data-path="users" href="../customer_profile_settings_hunar/code.html"><div class="flex items-center gap-space-12"><span class="material-symbols-outlined text-[20px]">group</span><span class="font-body-md text-body-md">Users</span></div><span class="font-caption-sm text-caption-sm px-space-6 py-0.5 rounded-full bg-surface-container text-on-surface-variant">2 Roles</span></a><a aria-current="page" class="flex items-center justify-between px-space-12 py-space-8 transition-colors rounded-lg font-body-md-medium text-white shadow-sm" style="background-color: rgb(18, 59, 93); color: rgb(255, 255, 255);" data-path="jobs" href="../jobs_management_work_orders_hunar_admin/code.html"><div class="flex items-center gap-space-12"><span class="material-symbols-outlined text-[20px]">work</span><span class="font-body-md text-body-md font-semibold">Jobs</span></div><span class="font-caption-sm text-caption-sm px-space-8 py-0.5 rounded-full font-semibold" style="background-color: #0F766E; color: #ffffff;">428</span></a><a class="flex items-center justify-between px-space-12 py-space-8 rounded-lg text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors" data-path="verification" href="../hunar_worker_dashboard/code.html"><div class="flex items-center gap-space-12"><span class="material-symbols-outlined text-[20px]">verified_user</span><span class="font-body-md text-body-md">Worker Portal</span></div><span class="font-caption-sm text-caption-sm px-space-8 py-0.5 rounded-full bg-secondary-fixed text-on-secondary-fixed font-medium">24</span></a><a class="flex items-center justify-between px-space-12 py-space-8 rounded-lg text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors" data-path="payments-and-transactions" href="../payments_escrow_wallet_hunar/code.html"><div class="flex items-center gap-space-12"><span class="material-symbols-outlined text-[20px]">payments</span><span class="font-body-md text-body-md">Payments &amp; Txns</span></div></a><a class="flex items-center justify-between px-space-12 py-space-8 rounded-lg text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors" data-path="disputes" href="../dispute_resolution_help_center_hunar/code.html"><div class="flex items-center gap-space-12"><span class="material-symbols-outlined text-[20px]">gavel</span><span class="font-body-md text-body-md">Disputes</span></div><span class="font-caption-sm text-caption-sm px-space-8 py-0.5 rounded-full bg-error-container text-on-error-container font-medium">8</span></a><a class="flex items-center justify-between px-space-12 py-space-8 rounded-lg text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors" data-path="customer-hub" href="../hunar_customer_dashboard/code.html"><div class="flex items-center gap-space-12"><span class="material-symbols-outlined text-[20px]">storefront</span><span class="font-body-md text-body-md">Customer Hub</span></div></a><a class="flex items-center justify-between px-space-12 py-space-8 rounded-lg text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors" data-path="locations" href="../scheduled_visits_arrival_tracker_hunar/code.html"><div class="flex items-center gap-space-12"><span class="material-symbols-outlined text-[20px]">location_on</span><span class="font-body-md text-body-md">Live Tracker</span></div><span class="font-caption-sm text-caption-sm px-space-6 py-0.5 rounded-full bg-surface-container text-on-surface-variant">Peshawar</span></a></nav></div></div><div class="p-space-12 border-t border-outline-variant/30 bg-surface-container-lowest"><div class="flex items-center justify-between p-space-8 rounded-lg hover:bg-surface-container-low transition-colors"><div class="flex items-center gap-space-12 min-w-0"><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center flex-shrink-0"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div><div class="flex flex-col min-w-0"><span class="font-body-md-medium text-body-md-medium text-on-surface truncate">Abdullah</span><span class="font-label-uppercase text-label-uppercase text-primary font-semibold uppercase tracking-wider" style="color: rgb(18, 59, 93);">Super Admin</span></div></div><button aria-label="Account options" class="text-on-surface-variant hover:text-on-surface p-1 rounded transition-colors" type="button"><span class="material-symbols-outlined text-[18px]">more_vert</span></button></div></div></aside><div class="pl-[260px]"><header class="fixed top-0 left-[260px] right-0 h-16 bg-surface-container-lowest/90 backdrop-blur-md border-b border-outline-variant/30 z-40 px-space-24 flex items-center justify-between gap-space-16"><div class="flex items-center gap-space-8 text-on-surface-variant font-body-md text-body-md"><a href="../hunar_admin_operations_dashboard_modern/code.html" class="hover:text-on-surface transition-colors cursor-pointer">HUNAR Admin</a><span class="material-symbols-outlined text-[16px] text-outline">chevron_right</span><span class="text-on-surface font-body-md-medium text-body-md-medium">Work Orders</span></div><div class="flex items-center gap-space-16"><div class="relative hidden md:flex items-center"><span class="material-symbols-outlined absolute left-3 text-outline text-[18px]">search</span><input class="w-80 h-9 pl-9 pr-12 rounded-lg bg-surface-container-low border border-outline-variant/40 font-body-md text-body-md text-on-surface placeholder:text-outline focus:outline-none focus:border-primary focus:bg-surface-container-lowest transition-colors" placeholder="Search HUNAR... Customers, Pros, Jobs" type="text"><kbd class="absolute right-2.5 px-1.5 py-0.5 rounded border border-outline-variant/50 bg-surface-container-lowest text-outline font-caption-sm text-caption-sm font-medium">⌘K</kbd></div><div class="hidden sm:flex items-center gap-space-6 px-space-8 py-1 rounded-full bg-surface-container text-on-surface-variant font-caption-sm text-caption-sm"><span class="w-2 h-2 rounded-full bg-secondary" style="background-color: rgb(15, 139, 141);"></span><span class="">Operational</span></div><div class="relative"><button aria-label="Notifications" class="relative p-2 rounded-lg text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors" type="button"><span class="material-symbols-outlined text-[20px]">notifications</span><span class="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-error ring-2 ring-surface-container-lowest"></span></button></div><div class="h-6 w-px bg-outline-variant/40"></div><div class="flex items-center gap-space-8 cursor-pointer"><div class="w-8 h-8 rounded-full flex items-center justify-center" style="background-color: rgb(18, 59, 93);"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div><span class="material-symbols-outlined text-on-surface-variant text-[18px]">expand_more</span></div></div></header><main class="w-full pt-16 min-h-screen bg-white px-space-24 py-space-24"><div class="flex flex-col w-full">
+<!-- Top Command & Action Bar -->
+<div class="flex flex-col xl:flex-row xl:items-center justify-between gap-space-16 mb-space-24">
+<div class="flex flex-col gap-1">
+<div class="flex items-center gap-space-8">
+<h1 class="font-headline-lg text-headline-lg text-primary tracking-tight" style="color: rgb(18, 59, 93);">Jobs &amp; Work Orders</h1>
+<div class="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full" style="background-color: rgba(18, 59, 93, 0.08); color: rgb(18, 59, 93);"><span class="w-2 h-2 rounded-full" style="background-color: #0F766E;"></span><span class="font-label-md text-[11px] font-semibold uppercase tracking-wider">Peshawar Grid Active</span></div>
+</div>
+<p class="font-body-md text-body-md text-outline">
+        Real-time audit, verification, and dispatch orchestration across 7 urban sectors of Peshawar.
+      </p>
+</div>
+<div class="flex items-center gap-space-12 self-start xl:self-auto">
+<button class="flex items-center gap-2 px-space-16 py-2.5 rounded-lg bg-surface-container-lowest text-on-surface shadow-sm hover:bg-surface-container-low transition-all font-button-text text-[14px]" type="button">
+<span class="material-symbols-outlined text-[18px] text-outline">file_download</span>
+<span class="">Export CSV</span>
+</button>
+<button class="flex items-center gap-2 px-space-16 py-2.5 rounded-lg text-white shadow-md transition-all font-button-text text-[14px]" style="background-color: rgb(15, 139, 141);" onmouseover="this.style.backgroundColor='#115E59'" onmouseout="this.style.backgroundColor='#0F766E'" type="button"><span class="material-symbols-outlined text-[18px]">add_circle</span><span class="">Manual Dispatch</span></button>
+</div>
+</div>
+<!-- Operational Metrics Bento Grid -->
+<div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-space-16 mb-space-24"><!-- Stat Card 1 -->
+<div class="p-space-20 rounded-xl bg-surface-container-lowest shadow-sm flex flex-col justify-between relative overflow-hidden group hover:shadow-md transition-shadow border border-outline-variant/30">
+<div class="flex items-start justify-between">
+<div>
+<span class="font-label-md text-caption-sm uppercase tracking-wider" style="color: #64748B;">Active Work Orders</span>
+<div class="flex items-baseline gap-2 mt-1">
+<span class="font-stat-lg text-stat-lg font-bold" style="color: #1A1A2E;">428</span>
+<span class="font-label-md text-[12px] font-semibold flex items-center" style="color: #0F766E;">
+<span class="material-symbols-outlined text-[14px]">trending_up</span>+15.3%
+</span>
+</div>
+</div>
+<div class="w-10 h-10 rounded-lg flex items-center justify-center" style="background-color: rgba(18, 59, 93, 0.08); color: #1A1A2E;"><span class="material-symbols-outlined text-[20px]">assignment</span></div>
+</div>
+<div class="mt-4 pt-3 flex items-center justify-between text-[12px] border-t border-outline-variant/30" style="color: #64748B;">
+<span class="">Active Escrow Value</span>
+<span class="font-semibold" style="color: #1A1A2E;">Rs. 1,184,200</span>
+</div>
+<div class="absolute bottom-0 left-0 right-0 h-1 opacity-20 group-hover:opacity-100 transition-opacity" style="background-color: #0F766E;"></div>
+</div>
+<!-- Stat Card 2 -->
+<div class="p-space-20 rounded-xl bg-surface-container-lowest shadow-sm flex flex-col justify-between relative overflow-hidden group hover:shadow-md transition-shadow border border-outline-variant/30">
+<div class="flex items-start justify-between">
+<div>
+<span class="font-label-md text-caption-sm uppercase tracking-wider" style="color: #64748B;">Dispatched &amp; In-Route</span>
+<div class="flex items-baseline gap-2 mt-1">
+<span class="font-stat-lg text-stat-lg font-bold" style="color: #1A1A2E;">184</span>
+<span class="font-label-md text-[12px]" style="color: #64748B;">43% load</span>
+</div>
+</div>
+<div class="w-10 h-10 rounded-lg flex items-center justify-center" style="background-color: rgba(15, 139, 141, 0.1); color: #0F766E;"><span class="material-symbols-outlined text-[20px]">electric_bolt</span></div>
+</div>
+<div class="mt-4 pt-3 flex items-center justify-between text-[12px] border-t border-outline-variant/30" style="color: #64748B;">
+<span class="">Average Completion</span>
+<span class="font-semibold" style="color: #1A1A2E;">2.8 hrs</span>
+</div>
+<div class="absolute bottom-0 left-0 right-0 h-1 opacity-20 group-hover:opacity-100 transition-opacity" style="background-color: #0F766E;"></div>
+</div>
+<!-- Stat Card 3 -->
+<div class="p-space-20 rounded-xl bg-surface-container-lowest shadow-sm flex flex-col justify-between relative overflow-hidden group hover:shadow-md transition-shadow border border-outline-variant/30">
+<div class="flex items-start justify-between">
+<div>
+<span class="font-label-md text-caption-sm uppercase tracking-wider" style="color: #64748B;">Pending Selection</span>
+<div class="flex items-baseline gap-2 mt-1">
+<span class="font-stat-lg text-stat-lg font-bold" style="color: #1A1A2E;">132</span>
+<span class="font-label-md text-[12px] font-semibold" style="color: #F59E0B;">31 biddings</span>
+</div>
+</div>
+<div class="w-10 h-10 rounded-lg flex items-center justify-center" style="background-color: rgba(245, 158, 11, 0.12); color: #F59E0B;">
+<span class="material-symbols-outlined text-[20px]">how_to_reg</span>
+</div>
+</div>
+<div class="mt-4 pt-3 flex items-center justify-between text-[12px] border-t border-outline-variant/30" style="color: #64748B;">
+<span class="">Median Pro Match</span>
+<span class="font-semibold" style="color: #1A1A2E;">14 mins</span>
+</div>
+<div class="absolute bottom-0 left-0 right-0 h-1 opacity-30 group-hover:opacity-100 transition-opacity" style="background-color: #F59E0B;"></div>
+</div>
+<!-- Stat Card 4 -->
+<div class="p-space-20 rounded-xl bg-surface-container-lowest shadow-sm flex flex-col justify-between relative overflow-hidden group hover:shadow-md transition-shadow border border-outline-variant/30">
+<div class="flex items-start justify-between">
+<div>
+<span class="font-label-md text-caption-sm uppercase tracking-wider" style="color: #64748B;">Disputes &amp; Audits</span>
+<div class="flex items-baseline gap-2 mt-1">
+<span class="font-stat-lg text-stat-lg font-bold" style="color: #DC2626;">8</span>
+<span class="font-label-md text-[12px] font-semibold flex items-center" style="color: #DC2626;">
+<span class="material-symbols-outlined text-[14px]">priority_high</span>Action Required
+</span>
+</div>
+</div>
+<div class="w-10 h-10 rounded-lg flex items-center justify-center" style="background-color: rgba(220, 38, 38, 0.1); color: #DC2626;">
+<span class="material-symbols-outlined text-[20px]">gavel</span>
+</div>
+</div>
+<div class="mt-4 pt-3 flex items-center justify-between text-[12px] border-t border-outline-variant/30" style="color: #64748B;">
+<span class="">Escrow Frozen</span>
+<span class="font-semibold" style="color: #DC2626;">Rs. 28,400</span>
+</div>
+<div class="absolute bottom-0 left-0 right-0 h-1 opacity-40 group-hover:opacity-100 transition-opacity" style="background-color: #DC2626;"></div>
+</div></div>
+<!-- Stage Segmented Navigation Tabs -->
+<div class="bg-surface-container-lowest rounded-xl p-1.5 shadow-sm mb-space-16 flex items-center overflow-x-auto"><div class="flex items-center gap-1.5 w-full text-[13px] font-body-md-medium select-none min-w-[760px]">
+<button class="flex items-center gap-2 px-4 py-2 rounded-lg hover:text-on-surface hover:bg-slate-100 transition-all border border-transparent" style="color: #64748B;" type="button">
+<span class="">All Jobs</span>
+<span class="px-2 py-0.5 rounded-full text-[11px] font-semibold" style="background-color: #F8FAFC; color: #64748B;">1,420</span>
+</button>
+<button class="flex items-center gap-2 px-4 py-2 rounded-lg hover:text-on-surface hover:bg-slate-100 transition-all border border-transparent" style="color: #64748B;" type="button">
+<span class="">Posted &amp; Bidding</span>
+<span class="px-2 py-0.5 rounded-full text-[11px] font-semibold" style="background-color: #F8FAFC; color: #64748B;">132</span>
+</button>
+<button class="flex items-center gap-2 px-4 py-2 rounded-lg hover:text-on-surface hover:bg-slate-100 transition-all border border-transparent" style="color: #64748B;" type="button">
+<span class="">Pro Selected</span>
+<span class="px-2 py-0.5 rounded-full text-[11px] font-semibold" style="background-color: #F8FAFC; color: #64748B;">46</span>
+</button>
+<button class="flex items-center gap-2 px-4 py-2 rounded-lg hover:text-on-surface hover:bg-slate-100 transition-all border border-transparent" style="color: #64748B;" type="button">
+<span class="">Scheduled</span>
+<span class="px-2 py-0.5 rounded-full text-[11px] font-semibold" style="background-color: #F8FAFC; color: #64748B;">66</span>
+</button>
+<button class="flex items-center gap-2 px-4 py-2 rounded-lg text-white shadow-sm font-semibold" style="background-color: #0F766E; color: #ffffff;" type="button">
+<span class="">In Progress</span>
+<span class="px-2 py-0.5 rounded-full text-[11px] font-semibold" style="background-color: rgba(255, 255, 255, 0.2); color: #ffffff;">184</span>
+</button>
+<button class="flex items-center gap-2 px-4 py-2 rounded-lg hover:text-on-surface hover:bg-slate-100 transition-all border border-transparent" style="color: #64748B;" type="button">
+<span class="">Completed</span>
+<span class="px-2 py-0.5 rounded-full text-[11px] font-semibold" style="background-color: #F8FAFC; color: #64748B;">984</span>
+</button>
+<button class="flex items-center gap-2 px-4 py-2 rounded-lg transition-all ml-auto" style="background-color: rgba(220, 38, 38, 0.08); color: #DC2626;" type="button">
+<span class="material-symbols-outlined text-[16px]">warning</span>
+<span class="">Disputed</span>
+<span class="px-2 py-0.5 rounded-full text-[11px] font-semibold" style="background-color: rgba(220, 38, 38, 0.16); color: #DC2626;">8</span>
+</button>
+</div></div>
+<!-- Filter & Search Toolbar Panel -->
+<div class="bg-surface-container-lowest rounded-xl p-space-16 shadow-sm mb-space-16 flex flex-col lg:flex-row items-center justify-between gap-space-12">
+<!-- Live Search -->
+<div class="relative w-full lg:w-96">
+<span class="material-symbols-outlined absolute left-3 top-2.5 text-outline text-[18px]">search</span>
+<input class="w-full h-10 pl-9 pr-4 rounded-lg bg-surface text-[14px] text-on-surface placeholder:text-outline focus:outline-none focus:ring-2 focus:ring-secondary/40 transition-all" placeholder="Filter by Job #HN, Client, Pro name..." type="text">
+</div>
+<!-- Dropdown Selector Group -->
+<div class="flex flex-wrap items-center gap-space-8 w-full lg:w-auto">
+<div class="relative flex-1 sm:flex-none">
+<select class="appearance-none w-full sm:w-auto h-10 pl-3.5 pr-8 rounded-lg bg-surface text-[13px] font-medium text-on-surface focus:outline-none focus:ring-2 focus:ring-secondary/40 cursor-pointer">
+<option>All Peshawar Sectors (Hayatabad, Saddar, Town...)</option>
+<option>Hayatabad (Phase 1-7)</option>
+<option>University Town</option>
+<option>Saddar Cantonment</option>
+<option>Ring Road Corridor</option>
+<option>Warsak Road</option>
+<option>Gulbahar / City</option>
+</select>
+<span class="material-symbols-outlined absolute right-2.5 top-3 text-[16px] text-outline pointer-events-none">expand_more</span>
+</div>
+<div class="relative flex-1 sm:flex-none">
+<select class="appearance-none w-full sm:w-auto h-10 pl-3.5 pr-8 rounded-lg bg-surface text-[13px] font-medium text-on-surface focus:outline-none focus:ring-2 focus:ring-secondary/40 cursor-pointer">
+<option>All Trades (HVAC, Electrical, Plumbing...)</option>
+<option>HVAC / AC Technicians</option>
+<option>Master Electricians</option>
+<option>Plumbing &amp; Water Systems</option>
+<option>Carpentry &amp; Woodcraft</option>
+<option>Solar &amp; Inverter Techs</option>
+</select>
+<span class="material-symbols-outlined absolute right-2.5 top-3 text-[16px] text-outline pointer-events-none">expand_more</span>
+</div>
+<div class="relative flex-1 sm:flex-none">
+<select class="appearance-none w-full sm:w-auto h-10 pl-3.5 pr-8 rounded-lg bg-surface text-[13px] font-medium text-on-surface focus:outline-none focus:ring-2 focus:ring-secondary/40 cursor-pointer">
+<option>Sort: Most Urgent First</option>
+<option>Highest Escrow Value</option>
+<option>Recently Created</option>
+<option>Longest In-Progress</option>
+</select>
+<span class="material-symbols-outlined absolute right-2.5 top-3 text-[16px] text-outline pointer-events-none">sort</span>
+</div>
+<button aria-label="Reset Filters" class="p-2 rounded-lg bg-surface text-outline hover:text-on-surface hover:bg-surface-container-low transition-colors" title="Reset Filters" type="button">
+<span class="material-symbols-outlined text-[20px]">refresh</span>
+</button>
+</div>
+</div>
+<!-- SaaS Master Data Table Container -->
+<div class="bg-surface-container-lowest rounded-xl shadow-sm overflow-hidden mb-space-24">
+<div class="w-full overflow-x-auto">
+<table class="w-full text-left text-[14px]">
+<thead>
+<tr class="bg-surface-container-low/60 text-outline text-[12px] font-semibold uppercase tracking-wider select-none">
+<th class="py-3.5 px-space-20">Job Code &amp; Trade</th>
+<th class="py-3.5 px-space-16">Customer Details</th>
+<th class="py-3.5 px-space-16">Assigned Pro</th>
+<th class="py-3.5 px-space-16">Sector &amp; Timeline</th>
+<th class="py-3.5 px-space-16">Financials / Escrow</th>
+<th class="py-3.5 px-space-16">State</th>
+<th class="py-3.5 px-space-20 text-right">Actions</th>
+</tr>
+</thead>
+<tbody class="divide-y-0 text-on-surface"><!-- Row 1: AC Diagnostic In Progress -->
+<tr class="hover:bg-slate-50 transition-colors group border-b border-outline-variant/30">
+<td class="py-space-16 px-space-20 align-top">
+<div class="flex items-start gap-3">
+<div class="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5" style="background-color: rgba(18, 59, 93, 0.08); color: #1A1A2E;">
+<span class="material-symbols-outlined text-[18px]">ac_unit</span>
+</div>
+<div>
+<div class="flex items-center gap-1.5">
+<span class="font-body-md-medium font-bold" style="color: #1A1A2E;">#HN-10482</span>
+<span class="px-1.5 py-0.2 rounded text-[11px] font-medium" style="background-color: #F8FAFC; color: #64748B;">HVAC</span>
+</div>
+<div class="text-[13px] font-medium text-on-surface mt-0.5">AC Repair &amp; Gas Refill</div>
+<div class="text-[11px] mt-0.5" style="color: #64748B;">Split Inverter 1.5 Ton Diagnostic</div>
+</div>
+</div>
+</td>
+<td class="py-space-16 px-space-16 align-top">
+<div class="font-body-md-medium text-on-surface">Muhammad Ali</div>
+<div class="text-[12px]" style="color: #64748B;">0301-8921443</div>
+<div class="text-[11px] flex items-center gap-1 mt-0.5" style="color: #0F766E;">
+<span class="material-symbols-outlined text-[12px]">verified</span>Verified Client
+</div>
+</td>
+<td class="py-space-16 px-space-16 align-top">
+<div class="flex items-center gap-2.5">
+<div class="w-8 h-8 rounded-full text-white flex items-center justify-center font-bold text-xs flex-shrink-0" style="background-color: #1A1A2E;">AK</div>
+<div>
+<div class="font-body-md-medium text-on-surface flex items-center gap-1">
+Ahmed Khan
+<span class="flex items-center text-amber-500 text-[11px] font-bold">
+<span class="material-symbols-outlined text-[12px]" style="font-variation-settings: 'FILL' 1;">star</span>4.9
+</span>
+</div>
+<div class="text-[11px] font-medium" style="color: #0F766E;">Certified HVAC Pro</div>
+</div>
+</div>
+</td>
+<td class="py-space-16 px-space-16 align-top">
+<div class="font-body-md-medium text-on-surface">Hayatabad Phase 4</div>
+<div class="text-[12px] flex items-center gap-1 mt-0.5" style="color: #64748B;">
+<span class="material-symbols-outlined text-[14px]">schedule</span>Today, 2:30 PM
+</div>
+<span class="inline-block mt-1 text-[11px] font-medium" style="color: #0F766E;">En Route (1.4 km)</span>
+</td>
+<td class="py-space-16 px-space-16 align-top">
+<div class="font-stat-lg text-[15px] font-bold" style="color: #1A1A2E;">Rs. 2,500</div>
+<div class="text-[11px]" style="color: #64748B;">Platform fee: Rs. 250 (10%)</div>
+<div class="inline-flex items-center gap-1 px-2 py-0.5 mt-1 rounded font-semibold text-[11px]" style="background-color: rgba(15, 139, 141, 0.12); color: #0F766E;">
+<span class="material-symbols-outlined text-[12px]">lock</span>Escrow Held
+</div>
+</td>
+<td class="py-space-16 px-space-16 align-top">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[12px] font-semibold" style="background-color: rgba(15, 139, 141, 0.12); color: #0F766E;"><span class="w-1.5 h-1.5 rounded-full animate-pulse" style="background-color: #0F766E;"></span>In Progress</span>
+</td>
+<td class="py-space-16 px-space-20 align-top text-right">
+<div class="flex items-center justify-end gap-1">
+<button class="px-3 py-1.5 rounded-lg border transition-all text-[12px] font-semibold shadow-sm hover:bg-slate-100" style="color: #0F766E; border-color: #0F766E;" type="button">
+Inspect
+</button>
+<button aria-label="Options" class="p-1 text-outline hover:text-on-surface rounded" type="button">
+<span class="material-symbols-outlined text-[18px]">more_vert</span>
+</button>
+</div>
+</td>
+</tr>
+
+<!-- Row 2: 3-Phase DB Short Circuit (Urgent Offers Received) -->
+<tr class="hover:bg-slate-50 transition-colors group border-b border-outline-variant/30">
+<td class="py-space-16 px-space-20 align-top">
+<div class="flex items-start gap-3">
+<div class="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5" style="background-color: rgba(245, 158, 11, 0.12); color: #F59E0B;">
+<span class="material-symbols-outlined text-[18px]">bolt</span>
+</div>
+<div>
+<div class="flex items-center gap-1.5">
+<span class="font-body-md-medium font-bold" style="color: #1A1A2E;">#HN-10495</span>
+<span class="px-1.5 py-0.2 rounded text-[11px] font-medium" style="background-color: #F8FAFC; color: #64748B;">Electric</span>
+</div>
+<div class="text-[13px] font-medium text-on-surface mt-0.5">DB 3-Phase Panel Short Circuit</div>
+<div class="text-[11px] font-medium flex items-center gap-0.5 mt-0.5" style="color: #DC2626;">
+<span class="material-symbols-outlined text-[12px]">alarm</span>Urgent Dispatch Priority
+</div>
+</div>
+</div>
+</td>
+<td class="py-space-16 px-space-16 align-top">
+<div class="font-body-md-medium text-on-surface">Tariq Mehmood</div>
+<div class="text-[12px]" style="color: #64748B;">0333-9182301</div>
+<div class="text-[11px]" style="color: #64748B;">Saddar Cantonment</div>
+</td>
+<td class="py-space-16 px-space-16 align-top">
+<div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full font-semibold text-[11px]" style="background-color: rgba(245, 158, 11, 0.15); color: #F59E0B;">
+<span class="material-symbols-outlined text-[14px]">groups</span>
+4 Offers Received
+</div>
+<div class="text-[11px] mt-1" style="color: #64748B;">Awaiting client selection</div>
+</td>
+<td class="py-space-16 px-space-16 align-top">
+<div class="font-body-md-medium text-on-surface">Saddar Peshawar</div>
+<div class="text-[12px] flex items-center gap-1 mt-0.5" style="color: #64748B;">
+<span class="material-symbols-outlined text-[14px]">schedule</span>Immediate Request
+</div>
+</td>
+<td class="py-space-16 px-space-16 align-top">
+<div class="font-stat-lg text-[15px] font-bold" style="color: #1A1A2E;">Est. Rs. 4,200</div>
+<div class="text-[11px]" style="color: #64748B;">Budget Range</div>
+<div class="text-[11px] font-medium mt-1" style="color: #0F766E;">Deposit Ready</div>
+</td>
+<td class="py-space-16 px-space-16 align-top">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[12px] font-medium" style="background-color: rgba(245, 158, 11, 0.15); color: #F59E0B;">
+<span class="w-1.5 h-1.5 rounded-full" style="background-color: #F59E0B;"></span>
+Offers Received
+</span>
+</td>
+<td class="py-space-16 px-space-20 align-top text-right">
+<div class="flex items-center justify-end gap-1">
+<button class="px-3 py-1.5 rounded-lg text-white transition-all text-[12px] font-semibold shadow-sm" style="background-color: #0F766E;" onmouseover="this.style.backgroundColor='#115E59'" onmouseout="this.style.backgroundColor='#0F766E'" type="button">Review Offers</button>
+<button aria-label="Options" class="p-1 text-outline hover:text-on-surface rounded" type="button">
+<span class="material-symbols-outlined text-[18px]">more_vert</span>
+</button>
+</div>
+</td>
+</tr>
+
+<!-- Row 3: Water Leakage (Disputed Case) -->
+<tr class="hover:bg-rose-50/50 transition-colors group border-b border-outline-variant/30">
+<td class="py-space-16 px-space-20 align-top">
+<div class="flex items-start gap-3">
+<div class="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5" style="background-color: rgba(220, 38, 38, 0.1); color: #DC2626;">
+<span class="material-symbols-outlined text-[18px]">plumbing</span>
+</div>
+<div>
+<div class="flex items-center gap-1.5">
+<span class="font-body-md-medium font-bold" style="color: #DC2626;">#HN-10431</span>
+<span class="px-1.5 py-0.2 rounded text-[11px] font-medium" style="background-color: #F8FAFC; color: #64748B;">Plumbing</span>
+</div>
+<div class="text-[13px] font-medium text-on-surface mt-0.5">Concealed PPRC Water Leakage</div>
+<div class="text-[11px] font-medium mt-0.5" style="color: #DC2626;">Claim: Joint leakage persists</div>
+</div>
+</div>
+</td>
+<td class="py-space-16 px-space-16 align-top">
+<div class="font-body-md-medium text-on-surface">Dr. Asadullah</div>
+<div class="text-[12px]" style="color: #64748B;">0345-5550291</div>
+<div class="text-[11px]" style="color: #64748B;">University Town</div>
+</td>
+<td class="py-space-16 px-space-16 align-top">
+<div class="flex items-center gap-2.5">
+<div class="w-8 h-8 rounded-full text-white flex items-center justify-center font-bold text-xs flex-shrink-0" style="background-color: #64748B;">
+TM
+</div>
+<div>
+<div class="font-body-md-medium text-on-surface flex items-center gap-1">
+Tariq M.
+<span class="flex items-center text-amber-500 text-[11px] font-bold">
+<span class="material-symbols-outlined text-[12px]" style="font-variation-settings: 'FILL' 1;">star</span>4.7
+</span>
+</div>
+<div class="text-[11px]" style="color: #64748B;">Peshawar Pipe Care</div>
+</div>
+</div>
+</td>
+<td class="py-space-16 px-space-16 align-top">
+<div class="font-body-md-medium text-on-surface">University Town</div>
+<div class="text-[12px] flex items-center gap-1 mt-0.5" style="color: #64748B;">
+<span class="material-symbols-outlined text-[14px]">history</span>Yesterday, 5:00 PM
+</div>
+</td>
+<td class="py-space-16 px-space-16 align-top">
+<div class="font-stat-lg text-[15px] font-bold" style="color: #DC2626;">Rs. 3,500</div>
+<div class="text-[11px] font-semibold" style="color: #DC2626;">Payment Frozen</div>
+<div class="inline-flex items-center gap-1 px-2 py-0.5 mt-1 rounded font-semibold text-[11px]" style="background-color: rgba(220, 38, 38, 0.1); color: #DC2626;">
+Escrow Locked
+</div>
+</td>
+<td class="py-space-16 px-space-16 align-top">
+<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[12px] font-semibold" style="background-color: rgba(220, 38, 38, 0.1); color: #DC2626;">
+<span class="w-1.5 h-1.5 rounded-full" style="background-color: #DC2626;"></span>
+Disputed
+</span>
+</td>
+<td class="py-space-16 px-space-20 align-top text-right">
+<div class="flex items-center justify-end gap-1">
+<button class="px-3 py-1.5 rounded-lg text-white transition-all text-[12px] font-semibold shadow-sm" style="background-color: #DC2626;" onmouseover="this.style.backgroundColor='#DC2626'" onmouseout="this.style.backgroundColor='#DC2626'" type="button">
+Open Case
+</button>
+<button aria-label="Options" class="p-1 text-outline hover:text-on-surface rounded" type="button">
+<span class="material-symbols-outlined text-[18px]">more_vert</span>
+</button>
+</div>
+</td>
+</tr>
+
+<!-- Row 4: Solar Net-Metering Wire -->
+<tr class="hover:bg-slate-50 transition-colors group border-b border-outline-variant/30">
+<td class="py-space-16 px-space-20 align-top">
+<div class="flex items-start gap-3">
+<div class="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5" style="background-color: rgba(18, 59, 93, 0.08); color: #1A1A2E;">
+<span class="material-symbols-outlined text-[18px]">solar_power</span>
+</div>
+<div>
+<div class="flex items-center gap-1.5">
+<span class="font-body-md-medium font-bold" style="color: #1A1A2E;">#HN-10502</span>
+<span class="px-1.5 py-0.2 rounded text-[11px] font-medium" style="background-color: #F8FAFC; color: #64748B;">Renewable</span>
+</div>
+<div class="text-[13px] font-medium text-on-surface mt-0.5">Solar Inverter Net-Metering Wire</div>
+<div class="text-[11px] mt-0.5" style="color: #64748B;">10kW Hybrid Inverter Grounding</div>
+</div>
+</div>
+</td>
+<td class="py-space-16 px-space-16 align-top">
+<div class="font-body-md-medium text-on-surface">Farhan Afridi</div>
+<div class="text-[12px]" style="color: #64748B;">0312-4419902</div>
+<div class="text-[11px]" style="color: #64748B;">Ring Road Corridor</div>
+</td>
+<td class="py-space-16 px-space-16 align-top">
+<div class="flex items-center gap-2.5">
+<div class="w-8 h-8 rounded-full text-white flex items-center justify-center font-bold text-xs flex-shrink-0" style="background-color: #0F766E;">BT</div>
+<div>
+<div class="font-body-md-medium text-on-surface flex items-center gap-1">
+Bilal Tariq
+<span class="flex items-center text-amber-500 text-[11px] font-bold">
+<span class="material-symbols-outlined text-[12px]" style="font-variation-settings: 'FILL' 1;">star</span>4.9
+</span>
+</div>
+<div class="text-[11px] font-medium" style="color: #0F766E;">Solar Specialist</div>
+</div>
+</div>
+</td>
+<td class="py-space-16 px-space-16 align-top">
+<div class="font-body-md-medium text-on-surface">Ring Road, Peshawar</div>
+<div class="text-[12px] flex items-center gap-1 mt-0.5" style="color: #64748B;">
+<span class="material-symbols-outlined text-[14px]">event</span>Tomorrow, 10:00 AM
+</div>
+</td>
+<td class="py-space-16 px-space-16 align-top">
+<div class="font-stat-lg text-[15px] font-bold" style="color: #1A1A2E;">Rs. 8,500</div>
+<div class="text-[11px]" style="color: #64748B;">Fee: Rs. 850 (10%)</div>
+<div class="inline-flex items-center gap-1 px-2 py-0.5 mt-1 rounded font-semibold text-[11px]" style="background-color: rgba(15, 139, 141, 0.12); color: #0F766E;">
+<span class="material-symbols-outlined text-[12px]">lock</span>Escrow Held
+</div>
+</td>
+<td class="py-space-16 px-space-16 align-top">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[12px] font-medium" style="background-color: #F8FAFC; color: #1A1A2E;">
+<span class="w-1.5 h-1.5 rounded-full" style="background-color: #1A1A2E;"></span>
+Scheduled
+</span>
+</td>
+<td class="py-space-16 px-space-20 align-top text-right">
+<div class="flex items-center justify-end gap-1">
+<button class="px-3 py-1.5 rounded-lg border transition-all text-[12px] font-semibold shadow-sm hover:bg-slate-100" style="color: #0F766E; border-color: #0F766E;" type="button">
+Inspect
+</button>
+<button aria-label="Options" class="p-1 text-outline hover:text-on-surface rounded" type="button">
+<span class="material-symbols-outlined text-[18px]">more_vert</span>
+</button>
+</div>
+</td>
+</tr>
+
+<!-- Row 5: Geyser Swap (Completed) -->
+<tr class="hover:bg-slate-50 transition-colors group border-b border-outline-variant/30">
+<td class="py-space-16 px-space-20 align-top">
+<div class="flex items-start gap-3">
+<div class="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5" style="background-color: rgba(18, 59, 93, 0.08); color: #1A1A2E;">
+<span class="material-symbols-outlined text-[18px]">water_heater</span>
+</div>
+<div>
+<div class="flex items-center gap-1.5">
+<span class="font-body-md-medium font-bold" style="color: #1A1A2E;">#HN-10467</span>
+<span class="px-1.5 py-0.2 rounded text-[11px] font-medium" style="background-color: #F8FAFC; color: #64748B;">Gas &amp; Heating</span>
+</div>
+<div class="text-[13px] font-medium text-on-surface mt-0.5">Geyser Thermostat &amp; Element Swap</div>
+<div class="text-[11px] mt-0.5" style="color: #64748B;">35 Gallon Storage Geyser</div>
+</div>
+</div>
+</td>
+<td class="py-space-16 px-space-16 align-top">
+<div class="font-body-md-medium text-on-surface">Bilawal Shah</div>
+<div class="text-[12px]" style="color: #64748B;">0300-9988112</div>
+<div class="text-[11px]" style="color: #64748B;">Warsak Road</div>
+</td>
+<td class="py-space-16 px-space-16 align-top">
+<div class="flex items-center gap-2.5">
+<div class="w-8 h-8 rounded-full text-white flex items-center justify-center font-bold text-xs flex-shrink-0" style="background-color: #1A1A2E;">RA</div>
+<div>
+<div class="font-body-md-medium text-on-surface flex items-center gap-1">
+Rashid Ali
+<span class="flex items-center text-amber-500 text-[11px] font-bold">
+<span class="material-symbols-outlined text-[12px]" style="font-variation-settings: 'FILL' 1;">star</span>4.8
+</span>
+</div>
+<div class="text-[11px]" style="color: #64748B;">Plumbing &amp; Gas Pro</div>
+</div>
+</div>
+</td>
+<td class="py-space-16 px-space-16 align-top">
+<div class="font-body-md-medium text-on-surface">Warsak Road</div>
+<div class="text-[12px] flex items-center gap-1 mt-0.5" style="color: #64748B;">
+<span class="material-symbols-outlined text-[14px]">check_circle</span>Completed 2h ago
+</div>
+</td>
+<td class="py-space-16 px-space-16 align-top">
+<div class="font-stat-lg text-[15px] font-bold" style="color: #16A34A;">Rs. 2,800</div>
+<div class="text-[11px]" style="color: #64748B;">Fee: Rs. 280 (10%)</div>
+<div class="text-[11px] font-semibold mt-1" style="color: #16A34A;">Funds Settled (Nayapay)</div>
+</td>
+<td class="py-space-16 px-space-16 align-top">
+<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[12px] font-semibold" style="background-color: rgba(22, 163, 74, 0.12); color: #16A34A;">
+<span class="w-1.5 h-1.5 rounded-full" style="background-color: #16A34A;"></span>
+Completed
+</span>
+</td>
+<td class="py-space-16 px-space-20 align-top text-right">
+<div class="flex items-center justify-end gap-1">
+<button class="px-3 py-1.5 rounded-lg border transition-all text-[12px] font-semibold shadow-sm hover:bg-slate-100" style="color: #64748B; border-color: #E2E8F0;" type="button">
+Receipt
+</button>
+<button aria-label="Options" class="p-1 text-outline hover:text-on-surface rounded" type="button">
+<span class="material-symbols-outlined text-[18px]">more_vert</span>
+</button>
+</div>
+</td>
+</tr>
+
+<!-- Row 6: Custom Kitchen Cabinet (In Progress) -->
+<tr class="hover:bg-slate-50 transition-colors group border-b border-outline-variant/30">
+<td class="py-space-16 px-space-20 align-top">
+<div class="flex items-start gap-3">
+<div class="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5" style="background-color: rgba(18, 59, 93, 0.08); color: #1A1A2E;">
+<span class="material-symbols-outlined text-[18px]">carpenter</span>
+</div>
+<div>
+<div class="flex items-center gap-1.5">
+<span class="font-body-md-medium font-bold" style="color: #1A1A2E;">#HN-10515</span>
+<span class="px-1.5 py-0.2 rounded text-[11px] font-medium" style="background-color: #F8FAFC; color: #64748B;">Woodwork</span>
+</div>
+<div class="text-[13px] font-medium text-on-surface mt-0.5">Custom Kitchen Cabinet Fitting</div>
+<div class="text-[11px] mt-0.5" style="color: #64748B;">UV Sheet Hinges Replacement &amp; Alignment</div>
+</div>
+</div>
+</td>
+<td class="py-space-16 px-space-16 align-top">
+<div class="font-body-md-medium text-on-surface">Zainab Bibi</div>
+<div class="text-[12px]" style="color: #64748B;">0321-7890123</div>
+<div class="text-[11px]" style="color: #64748B;">Hayatabad Phase 2</div>
+</td>
+<td class="py-space-16 px-space-16 align-top">
+<div class="flex items-center gap-2.5">
+<div class="w-8 h-8 rounded-full text-white flex items-center justify-center font-bold text-xs flex-shrink-0" style="background-color: #0F766E;">UW</div>
+<div>
+<div class="font-body-md-medium text-on-surface flex items-center gap-1">
+Usman Woodcraft
+<span class="flex items-center text-amber-500 text-[11px] font-bold">
+<span class="material-symbols-outlined text-[12px]" style="font-variation-settings: 'FILL' 1;">star</span>4.9
+</span>
+</div>
+<div class="text-[11px] font-medium" style="color: #0F766E;">Master Carpenter</div>
+</div>
+</div>
+</td>
+<td class="py-space-16 px-space-16 align-top">
+<div class="font-body-md-medium text-on-surface">Hayatabad Phase 2</div>
+<div class="text-[12px] flex items-center gap-1 mt-0.5" style="color: #64748B;">
+<span class="material-symbols-outlined text-[14px]">calendar_today</span>Oct 28 · Day 2 of 3
+</div>
+</td>
+<td class="py-space-16 px-space-16 align-top">
+<div class="font-stat-lg text-[15px] font-bold" style="color: #1A1A2E;">Rs. 12,000</div>
+<div class="text-[11px]" style="color: #64748B;">Fee: Rs. 1,200 (10%)</div>
+<div class="inline-flex items-center gap-1 px-2 py-0.5 mt-1 rounded font-semibold text-[11px]" style="background-color: rgba(15, 139, 141, 0.12); color: #0F766E;">
+<span class="material-symbols-outlined text-[12px]">lock</span>Escrow Held
+</div>
+</td>
+<td class="py-space-16 px-space-16 align-top">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[12px] font-semibold" style="background-color: rgba(15, 139, 141, 0.12); color: #0F766E;"><span class="w-1.5 h-1.5 rounded-full animate-pulse" style="background-color: #0F766E;"></span>In Progress</span>
+</td>
+<td class="py-space-16 px-space-20 align-top text-right">
+<div class="flex items-center justify-end gap-1">
+<button class="px-3 py-1.5 rounded-lg border transition-all text-[12px] font-semibold shadow-sm hover:bg-slate-100" style="color: #0F766E; border-color: #0F766E;" type="button">
+Inspect
+</button>
+<button aria-label="Options" class="p-1 text-outline hover:text-on-surface rounded" type="button">
+<span class="material-symbols-outlined text-[18px]">more_vert</span>
+</button>
+</div>
+</td>
+</tr>
+
+<!-- Row 7: Automatic Washing Machine Drum (Offers Received) -->
+<tr class="hover:bg-slate-50 transition-colors group">
+<td class="py-space-16 px-space-20 align-top">
+<div class="flex items-start gap-3">
+<div class="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5" style="background-color: rgba(18, 59, 93, 0.08); color: #1A1A2E;">
+<span class="material-symbols-outlined text-[18px]">local_laundry_service</span>
+</div>
+<div>
+<div class="flex items-center gap-1.5">
+<span class="font-body-md-medium font-bold" style="color: #1A1A2E;">#HN-10520</span>
+<span class="px-1.5 py-0.2 rounded text-[11px] font-medium" style="background-color: #F8FAFC; color: #64748B;">Appliance</span>
+</div>
+<div class="text-[13px] font-medium text-on-surface mt-0.5">Washing Machine Drum Repair</div>
+<div class="text-[11px] mt-0.5" style="color: #64748B;">Front-load bearing replacement</div>
+</div>
+</div>
+</td>
+<td class="py-space-16 px-space-16 align-top">
+<div class="font-body-md-medium text-on-surface">Kamran Siddiqui</div>
+<div class="text-[12px]" style="color: #64748B;">0332-9011234</div>
+<div class="text-[11px]" style="color: #64748B;">Gulbahar Sector</div>
+</td>
+<td class="py-space-16 px-space-16 align-top">
+<div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full font-semibold text-[11px]" style="background-color: rgba(245, 158, 11, 0.15); color: #F59E0B;">
+<span class="material-symbols-outlined text-[14px]">groups</span>
+2 Offers Received
+</div>
+<div class="text-[11px] mt-1" style="color: #64748B;">Awaiting client decision</div>
+</td>
+<td class="py-space-16 px-space-16 align-top">
+<div class="font-body-md-medium text-on-surface">Gulbahar Peshawar</div>
+<div class="text-[12px] flex items-center gap-1 mt-0.5" style="color: #64748B;">
+<span class="material-symbols-outlined text-[14px]">schedule</span>Flexible Dispatch
+</div>
+</td>
+<td class="py-space-16 px-space-16 align-top">
+<div class="font-stat-lg text-[15px] font-bold" style="color: #1A1A2E;">Est. Rs. 2,200</div>
+<div class="text-[11px]" style="color: #64748B;">Estimated Cost</div>
+<div class="text-[11px] mt-1" style="color: #64748B;">No Escrow Yet</div>
+</td>
+<td class="py-space-16 px-space-16 align-top">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[12px] font-medium" style="background-color: rgba(245, 158, 11, 0.15); color: #F59E0B;">
+<span class="w-1.5 h-1.5 rounded-full" style="background-color: #F59E0B;"></span>
+Offers Received
+</span>
+</td>
+<td class="py-space-16 px-space-20 align-top text-right">
+<div class="flex items-center justify-end gap-1">
+<button class="px-3 py-1.5 rounded-lg text-white transition-all text-[12px] font-semibold shadow-sm" style="background-color: #0F766E;" onmouseover="this.style.backgroundColor='#115E59'" onmouseout="this.style.backgroundColor='#0F766E'" type="button">Review Offers</button>
+<button aria-label="Options" class="p-1 text-outline hover:text-on-surface rounded" type="button">
+<span class="material-symbols-outlined text-[18px]">more_vert</span>
+</button>
+</div>
+</td>
+</tr></tbody>
+</table>
+</div>
+<!-- Data Table Pagination Bar -->
+<div class="py-space-16 px-space-20 bg-surface-container-lowest flex flex-col sm:flex-row items-center justify-between gap-space-12 text-[13px] text-outline">
+<div class="flex items-center gap-2">
+<span class="">Showing</span>
+<span class="font-semibold text-primary">1 to 7</span>
+<span class="">of</span>
+<span class="font-semibold text-primary">428</span>
+<span class="">active work orders</span>
+</div>
+<div class="flex items-center gap-1">
+<button class="p-2 rounded-lg bg-surface text-outline hover:text-on-surface disabled:opacity-40 transition-colors" disabled="" type="button">
+<span class="material-symbols-outlined text-[18px]">chevron_left</span>
+</button>
+<button class="w-8 h-8 rounded-lg font-semibold text-xs flex items-center justify-center text-white shadow-sm" style="background-color: rgb(15, 139, 141); color: rgb(255, 255, 255);" type="button">1</button>
+<button class="w-8 h-8 rounded-lg bg-surface hover:bg-surface-container-low text-on-surface font-semibold text-xs flex items-center justify-center transition-colors" type="button">
+          2
+        </button>
+<button class="w-8 h-8 rounded-lg bg-surface hover:bg-surface-container-low text-on-surface font-semibold text-xs flex items-center justify-center transition-colors" type="button">
+          3
+        </button>
+<span class="px-1 text-outline">...</span>
+<button class="w-8 h-8 rounded-lg bg-surface hover:bg-surface-container-low text-on-surface font-semibold text-xs flex items-center justify-center transition-colors" type="button">
+          62
+        </button>
+<button class="p-2 rounded-lg bg-surface text-outline hover:text-on-surface transition-colors" type="button">
+<span class="material-symbols-outlined text-[18px]">chevron_right</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Bottom Infrastructure & Financial Audit Bar -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-space-16"><!-- Escrow Health Card -->
+<div class="p-space-20 rounded-xl bg-surface-container-lowest shadow-sm flex items-center justify-between border border-outline-variant/30">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-lg flex items-center justify-center" style="background-color: rgba(15, 139, 141, 0.1); color: #0F766E;">
+<span class="material-symbols-outlined text-[22px]">account_balance</span>
+</div>
+<div>
+<div class="text-[14px] font-bold" style="color: #1A1A2E;">Escrow Vault: 100% Locked</div>
+<div class="text-[12px]" style="color: #64748B;">Nayapay &amp; JazzCash Merchant Integration</div>
+</div>
+</div>
+<span class="material-symbols-outlined text-[24px]" style="color: #0F766E;">verified</span>
+</div>
+<!-- Dispatch Velocity Card -->
+<div class="p-space-20 rounded-xl bg-surface-container-lowest shadow-sm flex items-center justify-between border border-outline-variant/30">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-lg flex items-center justify-center" style="background-color: rgba(18, 59, 93, 0.08); color: #1A1A2E;">
+<span class="material-symbols-outlined text-[22px]">speed</span>
+</div>
+<div>
+<div class="text-[14px] font-bold" style="color: #1A1A2E;">Dispatch Latency: 42s</div>
+<div class="text-[12px]" style="color: #64748B;">Auto-routing pro radius: 4.5 km</div>
+</div>
+</div>
+<div class="text-right">
+<span class="text-[12px] font-bold" style="color: #0F766E;">Optimal</span>
+</div>
+</div>
+<!-- Peshawar Regional Node -->
+<div class="p-space-20 rounded-xl bg-surface-container-lowest shadow-sm flex items-center justify-between border border-outline-variant/30">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-lg flex items-center justify-center" style="background-color: rgba(18, 59, 93, 0.08); color: #1A1A2E;">
+<span class="material-symbols-outlined text-[22px]">hub</span>
+</div>
+<div>
+<div class="text-[14px] font-bold" style="color: #1A1A2E;">Peshawar Operational Node</div>
+<div class="text-[12px]" style="color: #64748B;">7 Sectors Synced · Hayatabad Hub #1</div>
+</div>
+</div>
+<span class="w-2.5 h-2.5 rounded-full" style="background-color: #0F766E;"></span>
+</div></div>
+</div></main></div>
+
+
+
+</body></html>

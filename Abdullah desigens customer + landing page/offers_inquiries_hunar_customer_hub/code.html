@@ -1,0 +1,802 @@
+<!DOCTYPE html><html lang="en" style=""><head><meta charset="utf-8"><meta content="width=device-width, initial-scale=1.0" name="viewport"><title>HUNAR Customer Hub</title><link href="https://fonts.googleapis.com" rel="preconnect"><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<style>
+  html {
+    overflow-y: scroll;
+    scrollbar-gutter: stable;
+  }
+  body {
+    font-family: 'Inter', sans-serif;
+    background-color: #FFFFFF;
+    color: #1A1A2E;
+    margin: 0;
+    padding: 0;
+  }
+  aside {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  aside::-webkit-scrollbar {
+    display: none;
+  }
+</style>
+<script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">
+tailwind.config = {
+  darkMode: "class",
+  theme: {
+    extend: {
+      colors: {
+        navy: "#1A1A2E",
+        teal: {
+          DEFAULT: "#0F766E",
+          dark: "#115E59",
+          light: "rgba(15, 118, 110, 0.1)"
+        },
+        orange: "#F59E0B",
+        success: "#16A34A",
+        error: "#DC2626",
+        gray: "#64748B",
+        background: "#F8FAFC",
+        border: "#E2E8F0",
+        surface: "#FFFFFF",
+        primary: "#0F766E",
+        "primary-dark": "#115E59",
+        secondary: "#1A1A2E",
+        
+        // Aliases used in templates
+        appBg: "#F8FAFC",
+        darkText: "#1A1A2E",
+        mutedText: "#64748B",
+        borderLine: "#E2E8F0",
+        "text-main": "#1A1A2E",
+        "surface-muted": "#F8FAFC",
+        "outline-border": "#E2E8F0",
+        
+        // Material Theme 3 Aliases
+        "on-surface": "#1A1A2E",
+        "on-surface-variant": "#64748B",
+        "on-background": "#1A1A2E",
+        "on-primary": "#FFFFFF",
+        "on-secondary": "#FFFFFF",
+        "on-error": "#FFFFFF",
+        "surface-container-lowest": "#FFFFFF",
+        "surface-container-low": "#F8FAFC",
+        "surface-container": "#F8FAFC",
+        "surface-container-high": "#F8FAFC",
+        "surface-container-highest": "#F8FAFC",
+        "surface-variant": "#F8FAFC",
+        "surface-tint": "#0F766E",
+        "surface-dim": "#E2E8F0",
+        "surface-bright": "#FFFFFF",
+        outline: "#64748B",
+        "outline-variant": "#E2E8F0",
+        "primary-container": "rgba(15, 118, 110, 0.1)",
+        "on-primary-container": "#0F766E",
+        "secondary-container": "rgba(26, 26, 46, 0.08)",
+        "on-secondary-container": "#1A1A2E",
+        "secondary-fixed": "rgba(15, 118, 110, 0.1)",
+        "secondary-fixed-dim": "rgba(15, 118, 110, 0.1)",
+        "on-secondary-fixed": "#1A1A2E",
+        "on-secondary-fixed-variant": "#115E59",
+        "primary-fixed": "rgba(15, 118, 110, 0.1)",
+        "primary-fixed-dim": "rgba(15, 118, 110, 0.1)",
+        "on-primary-fixed": "#1A1A2E",
+        "on-primary-fixed-variant": "#115E59",
+        "tertiary": "#F59E0B",
+        "tertiary-container": "rgba(245, 158, 11, 0.1)",
+        "on-tertiary-container": "#F59E0B",
+        "tertiary-fixed": "rgba(245, 158, 11, 0.1)",
+        "on-tertiary-fixed": "#1A1A2E",
+        "error-container": "rgba(220, 38, 38, 0.1)",
+        "on-error-container": "#DC2626",
+        "inverse-primary": "#0F766E",
+        "inverse-surface": "#1A1A2E",
+        "inverse-on-surface": "#F8FAFC"
+      },
+      spacing: {
+        "margin-desktop": "2rem",
+        "margin-tablet": "1.5rem",
+        "margin-mobile": "1rem",
+        "gutter-desktop": "1.5rem",
+        "gutter-mobile": "1rem",
+        "space-3xl": "4rem",
+        "space-2xl": "3rem",
+        "space-xl": "2rem",
+        "space-lg": "1.5rem",
+        "space-md": "1rem",
+        "space-base": "1rem",
+        "space-sm": "0.75rem",
+        "space-xs": "0.5rem",
+        "space-2xs": "0.25rem",
+        "space-xxs": "0.25rem",
+        "space-1": "0.25rem",
+        "space-2": "0.5rem",
+        "space-3": "0.75rem",
+        "space-4": "1rem",
+        "space-5": "1.25rem",
+        "space-6": "1.5rem",
+        "space-8": "2rem",
+        "space-12": "3rem",
+        "space-16": "4rem",
+        "space-20": "5rem",
+        "space-24": "6rem",
+        "space-stack-sm": "0.5rem",
+        "space-stack-md": "1rem",
+        "space-stack-lg": "1.5rem",
+        "section-gap": "2rem",
+        "gutter": "1.5rem"
+      },
+      fontSize: {
+        "stat-lg": ["28px", { lineHeight: "36px", letterSpacing: "-0.02em", fontWeight: "700" }],
+        "button-text": ["14px", { lineHeight: "20px", letterSpacing: "0.01em", fontWeight: "600" }],
+
+        "display-hero": ["48px", { lineHeight: "56px", letterSpacing: "-0.025em", fontWeight: "700" }],
+        "display-hero-mobile": ["32px", { lineHeight: "40px", letterSpacing: "-0.02em", fontWeight: "700" }],
+        "display-kpi": ["36px", { lineHeight: "44px", letterSpacing: "-0.02em", fontWeight: "700" }],
+        "display-kpi-mobile": ["28px", { lineHeight: "34px", letterSpacing: "-0.02em", fontWeight: "700" }],
+        "display-lg": ["36px", { lineHeight: "44px", letterSpacing: "-0.02em", fontWeight: "700" }],
+        "headline-page": ["28px", { lineHeight: "36px", letterSpacing: "-0.015em", fontWeight: "600" }],
+        "headline-page-mobile": ["24px", { lineHeight: "32px", letterSpacing: "-0.015em", fontWeight: "600" }],
+        "headline-section": ["20px", { lineHeight: "28px", letterSpacing: "-0.01em", fontWeight: "600" }],
+        "headline-subsection": ["16px", { lineHeight: "24px", letterSpacing: "-0.005em", fontWeight: "600" }],
+        "headline-lg": ["28px", { lineHeight: "36px", letterSpacing: "-0.015em", fontWeight: "600" }],
+        "headline-lg-mobile": ["24px", { lineHeight: "32px", letterSpacing: "-0.015em", fontWeight: "600" }],
+        "headline-md": ["20px", { lineHeight: "28px", letterSpacing: "-0.01em", fontWeight: "600" }],
+        "headline-sm": ["16px", { lineHeight: "24px", letterSpacing: "-0.005em", fontWeight: "600" }],
+        "headline-xl-mobile": ["26px", { lineHeight: "34px", letterSpacing: "-0.015em", fontWeight: "600" }],
+        "body-default": ["14px", { lineHeight: "22px", letterSpacing: "0em", fontWeight: "400" }],
+        "body-compact": ["13px", { lineHeight: "18px", letterSpacing: "0em", fontWeight: "400" }],
+        "body-strong": ["14px", { lineHeight: "22px", letterSpacing: "0em", fontWeight: "600" }],
+        "body-lg": ["16px", { lineHeight: "24px", letterSpacing: "0em", fontWeight: "400" }],
+        "body-md": ["14px", { lineHeight: "22px", letterSpacing: "0em", fontWeight: "400" }],
+        "body-md-medium": ["14px", { lineHeight: "22px", letterSpacing: "0em", fontWeight: "500" }],
+        "body-sm": ["12px", { lineHeight: "16px", letterSpacing: "0em", fontWeight: "400" }],
+        "label-badge": ["11px", { lineHeight: "14px", letterSpacing: "0.02em", fontWeight: "600" }],
+        "label-regular": ["12px", { lineHeight: "16px", letterSpacing: "0.01em", fontWeight: "500" }],
+        "label-md": ["12px", { lineHeight: "16px", letterSpacing: "0.01em", fontWeight: "500" }],
+        "label-sm": ["11px", { lineHeight: "14px", letterSpacing: "0.02em", fontWeight: "500" }],
+        "label-uppercase": ["10px", { lineHeight: "12px", letterSpacing: "0.05em", fontWeight: "700" }]
+      },
+      fontFamily: {
+        "stat-lg": ["Inter", "sans-serif"],
+        "button-text": ["Inter", "sans-serif"],
+
+        sans: ["Inter", "sans-serif"],
+        "body-default": ["Inter", "sans-serif"],
+        "body-compact": ["Inter", "sans-serif"],
+        "body-strong": ["Inter", "sans-serif"],
+        "body-md": ["Inter", "sans-serif"],
+        "body-sm": ["Inter", "sans-serif"],
+        "display-kpi": ["Inter", "sans-serif"],
+        "headline-page": ["Inter", "sans-serif"],
+        "headline-section": ["Inter", "sans-serif"],
+        "headline-subsection": ["Inter", "sans-serif"],
+        "headline-md": ["Inter", "sans-serif"],
+        "headline-sm": ["Inter", "sans-serif"],
+        "headline-lg": ["Inter", "sans-serif"],
+        "label-badge": ["Inter", "sans-serif"],
+        "label-regular": ["Inter", "sans-serif"],
+        "label-md": ["Inter", "sans-serif"],
+        "label-sm": ["Inter", "sans-serif"]
+      },
+      borderRadius: {
+        DEFAULT: "0.375rem",
+        sm: "0.25rem",
+        md: "0.375rem",
+        lg: "0.5rem",
+        xl: "0.75rem",
+        "2xl": "1rem",
+        full: "9999px"
+      }
+    }
+  }
+};
+</script></head><body class="bg-white text-[#1A1A2E] antialiased min-h-screen">
+  <!-- Desktop Sidebar -->
+  <aside class="fixed left-0 top-0 h-screen w-[260px] bg-white border-r border-[#E2E8F0] z-50 hidden lg:flex flex-col justify-between overflow-y-auto" style="scrollbar-width: none; -ms-overflow-style: none;">
+    <div class="p-5">
+      <!-- Brand Header -->
+      <a href="../landing page/code.html" class="flex items-center gap-3 pb-5 border-b border-[#E2E8F0] mb-4 group cursor-pointer hover:opacity-90 transition-opacity" title="Back to Landing Page">
+        <div class="w-9 h-9 rounded-xl bg-[#1A1A2E] flex items-center justify-center text-white text-[16px] font-bold">
+          <span>H</span><span class="w-1.5 h-1.5 rounded-full bg-[#0F766E] ml-0.5"></span>
+        </div>
+        <div>
+          <div class="flex items-center gap-1.5">
+            <span class="text-[16px] font-bold tracking-tight text-[#1A1A2E]">HUNAR</span>
+            <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold bg-[#0F766E]/10 text-[#0F766E] uppercase tracking-wider">PK</span>
+          </div>
+          <p class="text-[12px] font-medium text-[#64748B]">Certified Pro Marketplace</p>
+        </div>
+      </a>
+
+      <!-- Navigation List -->
+      <nav class="flex flex-col gap-1">
+        <a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] font-medium text-[#64748B] hover:bg-[#F8FAFC] hover:text-[#1A1A2E] transition-colors" data-path="customer-dashboard" href="../hunar_customer_dashboard/code.html">
+          <span class="material-symbols-outlined text-[20px]">grid_view</span>
+          <span>Dashboard</span>
+        </a>
+        <a class="flex items-center justify-between px-3 py-2.5 rounded-lg text-[13px] font-medium text-[#64748B] hover:bg-[#F8FAFC] hover:text-[#1A1A2E] transition-colors" data-path="my-jobs" href="../my_jobs_hunar_customer_hub/code.html">
+          <div class="flex items-center gap-3">
+            <span class="material-symbols-outlined text-[20px]">assignment</span>
+            <span>My Jobs</span>
+          </div>
+          <span class="px-2 py-0.5 rounded-full bg-[#F8FAFC] text-[#1A1A2E] text-[11px] font-bold">2</span>
+        </a>
+        <a aria-current="page" class="flex items-center justify-between px-3 py-2.5 rounded-lg bg-[#0F766E] text-white font-semibold text-[13px] shadow-sm transition-colors" data-path="offers-and-bids" href="../offers_inquiries_hunar_customer_hub/code.html">
+          <div class="flex items-center gap-3">
+            <span class="material-symbols-outlined text-[20px] text-white">local_offer</span>
+            <span class="text-white">Offers</span>
+          </div>
+          <span class="px-2 py-0.5 rounded-full bg-white text-[#0F766E] text-[11px] font-bold">3</span>
+        </a>
+        <a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] font-medium text-[#64748B] hover:bg-[#F8FAFC] hover:text-[#1A1A2E] transition-colors" data-path="service-bookings" href="../scheduled_visits_arrival_tracker_hunar/code.html">
+          <span class="material-symbols-outlined text-[20px]">calendar_today</span>
+          <span>Visits</span>
+        </a>
+        <a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] font-medium text-[#64748B] hover:bg-[#F8FAFC] hover:text-[#1A1A2E] transition-colors" data-path="messages" href="../direct_chat_negotiation_hunar_customer_hub/code.html">
+          <span class="material-symbols-outlined text-[20px]">chat</span>
+          <span>Messages</span>
+        </a>
+        <a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] font-medium text-[#64748B] hover:bg-[#F8FAFC] hover:text-[#1A1A2E] transition-colors" data-path="payments-and-escrow" href="../payments_escrow_wallet_hunar/code.html">
+          <span class="material-symbols-outlined text-[20px]">payments</span>
+          <span>Payments</span>
+        </a>
+        <a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] font-medium text-[#64748B] hover:bg-[#F8FAFC] hover:text-[#1A1A2E] transition-colors" data-path="customer-profile" href="../customer_profile_settings_hunar/code.html">
+          <span class="material-symbols-outlined text-[20px]">person</span>
+          <span>Profile</span>
+        </a>
+        <a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] font-medium text-[#64748B] hover:bg-[#F8FAFC] hover:text-[#1A1A2E] transition-colors" data-path="help-center" href="../dispute_resolution_help_center_hunar/code.html">
+          <span class="material-symbols-outlined text-[20px]">help_center</span>
+          <span>Help Center</span>
+        </a>
+      </nav>
+    </div>
+
+    <!-- Bottom Escrow Card & User Profile -->
+    <div class="p-4 border-t border-[#E2E8F0] flex flex-col gap-3">
+      <div class="bg-[#1A1A2E] text-white p-3.5 rounded-xl flex flex-col gap-2">
+        <div class="flex items-center gap-2">
+          <span class="material-symbols-outlined text-[#0F766E] text-[18px]">verified</span>
+          <span class="text-[11px] font-bold uppercase tracking-wider text-[#0F766E]">HUNAR Escrow</span>
+        </div>
+        <p class="text-[11px] leading-snug text-slate-300">100% NADRA CNIC Verified Pros &amp; safe Raast dispute guarantee.</p>
+        <a class="inline-flex items-center justify-center py-1.5 px-3 bg-[#0F766E] text-white text-[11px] font-bold rounded-lg hover:bg-[#115E59] transition-colors" data-path="guarantee-policy" href="../dispute_resolution_help_center_hunar/code.html">View Escrow Rules</a>
+      </div>
+      <div class="flex items-center justify-between pt-1">
+        <div class="flex items-center gap-2.5">
+          <div class="w-8 h-8 rounded-full bg-[#1A1A2E] flex items-center justify-center">
+            <span class="material-symbols-outlined text-white text-[18px]">person</span>
+          </div>
+          <div class="flex flex-col">
+            <span class="text-[13px] font-semibold text-[#1A1A2E] leading-tight">Ahmed Khan</span>
+            <span class="text-[11px] font-medium text-[#64748B]">University Town, Peshawar</span>
+          </div>
+        </div>
+        <a class="text-[#64748B] hover:text-[#DC2626] transition-colors" data-path="sign-in" href="../customer_profile_settings_hunar/code.html">
+          <span class="material-symbols-outlined text-[20px]">logout</span>
+        </a>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main Content Wrapper -->
+  <div class="w-full lg:pl-[260px] min-h-screen flex flex-col bg-white">
+    <!-- Top Header Bar -->
+    <header class="fixed top-0 left-0 lg:left-[260px] right-0 h-16 bg-white border-b border-[#E2E8F0] z-40 px-4 sm:px-6 lg:px-8 flex items-center justify-between gap-4">
+      <div class="flex items-center gap-3 flex-1 max-w-lg">
+        <button aria-label="Open Menu" onclick="const s=document.querySelector('aside'); s.classList.toggle('hidden'); s.classList.toggle('flex');" class="lg:hidden p-1.5 rounded-lg text-[#64748B] hover:text-[#1A1A2E] hover:bg-[#F8FAFC] transition-colors focus:outline-none shrink-0">
+          <span class="material-symbols-outlined text-[24px]">menu</span>
+        </button>
+        <a href="../landing page/code.html" class="flex items-center gap-1.5 lg:hidden shrink-0 hover:scale-105 transition-transform" title="Back to Landing Page"><div class="w-8 h-8 rounded-lg bg-[#1A1A2E] flex items-center justify-center text-white font-bold text-[14px]">H</div></a>
+        <div class="relative w-full">
+          <span class="material-symbols-outlined absolute left-3 top-2.5 text-[#64748B] text-[20px]">search</span>
+          <input class="w-full h-10 pl-10 pr-4 text-[#1A1A2E] font-body-compact text-xs rounded-lg border border-[#E2E8F0] focus:border-[#0F766E] focus:bg-white focus:outline-none transition-all placeholder:text-[#64748B] bg-[#F8FAFC]" placeholder="Search jobs, verified technicians, booking IDs (PKR)..." type="search">
+        </div>
+      </div>
+      <div class="flex items-center gap-3 shrink-0">
+        <a href="../post_a_job_step_1_modern_service_selection/code.html" class="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-[#0F766E] hover:bg-[#115E59] text-white text-xs font-semibold shadow-sm transition-all active:scale-[0.99]">
+          <span class="material-symbols-outlined text-[16px]">add</span>
+          <span>Post a Job</span>
+        </a>
+        <a href="../offers_inquiries_hunar_customer_hub/code.html" class="relative text-[#64748B] hover:text-[#1A1A2E] transition-colors p-2 rounded-lg hover:bg-[#F8FAFC]" title="Offers & Notifications">
+          <span class="material-symbols-outlined text-[22px]">notifications</span>
+          <span class="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-[#F59E0B]"></span>
+        </a>
+        <a href="../direct_chat_negotiation_hunar_customer_hub/code.html" class="text-[#64748B] hover:text-[#1A1A2E] transition-colors p-2 rounded-lg hover:bg-[#F8FAFC]" title="Messages">
+          <span class="material-symbols-outlined text-[22px]">chat</span>
+        </a>
+        <div class="h-6 w-[1px] bg-[#E2E8F0] hidden sm:block"></div>
+        <a href="../customer_profile_settings_hunar/code.html" class="flex items-center gap-2.5 p-1 rounded-lg hover:bg-[#F8FAFC] transition-colors cursor-pointer" title="Profile Settings">
+          <div class="w-8 h-8 rounded-full bg-[#1A1A2E] flex items-center justify-center text-white font-bold text-xs">AK</div>
+          <div class="hidden xl:flex flex-col text-left">
+            <span class="text-xs font-semibold text-[#1A1A2E] leading-tight">Ahmed Khan</span>
+            <span class="text-[10px] font-medium text-[#64748B] leading-tight">University Town, Peshawar</span>
+          </div>
+          <span class="material-symbols-outlined text-[#64748B] text-[18px] hidden sm:inline-block">expand_more</span>
+        </a>
+      </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="w-full pt-16 pb-16 bg-white flex-1">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex flex-col gap-6">
+        
+        <!-- Top Context & Header Banner -->
+        <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 pb-4 border-b border-[#E2E8F0]">
+          <div class="space-y-1">
+            <div class="flex items-center gap-2">
+              <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-[#0F766E]/10 text-[#0F766E]">Live Inquiries</span>
+              <span class="text-xs text-[#64748B]">• Updated 4 mins ago</span>
+            </div>
+            <h1 class="text-2xl font-bold text-[#1A1A2E] tracking-tight">Pro Offers &amp; Quotes</h1>
+            <p class="text-sm text-[#64748B]">Review bids, compare worker credentials, and hire verified pros for your posted jobs.</p>
+          </div>
+
+          <!-- Quick Micro Stats Strip -->
+          <div class="flex items-center gap-4 bg-white p-2.5 rounded-xl border border-[#E2E8F0] shadow-sm">
+            <div class="px-3 py-1 border-r border-[#E2E8F0]">
+              <div class="text-[11px] text-[#64748B] font-medium uppercase tracking-wider">Active Bids</div>
+              <div class="text-xl font-bold text-[#1A1A2E] leading-none mt-1">5</div>
+            </div>
+            <div class="px-3 py-1 border-r border-[#E2E8F0]">
+              <div class="text-[11px] text-[#64748B] font-medium uppercase tracking-wider">Lowest Price</div>
+              <div class="text-base font-bold text-[#0F766E] leading-none mt-1">Rs. 1,800</div>
+            </div>
+            <div class="px-3 py-1">
+              <div class="text-[11px] text-[#64748B] font-medium uppercase tracking-wider">Avg Response</div>
+              <div class="text-base font-bold text-[#1A1A2E] leading-none mt-1">18 mins</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Filter & Controls Toolbar -->
+        <div class="flex flex-col xl:flex-row items-stretch xl:items-center justify-between gap-4">
+          <!-- Status Segment Tabs -->
+          <div class="flex items-center overflow-x-auto rounded-lg bg-white p-1 border border-[#E2E8F0] gap-1">
+            <button class="px-3.5 py-1.5 rounded-md text-xs bg-[#1A1A2E] text-white shadow-sm font-semibold flex items-center gap-1.5 transition-all">
+              <span>All Offers</span>
+              <span class="px-1.5 py-0.5 rounded-full bg-white/20 text-[10px] font-bold">5</span>
+            </button>
+            <button class="px-3.5 py-1.5 rounded-md text-xs text-[#64748B] hover:text-[#1A1A2E] hover:bg-[#F8FAFC] flex items-center gap-1.5 transition-all">
+              <span>Pending Action</span>
+              <span class="px-1.5 py-0.5 rounded-full bg-[#F59E0B]/15 text-[#F59E0B] text-[10px] font-bold">3</span>
+            </button>
+            <button class="px-3.5 py-1.5 rounded-md text-xs text-[#64748B] hover:text-[#1A1A2E] hover:bg-[#F8FAFC] flex items-center gap-1.5 transition-all">
+              <span>Accepted</span>
+              <span class="px-1.5 py-0.5 rounded-full bg-[#E2E8F0] text-[#64748B] text-[10px] font-bold">1</span>
+            </button>
+            <button class="px-3.5 py-1.5 rounded-md text-xs text-[#64748B] hover:text-[#1A1A2E] hover:bg-[#F8FAFC] flex items-center gap-1.5 transition-all">
+              <span>Expired</span>
+              <span class="px-1.5 py-0.5 rounded-full bg-[#E2E8F0] text-[#64748B] text-[10px] font-bold">1</span>
+            </button>
+          </div>
+
+          <!-- Dropdowns & Search -->
+          <div class="flex flex-wrap items-center gap-3 flex-1 xl:justify-end">
+            <div class="relative flex-1 sm:max-w-xs min-w-[200px]">
+              <span class="material-symbols-outlined absolute left-3 top-2.5 text-[#64748B] text-[18px]">search</span>
+              <input class="w-full h-9 pl-9 pr-3 rounded-lg border border-[#E2E8F0] text-xs text-[#1A1A2E] bg-white placeholder:text-[#64748B] focus:outline-none focus:border-[#0F766E] transition-colors" placeholder="Search pro name or job..." type="text">
+            </div>
+            <div class="relative">
+              <select class="h-9 pl-3 pr-8 rounded-lg border border-[#E2E8F0] bg-white text-xs text-[#1A1A2E] font-medium appearance-none focus:outline-none focus:border-[#0F766E] cursor-pointer">
+                <option>All Services (AC, Plumbing, Electrical)</option>
+                <option>AC Repair &amp; Maintenance</option>
+                <option>Plumbing &amp; Pipefitting</option>
+                <option>Electrical Fixes</option>
+              </select>
+              <span class="material-symbols-outlined absolute right-2.5 top-2 text-[#64748B] pointer-events-none text-[18px]">expand_more</span>
+            </div>
+            <div class="relative">
+              <select class="h-9 pl-3 pr-8 rounded-lg border border-[#E2E8F0] bg-white text-xs text-[#1A1A2E] font-medium appearance-none focus:outline-none focus:border-[#0F766E] cursor-pointer">
+                <option>Sort by: Lowest Price</option>
+                <option>Sort by: Highest Rated</option>
+                <option>Sort by: Quickest Arrival</option>
+              </select>
+              <span class="material-symbols-outlined absolute right-2.5 top-2 text-[#64748B] pointer-events-none text-[18px]">tune</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Primary Workspace Layout Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+          
+          <!-- Left Column: Active Job Request Groups (8 Cols) -->
+          <div class="lg:col-span-8 flex flex-col gap-6">
+            
+            <!-- JOB GROUP 1 -->
+            <section class="flex flex-col gap-4">
+              <!-- Job Meta Header Card -->
+              <div class="bg-white rounded-xl p-4 border border-[#E2E8F0] shadow-sm">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                  <div class="flex items-center gap-2 flex-wrap">
+                    <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-[#0F766E]/15 text-[#0F766E]">
+                      <span class="w-1.5 h-1.5 rounded-full bg-[#0F766E]"></span>3 Offers Received
+                    </span>
+                    <span class="text-xs text-[#64748B]">Posted 2 hours ago</span>
+                    <span class="text-[#64748B] text-xs">•</span>
+                    <span class="text-xs font-semibold text-[#1A1A2E]">Job ID: #HNR-4921</span>
+                  </div>
+                  <div class="text-xs text-[#1A1A2E] font-semibold">Client Budget: <span class="text-[#0F766E]">Rs. 3,000 - 4,500</span></div>
+                </div>
+                <div class="mt-3 flex items-start justify-between gap-4">
+                  <div>
+                    <h2 class="text-base font-bold text-[#1A1A2E] tracking-tight">Master Bedroom Split AC Repair &amp; Service</h2>
+                    <div class="flex items-center gap-1.5 text-[#64748B] text-xs mt-1">
+                      <span class="material-symbols-outlined text-[16px] text-[#64748B]">location_on</span>
+                      <span>House 45, Street 12, Gulberg III, Lahore</span>
+                    </div>
+                  </div>
+                  <a class="hidden sm:inline-flex items-center gap-1 text-xs text-[#0F766E] hover:underline font-semibold" href="../job_details_offers_hunar/code.html">
+                    <span>View Job Details</span>
+                    <span class="material-symbols-outlined text-[14px]">arrow_outward</span>
+                  </a>
+                </div>
+              </div>
+
+              <!-- Offer Cards Stack -->
+              <div class="flex flex-col gap-4">
+                
+                <!-- Offer 1: Recommended Card -->
+                <div class="relative bg-white rounded-xl border-2 border-[#0F766E] p-5 shadow-sm hover:shadow-md transition-shadow">
+                  <div class="absolute -top-3 left-6 inline-flex items-center gap-1.5 bg-[#0F766E] text-white text-[11px] font-bold px-3 py-0.5 rounded-full uppercase tracking-wider shadow-sm">
+                    <span class="material-symbols-outlined text-[14px]" style="font-variation-settings: 'FILL' 1;">verified</span>
+                    Recommended Specialist
+                  </div>
+                  
+                  <div class="pt-2 flex flex-col md:flex-row md:items-start justify-between gap-4">
+                    <!-- Pro Profile -->
+                    <div class="flex items-start gap-4 min-w-0">
+                      <div class="relative flex-shrink-0">
+                        <img class="w-16 h-16 rounded-xl object-cover border border-[#E2E8F0]" data-alt="Professional Pakistani HVAC technician Ali Khan smiling with high confidence wearing crisp teal work uniform against a modern clean workshop background, 4k sharp focus studio lighting." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCFVPGf63zfOrDuwVgEtKjXvJ40BJXS8qMHX102Q2DLiZWJEwnWxCrn2Hu-ebvh_LOy69P1sJ5ILLk-ISoSV8q1iVAha2n6EVwDPUAVtprPcIOEXA4SuFo9VAeESPvh81fBjNSpmJgnWqVXqmaA1zBCBh4EN7AaX6v6xcP1etYvOUFOLuTdN6oCJwWlu4MPc7GdQTbI5Lqb2fA-bzGj_fSRroTC-4flENaXIFOucIGV0WPEDolHZ9eP">
+                        <div class="absolute -bottom-1 -right-1 bg-white p-0.5 rounded-full shadow-sm">
+                          <span class="material-symbols-outlined text-[16px] text-[#0F766E]" style="font-variation-settings: 'FILL' 1;">verified</span>
+                        </div>
+                      </div>
+                      <div class="min-w-0">
+                        <div class="flex items-center gap-2 flex-wrap">
+                          <h3 class="text-base font-bold text-[#1A1A2E] truncate">Ali Khan</h3>
+                          <span class="text-xs font-semibold text-[#64748B] bg-[#F8FAFC] px-2 py-0.5 rounded border border-[#E2E8F0]">CoolBreeze Services</span>
+                        </div>
+                        <div class="flex items-center gap-2 mt-1 flex-wrap">
+                          <div class="flex items-center gap-1 text-[#F59E0B] font-bold text-xs">
+                            <span class="material-symbols-outlined text-[16px]" style="font-variation-settings: 'FILL' 1;">star</span>
+                            <span>4.9</span>
+                            <span class="text-[#64748B] font-normal text-xs">(124 reviews)</span>
+                          </div>
+                          <span class="text-[#64748B] text-xs">•</span>
+                          <span class="inline-flex items-center gap-1 text-[11px] font-medium text-[#1A1A2E] bg-[#1A1A2E]/5 px-2 py-0.5 rounded">
+                            <span class="material-symbols-outlined text-[12px] text-[#0F766E]">badge</span> Hunar Verified CNIC
+                          </span>
+                        </div>
+                        <p class="text-xs text-[#1A1A2E] mt-2.5">"Includes diagnostic check, gas pressure inspection &amp; deep coil pressure wash. Will bring high-grade gauge kit and R32 canister."</p>
+                        <div class="mt-3 flex items-center gap-4 flex-wrap text-xs text-[#64748B]">
+                          <div class="flex items-center gap-1">
+                            <span class="material-symbols-outlined text-[16px] text-[#0F766E]">schedule</span>
+                            <span>Can arrive: <strong class="text-[#1A1A2E]">Tomorrow, 10:00 AM</strong></span>
+                          </div>
+                          <div class="flex items-center gap-1">
+                            <span class="material-symbols-outlined text-[16px] text-[#F59E0B]">security</span>
+                            <span>7-Day Workmanship Warranty</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Pricing & Action Callout -->
+                    <div class="flex flex-row md:flex-col items-center md:items-end justify-between border-t md:border-t-0 pt-3 md:pt-0 border-[#E2E8F0] md:min-w-[160px] flex-shrink-0">
+                      <div class="text-left md:text-right">
+                        <span class="text-xs text-[#64748B] block">Offered Quote</span>
+                        <span class="text-xl font-bold text-[#1A1A2E] leading-tight">Rs. 3,200</span>
+                        <span class="text-[11px] text-[#0F766E] font-semibold block">All Inclusive</span>
+                      </div>
+                      <div class="flex items-center gap-2 mt-3 w-full sm:w-auto">
+                        <a class="w-full sm:w-auto px-4 py-2 rounded-lg bg-[#0F766E] hover:bg-[#115E59] text-white text-xs font-semibold shadow-sm transition-all flex items-center justify-center gap-1.5" href="../job_details_select_worker_confirm_booking_modal_hunar/code.html">
+                          <span class="material-symbols-outlined text-[16px]">check</span>
+                          <span>Hire &amp; Confirm</span>
+                        </a>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Offer 2 -->
+                <div class="bg-white rounded-xl border border-[#E2E8F0] p-5 shadow-sm hover:border-[#1A1A2E]/30 transition-all">
+                  <div class="flex flex-col md:flex-row md:items-start justify-between gap-4">
+                    <div class="flex items-start gap-4 min-w-0">
+                      <div class="relative flex-shrink-0">
+                        <img class="w-16 h-16 rounded-xl object-cover border border-[#E2E8F0]" data-alt="Portrait of seasoned Pakistani technician Tariq Mehmood in blue technical workwear with tools in background, professional lighting and clean environment." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDu6N4bR6GbYrfDUvanZoQZunvNdMgrfgUoKZmgau9XE_D-QNUF5_yrzx9A4erDPW9JPwwoKVljhtNUy09qsTAqExa2HqF07w-57l5y7DYbh6UdKsN45qNcQJRwTz3Rjq_oDLLP6yEcEkMW9cYWT7psAilUWvv_zlZTnmv4IAYna473RiAdncQji51reOfe0qVG8ZMzAoT8iDzZRW3IXGS4DLKCaccbDXTuigsVQnV_8c88w10z8ulg">
+                      </div>
+                      <div class="min-w-0">
+                        <div class="flex items-center gap-2 flex-wrap">
+                          <h3 class="text-base font-bold text-[#1A1A2E] truncate">Tariq Mehmood Pro</h3>
+                          <span class="text-xs font-semibold text-[#64748B] bg-[#F8FAFC] px-2 py-0.5 rounded border border-[#E2E8F0]">HVAC Solutions</span>
+                        </div>
+                        <div class="flex items-center gap-2 mt-1 flex-wrap">
+                          <div class="flex items-center gap-1 text-[#F59E0B] font-bold text-xs">
+                            <span class="material-symbols-outlined text-[16px]" style="font-variation-settings: 'FILL' 1;">star</span>
+                            <span>4.8</span>
+                            <span class="text-[#64748B] font-normal text-xs">(89 reviews)</span>
+                          </div>
+                          <span class="text-[#64748B] text-xs">•</span>
+                          <span class="inline-flex items-center gap-1 text-[11px] font-medium text-[#1A1A2E] bg-[#1A1A2E]/5 px-2 py-0.5 rounded">
+                            <span class="material-symbols-outlined text-[12px] text-[#0F766E]">verified</span> Hunar Verified
+                          </span>
+                        </div>
+                        <p class="text-xs text-[#1A1A2E] mt-2.5">"Includes full electrical checkup, compressor amperage measurement, and complete refrigerant R32 top-up guaranteed."</p>
+                        <div class="mt-3 flex items-center gap-4 flex-wrap text-xs text-[#64748B]">
+                          <div class="flex items-center gap-1">
+                            <span class="material-symbols-outlined text-[16px] text-[#0F766E]">schedule</span>
+                            <span>Can arrive: <strong class="text-[#1A1A2E]">Tomorrow, 2:00 PM</strong></span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Price & Actions -->
+                    <div class="flex flex-row md:flex-col items-center md:items-end justify-between border-t md:border-t-0 pt-3 md:pt-0 border-[#E2E8F0] md:min-w-[160px] flex-shrink-0">
+                      <div class="text-left md:text-right">
+                        <span class="text-xs text-[#64748B] block">Offered Quote</span>
+                        <span class="text-xl font-bold text-[#1A1A2E] leading-tight">Rs. 3,500</span>
+                        <span class="text-[11px] text-[#64748B] font-medium block">Gas Top-up Included</span>
+                      </div>
+                      <div class="flex items-center gap-2 mt-3 w-full sm:w-auto">
+                        <a class="w-full sm:w-auto px-4 py-2 rounded-lg bg-[#0F766E] hover:bg-[#115E59] text-white text-xs font-semibold shadow-sm transition-all flex items-center justify-center gap-1.5" href="../job_details_select_worker_confirm_booking_modal_hunar/code.html">
+                          <span class="material-symbols-outlined text-[16px]">check</span>
+                          <span>Hire &amp; Confirm</span>
+                        </a>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Offer 3 -->
+                <div class="bg-white rounded-xl border border-[#E2E8F0] p-5 shadow-sm hover:border-[#1A1A2E]/30 transition-all">
+                  <div class="flex flex-col md:flex-row md:items-start justify-between gap-4">
+                    <div class="flex items-start gap-4 min-w-0">
+                      <div class="relative flex-shrink-0">
+                        <img class="w-16 h-16 rounded-xl object-cover border border-[#E2E8F0]" data-alt="Portrait of young Pakistani technician Bilal Tariq holding digital multimeter dressed in professional service jacket indoors, warm lighting and sharp corporate aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAm8Xx0vdFV3T0tQaOAbcSf6VvuMA_wAbJxN0nB5yChcEyEd0PUU8GsZ-5-WgzzF0lysmKCFF9b0oOJ8w3PN_vlUbsUmR77AW6AnKVWkC85HJgBF7HpRWQ19arI0VQ2U8icSClmYDLBge7jztdBEFLJuh4wL1W0YrDgWQdUjiC0wqHCczBnUDTFNBXxHxRB9yUbWfWLAG75ahc-7LRgGfhHQMNx2X-vIjENZNxkj1QwZykkRqjFNQVp">
+                      </div>
+                      <div class="min-w-0">
+                        <div class="flex items-center gap-2 flex-wrap">
+                          <h3 class="text-base font-bold text-[#1A1A2E] truncate">Bilal Tariq</h3>
+                          <span class="text-xs font-semibold text-[#64748B] bg-[#F8FAFC] px-2 py-0.5 rounded border border-[#E2E8F0]">Certified HVAC Engineer</span>
+                        </div>
+                        <div class="flex items-center gap-2 mt-1 flex-wrap">
+                          <div class="flex items-center gap-1 text-[#F59E0B] font-bold text-xs">
+                            <span class="material-symbols-outlined text-[16px]" style="font-variation-settings: 'FILL' 1;">star</span>
+                            <span>4.92</span>
+                            <span class="text-[#64748B] font-normal text-xs">(98 reviews)</span>
+                          </div>
+                          <span class="text-[#64748B] text-xs">•</span>
+                          <span class="inline-flex items-center gap-1 text-[11px] font-medium text-[#0F766E] bg-[#0F766E]/10 px-2 py-0.5 rounded">Fastest Quote</span>
+                        </div>
+                        <p class="text-xs text-[#1A1A2E] mt-2.5">"Specialist in inverter PCB board diagnostics and drain blockage flushes. Clean and quick servicing without indoor mess."</p>
+                        <div class="mt-3 flex items-center gap-4 flex-wrap text-xs text-[#64748B]">
+                          <div class="flex items-center gap-1">
+                            <span class="material-symbols-outlined text-[16px] text-[#0F766E]">schedule</span>
+                            <span>Can arrive: <strong class="text-[#1A1A2E]">Available Friday morning</strong></span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Price & Actions -->
+                    <div class="flex flex-row md:flex-col items-center md:items-end justify-between border-t md:border-t-0 pt-3 md:pt-0 border-[#E2E8F0] md:min-w-[160px] flex-shrink-0">
+                      <div class="text-left md:text-right">
+                        <span class="text-xs text-[#64748B] block">Offered Quote</span>
+                        <span class="text-xl font-bold text-[#1A1A2E] leading-tight">Rs. 3,000</span>
+                        <span class="text-[11px] text-[#0F766E] font-semibold block">Lowest Inverter Rate</span>
+                      </div>
+                      <div class="flex items-center gap-2 mt-3 w-full sm:w-auto">
+                        <a class="w-full sm:w-auto px-4 py-2 rounded-lg bg-[#0F766E] hover:bg-[#115E59] text-white text-xs font-semibold shadow-sm transition-all flex items-center justify-center gap-1.5" href="../job_details_select_worker_confirm_booking_modal_hunar/code.html">
+                          <span class="material-symbols-outlined text-[16px]">check</span>
+                          <span>Hire &amp; Confirm</span>
+                        </a>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+            </section>
+
+            <!-- JOB GROUP 2 -->
+            <section class="flex flex-col gap-4 pt-2">
+              <!-- Job Meta Header Card -->
+              <div class="bg-white rounded-xl p-4 border border-[#E2E8F0] shadow-sm">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                  <div class="flex items-center gap-2 flex-wrap">
+                    <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-[#0F766E]/15 text-[#0F766E]">
+                      <span class="w-1.5 h-1.5 rounded-full bg-[#0F766E]"></span>2 Offers Received
+                    </span>
+                    <span class="text-xs text-[#64748B]">Posted Yesterday</span>
+                    <span class="text-[#64748B] text-xs">•</span>
+                    <span class="text-xs font-semibold text-[#1A1A2E]">Job ID: #HNR-4880</span>
+                  </div>
+                  <div class="text-xs text-[#1A1A2E] font-semibold">Client Budget: <span class="text-[#0F766E]">Rs. 2,000</span></div>
+                </div>
+                <div class="mt-3 flex items-start justify-between gap-4">
+                  <div>
+                    <h2 class="text-base font-bold text-[#1A1A2E] tracking-tight">Kitchen Water Filtration &amp; Sink Pipe Repair</h2>
+                    <div class="flex items-center gap-1.5 text-[#64748B] text-xs mt-1">
+                      <span class="material-symbols-outlined text-[16px] text-[#64748B]">location_on</span>
+                      <span>House 45, Street 12, Gulberg III, Lahore</span>
+                    </div>
+                  </div>
+                  <a class="hidden sm:inline-flex items-center gap-1 text-xs text-[#0F766E] hover:underline font-semibold" href="../job_details_offers_hunar/code.html">
+                    <span>View Job Details</span>
+                    <span class="material-symbols-outlined text-[14px]">arrow_outward</span>
+                  </a>
+                </div>
+              </div>
+
+              <!-- Offer Cards Stack -->
+              <div class="flex flex-col gap-4">
+                
+                <!-- Offer 4 -->
+                <div class="bg-white rounded-xl border border-[#E2E8F0] p-5 shadow-sm hover:border-[#1A1A2E]/30 transition-all">
+                  <div class="flex flex-col md:flex-row md:items-start justify-between gap-4">
+                    <div class="flex items-start gap-4 min-w-0">
+                      <div class="relative flex-shrink-0">
+                        <img class="w-16 h-16 rounded-xl object-cover border border-[#E2E8F0]" data-alt="Portrait of Pakistani plumber Rashid Ali carrying specialized wrench in industrial shirt against light background, friendly expression, crisp photo." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCj9Mnaxp7lb_IMYlBggb60_MDEMcrLopiFBA089o0GtGTrF1m_FJZIR9FJfX53L0_tz3KkgpHovaaXbzDHDCVSpJBk_W28PUEurpcOZUdktcQ9gDftCEqM_87zPROchFv-JZNFquuK8mtBbnl8T53P0-jf4bcFl6PINTnKNcxYBJJV-2U-ToD__44djOnfojACzek_WK7sEEElL8XarJSiqzd9IFaw8o4rfQC3mWI9afpum_eQ1sh8">
+                        <div class="absolute -bottom-1 -right-1 bg-white p-0.5 rounded-full shadow-sm">
+                          <span class="material-symbols-outlined text-[16px] text-[#0F766E]" style="font-variation-settings: 'FILL' 1;">verified</span>
+                        </div>
+                      </div>
+                      <div class="min-w-0">
+                        <div class="flex items-center gap-2 flex-wrap">
+                          <h3 class="text-base font-bold text-[#1A1A2E] truncate">Rashid Ali</h3>
+                          <span class="text-xs font-semibold text-[#64748B] bg-[#F8FAFC] px-2 py-0.5 rounded border border-[#E2E8F0]">Master Plumber &amp; Pipefitter</span>
+                        </div>
+                        <div class="flex items-center gap-2 mt-1 flex-wrap">
+                          <div class="flex items-center gap-1 text-[#F59E0B] font-bold text-xs">
+                            <span class="material-symbols-outlined text-[16px]" style="font-variation-settings: 'FILL' 1;">star</span>
+                            <span>4.95</span>
+                            <span class="text-[#64748B] font-normal text-xs">(42 reviews)</span>
+                          </div>
+                          <span class="text-[#64748B] text-xs">•</span>
+                          <span class="inline-flex items-center gap-1 text-[11px] font-medium text-[#1A1A2E] bg-[#1A1A2E]/5 px-2 py-0.5 rounded">
+                            <span class="material-symbols-outlined text-[12px] text-[#0F766E]">check_circle</span> Top Value
+                          </span>
+                        </div>
+                        <p class="text-xs text-[#1A1A2E] mt-2.5">"Includes PPRC fittings replacement, leak seal ring installation, and complete kitchen filter cartridges refitting."</p>
+                        <div class="mt-3 flex items-center gap-4 flex-wrap text-xs text-[#64748B]">
+                          <div class="flex items-center gap-1">
+                            <span class="material-symbols-outlined text-[16px] text-[#0F766E]">schedule</span>
+                            <span>Can arrive: <strong class="text-[#1A1A2E]">Today within 90 mins</strong></span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Price & Actions -->
+                    <div class="flex flex-row md:flex-col items-center md:items-end justify-between border-t md:border-t-0 pt-3 md:pt-0 border-[#E2E8F0] md:min-w-[160px] flex-shrink-0">
+                      <div class="text-left md:text-right">
+                        <span class="text-xs text-[#64748B] block">Offered Quote</span>
+                        <span class="text-xl font-bold text-[#1A1A2E] leading-tight">Rs. 1,800</span>
+                        <span class="text-[11px] text-[#0F766E] font-semibold block">Below Estimated Budget</span>
+                      </div>
+                      <div class="flex items-center gap-2 mt-3 w-full sm:w-auto">
+                        <a class="w-full sm:w-auto px-4 py-2 rounded-lg bg-[#0F766E] hover:bg-[#115E59] text-white text-xs font-semibold shadow-sm transition-all flex items-center justify-center gap-1.5" href="../job_details_select_worker_confirm_booking_modal_hunar/code.html">
+                          <span class="material-symbols-outlined text-[16px]">check</span>
+                          <span>Hire &amp; Confirm</span>
+                        </a>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Offer 5 -->
+                <div class="bg-white rounded-xl border border-[#E2E8F0] p-5 shadow-sm hover:border-[#1A1A2E]/30 transition-all">
+                  <div class="flex flex-col md:flex-row md:items-start justify-between gap-4">
+                    <div class="flex items-start gap-4 min-w-0">
+                      <div class="relative flex-shrink-0">
+                        <img class="w-16 h-16 rounded-xl object-cover border border-[#E2E8F0]" data-alt="Portrait of Pakistani home maintenance professional Farhan holding pipe wrench and service checklist, standing cleanly in uniform with natural daytime lighting." src="https://lh3.googleusercontent.com/aida-public/AB6AXuA4jL12Gv__Jac209TN8txZReHLYFxvhORut77DxX0kiCBBzAg-F6oBGVIQxCUIgdUkumoE0DNzBTWxTkclCV-32vgYhjHPmDJJvZdFdgWN5PhctyqhumVmIullz__hqzih6mWbFFSU-bBBvaPMTBjCd_aWcFy-QmUL9LOVdqIbN8zXu2pctRn3aA76faqRYjOYSIrJxXmkBLru2fXgtYTvAgq-Zx-zowhV1hRoxs1xzhLUNEMMSdhW">
+                      </div>
+                      <div class="min-w-0">
+                        <div class="flex items-center gap-2 flex-wrap">
+                          <h3 class="text-base font-bold text-[#1A1A2E] truncate">Farhan CleanPK Services</h3>
+                          <span class="text-xs font-semibold text-[#64748B] bg-[#F8FAFC] px-2 py-0.5 rounded border border-[#E2E8F0]">Plumbing Pro</span>
+                        </div>
+                        <div class="flex items-center gap-2 mt-1 flex-wrap">
+                          <div class="flex items-center gap-1 text-[#F59E0B] font-bold text-xs">
+                            <span class="material-symbols-outlined text-[16px]" style="font-variation-settings: 'FILL' 1;">star</span>
+                            <span>4.85</span>
+                            <span class="text-[#64748B] font-normal text-xs">(53 reviews)</span>
+                          </div>
+                        </div>
+                        <p class="text-xs text-[#1A1A2E] mt-2.5">"Will inspect entire under-sink connection, seal drain elbow, and align filter output pressure. Standard 3-day guarantee."</p>
+                        <div class="mt-3 flex items-center gap-4 flex-wrap text-xs text-[#64748B]">
+                          <div class="flex items-center gap-1">
+                            <span class="material-symbols-outlined text-[16px] text-[#0F766E]">schedule</span>
+                            <span>Can arrive: <strong class="text-[#1A1A2E]">Tomorrow, 11:30 AM</strong></span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Price & Actions -->
+                    <div class="flex flex-row md:flex-col items-center md:items-end justify-between border-t md:border-t-0 pt-3 md:pt-0 border-[#E2E8F0] md:min-w-[160px] flex-shrink-0">
+                      <div class="text-left md:text-right">
+                        <span class="text-xs text-[#64748B] block">Offered Quote</span>
+                        <span class="text-xl font-bold text-[#1A1A2E] leading-tight">Rs. 2,000</span>
+                        <span class="text-[11px] text-[#64748B] font-medium block">Matches Budget</span>
+                      </div>
+                      <div class="flex items-center gap-2 mt-3 w-full sm:w-auto">
+                        <a class="w-full sm:w-auto px-4 py-2 rounded-lg bg-[#0F766E] hover:bg-[#115E59] text-white text-xs font-semibold shadow-sm transition-all flex items-center justify-center gap-1.5" href="../job_details_select_worker_confirm_booking_modal_hunar/code.html">
+                          <span class="material-symbols-outlined text-[16px]">check</span>
+                          <span>Hire &amp; Confirm</span>
+                        </a>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+            </section>
+
+          </div>
+
+          <!-- Right Column: Security, Insights & Direct Assistance (4 Cols) -->
+          <div class="lg:col-span-4 flex flex-col gap-6">
+            <!-- Hunar Escrow Protection Card -->
+            <div class="bg-white rounded-xl border border-[#E2E8F0] p-6 shadow-sm">
+              <div class="flex items-center gap-3">
+                <div class="w-12 h-12 rounded-xl bg-[#0F766E]/10 flex items-center justify-center text-[#0F766E] flex-shrink-0">
+                  <span class="material-symbols-outlined text-[28px]" style="font-variation-settings: 'FILL' 1;">shield</span>
+                </div>
+                <div>
+                  <h4 class="text-base font-bold text-[#1A1A2E]">Hunar Escrow Security</h4>
+                  <span class="text-xs text-[#0F766E] font-semibold">100% Guaranteed Protection</span>
+                </div>
+              </div>
+              <p class="text-xs text-[#64748B] mt-4 leading-relaxed">Your funds are held securely in <strong class="text-[#1A1A2E]">Hunar Escrow</strong> until the job is completed to your 100% satisfaction. The worker is paid only when you approve the final handover.</p>
+              
+              <div class="mt-4 space-y-2.5 pt-4 border-t border-[#E2E8F0]">
+                <div class="flex items-start gap-2 text-xs text-[#1A1A2E]">
+                  <span class="material-symbols-outlined text-[#0F766E] text-[16px] flex-shrink-0 mt-0.5" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+                  <span>No advance cash payments required directly to workers</span>
+                </div>
+                <div class="flex items-start gap-2 text-xs text-[#1A1A2E]">
+                  <span class="material-symbols-outlined text-[#0F766E] text-[16px] flex-shrink-0 mt-0.5" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+                  <span>Full refund guarantee if technician fails to arrive</span>
+                </div>
+                <div class="flex items-start gap-2 text-xs text-[#1A1A2E]">
+                  <span class="material-symbols-outlined text-[#0F766E] text-[16px] flex-shrink-0 mt-0.5" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+                  <span>Verified Police Clearance and NADRA CNIC validation</span>
+                </div>
+              </div>
+
+              <div class="mt-4 bg-[#F8FAFC] p-3 rounded-lg flex items-center justify-between border border-[#E2E8F0]">
+                <div class="flex items-center gap-2">
+                  <span class="material-symbols-outlined text-[#F59E0B] text-[18px]">verified_user</span>
+                  <span class="text-xs font-semibold text-[#1A1A2E]">Hunar Protection Seal</span>
+                </div>
+                <span class="text-[11px] font-mono text-[#64748B] font-medium">VERIFIED-PK</span>
+              </div>
+            </div>
+
+            <!-- Quick Pro Tips Card -->
+            <div class="bg-white rounded-xl border border-[#E2E8F0] p-6 shadow-sm flex flex-col gap-3">
+              <h4 class="text-sm font-bold text-[#1A1A2E] flex items-center gap-2">
+                <span class="material-symbols-outlined text-[#0F766E] text-[18px]">lightbulb</span>
+                Pro Hiring Tip
+              </h4>
+              <p class="text-xs text-[#64748B] leading-relaxed">
+                Review verified reviews and CNIC status before hiring. You can chat directly with multiple pros to clarify parts pricing before confirming booking.
+              </p>
+              <a class="text-xs font-semibold text-[#0F766E] hover:underline inline-flex items-center gap-1 mt-1" href="../direct_chat_negotiation_hunar_customer_hub/code.html">
+                <span>Go to Direct Messages</span>
+                <span class="material-symbols-outlined text-[14px]">arrow_forward</span>
+              </a>
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+    </main>
+  </div>
+</body>
+</html>

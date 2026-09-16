@@ -1,0 +1,784 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta content="width=device-width, initial-scale=1.0" name="viewport"><title>HUNAR Customer Hub - Direct Chat &amp; Negotiation</title><link href="https://fonts.googleapis.com" rel="preconnect"><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"><style id="hunar-system-overrides">.bg-primary { background-color: #1A1A2E !important; }.text-primary { color: #1A1A2E !important; }.border-primary { border-color: #1A1A2E !important; }.bg-secondary { background-color: #0F766E !important; }.hover\:bg-secondary-hover:hover { background-color: #115E59 !important; }.text-secondary { color: #0F766E !important; }.border-secondary { border-color: #0F766E !important; }</style>
+<style>
+  html {
+    overflow-y: scroll;
+    scrollbar-gutter: stable;
+  }
+  body {
+    font-family: 'Inter', sans-serif;
+    background-color: #FFFFFF;
+    color: #1A1A2E;
+    margin: 0;
+    padding: 0;
+  }
+  aside {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  aside::-webkit-scrollbar {
+    display: none;
+  }
+</style>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script><script id="tailwind-config">
+tailwind.config = {
+  darkMode: "class",
+  theme: {
+    extend: {
+      colors: {
+        navy: "#1A1A2E",
+        teal: {
+          DEFAULT: "#0F766E",
+          dark: "#115E59",
+          light: "rgba(15, 118, 110, 0.1)"
+        },
+        orange: "#F59E0B",
+        success: "#16A34A",
+        error: "#DC2626",
+        gray: "#64748B",
+        background: "#F8FAFC",
+        border: "#E2E8F0",
+        surface: "#FFFFFF",
+        primary: "#0F766E",
+        "primary-dark": "#115E59",
+        secondary: "#1A1A2E",
+        
+        // Aliases used in templates
+        appBg: "#F8FAFC",
+        darkText: "#1A1A2E",
+        mutedText: "#64748B",
+        borderLine: "#E2E8F0",
+        "text-main": "#1A1A2E",
+        "surface-muted": "#F8FAFC",
+        "outline-border": "#E2E8F0",
+        
+        // Material Theme 3 Aliases
+        "on-surface": "#1A1A2E",
+        "on-surface-variant": "#64748B",
+        "on-background": "#1A1A2E",
+        "on-primary": "#FFFFFF",
+        "on-secondary": "#FFFFFF",
+        "on-error": "#FFFFFF",
+        "surface-container-lowest": "#FFFFFF",
+        "surface-container-low": "#F8FAFC",
+        "surface-container": "#F8FAFC",
+        "surface-container-high": "#F8FAFC",
+        "surface-container-highest": "#F8FAFC",
+        "surface-variant": "#F8FAFC",
+        "surface-tint": "#0F766E",
+        "surface-dim": "#E2E8F0",
+        "surface-bright": "#FFFFFF",
+        outline: "#64748B",
+        "outline-variant": "#E2E8F0",
+        "primary-container": "rgba(15, 118, 110, 0.1)",
+        "on-primary-container": "#0F766E",
+        "secondary-container": "rgba(26, 26, 46, 0.08)",
+        "on-secondary-container": "#1A1A2E",
+        "secondary-fixed": "rgba(15, 118, 110, 0.1)",
+        "secondary-fixed-dim": "rgba(15, 118, 110, 0.1)",
+        "on-secondary-fixed": "#1A1A2E",
+        "on-secondary-fixed-variant": "#115E59",
+        "primary-fixed": "rgba(15, 118, 110, 0.1)",
+        "primary-fixed-dim": "rgba(15, 118, 110, 0.1)",
+        "on-primary-fixed": "#1A1A2E",
+        "on-primary-fixed-variant": "#115E59",
+        "tertiary": "#F59E0B",
+        "tertiary-container": "rgba(245, 158, 11, 0.1)",
+        "on-tertiary-container": "#F59E0B",
+        "tertiary-fixed": "rgba(245, 158, 11, 0.1)",
+        "on-tertiary-fixed": "#1A1A2E",
+        "error-container": "rgba(220, 38, 38, 0.1)",
+        "on-error-container": "#DC2626",
+        "inverse-primary": "#0F766E",
+        "inverse-surface": "#1A1A2E",
+        "inverse-on-surface": "#F8FAFC"
+      },
+      spacing: {
+        "margin-desktop": "2rem",
+        "margin-tablet": "1.5rem",
+        "margin-mobile": "1rem",
+        "gutter-desktop": "1.5rem",
+        "gutter-mobile": "1rem",
+        "space-3xl": "4rem",
+        "space-2xl": "3rem",
+        "space-xl": "2rem",
+        "space-lg": "1.5rem",
+        "space-md": "1rem",
+        "space-base": "1rem",
+        "space-sm": "0.75rem",
+        "space-xs": "0.5rem",
+        "space-2xs": "0.25rem",
+        "space-xxs": "0.25rem",
+        "space-1": "0.25rem",
+        "space-2": "0.5rem",
+        "space-3": "0.75rem",
+        "space-4": "1rem",
+        "space-5": "1.25rem",
+        "space-6": "1.5rem",
+        "space-8": "2rem",
+        "space-12": "3rem",
+        "space-16": "4rem",
+        "space-20": "5rem",
+        "space-24": "6rem",
+        "space-stack-sm": "0.5rem",
+        "space-stack-md": "1rem",
+        "space-stack-lg": "1.5rem",
+        "section-gap": "2rem",
+        "gutter": "1.5rem"
+      },
+      fontSize: {
+        "stat-lg": ["28px", { lineHeight: "36px", letterSpacing: "-0.02em", fontWeight: "700" }],
+        "button-text": ["14px", { lineHeight: "20px", letterSpacing: "0.01em", fontWeight: "600" }],
+
+        "display-hero": ["48px", { lineHeight: "56px", letterSpacing: "-0.025em", fontWeight: "700" }],
+        "display-hero-mobile": ["32px", { lineHeight: "40px", letterSpacing: "-0.02em", fontWeight: "700" }],
+        "display-kpi": ["36px", { lineHeight: "44px", letterSpacing: "-0.02em", fontWeight: "700" }],
+        "display-kpi-mobile": ["28px", { lineHeight: "34px", letterSpacing: "-0.02em", fontWeight: "700" }],
+        "display-lg": ["36px", { lineHeight: "44px", letterSpacing: "-0.02em", fontWeight: "700" }],
+        "headline-page": ["28px", { lineHeight: "36px", letterSpacing: "-0.015em", fontWeight: "600" }],
+        "headline-page-mobile": ["24px", { lineHeight: "32px", letterSpacing: "-0.015em", fontWeight: "600" }],
+        "headline-section": ["20px", { lineHeight: "28px", letterSpacing: "-0.01em", fontWeight: "600" }],
+        "headline-subsection": ["16px", { lineHeight: "24px", letterSpacing: "-0.005em", fontWeight: "600" }],
+        "headline-lg": ["28px", { lineHeight: "36px", letterSpacing: "-0.015em", fontWeight: "600" }],
+        "headline-lg-mobile": ["24px", { lineHeight: "32px", letterSpacing: "-0.015em", fontWeight: "600" }],
+        "headline-md": ["20px", { lineHeight: "28px", letterSpacing: "-0.01em", fontWeight: "600" }],
+        "headline-sm": ["16px", { lineHeight: "24px", letterSpacing: "-0.005em", fontWeight: "600" }],
+        "headline-xl-mobile": ["26px", { lineHeight: "34px", letterSpacing: "-0.015em", fontWeight: "600" }],
+        "body-default": ["14px", { lineHeight: "22px", letterSpacing: "0em", fontWeight: "400" }],
+        "body-compact": ["13px", { lineHeight: "18px", letterSpacing: "0em", fontWeight: "400" }],
+        "body-strong": ["14px", { lineHeight: "22px", letterSpacing: "0em", fontWeight: "600" }],
+        "body-lg": ["16px", { lineHeight: "24px", letterSpacing: "0em", fontWeight: "400" }],
+        "body-md": ["14px", { lineHeight: "22px", letterSpacing: "0em", fontWeight: "400" }],
+        "body-md-medium": ["14px", { lineHeight: "22px", letterSpacing: "0em", fontWeight: "500" }],
+        "body-sm": ["12px", { lineHeight: "16px", letterSpacing: "0em", fontWeight: "400" }],
+        "label-badge": ["11px", { lineHeight: "14px", letterSpacing: "0.02em", fontWeight: "600" }],
+        "label-regular": ["12px", { lineHeight: "16px", letterSpacing: "0.01em", fontWeight: "500" }],
+        "label-md": ["12px", { lineHeight: "16px", letterSpacing: "0.01em", fontWeight: "500" }],
+        "label-sm": ["11px", { lineHeight: "14px", letterSpacing: "0.02em", fontWeight: "500" }],
+        "label-uppercase": ["10px", { lineHeight: "12px", letterSpacing: "0.05em", fontWeight: "700" }]
+      },
+      fontFamily: {
+        "stat-lg": ["Inter", "sans-serif"],
+        "button-text": ["Inter", "sans-serif"],
+
+        sans: ["Inter", "sans-serif"],
+        "body-default": ["Inter", "sans-serif"],
+        "body-compact": ["Inter", "sans-serif"],
+        "body-strong": ["Inter", "sans-serif"],
+        "body-md": ["Inter", "sans-serif"],
+        "body-sm": ["Inter", "sans-serif"],
+        "display-kpi": ["Inter", "sans-serif"],
+        "headline-page": ["Inter", "sans-serif"],
+        "headline-section": ["Inter", "sans-serif"],
+        "headline-subsection": ["Inter", "sans-serif"],
+        "headline-md": ["Inter", "sans-serif"],
+        "headline-sm": ["Inter", "sans-serif"],
+        "headline-lg": ["Inter", "sans-serif"],
+        "label-badge": ["Inter", "sans-serif"],
+        "label-regular": ["Inter", "sans-serif"],
+        "label-md": ["Inter", "sans-serif"],
+        "label-sm": ["Inter", "sans-serif"]
+      },
+      borderRadius: {
+        DEFAULT: "0.375rem",
+        sm: "0.25rem",
+        md: "0.375rem",
+        lg: "0.5rem",
+        xl: "0.75rem",
+        "2xl": "1rem",
+        full: "9999px"
+      }
+    }
+  }
+};
+</script></head><body class="bg-white font-sans text-[#1A1A2E]">
+  <!-- Desktop Sidebar -->
+  <aside class="fixed left-0 top-0 h-screen w-[260px] bg-white border-r border-[#E2E8F0] z-50 hidden lg:flex flex-col justify-between overflow-y-auto" style="scrollbar-width: none; -ms-overflow-style: none;">
+    <div class="p-5">
+      <!-- Brand Header -->
+      <a href="../landing page/code.html" class="flex items-center gap-3 pb-5 border-b border-[#E2E8F0] mb-4 group cursor-pointer hover:opacity-90 transition-opacity" title="Back to Landing Page">
+        <div class="w-9 h-9 rounded-xl bg-[#1A1A2E] flex items-center justify-center text-white text-[16px] font-bold">
+          <span>H</span><span class="w-1.5 h-1.5 rounded-full bg-[#0F766E] ml-0.5"></span>
+        </div>
+        <div>
+          <div class="flex items-center gap-1.5">
+            <span class="text-[16px] font-bold tracking-tight text-[#1A1A2E]">HUNAR</span>
+            <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold bg-[#0F766E]/10 text-[#0F766E] uppercase tracking-wider">PK</span>
+          </div>
+          <p class="text-[12px] font-medium text-[#64748B]">Certified Pro Marketplace</p>
+        </div>
+      </a>
+
+      <!-- Navigation List -->
+      <nav class="flex flex-col gap-1">
+        <a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] font-medium text-[#64748B] hover:bg-[#F8FAFC] hover:text-[#1A1A2E] transition-colors" data-path="customer-dashboard" href="../hunar_customer_dashboard/code.html">
+          <span class="material-symbols-outlined text-[20px]">grid_view</span>
+          <span>Dashboard</span>
+        </a>
+        <a class="flex items-center justify-between px-3 py-2.5 rounded-lg text-[13px] font-medium text-[#64748B] hover:bg-[#F8FAFC] hover:text-[#1A1A2E] transition-colors" data-path="my-jobs" href="../my_jobs_hunar_customer_hub/code.html">
+          <div class="flex items-center gap-3">
+            <span class="material-symbols-outlined text-[20px]">assignment</span>
+            <span>My Jobs</span>
+          </div>
+          <span class="px-2 py-0.5 rounded-full bg-[#F8FAFC] text-[#1A1A2E] text-[11px] font-bold">2</span>
+        </a>
+        <a class="flex items-center justify-between px-3 py-2.5 rounded-lg text-[13px] font-medium text-[#64748B] hover:bg-[#F8FAFC] hover:text-[#1A1A2E] transition-colors" data-path="offers-and-bids" href="../offers_inquiries_hunar_customer_hub/code.html">
+          <div class="flex items-center gap-3">
+            <span class="material-symbols-outlined text-[20px]">local_offer</span>
+            <span>Offers</span>
+          </div>
+          <span class="px-2 py-0.5 rounded-full bg-[#F59E0B]/10 text-[#F59E0B] text-[11px] font-bold">3</span>
+        </a>
+        <a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] font-medium text-[#64748B] hover:bg-[#F8FAFC] hover:text-[#1A1A2E] transition-colors" data-path="service-bookings" href="../scheduled_visits_arrival_tracker_hunar/code.html">
+          <span class="material-symbols-outlined text-[20px]">calendar_today</span>
+          <span>Visits</span>
+        </a>
+        <a aria-current="page" class="flex items-center justify-between px-3 py-2.5 rounded-lg bg-[#0F766E] text-white font-semibold text-[13px] shadow-sm transition-colors" data-path="messages" href="../direct_chat_negotiation_hunar_customer_hub/code.html">
+          <div class="flex items-center gap-3">
+            <span class="material-symbols-outlined text-[20px] text-white">chat</span>
+            <span class="text-white">Messages</span>
+          </div>
+          <span class="px-2 py-0.5 rounded-full bg-white text-[#0F766E] text-[11px] font-bold">2</span>
+        </a>
+        <a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] font-medium text-[#64748B] hover:bg-[#F8FAFC] hover:text-[#1A1A2E] transition-colors" data-path="payments-and-escrow" href="../payments_escrow_wallet_hunar/code.html">
+          <span class="material-symbols-outlined text-[20px]">payments</span>
+          <span>Payments</span>
+        </a>
+        <a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] font-medium text-[#64748B] hover:bg-[#F8FAFC] hover:text-[#1A1A2E] transition-colors" data-path="customer-profile" href="../customer_profile_settings_hunar/code.html">
+          <span class="material-symbols-outlined text-[20px]">person</span>
+          <span>Profile</span>
+        </a>
+        <a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] font-medium text-[#64748B] hover:bg-[#F8FAFC] hover:text-[#1A1A2E] transition-colors" data-path="help-center" href="../dispute_resolution_help_center_hunar/code.html">
+          <span class="material-symbols-outlined text-[20px]">help_center</span>
+          <span>Help Center</span>
+        </a>
+      </nav>
+    </div>
+
+    <!-- Bottom Escrow Card & User Profile -->
+    <div class="p-4 border-t border-[#E2E8F0] flex flex-col gap-3">
+      <div class="bg-[#1A1A2E] text-white p-3.5 rounded-xl flex flex-col gap-2">
+        <div class="flex items-center gap-2">
+          <span class="material-symbols-outlined text-[#0F766E] text-[18px]">verified</span>
+          <span class="text-[11px] font-bold uppercase tracking-wider text-[#0F766E]">HUNAR Escrow</span>
+        </div>
+        <p class="text-[11px] leading-snug text-slate-300">100% NADRA CNIC Verified Pros &amp; safe Raast dispute guarantee.</p>
+        <a class="inline-flex items-center justify-center py-1.5 px-3 bg-[#0F766E] text-white text-[11px] font-bold rounded-lg hover:bg-[#115E59] transition-colors" data-path="guarantee-policy" href="../dispute_resolution_help_center_hunar/code.html">View Escrow Rules</a>
+      </div>
+      <div class="flex items-center justify-between pt-1">
+        <div class="flex items-center gap-2.5">
+          <div class="w-8 h-8 rounded-full bg-[#1A1A2E] flex items-center justify-center">
+            <span class="material-symbols-outlined text-white text-[18px]">person</span>
+          </div>
+          <div class="flex flex-col">
+            <span class="text-[13px] font-semibold text-[#1A1A2E] leading-tight">Ahmed Khan</span>
+            <span class="text-[11px] font-medium text-[#64748B]">University Town, Peshawar</span>
+          </div>
+        </div>
+        <a class="text-[#64748B] hover:text-[#DC2626] transition-colors" data-path="sign-in" href="../customer_profile_settings_hunar/code.html">
+          <span class="material-symbols-outlined text-[20px]">logout</span>
+        </a>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main Content Wrapper -->
+  <div class="w-full lg:pl-[260px] min-h-screen flex flex-col bg-white">
+    <!-- Top Header Bar -->
+    <header class="fixed top-0 left-0 lg:left-[260px] right-0 h-16 bg-white border-b border-[#E2E8F0] z-40 px-4 sm:px-6 lg:px-8 flex items-center justify-between gap-4">
+      <div class="flex items-center gap-3 flex-1 max-w-lg">
+        <button aria-label="Open Menu" onclick="const s=document.querySelector('aside'); s.classList.toggle('hidden'); s.classList.toggle('flex');" class="lg:hidden p-1.5 rounded-lg text-[#64748B] hover:text-[#1A1A2E] hover:bg-[#F8FAFC] transition-colors focus:outline-none shrink-0">
+          <span class="material-symbols-outlined text-[24px]">menu</span>
+        </button>
+        <a href="../landing page/code.html" class="flex items-center gap-1.5 lg:hidden shrink-0 hover:scale-105 transition-transform" title="Back to Landing Page"><div class="w-8 h-8 rounded-lg bg-[#1A1A2E] flex items-center justify-center text-white font-bold text-[14px]">H</div></a>
+        <div class="relative w-full">
+          <span class="material-symbols-outlined absolute left-3 top-2.5 text-[#64748B] text-[20px]">search</span>
+          <input class="w-full h-10 pl-10 pr-4 text-[#1A1A2E] font-body-compact text-xs rounded-lg border border-[#E2E8F0] focus:border-[#0F766E] focus:bg-white focus:outline-none transition-all placeholder:text-[#64748B] bg-[#F8FAFC]" placeholder="Search jobs, verified technicians, booking IDs (PKR)..." type="search">
+        </div>
+      </div>
+      <div class="flex items-center gap-3 shrink-0">
+        <a href="../post_a_job_step_1_modern_service_selection/code.html" class="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-[#0F766E] hover:bg-[#115E59] text-white text-xs font-semibold shadow-sm transition-all active:scale-[0.99]">
+          <span class="material-symbols-outlined text-[16px]">add</span>
+          <span>Post a Job</span>
+        </a>
+        <a href="../offers_inquiries_hunar_customer_hub/code.html" class="relative text-[#64748B] hover:text-[#1A1A2E] transition-colors p-2 rounded-lg hover:bg-[#F8FAFC]" title="Offers & Notifications">
+          <span class="material-symbols-outlined text-[22px]">notifications</span>
+          <span class="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-[#F59E0B]"></span>
+        </a>
+        <a href="../direct_chat_negotiation_hunar_customer_hub/code.html" class="text-[#64748B] hover:text-[#1A1A2E] transition-colors p-2 rounded-lg hover:bg-[#F8FAFC]" title="Messages">
+          <span class="material-symbols-outlined text-[22px]">chat</span>
+        </a>
+        <div class="h-6 w-[1px] bg-[#E2E8F0] hidden sm:block"></div>
+        <a href="../customer_profile_settings_hunar/code.html" class="flex items-center gap-2.5 p-1 rounded-lg hover:bg-[#F8FAFC] transition-colors cursor-pointer" title="Profile Settings">
+          <div class="w-8 h-8 rounded-full bg-[#1A1A2E] flex items-center justify-center text-white font-bold text-xs">AK</div>
+          <div class="hidden xl:flex flex-col text-left">
+            <span class="text-xs font-semibold text-[#1A1A2E] leading-tight">Ahmed Khan</span>
+            <span class="text-[10px] font-medium text-[#64748B] leading-tight">University Town, Peshawar</span>
+          </div>
+          <span class="material-symbols-outlined text-[#64748B] text-[18px] hidden sm:inline-block">expand_more</span>
+        </a>
+      </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="w-full pt-16 pb-16 bg-white flex-1">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex flex-col gap-6">
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+<section class="lg:col-span-8 flex flex-col bg-white rounded-2xl border border-outline-border shadow-sm overflow-hidden min-w-0">
+<header class="p-6 bg-white border-b border-outline-border flex flex-col gap-4 left-0">
+<div class="flex flex-wrap items-center justify-between gap-4">
+<div class="flex items-center gap-4 min-w-0">
+<div class="relative flex-shrink-0">
+<img alt="Rashid Ali" class="w-14 h-14 rounded-full object-cover border border-outline-border shadow-sm" data-alt="Professional portrait of Pakistani technician Rashid Ali smiling, wearing a clean technician collared shirt, well groomed, natural studio lighting with soft navy rim, confident and professional look" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAiE-p4OjvLNTL-f2eltABwvd1nIzxor_9-BJGLG77VM6PQT3gk1C_xzbIzvvXpfg-1zfaSobhKfz_4KSUEiIXNny3ttAM6brVaSgsKxaEppur1_jU2-BvrRhswvaJzB4bxs8bWI3laKWqU2LJkh1xXQUqm_1ygJ2RUkyARoJBOuA8Tbi3Uu9mtB3_-wlDTMhpRm2LWHX9JURH_h_VZZN4BvHKUCB9JS4yuTw6NImxqLftDS0YMDdrj">
+<span class="absolute bottom-0 right-0 w-3.5 h-3.5 bg-emerald-500 rounded-full ring-2 ring-white"></span>
+</div>
+<div class="flex flex-col min-w-0">
+<div class="flex items-center gap-2 flex-wrap">
+<h2 class="text-lg font-bold text-primary tracking-tight truncate">Rashid Ali</h2>
+<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-600 font-semibold text-xs border border-emerald-500/30" style="color: rgb(22, 163, 74);">
+<span class="material-symbols-outlined text-[15px]" style="font-variation-settings: &quot;FILL&quot; 1; color: rgb(22, 163, 74);">verified</span>
+CNIC Verified
+</span>
+</div>
+<p class="text-sm text-text-muted">Master Plumber &amp; Pipefitter</p>
+<div class="flex items-center gap-3 mt-1 text-xs text-text-muted">
+<span class="flex items-center gap-1 font-semibold text-text-main">
+<span class="material-symbols-outlined text-[16px] text-amber-badge" style="font-variation-settings: &quot;FILL&quot; 1;">star</span>
+                    4.95
+                    <span class="text-text-muted font-normal">(42 reviews)</span>
+</span>
+<span class="text-outline-border">•</span>
+<span class="flex items-center gap-1 text-text-muted">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>
+                    Replies in ~3 mins
+                  </span>
+</div>
+</div>
+</div>
+<div class="flex items-center gap-2 flex-wrap self-start sm:self-auto">
+<button class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-white border border-secondary text-secondary font-semibold text-xs hover:bg-emerald-50 transition-colors shadow-sm" type="button">
+<span class="material-symbols-outlined text-[18px] text-secondary">call</span>
+<span class="">Voice Call</span>
+</button>
+<button class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-secondary hover:bg-secondary-hover text-white font-medium text-xs transition-colors shadow-sm" type="button">
+<span class="material-symbols-outlined text-[18px]">calendar_today</span>
+<span class="">Schedule Visit</span>
+</button>
+<button aria-label="Profile options" class="p-2 rounded-lg bg-surface border border-outline-border text-text-muted hover:bg-surface-muted hover:text-text-main transition-colors" type="button">
+<span class="material-symbols-outlined text-[20px]">badge</span>
+</button>
+</div>
+</div>
+<div class="p-3.5 rounded-xl bg-surface border border-outline-border flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+<div class="flex items-start sm:items-center gap-3 min-w-0">
+<div class="w-9 h-9 rounded-lg bg-white border border-outline-border flex items-center justify-center text-secondary shadow-sm flex-shrink-0">
+<span class="material-symbols-outlined text-[20px]">handyman</span>
+</div>
+<div class="flex flex-col min-w-0">
+<div class="flex items-center gap-2">
+<span class="text-[11px] font-bold uppercase tracking-wider text-secondary">Discussing Job #HN-9821</span>
+<span class="px-2 py-0.5 rounded-full bg-white text-[#0F766E] border border-outline-border text-[11px] font-semibold shadow-sm">Quote Negotiating</span>
+</div>
+<p class="text-sm font-semibold text-primary truncate mt-0.5">Kitchen Pipe Joint Leak &amp; Pressure Valve Fix</p>
+</div>
+</div>
+<div class="flex items-center gap-2 self-start sm:self-auto flex-shrink-0">
+<span class="text-xs uppercase font-medium text-text-muted">Est. Budget:</span>
+<span class="px-3 py-1 rounded-lg bg-white border border-outline-border text-primary font-bold text-sm shadow-sm">Rs. 2,000</span>
+</div>
+</div>
+</header>
+<div class="px-6 py-6 flex flex-col gap-6 bg-surface overflow-y-auto max-h-[720px] scroll-smooth" id="chat-thread">
+<div class="flex justify-center">
+<div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white border border-outline-border text-text-muted text-xs shadow-sm">
+<span class="material-symbols-outlined text-[16px] text-secondary">lock</span>
+<span class="">Chat opened. Quotes negotiated here are backed by Hunar 100% Escrow Guarantee.</span>
+</div>
+</div>
+<div class="flex items-end gap-3 max-w-[85%] self-start">
+<img alt="Rashid Ali" class="w-8 h-8 rounded-full object-cover flex-shrink-0 mb-1 border border-outline-border" data-alt="Small thumbnail avatar of Pakistani technician Rashid Ali" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBQGlr2p_0s9Eg-k0o5PwDjVH8JJM89or69L5rLw9-V6vxfFOk_D6BjJgydOjZXkqneOJYTNxvn84j32NaTv-lboQiotuA-LEpFORo3f_v3ys-95WmjFeflSH25ot1LdLwzga64MnOFGhowa3y4FGNIxDxPysgVY74aje0Sgw7m1pzHgImHLVR_LOFOvOpZ4wQc4DJvVs7rgnimIzRxKc104yCYbvNFwrzvdObo4Dp7DcP01dYNsIaV">
+<div class="flex flex-col gap-1">
+<span class="text-[11px] text-text-muted ml-1 font-medium">Rashid Ali • 2:14 PM</span>
+<div class="p-4 rounded-2xl rounded-bl-sm bg-white border border-outline-border text-text-main text-sm shadow-sm leading-relaxed">
+                Assalam-o-Alaikum Ahmed bhai, I saw your job description. Is the pipe leak inside the wall or under the sink cabinet?
+              </div>
+</div>
+</div>
+<div class="flex items-end gap-3 max-w-[85%] self-end flex-row-reverse">
+<div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white text-xs font-semibold flex-shrink-0 mb-1 shadow-sm">
+              AK
+            </div>
+<div class="flex flex-col gap-1 items-end">
+<span class="text-[11px] text-text-muted mr-1 font-medium">You • 2:16 PM</span>
+<div class="p-4 rounded-2xl rounded-br-sm bg-primary text-white text-sm shadow-sm leading-relaxed">
+                Walaikum Assalam. It is under the sink, the PPRC joint has a visible hairline crack dripping whenever the main motor runs.
+              </div>
+</div>
+</div>
+<div class="flex items-end gap-3 max-w-[88%] sm:max-w-[70%] self-start">
+<img alt="Rashid Ali" class="w-8 h-8 rounded-full object-cover flex-shrink-0 mb-1 border border-outline-border" data-alt="Small thumbnail avatar of technician Rashid" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCxZapF5hNT_lxuh_clpky4q0eoWu90c103vGjpdELwd7EYvYRiF5RNSSzN78wZ-nEbAIgu4nZINmc8zan2A75HVToNSS5jLibU6UA7cm8u65MD3C40BQqYowcnDPvDTJuOaERKz2DyPNMk8HpdKIX8tuVNV-QlYmu6l2dZrqsfyyEvSP2DQ5ijSuwamW6LQc-gSinEf8D8J5R5L2pyBtFS4v90Kq4KGpMluwopWEaTnEVOVjXF_iFE">
+<div class="flex flex-col gap-1 w-full">
+<span class="text-[11px] text-text-muted ml-1 font-medium">Rashid Ali • Voice Note • 2:18 PM</span>
+<div class="p-4 rounded-2xl rounded-bl-sm bg-white border border-outline-border shadow-sm flex flex-col gap-3">
+<div class="flex items-center gap-3">
+<button class="w-10 h-10 rounded-full bg-secondary hover:bg-secondary-hover text-white flex items-center justify-center flex-shrink-0 transition-colors shadow-sm" id="voice-play-btn" type="button">
+<span class="material-symbols-outlined text-[20px]" id="play-icon">play_arrow</span>
+</button>
+<div class="flex-1 flex flex-col gap-1.5">
+<div class="h-6 flex items-center gap-[3px] px-1 overflow-hidden" id="waveform-bars">
+<span class="w-1 h-3 rounded-full bg-secondary"></span>
+<span class="w-1 h-4 rounded-full bg-secondary"></span>
+<span class="w-1 h-6 rounded-full bg-secondary"></span>
+<span class="w-1 h-2 rounded-full bg-secondary"></span>
+<span class="w-1 h-5 rounded-full bg-secondary"></span>
+<span class="w-1 h-4 rounded-full bg-secondary"></span>
+<span class="w-1 h-6 rounded-full bg-slate-300"></span>
+<span class="w-1 h-3 rounded-full bg-slate-300"></span>
+<span class="w-1 h-5 rounded-full bg-slate-300"></span>
+<span class="w-1 h-2 rounded-full bg-slate-300"></span>
+<span class="w-1 h-6 rounded-full bg-slate-300"></span>
+<span class="w-1 h-4 rounded-full bg-slate-300"></span>
+<span class="w-1 h-2 rounded-full bg-slate-300"></span>
+<span class="w-1 h-5 rounded-full bg-slate-300"></span>
+<span class="w-1 h-3 rounded-full bg-slate-300"></span>
+<span class="w-1 h-1 rounded-full bg-slate-300"></span>
+</div>
+<div class="flex items-center justify-between text-text-muted text-xs">
+<span id="current-time" class="">0:12</span>
+<span class="">0:28</span>
+</div>
+</div>
+<button class="px-2 py-1 rounded bg-surface border border-outline-border text-xs font-semibold text-primary hover:bg-surface-muted transition-colors" type="button">
+                    1.0x
+                  </button>
+</div>
+<div class="pt-2 flex items-start gap-2 bg-surface p-2.5 rounded-lg border border-outline-border/60">
+<span class="material-symbols-outlined text-[16px] text-secondary flex-shrink-0 mt-0.5">subtitles</span>
+<p class="text-xs text-text-muted italic leading-relaxed">
+                    “Ji theek hai, main seal ring aur pipe joint sath le aao ga. Proper fusion welding karni paregi taake dobara leak na ho.”
+                  </p>
+</div>
+</div>
+</div>
+</div>
+<div class="flex items-end gap-3 max-w-[85%] self-end flex-row-reverse">
+<div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white text-xs font-semibold flex-shrink-0 mb-1 shadow-sm">
+              AK
+            </div>
+<div class="flex flex-col gap-1 items-end">
+<span class="text-[11px] text-text-muted mr-1 font-medium">You • Photo Attachment • 2:20 PM</span>
+<div class="p-3 rounded-2xl rounded-br-sm bg-primary text-white shadow-sm flex flex-col gap-2 max-w-sm">
+<div class="relative rounded-xl overflow-hidden group border border-white/10">
+<img alt="Leaking pipe evidence" class="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300" data-alt="Close up view under modern kitchen sink cabinet showing grey PPRC water pipes with visible hairline crack fitting and subtle clean water moisture droplet forming, realistic residential plumbing repair context" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD-RPRhsDP00WA8AyumZJwnoNzblPpLBHY0gZwlhK3S1cNoS6R_DoBLRxCokb56hw0D8V6UmLm-tobtfYXr8SmvSZz01WH7qw-MHe5SEGzBkkX88t7I0AsaUv8bjvcseb1rCPdQLrWNt2d41V7l5VcLGAxNnd88pIGHDViUS0ZNhZsnHEsxRG0FqVKBkuwwYLAaMlFtMNKxXcMtyzblaMDJmDfmpfOlWNhz4_ARcigFQtNohrS0u-Pg">
+<div class="absolute bottom-2 left-2 right-2 bg-primary/90 backdrop-blur-sm px-3 py-1.5 rounded-lg flex items-center gap-2 border border-white/10">
+<span class="material-symbols-outlined text-[16px] text-amber-badge">water_drop</span>
+<span class="text-xs text-white truncate">Water dripping here at 1 drop/sec</span>
+</div>
+</div>
+<p class="text-xs px-1 text-slate-200">Here is the exact elbow joint under the kitchen sink.</p>
+</div>
+</div>
+</div>
+<div class="flex items-end gap-3 max-w-[92%] sm:max-w-[80%] self-start w-full">
+<img alt="Rashid Ali" class="w-8 h-8 rounded-full object-cover flex-shrink-0 mb-1 border border-outline-border" data-alt="Small thumbnail avatar of technician Rashid" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB2qRXYXPKz-45BT-C1r3qCFuJA_pl-C47y2xF6Nh3Vk7Tuv9Gc0G8c1j56ooYUWaBdVTrIBBgIGeEPZMMX9guV8axjgeWzKPf7hz3NuPTk61BlYkJSHo8anNpc3kMGhvBAcMqcoS8G94bbUunTR4SBL8y67dNLKH95gEeSdE1GTjDGefEZoWO0fsgDgfoztfsAlhsnMbiEwN29U7giH68MG2-DrVHql-u8yRCPGSlTJFLu6HYADT1p">
+<div class="flex flex-col gap-1 w-full min-w-0">
+<span class="text-[11px] text-text-muted ml-1 font-medium">Rashid Ali • Diagnostic &amp; Proposal • 2:22 PM</span>
+<div class="w-full rounded-2xl rounded-bl-sm overflow-hidden bg-white border border-outline-border shadow-sm">
+<div class="p-4 bg-primary text-white flex items-center justify-between">
+<div class="flex items-center gap-2.5">
+<div class="w-8 h-8 rounded-lg bg-white/15 flex items-center justify-center">
+<span class="material-symbols-outlined text-[18px] text-emerald-300">receipt_long</span>
+</div>
+<div>
+<h3 class="font-bold text-sm leading-none text-white">Official Revised Pro Proposal</h3>
+<p class="text-xs text-slate-300 mt-1">Job #HN-9821 • PPRC Joint Replacement</p>
+</div>
+</div>
+<span class="px-2.5 py-1 rounded-full bg-secondary text-white text-xs font-semibold uppercase tracking-wider">Fixed Price</span>
+</div>
+<div class="p-5 flex flex-col gap-4">
+<div class="flex flex-col gap-2.5 pb-4 bg-surface p-3.5 rounded-xl border border-outline-border">
+<div class="flex justify-between items-center text-sm">
+<span class="text-text-muted flex items-center gap-2">
+<span class="material-symbols-outlined text-[16px] text-text-muted">build</span>
+                        Labor &amp; PPRC Heat Fusion Welding
+                      </span>
+<span class="font-bold text-primary">Rs. 1,200</span>
+</div>
+<div class="flex justify-between items-center text-sm">
+<span class="text-text-muted flex items-center gap-2">
+<span class="material-symbols-outlined text-[16px] text-text-muted">inventory_2</span>
+                        PPRC High-Pressure Coupler &amp; Seal Ring
+                      </span>
+<span class="font-bold text-primary">Rs. 600</span>
+</div>
+<div class="h-px bg-outline-border my-1"></div>
+<div class="flex justify-between items-center">
+<div class="flex flex-col">
+<span class="font-bold text-sm text-primary">Total Payable via Escrow</span>
+<span class="text-xs text-text-muted">No hidden charges • Funds held safely</span>
+</div>
+<span class="text-lg font-bold text-secondary">Rs. 1,800</span>
+</div>
+</div>
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+<div class="flex items-center gap-2.5 p-3 rounded-xl bg-surface border border-outline-border">
+<span class="material-symbols-outlined text-[20px] text-secondary">verified</span>
+<div class="flex flex-col">
+<span class="font-semibold text-xs text-primary">7-Day Warranty</span>
+<span class="text-xs text-text-muted">Free rework guarantee included</span>
+</div>
+</div>
+<div class="flex items-center gap-2.5 p-3 rounded-xl bg-surface border border-outline-border">
+<span class="material-symbols-outlined text-[20px] text-amber-badge">schedule</span>
+<div class="flex flex-col">
+<span class="font-semibold text-xs text-primary">Today in ~90 mins</span>
+<span class="text-xs text-text-muted">Arrival by 3:30 PM confirmed</span>
+</div>
+</div>
+</div>
+<div class="pt-2 flex flex-col sm:flex-row items-center gap-3">
+<button class="w-full sm:flex-1 py-2.5 px-5 rounded-lg bg-secondary hover:bg-secondary-hover text-white font-semibold text-sm shadow-sm transition-colors flex items-center justify-center gap-2" type="button">
+<span class="material-symbols-outlined text-[18px]">lock_open</span>
+<span class="">Accept &amp; Deposit to Escrow (Rs. 1,800)</span>
+</button>
+<button class="w-full sm:w-auto py-2.5 px-5 rounded-lg bg-white hover:bg-emerald-50 border border-secondary text-secondary font-semibold text-sm transition-colors flex items-center justify-center gap-1.5" type="button">
+<span class="material-symbols-outlined text-[18px]">swap_horiz</span>
+<span class="">Counter Offer</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="p-4 bg-white border-t border-outline-border flex flex-col gap-3">
+<div class="flex items-center gap-2 overflow-x-auto pb-1">
+<span class="text-xs font-bold uppercase text-text-muted flex-shrink-0">Suggested:</span>
+<button class="quick-chip px-3 py-1.5 rounded-full bg-surface hover:bg-surface-muted border border-outline-border text-primary text-xs font-medium whitespace-nowrap transition-colors" type="button">
+              Can you arrive earlier?
+            </button>
+<button class="quick-chip px-3 py-1.5 rounded-full bg-surface hover:bg-surface-muted border border-outline-border text-primary text-xs font-medium whitespace-nowrap transition-colors" type="button">
+              Is parts cost included?
+            </button>
+<button class="quick-chip px-3 py-1.5 rounded-full bg-surface hover:bg-surface-muted border border-outline-border text-primary text-xs font-medium whitespace-nowrap transition-colors" type="button">
+              Please share CNIC verification
+            </button>
+</div>
+<form class="flex items-center gap-2" id="chat-form">
+<button aria-label="Upload photo or doc" class="p-2.5 rounded-lg text-text-muted hover:bg-surface-muted hover:text-text-main transition-colors border border-outline-border" type="button">
+<span class="material-symbols-outlined text-[20px]">attach_file</span>
+</button>
+<button aria-label="Record voice note" class="p-2.5 rounded-lg text-text-muted hover:bg-surface-muted hover:text-red-600 transition-colors border border-outline-border relative" id="record-voice-btn" type="button">
+<span class="material-symbols-outlined text-[20px]">mic</span>
+</button>
+<div class="flex-1 relative">
+<input class="w-full py-2.5 pl-4 pr-10 rounded-lg bg-surface border border-outline-border text-text-main text-sm placeholder:text-text-muted focus:outline-none focus:border-secondary focus:bg-white transition-colors" id="message-input" placeholder="Write a message in Urdu or English..." type="text">
+</div>
+<button class="px-5 py-2.5 rounded-lg bg-secondary hover:bg-secondary-hover text-white font-medium text-sm shadow-sm transition-colors flex items-center gap-2 flex-shrink-0" type="submit">
+<span class="">Send</span>
+<span class="material-symbols-outlined text-[18px]">send</span>
+</button>
+</form>
+</div>
+</section>
+<aside class="lg:col-span-4 flex-col gap-6 hidden md:flex">
+<div class="p-6 rounded-2xl bg-white border border-outline-border shadow-sm flex flex-col gap-4">
+<div class="flex items-center justify-between">
+<span class="text-xs font-bold uppercase tracking-wider text-text-muted">Job Details</span>
+<span class="px-2.5 py-0.5 rounded-full bg-slate-50 border border-outline-border text-[#0F766E] text-xs font-semibold">Assigned Request</span>
+</div>
+<div>
+<h3 class="text-base font-bold text-primary leading-snug">Kitchen Pipe Joint Leak &amp; Pressure Valve Fix</h3>
+<p class="text-xs text-text-muted mt-1">Posted today at 1:45 PM • ID: #HN-9821</p>
+</div>
+<div class="p-4 rounded-xl bg-surface border border-outline-border flex flex-col gap-3">
+<div class="flex items-start gap-3">
+<span class="material-symbols-outlined text-[20px] text-secondary mt-0.5">location_on</span>
+<div class="flex flex-col">
+<span class="font-semibold text-xs text-primary">Service Location</span>
+<span class="text-xs text-text-muted leading-relaxed">
+                  House 45, Street 12, Gulberg III, Lahore
+                </span>
+<span class="text-[11px] text-text-muted/80 mt-0.5">Near Mini Market roundabout</span>
+</div>
+</div>
+<div class="h-px bg-outline-border"></div>
+<div class="flex items-center justify-between">
+<span class="text-xs text-text-muted">Client Posted Budget:</span>
+<span class="font-bold text-sm text-primary">Rs. 2,000</span>
+</div>
+</div>
+<div class="flex items-center justify-between text-text-muted text-xs pt-1">
+<span class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[16px] text-text-muted">visibility</span>
+              3 Active Offers Received
+            </span>
+<a class="text-secondary font-semibold hover:underline" href="#">View Job Card</a>
+</div>
+</div>
+<div class="p-6 rounded-2xl bg-white border border-outline-border shadow-sm flex flex-col gap-4">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-xl bg-emerald-50 border border-emerald-500/20 flex items-center justify-center shadow-sm" style="color: rgb(22, 163, 74);">
+<span class="material-symbols-outlined text-[22px]">verified_user</span>
+</div>
+<div>
+<h3 class="font-bold text-sm text-primary">Verified Hunar Pro</h3>
+<p class="text-xs text-text-muted">Screened &amp; Field-Audited</p>
+</div>
+</div>
+<div class="space-y-3">
+<div class="flex items-center justify-between p-3 rounded-xl bg-surface border border-outline-border">
+<div class="flex items-center gap-2.5">
+<span class="material-symbols-outlined text-[18px] text-secondary">policy</span>
+<span class="text-xs font-medium text-text-main">Police Character Record</span>
+</div>
+<span class="text-xs font-bold uppercase bg-emerald-50 px-2.5 py-0.5 rounded border border-emerald-500/20" style="color: rgb(22, 163, 74);">Clear</span>
+</div>
+<div class="flex items-center justify-between p-3 rounded-xl bg-surface border border-outline-border">
+<div class="flex items-center gap-2.5">
+<span class="material-symbols-outlined text-[18px] text-amber-badge">task_alt</span>
+<span class="text-xs font-medium text-text-main">Completion Ratio</span>
+</div>
+<span class="text-xs font-bold text-primary">100% (42/42)</span>
+</div>
+</div>
+<div class="p-3.5 rounded-xl bg-surface border border-outline-border flex items-center gap-3">
+<div class="w-8 h-8 rounded-lg bg-white border border-outline-border flex items-center justify-center text-amber-badge flex-shrink-0 shadow-sm">
+<span class="material-symbols-outlined text-[18px]">military_tech</span>
+</div>
+<div class="flex flex-col min-w-0">
+<span class="font-semibold text-xs text-primary">Top Rated Badge</span>
+<span class="text-xs text-text-muted truncate">Consistently scored 4.9+ in Gulberg</span>
+</div>
+</div>
+</div>
+<div class="p-6 rounded-2xl bg-primary text-white shadow-sm flex flex-col gap-4 relative overflow-hidden border border-primary" style="background-color: rgb(26, 26, 46); border-color: rgb(26, 26, 46);">
+<div class="flex items-center gap-2.5">
+<div class="w-8 h-8 rounded-lg bg-white/15 flex items-center justify-center text-emerald-300">
+<span class="material-symbols-outlined text-[18px]">security</span>
+</div>
+<h4 class="font-bold text-sm text-white">Hunar Escrow Protection</h4>
+</div>
+<p class="text-xs text-slate-300 leading-relaxed">
+            Never hand cash to technicians directly. Paying online locks your funds in safe escrow and activates the <strong class="text-white">5-Day Free Rework Guarantee</strong>.
+          </p>
+<div class="flex flex-col gap-2 pt-1">
+<div class="flex items-center gap-2 text-xs text-slate-200">
+<span class="material-symbols-outlined text-[16px] text-secondary">check_circle</span>
+<span class="">Released only after your satisfaction confirmation</span>
+</div>
+<div class="flex items-center gap-2 text-xs text-slate-200">
+<span class="material-symbols-outlined text-[16px] text-secondary">check_circle</span>
+<span class="">Dispute assistance within 2 hours</span>
+</div>
+<div class="pt-2">
+  <a class="inline-flex items-center gap-1 text-xs font-semibold text-emerald-300 hover:text-white transition-colors" href="#">
+    <span>Read Escrow Buyer Terms</span>
+    <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
+  </a>
+</div>
+</div>
+</div>
+</aside>
+</div>
+</div>
+</main>
+</div>
+
+<script>
+  (function() {
+    const input = document.getElementById('message-input');
+    const form = document.getElementById('chat-form');
+    const thread = document.getElementById('chat-thread');
+    const voicePlayBtn = document.getElementById('voice-play-btn');
+    const playIcon = document.getElementById('play-icon');
+    const recordVoiceBtn = document.getElementById('record-voice-btn');
+    const currentTimeEl = document.getElementById('current-time');
+    const chips = document.querySelectorAll('.quick-chip');
+
+    if (chips) {
+      chips.forEach(chip => {
+        chip.addEventListener('click', () => {
+          if (input) {
+            input.value = chip.textContent.trim();
+            input.focus();
+          }
+        });
+      });
+    }
+
+    let isPlaying = false;
+    let timer = null;
+    let seconds = 12;
+
+    if (voicePlayBtn && playIcon && currentTimeEl) {
+      voicePlayBtn.addEventListener('click', () => {
+        isPlaying = !isPlaying;
+        if (isPlaying) {
+          playIcon.textContent = 'pause';
+          timer = setInterval(() => {
+            seconds--;
+            if (seconds >= 0) {
+              const secStr = seconds < 10 ? '0' + seconds : seconds;
+              currentTimeEl.textContent = `0:${secStr}`;
+            } else {
+              isPlaying = false;
+              seconds = 12;
+              playIcon.textContent = 'play_arrow';
+              clearInterval(timer);
+              currentTimeEl.textContent = '0:00';
+            }
+          }, 1000);
+        } else {
+          playIcon.textContent = 'play_arrow';
+          clearInterval(timer);
+        }
+      });
+    }
+
+    let isRecording = false;
+    if (recordVoiceBtn && input) {
+      recordVoiceBtn.addEventListener('click', () => {
+        isRecording = !isRecording;
+        if (isRecording) {
+          recordVoiceBtn.classList.add('bg-red-50', 'text-red-600', 'border-red-200');
+          input.placeholder = 'Recording voice note... click mic again to send';
+        } else {
+          recordVoiceBtn.classList.remove('bg-red-50', 'text-red-600', 'border-red-200');
+          input.placeholder = 'Write a message in Urdu or English...';
+          postUserMessage('🎤 Voice note sent (0:09)');
+        }
+      });
+    }
+
+    function postUserMessage(msgText) {
+      if (!msgText || !msgText.trim() || !thread) return;
+      const msgWrapper = document.createElement('div');
+      msgWrapper.className = 'flex items-end gap-3 max-w-[85%] self-end flex-row-reverse';
+      msgWrapper.innerHTML = `
+        <div class="w-8 h-8 rounded-full bg-[#0F766E] flex items-center justify-center text-white text-xs font-semibold flex-shrink-0 mb-1 shadow-sm">
+          AK
+        </div>
+        <div class="flex flex-col gap-1 items-end">
+          <span class="text-[11px] text-[#64748B] mr-1 font-medium">You • Just now</span>
+          <div class="p-4 rounded-2xl rounded-br-sm bg-[#0F766E] text-white text-sm shadow-sm leading-relaxed">
+            ${msgText}
+          </div>
+        </div>
+      `;
+      thread.appendChild(msgWrapper);
+      thread.scrollTop = thread.scrollHeight;
+    }
+
+    if (form && input) {
+      form.addEventListener('submit', (e) => {
+        e.preventDefault();
+        if (!input.value.trim()) return;
+        postUserMessage(input.value);
+        input.value = '';
+      });
+    }
+  })();
+</script>
+</body>
+</html>

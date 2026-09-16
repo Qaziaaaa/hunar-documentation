@@ -1,0 +1,953 @@
+<!DOCTYPE html><html class="stitch-anim-fade-in" lang="en" style="scroll-behavior: smooth; height: auto; min-height: 100vh !important;"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>HUNAR - Trusted Skilled Services &amp; Freelance Marketplace</title>
+<!-- Google Fonts: Inter -->
+<link href="https://fonts.googleapis.com" rel="preconnect">
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&amp;display=swap" rel="stylesheet">
+<!-- Tailwind CSS v3 with forms & container queries -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+          },
+          colors: {
+            brand: {
+              top: '#1B3B36',
+              topborder: '#2A4D47',
+              hero: '#1F4B3F',
+              heroDark: '#163E34',
+              accent: '#5BBB7B',
+              accentHover: '#4faa6f',
+              dark: '#0e2923'
+            }
+          }
+        }
+      }
+    }
+  </script>
+<style data-purpose="freeio-pixel-accurate">
+    body {
+      font-family: 'Inter', sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+    .hero-topo {
+      background-color: #1F4B3F;
+      background-image: radial-gradient(circle at 10% 20%, rgba(91, 187, 123, 0.08) 0%, transparent 40%),
+                        radial-gradient(circle at 90% 80%, rgba(91, 187, 123, 0.06) 0%, transparent 45%);
+    }
+    .curved-sheet {
+      border-top-left-radius: 48px;
+      border-top-right-radius: 48px;
+    }
+    .arch-card-left {
+      border-radius: 180px 180px 32px 32px;
+    }
+    .arch-card-right {
+      border-radius: 220px 220px 32px 32px;
+    }
+  </style>
+<style data-purpose="scroll-fix">
+html, body {
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  height: auto !important;
+  min-height: 100% !important;
+  scroll-behavior: smooth;
+}
+</style></head>
+<body class="bg-gray-50 text-slate-800 antialiased selection:bg-[#5BBB7B] selection:text-white" style="overflow-y: auto !important; height: auto !important; min-height: 100vh !important;">
+<!-- BEGIN: TopUtilityBar (1:1 Freeio Header Spruce Bar) -->
+<aside class="bg-[#1B3B36] text-[#A2B8B3] text-xs border-b border-[#2A4D47] py-2" data-purpose="top-utility-bar">
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row justify-between items-center gap-2">
+<div class="flex items-center space-x-3 text-[11px] sm:text-xs">
+<span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-[#5BBB7B]/20 text-[#5BBB7B]">Verified Platform</span>
+<span class="text-slate-200">Peshawar, Twin Cities&nbsp;</span>
+</div>
+<div class="flex items-center space-x-6 text-[11px] sm:text-xs text-slate-200">
+<span class="flex items-center gap-1 text-slate-300">Currency: <strong class="text-white font-medium">PKR (Rs.)</strong></span>
+<a class="hover:text-white transition-colors" href="#help">Help Center</a>
+<a class="hover:text-white transition-colors flex items-center gap-1" href="#lang">
+<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+        English / Urdu
+      </a>
+</div>
+</div>
+</aside>
+<!-- END: TopUtilityBar -->
+<!-- BEGIN: MainNavbar (1:1 Freeio Header Layout) -->
+<header class="bg-[#1F4B3F] border-b border-white/10 sticky top-0 z-50 backdrop-blur-md bg-opacity-95" data-purpose="main-header">
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+<!-- Left: Brand Logo & Categories Button -->
+<div class="flex items-center space-x-6">
+<a class="flex items-center" href="#">
+<img alt="HUNAR Logo" class="h-10 w-auto object-contain" src="https://lh3.googleusercontent.com/aida/AEtjO1WP5TaDTqi2Td33jsa5rcU5JMa96C9tEPOFTWDkfzhqfQMHNVASmguztAqEWCj84yPE-W3cAI2H7D4R8jvFM2WUNCPLGVAeuw2onZbGAPdKD9Q6xyqctAfBINh3NSw9xvku0khCh-wJTDrak6FWUbRKYzzfrrwG5CpV-t9Cg66hsrE7dllMuMF49FMV2R_KWCJfq-hrzNnCnsBKk3zX4J3dBmj7oeKvbKd-3TvxSwn4HRerRC8hSjWNpXmU">
+</a>
+<!-- Categories Button with 4-square grid icon -->
+<button class="hidden lg:flex items-center space-x-2.5 bg-white/10 hover:bg-white/15 text-white text-xs font-semibold px-4 py-2.5 rounded-full border border-white/15 transition duration-150">
+<svg class="w-3.5 h-3.5 text-white" fill="currentColor" viewBox="0 0 20 20">
+<path d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5zM5 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2H5zM11 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V5zM11 13a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path>
+</svg>
+<span class="">Categories</span>
+<svg class="w-3 h-3 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"></path></svg>
+</button>
+</div>
+<!-- Center Navigation Links -->
+<nav aria-label="Main Navigation" class="hidden xl:flex items-center space-x-7 text-sm font-medium text-slate-200">
+</nav>
+<!-- Right Actions -->
+<div class="flex items-center space-x-5">
+<button aria-label="Search" class="text-slate-200 hover:text-white transition">
+<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+</button>
+<a class="bg-white hover:bg-slate-100 text-[#1F4B3F] text-xs sm:text-sm font-bold px-5 py-2.5 rounded-full shadow transition-all duration-200" href="#post-job">Get started</a>
+</div>
+</div>
+</header>
+<!-- END: MainNavbar -->
+<!-- BEGIN: HeroSection (1:1 Pixel Match with Freeio Template) -->
+<section class="hero-topo text-white pt-12 lg:pt-20 relative overflow-hidden pb-16" data-purpose="hero-section" id="home">
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 items-center">
+<!-- Left Hero Column -->
+<div class="lg:col-span-7 space-y-7">
+<h1 class="text-4xl sm:text-5xl lg:text-[54px] font-bold tracking-tight text-white leading-[1.18]">
+          Find the perfect skilled services <span class="text-[#5BBB7B]">for your home &amp; business</span>
+</h1>
+<p class="text-slate-200 text-base sm:text-lg max-w-xl font-normal leading-relaxed">
+          Work with talented certified tradespeople at the most affordable price to get the most out of your time and cost.
+        </p>
+<!-- Freeio Iconic Rounded Search Pill -->
+<div class="bg-white p-2 rounded-2xl sm:rounded-full shadow-2xl flex flex-col sm:flex-row items-center gap-2 max-w-2xl">
+<!-- Keyword Input -->
+<div class="flex items-center w-full px-4 py-2">
+<svg class="w-5 h-5 text-slate-400 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"></path></svg>
+<input class="w-full bg-transparent border-0 text-slate-800 placeholder-slate-400 text-sm focus:ring-0 p-0 font-medium" placeholder="What are you looking for?" type="text">
+</div>
+<!-- Divider -->
+<div class="hidden sm:block w-px h-8 bg-slate-200"></div>
+<!-- Category Selector -->
+<div class="flex items-center w-full sm:w-auto px-4 py-2">
+<select class="w-full sm:w-44 bg-transparent border-0 text-slate-700 text-sm focus:ring-0 p-0 font-medium cursor-pointer">
+<option value="">Choose Category</option>
+<option>HVAC &amp; AC Cooling</option>
+<option>Electrical &amp; Solar</option>
+<option>Plumbing &amp; Sanitary</option>
+<option>Woodwork &amp; Fitout</option>
+<option>House Paint &amp; Polish</option>
+</select>
+</div>
+<!-- Search Button -->
+<button class="w-full sm:w-auto bg-[#5BBB7B] hover:bg-[#4faa6f] text-white text-sm font-semibold px-8 py-3.5 rounded-xl sm:rounded-full transition-all duration-200 flex-shrink-0 flex items-center justify-center shadow-md">
+            Search
+          </button>
+</div>
+<!-- 4-Counter Metrics Row (Exact Freeio numbers & structure) -->
+<div class="pt-6 grid grid-cols-2 sm:grid-cols-4 gap-6 max-w-2xl"><div class="">
+<div class="text-2xl sm:text-3xl font-extrabold text-white">834M</div>
+<div class="text-xs text-slate-300 font-normal mt-0.5">Skilled Tradespeople</div>
+</div>
+<div class="">
+<div class="text-2xl sm:text-3xl font-extrabold text-white">732M</div>
+<div class="text-xs text-slate-300 font-normal mt-0.5">Positive Reviews</div>
+</div>
+<div class="">
+<div class="text-2xl sm:text-3xl font-extrabold text-white">90M</div>
+<div class="text-xs text-slate-300 font-normal mt-0.5">Orders Completed</div>
+</div>
+<div class="">
+<div class="text-2xl sm:text-3xl font-extrabold text-white">236M</div>
+<div class="text-xs text-slate-300 font-normal mt-0.5">Projects Completed</div>
+</div></div>
+</div>
+<!-- Right Freeio Arched Double Card Composition -->
+<div class="lg:col-span-5 relative flex justify-center items-center">
+<div class="relative w-full max-w-lg flex items-end justify-center gap-4">
+<!-- Left Foreground Arch: Pakistani AC Technician Tariq Mehmood -->
+<div class="w-1/2 arch-card-left overflow-hidden shadow-2xl border-4 border-white/20 bg-slate-800 relative z-20 aspect-[3/4.6] group">
+<img alt="Pakistani AC Specialist Tariq Mehmood" class="w-full h-full object-cover group-hover:scale-105 transition duration-500" src="https://lh3.googleusercontent.com/aida/AEtjO1X60Jg_25HShTAnk_AFw6WozyWFHtrcq5Vuu-PFRlv6Lso3CZI-KH7532vok6n7pph72NkpVZOjri6IVNfZCNicLdMqDJbI_IP2TMWZBBgX18EiCAsJN1U00Lc3yH60AkIdIY62WDr1CvKES00cuqsKLHW2rK1UROgv2X38dcoBfjSpXuPRSeV1k6PtP2r_U2-QML_0FCLaImpGO4NDwrWtiD9D5dkHCn6fwnwTbZGttnEdoi4iCVZ4_XuI">
+<div class="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent"></div>
+<div class="absolute bottom-4 left-4 right-4 text-white">
+<span class="text-xs font-semibold text-[#5BBB7B]">Tariq Mehmood</span>
+<p class="text-[11px] text-slate-200">Senior HVAC Specialist</p>
+</div>
+</div>
+<!-- Right Background Arch: Maqsood Raza - Certified DB Expert & Wiring -->
+<div class="w-1/2 arch-card-right overflow-hidden shadow-2xl border-4 border-white/20 bg-slate-800 relative z-10 aspect-[3/5] -translate-y-8 group">
+<img alt="Maqsood Raza - Certified DB Expert &amp; Wiring" class="w-full h-full object-cover group-hover:scale-105 transition duration-500" src="https://lh3.googleusercontent.com/aida/AEtjO1XNw8-iVrsaCh9ZAcBy3RyivQL9SmwSW6OZHFa87l08iKWwr-13T-pm1YQCFhaAq3mUiWDdWBeOLHjW3VXPyXmo9iunSB8BYUpVY-NV19sd-pkT0u-fElYJ3B98u0mUNlRRrvkDerFup1Zr4tdT_oiLvgPXt8gfj210B6tBUSkHc_dcThjURwEtSVnz__31UXq2HKA8Ll8gELpzA_VeOrPX4UyCObfxqo4qjuRrRn8ip0ZYMIZiQgkvKs4">
+<div class="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent"></div>
+<div class="absolute bottom-4 left-4 right-4 text-white">
+<span class="text-xs font-semibold text-[#5BBB7B]">Maqsood Raza</span>
+<p class="text-[11px] text-slate-200">Certified DB Expert &amp; Wiring</p>
+</div>
+</div>
+<!-- Top-Left Floating Badge: Proof of quality -->
+<div class="absolute -top-4 -left-4 z-30 bg-white/95 backdrop-blur text-slate-800 px-4 py-2.5 rounded-2xl shadow-xl border border-slate-100 flex items-center space-x-3">
+<div class="w-9 h-9 rounded-full bg-emerald-100 text-[#5BBB7B] flex items-center justify-center flex-shrink-0">
+<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"></path></svg>
+</div>
+<div>
+<p class="text-xs font-bold text-slate-900 leading-tight">Proof of quality</p>
+<p class="text-[11px] text-slate-500">100% CNIC &amp; Police Verified</p>
+</div>
+</div>
+<!-- Bottom-Right Floating Badge: Safe and secure -->
+<div class="absolute -bottom-6 -right-2 z-30 bg-white/95 backdrop-blur text-slate-800 px-4 py-2.5 rounded-2xl shadow-xl border border-slate-100 flex items-center space-x-3">
+<div class="w-9 h-9 rounded-full bg-teal-50 text-[#1F4B3F] flex items-center justify-center flex-shrink-0">
+<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"></path></svg>
+</div>
+<div>
+<p class="text-xs font-bold text-slate-900 leading-tight">Safe and secure</p>
+<p class="text-[11px] text-slate-500">Escrow milestone release</p>
+</div>
+</div>
+<!-- Bottom Floating Pro Avatar Pill -->
+<div class="absolute -bottom-4 left-6 z-30 bg-white/95 backdrop-blur border border-slate-100 text-slate-800 px-3.5 py-2 rounded-full shadow-2xl flex items-center space-x-2.5">
+<span class="text-xs font-bold text-slate-900">58M+ Professionals</span>
+<div class="flex -space-x-2 overflow-hidden">
+<img alt="pro" class="inline-block h-6 w-6 rounded-full ring-2 ring-white object-cover" src="https://lh3.googleusercontent.com/aida/AEtjO1WlUxdgskkRmngrQvI64wmtYGu4IcBFFtFivbOmX-LMyqHHZZa-qPUnxcd1WYcWPE2MGwE8zh8Nz5t2yf3SLYN3EOspGivibDxTF_rK_m3nVwj0y7Fe3hpBI5NCXY_DsfGx8wV5bHTyASuvcauN5AOKWPKt32uZQSB8jmMRBOeEI--1Q5pOJCP6voDvQRsuYInge7-Hk3symj7pkpX-Zb-sGOLPBPmtwISkBFhyVuWCysl3PrXHSnlO4HY">
+<img alt="pro" class="inline-block h-6 w-6 rounded-full ring-2 ring-white object-cover" src="https://lh3.googleusercontent.com/aida/AEtjO1WYMHNHLhCwTSUk_WPfNMrRKnLuzSLVYcOCPX0wlpB7UMjp0nc9omJWvdvQWwVETla6a0CL4r64pE0wFFLYQUUnCkYvkrT0jVoftomJ4zy2wuV90DWdbSCnEBYCqgGmuEwuLGkCaZqFgVIeldifvSlmvQCzdwlkqXAdJ67wVT7eutUHKjlIzaFf6itgvuObiZAjab1M-tjhYF3f7qKaf1DmCiInKYTvLFMncIGa_kqrUEvmyVw5ocG8Fb51">
+<img alt="pro" class="inline-block h-6 w-6 rounded-full ring-2 ring-white object-cover" src="https://lh3.googleusercontent.com/aida/AEtjO1Xl5vnZ-maILw2JkZaq-pQXWcSp2uYcAez3cpBSSmTCWXpFcr0Cp74E5R2u0HJbejIpe8XIAqvGskNQi9lPYCDHwVVPAPWj5s67uUvd_SVB0gcKDSvJRPQAYQbVcC2HJwWdAovvPtdyqvh9gvKVr2OqEVGUqhDMDiSRb0fsL-O1lVoU1tsBxco8gBDQMAjLNp-NjOm54Evx2-l5JkHWu81U1rhUs3O2YPWxjZQbhrU6yiHTn_ocgpKwMNE">
+<div class="inline-block h-6 w-6 rounded-full ring-2 ring-white bg-[#5BBB7B] flex items-center justify-center text-[10px] font-bold text-white">+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- END: HeroSection -->
+<!-- BEGIN: "Need something done?" 4-Step Feature Row -->
+<section class="relative z-20 bg-slate-50 py-12" data-purpose="features-overview" id="how-it-works">
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+<div class="text-center max-w-3xl mx-auto mb-10"><h2 class="text-3xl sm:text-4xl md:text-5xl font-bold text-slate-900 tracking-tight leading-tight mb-3">Need something done?</h2><p class="text-slate-500 text-sm sm:text-base leading-relaxed font-normal">Most viewed and all-time top-selling skilled trade services in Pakistan</p></div>
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+<!-- Step 1: Post a job -->
+<div class="border border-slate-100 rounded-2xl p-6 hover:shadow-md transition-shadow bg-white text-center flex flex-col items-center">
+<div class="w-full h-44 flex items-center justify-center mb-4">
+<img alt="Post a job" class="h-40 w-auto object-contain mix-blend-multiply" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAJRYC4W-Q9P_mvM5rU7EE4I45kKL5CYcsQX1ApZHMOk7HCyGn2UtvZu4Y_fGPefqkXJsqtvrPOqy_rvPT1JMmu7w9Ggf12aNBf2jeSmQe5A3SMChiQ5B_MQ333fiISM11TiVmRwCpFHEmwuOvN_452KU_PqLbAK3cYa8mUVz0mPf8QUofnUzLuWZzFpoN7GLlLUoNjJkm4qtvHVBGyKJjXPS6GkO63OW7DYwV9Jz_SznuXsz1dfmDNDtFRdYRLqGhdb80">
+</div>
+<div class="inline-block px-2.5 py-0.5 rounded-full bg-emerald-100 text-[#1F4B3F] text-[11px] font-bold mb-2">Step 1</div>
+<h3 class="text-lg font-bold text-slate-900 mb-2">Post a job</h3>
+<p class="text-slate-600 text-xs sm:text-sm leading-relaxed font-normal">Describe your home repair or skilled service need in under a minute with photos or details.</p>
+</div>
+<!-- Step 2: Choose Worker -->
+<div class="border border-slate-100 rounded-2xl p-6 hover:shadow-md transition-shadow bg-white text-center flex flex-col items-center">
+<div class="w-full h-44 flex items-center justify-center mb-4">
+<img alt="Choose Worker" class="h-40 w-auto object-contain mix-blend-multiply" src="https://lh3.googleusercontent.com/aida/AEtjO1V2j5HnSk7KPYoccbh-ZVKuxCTpvscfP1dFp2h5WSNQwB-Vq1LhVtCatyBN5SSZYi47ymrPVkVOy5jR_qVD29ue7Gu9_Bo6sDoiS7HfBtXugSihCiRJnHz2LuswEf1JXR2EOe-dWKubX1GoL4oF5Mpa4G-cTTwQqJA6T2Xkuo4YOmjEIssCM03dNLgqtEtaXeKN-JulOsBiNEhYXhh2b1Jl5liVCxWX2T1hnWUAYe6EQDxYzaJduQz5X-s">
+</div>
+<div class="inline-block px-2.5 py-0.5 rounded-full bg-emerald-100 text-[#1F4B3F] text-[11px] font-bold mb-2">Step 2</div>
+<h3 class="text-lg font-bold text-slate-900 mb-2">Choose Worker</h3>
+<p class="text-slate-600 text-xs sm:text-sm leading-relaxed font-normal">Compare verified tradespeople, check real ratings, CNIC verification, and transparent upfront quotes.</p>
+</div>
+<!-- Step 3: Pay safely -->
+<div class="border border-slate-100 rounded-2xl p-6 hover:shadow-md transition-shadow bg-white text-center flex flex-col items-center">
+<div class="w-full h-44 flex items-center justify-center mb-4">
+<img alt="Pay safely" class="h-40 w-auto object-contain mix-blend-multiply" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCCuieR0SJmPpWlyZWjQPHTDARN3yAhTrin_5Ej0N7qQNFUd9Gr3DIFXnxKhZ2pMl0lqq2mBTGiuxi-vVnt3MvifmVUHo9V3SF4rbx-zrq6stcTktqHzQ2SZmQeDSvO1HqW8Sc2xqfYTCD3_ee-nP3MfRvuNbnetNq6FYKFd5wSC19Pgm8fF7IDubJEhar6FxLn1sVwOwUYZfvj4hhr3cHLuC08bbZr2udi3Cv_wyfRad1KWndmKSwwxD-khRLx5J_5BZWB1DAOTd6NgRA">
+</div>
+<div class="inline-block px-2.5 py-0.5 rounded-full bg-emerald-100 text-[#1F4B3F] text-[11px] font-bold mb-2">Step 3</div>
+<h3 class="text-lg font-bold text-slate-900 mb-2">Pay safely</h3>
+<p class="text-slate-600 text-xs sm:text-sm leading-relaxed font-normal">Pay with complete confidence using secure milestone escrow. Funds released only when you're 100% satisfied.</p>
+</div>
+<!-- Step 4: Work done -->
+<div class="border border-slate-100 rounded-2xl p-6 hover:shadow-md transition-shadow bg-white text-center flex flex-col items-center">
+<div class="w-full h-44 flex items-center justify-center mb-4">
+<img alt="Work done" class="h-40 w-auto object-contain mix-blend-multiply" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDTljjM4Q99JZYHIlIqLa42SeQuzvPNCi0T8vg_p8_FUWoPqRgSgcZ0dfEhu5Y00aRoPYOIXY_jwG5CESL8Dl7JpDXFuS5CuVD96HzQt7hTcdwIZyl2ItNRbljwEMNaelmzKCCvgt38UyeffGZnes2TMiMbzcUqSFsgulF_PJYIjLxE8sCnO9BLYT947-dljCcpGk9BOiZOc2XTN0vmC1yIlqxk7elXRymX1LNM28m116NBPzxIpPraw1BGBff8BzgGdolNjOIo8s-L40A">
+</div>
+<div class="inline-block px-2.5 py-0.5 rounded-full bg-emerald-100 text-[#1F4B3F] text-[11px] font-bold mb-2">Step 4</div>
+<h3 class="text-lg font-bold text-slate-900 mb-2">Work done</h3>
+<p class="text-slate-600 text-xs sm:text-sm leading-relaxed font-normal">The certified local artisan completes the job with guaranteed craft quality and 5-day rework warranty.</p>
+</div>
+</div>
+</div>
+</section>
+<!-- END: "Need something done?" -->
+<!-- BEGIN: OnlineProfessionalsSection -->
+<section class="bg-white border-t border-slate-100 py-12" data-purpose="online-professionals" id="online-pros">
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+<div class="flex items-center justify-between mb-10">
+<div>
+<div class="flex items-center gap-2.5 mb-1">
+<span class="relative flex h-3 w-3">
+<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+<span class="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
+</span>
+<h2 class="text-2xl sm:text-3xl font-bold text-slate-900">Available Professionals</h2>
+</div>
+<p class="text-sm text-slate-500">Find skilled professionals ready to help.</p>
+</div>
+<a class="text-sm font-semibold text-slate-700 hover:text-[#5BBB7B] flex items-center gap-1 transition" href="#all-online-pros">All Available Professionals <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg></a>
+</div>
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+<!-- Pro 1: Kamran Siddiqui -->
+<div class="bg-white rounded-2xl border border-slate-200 p-6 text-center shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col justify-between relative">
+<div>
+<div class="relative w-20 h-20 mx-auto mb-4"><div class="w-full h-full rounded-full overflow-hidden"><img alt="Kamran Siddiqui" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida/AEtjO1Xl5vnZ-maILw2JkZaq-pQXWcSp2uYcAez3cpBSSmTCWXpFcr0Cp74E5R2u0HJbejIpe8XIAqvGskNQi9lPYCDHwVVPAPWj5s67uUvd_SVB0gcKDSvJRPQAYQbVcC2HJwWdAovvPtdyqvh9gvKVr2OqEVGUqhDMDiSRb0fsL-O1lVoU1tsBxco8gBDQMAjLNp-NjOm54Evx2-l5JkHWu81U1rhUs3O2YPWxjZQbhrU6yiHTn_ocgpKwMNE"></div><span class="absolute bottom-0 right-0 z-10 flex h-5 w-5"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span><span class="relative inline-flex rounded-full h-5 w-5 bg-emerald-500 border-2 border-white"></span></span></div>
+<div class="flex items-center justify-center gap-1">
+<h3 class="text-base font-bold text-slate-900">Kamran Siddiqui</h3>
+<svg class="w-4 h-4 text-[#5BBB7B]" fill="currentColor" viewBox="0 0 20 20"><path clip-rule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" fill-rule="evenodd"></path></svg>
+</div>
+<p class="text-xs text-slate-500 font-medium">DB Expert</p>
+<div class="flex items-center justify-center gap-1 mt-2 text-xs font-semibold text-slate-700">
+<span class="text-amber-400 font-bold">★ 4.96</span>
+<span class="text-slate-400">(142 reviews)</span>
+</div>
+<div class="flex flex-wrap justify-center gap-1.5 mt-4">
+<span class="px-2.5 py-1 rounded-md bg-slate-100 text-[11px] font-medium text-slate-600">Reached in 30 mins</span>
+<span class="px-2.5 py-1 rounded-md bg-slate-100 text-[11px] font-medium text-slate-600">Instant Call</span>
+<span class="px-2.5 py-1 rounded-md bg-slate-100 text-[11px] font-medium text-slate-600">Design Audit</span>
+</div>
+</div>
+<div class="mt-6 pt-5 border-t border-slate-100">
+<div class="grid grid-cols-2 text-center text-xs mb-4"><div class="relative"><span class="text-slate-400 block text-[10px]">Location</span><span class="font-bold text-slate-800">Peshawar</span></div><div class="relative"><span class="text-slate-400 block text-[10px]">Job Success</span><span class="font-bold text-emerald-600">100%</span></div></div>
+<button class="w-full py-2.5 rounded-xl bg-[#5BBB7B] text-white text-xs font-bold hover:bg-[#4faa6f] transition flex items-center justify-center gap-1.5 shadow-sm">Hire</button>
+</div>
+</div>
+<!-- Pro 2: Hashim Mansoor -->
+<div class="bg-white rounded-2xl border border-slate-200 p-6 text-center shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col justify-between relative">
+<div>
+<div class="relative w-20 h-20 mx-auto mb-4"><div class="w-full h-full rounded-full overflow-hidden"><img alt="Hashim Mansoor" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida/AEtjO1WlUxdgskkRmngrQvI64wmtYGu4IcBFFtFivbOmX-LMyqHHZZa-qPUnxcd1WYcWPE2MGwE8zh8Nz5t2yf3SLYN3EOspGivibDxTF_rK_m3nVwj0y7Fe3hpBI5NCXY_DsfGx8wV5bHTyASuvcauN5AOKWPKt32uZQSB8jmMRBOeEI--1Q5pOJCP6voDvQRsuYInge7-Hk3symj7pkpX-Zb-sGOLPBPmtwISkBFhyVuWCysl3PrXHSnlO4HY"></div><span class="absolute bottom-0 right-0 z-10 flex h-5 w-5"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span><span class="relative inline-flex rounded-full h-5 w-5 bg-emerald-500 border-2 border-white"></span></span></div>
+<div class="flex items-center justify-center gap-1">
+<h3 class="text-base font-bold text-slate-900">Hashim Mansoor</h3>
+<svg class="w-4 h-4 text-[#5BBB7B]" fill="currentColor" viewBox="0 0 20 20"><path clip-rule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" fill-rule="evenodd"></path></svg>
+</div>
+<p class="text-xs text-slate-500 font-medium">Architectural Space Planner</p>
+<div class="flex items-center justify-center gap-1 mt-2 text-xs font-semibold text-slate-700">
+<span class="text-amber-400 font-bold">★ 4.98</span>
+<span class="text-slate-400">(215 reviews)</span>
+</div>
+<div class="flex flex-wrap justify-center gap-1.5 mt-4">
+<span class="px-2.5 py-1 rounded-md bg-slate-100 text-[11px] font-medium text-slate-600">Floor Plan 3D</span>
+<span class="px-2.5 py-1 rounded-md bg-slate-100 text-[11px] font-medium text-slate-600">Virtual Tour</span>
+<span class="px-2.5 py-1 rounded-md bg-slate-100 text-[11px] font-medium text-slate-600">Renovation</span>
+</div>
+</div>
+<div class="mt-6 pt-5 border-t border-slate-100">
+<div class="grid grid-cols-2 text-center text-xs mb-4"><div class="relative"><span class="text-slate-400 block text-[10px]">Location</span><span class="font-bold text-slate-800">Peshawar</span></div><div class="relative"><span class="text-slate-400 block text-[10px]">Job Success</span><span class="font-bold text-emerald-600">99%</span></div></div>
+<button class="w-full py-2.5 rounded-xl bg-[#5BBB7B] text-white text-xs font-bold hover:bg-[#4faa6f] transition flex items-center justify-center gap-1.5 shadow-sm">Hire</button>
+</div>
+</div>
+<!-- Pro 3: Bilal Tariq -->
+<div class="bg-white rounded-2xl border border-slate-200 p-6 text-center shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col justify-between relative">
+<div>
+<div class="relative w-20 h-20 mx-auto mb-4"><div class="w-full h-full rounded-full overflow-hidden"><img alt="Bilal Tariq" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida/AEtjO1WYMHNHLhCwTSUk_WPfNMrRKnLuzSLVYcOCPX0wlpB7UMjp0nc9omJWvdvQWwVETla6a0CL4r64pE0wFFLYQUUnCkYvkrT0jVoftomJ4zy2wuV90DWdbSCnEBYCqgGmuEwuLGkCaZqFgVIeldifvSlmvQCzdwlkqXAdJ67wVT7eutUHKjlIzaFf6itgvuObiZAjab1M-tjhYF3f7qKaf1DmCiInKYTvLFMncIGa_kqrUEvmyVw5ocG8Fb51"></div><span class="absolute bottom-0 right-0 z-10 flex h-5 w-5"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span><span class="relative inline-flex rounded-full h-5 w-5 bg-emerald-500 border-2 border-white"></span></span></div>
+<div class="flex items-center justify-center gap-1">
+<h3 class="text-base font-bold text-slate-900">Bilal Tariq</h3>
+<svg class="w-4 h-4 text-[#5BBB7B]" fill="currentColor" viewBox="0 0 20 20"><path clip-rule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" fill-rule="evenodd"></path></svg>
+</div>
+<p class="text-xs text-slate-500 font-medium">Certified HVAC Engineer</p>
+<div class="flex items-center justify-center gap-1 mt-2 text-xs font-semibold text-slate-700">
+<span class="text-amber-400 font-bold">★ 4.92</span>
+<span class="text-slate-400">(98 reviews)</span>
+</div>
+<div class="flex flex-wrap justify-center gap-1.5 mt-4">
+<span class="px-2.5 py-1 rounded-md bg-slate-100 text-[11px] font-medium text-slate-600">Live Troubleshooting</span>
+<span class="px-2.5 py-1 rounded-md bg-slate-100 text-[11px] font-medium text-slate-600">VRF Sizing</span>
+<span class="px-2.5 py-1 rounded-md bg-slate-100 text-[11px] font-medium text-slate-600">PCB Error Fix</span>
+</div>
+</div>
+<div class="mt-6 pt-5 border-t border-slate-100">
+<div class="grid grid-cols-2 text-center text-xs mb-4"><div class="relative"><span class="text-slate-400 block text-[10px]">Location</span><span class="font-bold text-slate-800">Peshawar</span></div><div class="relative"><span class="text-slate-400 block text-[10px]">Job Success</span><span class="font-bold text-emerald-600">98%</span></div></div>
+<button class="w-full py-2.5 rounded-xl bg-[#5BBB7B] text-white text-xs font-bold hover:bg-[#4faa6f] transition flex items-center justify-center gap-1.5 shadow-sm">Hire</button>
+</div>
+</div>
+<!-- Pro 4: Riaz Ali -->
+<div class="bg-white rounded-2xl border border-slate-200 p-6 text-center shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col justify-between relative">
+<div>
+<div class="relative w-20 h-20 mx-auto mb-4"><div class="w-full h-full rounded-full overflow-hidden"><img alt="Riaz Ali" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida/AEtjO1VsqbqJoYxRVtRBoxBm43nZ77vRogC5uOhgGB1ll1e4p7Bjr-WmdnV81Xm7fkDZDsCBJqZ18-4L7WjTKn2hY8BrwO3PmLybn_uEGlfcYXlgvYVztZkWyxGE_VwwZQx7fbQuaGa6eeg-a-DFP10XnI1a2HugaIMd6H7gi6hXdK49VIpON5PR_mVc9e2OtX6lujmiFp3eBSqh3QmEh5KTUFR4PfRKQuW5Qod5ahK7n2T4cIuLI9LAj8TSmEfo"></div><span class="absolute bottom-0 right-0 z-10 flex h-5 w-5"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span><span class="relative inline-flex rounded-full h-5 w-5 bg-emerald-500 border-2 border-white"></span></span></div>
+<div class="flex items-center justify-center gap-1">
+<h3 class="text-base font-bold text-slate-900">Riaz Ali</h3>
+<svg class="w-4 h-4 text-[#5BBB7B]" fill="currentColor" viewBox="0 0 20 20"><path clip-rule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" fill-rule="evenodd"></path></svg>
+</div>
+<p class="text-xs text-slate-500 font-medium">Solar System Designer</p>
+<div class="flex items-center justify-center gap-1 mt-2 text-xs font-semibold text-slate-700">
+<span class="text-amber-400 font-bold">★ 5.0</span>
+<span class="text-slate-400">(84 reviews)</span>
+</div>
+<div class="flex flex-wrap justify-center gap-1.5 mt-4">
+<span class="px-2.5 py-1 rounded-md bg-slate-100 text-[11px] font-medium text-slate-600">Schematic Review</span>
+<span class="px-2.5 py-1 rounded-md bg-slate-100 text-[11px] font-medium text-slate-600">Solar ROI</span>
+<span class="px-2.5 py-1 rounded-md bg-slate-100 text-[11px] font-medium text-slate-600">Net Metering</span>
+</div>
+</div>
+<div class="mt-6 pt-5 border-t border-slate-100">
+<div class="grid grid-cols-2 text-center text-xs mb-4"><div class="relative"><span class="text-slate-400 block text-[10px]">Location</span><span class="font-bold text-slate-800">Peshawar</span></div><div class="relative"><span class="text-slate-400 block text-[10px]">Job Success</span><span class="font-bold text-emerald-600">100%</span></div></div>
+<button class="w-full py-2.5 rounded-xl bg-[#5BBB7B] text-white text-xs font-bold hover:bg-[#4faa6f] transition flex items-center justify-center gap-1.5 shadow-sm">Hire</button>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- END: OnlineProfessionalsSection -->
+<!-- BEGIN: PopularServicesSection (Freeio 2x4 Card Catalog) -->
+<section class="bg-white border-t border-slate-100 py-12" data-purpose="popular-services-catalog" id="services">
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+<!-- Header with Category Tabs -->
+<div class="flex flex-col lg:flex-row lg:items-end justify-between mb-10 gap-6">
+<div>
+<h2 class="text-2xl sm:text-3xl font-bold text-slate-900">Popular Services</h2>
+<p class="text-sm text-slate-500 mt-1">Most viewed and all-time top-selling services</p>
+</div>
+<!-- Filter Tabs -->
+<div class="flex flex-wrap items-center gap-2 text-xs font-semibold">
+<button class="px-4 py-2 rounded-full bg-[#1F4B3F] text-white">All Trades</button>
+<button class="px-4 py-2 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 transition">Electrical &amp; Power</button>
+<button class="px-4 py-2 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 transition">Cooling &amp; AC</button>
+<button class="px-4 py-2 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 transition">Plumbing &amp; Sanitary</button>
+<button class="px-4 py-2 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 transition">Carpentry &amp; Fitout</button>
+</div>
+</div>
+<!-- 2 Rows x 4 Columns Cards -->
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+<!-- Card 1: AC Wash -->
+<article class="group rounded-2xl border border-slate-200 bg-white hover:shadow-xl transition-all duration-300 flex flex-col overflow-hidden">
+<div class="relative aspect-[16/10] overflow-hidden bg-slate-100"><img alt="AC Deep Chemical Wash" class="w-full h-full object-cover group-hover:scale-105 transition duration-300" src="https://lh3.googleusercontent.com/aida/AEtjO1W89ijeoTPlQIxDGkJQZeAr9KAkGPuUxQhZH3R7pnx8jwvYizgPH3ATuJybrLhIHk6YKiwmlJ_3GPP2lAyp1mERB2Rg-CdFlEQSILUnc2VMehzii-s3LZsW2wawMZ1W84RZdtEStWj8Fil_U41c3eqtb9EoaVW6O5AKLmG_HWZ6i_t1p5FFo7tN2gEWyv-zaclq-MG5ot4R5-36K2a0fUWps-xzyGUrL0YzsDOvyC82QHH5Ww57NDScMKGc">
+<button aria-label="Favorite" class="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/90 backdrop-blur text-slate-400 hover:text-red-500 flex items-center justify-center shadow transition">
+<svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"></path></svg>
+</button></div>
+<div class="p-4 flex-1 flex flex-col justify-between">
+<div>
+<p class="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Cooling &amp; AC</p>
+<h3 class="text-sm font-bold text-slate-900 mt-1 line-clamp-2 hover:text-[#5BBB7B] transition">
+              Complete Inverter AC Deep Chemical Wash &amp; Gas Pressure Topup
+            </h3>
+<div class="flex items-center gap-1.5 mt-2.5 text-xs text-slate-500">
+<span class="text-amber-400 font-bold flex items-center gap-0.5">★ 4.92</span>
+<span class="">(84 reviews)</span>
+</div>
+</div>
+<div class="pt-4 mt-4 border-t border-slate-100 flex items-center justify-between">
+<div class="flex items-center space-x-2">
+<img alt="Tariq M." class="w-7 h-7 rounded-full object-cover border border-slate-200" src="https://lh3.googleusercontent.com/aida/AEtjO1X60Jg_25HShTAnk_AFw6WozyWFHtrcq5Vuu-PFRlv6Lso3CZI-KH7532vok6n7pph72NkpVZOjri6IVNfZCNicLdMqDJbI_IP2TMWZBBgX18EiCAsJN1U00Lc3yH60AkIdIY62WDr1CvKES00cuqsKLHW2rK1UROgv2X38dcoBfjSpXuPRSeV1k6PtP2r_U2-QML_0FCLaImpGO4NDwrWtiD9D5dkHCn6fwnwTbZGttnEdoi4iCVZ4_XuI">
+<span class="text-xs text-slate-600 font-medium">Tariq M.</span>
+</div>
+</div>
+</div>
+</article>
+<!-- Card 2: DB Panel Wiring -->
+<article class="group rounded-2xl border border-slate-200 bg-white hover:shadow-xl transition-all duration-300 flex flex-col overflow-hidden">
+<div class="relative aspect-[16/10] overflow-hidden bg-slate-100"><img alt="DB Panel Wiring" class="w-full h-full object-cover group-hover:scale-105 transition duration-300" src="https://lh3.googleusercontent.com/aida/AEtjO1XNw8-iVrsaCh9ZAcBy3RyivQL9SmwSW6OZHFa87l08iKWwr-13T-pm1YQCFhaAq3mUiWDdWBeOLHjW3VXPyXmo9iunSB8BYUpVY-NV19sd-pkT0u-fElYJ3B98u0mUNlRRrvkDerFup1Zr4tdT_oiLvgPXt8gfj210B6tBUSkHc_dcThjURwEtSVnz__31UXq2HKA8Ll8gELpzA_VeOrPX4UyCObfxqo4qjuRrRn8ip0ZYMIZiQgkvKs4">
+<button aria-label="Favorite" class="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/90 backdrop-blur text-slate-400 hover:text-red-500 flex items-center justify-center shadow transition">
+<svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"></path></svg>
+</button></div>
+<div class="p-4 flex-1 flex flex-col justify-between">
+<div>
+<p class="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Electrical &amp; Power</p>
+<h3 class="text-sm font-bold text-slate-900 mt-1 line-clamp-2 hover:text-[#5BBB7B] transition">
+              Master DB Panel Wiring, Breakers &amp; Three-Phase Load Balancing
+            </h3>
+<div class="flex items-center gap-1.5 mt-2.5 text-xs text-slate-500">
+<span class="text-amber-400 font-bold flex items-center gap-0.5">★ 4.98</span>
+<span class="">(112 reviews)</span>
+</div>
+</div>
+<div class="pt-4 mt-4 border-t border-slate-100 flex items-center justify-between">
+<div class="flex items-center space-x-2">
+<img alt="Ahmad Khan" class="w-7 h-7 rounded-full object-cover border border-slate-200" src="https://lh3.googleusercontent.com/aida/AEtjO1XN-3mfLb_hNWKE8AdGkc3IgttlL1yHoMwE5Dzh6q7VwuhYCczh_8RhEl-88gW6CYfTHDuX-2-eN_XrTmA-ZbHdlbE5Gq5IUnDatKNDPo-5WgQw8GbyL0X5ZYqAsLitUDoxEChXEHsTVL2InsGk8J-Sz7g3fE8udsb3pxvo5FUXFnkqA2d-HDww2-3GXZkgcUy0lXVPYlPotUDgTb-E7BIINXAhCjOzVgheac4Yy302x1QxDo93gCH9PgA">
+<span class="text-xs text-slate-600 font-medium">Ahmad Khan</span>
+</div>
+</div>
+</div>
+</article>
+<!-- Card 3: Plumbing Detection -->
+<article class="group rounded-2xl border border-slate-200 bg-white hover:shadow-xl transition-all duration-300 flex flex-col overflow-hidden">
+<div class="relative aspect-[16/10] overflow-hidden bg-slate-100"><img alt="Plumbing Leakage Detection" class="w-full h-full object-cover group-hover:scale-105 transition duration-300" src="https://lh3.googleusercontent.com/aida/AEtjO1UNtXIeluASda6spgcrqgq6CTukYowo7TvjH6ldL4XOJTZbJKg-dW1Mo-_f2hCVMDCwxppMIXI2NOBAc7IvSy8whfepM7Vn6kzCPYh5UeXMlfPwNLqooppOTKnXkadaakszOe2nAXIcyMbSk-QDym5SdaMDZN2txAWle7Z5CnXoa07NyCkS8WUmTaiqE0N-MTyCcG5w5bYg5a6qC_mKKGQZqVIjtqbBU4CGAXwPBecdoISPlWS0YvS15i0k">
+<button aria-label="Favorite" class="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/90 backdrop-blur text-slate-400 hover:text-red-500 flex items-center justify-center shadow transition">
+<svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"></path></svg>
+</button></div>
+<div class="p-4 flex-1 flex flex-col justify-between">
+<div>
+<p class="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Plumbing &amp; Sanitary</p>
+<h3 class="text-sm font-bold text-slate-900 mt-1 line-clamp-2 hover:text-[#5BBB7B] transition">
+              Concealed PPRC Water Leakage Detection &amp; Pipe Burst Repair
+            </h3>
+<div class="flex items-center gap-1.5 mt-2.5 text-xs text-slate-500">
+<span class="text-amber-400 font-bold flex items-center gap-0.5">★ 4.88</span>
+<span class="">(64 reviews)</span>
+</div>
+</div>
+<div class="pt-4 mt-4 border-t border-slate-100 flex items-center justify-between">
+<div class="flex items-center space-x-2">
+<img alt="Rashid Ali" class="w-7 h-7 rounded-full object-cover border border-slate-200" src="https://lh3.googleusercontent.com/aida/AEtjO1VjQ9a2fS36cIj_XC_cgy4NIWDmAt7_pjDeP3_TdPmXBMr_7pdy8l9jdXGULYWy60_RpK-sKnqcRkiQ3MS6uE1MdnZWOS7oTrXLI5R8xDPY4MrHOLBdPYBUj0uAB-U5o2xXmDNg25DVfOPT5PtOQUcD_mss5vtOKR5fSyXzSmsOW_NverdjK5-PgfIJx84skhNxkfve0ksvtlbNUNbqNl7Keb9QRdSoKSWEhstqtscHvvVhHwTaA28GrY2O">
+<span class="text-xs text-slate-600 font-medium">Rashid Ali</span>
+</div>
+</div>
+</div>
+</article>
+<!-- Card 4: Kitchen Cabinetry -->
+<article class="group rounded-2xl border border-slate-200 bg-white hover:shadow-xl transition-all duration-300 flex flex-col overflow-hidden">
+<div class="relative aspect-[16/10] overflow-hidden bg-slate-100"><img alt="Kitchen Cabinetry &amp; Woodwork" class="w-full h-full object-cover group-hover:scale-105 transition duration-300" src="https://lh3.googleusercontent.com/aida/AEtjO1XlgfNRkaNq0hRhoR53Q5I1Uj5o3i4sSSzdZUgrmY4NqniKlrnAi-H3b8o-WPr2zAUF1GynLW6k5e5qApzlpded-ow5J_5QGX1x26WZLBVRSyUVhA-nOV11iA5_jseDwcDPn10uXjkLAInZwZr1KWbIFVvVwjymGTyuXMgMvVc0S1FzkNKBibVF9heMO9njUpjFJy02S-dSnyv_AR1pQGaL8m2_uqb56AKRSz9drk0qX_38MAMGp0HwxmoT">
+<button aria-label="Favorite" class="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/90 backdrop-blur text-slate-400 hover:text-red-500 flex items-center justify-center shadow transition">
+<svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"></path></svg>
+</button></div>
+<div class="p-4 flex-1 flex flex-col justify-between">
+<div>
+<p class="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Carpentry &amp; Fitout</p>
+<h3 class="text-sm font-bold text-slate-900 mt-1 line-clamp-2 hover:text-[#5BBB7B] transition">
+              Custom Kitchen Cabinetry &amp; Hydraulic Soft-Close Hinge Fix
+            </h3>
+<div class="flex items-center gap-1.5 mt-2.5 text-xs text-slate-500">
+<span class="text-amber-400 font-bold flex items-center gap-0.5">★ 4.95</span>
+<span class="">(42 reviews)</span>
+</div>
+</div>
+<div class="pt-4 mt-4 border-t border-slate-100 flex items-center justify-between">
+<div class="flex items-center space-x-2">
+<img alt="Usman Woodcraft" class="w-7 h-7 rounded-full object-cover border border-slate-200" src="https://lh3.googleusercontent.com/aida/AEtjO1WlUxdgskkRmngrQvI64wmtYGu4IcBFFtFivbOmX-LMyqHHZZa-qPUnxcd1WYcWPE2MGwE8zh8Nz5t2yf3SLYN3EOspGivibDxTF_rK_m3nVwj0y7Fe3hpBI5NCXY_DsfGx8wV5bHTyASuvcauN5AOKWPKt32uZQSB8jmMRBOeEI--1Q5pOJCP6voDvQRsuYInge7-Hk3symj7pkpX-Zb-sGOLPBPmtwISkBFhyVuWCysl3PrXHSnlO4HY">
+<span class="text-xs text-slate-600 font-medium">Usman Woodcraft</span>
+</div>
+</div>
+</div>
+</article>
+<!-- Card 5: Full House Painting -->
+<article class="group rounded-2xl border border-slate-200 bg-white hover:shadow-xl transition-all duration-300 flex flex-col overflow-hidden">
+<div class="relative aspect-[16/10] overflow-hidden bg-slate-100"><img alt="House Painting &amp; Polish" class="w-full h-full object-cover group-hover:scale-105 transition duration-300" src="https://lh3.googleusercontent.com/aida/AEtjO1WGVqTyEUdoquloLdVZCRv11CmUx_t9MD_H3Q_9eTEYyoDw-6bXkMlTBWhg_9P7x3LecjHD2QnxTGrw1M3qkt36ynJ3teIa3cIKVDFxCrY-_rt_5qOb_EcgKvqN5shEzzhEHXH6yy8tGSbwESZjHg7L2X4BYuDBowMGOD3Cud4I5KMRN0GakSERj5hEuRnB8OtQ76-DxOqSxxk73ef5m2MTBfApzLvFGF8qIXVOEYi7o4d1GLH68TIstsxI">
+<button aria-label="Favorite" class="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/90 backdrop-blur text-slate-400 hover:text-red-500 flex items-center justify-center shadow transition">
+<svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"></path></svg>
+</button></div>
+<div class="p-4 flex-1 flex flex-col justify-between">
+<div>
+<p class="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Painting &amp; Polish</p>
+<h3 class="text-sm font-bold text-slate-900 mt-1 line-clamp-2 hover:text-[#5BBB7B] transition">
+              Full House WeatherSheet &amp; Interior Velvet Matte Finish
+            </h3>
+<div class="flex items-center gap-1.5 mt-2.5 text-xs text-slate-500">
+<span class="text-amber-400 font-bold flex items-center gap-0.5">★ 4.90</span>
+<span class="">(78 reviews)</span>
+</div>
+</div>
+<div class="pt-4 mt-4 border-t border-slate-100 flex items-center justify-between">
+<div class="flex items-center space-x-2">
+<img alt="Farhan Painters" class="w-7 h-7 rounded-full object-cover border border-slate-200" src="https://lh3.googleusercontent.com/aida/AEtjO1WYMHNHLhCwTSUk_WPfNMrRKnLuzSLVYcOCPX0wlpB7UMjp0nc9omJWvdvQWwVETla6a0CL4r64pE0wFFLYQUUnCkYvkrT0jVoftomJ4zy2wuV90DWdbSCnEBYCqgGmuEwuLGkCaZqFgVIeldifvSlmvQCzdwlkqXAdJ67wVT7eutUHKjlIzaFf6itgvuObiZAjab1M-tjhYF3f7qKaf1DmCiInKYTvLFMncIGa_kqrUEvmyVw5ocG8Fb51">
+<span class="text-xs text-slate-600 font-medium">Farhan Painters</span>
+</div>
+</div>
+</div>
+</article>
+<!-- Card 6: Water Tank Disinfection -->
+<article class="group rounded-2xl border border-slate-200 bg-white hover:shadow-xl transition-all duration-300 flex flex-col overflow-hidden">
+<div class="relative aspect-[16/10] overflow-hidden bg-slate-100"><img alt="Water Tank Disinfection" class="w-full h-full object-cover group-hover:scale-105 transition duration-300" src="https://lh3.googleusercontent.com/aida/AEtjO1XMvI-QY_oPw5rlZ93iGGSTRMI_NxHAjlcalzLkTbH7qOS0_4xYBPEyIgyYTLxEhuM7lRhQ1br9IWmEgCL2hXb_prKfl8jZL3xnKHA8CSgvN_s_CDouivG7KDgfQJ2hV3AyGgruesXJc8ZBt7mONlCFa-3n67NEAGhIPZ0zasR9UmxPbUygOAVRrrSP7ilAdYqRB1B_Tlz1cwJDxJVkAOACz5wYT78bzZaltk-0yRRi_6glYDom3paDfYDY"><button aria-label="Favorite" class="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/90 backdrop-blur text-slate-400 hover:text-red-500 flex items-center justify-center shadow transition"><svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"></path></svg></button></div>
+<div class="p-4 flex-1 flex flex-col justify-between">
+<div>
+<p class="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Home Care</p>
+<h3 class="text-sm font-bold text-slate-900 mt-1 line-clamp-2 hover:text-[#5BBB7B] transition">
+              Automatic Underground &amp; Overhead Water Tank Disinfection
+            </h3>
+<div class="flex items-center gap-1.5 mt-2.5 text-xs text-slate-500">
+<span class="text-amber-400 font-bold flex items-center gap-0.5">★ 4.85</span>
+<span class="">(53 reviews)</span>
+</div>
+</div>
+<div class="pt-4 mt-4 border-t border-slate-100 flex items-center justify-between">
+<div class="flex items-center space-x-2">
+<img alt="CleanPro PK" class="w-7 h-7 rounded-full object-cover border border-slate-200" src="https://lh3.googleusercontent.com/aida/AEtjO1Xl5vnZ-maILw2JkZaq-pQXWcSp2uYcAez3cpBSSmTCWXpFcr0Cp74E5R2u0HJbejIpe8XIAqvGskNQi9lPYCDHwVVPAPWj5s67uUvd_SVB0gcKDSvJRPQAYQbVcC2HJwWdAovvPtdyqvh9gvKVr2OqEVGUqhDMDiSRb0fsL-O1lVoU1tsBxco8gBDQMAjLNp-NjOm54Evx2-l5JkHWu81U1rhUs3O2YPWxjZQbhrU6yiHTn_ocgpKwMNE">
+<span class="text-xs text-slate-600 font-medium">CleanPro PK</span>
+</div>
+</div>
+</div>
+</article>
+<!-- Card 7: Solar Inverter Hybrid -->
+<article class="group rounded-2xl border border-slate-200 bg-white hover:shadow-xl transition-all duration-300 flex flex-col overflow-hidden">
+<div class="relative aspect-[16/10] overflow-hidden bg-slate-100"><img alt="Solar Inverter Hybrid Net-Metering" class="w-full h-full object-cover group-hover:scale-105 transition duration-300" src="https://lh3.googleusercontent.com/aida/AEtjO1Umj3yOMQc4dMU6I2t1bNi6COn3EtXSwW-eV1QjfgBLPvRh-EK5ZiLfxjC1i2lIyxaF0BGs5gi6elhQ1g6_GmmYpTpSKIGFKpzqJ3H7tb2BRX5F2B-3h_nbL6cRSj_f2rvnKRypxVGsGuIOiZ6uGiQzYJjO6YkwAwHbzI5X9FiO31MYxm56NFowCyFWDNc5l_Fr9FwjHTl1bd_hzpcR8uPbcZcXz-JNT9-Qgy0Wk1ok5qPbLOvN6I2Dns0"><button aria-label="Favorite" class="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/90 backdrop-blur text-slate-400 hover:text-red-500 flex items-center justify-center shadow transition"><svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"></path></svg></button></div>
+<div class="p-4 flex-1 flex flex-col justify-between">
+<div>
+<p class="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Solar &amp; Renewable</p>
+<h3 class="text-sm font-bold text-slate-900 mt-1 line-clamp-2 hover:text-[#5BBB7B] transition">
+              Solar Inverter Hybrid Net-Metering Setup &amp; Distribution Wiring
+            </h3>
+<div class="flex items-center gap-1.5 mt-2.5 text-xs text-slate-500">
+<span class="text-amber-400 font-bold flex items-center gap-0.5">★ 4.96</span>
+<span class="">(95 reviews)</span>
+</div>
+</div>
+<div class="pt-4 mt-4 border-t border-slate-100 flex items-center justify-between">
+<div class="flex items-center space-x-2">
+<img alt="Solaronics PK" class="w-7 h-7 rounded-full object-cover border border-slate-200" src="https://lh3.googleusercontent.com/aida/AEtjO1VsqbqJoYxRVtRBoxBm43nZ77vRogC5uOhgGB1ll1e4p7Bjr-WmdnV81Xm7fkDZDsCBJqZ18-4L7WjTKn2hY8BrwO3PmLybn_uEGlfcYXlgvYVztZkWyxGE_VwwZQx7fbQuaGa6eeg-a-DFP10XnI1a2HugaIMd6H7gi6hXdK49VIpON5PR_mVc9e2OtX6lujmiFp3eBSqh3QmEh5KTUFR4PfRKQuW5Qod5ahK7n2T4cIuLI9LAj8TSmEfo">
+<span class="text-xs text-slate-600 font-medium">Solaronics PK</span>
+</div>
+</div>
+</div>
+</article>
+<!-- Card 8: Appliance Repair -->
+<article class="group rounded-2xl border border-slate-200 bg-white hover:shadow-xl transition-all duration-300 flex flex-col overflow-hidden">
+<div class="relative aspect-[16/10] overflow-hidden bg-slate-100"><img alt="Washing Machine &amp; Refrigerator Repair" class="w-full h-full object-cover group-hover:scale-105 transition duration-300" src="https://lh3.googleusercontent.com/aida/AEtjO1WPPGa1ojexSkWu3-1b5rZ2K2ge3aa385efSYioWlntRUBSfai6PYWOH3cbHFOGifwwOdGZ6ON3at6HjXmRFe-fpgFsYtHKGUs_OSCPziSdCRpfswfmL9Fsots-wFpOmXpfdxeM8znVpsbw2RCMSPMUwrOoS9Pwy3qemwRgeFf53M4ZoLNFdNxjPeD4aVszIf3jGLdL1nCjsSRraJV4rgX1NqN5e8ZtgGISV7Wu2i85DVNDSb3n5DT3QqX5"><button aria-label="Favorite" class="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/90 backdrop-blur text-slate-400 hover:text-red-500 flex items-center justify-center shadow transition"><svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"></path></svg></button></div>
+<div class="p-4 flex-1 flex flex-col justify-between">
+<div>
+<p class="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Appliance Repair</p>
+<h3 class="text-sm font-bold text-slate-900 mt-1 line-clamp-2 hover:text-[#5BBB7B] transition">
+              Automatic Washing Machine &amp; Refrigerator Compressor Overhaul
+            </h3>
+<div class="flex items-center gap-1.5 mt-2.5 text-xs text-slate-500">
+<span class="text-amber-400 font-bold flex items-center gap-0.5">★ 4.89</span>
+<span class="">(71 reviews)</span>
+</div>
+</div>
+<div class="pt-4 mt-4 border-t border-slate-100 flex items-center justify-between">
+<div class="flex items-center space-x-2">
+<img alt="QuickFix PK" class="w-7 h-7 rounded-full object-cover border border-slate-200" src="https://lh3.googleusercontent.com/aida/AEtjO1U9mi-0AG1mS5XzHLOH6vqzJX6QbcumoxQ1uvk_mVlOXm5VxonZ5sfJ75IOhdAUIt5mLMebYKPYb03H-p_XQinE9A0ehnJSl34sA-HiHX4AFEUe_vWjaRlVvynZBOCBtOm9D7Idy6NJQT9kV4OnHp-CSV6fHfvyhcQuLk9mjm-nPOzRP2ElYmPab43ARulLJf6aJ62-mtkF8QJYeCDNXxyteJi9zL40p3S7cpil89_HJJIoHq1zOlhRKPo">
+<span class="text-xs text-slate-600 font-medium">QuickFix PK</span>
+</div>
+</div>
+</div>
+</article>
+</div>
+<!-- Centered All Services Action Button -->
+<div class="mt-12 text-center">
+<a class="inline-flex items-center space-x-2 px-8 py-3.5 rounded-full border border-slate-300 hover:border-[#1F4B3F] text-slate-700 hover:text-[#1F4B3F] font-semibold text-sm transition" href="#all-services">
+<span class="">All Services</span>
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M14 5l7 7m0 0l-7 7m7-7H3" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+</a>
+</div>
+</div>
+</section><section class="border-t border-slate-100 py-12 bg-white" data-purpose="rated-professionals" id="pros">
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+<div class="flex items-center justify-between mb-10">
+<div>
+<h2 class="text-2xl sm:text-3xl font-bold text-slate-900">Highest Rated Professionals</h2>
+<p class="text-sm text-slate-500 mt-1">Verified background checks, CNIC authenticated, and client recommended</p>
+</div>
+<a class="text-sm font-semibold text-slate-700 hover:text-[#5BBB7B] flex items-center gap-1 transition" href="#all-freelancers">All Professionals <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg></a>
+</div>
+<!-- 4 Pro Cards with Online Green Dot and Tags -->
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+<!-- Pro 1: Ahmad Khan -->
+<div class="bg-white rounded-2xl border border-slate-200 p-6 text-center shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col justify-between">
+<div>
+<div class="relative w-20 h-20 mx-auto mb-4 rounded-full overflow-hidden ring-4 ring-emerald-50">
+<img alt="Ahmad Khan" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida/AEtjO1XN-3mfLb_hNWKE8AdGkc3IgttlL1yHoMwE5Dzh6q7VwuhYCczh_8RhEl-88gW6CYfTHDuX-2-eN_XrTmA-ZbHdlbE5Gq5IUnDatKNDPo-5WgQw8GbyL0X5ZYqAsLitUDoxEChXEHsTVL2InsGk8J-Sz7g3fE8udsb3pxvo5FUXFnkqA2d-HDww2-3GXZkgcUy0lXVPYlPotUDgTb-E7BIINXAhCjOzVgheac4Yy302x1QxDo93gCH9PgA">
+<span class="absolute bottom-0 right-1 w-3.5 h-3.5 bg-emerald-500 border-2 border-white rounded-full"></span>
+</div>
+<h3 class="text-base font-bold text-slate-900">Ahmad Khan</h3>
+<p class="text-xs text-slate-500 font-medium">DB Expert &amp; Master Electrician</p>
+<div class="flex items-center justify-center gap-1 mt-2 text-xs font-semibold text-slate-700">
+<span class="text-amber-400 font-bold">★ 4.9</span>
+<span class="text-slate-400">(142 reviews)</span>
+</div>
+<div class="flex flex-wrap justify-center gap-1.5 mt-4">
+<span class="px-2.5 py-1 rounded-md bg-slate-100 text-[11px] font-medium text-slate-600">DB Wiring</span>
+<span class="px-2.5 py-1 rounded-md bg-slate-100 text-[11px] font-medium text-slate-600">Solar 3-Phase</span>
+<span class="px-2.5 py-1 rounded-md bg-slate-100 text-[11px] font-medium text-slate-600">Breakers</span>
+</div>
+</div>
+<div class="mt-6 pt-5 border-t border-slate-100">
+<div class="grid grid-cols-2 text-center text-xs mb-4"><div><span class="text-slate-400 block text-[10px]">Location</span><span class="font-bold text-slate-800">Lahore</span></div><div><span class="text-slate-400 block text-[10px]">Job Success</span><span class="font-bold text-emerald-600">99%</span></div></div>
+<button class="w-full py-2.5 rounded-xl border border-slate-200 hover:border-[#5BBB7B] hover:bg-[#5BBB7B] text-slate-700 hover:text-white text-xs font-bold transition">
+            View Profile
+          </button>
+</div>
+</div>
+<!-- Pro 2: Tariq Mehmood -->
+<div class="bg-white rounded-2xl border border-slate-200 p-6 text-center shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col justify-between">
+<div>
+<div class="relative w-20 h-20 mx-auto mb-4 rounded-full overflow-hidden ring-4 ring-emerald-50">
+<img alt="Tariq Mehmood" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida/AEtjO1X60Jg_25HShTAnk_AFw6WozyWFHtrcq5Vuu-PFRlv6Lso3CZI-KH7532vok6n7pph72NkpVZOjri6IVNfZCNicLdMqDJbI_IP2TMWZBBgX18EiCAsJN1U00Lc3yH60AkIdIY62WDr1CvKES00cuqsKLHW2rK1UROgv2X38dcoBfjSpXuPRSeV1k6PtP2r_U2-QML_0FCLaImpGO4NDwrWtiD9D5dkHCn6fwnwTbZGttnEdoi4iCVZ4_XuI">
+<span class="absolute bottom-0 right-1 w-3.5 h-3.5 bg-emerald-500 border-2 border-white rounded-full"></span>
+</div>
+<h3 class="text-base font-bold text-slate-900">Tariq Mehmood</h3>
+<p class="text-xs text-slate-500 font-medium">HVAC &amp; AC Specialist</p>
+<div class="flex items-center justify-center gap-1 mt-2 text-xs font-semibold text-slate-700">
+<span class="text-amber-400 font-bold">★ 4.95</span>
+<span class="text-slate-400">(210 reviews)</span>
+</div>
+<div class="flex flex-wrap justify-center gap-1.5 mt-4">
+<span class="px-2.5 py-1 rounded-md bg-slate-100 text-[11px] font-medium text-slate-600">Inverter PCB</span>
+<span class="px-2.5 py-1 rounded-md bg-slate-100 text-[11px] font-medium text-slate-600">R32 Gas</span>
+<span class="px-2.5 py-1 rounded-md bg-slate-100 text-[11px] font-medium text-slate-600">Chillers</span>
+</div>
+</div>
+<div class="mt-6 pt-5 border-t border-slate-100">
+<div class="grid grid-cols-2 text-center text-xs mb-4"><div><span class="text-slate-400 block text-[10px]">Location</span><span class="font-bold text-slate-800">Karachi</span></div><div><span class="text-slate-400 block text-[10px]">Job Success</span><span class="font-bold text-emerald-600">98%</span></div></div>
+<button class="w-full py-2.5 rounded-xl border border-slate-200 hover:border-[#5BBB7B] hover:bg-[#5BBB7B] text-slate-700 hover:text-white text-xs font-bold transition">
+            View Profile
+          </button>
+</div>
+</div>
+<!-- Pro 3: Mansoor -->
+<div class="bg-white rounded-2xl border border-slate-200 p-6 text-center shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col justify-between">
+<div>
+<div class="relative w-20 h-20 mx-auto mb-4 rounded-full overflow-hidden ring-4 ring-emerald-50"><img alt="Mansoor" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida/AEtjO1U9mi-0AG1mS5XzHLOH6vqzJX6QbcumoxQ1uvk_mVlOXm5VxonZ5sfJ75IOhdAUIt5mLMebYKPYb03H-p_XQinE9A0ehnJSl34sA-HiHX4AFEUe_vWjaRlVvynZBOCBtOm9D7Idy6NJQT9kV4OnHp-CSV6fHfvyhcQuLk9mjm-nPOzRP2ElYmPab43ARulLJf6aJ62-mtkF8QJYeCDNXxyteJi9zL40p3S7cpil89_HJJIoHq1zOlhRKPo">
+<span class="absolute bottom-0 right-1 w-3.5 h-3.5 bg-emerald-500 border-2 border-white rounded-full"></span></div>
+<h3 class="text-base font-bold text-slate-900">Mansoor</h3>
+<p class="text-xs text-slate-500 font-medium">Architectural Consultant</p>
+<div class="flex items-center justify-center gap-1 mt-2 text-xs font-semibold text-slate-700">
+<span class="text-amber-400 font-bold">★ 4.98</span>
+<span class="text-slate-400">(89 reviews)</span>
+</div>
+<div class="flex flex-wrap justify-center gap-1.5 mt-4">
+<span class="px-2.5 py-1 rounded-md bg-slate-100 text-[11px] font-medium text-slate-600">Site Audit</span>
+<span class="px-2.5 py-1 rounded-md bg-slate-100 text-[11px] font-medium text-slate-600">Layout Plans</span>
+<span class="px-2.5 py-1 rounded-md bg-slate-100 text-[11px] font-medium text-slate-600">Fitouts</span>
+</div>
+</div>
+<div class="mt-6 pt-5 border-t border-slate-100">
+<div class="grid grid-cols-2 text-center text-xs mb-4"><div><span class="text-slate-400 block text-[10px]">Location</span><span class="font-bold text-slate-800">Islamabad</span></div><div><span class="text-slate-400 block text-[10px]">Job Success</span><span class="font-bold text-emerald-600">100%</span></div></div>
+<button class="w-full py-2.5 rounded-xl border border-slate-200 hover:border-[#5BBB7B] hover:bg-[#5BBB7B] text-slate-700 hover:text-white text-xs font-bold transition">
+            View Profile
+          </button>
+</div>
+</div>
+<!-- Pro 4: Rashid Ali -->
+<div class="bg-white rounded-2xl border border-slate-200 p-6 text-center shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col justify-between">
+<div>
+<div class="relative w-20 h-20 mx-auto mb-4 rounded-full overflow-hidden ring-4 ring-emerald-50 bg-[#1F4B3F] flex items-center justify-center text-xl font-bold text-white"><img alt="Rashid Ali" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida/AEtjO1VjQ9a2fS36cIj_XC_cgy4NIWDmAt7_pjDeP3_TdPmXBMr_7pdy8l9jdXGULYWy60_RpK-sKnqcRkiQ3MS6uE1MdnZWOS7oTrXLI5R8xDPY4MrHOLBdPYBUj0uAB-U5o2xXmDNg25DVfOPT5PtOQUcD_mss5vtOKR5fSyXzSmsOW_NverdjK5-PgfIJx84skhNxkfve0ksvtlbNUNbqNl7Keb9QRdSoKSWEhstqtscHvvVhHwTaA28GrY2O"><span class="absolute bottom-0 right-1 w-3.5 h-3.5 bg-emerald-500 border-2 border-white rounded-full"></span></div>
+<h3 class="text-base font-bold text-slate-900">Rashid Ali</h3>
+<p class="text-xs text-slate-500 font-medium">Master Plumber &amp; Pipefitter</p>
+<div class="flex items-center justify-center gap-1 mt-2 text-xs font-semibold text-slate-700">
+<span class="text-amber-400 font-bold">★ 4.88</span>
+<span class="text-slate-400">(94 reviews)</span>
+</div>
+<div class="flex flex-wrap justify-center gap-1.5 mt-4">
+<span class="px-2.5 py-1 rounded-md bg-slate-100 text-[11px] font-medium text-slate-600">PPRC Hot/Cold</span>
+<span class="px-2.5 py-1 rounded-md bg-slate-100 text-[11px] font-medium text-slate-600">Geyser Fix</span>
+<span class="px-2.5 py-1 rounded-md bg-slate-100 text-[11px] font-medium text-slate-600">Motors</span>
+</div>
+</div>
+<div class="mt-6 pt-5 border-t border-slate-100">
+<div class="grid grid-cols-2 text-center text-xs mb-4"><div><span class="text-slate-400 block text-[10px]">Location</span><span class="font-bold text-slate-800">Rawalpindi</span></div><div><span class="text-slate-400 block text-[10px]">Job Success</span><span class="font-bold text-emerald-600">97%</span></div></div>
+<button class="w-full py-2.5 rounded-xl border border-slate-200 hover:border-[#5BBB7B] hover:bg-[#5BBB7B] text-slate-700 hover:text-white text-xs font-bold transition">
+            View Profile
+          </button>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- BEGIN: PopularServicesSection Catalog -->
+
+<!-- END: PopularServicesSection -->
+<!-- BEGIN: "Find talent your way" Split Feature Section -->
+<section class="bg-white overflow-hidden py-14" data-purpose="value-prop-banner">
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+<!-- Left Photographic Showcase -->
+<div class="lg:col-span-6 relative">
+<div class="rounded-3xl overflow-hidden shadow-2xl border-4 border-white aspect-[4/3] bg-slate-200">
+<img alt="Professional Electrician &amp; DB Technician" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDKiXz7NtJvhEnFVoaFRPm6hEjK44f_OHdo-cKC7CIisCRL_hYP1lj86n-b2szgajUvGcr85FmVVaAokQXvQyEqT7vqJxUx1G4hDM5b7H4vOU6DDbMiAjQTHLwxVvTbZtCpCigKVxsL7F2JaiB-VgmXAxkvx07i9FX4mP8qOAh_kWJKQ1dOXS6HlNjBUl33_48_so9IoI_bkSh2aV_xXiyaqD6ajqIRHbDwGRkiPDD0TSyMzraZIzAzcw">
+</div>
+<!-- Floating Pro Overlay Badge -->
+<div class="absolute -bottom-6 -right-2 sm:right-6 bg-white p-4 rounded-2xl shadow-xl border border-slate-100 flex items-center gap-3">
+<div class="w-12 h-12 rounded-xl overflow-hidden bg-slate-200 flex-shrink-0">
+<img alt="Maqsood Raza" class="w-full h-full object-cover rounded-xl" src="https://lh3.googleusercontent.com/aida/AEtjO1XNw8-iVrsaCh9ZAcBy3RyivQL9SmwSW6OZHFa87l08iKWwr-13T-pm1YQCFhaAq3mUiWDdWBeOLHjW3VXPyXmo9iunSB8BYUpVY-NV19sd-pkT0u-fElYJ3B98u0mUNlRRrvkDerFup1Zr4tdT_oiLvgPXt8gfj210B6tBUSkHc_dcThjURwEtSVnz__31UXq2HKA8Ll8gELpzA_VeOrPX4UyCObfxqo4qjuRrRn8ip0ZYMIZiQgkvKs4">
+</div>
+<div>
+<p class="text-xs font-bold text-slate-900">Maqsood Raza (Verified Engineer)</p>
+<p class="text-[11px] text-emerald-600 font-medium">● Available for immediate visit</p>
+</div>
+</div>
+</div>
+<!-- Right Feature Copy & Dark Teal Badges List -->
+<div class="lg:col-span-6 space-y-6">
+<span class="text-xs font-bold uppercase tracking-wider text-[#5BBB7B]">For clients</span>
+<h2 class="text-3xl sm:text-4xl font-bold text-slate-900 leading-tight">
+          Find trusted local craft your way
+        </h2>
+<p class="text-slate-600 text-sm sm:text-base leading-relaxed">
+          Work with the largest network of independent skilled professionals and get things done — from quick emergency repairs to turnkey installations.
+        </p>
+<!-- 4 Dark Rounded Badges with Checkmarks -->
+<div class="p-6 rounded-2xl bg-[#1F4B3F] text-white space-y-4 shadow-lg">
+<div class="flex items-center space-x-3">
+<div class="w-5 h-5 rounded-full bg-[#5BBB7B]/20 text-[#5BBB7B] flex items-center justify-center flex-shrink-0">
+<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"></path></svg>
+</div>
+<span class="text-sm font-medium">The best for every budget with upfront estimates</span>
+</div>
+<div class="flex items-center space-x-3">
+<div class="w-5 h-5 rounded-full bg-[#5BBB7B]/20 text-[#5BBB7B] flex items-center justify-center flex-shrink-0">
+<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"></path></svg>
+</div>
+<span class="text-sm font-medium">Quality work done quickly with verified professionals</span>
+</div>
+<div class="flex items-center space-x-3">
+<div class="w-5 h-5 rounded-full bg-[#5BBB7B]/20 text-[#5BBB7B] flex items-center justify-center flex-shrink-0">
+<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"></path></svg>
+</div>
+<span class="text-sm font-medium">Protected payments, every time via digital escrow</span>
+</div>
+<div class="flex items-center space-x-3">
+<div class="w-5 h-5 rounded-full bg-[#5BBB7B]/20 text-[#5BBB7B] flex items-center justify-center flex-shrink-0">
+<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"></path></svg>
+</div>
+<span class="text-sm font-medium">24/7 dedicated support &amp; 5-day rework warranty</span>
+</div>
+</div>
+<div>
+<a class="inline-flex items-center px-8 py-3.5 rounded-full bg-[#5BBB7B] hover:bg-[#4faa6f] text-white font-semibold text-sm transition shadow-md" href="#post-job">
+            Post a Job
+          </a>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- END: "Find talent your way" -->
+<!-- BEGIN: Trusted By Partner Brand Strip -->
+<section class="py-12 bg-white border-y border-slate-100" data-purpose="trusted-brands-strip">
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+<p class="text-center text-xs font-semibold uppercase tracking-widest text-slate-400 mb-8">Trusted by leading businesses &amp; residents across Peshawar &amp; KPK</p>
+<div class="flex flex-wrap items-center justify-center gap-8 sm:gap-14 opacity-60 grayscale hover:grayscale-0 transition duration-300"><span class="text-lg sm:text-xl font-black tracking-tight text-slate-800">DEANS</span><span class="text-lg sm:text-xl font-extrabold tracking-tighter text-slate-800">PC PESHAWAR</span><span class="text-lg sm:text-xl font-bold tracking-widest text-slate-800">Shiraz</span><span class="text-lg sm:text-xl font-medium tracking-tight text-slate-800">SHIREEN MAHAL</span><span class="text-lg sm:text-xl font-bold tracking-wider text-slate-800">BRT PESHAWAR</span><span class="text-lg sm:text-xl font-extrabold tracking-tight text-slate-800">TOWN CLUB</span></div>
+</div>
+</section>
+<!-- END: Trusted By Partner Brand Strip -->
+<!-- BEGIN: TestimonialAndStatsSection -->
+<section class="bg-white py-14" data-purpose="testimonials-metrics">
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+<div class="p-8 sm:p-14 rounded-3xl bg-slate-50 border border-slate-100 grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
+<!-- Left Stats Section -->
+<div class="lg:col-span-7 space-y-6">
+<h2 class="text-2xl sm:text-3xl font-bold text-slate-900">People Love To Work With HUNAR</h2>
+<p class="text-slate-500 text-sm max-w-lg">Transparent quotes, real-time tracking of technicians, and verified ID accountability on every doorstep.</p>
+<div class="grid grid-cols-3 gap-6 pt-4">
+<div>
+<div class="text-3xl sm:text-4xl font-extrabold text-slate-900">4.9/5</div>
+<p class="text-xs text-slate-500 mt-1">Clients rate professionals on Hunar</p>
+</div>
+<div>
+<div class="text-3xl sm:text-4xl font-extrabold text-slate-900">95%</div>
+<p class="text-xs text-slate-500 mt-1">95% of customers book repeat services</p>
+</div>
+<div>
+<div class="text-3xl sm:text-4xl font-extrabold text-slate-900">Award winner</div>
+<p class="text-xs text-slate-500 mt-1">G2 2025 Best Service Platform</p>
+</div>
+</div>
+</div>
+<!-- Right Featured Testimonial Card -->
+<div class="lg:col-span-5 bg-white p-7 sm:p-8 rounded-2xl shadow-xl border border-slate-100 relative">
+<span class="text-xs font-bold uppercase tracking-wider text-[#5BBB7B] block mb-2">Great Work</span>
+<div class="text-emerald-500 font-serif text-4xl leading-none mb-2">“</div>
+<p class="text-slate-700 text-sm sm:text-base leading-relaxed mb-6 italic">
+          "HUNAR took all the anxiety out of emergency plumbing and electrical repairs. Transparent price quote received in 10 minutes, pro arrived with complete tools, immaculate craft."
+        </p>
+<div class="flex items-center space-x-3">
+<div class="w-11 h-11 rounded-full overflow-hidden bg-slate-200">
+<img alt="Maryam Nawaz" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida/AEtjO1UIPov1VoKhtWJoKeXmDXRCpbZOGMpsqIFqqaClw8ySzmGRdng91el5J4n3oJDtyF_YTa2T1rd2KRZraQsWRK94sbmgmMI5zkCIcLdfW-viUH2EtiA8BLXrcN-HB05IAf2-EtewlxVWqdoLiACkEECmo6g5z5QjgHWnI8cJKY8-1x_nsuFvQjiBfiJw4oYqtmFN6v5bm7PlcccTEnU6JmPa5Rx52M5sSe_3rrqstLbsDt-CoG4n29d_paIX">
+</div>
+<div>
+<p class="text-sm font-bold text-slate-900">Faryal</p>
+<p class="text-xs text-slate-500">Homeowner, DHA Phase 6, Lahore</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- END: TestimonialAndStatsSection -->
+<!-- BEGIN: MainFooter (1:1 Freeio Dark Spruce Green Footer) -->
+<section class="bg-[#1B3B36] text-white border-t border-[#2A4D47] relative overflow-hidden py-12" data-purpose="pre-footer-cta">
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
+<span class="inline-block px-3 py-1 rounded-full bg-[#5BBB7B]/20 text-[#5BBB7B] text-xs font-semibold mb-3 tracking-wider uppercase">Fast &amp; Guaranteed Service</span>
+<h2 class="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-white mb-4">
+      Ready to get skilled work done in Peshawar?
+    </h2>
+<p class="text-slate-300 text-sm sm:text-base max-w-2xl mx-auto mb-8 leading-relaxed">
+      Post your requirements today to receive quotes in minutes, or register as a certified artisan to expand your craft business.
+    </p>
+<div class="flex flex-wrap items-center justify-center gap-4">
+<a class="inline-flex items-center px-7 py-3 rounded-full bg-[#5BBB7B] hover:bg-[#4faa6f] text-white font-bold text-sm shadow-lg transition-all duration-200" href="#post-job">
+        Post a Job&nbsp;</a>
+<a class="inline-flex items-center px-7 py-3 rounded-full bg-white/10 hover:bg-white/20 text-white font-semibold text-sm border border-white/20 transition-all duration-200" href="#join-artisan">
+        Register as Professional</a>
+</div>
+</div>
+</section><footer class="bg-[#163E34] text-slate-300 pt-16 pb-12 border-t border-[#2A4D47]" data-purpose="marketplace-footer">
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+<!-- Top links & social bar -->
+<div class="flex flex-col md:flex-row items-center justify-between pb-10 border-b border-white/10 gap-4">
+<div class="flex flex-wrap items-center gap-6 text-xs text-slate-300 font-medium">
+<a class="hover:text-white transition" href="#tos">Terms of Service</a>
+<a class="hover:text-white transition" href="#privacy">Privacy Policy</a>
+<a class="hover:text-white transition" href="#sitemap">Site Map</a>
+</div>
+<div class="flex items-center space-x-4 text-slate-400">
+<span class="text-xs font-medium text-slate-300">Follow Us:</span>
+<a aria-label="Facebook" class="hover:text-white transition" href="#">
+<svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"></path></svg>
+</a>
+<a aria-label="Twitter" class="hover:text-white transition" href="#">
+<svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.936 9.936 0 0024 4.59z"></path></svg>
+</a>
+<a aria-label="Instagram" class="hover:text-white transition" href="#">
+<svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069z"></path></svg>
+</a>
+<a aria-label="LinkedIn" class="hover:text-white transition" href="#">
+<svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"></path></svg>
+</a>
+</div>
+</div>
+<!-- Navigation Columns -->
+<div class="grid grid-cols-2 md:grid-cols-4 gap-8 py-12 text-xs">
+<!-- About -->
+<div>
+<h4 class="text-sm font-bold text-white mb-4">About</h4>
+<ul class="space-y-2.5">
+<li class=""><a class="hover:text-white transition" href="#">About Us</a></li>
+<li class=""><a class="hover:text-white transition" href="#">Careers</a></li>
+<li class=""><a class="hover:text-white transition" href="#">Press &amp; News</a></li>
+<li class=""><a class="hover:text-white transition" href="#">Partnerships</a></li>
+<li class=""><a class="hover:text-white transition" href="#">Privacy Policy</a></li>
+<li class=""><a class="hover:text-white transition" href="#">Terms of Service</a></li>
+<li class=""><a class="hover:text-white transition" href="#">Investor Relations</a></li>
+</ul>
+</div>
+<!-- Categories -->
+<div>
+<h4 class="text-sm font-bold text-white mb-4">Categories</h4>
+<ul class="space-y-2.5"><li class=""><a class="hover:text-white transition" href="#cat-electrical">Electrical &amp; Power</a></li>
+<li class=""><a class="hover:text-white transition" href="#cat-hvac">HVAC &amp; Air Conditioning</a></li>
+<li class=""><a class="hover:text-white transition" href="#cat-plumbing">Plumbing &amp; Sanitary</a></li>
+<li class=""><a class="hover:text-white transition" href="#cat-woodwork">Carpentry &amp; Fitout</a></li>
+<li class=""><a class="hover:text-white transition" href="#cat-painting">Painting &amp; Renovation</a></li>
+<li class=""><a class="hover:text-white transition" href="#cat-solar">Solar &amp; Renewable Energy</a></li>
+<li class=""><a class="hover:text-white transition" href="#cat-cleaning">Water Tank &amp; Deep Cleaning</a></li>
+<li class=""><a class="hover:text-white transition" href="#cat-appliances">Home Appliance Repair</a></li>
+<li class=""><a class="hover:text-white transition" href="#cat-civil">Civil Work &amp; Masonry</a></li></ul>
+</div>
+<!-- Support -->
+<div>
+<h4 class="text-sm font-bold text-white mb-4">Support</h4>
+<ul class="space-y-2.5">
+<li class=""><a class="hover:text-white transition" href="#">Help &amp; Support</a></li>
+<li class=""><a class="hover:text-white transition" href="#">Trust &amp; Safety</a></li>
+<li class=""><a class="hover:text-white transition" href="#">Selling on Freeio</a></li>
+<li class=""><a class="hover:text-white transition" href="#">Buying on Freeio</a></li>
+</ul>
+</div>
+<!-- Subscribe -->
+<div>
+<h4 class="text-sm font-bold text-white mb-4">Subscribe</h4>
+<p class="text-[11px] text-slate-400 mb-3">Get seasonal home maintenance checklists &amp; promo discount codes.</p>
+<div class="flex items-center bg-white/10 rounded-xl p-1 border border-white/15">
+<input class="bg-transparent border-0 text-white placeholder-slate-400 text-xs px-2 py-1.5 focus:ring-0 w-full" placeholder="Your email address" type="email">
+<button class="bg-[#5BBB7B] hover:bg-[#4faa6f] text-white font-bold text-xs px-3 py-1.5 rounded-lg transition">Send</button>
+</div>
+<div class="mt-5">
+<span class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block mb-2">Apps</span>
+<div class="flex items-center space-x-2 text-[11px] text-slate-200">
+<span class="px-2.5 py-1 rounded bg-white/10 border border-white/10 hover:bg-white/20 transition cursor-pointer">iOS App</span>
+<span class="px-2.5 py-1 rounded bg-white/10 border border-white/10 hover:bg-white/20 transition cursor-pointer">Android App</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Bottom Copyright -->
+<div class="pt-8 mt-6 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-400 gap-4">
+<p class="">© 2026 HUNAR Technologies Inc. All rights reserved.</p>
+<div class="flex items-center space-x-4">
+<span class="">PKR (₨)</span>
+<span class="w-1 h-1 bg-slate-500 rounded-full"></span>
+<span class="">English (US)</span>
+</div>
+</div>
+</div>
+</footer>
+<!-- END: MainFooter -->
+
+
+
+
+</body></html>

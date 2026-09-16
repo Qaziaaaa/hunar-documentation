@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta content="width=device-width, initial-scale=1.0" name="viewport">
+  <title>HUNAR - Post a Job - Step 4 & 5</title>
+  <link href="https://fonts.googleapis.com" rel="preconnect">
+  <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            teal: {
+              DEFAULT: "#0F766E",
+              dark: "#115E59",
+              light: "rgba(15, 118, 110, 0.08)"
+            },
+            navy: "#123B5D",
+            navyDark: "#1A1A2E",
+            border: "#E2E8F0"
+          },
+          fontFamily: {
+            sans: ["Inter", "sans-serif"]
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    }
+  </style>
+</head>
+<body class="bg-white text-[#1A1A2E] antialiased min-h-screen flex flex-col justify-between">
+
+  <!-- Header -->
+  <header class="sticky top-0 z-40 bg-white border-b border-[#E2E8F0] px-4 sm:px-8 py-3 flex items-center justify-between">
+    <a href="../landing page/code.html" class="flex items-center gap-2 text-xl font-bold text-[#123B5D] hover:opacity-90 transition-opacity" title="Return to Landing Page">
+      <span class="material-symbols-outlined text-[#0F766E]" style="font-variation-settings: 'FILL' 1;">handyman</span>
+      <span>HUNAR</span>
+    </a>
+    <a href="../hunar_customer_dashboard/code.html" class="text-slate-400 hover:text-slate-700 p-1.5 rounded-full hover:bg-slate-100 transition-colors flex items-center justify-center">
+      <span class="material-symbols-outlined text-2xl">close</span>
+    </a>
+  </header>
+
+  <!-- Main Content -->
+  <main class="flex-grow w-full max-w-4xl mx-auto px-4 sm:px-6 py-4 flex flex-col">
+    
+    <!-- Step Progression Bar -->
+    <div class="w-full max-w-xl mx-auto mb-4 px-4">
+      <div class="relative flex items-center justify-between">
+        <!-- Connecting Track -->
+        <div class="absolute top-1/2 left-0 right-0 -translate-y-1/2 h-[2px] bg-slate-200 z-0"></div>
+        <div class="absolute top-1/2 left-0 -translate-y-1/2 h-[2px] bg-[#0F766E] z-0" style="width: 66.66%;"></div>
+
+        <!-- Step 1: Completed -->
+        <a href="../post_a_job_step_1_modern_service_selection/code.html" class="relative z-10 flex flex-col items-center group cursor-pointer">
+          <div class="w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs text-white bg-[#0F766E] shadow-sm">
+            <span class="material-symbols-outlined text-sm font-bold">check</span>
+          </div>
+          <span class="text-[11px] font-semibold text-[#0F766E] mt-1 whitespace-nowrap">1. Service</span>
+        </a>
+
+        <!-- Step 2: Completed -->
+        <a href="../post_a_job_step_2_3_details_media/code.html" class="relative z-10 flex flex-col items-center group cursor-pointer">
+          <div class="w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs text-white bg-[#0F766E] shadow-sm">
+            <span class="material-symbols-outlined text-sm font-bold">check</span>
+          </div>
+          <span class="text-[11px] font-semibold text-[#0F766E] mt-1 whitespace-nowrap">2. Details</span>
+        </a>
+
+        <!-- Step 3: Active -->
+        <div class="relative z-10 flex flex-col items-center">
+          <div class="w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs text-white bg-[#0F766E] shadow-sm ring-4 ring-[#0F766E]/15">
+            3
+          </div>
+          <span class="text-[11px] font-bold text-[#0F766E] mt-1 whitespace-nowrap">3. Schedule</span>
+        </div>
+
+        <!-- Step 4 -->
+        <div class="relative z-10 flex flex-col items-center">
+          <div class="w-8 h-8 rounded-full flex items-center justify-center font-semibold text-xs bg-white border-2 border-slate-300 text-slate-500 shadow-xs">
+            4
+          </div>
+          <span class="text-[11px] font-medium text-slate-500 mt-1 whitespace-nowrap">4. Review</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Header Section -->
+    <div class="text-center mb-3">
+      <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#123B5D]">Where and When?</h1>
+      <p class="text-xs sm:text-sm text-slate-500 max-w-md mx-auto mt-0.5">Set the location for the job and your preferred schedule for pros to visit.</p>
+    </div>
+
+    <!-- 2-Column Bento Grid Layout (Original Design) -->
+    <div class="w-full max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-12 gap-3.5">
+      
+      <!-- Left Column: Location Panel (7 cols) -->
+      <div class="md:col-span-7 bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col justify-between">
+        <div>
+          <div class="px-4 py-3 border-b border-slate-100 flex items-center gap-2 bg-slate-50/50">
+            <span class="material-symbols-outlined text-[#0F766E] text-lg" style="font-variation-settings: 'FILL' 1;">location_on</span>
+            <h2 class="text-sm font-bold text-[#123B5D]">Job Location</h2>
+          </div>
+
+          <div class="p-4 space-y-3">
+            <!-- Map Container -->
+            <div class="w-full h-36 bg-slate-100 rounded-xl relative overflow-hidden border border-slate-200">
+              <img alt="Suburban Map Location" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAfbCe-xDphWIWa2EsyQd2rBNv77un1epNIOTwpzx2GaObjD1PXMD-sS23oqEljn-4pqrh7zeinMMVzUEN9y1TlSwHj9UoRyWu2ovazpnn05MLDgsQWQSWdfMzJB_FKxbc_kKDJs2wg5vwtD1_WrFhbrLHXOISSiRyRo18Ei4XjeCHO1vVRJu-TG-t3s4_2W1yULhrSNAXh1bneHy2ZNeJL9RApOWkFSuRh1LYVoEXMIN_SdpzKtgI5">
+              <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex flex-col items-center">
+                <div class="w-8 h-8 rounded-full bg-[#0F766E] text-white flex items-center justify-center shadow-md ring-2 ring-white">
+                  <span class="material-symbols-outlined text-base" style="font-variation-settings: 'FILL' 1;">home</span>
+                </div>
+              </div>
+              <button class="absolute bottom-2.5 right-2.5 bg-white text-slate-600 hover:text-[#0F766E] p-1.5 rounded-full shadow-sm border border-slate-200 transition-colors">
+                <span class="material-symbols-outlined text-base">my_location</span>
+              </button>
+            </div>
+
+            <!-- Address Inputs -->
+            <div>
+              <label class="block text-xs font-medium text-slate-600 mb-1">Service Address</label>
+              <div class="relative">
+                <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-base">search</span>
+                <input class="w-full pl-9 pr-3 py-2 border border-slate-200 rounded-xl text-xs sm:text-sm text-[#1A1A2E] bg-white focus:outline-none focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E]" placeholder="Search address or drop pin on map" type="text" value="House 45, Street 12, Block C, University Town">
+              </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2.5">
+              <div>
+                <label class="block text-xs font-medium text-slate-600 mb-1">City</label>
+                <input class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs sm:text-sm text-[#1A1A2E] bg-white focus:outline-none focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E]" type="text" value="Peshawar">
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-slate-600 mb-1">Nearest Landmark</label>
+                <input class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs sm:text-sm text-[#1A1A2E] bg-white focus:outline-none focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E]" placeholder="e.g. Near Islamia College" type="text" value="Near Islamia College Gate">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="px-4 py-2 border-t border-slate-100 text-[11px] text-slate-400 flex items-center gap-1 bg-slate-50/50">
+          <span class="material-symbols-outlined text-[#0F766E] text-sm">lock</span>
+          <span>Exact address shared only with confirmed booked pro</span>
+        </div>
+      </div>
+
+      <!-- Right Column: Date & Time Panels (5 cols) -->
+      <div class="md:col-span-5 flex flex-col gap-3">
+        
+        <!-- Date Selection Card -->
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden p-3.5">
+          <div class="flex items-center justify-between mb-2">
+            <div class="flex items-center gap-1.5">
+              <span class="material-symbols-outlined text-[#0F766E] text-base" style="font-variation-settings: 'FILL' 1;">calendar_month</span>
+              <h2 class="text-xs font-bold text-[#123B5D]">Preferred Date</h2>
+            </div>
+            <div class="flex items-center gap-1">
+              <button class="p-0.5 text-slate-400 hover:text-[#0F766E] rounded-full hover:bg-slate-50">
+                <span class="material-symbols-outlined text-sm">chevron_left</span>
+              </button>
+              <span class="text-xs font-bold text-[#123B5D]">October 2026</span>
+              <button class="p-0.5 text-slate-400 hover:text-[#0F766E] rounded-full hover:bg-slate-50">
+                <span class="material-symbols-outlined text-sm">chevron_right</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Mini Calendar Grid -->
+          <div class="grid grid-cols-7 gap-1 text-center text-[10px] font-semibold text-slate-400 mb-1">
+            <div>Su</div><div>Mo</div><div>Tu</div><div>We</div><div>Th</div><div>Fr</div><div>Sa</div>
+          </div>
+          <div class="grid grid-cols-7 gap-1 text-center text-xs font-medium">
+            <div class="py-1 text-slate-300">29</div><div class="py-1 text-slate-300">30</div>
+            <div class="py-1 hover:bg-slate-50 rounded cursor-pointer">1</div>
+            <div class="py-1 hover:bg-slate-50 rounded cursor-pointer">2</div>
+            <div class="py-1 hover:bg-slate-50 rounded cursor-pointer">3</div>
+            <div class="py-1 hover:bg-slate-50 rounded cursor-pointer">4</div>
+            <div class="py-1 hover:bg-slate-50 rounded cursor-pointer">5</div>
+            <div class="py-1 hover:bg-slate-50 rounded cursor-pointer">6</div>
+            <div class="py-1 hover:bg-slate-50 rounded cursor-pointer">7</div>
+            <div class="py-1 hover:bg-slate-50 rounded cursor-pointer">8</div>
+            <div class="py-1 hover:bg-slate-50 rounded cursor-pointer">9</div>
+            <div class="py-1 hover:bg-slate-50 rounded cursor-pointer">10</div>
+            <div class="py-1 hover:bg-slate-50 rounded cursor-pointer">11</div>
+            <div class="py-1 hover:bg-slate-50 rounded cursor-pointer">12</div>
+            <div class="py-1 hover:bg-slate-50 rounded cursor-pointer">13</div>
+            <div class="py-1 hover:bg-slate-50 rounded cursor-pointer">14</div>
+            <!-- Selected Date -->
+            <div class="py-1 bg-[#0F766E] text-white rounded-lg font-bold shadow-2xs cursor-pointer">15</div>
+            <div class="py-1 hover:bg-slate-50 rounded cursor-pointer">16</div>
+            <div class="py-1 hover:bg-slate-50 rounded cursor-pointer">17</div>
+            <div class="py-1 hover:bg-slate-50 rounded cursor-pointer">18</div>
+            <div class="py-1 hover:bg-slate-50 rounded cursor-pointer">19</div>
+          </div>
+        </div>
+
+        <!-- Time Window Card -->
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden p-3.5">
+          <div class="flex items-center gap-1.5 mb-2">
+            <span class="material-symbols-outlined text-[#0F766E] text-base" style="font-variation-settings: 'FILL' 1;">schedule</span>
+            <h2 class="text-xs font-bold text-[#123B5D]">Time Window</h2>
+          </div>
+
+          <div class="space-y-1.5">
+            <label class="block cursor-pointer">
+              <input checked="" class="peer sr-only" name="time_window" type="radio">
+              <div class="px-3 py-1.5 border border-slate-200 rounded-xl text-xs font-medium text-slate-600 peer-checked:border-2 peer-checked:border-[#0F766E] peer-checked:text-[#0F766E] peer-checked:font-bold peer-checked:bg-[#0F766E]/5 transition-all">
+                Morning (8AM - 12PM)
+              </div>
+            </label>
+            <label class="block cursor-pointer">
+              <input class="peer sr-only" name="time_window" type="radio">
+              <div class="px-3 py-1.5 border border-slate-200 rounded-xl text-xs font-medium text-slate-600 peer-checked:border-2 peer-checked:border-[#0F766E] peer-checked:text-[#0F766E] peer-checked:font-bold peer-checked:bg-[#0F766E]/5 transition-all">
+                Afternoon (12PM - 4PM)
+              </div>
+            </label>
+            <label class="block cursor-pointer">
+              <input class="peer sr-only" name="time_window" type="radio">
+              <div class="px-3 py-1.5 border border-slate-200 rounded-xl text-xs font-medium text-slate-600 peer-checked:border-2 peer-checked:border-[#0F766E] peer-checked:text-[#0F766E] peer-checked:font-bold peer-checked:bg-[#0F766E]/5 transition-all">
+                Evening (4PM - 8PM)
+              </div>
+            </label>
+            <label class="block cursor-pointer">
+              <input class="peer sr-only" name="time_window" type="radio">
+              <div class="px-3 py-1.5 border border-slate-200 rounded-xl text-xs font-medium text-slate-600 peer-checked:border-2 peer-checked:border-[#0F766E] peer-checked:text-[#0F766E] peer-checked:font-bold peer-checked:bg-[#0F766E]/5 transition-all flex items-center gap-1">
+                <span class="material-symbols-outlined text-sm">tune</span>
+                <span>Specific Time</span>
+              </div>
+            </label>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- Actions -->
+    <div class="w-full max-w-4xl mx-auto flex justify-between items-center pt-3 mt-3 border-t border-slate-200">
+      <a href="../post_a_job_step_2_3_details_media/code.html" class="px-5 py-2 rounded-full border border-slate-200 text-slate-600 font-semibold text-xs hover:bg-slate-50 transition-colors flex items-center gap-1.5">
+        <span class="material-symbols-outlined text-base">arrow_back</span>
+        <span>Back</span>
+      </a>
+
+      <div class="flex items-center gap-3">
+        <span class="text-xs text-slate-400 hidden sm:inline">Next: Final Review</span>
+        <a href="../post_a_job_step_6_review_post/code.html" class="px-6 py-2.5 rounded-full transition-all duration-200 flex items-center gap-2 text-xs sm:text-sm font-semibold text-white shadow-sm hover:opacity-95 cursor-pointer bg-[#0F766E] hover:bg-[#115E59] active:scale-[0.99]">
+          <span>Review Job</span>
+          <span class="material-symbols-outlined text-base">arrow_forward</span>
+        </a>
+      </div>
+    </div>
+
+  </main>
+
+  <div class="h-2"></div>
+
+</body>
+</html>
