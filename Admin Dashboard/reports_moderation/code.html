@@ -1,0 +1,1082 @@
+<!DOCTYPE html>
+<html class="h-full" lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+
+<!-- Fonts (Inter only, same as other pages) -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+
+<!-- Tailwind -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+tailwind.config = {
+  darkMode: "class",
+  theme: {
+    extend: {
+      colors: {
+        navy: "#1A1A2E",
+        teal: { DEFAULT: "#0F766E", dark: "#115E59", light: "rgba(15, 118, 110, 0.1)" },
+        orange: "#F59E0B",
+        success: "#16A34A",
+        error: "#DC2626",
+        gray: "#64748B",
+        background: "#F8FAFC",
+        border: "#E2E8F0",
+        surface: "#FFFFFF",
+        primary: "#0F766E",
+        "primary-dark": "#115E59",
+        secondary: "#1A1A2E",
+        appBg: "#F8FAFC",
+        darkText: "#1A1A2E",
+        mutedText: "#64748B",
+        borderLine: "#E2E8F0",
+        "text-main": "#1A1A2E",
+        "surface-muted": "#F8FAFC",
+        "outline-border": "#E2E8F0",
+
+        // Material 3 aliases
+        "on-surface": "#1A1A2E",
+        "on-surface-variant": "#64748B",
+        "on-background": "#1A1A2E",
+        "on-primary": "#FFFFFF",
+        "on-secondary": "#FFFFFF",
+        "on-error": "#FFFFFF",
+        "surface-container-lowest": "#FFFFFF",
+        "surface-container-low": "#F8FAFC",
+        "surface-container": "#F8FAFC",
+        "surface-container-high": "#F8FAFC",
+        "surface-container-highest": "#F8FAFC",
+        "surface-variant": "#F8FAFC",
+        "surface-tint": "#0F766E",
+        "surface-dim": "#E2E8F0",
+        "surface-bright": "#FFFFFF",
+        outline: "#64748B",
+        "outline-variant": "#E2E8F0",
+        "primary-container": "rgba(15, 118, 110, 0.1)",
+        "on-primary-container": "#0F766E",
+        "secondary-container": "rgba(26, 26, 46, 0.08)",
+        "on-secondary-container": "#1A1A2E",
+        "secondary-fixed": "rgba(15, 118, 110, 0.1)",
+        "secondary-fixed-dim": "rgba(15, 118, 110, 0.1)",
+        "on-secondary-fixed": "#1A1A2E",
+        "on-secondary-fixed-variant": "#115E59",
+        "primary-fixed": "rgba(15, 118, 110, 0.1)",
+        "primary-fixed-dim": "rgba(15, 118, 110, 0.1)",
+        "on-primary-fixed": "#1A1A2E",
+        "on-primary-fixed-variant": "#115E59",
+        tertiary: "#F59E0B",
+        "tertiary-container": "rgba(245, 158, 11, 0.1)",
+        "on-tertiary-container": "#F59E0B",
+        "tertiary-fixed": "rgba(245, 158, 11, 0.1)",
+        "on-tertiary-fixed": "#1A1A2E",
+        "error-container": "rgba(220, 38, 38, 0.1)",
+        "on-error-container": "#DC2626",
+        "inverse-primary": "#0F766E",
+        "inverse-surface": "#1A1A2E",
+        "inverse-on-surface": "#F8FAFC",
+
+        // Brand palette
+        "brand-bg": "#F8FAFC",
+        "brand-card": "#FFFFFF",
+        "brand-border": "#E2E8F0",
+        "brand-navy": "#1A1A2E",
+        "brand-body": "#1A1A2E",
+        "brand-muted": "#64748B",
+        "brand-teal": "#0F766E",
+        "brand-teal-light": "rgba(15, 118, 110, 0.1)",
+        "brand-orange": "#F59E0B",
+        "brand-orange-light": "rgba(245, 158, 11, 0.1)",
+        "brand-red": "#DC2626",
+        "brand-red-light": "rgba(220, 38, 38, 0.1)",
+        "brand-green": "#16A34A",
+        "brand-green-light": "rgba(22, 163, 74, 0.1)"
+      },
+      spacing: {
+        "margin-desktop": "2rem",
+        "margin-tablet": "1.5rem",
+        "margin-mobile": "1rem",
+        "gutter-desktop": "1.5rem",
+        "gutter-mobile": "1rem",
+        "space-3xl": "4rem",
+        "space-2xl": "3rem",
+        "space-xl": "2rem",
+        "space-lg": "1.5rem",
+        "space-md": "1rem",
+        "space-base": "1rem",
+        "space-sm": "0.75rem",
+        "space-xs": "0.5rem",
+        "space-2xs": "0.25rem",
+        "space-xxs": "0.25rem",
+        "space-1": "0.25rem",
+        "space-2": "0.5rem",
+        "space-3": "0.75rem",
+        "space-4": "1rem",
+        "space-5": "1.25rem",
+        "space-6": "1.5rem",
+        "space-8": "2rem",
+        "space-12": "3rem",
+        "space-16": "4rem",
+        "space-20": "5rem",
+        "space-24": "6rem",
+        "space-stack-sm": "0.5rem",
+        "space-stack-md": "1rem",
+        "space-stack-lg": "1.5rem",
+        "section-gap": "2rem",
+        gutter: "1.5rem",
+        "sidebar-w": "16rem"
+      },
+      fontSize: {
+        "stat-lg": ["28px", { lineHeight: "36px", letterSpacing: "-0.02em", fontWeight: "700" }],
+        "button-text": ["14px", { lineHeight: "20px", letterSpacing: "0.01em", fontWeight: "600" }],
+        "display-hero": ["48px", { lineHeight: "56px", letterSpacing: "-0.025em", fontWeight: "700" }],
+        "display-hero-mobile": ["32px", { lineHeight: "40px", letterSpacing: "-0.02em", fontWeight: "700" }],
+        "display-kpi": ["36px", { lineHeight: "44px", letterSpacing: "-0.02em", fontWeight: "700" }],
+        "display-kpi-mobile": ["28px", { lineHeight: "34px", letterSpacing: "-0.02em", fontWeight: "700" }],
+        "display-lg": ["36px", { lineHeight: "44px", letterSpacing: "-0.02em", fontWeight: "700" }],
+        "headline-page": ["28px", { lineHeight: "36px", letterSpacing: "-0.015em", fontWeight: "600" }],
+        "headline-page-mobile": ["24px", { lineHeight: "32px", letterSpacing: "-0.015em", fontWeight: "600" }],
+        "headline-section": ["20px", { lineHeight: "28px", letterSpacing: "-0.01em", fontWeight: "600" }],
+        "headline-subsection": ["16px", { lineHeight: "24px", letterSpacing: "-0.005em", fontWeight: "600" }],
+        "headline-lg": ["28px", { lineHeight: "36px", letterSpacing: "-0.015em", fontWeight: "600" }],
+        "headline-lg-mobile": ["24px", { lineHeight: "32px", letterSpacing: "-0.015em", fontWeight: "600" }],
+        "headline-md": ["20px", { lineHeight: "28px", letterSpacing: "-0.01em", fontWeight: "600" }],
+        "headline-sm": ["16px", { lineHeight: "24px", letterSpacing: "-0.005em", fontWeight: "600" }],
+        "headline-xl-mobile": ["26px", { lineHeight: "34px", letterSpacing: "-0.015em", fontWeight: "600" }],
+        "body-default": ["14px", { lineHeight: "22px", letterSpacing: "0em", fontWeight: "400" }],
+        "body-compact": ["13px", { lineHeight: "18px", letterSpacing: "0em", fontWeight: "400" }],
+        "body-strong": ["14px", { lineHeight: "22px", letterSpacing: "0em", fontWeight: "600" }],
+        "body-lg": ["16px", { lineHeight: "24px", letterSpacing: "0em", fontWeight: "400" }],
+        "body-md": ["14px", { lineHeight: "22px", letterSpacing: "0em", fontWeight: "400" }],
+        "body-md-medium": ["14px", { lineHeight: "22px", letterSpacing: "0em", fontWeight: "500" }],
+        "body-sm": ["12px", { lineHeight: "16px", letterSpacing: "0em", fontWeight: "400" }],
+        "label-badge": ["11px", { lineHeight: "14px", letterSpacing: "0.02em", fontWeight: "600" }],
+        "label-regular": ["12px", { lineHeight: "16px", letterSpacing: "0.01em", fontWeight: "500" }],
+        "label-md": ["12px", { lineHeight: "16px", letterSpacing: "0.01em", fontWeight: "500" }],
+        "label-sm": ["11px", { lineHeight: "14px", letterSpacing: "0.02em", fontWeight: "500" }],
+        "label-uppercase": ["10px", { lineHeight: "12px", letterSpacing: "0.05em", fontWeight: "700" }]
+      },
+      fontFamily: {
+        "stat-lg": ["Inter", "sans-serif"],
+        "button-text": ["Inter", "sans-serif"],
+        sans: ["Inter", "sans-serif"],
+        heading: ["Inter", "sans-serif"],
+        "body-default": ["Inter", "sans-serif"],
+        "body-compact": ["Inter", "sans-serif"],
+        "body-strong": ["Inter", "sans-serif"],
+        "body-md": ["Inter", "sans-serif"],
+        "body-sm": ["Inter", "sans-serif"],
+        "display-kpi": ["Inter", "sans-serif"],
+        "headline-page": ["Inter", "sans-serif"],
+        "headline-section": ["Inter", "sans-serif"],
+        "headline-subsection": ["Inter", "sans-serif"],
+        "headline-md": ["Inter", "sans-serif"],
+        "headline-sm": ["Inter", "sans-serif"],
+        "headline-lg": ["Inter", "sans-serif"],
+        "label-badge": ["Inter", "sans-serif"],
+        "label-regular": ["Inter", "sans-serif"],
+        "label-md": ["Inter", "sans-serif"],
+        "label-sm": ["Inter", "sans-serif"]
+      },
+      borderRadius: {
+        DEFAULT: "0.375rem",
+        sm: "0.25rem",
+        md: "0.375rem",
+        lg: "0.5rem",
+        xl: "0.75rem",
+        "2xl": "1rem",
+        full: "9999px"
+      }
+    }
+  }
+};
+</script>
+
+<style>
+  /* ---------- Base reset (scroll-friendly) ---------- */
+  html, body {
+    width: 100%;
+    max-width: 100%;
+    margin: 0;
+    padding: 0;
+    height: auto;
+    min-height: 100%;
+  }
+  html { overflow-y: auto; overflow-x: hidden; }
+  body {
+    overflow-y: auto;
+    overflow-x: hidden;
+    overscroll-behavior-y: auto;
+  }
+
+  /* ---------- First/last child margin collapse ---------- */
+  main > :first-child { margin-top: 0 !important; }
+  main > :last-child  { margin-bottom: 0 !important; }
+
+  /* ---------- App-like scrollbars (horizontal chip rows only) ---------- */
+  .scrollbar-none,
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-none::-webkit-scrollbar,
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* ---------- Form control tweaks ---------- */
+  input[type="search"]::-webkit-search-decoration,
+  input[type="search"]::-webkit-search-cancel-button {
+    -webkit-appearance: none;
+  }
+</style>
+</head>
+
+<body class="bg-white font-sans text-brand-body min-h-full antialiased">
+
+<!-- SIDEBAR (Modern, Crisp White with Brand Navy Accents & Clear Hierarchy) -->
+<aside class="hidden lg:flex fixed left-0 top-0 h-screen w-64 bg-white border-r border-[#E2E8F0] z-50 flex-col justify-between shadow-[1px_0_10px_rgba(0,0,0,0.02)]">
+<div class="flex flex-col flex-1 overflow-y-auto px-4 py-5">
+<!-- Logo Header -->
+<div class="flex items-center justify-between pb-5 border-b border-[#E2E8F0] mb-5">
+<a href="../../Abdullah desigens customer + landing page/landing page/code.html" class="flex items-center gap-3 group hover:opacity-90 transition-opacity no-underline" title="Back to Landing Page">
+<div class="w-10 h-10 rounded-xl bg-[#123B5D] flex items-center justify-center text-white font-extrabold text-xl shadow-sm tracking-tight relative group-hover:scale-105 transition-transform">
+<span>H</span>
+<span class="w-2.5 h-2.5 rounded-full bg-[#0F8B8D] absolute bottom-1 right-1 border-2 border-white"></span>
+</div>
+<div class="flex flex-col">
+<div class="flex items-center gap-1.5 leading-tight">
+<span class="font-extrabold text-[17px] tracking-tight text-[#172033]">HUNAR</span>
+<span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-[#123B5D]/5 text-[#123B5D] uppercase tracking-wider border border-[#123B5D]/15">ADMIN</span>
+</div>
+<p class="text-[11px] font-medium text-[#64748B]">Certified Pro Marketplace</p>
+</div>
+</a>
+</div>
+<!-- Navigation Hierarchy -->
+<nav class="space-y-6">
+<!-- Section: MAIN -->
+<div>
+<div class="px-3 pb-2 text-[10px] font-bold uppercase tracking-wider text-[#64748B]">Main</div>
+<div class="space-y-1">
+<a class="flex items-center justify-between px-3 py-2 rounded-xl text-[13px] font-medium text-[#64748B] hover:text-[#172033] hover:bg-slate-50 transition-colors" href="../stitch_hunar_marketplace_prototype/hunar_admin_operations_dashboard_modern/code.html">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-[19px]">dashboard</span>
+<span>Dashboard</span>
+</div>
+</a>
+<a class="flex items-center justify-between px-3 py-2 rounded-xl text-[13px] font-medium text-[#64748B] hover:text-[#172033] hover:bg-slate-50 transition-colors" href="../admin panel design/customers.html">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-[19px]">group</span>
+<span>Users</span>
+</div>
+<span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-slate-100 text-[#64748B] border border-[#E2E8F0]">2 Roles</span>
+</a>
+<a class="flex items-center justify-between px-3 py-2 rounded-xl text-[13px] font-medium text-[#64748B] hover:text-[#172033] hover:bg-slate-50 transition-colors" href="../stitch_hunar_marketplace_prototype/jobs_management_work_orders_hunar_admin/code.html">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-[19px]">assignment</span>
+<span>Jobs</span>
+</div>
+<span class="px-2 py-0.5 rounded-full text-[11px] font-bold bg-slate-100 text-[#123B5D]">428</span>
+</a>
+</div>
+</div>
+<!-- Section: OPERATIONS -->
+<div>
+<div class="px-3 pb-2 text-[10px] font-bold uppercase tracking-wider text-[#64748B]">Operations</div>
+<div class="space-y-1">
+<a class="flex items-center justify-between px-3 py-2 rounded-xl text-[13px] font-medium text-[#64748B] hover:text-[#172033] hover:bg-slate-50 transition-colors" href="../admin panel design/index.html">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-[19px] text-[#F59E0B]">verified</span>
+<span>Verification</span>
+</div>
+<span class="px-2 py-0.5 rounded-full text-[11px] font-bold bg-[#FEF3C7] text-[#92400E] border border-[#F59E0B]/30">24</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-xl text-[13px] font-medium text-[#64748B] hover:text-[#172033] hover:bg-slate-50 transition-colors" href="../admin panel design/payments.html">
+<span class="material-symbols-outlined text-[19px]">account_balance_wallet</span>
+<span>Payments &amp; Txns</span>
+</a>
+<a class="flex items-center justify-between px-3 py-2 rounded-xl text-[13px] font-medium text-[#64748B] hover:text-[#172033] hover:bg-slate-50 transition-colors" href="../../stitch_hunar_admin pannel some features_mvp/shahzad-admin pannel, features/worker_dispute_management_resolution/code.html">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-[19px] text-[#DC2626]">flag</span>
+<span>Disputes</span>
+</div>
+<span class="px-2 py-0.5 rounded-full text-[11px] font-bold bg-[#FEE2E2] text-[#DC2626] border border-[#DC2626]/30">8</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-xl text-[13px] font-medium text-[#64748B] hover:text-[#172033] hover:bg-slate-50 transition-colors" href="../../stitch_hunar_admin pannel some features_mvp/shahzad-admin pannel, features/worker_reviews_ratings/code.html">
+<span class="material-symbols-outlined text-[19px]">star</span>
+<span>Reviews &amp; Ratings</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-xl text-[13px] font-medium text-[#64748B] hover:text-[#172033] hover:bg-slate-50 transition-colors" href="../../stitch_hunar_admin pannel some features_mvp/shahzad-admin pannel, features/worker_category_skill_settings/code.html">
+<span class="material-symbols-outlined text-[19px]">category</span>
+<span>Categories</span>
+</a>
+<a class="flex items-center justify-between px-3 py-2 rounded-xl text-[13px] font-medium text-[#64748B] hover:text-[#172033] hover:bg-slate-50 transition-colors" href="../../stitch_hunar_admin pannel some features_mvp/shahzad-admin pannel, features/worker_service_area_location_settings/code.html">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-[19px]">location_on</span>
+<span>Locations</span>
+</div>
+<span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-[#0F8B8D]/10 text-[#0F8B8D] border border-[#0F8B8D]/20">Peshawar</span>
+</a>
+</div>
+</div>
+<!-- Section: GOVERNANCE & TELEMETRY -->
+<div>
+<div class="px-3 pb-2 text-[10px] font-bold uppercase tracking-wider text-[#64748B]">Governance</div>
+<div class="space-y-1">
+<a class="flex items-center justify-between px-3 py-2.5 rounded-xl bg-[#123B5D] text-white font-semibold text-[13px] shadow-sm group transition-all" href="code.html">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-[19px] text-[#0F8B8D]">description</span>
+<span>Reports</span>
+</div>
+<span class="w-1.5 h-1.5 rounded-full bg-[#0F8B8D]"></span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-xl text-[13px] font-medium text-[#64748B] hover:text-[#172033] hover:bg-slate-50 transition-colors" href="../notifications/code.html">
+<span class="material-symbols-outlined text-[19px]">notifications</span>
+<span>Notifications</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-xl text-[13px] font-medium text-[#64748B] hover:text-[#172033] hover:bg-slate-50 transition-colors" href="../analytics/code.html">
+<span class="material-symbols-outlined text-[19px]">monitoring</span>
+<span>Analytics</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-xl text-[13px] font-medium text-[#64748B] hover:text-[#172033] hover:bg-slate-50 transition-colors" href="../settings/code.html">
+<span class="material-symbols-outlined text-[19px]">settings</span>
+<span>Settings</span>
+</a>
+</div>
+</div>
+</nav>
+</div>
+<!-- Sidebar Bottom: Escrow Highlight Card & Super Admin Profile -->
+<div class="p-4 border-t border-[#E2E8F0] space-y-3 bg-white">
+<div class="p-3.5 rounded-xl bg-[#123B5D] text-white space-y-2 shadow-sm">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[#0F8B8D] text-[18px]">verified_user</span>
+<span class="text-[10px] font-bold tracking-wider uppercase text-teal-300">HUNAR Escrow</span>
+</div>
+<span class="w-2 h-2 rounded-full bg-[#16A34A] animate-pulse"></span>
+</div>
+<p class="text-[11px] text-slate-300 leading-relaxed">100% SBP / NADRA Verified Pros &amp; safe Raast dispute guarantee.</p>
+<a class="block text-center py-1.5 px-3 bg-[#0F8B8D] text-white text-[11px] font-semibold rounded-lg hover:bg-[#0D7A7C] transition-colors" href="#">
+View Escrow Rules
+</a>
+</div>
+<div class="flex items-center justify-between pt-1">
+<div class="flex items-center gap-2.5">
+<div class="w-8 h-8 rounded-full bg-[#123B5D] text-white flex items-center justify-center font-bold text-xs ring-2 ring-[#0F8B8D]/20">
+<span class="material-symbols-outlined text-[18px]">person</span>
+</div>
+<div class="flex flex-col">
+<span class="text-[12px] font-bold text-[#172033] leading-tight">Abdullah Khan</span>
+<span class="text-[10px] text-[#64748B] font-medium">Super Admin • Peshawar Hub</span>
+</div>
+</div>
+<a class="text-[#64748B] hover:text-[#DC2626] p-1 rounded-md transition-colors" href="#" title="Logout">
+<span class="material-symbols-outlined text-[18px]">logout</span>
+</a>
+</div>
+</div>
+</aside>
+
+<!-- ================= MAIN WRAPPER ================= -->
+<div class="w-full lg:pl-64 flex flex-col min-h-screen bg-white min-w-0">
+
+  <!-- Header -->
+  <header class="sticky top-0 z-40 h-16 w-full bg-white/95 backdrop-blur-md border-b border-[#E2E8F0] px-4 sm:px-8 flex items-center justify-between gap-4">
+    <div class="flex items-center gap-2">
+      <a href="../../Abdullah desigens customer + landing page/landing page/code.html" class="text-brand-muted hover:text-[#0F8B8D] transition-colors font-medium text-xs" title="Back to Landing Page">HUNAR</a>
+      <span class="text-slate-300">/</span>
+      <span class="text-brand-navy font-semibold text-sm">Reports &amp; Moderation</span>
+    </div>
+
+    <div class="flex items-center gap-3 flex-1 max-w-xl mx-4">
+      <div class="relative w-full flex items-center">
+        <span class="material-symbols-outlined absolute left-3 text-[18px] text-brand-muted pointer-events-none">search</span>
+        <input class="w-full h-9 pl-9 pr-16 bg-slate-50 border border-brand-border rounded-lg text-brand-body placeholder:text-brand-muted text-sm focus:outline-none focus:border-brand-teal focus:ring-1 focus:ring-brand-teal" placeholder="Search reports, user CNIC, incident flags..." type="search"/>
+        <kbd class="hidden sm:inline-block absolute right-2.5 px-1.5 py-0.5 text-[11px] bg-brand-card border border-brand-border rounded text-brand-muted shadow-sm pointer-events-none">Ctrl + K</kbd>
+      </div>
+    </div>
+
+    <div class="flex items-center gap-3 shrink-0">
+      <div class="hidden xl:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-brand-green-light text-brand-green border border-emerald-200">
+        <span class="w-2 h-2 rounded-full bg-brand-green animate-pulse"></span>
+        <span class="text-xs font-semibold tracking-tight">Live System: 99.98%</span>
+      </div>
+      <div class="relative">
+        <button class="p-2 text-brand-muted hover:text-brand-navy hover:bg-slate-100 rounded-lg transition-colors relative" title="Notifications" type="button">
+          <span class="material-symbols-outlined text-[22px]">notifications</span>
+          <span class="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-brand-red ring-2 ring-brand-card"></span>
+        </button>
+      </div>
+      <div class="h-6 w-px bg-brand-border"></div>
+      <div class="flex items-center gap-2 cursor-pointer group">
+        <img alt="Profile" class="w-8 h-8 rounded-full object-cover ring-1 ring-brand-border group-hover:ring-brand-teal transition-all" src="https://randomuser.me/api/portraits/men/32.jpg"/>
+        <span class="material-symbols-outlined text-[18px] text-brand-muted group-hover:text-brand-navy transition-colors hidden sm:block">expand_more</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main -->
+  <main class="flex-1 w-full min-w-0 p-4 sm:p-6 lg:p-8 bg-brand-bg">
+    <div class="max-w-7xl mx-auto w-full min-w-0 flex flex-col gap-6">
+
+        <!-- Title -->
+        <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 pb-1">
+          <div class="flex flex-col">
+            <div class="flex items-center gap-2">
+              <span class="font-heading font-extrabold text-2xl text-brand-navy tracking-tight">Reports</span>
+              <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-brand-red-light text-brand-red">Live Queue</span>
+            </div>
+            <p class="text-sm text-brand-muted mt-0.5">Review, investigate, and moderate user reports, fraud flags, and platform integrity violations.</p>
+          </div>
+          <div class="flex items-center gap-2 shrink-0">
+            <button class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-brand-card border border-brand-border hover:bg-slate-50 text-brand-navy font-semibold text-sm shadow-sm transition-colors" type="button">
+              <span class="material-symbols-outlined text-[18px] text-brand-muted">tune</span>
+              Audit Rules
+            </button>
+            <button class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-brand-card border border-brand-border hover:bg-slate-50 text-brand-navy font-semibold text-sm shadow-sm transition-colors" type="button">
+              <span class="material-symbols-outlined text-[18px] text-brand-muted">download</span>
+              Export CSV
+            </button>
+            <button class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-brand-teal text-white font-semibold text-sm shadow-sm hover:opacity-95 transition-all" type="button">
+              <span class="material-symbols-outlined text-[18px]">add_moderator</span>
+              Log Direct Incident
+            </button>
+          </div>
+        </div>
+
+        <!-- KPI Cards -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+
+          <div class="relative overflow-hidden bg-brand-card rounded-xl p-4 border border-brand-border shadow-sm flex flex-col justify-between group">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-semibold text-brand-muted uppercase tracking-wider">Total Reports</span>
+              <div class="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center text-brand-navy">
+                <span class="material-symbols-outlined text-[18px]">flag</span>
+              </div>
+            </div>
+            <div class="flex items-baseline gap-2 my-2">
+              <span class="font-heading text-3xl text-brand-navy font-extrabold">48</span>
+              <span class="text-xs text-brand-muted font-medium">active cases</span>
+            </div>
+            <div class="flex items-center justify-between pt-1">
+              <span class="inline-flex items-center gap-1 text-xs text-brand-orange font-semibold">
+                <span class="material-symbols-outlined text-[14px]">arrow_upward</span> +12% this week
+              </span>
+              <svg class="w-16 h-5 text-brand-teal opacity-80" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 64 20">
+                <path d="M1 17L12 13L24 16L36 7L48 11L63 3"></path>
+              </svg>
+            </div>
+          </div>
+
+          <div class="relative overflow-hidden bg-brand-card rounded-xl p-4 border border-brand-border shadow-sm flex flex-col justify-between group">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-semibold text-brand-muted uppercase tracking-wider">Critical &amp; High</span>
+              <div class="w-8 h-8 rounded-lg bg-brand-orange-light flex items-center justify-center text-brand-orange">
+                <span class="material-symbols-outlined text-[18px]">warning</span>
+              </div>
+            </div>
+            <div class="flex items-baseline gap-2 my-2">
+              <span class="font-heading text-3xl text-brand-red font-extrabold">05</span>
+              <span class="text-xs text-brand-muted font-medium">require SLA &lt; 2h</span>
+            </div>
+            <div class="flex items-center justify-between pt-1">
+              <span class="inline-flex items-center gap-1 text-xs text-brand-orange font-semibold bg-brand-orange-light px-1.5 py-0.5 rounded">
+                <span class="material-symbols-outlined text-[14px]">emergency</span> Immediate review
+              </span>
+              <div class="flex -space-x-1">
+                <span class="w-2 h-2 rounded-full bg-brand-red animate-ping"></span>
+              </div>
+            </div>
+          </div>
+
+          <div class="relative overflow-hidden bg-brand-card rounded-xl p-4 border border-brand-border shadow-sm flex flex-col justify-between group">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-semibold text-brand-muted uppercase tracking-wider">Under Investigation</span>
+              <div class="w-8 h-8 rounded-lg bg-sky-50 flex items-center justify-center text-brand-navy">
+                <span class="material-symbols-outlined text-[18px]">manage_search</span>
+              </div>
+            </div>
+            <div class="flex items-baseline gap-2 my-2">
+              <span class="font-heading text-3xl text-brand-navy font-extrabold">14</span>
+              <span class="text-xs text-brand-muted font-medium">assigned officers</span>
+            </div>
+            <div class="flex items-center justify-between pt-1">
+              <span class="inline-flex items-center gap-1 text-xs text-brand-teal font-semibold">
+                <span class="material-symbols-outlined text-[14px]">done</span> 6 in arbitration
+              </span>
+              <svg class="w-16 h-5 text-brand-navy opacity-70" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 64 20">
+                <path d="M1 12L14 8L27 15L40 6L52 9L63 4"></path>
+              </svg>
+            </div>
+          </div>
+
+          <div class="relative overflow-hidden bg-brand-card rounded-xl p-4 border border-brand-border shadow-sm flex flex-col justify-between group">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-semibold text-brand-muted uppercase tracking-wider">Resolved (30d)</span>
+              <div class="w-8 h-8 rounded-lg bg-brand-green-light flex items-center justify-center text-brand-green">
+                <span class="material-symbols-outlined text-[18px]">verified</span>
+              </div>
+            </div>
+            <div class="flex items-baseline gap-2 my-2">
+              <span class="font-heading text-3xl text-brand-navy font-extrabold">128</span>
+              <span class="text-xs text-brand-muted font-medium">PKR 420K protected</span>
+            </div>
+            <div class="flex items-center justify-between pt-1">
+              <span class="inline-flex items-center gap-1 text-xs text-brand-green font-semibold">
+                <span class="material-symbols-outlined text-[14px]">check_circle</span> 94.2% resolution rate
+              </span>
+              <svg class="w-16 h-5 text-brand-green opacity-80" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 64 20">
+                <path d="M1 18L15 14L28 10L42 8L54 5L63 2"></path>
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        <!-- Category Pills -->
+        <div class="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs font-medium scrollbar-none">
+          <button class="px-3.5 py-1.5 rounded-full bg-brand-teal text-white font-semibold whitespace-nowrap shadow-sm" type="button">All Reports (48)</button>
+          <button class="px-3.5 py-1.5 rounded-full bg-brand-card border border-brand-border hover:bg-slate-50 text-brand-muted whitespace-nowrap transition-colors" type="button">Fake Professional (6)</button>
+          <button class="px-3.5 py-1.5 rounded-full bg-brand-card border border-brand-border hover:bg-slate-50 text-brand-muted whitespace-nowrap transition-colors" type="button">Fraud &amp; Payment (4)</button>
+          <button class="px-3.5 py-1.5 rounded-full bg-brand-card border border-brand-border hover:bg-slate-50 text-brand-muted whitespace-nowrap transition-colors" type="button">Bad Service (18)</button>
+          <button class="px-3.5 py-1.5 rounded-full bg-brand-card border border-brand-border hover:bg-slate-50 text-brand-muted whitespace-nowrap transition-colors" type="button">Spam &amp; Abuse (11)</button>
+          <button class="px-3.5 py-1.5 rounded-full bg-brand-card border border-brand-border hover:bg-slate-50 text-brand-muted whitespace-nowrap transition-colors" type="button">Fake Reviews (7)</button>
+          <button class="px-3.5 py-1.5 rounded-full bg-brand-card border border-brand-border hover:bg-slate-50 text-brand-muted whitespace-nowrap transition-colors" type="button">Other (2)</button>
+        </div>
+
+        <!-- Filter Bar -->
+        <div class="bg-brand-card rounded-xl p-3 border border-brand-border shadow-sm flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
+          <div class="relative flex-1 max-w-lg">
+            <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-[18px] text-brand-muted pointer-events-none">search</span>
+            <input class="w-full h-9 pl-9 pr-4 bg-slate-50 border border-brand-border rounded-lg text-brand-body placeholder:text-brand-muted text-sm focus:outline-none focus:bg-white focus:ring-1 focus:ring-brand-teal transition-all" placeholder="Filter by Report ID, user, or reason..." type="text" value=""/>
+          </div>
+          <div class="flex items-center flex-wrap gap-2">
+            <div class="relative">
+              <select class="appearance-none h-9 pl-3 pr-8 bg-slate-50 border border-brand-border hover:bg-slate-100 rounded-lg text-brand-body text-sm font-medium cursor-pointer focus:outline-none focus:ring-1 focus:ring-brand-teal">
+                <option>All Priorities</option>
+                <option>Critical Priority</option>
+                <option>High Priority</option>
+                <option>Medium Priority</option>
+                <option>Low Priority</option>
+              </select>
+              <span class="material-symbols-outlined absolute right-2 top-1/2 -translate-y-1/2 text-[18px] text-brand-muted pointer-events-none">arrow_drop_down</span>
+            </div>
+            <div class="relative">
+              <select class="appearance-none h-9 pl-3 pr-8 bg-slate-50 border border-brand-border hover:bg-slate-100 rounded-lg text-brand-body text-sm font-medium cursor-pointer focus:outline-none focus:ring-1 focus:ring-brand-teal">
+                <option>All Statuses</option>
+                <option>Pending Review</option>
+                <option>Under Investigation</option>
+                <option>Action Taken</option>
+                <option>Dismissed</option>
+              </select>
+              <span class="material-symbols-outlined absolute right-2 top-1/2 -translate-y-1/2 text-[18px] text-brand-muted pointer-events-none">arrow_drop_down</span>
+            </div>
+            <button class="inline-flex items-center gap-2 h-9 px-3 bg-slate-50 border border-brand-border hover:bg-slate-100 rounded-lg text-brand-body text-sm font-medium transition-colors" type="button">
+              <span class="material-symbols-outlined text-[18px] text-brand-muted">calendar_today</span>
+              <span>Last 30 Days</span>
+              <span class="material-symbols-outlined text-[16px] text-brand-muted">expand_more</span>
+            </button>
+            <button class="h-9 w-9 flex items-center justify-center rounded-lg bg-slate-50 border border-brand-border hover:bg-slate-100 text-brand-muted hover:text-brand-navy transition-colors" title="Refresh Feed" type="button">
+              <span class="material-symbols-outlined text-[18px]">refresh</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Workspace Split -->
+        <div class="grid grid-cols-1 2xl:grid-cols-12 gap-5 items-start">
+
+          <!-- Table Container -->
+          <div class="2xl:col-span-8 bg-brand-card rounded-xl border border-brand-border shadow-sm overflow-hidden flex flex-col">
+            <div class="overflow-x-auto w-full">
+              <table class="w-full text-left text-[13px]">
+                <thead class="bg-slate-50 border-b border-brand-border text-brand-navy font-semibold text-xs uppercase tracking-wider">
+                  <tr class="h-10">
+                    <th class="px-4 font-bold text-brand-navy">Report ID</th>
+                    <th class="px-3 font-bold text-brand-navy">Reporter</th>
+                    <th class="px-3 font-bold text-brand-navy">Reported User</th>
+                    <th class="px-3 font-bold text-brand-navy">Reason &amp; Category</th>
+                    <th class="px-3 font-bold text-brand-navy">Location</th>
+                    <th class="px-3 font-bold text-brand-navy">Date &amp; Time</th>
+                    <th class="px-3 font-bold text-brand-navy">Priority</th>
+                    <th class="px-3 font-bold text-brand-navy">Status</th>
+                    <th class="px-4 font-bold text-brand-navy text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-brand-border">
+
+                  <tr class="h-14 bg-teal-50/40 hover:bg-teal-50/70 transition-colors cursor-pointer group">
+                    <td class="px-4 py-2 font-medium whitespace-nowrap">
+                      <div class="flex items-center gap-1.5">
+                        <span class="w-1.5 h-4 bg-brand-teal rounded-full"></span>
+                        <span class="font-bold text-brand-navy">#REP-9042</span>
+                      </div>
+                    </td>
+                    <td class="px-3 py-2 whitespace-nowrap">
+                      <div class="flex items-center gap-2">
+                        <div class="w-7 h-7 rounded-full bg-slate-200 flex items-center justify-center text-xs text-brand-navy font-bold">MA</div>
+                        <div class="flex flex-col">
+                          <span class="font-bold text-brand-navy leading-tight">Muhammad Ali</span>
+                          <span class="text-[11px] text-brand-muted">Customer</span>
+                        </div>
+                      </div>
+                    </td>
+                    <td class="px-3 py-2 whitespace-nowrap">
+                      <div class="flex items-center gap-2">
+                        <div class="w-7 h-7 rounded-full bg-slate-100 flex items-center justify-center text-xs text-brand-navy font-semibold">BA</div>
+                        <div class="flex flex-col">
+                          <span class="font-semibold text-brand-body leading-tight">Bilal Ahmad</span>
+                          <span class="text-[11px] text-brand-teal font-medium">Electrician</span>
+                        </div>
+                      </div>
+                    </td>
+                    <td class="px-3 py-2 max-w-xs">
+                      <p class="text-brand-body truncate font-medium">Unlicensed electrical hazard reported</p>
+                      <span class="text-[11px] text-brand-muted">Bad Service / Hazard</span>
+                    </td>
+                    <td class="px-3 py-2 whitespace-nowrap text-brand-muted">Hayatabad Ph 4, Peshawar</td>
+                    <td class="px-3 py-2 whitespace-nowrap text-brand-muted">Sep 08, 2026 · 10:24 AM</td>
+                    <td class="px-3 py-2 whitespace-nowrap">
+                      <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold bg-brand-red-light text-brand-red">Critical</span>
+                    </td>
+                    <td class="px-3 py-2 whitespace-nowrap">
+                      <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-sky-100 text-sky-800">Under Investigation</span>
+                    </td>
+                    <td class="px-4 py-2 whitespace-nowrap text-right">
+                      <div class="flex items-center justify-end gap-1">
+                        <button class="p-1 text-brand-teal hover:bg-slate-100 rounded transition-colors" title="Quick Review" type="button">
+                          <span class="material-symbols-outlined text-[18px]">visibility</span>
+                        </button>
+                        <button class="p-1 text-brand-muted hover:text-brand-navy rounded transition-colors" title="More Actions" type="button">
+                          <span class="material-symbols-outlined text-[18px]">more_vert</span>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+
+                  <tr class="h-14 hover:bg-slate-50 transition-colors cursor-pointer group">
+                    <td class="px-4 py-2 font-bold text-brand-navy whitespace-nowrap">#REP-9038</td>
+                    <td class="px-3 py-2 whitespace-nowrap">
+                      <div class="flex items-center gap-2">
+                        <div class="w-7 h-7 rounded-full bg-slate-200 flex items-center justify-center text-xs text-brand-navy font-bold">FS</div>
+                        <div class="flex flex-col">
+                          <span class="font-bold text-brand-navy leading-tight">Farhan Shah</span>
+                          <span class="text-[11px] text-brand-muted">Customer</span>
+                        </div>
+                      </div>
+                    </td>
+                    <td class="px-3 py-2 whitespace-nowrap">
+                      <div class="flex items-center gap-2">
+                        <div class="w-7 h-7 rounded-full bg-slate-100 flex items-center justify-center text-xs text-brand-navy font-semibold">HK</div>
+                        <div class="flex flex-col">
+                          <span class="font-semibold text-brand-body leading-tight">Hamza Khan</span>
+                          <span class="text-[11px] text-brand-teal font-medium">AC Tech</span>
+                        </div>
+                      </div>
+                    </td>
+                    <td class="px-3 py-2 max-w-xs">
+                      <p class="text-brand-body truncate font-medium">Demanded cash payment outside HUNAR</p>
+                      <span class="text-[11px] text-brand-muted">Fraud &amp; Payment</span>
+                    </td>
+                    <td class="px-3 py-2 whitespace-nowrap text-brand-muted">University Town, Peshawar</td>
+                    <td class="px-3 py-2 whitespace-nowrap text-brand-muted">Sep 08, 2026 · 09:15 AM</td>
+                    <td class="px-3 py-2 whitespace-nowrap">
+                      <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold bg-brand-orange-light text-brand-orange">High</span>
+                    </td>
+                    <td class="px-3 py-2 whitespace-nowrap">
+                      <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-slate-100 text-brand-muted">Pending Review</span>
+                    </td>
+                    <td class="px-4 py-2 whitespace-nowrap text-right">
+                      <div class="flex items-center justify-end gap-1">
+                        <button class="p-1 text-brand-muted hover:text-brand-teal rounded transition-colors" title="Quick Review" type="button">
+                          <span class="material-symbols-outlined text-[18px]">visibility</span>
+                        </button>
+                        <button class="p-1 text-brand-muted hover:text-brand-navy rounded transition-colors" title="More Actions" type="button">
+                          <span class="material-symbols-outlined text-[18px]">more_vert</span>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+
+                  <tr class="h-14 hover:bg-slate-50 transition-colors cursor-pointer group">
+                    <td class="px-4 py-2 font-bold text-brand-navy whitespace-nowrap">#REP-9031</td>
+                    <td class="px-3 py-2 whitespace-nowrap">
+                      <div class="flex items-center gap-2">
+                        <div class="w-7 h-7 rounded-full bg-slate-200 flex items-center justify-center text-xs text-brand-navy font-bold">TK</div>
+                        <div class="flex flex-col">
+                          <span class="font-bold text-brand-navy leading-tight">Tariq Mehmood</span>
+                          <span class="text-[11px] text-brand-muted">Customer</span>
+                        </div>
+                      </div>
+                    </td>
+                    <td class="px-3 py-2 whitespace-nowrap">
+                      <div class="flex items-center gap-2">
+                        <div class="w-7 h-7 rounded-full bg-slate-100 flex items-center justify-center text-xs text-brand-navy font-semibold">SN</div>
+                        <div class="flex flex-col">
+                          <span class="font-semibold text-brand-body leading-tight">Sohail Niazi</span>
+                          <span class="text-[11px] text-brand-teal font-medium">Plumber</span>
+                        </div>
+                      </div>
+                    </td>
+                    <td class="px-3 py-2 max-w-xs">
+                      <p class="text-brand-body truncate font-medium">Abusive language during in-home visit</p>
+                      <span class="text-[11px] text-brand-muted">Spam &amp; Abuse</span>
+                    </td>
+                    <td class="px-3 py-2 whitespace-nowrap text-brand-muted">Saddar Cantt, Peshawar</td>
+                    <td class="px-3 py-2 whitespace-nowrap text-brand-muted">Sep 07, 2026 · 04:40 PM</td>
+                    <td class="px-3 py-2 whitespace-nowrap">
+                      <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-amber-50 text-amber-700">Medium</span>
+                    </td>
+                    <td class="px-3 py-2 whitespace-nowrap">
+                      <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-slate-100 text-brand-muted">Pending Review</span>
+                    </td>
+                    <td class="px-4 py-2 whitespace-nowrap text-right">
+                      <div class="flex items-center justify-end gap-1">
+                        <button class="p-1 text-brand-muted hover:text-brand-teal rounded transition-colors" title="Quick Review" type="button">
+                          <span class="material-symbols-outlined text-[18px]">visibility</span>
+                        </button>
+                        <button class="p-1 text-brand-muted hover:text-brand-navy rounded transition-colors" title="More Actions" type="button">
+                          <span class="material-symbols-outlined text-[18px]">more_vert</span>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+
+                  <tr class="h-14 hover:bg-slate-50 transition-colors cursor-pointer group">
+                    <td class="px-4 py-2 font-bold text-brand-navy whitespace-nowrap">#REP-9025</td>
+                    <td class="px-3 py-2 whitespace-nowrap">
+                      <div class="flex items-center gap-2">
+                        <div class="w-7 h-7 rounded-full bg-slate-200 flex items-center justify-center text-xs text-brand-navy font-bold">ZA</div>
+                        <div class="flex flex-col">
+                          <span class="font-bold text-brand-navy leading-tight">Zeeshan Afridi</span>
+                          <span class="text-[11px] text-brand-muted">Customer</span>
+                        </div>
+                      </div>
+                    </td>
+                    <td class="px-3 py-2 whitespace-nowrap">
+                      <div class="flex items-center gap-2">
+                        <div class="w-7 h-7 rounded-full bg-slate-100 flex items-center justify-center text-xs text-brand-navy font-semibold">RK</div>
+                        <div class="flex flex-col">
+                          <span class="font-semibold text-brand-body leading-tight">Rashid Karim</span>
+                          <span class="text-[11px] text-brand-red font-medium">Unverified Pro</span>
+                        </div>
+                      </div>
+                    </td>
+                    <td class="px-3 py-2 max-w-xs">
+                      <p class="text-brand-body truncate font-medium">Forged CNIC and apprentice impersonation</p>
+                      <span class="text-[11px] text-brand-muted">Fake Professional</span>
+                    </td>
+                    <td class="px-3 py-2 whitespace-nowrap text-brand-muted">Gulbahar No 2, Peshawar</td>
+                    <td class="px-3 py-2 whitespace-nowrap text-brand-muted">Sep 07, 2026 · 01:10 PM</td>
+                    <td class="px-3 py-2 whitespace-nowrap">
+                      <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold bg-brand-red-light text-brand-red">Critical</span>
+                    </td>
+                    <td class="px-3 py-2 whitespace-nowrap">
+                      <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold bg-brand-green-light text-brand-green">Action Taken</span>
+                    </td>
+                    <td class="px-4 py-2 whitespace-nowrap text-right">
+                      <div class="flex items-center justify-end gap-1">
+                        <button class="p-1 text-brand-muted hover:text-brand-teal rounded transition-colors" title="Quick Review" type="button">
+                          <span class="material-symbols-outlined text-[18px]">visibility</span>
+                        </button>
+                        <button class="p-1 text-brand-muted hover:text-brand-navy rounded transition-colors" title="More Actions" type="button">
+                          <span class="material-symbols-outlined text-[18px]">more_vert</span>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+
+                  <tr class="h-14 hover:bg-slate-50 transition-colors cursor-pointer group">
+                    <td class="px-4 py-2 font-bold text-brand-navy whitespace-nowrap">#REP-9019</td>
+                    <td class="px-3 py-2 whitespace-nowrap">
+                      <div class="flex items-center gap-2">
+                        <div class="w-7 h-7 rounded-full bg-slate-200 flex items-center justify-center text-xs text-brand-navy font-bold">SY</div>
+                        <div class="flex flex-col">
+                          <span class="font-bold text-brand-navy leading-tight">System Bot</span>
+                          <span class="text-[11px] text-brand-teal font-medium">Integrity Engine</span>
+                        </div>
+                      </div>
+                    </td>
+                    <td class="px-3 py-2 whitespace-nowrap">
+                      <div class="flex items-center gap-2">
+                        <div class="w-7 h-7 rounded-full bg-slate-100 flex items-center justify-center text-xs text-brand-navy font-semibold">NW</div>
+                        <div class="flex flex-col">
+                          <span class="font-semibold text-brand-body leading-tight">Naveed Woodcraft</span>
+                          <span class="text-[11px] text-brand-teal font-medium">Carpenter</span>
+                        </div>
+                      </div>
+                    </td>
+                    <td class="px-3 py-2 max-w-xs">
+                      <p class="text-brand-body truncate font-medium">Coordinated 5-star cluster from same device IP</p>
+                      <span class="text-[11px] text-brand-muted">Fake Reviews</span>
+                    </td>
+                    <td class="px-3 py-2 whitespace-nowrap text-brand-muted">Charsadda Road, Peshawar</td>
+                    <td class="px-3 py-2 whitespace-nowrap text-brand-muted">Sep 06, 2026 · 08:30 PM</td>
+                    <td class="px-3 py-2 whitespace-nowrap">
+                      <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-amber-50 text-amber-700">Medium</span>
+                    </td>
+                    <td class="px-3 py-2 whitespace-nowrap">
+                      <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-sky-100 text-sky-800">Under Investigation</span>
+                    </td>
+                    <td class="px-4 py-2 whitespace-nowrap text-right">
+                      <div class="flex items-center justify-end gap-1">
+                        <button class="p-1 text-brand-muted hover:text-brand-teal rounded transition-colors" title="Quick Review" type="button">
+                          <span class="material-symbols-outlined text-[18px]">visibility</span>
+                        </button>
+                        <button class="p-1 text-brand-muted hover:text-brand-navy rounded transition-colors" title="More Actions" type="button">
+                          <span class="material-symbols-outlined text-[18px]">more_vert</span>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+
+                  <tr class="h-14 hover:bg-slate-50 transition-colors cursor-pointer group">
+                    <td class="px-4 py-2 font-bold text-brand-navy whitespace-nowrap">#REP-9012</td>
+                    <td class="px-3 py-2 whitespace-nowrap">
+                      <div class="flex items-center gap-2">
+                        <div class="w-7 h-7 rounded-full bg-slate-200 flex items-center justify-center text-xs text-brand-navy font-bold">KM</div>
+                        <div class="flex flex-col">
+                          <span class="font-bold text-brand-navy leading-tight">Kamran Mengal</span>
+                          <span class="text-[11px] text-brand-muted">Customer</span>
+                        </div>
+                      </div>
+                    </td>
+                    <td class="px-3 py-2 whitespace-nowrap">
+                      <div class="flex items-center gap-2">
+                        <div class="w-7 h-7 rounded-full bg-slate-100 flex items-center justify-center text-xs text-brand-navy font-semibold">AM</div>
+                        <div class="flex flex-col">
+                          <span class="font-semibold text-brand-body leading-tight">Asif Masood</span>
+                          <span class="text-[11px] text-brand-teal font-medium">Painter</span>
+                        </div>
+                      </div>
+                    </td>
+                    <td class="px-3 py-2 max-w-xs">
+                      <p class="text-brand-body truncate font-medium">Advance material fee taken without job start</p>
+                      <span class="text-[11px] text-brand-muted">Fraud &amp; Payment</span>
+                    </td>
+                    <td class="px-3 py-2 whitespace-nowrap text-brand-muted">Warsak Road, Peshawar</td>
+                    <td class="px-3 py-2 whitespace-nowrap text-brand-muted">Sep 06, 2026 · 11:20 AM</td>
+                    <td class="px-3 py-2 whitespace-nowrap">
+                      <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold bg-brand-orange-light text-brand-orange">High</span>
+                    </td>
+                    <td class="px-3 py-2 whitespace-nowrap">
+                      <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold bg-brand-green-light text-brand-green">Action Taken</span>
+                    </td>
+                    <td class="px-4 py-2 whitespace-nowrap text-right">
+                      <div class="flex items-center justify-end gap-1">
+                        <button class="p-1 text-brand-muted hover:text-brand-teal rounded transition-colors" title="Quick Review" type="button">
+                          <span class="material-symbols-outlined text-[18px]">visibility</span>
+                        </button>
+                        <button class="p-1 text-brand-muted hover:text-brand-navy rounded transition-colors" title="More Actions" type="button">
+                          <span class="material-symbols-outlined text-[18px]">more_vert</span>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+
+                  <tr class="h-14 hover:bg-slate-50 transition-colors cursor-pointer group">
+                    <td class="px-4 py-2 font-bold text-brand-navy whitespace-nowrap">#REP-9008</td>
+                    <td class="px-3 py-2 whitespace-nowrap">
+                      <div class="flex items-center gap-2">
+                        <div class="w-7 h-7 rounded-full bg-slate-200 flex items-center justify-center text-xs text-brand-navy font-bold">IK</div>
+                        <div class="flex flex-col">
+                          <span class="font-bold text-brand-navy leading-tight">Imran Khattak</span>
+                          <span class="text-[11px] text-brand-muted">Customer</span>
+                        </div>
+                      </div>
+                    </td>
+                    <td class="px-3 py-2 whitespace-nowrap">
+                      <div class="flex items-center gap-2">
+                        <div class="w-7 h-7 rounded-full bg-slate-100 flex items-center justify-center text-xs text-brand-navy font-semibold">WQ</div>
+                        <div class="flex flex-col">
+                          <span class="font-semibold text-brand-body leading-tight">Waqas Qazi</span>
+                          <span class="text-[11px] text-brand-teal font-medium">Plumber</span>
+                        </div>
+                      </div>
+                    </td>
+                    <td class="px-3 py-2 max-w-xs">
+                      <p class="text-brand-body truncate font-medium">Customer disputed standardized pipe fitting charge</p>
+                      <span class="text-[11px] text-brand-muted">Price Dispute</span>
+                    </td>
+                    <td class="px-3 py-2 whitespace-nowrap text-brand-muted">Ring Road, Peshawar</td>
+                    <td class="px-3 py-2 whitespace-nowrap text-brand-muted">Sep 05, 2026 · 02:15 PM</td>
+                    <td class="px-3 py-2 whitespace-nowrap">
+                      <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-slate-100 text-brand-muted">Low</span>
+                    </td>
+                    <td class="px-3 py-2 whitespace-nowrap">
+                      <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-slate-100 text-brand-muted">Dismissed</span>
+                    </td>
+                    <td class="px-4 py-2 whitespace-nowrap text-right">
+                      <div class="flex items-center justify-end gap-1">
+                        <button class="p-1 text-brand-muted hover:text-brand-teal rounded transition-colors" title="Quick Review" type="button">
+                          <span class="material-symbols-outlined text-[18px]">visibility</span>
+                        </button>
+                        <button class="p-1 text-brand-muted hover:text-brand-navy rounded transition-colors" title="More Actions" type="button">
+                          <span class="material-symbols-outlined text-[18px]">more_vert</span>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Pagination -->
+            <div class="px-4 py-3 bg-brand-card border-t border-brand-border flex flex-col sm:flex-row items-center justify-between gap-3">
+              <span class="text-xs text-brand-muted">
+                Showing <strong class="text-brand-navy font-semibold">1 to 7</strong> of <strong class="text-brand-navy font-semibold">48</strong> reports
+              </span>
+              <div class="flex items-center gap-2">
+                <button class="px-3 py-1.5 rounded-lg border border-brand-border bg-brand-card text-brand-muted opacity-50 cursor-not-allowed text-xs font-semibold" disabled type="button">Previous</button>
+                <div class="flex items-center gap-1">
+                  <button class="w-8 h-8 rounded-lg bg-brand-teal text-white text-xs font-bold shadow-sm" type="button">1</button>
+                  <button class="w-8 h-8 rounded-lg border border-brand-border bg-brand-card hover:bg-slate-50 text-brand-navy text-xs font-medium" type="button">2</button>
+                  <button class="w-8 h-8 rounded-lg border border-brand-border bg-brand-card hover:bg-slate-50 text-brand-navy text-xs font-medium" type="button">3</button>
+                  <span class="px-1 text-brand-muted text-xs">...</span>
+                  <button class="w-8 h-8 rounded-lg border border-brand-border bg-brand-card hover:bg-slate-50 text-brand-navy text-xs font-medium" type="button">7</button>
+                </div>
+                <button class="px-3 py-1.5 rounded-lg border border-brand-border bg-brand-card hover:bg-slate-50 text-brand-navy text-xs font-semibold transition-colors" type="button">Next</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right Drawer -->
+          <div class="2xl:col-span-4 flex flex-col gap-4">
+
+            <div class="bg-brand-card rounded-xl p-5 border border-brand-border shadow-sm flex flex-col gap-4 relative">
+              <div class="flex items-start justify-between">
+                <div class="flex flex-col">
+                  <div class="flex items-center gap-2">
+                    <span class="font-heading font-bold text-base text-brand-navy">Report #REP-9042</span>
+                    <span class="px-2 py-0.5 rounded-full text-[11px] font-bold bg-brand-red-light text-brand-red">Critical</span>
+                  </div>
+                  <span class="text-xs text-brand-muted mt-0.5">Logged via Android App · Sep 08, 2026</span>
+                </div>
+                <button class="p-1 rounded-md text-brand-muted hover:bg-slate-100 hover:text-brand-navy transition-colors" title="Close inspector" type="button">
+                  <span class="material-symbols-outlined text-[20px]">close</span>
+                </button>
+              </div>
+
+              <!-- Reporter Statement -->
+              <div class="flex flex-col gap-2 bg-slate-50 border border-brand-border rounded-xl p-3.5">
+                <div class="flex items-center justify-between">
+                  <span class="text-xs font-bold text-brand-navy">Reporter Statement</span>
+                  <span class="px-2 py-0.5 rounded-full text-[11px] font-bold bg-brand-teal-light text-brand-teal">Verified Customer</span>
+                </div>
+                <p class="text-[13px] text-brand-body italic leading-relaxed">
+                  "Artisan attempted to bypass the breaker box with bare copper wire without safety switches, resulting in sparks and melted outlet casing. Refused to fix it properly unless paid PKR 3,500 extra."
+                </p>
+                <div class="pt-1">
+                  <span class="text-xs font-semibold text-brand-muted block mb-1.5">Attached Photographic Evidence (1)</span>
+                  <div class="relative w-full h-36 rounded-lg overflow-hidden group cursor-pointer shadow-sm border border-brand-border">
+                    <img class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBHBWMcrRl-8racxxhXNy2zrJXlXcdES9X0Lw5TkDW9047U7z0KFSIo6ZD36uLQQCifPnUojIDM7Rn8LO-NpuY3ImoHMBb2iMTjKDMyrCCEYBTlgUQfG3RfvAk2BP8niFYkHZ_9MJ_DvNDgOYMRk9Mmg6z0JLHAF5bdpidGstvaefQ6f0pHb-pQSHA9oar3U7BgdXOq8Qlg6p41anOYOShgesGGEYvcKi3xz0IPuNPJA4icGthdKqkzEg"/>
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent flex items-end p-2.5">
+                      <div class="flex items-center gap-1.5 text-white text-[11px] font-medium">
+                        <span class="material-symbols-outlined text-[16px]">zoom_in</span>
+                        <span>IMG_9042_hazard_proof.jpg (2.4 MB)</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Accused Pro -->
+              <div class="flex flex-col gap-2 bg-slate-50 border border-brand-border rounded-xl p-3.5">
+                <div class="flex items-center justify-between">
+                  <span class="text-xs font-bold text-brand-navy">Accused Professional</span>
+                  <span class="px-2 py-0.5 rounded-full text-[11px] bg-slate-200 text-brand-navy font-bold">Tier 1 Pro</span>
+                </div>
+                <div class="flex items-center gap-3 pt-1">
+                  <img class="w-12 h-12 rounded-xl object-cover shadow-sm shrink-0 border border-brand-border" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC-oBopH-kPHDdz2V4jiFZYLx1fZZHr8DaNohkxgO-SbwcFRdQgEda5O5tV1uk_Mcr_W0p6MZ6JsGLmoXymZMA_GfkbMuBG5PGBfp_-qpbEy6HJudHsGXQrJUbyTnFpGUoyy-9zH4Uba1OeJhyhBcCfPS0GsbulyY5ydfZPgacwt7hVvYikX9vIQRMAov9ULr8UV-_5ffdK8DejkwfOWpKGtmnTK4frvhbLIEMk6wSdFsLJwGFgJQez7g"/>
+                  <div class="flex flex-col min-w-0">
+                    <div class="flex items-center gap-1.5">
+                      <span class="font-bold text-brand-navy truncate">Bilal Ahmad</span>
+                      <span class="material-symbols-outlined text-[16px] text-brand-green" title="Identity Verified">check_circle</span>
+                    </div>
+                    <span class="text-xs text-brand-muted truncate">Master Electrician · Peshawar Core</span>
+                    <div class="flex items-center gap-1.5 mt-1 text-xs">
+                      <span class="inline-flex items-center gap-0.5 font-bold text-brand-navy">
+                        <span class="material-symbols-outlined text-[14px] text-amber-500" style="font-variation-settings: 'FILL' 1;">star</span> 3.2
+                      </span>
+                      <span class="text-slate-300">·</span>
+                      <span class="text-brand-muted">18 Completed Jobs</span>
+                      <span class="text-slate-300">·</span>
+                      <span class="text-brand-red font-bold">2 Prior Strikes</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="grid grid-cols-3 gap-2 pt-1 text-center">
+                  <div class="p-2 rounded-lg bg-brand-card border border-brand-border">
+                    <span class="block text-[10px] font-bold text-brand-muted uppercase tracking-wider">Escrow Hold</span>
+                    <span class="text-xs font-extrabold text-brand-navy">PKR 4,200</span>
+                  </div>
+                  <div class="p-2 rounded-lg bg-brand-card border border-brand-border">
+                    <span class="block text-[10px] font-bold text-brand-muted uppercase tracking-wider">Complaints</span>
+                    <span class="text-xs font-extrabold text-brand-red">3 Cases</span>
+                  </div>
+                  <div class="p-2 rounded-lg bg-brand-card border border-brand-border">
+                    <span class="block text-[10px] font-bold text-brand-muted uppercase tracking-wider">Member Since</span>
+                    <span class="text-xs font-extrabold text-brand-navy">Nov 2025</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Notes -->
+              <div class="flex flex-col gap-1.5">
+                <div class="flex items-center justify-between">
+                  <label class="text-xs font-bold text-brand-navy" for="investigation-notes">Investigation Notes</label>
+                  <span class="text-[11px] text-brand-muted">Visible only to Admins</span>
+                </div>
+                <textarea class="w-full p-2.5 bg-slate-50 border border-brand-border rounded-xl text-brand-body placeholder:text-brand-muted text-[13px] focus:outline-none focus:bg-white focus:ring-1 focus:ring-brand-teal" id="investigation-notes" placeholder="Record findings, customer call logs, or safety inspection dispatch notes..." rows="3">Assigned inspector Engr. Haroon to visit Peshawar Hayatabad site at 2:00 PM today. Customer shared video of electrical sparks. Pro claiming existing wiring was substandard.</textarea>
+                <div class="flex justify-end">
+                  <button class="inline-flex items-center gap-1 text-xs text-brand-teal font-bold hover:underline" type="button">
+                    <span class="material-symbols-outlined text-[14px]">save</span> Update Notes
+                  </button>
+                </div>
+              </div>
+
+              <!-- Actions -->
+              <div class="flex flex-col gap-2 pt-1">
+                <span class="text-xs font-bold text-brand-navy uppercase tracking-wider">Disciplinary &amp; Moderation Actions</span>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <button class="px-3 py-2 rounded-lg bg-brand-card border border-brand-border hover:bg-slate-50 text-brand-navy font-semibold text-xs flex items-center justify-center gap-1.5 transition-colors" type="button">
+                    <span class="material-symbols-outlined text-[18px] text-brand-muted">report</span>
+                    Issue Warning
+                  </button>
+                  <button class="px-3 py-2 rounded-lg bg-sky-50 border border-sky-200 hover:bg-sky-100 text-sky-900 font-semibold text-xs flex items-center justify-center gap-1.5 transition-colors" type="button">
+                    <span class="material-symbols-outlined text-[18px] text-sky-700">lock_clock</span>
+                    Suspend (7 Days)
+                  </button>
+                  <button class="px-3 py-2 rounded-lg bg-brand-red-light border border-red-200 hover:bg-red-100 text-brand-red font-bold text-xs flex items-center justify-center gap-1.5 transition-colors" type="button">
+                    <span class="material-symbols-outlined text-[18px]">block</span>
+                    Permanently Ban
+                  </button>
+                  <button class="px-3 py-2 rounded-lg bg-slate-100 border border-brand-border hover:bg-slate-200 text-brand-body font-semibold text-xs flex items-center justify-center gap-1.5 transition-colors" type="button">
+                    <span class="material-symbols-outlined text-[18px] text-brand-muted">close</span>
+                    Dismiss Report
+                  </button>
+                </div>
+                <button class="w-full mt-1 py-2.5 rounded-lg bg-brand-teal text-white font-bold text-sm shadow-sm hover:opacity-95 transition-all flex items-center justify-center gap-2" type="button">
+                  <span class="material-symbols-outlined text-[18px]">gavel</span>
+                  Arbitrate &amp; Refund Escrow (PKR 4,200)
+                </button>
+              </div>
+            </div>
+
+            <!-- Tip -->
+            <div class="bg-slate-50 border border-brand-border rounded-xl p-3.5 flex items-start gap-2.5 text-brand-muted">
+              <span class="material-symbols-outlined text-[20px] text-brand-teal shrink-0 mt-0.5">verified_user</span>
+              <p class="text-xs leading-relaxed">
+                Decisions triggering account suspensions automatically push SMS alerts in Urdu &amp; English to the artisan and trigger Peshawar regional admin notification logs.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+</body>
+</html>

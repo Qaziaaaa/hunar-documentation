@@ -1,0 +1,814 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/>
+
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+
+<!-- Tailwind -->
+<script src="https://cdn.tailwindcss.com"></script>
+<script id="tailwind-config">
+tailwind.config = {
+  darkMode: "class",
+  theme: {
+    extend: {
+      colors: {
+        navy: "#1A1A2E",
+        teal: { DEFAULT: "#0F766E", dark: "#115E59", light: "rgba(15, 118, 110, 0.1)" },
+        orange: "#F59E0B",
+        success: "#16A34A",
+        error: "#DC2626",
+        gray: "#64748B",
+        background: "#F8FAFC",
+        border: "#E2E8F0",
+        surface: "#FFFFFF",
+        primary: "#0F766E",
+        "primary-dark": "#115E59",
+        secondary: "#1A1A2E",
+        appBg: "#F8FAFC",
+        darkText: "#1A1A2E",
+        mutedText: "#64748B",
+        borderLine: "#E2E8F0",
+        "text-main": "#1A1A2E",
+        "surface-muted": "#F8FAFC",
+        "outline-border": "#E2E8F0",
+        "on-surface": "#1A1A2E",
+        "on-surface-variant": "#64748B",
+        "on-background": "#1A1A2E",
+        "on-primary": "#FFFFFF",
+        "on-secondary": "#FFFFFF",
+        "on-error": "#FFFFFF",
+        "surface-container-lowest": "#FFFFFF",
+        "surface-container-low": "#F8FAFC",
+        "surface-container": "#F8FAFC",
+        "surface-container-high": "#F8FAFC",
+        "surface-container-highest": "#F8FAFC",
+        "surface-variant": "#F8FAFC",
+        "surface-tint": "#0F766E",
+        "surface-dim": "#E2E8F0",
+        "surface-bright": "#FFFFFF",
+        outline: "#64748B",
+        "outline-variant": "#E2E8F0",
+        "primary-container": "rgba(15, 118, 110, 0.1)",
+        "on-primary-container": "#0F766E",
+        "secondary-container": "rgba(26, 26, 46, 0.08)",
+        "on-secondary-container": "#1A1A2E",
+        "secondary-fixed": "rgba(15, 118, 110, 0.1)",
+        "secondary-fixed-dim": "rgba(15, 118, 110, 0.1)",
+        "on-secondary-fixed": "#1A1A2E",
+        "on-secondary-fixed-variant": "#115E59",
+        "primary-fixed": "rgba(15, 118, 110, 0.1)",
+        "primary-fixed-dim": "rgba(15, 118, 110, 0.1)",
+        "on-primary-fixed": "#1A1A2E",
+        "on-primary-fixed-variant": "#115E59",
+        tertiary: "#F59E0B",
+        "tertiary-container": "rgba(245, 158, 11, 0.1)",
+        "on-tertiary-container": "#F59E0B",
+        "tertiary-fixed": "rgba(245, 158, 11, 0.1)",
+        "on-tertiary-fixed": "#1A1A2E",
+        "error-container": "rgba(220, 38, 38, 0.1)",
+        "on-error-container": "#DC2626",
+        "inverse-primary": "#0F766E",
+        "inverse-surface": "#1A1A2E",
+        "inverse-on-surface": "#F8FAFC"
+      },
+      spacing: {
+        "margin-desktop": "2rem",
+        "margin-tablet": "1.5rem",
+        "margin-mobile": "1rem",
+        "gutter-desktop": "1.5rem",
+        "gutter-mobile": "1rem",
+        "space-3xl": "4rem",
+        "space-2xl": "3rem",
+        "space-xl": "2rem",
+        "space-lg": "1.5rem",
+        "space-md": "1rem",
+        "space-base": "1rem",
+        "space-sm": "0.75rem",
+        "space-xs": "0.5rem",
+        "space-2xs": "0.25rem",
+        "space-xxs": "0.25rem",
+        "space-1": "0.25rem",
+        "space-2": "0.5rem",
+        "space-3": "0.75rem",
+        "space-4": "1rem",
+        "space-5": "1.25rem",
+        "space-6": "1.5rem",
+        "space-8": "2rem",
+        "space-12": "3rem",
+        "space-16": "4rem",
+        "space-20": "5rem",
+        "space-24": "6rem",
+        "space-stack-sm": "0.5rem",
+        "space-stack-md": "1rem",
+        "space-stack-lg": "1.5rem",
+        "section-gap": "2rem",
+        gutter: "1.5rem"
+      },
+      fontSize: {
+        "stat-lg": ["28px", { lineHeight: "36px", letterSpacing: "-0.02em", fontWeight: "700" }],
+        "button-text": ["14px", { lineHeight: "20px", letterSpacing: "0.01em", fontWeight: "600" }],
+        "display-hero": ["48px", { lineHeight: "56px", letterSpacing: "-0.025em", fontWeight: "700" }],
+        "display-hero-mobile": ["32px", { lineHeight: "40px", letterSpacing: "-0.02em", fontWeight: "700" }],
+        "display-kpi": ["36px", { lineHeight: "44px", letterSpacing: "-0.02em", fontWeight: "700" }],
+        "display-kpi-mobile": ["28px", { lineHeight: "34px", letterSpacing: "-0.02em", fontWeight: "700" }],
+        "display-lg": ["36px", { lineHeight: "44px", letterSpacing: "-0.02em", fontWeight: "700" }],
+        "headline-page": ["28px", { lineHeight: "36px", letterSpacing: "-0.015em", fontWeight: "600" }],
+        "headline-page-mobile": ["24px", { lineHeight: "32px", letterSpacing: "-0.015em", fontWeight: "600" }],
+        "headline-section": ["20px", { lineHeight: "28px", letterSpacing: "-0.01em", fontWeight: "600" }],
+        "headline-subsection": ["16px", { lineHeight: "24px", letterSpacing: "-0.005em", fontWeight: "600" }],
+        "headline-lg": ["28px", { lineHeight: "36px", letterSpacing: "-0.015em", fontWeight: "600" }],
+        "headline-lg-mobile": ["24px", { lineHeight: "32px", letterSpacing: "-0.015em", fontWeight: "600" }],
+        "headline-md": ["20px", { lineHeight: "28px", letterSpacing: "-0.01em", fontWeight: "600" }],
+        "headline-sm": ["16px", { lineHeight: "24px", letterSpacing: "-0.005em", fontWeight: "600" }],
+        "headline-xl-mobile": ["26px", { lineHeight: "34px", letterSpacing: "-0.015em", fontWeight: "600" }],
+        "body-default": ["14px", { lineHeight: "22px", letterSpacing: "0em", fontWeight: "400" }],
+        "body-compact": ["13px", { lineHeight: "18px", letterSpacing: "0em", fontWeight: "400" }],
+        "body-strong": ["14px", { lineHeight: "22px", letterSpacing: "0em", fontWeight: "600" }],
+        "body-lg": ["16px", { lineHeight: "24px", letterSpacing: "0em", fontWeight: "400" }],
+        "body-md": ["14px", { lineHeight: "22px", letterSpacing: "0em", fontWeight: "400" }],
+        "body-md-medium": ["14px", { lineHeight: "22px", letterSpacing: "0em", fontWeight: "500" }],
+        "body-sm": ["12px", { lineHeight: "16px", letterSpacing: "0em", fontWeight: "400" }],
+        "label-badge": ["11px", { lineHeight: "14px", letterSpacing: "0.02em", fontWeight: "600" }],
+        "label-regular": ["12px", { lineHeight: "16px", letterSpacing: "0.01em", fontWeight: "500" }],
+        "label-md": ["12px", { lineHeight: "16px", letterSpacing: "0.01em", fontWeight: "500" }],
+        "label-sm": ["11px", { lineHeight: "14px", letterSpacing: "0.02em", fontWeight: "500" }],
+        "label-uppercase": ["10px", { lineHeight: "12px", letterSpacing: "0.05em", fontWeight: "700" }]
+      },
+      fontFamily: {
+        "stat-lg": ["Inter", "sans-serif"],
+        "button-text": ["Inter", "sans-serif"],
+        sans: ["Inter", "sans-serif"],
+        "body-default": ["Inter", "sans-serif"],
+        "body-compact": ["Inter", "sans-serif"],
+        "body-strong": ["Inter", "sans-serif"],
+        "body-md": ["Inter", "sans-serif"],
+        "body-sm": ["Inter", "sans-serif"],
+        "display-kpi": ["Inter", "sans-serif"],
+        "headline-page": ["Inter", "sans-serif"],
+        "headline-section": ["Inter", "sans-serif"],
+        "headline-subsection": ["Inter", "sans-serif"],
+        "headline-md": ["Inter", "sans-serif"],
+        "headline-sm": ["Inter", "sans-serif"],
+        "headline-lg": ["Inter", "sans-serif"],
+        "label-badge": ["Inter", "sans-serif"],
+        "label-regular": ["Inter", "sans-serif"],
+        "label-md": ["Inter", "sans-serif"],
+        "label-sm": ["Inter", "sans-serif"]
+      },
+      borderRadius: {
+        DEFAULT: "0.375rem",
+        sm: "0.25rem",
+        md: "0.375rem",
+        lg: "0.5rem",
+        xl: "0.75rem",
+        "2xl": "1rem",
+        full: "9999px"
+      }
+    }
+  }
+};
+</script>
+
+<style>
+  /* ---------- Base reset (scroll-friendly) ---------- */
+  html, body {
+    width: 100%;
+    max-width: 100%;
+    margin: 0;
+    padding: 0;
+  }
+  body {
+    overscroll-behavior-y: auto;
+    min-height: max(884px, 100dvh);
+  }
+  * {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* ---------- Safe-area helpers ---------- */
+  .pb-safe { padding-bottom: env(safe-area-inset-bottom, 0px); }
+  .pt-safe { padding-top: env(safe-area-inset-top, 0px); }
+
+  /* ---------- First/last child margin collapse ---------- */
+  main > :first-child { margin-top: 0 !important; }
+  main > :last-child  { margin-bottom: 0 !important; }
+
+  /* ---------- Hide horizontal scrollbar for chip rows only ---------- */
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+</style>
+</head>
+
+<body class="bg-surface font-body-md text-body-md text-on-surface flex flex-col antialiased">
+
+<!-- ========== HEADER (HUNAR text logo) ========== -->
+<header class="fixed top-0 inset-x-0 z-50 bg-surface-container-lowest/90 backdrop-blur-xl shadow-[0_1px_8px_rgba(11,28,48,0.04)] pt-safe">
+  <div class="h-16 px-gutter-mobile flex items-center justify-between gap-2">
+
+    <!-- Left: HUNAR text logo -->
+    <a href="../../Abdullah desigens customer + landing page/landing page/code.html" class="flex items-center gap-space-2 min-w-0 group hover:opacity-90 transition-opacity no-underline" title="Back to Landing Page">
+      <div class="flex flex-col min-w-0">
+        <span class="font-headline-sm text-headline-sm text-primary leading-tight font-extrabold tracking-tight truncate">HUNAR</span>
+        <span class="font-label-sm text-label-sm text-on-surface-variant leading-none truncate">Super Admin</span>
+      </div>
+    </a>
+
+    <!-- Right: Actions + Profile -->
+    <div class="flex items-center gap-0.5 md:gap-1 shrink-0">
+      <button aria-label="Search" class="w-10 h-10 md:w-12 md:h-12 flex items-center justify-center text-on-surface-variant hover:text-primary transition-colors rounded-full" type="button">
+        <span class="material-symbols-outlined text-[20px] md:text-[22px]">search</span>
+      </button>
+      <button aria-label="Notifications" class="w-10 h-10 md:w-12 md:h-12 flex items-center justify-center text-on-surface-variant hover:text-primary relative transition-colors rounded-full" type="button">
+        <span class="material-symbols-outlined text-[20px] md:text-[22px]">notifications</span>
+        <span class="absolute top-2 right-2 md:top-3 md:right-3 w-2 h-2 rounded-full bg-error ring-2 ring-surface-container-lowest"></span>
+      </button>
+      <div class="flex items-center pl-space-1">
+        <img alt="Profile" class="w-8 h-8 rounded-full object-cover ring-2 ring-primary/20 shrink-0" src="https://randomuser.me/api/portraits/men/32.jpg"/>
+      </div>
+    </div>
+  </div>
+</header>
+
+<main class="flex flex-col relative w-full pt-16 pb-24 bg-surface">
+
+  <div class="px-gutter-mobile pt-space-3 pb-space-2 flex items-center justify-between gap-space-2">
+    <div class="flex items-center gap-space-2 min-w-0">
+      <span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider shrink-0">Console</span>
+      <span class="material-symbols-outlined text-outline text-[14px] shrink-0">chevron_right</span>
+      <h1 class="font-headline-sm text-headline-sm text-on-surface truncate">Settings</h1>
+    </div>
+    <div class="inline-flex items-center gap-space-1 px-space-2 py-space-1 rounded-full bg-surface-container-lowest shadow-[0_1px_4px_rgba(11,28,48,0.06)] shrink-0">
+      <span class="w-2 h-2 rounded-full bg-[#16A34A] animate-pulse"></span>
+      <span class="font-label-sm text-label-sm text-on-surface-variant font-medium">99.98%</span>
+    </div>
+  </div>
+
+  <div class="px-gutter-mobile pb-space-3">
+    <div class="flex items-center gap-space-2 overflow-x-auto no-scrollbar py-space-1">
+      <a class="px-space-3 py-space-2 rounded-lg bg-surface-container-lowest text-on-surface-variant font-label-md text-label-md shrink-0 shadow-[0_1px_3px_rgba(11,28,48,0.04)] hover:text-primary transition-colors" data-path="reports" href="#">Reports</a>
+      <a class="px-space-3 py-space-2 rounded-lg bg-surface-container-lowest text-on-surface-variant font-label-md text-label-md shrink-0 shadow-[0_1px_3px_rgba(11,28,48,0.04)] hover:text-primary transition-colors" data-path="notifications" href="#">Notifications</a>
+      <a class="px-space-3 py-space-2 rounded-lg bg-surface-container-lowest text-on-surface-variant font-label-md text-label-md shrink-0 shadow-[0_1px_3px_rgba(11,28,48,0.04)] hover:text-primary transition-colors" data-path="analytics" href="#">Analytics</a>
+      <a class="px-space-3 py-space-2 rounded-lg bg-surface-container-lowest text-on-surface-variant font-label-md text-label-md shrink-0 shadow-[0_1px_3px_rgba(11,28,48,0.04)] hover:text-primary transition-colors" data-path="settings" href="#">Settings</a>
+    </div>
+  </div>
+
+  <div class="px-gutter-mobile">
+    <div class="flex flex-col w-full space-y-space-4 pb-space-8">
+
+      <!-- Hero Banner -->
+      <div class="relative overflow-hidden rounded-xl bg-surface-container-lowest shadow-sm p-space-4">
+        <div class="absolute -right-6 -bottom-6 w-32 h-32 rounded-full bg-primary/5 pointer-events-none"></div>
+        <div class="relative flex flex-col gap-space-2">
+          <div class="flex items-center justify-between gap-space-2">
+            <div class="inline-flex items-center gap-space-1 px-space-2 py-space-1 rounded-full bg-secondary-fixed text-on-secondary-fixed font-label-sm text-label-sm">
+              <span class="material-symbols-outlined text-[14px]">map</span>
+              <span>Active: KP &amp; Punjab</span>
+            </div>
+            <div class="inline-flex items-center gap-space-1 text-on-surface-variant font-label-sm text-label-sm">
+              <span class="w-2 h-2 rounded-full bg-primary animate-ping"></span>
+              <span>Live Sync</span>
+            </div>
+          </div>
+          <div>
+            <h2 class="font-headline-xl-mobile text-headline-xl-mobile text-secondary font-bold">Platform Settings</h2>
+            <p class="font-body-sm text-body-sm text-on-surface-variant mt-space-1">Global marketplace commissions, artisan escrow thresholds &amp; security governance.</p>
+          </div>
+          <div class="flex items-center gap-space-2 pt-space-2">
+            <button class="flex-1 py-space-2 px-space-3 rounded-lg bg-surface-container-low text-secondary font-label-md text-label-md text-center transition-colors hover:bg-surface-container" id="discardBtn" type="button">
+              Discard
+            </button>
+            <button class="flex-1 py-space-2 px-space-3 rounded-lg bg-primary text-on-primary font-label-md text-label-md text-center shadow-sm transition-transform active:scale-[0.98] flex items-center justify-center gap-space-1" id="saveBtn" type="button">
+              <span class="material-symbols-outlined text-[16px]">check_circle</span>
+              <span>Save Changes</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Metric Tiles -->
+      <div class="grid grid-cols-2 gap-space-2">
+
+        <div class="bg-surface-container-lowest rounded-xl p-space-3 shadow-sm flex flex-col justify-between min-w-0">
+          <div class="flex items-center justify-between text-secondary gap-1">
+            <span class="font-label-sm text-label-sm text-on-surface-variant truncate">Blended Take</span>
+            <div class="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center text-primary shrink-0">
+              <span class="material-symbols-outlined text-[18px]">percent</span>
+            </div>
+          </div>
+          <div class="mt-space-2">
+            <span class="font-headline-lg-mobile text-headline-lg-mobile font-extrabold text-secondary">9.64%</span>
+            <div class="flex items-center gap-space-1 text-primary font-label-sm text-label-sm mt-space-1">
+              <span class="material-symbols-outlined text-[14px]">trending_up</span>
+              <span>+0.4% MoM</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-surface-container-lowest rounded-xl p-space-3 shadow-sm flex flex-col justify-between min-w-0">
+          <div class="flex items-center justify-between text-secondary gap-1">
+            <span class="font-label-sm text-label-sm text-on-surface-variant truncate">Escrow Balance</span>
+            <div class="w-7 h-7 rounded-lg bg-tertiary-fixed flex items-center justify-center text-tertiary shrink-0">
+              <span class="material-symbols-outlined text-[18px]">account_balance_wallet</span>
+            </div>
+          </div>
+          <div class="mt-space-2">
+            <span class="font-headline-lg-mobile text-headline-lg-mobile font-extrabold text-secondary">PKR 4.82M</span>
+            <div class="flex items-center gap-space-1 text-on-surface-variant font-label-sm text-label-sm mt-space-1">
+              <span class="material-symbols-outlined text-[14px] text-tertiary">lock</span>
+              <span>1,842 Active holds</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-surface-container-lowest rounded-xl p-space-3 shadow-sm flex flex-col justify-between min-w-0">
+          <div class="flex items-center justify-between text-secondary gap-1">
+            <span class="font-label-sm text-label-sm text-on-surface-variant truncate">Diag. Waiver</span>
+            <div class="w-7 h-7 rounded-lg bg-secondary-container flex items-center justify-center text-secondary shrink-0">
+              <span class="material-symbols-outlined text-[18px]">price_check</span>
+            </div>
+          </div>
+          <div class="mt-space-2">
+            <span class="font-headline-lg-mobile text-headline-lg-mobile font-extrabold text-secondary">78.2%</span>
+            <div class="flex items-center gap-space-1 text-primary font-label-sm text-label-sm mt-space-1">
+              <span class="material-symbols-outlined text-[14px]">auto_fix_high</span>
+              <span>Converted to Work</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-surface-container-lowest rounded-xl p-space-3 shadow-sm flex flex-col justify-between min-w-0">
+          <div class="flex items-center justify-between text-secondary gap-1">
+            <span class="font-label-sm text-label-sm text-on-surface-variant truncate">Payout Speed</span>
+            <div class="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center text-primary shrink-0">
+              <span class="material-symbols-outlined text-[18px]">bolt</span>
+            </div>
+          </div>
+          <div class="mt-space-2">
+            <span class="font-headline-lg-mobile text-headline-lg-mobile font-extrabold text-secondary">T+2 Days</span>
+            <div class="flex items-center gap-space-1 text-primary font-label-sm text-label-sm mt-space-1">
+              <span class="material-symbols-outlined text-[14px]">verified</span>
+              <span>99.1% on time</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Domain Navigation Pills -->
+      <div class="flex items-center gap-space-2 overflow-x-auto no-scrollbar py-space-1">
+        <button class="px-space-3 py-space-2 rounded-lg bg-primary text-on-primary font-label-md text-label-md shrink-0 shadow-sm flex items-center gap-space-1" type="button">
+          <span class="material-symbols-outlined text-[16px]">receipt_long</span>
+          <span>Commission &amp; Fees</span>
+        </button>
+        <button class="px-space-3 py-space-2 rounded-lg bg-surface-container-lowest text-secondary font-label-md text-label-md shrink-0 shadow-sm hover:text-primary transition-colors flex items-center gap-space-1" type="button">
+          <span class="material-symbols-outlined text-[16px]">payments</span>
+          <span>Payout &amp; Wallets</span>
+        </button>
+        <button class="px-space-3 py-space-2 rounded-lg bg-surface-container-lowest text-secondary font-label-md text-label-md shrink-0 shadow-sm hover:text-primary transition-colors flex items-center gap-space-1" type="button">
+          <span class="material-symbols-outlined text-[16px]">verified_user</span>
+          <span>Verification v3</span>
+        </button>
+        <button class="px-space-3 py-space-2 rounded-lg bg-surface-container-lowest text-secondary font-label-md text-label-md shrink-0 shadow-sm hover:text-primary transition-colors flex items-center gap-space-1" type="button">
+          <span class="material-symbols-outlined text-[16px]">gavel</span>
+          <span>Job Governance</span>
+        </button>
+        <button class="px-space-3 py-space-2 rounded-lg bg-surface-container-lowest text-secondary font-label-md text-label-md shrink-0 shadow-sm hover:text-primary transition-colors flex items-center gap-space-1" type="button">
+          <span class="material-symbols-outlined text-[16px]">badge</span>
+          <span>Admin Staff (4)</span>
+        </button>
+      </div>
+
+      <!-- Card 1: Commission Policy -->
+      <div class="bg-surface-container-lowest rounded-xl p-space-4 shadow-sm flex flex-col gap-space-4">
+        <div class="flex items-center justify-between pb-space-2 border-b-0">
+          <div class="flex items-center gap-space-2">
+            <div class="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary shrink-0">
+              <span class="material-symbols-outlined text-[20px]">tune</span>
+            </div>
+            <div class="min-w-0">
+              <h3 class="font-headline-sm text-headline-sm text-secondary">Default Commission Policy</h3>
+              <p class="font-body-sm text-body-sm text-on-surface-variant">Core take-rate applied across verified artisans</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="space-y-space-3">
+          <div>
+            <label class="block font-label-md text-label-md text-secondary mb-space-1">Default HUNAR Cut (%)</label>
+            <div class="relative flex items-center">
+              <input class="w-full h-10 px-space-3 bg-surface-container-lowest text-on-surface rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-primary/40 font-body-md-medium text-body-md-medium pl-10" step="0.5" type="number" value="10.0"/>
+              <span class="material-symbols-outlined text-outline text-[18px] absolute left-3">percent</span>
+              <span class="absolute right-3 font-label-sm text-label-sm text-on-surface-variant">Fixed Net</span>
+            </div>
+          </div>
+          <div>
+            <label class="block font-label-md text-label-md text-secondary mb-space-1">Minimum Service Platform Fee</label>
+            <div class="relative flex items-center">
+              <input class="w-full h-10 px-space-3 bg-surface-container-lowest text-on-surface rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-primary/40 font-body-md-medium text-body-md-medium pl-10" type="text" value="PKR 100"/>
+              <span class="material-symbols-outlined text-outline text-[18px] absolute left-3">local_atm</span>
+              <span class="absolute right-3 font-label-sm text-label-sm text-on-surface-variant">Floor per ticket</span>
+            </div>
+          </div>
+
+          <div class="p-space-3 rounded-lg bg-surface-container-low flex flex-col gap-space-2">
+            <div class="flex items-center justify-between gap-2">
+              <div class="flex items-center gap-space-2 min-w-0">
+                <span class="material-symbols-outlined text-primary text-[20px] shrink-0">medical_services</span>
+                <div class="min-w-0">
+                  <p class="font-label-md text-label-md text-secondary">Diagnosis &amp; Visiting Cap</p>
+                  <p class="font-body-sm text-body-sm text-on-surface-variant">Base travel and quotation ceiling</p>
+                </div>
+              </div>
+              <span class="font-headline-sm text-headline-sm font-bold text-secondary shrink-0">PKR 500</span>
+            </div>
+            <div class="flex items-center justify-between gap-2 pt-space-2 mt-space-1 bg-surface-container-lowest p-space-2 rounded-lg">
+              <div class="flex flex-col pr-space-2 min-w-0">
+                <span class="font-label-md text-label-md text-secondary">Deduct Fee on Conversion</span>
+                <span class="font-body-sm text-body-sm text-on-surface-variant">Waive diagnostic charge if customer accepts repair quotation</span>
+              </div>
+              <label class="relative inline-flex items-center cursor-pointer shrink-0">
+                <input checked class="sr-only peer" type="checkbox"/>
+                <div class="w-11 h-6 bg-surface-variant peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 2: Category Overrides -->
+      <div class="bg-surface-container-lowest rounded-xl p-space-4 shadow-sm flex flex-col gap-space-3">
+        <div class="flex items-center justify-between gap-2">
+          <div class="flex items-center gap-space-2 min-w-0">
+            <div class="w-8 h-8 rounded-lg bg-secondary-container flex items-center justify-center text-secondary shrink-0">
+              <span class="material-symbols-outlined text-[20px]">category</span>
+            </div>
+            <div class="min-w-0">
+              <h3 class="font-headline-sm text-headline-sm text-secondary">Trade Rate Overrides</h3>
+              <p class="font-body-sm text-body-sm text-on-surface-variant">Adjusted takes for seasonal &amp; artisan retention</p>
+            </div>
+          </div>
+          <span class="px-space-2 py-space-1 rounded-full bg-surface-container text-secondary font-label-sm text-label-sm font-semibold shrink-0">5 Active</span>
+        </div>
+
+        <div class="space-y-space-2 pt-space-1">
+
+          <div class="p-space-3 rounded-xl bg-surface-container-low flex items-center justify-between gap-2">
+            <div class="flex items-center gap-space-3 min-w-0">
+              <div class="w-10 h-10 rounded-lg bg-surface-container-lowest flex items-center justify-center text-primary shadow-sm shrink-0">
+                <span class="material-symbols-outlined text-[22px]">bolt</span>
+              </div>
+              <div class="min-w-0">
+                <div class="flex items-center gap-space-1">
+                  <h4 class="font-label-md text-label-md text-secondary font-bold truncate">Electrician (Bijli Mistri)</h4>
+                </div>
+                <p class="font-body-sm text-body-sm text-on-surface-variant truncate">Standard Domestic Work</p>
+              </div>
+            </div>
+            <div class="text-right shrink-0">
+              <span class="font-headline-sm text-headline-sm font-bold text-secondary">10.0%</span>
+              <span class="block font-label-sm text-label-sm text-on-surface-variant">Default</span>
+            </div>
+          </div>
+
+          <div class="p-space-3 rounded-xl bg-surface-container-low flex items-center justify-between gap-2">
+            <div class="flex items-center gap-space-3 min-w-0">
+              <div class="w-10 h-10 rounded-lg bg-surface-container-lowest flex items-center justify-center text-primary shadow-sm shrink-0">
+                <span class="material-symbols-outlined text-[22px]">mode_fan</span>
+              </div>
+              <div class="min-w-0">
+                <div class="flex items-center gap-space-1">
+                  <h4 class="font-label-md text-label-md text-secondary font-bold truncate">AC Technician</h4>
+                  <span class="px-space-1 py-0.5 rounded bg-tertiary-fixed text-on-tertiary-fixed font-label-sm text-[10px] shrink-0">Promo</span>
+                </div>
+                <p class="font-body-sm text-body-sm text-on-surface-variant truncate">Summer Seasonal Subsidy</p>
+              </div>
+            </div>
+            <div class="text-right shrink-0">
+              <span class="font-headline-sm text-headline-sm font-bold text-primary">8.0%</span>
+              <span class="block font-label-sm text-label-sm text-primary font-medium">-2.0% Promo</span>
+            </div>
+          </div>
+
+          <div class="p-space-3 rounded-xl bg-surface-container-low flex items-center justify-between gap-2">
+            <div class="flex items-center gap-space-3 min-w-0">
+              <div class="w-10 h-10 rounded-lg bg-surface-container-lowest flex items-center justify-center text-secondary shadow-sm shrink-0">
+                <span class="material-symbols-outlined text-[22px]">water_drop</span>
+              </div>
+              <div class="min-w-0">
+                <h4 class="font-label-md text-label-md text-secondary font-bold truncate">Plumber (Nal Saz)</h4>
+                <p class="font-body-sm text-body-sm text-on-surface-variant truncate">Sanitary &amp; Pipefitting</p>
+              </div>
+            </div>
+            <div class="text-right shrink-0">
+              <span class="font-headline-sm text-headline-sm font-bold text-secondary">10.0%</span>
+              <span class="block font-label-sm text-label-sm text-on-surface-variant">Default</span>
+            </div>
+          </div>
+
+          <div class="p-space-3 rounded-xl bg-surface-container-low flex items-center justify-between gap-2">
+            <div class="flex items-center gap-space-3 min-w-0">
+              <div class="w-10 h-10 rounded-lg bg-surface-container-lowest flex items-center justify-center text-tertiary shadow-sm shrink-0">
+                <span class="material-symbols-outlined text-[22px]">carpenter</span>
+              </div>
+              <div class="min-w-0">
+                <div class="flex items-center gap-space-1">
+                  <h4 class="font-label-md text-label-md text-secondary font-bold truncate">Carpenter (Tarkhan)</h4>
+                  <span class="px-space-1 py-0.5 rounded bg-surface-container text-secondary font-label-sm text-[10px] shrink-0">Artisan</span>
+                </div>
+                <p class="font-body-sm text-body-sm text-on-surface-variant truncate">Cabinetry &amp; Furniture Fixes</p>
+              </div>
+            </div>
+            <div class="text-right shrink-0">
+              <span class="font-headline-sm text-headline-sm font-bold text-secondary">9.0%</span>
+              <span class="block font-label-sm text-label-sm text-secondary font-medium">-1.0% Retainer</span>
+            </div>
+          </div>
+
+          <div class="p-space-3 rounded-xl bg-surface-container-low flex items-center justify-between gap-2">
+            <div class="flex items-center gap-space-3 min-w-0">
+              <div class="w-10 h-10 rounded-lg bg-surface-container-lowest flex items-center justify-center text-secondary shadow-sm shrink-0">
+                <span class="material-symbols-outlined text-[22px]">precision_manufacturing</span>
+              </div>
+              <div class="min-w-0">
+                <div class="flex items-center gap-space-1">
+                  <h4 class="font-label-md text-label-md text-secondary font-bold truncate">Heavy Appliances &amp; Comm.</h4>
+                </div>
+                <p class="font-body-sm text-body-sm text-on-surface-variant truncate">Requires Managed QA Inspection</p>
+              </div>
+            </div>
+            <div class="text-right shrink-0">
+              <span class="font-headline-sm text-headline-sm font-bold text-secondary">12.0%</span>
+              <span class="block font-label-sm text-label-sm text-on-surface-variant font-medium">+2.0% QA Fee</span>
+            </div>
+          </div>
+        </div>
+
+        <button class="mt-space-2 w-full py-space-2 px-space-4 rounded-lg bg-surface-container-lowest text-secondary font-label-md text-label-md flex items-center justify-center gap-space-2 shadow-sm hover:bg-surface-container-low transition-colors" type="button">
+          <span class="material-symbols-outlined text-[18px]">add_circle</span>
+          <span>+ Add Category Rate Override</span>
+        </button>
+      </div>
+
+      <!-- Card 3: Work Order Governance -->
+      <div class="bg-surface-container-lowest rounded-xl p-space-4 shadow-sm flex flex-col gap-space-3">
+        <div class="flex items-center gap-space-2">
+          <div class="w-8 h-8 rounded-lg bg-tertiary-fixed flex items-center justify-center text-tertiary shrink-0">
+            <span class="material-symbols-outlined text-[20px]">security</span>
+          </div>
+          <div class="min-w-0">
+            <h3 class="font-headline-sm text-headline-sm text-secondary">Work Order Governance</h3>
+            <p class="font-body-sm text-body-sm text-on-surface-variant">Scope escalation &amp; fraud controls</p>
+          </div>
+        </div>
+        <div class="space-y-space-3 pt-space-1">
+
+          <div class="p-space-3 rounded-lg bg-surface-container-low flex items-center justify-between gap-2">
+            <div class="flex flex-col pr-space-2 min-w-0">
+              <div class="flex items-center gap-space-1">
+                <span class="font-label-md text-label-md text-secondary font-bold">Mandatory Dual OTP Sign-off</span>
+                <span class="material-symbols-outlined text-primary text-[16px] shrink-0">verified</span>
+              </div>
+              <span class="font-body-sm text-body-sm text-on-surface-variant">Auto-sends SMS token to customer prior to job closure</span>
+            </div>
+            <label class="relative inline-flex items-center cursor-pointer shrink-0">
+              <input checked class="sr-only peer" type="checkbox"/>
+              <div class="w-11 h-6 bg-surface-variant peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+            </label>
+          </div>
+
+          <div>
+            <div class="flex items-center justify-between mb-space-1 gap-2 flex-wrap">
+              <label class="font-label-md text-label-md text-secondary">Supervisor Escalation Cap</label>
+              <span class="font-label-sm text-label-sm text-tertiary font-semibold flex items-center gap-space-1 shrink-0">
+                <span class="material-symbols-outlined text-[14px]">warning</span> Trigger Alert
+              </span>
+            </div>
+            <div class="relative flex items-center">
+              <input class="w-full h-10 px-space-3 bg-surface-container-lowest text-on-surface rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-primary/40 font-body-md-medium text-body-md-medium pl-10" type="text" value="PKR 15,000"/>
+              <span class="material-symbols-outlined text-outline text-[18px] absolute left-3">shield_person</span>
+              <span class="absolute right-3 font-label-sm text-label-sm text-on-surface-variant">Manual Review</span>
+            </div>
+            <p class="font-body-sm text-body-sm text-on-surface-variant mt-space-1">Jobs quoted above PKR 15,000 require instant photo approval from Regional Manager.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 4: Payout & Settlement -->
+      <div class="bg-surface-container-lowest rounded-xl p-space-4 shadow-sm flex flex-col gap-space-3">
+        <div class="flex items-center gap-space-2">
+          <div class="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary shrink-0">
+            <span class="material-symbols-outlined text-[20px]">account_balance</span>
+          </div>
+          <div class="min-w-0">
+            <h3 class="font-headline-sm text-headline-sm text-secondary">Payout &amp; Settlement</h3>
+            <p class="font-body-sm text-body-sm text-on-surface-variant">Artisan disbursement cycles &amp; wallet limits</p>
+          </div>
+        </div>
+        <div class="grid grid-cols-1 gap-space-2 pt-space-1">
+          <div class="p-space-3 rounded-lg bg-surface-container-low flex items-center justify-between gap-2">
+            <div class="min-w-0">
+              <span class="font-label-sm text-label-sm text-on-surface-variant">Minimum Withdrawal</span>
+              <span class="block font-headline-sm text-headline-sm font-bold text-secondary">PKR 1,000</span>
+            </div>
+            <span class="material-symbols-outlined text-primary text-[22px] shrink-0">savings</span>
+          </div>
+          <div class="p-space-3 rounded-lg bg-surface-container-low flex items-center justify-between gap-2">
+            <div class="min-w-0">
+              <span class="font-label-sm text-label-sm text-on-surface-variant">Auto-Payout Frequency</span>
+              <span class="block font-headline-sm text-headline-sm font-bold text-secondary">Weekly (Tuesdays)</span>
+            </div>
+            <span class="material-symbols-outlined text-secondary text-[22px] shrink-0">event_repeat</span>
+          </div>
+          <div class="p-space-3 rounded-lg bg-surface-container-low flex items-center justify-between gap-2">
+            <div class="min-w-0">
+              <div class="flex items-center gap-space-1 flex-wrap">
+                <span class="font-label-sm text-label-sm text-on-surface-variant">Disbursement Gateway Fee</span>
+                <span class="px-space-1 py-0.5 rounded bg-primary text-on-primary font-label-sm text-[9px] uppercase tracking-wider">Subsidized</span>
+              </div>
+              <span class="block font-headline-sm text-headline-sm font-bold text-primary">PKR 0 (Free via JazzCash &amp; EasyPaisa)</span>
+            </div>
+            <div class="flex items-center -space-x-1 shrink-0">
+              <span class="w-6 h-6 rounded-full bg-secondary-container flex items-center justify-center font-label-sm text-[10px] text-secondary font-bold">JC</span>
+              <span class="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center font-label-sm text-[10px] text-primary font-bold">EP</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 5: Administrative Staff -->
+      <div class="bg-surface-container-lowest rounded-xl p-space-4 shadow-sm flex flex-col gap-space-3">
+        <div class="flex items-center justify-between gap-2">
+          <div class="flex items-center gap-space-2 min-w-0">
+            <div class="w-8 h-8 rounded-lg bg-secondary-container flex items-center justify-center text-secondary shrink-0">
+              <span class="material-symbols-outlined text-[20px]">admin_panel_settings</span>
+            </div>
+            <div class="min-w-0">
+              <h3 class="font-headline-sm text-headline-sm text-secondary">Administrative Staff</h3>
+              <p class="font-body-sm text-body-sm text-on-surface-variant">4 members with regional privileges</p>
+            </div>
+          </div>
+          <button class="w-8 h-8 rounded-full bg-surface-container flex items-center justify-center text-secondary hover:bg-surface-variant transition-colors shrink-0" type="button">
+            <span class="material-symbols-outlined text-[18px]">person_add</span>
+          </button>
+        </div>
+
+        <div class="space-y-space-2 pt-space-1">
+
+          <div class="p-space-3 rounded-xl bg-surface-container-low flex items-center justify-between gap-2">
+            <div class="flex items-center gap-space-3 min-w-0">
+              <div class="relative shrink-0">
+                <img class="w-10 h-10 rounded-full object-cover shadow-sm" src="https://randomuser.me/api/portraits/men/32.jpg"/>
+                <span class="w-2.5 h-2.5 rounded-full bg-[#16A34A] absolute bottom-0 right-0"></span>
+              </div>
+              <div class="min-w-0">
+                <h4 class="font-label-md text-label-md text-secondary font-bold truncate">Abdullah</h4>
+                <div class="flex items-center gap-space-1 flex-wrap">
+                  <span class="font-body-sm text-body-sm text-primary font-medium">Super Admin</span>
+                  <span class="text-outline text-xs">•</span>
+                  <span class="font-body-sm text-body-sm text-on-surface-variant">All Access</span>
+                </div>
+              </div>
+            </div>
+            <button class="p-space-1 rounded-lg text-on-surface-variant hover:text-secondary shrink-0" type="button">
+              <span class="material-symbols-outlined text-[20px]">more_vert</span>
+            </button>
+          </div>
+
+          <div class="p-space-3 rounded-xl bg-surface-container-low flex items-center justify-between gap-2">
+            <div class="flex items-center gap-space-3 min-w-0">
+              <div class="relative shrink-0">
+                <img class="w-10 h-10 rounded-full object-cover shadow-sm" src="https://randomuser.me/api/portraits/men/45.jpg"/>
+                <span class="w-2.5 h-2.5 rounded-full bg-[#16A34A] absolute bottom-0 right-0"></span>
+              </div>
+              <div class="min-w-0">
+                <h4 class="font-label-md text-label-md text-secondary font-bold truncate">Sajid Ullah</h4>
+                <div class="flex items-center gap-space-1 flex-wrap">
+                  <span class="font-body-sm text-body-sm text-secondary font-medium">Ops Admin</span>
+                  <span class="text-outline text-xs">•</span>
+                  <span class="font-body-sm text-body-sm text-on-surface-variant">Peshawar &amp; Rawalpindi</span>
+                </div>
+              </div>
+            </div>
+            <button class="p-space-1 rounded-lg text-on-surface-variant hover:text-secondary shrink-0" type="button">
+              <span class="material-symbols-outlined text-[20px]">more_vert</span>
+            </button>
+          </div>
+
+          <div class="p-space-3 rounded-xl bg-surface-container-low flex items-center justify-between gap-2">
+            <div class="flex items-center gap-space-3 min-w-0">
+              <div class="relative shrink-0">
+                <img class="w-10 h-10 rounded-full object-cover shadow-sm" src="https://randomuser.me/api/portraits/women/44.jpg"/>
+                <span class="w-2.5 h-2.5 rounded-full bg-[#16A34A] absolute bottom-0 right-0"></span>
+              </div>
+              <div class="min-w-0">
+                <h4 class="font-label-md text-label-md text-secondary font-bold truncate">Ayesha Bibi</h4>
+                <div class="flex items-center gap-space-1 flex-wrap">
+                  <span class="font-body-sm text-body-sm text-secondary font-medium">Verification Officer</span>
+                  <span class="text-outline text-xs">•</span>
+                  <span class="font-body-sm text-body-sm text-on-surface-variant">CNIC &amp; Police Check</span>
+                </div>
+              </div>
+            </div>
+            <button class="p-space-1 rounded-lg text-on-surface-variant hover:text-secondary shrink-0" type="button">
+              <span class="material-symbols-outlined text-[20px]">more_vert</span>
+            </button>
+          </div>
+
+          <div class="p-space-3 rounded-xl bg-surface-container-low flex items-center justify-between gap-2">
+            <div class="flex items-center gap-space-3 min-w-0">
+              <div class="relative shrink-0">
+                <img class="w-10 h-10 rounded-full object-cover shadow-sm" src="https://randomuser.me/api/portraits/men/55.jpg"/>
+                <span class="w-2.5 h-2.5 rounded-full bg-outline-variant absolute bottom-0 right-0"></span>
+              </div>
+              <div class="min-w-0">
+                <h4 class="font-label-md text-label-md text-secondary font-bold truncate">Farooq Ahmad</h4>
+                <div class="flex items-center gap-space-1 flex-wrap">
+                  <span class="font-body-sm text-body-sm text-secondary font-medium">Finance Manager</span>
+                  <span class="text-outline text-xs">•</span>
+                  <span class="font-body-sm text-body-sm text-on-surface-variant">Disbursements</span>
+                </div>
+              </div>
+            </div>
+            <button class="p-space-1 rounded-lg text-on-surface-variant hover:text-secondary shrink-0" type="button">
+              <span class="material-symbols-outlined text-[20px]">more_vert</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Toast -->
+      <div class="hidden fixed bottom-20 inset-x-4 z-50 bg-secondary text-on-secondary py-space-3 px-space-4 rounded-xl shadow-xl flex items-center justify-between transition-all" id="toastFeedback">
+        <div class="flex items-center gap-space-2 min-w-0">
+          <span class="material-symbols-outlined text-primary-fixed text-[20px] shrink-0">check_circle</span>
+          <span class="font-body-md text-body-md truncate">Platform policy updated across regional nodes</span>
+        </div>
+        <button class="text-on-secondary shrink-0" onclick="document.getElementById('toastFeedback').classList.add('hidden')" type="button">
+          <span class="material-symbols-outlined text-[18px]">close</span>
+        </button>
+      </div>
+
+      <script>
+        (function() {
+          const saveBtn = document.getElementById('saveBtn');
+          const discardBtn = document.getElementById('discardBtn');
+          const toast = document.getElementById('toastFeedback');
+
+          if (saveBtn && toast) {
+            saveBtn.addEventListener('click', function() {
+              toast.classList.remove('hidden');
+              setTimeout(function() {
+                toast.classList.add('hidden');
+              }, 4000);
+            });
+          }
+
+          if (discardBtn) {
+            discardBtn.addEventListener('click', function() {
+              const confirmed = confirm('Revert changes back to live server state?');
+              if (confirmed) {
+                window.location.reload();
+              }
+            });
+          }
+        })();
+      </script>
+    </div>
+  </div>
+</main>
+
+<nav class="fixed bottom-0 inset-x-0 z-50 pb-safe bg-surface-container-lowest/95 backdrop-blur-xl shadow-[0_-2px_12px_rgba(11,28,48,0.06)]">
+  <div class="flex justify-around items-center h-16 px-space-2">
+    <a class="flex flex-col items-center justify-center w-14 h-14 text-on-surface-variant transition-colors hover:text-primary" data-path="dashboard" href="#">
+      <span class="material-symbols-outlined text-[22px]">dashboard</span>
+      <span class="font-label-sm text-label-sm mt-space-1">Home</span>
+    </a>
+    <a class="flex flex-col items-center justify-center w-14 h-14 text-on-surface-variant relative transition-colors hover:text-primary" data-path="reports" href="#">
+      <span class="material-symbols-outlined text-[22px]">description</span>
+      <span class="absolute top-2 right-3 px-[4px] py-[1px] rounded-full bg-primary text-on-primary font-label-sm text-[9px] leading-tight">3</span>
+      <span class="font-label-sm text-label-sm mt-space-1">Reports</span>
+    </a>
+    <a class="flex flex-col items-center justify-center w-14 h-14 text-on-surface-variant transition-colors hover:text-primary" data-path="notifications" href="#">
+      <span class="material-symbols-outlined text-[22px]">notifications</span>
+      <span class="font-label-sm text-label-sm mt-space-1">Alerts</span>
+    </a>
+    <a class="flex flex-col items-center justify-center w-14 h-14 text-on-surface-variant transition-colors hover:text-primary" data-path="analytics" href="#">
+      <span class="material-symbols-outlined text-[22px]">insights</span>
+      <span class="font-label-sm text-label-sm mt-space-1">Analytics</span>
+    </a>
+    <a aria-current="page" class="flex flex-col items-center justify-center w-14 h-14 transition-colors text-primary" data-path="settings" href="#">
+      <span class="material-symbols-outlined text-[22px]">settings</span>
+      <span class="font-label-sm text-label-sm mt-space-1">Settings</span>
+    </a>
+  </div>
+</nav>
+
+</body>
+</html>

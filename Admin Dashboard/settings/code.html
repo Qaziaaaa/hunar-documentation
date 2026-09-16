@@ -1,0 +1,993 @@
+<!DOCTYPE html>
+<html class="h-full" lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+
+<!-- Fonts: Inter (UI) + Material Symbols (icons) -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=block" rel="stylesheet"/>
+
+<!-- Tailwind -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+tailwind.config = {
+  darkMode: "class",
+  theme: {
+    extend: {
+      colors: {
+        navy: "#1A1A2E",
+        teal: { DEFAULT: "#0F766E", dark: "#115E59", light: "rgba(15, 118, 110, 0.1)" },
+        orange: "#F59E0B",
+        success: "#16A34A",
+        error: "#DC2626",
+        gray: "#64748B",
+        background: "#F8FAFC",
+        border: "#E2E8F0",
+        surface: "#FFFFFF",
+        primary: "#0F766E",
+        "primary-dark": "#115E59",
+        secondary: "#1A1A2E",
+        appBg: "#F8FAFC",
+        darkText: "#1A1A2E",
+        mutedText: "#64748B",
+        borderLine: "#E2E8F0",
+        "text-main": "#1A1A2E",
+        "surface-muted": "#F8FAFC",
+        "outline-border": "#E2E8F0",
+        "on-surface": "#1A1A2E",
+        "on-surface-variant": "#64748B",
+        "on-background": "#1A1A2E",
+        "on-primary": "#FFFFFF",
+        "on-secondary": "#FFFFFF",
+        "on-error": "#FFFFFF",
+        "surface-container-lowest": "#FFFFFF",
+        "surface-container-low": "#F8FAFC",
+        "surface-container": "#F8FAFC",
+        "surface-container-high": "#F8FAFC",
+        "surface-container-highest": "#F8FAFC",
+        "surface-variant": "#F8FAFC",
+        "surface-tint": "#0F766E",
+        "surface-dim": "#E2E8F0",
+        "surface-bright": "#FFFFFF",
+        outline: "#64748B",
+        "outline-variant": "#E2E8F0",
+        "primary-container": "rgba(15, 118, 110, 0.1)",
+        "on-primary-container": "#0F766E",
+        "secondary-container": "rgba(26, 26, 46, 0.08)",
+        "on-secondary-container": "#1A1A2E",
+        "secondary-fixed": "rgba(15, 118, 110, 0.1)",
+        "secondary-fixed-dim": "rgba(15, 118, 110, 0.1)",
+        "on-secondary-fixed": "#1A1A2E",
+        "on-secondary-fixed-variant": "#115E59",
+        "primary-fixed": "rgba(15, 118, 110, 0.1)",
+        "primary-fixed-dim": "rgba(15, 118, 110, 0.1)",
+        "on-primary-fixed": "#1A1A2E",
+        "on-primary-fixed-variant": "#115E59",
+        tertiary: "#F59E0B",
+        "tertiary-container": "rgba(245, 158, 11, 0.1)",
+        "on-tertiary-container": "#F59E0B",
+        "tertiary-fixed": "rgba(245, 158, 11, 0.1)",
+        "on-tertiary-fixed": "#1A1A2E",
+        "error-container": "rgba(220, 38, 38, 0.1)",
+        "on-error-container": "#DC2626",
+        "inverse-primary": "#0F766E",
+        "inverse-surface": "#1A1A2E",
+        "inverse-on-surface": "#F8FAFC",
+
+        "brand-bg": "#F8FAFC",
+        "brand-card": "#FFFFFF",
+        "brand-border": "#E2E8F0",
+        "brand-navy": "#1A1A2E",
+        "brand-body": "#1A1A2E",
+        "brand-muted": "#64748B",
+        "brand-teal": "#0F766E",
+        "brand-teal-light": "rgba(15, 118, 110, 0.1)",
+        "brand-orange": "#F59E0B",
+        "brand-orange-light": "rgba(245, 158, 11, 0.1)",
+        "brand-red": "#DC2626",
+        "brand-red-light": "rgba(220, 38, 38, 0.1)",
+        "brand-green": "#16A34A",
+        "brand-green-light": "rgba(22, 163, 74, 0.1)"
+      },
+      spacing: {
+        "margin-desktop": "2rem",
+        "margin-tablet": "1.5rem",
+        "margin-mobile": "1rem",
+        "gutter-desktop": "1.5rem",
+        "gutter-mobile": "1rem",
+        "space-3xl": "4rem",
+        "space-2xl": "3rem",
+        "space-xl": "2rem",
+        "space-lg": "1.5rem",
+        "space-md": "1rem",
+        "space-base": "1rem",
+        "space-sm": "0.75rem",
+        "space-xs": "0.5rem",
+        "space-2xs": "0.25rem",
+        "space-xxs": "0.25rem",
+        "space-1": "0.25rem",
+        "space-2": "0.5rem",
+        "space-3": "0.75rem",
+        "space-4": "1rem",
+        "space-5": "1.25rem",
+        "space-6": "1.5rem",
+        "space-8": "2rem",
+        "space-12": "3rem",
+        "space-16": "4rem",
+        "space-20": "5rem",
+        "space-24": "6rem",
+        "space-stack-sm": "0.5rem",
+        "space-stack-md": "1rem",
+        "space-stack-lg": "1.5rem",
+        "section-gap": "2rem",
+        gutter: "1.5rem",
+        "sidebar-w": "16rem"
+      },
+      fontSize: {
+        "stat-lg": ["28px", { lineHeight: "36px", letterSpacing: "-0.02em", fontWeight: "700" }],
+        "button-text": ["14px", { lineHeight: "20px", letterSpacing: "0.01em", fontWeight: "600" }],
+        "display-hero": ["48px", { lineHeight: "56px", letterSpacing: "-0.025em", fontWeight: "700" }],
+        "display-hero-mobile": ["32px", { lineHeight: "40px", letterSpacing: "-0.02em", fontWeight: "700" }],
+        "display-kpi": ["36px", { lineHeight: "44px", letterSpacing: "-0.02em", fontWeight: "700" }],
+        "display-kpi-mobile": ["28px", { lineHeight: "34px", letterSpacing: "-0.02em", fontWeight: "700" }],
+        "display-lg": ["36px", { lineHeight: "44px", letterSpacing: "-0.02em", fontWeight: "700" }],
+        "headline-page": ["28px", { lineHeight: "36px", letterSpacing: "-0.015em", fontWeight: "600" }],
+        "headline-page-mobile": ["24px", { lineHeight: "32px", letterSpacing: "-0.015em", fontWeight: "600" }],
+        "headline-section": ["20px", { lineHeight: "28px", letterSpacing: "-0.01em", fontWeight: "600" }],
+        "headline-subsection": ["16px", { lineHeight: "24px", letterSpacing: "-0.005em", fontWeight: "600" }],
+        "headline-lg": ["28px", { lineHeight: "36px", letterSpacing: "-0.015em", fontWeight: "600" }],
+        "headline-lg-mobile": ["24px", { lineHeight: "32px", letterSpacing: "-0.015em", fontWeight: "600" }],
+        "headline-md": ["20px", { lineHeight: "28px", letterSpacing: "-0.01em", fontWeight: "600" }],
+        "headline-sm": ["16px", { lineHeight: "24px", letterSpacing: "-0.005em", fontWeight: "600" }],
+        "headline-xl-mobile": ["26px", { lineHeight: "34px", letterSpacing: "-0.015em", fontWeight: "600" }],
+        "body-default": ["14px", { lineHeight: "22px", letterSpacing: "0em", fontWeight: "400" }],
+        "body-compact": ["13px", { lineHeight: "18px", letterSpacing: "0em", fontWeight: "400" }],
+        "body-strong": ["14px", { lineHeight: "22px", letterSpacing: "0em", fontWeight: "600" }],
+        "body-lg": ["16px", { lineHeight: "24px", letterSpacing: "0em", fontWeight: "400" }],
+        "body-md": ["14px", { lineHeight: "22px", letterSpacing: "0em", fontWeight: "400" }],
+        "body-md-medium": ["14px", { lineHeight: "22px", letterSpacing: "0em", fontWeight: "500" }],
+        "body-sm": ["12px", { lineHeight: "16px", letterSpacing: "0em", fontWeight: "400" }],
+        "label-badge": ["11px", { lineHeight: "14px", letterSpacing: "0.02em", fontWeight: "600" }],
+        "label-regular": ["12px", { lineHeight: "16px", letterSpacing: "0.01em", fontWeight: "500" }],
+        "label-md": ["12px", { lineHeight: "16px", letterSpacing: "0.01em", fontWeight: "500" }],
+        "label-sm": ["11px", { lineHeight: "14px", letterSpacing: "0.02em", fontWeight: "500" }],
+        "label-uppercase": ["10px", { lineHeight: "12px", letterSpacing: "0.05em", fontWeight: "700" }]
+      },
+      fontFamily: {
+        // All text families use Inter — single source of truth
+        "stat-lg": ["Inter", "sans-serif"],
+        "button-text": ["Inter", "sans-serif"],
+        sans: ["Inter", "sans-serif"],
+        heading: ["Inter", "sans-serif"],
+        "body-default": ["Inter", "sans-serif"],
+        "body-compact": ["Inter", "sans-serif"],
+        "body-strong": ["Inter", "sans-serif"],
+        "body-md": ["Inter", "sans-serif"],
+        "body-sm": ["Inter", "sans-serif"],
+        "display-kpi": ["Inter", "sans-serif"],
+        "headline-page": ["Inter", "sans-serif"],
+        "headline-section": ["Inter", "sans-serif"],
+        "headline-subsection": ["Inter", "sans-serif"],
+        "headline-md": ["Inter", "sans-serif"],
+        "headline-sm": ["Inter", "sans-serif"],
+        "headline-lg": ["Inter", "sans-serif"],
+        "label-badge": ["Inter", "sans-serif"],
+        "label-regular": ["Inter", "sans-serif"],
+        "label-md": ["Inter", "sans-serif"],
+        "label-sm": ["Inter", "sans-serif"],
+        // Icon font — never overridden
+        "material-symbols-outlined": ["Material Symbols Outlined", "sans-serif"]
+      },
+      borderRadius: {
+        DEFAULT: "0.375rem",
+        sm: "0.25rem",
+        md: "0.375rem",
+        lg: "0.5rem",
+        xl: "0.75rem",
+        "2xl": "1rem",
+        full: "9999px"
+      }
+    }
+  }
+};
+</script>
+
+<style>
+  html, body {
+    width: 100%;
+    max-width: 100%;
+    margin: 0;
+    padding: 0;
+    height: auto;
+    min-height: 100%;
+    font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+  html { overflow-y: auto; overflow-x: hidden; }
+  body {
+    overflow-y: auto;
+    overflow-x: hidden;
+    overscroll-behavior-y: auto;
+  }
+
+  /* Material Symbols — safe defaults */
+  .material-symbols-outlined {
+    font-family: 'Material Symbols Outlined', sans-serif;
+    font-weight: normal;
+    font-style: normal;
+    line-height: 1;
+    letter-spacing: normal;
+    text-transform: none;
+    display: inline-block;
+    white-space: nowrap;
+    word-wrap: normal;
+    direction: ltr;
+    font-feature-settings: 'liga';
+    -webkit-font-feature-settings: 'liga';
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* Form controls — inherit Inter */
+  input, select, textarea, button, kbd {
+    font-family: inherit;
+  }
+
+  /* Tabular numbers for metrics */
+  .font-heading, .tabular-nums {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: 'tnum';
+  }
+
+  main > :first-child { margin-top: 0 !important; }
+  main > :last-child  { margin-bottom: 0 !important; }
+  .scrollbar-none,
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-none::-webkit-scrollbar,
+  .no-scrollbar::-webkit-scrollbar { display: none; }
+  input[type="search"]::-webkit-search-decoration,
+  input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; }
+</style>
+</head>
+
+<body class="bg-white font-sans text-brand-body min-h-full antialiased">
+
+<!-- SIDEBAR (Modern, Crisp White with Brand Navy Accents & Clear Hierarchy) -->
+<aside class="hidden lg:flex fixed left-0 top-0 h-screen w-64 bg-white border-r border-[#E2E8F0] z-50 flex-col justify-between shadow-[1px_0_10px_rgba(0,0,0,0.02)]">
+<div class="flex flex-col flex-1 overflow-y-auto px-4 py-5">
+<!-- Logo Header -->
+<div class="flex items-center justify-between pb-5 border-b border-[#E2E8F0] mb-5">
+<a href="../../Abdullah desigens customer + landing page/landing page/code.html" class="flex items-center gap-3 group hover:opacity-90 transition-opacity no-underline" title="Back to Landing Page">
+<div class="w-10 h-10 rounded-xl bg-[#123B5D] flex items-center justify-center text-white font-extrabold text-xl shadow-sm tracking-tight relative group-hover:scale-105 transition-transform">
+<span>H</span>
+<span class="w-2.5 h-2.5 rounded-full bg-[#0F8B8D] absolute bottom-1 right-1 border-2 border-white"></span>
+</div>
+<div class="flex flex-col">
+<div class="flex items-center gap-1.5 leading-tight">
+<span class="font-extrabold text-[17px] tracking-tight text-[#172033]">HUNAR</span>
+<span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-[#123B5D]/5 text-[#123B5D] uppercase tracking-wider border border-[#123B5D]/15">ADMIN</span>
+</div>
+<p class="text-[11px] font-medium text-[#64748B]">Certified Pro Marketplace</p>
+</div>
+</a>
+</div>
+<!-- Navigation Hierarchy -->
+<nav class="space-y-6">
+<!-- Section: MAIN -->
+<div>
+<div class="px-3 pb-2 text-[10px] font-bold uppercase tracking-wider text-[#64748B]">Main</div>
+<div class="space-y-1">
+<a class="flex items-center justify-between px-3 py-2 rounded-xl text-[13px] font-medium text-[#64748B] hover:text-[#172033] hover:bg-slate-50 transition-colors" href="../stitch_hunar_marketplace_prototype/hunar_admin_operations_dashboard_modern/code.html">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-[19px]">dashboard</span>
+<span>Dashboard</span>
+</div>
+</a>
+<a class="flex items-center justify-between px-3 py-2 rounded-xl text-[13px] font-medium text-[#64748B] hover:text-[#172033] hover:bg-slate-50 transition-colors" href="../admin panel design/customers.html">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-[19px]">group</span>
+<span>Users</span>
+</div>
+<span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-slate-100 text-[#64748B] border border-[#E2E8F0]">2 Roles</span>
+</a>
+<a class="flex items-center justify-between px-3 py-2 rounded-xl text-[13px] font-medium text-[#64748B] hover:text-[#172033] hover:bg-slate-50 transition-colors" href="../stitch_hunar_marketplace_prototype/jobs_management_work_orders_hunar_admin/code.html">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-[19px]">assignment</span>
+<span>Jobs</span>
+</div>
+<span class="px-2 py-0.5 rounded-full text-[11px] font-bold bg-slate-100 text-[#123B5D]">428</span>
+</a>
+</div>
+</div>
+<!-- Section: OPERATIONS -->
+<div>
+<div class="px-3 pb-2 text-[10px] font-bold uppercase tracking-wider text-[#64748B]">Operations</div>
+<div class="space-y-1">
+<a class="flex items-center justify-between px-3 py-2 rounded-xl text-[13px] font-medium text-[#64748B] hover:text-[#172033] hover:bg-slate-50 transition-colors" href="../admin panel design/index.html">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-[19px] text-[#F59E0B]">verified</span>
+<span>Verification</span>
+</div>
+<span class="px-2 py-0.5 rounded-full text-[11px] font-bold bg-[#FEF3C7] text-[#92400E] border border-[#F59E0B]/30">24</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-xl text-[13px] font-medium text-[#64748B] hover:text-[#172033] hover:bg-slate-50 transition-colors" href="../admin panel design/payments.html">
+<span class="material-symbols-outlined text-[19px]">account_balance_wallet</span>
+<span>Payments &amp; Txns</span>
+</a>
+<a class="flex items-center justify-between px-3 py-2 rounded-xl text-[13px] font-medium text-[#64748B] hover:text-[#172033] hover:bg-slate-50 transition-colors" href="../../stitch_hunar_admin pannel some features_mvp/shahzad-admin pannel, features/worker_dispute_management_resolution/code.html">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-[19px] text-[#DC2626]">flag</span>
+<span>Disputes</span>
+</div>
+<span class="px-2 py-0.5 rounded-full text-[11px] font-bold bg-[#FEE2E2] text-[#DC2626] border border-[#DC2626]/30">8</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-xl text-[13px] font-medium text-[#64748B] hover:text-[#172033] hover:bg-slate-50 transition-colors" href="../../stitch_hunar_admin pannel some features_mvp/shahzad-admin pannel, features/worker_reviews_ratings/code.html">
+<span class="material-symbols-outlined text-[19px]">star</span>
+<span>Reviews &amp; Ratings</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-xl text-[13px] font-medium text-[#64748B] hover:text-[#172033] hover:bg-slate-50 transition-colors" href="../../stitch_hunar_admin pannel some features_mvp/shahzad-admin pannel, features/worker_category_skill_settings/code.html">
+<span class="material-symbols-outlined text-[19px]">category</span>
+<span>Categories</span>
+</a>
+<a class="flex items-center justify-between px-3 py-2 rounded-xl text-[13px] font-medium text-[#64748B] hover:text-[#172033] hover:bg-slate-50 transition-colors" href="../../stitch_hunar_admin pannel some features_mvp/shahzad-admin pannel, features/worker_service_area_location_settings/code.html">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-[19px]">location_on</span>
+<span>Locations</span>
+</div>
+<span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-[#0F8B8D]/10 text-[#0F8B8D] border border-[#0F8B8D]/20">Peshawar</span>
+</a>
+</div>
+</div>
+<!-- Section: GOVERNANCE & TELEMETRY -->
+<div>
+<div class="px-3 pb-2 text-[10px] font-bold uppercase tracking-wider text-[#64748B]">Governance</div>
+<div class="space-y-1">
+<a class="flex items-center gap-3 px-3 py-2 rounded-xl text-[13px] font-medium text-[#64748B] hover:text-[#172033] hover:bg-slate-50 transition-colors" href="../reports_moderation/code.html">
+<span class="material-symbols-outlined text-[19px]">description</span>
+<span>Reports</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-xl text-[13px] font-medium text-[#64748B] hover:text-[#172033] hover:bg-slate-50 transition-colors" href="../notifications/code.html">
+<span class="material-symbols-outlined text-[19px]">notifications</span>
+<span>Notifications</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-xl text-[13px] font-medium text-[#64748B] hover:text-[#172033] hover:bg-slate-50 transition-colors" href="../analytics/code.html">
+<span class="material-symbols-outlined text-[19px]">monitoring</span>
+<span>Analytics</span>
+</a>
+<a class="flex items-center justify-between px-3 py-2.5 rounded-xl bg-[#123B5D] text-white font-semibold text-[13px] shadow-sm group transition-all" href="code.html">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-[19px] text-[#0F8B8D]">settings</span>
+<span>Settings</span>
+</div>
+<span class="w-1.5 h-1.5 rounded-full bg-[#0F8B8D]"></span>
+</a>
+</div>
+</div>
+</nav>
+</div>
+<!-- Sidebar Bottom: Escrow Highlight Card & Super Admin Profile -->
+<div class="p-4 border-t border-[#E2E8F0] space-y-3 bg-white">
+<div class="p-3.5 rounded-xl bg-[#123B5D] text-white space-y-2 shadow-sm">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[#0F8B8D] text-[18px]">verified_user</span>
+<span class="text-[10px] font-bold tracking-wider uppercase text-teal-300">HUNAR Escrow</span>
+</div>
+<span class="w-2 h-2 rounded-full bg-[#16A34A] animate-pulse"></span>
+</div>
+<p class="text-[11px] text-slate-300 leading-relaxed">100% SBP / NADRA Verified Pros &amp; safe Raast dispute guarantee.</p>
+<a class="block text-center py-1.5 px-3 bg-[#0F8B8D] text-white text-[11px] font-semibold rounded-lg hover:bg-[#0D7A7C] transition-colors" href="#">
+View Escrow Rules
+</a>
+</div>
+<div class="flex items-center justify-between pt-1">
+<div class="flex items-center gap-2.5">
+<div class="w-8 h-8 rounded-full bg-[#123B5D] text-white flex items-center justify-center font-bold text-xs ring-2 ring-[#0F8B8D]/20">
+<span class="material-symbols-outlined text-[18px]">person</span>
+</div>
+<div class="flex flex-col">
+<span class="text-[12px] font-bold text-[#172033] leading-tight">Abdullah Khan</span>
+<span class="text-[10px] text-[#64748B] font-medium">Super Admin • Peshawar Hub</span>
+</div>
+</div>
+<a class="text-[#64748B] hover:text-[#DC2626] p-1 rounded-md transition-colors" href="#" title="Logout">
+<span class="material-symbols-outlined text-[18px]">logout</span>
+</a>
+</div>
+</div>
+</aside>
+
+<!-- ================= MAIN WRAPPER ================= -->
+<div class="w-full lg:pl-64 flex flex-col min-h-screen bg-white min-w-0">
+
+  <!-- Header -->
+  <header class="sticky top-0 z-40 h-16 w-full bg-white/95 backdrop-blur-md border-b border-[#E2E8F0] px-4 sm:px-8 flex items-center justify-between gap-4">
+    <div class="flex items-center gap-2">
+      <a href="../../Abdullah desigens customer + landing page/landing page/code.html" class="text-brand-muted hover:text-[#0F8B8D] transition-colors font-medium text-xs" title="Back to Landing Page">HUNAR</a>
+      <span class="text-slate-300">/</span>
+      <span class="text-brand-navy font-semibold text-sm">Platform Settings</span>
+    </div>
+
+    <div class="flex items-center gap-3 flex-1 max-w-xl mx-4">
+      <div class="relative w-full flex items-center">
+        <span class="material-symbols-outlined absolute left-3 text-[18px] text-brand-muted pointer-events-none">search</span>
+        <input class="w-full h-9 pl-9 pr-16 bg-slate-50 border border-brand-border rounded-lg text-brand-body placeholder:text-brand-muted text-sm focus:outline-none focus:border-brand-teal focus:ring-1 focus:ring-brand-teal" placeholder="Search system settings, escrow params..." type="search"/>
+        <kbd class="hidden sm:inline-block absolute right-2.5 px-1.5 py-0.5 text-[11px] bg-brand-card border border-brand-border rounded text-brand-muted shadow-sm pointer-events-none">Ctrl + K</kbd>
+      </div>
+    </div>
+
+    <div class="flex items-center gap-3 shrink-0">
+      <div class="hidden xl:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-brand-green-light text-brand-green border border-emerald-200">
+        <span class="w-2 h-2 rounded-full bg-brand-green animate-pulse"></span>
+        <span class="text-xs font-semibold tracking-tight">Live System: 99.98%</span>
+      </div>
+      <div class="relative">
+        <button class="p-2 text-brand-muted hover:text-brand-navy hover:bg-slate-100 rounded-lg transition-colors relative" title="Notifications" type="button">
+          <span class="material-symbols-outlined text-[22px]">notifications</span>
+          <span class="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-brand-red ring-2 ring-brand-card"></span>
+        </button>
+      </div>
+      <div class="h-6 w-px bg-brand-border"></div>
+      <div class="flex items-center gap-2 cursor-pointer group">
+        <img alt="Profile" class="w-8 h-8 rounded-full object-cover ring-1 ring-brand-border group-hover:ring-brand-teal transition-all" src="https://randomuser.me/api/portraits/men/32.jpg"/>
+        <span class="material-symbols-outlined text-[18px] text-brand-muted group-hover:text-brand-navy transition-colors hidden sm:block">expand_more</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main -->
+  <main class="flex-1 w-full min-w-0 p-4 sm:p-6 lg:p-8 bg-brand-bg">
+    <div class="max-w-7xl mx-auto w-full min-w-0 flex flex-col gap-6">
+
+        <!-- Title Row -->
+        <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 pb-1">
+          <div class="flex flex-col">
+            <div class="flex items-center gap-2">
+              <span class="font-heading font-extrabold text-2xl text-brand-navy tracking-tight">Settings</span>
+              <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-brand-teal-light text-brand-teal">
+                <span class="w-1.5 h-1.5 rounded-full bg-brand-teal animate-pulse"></span>
+                Live Sync
+              </span>
+            </div>
+            <p class="text-sm text-brand-muted mt-0.5">Global marketplace commissions, artisan escrow thresholds &amp; security governance.</p>
+          </div>
+          <div class="flex items-center gap-2 shrink-0">
+            <button class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-brand-card border border-brand-border hover:bg-slate-50 text-brand-navy font-semibold text-sm shadow-sm transition-colors" id="discardBtn" type="button">
+              <span class="material-symbols-outlined text-[18px] text-brand-muted">undo</span>
+              Discard
+            </button>
+            <button class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-brand-teal text-white font-semibold text-sm shadow-sm hover:opacity-95 transition-all" id="saveBtn" type="button">
+              <span class="material-symbols-outlined text-[18px]">check_circle</span>
+              Save Changes
+            </button>
+          </div>
+        </div>
+
+        <!-- KPI Cards -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+
+          <div class="relative overflow-hidden bg-brand-card rounded-xl p-4 border border-brand-border shadow-sm flex flex-col justify-between group">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-semibold text-brand-muted uppercase tracking-wider">Blended Take</span>
+              <div class="w-8 h-8 rounded-lg bg-brand-teal-light flex items-center justify-center text-brand-teal">
+                <span class="material-symbols-outlined text-[18px]">percent</span>
+              </div>
+            </div>
+            <div class="flex items-baseline gap-2 my-2">
+              <span class="font-heading text-3xl text-brand-navy font-extrabold tabular-nums">9.64%</span>
+              <span class="text-xs text-brand-teal font-semibold inline-flex items-center gap-0.5">
+                <span class="material-symbols-outlined text-[14px]">trending_up</span>+0.4% MoM
+              </span>
+            </div>
+            <div class="flex items-center justify-between pt-1">
+              <span class="text-xs text-brand-muted font-medium">Applied across verified artisans</span>
+              <svg class="w-16 h-5 text-brand-teal opacity-80" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 64 20">
+                <path d="M1 17L12 13L24 16L36 7L48 11L63 3"></path>
+              </svg>
+            </div>
+          </div>
+
+          <div class="relative overflow-hidden bg-brand-card rounded-xl p-4 border border-brand-border shadow-sm flex flex-col justify-between group">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-semibold text-brand-muted uppercase tracking-wider">Escrow Balance</span>
+              <div class="w-8 h-8 rounded-lg bg-brand-orange-light flex items-center justify-center text-brand-orange">
+                <span class="material-symbols-outlined text-[18px]">account_balance_wallet</span>
+              </div>
+            </div>
+            <div class="flex items-baseline gap-2 my-2">
+              <span class="font-heading text-3xl text-brand-navy font-extrabold tabular-nums">PKR 4.82M</span>
+            </div>
+            <div class="flex items-center justify-between pt-1">
+              <span class="inline-flex items-center gap-1 text-xs text-brand-orange font-semibold bg-brand-orange-light px-1.5 py-0.5 rounded">
+                <span class="material-symbols-outlined text-[14px]">lock</span> 1,842 active holds
+              </span>
+              <span class="text-xs text-brand-muted">Protected</span>
+            </div>
+          </div>
+
+          <div class="relative overflow-hidden bg-brand-card rounded-xl p-4 border border-brand-border shadow-sm flex flex-col justify-between group">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-semibold text-brand-muted uppercase tracking-wider">Diag. Waiver</span>
+              <div class="w-8 h-8 rounded-lg bg-sky-50 flex items-center justify-center text-brand-navy">
+                <span class="material-symbols-outlined text-[18px]">price_check</span>
+              </div>
+            </div>
+            <div class="flex items-baseline gap-2 my-2">
+              <span class="font-heading text-3xl text-brand-navy font-extrabold tabular-nums">78.2%</span>
+            </div>
+            <div class="flex items-center justify-between pt-1">
+              <span class="inline-flex items-center gap-1 text-xs text-brand-teal font-semibold">
+                <span class="material-symbols-outlined text-[14px]">auto_fix_high</span> Converted to Work
+              </span>
+              <svg class="w-16 h-5 text-brand-navy opacity-70" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 64 20">
+                <path d="M1 12L14 8L27 15L40 6L52 9L63 4"></path>
+              </svg>
+            </div>
+          </div>
+
+          <div class="relative overflow-hidden bg-brand-card rounded-xl p-4 border border-brand-border shadow-sm flex flex-col justify-between group">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-semibold text-brand-muted uppercase tracking-wider">Payout Speed</span>
+              <div class="w-8 h-8 rounded-lg bg-brand-green-light flex items-center justify-center text-brand-green">
+                <span class="material-symbols-outlined text-[18px]">bolt</span>
+              </div>
+            </div>
+            <div class="flex items-baseline gap-2 my-2">
+              <span class="font-heading text-3xl text-brand-navy font-extrabold tabular-nums">T+2 Days</span>
+            </div>
+            <div class="flex items-center justify-between pt-1">
+              <span class="inline-flex items-center gap-1 text-xs text-brand-green font-semibold">
+                <span class="material-symbols-outlined text-[14px]">verified</span> 99.1% on time
+              </span>
+              <svg class="w-16 h-5 text-brand-green opacity-80" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 64 20">
+                <path d="M1 18L15 14L28 10L42 8L54 5L63 2"></path>
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        <!-- Domain Navigation Pills -->
+        <div class="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs font-medium scrollbar-none">
+          <button class="px-3.5 py-1.5 rounded-full bg-brand-teal text-white font-semibold whitespace-nowrap shadow-sm inline-flex items-center gap-1.5" type="button">
+            <span class="material-symbols-outlined text-[16px]">receipt_long</span>
+            Commission &amp; Fees
+          </button>
+          <button class="px-3.5 py-1.5 rounded-full bg-brand-card border border-brand-border hover:bg-slate-50 text-brand-muted whitespace-nowrap transition-colors inline-flex items-center gap-1.5" type="button">
+            <span class="material-symbols-outlined text-[16px]">payments</span>
+            Payout &amp; Wallets
+          </button>
+          <button class="px-3.5 py-1.5 rounded-full bg-brand-card border border-brand-border hover:bg-slate-50 text-brand-muted whitespace-nowrap transition-colors inline-flex items-center gap-1.5" type="button">
+            <span class="material-symbols-outlined text-[16px]">verified_user</span>
+            Verification v3
+          </button>
+          <button class="px-3.5 py-1.5 rounded-full bg-brand-card border border-brand-border hover:bg-slate-50 text-brand-muted whitespace-nowrap transition-colors inline-flex items-center gap-1.5" type="button">
+            <span class="material-symbols-outlined text-[16px]">gavel</span>
+            Job Governance
+          </button>
+          <button class="px-3.5 py-1.5 rounded-full bg-brand-card border border-brand-border hover:bg-slate-50 text-brand-muted whitespace-nowrap transition-colors inline-flex items-center gap-1.5" type="button">
+            <span class="material-symbols-outlined text-[16px]">badge</span>
+            Admin Staff (4)
+          </button>
+        </div>
+
+        <!-- Settings Split Layout -->
+        <div class="grid grid-cols-1 xl:grid-cols-12 gap-5 items-start">
+
+          <!-- LEFT COLUMN -->
+          <div class="xl:col-span-7 flex flex-col gap-5">
+
+            <!-- Card 1 -->
+            <div class="bg-brand-card rounded-xl p-5 border border-brand-border shadow-sm flex flex-col gap-4">
+              <div class="flex items-center justify-between gap-2">
+                <div class="flex items-center gap-2.5 min-w-0">
+                  <div class="w-9 h-9 rounded-lg bg-brand-teal-light flex items-center justify-center text-brand-teal shrink-0">
+                    <span class="material-symbols-outlined text-[20px]">tune</span>
+                  </div>
+                  <div class="min-w-0">
+                    <h3 class="font-heading text-base font-bold text-brand-navy">Default Commission Policy</h3>
+                    <p class="text-xs text-brand-muted mt-0.5">Core take-rate applied across verified artisans</p>
+                  </div>
+                </div>
+              </div>
+
+              <div class="space-y-3">
+                <div>
+                  <label class="block text-xs font-semibold text-brand-navy mb-1.5">Default HUNAR Cut (%)</label>
+                  <div class="relative flex items-center">
+                    <input class="w-full h-10 px-3 pl-10 bg-slate-50 border border-brand-border text-brand-body rounded-lg focus:outline-none focus:bg-white focus:ring-1 focus:ring-brand-teal font-semibold text-sm tabular-nums" step="0.5" type="number" value="10.0"/>
+                    <span class="material-symbols-outlined text-brand-muted text-[18px] absolute left-3">percent</span>
+                    <span class="absolute right-3 text-xs text-brand-muted">Fixed Net</span>
+                  </div>
+                </div>
+                <div>
+                  <label class="block text-xs font-semibold text-brand-navy mb-1.5">Minimum Service Platform Fee</label>
+                  <div class="relative flex items-center">
+                    <input class="w-full h-10 px-3 pl-10 bg-slate-50 border border-brand-border text-brand-body rounded-lg focus:outline-none focus:bg-white focus:ring-1 focus:ring-brand-teal font-semibold text-sm tabular-nums" type="text" value="PKR 100"/>
+                    <span class="material-symbols-outlined text-brand-muted text-[18px] absolute left-3">local_atm</span>
+                    <span class="absolute right-3 text-xs text-brand-muted">Floor per ticket</span>
+                  </div>
+                </div>
+
+                <div class="p-3.5 rounded-lg bg-slate-50 border border-brand-border flex flex-col gap-3">
+                  <div class="flex items-center justify-between gap-2">
+                    <div class="flex items-center gap-2.5 min-w-0">
+                      <span class="material-symbols-outlined text-brand-teal text-[20px] shrink-0">medical_services</span>
+                      <div class="min-w-0">
+                        <p class="text-xs font-bold text-brand-navy">Diagnosis &amp; Visiting Cap</p>
+                        <p class="text-xs text-brand-muted">Base travel and quotation ceiling</p>
+                      </div>
+                    </div>
+                    <span class="text-base font-heading font-bold text-brand-navy shrink-0 tabular-nums">PKR 500</span>
+                  </div>
+                  <div class="flex items-center justify-between gap-2 pt-2 border-t border-brand-border">
+                    <div class="flex flex-col pr-2 min-w-0">
+                      <span class="text-xs font-semibold text-brand-navy">Deduct Fee on Conversion</span>
+                      <span class="text-xs text-brand-muted">Waive diagnostic charge if customer accepts quotation</span>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer shrink-0">
+                      <input checked class="sr-only peer" type="checkbox"/>
+                      <div class="w-11 h-6 bg-slate-200 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-brand-teal"></div>
+                    </label>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Card 2 -->
+            <div class="bg-brand-card rounded-xl p-5 border border-brand-border shadow-sm flex flex-col gap-3">
+              <div class="flex items-center justify-between gap-2">
+                <div class="flex items-center gap-2.5 min-w-0">
+                  <div class="w-9 h-9 rounded-lg bg-sky-50 flex items-center justify-center text-brand-navy shrink-0">
+                    <span class="material-symbols-outlined text-[20px]">category</span>
+                  </div>
+                  <div class="min-w-0">
+                    <h3 class="font-heading text-base font-bold text-brand-navy">Trade Rate Overrides</h3>
+                    <p class="text-xs text-brand-muted mt-0.5">Adjusted takes for seasonal &amp; artisan retention</p>
+                  </div>
+                </div>
+                <span class="px-2 py-0.5 rounded-full bg-slate-100 text-brand-navy text-xs font-semibold shrink-0">5 Active</span>
+              </div>
+
+              <div class="space-y-2 pt-1">
+
+                <div class="p-3 rounded-lg bg-slate-50 border border-brand-border flex items-center justify-between gap-2">
+                  <div class="flex items-center gap-3 min-w-0">
+                    <div class="w-10 h-10 rounded-lg bg-white flex items-center justify-center text-brand-teal shadow-sm border border-brand-border shrink-0">
+                      <span class="material-symbols-outlined text-[22px]">bolt</span>
+                    </div>
+                    <div class="min-w-0">
+                      <h4 class="text-sm font-bold text-brand-navy truncate">Electrician (Bijli Mistri)</h4>
+                      <p class="text-xs text-brand-muted truncate">Standard Domestic Work</p>
+                    </div>
+                  </div>
+                  <div class="text-right shrink-0">
+                    <span class="text-base font-heading font-bold text-brand-navy tabular-nums">10.0%</span>
+                    <span class="block text-xs text-brand-muted">Default</span>
+                  </div>
+                </div>
+
+                <div class="p-3 rounded-lg bg-slate-50 border border-brand-border flex items-center justify-between gap-2">
+                  <div class="flex items-center gap-3 min-w-0">
+                    <div class="w-10 h-10 rounded-lg bg-white flex items-center justify-center text-brand-teal shadow-sm border border-brand-border shrink-0">
+                      <span class="material-symbols-outlined text-[22px]">mode_fan</span>
+                    </div>
+                    <div class="min-w-0">
+                      <div class="flex items-center gap-1.5">
+                        <h4 class="text-sm font-bold text-brand-navy truncate">AC Technician</h4>
+                        <span class="px-1.5 py-0.5 rounded bg-brand-orange-light text-brand-orange text-[10px] font-semibold shrink-0">Promo</span>
+                      </div>
+                      <p class="text-xs text-brand-muted truncate">Summer Seasonal Subsidy</p>
+                    </div>
+                  </div>
+                  <div class="text-right shrink-0">
+                    <span class="text-base font-heading font-bold text-brand-teal tabular-nums">8.0%</span>
+                    <span class="block text-xs text-brand-teal font-medium">-2.0% Promo</span>
+                  </div>
+                </div>
+
+                <div class="p-3 rounded-lg bg-slate-50 border border-brand-border flex items-center justify-between gap-2">
+                  <div class="flex items-center gap-3 min-w-0">
+                    <div class="w-10 h-10 rounded-lg bg-white flex items-center justify-center text-brand-navy shadow-sm border border-brand-border shrink-0">
+                      <span class="material-symbols-outlined text-[22px]">water_drop</span>
+                    </div>
+                    <div class="min-w-0">
+                      <h4 class="text-sm font-bold text-brand-navy truncate">Plumber (Nal Saz)</h4>
+                      <p class="text-xs text-brand-muted truncate">Sanitary &amp; Pipefitting</p>
+                    </div>
+                  </div>
+                  <div class="text-right shrink-0">
+                    <span class="text-base font-heading font-bold text-brand-navy tabular-nums">10.0%</span>
+                    <span class="block text-xs text-brand-muted">Default</span>
+                  </div>
+                </div>
+
+                <div class="p-3 rounded-lg bg-slate-50 border border-brand-border flex items-center justify-between gap-2">
+                  <div class="flex items-center gap-3 min-w-0">
+                    <div class="w-10 h-10 rounded-lg bg-white flex items-center justify-center text-brand-orange shadow-sm border border-brand-border shrink-0">
+                      <span class="material-symbols-outlined text-[22px]">carpenter</span>
+                    </div>
+                    <div class="min-w-0">
+                      <div class="flex items-center gap-1.5">
+                        <h4 class="text-sm font-bold text-brand-navy truncate">Carpenter (Tarkhan)</h4>
+                        <span class="px-1.5 py-0.5 rounded bg-slate-100 text-brand-navy text-[10px] font-semibold shrink-0">Artisan</span>
+                      </div>
+                      <p class="text-xs text-brand-muted truncate">Cabinetry &amp; Furniture Fixes</p>
+                    </div>
+                  </div>
+                  <div class="text-right shrink-0">
+                    <span class="text-base font-heading font-bold text-brand-navy tabular-nums">9.0%</span>
+                    <span class="block text-xs text-brand-navy font-medium">-1.0% Retainer</span>
+                  </div>
+                </div>
+
+                <div class="p-3 rounded-lg bg-slate-50 border border-brand-border flex items-center justify-between gap-2">
+                  <div class="flex items-center gap-3 min-w-0">
+                    <div class="w-10 h-10 rounded-lg bg-white flex items-center justify-center text-brand-navy shadow-sm border border-brand-border shrink-0">
+                      <span class="material-symbols-outlined text-[22px]">precision_manufacturing</span>
+                    </div>
+                    <div class="min-w-0">
+                      <h4 class="text-sm font-bold text-brand-navy truncate">Heavy Appliances &amp; Comm.</h4>
+                      <p class="text-xs text-brand-muted truncate">Requires Managed QA Inspection</p>
+                    </div>
+                  </div>
+                  <div class="text-right shrink-0">
+                    <span class="text-base font-heading font-bold text-brand-navy tabular-nums">12.0%</span>
+                    <span class="block text-xs text-brand-muted font-medium">+2.0% QA Fee</span>
+                  </div>
+                </div>
+              </div>
+
+              <button class="mt-2 w-full py-2.5 px-4 rounded-lg bg-slate-50 border border-dashed border-brand-border hover:bg-slate-100 text-brand-navy text-sm font-semibold flex items-center justify-center gap-2 transition-colors" type="button">
+                <span class="material-symbols-outlined text-[18px]">add_circle</span>
+                <span>Add Category Rate Override</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- RIGHT COLUMN -->
+          <div class="xl:col-span-5 flex flex-col gap-5">
+
+            <!-- Card 3 -->
+            <div class="bg-brand-card rounded-xl p-5 border border-brand-border shadow-sm flex flex-col gap-3">
+              <div class="flex items-center gap-2.5">
+                <div class="w-9 h-9 rounded-lg bg-brand-orange-light flex items-center justify-center text-brand-orange shrink-0">
+                  <span class="material-symbols-outlined text-[20px]">security</span>
+                </div>
+                <div class="min-w-0">
+                  <h3 class="font-heading text-base font-bold text-brand-navy">Work Order Governance</h3>
+                  <p class="text-xs text-brand-muted mt-0.5">Scope escalation &amp; fraud controls</p>
+                </div>
+              </div>
+
+              <div class="space-y-3 pt-1">
+                <div class="p-3.5 rounded-lg bg-slate-50 border border-brand-border flex items-center justify-between gap-2">
+                  <div class="flex flex-col pr-2 min-w-0">
+                    <div class="flex items-center gap-1">
+                      <span class="text-xs font-bold text-brand-navy">Mandatory Dual OTP</span>
+                      <span class="material-symbols-outlined text-brand-teal text-[16px] shrink-0">verified</span>
+                    </div>
+                    <span class="text-xs text-brand-muted">Auto-sends SMS token to customer</span>
+                  </div>
+                  <label class="relative inline-flex items-center cursor-pointer shrink-0">
+                    <input checked class="sr-only peer" type="checkbox"/>
+                    <div class="w-11 h-6 bg-slate-200 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-brand-teal"></div>
+                  </label>
+                </div>
+
+                <div>
+                  <div class="flex items-center justify-between mb-1.5 gap-2 flex-wrap">
+                    <label class="text-xs font-bold text-brand-navy">Supervisor Escalation Cap</label>
+                    <span class="text-xs text-brand-orange font-semibold flex items-center gap-1 shrink-0">
+                      <span class="material-symbols-outlined text-[14px]">warning</span> Trigger Alert
+                    </span>
+                  </div>
+                  <div class="relative flex items-center">
+                    <input class="w-full h-10 px-3 pl-10 bg-slate-50 border border-brand-border text-brand-body rounded-lg focus:outline-none focus:bg-white focus:ring-1 focus:ring-brand-teal font-semibold text-sm tabular-nums" type="text" value="PKR 15,000"/>
+                    <span class="material-symbols-outlined text-brand-muted text-[18px] absolute left-3">shield_person</span>
+                    <span class="absolute right-3 text-xs text-brand-muted">Manual Review</span>
+                  </div>
+                  <p class="text-xs text-brand-muted mt-1.5">Jobs quoted above PKR 15,000 require photo approval from Regional Manager.</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Card 4 -->
+            <div class="bg-brand-card rounded-xl p-5 border border-brand-border shadow-sm flex flex-col gap-3">
+              <div class="flex items-center gap-2.5">
+                <div class="w-9 h-9 rounded-lg bg-brand-teal-light flex items-center justify-center text-brand-teal shrink-0">
+                  <span class="material-symbols-outlined text-[20px]">account_balance</span>
+                </div>
+                <div class="min-w-0">
+                  <h3 class="font-heading text-base font-bold text-brand-navy">Payout &amp; Settlement</h3>
+                  <p class="text-xs text-brand-muted mt-0.5">Artisan disbursement cycles &amp; wallet limits</p>
+                </div>
+              </div>
+
+              <div class="grid grid-cols-1 gap-2 pt-1">
+                <div class="p-3 rounded-lg bg-slate-50 border border-brand-border flex items-center justify-between gap-2">
+                  <div class="min-w-0">
+                    <span class="text-xs text-brand-muted">Minimum Withdrawal</span>
+                    <span class="block text-base font-heading font-bold text-brand-navy tabular-nums">PKR 1,000</span>
+                  </div>
+                  <span class="material-symbols-outlined text-brand-teal text-[22px] shrink-0">savings</span>
+                </div>
+
+                <div class="p-3 rounded-lg bg-slate-50 border border-brand-border flex items-center justify-between gap-2">
+                  <div class="min-w-0">
+                    <span class="text-xs text-brand-muted">Auto-Payout Frequency</span>
+                    <span class="block text-base font-heading font-bold text-brand-navy">Weekly (Tuesdays)</span>
+                  </div>
+                  <span class="material-symbols-outlined text-brand-navy text-[22px] shrink-0">event_repeat</span>
+                </div>
+
+                <div class="p-3 rounded-lg bg-slate-50 border border-brand-border flex items-center justify-between gap-2">
+                  <div class="min-w-0">
+                    <div class="flex items-center gap-1.5 flex-wrap">
+                      <span class="text-xs text-brand-muted">Gateway Fee</span>
+                      <span class="px-1.5 py-0.5 rounded bg-brand-teal text-white text-[9px] uppercase tracking-wider font-bold">Subsidized</span>
+                    </div>
+                    <span class="block text-sm font-heading font-bold text-brand-teal mt-0.5">PKR 0 (JazzCash &amp; EasyPaisa)</span>
+                  </div>
+                  <div class="flex items-center -space-x-1 shrink-0">
+                    <span class="w-7 h-7 rounded-full bg-slate-200 flex items-center justify-center text-[10px] text-brand-navy font-bold border-2 border-brand-card">JC</span>
+                    <span class="w-7 h-7 rounded-full bg-brand-teal-light flex items-center justify-center text-[10px] text-brand-teal font-bold border-2 border-brand-card">EP</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Card 5 -->
+            <div class="bg-brand-card rounded-xl p-5 border border-brand-border shadow-sm flex flex-col gap-3">
+              <div class="flex items-center justify-between gap-2">
+                <div class="flex items-center gap-2.5 min-w-0">
+                  <div class="w-9 h-9 rounded-lg bg-sky-50 flex items-center justify-center text-brand-navy shrink-0">
+                    <span class="material-symbols-outlined text-[20px]">admin_panel_settings</span>
+                  </div>
+                  <div class="min-w-0">
+                    <h3 class="font-heading text-base font-bold text-brand-navy">Administrative Staff</h3>
+                    <p class="text-xs text-brand-muted mt-0.5">4 members with regional privileges</p>
+                  </div>
+                </div>
+                <button class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-brand-navy hover:bg-slate-200 transition-colors shrink-0" type="button" title="Add staff">
+                  <span class="material-symbols-outlined text-[18px]">person_add</span>
+                </button>
+              </div>
+
+              <div class="space-y-2 pt-1">
+
+                <div class="p-3 rounded-lg bg-slate-50 border border-brand-border flex items-center justify-between gap-2">
+                  <div class="flex items-center gap-3 min-w-0">
+                    <div class="relative shrink-0">
+                      <img class="w-9 h-9 rounded-full object-cover border border-brand-border" src="https://randomuser.me/api/portraits/men/32.jpg"/>
+                      <span class="w-2.5 h-2.5 rounded-full bg-brand-green absolute bottom-0 right-0 ring-2 ring-white"></span>
+                    </div>
+                    <div class="min-w-0">
+                      <h4 class="text-sm font-bold text-brand-navy truncate">Abdullah</h4>
+                      <div class="flex items-center gap-1 flex-wrap">
+                        <span class="text-xs text-brand-teal font-semibold">Super Admin</span>
+                        <span class="text-slate-300 text-xs">•</span>
+                        <span class="text-xs text-brand-muted">All Access</span>
+                      </div>
+                    </div>
+                  </div>
+                  <button class="p-1 rounded-lg text-brand-muted hover:text-brand-navy shrink-0" type="button">
+                    <span class="material-symbols-outlined text-[20px]">more_vert</span>
+                  </button>
+                </div>
+
+                <div class="p-3 rounded-lg bg-slate-50 border border-brand-border flex items-center justify-between gap-2">
+                  <div class="flex items-center gap-3 min-w-0">
+                    <div class="relative shrink-0">
+                      <img class="w-9 h-9 rounded-full object-cover border border-brand-border" src="https://randomuser.me/api/portraits/men/45.jpg"/>
+                      <span class="w-2.5 h-2.5 rounded-full bg-brand-green absolute bottom-0 right-0 ring-2 ring-white"></span>
+                    </div>
+                    <div class="min-w-0">
+                      <h4 class="text-sm font-bold text-brand-navy truncate">Sajid Ullah</h4>
+                      <div class="flex items-center gap-1 flex-wrap">
+                        <span class="text-xs text-brand-navy font-semibold">Ops Admin</span>
+                        <span class="text-slate-300 text-xs">•</span>
+                        <span class="text-xs text-brand-muted">Peshawar &amp; RWP</span>
+                      </div>
+                    </div>
+                  </div>
+                  <button class="p-1 rounded-lg text-brand-muted hover:text-brand-navy shrink-0" type="button">
+                    <span class="material-symbols-outlined text-[20px]">more_vert</span>
+                  </button>
+                </div>
+
+                <div class="p-3 rounded-lg bg-slate-50 border border-brand-border flex items-center justify-between gap-2">
+                  <div class="flex items-center gap-3 min-w-0">
+                    <div class="relative shrink-0">
+                      <img class="w-9 h-9 rounded-full object-cover border border-brand-border" src="https://randomuser.me/api/portraits/women/44.jpg"/>
+                      <span class="w-2.5 h-2.5 rounded-full bg-brand-green absolute bottom-0 right-0 ring-2 ring-white"></span>
+                    </div>
+                    <div class="min-w-0">
+                      <h4 class="text-sm font-bold text-brand-navy truncate">Ayesha Bibi</h4>
+                      <div class="flex items-center gap-1 flex-wrap">
+                        <span class="text-xs text-brand-navy font-semibold">Verification Officer</span>
+                        <span class="text-slate-300 text-xs">•</span>
+                        <span class="text-xs text-brand-muted">CNIC &amp; Police</span>
+                      </div>
+                    </div>
+                  </div>
+                  <button class="p-1 rounded-lg text-brand-muted hover:text-brand-navy shrink-0" type="button">
+                    <span class="material-symbols-outlined text-[20px]">more_vert</span>
+                  </button>
+                </div>
+
+                <div class="p-3 rounded-lg bg-slate-50 border border-brand-border flex items-center justify-between gap-2">
+                  <div class="flex items-center gap-3 min-w-0">
+                    <div class="relative shrink-0">
+                      <img class="w-9 h-9 rounded-full object-cover border border-brand-border" src="https://randomuser.me/api/portraits/men/55.jpg"/>
+                      <span class="w-2.5 h-2.5 rounded-full bg-slate-400 absolute bottom-0 right-0 ring-2 ring-white"></span>
+                    </div>
+                    <div class="min-w-0">
+                      <h4 class="text-sm font-bold text-brand-navy truncate">Farooq Ahmad</h4>
+                      <div class="flex items-center gap-1 flex-wrap">
+                        <span class="text-xs text-brand-navy font-semibold">Finance Manager</span>
+                        <span class="text-slate-300 text-xs">•</span>
+                        <span class="text-xs text-brand-muted">Disbursements</span>
+                      </div>
+                    </div>
+                  </div>
+                  <button class="p-1 rounded-lg text-brand-muted hover:text-brand-navy shrink-0" type="button">
+                    <span class="material-symbols-outlined text-[20px]">more_vert</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Info Tip -->
+            <div class="bg-slate-50 border border-brand-border rounded-xl p-3.5 flex items-start gap-2.5 text-brand-muted">
+              <span class="material-symbols-outlined text-[20px] text-brand-teal shrink-0 mt-0.5">verified_user</span>
+              <p class="text-xs leading-relaxed">
+                Changes to commission or payout policy automatically sync to Peshawar, Rawalpindi, and Lahore regional nodes within 60 seconds.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- Toast -->
+<div class="hidden fixed bottom-6 right-6 z-50 bg-brand-navy text-white py-3 px-4 rounded-xl shadow-xl flex items-center justify-between gap-3 max-w-sm" id="toastFeedback">
+  <div class="flex items-center gap-2 min-w-0">
+    <span class="material-symbols-outlined text-brand-green text-[20px] shrink-0">check_circle</span>
+    <span class="text-sm truncate">Platform policy updated across regional nodes</span>
+  </div>
+  <button class="text-white/70 hover:text-white shrink-0" onclick="document.getElementById('toastFeedback').classList.add('hidden')" type="button">
+    <span class="material-symbols-outlined text-[18px]">close</span>
+  </button>
+</div>
+
+<script>
+  (function() {
+    const saveBtn = document.getElementById('saveBtn');
+    const discardBtn = document.getElementById('discardBtn');
+    const toast = document.getElementById('toastFeedback');
+
+    if (saveBtn && toast) {
+      saveBtn.addEventListener('click', function() {
+        toast.classList.remove('hidden');
+        setTimeout(function() { toast.classList.add('hidden'); }, 4000);
+      });
+    }
+
+    if (discardBtn) {
+      discardBtn.addEventListener('click', function() {
+        const confirmed = confirm('Revert changes back to live server state?');
+        if (confirmed) window.location.reload();
+      });
+    }
+  })();
+</script>
+
+</body>
+</html>
