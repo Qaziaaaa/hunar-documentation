@@ -1,0 +1,23 @@
+{
+  "Metadata": {
+    "title": "HUNAR — Home Services Marketplace",
+    "description": "Find trusted, verified professionals for your home in Pakistan. Hunar connects customers with skilled workers — electricians, plumbers, AC technicians and more."
+  },
+  "Common": {
+    "slogan": "Verified skilled workers at your doorstep",
+    "appName": "HUNAR"
+  },
+  "Home": {
+    "heroBadge": "Pakistan's trusted home services marketplace",
+    "heroTitle": "Find a verified professional for every home task",
+    "heroSubtitle": "Sign up as a worker to take jobs near you, or create a job and let trusted professionals reach out with offers.",
+    "ctaWorker": "Sign Up as a Worker",
+    "ctaPostJob": "Post a Job",
+    "learnMore": "Learn more"
+  },
+  "NotFound": {
+    "title": "Page not found",
+    "description": "The page you are looking for does not exist or has moved.",
+    "backHome": "Go back home"
+  }
+}
