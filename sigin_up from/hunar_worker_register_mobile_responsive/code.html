@@ -1,0 +1,280 @@
+<!DOCTYPE html><html lang="en" style=""><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport">
+<title>HUNAR - Worker / Pro Registration</title>
+<!-- Tailwind CSS v3 -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+tailwind.config = {
+  darkMode: "class",
+  theme: {
+    extend: {
+      colors: {
+        navy: "#1A1A2E",
+        teal: {
+          DEFAULT: "#0F766E",
+          dark: "#115E59",
+          light: "rgba(15, 118, 110, 0.1)"
+        },
+        orange: "#F59E0B",
+        success: "#16A34A",
+        error: "#DC2626",
+        gray: "#64748B",
+        background: "#F8FAFC",
+        border: "#E2E8F0",
+        surface: "#FFFFFF",
+        primary: "#0F766E",
+        "primary-dark": "#115E59",
+        secondary: "#1A1A2E",
+        
+        // Aliases used in templates
+        appBg: "#F8FAFC",
+        darkText: "#1A1A2E",
+        mutedText: "#64748B",
+        borderLine: "#E2E8F0",
+        "text-main": "#1A1A2E",
+        "surface-muted": "#F8FAFC",
+        "outline-border": "#E2E8F0",
+        
+        // Material Theme 3 Aliases
+        "on-surface": "#1A1A2E",
+        "on-surface-variant": "#64748B",
+        "on-background": "#1A1A2E",
+        "on-primary": "#FFFFFF",
+        "on-secondary": "#FFFFFF",
+        "on-error": "#FFFFFF",
+        "surface-container-lowest": "#FFFFFF",
+        "surface-container-low": "#F8FAFC",
+        "surface-container": "#F8FAFC",
+        "surface-container-high": "#F8FAFC",
+        "surface-container-highest": "#F8FAFC",
+        "surface-variant": "#F8FAFC",
+        "surface-tint": "#0F766E",
+        "surface-dim": "#E2E8F0",
+        "surface-bright": "#FFFFFF",
+        outline: "#64748B",
+        "outline-variant": "#E2E8F0",
+        "primary-container": "rgba(15, 118, 110, 0.1)",
+        "on-primary-container": "#0F766E",
+        "secondary-container": "rgba(26, 26, 46, 0.08)",
+        "on-secondary-container": "#1A1A2E",
+        "secondary-fixed": "rgba(15, 118, 110, 0.1)",
+        "secondary-fixed-dim": "rgba(15, 118, 110, 0.1)",
+        "on-secondary-fixed": "#1A1A2E",
+        "on-secondary-fixed-variant": "#115E59",
+        "primary-fixed": "rgba(15, 118, 110, 0.1)",
+        "primary-fixed-dim": "rgba(15, 118, 110, 0.1)",
+        "on-primary-fixed": "#1A1A2E",
+        "on-primary-fixed-variant": "#115E59",
+        "tertiary": "#F59E0B",
+        "tertiary-container": "rgba(245, 158, 11, 0.1)",
+        "on-tertiary-container": "#F59E0B",
+        "tertiary-fixed": "rgba(245, 158, 11, 0.1)",
+        "on-tertiary-fixed": "#1A1A2E",
+        "error-container": "rgba(220, 38, 38, 0.1)",
+        "on-error-container": "#DC2626",
+        "inverse-primary": "#0F766E",
+        "inverse-surface": "#1A1A2E",
+        "inverse-on-surface": "#F8FAFC"
+      },
+      spacing: {
+        "margin-desktop": "2rem",
+        "margin-tablet": "1.5rem",
+        "margin-mobile": "1rem",
+        "gutter-desktop": "1.5rem",
+        "gutter-mobile": "1rem",
+        "space-3xl": "4rem",
+        "space-2xl": "3rem",
+        "space-xl": "2rem",
+        "space-lg": "1.5rem",
+        "space-md": "1rem",
+        "space-base": "1rem",
+        "space-sm": "0.75rem",
+        "space-xs": "0.5rem",
+        "space-2xs": "0.25rem",
+        "space-xxs": "0.25rem",
+        "space-1": "0.25rem",
+        "space-2": "0.5rem",
+        "space-3": "0.75rem",
+        "space-4": "1rem",
+        "space-5": "1.25rem",
+        "space-6": "1.5rem",
+        "space-8": "2rem",
+        "space-12": "3rem",
+        "space-16": "4rem",
+        "space-20": "5rem",
+        "space-24": "6rem",
+        "space-stack-sm": "0.5rem",
+        "space-stack-md": "1rem",
+        "space-stack-lg": "1.5rem",
+        "section-gap": "2rem",
+        "gutter": "1.5rem"
+      },
+      fontSize: {
+        "stat-lg": ["28px", { lineHeight: "36px", letterSpacing: "-0.02em", fontWeight: "700" }],
+        "button-text": ["14px", { lineHeight: "20px", letterSpacing: "0.01em", fontWeight: "600" }],
+
+        "display-hero": ["48px", { lineHeight: "56px", letterSpacing: "-0.025em", fontWeight: "700" }],
+        "display-hero-mobile": ["32px", { lineHeight: "40px", letterSpacing: "-0.02em", fontWeight: "700" }],
+        "display-kpi": ["36px", { lineHeight: "44px", letterSpacing: "-0.02em", fontWeight: "700" }],
+        "display-kpi-mobile": ["28px", { lineHeight: "34px", letterSpacing: "-0.02em", fontWeight: "700" }],
+        "display-lg": ["36px", { lineHeight: "44px", letterSpacing: "-0.02em", fontWeight: "700" }],
+        "headline-page": ["28px", { lineHeight: "36px", letterSpacing: "-0.015em", fontWeight: "600" }],
+        "headline-page-mobile": ["24px", { lineHeight: "32px", letterSpacing: "-0.015em", fontWeight: "600" }],
+        "headline-section": ["20px", { lineHeight: "28px", letterSpacing: "-0.01em", fontWeight: "600" }],
+        "headline-subsection": ["16px", { lineHeight: "24px", letterSpacing: "-0.005em", fontWeight: "600" }],
+        "headline-lg": ["28px", { lineHeight: "36px", letterSpacing: "-0.015em", fontWeight: "600" }],
+        "headline-lg-mobile": ["24px", { lineHeight: "32px", letterSpacing: "-0.015em", fontWeight: "600" }],
+        "headline-md": ["20px", { lineHeight: "28px", letterSpacing: "-0.01em", fontWeight: "600" }],
+        "headline-sm": ["16px", { lineHeight: "24px", letterSpacing: "-0.005em", fontWeight: "600" }],
+        "headline-xl-mobile": ["26px", { lineHeight: "34px", letterSpacing: "-0.015em", fontWeight: "600" }],
+        "body-default": ["14px", { lineHeight: "22px", letterSpacing: "0em", fontWeight: "400" }],
+        "body-compact": ["13px", { lineHeight: "18px", letterSpacing: "0em", fontWeight: "400" }],
+        "body-strong": ["14px", { lineHeight: "22px", letterSpacing: "0em", fontWeight: "600" }],
+        "body-lg": ["16px", { lineHeight: "24px", letterSpacing: "0em", fontWeight: "400" }],
+        "body-md": ["14px", { lineHeight: "22px", letterSpacing: "0em", fontWeight: "400" }],
+        "body-md-medium": ["14px", { lineHeight: "22px", letterSpacing: "0em", fontWeight: "500" }],
+        "body-sm": ["12px", { lineHeight: "16px", letterSpacing: "0em", fontWeight: "400" }],
+        "label-badge": ["11px", { lineHeight: "14px", letterSpacing: "0.02em", fontWeight: "600" }],
+        "label-regular": ["12px", { lineHeight: "16px", letterSpacing: "0.01em", fontWeight: "500" }],
+        "label-md": ["12px", { lineHeight: "16px", letterSpacing: "0.01em", fontWeight: "500" }],
+        "label-sm": ["11px", { lineHeight: "14px", letterSpacing: "0.02em", fontWeight: "500" }],
+        "label-uppercase": ["10px", { lineHeight: "12px", letterSpacing: "0.05em", fontWeight: "700" }]
+      },
+      fontFamily: {
+        "stat-lg": ["Inter", "sans-serif"],
+        "button-text": ["Inter", "sans-serif"],
+
+        sans: ["Inter", "sans-serif"],
+        "body-default": ["Inter", "sans-serif"],
+        "body-compact": ["Inter", "sans-serif"],
+        "body-strong": ["Inter", "sans-serif"],
+        "body-md": ["Inter", "sans-serif"],
+        "body-sm": ["Inter", "sans-serif"],
+        "display-kpi": ["Inter", "sans-serif"],
+        "headline-page": ["Inter", "sans-serif"],
+        "headline-section": ["Inter", "sans-serif"],
+        "headline-subsection": ["Inter", "sans-serif"],
+        "headline-md": ["Inter", "sans-serif"],
+        "headline-sm": ["Inter", "sans-serif"],
+        "headline-lg": ["Inter", "sans-serif"],
+        "label-badge": ["Inter", "sans-serif"],
+        "label-regular": ["Inter", "sans-serif"],
+        "label-md": ["Inter", "sans-serif"],
+        "label-sm": ["Inter", "sans-serif"]
+      },
+      borderRadius: {
+        DEFAULT: "0.375rem",
+        sm: "0.25rem",
+        md: "0.375rem",
+        lg: "0.5rem",
+        xl: "0.75rem",
+        "2xl": "1rem",
+        full: "9999px"
+      }
+    }
+  }
+};
+</script>
+<!-- Google Fonts: Plus Jakarta Sans -->
+<link href="https://fonts.googleapis.com" rel="preconnect">
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+<script>
+    tailwind.config = {
+  darkMode: "class",
+  theme: {
+    extend: {
+      colors: {
+        navy: "#1A1A2E",
+        teal: {
+          DEFAULT: "#0F766E",
+          dark: "#115E59"
+        },
+        orange: "#F59E0B",
+        success: "#16A34A",
+        error: "#DC2626",
+        gray: "#64748B",
+        background: "#F8FAFC",
+        border: "#E2E8F0",
+        primary: "#0F766E",
+        "primary-dark": "#115E59",
+        secondary: "#1A1A2E",
+        surface: "#FFFFFF"
+      },
+      fontFamily: {
+        "stat-lg": ["Inter", "sans-serif"],
+        "button-text": ["Inter", "sans-serif"],
+
+        sans: ["Inter", "sans-serif"]
+      }
+    }
+  }
+}</script>
+<style data-purpose="custom-layout">
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .custom-scroll::-webkit-scrollbar {
+      display: none;
+    }
+    .custom-scroll {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+  </style>
+</head>
+<body class="bg-brand-900 min-h-screen flex items-center justify-center p-0 sm:p-4 text-slate-800 antialiased selection:bg-brand-500 selection:text-white" style="background-color: rgb(11, 28, 48); color: rgb(11, 28, 48);">
+<!-- BEGIN: MobileContainer -->
+<!-- Constrained mobile iOS container mimicking iPhone 14/15 viewport dimensions -->
+<main class="w-full max-w-[430px] bg-slate-50 min-h-screen sm:min-h-[880px] sm:rounded-[42px] shadow-2xl overflow-hidden flex flex-col relative sm:border-[8px] sm:border-slate-800" data-purpose="mobile-wrapper" style="background-color: rgb(248, 249, 255);">
+<!-- BEGIN: TopStatusBar & Header -->
+<header class="pt-6 px-5 pb-3 bg-white/95 backdrop-blur sticky top-0 z-30 border-b border-slate-100 flex items-center justify-between" data-purpose="app-header">
+<!-- Back Navigation Button -->
+<button aria-label="Go back" class="w-10 h-10 rounded-full flex items-center justify-center bg-slate-100 hover:bg-slate-200 active:scale-95 transition text-slate-700" type="button">
+<svg class="w-5 h-5 stroke-current" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" viewBox="0 0 24 24">
+<polyline points="15 18 9 12 15 6"></polyline>
+</svg>
+</button>
+<!-- HUNAR Brand Logo -->
+<div class="flex items-center space-x-2"><div class="w-8 h-8 rounded-lg flex items-center justify-center shadow-sm" style="background-color: rgb(18, 59, 93);"><svg class="w-5 h-5 fill-current" style="color: #0F766E;" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg></div><div class="flex flex-col text-left"><span class="text-base font-extrabold tracking-tight leading-none" style="color: #1A1A2E;">HUNAR</span><span class="text-[9px] font-bold tracking-wider uppercase mt-0.5" style="color: #0F766E;">PAKISTAN VERIFIED</span></div></div>
+<!-- Help / Support Icon -->
+<button aria-label="Support and FAQs" class="w-10 h-10 rounded-full flex items-center justify-center bg-slate-100 hover:bg-slate-200 active:scale-95 transition text-slate-600 font-semibold text-sm" type="button">
+<svg class="w-5 h-5 stroke-current" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24">
+<circle cx="12" cy="12" r="10"></circle>
+<path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+<line x1="12" x2="12.01" y1="17" y2="17"></line>
+</svg>
+</button>
+</header>
+<!-- END: TopStatusBar & Header -->
+<!-- Scrollable Content Section -->
+<div class="flex-1 overflow-y-auto custom-scroll px-5 pt-5 pb-8 flex flex-col justify-between">
+<div>
+<!-- BEGIN: WorkerPortalHeaderBanner -->
+<section class="text-center mb-6" data-purpose="portal-header"><div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold tracking-wide uppercase shadow-xs mb-3 border" style="background-color: rgb(230, 246, 246); border-color: rgb(178, 231, 232); color: rgb(15, 139, 141);"><svg class="w-3.5 h-3.5 stroke-current" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" viewBox="0 0 24 24"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg><span class="">WORKER / PRO PORTAL</span></div><h1 class="text-2xl font-extrabold tracking-tight" style="color: rgb(18, 59, 93);">Create your Pro account</h1><p class="text-sm font-medium mt-1" style="color: rgb(100, 116, 139);">Already have a worker account? <a class="font-semibold transition hover:underline" style="color: #0F766E;" href="#">Sign In</a></p><div class="mt-4 p-1 rounded-full flex items-center max-w-[280px] mx-auto shadow-inner" style="background-color: rgb(226, 232, 240);" data-purpose="auth-switcher"><a class="flex-1 py-1.5 text-center text-xs font-semibold rounded-full transition" style="color: #1A1A2E;" href="#">Sign In</a><a class="flex-1 py-1.5 text-center text-xs font-bold text-white rounded-full shadow-md transition" style="background-color: #0F766E;" href="#">Register</a></div></section>
+<!-- END: WorkerPortalHeaderBanner -->
+<!-- BEGIN: MultiStepIndicator -->
+<section id="stepIndicatorSection" class="bg-white p-4 rounded-2xl border border-slate-100 shadow-xs mb-5" data-purpose="progress-indicator"><div class="flex items-center justify-between mb-2"><span id="stepCounterText" class="text-[11px] font-extrabold tracking-wider uppercase" style="color: #1A1A2E;">STEP 3 OF 4</span><span id="stepBadgeText" class="text-xs font-bold px-2.5 py-0.5 rounded-full border" style="background-color: rgba(15, 118, 110, 0.1); border-color: rgba(15, 118, 110, 0.1); color: #0F766E;">Experience &amp; CNIC</span></div><div class="grid grid-cols-4 gap-1.5 h-1.5 w-full"><div id="barStep1" class="rounded-full h-full transition-all duration-300" style="background-color: #0F766E;"></div><div id="barStep2" class="rounded-full h-full transition-all duration-300" style="background-color: rgb(15, 139, 141);"></div><div id="barStep3" class="rounded-full h-full transition-all duration-300" style="background-color: rgb(15, 139, 141);"></div><div id="barStep4" class="rounded-full h-full transition-all duration-300" style="background-color: rgb(226, 232, 240);"></div></div></section>
+<!-- END: MultiStepIndicator -->
+<!-- BEGIN: RegistrationForm -->
+<div id="registrationFlowContainer" class="space-y-4"><!-- STEP 1: Basic Information --><div id="step1Panel" class="space-y-4 hidden"><div class="mb-1"><span class="text-[11px] font-black uppercase tracking-wider" style="color: #0F766E;">BASIC INFORMATION</span><h2 class="text-base font-bold" style="color: #1A1A2E;">Tell us about yourself</h2><p class="text-xs" style="color: #64748B;">Enter your accurate details matching your CNIC card.</p></div><div><label class="block text-xs font-semibold mb-1.5 ml-1" for="fullName" style="color: #1A1A2E;">Full Legal Name</label><div class="relative"><div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400"><svg class="w-4 h-4 stroke-current" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg></div><input class="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-full text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#0F766E] shadow-sm transition" id="fullName" name="fullName" placeholder="e.g. Tariq Mehmood" required="" type="text" value="Tariq Mehmood"></div></div><div><label class="block text-xs font-semibold mb-1.5 ml-1" for="email" style="color: #1A1A2E;">Email Address</label><div class="relative"><div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400"><svg class="w-4 h-4 stroke-current" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg></div><input class="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-full text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#0F766E] shadow-sm transition" id="email" name="email" placeholder="tariq@example.com" type="email" value="tariq@example.com"></div></div><div><label class="block text-xs font-semibold mb-1.5 ml-1" for="phone" style="color: #1A1A2E;">Mobile Phone Number (Active WhatsApp)</label><div class="relative flex rounded-full shadow-sm"><div class="inline-flex items-center px-3.5 rounded-l-full border border-r-0 border-slate-200 bg-slate-50 text-slate-600 text-xs font-bold gap-1.5"><span class="text-sm">🇵🇰</span><span class="">+92</span></div><input class="flex-1 min-w-0 block w-full px-4 py-2.5 bg-white border border-slate-200 rounded-r-full text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#0F766E] transition" id="phone" name="phone" placeholder="300 1234567" required="" type="tel" value="300 1234567"></div><p class="text-[11px] mt-1 ml-2" style="color: #64748B;">We will send a 4-digit OTP code to verify this number.</p></div><div><label class="block text-xs font-semibold mb-1.5 ml-1" for="city" style="color: #1A1A2E;">Primary Operating City / Zone</label><div class="relative"><div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400"><svg class="w-4 h-4 stroke-current" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg></div><select class="w-full pl-10 pr-9 py-2.5 bg-white border border-slate-200 rounded-full text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#0F766E] shadow-sm appearance-none transition" id="city" name="city"><option selected="" value="Lahore (DHA, Gulberg, Johar Town)">Lahore (DHA, Gulberg, Johar Town, Model Town)</option><option value="Karachi (Clifton, DHA, Gulshan)">Karachi (Clifton, DHA, Gulshan, Nazimabad)</option><option value="Islamabad &amp; Rawalpindi">Islamabad &amp; Rawalpindi (Twin Cities)</option><option value="Faisalabad">Faisalabad</option><option value="Multan">Multan</option></select><div class="absolute inset-y-0 right-0 pr-3.5 flex items-center pointer-events-none text-slate-400"><svg class="w-4 h-4 stroke-current" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"></polyline></svg></div></div></div><div class="pt-3"><button id="goToStep2Btn" class="w-full px-6 rounded-full text-white font-bold text-sm tracking-wide shadow-lg active:scale-[0.98] flex items-center justify-center gap-2 transition duration-150 py-2.5" style="background-color: rgb(15, 139, 141);" type="button"><span class="">Continue to Skill Verification</span><svg class="w-4 h-4 stroke-current" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" viewBox="0 0 24 24"><line x1="5" x2="19" y1="12" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg></button></div></div><!-- STEP 2: Trade Skills Selection --><div id="step2Panel" class="space-y-4 hidden"><div class="mb-1"><span class="text-[11px] font-black uppercase tracking-wider" style="color: #0F766E;">TRADE EXPERTISE</span><h2 class="text-base font-bold" style="color: #1A1A2E;">Select your skilled trades</h2><p class="text-xs" style="color: #64748B;">Pick at least one primary skill to receive verified client orders.</p></div><div class="grid grid-cols-2 gap-2.5" id="skillsGrid"><div class="skill-card cursor-pointer p-3 rounded-2xl border-2 transition flex items-center gap-2.5" data-skill="Electrician" style="border-color: #0F766E; background-color: rgba(15, 118, 110, 0.1);"><div class="w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm" style="background-color: #0F766E; color: #ffffff;">⚡</div><div class="flex-1"><p class="text-xs font-bold" style="color: #1A1A2E;">Electrician</p><p class="text-[10px] text-slate-500">Wiring, UPS, DB</p></div><div class="skill-check w-4 h-4 rounded-full flex items-center justify-center text-white text-[10px]" style="background-color: #0F766E;">✓</div></div><div class="skill-card cursor-pointer p-3 rounded-2xl border border-slate-200 transition flex items-center gap-2.5 bg-white" data-skill="Plumber"><div class="w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm" style="background-color: #e2e8f0; color: #1A1A2E;">🔧</div><div class="flex-1"><p class="text-xs font-bold" style="color: #1A1A2E;">Plumber</p><p class="text-[10px] text-slate-500">Sanitary, Fitting</p></div><div class="skill-check hidden w-4 h-4 rounded-full flex items-center justify-center text-white text-[10px]" style="background-color: #0F766E;">✓</div></div><div class="skill-card cursor-pointer p-3 rounded-2xl border border-slate-200 transition flex items-center gap-2.5 bg-white" data-skill="AC &amp; HVAC"><div class="w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm" style="background-color: #e2e8f0; color: #1A1A2E;">❄️</div><div class="flex-1"><p class="text-xs font-bold" style="color: #1A1A2E;">AC &amp; HVAC</p><p class="text-[10px] text-slate-500">Inverter, Gas</p></div><div class="skill-check hidden w-4 h-4 rounded-full flex items-center justify-center text-white text-[10px]" style="background-color: #0F766E;">✓</div></div><div class="skill-card cursor-pointer p-3 rounded-2xl border border-slate-200 transition flex items-center gap-2.5 bg-white" data-skill="Solar Tech"><div class="w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm" style="background-color: #e2e8f0; color: #1A1A2E;">☀️</div><div class="flex-1"><p class="text-xs font-bold" style="color: #1A1A2E;">Solar Tech</p><p class="text-[10px] text-slate-500">Panels, Net Meter</p></div><div class="skill-check hidden w-4 h-4 rounded-full flex items-center justify-center text-white text-[10px]" style="background-color: #0F766E;">✓</div></div><div class="skill-card cursor-pointer p-3 rounded-2xl border border-slate-200 transition flex items-center gap-2.5 bg-white" data-skill="Carpenter"><div class="w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm" style="background-color: #e2e8f0; color: #1A1A2E;">🪚</div><div class="flex-1"><p class="text-xs font-bold" style="color: #1A1A2E;">Carpenter</p><p class="text-[10px] text-slate-500">Doors, Polish</p></div><div class="skill-check hidden w-4 h-4 rounded-full flex items-center justify-center text-white text-[10px]" style="background-color: #0F766E;">✓</div></div><div class="skill-card cursor-pointer p-3 rounded-2xl border border-slate-200 transition flex items-center gap-2.5 bg-white" data-skill="Painter"><div class="w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm" style="background-color: #e2e8f0; color: #1A1A2E;">🎨</div><div class="flex-1"><p class="text-xs font-bold" style="color: #1A1A2E;">Painter</p><p class="text-[10px] text-slate-500">Interior, Exterior</p></div><div class="skill-check hidden w-4 h-4 rounded-full flex items-center justify-center text-white text-[10px]" style="background-color: #0F766E;">✓</div></div></div><div class="rounded-2xl p-3 border border-amber-200 bg-amber-50 flex items-center gap-2.5"><span class="text-amber-600 text-base">💡</span><p class="text-[11px] leading-snug font-medium text-amber-900">Pros verified in multiple trades receive on average <strong class="font-bold">2.4x more service requests</strong> per week.</p></div><div class="pt-2 flex gap-2"><button id="backToStep1Btn" class="w-1/3 rounded-full font-bold text-xs border tracking-wide transition py-2" style="color: rgb(18, 59, 93); border-color: rgb(18, 59, 93); background-color: rgb(255, 255, 255);" type="button">← Back</button><button id="goToStep3Btn" class="flex-1 px-4 rounded-full text-white font-bold text-sm tracking-wide shadow-lg active:scale-[0.98] flex items-center justify-center gap-1.5 transition duration-150 py-2" style="background-color: rgb(15, 139, 141);" type="button"><span class="">→</span></button></div></div><!-- STEP 3: Experience & Verification --><div id="step3Panel" class="space-y-4"><div class="mb-1"><span class="text-[11px] font-black uppercase tracking-wider" style="color: #0F766E;">VERIFICATION &amp; EXPERIENCE</span><h2 class="text-base font-bold" style="color: #1A1A2E;">CNIC &amp; Background Check</h2><p class="text-xs" style="color: #64748B;">Required for Hunar Escrow protection and consumer trust guarantee.</p></div><div><label class="block text-xs font-semibold mb-1.5 ml-1" for="cnicNumber" style="color: #1A1A2E;">National Identity Card (CNIC)</label><div class="relative"><div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400"><svg class="w-4 h-4 stroke-current" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24"><rect height="14" rx="2" width="20" x="2" y="5"></rect><line x1="2" x2="22" y1="10" y2="10"></line></svg></div><input class="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-full text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#0F766E] shadow-sm transition" id="cnicNumber" placeholder="35202-XXXXXXX-X" type="text" value="35201-8492041-3"></div></div><div class="grid grid-cols-2 gap-3"><div><label class="block text-xs font-semibold mb-1.5 ml-1" for="experienceYears" style="color: #1A1A2E;">Experience</label><select id="experienceYears" class="w-full px-3.5 py-2.5 bg-white border border-slate-200 rounded-full text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#0F766E]"><option value="1-2 Years">1-2 Years</option><option value="3-5 Years" selected="">3-5 Years</option><option value="6-10 Years">6-10 Years</option><option value="10+ Years">10+ Years</option></select></div><div><label class="block text-xs font-semibold mb-1.5 ml-1" for="dailyRate" style="color: #1A1A2E;">Typical Day Rate</label><input id="dailyRate" class="w-full px-3.5 py-2.5 bg-white border border-slate-200 rounded-full text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#0F766E]" placeholder="PKR 2,500" type="text" value="PKR 2,800 / day"></div></div><div><label class="block text-xs font-semibold mb-1.5 ml-1" style="color: #1A1A2E;">CNIC Front &amp; Back Photo Upload</label><div class="border-2 border-dashed rounded-2xl p-3 text-center transition cursor-pointer hover:bg-slate-50" style="border-color: #0F766E; background-color: rgba(15, 118, 110, 0.1);"><div class="flex items-center justify-center gap-2"><span class="text-xs font-bold" style="color: #0F766E;">📎 cnic_tariq_front_verified.jpg</span><span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700">Uploaded</span></div><p class="text-[10px] text-slate-400 mt-1">Encrypted &amp; transmitted directly to NADRA Verisys server</p></div></div><div class="pt-2 flex gap-2"><button id="backToStep2Btn" class="w-1/3 rounded-full font-bold text-xs border tracking-wide transition py-2" style="color: rgb(18, 59, 93); border-color: rgb(18, 59, 93); background-color: rgb(255, 255, 255);" type="button">← Back</button><button id="goToStep4Btn" class="flex-1 px-4 rounded-full text-white font-bold text-sm tracking-wide shadow-lg active:scale-[0.98] flex items-center justify-center gap-1.5 transition duration-150 py-2" style="background-color: rgb(15, 139, 141);" type="button"><span class="">Review Application</span><span class="">→</span></button></div></div><!-- STEP 4: Review & Submit --><div id="step4Panel" class="space-y-4 hidden"><div class="mb-1"><span class="text-[11px] font-black uppercase tracking-wider" style="color: #0F766E;">FINAL REVIEW</span><h2 class="text-base font-bold" style="color: #1A1A2E;">Confirm Your Pro Profile</h2><p class="text-xs" style="color: #64748B;">Review your registration details before final escrow credentialing.</p></div><div class="bg-white rounded-2xl border border-slate-100 p-4 space-y-3 shadow-xs"><div class="flex justify-between items-center pb-2 border-b border-slate-100"><span class="text-xs text-slate-500">Full Name</span><span id="reviewName" class="text-xs font-bold" style="color: #1A1A2E;">Tariq Mehmood</span></div><div class="flex justify-between items-center pb-2 border-b border-slate-100"><span class="text-xs text-slate-500">Phone (WhatsApp)</span><span id="reviewPhone" class="text-xs font-bold" style="color: #1A1A2E;">+92 300 1234567</span></div><div class="flex justify-between items-center pb-2 border-b border-slate-100"><span class="text-xs text-slate-500">City / Zone</span><span id="reviewCity" class="text-xs font-bold text-right max-w-[190px]" style="color: #1A1A2E;">Lahore (DHA, Gulberg, Johar Town)</span></div><div class="flex justify-between items-center pb-2 border-b border-slate-100"><span class="text-xs text-slate-500">Selected Trade</span><span id="reviewSkill" class="text-xs font-bold px-2 py-0.5 rounded-full" style="background-color: rgba(15, 118, 110, 0.1); color: #0F766E;">Electrician</span></div><div class="flex justify-between items-center pb-2 border-b border-slate-100"><span class="text-xs text-slate-500">CNIC</span><span id="reviewCnic" class="text-xs font-bold" style="color: #1A1A2E;">35201-8492041-3</span></div><div class="flex justify-between items-center"><span class="text-xs text-slate-500">Hunar Verification Fee</span><span class="text-xs font-bold text-emerald-600">FREE (Sponsored by Hunar)</span></div></div><div class="flex items-start gap-2 p-2.5 rounded-xl border border-slate-200 bg-slate-50"><input id="termsConsent" class="mt-0.5 rounded border-slate-300" type="checkbox" checked=""><label for="termsConsent" class="text-[11px] text-slate-600 leading-tight">I certify that all details are authentic and I agree to the <a href="#" class="font-bold underline" style="color: #0F766E;">Hunar Tradesperson Code of Conduct</a> and Escrow Rules.</label></div><div class="pt-2 flex gap-2"><button id="backToStep3Btn" class="w-1/3 rounded-full font-bold text-xs border tracking-wide transition py-2" style="color: rgb(18, 59, 93); border-color: rgb(18, 59, 93); background-color: rgb(255, 255, 255);" type="button">← Back</button><button id="submitApplicationBtn" class="flex-1 px-4 rounded-full text-white font-bold text-sm tracking-wide shadow-lg active:scale-[0.98] flex items-center justify-center gap-1.5 transition duration-150 py-2" style="background-color: rgb(15, 139, 141);" type="button"><span class="">Complete Registration</span><span class="">✓</span></button></div></div><!-- SUCCESS STATE --><div id="stepSuccessPanel" class="space-y-4 text-center pt-2 hidden"><div class="w-16 h-16 rounded-full mx-auto flex items-center justify-center shadow-lg" style="background-color: #0F766E; color: #ffffff;"><svg class="w-9 h-9 stroke-current" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg></div><div><span class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-[11px] font-bold tracking-wide uppercase border mb-2" style="background-color: rgba(245, 158, 11, 0.1); border-color: rgba(245, 158, 11, 0.25); color: #F59E0B;">Pending NADRA Verification</span><h2 class="text-xl font-extrabold tracking-tight" style="color: #1A1A2E;">Application Submitted!</h2><p class="text-xs text-slate-500 mt-1 max-w-[280px] mx-auto">Welcome to Hunar, <strong id="successProName" class="text-slate-800">Tariq</strong>. Your profile is being matched with NADRA &amp; local union records within 2 to 4 hours.</p></div><div class="bg-white rounded-2xl border border-slate-100 p-4 text-left space-y-2 shadow-xs"><div class="flex items-center gap-2"><span class="w-2 h-2 rounded-full" style="background-color: #0F766E;"></span><span class="text-xs font-semibold" style="color: #1A1A2E;">Pro ID: HNR-8942-PK</span></div><div class="flex items-center gap-2"><span class="w-2 h-2 rounded-full" style="background-color: #0F766E;"></span><span class="text-xs font-semibold" style="color: #1A1A2E;">WhatsApp SMS Confirmation Dispatched</span></div><div class="flex items-center gap-2"><span class="w-2 h-2 rounded-full" style="background-color: #f59e0b;"></span><span class="text-xs font-semibold" style="color: #1A1A2E;">Profile Badge: Verification In-Progress</span></div></div><div class="pt-2 space-y-2"><button id="viewDashboardBtn" class="w-full py-3.5 px-6 rounded-full text-white font-bold text-sm tracking-wide shadow-lg active:scale-[0.98] transition" style="background-color: #0F766E;" type="button">Go to Pro Work Dashboard</button><button id="restartFlowBtn" class="w-full py-2.5 px-4 rounded-full text-xs font-bold border transition" style="color: #1A1A2E; border-color: #E2E8F0; background-color: #ffffff;" type="button">Edit Application Details</button></div></div></div>
+<!-- END: RegistrationForm -->
+<!-- Cross Link to Hire / Customer -->
+<div class="mt-4 text-center"><a class="inline-flex items-center gap-1 text-xs font-semibold text-slate-600 transition hover:underline" href="#"><span class="">Looking to hire skilled professionals instead?</span><span class="font-bold underline" style="color: #0F766E;">Customer App →</span></a></div>
+</div>
+<!-- BEGIN: TrustSecurityFooter -->
+<footer class="mt-8 pt-4 border-t border-slate-200/80" data-purpose="trust-guarantee-footer"><div class="flex items-center justify-center gap-4 text-center"><div class="flex items-center gap-1.5" style="color: #1A1A2E;"><svg class="w-4 h-4" style="color: #0F766E;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" stroke-linecap="round" stroke-linejoin="round"></path></svg><span class="text-[11px] font-semibold tracking-tight">Nadra CNIC Verified</span></div><div class="w-1 h-1 rounded-full bg-slate-300"></div><div class="flex items-center gap-1.5" style="color: #1A1A2E;"><svg class="w-4 h-4" style="color: #0F766E;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect height="11" rx="2" ry="2" width="18" x="3" y="11"></rect><path d="M7 11V7a5 5 0 0110 0v4"></path></svg><span class="text-[11px] font-semibold tracking-tight">100% Escrow Protection</span></div></div><p class="text-center text-[10px] text-slate-400 mt-2">© 2025 HUNAR Services Inc. Guaranteed tradesperson protection.</p></footer>
+<!-- END: TrustSecurityFooter -->
+</div>
+<!-- END: MobileContent -->
+</main>
+<!-- END: MobileContainer -->
+
+
+
+
+<script data-purpose="registration-flow-controller">window.addEventListener('DOMContentLoaded', function() { var currentStep = 1; var selectedSkill = 'Electrician'; var stepConfig = { 1: { label: 'STEP 1 OF 4', badge: 'Basic Details' }, 2: { label: 'STEP 2 OF 4', badge: 'Trade Skills' }, 3: { label: 'STEP 3 OF 4', badge: 'Experience & CNIC' }, 4: { label: 'STEP 4 OF 4', badge: 'Review & Submit' } }; function updateStepUI(step) { currentStep = step; var panels = ['step1Panel', 'step2Panel', 'step3Panel', 'step4Panel', 'stepSuccessPanel']; panels.forEach(function(pId) { var el = document.getElementById(pId); if (el) el.classList.add('hidden'); }); if (step <= 4) { var targetPanel = document.getElementById('step' + step + 'Panel'); if (targetPanel) targetPanel.classList.remove('hidden'); document.getElementById('stepCounterText').innerText = stepConfig[step].label; document.getElementById('stepBadgeText').innerText = stepConfig[step].badge; for (var i = 1; i <= 4; i++) { var bar = document.getElementById('barStep' + i); if (bar) { bar.style.backgroundColor = (i <= step) ? '#0F766E' : '#e2e8f0'; } } } else { var successPanel = document.getElementById('stepSuccessPanel'); if (successPanel) successPanel.classList.remove('hidden'); document.getElementById('stepCounterText').innerText = 'COMPLETED'; document.getElementById('stepBadgeText').innerText = 'Application Under Review'; for (var j = 1; j <= 4; j++) { var barS = document.getElementById('barStep' + j); if (barS) barS.style.backgroundColor = '#0F766E'; } } } var skillCards = document.querySelectorAll('.skill-card'); skillCards.forEach(function(card) { card.addEventListener('click', function() { skillCards.forEach(function(c) { c.style.borderColor = '#e2e8f0'; c.style.backgroundColor = '#ffffff'; var check = c.querySelector('.skill-check'); if (check) check.classList.add('hidden'); }); card.style.borderColor = '#0F766E'; card.style.backgroundColor = 'rgba(15, 118, 110, 0.1)'; var chk = card.querySelector('.skill-check'); if (chk) chk.classList.remove('hidden'); selectedSkill = card.getAttribute('data-skill'); }); }); var btn1 = document.getElementById('goToStep2Btn'); if (btn1) btn1.addEventListener('click', function() { updateStepUI(2); }); var btn2 = document.getElementById('goToStep3Btn'); if (btn2) btn2.addEventListener('click', function() { updateStepUI(3); }); var btn3 = document.getElementById('goToStep4Btn'); if (btn3) btn3.addEventListener('click', function() { var nameVal = document.getElementById('fullName').value || 'Tariq Mehmood'; var phoneVal = document.getElementById('phone').value || '+92 300 1234567'; var cityVal = document.getElementById('city').value || 'Lahore'; var cnicVal = document.getElementById('cnicNumber').value || '35201-8492041-3'; document.getElementById('reviewName').innerText = nameVal; document.getElementById('reviewPhone').innerText = phoneVal.indexOf('+92') === -1 ? '+92 ' + phoneVal : phoneVal; document.getElementById('reviewCity').innerText = cityVal; document.getElementById('reviewCnic').innerText = cnicVal; document.getElementById('reviewSkill').innerText = selectedSkill; document.getElementById('successProName').innerText = nameVal.split(' ')[0] || 'Tariq'; updateStepUI(4); }); var btnSubmit = document.getElementById('submitApplicationBtn'); if (btnSubmit) btnSubmit.addEventListener('click', function() { updateStepUI(5); }); var back1 = document.getElementById('backToStep1Btn'); if (back1) back1.addEventListener('click', function() { updateStepUI(1); }); var back2 = document.getElementById('backToStep2Btn'); if (back2) back2.addEventListener('click', function() { updateStepUI(2); }); var back3 = document.getElementById('backToStep3Btn'); if (back3) back3.addEventListener('click', function() { updateStepUI(3); }); var restart = document.getElementById('restartFlowBtn'); if (restart) restart.addEventListener('click', function() { updateStepUI(1); }); var headerBack = document.querySelector('header button[aria-label="Go back"]'); if (headerBack) headerBack.addEventListener('click', function() { if (currentStep > 1 && currentStep <= 4) { updateStepUI(currentStep - 1); } else if (currentStep > 4) { updateStepUI(1); } }); });</script>
+
+</body></html>

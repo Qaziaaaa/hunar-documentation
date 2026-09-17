@@ -1,0 +1,418 @@
+<!DOCTYPE html><html lang="en" style=""><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>HUNAR - Verified Trades Platform</title>
+<!-- Tailwind CSS v3 with Forms Plugin -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+tailwind.config = {
+  darkMode: "class",
+  theme: {
+    extend: {
+      colors: {
+        navy: "#1A1A2E",
+        teal: {
+          DEFAULT: "#0F766E",
+          dark: "#115E59",
+          light: "rgba(15, 118, 110, 0.1)"
+        },
+        orange: "#F59E0B",
+        success: "#16A34A",
+        error: "#DC2626",
+        gray: "#64748B",
+        background: "#F8FAFC",
+        border: "#E2E8F0",
+        surface: "#FFFFFF",
+        primary: "#0F766E",
+        "primary-dark": "#115E59",
+        secondary: "#1A1A2E",
+        
+        // Aliases used in templates
+        appBg: "#F8FAFC",
+        darkText: "#1A1A2E",
+        mutedText: "#64748B",
+        borderLine: "#E2E8F0",
+        "text-main": "#1A1A2E",
+        "surface-muted": "#F8FAFC",
+        "outline-border": "#E2E8F0",
+        
+        // Material Theme 3 Aliases
+        "on-surface": "#1A1A2E",
+        "on-surface-variant": "#64748B",
+        "on-background": "#1A1A2E",
+        "on-primary": "#FFFFFF",
+        "on-secondary": "#FFFFFF",
+        "on-error": "#FFFFFF",
+        "surface-container-lowest": "#FFFFFF",
+        "surface-container-low": "#F8FAFC",
+        "surface-container": "#F8FAFC",
+        "surface-container-high": "#F8FAFC",
+        "surface-container-highest": "#F8FAFC",
+        "surface-variant": "#F8FAFC",
+        "surface-tint": "#0F766E",
+        "surface-dim": "#E2E8F0",
+        "surface-bright": "#FFFFFF",
+        outline: "#64748B",
+        "outline-variant": "#E2E8F0",
+        "primary-container": "rgba(15, 118, 110, 0.1)",
+        "on-primary-container": "#0F766E",
+        "secondary-container": "rgba(26, 26, 46, 0.08)",
+        "on-secondary-container": "#1A1A2E",
+        "secondary-fixed": "rgba(15, 118, 110, 0.1)",
+        "secondary-fixed-dim": "rgba(15, 118, 110, 0.1)",
+        "on-secondary-fixed": "#1A1A2E",
+        "on-secondary-fixed-variant": "#115E59",
+        "primary-fixed": "rgba(15, 118, 110, 0.1)",
+        "primary-fixed-dim": "rgba(15, 118, 110, 0.1)",
+        "on-primary-fixed": "#1A1A2E",
+        "on-primary-fixed-variant": "#115E59",
+        "tertiary": "#F59E0B",
+        "tertiary-container": "rgba(245, 158, 11, 0.1)",
+        "on-tertiary-container": "#F59E0B",
+        "tertiary-fixed": "rgba(245, 158, 11, 0.1)",
+        "on-tertiary-fixed": "#1A1A2E",
+        "error-container": "rgba(220, 38, 38, 0.1)",
+        "on-error-container": "#DC2626",
+        "inverse-primary": "#0F766E",
+        "inverse-surface": "#1A1A2E",
+        "inverse-on-surface": "#F8FAFC"
+      },
+      spacing: {
+        "margin-desktop": "2rem",
+        "margin-tablet": "1.5rem",
+        "margin-mobile": "1rem",
+        "gutter-desktop": "1.5rem",
+        "gutter-mobile": "1rem",
+        "space-3xl": "4rem",
+        "space-2xl": "3rem",
+        "space-xl": "2rem",
+        "space-lg": "1.5rem",
+        "space-md": "1rem",
+        "space-base": "1rem",
+        "space-sm": "0.75rem",
+        "space-xs": "0.5rem",
+        "space-2xs": "0.25rem",
+        "space-xxs": "0.25rem",
+        "space-1": "0.25rem",
+        "space-2": "0.5rem",
+        "space-3": "0.75rem",
+        "space-4": "1rem",
+        "space-5": "1.25rem",
+        "space-6": "1.5rem",
+        "space-8": "2rem",
+        "space-12": "3rem",
+        "space-16": "4rem",
+        "space-20": "5rem",
+        "space-24": "6rem",
+        "space-stack-sm": "0.5rem",
+        "space-stack-md": "1rem",
+        "space-stack-lg": "1.5rem",
+        "section-gap": "2rem",
+        "gutter": "1.5rem"
+      },
+      fontSize: {
+        "stat-lg": ["28px", { lineHeight: "36px", letterSpacing: "-0.02em", fontWeight: "700" }],
+        "button-text": ["14px", { lineHeight: "20px", letterSpacing: "0.01em", fontWeight: "600" }],
+
+        "display-hero": ["48px", { lineHeight: "56px", letterSpacing: "-0.025em", fontWeight: "700" }],
+        "display-hero-mobile": ["32px", { lineHeight: "40px", letterSpacing: "-0.02em", fontWeight: "700" }],
+        "display-kpi": ["36px", { lineHeight: "44px", letterSpacing: "-0.02em", fontWeight: "700" }],
+        "display-kpi-mobile": ["28px", { lineHeight: "34px", letterSpacing: "-0.02em", fontWeight: "700" }],
+        "display-lg": ["36px", { lineHeight: "44px", letterSpacing: "-0.02em", fontWeight: "700" }],
+        "headline-page": ["28px", { lineHeight: "36px", letterSpacing: "-0.015em", fontWeight: "600" }],
+        "headline-page-mobile": ["24px", { lineHeight: "32px", letterSpacing: "-0.015em", fontWeight: "600" }],
+        "headline-section": ["20px", { lineHeight: "28px", letterSpacing: "-0.01em", fontWeight: "600" }],
+        "headline-subsection": ["16px", { lineHeight: "24px", letterSpacing: "-0.005em", fontWeight: "600" }],
+        "headline-lg": ["28px", { lineHeight: "36px", letterSpacing: "-0.015em", fontWeight: "600" }],
+        "headline-lg-mobile": ["24px", { lineHeight: "32px", letterSpacing: "-0.015em", fontWeight: "600" }],
+        "headline-md": ["20px", { lineHeight: "28px", letterSpacing: "-0.01em", fontWeight: "600" }],
+        "headline-sm": ["16px", { lineHeight: "24px", letterSpacing: "-0.005em", fontWeight: "600" }],
+        "headline-xl-mobile": ["26px", { lineHeight: "34px", letterSpacing: "-0.015em", fontWeight: "600" }],
+        "body-default": ["14px", { lineHeight: "22px", letterSpacing: "0em", fontWeight: "400" }],
+        "body-compact": ["13px", { lineHeight: "18px", letterSpacing: "0em", fontWeight: "400" }],
+        "body-strong": ["14px", { lineHeight: "22px", letterSpacing: "0em", fontWeight: "600" }],
+        "body-lg": ["16px", { lineHeight: "24px", letterSpacing: "0em", fontWeight: "400" }],
+        "body-md": ["14px", { lineHeight: "22px", letterSpacing: "0em", fontWeight: "400" }],
+        "body-md-medium": ["14px", { lineHeight: "22px", letterSpacing: "0em", fontWeight: "500" }],
+        "body-sm": ["12px", { lineHeight: "16px", letterSpacing: "0em", fontWeight: "400" }],
+        "label-badge": ["11px", { lineHeight: "14px", letterSpacing: "0.02em", fontWeight: "600" }],
+        "label-regular": ["12px", { lineHeight: "16px", letterSpacing: "0.01em", fontWeight: "500" }],
+        "label-md": ["12px", { lineHeight: "16px", letterSpacing: "0.01em", fontWeight: "500" }],
+        "label-sm": ["11px", { lineHeight: "14px", letterSpacing: "0.02em", fontWeight: "500" }],
+        "label-uppercase": ["10px", { lineHeight: "12px", letterSpacing: "0.05em", fontWeight: "700" }]
+      },
+      fontFamily: {
+        "stat-lg": ["Inter", "sans-serif"],
+        "button-text": ["Inter", "sans-serif"],
+
+        sans: ["Inter", "sans-serif"],
+        "body-default": ["Inter", "sans-serif"],
+        "body-compact": ["Inter", "sans-serif"],
+        "body-strong": ["Inter", "sans-serif"],
+        "body-md": ["Inter", "sans-serif"],
+        "body-sm": ["Inter", "sans-serif"],
+        "display-kpi": ["Inter", "sans-serif"],
+        "headline-page": ["Inter", "sans-serif"],
+        "headline-section": ["Inter", "sans-serif"],
+        "headline-subsection": ["Inter", "sans-serif"],
+        "headline-md": ["Inter", "sans-serif"],
+        "headline-sm": ["Inter", "sans-serif"],
+        "headline-lg": ["Inter", "sans-serif"],
+        "label-badge": ["Inter", "sans-serif"],
+        "label-regular": ["Inter", "sans-serif"],
+        "label-md": ["Inter", "sans-serif"],
+        "label-sm": ["Inter", "sans-serif"]
+      },
+      borderRadius: {
+        DEFAULT: "0.375rem",
+        sm: "0.25rem",
+        md: "0.375rem",
+        lg: "0.5rem",
+        xl: "0.75rem",
+        "2xl": "1rem",
+        full: "9999px"
+      }
+    }
+  }
+};
+</script>
+<script>
+    tailwind.config = {
+  darkMode: "class",
+  theme: {
+    extend: {
+      colors: {
+        navy: "#1A1A2E",
+        teal: {
+          DEFAULT: "#0F766E",
+          dark: "#115E59"
+        },
+        orange: "#F59E0B",
+        success: "#16A34A",
+        error: "#DC2626",
+        gray: "#64748B",
+        background: "#F8FAFC",
+        border: "#E2E8F0",
+        primary: "#0F766E",
+        "primary-dark": "#115E59",
+        secondary: "#1A1A2E",
+        surface: "#FFFFFF"
+      },
+      fontFamily: {
+        "stat-lg": ["Inter", "sans-serif"],
+        "button-text": ["Inter", "sans-serif"],
+
+        sans: ["Inter", "sans-serif"]
+      }
+    }
+  }
+}</script>
+<!-- Google Fonts: Inter -->
+<link href="https://fonts.googleapis.com" rel="preconnect">
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+<style data-purpose="custom-overrides">
+    body {
+      font-family: 'Inter', sans-serif;
+    }
+    .custom-gradient-card {
+      background: linear-gradient(155deg, rgba(22, 163, 74, 0.1) 0%, #FFFFFF 45%, rgba(22, 163, 74, 0.1) 100%);
+    }
+    .accent-glow {
+      box-shadow: 0 0 35px -5px rgba(0, 223, 129, 0.35);
+    }
+  </style>
+</head>
+<body class="bg-brand-dark min-h-screen flex items-center justify-center p-4 sm:p-6 lg:p-8 antialiased selection:bg-brand-accent selection:text-brand-dark flex-col">
+<!-- BEGIN: MainContainer -->
+<main class="w-full max-w-[1040px] bg-white rounded-3xl shadow-modal overflow-hidden p-3 lg:p-4 transition-all" data-purpose="auth-container-card">
+<div class="flex flex-col lg:flex-row gap-6 items-stretch">
+<!-- BEGIN: LeftShowcaseColumn -->
+<section class="lg:w-[45%] custom-gradient-card rounded-2xl border border-[#0F766E]/20 p-6 lg:p-8 flex flex-col justify-between relative overflow-hidden" data-purpose="brand-showcase"><!-- Decorative Ambient Sparkle / Glow -->
+<div aria-hidden="true" class="absolute -top-16 -right-16 w-48 h-48 bg-emerald-200/40 rounded-full blur-3xl pointer-events-none"></div>
+<div aria-hidden="true" class="absolute top-1/2 -left-10 w-32 h-32 bg-[#0F766E]/15 rounded-full blur-2xl pointer-events-none"></div>
+<div class="relative z-10 flex flex-col h-full justify-between">
+<!-- Brand Logo & Header -->
+<div>
+<div class="flex items-center justify-between gap-2.5 mb-4" data-purpose="brand-logo">
+<div class="flex items-center gap-2.5">
+<div class="w-9 h-9 rounded-xl bg-[#1A1A2E] flex items-center justify-center shadow-sm">
+<svg class="w-5 h-5 text-[#0F766E]" fill="currentColor" viewBox="0 0 24 24">
+<path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"></path>
+</svg>
+</div>
+<div class="flex flex-col">
+<span class="text-xl font-extrabold tracking-wider text-[#1A1A2E]">HUNAR</span>
+<span class="text-[10px] uppercase tracking-widest text-[#0F766E] font-bold -mt-1">Pakistan Verified</span>
+</div>
+</div>
+<span class="text-xs font-semibold text-[#0F766E] bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200/80">Escrow Guaranteed</span>
+</div>
+<h1 class="text-lg lg:text-xl font-bold text-brand-dark tracking-tight leading-snug mb-3">
+      Find verified skilled tradespeople with escrow guarantee.
+    </h1>
+</div>
+<!-- Visual Asset Showcase -->
+<div class="my-2 rounded-xl overflow-hidden border border-emerald-100/80 shadow-sm bg-white flex items-center justify-center">
+<img alt="HUNAR Skilled Tradespeople &amp; Popular Skills" class="w-full h-auto object-cover max-h-[440px] block" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBQCUeKPDPnTIpUepp_LgqSZGcAEaYgVcLQbr8qAGh5Uha8dQk2l23CCOjEaMokzw0c3BP8W6znceOkrTZd64HLl1Rruo_SasYbuY9TB64vXcgvukyjSsn5GVvvil3F6KqCf5FgjeeqNJbnjW7wjZ5_Txkcql66nai2r5ansMuxShgjz2iG-Wo2MjgcFPvxSzhSE_5KEOjnLtdYbKwJgLUmeddsgR19FDlAfFp8zPC4KJIUqDCwq94yywfopoeIE19c5Q">
+</div>
+<!-- Trust Indicators Footer -->
+<div class="pt-3 border-t border-slate-200 flex items-center justify-between text-[11px] text-slate-600 font-medium">
+<div class="flex items-center gap-1.5">
+<svg class="w-4 h-4 text-[#0F766E]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+<path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+<span class="text-slate-700 font-semibold">Nadra CNIC Verified</span>
+</div>
+<div class="flex items-center gap-1.5">
+<svg class="w-4 h-4 text-[#0F766E]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+<path d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+<span class="text-slate-700 font-semibold">100% Escrow Protection</span>
+</div>
+</div>
+</div></section>
+<!-- END: LeftShowcaseColumn -->
+<!-- BEGIN: RightFormColumn -->
+<section class="lg:w-[55%] p-4 sm:p-6 lg:p-8 flex flex-col justify-center" data-purpose="auth-form-column"><div class="w-full flex flex-col items-center">
+<!-- Customer Portal Badge -->
+<div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 border border-slate-200 text-[11px] font-bold text-[#0F766E] tracking-wide uppercase mb-3">
+<svg class="w-3.5 h-3.5 text-[#0F766E] stroke-[2.5]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+<path d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+<span class="">Customer Portal</span>
+</div>
+
+<!-- Clean Non-Overlapping Heading & Subtitle -->
+<div class="text-center mb-5">
+<h1 class="text-2xl sm:text-3xl font-extrabold text-[#1A1A2E] tracking-tight mb-2">Sign in to your account</h1>
+<p class="text-xs sm:text-sm text-slate-500 font-medium">Don't have an account? <a class="text-[#0F766E] hover:underline font-bold transition" href="#">Register</a></p>
+</div>
+
+<!-- Segmented Control Tabs (Teal Active) -->
+<div class="w-full max-w-sm flex items-center p-1 bg-slate-100 mb-5 rounded-xl border border-slate-200">
+<button class="flex-1 py-2 text-xs sm:text-sm font-bold text-white bg-[#0F766E] shadow-sm transition rounded-lg" id="tab-signin" type="button">Sign In</button>
+<button class="flex-1 py-2 text-xs sm:text-sm font-semibold text-slate-600 hover:text-[#1A1A2E] transition rounded-lg" id="tab-register" type="button">Register</button>
+</div>
+
+<!-- Form -->
+<form class="w-full space-y-4" onsubmit="event.preventDefault();">
+<div>
+<label class="block text-[11px] font-bold tracking-wider text-[#1A1A2E] uppercase mb-1" for="login-identifier">Email Address or Phone</label>
+<div class="relative flex items-center">
+<div class="absolute left-4 text-slate-400 pointer-events-none flex items-center">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+</div>
+<input class="w-full pl-11 pr-5 py-3 text-xs sm:text-sm bg-white border border-slate-300 text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#0F766E] focus:border-transparent transition shadow-sm rounded-full" id="login-identifier" placeholder="ahmed@example.com or +92 300 1234567" type="text">
+</div>
+</div>
+
+<div>
+<label class="block text-[11px] font-bold tracking-wider text-[#1A1A2E] uppercase mb-1" for="login-password">Password</label>
+<div class="relative flex items-center">
+<div class="absolute left-4 text-slate-400 pointer-events-none flex items-center">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+</div>
+<input class="w-full pl-11 pr-11 py-3 text-xs sm:text-sm bg-white border border-slate-300 text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#0F766E] focus:border-transparent transition shadow-sm rounded-full" id="login-password" placeholder="Enter your password" type="password">
+<button class="absolute right-4 text-slate-400 hover:text-slate-600 focus:outline-none" id="togglePassword" type="button">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" stroke-linecap="round" stroke-linejoin="round"></path><path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+</button>
+</div>
+</div>
+
+<div class="flex items-center justify-between pt-1">
+<div class="flex items-center gap-2">
+<input class="rounded border-slate-300 text-[#0F766E] focus:ring-[#0F766E] h-4 w-4 transition cursor-pointer" id="remember-me" type="checkbox">
+<label class="text-xs text-slate-600 leading-tight select-none cursor-pointer font-medium" for="remember-me">Remember me</label>
+</div>
+<a class="text-xs font-semibold text-[#0F766E] hover:underline" href="#">Forgot password?</a>
+</div>
+
+<button class="w-full mt-2 py-3 px-4 bg-[#0F766E] hover:bg-[#115E59] text-white font-bold text-sm transition duration-150 ease-in-out shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#0F766E] flex items-center justify-center gap-2 rounded-full" type="submit">
+<span class="">Sign In to Customer Account</span>
+<svg class="w-4 h-4 stroke-[2.5]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M14 5l7 7m0 0l-7 7m7-7H3" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+</button>
+</form>
+
+<!-- Or Continue With Divider -->
+<div class="relative w-full my-5 text-center">
+<div aria-hidden="true" class="absolute inset-0 flex items-center">
+<div class="w-full border-t border-slate-200"></div>
+</div>
+<div class="relative flex justify-center text-[10px] uppercase font-bold tracking-wider text-slate-400">
+<span class="px-3 bg-white">Or continue with</span>
+</div>
+</div>
+
+<!-- Social Login Buttons with Navy Border and Dark/Navy text -->
+<div class="w-full grid grid-cols-2 gap-3">
+<button class="flex items-center justify-center gap-2 py-2.5 px-4 bg-white border border-[#1A1A2E]/40 text-xs sm:text-sm font-semibold text-[#1A1A2E] hover:bg-slate-50 transition shadow-sm rounded-xl" type="button">
+<svg class="w-4 h-4" viewBox="0 0 24 24">
+<path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#0F766E"></path>
+<path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#16A34A"></path>
+<path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" fill="#F59E0B"></path>
+<path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" fill="#DC2626"></path>
+</svg>
+<span class="">Google</span>
+</button>
+<button class="flex items-center justify-center gap-2 py-2.5 px-4 bg-white border border-[#1A1A2E]/40 text-xs sm:text-sm font-semibold text-[#1A1A2E] hover:bg-slate-50 transition shadow-sm rounded-xl" type="button">
+<svg class="w-4 h-4 text-[#1A1A2E] fill-current" viewBox="0 0 24 24">
+<path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 6.37c.62-.75 1.04-1.8 0.93-2.85-.9.04-1.99.6-2.63 1.35-.57.65-1.07 1.72-.94 2.74 1 .08 2.02-.49 2.64-1.24z"></path>
+</svg>
+<span class="">Apple</span>
+</button>
+</div>
+
+<!-- Skilled Tradesperson Footer Link -->
+<div class="mt-6 pt-3 text-center text-xs text-slate-500">
+<span class="">Looking to work as a skilled tradesperson? </span>
+<a class="font-bold text-[#0F766E] hover:underline inline-flex items-center gap-1" href="#">Sign in as Worker / Pro →</a>
+</div>
+</div></section>
+<!-- END: RightFormColumn -->
+</div>
+</main><footer class="mt-6 text-center text-xs text-emerald-100/50">
+  © 2025 HUNAR Services Inc. Guaranteed Quality &amp; Verified Professionals.
+</footer>
+<!-- END: MainContainer -->
+<!-- BEGIN: InteractiveScripts -->
+<script data-purpose="password-toggle">
+    // Simple show/hide password toggle logic
+    const togglePasswordBtn = document.getElementById('togglePassword');
+    const passwordInput = document.getElementById('password');
+
+    if (togglePasswordBtn && passwordInput) {
+      togglePasswordBtn.addEventListener('click', function () {
+        const isPassword = passwordInput.getAttribute('type') === 'password';
+        passwordInput.setAttribute('type', isPassword ? 'text' : 'password');
+        this.classList.toggle('text-brand-accent', isPassword);
+      });
+    }
+  </script>
+<script data-purpose="tab-switcher">
+    // Segmented control switcher logic (Sign In / Register)
+    const tabRegister = document.getElementById('tab-register');
+    const tabSignIn = document.getElementById('tab-signin');
+
+    if (tabRegister && tabSignIn) {
+      tabSignIn.addEventListener('click', () => {
+        tabSignIn.className = 'flex-1 py-2 text-xs sm:text-sm font-semibold rounded-lg bg-white text-brand-dark shadow-sm transition';
+        tabSignIn.setAttribute('aria-selected', 'true');
+        
+        tabRegister.className = 'flex-1 py-2 text-xs sm:text-sm font-medium text-slate-500 hover:text-slate-900 transition';
+        tabRegister.setAttribute('aria-selected', 'false');
+      });
+
+      tabRegister.addEventListener('click', () => {
+        tabRegister.className = 'flex-1 py-2 text-xs sm:text-sm font-semibold rounded-lg bg-white text-brand-dark shadow-sm transition';
+        tabRegister.setAttribute('aria-selected', 'true');
+        
+        tabSignIn.className = 'flex-1 py-2 text-xs sm:text-sm font-medium text-slate-500 hover:text-slate-900 transition';
+        tabSignIn.setAttribute('aria-selected', 'false');
+      });
+    }
+  </script>
+<!-- END: InteractiveScripts -->
+
+
+</body></html>
