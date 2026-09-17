@@ -53,7 +53,7 @@ Every section of `01_Worker_Flow.md` is assigned below. If a line is empty under
 | 9 Visit + Inspection | Start/arrive/inspect | Shahzad | Shafqat Ullah |
 | 10 Repair Negotiation | Approve/counter repair | Faizan | Shafqat Ullah |
 | 11 Perform & Complete Repair | Start/complete repair | Faizan | Shafqat Ullah |
-| 12 + 13 Earnings & Commission | Bank + WhatsApp screenshot | Faizan | Shafqat Ullah (commission) + Hakim (wallet-inactive) |
+| 12 + 13 Earnings & Commission | Wallet top-up via screenshot + auto commission | Faizan | Shafqat Ullah (commission) + Hakim (wallet-active) |
 | 14 Reviews & Rating | Rating display | Faizan | Shafqat Ullah |
 | 15 Chat | One-to-one messaging | Faizan | Hakim Ullah |
 | 16 Notifications | Notification list + badges | Faizan | Hakim Ullah |
@@ -170,7 +170,7 @@ In simple words: you build the **entry point and home base** of the worker exper
 - **Step 5 — Verification Documents:** CNIC / valid ID front and back photos (required) + optional trade certificate. Documents stored as original + compressed versions.
 - **Step 6 — Review & Submit:** worker reviews everything, then submits the profile for **admin verification**.
 
-**Important:** No wallet setup at this step. The wallet is NOT active yet (Section 3.3 note + Section 12).
+**Important:** No wallet setup is needed at this step. Every worker gets a wallet automatically starting at Rs. 0 — the wallet needs no signup configuration (Section 3.3 note + Section 12).
 
 **Done?** A new worker can complete all 6 steps in order, go back to edit, and submit for verification.
 
@@ -195,7 +195,7 @@ In simple words: you build the **entry point and home base** of the worker exper
 
 **Requirements from the project (Section 5.1):**
 - **Header:** App name (HUNAR), search bar, notifications bell with **unread count badge**, profile avatar.
-- **Status banner:** **online/offline toggle**. A worker must be **online** to receive new job offers and appear in search results. (This toggle is a manual switch — wallet balance does NOT control it in the current mode — see Section 12.6.)
+- **Status banner:** **online/offline toggle**. A worker must be **online** to receive new job offers and appear in search results. This is a manual switch, BUT the worker is automatically forced **offline** when the wallet balance drops below **−500 Rs.** (Section 12.6).
 - **Key statistics cards:** Active Jobs (count), Total Earnings (Rs.), Rating (e.g., 4.8 stars).
 - **"Nearby Jobs" list area** — a placeholder region where the jobs feed (built by a teammate, Shahzad) will be displayed.
 - **Main navigation:** Dashboard | Jobs | Earnings | Chat | Profile.
@@ -211,8 +211,8 @@ In simple words: you build the **entry point and home base** of the worker exper
 3. **OTP rules are strict** (5 min valid, 15 min re-request, 3 attempts max). Never loosen them.
 4. **Tokens:** access = 15 min, refresh = 30 days. Keep silent refresh working.
 5. **Design tokens:** always use the exact colors listed. Never invent new colors.
-6. **No wallet setup** appears at signup or in the wizard. Wallet will be activated later (Section 12.5).
-7. **Online/offline is a manual toggle now** — no wallet-balance gating today.
+6. **No wallet setup** appears at signup or in the wizard. The wallet is auto-created at Rs. 0 (Section 12.5).
+7. **Online/offline is a manual toggle**, but wallet balance auto-forces the worker offline below **−500 Rs.**
 8. All money displayed with "Rs." and Pakistani number formatting.
 
 ---
@@ -384,7 +384,7 @@ In simple words: you build everything from **"a worker finds a job"** to **"the 
 **8b. I've Arrived**
 - "I've Arrived" → status becomes **visit_completed**.
 - Customer is notified "Worker has arrived".
-- Commission note: the platform commission is **10% of the visiting charge**. Because the wallet is NOT active yet, the worker settles this into the **HUNAR platform bank account** and sends the payment screenshot on **WhatsApp +92 314 0837519** (Section 12.3). This information can be shown as a reminder card. An automatic wallet deduction applies only later.
+- Commission note: the platform commission is **10% of the visiting charge**. When the worker clicks **"I've Arrived"**, the platform **holds (reserves)** the 10% commission from the worker's wallet. If the wallet balance is **insufficient**, the Arrive button is **disabled** and the worker sees a top-up warning: "Insufficient wallet balance. Please top up before arriving." The hold is finalized and deducted when the worker confirms the OTP sent to the customer (Section 12.3).
 
 **8c. Start Inspection**
 - "Start Inspection" → inspection begins; customer sees inspection is in progress.
@@ -440,7 +440,7 @@ In simple words: you build everything from **"a worker finds a job"** to **"the 
 
 ## YOUR OVERVIEW
 
-> Faizan, you will build the **money + communication + account part** of the worker app: the **Repair Negotiation & Approval** screens, **Start/Complete Repair**, the **Earnings & Commission** screen (with the HUNAR bank account + WhatsApp screenshot instructions), the **Reviews** display, the **Chat** screen, the **Notifications** panel, the **Profile & Settings** screens, and all **Cancellation / edge-case** screens.
+> Faizan, you will build the **money + communication + account part** of the worker app: the **Repair Negotiation & Approval** screens, **Start/Complete Repair**, the **Earnings & Commission** screen (with the **active wallet**, top-up via screenshot proof, and auto commission deduction), the **Reviews** display, the **Chat** screen, the **Notifications** panel, the **Profile & Settings** screens, and all **Cancellation / edge-case** screens.
 
 In simple words: you build everything after the inspection — **negotiating the repair price, finishing the job, getting paid, communicating, and managing the worker's own profile.**
 
@@ -481,21 +481,22 @@ In simple words: you build everything after the inspection — **negotiating the
 
 ### Task 3 — Earnings & Commission Screen
 
-**Build:** The Earnings tab that shows the worker's money.
+**Build:** The Earnings tab that shows the worker's money and wallet.
 
-**Requirements from the project (Section 13 — CURRENT MODE, no wallet yet):
+**Requirements from the project (Section 13 — ACTIVE wallet mode):
 - Show:
+  - **Wallet balance** (current Rs. balance)
   - **Total earned** (gross from jobs)
-  - **Total commission due / paid to HUNAR** (10% of visit charges)
-  - **Pending commission** (jobs where the screenshot has not been sent yet)
-  - **Commission payment instructions card**:
-    - Bank account = **HUNAR platform bank account**
-    - After paying, send the payment screenshot on **WhatsApp +92 314 0837519**
-  - **Transactions list** (chronological): job #, visit charge, repair charge, commission (10%), screenshot status (Pending / Received / Verified), date.
+  - **Total commission deducted** (10% of visit charges, auto-deducted from wallet)
+  - **Held commission** (commission reserved after "I've Arrived", not yet deducted)
+  - **Top-up section**:
+    - Worker transfers money to the **given HUNAR top-up number** (Easypaisa / JazzCash / Bank Transfer).
+    - Worker clicks **"I've Sent Payment"**, enters the amount, and **uploads the payment screenshot** as proof.
+    - Screenshot is reviewed by HUNAR team on **WhatsApp +92 314 0837519**; once verified the wallet is credited.
+    - Top-up status shown: **Pending / Approved / Rejected**.
+  - **Transactions list** (chronological): job #, visit charge, repair charge, commission (10%), commission status (Held / Deducted / Reversed), date, wallet balance after change.
 
-**Do NOT build a wallet balance, top-up, or withdraw UI here — the wallet is NOT active yet.** (Section 12.)
-
-**Done?** The worker sees their earnings, commission due, and clear instructions on how to pay it with WhatsApp confirmation.
+**Done?** The worker sees their wallet balance, earnings, commission, and can top up the wallet by sending money to the given number and uploading a screenshot proof.
 
 ---
 
@@ -542,8 +543,12 @@ In simple words: you build everything after the inspection — **negotiating the
   - Counter accepted
   - Visit window approaching
   - New message
-  - Commission reminder ("Commission Rs. 50 is due. Pay to HUNAR bank account and send the screenshot on WhatsApp +92 314 0837519.")
-  - Commission verified
+  - Commission held ("Commission Rs. 50 held from your wallet for job #123. Complete OTP to finalize.")
+  - Commission deducted ("Commission Rs. 50 deducted. Thank you for using HUNAR.")
+  - Commission reversed ("Commission held Rs. 50 returned to your wallet.")
+  - Insufficient balance ("Insufficient wallet balance. Top up to keep accepting visits — send money to the given number and upload your screenshot proof.")
+  - Top-up approved ("Your wallet top-up of Rs. 500 has been verified and credited.")
+  - Top-up rejected
   - Earnings recorded
   - New review
   - Verification result
@@ -590,7 +595,7 @@ In simple words: you build everything after the inspection — **negotiating the
 - Worker cancels **after arrival** → must enter a reason; may affect reliability; admin can review.
 - Customer cancels after acceptance → worker is notified; no work done, no repair fee.
 - Worker never shows up → customer can report "No Show"; admin reviews.
-- Commission not yet paid → job commission shown as "Pending"; HUNAR team follows up via WhatsApp until the screenshot is received.
+- Commission not yet deducted → job commission held on arrive shows as "Held"; if the job is cancelled before OTP confirmation, the hold is reversed back to the worker's wallet.
 - **No nearby jobs** → empty state on dashboard: "Check again later" + option to expand service area.
 
 **Done?** Every cancellation shows the correct confirmation/reason flow and every empty state is friendly and clear.
@@ -600,8 +605,8 @@ In simple words: you build everything after the inspection — **negotiating the
 ## RULES YOU MUST FOLLOW (acc. to project requirements)
 
 1. **Repair price is separate and locked** once agreed; scope changes need explicit re-approval (Section 10).
-2. **Commission = 10% of the visit charge** — shown clearly, and paid via the HUNAR bank account + WhatsApp screenshot +92 314 0837519 (Section 12).
-3. **No wallet UI today.** No balance, no top-up, no withdraw screens (Section 12 status update).
+2. **Commission = 10% of the visit charge**, auto-deducted from the worker's wallet (hold on arrive, deduct on OTP confirmation) — shown clearly on the Earnings screen (Section 12).
+3. **Wallet UI is ACTIVE.** Build the wallet balance display, top-up screen (send money to given number + upload screenshot proof), top-up status, and transactions list. Commission is auto-deducted from the wallet.
 4. **Chat is for the active/accepted job only**, never for off-platform payment talk (Section 15).
 5. **Single verified badge** = teal checkmark, only when admin-verified (Sections 4 & 17).
 6. **Cancellation reasons are required** for post-arrival cancellations (Section 18).
@@ -614,7 +619,7 @@ In simple words: you build everything after the inspection — **negotiating the
 
 - [ ] Repair negotiation UI (accept / counter / locked price / scope-change approval)
 - [ ] Start Repair → Complete Repair
-- [ ] Earnings screen with commission + bank + WhatsApp +92 314 0837519 instructions
+- [ ] Earnings screen with wallet balance, commission auto-deduction, top-up via screenshot proof (+92 314 0837519 verification)
 - [ ] Reviews display (average + individual)
 - [ ] Chat screen (text + images, real-time)
 - [ ] Notifications panel + unread badges
@@ -635,7 +640,7 @@ In simple words: you build everything after the inspection — **negotiating the
 
 ## YOUR OVERVIEW
 
-> Hakim Ullah, you will build the **worker account backbone**: the **Auth module** (OTP, password, tokens, role protection), the **Worker Profile module** (the 6-step onboarding data), the **Verification workflow**, **File Uploads** (photos & documents), the **Chat backend**, **Notifications backend**, and the **Wallet system** in a **built-but-inactive** state (it will be switched on later after the third-party wallet API meeting).
+> Hakim Ullah, you will build the **worker account backbone**: the **Auth module** (OTP, password, tokens, role protection), the **Worker Profile module** (the 6-step onboarding data), the **Verification workflow**, **File Uploads** (photos & documents), the **Chat backend**, **Notifications backend**, and the **active Wallet system** (auto-created at Rs. 0, top-up via screenshot proof, and auto commission deduction to the platform wallet).
 
 In simple words: you own everything about **who the worker is** and **how they communicate**, plus the future wallet.
 
@@ -738,7 +743,9 @@ Generate and deliver the notification events:
 - Counter offer / counter accepted
 - Visit window approaching
 - New message
-- Commission reminder / commission verified
+- Commission held / deducted / reversed
+- Insufficient balance top-up warning
+- Top-up submitted / approved / rejected
 - Earnings recorded
 - New review
 - Verification result
@@ -748,27 +755,47 @@ Generate and deliver the notification events:
 
 ---
 
-### Task 7 — Wallet System (BUILT BUT NOT ACTIVE)
+### Task 7 — Wallet System (ACTIVE — Manual Top-Up via Screenshot Proof)
 
-**Build:** The wallet backend, fully coded but **disabled** for now.
+**Build:** The wallet backend, fully coded and **ACTIVE** for all workers.
 
-**Requirements from the project (Section 12.5 — planned rules):
-- Every worker will have a wallet starting at **Rs. 0**.
-- Earnings credited to the wallet; platform commission auto-deducted (when activated).
-- Planned rules to implement behind a feature flag (leave OFF for now):
-  - Online/offline controlled by balance: online at ≥ **−500 Rs.**, offline below −500.
-  - **Top-up:** Easypaisa, JazzCash, Bank Transfer.
-  - **Withdraw:** minimum **Rs. 100**, self-service/automatic payout (no manual admin approval).
-  - **Wallet Ledger:** every credit/debit timestamped with balance after change.
-  - **Idempotency:** all wallet movements idempotent (double-tap cannot double-charge; Redis idempotency keys).
+**Requirements from the project (Section 12.5 — active rules):**
+- Every worker has a wallet starting at **Rs. 0**.
+- Earnings credited to the wallet; platform commission auto-deducted when the customer confirms OTP.
 
-**Important for RIGHT NOW (Section 12 status update):**
-- The feature flag stays **OFF**.
-- No wallet API is exposed to the frontend.
-- Online/offline is a manual toggle, NOT driven by wallet balance (Section 12.6).
-- HUNAR's commission is received via the **HUNAR platform bank account** and verified via **WhatsApp screenshot +92 314 0837519** — this manual record keeping is coordinated with the Earnings commission tracking (owned by Shafqat Ullah's backend task, see his section).
+**WALLET TOP-UP FLOW (Manual via Screenshot):**
+- Worker wants to add money to their wallet → they transfer money (Easypaisa / JazzCash / Bank Transfer) to the **given HUNAR top-up phone number**.
+- After sending payment, the worker takes a **screenshot** of the payment confirmation and **uploads it as proof** on the app.
+- The screenshot is sent to the HUNAR team (on the same number / WhatsApp **+92 314 0837519**) for verification.
+- Once the HUNAR admin **verifies** the screenshot, the wallet is **credited** with the top-up amount.
+- Top-up statuses: **Pending** (screenshot uploaded, awaiting verification) → **Approved** (admin verified, amount credited) → **Rejected** (invalid screenshot, amount not credited).
+- The worker sees their pending top-up status in the wallet screen.
 
-**Done?** Wallet code exists, passes tests, is behind a disabled flag, and cannot be used by the app yet.
+**COMMISSION AUTO-DEDUCTION FLOW:**
+- When the worker clicks **"I've Arrived"** at the job site, the platform **holds** (reserves) the 10% commission of the agreed visit charge from the worker's wallet.
+- When the worker confirms the **OTP** (sent to the customer by the platform), the held commission is **finalized and deducted** from the worker's wallet.
+- The deducted commission is **transferred to the platform's own wallet** (HUNAR platform wallet).
+- If the worker's wallet balance is **insufficient** to cover the commission at the "Arrive" step, the worker is shown a warning: **"Insufficient wallet balance. Please top up before arriving."** The Arrive button is disabled until the wallet has enough balance.
+- Wallet Ledger: every credit (top-up approved, earnings) and debit (commission hold, commission deduction, reversal) is **timestamped with balance after change**.
+- **Idempotency:** all wallet movements are idempotent (double-tap cannot double-charge; Redis idempotency keys).
+
+**ADDITIONAL WALLET RULES:**
+- Online/offline is controlled by balance: worker goes **offline automatically** if wallet balance drops below **−500 Rs.** (Section 12.6).
+- **Withdraw:** minimum **Rs. 100**, self-service/automatic payout (no manual admin approval).
+- **Platform Wallet:** all deducted commissions are stored in a separate HUNAR platform wallet, tracked and viewable by admin.
+
+**APIs to build:**
+- `POST /wallet/topup` — worker uploads screenshot + amount + payment method details
+- `GET /wallet/topup/status` — worker sees their pending/approved/rejected top-ups
+- `GET /wallet/balance` — worker sees current wallet balance
+- `GET /wallet/ledger` — full transaction history (credits, debits, timestamps, balances)
+- `POST /wallet/hold-commission` — platform holds commission when worker arrives
+- `POST /wallet/confirm-commission` — platform deducts commission on OTP confirmation
+- `POST /wallet/reverse-commission` — reversal if job is cancelled before OTP
+- `GET /platform-wallet/balance` — admin view of total collected commission
+- `PUT /wallet/topup/:id/verify` — admin approves/rejects a top-up
+
+**Done?** Wallet is active for all workers, top-up via screenshot proof works, commission is auto-held on arrive and auto-deducted on OTP confirmation, ledger tracks everything, and platform wallet stores all commission.
 
 ---
 
@@ -779,9 +806,12 @@ Generate and deliver the notification events:
 3. **Token lifetimes:** access 15 min, refresh 30 days.
 4. **Role separation:** WORKER routes reject CUSTOMER and ADMIN tokens.
 5. **Verification is human-made**, never automatic.
-6. **Wallet is OFF today.** Do not let wallet logic affect current earnings or online status.
-7. **All money movements idempotent** (even before the wallet is live, design the ledger that way).
-8. Use the approved backend stack: NestJS modular monolith, Prisma, PostgreSQL/PostGIS, Redis, BullMQ, Socket.IO.
+6. **Wallet is ACTIVE.** Every worker has a wallet starting at Rs. 0. Commission is auto-deducted from the wallet on OTP confirmation.
+7. **Wallet top-up is manual via screenshot proof.** Worker sends money to the given number, uploads screenshot, admin verifies, wallet credited.
+8. **Commission hold on arrive, deduct on OTP.** If wallet balance is insufficient, Arrive button is disabled.
+9. **All money movements idempotent** — ledger must track every credit/debit with timestamp and balance after change.
+10. **Platform wallet** stores all deducted commissions separately.
+11. Use the approved backend stack: NestJS modular monolith, Prisma, PostgreSQL/PostGIS, Redis, BullMQ, Socket.IO.
 
 ---
 
@@ -793,7 +823,7 @@ Generate and deliver the notification events:
 - [ ] File upload with compression (S3/MinIO)
 - [ ] Chat backend (real-time + images)
 - [ ] Notifications backend (all events + unread)
-- [ ] Wallet module built behind a disabled flag (rs.0 start, −500 threshold, min Rs.100 withdraw, ledger, idempotent)
+- [ ] Wallet module ACTIVE: Rs. 0 start, manual top-up via screenshot proof, commission hold on arrive, deduct on OTP confirm, platform wallet, ledger, idempotent
 
 ---
 
@@ -809,7 +839,7 @@ Generate and deliver the notification events:
 
 ## YOUR OVERVIEW
 
-> Shafqat Ullah, you will build the **marketplace engine** of the worker side: the **Jobs & Matching module** (nearby jobs in PostgreSQL/PostGIS), the **Offers module** (visit offers + bounded counter-offers + accept/reject), the **Visits module** (visit statuses + location tracking), the **Inspection + Repair module** (estimate, negotiation, locked price, scope-change approval), the **Commission tracking module** (10% of visit charge, recorded per job, verified via WhatsApp screenshot), and **Reviews** (rating + aggregation).
+> Shafqat Ullah, you will build the **marketplace engine** of the worker side: the **Jobs & Matching module** (nearby jobs in PostgreSQL/PostGIS), the **Offers module** (visit offers + bounded counter-offers + accept/reject), the **Visits module** (visit statuses + location tracking), the **Inspection + Repair module** (estimate, negotiation, locked price, scope-change approval), the **Commission tracking module** (10% of visit charge, held on arrive and auto-deducted to the platform wallet on OTP confirmation), and **Reviews** (rating + aggregation).
 
 In simple words: you own everything that happens **between a job being out there and the worker getting paid for it**, plus reviews.
 
@@ -891,20 +921,23 @@ In simple words: you own everything that happens **between a job being out there
 
 ---
 
-### Task 6 — Commission Tracking Module (Current Mode)
+### Task 6 — Commission Tracking Module (Wallet Auto-Deduction)
 
-**Build:** Record the platform commission per job (10% of the visit charge).
+**Build:** Record the platform commission per job (10% of the visit charge), auto-deducted from the wallet.
 
-**Requirements from the project (Section 12 — CURRENT MODE, wallet OFF):
+**Requirements from the project (Section 12 — ACTIVE wallet mode):
 - Commission = `VisitCharge × 10%`.
 - Applies to the **visit charge only**, not the repair price.
-- Record each job's commission against that job with a status of **Pending / Received / Verified**.
-- The WhatsApp screenshot (**+92 314 0837519**) is proof of payment; admin marks commission "received" when the screenshot is verified (the admin screenshot handling is an admin-side concern, but the job's commission status API is yours).
-- Earnings summary endpoints supply the Earnings screen: total earned, commission due/paid, pending commission, per-job list (job #, visit charge, repair charge, commission, screenshot status, date).
+- Flow:
+  1. Worker clicks **"I've Arrived"** → commission is **held (reserved)** from the worker's wallet (via the Wallet module's hold API, coordinated with Hakim Ullah).
+  2. Worker confirms the **OTP** sent to the customer → the held commission is **finalized and deducted** from the worker's wallet and **credited to the platform's wallet**.
+  3. If the job is cancelled before OTP confirmation → the hold is **reversed** back to the worker's wallet.
+- If the worker's wallet balance is not enough to cover the commission at the **Arrive** step → the Arrive button is disabled and the worker sees a top-up warning.
+- Each job's commission is recorded with a status of **Held / Deducted / Reversed**.
+- The Earnings screen shows: wallet balance, total earned, commission deducted (10%), per-job list (job #, visit charge, repair charge, commission, commission status, date).
+- Earnings summary endpoints supply the Earnings screen data.
 
-**Important:** This replaces automatic wallet deduction for now. The wallet (owned by Hakim Ullah) is OFF today.
-
-**Done?** Every completed visit generates a 10% commission record with correct status, and the Earnings screen data is served.
+**Done?** Every completed visit holds 10% commission at arrive, deducts it on OTP confirmation to the platform wallet, and correct status is served to the Earnings screen.
 
 ---
 
@@ -928,10 +961,11 @@ In simple words: you own everything that happens **between a job being out there
 2. **One offer per job per worker**, strictly enforced server-side.
 3. **Bounded negotiation** on visit AND repair prices — a round counter stops infinite haggling.
 4. **Price locking:** agreed prices are locked; repair scope changes need explicit re-approval.
-5. **Commission = 10% of the visit charge only**, recorded per job with screenshot status.
-6. **Wallet OFF today:** commission is manual/bank + WhatsApp screenshot, not auto-deducted.
-7. **Realtime:** state changes emit notifications via Socket.IO (coordinate with the Notifications events list).
-8. Use the approved backend stack: NestJS modular monolith, Prisma, PostgreSQL/PostGIS, Redis, BullMQ, Socket.IO.
+5. **Commission = 10% of the visit charge only.** Flow: hold on "Arrive" → deduct on OTP confirmation → credit to platform wallet. Reversed if job cancels before OTP.
+6. **Wallet is ACTIVE:** commission is auto-deducted from the worker's wallet, NOT paid via bank + screenshot.
+7. **Insufficient balance blocks arrival:** the Arrive button is disabled until the wallet can cover the 10% commission.
+8. **Realtime:** state changes emit notifications via Socket.IO (coordinate with the Notifications events list).
+9. Use the approved backend stack: NestJS modular monolith, Prisma, PostgreSQL/PostGIS, Redis, BullMQ, Socket.IO.
 
 ---
 
@@ -942,7 +976,7 @@ In simple words: you own everything that happens **between a job being out there
 - [ ] Visits: state machine + live location tracking
 - [ ] Inspection submission (diagnosis, repair plan, estimate, photos, time)
 - [ ] Repair: bounded negotiation, locked price, scope-change re-approval, complete
-- [ ] Commission: 10% per visit charge, Pending/Received/Verified + Earnings data
+- [ ] Commission: 10% per visit charge, Held on arrive / Deducted on OTP / Reversed on cancel + Earnings data
 - [ ] Reviews: store + average rating + list + notification trigger
 
 ---
@@ -972,8 +1006,8 @@ Use this checklist before wrapping up Module 1. Every item below is a requiremen
 - [ ] Visit sequence: Start / Arrived / Inspect / Submit (commission reminder card) — Shahzad + Shafqat
 - [ ] Repair negotiation + locked price + scope-change approval — Faizan + Shafqat
 - [ ] Start Repair / Complete Repair — Faizan + Shafqat
-- [ ] Earnings screen: commission 10%, bank account, WhatsApp +92 314 0837519, screenshot status — Faizan + Shafqat
-- [ ] Wallet system built but DISABLED (no wallet UI today) — Faizan (no UI) + Hakim (disabled)
+- [ ] Earnings screen: wallet balance, commission 10% auto-deducted, top-up via screenshot proof (+92 314 0837519) — Faizan + Shafqat
+- [ ] Wallet system ACTIVE: Rs. 0 start, top-up via screenshot, commission hold on arrive, deduct on OTP confirm, platform wallet — Faizan (UI) + Hakim (backend)
 - [ ] Reviews & rating display — Faizan + Shafqat
 - [ ] Chat (text + images, realtime, active job only) — Faizan + Hakim
 - [ ] Notifications (all events + unread badges) — Faizan + Hakim

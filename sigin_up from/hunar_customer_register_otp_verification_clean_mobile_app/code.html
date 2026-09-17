@@ -1,0 +1,338 @@
+<!DOCTYPE html><html lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport">
+<title>HUNAR - Verify Phone Number</title>
+<!-- Tailwind CSS v3 -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+tailwind.config = {
+  darkMode: "class",
+  theme: {
+    extend: {
+      colors: {
+        navy: "#1A1A2E",
+        teal: {
+          DEFAULT: "#0F766E",
+          dark: "#115E59",
+          light: "rgba(15, 118, 110, 0.1)"
+        },
+        orange: "#F59E0B",
+        success: "#16A34A",
+        error: "#DC2626",
+        gray: "#64748B",
+        background: "#F8FAFC",
+        border: "#E2E8F0",
+        surface: "#FFFFFF",
+        primary: "#0F766E",
+        "primary-dark": "#115E59",
+        secondary: "#1A1A2E",
+        
+        // Aliases used in templates
+        appBg: "#F8FAFC",
+        darkText: "#1A1A2E",
+        mutedText: "#64748B",
+        borderLine: "#E2E8F0",
+        "text-main": "#1A1A2E",
+        "surface-muted": "#F8FAFC",
+        "outline-border": "#E2E8F0",
+        
+        // Material Theme 3 Aliases
+        "on-surface": "#1A1A2E",
+        "on-surface-variant": "#64748B",
+        "on-background": "#1A1A2E",
+        "on-primary": "#FFFFFF",
+        "on-secondary": "#FFFFFF",
+        "on-error": "#FFFFFF",
+        "surface-container-lowest": "#FFFFFF",
+        "surface-container-low": "#F8FAFC",
+        "surface-container": "#F8FAFC",
+        "surface-container-high": "#F8FAFC",
+        "surface-container-highest": "#F8FAFC",
+        "surface-variant": "#F8FAFC",
+        "surface-tint": "#0F766E",
+        "surface-dim": "#E2E8F0",
+        "surface-bright": "#FFFFFF",
+        outline: "#64748B",
+        "outline-variant": "#E2E8F0",
+        "primary-container": "rgba(15, 118, 110, 0.1)",
+        "on-primary-container": "#0F766E",
+        "secondary-container": "rgba(26, 26, 46, 0.08)",
+        "on-secondary-container": "#1A1A2E",
+        "secondary-fixed": "rgba(15, 118, 110, 0.1)",
+        "secondary-fixed-dim": "rgba(15, 118, 110, 0.1)",
+        "on-secondary-fixed": "#1A1A2E",
+        "on-secondary-fixed-variant": "#115E59",
+        "primary-fixed": "rgba(15, 118, 110, 0.1)",
+        "primary-fixed-dim": "rgba(15, 118, 110, 0.1)",
+        "on-primary-fixed": "#1A1A2E",
+        "on-primary-fixed-variant": "#115E59",
+        "tertiary": "#F59E0B",
+        "tertiary-container": "rgba(245, 158, 11, 0.1)",
+        "on-tertiary-container": "#F59E0B",
+        "tertiary-fixed": "rgba(245, 158, 11, 0.1)",
+        "on-tertiary-fixed": "#1A1A2E",
+        "error-container": "rgba(220, 38, 38, 0.1)",
+        "on-error-container": "#DC2626",
+        "inverse-primary": "#0F766E",
+        "inverse-surface": "#1A1A2E",
+        "inverse-on-surface": "#F8FAFC"
+      },
+      spacing: {
+        "margin-desktop": "2rem",
+        "margin-tablet": "1.5rem",
+        "margin-mobile": "1rem",
+        "gutter-desktop": "1.5rem",
+        "gutter-mobile": "1rem",
+        "space-3xl": "4rem",
+        "space-2xl": "3rem",
+        "space-xl": "2rem",
+        "space-lg": "1.5rem",
+        "space-md": "1rem",
+        "space-base": "1rem",
+        "space-sm": "0.75rem",
+        "space-xs": "0.5rem",
+        "space-2xs": "0.25rem",
+        "space-xxs": "0.25rem",
+        "space-1": "0.25rem",
+        "space-2": "0.5rem",
+        "space-3": "0.75rem",
+        "space-4": "1rem",
+        "space-5": "1.25rem",
+        "space-6": "1.5rem",
+        "space-8": "2rem",
+        "space-12": "3rem",
+        "space-16": "4rem",
+        "space-20": "5rem",
+        "space-24": "6rem",
+        "space-stack-sm": "0.5rem",
+        "space-stack-md": "1rem",
+        "space-stack-lg": "1.5rem",
+        "section-gap": "2rem",
+        "gutter": "1.5rem"
+      },
+      fontSize: {
+        "stat-lg": ["28px", { lineHeight: "36px", letterSpacing: "-0.02em", fontWeight: "700" }],
+        "button-text": ["14px", { lineHeight: "20px", letterSpacing: "0.01em", fontWeight: "600" }],
+
+        "display-hero": ["48px", { lineHeight: "56px", letterSpacing: "-0.025em", fontWeight: "700" }],
+        "display-hero-mobile": ["32px", { lineHeight: "40px", letterSpacing: "-0.02em", fontWeight: "700" }],
+        "display-kpi": ["36px", { lineHeight: "44px", letterSpacing: "-0.02em", fontWeight: "700" }],
+        "display-kpi-mobile": ["28px", { lineHeight: "34px", letterSpacing: "-0.02em", fontWeight: "700" }],
+        "display-lg": ["36px", { lineHeight: "44px", letterSpacing: "-0.02em", fontWeight: "700" }],
+        "headline-page": ["28px", { lineHeight: "36px", letterSpacing: "-0.015em", fontWeight: "600" }],
+        "headline-page-mobile": ["24px", { lineHeight: "32px", letterSpacing: "-0.015em", fontWeight: "600" }],
+        "headline-section": ["20px", { lineHeight: "28px", letterSpacing: "-0.01em", fontWeight: "600" }],
+        "headline-subsection": ["16px", { lineHeight: "24px", letterSpacing: "-0.005em", fontWeight: "600" }],
+        "headline-lg": ["28px", { lineHeight: "36px", letterSpacing: "-0.015em", fontWeight: "600" }],
+        "headline-lg-mobile": ["24px", { lineHeight: "32px", letterSpacing: "-0.015em", fontWeight: "600" }],
+        "headline-md": ["20px", { lineHeight: "28px", letterSpacing: "-0.01em", fontWeight: "600" }],
+        "headline-sm": ["16px", { lineHeight: "24px", letterSpacing: "-0.005em", fontWeight: "600" }],
+        "headline-xl-mobile": ["26px", { lineHeight: "34px", letterSpacing: "-0.015em", fontWeight: "600" }],
+        "body-default": ["14px", { lineHeight: "22px", letterSpacing: "0em", fontWeight: "400" }],
+        "body-compact": ["13px", { lineHeight: "18px", letterSpacing: "0em", fontWeight: "400" }],
+        "body-strong": ["14px", { lineHeight: "22px", letterSpacing: "0em", fontWeight: "600" }],
+        "body-lg": ["16px", { lineHeight: "24px", letterSpacing: "0em", fontWeight: "400" }],
+        "body-md": ["14px", { lineHeight: "22px", letterSpacing: "0em", fontWeight: "400" }],
+        "body-md-medium": ["14px", { lineHeight: "22px", letterSpacing: "0em", fontWeight: "500" }],
+        "body-sm": ["12px", { lineHeight: "16px", letterSpacing: "0em", fontWeight: "400" }],
+        "label-badge": ["11px", { lineHeight: "14px", letterSpacing: "0.02em", fontWeight: "600" }],
+        "label-regular": ["12px", { lineHeight: "16px", letterSpacing: "0.01em", fontWeight: "500" }],
+        "label-md": ["12px", { lineHeight: "16px", letterSpacing: "0.01em", fontWeight: "500" }],
+        "label-sm": ["11px", { lineHeight: "14px", letterSpacing: "0.02em", fontWeight: "500" }],
+        "label-uppercase": ["10px", { lineHeight: "12px", letterSpacing: "0.05em", fontWeight: "700" }]
+      },
+      fontFamily: {
+        "stat-lg": ["Inter", "sans-serif"],
+        "button-text": ["Inter", "sans-serif"],
+
+        sans: ["Inter", "sans-serif"],
+        "body-default": ["Inter", "sans-serif"],
+        "body-compact": ["Inter", "sans-serif"],
+        "body-strong": ["Inter", "sans-serif"],
+        "body-md": ["Inter", "sans-serif"],
+        "body-sm": ["Inter", "sans-serif"],
+        "display-kpi": ["Inter", "sans-serif"],
+        "headline-page": ["Inter", "sans-serif"],
+        "headline-section": ["Inter", "sans-serif"],
+        "headline-subsection": ["Inter", "sans-serif"],
+        "headline-md": ["Inter", "sans-serif"],
+        "headline-sm": ["Inter", "sans-serif"],
+        "headline-lg": ["Inter", "sans-serif"],
+        "label-badge": ["Inter", "sans-serif"],
+        "label-regular": ["Inter", "sans-serif"],
+        "label-md": ["Inter", "sans-serif"],
+        "label-sm": ["Inter", "sans-serif"]
+      },
+      borderRadius: {
+        DEFAULT: "0.375rem",
+        sm: "0.25rem",
+        md: "0.375rem",
+        lg: "0.5rem",
+        xl: "0.75rem",
+        "2xl": "1rem",
+        full: "9999px"
+      }
+    }
+  }
+};
+</script>
+<!-- Google Fonts: Plus Jakarta Sans -->
+<link href="https://fonts.googleapis.com" rel="preconnect">
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+<!-- Tailwind Configuration -->
+<script>
+    tailwind.config = {
+  darkMode: "class",
+  theme: {
+    extend: {
+      colors: {
+        navy: "#1A1A2E",
+        teal: {
+          DEFAULT: "#0F766E",
+          dark: "#115E59"
+        },
+        orange: "#F59E0B",
+        success: "#16A34A",
+        error: "#DC2626",
+        gray: "#64748B",
+        background: "#F8FAFC",
+        border: "#E2E8F0",
+        primary: "#0F766E",
+        "primary-dark": "#115E59",
+        secondary: "#1A1A2E",
+        surface: "#FFFFFF"
+      },
+      fontFamily: {
+        "stat-lg": ["Inter", "sans-serif"],
+        "button-text": ["Inter", "sans-serif"],
+
+        sans: ["Inter", "sans-serif"]
+      }
+    }
+  }
+}</script>
+<!-- Custom styles for layout and micro-interactions -->
+<style data-purpose="custom-styling">
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .otp-input {
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .otp-input:focus {
+      border-color: #0F766E;
+      box-shadow: 0 0 0 4px rgba(0, 168, 107, 0.15);
+      outline: none;
+    }
+    /* Hide native number input arrows */
+    input[type=number]::-webkit-inner-spin-button,
+    input[type=number]::-webkit-outer-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+  </style>
+</head>
+<body class="bg-slate-50 flex justify-center items-center min-h-screen p-0 sm:p-4 text-dark antialiased selection:bg-brand-100 selection:text-brand-800">
+<!-- BEGIN: MobileDeviceFrame -->
+<main class="w-full max-w-md bg-white min-h-screen sm:min-h-[844px] sm:rounded-[40px] sm:shadow-2xl sm:border sm:border-slate-100 flex flex-col justify-between overflow-hidden relative" data-purpose="mobile-viewport">
+<!-- BEGIN: TopBar -->
+<header class="px-6 pt-5 pb-2 flex items-center justify-between z-10" data-purpose="header-navigation">
+<!-- Back Navigation Button -->
+<a aria-label="Go back" class="w-10 h-10 rounded-full border border-slate-200 flex items-center justify-center text-slate-700 hover:bg-slate-50 transition active:scale-95" data-purpose="back-button" href="#">
+<svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+<path clip-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" fill-rule="evenodd"></path>
+</svg>
+</a>
+<!-- Brand Logo / Badge -->
+<div class="flex items-center space-x-1.5" data-purpose="brand-logo"><span class="text-xl font-extrabold tracking-tight" style="color: rgb(18, 59, 93);">HUNAR</span><span class="w-2 h-2 rounded-full" style="background-color: rgb(15, 139, 141);"></span></div>
+<!-- Help / Support Icon -->
+<a aria-label="Support" class="w-10 h-10 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-600 transition" href="#">
+<svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</a>
+</header>
+<!-- END: TopBar -->
+<!-- BEGIN: VerificationContent -->
+<div class="flex-1 px-6 pb-6 pt-1 flex flex-col justify-between" data-purpose="main-flow-container">
+<div>
+<!-- Hero Illustration -->
+<div class="w-full flex justify-center items-center py-2" data-purpose="hero-illustration-container">
+<div class="relative w-52 h-32 flex items-center justify-center">
+<img alt="Verification Illustration with User and Laptop" class="max-h-full max-w-full object-contain filter drop-shadow-sm" loading="eager" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA_zfWKtX1d5csISECS-TxxxX4bGJzXzTKAlG9bJF0AyTGlsGTNGWfJMQ-Ka4P97svUh5TLLLekctUMS9FTIhInKdNavtmMlOfU6Zfi4SJIJqm67-HA1fN3uk5CF1ooKy4QDKd36T4KcdrdYvhti8sOb9ELRJ-HHEYnB9OB6jG5pHewA7vRwUhQmNajH7Eftr3kjyuAR-zH77zifxE5tV0Vq6qwVyJGFw_8SDLMCu6bKUzDMZ4c-bTQ29BcQqSU9Z9y1y5bbBZRKtVYwQ">
+</div>
+</div>
+<!-- Typography & Heading Section -->
+<section class="text-center mt-3 space-y-1.5" data-purpose="title-and-instructions"><h1 class="text-2xl font-bold tracking-tight" style="color: rgb(18, 59, 93);">Verify Phone Number</h1><p class="text-sm font-normal leading-relaxed px-4" style="color: rgb(100, 116, 139);">We have sent a 6-digit verification code to</p><div class="flex items-center justify-center space-x-2 text-sm font-semibold"><span style="color: #1A1A2E;" class="">+92 300 1234567</span><button class="text-xs font-semibold underline underline-offset-2 flex items-center space-x-0.5" style="color: #0F766E;" type="button"><span class="">Edit</span><svg class="h-3 w-3" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z"></path></svg></button></div></section>
+<!-- 6-Digit Code Input Section -->
+<form class="mt-7" data-purpose="otp-input-form" id="otp-form" onsubmit="event.preventDefault();">
+<div class="flex justify-between items-center gap-2 max-w-xs mx-auto" data-purpose="digit-cells-group"><!-- Box 1 (Filled: 3) -->
+<input aria-label="First digit" class="otp-input w-11 h-14 sm:w-12 sm:h-14 text-center text-xl font-bold rounded-2xl shadow-sm bg-[#0F766E]/10" style="border: 2px solid rgb(15, 139, 141); color: rgb(18, 59, 93);" inputmode="numeric" maxlength="1" type="text" value="3">
+<!-- Box 2 (Filled: 6) -->
+<input aria-label="Second digit" class="otp-input w-11 h-14 sm:w-12 sm:h-14 text-center text-xl font-bold rounded-2xl shadow-sm bg-[#0F766E]/10" style="border: 2px solid rgb(15, 139, 141); color: rgb(18, 59, 93);" inputmode="numeric" maxlength="1" type="text" value="6">
+<!-- Box 3 (Filled: 4) -->
+<input aria-label="Third digit" class="otp-input w-11 h-14 sm:w-12 sm:h-14 text-center text-xl font-bold rounded-2xl shadow-sm bg-[#0F766E]/10" style="border: 2px solid rgb(15, 139, 141); color: rgb(18, 59, 93);" inputmode="numeric" maxlength="1" type="text" value="4">
+<!-- Box 4 (Active) -->
+<input aria-label="Fourth digit" autofocus="" class="otp-input w-11 h-14 sm:w-12 sm:h-14 text-center text-xl font-bold bg-white rounded-2xl shadow-sm" style="border: 2px solid rgb(203, 213, 225); color: rgb(18, 59, 93);" inputmode="numeric" maxlength="1" placeholder="" type="text">
+<!-- Box 5 (Empty) -->
+<input aria-label="Fifth digit" class="otp-input w-11 h-14 sm:w-12 sm:h-14 text-center text-xl font-bold bg-white rounded-2xl shadow-sm" style="border: 1px solid rgb(203, 213, 225); color: rgb(18, 59, 93);" inputmode="numeric" maxlength="1" placeholder="" type="text">
+<!-- Box 6 (Empty) -->
+<input aria-label="Sixth digit" class="otp-input w-11 h-14 sm:w-12 sm:h-14 text-center text-xl font-bold bg-white rounded-2xl shadow-sm" style="border: 1px solid rgb(203, 213, 225); color: rgb(18, 59, 93);" inputmode="numeric" maxlength="1" placeholder="" type="text"></div>
+<!-- Resend Timer & Action Channels -->
+<div class="mt-6 text-center space-y-2.5" data-purpose="resend-options"><div class="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-full text-xs font-medium" style="background-color: rgb(254, 243, 199); color: rgb(180, 83, 9);"><svg class="h-3.5 w-3.5 animate-pulse" style="color: #F59E0B;" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg><span class="">Resend code in <strong class="font-semibold" style="color: #F59E0B;">00:45</strong></span></div><div class="flex items-center justify-center space-x-4 text-xs font-medium pt-1"><button class="transition cursor-not-allowed" style="color: #64748B;" disabled="" type="button">Resend via SMS</button><span style="color: #E2E8F0;" class="">•</span><button class="font-semibold inline-flex items-center space-x-1 hover:underline" style="color: #0F766E;" type="button"><span class="">Send via WhatsApp</span></button></div></div>
+</form>
+</div>
+<!-- BEGIN: ActionButtonsGroup -->
+<footer class="mt-8 space-y-4" data-purpose="primary-action-footer"><!-- Main Confirmation Button -->
+<button class="w-full h-14 active:scale-[0.99] text-white font-semibold text-base rounded-full shadow-lg transition-all flex items-center justify-center space-x-2" style="background-color: rgb(15, 139, 141); box-shadow: rgba(15, 139, 141, 0.25) 0px 10px 15px -3px;" onmouseover="this.style.backgroundColor='#115E59'" onmouseout="this.style.backgroundColor='#0F766E'" data-purpose="confirm-button" type="button">
+<span class="">Verify &amp; Proceed</span>
+<svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+<path clip-rule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" fill-rule="evenodd"></path>
+</svg>
+</button>
+<!-- Back to Sign in link -->
+<div class="text-center pt-1" data-purpose="alternate-navigation">
+<p class="text-sm font-normal" style="color: #64748B;">
+Already confirmed? 
+<a class="font-semibold hover:underline transition" style="color: #0F766E;" href="#">Sign in</a>
+</p>
+</div>
+<!-- Security Trust Indicator -->
+<div class="pt-2 flex items-center justify-center space-x-1.5 text-xs text-center" style="color: rgb(100, 116, 139);" data-purpose="security-note">
+<svg class="h-3.5 w-3.5" style="color: #16A34A;" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+<path clip-rule="evenodd" d="M2.166 4.999A11.954 11.954 0 0010 1.944 11.954 11.954 0 0017.834 5c.11.65.166 1.32.166 2.001 0 5.225-3.34 9.67-8 11.317C5.34 16.67 2 12.225 2 7c0-.682.057-1.35.166-2.001zm11.541 3.708a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" fill-rule="evenodd"></path>
+</svg>
+<span class="">256-bit encrypted &amp; secure verification</span>
+</div></footer>
+<!-- END: ActionButtonsGroup -->
+</div>
+<!-- END: VerificationContent -->
+</main>
+<!-- END: MobileDeviceFrame -->
+<!-- Script for Auto-Advancing OTP Inputs -->
+<script data-purpose="otp-input-behavior">
+    document.addEventListener('DOMContentLoaded', () => {
+      const inputs = document.querySelectorAll('.otp-input');
+
+      inputs.forEach((input, index) => {
+        input.addEventListener('input', (e) => {
+          if (e.target.value.length === 1 && index < inputs.length - 1) {
+            inputs[index + 1].focus();
+          }
+        });
+
+        input.addEventListener('keydown', (e) => {
+          if (e.key === 'Backspace' && !e.target.value && index > 0) {
+            inputs[index - 1].focus();
+          }
+        });
+      });
+    });
+  </script>
+
+
+
+
+</body></html>

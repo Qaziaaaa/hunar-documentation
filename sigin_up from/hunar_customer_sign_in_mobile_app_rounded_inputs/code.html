@@ -1,0 +1,306 @@
+<!DOCTYPE html><html lang="en" style=""><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport">
+<title>Create Account - HUNAR</title>
+<!-- Tailwind CSS v3 -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+tailwind.config = {
+  darkMode: "class",
+  theme: {
+    extend: {
+      colors: {
+        navy: "#1A1A2E",
+        teal: {
+          DEFAULT: "#0F766E",
+          dark: "#115E59",
+          light: "rgba(15, 118, 110, 0.1)"
+        },
+        orange: "#F59E0B",
+        success: "#16A34A",
+        error: "#DC2626",
+        gray: "#64748B",
+        background: "#F8FAFC",
+        border: "#E2E8F0",
+        surface: "#FFFFFF",
+        primary: "#0F766E",
+        "primary-dark": "#115E59",
+        secondary: "#1A1A2E",
+        
+        // Aliases used in templates
+        appBg: "#F8FAFC",
+        darkText: "#1A1A2E",
+        mutedText: "#64748B",
+        borderLine: "#E2E8F0",
+        "text-main": "#1A1A2E",
+        "surface-muted": "#F8FAFC",
+        "outline-border": "#E2E8F0",
+        
+        // Material Theme 3 Aliases
+        "on-surface": "#1A1A2E",
+        "on-surface-variant": "#64748B",
+        "on-background": "#1A1A2E",
+        "on-primary": "#FFFFFF",
+        "on-secondary": "#FFFFFF",
+        "on-error": "#FFFFFF",
+        "surface-container-lowest": "#FFFFFF",
+        "surface-container-low": "#F8FAFC",
+        "surface-container": "#F8FAFC",
+        "surface-container-high": "#F8FAFC",
+        "surface-container-highest": "#F8FAFC",
+        "surface-variant": "#F8FAFC",
+        "surface-tint": "#0F766E",
+        "surface-dim": "#E2E8F0",
+        "surface-bright": "#FFFFFF",
+        outline: "#64748B",
+        "outline-variant": "#E2E8F0",
+        "primary-container": "rgba(15, 118, 110, 0.1)",
+        "on-primary-container": "#0F766E",
+        "secondary-container": "rgba(26, 26, 46, 0.08)",
+        "on-secondary-container": "#1A1A2E",
+        "secondary-fixed": "rgba(15, 118, 110, 0.1)",
+        "secondary-fixed-dim": "rgba(15, 118, 110, 0.1)",
+        "on-secondary-fixed": "#1A1A2E",
+        "on-secondary-fixed-variant": "#115E59",
+        "primary-fixed": "rgba(15, 118, 110, 0.1)",
+        "primary-fixed-dim": "rgba(15, 118, 110, 0.1)",
+        "on-primary-fixed": "#1A1A2E",
+        "on-primary-fixed-variant": "#115E59",
+        "tertiary": "#F59E0B",
+        "tertiary-container": "rgba(245, 158, 11, 0.1)",
+        "on-tertiary-container": "#F59E0B",
+        "tertiary-fixed": "rgba(245, 158, 11, 0.1)",
+        "on-tertiary-fixed": "#1A1A2E",
+        "error-container": "rgba(220, 38, 38, 0.1)",
+        "on-error-container": "#DC2626",
+        "inverse-primary": "#0F766E",
+        "inverse-surface": "#1A1A2E",
+        "inverse-on-surface": "#F8FAFC"
+      },
+      spacing: {
+        "margin-desktop": "2rem",
+        "margin-tablet": "1.5rem",
+        "margin-mobile": "1rem",
+        "gutter-desktop": "1.5rem",
+        "gutter-mobile": "1rem",
+        "space-3xl": "4rem",
+        "space-2xl": "3rem",
+        "space-xl": "2rem",
+        "space-lg": "1.5rem",
+        "space-md": "1rem",
+        "space-base": "1rem",
+        "space-sm": "0.75rem",
+        "space-xs": "0.5rem",
+        "space-2xs": "0.25rem",
+        "space-xxs": "0.25rem",
+        "space-1": "0.25rem",
+        "space-2": "0.5rem",
+        "space-3": "0.75rem",
+        "space-4": "1rem",
+        "space-5": "1.25rem",
+        "space-6": "1.5rem",
+        "space-8": "2rem",
+        "space-12": "3rem",
+        "space-16": "4rem",
+        "space-20": "5rem",
+        "space-24": "6rem",
+        "space-stack-sm": "0.5rem",
+        "space-stack-md": "1rem",
+        "space-stack-lg": "1.5rem",
+        "section-gap": "2rem",
+        "gutter": "1.5rem"
+      },
+      fontSize: {
+        "stat-lg": ["28px", { lineHeight: "36px", letterSpacing: "-0.02em", fontWeight: "700" }],
+        "button-text": ["14px", { lineHeight: "20px", letterSpacing: "0.01em", fontWeight: "600" }],
+
+        "display-hero": ["48px", { lineHeight: "56px", letterSpacing: "-0.025em", fontWeight: "700" }],
+        "display-hero-mobile": ["32px", { lineHeight: "40px", letterSpacing: "-0.02em", fontWeight: "700" }],
+        "display-kpi": ["36px", { lineHeight: "44px", letterSpacing: "-0.02em", fontWeight: "700" }],
+        "display-kpi-mobile": ["28px", { lineHeight: "34px", letterSpacing: "-0.02em", fontWeight: "700" }],
+        "display-lg": ["36px", { lineHeight: "44px", letterSpacing: "-0.02em", fontWeight: "700" }],
+        "headline-page": ["28px", { lineHeight: "36px", letterSpacing: "-0.015em", fontWeight: "600" }],
+        "headline-page-mobile": ["24px", { lineHeight: "32px", letterSpacing: "-0.015em", fontWeight: "600" }],
+        "headline-section": ["20px", { lineHeight: "28px", letterSpacing: "-0.01em", fontWeight: "600" }],
+        "headline-subsection": ["16px", { lineHeight: "24px", letterSpacing: "-0.005em", fontWeight: "600" }],
+        "headline-lg": ["28px", { lineHeight: "36px", letterSpacing: "-0.015em", fontWeight: "600" }],
+        "headline-lg-mobile": ["24px", { lineHeight: "32px", letterSpacing: "-0.015em", fontWeight: "600" }],
+        "headline-md": ["20px", { lineHeight: "28px", letterSpacing: "-0.01em", fontWeight: "600" }],
+        "headline-sm": ["16px", { lineHeight: "24px", letterSpacing: "-0.005em", fontWeight: "600" }],
+        "headline-xl-mobile": ["26px", { lineHeight: "34px", letterSpacing: "-0.015em", fontWeight: "600" }],
+        "body-default": ["14px", { lineHeight: "22px", letterSpacing: "0em", fontWeight: "400" }],
+        "body-compact": ["13px", { lineHeight: "18px", letterSpacing: "0em", fontWeight: "400" }],
+        "body-strong": ["14px", { lineHeight: "22px", letterSpacing: "0em", fontWeight: "600" }],
+        "body-lg": ["16px", { lineHeight: "24px", letterSpacing: "0em", fontWeight: "400" }],
+        "body-md": ["14px", { lineHeight: "22px", letterSpacing: "0em", fontWeight: "400" }],
+        "body-md-medium": ["14px", { lineHeight: "22px", letterSpacing: "0em", fontWeight: "500" }],
+        "body-sm": ["12px", { lineHeight: "16px", letterSpacing: "0em", fontWeight: "400" }],
+        "label-badge": ["11px", { lineHeight: "14px", letterSpacing: "0.02em", fontWeight: "600" }],
+        "label-regular": ["12px", { lineHeight: "16px", letterSpacing: "0.01em", fontWeight: "500" }],
+        "label-md": ["12px", { lineHeight: "16px", letterSpacing: "0.01em", fontWeight: "500" }],
+        "label-sm": ["11px", { lineHeight: "14px", letterSpacing: "0.02em", fontWeight: "500" }],
+        "label-uppercase": ["10px", { lineHeight: "12px", letterSpacing: "0.05em", fontWeight: "700" }]
+      },
+      fontFamily: {
+        "stat-lg": ["Inter", "sans-serif"],
+        "button-text": ["Inter", "sans-serif"],
+
+        sans: ["Inter", "sans-serif"],
+        "body-default": ["Inter", "sans-serif"],
+        "body-compact": ["Inter", "sans-serif"],
+        "body-strong": ["Inter", "sans-serif"],
+        "body-md": ["Inter", "sans-serif"],
+        "body-sm": ["Inter", "sans-serif"],
+        "display-kpi": ["Inter", "sans-serif"],
+        "headline-page": ["Inter", "sans-serif"],
+        "headline-section": ["Inter", "sans-serif"],
+        "headline-subsection": ["Inter", "sans-serif"],
+        "headline-md": ["Inter", "sans-serif"],
+        "headline-sm": ["Inter", "sans-serif"],
+        "headline-lg": ["Inter", "sans-serif"],
+        "label-badge": ["Inter", "sans-serif"],
+        "label-regular": ["Inter", "sans-serif"],
+        "label-md": ["Inter", "sans-serif"],
+        "label-sm": ["Inter", "sans-serif"]
+      },
+      borderRadius: {
+        DEFAULT: "0.375rem",
+        sm: "0.25rem",
+        md: "0.375rem",
+        lg: "0.5rem",
+        xl: "0.75rem",
+        "2xl": "1rem",
+        full: "9999px"
+      }
+    }
+  }
+};
+</script>
+<!-- Google Fonts: Plus Jakarta Sans -->
+<link href="https://fonts.googleapis.com" rel="preconnect">
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+<script>
+    tailwind.config = {
+  darkMode: "class",
+  theme: {
+    extend: {
+      colors: {
+        navy: "#1A1A2E",
+        teal: {
+          DEFAULT: "#0F766E",
+          dark: "#115E59"
+        },
+        orange: "#F59E0B",
+        success: "#16A34A",
+        error: "#DC2626",
+        gray: "#64748B",
+        background: "#F8FAFC",
+        border: "#E2E8F0",
+        primary: "#0F766E",
+        "primary-dark": "#115E59",
+        secondary: "#1A1A2E",
+        surface: "#FFFFFF"
+      },
+      fontFamily: {
+        "stat-lg": ["Inter", "sans-serif"],
+        "button-text": ["Inter", "sans-serif"],
+
+        sans: ["Inter", "sans-serif"]
+      }
+    }
+  }
+}</script>
+<style data-purpose="custom-styling">
+    body {
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      background-color: #F8FAFC;
+    }
+    /* Custom removal of outline default glow */
+    input:focus {
+      box-shadow: 0 0 0 1.5px #0F766E !important;
+      border-color: #0F766E !important;
+    }
+  </style>
+</head>
+<body class="font-sans min-h-screen flex items-center justify-center p-0 sm:p-4 md:p-6 text-slate-800">
+<!-- BEGIN: MainContainer -->
+<!-- Mimicking the crisp iOS mobile card container -->
+<main class="w-full max-w-[420px] bg-white sm:rounded-[32px] shadow-xl border border-slate-100 overflow-hidden min-h-screen sm:min-h-0 flex flex-col py-8 px-6 sm:px-8">
+<!-- BEGIN: HeaderSection -->
+<header class="text-center mb-2" data-purpose="registration-header"><h1 class="text-2xl sm:text-[28px] font-extrabold tracking-tight text-[#1A1A2E] leading-tight">Welcome Back!</h1>
+<p class="text-[#64748B] text-[14px] mt-1 font-medium">Sign in to access your HUNAR account</p></header>
+<!-- END: HeaderSection -->
+<!-- BEGIN: IllustrationSection -->
+<div class="flex justify-center my-3 relative" data-purpose="header-illustration"><img alt="HUNAR Customer Sign In" class="h-44 w-auto max-w-[280px] object-contain mx-auto drop-shadow-xs" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCjz12PwV0yv4xLge1cY1p2Q5GXL_yEFV0PZZNqgBckKyA9aIQslGtm596CBCtkP_fYjI4swLo4CKBIyW8IMHGmzu8Tu6lD_UHymcFc0dPpjrTjyOQy5tvf5PQ4sm1ZAo1JRNhShgCoTUqK3zMHCjKxZY1vHkBA9zXhNv5TYE9NsG1pH_B-bV5Hob_OZI7Ze0TqIgZvg1-791AFJP9wJX9Oicgn0R9-_sjwm9Jut4yeuy9R_vtC_WIrdq4Jt7eYrjNOM5dR8xRqFMbrFw"></div>
+<!-- END: IllustrationSection -->
+<!-- BEGIN: RegistrationForm -->
+<form class="space-y-3.5 mt-2" data-purpose="account-creation-form" onsubmit="event.preventDefault();"><!-- Field 1: Email Address or Phone -->
+<div class="space-y-1">
+<label class="block text-[11px] font-extrabold tracking-wider text-[#1A1A2E] uppercase" for="loginId">EMAIL ADDRESS OR PHONE</label>
+<div class="relative rounded-xl shadow-xs">
+<div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+<!-- Mail/User Icon -->
+<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24">
+<rect height="16" rx="2" width="20" x="2" y="4"></rect>
+<path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"></path>
+</svg>
+</div>
+<input class="block w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 text-sm placeholder-slate-400 focus:outline-none focus:border-brand transition duration-150 rounded-full" id="loginId" name="loginId" placeholder="Enter your email or phone number" required="" type="text">
+</div>
+</div>
+<!-- Field 2: Password -->
+<div class="space-y-1">
+<label class="block text-[11px] font-extrabold tracking-wider text-[#1A1A2E] uppercase" for="password">PASSWORD</label>
+<div class="relative rounded-xl shadow-xs">
+<div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+<!-- Lock Icon -->
+<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24">
+<rect height="11" rx="2" ry="2" width="18" x="3" y="11"></rect>
+<path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+</svg>
+</div>
+<input class="block w-full pl-10 pr-10 py-2.5 bg-white border border-slate-200 text-sm placeholder-slate-400 focus:outline-none focus:border-brand transition duration-150 rounded-full" id="password" name="password" placeholder="Enter your password" required="" type="password">
+<button aria-label="Toggle password visibility" class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-600 focus:outline-none" type="button">
+<!-- Eye Icon -->
+<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24">
+<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+<circle cx="12" cy="12" r="3"></circle>
+</svg>
+</button>
+</div>
+</div>
+<!-- Remember me & Forgot Password Row -->
+<div class="pt-1 flex items-center justify-between text-xs"><div class="flex items-center"><input class="h-4 w-4 rounded border-slate-300 text-[#0F766E] focus:ring-[#0F766E]/40 accent-[#0F766E] cursor-pointer" id="rememberMe" name="rememberMe" type="checkbox"><label class="ml-2 text-[11.5px] text-[#1A1A2E] font-semibold select-none cursor-pointer" for="rememberMe">Remember me</label></div><a class="text-[11.5px] font-semibold text-[#0F766E] hover:underline" href="#">Forgot password?</a></div>
+<!-- Submit CTA Button -->
+<div class="pt-1.5">
+<button class="w-full bg-[#0F766E] hover:bg-[#115E59] active:bg-[#115E59] text-white font-bold py-3 px-4 text-sm shadow-sm transition duration-150 ease-in-out focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#0F766E] rounded-full" type="submit">Sign In</button>
+</div></form>
+<!-- END: RegistrationForm -->
+<!-- BEGIN: SocialAuthenticationSection -->
+<div class="mt-5" data-purpose="social-auth-options">
+<!-- Divider -->
+<div class="relative flex items-center justify-center my-3">
+<div class="border-t border-slate-200 w-full"></div>
+<span class="bg-white px-3 text-[10px] uppercase font-bold tracking-wider text-slate-400 whitespace-nowrap">
+          OR CONTINUE WITH
+        </span>
+<div class="border-t border-slate-200 w-full"></div>
+</div>
+<!-- Social Action Buttons -->
+<div class="grid grid-cols-2 gap-3 mt-4"><button class="flex items-center justify-center py-2.5 px-3 border border-[#1A1A2E]/20 hover:border-[#1A1A2E]/40 rounded-full bg-white hover:bg-slate-50 transition duration-150 active:scale-[0.98] shadow-xs" type="button"><svg class="w-4 h-4 mr-2" viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#0F766E"></path><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#16A34A"></path><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" fill="#F59E0B"></path><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" fill="#DC2626"></path></svg><span class="text-xs font-bold text-[#1A1A2E]">Google</span></button><button class="flex items-center justify-center py-2.5 px-3 border border-[#1A1A2E]/20 hover:border-[#1A1A2E]/40 rounded-full bg-white hover:bg-slate-50 transition duration-150 active:scale-[0.98] shadow-xs" type="button"><svg class="w-4 h-4 mr-2 fill-current text-[#1A1A2E]" viewBox="0 0 170 170"><path d="M150.37 130.25c-2.45 5.66-5.35 10.87-8.71 15.66-4.58 6.53-8.33 11.05-11.22 13.56-4.48 4.12-9.28 6.23-14.42 6.35-3.69 0-8.14-1.05-13.32-3.18-5.19-2.12-9.97-3.17-14.34-3.17-4.58 0-9.49 1.05-14.75 3.17-5.26 2.13-9.5 3.24-12.74 3.35-4.35.13-9.16-1.9-14.42-6.08-3.69-3.04-7.69-7.85-12-14.42-6.09-9.36-10.87-20.24-14.35-32.63-3.48-12.39-5.22-24.16-5.22-35.32 0-14.05 3.37-25.96 10.11-35.73 6.74-9.78 15.29-14.73 25.66-14.86 5.33 0 11.19 1.55 17.58 4.67 6.39 3.12 10.13 4.73 11.22 4.84 1.85-.33 6.09-2.12 12.74-5.37 6.64-3.26 12.39-4.78 17.25-4.57 16.53 1.2 28.71 7.42 36.54 18.66-14.57 8.8-21.74 20.8-21.52 36 0 11.75 4.35 21.64 13.05 29.69 8.7 8.05 18.7 12.4 30.01 13.06-2.61 7.6-5.76 15.42-9.45 23.47zM119.22 31.84c0-7.72 2.72-14.89 8.16-21.52 5.44-6.63 12.07-10.43 19.89-11.41.22 1.3.33 2.39.33 3.26 0 7.83-2.83 15.11-8.48 21.85-5.65 6.74-12.28 10.33-19.9 10.76v-2.94z"></path></svg><span class="text-xs font-bold text-[#1A1A2E]">Apple</span></button></div>
+</div>
+<!-- END: SocialAuthenticationSection -->
+<!-- BEGIN: FooterSection -->
+<footer class="text-center mt-6 pb-2" data-purpose="card-footer"><p class="text-xs font-medium text-slate-500">Don't have an account? <a class="text-[#0F766E] font-bold hover:underline ml-0.5" href="#">Sign up</a></p></footer>
+<!-- END: FooterSection -->
+</main>
+<!-- END: MainContainer -->
+
+
+
+
+
+
+</body></html>

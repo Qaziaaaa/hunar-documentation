@@ -1,0 +1,1293 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<style>
+    @layer base {
+      html, body { margin: 0; padding: 0; }
+      body { overscroll-behavior: none; }
+      main > :first-child { margin-top: 0 !important; }
+      main > :last-child { margin-bottom: 0 !important; }
+    }
+    ::-webkit-scrollbar { display: none; }
+  </style>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+tailwind.config = {
+  darkMode: "class",
+  theme: {
+    extend: {
+      colors: {
+        navy: "#1A1A2E",
+        teal: {
+          DEFAULT: "#0F766E",
+          dark: "#115E59",
+          light: "rgba(15, 118, 110, 0.1)"
+        },
+        orange: "#F59E0B",
+        success: "#16A34A",
+        error: "#DC2626",
+        gray: "#64748B",
+        background: "#F8FAFC",
+        border: "#E2E8F0",
+        surface: "#FFFFFF",
+        primary: "#0F766E",
+        "primary-dark": "#115E59",
+        secondary: "#1A1A2E",
+        
+        // Aliases used in templates
+        appBg: "#F8FAFC",
+        darkText: "#1A1A2E",
+        mutedText: "#64748B",
+        borderLine: "#E2E8F0",
+        "text-main": "#1A1A2E",
+        "surface-muted": "#F8FAFC",
+        "outline-border": "#E2E8F0",
+        
+        // Material Theme 3 Aliases
+        "on-surface": "#1A1A2E",
+        "on-surface-variant": "#64748B",
+        "on-background": "#1A1A2E",
+        "on-primary": "#FFFFFF",
+        "on-secondary": "#FFFFFF",
+        "on-error": "#FFFFFF",
+        "surface-container-lowest": "#FFFFFF",
+        "surface-container-low": "#F8FAFC",
+        "surface-container": "#F8FAFC",
+        "surface-container-high": "#F8FAFC",
+        "surface-container-highest": "#F8FAFC",
+        "surface-variant": "#F8FAFC",
+        "surface-tint": "#0F766E",
+        "surface-dim": "#E2E8F0",
+        "surface-bright": "#FFFFFF",
+        outline: "#64748B",
+        "outline-variant": "#E2E8F0",
+        "primary-container": "rgba(15, 118, 110, 0.1)",
+        "on-primary-container": "#0F766E",
+        "secondary-container": "rgba(26, 26, 46, 0.08)",
+        "on-secondary-container": "#1A1A2E",
+        "secondary-fixed": "rgba(15, 118, 110, 0.1)",
+        "secondary-fixed-dim": "rgba(15, 118, 110, 0.1)",
+        "on-secondary-fixed": "#1A1A2E",
+        "on-secondary-fixed-variant": "#115E59",
+        "primary-fixed": "rgba(15, 118, 110, 0.1)",
+        "primary-fixed-dim": "rgba(15, 118, 110, 0.1)",
+        "on-primary-fixed": "#1A1A2E",
+        "on-primary-fixed-variant": "#115E59",
+        "tertiary": "#F59E0B",
+        "tertiary-container": "rgba(245, 158, 11, 0.1)",
+        "on-tertiary-container": "#F59E0B",
+        "tertiary-fixed": "rgba(245, 158, 11, 0.1)",
+        "on-tertiary-fixed": "#1A1A2E",
+        "error-container": "rgba(220, 38, 38, 0.1)",
+        "on-error-container": "#DC2626",
+        "inverse-primary": "#0F766E",
+        "inverse-surface": "#1A1A2E",
+        "inverse-on-surface": "#F8FAFC"
+      },
+      spacing: {
+        "margin-desktop": "2rem",
+        "margin-tablet": "1.5rem",
+        "margin-mobile": "1rem",
+        "gutter-desktop": "1.5rem",
+        "gutter-mobile": "1rem",
+        "space-3xl": "4rem",
+        "space-2xl": "3rem",
+        "space-xl": "2rem",
+        "space-lg": "1.5rem",
+        "space-md": "1rem",
+        "space-base": "1rem",
+        "space-sm": "0.75rem",
+        "space-xs": "0.5rem",
+        "space-2xs": "0.25rem",
+        "space-xxs": "0.25rem",
+        "space-1": "0.25rem",
+        "space-2": "0.5rem",
+        "space-3": "0.75rem",
+        "space-4": "1rem",
+        "space-5": "1.25rem",
+        "space-6": "1.5rem",
+        "space-8": "2rem",
+        "space-12": "3rem",
+        "space-16": "4rem",
+        "space-20": "5rem",
+        "space-24": "6rem",
+        "space-stack-sm": "0.5rem",
+        "space-stack-md": "1rem",
+        "space-stack-lg": "1.5rem",
+        "section-gap": "2rem",
+        "gutter": "1.5rem"
+      },
+      fontSize: {
+        "stat-lg": ["28px", { lineHeight: "36px", letterSpacing: "-0.02em", fontWeight: "700" }],
+        "button-text": ["14px", { lineHeight: "20px", letterSpacing: "0.01em", fontWeight: "600" }],
+
+        "display-hero": ["48px", { lineHeight: "56px", letterSpacing: "-0.025em", fontWeight: "700" }],
+        "display-hero-mobile": ["32px", { lineHeight: "40px", letterSpacing: "-0.02em", fontWeight: "700" }],
+        "display-kpi": ["36px", { lineHeight: "44px", letterSpacing: "-0.02em", fontWeight: "700" }],
+        "display-kpi-mobile": ["28px", { lineHeight: "34px", letterSpacing: "-0.02em", fontWeight: "700" }],
+        "display-lg": ["36px", { lineHeight: "44px", letterSpacing: "-0.02em", fontWeight: "700" }],
+        "headline-page": ["28px", { lineHeight: "36px", letterSpacing: "-0.015em", fontWeight: "600" }],
+        "headline-page-mobile": ["24px", { lineHeight: "32px", letterSpacing: "-0.015em", fontWeight: "600" }],
+        "headline-section": ["20px", { lineHeight: "28px", letterSpacing: "-0.01em", fontWeight: "600" }],
+        "headline-subsection": ["16px", { lineHeight: "24px", letterSpacing: "-0.005em", fontWeight: "600" }],
+        "headline-lg": ["28px", { lineHeight: "36px", letterSpacing: "-0.015em", fontWeight: "600" }],
+        "headline-lg-mobile": ["24px", { lineHeight: "32px", letterSpacing: "-0.015em", fontWeight: "600" }],
+        "headline-md": ["20px", { lineHeight: "28px", letterSpacing: "-0.01em", fontWeight: "600" }],
+        "headline-sm": ["16px", { lineHeight: "24px", letterSpacing: "-0.005em", fontWeight: "600" }],
+        "headline-xl-mobile": ["26px", { lineHeight: "34px", letterSpacing: "-0.015em", fontWeight: "600" }],
+        "body-default": ["14px", { lineHeight: "22px", letterSpacing: "0em", fontWeight: "400" }],
+        "body-compact": ["13px", { lineHeight: "18px", letterSpacing: "0em", fontWeight: "400" }],
+        "body-strong": ["14px", { lineHeight: "22px", letterSpacing: "0em", fontWeight: "600" }],
+        "body-lg": ["16px", { lineHeight: "24px", letterSpacing: "0em", fontWeight: "400" }],
+        "body-md": ["14px", { lineHeight: "22px", letterSpacing: "0em", fontWeight: "400" }],
+        "body-md-medium": ["14px", { lineHeight: "22px", letterSpacing: "0em", fontWeight: "500" }],
+        "body-sm": ["12px", { lineHeight: "16px", letterSpacing: "0em", fontWeight: "400" }],
+        "label-badge": ["11px", { lineHeight: "14px", letterSpacing: "0.02em", fontWeight: "600" }],
+        "label-regular": ["12px", { lineHeight: "16px", letterSpacing: "0.01em", fontWeight: "500" }],
+        "label-md": ["12px", { lineHeight: "16px", letterSpacing: "0.01em", fontWeight: "500" }],
+        "label-sm": ["11px", { lineHeight: "14px", letterSpacing: "0.02em", fontWeight: "500" }],
+        "label-uppercase": ["10px", { lineHeight: "12px", letterSpacing: "0.05em", fontWeight: "700" }]
+      },
+      fontFamily: {
+        "stat-lg": ["Inter", "sans-serif"],
+        "button-text": ["Inter", "sans-serif"],
+
+        sans: ["Inter", "sans-serif"],
+        "body-default": ["Inter", "sans-serif"],
+        "body-compact": ["Inter", "sans-serif"],
+        "body-strong": ["Inter", "sans-serif"],
+        "body-md": ["Inter", "sans-serif"],
+        "body-sm": ["Inter", "sans-serif"],
+        "display-kpi": ["Inter", "sans-serif"],
+        "headline-page": ["Inter", "sans-serif"],
+        "headline-section": ["Inter", "sans-serif"],
+        "headline-subsection": ["Inter", "sans-serif"],
+        "headline-md": ["Inter", "sans-serif"],
+        "headline-sm": ["Inter", "sans-serif"],
+        "headline-lg": ["Inter", "sans-serif"],
+        "label-badge": ["Inter", "sans-serif"],
+        "label-regular": ["Inter", "sans-serif"],
+        "label-md": ["Inter", "sans-serif"],
+        "label-sm": ["Inter", "sans-serif"]
+      },
+      borderRadius: {
+        DEFAULT: "0.375rem",
+        sm: "0.25rem",
+        md: "0.375rem",
+        lg: "0.5rem",
+        xl: "0.75rem",
+        "2xl": "1rem",
+        full: "9999px"
+      }
+    }
+  }
+};
+</script>
+</head>
+<body class="bg-[#F8FAFC] text-[#1A1A2E] font-sans text-sm antialiased selection:bg-[#0F766E]/10 selection:text-[#0F766E]">
+<!-- SIDEBAR NAVIGATION -->
+<aside class="fixed left-0 top-0 h-full w-64 bg-white border-r border-[#E2E8F0] z-50 flex flex-col justify-between select-none">
+<div class="flex flex-col flex-1 min-h-0">
+<!-- Brand Logo Header -->
+<div class="h-16 px-space-base flex items-center justify-between border-b border-[#E2E8F0]">
+<div class="flex items-center gap-2.5">
+<img alt="HUNAR Admin Logo" class="h-8 w-auto object-contain" src="https://lh3.googleusercontent.com/aida/AEtjO1UvaXZ1RB-ALHCCZwauZCZPTVwT81uzHrtT6xxpBkQ2iim9nlyCO87EtvtLf2cXoYpJ23PQIvi3t44hSjW_bxvtC--_nvCzyR6qhf9e4KwwcLufzgbUrILUTuMDIGUnhoJZoVlIUN8s31pZp1X_6JjZwK9dhsYED0wb6oQNPNu0TKccmF3bx6M43QdySNF3XLxZpMIuTb5I7EUkKehsCoyn3peExuGVBluTEh3AGTd5pnRGEfvs1jNaZG4m"/>
+</div>
+<span class="px-2 py-0.5 bg-[#0F766E]/10 text-[#0F766E] font-mono text-[11px] font-semibold rounded border border-[#0F766E]/20/60 tracking-wider">OPS</span>
+</div>
+<!-- Nav Items -->
+<div class="flex-1 overflow-y-auto px-3 py-4">
+<nav class="space-y-6">
+<!-- Main Section -->
+<div class="space-y-1">
+<p class="px-3 text-[11px] font-semibold uppercase tracking-wider text-[#64748B]">Main</p>
+<div class="mt-1 space-y-0.5">
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-[#64748B] hover:bg-[#F8FAFC] hover:text-[#1A1A2E] transition-colors text-sm font-medium" href="#">
+<span class="material-symbols-outlined text-[19px] text-[#64748B]">dashboard</span>
+<span>Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-[#64748B] hover:bg-[#F8FAFC] hover:text-[#1A1A2E] transition-colors text-sm font-medium" href="#">
+<span class="material-symbols-outlined text-[19px] text-[#64748B]">calendar_month</span>
+<span>Jobs &amp; Bookings</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-[#64748B] hover:bg-[#F8FAFC] hover:text-[#1A1A2E] transition-colors text-sm font-medium" href="#">
+<span class="material-symbols-outlined text-[19px] text-[#64748B]">group</span>
+<span>Customers</span>
+</a>
+</div>
+</div>
+<!-- Workers & Supply -->
+<div class="space-y-1">
+<p class="px-3 text-[11px] font-semibold uppercase tracking-wider text-[#64748B]">Workers &amp; Supply</p>
+<div class="mt-1 space-y-0.5">
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-[#64748B] hover:bg-[#F8FAFC] hover:text-[#1A1A2E] transition-colors text-sm font-medium" href="#">
+<span class="material-symbols-outlined text-[19px] text-[#64748B]">engineering</span>
+<span>Workers Directory</span>
+</a>
+<!-- Active Route: Verification -->
+<a aria-current="page" class="flex items-center justify-between px-3 py-2 rounded-lg bg-[#0F766E] text-white font-semibold shadow-sm transition-all" href="#">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-[19px]">verified_user</span>
+<span>Verification</span>
+</div>
+<span class="px-1.5 py-0.5 text-[11px] bg-[#0F766E]/10 text-[#0F766E] font-bold rounded">24 Pending</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-[#64748B] hover:bg-[#F8FAFC] hover:text-[#1A1A2E] transition-colors text-sm font-medium" href="#">
+<span class="material-symbols-outlined text-[19px] text-[#64748B]">construction</span>
+<span>Skill Categories &amp; Pricing</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-[#64748B] hover:bg-[#F8FAFC] hover:text-[#1A1A2E] transition-colors text-sm font-medium" href="#">
+<span class="material-symbols-outlined text-[19px] text-[#64748B]">payments</span>
+<span>Payouts &amp; Escrow</span>
+</a>
+</div>
+</div>
+<!-- Platform Section -->
+<div class="space-y-1">
+<p class="px-3 text-[11px] font-semibold uppercase tracking-wider text-[#64748B]">Platform</p>
+<div class="mt-1 space-y-0.5">
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-[#64748B] hover:bg-[#F8FAFC] hover:text-[#1A1A2E] transition-colors text-sm font-medium" href="#">
+<span class="material-symbols-outlined text-[19px] text-[#64748B]">gavel</span>
+<span>Dispute Center</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-[#64748B] hover:bg-[#F8FAFC] hover:text-[#1A1A2E] transition-colors text-sm font-medium" href="#">
+<span class="material-symbols-outlined text-[19px] text-[#64748B]">settings</span>
+<span>System Settings</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-[#64748B] hover:bg-[#F8FAFC] hover:text-[#1A1A2E] transition-colors text-sm font-medium" href="#">
+<span class="material-symbols-outlined text-[19px] text-[#64748B]">fact_check</span>
+<span>Audit Logs</span>
+</a>
+</div>
+</div>
+</nav>
+</div>
+</div>
+<!-- Node status footer -->
+<div class="p-3.5 border-t border-[#E2E8F0] bg-[#F8FAFC]">
+<div class="flex items-center gap-2 mb-1">
+<span class="w-2 h-2 rounded-full bg-emerald-500 inline-block animate-pulse"></span>
+<span class="text-xs text-[#1A1A2E] font-semibold">Lahore/Karachi Node</span>
+</div>
+<p class="text-xs text-[#64748B]">All systems operational</p>
+<div class="mt-2 flex items-center justify-between text-[#64748B] font-mono text-[11px]">
+<span>Build</span>
+<span class="font-semibold text-[#1A1A2E]">v2.4.2</span>
+</div>
+</div>
+</aside>
+<!-- MAIN WRAPPER -->
+<div class="pl-64 flex flex-col min-h-screen">
+<!-- Topbar Header -->
+<header class="fixed top-0 left-64 right-0 h-16 bg-white border-b border-[#E2E8F0] z-40 px-6 flex items-center justify-between">
+<div class="flex items-center gap-4">
+<div class="flex items-center gap-1.5 text-xs font-medium text-[#64748B]">
+<span>HUNAR Admin</span>
+<span class="material-symbols-outlined text-[14px]">chevron_right</span>
+<span>Supply Operations</span>
+<span class="material-symbols-outlined text-[14px]">chevron_right</span>
+<span class="font-semibold text-[#0F766E]">Verification</span>
+</div>
+<div class="h-4 w-[1px] bg-[#E2E8F0]"></div>
+<div class="relative flex items-center w-80">
+<span class="material-symbols-outlined absolute left-3 text-[#64748B] text-[18px]">search</span>
+<input class="w-full h-9 pl-9 pr-12 bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg text-xs text-[#1A1A2E] placeholder:text-[#64748B] focus:bg-white focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E] focus:outline-none transition-all" placeholder="Quick search (workers, CNIC, orders)..." type="text"/>
+<span class="absolute right-2.5 px-1.5 py-0.5 font-mono text-[10px] text-[#64748B] bg-white rounded border border-[#E2E8F0]">⌘K</span>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<!-- Region Dropdown -->
+<div class="flex items-center gap-1.5 px-3 py-1.5 bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg text-xs text-[#1A1A2E] cursor-pointer hover:bg-[#F8FAFC] transition-colors">
+<span class="material-symbols-outlined text-[#0F766E] text-[18px]">location_on</span>
+<span class="font-medium">All Pakistan (LHE, KHI, ISB)</span>
+<span class="material-symbols-outlined text-[#64748B] text-[16px]">expand_more</span>
+</div>
+<div class="h-4 w-[1px] bg-[#E2E8F0]"></div>
+<!-- Notifications button -->
+<button class="relative p-1.5 rounded-lg text-[#64748B] hover:bg-[#F8FAFC] hover:text-[#1A1A2E] transition-colors" type="button">
+<span class="material-symbols-outlined text-[22px]">notifications</span>
+<span class="absolute top-1 right-1 w-4 h-4 bg-[#0F766E] text-white rounded-full text-[10px] flex items-center justify-center font-bold">3</span>
+</button>
+<!-- Admin Profile -->
+<div class="flex items-center gap-3 pl-1 cursor-pointer group">
+<img alt="Profile" class="w-8 h-8 rounded-full object-cover border border-[#E2E8F0]" src="https://lh3.googleusercontent.com/aida/AEtjO1XP-Abg8-q3TBwA46L_zOUl6K_yqtJq_bJGEutqwUoDOdLdDmXUYrtPctk5mhw6WO2WnXKgSlAsb7WUEOxfXO7b72-HG53xTeygAtS8ZVa52vE51SvUfXkkStE1eFxXLMf88GEm-d3dIMZ9w63_CBpTmJh72LBLfRMnzxw3DB8twHaovPod03qGgEcDrbiuLFQi--Hwp0oQtnoQzSrEWsVAXqPyAsbTNfg_FukagtTUkx0CNn8ntAzqtyQ"/>
+<div class="hidden xl:flex flex-col text-left">
+<span class="text-xs font-semibold text-[#1A1A2E] group-hover:text-[#0F766E] transition-colors leading-tight">Tariq Mahmood</span>
+<span class="text-[11px] text-[#64748B] leading-tight">Lead Verification Officer</span>
+</div>
+<span class="material-symbols-outlined text-[#64748B] text-[18px] group-hover:text-[#1A1A2E] transition-colors">keyboard_arrow_down</span>
+</div>
+</div>
+</header>
+<!-- CONTENT BODY -->
+<main class="relative pt-20 w-full px-6 py-4 bg-[#F8FAFC] flex-1">
+<div class="flex flex-col w-full max-w-[1400px] mx-auto">
+<!-- Compliance Policy Notice Banner -->
+<div class="mb-5 rounded-lg bg-gradient-to-r from-[#0F766E]/10 to-[#0F766E]/10 border border-[#0F766E]/20 px-4 py-3 flex items-center justify-between shadow-xs">
+<div class="flex items-center gap-3 min-w-0">
+<div class="w-7 h-7 rounded bg-[#0F766E] text-white flex items-center justify-center flex-shrink-0">
+<span class="material-symbols-outlined text-[17px]">verified_user</span>
+</div>
+<div class="flex items-center gap-1.5 min-w-0">
+<span class="text-xs font-semibold text-[#1A1A2E] flex-shrink-0">Compliance Directive:</span>
+<p class="text-xs text-[#64748B] truncate">
+                Skilled workers must provide valid NADRA CNIC biometrics and minimum 1 technical certification before onboarding to Hunar Direct Dispatch.
+              </p>
+</div>
+</div>
+<div class="flex items-center gap-4 flex-shrink-0">
+<span class="font-mono text-xs text-[#0F766E] font-semibold">SLA Window: 6.0 hrs</span>
+<button aria-label="Dismiss alert" class="text-[#64748B] hover:text-[#1A1A2E] flex items-center" onclick="this.closest('.mb-5').remove()" type="button">
+<span class="material-symbols-outlined text-[16px]">close</span>
+</button>
+</div>
+</div>
+<!-- Header & Primary Controls -->
+<div class="flex flex-col lg:flex-row lg:items-end justify-between gap-4 mb-5">
+<div>
+<div class="flex items-center gap-2.5 mb-1">
+<h1 class="text-2xl font-bold text-[#1A1A2E] tracking-tight">Verification Center</h1>
+<span class="px-2 py-0.5 bg-[#0F766E] text-white text-[11px] font-mono font-semibold rounded tracking-wider">LIVE QUEUE</span>
+</div>
+<p class="text-xs text-[#64748B]">
+              Review, inspect credentials, and clear skilled tradespersons for live dispatch across Pakistan operational hubs.
+            </p>
+</div>
+<!-- Tabs and Action Buttons -->
+<div class="flex items-center flex-wrap gap-2.5">
+<div class="p-1 bg-white border border-[#E2E8F0] rounded-lg flex items-center shadow-xs">
+<button class="px-3 py-1.5 rounded text-xs font-semibold transition-all bg-[#0F766E]/10 text-[#0F766E]" id="tab-active" onclick="switchView('active')">
+                Active Queue (24)
+              </button>
+<button class="px-3 py-1.5 rounded text-xs font-medium text-[#64748B] hover:text-[#1A1A2E] transition-all" id="tab-archive" onclick="switchView('archive')">
+                Archive &amp; Logs
+              </button>
+<button class="px-3 py-1.5 rounded text-xs font-medium text-[#64748B] hover:text-[#1A1A2E] transition-all flex items-center gap-1" id="tab-empty" onclick="switchView('empty')">
+<span class="material-symbols-outlined text-[14px]">auto_mode</span> Empty State
+              </button>
+</div>
+<div class="h-6 w-[1px] bg-[#E2E8F0] hidden sm:block"></div>
+<button class="h-9 px-3.5 bg-white border border-[#E2E8F0] text-[#1A1A2E] hover:bg-[#F8FAFC] text-xs font-medium rounded-lg shadow-xs flex items-center gap-1.5 transition-colors" type="button">
+<span class="material-symbols-outlined text-[16px] text-[#64748B]">download</span>
+<span>Export CSV</span>
+</button>
+<button class="h-9 px-4 bg-[#0F766E] text-white hover:bg-[#115E59] text-xs font-semibold rounded-lg shadow-xs flex items-center gap-1.5 transition-colors" type="button">
+<span class="material-symbols-outlined text-[16px]">checklist</span>
+<span>Batch Actions</span>
+</button>
+</div>
+</div>
+<!-- 4 KPI Summary Cards -->
+<div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mb-5">
+<!-- Card 1: Pending Review -->
+<div class="bg-white border border-[#E2E8F0] p-4 rounded-lg shadow-xs relative overflow-hidden flex flex-col justify-between">
+<div class="flex items-start justify-between mb-3">
+<div class="flex items-center gap-2.5">
+<div class="w-8 h-8 rounded-lg bg-[#0F766E]/10 text-[#0F766E] flex items-center justify-center">
+<span class="material-symbols-outlined text-[20px]">hourglass_top</span>
+</div>
+<span class="text-xs font-semibold text-[#64748B]">Pending Review</span>
+</div>
+<span class="px-1.5 py-0.5 bg-[#0F766E]/10 text-[#0F766E] text-[11px] font-mono font-bold rounded">+6 today</span>
+</div>
+<div>
+<div class="flex items-baseline gap-1.5">
+<span class="text-2xl font-bold text-[#1A1A2E]">24</span>
+<span class="text-xs text-[#64748B]">candidates</span>
+</div>
+<div class="mt-2 flex items-center justify-between text-xs text-[#64748B]">
+<span>Avg. wait time: <strong class="text-[#1A1A2E] font-semibold">4.2 hrs</strong></span>
+<span class="text-[#0F766E] font-mono text-[11px] font-semibold">SLA OK</span>
+</div>
+</div>
+</div>
+<!-- Card 2: Approved Masters -->
+<div class="bg-white border border-[#E2E8F0] p-4 rounded-lg shadow-xs relative overflow-hidden flex flex-col justify-between">
+<div class="flex items-start justify-between mb-3">
+<div class="flex items-center gap-2.5">
+<div class="w-8 h-8 rounded-lg bg-[#16A34A]/10 text-[#16A34A] flex items-center justify-center">
+<span class="material-symbols-outlined text-[20px]">verified</span>
+</div>
+<span class="text-xs font-semibold text-[#64748B]">Approved Masters</span>
+</div>
+<span class="px-1.5 py-0.5 bg-[#16A34A]/10 text-[#16A34A] text-[11px] font-mono font-bold rounded">+32 this wk</span>
+</div>
+<div>
+<div class="flex items-baseline gap-1.5">
+<span class="text-2xl font-bold text-[#1A1A2E]">1,428</span>
+<span class="text-xs text-[#16A34A] font-medium">94.2% rate</span>
+</div>
+<div class="mt-2 flex items-center justify-between text-xs text-[#64748B]">
+<span>Cleared for direct job bids</span>
+<span class="font-mono text-[11px] text-[#64748B]">LHE 54%</span>
+</div>
+</div>
+</div>
+<!-- Card 3: Changes Requested -->
+<div class="bg-white border border-[#E2E8F0] p-4 rounded-lg shadow-xs relative overflow-hidden flex flex-col justify-between">
+<div class="flex items-start justify-between mb-3">
+<div class="flex items-center gap-2.5">
+<div class="w-8 h-8 rounded-lg bg-[#F59E0B]/10 text-[#F59E0B] flex items-center justify-center">
+<span class="material-symbols-outlined text-[20px]">assignment_late</span>
+</div>
+<span class="text-xs font-semibold text-[#64748B]">Changes Requested</span>
+</div>
+<span class="px-1.5 py-0.5 bg-[#F59E0B]/10 text-[#F59E0B] text-[11px] font-mono font-bold rounded">3 urgent</span>
+</div>
+<div>
+<div class="flex items-baseline gap-1.5">
+<span class="text-2xl font-bold text-[#1A1A2E]">8</span>
+<span class="text-xs text-[#64748B]">awaiting docs</span>
+</div>
+<div class="mt-2 flex items-center justify-between text-xs text-[#64748B]">
+<span>Mainly expired CNIC / blur</span>
+<span class="font-mono text-[11px] text-[#F59E0B] font-semibold">Follow-up sent</span>
+</div>
+</div>
+</div>
+<!-- Card 4: Rejected / Banned -->
+<div class="bg-white border border-[#E2E8F0] p-4 rounded-lg shadow-xs relative overflow-hidden flex flex-col justify-between">
+<div class="flex items-start justify-between mb-3">
+<div class="flex items-center gap-2.5">
+<div class="w-8 h-8 rounded-lg bg-[#DC2626]/10 text-[#DC2626] flex items-center justify-center">
+<span class="material-symbols-outlined text-[20px]">block</span>
+</div>
+<span class="text-xs font-semibold text-[#64748B]">Rejected / Banned</span>
+</div>
+<span class="px-1.5 py-0.5 bg-[#DC2626]/10 text-[#DC2626] text-[11px] font-mono font-bold rounded">2.4% fail rate</span>
+</div>
+<div>
+<div class="flex items-baseline gap-1.5">
+<span class="text-2xl font-bold text-[#1A1A2E]">36</span>
+<span class="text-xs text-[#64748B]">fraud / mismatched</span>
+</div>
+<div class="mt-2 flex items-center justify-between text-xs text-[#64748B]">
+<span>NADRA hash mismatch</span>
+<span class="font-mono text-[11px] text-[#64748B]">Automated flags</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Search & Deep Filtering Toolbar -->
+<div class="bg-white border border-[#E2E8F0] p-3.5 rounded-lg shadow-xs mb-5">
+<div class="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3">
+<!-- Search Input -->
+<div class="relative flex-1">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-[#64748B] text-[18px]">search</span>
+<input class="w-full h-9 pl-9 pr-14 bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg text-xs text-[#1A1A2E] placeholder:text-[#64748B] focus:bg-white focus:ring-1 focus:ring-[#0F766E] focus:border-[#0F766E] focus:outline-none transition-all" id="worker-search" placeholder="Search worker by name, phone (+92), CNIC (e.g. 35202-...), or skill..." type="text"/>
+<span class="absolute right-3 top-1/2 -translate-y-1/2 px-1.5 py-0.5 font-mono text-[10px] text-[#64748B] bg-white rounded border border-[#E2E8F0]">/</span>
+</div>
+<!-- Filters Group -->
+<div class="flex flex-wrap items-center gap-2">
+<!-- Status Filter -->
+<div class="relative">
+<select class="appearance-none h-9 pl-3 pr-8 bg-[#F8FAFC] border border-[#E2E8F0] hover:bg-[#F8FAFC] text-[#1A1A2E] text-xs font-medium rounded-lg cursor-pointer focus:outline-none focus:ring-1 focus:ring-[#0F766E] transition-colors">
+<option>All Statuses (42)</option>
+<option selected="">Pending Review (24)</option>
+<option>Approved (1,428)</option>
+<option>Changes Requested (8)</option>
+<option>Rejected (36)</option>
+</select>
+<span class="material-symbols-outlined absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none text-[#64748B] text-[16px]">expand_more</span>
+</div>
+<!-- Skill Category Filter -->
+<div class="relative">
+<select class="appearance-none h-9 pl-3 pr-8 bg-[#F8FAFC] border border-[#E2E8F0] hover:bg-[#F8FAFC] text-[#1A1A2E] text-xs font-medium rounded-lg cursor-pointer focus:outline-none focus:ring-1 focus:ring-[#0F766E] transition-colors">
+<option>All Categories</option>
+<option>Electrician (Bijli Mistri)</option>
+<option>Plumber (Sanitary)</option>
+<option>Mason (Raj Mistri)</option>
+<option>Painter &amp; Finisher</option>
+<option>Carpenter (Badhai)</option>
+<option>HVAC &amp; Chiller Tech</option>
+</select>
+<span class="material-symbols-outlined absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none text-[#64748B] text-[16px]">expand_more</span>
+</div>
+<!-- Date Range Filter -->
+<div class="relative">
+<select class="appearance-none h-9 pl-3 pr-8 bg-[#F8FAFC] border border-[#E2E8F0] hover:bg-[#F8FAFC] text-[#1A1A2E] text-xs font-medium rounded-lg cursor-pointer focus:outline-none focus:ring-1 focus:ring-[#0F766E] transition-colors">
+<option>All Time</option>
+<option selected="">Last 24 Hours</option>
+<option>Last 7 Days</option>
+<option>Last 30 Days</option>
+<option>Custom Date Range</option>
+</select>
+<span class="material-symbols-outlined absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none text-[#64748B] text-[16px]">calendar_today</span>
+</div>
+<!-- Refresh Button -->
+<button class="h-9 w-9 bg-[#F8FAFC] border border-[#E2E8F0] hover:bg-[#F8FAFC] text-[#64748B] hover:text-[#1A1A2E] rounded-lg flex items-center justify-center transition-colors" title="Refresh Table" type="button">
+<span class="material-symbols-outlined text-[17px]">refresh</span>
+</button>
+</div>
+</div>
+<!-- Active Filter Badges -->
+<div class="mt-2.5 pt-2 border-t border-[#F8FAFC] flex items-center flex-wrap gap-1.5">
+<span class="text-xs text-[#64748B]">Active filters:</span>
+<span class="inline-flex items-center gap-1 px-2.5 py-0.5 bg-[#F8FAFC] text-[#1A1A2E] text-xs font-medium rounded">
+              Status: <strong class="font-semibold">Pending Review</strong>
+<span class="material-symbols-outlined text-[13px] text-[#64748B] hover:text-[#DC2626] cursor-pointer">close</span>
+</span>
+<span class="inline-flex items-center gap-1 px-2.5 py-0.5 bg-[#F8FAFC] text-[#1A1A2E] text-xs font-medium rounded">
+              Window: <strong class="font-semibold">Last 24h</strong>
+<span class="material-symbols-outlined text-[13px] text-[#64748B] hover:text-[#DC2626] cursor-pointer">close</span>
+</span>
+<button class="text-xs text-[#0F766E] font-medium hover:underline ml-1" type="button">Clear all filters</button>
+</div>
+</div>
+<!-- TABLE CONTAINER / ACTIVE VIEW -->
+<div class="bg-white border border-[#E2E8F0] rounded-lg shadow-xs overflow-hidden mb-6" id="view-active-container">
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-[#F8FAFC] border-b border-[#E2E8F0] h-10">
+<th class="w-10 pl-4 pr-1">
+<input class="rounded border-[#E2E8F0] text-[#0F766E] focus:ring-[#0F766E] w-4 h-4 cursor-pointer" type="checkbox"/>
+</th>
+<th class="py-2.5 px-3 text-[11px] font-semibold uppercase tracking-wider text-[#64748B]">Worker Profile</th>
+<th class="py-2.5 px-3 text-[11px] font-semibold uppercase tracking-wider text-[#64748B]">Skill / Category</th>
+<th class="py-2.5 px-3 text-[11px] font-semibold uppercase tracking-wider text-[#64748B]">Experience &amp; Node</th>
+<th class="py-2.5 px-3 text-[11px] font-semibold uppercase tracking-wider text-[#64748B]">Documents</th>
+<th class="py-2.5 px-3 text-[11px] font-semibold uppercase tracking-wider text-[#64748B]">Submitted</th>
+<th class="py-2.5 px-3 text-[11px] font-semibold uppercase tracking-wider text-[#64748B]">Status</th>
+<th class="py-2.5 pr-4 pl-3 text-right text-[11px] font-semibold uppercase tracking-wider text-[#64748B]">Actions</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-[#E2E8F0]">
+<!-- ROW 1: Ahmed Khan -->
+<tr class="hover:bg-[#F8FAFC] transition-colors group">
+<td class="pl-4 pr-1 py-3">
+<input class="rounded border-[#E2E8F0] text-[#0F766E] focus:ring-[#0F766E] w-4 h-4 cursor-pointer" type="checkbox"/>
+</td>
+<td class="py-3 px-3">
+<div class="flex items-center gap-3">
+<img class="w-10 h-10 rounded-full object-cover border border-[#E2E8F0] flex-shrink-0" data-alt="Portrait photo of a Pakistani electrician in his early 30s wearing a blue work polo shirt" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBhyCRoH14W0bl151zmQEMt3ewCFwB0G4WaKs6YdcWCDUQyzNmXNmp2NjOrZcQZrWvY-fAsP1yNzF3gxE_QJfpEtOKJtSRZKU4OZw-1wMtE6U5mtMnW4hXblTCVIekFfmwMMzxcZwwsd68P_NRoEj4cDbwdkVIprH_yvld2FzaEOqauzfbppb380N5EoffQgt6su9L_dwv4xltrZw7c6DJqHnLryJ9sputhSLAkc4QezwiA-MvjvTIeVw"/>
+<div class="min-w-0">
+<div class="flex items-center gap-1.5">
+<span class="text-xs font-semibold text-[#1A1A2E] group-hover:text-[#0F766E] transition-colors">Ahmed Khan</span>
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-500" title="Online via Hunar Partner App"></span>
+</div>
+<div class="flex items-center gap-1.5 font-mono text-[11px] text-[#64748B] mt-0.5">
+<span>+92 300 4829103</span>
+<span>•</span>
+<span class="bg-[#F8FAFC] px-1 py-0.5 rounded text-[#1A1A2E]">35202-8492019-1</span>
+</div>
+</div>
+</div>
+</td>
+<td class="py-3 px-3">
+<div>
+<span class="inline-flex items-center gap-1 px-2 py-0.5 bg-[#0F766E]/10 text-[#0F766E] text-xs font-semibold rounded">
+<span class="material-symbols-outlined text-[14px]">bolt</span>
+                        Electrician
+                      </span>
+<p class="text-[11px] text-[#64748B] mt-1 truncate max-w-[180px]">Solar Wiring, Substation, Inverter</p>
+</div>
+</td>
+<td class="py-3 px-3">
+<div class="flex flex-col">
+<div class="flex items-center gap-1 text-xs font-medium text-[#1A1A2E]">
+<span class="material-symbols-outlined text-[15px] text-[#64748B]">work_history</span>
+                        8 yrs exp
+                      </div>
+<span class="text-xs text-[#64748B]">Lahore, Gulberg III</span>
+</div>
+</td>
+<td class="py-3 px-3">
+<div class="flex items-center gap-1.5">
+<span class="inline-flex items-center gap-1 px-1.5 py-0.5 bg-[#16A34A]/10 text-[#16A34A] text-xs font-semibold rounded">
+<span class="material-symbols-outlined text-[13px]">check_circle</span>
+                        3/3
+                      </span>
+<span class="text-[11px] text-[#64748B] truncate" title="CNIC Front/Back, TEVTA Diploma, Police Verification">CNIC + TEVTA + Police</span>
+</div>
+</td>
+<td class="py-3 px-3">
+<div class="flex flex-col">
+<span class="text-xs text-[#1A1A2E]">Today, 09:15 AM</span>
+<span class="font-mono text-[11px] text-[#0F766E] font-medium">2 hrs ago</span>
+</div>
+</td>
+<td class="py-3 px-3">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 bg-[#0F766E]/10 text-[#0F766E] text-xs font-semibold rounded">
+<span class="w-1.5 h-1.5 rounded-full bg-[#0F766E] animate-pulse"></span>
+                      Pending Review
+                    </span>
+</td>
+<td class="py-3 pr-4 pl-3 text-right">
+<div class="flex items-center justify-end gap-1.5">
+<button class="h-7 px-3 bg-[#0F766E] text-white hover:bg-[#115E59] text-xs font-semibold rounded shadow-xs flex items-center gap-1 transition-all" onclick="openInspectionDrawer('Ahmed Khan', 'Electrician', 'Lahore, Gulberg III', '35202-8492019-1')" type="button">
+<span>Review</span>
+<span class="font-mono text-[10px] opacity-75">↵</span>
+</button>
+<button class="h-7 w-7 text-[#64748B] hover:text-[#1A1A2E] hover:bg-[#F8FAFC] rounded flex items-center justify-center transition-colors" type="button">
+<span class="material-symbols-outlined text-[17px]">more_vert</span>
+</button>
+</div>
+</td>
+</tr>
+<!-- ROW 2: Ali Raza -->
+<tr class="hover:bg-[#F8FAFC] transition-colors group">
+<td class="pl-4 pr-1 py-3">
+<input class="rounded border-[#E2E8F0] text-[#0F766E] focus:ring-[#0F766E] w-4 h-4 cursor-pointer" type="checkbox"/>
+</td>
+<td class="py-3 px-3">
+<div class="flex items-center gap-3">
+<img class="w-10 h-10 rounded-full object-cover border border-[#E2E8F0] flex-shrink-0" data-alt="Close-up headshot of a middle-aged South Asian plumber" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA2gfbbhVM3-nXl64wHIJvDkjwNfQ_mbFmBLQf024kw-wrUS8eMrQ3Zqa3QLtq6e0TwbNNB8CczeKm1LziRa8UJY9FTb67uZ3Q0gehUY3SnR93RDOwFcne3Com4wOqnb_HfZvHbPwpfNVFkmTzJP8MKuDepFrqidtmCzhHLbe6GY4KlFbxs1BT7Sm1BP-pKKTfxxKj3CVc3uREgbTd9AZjy9tKX5pNrbOjYOIGl2CszujCEpl-LwTLDGg"/>
+<div class="min-w-0">
+<div class="flex items-center gap-1.5">
+<span class="text-xs font-semibold text-[#1A1A2E] group-hover:text-[#0F766E] transition-colors">Ali Raza</span>
+</div>
+<div class="flex items-center gap-1.5 font-mono text-[11px] text-[#64748B] mt-0.5">
+<span>+92 321 9912044</span>
+<span>•</span>
+<span class="bg-[#F8FAFC] px-1 py-0.5 rounded text-[#1A1A2E]">42101-1829302-3</span>
+</div>
+</div>
+</div>
+</td>
+<td class="py-3 px-3">
+<div>
+<span class="inline-flex items-center gap-1 px-2 py-0.5 bg-[#0F766E]/10 text-[#0F766E] text-xs font-semibold rounded">
+<span class="material-symbols-outlined text-[14px]">plumbing</span>
+                        Plumber
+                      </span>
+<p class="text-[11px] text-[#64748B] mt-1 truncate max-w-[180px]">Sanitary, Geyser, Leak Trace</p>
+</div>
+</td>
+<td class="py-3 px-3">
+<div class="flex flex-col">
+<div class="flex items-center gap-1 text-xs font-medium text-[#1A1A2E]">
+<span class="material-symbols-outlined text-[15px] text-[#64748B]">work_history</span>
+                        5 yrs exp
+                      </div>
+<span class="text-xs text-[#64748B]">Karachi, Clifton Block 4</span>
+</div>
+</td>
+<td class="py-3 px-3">
+<div class="flex items-center gap-1.5">
+<span class="inline-flex items-center gap-1 px-1.5 py-0.5 bg-[#16A34A]/10 text-[#16A34A] text-xs font-semibold rounded">
+<span class="material-symbols-outlined text-[13px]">check_circle</span>
+                        3/3
+                      </span>
+<span class="text-[11px] text-[#64748B] truncate">CNIC + Sindh Police + Appr</span>
+</div>
+</td>
+<td class="py-3 px-3">
+<div class="flex flex-col">
+<span class="text-xs text-[#1A1A2E]">Today, 11:30 AM</span>
+<span class="font-mono text-[11px] text-[#0F766E] font-medium">45 min ago</span>
+</div>
+</td>
+<td class="py-3 px-3">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 bg-[#0F766E]/10 text-[#0F766E] text-xs font-semibold rounded">
+<span class="w-1.5 h-1.5 rounded-full bg-[#0F766E] animate-pulse"></span>
+                      Pending Review
+                    </span>
+</td>
+<td class="py-3 pr-4 pl-3 text-right">
+<div class="flex items-center justify-end gap-1.5">
+<button class="h-7 px-3 bg-[#0F766E] text-white hover:bg-[#115E59] text-xs font-semibold rounded shadow-xs flex items-center gap-1 transition-all" onclick="openInspectionDrawer('Ali Raza', 'Plumber', 'Karachi, Clifton Block 4', '42101-1829302-3')" type="button">
+<span>Review</span>
+<span class="font-mono text-[10px] opacity-75">↵</span>
+</button>
+<button class="h-7 w-7 text-[#64748B] hover:text-[#1A1A2E] hover:bg-[#F8FAFC] rounded flex items-center justify-center transition-colors" type="button">
+<span class="material-symbols-outlined text-[17px]">more_vert</span>
+</button>
+</div>
+</td>
+</tr>
+<!-- ROW 3: Usman Khan (Changes Requested) -->
+<tr class="hover:bg-[#F8FAFC] transition-colors group">
+<td class="pl-4 pr-1 py-3">
+<input class="rounded border-[#E2E8F0] text-[#0F766E] focus:ring-[#0F766E] w-4 h-4 cursor-pointer" type="checkbox"/>
+</td>
+<td class="py-3 px-3">
+<div class="flex items-center gap-3">
+<img class="w-10 h-10 rounded-full object-cover border border-[#E2E8F0] flex-shrink-0" data-alt="Headshot of a senior Pakistani construction mason" src="https://lh3.googleusercontent.com/aida-public/AB6AXuArvdsbHMKk-y52g_kanZdKulC1R69NAEDpeeSkeBSi208ay2iLSDUfjyJ_PY4rl9HtuLBQWp3ptLObVyej_pROi-w7sl83JHmNx5rf4pwGFhfoRZW5_PorWNjf9iMSP6FfcLYXctgSO0mS5vGkAQEROknc4N24Ge_W2nluE89p4lXbXFZn4sc5kfgtq5DWsP4vfi-zUEJ5uBoHuzgrLWv_u6ku_Nj-A3zmH2B26qnCLswCMNP5bbWUOA"/>
+<div class="min-w-0">
+<div class="flex items-center gap-1.5">
+<span class="text-xs font-semibold text-[#1A1A2E] group-hover:text-[#0F766E] transition-colors">Usman Khan</span>
+</div>
+<div class="flex items-center gap-1.5 font-mono text-[11px] text-[#64748B] mt-0.5">
+<span>+92 333 5104829</span>
+<span>•</span>
+<span class="bg-[#F8FAFC] px-1 py-0.5 rounded text-[#1A1A2E]">37405-9018291-7</span>
+</div>
+</div>
+</div>
+</td>
+<td class="py-3 px-3">
+<div>
+<span class="inline-flex items-center gap-1 px-2 py-0.5 bg-[#F59E0B]/10 text-[#F59E0B] text-xs font-semibold rounded">
+<span class="material-symbols-outlined text-[14px]">foundation</span>
+                        Mason (Raj Mistri)
+                      </span>
+<p class="text-[11px] text-[#64748B] mt-1 truncate max-w-[180px]">Tile Fixing, Plaster, Concrete</p>
+</div>
+</td>
+<td class="py-3 px-3">
+<div class="flex flex-col">
+<div class="flex items-center gap-1 text-xs font-medium text-[#1A1A2E]">
+<span class="material-symbols-outlined text-[15px] text-[#64748B]">work_history</span>
+                        11 yrs exp
+                      </div>
+<span class="text-xs text-[#64748B]">Rawalpindi, Saddar</span>
+</div>
+</td>
+<td class="py-3 px-3">
+<div class="flex items-center gap-1.5">
+<span class="inline-flex items-center gap-1 px-1.5 py-0.5 bg-[#F59E0B]/10 text-[#F59E0B] text-xs font-semibold rounded">
+<span class="material-symbols-outlined text-[13px]">warning</span>
+                        2/3
+                      </span>
+<span class="text-[11px] text-[#F59E0B] font-medium truncate">CNIC back blurry</span>
+</div>
+</td>
+<td class="py-3 px-3">
+<div class="flex flex-col">
+<span class="text-xs text-[#1A1A2E]">Yesterday, 04:20 PM</span>
+<span class="font-mono text-[11px] text-[#64748B] font-medium">18 hrs ago</span>
+</div>
+</td>
+<td class="py-3 px-3">
+<span class="inline-flex items-center gap-1 px-2 py-0.5 bg-[#F59E0B]/10 text-[#F59E0B] text-xs font-semibold rounded">
+                      Changes Requested
+                    </span>
+</td>
+<td class="py-3 pr-4 pl-3 text-right">
+<div class="flex items-center justify-end gap-1.5">
+<button class="h-7 px-3 bg-white border border-[#E2E8F0] text-[#1A1A2E] hover:bg-[#F8FAFC] text-xs font-medium rounded shadow-xs transition-colors" onclick="openInspectionDrawer('Usman Khan', 'Mason (Raj Mistri)', 'Rawalpindi, Saddar', '37405-9018291-7')" type="button">
+                        View
+                      </button>
+<button class="h-7 w-7 text-[#64748B] hover:text-[#1A1A2E] hover:bg-[#F8FAFC] rounded flex items-center justify-center transition-colors" type="button">
+<span class="material-symbols-outlined text-[17px]">more_vert</span>
+</button>
+</div>
+</td>
+</tr>
+<!-- ROW 4: Hamza Ali (Approved) -->
+<tr class="hover:bg-[#F8FAFC] transition-colors group">
+<td class="pl-4 pr-1 py-3">
+<input class="rounded border-[#E2E8F0] text-[#0F766E] focus:ring-[#0F766E] w-4 h-4 cursor-pointer" type="checkbox"/>
+</td>
+<td class="py-3 px-3">
+<div class="flex items-center gap-3">
+<img class="w-10 h-10 rounded-full object-cover border border-[#E2E8F0] flex-shrink-0" data-alt="Portrait of a young Pakistani painter in a clean white work shirt" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCCKZaqCxljs0BREsXdXzEQptXsu8inmbM3obrSn9vm004zFtlENzQNJIlq1zmb-2c3oF_wrZWW_1lr2GUw_temxq9-Ep249F3iPVIN2rnDa2mI_iZvFZg4Oxd61g8RF9hG3sBYb1gMV8_IRwfy1nhkfLjt6MXwEKk1R4wSMU0LUpebRsHbGlLctLTT8RByOiul-UoyH_GRXYebB81w6N779kOZIYUbWDbj91e7tGQmsSC-c7jz4XPYaA"/>
+<div class="min-w-0">
+<div class="flex items-center gap-1.5">
+<span class="text-xs font-semibold text-[#1A1A2E] group-hover:text-[#0F766E] transition-colors">Hamza Ali</span>
+</div>
+<div class="flex items-center gap-1.5 font-mono text-[11px] text-[#64748B] mt-0.5">
+<span>+92 345 8820199</span>
+<span>•</span>
+<span class="bg-[#F8FAFC] px-1 py-0.5 rounded text-[#1A1A2E]">61101-4491028-5</span>
+</div>
+</div>
+</div>
+</td>
+<td class="py-3 px-3">
+<div>
+<span class="inline-flex items-center gap-1 px-2 py-0.5 bg-[#F8FAFC] text-[#64748B] text-xs font-semibold rounded">
+<span class="material-symbols-outlined text-[14px]">format_paint</span>
+                        Painter &amp; Finisher
+                      </span>
+<p class="text-[11px] text-[#64748B] mt-1 truncate max-w-[180px]">Texture, Exterior WeatherSheet</p>
+</div>
+</td>
+<td class="py-3 px-3">
+<div class="flex flex-col">
+<div class="flex items-center gap-1 text-xs font-medium text-[#1A1A2E]">
+<span class="material-symbols-outlined text-[15px] text-[#64748B]">work_history</span>
+                        4 yrs exp
+                      </div>
+<span class="text-xs text-[#64748B]">Islamabad, Sector G-11</span>
+</div>
+</td>
+<td class="py-3 px-3">
+<div class="flex items-center gap-1.5">
+<span class="inline-flex items-center gap-1 px-1.5 py-0.5 bg-[#16A34A]/10 text-[#16A34A] text-xs font-semibold rounded">
+<span class="material-symbols-outlined text-[13px]">check_circle</span>
+                        3/3
+                      </span>
+<span class="text-[11px] text-[#64748B] truncate">Full Badge Verified</span>
+</div>
+</td>
+<td class="py-3 px-3">
+<div class="flex flex-col">
+<span class="text-xs text-[#1A1A2E]">Sep 08, 2026</span>
+<span class="font-mono text-[11px] text-[#64748B] font-medium">Approved by Tariq M.</span>
+</div>
+</td>
+<td class="py-3 px-3">
+<span class="inline-flex items-center gap-1 px-2 py-0.5 bg-[#16A34A]/10 text-[#16A34A] text-xs font-semibold rounded">
+<span class="material-symbols-outlined text-[13px]">check</span>
+                      Approved
+                    </span>
+</td>
+<td class="py-3 pr-4 pl-3 text-right">
+<div class="flex items-center justify-end gap-1.5">
+<button class="h-7 px-3 bg-white border border-[#E2E8F0] text-[#1A1A2E] hover:bg-[#F8FAFC] text-xs font-medium rounded shadow-xs transition-colors" onclick="openInspectionDrawer('Hamza Ali', 'Painter', 'Islamabad, Sector G-11', '61101-4491028-5')" type="button">
+                        View
+                      </button>
+<button class="h-7 w-7 text-[#64748B] hover:text-[#1A1A2E] hover:bg-[#F8FAFC] rounded flex items-center justify-center transition-colors" type="button">
+<span class="material-symbols-outlined text-[17px]">more_vert</span>
+</button>
+</div>
+</td>
+</tr>
+<!-- ROW 5: Muhammad Bilal (Pending Review) -->
+<tr class="hover:bg-[#F8FAFC] transition-colors group">
+<td class="pl-4 pr-1 py-3">
+<input class="rounded border-[#E2E8F0] text-[#0F766E] focus:ring-[#0F766E] w-4 h-4 cursor-pointer" type="checkbox"/>
+</td>
+<td class="py-3 px-3">
+<div class="flex items-center gap-3">
+<img class="w-10 h-10 rounded-full object-cover border border-[#E2E8F0] flex-shrink-0" data-alt="Pakistani HVAC repair technician in industrial work attire" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCBfOPIMMBJOcKGp7ph2KgzqYMr0dpPEDBxfxltfv0yJ-YjJLAWoNVAzZjQFgcD9L2OBaHl3Xm0HnEN7yflw2BPTVg28AQbWAGA763AKHuaJJ1fbhAGske5IL3RUKzTMTcwkXdzLM4s6Q0_s38kMwdVgOtHb6zzOAKWEX9ceNhbVoUHh0ysW9mGpf1XuQ_ocH4AjO-8jGqjtzO5sQ1WemrzC9ox3e3VT1xl8N_p_zJm4SzqqGR6HJDKGQ"/>
+<div class="min-w-0">
+<div class="flex items-center gap-1.5">
+<span class="text-xs font-semibold text-[#1A1A2E] group-hover:text-[#0F766E] transition-colors">Muhammad Bilal</span>
+</div>
+<div class="flex items-center gap-1.5 font-mono text-[11px] text-[#64748B] mt-0.5">
+<span>+92 301 7729104</span>
+<span>•</span>
+<span class="bg-[#F8FAFC] px-1 py-0.5 rounded text-[#1A1A2E]">33100-2918390-9</span>
+</div>
+</div>
+</div>
+</td>
+<td class="py-3 px-3">
+<div>
+<span class="inline-flex items-center gap-1 px-2 py-0.5 bg-[#0F766E]/10 text-[#0F766E] text-xs font-semibold rounded">
+<span class="material-symbols-outlined text-[14px]">ac_unit</span>
+                        HVAC Tech
+                      </span>
+<p class="text-[11px] text-[#64748B] mt-1 truncate max-w-[180px]">Inverter AC, Gas Charge, Chiller</p>
+</div>
+</td>
+<td class="py-3 px-3">
+<div class="flex flex-col">
+<div class="flex items-center gap-1 text-xs font-medium text-[#1A1A2E]">
+<span class="material-symbols-outlined text-[15px] text-[#64748B]">work_history</span>
+                        6 yrs exp
+                      </div>
+<span class="text-xs text-[#64748B]">Faisalabad, D-Ground</span>
+</div>
+</td>
+<td class="py-3 px-3">
+<div class="flex items-center gap-1.5">
+<span class="inline-flex items-center gap-1 px-1.5 py-0.5 bg-[#16A34A]/10 text-[#16A34A] text-xs font-semibold rounded">
+<span class="material-symbols-outlined text-[13px]">check_circle</span>
+                        3/3
+                      </span>
+<span class="text-[11px] text-[#64748B] truncate">HVAC Cert + CNIC</span>
+</div>
+</td>
+<td class="py-3 px-3">
+<div class="flex flex-col">
+<span class="text-xs text-[#1A1A2E]">Sep 07, 2026</span>
+<span class="font-mono text-[11px] text-[#64748B] font-medium">1 day ago</span>
+</div>
+</td>
+<td class="py-3 px-3">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 bg-[#0F766E]/10 text-[#0F766E] text-xs font-semibold rounded">
+<span class="w-1.5 h-1.5 rounded-full bg-[#0F766E] animate-pulse"></span>
+                      Pending Review
+                    </span>
+</td>
+<td class="py-3 pr-4 pl-3 text-right">
+<div class="flex items-center justify-end gap-1.5">
+<button class="h-7 px-3 bg-[#0F766E] text-white hover:bg-[#115E59] text-xs font-semibold rounded shadow-xs flex items-center gap-1 transition-all" onclick="openInspectionDrawer('Muhammad Bilal', 'HVAC Tech', 'Faisalabad, D-Ground', '33100-2918390-9')" type="button">
+<span>Review</span>
+<span class="font-mono text-[10px] opacity-75">↵</span>
+</button>
+<button class="h-7 w-7 text-[#64748B] hover:text-[#1A1A2E] hover:bg-[#F8FAFC] rounded flex items-center justify-center transition-colors" type="button">
+<span class="material-symbols-outlined text-[17px]">more_vert</span>
+</button>
+</div>
+</td>
+</tr>
+<!-- ROW 6: Tariq Jamil (Rejected) -->
+<tr class="hover:bg-[#F8FAFC] transition-colors group">
+<td class="pl-4 pr-1 py-3">
+<input class="rounded border-[#E2E8F0] text-[#0F766E] focus:ring-[#0F766E] w-4 h-4 cursor-pointer" type="checkbox"/>
+</td>
+<td class="py-3 px-3">
+<div class="flex items-center gap-3">
+<img class="w-10 h-10 rounded-full object-cover border border-[#E2E8F0] flex-shrink-0" data-alt="Portrait of an experienced Pakistani carpenter artisan" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD4ZmtP5wqGFobSOlkl0b9b7zA8jedb1lUTH0c0Bu0r0qoEjQdy2qukUcj9VHWg9K4vejpOoaDh2914mrzfpR0twwqmu1KgwAtGHfp0lZqtvK4TGduPt5F58NYR92d9ADHApa-g-hax2HtYh_WdCKB-4MOZ78w9d3T4xqvwkND1kbtgfCQXt4i_4lT3Ewqqfg5NZOXofyWpQJpSx2UhbX--jnhxmwg46xU4JUacvc7t-vwGIAA0BL68MQ"/>
+<div class="min-w-0">
+<div class="flex items-center gap-1.5">
+<span class="text-xs font-semibold text-[#1A1A2E] group-hover:text-[#0F766E] transition-colors">Tariq Jamil</span>
+</div>
+<div class="flex items-center gap-1.5 font-mono text-[11px] text-[#64748B] mt-0.5">
+<span>+92 305 9182049</span>
+<span>•</span>
+<span class="bg-[#F8FAFC] px-1 py-0.5 rounded text-[#1A1A2E]">36302-8192048-3</span>
+</div>
+</div>
+</div>
+</td>
+<td class="py-3 px-3">
+<div>
+<span class="inline-flex items-center gap-1 px-2 py-0.5 bg-[#F8FAFC] text-[#64748B] text-xs font-semibold rounded">
+<span class="material-symbols-outlined text-[14px]">carpenter</span>
+                        Carpenter
+                      </span>
+<p class="text-[11px] text-[#64748B] mt-1 truncate max-w-[180px]">Woodcraft, Cabinetry, Doors</p>
+</div>
+</td>
+<td class="py-3 px-3">
+<div class="flex flex-col">
+<div class="flex items-center gap-1 text-xs font-medium text-[#1A1A2E]">
+<span class="material-symbols-outlined text-[15px] text-[#64748B]">work_history</span>
+                        9 yrs exp
+                      </div>
+<span class="text-xs text-[#64748B]">Multan, Cantt</span>
+</div>
+</td>
+<td class="py-3 px-3">
+<div class="flex items-center gap-1.5">
+<span class="inline-flex items-center gap-1 px-1.5 py-0.5 bg-[#DC2626]/10 text-[#DC2626] text-xs font-semibold rounded">
+<span class="material-symbols-outlined text-[13px]">cancel</span>
+                        1/3
+                      </span>
+<span class="text-[11px] text-[#DC2626] font-medium truncate">NADRA CNIC Expired</span>
+</div>
+</td>
+<td class="py-3 px-3">
+<div class="flex flex-col">
+<span class="text-xs text-[#1A1A2E]">Sep 06, 2026</span>
+<span class="font-mono text-[11px] text-[#64748B] font-medium">Flagged by System</span>
+</div>
+</td>
+<td class="py-3 px-3">
+<span class="inline-flex items-center gap-1 px-2 py-0.5 bg-[#DC2626]/10 text-[#DC2626] text-xs font-semibold rounded">
+<span class="material-symbols-outlined text-[13px]">block</span>
+                      Rejected
+                    </span>
+</td>
+<td class="py-3 pr-4 pl-3 text-right">
+<div class="flex items-center justify-end gap-1.5">
+<button class="h-7 px-3 bg-white border border-[#E2E8F0] text-[#1A1A2E] hover:bg-[#F8FAFC] text-xs font-medium rounded shadow-xs transition-colors" onclick="openInspectionDrawer('Tariq Jamil', 'Carpenter', 'Multan, Cantt', '36302-8192048-3')" type="button">
+                        View
+                      </button>
+<button class="h-7 w-7 text-[#64748B] hover:text-[#1A1A2E] hover:bg-[#F8FAFC] rounded flex items-center justify-center transition-colors" type="button">
+<span class="material-symbols-outlined text-[17px]">more_vert</span>
+</button>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Pagination Footer -->
+<div class="px-4 py-3 bg-[#F8FAFC] border-t border-[#E2E8F0] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+<div class="flex items-center gap-4">
+<span class="text-xs text-[#64748B]">
+                Showing <strong class="text-[#1A1A2E] font-semibold">1</strong> to <strong class="text-[#1A1A2E] font-semibold">6</strong> of <strong class="text-[#1A1A2E] font-semibold">24</strong> pending candidates
+              </span>
+<div class="flex items-center gap-1.5">
+<span class="text-xs text-[#64748B]">Show:</span>
+<select class="bg-white border border-[#E2E8F0] text-[#1A1A2E] text-xs rounded px-2 py-0.5 focus:outline-none">
+<option>10</option>
+<option selected="">25</option>
+<option>50</option>
+</select>
+</div>
+</div>
+<div class="flex items-center gap-1">
+<button class="h-7 w-7 rounded bg-white border border-[#E2E8F0] text-[#64748B] hover:text-[#1A1A2E] flex items-center justify-center shadow-xs disabled:opacity-40" disabled="" type="button">
+<span class="material-symbols-outlined text-[16px]">chevron_left</span>
+</button>
+<button class="h-7 w-7 rounded bg-[#0F766E] text-white text-xs font-semibold shadow-xs" type="button">1</button>
+<button class="h-7 w-7 rounded bg-white border border-[#E2E8F0] hover:bg-[#F8FAFC] text-[#1A1A2E] text-xs shadow-xs" type="button">2</button>
+<button class="h-7 w-7 rounded bg-white border border-[#E2E8F0] hover:bg-[#F8FAFC] text-[#1A1A2E] text-xs shadow-xs" type="button">3</button>
+<span class="px-1 text-[#64748B] font-mono text-xs">...</span>
+<button class="h-7 w-7 rounded bg-white border border-[#E2E8F0] hover:bg-[#F8FAFC] text-[#1A1A2E] text-xs shadow-xs" type="button">4</button>
+<button class="h-7 w-7 rounded bg-white border border-[#E2E8F0] text-[#1A1A2E] hover:bg-[#F8FAFC] flex items-center justify-center shadow-xs" type="button">
+<span class="material-symbols-outlined text-[16px]">chevron_right</span>
+</button>
+</div>
+</div>
+</div>
+<!-- EMPTY STATE CONTAINER -->
+<div class="hidden bg-white border border-[#E2E8F0] rounded-lg p-12 text-center shadow-xs mb-6 flex-col items-center justify-center" id="view-empty-container">
+<div class="w-14 h-14 rounded-full bg-[#0F766E]/10 text-[#0F766E] flex items-center justify-center mb-3 mx-auto">
+<span class="material-symbols-outlined text-[32px]">task_alt</span>
+</div>
+<h2 class="text-xl text-[#1A1A2E] font-bold mb-1">All Caught Up!</h2>
+<p class="text-xs text-[#64748B] max-w-md mx-auto mb-4">
+            There are no pending verification requests matching your active filters. All Pakistani artisan dossiers have been processed or forwarded to dispatch.
+          </p>
+<div class="flex items-center justify-center gap-2.5">
+<button class="px-4 py-2 bg-[#0F766E] text-white text-xs font-semibold rounded-lg shadow-xs hover:bg-[#115E59] transition-colors" onclick="switchView('active')" type="button">
+              Back to Active Queue
+            </button>
+<button class="px-4 py-2 bg-white border border-[#E2E8F0] hover:bg-[#F8FAFC] text-[#1A1A2E] text-xs font-medium rounded-lg transition-colors" type="button">
+              Audit Activity Log
+            </button>
+</div>
+</div>
+<!-- SKELETON / ARCHIVE SIMULATION VIEW -->
+<div class="hidden bg-white border border-[#E2E8F0] rounded-lg p-5 shadow-xs mb-6" id="view-archive-container">
+<div class="flex items-center justify-between pb-3 mb-4 border-b border-[#E2E8F0]">
+<div>
+<h3 class="text-base text-[#1A1A2E] font-semibold">Verification Audit Archive</h3>
+<p class="text-xs text-[#64748B]">Historical vetting records from Nadra API and local Pakistani trade councils.</p>
+</div>
+<span class="font-mono text-xs text-[#0F766E] bg-[#0F766E]/10 px-2.5 py-1 rounded border border-[#0F766E]/20/60">Indexed: 1,464 records</span>
+</div>
+<div class="space-y-3 animate-pulse">
+<div class="h-9 bg-[#F8FAFC] rounded-lg w-full"></div>
+<div class="h-9 bg-[#F8FAFC] rounded-lg w-full"></div>
+<div class="h-9 bg-[#F8FAFC] rounded-lg w-full"></div>
+<div class="h-9 bg-[#F8FAFC] rounded-lg w-full"></div>
+</div>
+<div class="mt-4 text-center">
+<button class="text-[#0F766E] text-xs font-semibold hover:underline" onclick="switchView('active')" type="button">
+              Return to Live Dispatch Queue
+            </button>
+</div>
+</div>
+</div>
+</main>
+</div>
+<!-- SLIDING INSPECTION DRAWER OVERLAY -->
+<div class="fixed inset-0 bg-[#1A1A2E]/40 z-50 hidden backdrop-blur-[2px] transition-opacity" id="drawer-backdrop" onclick="closeInspectionDrawer()"></div>
+<div class="fixed right-0 top-0 bottom-0 w-full max-w-2xl bg-white shadow-2xl z-50 translate-x-full transition-transform duration-300 flex flex-col justify-between overflow-hidden border-l border-[#E2E8F0]" id="inspection-drawer">
+<!-- Drawer Header -->
+<div class="p-4 bg-white flex items-center justify-between border-b border-[#E2E8F0]">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-lg bg-[#0F766E] text-white flex items-center justify-center font-bold text-base shadow-xs">
+<span id="drawer-initials">AK</span>
+</div>
+<div>
+<div class="flex items-center gap-2">
+<h2 class="text-base font-bold text-[#1A1A2E]" id="drawer-worker-name">Ahmed Khan</h2>
+<span class="px-2 py-0.5 bg-[#0F766E]/10 text-[#0F766E] text-[11px] font-semibold rounded">Ready for Review</span>
+</div>
+<p class="text-xs text-[#64748B]" id="drawer-worker-meta">Electrician • Lahore, Gulberg III • CNIC: 35202-8492019-1</p>
+</div>
+</div>
+<button class="h-8 w-8 rounded-lg bg-[#F8FAFC] hover:bg-[#E2E8F0] text-[#64748B] hover:text-[#1A1A2E] flex items-center justify-center transition-colors" onclick="closeInspectionDrawer()" type="button">
+<span class="material-symbols-outlined text-[18px]">close</span>
+</button>
+</div>
+<!-- Drawer Body -->
+<div class="flex-1 overflow-y-auto p-4 space-y-4 bg-[#F8FAFC]">
+<!-- CNIC Stage Preview -->
+<div class="rounded-lg overflow-hidden border border-[#E2E8F0] shadow-xs bg-[#1A1A2E] text-white">
+<div class="px-3.5 py-2 bg-[#1A1A2E] flex items-center justify-between border-b border-white/10">
+<span class="text-xs font-medium flex items-center gap-1.5 text-[#64748B]">
+<span class="material-symbols-outlined text-[16px] text-[#0F766E]">badge</span> NADRA Smart CNIC (Front Scan)
+          </span>
+<div class="flex items-center gap-2">
+<button class="p-1 hover:bg-white/10 rounded text-[#64748B] hover:text-white" title="Zoom in" type="button">
+<span class="material-symbols-outlined text-[16px]">zoom_in</span>
+</button>
+<button class="p-1 hover:bg-white/10 rounded text-[#64748B] hover:text-white" title="Rotate" type="button">
+<span class="material-symbols-outlined text-[16px]">rotate_right</span>
+</button>
+<span class="text-xs font-mono text-[#64748B]">100%</span>
+</div>
+</div>
+<div class="p-4 flex flex-col items-center justify-center bg-[#1A1A2E]">
+<div class="w-full max-w-sm rounded-lg bg-[#1A1A2E] p-3.5 shadow-md flex flex-col gap-2 relative border border-white/10">
+<div class="flex justify-between items-center text-[10px] text-[#0F766E] font-mono">
+<span>GOVERNMENT OF PAKISTAN</span>
+<span>CITIZEN ID</span>
+</div>
+<div class="flex gap-3 items-center">
+<div class="w-16 h-20 rounded bg-white/10 flex items-center justify-center overflow-hidden flex-shrink-0">
+<span class="material-symbols-outlined text-white/40 text-[32px]">person</span>
+</div>
+<div class="flex-1 min-w-0 space-y-1">
+<p class="text-[9px] text-[#64748B] uppercase">Name</p>
+<p class="text-xs font-bold text-white tracking-wide" id="cnic-preview-name">AHMED KHAN</p>
+<p class="text-[9px] text-[#64748B] uppercase">Father Name</p>
+<p class="text-[11px] text-white/90">MUHAMMAD NAZIR KHAN</p>
+<p class="text-[9px] text-[#64748B] uppercase">National Identity Number</p>
+<p class="text-xs font-mono font-bold text-[#0F766E]" id="cnic-preview-num">35202-8492019-1</p>
+</div>
+</div>
+<div class="flex justify-between text-[9px] text-[#64748B] pt-1 border-t border-white/10 font-mono">
+<span>DOB: 14.08.1993</span>
+<span>EXPIRY: 10.2031 (VALID)</span>
+</div>
+</div>
+</div>
+</div>
+<!-- OCR Machine Verification Checklist -->
+<div class="bg-white p-4 rounded-lg border border-[#E2E8F0] shadow-xs">
+<div class="flex items-center justify-between mb-3">
+<h4 class="text-xs font-bold text-[#1A1A2E] flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[#0F766E] text-[18px]">document_scanner</span>
+            OCR Extraction &amp; Database Matches
+          </h4>
+<span class="px-2 py-0.5 bg-[#16A34A]/10 text-[#16A34A] text-[11px] font-mono font-bold rounded">NADRA Verified (99.8%)</span>
+</div>
+<div class="space-y-2 text-xs">
+<div class="flex items-center justify-between p-2 rounded bg-[#F8FAFC] border border-[#E2E8F0]">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-emerald-600 text-[17px]">check_circle</span>
+<span class="font-medium text-[#1A1A2E]">Full Name Exact Match</span>
+</div>
+<span class="font-mono text-[#64748B]">Ahmed Khan</span>
+</div>
+<div class="flex items-center justify-between p-2 rounded bg-[#F8FAFC] border border-[#E2E8F0]">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-emerald-600 text-[17px]">check_circle</span>
+<span class="font-medium text-[#1A1A2E]">Valid Expiry Date</span>
+</div>
+<span class="font-mono text-[#64748B]">October 2031 (Valid)</span>
+</div>
+<div class="flex items-center justify-between p-2 rounded bg-[#F8FAFC] border border-[#E2E8F0]">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-emerald-600 text-[17px]">check_circle</span>
+<span class="font-medium text-[#1A1A2E]">Punjab Police Khidmat Record</span>
+</div>
+<span class="text-[#16A34A] font-semibold">No Criminal Case Found</span>
+</div>
+<div class="flex items-center justify-between p-2 rounded bg-[#F8FAFC] border border-[#E2E8F0]">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-emerald-600 text-[17px]">verified</span>
+<span class="font-medium text-[#1A1A2E]">TEVTA Technical Certificate</span>
+</div>
+<span class="font-mono text-[#0F766E] font-semibold">Diploma ID #PK-9810</span>
+</div>
+</div>
+</div>
+<!-- Notes / Compliance Observations -->
+<div class="bg-white p-4 rounded-lg border border-[#E2E8F0] shadow-xs">
+<label class="block text-xs font-bold text-[#1A1A2E] mb-1.5">
+          Internal Compliance Notes / Rejection Reason
+        </label>
+<textarea class="w-full p-2.5 bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg text-xs text-[#1A1A2E] placeholder:text-[#64748B] focus:bg-white focus:ring-1 focus:ring-[#0F766E] focus:border-[#0F766E] focus:outline-none transition-all resize-none mb-2" placeholder="Specify observations, discrepancies, or notes for the dispatch manager..." rows="3"></textarea>
+<div class="flex items-center justify-between text-[#64748B] text-[11px]">
+<span>Notes are strictly logged in immutable audit records.</span>
+<span class="font-mono text-[#1A1A2E]">Officer: Tariq M.</span>
+</div>
+</div>
+</div>
+<!-- Drawer Footer Actions -->
+<div class="p-3.5 bg-white flex items-center justify-between border-t border-[#E2E8F0]">
+<button class="h-9 px-3.5 rounded-lg border border-[#E2E8F0] bg-white hover:bg-[#F8FAFC] text-[#1A1A2E] text-xs font-medium transition-colors" onclick="closeInspectionDrawer()" type="button">
+        Cancel
+      </button>
+<div class="flex items-center gap-2">
+<button class="h-9 px-3 rounded-lg bg-[#F59E0B]/10 hover:bg-[#F59E0B]/20 text-[#F59E0B] text-xs font-semibold transition-colors flex items-center gap-1" onclick="triggerToast('Changes requested sent to worker via SMS.'); closeInspectionDrawer();" type="button">
+<span class="material-symbols-outlined text-[17px]">assignment_return</span>
+          Request Changes
+        </button>
+<button class="h-9 px-3 rounded-lg bg-[#DC2626]/10 hover:bg-[#DC2626]/20 text-[#DC2626] text-xs font-semibold transition-colors flex items-center gap-1" onclick="triggerToast('Worker rejected and blacklisted from system.'); closeInspectionDrawer();" type="button">
+<span class="material-symbols-outlined text-[17px]">close</span>
+          Reject
+        </button>
+<button class="h-9 px-4 rounded-lg bg-[#0F766E] hover:bg-[#115E59] text-white text-xs font-bold shadow-xs transition-all flex items-center gap-1.5" onclick="triggerToast('Worker verified successfully and unlocked for dispatch!'); closeInspectionDrawer();" type="button">
+<span class="material-symbols-outlined text-[17px]">verified</span>
+          Approve Candidate
+        </button>
+</div>
+</div>
+</div>
+<!-- Toast Notification Feedback -->
+<div class="fixed bottom-6 right-6 z-50 bg-[#1A1A2E] text-white px-4 py-2.5 rounded-lg shadow-xl flex items-center gap-2.5 transition-all duration-300 opacity-0 translate-y-4 pointer-events-none" id="toast-notification">
+<span class="material-symbols-outlined text-emerald-400 text-[18px]">check_circle</span>
+<span class="text-xs font-medium" id="toast-message">Operation completed</span>
+</div>
+<!-- Client-side Interactive Behaviors -->
+<script>
+    function switchView(viewName) {
+      const activeCont = document.getElementById('view-active-container');
+      const emptyCont = document.getElementById('view-empty-container');
+      const archiveCont = document.getElementById('view-archive-container');
+
+      const tabActive = document.getElementById('tab-active');
+      const tabArchive = document.getElementById('tab-archive');
+      const tabEmpty = document.getElementById('tab-empty');
+
+      // Reset tabs
+      [tabActive, tabArchive, tabEmpty].forEach(btn => {
+        btn.className = 'px-3 py-1.5 rounded text-xs font-medium text-[#64748B] hover:text-[#1A1A2E] transition-all';
+      });
+
+      // Reset views
+      activeCont.classList.add('hidden');
+      emptyCont.classList.add('hidden');
+      emptyCont.classList.remove('flex');
+      archiveCont.classList.add('hidden');
+
+      if (viewName === 'active') {
+        activeCont.classList.remove('hidden');
+        tabActive.className = 'px-3 py-1.5 rounded text-xs font-semibold transition-all bg-[#0F766E]/10 text-[#0F766E]';
+      } else if (viewName === 'empty') {
+        emptyCont.classList.remove('hidden');
+        emptyCont.classList.add('flex');
+        tabEmpty.className = 'px-3 py-1.5 rounded text-xs font-semibold transition-all bg-[#0F766E]/10 text-[#0F766E] flex items-center gap-1';
+      } else if (viewName === 'archive') {
+        archiveCont.classList.remove('hidden');
+        tabArchive.className = 'px-3 py-1.5 rounded text-xs font-semibold transition-all bg-[#0F766E]/10 text-[#0F766E]';
+      }
+    }
+
+    function openInspectionDrawer(name, skill, city, cnic) {
+      document.getElementById('drawer-worker-name').textContent = name;
+      document.getElementById('cnic-preview-name').textContent = name.toUpperCase();
+      document.getElementById('cnic-preview-num').textContent = cnic;
+      document.getElementById('drawer-worker-meta').textContent = `${skill} • ${city} • CNIC: ${cnic}`;
+      
+      // Initials
+      const initials = name.split(' ').map(n => n[0]).join('');
+      document.getElementById('drawer-initials').textContent = initials;
+
+      const drawer = document.getElementById('inspection-drawer');
+      const backdrop = document.getElementById('drawer-backdrop');
+
+      backdrop.classList.remove('hidden');
+      setTimeout(() => {
+        drawer.classList.remove('translate-x-full');
+      }, 10);
+    }
+
+    function closeInspectionDrawer() {
+      const drawer = document.getElementById('inspection-drawer');
+      const backdrop = document.getElementById('drawer-backdrop');
+
+      drawer.classList.add('translate-x-full');
+      setTimeout(() => {
+        backdrop.classList.add('hidden');
+      }, 300);
+    }
+
+    function triggerToast(msg) {
+      const toast = document.getElementById('toast-notification');
+      const label = document.getElementById('toast-message');
+      label.textContent = msg;
+
+      toast.classList.remove('opacity-0', 'translate-y-4', 'pointer-events-none');
+      toast.classList.add('opacity-100', 'translate-y-0');
+
+      setTimeout(() => {
+        toast.classList.add('opacity-0', 'translate-y-4', 'pointer-events-none');
+        toast.classList.remove('opacity-100', 'translate-y-0');
+      }, 3500);
+    }
+
+    // Keyboard shortcut for search
+    document.addEventListener('keydown', (e) => {
+      if (e.key === '/' && document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
+        e.preventDefault();
+        const searchInput = document.getElementById('worker-search');
+        if (searchInput) searchInput.focus();
+      }
+      if (e.key === 'Escape') {
+        closeInspectionDrawer();
+      }
+    });
+  </script>
+</body></html>
