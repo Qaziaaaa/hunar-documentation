@@ -5,36 +5,57 @@ function ServiceCard({ service }: { service: Service }) {
   return (
     <a
       href={service.href}
-      className="group rounded-2xl border border-slate-200 bg-white hover:shadow-xl hover:border-brand-accent transition-all duration-300 flex flex-col overflow-hidden cursor-pointer block"
+      className="group relative h-[224px] sm:h-[240px] overflow-hidden shadow-md hover:shadow-2xl transition-all duration-500 bg-slate-900 border border-slate-200/80 cursor-pointer block rounded-2xl"
     >
-      <div className="relative aspect-[16/10] overflow-hidden bg-slate-100">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          alt={service.alt}
-          className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
-          src={service.image}
-        />
-        <button
-          aria-label="Favorite"
-          className="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/90 backdrop-blur text-slate-400 hover:text-red-500 flex items-center justify-center shadow transition"
-        >
-          <HeartIcon className="w-4 h-4" />
-        </button>
-      </div>
-      <div className="p-4 flex-1 flex flex-col justify-between">
-        <div>
-          <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
-            {service.category}
-          </p>
-          <h3 className="text-sm font-bold text-slate-900 mt-1 line-clamp-2 hover:text-brand-accent transition">
-            {service.title}
-          </h3>
-        </div>
-        <div className="flex items-center gap-1.5 mt-3 text-xs text-slate-500">
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        alt={service.alt}
+        className="absolute inset-0 w-full h-full object-cover object-top group-hover:scale-110 transition-transform duration-700 ease-out"
+        src={service.image}
+      />
+      <button
+        aria-label="Favorite"
+        className="absolute top-3.5 right-3.5 w-8 h-8 rounded-full bg-white/90 backdrop-blur text-slate-400 hover:text-red-500 flex items-center justify-center shadow transition duration-300 z-20 opacity-0 group-hover:opacity-100"
+      >
+        <HeartIcon className="w-4 h-4" />
+      </button>
+      <div className="absolute inset-x-0 bottom-0 p-4 pt-14 z-10 bg-gradient-to-t from-slate-950/95 via-slate-950/50 to-transparent transition-opacity duration-300 group-hover:opacity-0 pointer-events-none">
+        <p className="text-[10px] font-semibold uppercase tracking-wider text-brand-accent">
+          {service.category}
+        </p>
+        <h3 className="text-sm font-bold text-white tracking-tight mt-0.5 line-clamp-2">
+          {service.title}
+        </h3>
+        <div className="flex items-center gap-1.5 mt-1.5 text-xs text-slate-300">
           <span className="text-amber-400 font-bold flex items-center gap-0.5">
             ★ {service.rating}
           </span>
-          <span>({service.reviews} reviews)</span>
+          <span>({service.reviews})</span>
+        </div>
+      </div>
+      <div className="absolute inset-x-0 bottom-0 z-10 translate-y-full opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-400 ease-out">
+        <div className="m-2 bg-slate-950/85 backdrop-blur-md border border-white/10 p-4 rounded-xl">
+          <p className="text-[9.5px] font-bold uppercase tracking-wider text-brand-accent">
+            {service.category}
+          </p>
+          <h3 className="text-sm font-bold text-white tracking-tight mt-0.5 line-clamp-1">
+            {service.title}
+          </h3>
+          <p className="text-[11px] text-slate-300 mt-1 line-clamp-2">
+            {service.description}
+          </p>
+          <div className="flex items-center justify-between mt-2">
+            <div className="flex items-center gap-1.5 text-[11px] text-slate-300">
+              <span className="text-amber-400 font-bold flex items-center gap-0.5">
+                ★ {service.rating}
+              </span>
+              <span>({service.reviews})</span>
+            </div>
+            <span className="inline-flex items-center gap-1 text-brand-accent text-[11px] font-bold">
+              View
+              <LongArrowRightIcon className="w-3 h-3" />
+            </span>
+          </div>
         </div>
       </div>
     </a>
