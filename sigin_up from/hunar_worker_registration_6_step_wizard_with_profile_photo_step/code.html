@@ -1,0 +1,1213 @@
+<!DOCTYPE html><html lang="en" style=""><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>HUNAR - Worker Register / Become a Pro</title>
+<!-- Google Fonts: Plus Jakarta Sans -->
+<link href="https://fonts.googleapis.com" rel="preconnect">
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+<!-- Tailwind CSS v3 -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+tailwind.config = {
+  darkMode: "class",
+  theme: {
+    extend: {
+      colors: {
+        navy: "#1A1A2E",
+        teal: {
+          DEFAULT: "#0F766E",
+          dark: "#115E59",
+          light: "rgba(15, 118, 110, 0.1)"
+        },
+        orange: "#F59E0B",
+        success: "#16A34A",
+        error: "#DC2626",
+        gray: "#64748B",
+        background: "#F8FAFC",
+        border: "#E2E8F0",
+        surface: "#FFFFFF",
+        primary: "#0F766E",
+        "primary-dark": "#115E59",
+        secondary: "#1A1A2E",
+        
+        // Aliases used in templates
+        appBg: "#F8FAFC",
+        darkText: "#1A1A2E",
+        mutedText: "#64748B",
+        borderLine: "#E2E8F0",
+        "text-main": "#1A1A2E",
+        "surface-muted": "#F8FAFC",
+        "outline-border": "#E2E8F0",
+        
+        // Material Theme 3 Aliases
+        "on-surface": "#1A1A2E",
+        "on-surface-variant": "#64748B",
+        "on-background": "#1A1A2E",
+        "on-primary": "#FFFFFF",
+        "on-secondary": "#FFFFFF",
+        "on-error": "#FFFFFF",
+        "surface-container-lowest": "#FFFFFF",
+        "surface-container-low": "#F8FAFC",
+        "surface-container": "#F8FAFC",
+        "surface-container-high": "#F8FAFC",
+        "surface-container-highest": "#F8FAFC",
+        "surface-variant": "#F8FAFC",
+        "surface-tint": "#0F766E",
+        "surface-dim": "#E2E8F0",
+        "surface-bright": "#FFFFFF",
+        outline: "#64748B",
+        "outline-variant": "#E2E8F0",
+        "primary-container": "rgba(15, 118, 110, 0.1)",
+        "on-primary-container": "#0F766E",
+        "secondary-container": "rgba(26, 26, 46, 0.08)",
+        "on-secondary-container": "#1A1A2E",
+        "secondary-fixed": "rgba(15, 118, 110, 0.1)",
+        "secondary-fixed-dim": "rgba(15, 118, 110, 0.1)",
+        "on-secondary-fixed": "#1A1A2E",
+        "on-secondary-fixed-variant": "#115E59",
+        "primary-fixed": "rgba(15, 118, 110, 0.1)",
+        "primary-fixed-dim": "rgba(15, 118, 110, 0.1)",
+        "on-primary-fixed": "#1A1A2E",
+        "on-primary-fixed-variant": "#115E59",
+        "tertiary": "#F59E0B",
+        "tertiary-container": "rgba(245, 158, 11, 0.1)",
+        "on-tertiary-container": "#F59E0B",
+        "tertiary-fixed": "rgba(245, 158, 11, 0.1)",
+        "on-tertiary-fixed": "#1A1A2E",
+        "error-container": "rgba(220, 38, 38, 0.1)",
+        "on-error-container": "#DC2626",
+        "inverse-primary": "#0F766E",
+        "inverse-surface": "#1A1A2E",
+        "inverse-on-surface": "#F8FAFC"
+      },
+      spacing: {
+        "margin-desktop": "2rem",
+        "margin-tablet": "1.5rem",
+        "margin-mobile": "1rem",
+        "gutter-desktop": "1.5rem",
+        "gutter-mobile": "1rem",
+        "space-3xl": "4rem",
+        "space-2xl": "3rem",
+        "space-xl": "2rem",
+        "space-lg": "1.5rem",
+        "space-md": "1rem",
+        "space-base": "1rem",
+        "space-sm": "0.75rem",
+        "space-xs": "0.5rem",
+        "space-2xs": "0.25rem",
+        "space-xxs": "0.25rem",
+        "space-1": "0.25rem",
+        "space-2": "0.5rem",
+        "space-3": "0.75rem",
+        "space-4": "1rem",
+        "space-5": "1.25rem",
+        "space-6": "1.5rem",
+        "space-8": "2rem",
+        "space-12": "3rem",
+        "space-16": "4rem",
+        "space-20": "5rem",
+        "space-24": "6rem",
+        "space-stack-sm": "0.5rem",
+        "space-stack-md": "1rem",
+        "space-stack-lg": "1.5rem",
+        "section-gap": "2rem",
+        "gutter": "1.5rem"
+      },
+      fontSize: {
+        "stat-lg": ["28px", { lineHeight: "36px", letterSpacing: "-0.02em", fontWeight: "700" }],
+        "button-text": ["14px", { lineHeight: "20px", letterSpacing: "0.01em", fontWeight: "600" }],
+
+        "display-hero": ["48px", { lineHeight: "56px", letterSpacing: "-0.025em", fontWeight: "700" }],
+        "display-hero-mobile": ["32px", { lineHeight: "40px", letterSpacing: "-0.02em", fontWeight: "700" }],
+        "display-kpi": ["36px", { lineHeight: "44px", letterSpacing: "-0.02em", fontWeight: "700" }],
+        "display-kpi-mobile": ["28px", { lineHeight: "34px", letterSpacing: "-0.02em", fontWeight: "700" }],
+        "display-lg": ["36px", { lineHeight: "44px", letterSpacing: "-0.02em", fontWeight: "700" }],
+        "headline-page": ["28px", { lineHeight: "36px", letterSpacing: "-0.015em", fontWeight: "600" }],
+        "headline-page-mobile": ["24px", { lineHeight: "32px", letterSpacing: "-0.015em", fontWeight: "600" }],
+        "headline-section": ["20px", { lineHeight: "28px", letterSpacing: "-0.01em", fontWeight: "600" }],
+        "headline-subsection": ["16px", { lineHeight: "24px", letterSpacing: "-0.005em", fontWeight: "600" }],
+        "headline-lg": ["28px", { lineHeight: "36px", letterSpacing: "-0.015em", fontWeight: "600" }],
+        "headline-lg-mobile": ["24px", { lineHeight: "32px", letterSpacing: "-0.015em", fontWeight: "600" }],
+        "headline-md": ["20px", { lineHeight: "28px", letterSpacing: "-0.01em", fontWeight: "600" }],
+        "headline-sm": ["16px", { lineHeight: "24px", letterSpacing: "-0.005em", fontWeight: "600" }],
+        "headline-xl-mobile": ["26px", { lineHeight: "34px", letterSpacing: "-0.015em", fontWeight: "600" }],
+        "body-default": ["14px", { lineHeight: "22px", letterSpacing: "0em", fontWeight: "400" }],
+        "body-compact": ["13px", { lineHeight: "18px", letterSpacing: "0em", fontWeight: "400" }],
+        "body-strong": ["14px", { lineHeight: "22px", letterSpacing: "0em", fontWeight: "600" }],
+        "body-lg": ["16px", { lineHeight: "24px", letterSpacing: "0em", fontWeight: "400" }],
+        "body-md": ["14px", { lineHeight: "22px", letterSpacing: "0em", fontWeight: "400" }],
+        "body-md-medium": ["14px", { lineHeight: "22px", letterSpacing: "0em", fontWeight: "500" }],
+        "body-sm": ["12px", { lineHeight: "16px", letterSpacing: "0em", fontWeight: "400" }],
+        "label-badge": ["11px", { lineHeight: "14px", letterSpacing: "0.02em", fontWeight: "600" }],
+        "label-regular": ["12px", { lineHeight: "16px", letterSpacing: "0.01em", fontWeight: "500" }],
+        "label-md": ["12px", { lineHeight: "16px", letterSpacing: "0.01em", fontWeight: "500" }],
+        "label-sm": ["11px", { lineHeight: "14px", letterSpacing: "0.02em", fontWeight: "500" }],
+        "label-uppercase": ["10px", { lineHeight: "12px", letterSpacing: "0.05em", fontWeight: "700" }]
+      },
+      fontFamily: {
+        "stat-lg": ["Inter", "sans-serif"],
+        "button-text": ["Inter", "sans-serif"],
+
+        sans: ["Inter", "sans-serif"],
+        "body-default": ["Inter", "sans-serif"],
+        "body-compact": ["Inter", "sans-serif"],
+        "body-strong": ["Inter", "sans-serif"],
+        "body-md": ["Inter", "sans-serif"],
+        "body-sm": ["Inter", "sans-serif"],
+        "display-kpi": ["Inter", "sans-serif"],
+        "headline-page": ["Inter", "sans-serif"],
+        "headline-section": ["Inter", "sans-serif"],
+        "headline-subsection": ["Inter", "sans-serif"],
+        "headline-md": ["Inter", "sans-serif"],
+        "headline-sm": ["Inter", "sans-serif"],
+        "headline-lg": ["Inter", "sans-serif"],
+        "label-badge": ["Inter", "sans-serif"],
+        "label-regular": ["Inter", "sans-serif"],
+        "label-md": ["Inter", "sans-serif"],
+        "label-sm": ["Inter", "sans-serif"]
+      },
+      borderRadius: {
+        DEFAULT: "0.375rem",
+        sm: "0.25rem",
+        md: "0.375rem",
+        lg: "0.5rem",
+        xl: "0.75rem",
+        "2xl": "1rem",
+        full: "9999px"
+      }
+    }
+  }
+};
+</script>
+<script>
+    tailwind.config = {
+  darkMode: "class",
+  theme: {
+    extend: {
+      colors: {
+        navy: "#1A1A2E",
+        teal: {
+          DEFAULT: "#0F766E",
+          dark: "#115E59"
+        },
+        orange: "#F59E0B",
+        success: "#16A34A",
+        error: "#DC2626",
+        gray: "#64748B",
+        background: "#F8FAFC",
+        border: "#E2E8F0",
+        primary: "#0F766E",
+        "primary-dark": "#115E59",
+        secondary: "#1A1A2E",
+        surface: "#FFFFFF"
+      },
+      fontFamily: {
+        "stat-lg": ["Inter", "sans-serif"],
+        "button-text": ["Inter", "sans-serif"],
+
+        sans: ["Inter", "sans-serif"]
+      }
+    }
+  }
+}</script>
+<style data-purpose="custom-scrollbars-and-resets">
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background-color: #1A1A2E;
+    }
+    input::placeholder, select::placeholder, textarea::placeholder {
+      color: #64748B;
+      font-size: 0.875rem;
+    }
+  </style>
+</head>
+<body class="min-h-screen bg-[#1A1A2E] text-gray-900 flex flex-col justify-between items-center p-4 sm:p-6 md:p-8 antialiased selection:bg-[#0F766E] selection:text-white">
+<!-- BEGIN: MainContainer -->
+<main class="w-full max-w-[1140px] my-auto bg-white rounded-[2rem] shadow-2xl shadow-black/40 overflow-hidden border border-emerald-900/20" data-purpose="registration-card">
+<div class="grid grid-cols-1 lg:grid-cols-12 min-h-[720px]">
+<!-- BEGIN: LeftShowcaseSection -->
+<section class="lg:col-span-5 p-4 sm:p-5 flex flex-col justify-between border-b lg:border-b-0 lg:border-r border-gray-100 bg-white" data-purpose="worker-value-prop">
+<div class="h-full flex flex-col justify-between rounded-[28px] bg-gradient-to-b from-[#16A34A]/10 to-[#16A34A]/10 p-5 sm:p-6 border border-emerald-200/50 shadow-xs">
+<div>
+<!-- Header Branding and Escrow Badge -->
+<div class="flex items-center justify-between gap-2 mb-4">
+<div class="flex items-center gap-2.5">
+<div class="w-9 h-9 rounded-xl bg-[#1A1A2E] flex items-center justify-center text-white shadow-xs">
+<svg class="w-5 h-5 text-[#0F766E]" fill="currentColor" viewBox="0 0 24 24">
+<path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path>
+</svg>
+</div>
+<div class="leading-none">
+<span class="block font-extrabold tracking-tight text-lg text-[#1A1A2E]">HUNAR</span>
+<span class="block text-[9px] font-bold tracking-wider text-emerald-800 uppercase mt-0.5">Pakistan Verified</span>
+</div>
+</div>
+<span class="inline-flex items-center px-3 py-1 rounded-full text-[11px] font-semibold bg-[#0F766E]/10 text-[#0F766E] border border-[#0F766E]/20 shadow-2xs">
+  Escrow Guaranteed
+</span>
+</div>
+<!-- Section Headline -->
+<div class="mb-5">
+<h2 class="text-lg sm:text-xl font-extrabold text-[#1A1A2E] leading-snug tracking-tight">
+  Find verified skilled tradespeople with escrow guarantee.
+</h2>
+</div>
+<!-- Center White Enclosed Card -->
+<div class="bg-white rounded-2xl p-5 border border-emerald-100/80 shadow-xs overflow-hidden w-full mx-auto">
+<!-- Hero Illustration -->
+<div class="relative w-full rounded-xl overflow-hidden mb-4 bg-[#F8FAFC]">
+<img alt="Skilled Tradespeople" class="w-full h-auto object-cover max-h-[160px] object-top" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCuZXmDOdAaEY7AxrjTPlrO88odCwEE_oanzoxOMdO-e0G7ZwoA9PTHsHvFCTL1unWl6g2ZqbakkGxX5ejJuLqHhWGc17IkLDplrUcQwdbkZIENVvMWH3g6Voilu3jLTJJP2gQMjOsbl7ria0EOojCrlDWlTsWGPYoKsdi4tWfIxXLrCiQWDGjnHJYoRKL-XqYl6YnzujxAJWVhcgwsNH25g82xF1_oy5KQu087Q_aHU8zVE2o_u2LdI-T3R6yDlPZvxA">
+</div>
+<!-- Popular Skills Title -->
+<div class="mb-3 px-1">
+<p class="text-xs font-extrabold text-gray-900 tracking-tight">Popular Skills</p>
+</div>
+<!-- 4x2 Grid of Skill Cards -->
+<div class="grid grid-cols-4 gap-2 text-center text-gray-800">
+<!-- 1. Electrician -->
+<div class="py-3 px-1 rounded-xl bg-white border border-gray-200/80 flex flex-col items-center justify-center hover:border-emerald-300 transition-all shadow-2xs">
+<svg class="w-5 h-5 text-gray-800 mb-1.5" fill="none" stroke="currentColor" stroke-width="1.7" viewBox="0 0 24 24">
+<path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+<span class="text-[9px] font-bold leading-tight text-gray-900">Electrician</span>
+</div>
+<!-- 2. Plumber -->
+<div class="py-3 px-1 rounded-xl bg-white border border-gray-200/80 flex flex-col items-center justify-center hover:border-emerald-300 transition-all shadow-2xs">
+<svg class="w-5 h-5 text-gray-800 mb-1.5" fill="none" stroke="currentColor" stroke-width="1.7" viewBox="0 0 24 24">
+<path d="M6 3v2m0 0a2 2 0 002 2h3a2 2 0 012 2v5a2 2 0 002 2h3a2 2 0 002-2V9m-14-4h4m10 7v3m-2-2h4" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+<span class="text-[9px] font-bold leading-tight text-gray-900">Plumber</span>
+</div>
+<!-- 3. Mechanic -->
+<div class="py-3 px-1 rounded-xl bg-white border border-gray-200/80 flex flex-col items-center justify-center hover:border-emerald-300 transition-all shadow-2xs">
+<svg class="w-5 h-5 text-gray-800 mb-1.5" fill="none" stroke="currentColor" stroke-width="1.7" viewBox="0 0 24 24">
+<path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+<span class="text-[9px] font-bold leading-tight text-gray-900">Mechanic</span>
+</div>
+<!-- 4. Mason -->
+<div class="py-3 px-1 rounded-xl bg-white border border-gray-200/80 flex flex-col items-center justify-center hover:border-emerald-300 transition-all shadow-2xs">
+<svg class="w-5 h-5 text-gray-800 mb-1.5" fill="none" stroke="currentColor" stroke-width="1.7" viewBox="0 0 24 24">
+<path d="M19 4l-4 4-2.5-2.5L15 3a2 2 0 013 0l1 1zm-7.5 4.5l-2 2M4 14h5m-5 3h7m-7 3h9M9 14v6m4-3v3" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+<span class="text-[9px] font-bold leading-tight text-gray-900">Mason</span>
+</div>
+<!-- 5. Carpenter -->
+<div class="py-3 px-1 rounded-xl bg-white border border-gray-200/80 flex flex-col items-center justify-center hover:border-emerald-300 transition-all shadow-2xs">
+<svg class="w-5 h-5 text-gray-800 mb-1.5" fill="none" stroke="currentColor" stroke-width="1.7" viewBox="0 0 24 24">
+<path d="M4 18l1.5-1.5 2 2 1.5-1.5 2 2 1.5-1.5 2 2 5-8-12-3-4 5.5v3.5h2z" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+<span class="text-[9px] font-bold leading-tight text-gray-900">Carpenter</span>
+</div>
+<!-- 6. Painter -->
+<div class="py-3 px-1 rounded-xl bg-white border border-gray-200/80 flex flex-col items-center justify-center hover:border-emerald-300 transition-all shadow-2xs">
+<svg class="w-5 h-5 text-gray-800 mb-1.5" fill="none" stroke="currentColor" stroke-width="1.7" viewBox="0 0 24 24">
+<path d="M7 7h10a2 2 0 012 2v1a2 2 0 01-2 2H7a2 2 0 01-2-2V9a2 2 0 012-2zm12 2h1a2 2 0 012 2v2a2 2 0 01-2 2h-7v3m-2 0h4m-4 3h4" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+<span class="text-[9px] font-bold leading-tight text-gray-900">Painter</span>
+</div>
+<!-- 7. Welder -->
+<div class="py-3 px-1 rounded-xl bg-white border border-gray-200/80 flex flex-col items-center justify-center hover:border-emerald-300 transition-all shadow-2xs">
+<svg class="w-5 h-5 text-gray-800 mb-1.5" fill="none" stroke="currentColor" stroke-width="1.7" viewBox="0 0 24 24">
+<path d="M7 6a5 5 0 0110 0v5a5 5 0 01-10 0V6zm2 4h6v2H9v-2zm-5 1l2 1m-2 3l2-1m14-3l-2 1m2 3l-2-1" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+<span class="text-[9px] font-bold leading-tight text-gray-900">Welder</span>
+</div>
+<!-- 8. AC Technician -->
+<div class="py-3 px-1 rounded-xl bg-white border border-gray-200/80 flex flex-col items-center justify-center hover:border-emerald-300 transition-all shadow-2xs">
+<svg class="w-5 h-5 text-gray-800 mb-1.5" fill="none" stroke="currentColor" stroke-width="1.7" viewBox="0 0 24 24">
+<path d="M4 6a2 2 0 012-2h12a2 2 0 012 2v5a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm4 10v2m4-2v2m4-2v2" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+<span class="text-[9px] font-bold leading-tight text-gray-900">AC Technician</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Bottom Trust Badges Bar -->
+<div class="mt-5 pt-3 flex items-center justify-between text-[11px] font-semibold text-emerald-900/90">
+<span class="inline-flex items-center gap-1.5" style="background-color: rgb(240, 253, 250); color: rgb(15, 139, 141); border-color: rgb(153, 246, 228);">
+<svg class="w-4 h-4 text-[#0F766E]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+<path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+  Nadra CNIC Verified
+</span>
+<span class="inline-flex items-center gap-1.5 text-emerald-800" style="background-color: rgb(240, 253, 250); color: rgb(15, 139, 141); border-color: rgb(153, 246, 228);">
+<svg class="w-4 h-4 text-[#16A34A]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+<path d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+  100% Escrow Protection
+</span>
+</div>
+</div>
+</section>
+<!-- END: LeftShowcaseSection -->
+<!-- BEGIN: RightRegistrationFormSection -->
+<section class="lg:col-span-7 p-6 sm:p-10 flex flex-col justify-center bg-white" data-purpose="worker-registration-form">
+<div class="max-w-[480px] mx-auto w-full flex flex-col justify-between h-full py-2" id="wizard-container">
+<!-- Top Stepper Progress Header -->
+<!-- BEGIN: Worker Portal Header & Tabs -->
+<div class="text-center mb-5" id="pro-portal-header">
+<div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#16A34A]/10 text-[#0F766E] text-xs font-semibold border border-[#0F766E]/20 mb-2">
+<span class="">✍️</span> WORKER / PRO PORTAL
+</div>
+<h2 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#1A1A2E]" id="portal-title">Create your Pro account</h2>
+<p class="text-sm mt-1 mb-4 text-[#64748B]" id="portal-subtext">Already have a worker account? <button class="text-[#0F766E] font-semibold hover:underline bg-transparent border-0 p-0 cursor-pointer ml-1" id="toggle-to-signin-link" onclick="switchPortalTab('signin')" type="button">Sign In</button></p>
+<div class="inline-flex p-1 bg-gray-100 rounded-full border border-gray-200 mb-2 w-full max-w-xs mx-auto shadow-inner" id="portal-tabs">
+<button class="flex-1 py-1.5 px-4 text-sm font-medium rounded-full text-slate-500 hover:text-slate-800 transition-all text-center" id="tab-signin-btn" onclick="switchPortalTab('signin')" type="button">Sign In</button>
+<button class="flex-1 py-1.5 px-4 text-sm font-bold rounded-full bg-[#0F766E] text-white shadow-sm transition-all text-center" id="tab-register-btn" onclick="switchPortalTab('register')" type="button">Register</button>
+</div>
+</div>
+<!-- END: Worker Portal Header & Tabs -->
+<!-- BEGIN: Worker Pro Sign In View (Toggled) -->
+<div class="space-y-4 hidden" id="signin-panel">
+<div class="space-y-3.5">
+<!-- Email Address -->
+<div>
+<label class="block text-[11px] font-bold tracking-wider text-[#64748B] uppercase mb-1" for="login_identifier">Email Address</label>
+<div class="relative flex items-center">
+<span class="absolute left-4 text-gray-400 select-none">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+<path d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+</span>
+<input class="w-full pl-11 pr-4 py-2.5 text-sm border border-gray-200 rounded-full focus:outline-none focus:ring-2 focus:ring-[#0F766E] bg-gray-50/50 hover:bg-white transition-all text-gray-800" id="login_identifier" placeholder="e.g. worker@example.com" type="email" value="tariq@example.com">
+</div>
+</div>
+<!-- Password with toggle visibility eye -->
+<div>
+<div class="flex items-center justify-between mb-1">
+<label class="block text-[11px] font-bold tracking-wider text-[#64748B] uppercase" for="login_password">Password</label>
+<a class="text-[11px] font-bold text-[#0F766E] hover:underline" href="#">Forgot Password?</a>
+</div>
+<div class="relative flex items-center">
+<input class="w-full px-4 pr-10 py-2.5 text-sm border border-gray-200 rounded-full focus:outline-none focus:ring-2 focus:ring-[#0F766E] bg-gray-50/50 hover:bg-white transition-all text-gray-800" id="login_password" placeholder="Enter your password" type="password" value="secretpassword123">
+<button aria-label="Toggle password visibility" class="absolute right-3.5 text-gray-400 hover:text-gray-600 focus:outline-none" onclick="togglePasswordVisibility()" type="button">
+<svg class="w-4 h-4" fill="none" id="eye-icon-show" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+<path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" stroke-linecap="round" stroke-linejoin="round"></path>
+<path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+<svg class="w-4 h-4 hidden" fill="none" id="eye-icon-hide" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+<path d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l18 18" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+</button>
+</div>
+</div>
+<!-- Remember Me Checkbox -->
+<div class="flex items-center justify-between pt-0.5">
+<label class="flex items-center gap-2 cursor-pointer select-none">
+<input checked="" class="w-4 h-4 text-[#0F766E] focus:ring-[#0F766E] border-gray-300 rounded cursor-pointer" type="checkbox">
+<span class="text-xs text-gray-600 font-medium">Remember me on this device</span>
+</label>
+</div>
+</div>
+<!-- Submit Button -->
+<div class="pt-2">
+<button class="w-full py-3 px-6 rounded-full font-bold text-white bg-[#0F766E] hover:bg-[#115E59] active:scale-[0.99] transition-all duration-150 shadow-md shadow-teal-700/20 flex items-center justify-center gap-2 text-sm" onclick="alert('Signing into Pro Portal...')" type="button">
+<span class="">Sign In to Pro Portal</span>
+<span class="">→</span>
+</button>
+</div>
+<!-- Social Divider -->
+<div class="relative flex items-center justify-center my-2">
+<div class="border-t border-gray-200 w-full"></div>
+<span class="bg-white px-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wider absolute">or continue with</span>
+</div>
+<!-- Google & Apple Social Login Options -->
+<div class="grid grid-cols-2 gap-2.5">
+<button class="flex items-center justify-center gap-2 py-2 px-3 border border-gray-200 rounded-full hover:bg-gray-50 text-xs font-semibold text-gray-700 transition-all shadow-2xs" type="button">
+<svg class="w-4 h-4" viewBox="0 0 24 24">
+<path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#0F766E"></path>
+<path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#16A34A"></path>
+<path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" fill="#F59E0B"></path>
+<path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" fill="#DC2626"></path>
+</svg>
+<span class="">Google</span>
+</button>
+<button class="flex items-center justify-center gap-2 py-2 px-3 border border-gray-200 rounded-full hover:bg-gray-50 text-xs font-semibold text-gray-700 transition-all shadow-2xs" type="button">
+<svg class="w-4 h-4 fill-current text-gray-900" viewBox="0 0 24 24">
+<path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 6.85c.61-.75 1.04-1.8 0.92-2.85-.92.04-2.02.62-2.66 1.37-.56.65-.96 1.7-0.83 2.73 1.03.08 2.05-.53 2.57-1.25z"></path>
+</svg>
+<span class="">Apple ID</span>
+</button>
+</div>
+<!-- Switch back link -->
+<div class="text-center pt-2">
+<p class="text-xs text-gray-600">
+  Don't have an account? 
+  <button class="text-[#0F766E] font-bold hover:underline bg-transparent border-0 p-0 cursor-pointer ml-0.5" onclick="switchPortalTab('register')" type="button">Register</button>
+</p>
+</div>
+<div class="p-3 rounded-2xl bg-[#16A34A]/10 border border-emerald-200 text-xs text-gray-600 text-center">
+<span class="font-bold text-emerald-950 block mb-0.5">🛡️ Protected with NADRA biometric security</span>
+  Verified account data stays fully encrypted.
+</div>
+</div>
+<!-- END: Worker Pro Sign In View -->
+<!-- BEGIN: 6-Step Progress Header -->
+<div class="mb-5" id="progress-header-container">
+<div class="flex items-center justify-between mb-2">
+<span class="text-xs font-bold uppercase tracking-wider text-[#1A1A2E]" id="step-indicator-text">Step 2 of 6</span>
+<span class="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-[#0F766E]/10 text-[#0F766E] border border-[#0F766E]/20" id="step-badge">Trade Skills</span>
+</div>
+<div class="flex items-center gap-1.5">
+<div class="h-1.5 flex-1 rounded-full bg-[#0F766E] transition-all duration-300" id="bar-step-1"></div>
+<div class="h-1.5 flex-1 rounded-full transition-all duration-300 bg-[#0F766E]" id="bar-step-2"></div>
+<div class="h-1.5 flex-1 rounded-full transition-all duration-300 bg-slate-200" id="bar-step-3"></div>
+<div class="h-1.5 flex-1 rounded-full transition-all duration-300 bg-slate-200" id="bar-step-4"></div>
+<div class="h-1.5 flex-1 rounded-full transition-all duration-300 bg-slate-200" id="bar-step-5"></div>
+<div class="h-1.5 flex-1 rounded-full transition-all duration-300 bg-slate-200" id="bar-step-6"></div>
+</div>
+</div>
+<!-- END: 6-Step Progress Header -->
+<!-- STEP 1: Basic Information -->
+<div class="space-y-4 hidden" id="step-1-content">
+<div class="mb-4">
+<span class="text-xs font-bold uppercase tracking-wider block mb-1 text-[#0F766E]">Basic Information</span>
+<h2 class="text-2xl font-extrabold tracking-tight leading-tight text-[#1A1A2E]">Tell us about yourself</h2>
+<p class="text-xs mt-1 text-[#64748B]">Enter your basic information to get started.</p>
+</div>
+<div class="space-y-3.5">
+<div>
+<label class="block text-[11px] font-bold tracking-wider uppercase mb-1 text-[#1A1A2E]" for="input_full_name">Full Name</label>
+<input class="w-full px-4 py-2.5 text-sm border border-gray-200 rounded-full focus:outline-none focus:ring-2 focus:ring-[#0F766E] bg-gray-50/50 hover:bg-white transition-all text-gray-800" id="input_full_name" placeholder="Enter your full name" type="text" value="Ahmed Khan">
+</div>
+<div>
+<label class="block text-[11px] font-bold tracking-wider uppercase mb-1 text-[#1A1A2E]" for="input_email">Email Address</label>
+<input class="w-full px-4 py-2.5 text-sm border border-gray-200 rounded-full focus:outline-none focus:ring-2 focus:ring-[#0F766E] bg-gray-50/50 hover:bg-white transition-all text-gray-800" id="input_email" placeholder="e.g. ahmed@example.com" type="email" value="ahmed.khan@example.com">
+</div>
+<div>
+<label class="block text-[11px] font-bold tracking-wider uppercase mb-1 text-[#1A1A2E]" for="input_phone_number">Phone Number</label>
+<div class="relative flex items-center">
+<span class="absolute left-4 text-xs font-bold text-gray-600 border-r border-gray-300 pr-2.5 select-none">+92</span>
+<input class="w-full pl-[62px] pr-4 py-2.5 text-sm border border-gray-200 rounded-full focus:outline-none focus:ring-2 focus:ring-[#0F766E] bg-gray-50/50 hover:bg-white transition-all text-gray-800" id="input_phone_number" placeholder="03XX XXXXXXX" type="tel" value="0300 1234567">
+</div>
+</div>
+<div>
+<label class="block text-[11px] font-bold tracking-wider uppercase mb-1 text-[#1A1A2E]" for="input_city">City</label>
+<div class="relative">
+<select class="w-full px-4 py-2.5 pr-10 text-sm border border-gray-200 rounded-full focus:outline-none focus:ring-2 focus:ring-[#0F766E] bg-gray-50/50 hover:bg-white transition-all text-gray-800 cursor-pointer appearance-none" id="input_city">
+<option selected="" value="Lahore">Lahore (DHA, Gulberg, Johar Town)</option>
+<option value="Karachi">Karachi (Clifton, DHA, Gulshan)</option>
+<option value="Islamabad">Islamabad (F-Sector, G-Sector)</option>
+<option value="Rawalpindi">Rawalpindi</option>
+<option value="Faisalabad">Faisalabad</option>
+</select>
+<span class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+</span>
+</div>
+</div>
+</div>
+<div class="pt-4">
+<button class="w-full py-3 px-6 rounded-full font-bold text-white bg-[#0F766E] hover:bg-[#115E59] active:scale-[0.99] transition-all duration-150 shadow-md shadow-teal-700/20 flex items-center justify-center gap-2 group text-sm" onclick="goToStep(2)" type="button">
+<span class="">Continue</span>
+<span class="transform group-hover:translate-x-1 transition-transform">→</span>
+</button>
+</div>
+</div>
+<!-- STEP 2: Skills & Services -->
+<div class="space-y-4" id="step-2-content">
+<div class="mb-3"><h2 class="text-2xl font-extrabold tracking-tight leading-tight text-[#1A1A2E]">What services do you provide?</h2><p class="text-xs mt-1 text-[#64748B]">Select one or more skills.</p></div>
+<div class="grid grid-cols-2 gap-2.5"><div class="skill-card cursor-pointer p-3 rounded-xl text-center flex flex-col items-center justify-center transition-all border-[#0F766E] bg-[#0F766E]/10 border-2 shadow-xs group" data-skill="Electrician" onclick="toggleSkill(this)"><div class="w-10 h-10 rounded-full bg-[#1A1A2E] flex items-center justify-center mb-1 text-white shadow-xs group-hover:scale-105 transition-transform"><svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path></svg></div><span class="text-xs font-bold text-gray-900">Electrician</span><span class="text-[10px] font-semibold text-[#0F766E] mt-0.5 flex items-center gap-0.5">✓ Selected</span></div><div class="skill-card cursor-pointer p-3 rounded-xl border-2 border-[#0F766E] bg-[#0F766E]/10 text-center flex flex-col items-center justify-center transition-all shadow-xs group" data-skill="Plumber" onclick="toggleSkill(this)"><div class="w-10 h-10 rounded-full bg-[#1A1A2E] flex items-center justify-center mb-1 text-white shadow-xs group-hover:scale-105 transition-transform"><img src="https://lh3.googleusercontent.com/aida-public/AB6AXuC5TwkNIaish96oY4Js49K23_0edeG6JyOMYse5G1d5g0MpET5Gj8mLG9R2kaiCW3_hJvfp9QZOCw7NChMjTtZ2JUI-UozHzkEwVt-BOmcZ3-bzpuYm7SXlH7WQ5OEx8xUarCqK_CM3BCqyztl9-7nmLVFa8h01OWwWdw7_-Nu8D9I4UKsocNzUvJ3fLpX1mRG3i33bX1q2UFbGjG5kQBIsFn55twKPNlqGrfiZ7yKG_8uxUY8-pS9LxxNrZSyEFFyHJw" alt="Wrench Tool" class="w-7 h-7 object-contain invert brightness-200"></div><span class="text-xs font-bold text-gray-900">Plumber</span><span class="text-[10px] font-semibold text-[#0F766E] mt-0.5 flex items-center gap-0.5">✓ Selected</span></div><div class="skill-card cursor-pointer p-3 rounded-xl text-center flex flex-col items-center justify-center transition-all border-[#0F766E] bg-[#0F766E]/10 border-2 shadow-xs group" data-skill="Painter" onclick="toggleSkill(this)"><div class="w-10 h-10 rounded-full bg-[#1A1A2E] flex items-center justify-center mb-1 text-white shadow-xs group-hover:scale-105 transition-transform"><svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" viewBox="0 0 24 24"><path d="M19 11V4a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1v4a1 1 0 0 0 1 1h12"></path><path d="M5 14v-5"></path><path d="M17 11v6a2 2 0 0 1-2 2h-1v4"></path></svg></div><span class="text-xs font-bold text-gray-900">Painter</span><span class="text-[10px] font-semibold text-[#0F766E] mt-0.5 flex items-center gap-0.5">✓ Selected</span></div><div class="skill-card cursor-pointer p-3 rounded-xl border border-gray-200 bg-gray-50 hover:bg-emerald-50 text-center flex flex-col items-center justify-center transition-all group" data-skill="Mason" onclick="toggleSkill(this)"><div class="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center mb-1 text-[#1A1A2E] shadow-xs group-hover:scale-105 transition-transform"><svg class="w-5 h-5 text-[#1A1A2E]" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" viewBox="0 0 24 24"><path d="M2 8h20M2 14h20M6 8v6M18 8v6M12 2v6M12 14v6M3 3h18a1 1 0 0 1 1 1v16a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z"></path></svg></div><span class="text-xs font-bold text-gray-900">Mason</span><span class="text-[10px] font-medium text-gray-400 mt-0.5">Tap to select</span></div><div class="skill-card cursor-pointer p-3 rounded-xl border border-gray-200 bg-gray-50 hover:bg-emerald-50 text-center flex flex-col items-center justify-center transition-all group" data-skill="Carpenter" onclick="toggleSkill(this)"><div class="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center mb-1 text-[#1A1A2E] shadow-xs group-hover:scale-105 transition-transform"><svg class="w-5 h-5 text-[#1A1A2E]" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" viewBox="0 0 24 24"><path d="M14 6l7 7-4 4-7-7"></path><path d="M3 21l3-1 2 2 1-3 11-11-4-4L3 15z"></path></svg></div><span class="text-xs font-bold text-gray-900">Carpenter</span><span class="text-[10px] font-medium text-gray-400 mt-0.5">Tap to select</span></div><div class="skill-card cursor-pointer p-3 rounded-xl border border-gray-200 bg-gray-50 hover:bg-emerald-50 text-center flex flex-col items-center justify-center transition-all group" data-skill="AC Technician" onclick="toggleSkill(this)"><div class="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center mb-1 text-[#1A1A2E] shadow-xs group-hover:scale-105 transition-transform"><svg class="w-5 h-5 text-[#1A1A2E]" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="10" rx="2"></rect><path d="M6 18v2M10 18v3M14 18v3M18 18v2M6 10h12"></path></svg></div><span class="text-xs font-bold text-gray-900">AC Technician</span><span class="text-[10px] font-medium text-gray-400 mt-0.5">Tap to select</span></div><div class="skill-card cursor-pointer p-3 rounded-xl border-2 border-[#0F766E] bg-[#0F766E]/10 text-center flex flex-col items-center justify-center transition-all shadow-xs group" data-skill="Solar Technician" onclick="toggleSkill(this)"><div class="w-10 h-10 rounded-full bg-[#1A1A2E] flex items-center justify-center mb-1 text-white shadow-xs group-hover:scale-105 transition-transform"><svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="12" rx="1"></rect><path d="M3 9h18M9 3v6M15 3v6M8 21l2-6M16 21l-2-6M5 21h14"></path></svg></div><span class="text-xs font-bold text-gray-900">Solar Technician</span><span class="text-[10px] font-semibold text-[#0F766E] mt-0.5 flex items-center gap-0.5">✓ Selected</span></div><div class="skill-card cursor-pointer p-3 rounded-xl border-2 border-[#0F766E] bg-[#0F766E]/10 text-center flex flex-col items-center justify-center transition-all shadow-xs group" data-skill="Appliance Repair" onclick="toggleSkill(this)"><div class="w-10 h-10 rounded-full bg-[#1A1A2E] flex items-center justify-center mb-1 text-white shadow-xs group-hover:scale-105 transition-transform"><svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg></div><span class="text-xs font-bold text-gray-900">Appliance Repair</span><span class="text-[10px] font-semibold text-[#0F766E] mt-0.5 flex items-center gap-0.5">✓ Selected</span></div></div>
+<div class="flex items-center gap-3 pt-3">
+<button class="w-1/3 py-3 px-4 rounded-full font-bold text-[#1A1A2E] bg-white border-[1.5px] border-[#1A1A2E] hover:bg-slate-50 transition-all text-sm flex items-center justify-center gap-1.5" onclick="goToStep(1)" type="button">
+<span class="">← Back</span>
+</button>
+<button class="flex-1 py-3 px-6 rounded-full font-bold text-white bg-[#0F766E] hover:bg-[#115E59] active:scale-[0.99] transition-all duration-150 shadow-md shadow-teal-700/20 flex items-center justify-center gap-2 text-sm" onclick="goToStep(3)" type="button">
+<span class="">Continue</span>
+<span class="">→</span>
+</button>
+</div>
+</div>
+<!-- STEP 3: Experience & Certificate -->
+<div class="space-y-3.5 hidden" id="step-3-content">
+<div class="mb-1"><div class="flex items-center justify-between gap-2 mb-1"><h2 class="text-xl font-extrabold tracking-tight leading-snug text-[#1A1A2E]">Experience &amp; Certificate</h2><span class="text-[10px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap bg-[#0F766E]/10 text-[#0F766E] border border-[#0F766E]/20">Pro Credential</span></div><p class="text-xs leading-normal text-[#64748B]">Tell clients how long you've worked in your trade and upload your skill or apprenticeship certificate for verified priority badges.</p></div>
+<!-- Years of Experience Selector -->
+<div class="p-3 rounded-2xl border border-gray-200/90 bg-white shadow-xs">
+<label class="block text-[11px] font-bold tracking-wider text-gray-500 uppercase mb-2">Years of Experience in Trade</label>
+<div class="grid grid-cols-4 gap-2 text-center" id="exp-selector-container">
+<button class="exp-pill py-2 px-1 rounded-xl text-xs font-semibold border border-gray-200 bg-white text-gray-700 hover:border-[#0F766E] transition-all" onclick="selectExp(this, '&lt; 1 Year (Beginner)')" type="button">
+<span class="block text-sm mb-0.5">🌱</span>
+<span class="block text-[10px] leading-tight font-bold">&lt; 1 Year</span>
+<span class="block text-[9px] text-gray-400">Beginner</span>
+</button>
+<button class="exp-pill py-2 px-1 rounded-xl text-xs font-semibold border border-gray-200 bg-white text-gray-700 hover:border-[#0F766E] transition-all" onclick="selectExp(this, '1 - 3 Years (Intermediate)')" type="button">
+<span class="block text-sm mb-0.5">⚡</span>
+<span class="block text-[10px] leading-tight font-bold">1 - 3 Years</span>
+<span class="block text-[9px] text-gray-400">Intermediate</span>
+</button>
+<button class="exp-pill py-2 px-1 rounded-xl text-xs font-bold border-2 border-[#0F766E] bg-[#0F766E]/10 text-[#1A1A2E] shadow-xs transition-all" onclick="selectExp(this, '4 - 7 Years (Skilled Pro)')" type="button">
+<span class="block text-sm mb-0.5">🏆</span>
+<span class="block text-[10px] leading-tight font-bold text-[#1A1A2E]">4 - 7 Years</span>
+<span class="block text-[9px] text-[#0F766E] font-semibold">Skilled Pro</span>
+</button>
+<button class="exp-pill py-2 px-1 rounded-xl text-xs font-semibold border border-gray-200 bg-white text-gray-700 hover:border-[#0F766E] transition-all" onclick="selectExp(this, '8+ Years (Master Craftsman)')" type="button">
+<span class="block text-sm mb-0.5">👑</span>
+<span class="block text-[10px] leading-tight font-bold">8+ Years</span>
+<span class="block text-[9px] text-gray-400">Master</span>
+</button>
+</div>
+</div>
+<!-- Service Area & Coverage Radius -->
+<div class="grid grid-cols-1 sm:grid-cols-12 gap-2.5">
+<div class="sm:col-span-8">
+<label class="block text-[11px] font-bold tracking-wider text-gray-500 uppercase mb-1" for="input_service_area">Primary Service Locations</label>
+<input class="w-full px-4 py-2.5 text-xs border border-gray-200 rounded-full focus:outline-none focus:ring-2 focus:ring-[#0F766E] bg-gray-50/50 hover:bg-white transition-all text-gray-800" id="input_service_area" placeholder="e.g. DHA Phase 1-6, Gulberg, Model Town" type="text" value="DHA Phases 1-6, Cantt &amp; Gulberg">
+</div>
+<div class="sm:col-span-4">
+<label class="block text-[11px] font-bold tracking-wider text-gray-500 uppercase mb-1" for="input_radius">Coverage Radius</label>
+<div class="relative">
+<select class="w-full px-3 py-2.5 pr-7 text-xs border border-gray-200 rounded-full focus:outline-none focus:ring-2 focus:ring-[#0F766E] bg-gray-50/50 hover:bg-white transition-all text-gray-800 cursor-pointer appearance-none" id="input_radius">
+<option value="10 km">Up to 10 km</option>
+<option selected="" value="20 km">Up to 20 km</option>
+<option value="35 km">Up to 35 km</option>
+<option value="Citywide">Entire City</option>
+</select>
+<span class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
+<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+</span>
+</div>
+</div>
+</div>
+<!-- Work Summary / Short Bio -->
+<div>
+<div class="flex items-center justify-between mb-1">
+<label class="block text-[11px] font-bold tracking-wider text-gray-500 uppercase" for="input_about">Short Work Summary / Bio</label>
+<span class="text-[10px] text-gray-400">Shown to clients on your quote</span>
+</div>
+<textarea class="w-full px-3.5 py-2 text-xs border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#0F766E] bg-gray-50/50 hover:bg-white transition-all text-gray-800 resize-none h-16 leading-relaxed" id="input_about" placeholder="Tell clients about your hands-on experience, equipment, and reliability...">Certified technician with 5+ years specializing in residential &amp; commercial wiring, electrical boards, and solar inverter installations. Fast response guaranteed.</textarea>
+</div>
+<!-- Dedicated Experience & Trade Certificate Upload Container -->
+<div class="p-3 rounded-2xl border border-[#0F766E]/20 bg-[#0F766E]/10/60 hover:border-[#0F766E] transition-all shadow-xs" id="cert-upload-card">
+<div class="flex items-center justify-between mb-2">
+<div>
+<span class="text-xs font-bold text-gray-900 flex items-center gap-1.5">
+<span class="text-sm">📜</span> Trade / Experience Certificate 
+<span class="text-[#0F766E] font-extrabold">*</span>
+</span>
+<p class="text-[10px] text-gray-500">NAVTTC, TEVTA, apprenticeship letter or employer certificate</p>
+</div>
+<span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#16A34A]/10 text-[#0F766E] border border-[#0F766E]/20" id="cert-status-pill">Recommended</span>
+</div>
+<div class="relative rounded-xl border-2 border-dashed border-[#0F766E]/50 hover:border-[#0F766E] bg-white transition-all p-3.5 text-center cursor-pointer group" id="cert-dropzone" onclick="document.getElementById('trade_cert_file').click()">
+<input accept="image/*,.pdf" class="hidden" id="trade_cert_file" onchange="handleCertUpload(this)" type="file">
+<div class="flex flex-col items-center justify-center gap-1" id="cert-upload-prompt">
+<div class="w-9 h-9 rounded-full bg-teal-50 text-[#0F766E] flex items-center justify-center transition-transform group-hover:scale-105 border border-teal-200">
+<svg class="w-5 h-5 text-[#0F766E]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+<path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+</div>
+<p class="text-xs font-bold text-gray-800"><span class="text-[#0F766E] underline">Click to upload</span> trade or experience certificate</p>
+<p class="text-[10px] text-gray-500">Supported formats: JPG, PNG, or PDF (Max 10MB)</p>
+</div>
+<div class="hidden items-center justify-between gap-3 p-2 bg-[#0F766E]/10 rounded-lg border border-[#0F766E]/20 text-left" id="cert-preview-container">
+<div class="flex items-center gap-2.5 min-w-0">
+<div class="w-8 h-8 rounded-lg bg-[#0F766E] text-white flex items-center justify-center font-bold text-xs flex-shrink-0">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+</div>
+<div class="leading-tight min-w-0">
+<p class="text-xs font-bold text-gray-900 truncate" id="cert-filename">NAVTTC_Electrician_Certificate.pdf</p>
+<p class="text-[10px] text-[#0F766E] font-semibold">Attached for priority Pro verification</p>
+</div>
+</div>
+<button class="text-[10px] font-bold text-[#0F766E] bg-white hover:bg-teal-50 border border-teal-300 px-2.5 py-1 rounded-full transition-all flex-shrink-0" onclick="event.stopPropagation(); resetCertUpload();" type="button">Replace</button>
+</div>
+</div>
+</div>
+<!-- Step 3 Navigation Buttons -->
+<div class="flex items-center gap-3 pt-2">
+<button class="w-1/3 py-3 px-4 rounded-full font-bold text-[#1A1A2E] bg-white border-[1.5px] border-[#1A1A2E] hover:bg-slate-50 transition-all text-sm flex items-center justify-center gap-1.5" onclick="goToStep(2)" type="button">
+<span class="">← Back</span>
+</button>
+<button class="flex-1 py-3 px-6 rounded-full font-bold text-white bg-[#0F766E] hover:bg-[#115E59] active:scale-[0.99] transition-all duration-150 shadow-md shadow-teal-700/20 flex items-center justify-center gap-2 text-sm" onclick="goToStep(4)" type="button">
+<span class="">Continue to Photo</span>
+<span class="">→</span>
+</button>
+</div>
+</div>
+<!-- STEP 4: Profile Photo (NEW STEP) -->
+<div class="space-y-3.5 hidden" id="step-4-content">
+<div class="mb-2">
+<div class="flex items-center justify-between gap-2 mb-1">
+<h2 class="text-xl font-extrabold tracking-tight leading-snug text-[#1A1A2E]">Profile Photo</h2>
+<span class="text-[10px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap bg-[#F59E0B]/10 text-[#F59E0B] border border-[#F59E0B]/30">High Trust Factor</span>
+</div>
+<p class="text-xs leading-normal text-[#64748B]">A clear face portrait helps Pakistani homeowners instantly recognize and hire you with full confidence.</p>
+</div>
+<!-- Avatar Preview & Actions Card -->
+<div class="p-4 rounded-2xl border border-gray-200/90 bg-white shadow-xs">
+<div class="flex flex-col sm:flex-row items-center gap-4">
+<!-- Circular Avatar with Verified Badge -->
+<div class="relative flex-shrink-0">
+<div class="w-24 h-24 rounded-full overflow-hidden border-4 border-[#0F766E] shadow-md bg-slate-100 ring-4 ring-teal-50">
+<img alt="Ahmed Khan Headshot" class="w-full h-full object-cover object-center" id="avatar-img-preview" src="https://lh3.googleusercontent.com/aida/AEtjO1X7xkTJ5EBMurxO4DZ2LpEphcZtxbhm7C8f_fEvP3j5MrRkz990ellDF2wi0T9vW94hKo69ytxMZuBRshwJhh-aHBCQRBCP_CJ8snbkmF9seTzSwXNgW9e-Ng4R6x2-LTYBr3VYg221nfqluQwOZOFas4J2FId2IBnFj8l0L_QQxZ2M1Wr05aMK8-lkMkakj6e_SB1FAsjzVAb6Zw6qoOSEG9lLe2Fl5_KduCn7VSBaxqActAyuc8vhIA">
+</div>
+<div class="absolute bottom-0 right-0 w-7 h-7 bg-[#16A34A] rounded-full border-2 border-white flex items-center justify-center text-white shadow-xs" title="Verified Worker Photo">
+<svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+<path clip-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" fill-rule="evenodd"></path>
+</svg>
+</div>
+</div>
+<!-- Action Buttons & Badge -->
+<div class="flex-1 text-center sm:text-left space-y-2">
+<div class="flex items-center justify-center sm:justify-start gap-2">
+<span class="text-xs font-bold text-[#1A1A2E]">Current Headshot Preview</span>
+<span class="text-[10px] font-semibold px-2 py-0.2 bg-[#0F766E]/10 text-[#0F766E] rounded-full border border-[#0F766E]/20">Pro Quality</span>
+</div>
+<p class="text-[11px] text-[#64748B] leading-tight">Your face photo is shown on quote proposals and verified ID cards.</p>
+<div class="flex items-center justify-center sm:justify-start gap-2 pt-1">
+<input accept="image/*" class="hidden" id="profile_photo_file" onchange="handlePhotoUpload(this)" type="file">
+<button class="px-3.5 py-1.5 rounded-full text-xs font-bold text-[#0F766E] border border-[#0F766E] bg-teal-50/50 hover:bg-teal-50 transition-all flex items-center gap-1 shadow-2xs" onclick="document.getElementById('profile_photo_file').click()" type="button">
+<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+<span class="">Change Photo</span>
+</button>
+<button class="px-3 py-1.5 rounded-full text-xs font-medium text-slate-700 border border-slate-300 hover:bg-slate-50 transition-all flex items-center gap-1 shadow-2xs" onclick="alert('Camera access requested for selfie check.')" type="button">
+<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" stroke-linecap="round" stroke-linejoin="round"></path><path d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+<span class="">Take Selfie</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+<!-- Photo Quality Guidelines Checklist -->
+<div class="p-3 rounded-2xl bg-[#F8FAFC] border border-slate-200 text-xs">
+<span class="block text-[11px] font-bold uppercase tracking-wider text-[#1A1A2E] mb-2">Photo Guidelines Checklist</span>
+<div class="grid grid-cols-2 gap-2 text-[11px]">
+<div class="flex items-center gap-1.5 text-slate-700">
+<span class="text-[#16A34A] font-bold">✓</span>
+<span class="">Clear face &amp; natural daylight</span>
+</div>
+<div class="flex items-center gap-1.5 text-slate-700">
+<span class="text-[#16A34A] font-bold">✓</span>
+<span class="">Clean work uniform or polo</span>
+</div>
+<div class="flex items-center gap-1.5 text-slate-700">
+<span class="text-[#DC2626] font-bold">✕</span>
+<span class="">No sunglasses or face covering</span>
+</div>
+<div class="flex items-center gap-1.5 text-slate-700">
+<span class="text-[#DC2626] font-bold">✕</span>
+<span class="">No group photos or logos</span>
+</div>
+</div>
+</div>
+<!-- Step 4 Navigation Buttons -->
+<div class="flex items-center gap-3 pt-2">
+<button class="w-1/3 py-3 px-4 rounded-full font-bold text-[#1A1A2E] bg-white border-[1.5px] border-[#1A1A2E] hover:bg-slate-50 transition-all text-sm flex items-center justify-center gap-1.5" onclick="goToStep(3)" type="button">
+<span class="">← Back</span>
+</button>
+<button class="flex-1 py-3 px-6 rounded-full font-bold text-white bg-[#0F766E] hover:bg-[#115E59] active:scale-[0.99] transition-all duration-150 shadow-md shadow-teal-700/20 flex items-center justify-center gap-2 text-sm" onclick="goToStep(5)" type="button">
+<span class="">Continue to CNIC</span>
+<span class="">→</span>
+</button>
+</div>
+</div>
+<!-- STEP 5: Pakistani Smart CNIC Verification -->
+<div class="space-y-3.5 hidden" id="step-5-content">
+<div class="mb-1"><div class="flex items-center justify-between gap-2 mb-1"><h2 class="text-xl font-extrabold tracking-tight leading-snug text-[#1A1A2E]">Pakistani Smart CNIC Verification</h2><span class="text-[10px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap bg-[#0F766E]/10 text-[#0F766E] border border-[#0F766E]/20">NADRA Escrow Safe</span></div><p class="text-xs leading-normal text-[#64748B]">Upload clear photos of your original National Identity Card (Smart CNIC) to earn the NADRA Verified Pro badge and receive client job requests.</p></div>
+<div class="p-2.5 rounded-xl bg-[#16A34A]/10 border border-emerald-200 flex items-center gap-2.5 text-xs text-emerald-950 shadow-2xs">
+<div class="w-7 h-7 rounded-lg bg-[#0F766E] text-white flex items-center justify-center flex-shrink-0">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+</div>
+<div class="leading-tight">
+<span class="font-bold block text-[11px] text-emerald-900">NADRA OCR Verified &amp; 256-bit Encrypted</span>
+<span class="text-[10px] text-gray-600">Your biometric and identity data is strictly protected for escrow verification.</span>
+</div>
+</div>
+<div class="space-y-2.5">
+<!-- Front side dropzone -->
+<div class="p-3 rounded-2xl border border-gray-200/90 bg-white hover:border-[#0F766E] transition-all shadow-xs" id="cnic-front-card">
+<div class="flex items-center justify-between mb-2">
+<div>
+<span class="text-xs font-bold text-gray-900 flex items-center gap-1.5"><span class="text-sm">🪪</span> CNIC Front Side <span class="text-[#0F766E] font-extrabold">*</span></span>
+<p class="text-[10px] text-gray-500">Photo, Name &amp; 13-Digit Identity Number</p>
+</div>
+<span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-teal-50 text-[#0F766E] border border-teal-200" id="front-status-pill">Required</span>
+</div>
+<div class="relative rounded-xl border-2 border-dashed border-gray-300 hover:border-[#0F766E] bg-gray-50/50 hover:bg-[#16A34A]/10 transition-all p-4 text-center cursor-pointer group" id="front-dropzone" onclick="document.getElementById('cnic_front_file').click()">
+<input accept="image/*,.pdf" class="hidden" id="cnic_front_file" onchange="handleCnicUpload(this, 'front')" type="file">
+<div class="flex flex-col items-center justify-center gap-1.5" id="front-upload-prompt">
+<div class="w-10 h-10 rounded-full bg-teal-100 text-[#0F766E] flex items-center justify-center transition-transform group-hover:scale-105">
+<svg class="w-5 h-5 text-[#0F766E]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+</div>
+<div class="leading-tight">
+<p class="text-xs font-bold text-gray-800"><span class="text-[#0F766E] underline">Click to upload</span> or drag &amp; drop CNIC Front side</p>
+<p class="text-[10px] text-gray-500 mt-0.5">PNG, JPG, or PDF (Max 5MB) • Photo &amp; 13-digit number must be legible</p>
+</div>
+</div>
+<div class="hidden items-center justify-between gap-3 p-2 bg-[#0F766E]/10 rounded-lg border border-[#0F766E]/20 text-left" id="front-preview-container">
+<div class="flex items-center gap-2.5 min-w-0">
+<div class="w-9 h-9 rounded bg-[#0F766E] text-white flex items-center justify-center font-bold text-xs flex-shrink-0">🪪</div>
+<div class="leading-tight min-w-0">
+<p class="text-xs font-bold text-gray-900 truncate" id="front-filename">cnic_front.jpg</p>
+<p class="text-[10px] text-[#0F766E] font-semibold">Ready for verification</p>
+</div>
+</div>
+<button class="text-[10px] font-bold text-[#0F766E] bg-white hover:bg-teal-50 border border-teal-300 px-2.5 py-1 rounded-full transition-all flex-shrink-0" onclick="event.stopPropagation(); resetCnicUpload('front');" type="button">Replace</button>
+</div>
+</div>
+</div>
+<!-- Back side dropzone -->
+<div class="p-3 rounded-2xl border border-gray-200/90 bg-white hover:border-[#0F766E] transition-all shadow-xs" id="cnic-back-card">
+<div class="flex items-center justify-between mb-2">
+<div>
+<span class="text-xs font-bold text-gray-900 flex items-center gap-1.5"><span class="text-sm">🪪</span> CNIC Back Side <span class="text-[#0F766E] font-extrabold">*</span></span>
+<p class="text-[10px] text-gray-500">Permanent &amp; Present Address side</p>
+</div>
+<span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-teal-50 text-[#0F766E] border border-teal-200" id="back-status-pill">Required</span>
+</div>
+<div class="relative rounded-xl border-2 border-dashed border-gray-300 hover:border-[#0F766E] bg-gray-50/50 hover:bg-[#16A34A]/10 transition-all p-4 text-center cursor-pointer group" id="back-dropzone" onclick="document.getElementById('cnic_back_file').click()">
+<input accept="image/*,.pdf" class="hidden" id="cnic_back_file" onchange="handleCnicUpload(this, 'back')" type="file">
+<div class="flex flex-col items-center justify-center gap-1.5" id="back-upload-prompt">
+<div class="w-10 h-10 rounded-full bg-teal-100 text-[#0F766E] flex items-center justify-center transition-transform group-hover:scale-105">
+<svg class="w-5 h-5 text-[#0F766E]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+</div>
+<div class="leading-tight">
+<p class="text-xs font-bold text-gray-800"><span class="text-[#0F766E] underline">Click to upload</span> or drag &amp; drop CNIC Back side</p>
+<p class="text-[10px] text-gray-500 mt-0.5">PNG, JPG, or PDF (Max 5MB) • Present &amp; permanent address side</p>
+</div>
+</div>
+<div class="hidden items-center justify-between gap-3 p-2 bg-[#0F766E]/10 rounded-lg border border-[#0F766E]/20 text-left" id="back-preview-container">
+<div class="flex items-center gap-2.5 min-w-0">
+<div class="w-9 h-9 rounded bg-[#0F766E] text-white flex items-center justify-center font-bold text-xs flex-shrink-0">🪪</div>
+<div class="leading-tight min-w-0">
+<p class="text-xs font-bold text-gray-900 truncate" id="back-filename">cnic_back.jpg</p>
+<p class="text-[10px] text-[#0F766E] font-semibold">Ready for verification</p>
+</div>
+</div>
+<button class="text-[10px] font-bold text-[#0F766E] bg-white hover:bg-teal-50 border border-teal-300 px-2.5 py-1 rounded-full transition-all flex-shrink-0" onclick="event.stopPropagation(); resetCnicUpload('back');" type="button">Replace</button>
+</div>
+</div>
+</div>
+<div class="p-2.5 rounded-xl bg-gray-50 border border-gray-200/80 text-[11px] text-gray-600 flex items-start gap-2">
+<span class="text-[#0F766E] font-bold flex-shrink-0">💡</span>
+<div class="leading-tight">
+<span class="font-bold text-gray-800 block text-[10px] mb-0.5">Photo Guidelines for Instant Approval:</span>
+<span class="text-[10px] text-gray-500">✓ All 4 corners visible &nbsp;•&nbsp; ✓ No flash glare/blur &nbsp;•&nbsp; ✓ Original Smart CNIC</span>
+</div>
+</div>
+</div>
+<div class="flex items-center gap-3 pt-2">
+<button class="w-1/3 py-3 px-4 rounded-full font-bold text-[#1A1A2E] bg-white border-[1.5px] border-[#1A1A2E] hover:bg-slate-50 transition-all text-sm flex items-center justify-center gap-1.5" onclick="goToStep(4)" type="button">
+<span class="">← Back</span>
+</button>
+<button class="flex-1 py-3 px-6 rounded-full font-bold text-white bg-[#0F766E] hover:bg-[#115E59] active:scale-[0.99] transition-all duration-150 shadow-md shadow-teal-700/20 flex items-center justify-center gap-2 text-sm" onclick="goToStep(6)" type="button">
+<span class="">Verify &amp; Review</span>
+<span class="">→</span>
+</button>
+</div>
+</div>
+<!-- STEP 6: Review & Submit Your Profile -->
+<div class="space-y-3 hidden" id="step-6-content">
+<div class="mb-1"><div class="flex items-center justify-between gap-2 mb-0.5"><h2 class="text-xl sm:text-2xl font-extrabold tracking-tight leading-tight text-[#1A1A2E]">Review your profile</h2><span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#0F766E]/10 text-[#0F766E] border border-[#0F766E]/20">Final Step</span></div><p class="text-xs mt-0.5 text-[#64748B]">Please check your details, photo, and documents before submitting.</p></div>
+<div class="space-y-2 text-xs">
+<!-- Personal Info Card with Photo thumbnail -->
+<div class="p-2.5 rounded-2xl border border-gray-200/90 bg-gray-50/50">
+<div class="flex items-center justify-between mb-1.5">
+<span class="font-bold text-gray-900 flex items-center gap-1.5">
+<svg class="w-3.5 h-3.5 text-[#0F766E]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" stroke-linecap="round" stroke-linejoin="round"></path></svg>Personal Information &amp; Photo
+</span>
+<button class="text-[11px] font-bold text-[#0F766E] hover:underline" onclick="goToStep(1)" type="button">[ Edit ]</button>
+</div>
+<div class="flex items-center gap-3 mb-1.5 pb-1.5 border-b border-gray-200">
+<img alt="Worker Avatar" class="w-10 h-10 rounded-full object-cover border-2 border-[#0F766E] shadow-2xs" id="rev-photo-thumb" src="https://lh3.googleusercontent.com/aida/AEtjO1X7xkTJ5EBMurxO4DZ2LpEphcZtxbhm7C8f_fEvP3j5MrRkz990ellDF2wi0T9vW94hKo69ytxMZuBRshwJhh-aHBCQRBCP_CJ8snbkmF9seTzSwXNgW9e-Ng4R6x2-LTYBr3VYg221nfqluQwOZOFas4J2FId2IBnFj8l0L_QQxZ2M1Wr05aMK8-lkMkakj6e_SB1FAsjzVAb6Zw6qoOSEG9lLe2Fl5_KduCn7VSBaxqActAyuc8vhIA">
+<div class="leading-tight">
+<span class="font-bold text-gray-900 block text-xs" id="rev-name">Ahmed Khan</span>
+<span class="text-[10px] text-[#0F766E] font-semibold">✓ Profile Photo Verified</span>
+</div>
+<button class="text-[10px] text-[#0F766E] font-bold hover:underline ml-auto" onclick="goToStep(4)" type="button">[ Edit Photo ]</button>
+</div>
+<div class="space-y-0.5 text-gray-600 text-[11px]">
+<div class="flex justify-between"><span class="text-gray-400">Email Address:</span><span class="font-semibold text-gray-800" id="rev-email">ahmed.khan@example.com</span></div>
+<div class="flex justify-between"><span class="text-gray-400">Phone Number:</span><span class="font-semibold text-gray-800" id="rev-phone">+92 0300 1234567</span></div>
+<div class="flex justify-between"><span class="text-gray-400">City:</span><span class="font-semibold text-gray-800" id="rev-city">Lahore</span></div>
+</div>
+</div>
+<!-- Selected Skills Card -->
+<div class="p-2.5 rounded-2xl border border-gray-200/90 bg-gray-50/50">
+<div class="flex items-center justify-between mb-1.5">
+<span class="font-bold text-gray-900 flex items-center gap-1.5">
+<svg class="w-3.5 h-3.5 text-[#0F766E]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M11 4a2 2 0 114 0v1a1 1 0 001 1h3a1 1 0 011 1v3a1 1 0 01-1 1h-1a2 2 0 100 4h1a1 1 0 011 1v3a1 1 0 01-1 1h-3a1 1 0 01-1-1v-1a2 2 0 10-4 0v1a1 1 0 01-1 1H7a1 1 0 01-1-1v-3a1 1 0 00-1-1H4a2 2 0 110-4h1a1 1 0 001-1V7a1 1 0 011-1h3a1 1 0 001-1V4z" stroke-linecap="round" stroke-linejoin="round"></path></svg>Selected Skills
+</span>
+<button class="text-[11px] font-bold text-[#0F766E] hover:underline" onclick="goToStep(2)" type="button">[ Edit ]</button>
+</div>
+<div class="flex flex-wrap gap-1.5" id="rev-skills-container"><span class="px-2.5 py-0.5 rounded-full bg-teal-50 text-[#0F766E] border border-teal-200 font-semibold text-[11px]">Electrician</span><span class="px-2.5 py-0.5 rounded-full bg-teal-50 text-[#0F766E] border border-teal-200 font-semibold text-[11px]">Plumber</span><span class="px-2.5 py-0.5 rounded-full bg-teal-50 text-[#0F766E] border border-teal-200 font-semibold text-[11px]">Painter</span><span class="px-2.5 py-0.5 rounded-full bg-teal-50 text-[#0F766E] border border-teal-200 font-semibold text-[11px]">Solar Technician</span><span class="px-2.5 py-0.5 rounded-full bg-teal-50 text-[#0F766E] border border-teal-200 font-semibold text-[11px]">Appliance Repair</span></div>
+</div>
+<!-- Experience & Certificate Card -->
+<div class="p-2.5 rounded-2xl border border-gray-200/90 bg-gray-50/50">
+<div class="flex items-center justify-between mb-1">
+<span class="font-bold text-gray-900 flex items-center gap-1.5">
+<svg class="w-3.5 h-3.5 text-[#0F766E]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" stroke-linecap="round" stroke-linejoin="round"></path></svg>Experience &amp; Certificate
+</span>
+<button class="text-[11px] font-bold text-[#0F766E] hover:underline" onclick="goToStep(3)" type="button">[ Edit ]</button>
+</div>
+<div class="space-y-0.5 text-gray-600 text-[11px]">
+<div class="flex justify-between"><span class="text-gray-400">Trade Experience:</span><span class="font-semibold text-gray-800" id="rev-exp-years">4 - 7 Years (Skilled Pro)</span></div>
+<div class="flex justify-between"><span class="text-gray-400">Service Coverage:</span><span class="font-semibold text-gray-800" id="rev-area">DHA Phases 1-6, Cantt &amp; Gulberg (20 km)</span></div>
+<div class="flex justify-between"><span class="text-gray-400">Certificate:</span><span class="font-semibold text-[#0F766E]" id="rev-cert-status">✓ Attached (NAVTTC / Trade Proof)</span></div>
+</div>
+</div>
+<!-- Smart CNIC Verification Documents Card -->
+<div class="p-2.5 rounded-2xl border border-gray-200/90 bg-gray-50/50">
+<div class="flex items-center justify-between mb-1">
+<span class="font-bold text-gray-900 flex items-center gap-1.5">
+<svg class="w-3.5 h-3.5 text-[#0F766E]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" stroke-linecap="round" stroke-linejoin="round"></path></svg>NADRA Smart CNIC Verification
+</span>
+<button class="text-[11px] font-bold text-[#0F766E] hover:underline" onclick="goToStep(5)" type="button">[ Edit ]</button>
+</div>
+<div class="space-y-0.5 text-gray-600 text-[11px]">
+<div class="flex justify-between"><span class="text-gray-400">CNIC Front (*):</span><span class="font-semibold text-[#0F766E]" id="rev-cnic-front">✓ Attached (Smart CNIC Front)</span></div>
+<div class="flex justify-between"><span class="text-gray-400">CNIC Back (*):</span><span class="font-semibold text-[#0F766E]" id="rev-cnic-back">✓ Attached (Smart CNIC Back)</span></div>
+<div class="flex justify-between"><span class="text-gray-400">Status:</span><span class="font-semibold text-[#0F766E] bg-teal-50 px-2 py-0.5 rounded-full text-[10px] border border-teal-200">NADRA Escrow Protected</span></div>
+</div>
+</div>
+</div>
+<div class="flex items-center gap-3 pt-2">
+<button class="w-1/3 py-3 px-4 rounded-full font-bold text-[#1A1A2E] bg-white border-[1.5px] border-[#1A1A2E] hover:bg-slate-50 transition-all text-sm flex items-center justify-center gap-1.5" onclick="goToStep(5)" type="button">
+<span class="">← Back</span>
+</button>
+<button class="flex-1 py-3 px-6 rounded-full font-bold text-white bg-[#0F766E] hover:bg-[#115E59] active:scale-[0.99] transition-all duration-150 shadow-md shadow-teal-700/20 flex items-center justify-center gap-2 text-sm" onclick="submitProfile()" type="button">
+<span class="">Submit Profile</span>
+<span class="">→</span>
+</button>
+</div>
+</div>
+<!-- STEP SUCCESS STATE: Submission View -->
+<div class="space-y-6 text-center py-6 hidden" id="step-success-content">
+<!-- Big Green Checkmark Icon in Circular Badge -->
+<div class="w-20 h-20 rounded-full bg-emerald-500/10 border-2 border-emerald-500/30 text-[#16A34A] flex items-center justify-center mx-auto shadow-lg shadow-emerald-500/10 transition-transform transform hover:scale-105 duration-300">
+<div class="w-14 h-14 rounded-full bg-[#16A34A] text-white flex items-center justify-center shadow-md">
+<svg class="w-8 h-8" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24">
+<path d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+</div>
+</div>
+<div>
+<h2 class="text-2xl sm:text-3xl font-extrabold tracking-tight leading-tight text-[#1A1A2E]">Profile Submitted! 🎉</h2>
+<p class="text-xs sm:text-sm mt-2 max-w-sm mx-auto leading-relaxed text-[#64748B]">Thank you for joining HUNAR. Your verified photo, trade credentials, and CNIC have been submitted successfully.</p>
+</div>
+<!-- Under Review callout box -->
+<div class="p-4 sm:p-5 rounded-2xl max-w-sm mx-auto text-left shadow-xs bg-[#F8FAFC] border-[1.5px] border-[#F59E0B] shadow-amber-500/10">
+<div class="flex items-center justify-between mb-2">
+<div class="flex items-center gap-2 text-xs sm:text-sm font-bold text-[#1A1A2E]">
+<span class="text-base">⏳</span>
+<span class="">Under Review</span>
+</div>
+<span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#F59E0B]/10 text-[#F59E0B] border border-[#F59E0B]/30">Pending NADRA Check</span>
+</div>
+<p class="text-xs leading-relaxed text-[#64748B]">Our compliance team is verifying your Smart CNIC, photo match, and trade certificate with NADRA records. We will notify you via SMS when jobs are ready.</p>
+</div>
+<div class="pt-2 max-w-sm mx-auto w-full">
+<button class="w-full py-3 px-6 rounded-full font-semibold transition-all duration-150 flex items-center justify-center text-sm cursor-pointer shadow-xs active:scale-[0.99] bg-white border-2 border-[#1A1A2E] text-[#1A1A2E] hover:bg-slate-50" onclick="goToStep(1)" type="button">Go to Home</button>
+</div>
+</div>
+<!-- Bottom Role Switcher Helper -->
+<div class="text-center pt-3 border-t border-gray-100 mt-4" id="bottom-role-switcher">
+<p class="text-xs text-[#64748B]">Looking to hire skilled professionals instead? <a class="text-[#0F766E] hover:underline font-bold ml-1 inline-flex items-center gap-0.5" href="#">Register as Customer →</a></p>
+</div>
+<script>
+window.currentExpSelection = '4 - 7 Years (Skilled Pro)';
+window.frontCnicAttached = true;
+window.backCnicAttached = true;
+window.certAttached = true;
+
+window.togglePasswordVisibility = function() {
+  var pwd = document.getElementById('login_password');
+  var showIcon = document.getElementById('eye-icon-show');
+  var hideIcon = document.getElementById('eye-icon-hide');
+  if (pwd.type === 'password') {
+    pwd.type = 'text';
+    if (showIcon) showIcon.classList.add('hidden');
+    if (hideIcon) hideIcon.classList.remove('hidden');
+  } else {
+    pwd.type = 'password';
+    if (showIcon) showIcon.classList.remove('hidden');
+    if (hideIcon) hideIcon.classList.add('hidden');
+  }
+};
+
+window.switchPortalTab = function(mode) {
+  var signInTab = document.getElementById('tab-signin-btn');
+  var regTab = document.getElementById('tab-register-btn');
+  var signInPanel = document.getElementById('signin-panel');
+  var progHeader = document.getElementById('progress-header-container');
+  var titleEl = document.getElementById('portal-title');
+  var subtextEl = document.getElementById('portal-subtext');
+
+  if (mode === 'signin') {
+    signInTab.className = 'flex-1 py-1.5 px-4 text-sm font-bold rounded-full bg-[#0F766E] text-white shadow-sm transition-all text-center';
+    regTab.className = 'flex-1 py-1.5 px-4 text-sm font-medium rounded-full text-slate-500 hover:text-slate-800 transition-all text-center';
+    signInPanel.classList.remove('hidden');
+    progHeader.classList.add('hidden');
+    if (titleEl) titleEl.textContent = 'Welcome back, Pro';
+    if (subtextEl) subtextEl.innerHTML = 'Need to create a worker profile? <button type="button" onclick="switchPortalTab(\'register\')" class="text-[#0F766E] font-semibold hover:underline bg-transparent border-0 p-0 cursor-pointer ml-1">Register</button>';
+    [1, 2, 3, 4, 5, 6].forEach(function(s) {
+      var el = document.getElementById('step-' + s + '-content');
+      if (el) el.classList.add('hidden');
+    });
+    var succ = document.getElementById('step-success-content');
+    if (succ) succ.classList.add('hidden');
+  } else {
+    regTab.className = 'flex-1 py-1.5 px-4 text-sm font-bold rounded-full bg-[#0F766E] text-white shadow-sm transition-all text-center';
+    signInTab.className = 'flex-1 py-1.5 px-4 text-sm font-medium rounded-full text-slate-500 hover:text-slate-800 transition-all text-center';
+    signInPanel.classList.add('hidden');
+    progHeader.classList.remove('hidden');
+    if (titleEl) titleEl.textContent = 'Create your Pro account';
+    if (subtextEl) subtextEl.innerHTML = 'Already have a worker account? <button type="button" id="toggle-to-signin-link" onclick="switchPortalTab(\'signin\')" class="text-[#0F766E] font-semibold hover:underline bg-transparent border-0 p-0 cursor-pointer ml-1">Sign In</button>';
+    if (window.goToStep) window.goToStep(1);
+  }
+};
+
+window.handlePhotoUpload = function(input) {
+  if (!input.files || !input.files[0]) return;
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    var preview = document.getElementById('avatar-img-preview');
+    var revThumb = document.getElementById('rev-photo-thumb');
+    if (preview) preview.src = e.target.result;
+    if (revThumb) revThumb.src = e.target.result;
+  };
+  reader.readAsDataURL(input.files[0]);
+};
+
+window.handleCertUpload = function(input) {
+  if (!input.files || !input.files[0]) return;
+  var file = input.files[0];
+  var prompt = document.getElementById('cert-upload-prompt');
+  var preview = document.getElementById('cert-preview-container');
+  var fname = document.getElementById('cert-filename');
+  var pill = document.getElementById('cert-status-pill');
+  var dropzone = document.getElementById('cert-dropzone');
+  if (prompt) prompt.classList.add('hidden');
+  if (preview) { preview.classList.remove('hidden'); preview.classList.add('flex'); }
+  if (fname) fname.textContent = file.name;
+  if (pill) {
+    pill.textContent = '✓ Attached';
+    pill.className = 'text-[10px] font-bold px-2 py-0.5 rounded-full bg-teal-100 text-[#0F766E] flex items-center gap-1 border border-teal-300';
+  }
+  if (dropzone) {
+    dropzone.classList.remove('border-dashed', 'border-[#0F766E]/50');
+    dropzone.classList.add('border-solid', 'border-[#0F766E]', 'bg-[#0F766E]/10');
+  }
+  window.certAttached = true;
+};
+
+window.resetCertUpload = function() {
+  var input = document.getElementById('trade_cert_file');
+  if (input) input.value = '';
+  var prompt = document.getElementById('cert-upload-prompt');
+  var preview = document.getElementById('cert-preview-container');
+  var pill = document.getElementById('cert-status-pill');
+  var dropzone = document.getElementById('cert-dropzone');
+  if (prompt) prompt.classList.remove('hidden');
+  if (preview) { preview.classList.add('hidden'); preview.classList.remove('flex'); }
+  if (pill) {
+    pill.textContent = 'Recommended';
+    pill.className = 'text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#16A34A]/10 text-[#0F766E] border border-[#0F766E]/20';
+  }
+  if (dropzone) {
+    dropzone.classList.add('border-dashed', 'border-[#0F766E]/50');
+    dropzone.classList.remove('border-solid', 'border-[#0F766E]', 'bg-[#0F766E]/10');
+  }
+  window.certAttached = false;
+};
+
+window.handleCnicUpload = function(input, side) {
+  if (!input.files || !input.files[0]) return;
+  var file = input.files[0];
+  var prompt = document.getElementById(side + '-upload-prompt');
+  var preview = document.getElementById(side + '-preview-container');
+  var fname = document.getElementById(side + '-filename');
+  var pill = document.getElementById(side + '-status-pill');
+  var dropzone = document.getElementById(side + '-dropzone');
+  if (prompt) prompt.classList.add('hidden');
+  if (preview) { preview.classList.remove('hidden'); preview.classList.add('flex'); }
+  if (fname) fname.textContent = file.name;
+  if (pill) {
+    pill.textContent = '✓ ' + (side === 'front' ? 'Front' : 'Back') + ' Ready';
+    pill.className = 'text-[10px] font-bold px-2 py-0.5 rounded-full bg-teal-100 text-[#0F766E] flex items-center gap-1 border border-teal-200';
+  }
+  if (dropzone) {
+    dropzone.classList.remove('border-dashed', 'border-gray-300');
+    dropzone.classList.add('border-solid', 'border-[#0F766E]', 'bg-[#0F766E]/10');
+  }
+  if (side === 'front') window.frontCnicAttached = true;
+  if (side === 'back') window.backCnicAttached = true;
+};
+
+window.resetCnicUpload = function(side) {
+  var input = document.getElementById('cnic_' + side + '_file');
+  if (input) input.value = '';
+  var prompt = document.getElementById(side + '-upload-prompt');
+  var preview = document.getElementById(side + '-preview-container');
+  var pill = document.getElementById(side + '-status-pill');
+  var dropzone = document.getElementById(side + '-dropzone');
+  if (prompt) prompt.classList.remove('hidden');
+  if (preview) { preview.classList.add('hidden'); preview.classList.remove('flex'); }
+  if (pill) {
+    pill.textContent = 'Required';
+    pill.className = 'text-[10px] font-bold px-2 py-0.5 rounded-full bg-teal-50 text-[#0F766E] border border-teal-200';
+  }
+  if (dropzone) {
+    dropzone.classList.add('border-dashed', 'border-gray-300');
+    dropzone.classList.remove('border-solid', 'border-[#0F766E]', 'bg-[#0F766E]/10');
+  }
+  if (side === 'front') window.frontCnicAttached = false;
+  if (side === 'back') window.backCnicAttached = false;
+};
+
+window.selectExp = function(btn, label) {
+  var pills = document.querySelectorAll('.exp-pill');
+  pills.forEach(function(p) {
+    p.className = 'exp-pill py-2 px-1 rounded-xl text-xs font-semibold border border-gray-200 bg-white text-gray-700 hover:border-[#0F766E] transition-all';
+  });
+  btn.className = 'exp-pill py-2 px-1 rounded-xl text-xs font-bold border-2 border-[#0F766E] bg-[#0F766E]/10 text-[#1A1A2E] shadow-xs transition-all';
+  window.currentExpSelection = label;
+};
+
+window.toggleSkill = function(card) {
+  var isSel = card.classList.contains('border-[#0F766E]');
+  if (isSel) {
+    card.classList.remove('border-[#0F766E]', 'bg-[#0F766E]/10', 'border-2', 'shadow-xs');
+    card.classList.add('border-gray-200', 'bg-gray-50');
+    var lastSpan = card.querySelector('span:last-child');
+    if (lastSpan) {
+      lastSpan.textContent = 'Tap to select';
+      lastSpan.className = 'text-[10px] font-medium text-gray-400 mt-0.5';
+    }
+  } else {
+    card.classList.remove('border-gray-200', 'bg-gray-50');
+    card.classList.add('border-[#0F766E]', 'bg-[#0F766E]/10', 'border-2', 'shadow-xs');
+    var lastSpan = card.querySelector('span:last-child');
+    if (lastSpan) {
+      lastSpan.textContent = '✓ Selected';
+      lastSpan.className = 'text-[10px] font-semibold text-[#0F766E] mt-0.5 flex items-center gap-0.5';
+    }
+  }
+};
+
+window.goToStep = function(stepNum) {
+  var steps = [1, 2, 3, 4, 5, 6];
+  var succ = document.getElementById('step-success-content');
+  var header = document.getElementById('progress-header-container');
+  var roleSwitcher = document.getElementById('bottom-role-switcher');
+
+  if (succ) succ.classList.add('hidden');
+  if (header) header.classList.remove('hidden');
+  if (roleSwitcher) roleSwitcher.classList.remove('hidden');
+
+  steps.forEach(function(s) {
+    var el = document.getElementById('step-' + s + '-content');
+    if (el) {
+      if (s === stepNum) el.classList.remove('hidden');
+      else el.classList.add('hidden');
+    }
+    var bar = document.getElementById('bar-step-' + s);
+    if (bar) {
+      if (s <= stepNum) {
+        bar.classList.remove('bg-slate-200');
+        bar.classList.add('bg-[#0F766E]');
+      } else {
+        bar.classList.remove('bg-[#0F766E]');
+        bar.classList.add('bg-slate-200');
+      }
+    }
+  });
+
+  var indText = document.getElementById('step-indicator-text');
+  var badge = document.getElementById('step-badge');
+  if (indText) indText.textContent = 'Step ' + stepNum + ' of 6';
+  var badgeTitles = {
+    1: 'Basic Details',
+    2: 'Trade Skills',
+    3: 'Experience & Certificate',
+    4: 'Profile Photo',
+    5: 'CNIC Verification',
+    6: 'Review & Submit'
+  };
+  if (badge) badge.textContent = badgeTitles[stepNum] || 'Pro Onboarding';
+
+  if (stepNum === 6) {
+    var nameVal = document.getElementById('input_full_name');
+    var emailVal = document.getElementById('input_email');
+    var phoneVal = document.getElementById('input_phone_number');
+    var cityVal = document.getElementById('input_city');
+    var areaVal = document.getElementById('input_service_area');
+    var radiusVal = document.getElementById('input_radius');
+    
+    if (nameVal && document.getElementById('rev-name')) document.getElementById('rev-name').textContent = nameVal.value || 'Ahmed Khan';
+    if (emailVal && document.getElementById('rev-email')) document.getElementById('rev-email').textContent = emailVal.value || 'ahmed.khan@example.com';
+    if (phoneVal && document.getElementById('rev-phone')) document.getElementById('rev-phone').textContent = '+92 ' + phoneVal.value;
+    if (cityVal && document.getElementById('rev-city')) document.getElementById('rev-city').textContent = cityVal.value;
+    
+    var combinedArea = (areaVal ? areaVal.value : 'DHA Phases 1-6') + ' (' + (radiusVal ? radiusVal.value : '20 km') + ')';
+    if (document.getElementById('rev-area')) document.getElementById('rev-area').textContent = combinedArea;
+    if (document.getElementById('rev-exp-years')) document.getElementById('rev-exp-years').textContent = window.currentExpSelection || '4 - 7 Years (Skilled Pro)';
+    
+    var certStatusEl = document.getElementById('rev-cert-status');
+    if (certStatusEl) {
+      certStatusEl.textContent = window.certAttached ? '✓ Attached (NAVTTC / Trade Proof)' : 'Not attached (Optional)';
+      certStatusEl.className = window.certAttached ? 'font-semibold text-[#0F766E]' : 'font-semibold text-gray-500';
+    }
+
+    var cnicFrontEl = document.getElementById('rev-cnic-front');
+    var cnicBackEl = document.getElementById('rev-cnic-back');
+    if (cnicFrontEl) cnicFrontEl.textContent = window.frontCnicAttached ? '✓ Attached (Smart CNIC Front)' : 'Pending upload';
+    if (cnicBackEl) cnicBackEl.textContent = window.backCnicAttached ? '✓ Attached (Smart CNIC Back)' : 'Pending upload';
+
+    var skillCards = document.querySelectorAll('.skill-card');
+    var selectedSkills = [];
+    skillCards.forEach(function(sc) {
+      if (sc.classList.contains('border-[#0F766E]')) {
+        var labelSpan = sc.querySelector('span.text-xs.font-bold');
+        var iconSpan = sc.querySelector('span.text-2xl');
+        if (labelSpan) {
+          var icon = iconSpan ? iconSpan.textContent + ' ' : '';
+          selectedSkills.push(icon + labelSpan.textContent.trim());
+        }
+      }
+    });
+    var revSkillsContainer = document.getElementById('rev-skills-container');
+    if (revSkillsContainer && selectedSkills.length > 0) {
+      revSkillsContainer.innerHTML = selectedSkills.map(function(sk) {
+        return '<span class="px-2.5 py-0.5 rounded-full bg-teal-50 text-[#0F766E] border border-teal-200 font-semibold text-[11px]">' + sk + '</span>';
+      }).join('');
+    }
+  }
+};
+
+window.submitProfile = function() {
+  [1, 2, 3, 4, 5, 6].forEach(function(s) {
+    var el = document.getElementById('step-' + s + '-content');
+    if (el) el.classList.add('hidden');
+    var bar = document.getElementById('bar-step-' + s);
+    if (bar) {
+      bar.classList.remove('bg-slate-200');
+      bar.classList.add('bg-[#0F766E]');
+    }
+  });
+
+  var header = document.getElementById('progress-header-container');
+  var succ = document.getElementById('step-success-content');
+  var roleSwitcher = document.getElementById('bottom-role-switcher');
+
+  if (succ) succ.classList.remove('hidden');
+  if (header) header.classList.remove('hidden');
+
+  var indText = document.getElementById('step-indicator-text');
+  if (indText) indText.textContent = 'Completed (6 of 6)';
+  var badge = document.getElementById('step-badge');
+  if (badge) badge.textContent = 'Approved for Verification';
+};
+window.submitProfileSafe = window.submitProfile;
+</script>
+</div>
+</section>
+<!-- END: RightRegistrationFormSection -->
+</div>
+</main>
+<!-- END: MainContainer -->
+
+
+</body></html>
