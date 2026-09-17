@@ -7,9 +7,18 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-  --font-heading: var(--font-geist-sans);
+  --font-sans: var(--font-inter);
+  --font-mono: var(--font-inter);
+  --font-heading: var(--font-inter);
+  --color-brand-top: #1b3b36;
+  --color-brand-topborder: #2a4d47;
+  --color-brand-hero: #1f4b3f;
+  --color-brand-herodark: #163e34;
+  --color-brand-accent: #5bbb7b;
+  --color-brand-accent-hover: #4faa6f;
+  --color-brand-dark: #0e2923;
+  --color-brand-worker: #d97706;
+  --color-brand-worker-hover: #b45309;
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -144,4 +153,31 @@
   html {
     @apply font-sans;
   }
+}
+
+@keyframes landing-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.landing-fade-in {
+  animation: landing-fade-in 0.6s ease;
+}
+
+.hero-topo {
+  background-color: #1f4b3f;
+  background-image: radial-gradient(circle at 10% 20%, rgba(91, 187, 123, 0.08) 0%, transparent 40%),
+    radial-gradient(circle at 90% 80%, rgba(91, 187, 123, 0.06) 0%, transparent 45%);
+}
+
+.arch-card-left {
+  border-radius: 180px 180px 32px 32px;
+}
+
+.arch-card-right {
+  border-radius: 220px 220px 32px 32px;
 }
