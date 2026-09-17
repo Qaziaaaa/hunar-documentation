@@ -1,0 +1,13 @@
+import { Module } from '@nestjs/common';
+import { VisitsController } from './visits.controller';
+import { VisitsService } from './visits.service';
+import { JobsModule } from '../jobs/jobs.module';
+import { RealtimeModule } from '../realtime/realtime.module';
+
+@Module({
+  imports: [JobsModule, RealtimeModule],
+  controllers: [VisitsController],
+  providers: [VisitsService],
+  exports: [VisitsService],
+})
+export class VisitsModule {}
