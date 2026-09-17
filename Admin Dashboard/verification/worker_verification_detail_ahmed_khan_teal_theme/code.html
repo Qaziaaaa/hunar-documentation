@@ -1,0 +1,1032 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script><script id="tailwind-config">
+tailwind.config = {
+  darkMode: "class",
+  theme: {
+    extend: {
+      colors: {
+        navy: "#1A1A2E",
+        teal: {
+          DEFAULT: "#0F766E",
+          dark: "#115E59",
+          light: "rgba(15, 118, 110, 0.1)"
+        },
+        orange: "#F59E0B",
+        success: "#16A34A",
+        error: "#DC2626",
+        gray: "#64748B",
+        background: "#F8FAFC",
+        border: "#E2E8F0",
+        surface: "#FFFFFF",
+        primary: "#0F766E",
+        "primary-dark": "#115E59",
+        secondary: "#1A1A2E",
+        
+        // Aliases used in templates
+        appBg: "#F8FAFC",
+        darkText: "#1A1A2E",
+        mutedText: "#64748B",
+        borderLine: "#E2E8F0",
+        "text-main": "#1A1A2E",
+        "surface-muted": "#F8FAFC",
+        "outline-border": "#E2E8F0",
+        
+        // Material Theme 3 Aliases
+        "on-surface": "#1A1A2E",
+        "on-surface-variant": "#64748B",
+        "on-background": "#1A1A2E",
+        "on-primary": "#FFFFFF",
+        "on-secondary": "#FFFFFF",
+        "on-error": "#FFFFFF",
+        "surface-container-lowest": "#FFFFFF",
+        "surface-container-low": "#F8FAFC",
+        "surface-container": "#F8FAFC",
+        "surface-container-high": "#F8FAFC",
+        "surface-container-highest": "#F8FAFC",
+        "surface-variant": "#F8FAFC",
+        "surface-tint": "#0F766E",
+        "surface-dim": "#E2E8F0",
+        "surface-bright": "#FFFFFF",
+        outline: "#64748B",
+        "outline-variant": "#E2E8F0",
+        "primary-container": "rgba(15, 118, 110, 0.1)",
+        "on-primary-container": "#0F766E",
+        "secondary-container": "rgba(26, 26, 46, 0.08)",
+        "on-secondary-container": "#1A1A2E",
+        "secondary-fixed": "rgba(15, 118, 110, 0.1)",
+        "secondary-fixed-dim": "rgba(15, 118, 110, 0.1)",
+        "on-secondary-fixed": "#1A1A2E",
+        "on-secondary-fixed-variant": "#115E59",
+        "primary-fixed": "rgba(15, 118, 110, 0.1)",
+        "primary-fixed-dim": "rgba(15, 118, 110, 0.1)",
+        "on-primary-fixed": "#1A1A2E",
+        "on-primary-fixed-variant": "#115E59",
+        "tertiary": "#F59E0B",
+        "tertiary-container": "rgba(245, 158, 11, 0.1)",
+        "on-tertiary-container": "#F59E0B",
+        "tertiary-fixed": "rgba(245, 158, 11, 0.1)",
+        "on-tertiary-fixed": "#1A1A2E",
+        "error-container": "rgba(220, 38, 38, 0.1)",
+        "on-error-container": "#DC2626",
+        "inverse-primary": "#0F766E",
+        "inverse-surface": "#1A1A2E",
+        "inverse-on-surface": "#F8FAFC"
+      },
+      spacing: {
+        "margin-desktop": "2rem",
+        "margin-tablet": "1.5rem",
+        "margin-mobile": "1rem",
+        "gutter-desktop": "1.5rem",
+        "gutter-mobile": "1rem",
+        "space-3xl": "4rem",
+        "space-2xl": "3rem",
+        "space-xl": "2rem",
+        "space-lg": "1.5rem",
+        "space-md": "1rem",
+        "space-base": "1rem",
+        "space-sm": "0.75rem",
+        "space-xs": "0.5rem",
+        "space-2xs": "0.25rem",
+        "space-xxs": "0.25rem",
+        "space-1": "0.25rem",
+        "space-2": "0.5rem",
+        "space-3": "0.75rem",
+        "space-4": "1rem",
+        "space-5": "1.25rem",
+        "space-6": "1.5rem",
+        "space-8": "2rem",
+        "space-12": "3rem",
+        "space-16": "4rem",
+        "space-20": "5rem",
+        "space-24": "6rem",
+        "space-stack-sm": "0.5rem",
+        "space-stack-md": "1rem",
+        "space-stack-lg": "1.5rem",
+        "section-gap": "2rem",
+        "gutter": "1.5rem"
+      },
+      fontSize: {
+        "stat-lg": ["28px", { lineHeight: "36px", letterSpacing: "-0.02em", fontWeight: "700" }],
+        "button-text": ["14px", { lineHeight: "20px", letterSpacing: "0.01em", fontWeight: "600" }],
+
+        "display-hero": ["48px", { lineHeight: "56px", letterSpacing: "-0.025em", fontWeight: "700" }],
+        "display-hero-mobile": ["32px", { lineHeight: "40px", letterSpacing: "-0.02em", fontWeight: "700" }],
+        "display-kpi": ["36px", { lineHeight: "44px", letterSpacing: "-0.02em", fontWeight: "700" }],
+        "display-kpi-mobile": ["28px", { lineHeight: "34px", letterSpacing: "-0.02em", fontWeight: "700" }],
+        "display-lg": ["36px", { lineHeight: "44px", letterSpacing: "-0.02em", fontWeight: "700" }],
+        "headline-page": ["28px", { lineHeight: "36px", letterSpacing: "-0.015em", fontWeight: "600" }],
+        "headline-page-mobile": ["24px", { lineHeight: "32px", letterSpacing: "-0.015em", fontWeight: "600" }],
+        "headline-section": ["20px", { lineHeight: "28px", letterSpacing: "-0.01em", fontWeight: "600" }],
+        "headline-subsection": ["16px", { lineHeight: "24px", letterSpacing: "-0.005em", fontWeight: "600" }],
+        "headline-lg": ["28px", { lineHeight: "36px", letterSpacing: "-0.015em", fontWeight: "600" }],
+        "headline-lg-mobile": ["24px", { lineHeight: "32px", letterSpacing: "-0.015em", fontWeight: "600" }],
+        "headline-md": ["20px", { lineHeight: "28px", letterSpacing: "-0.01em", fontWeight: "600" }],
+        "headline-sm": ["16px", { lineHeight: "24px", letterSpacing: "-0.005em", fontWeight: "600" }],
+        "headline-xl-mobile": ["26px", { lineHeight: "34px", letterSpacing: "-0.015em", fontWeight: "600" }],
+        "body-default": ["14px", { lineHeight: "22px", letterSpacing: "0em", fontWeight: "400" }],
+        "body-compact": ["13px", { lineHeight: "18px", letterSpacing: "0em", fontWeight: "400" }],
+        "body-strong": ["14px", { lineHeight: "22px", letterSpacing: "0em", fontWeight: "600" }],
+        "body-lg": ["16px", { lineHeight: "24px", letterSpacing: "0em", fontWeight: "400" }],
+        "body-md": ["14px", { lineHeight: "22px", letterSpacing: "0em", fontWeight: "400" }],
+        "body-md-medium": ["14px", { lineHeight: "22px", letterSpacing: "0em", fontWeight: "500" }],
+        "body-sm": ["12px", { lineHeight: "16px", letterSpacing: "0em", fontWeight: "400" }],
+        "label-badge": ["11px", { lineHeight: "14px", letterSpacing: "0.02em", fontWeight: "600" }],
+        "label-regular": ["12px", { lineHeight: "16px", letterSpacing: "0.01em", fontWeight: "500" }],
+        "label-md": ["12px", { lineHeight: "16px", letterSpacing: "0.01em", fontWeight: "500" }],
+        "label-sm": ["11px", { lineHeight: "14px", letterSpacing: "0.02em", fontWeight: "500" }],
+        "label-uppercase": ["10px", { lineHeight: "12px", letterSpacing: "0.05em", fontWeight: "700" }]
+      },
+      fontFamily: {
+        "stat-lg": ["Inter", "sans-serif"],
+        "button-text": ["Inter", "sans-serif"],
+
+        sans: ["Inter", "sans-serif"],
+        "body-default": ["Inter", "sans-serif"],
+        "body-compact": ["Inter", "sans-serif"],
+        "body-strong": ["Inter", "sans-serif"],
+        "body-md": ["Inter", "sans-serif"],
+        "body-sm": ["Inter", "sans-serif"],
+        "display-kpi": ["Inter", "sans-serif"],
+        "headline-page": ["Inter", "sans-serif"],
+        "headline-section": ["Inter", "sans-serif"],
+        "headline-subsection": ["Inter", "sans-serif"],
+        "headline-md": ["Inter", "sans-serif"],
+        "headline-sm": ["Inter", "sans-serif"],
+        "headline-lg": ["Inter", "sans-serif"],
+        "label-badge": ["Inter", "sans-serif"],
+        "label-regular": ["Inter", "sans-serif"],
+        "label-md": ["Inter", "sans-serif"],
+        "label-sm": ["Inter", "sans-serif"]
+      },
+      borderRadius: {
+        DEFAULT: "0.375rem",
+        sm: "0.25rem",
+        md: "0.375rem",
+        lg: "0.5rem",
+        xl: "0.75rem",
+        "2xl": "1rem",
+        full: "9999px"
+      }
+    }
+  }
+};
+</script></head><body class="bg-[#F8FAFC] text-[#1A1A2E] font-body-md text-body-md antialiased"><aside class="fixed left-0 top-0 h-full w-64 bg-surface-container-lowest border-r border-[#E2E8F0] z-50 flex flex-col justify-between select-none"><div class="flex flex-col flex-1 min-h-0"><div class="h-16 px-space-base flex items-center justify-between border-b border-[#E2E8F0]"><div class="flex items-center gap-space-xs"><img alt="HUNAR Admin Teal Logo" class="h-8 w-auto object-contain" src="https://lh3.googleusercontent.com/aida/AEtjO1UvaXZ1RB-ALHCCZwauZCZPTVwT81uzHrtT6xxpBkQ2iim9nlyCO87EtvtLf2cXoYpJ23PQIvi3t44hSjW_bxvtC--_nvCzyR6qhf9e4KwwcLufzgbUrILUTuMDIGUnhoJZoVlIUN8s31pZp1X_6JjZwK9dhsYED0wb6oQNPNu0TKccmF3bx6M43QdySNF3XLxZpMIuTb5I7EUkKehsCoyn3peExuGVBluTEh3AGTd5pnRGEfvs1jNaZG4m"/></div><span class="px-space-xs py-space-2xs bg-[#0F766E]/10 font-status-badge text-status-badge text-[#0F766E] font-semibold rounded uppercase tracking-wider border border-[#0F766E]/20">OPS</span></div><div class="flex-1 overflow-y-auto px-space-sm py-space-base"><nav class="space-y-space-lg"><div class="space-y-space-2xs"><p class="px-space-sm font-label-sm text-label-sm font-semibold uppercase tracking-wider text-[#64748B]">Main</p><div class="mt-space-xs space-y-space-2xs"><a class="flex items-center gap-space-md px-space-sm py-space-sm rounded text-[#64748B] hover:bg-[#F8FAFC] hover:text-[#1A1A2E] transition-colors font-label-md text-label-md" data-path="dashboard" href="#"><span class="material-symbols-outlined text-[18px]">dashboard</span><span>Dashboard</span></a><a class="flex items-center gap-space-md px-space-sm py-space-sm rounded text-[#64748B] hover:bg-[#F8FAFC] hover:text-[#1A1A2E] transition-colors font-label-md text-label-md" data-path="jobs-and-bookings" href="#"><span class="material-symbols-outlined text-[18px]">calendar_month</span><span>Jobs &amp; Bookings</span></a><a class="flex items-center gap-space-md px-space-sm py-space-sm rounded text-[#64748B] hover:bg-[#F8FAFC] hover:text-[#1A1A2E] transition-colors font-label-md text-label-md" data-path="customers" href="#"><span class="material-symbols-outlined text-[18px]">group</span><span>Customers</span></a></div></div><div class="space-y-space-2xs"><p class="px-space-sm font-label-sm text-label-sm font-semibold uppercase tracking-wider text-[#64748B]">Workers &amp; Supply</p><div class="mt-space-xs space-y-space-2xs"><a class="flex items-center gap-space-md px-space-sm py-space-sm rounded text-[#64748B] hover:bg-[#F8FAFC] hover:text-[#1A1A2E] transition-colors font-label-md text-label-md" data-path="workers-directory" href="#"><span class="material-symbols-outlined text-[18px]">engineering</span><span>Workers Directory</span></a><a aria-current="page" class="flex items-center justify-between px-space-sm py-space-sm transition-colors bg-[#0F766E] text-white font-semibold rounded shadow-sm" data-path="verification-queue" href="#"><div class="flex items-center gap-space-md"><span class="material-symbols-outlined text-[18px]">verified_user</span><span>Verification</span></div><span class="px-space-xs py-space-2xs font-status-badge text-status-badge bg-[#0F766E]/10 text-[#0F766E] rounded font-bold">24 Pending</span></a><a class="flex items-center gap-space-md px-space-sm py-space-sm rounded text-[#64748B] hover:bg-[#F8FAFC] hover:text-[#1A1A2E] transition-colors font-label-md text-label-md" data-path="skill-categories-and-pricing" href="#"><span class="material-symbols-outlined text-[18px]">construction</span><span>Skill Categories &amp; Pricing</span></a><a class="flex items-center gap-space-md px-space-sm py-space-sm rounded text-[#64748B] hover:bg-[#F8FAFC] hover:text-[#1A1A2E] transition-colors font-label-md text-label-md" data-path="payouts-and-escrow" href="#"><span class="material-symbols-outlined text-[18px]">payments</span><span>Payouts &amp; Escrow</span></a></div></div><div class="space-y-space-2xs"><p class="px-space-sm font-label-sm text-label-sm font-semibold uppercase tracking-wider text-[#64748B]">Platform</p><div class="mt-space-xs space-y-space-2xs"><a class="flex items-center gap-space-md px-space-sm py-space-sm rounded text-[#64748B] hover:bg-[#F8FAFC] hover:text-[#1A1A2E] transition-colors font-label-md text-label-md" data-path="dispute-center" href="#"><span class="material-symbols-outlined text-[18px]">gavel</span><span>Dispute Center</span></a><a class="flex items-center gap-space-md px-space-sm py-space-sm rounded text-[#64748B] hover:bg-[#F8FAFC] hover:text-[#1A1A2E] transition-colors font-label-md text-label-md" data-path="system-settings" href="#"><span class="material-symbols-outlined text-[18px]">settings</span><span>System Settings</span></a><a class="flex items-center gap-space-md px-space-sm py-space-sm rounded text-[#64748B] hover:bg-[#F8FAFC] hover:text-[#1A1A2E] transition-colors font-label-md text-label-md" data-path="audit-logs" href="#"><span class="material-symbols-outlined text-[18px]">fact_check</span><span>Audit Logs</span></a></div></div></nav></div></div><div class="p-space-base border-t border-[#E2E8F0] bg-[#F8FAFC]"><div class="flex items-center gap-space-xs mb-space-2xs"><span class="w-2 h-2 rounded-full bg-emerald-500 inline-block animate-pulse"></span><span class="font-label-sm text-label-sm text-[#1A1A2E] font-medium">Lahore/Karachi Node</span></div><p class="font-body-sm text-body-sm text-[#64748B]">All systems operational</p><div class="mt-space-xs flex items-center justify-between text-[#64748B] font-data-mono text-data-mono"><span>Build</span><span>v2.4.2</span></div></div></aside><div class="pl-64 flex flex-col min-h-screen"><header class="fixed top-0 left-64 right-0 h-16 bg-surface-container-lowest border-b border-[#E2E8F0] z-40 px-space-lg flex items-center justify-between"><div class="flex items-center gap-space-base"><div class="flex items-center gap-space-xs font-label-md text-label-md text-[#64748B]"><span class="text-[#64748B]">HUNAR Admin</span><span class="material-symbols-outlined text-[14px] text-[#64748B]">chevron_right</span><span class="text-[#64748B]">Supply Operations</span><span class="material-symbols-outlined text-[14px] text-[#64748B]">chevron_right</span><span class="font-semibold text-[#0F766E]">Verification</span></div><div class="h-4 w-[1px] bg-[#E2E8F0]"></div><div class="relative flex items-center w-72"><span class="material-symbols-outlined absolute left-space-sm text-[#64748B] text-[18px]">search</span><input class="w-full h-9 pl-8 pr-12 bg-[#F8FAFC] border border-[#E2E8F0] rounded font-body-sm text-body-sm text-[#1A1A2E] placeholder:text-[#64748B] focus:bg-surface-container-lowest focus:border-[#0F766E] focus:outline-none transition-colors" placeholder="Quick search (workers, CNIC, orders)..." type="text"/><span class="absolute right-space-sm px-space-xs py-space-2xs font-data-mono text-[10px] text-[#64748B] bg-[#F8FAFC] rounded border border-[#E2E8F0]">⌘K</span></div></div><div class="flex items-center gap-space-base"><div class="flex items-center gap-space-xs px-space-sm py-space-xs bg-[#F8FAFC] border border-[#E2E8F0] rounded font-label-md text-label-md text-[#1A1A2E] cursor-pointer hover:bg-[#F8FAFC] transition-colors"><span class="material-symbols-outlined text-[#0F766E] text-[18px]">location_on</span><span class="font-medium">All Pakistan (LHE, KHI, ISB)</span><span class="material-symbols-outlined text-[#64748B] text-[16px]">expand_more</span></div><div class="h-4 w-[1px] bg-[#E2E8F0]"></div><button class="relative p-space-xs rounded text-[#64748B] hover:bg-[#F8FAFC] hover:text-[#1A1A2E] transition-colors" type="button"><span class="material-symbols-outlined text-[22px]">notifications</span><span class="absolute top-1 right-1 w-4 h-4 bg-error text-on-error rounded-full font-status-badge text-[10px] flex items-center justify-center font-bold">3</span></button><div class="flex items-center gap-space-sm pl-space-xs cursor-pointer group"><img alt="Profile" class="w-8 h-8 rounded-full object-cover border border-[#E2E8F0]" src="https://lh3.googleusercontent.com/aida/AEtjO1XP-Abg8-q3TBwA46L_zOUl6K_yqtJq_bJGEutqwUoDOdLdDmXUYrtPctk5mhw6WO2WnXKgSlAsb7WUEOxfXO7b72-HG53xTeygAtS8ZVa52vE51SvUfXkkStE1eFxXLMf88GEm-d3dIMZ9w63_CBpTmJh72LBLfRMnzxw3DB8twHaovPod03qGgEcDrbiuLFQi--Hwp0oQtnoQzSrEWsVAXqPyAsbTNfg_FukagtTUkx0CNn8ntAzqtyQ"/><div class="hidden xl:flex flex-col text-left"><span class="font-label-md text-label-md font-semibold text-[#1A1A2E] group-hover:text-[#0F766E] transition-colors leading-tight">Tariq Mahmood</span><span class="font-body-sm text-[11px] text-[#64748B] leading-tight">Lead Verification Officer</span></div><span class="material-symbols-outlined text-[#64748B] text-[18px] group-hover:text-[#1A1A2E] transition-colors">keyboard_arrow_down</span></div></div></header><main class="relative pt-16 w-full px-space-lg py-space-base bg-[#F8FAFC] flex-1"><div class="flex flex-col w-full">
+<!-- Top Context & Quick Navigation Bar -->
+<div class="flex flex-col md:flex-row md:items-center justify-between gap-space-sm mb-space-base">
+<div class="flex items-center gap-space-md">
+<button class="group inline-flex items-center gap-space-xs px-space-sm py-space-xs rounded bg-surface-container-lowest hover:bg-[#0F766E]/10 hover:text-[#0F766E] transition-colors shadow-sm text-[#1A1A2E] font-label-md text-label-md border border-[#E2E8F0]" type="button">
+<span class="material-symbols-outlined text-[16px] group-hover:-translate-x-0.5 transition-transform text-[#64748B] group-hover:text-[#0F766E]">arrow_back</span>
+<span>Back to Verification Queue</span>
+</button>
+<div class="hidden sm:flex items-center gap-space-2xs text-[#64748B] font-data-mono text-data-mono">
+<span>Verification</span>
+<span class="text-[#E2E8F0]">/</span>
+<span>Requests</span>
+<span class="text-[#E2E8F0]">/</span>
+<span class="text-[#0F766E] font-semibold">APP-84920</span>
+</div>
+</div>
+<!-- Quick Telemetry Chips -->
+<div class="flex items-center gap-space-sm">
+<div class="flex items-center gap-space-xs px-space-sm py-space-2xs rounded bg-[#0F766E]/10 border border-[#0F766E]/20 shadow-sm font-label-sm text-label-sm text-[#0F766E] font-medium">
+<span class="material-symbols-outlined text-[15px] text-[#0F766E]">verified</span>
+<span>NADRA API: Connected</span>
+</div>
+<div class="flex items-center gap-space-xs px-space-sm py-space-2xs rounded bg-surface-container-lowest border border-[#E2E8F0] shadow-sm font-label-sm text-label-sm text-[#64748B]">
+<span class="material-symbols-outlined text-[14px] text-[#0F766E]">schedule</span>
+<span>SLA: 2h 45m left</span>
+</div>
+</div>
+</div>
+<!-- Hero Worker Overview Card -->
+<div class="relative bg-surface-container-lowest rounded-xl p-space-lg shadow-sm border border-[#E2E8F0] mb-space-lg overflow-hidden">
+<div class="absolute -right-16 -top-16 w-56 h-56 rounded-full bg-gradient-to-br from-[#0F766E]/10/30 to-transparent pointer-events-none"></div>
+<div class="flex flex-col lg:flex-row lg:items-center justify-between gap-space-lg">
+<div class="flex items-start sm:items-center gap-space-base">
+<!-- Worker Photo -->
+<div class="relative shrink-0">
+<img class="w-20 h-20 sm:w-24 sm:h-24 rounded-full object-cover ring-2 ring-[#0F766E]/10 shadow-md" data-alt="A dignified Pakistani male master electrician in his late 30s wearing a clean navy blue professional utility work shirt with neat brass collar studs, facing camera against an organized workshop background with soft studio lighting, ultra sharp documentary portrait" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDsRqwLOAJNFQjMPKuHqhjPKTA5p-MBsug2b7ZlH5vWRDUh2mbm3Uek9UHhPMZ85f9fMKnaRyzly8dhS8HlItGc1oZVP5Pl7HIg-A46kO_Ok9R500m-Lz4nxxKThkKrZvxTtVCAvTFYjkQ9roMncMi-581nVYjHF3y3g-H0gV_QzqwBMZVBzUyZQkVmf-fAm9Dtdv8IiydNW4iNoByVECjiG-tCozj1_MmBksjb4YzPBn2NDvblxEwXnQ"/>
+<span class="absolute bottom-0 right-0 w-6 h-6 rounded-full bg-[#0F766E] text-white flex items-center justify-center text-[12px] shadow-sm ring-2 ring-white" title="Trade Certified">
+<span class="material-symbols-outlined text-[14px]">bolt</span>
+</span>
+</div>
+<!-- Bio Brief -->
+<div class="space-y-space-2xs">
+<div class="flex flex-wrap items-center gap-space-sm">
+<h1 class="font-headline-lg text-headline-lg text-[#1A1A2E] font-bold">Ahmed Khan</h1>
+<span class="px-space-sm py-space-2xs rounded font-status-badge text-status-badge bg-[#F8FAFC] text-[#0F766E] flex items-center gap-space-2xs">
+<span class="w-1.5 h-1.5 rounded-full bg-[#0F766E] animate-pulse"></span>
+              Pending Review
+            </span>
+<span class="px-space-xs py-space-2xs rounded font-data-mono text-data-mono bg-[#F8FAFC] text-[#64748B] border border-[#E2E8F0]">ID: HUNAR-PK-0829</span>
+</div>
+<p class="font-body-lg text-body-lg text-[#64748B] font-medium flex flex-wrap items-center gap-x-space-sm gap-y-space-2xs">
+<span class="text-[#0F766E] font-semibold">Master Electrician</span>
+<span class="text-[#E2E8F0]">•</span>
+<span>8 Years Field Experience</span>
+<span class="text-[#E2E8F0]">•</span>
+<span class="inline-flex items-center gap-space-2xs text-[#1A1A2E]">
+<span class="material-symbols-outlined text-[15px] text-[#0F766E]">location_on</span>
+              Lahore, Punjab
+            </span>
+</p>
+<div class="flex flex-wrap items-center gap-x-space-md gap-y-space-xs pt-space-xs font-body-sm text-body-sm text-[#64748B]">
+<span class="flex items-center gap-space-2xs">
+<span class="material-symbols-outlined text-[15px] text-[#0F766E]">send_to_mobile</span>
+              Submitted: Today at 09:15 AM (PKT)
+            </span>
+<span class="text-[#E2E8F0]">•</span>
+<span>Worker App v3.2.1</span>
+<span class="text-[#E2E8F0]">•</span>
+<span class="text-[#0F766E] font-semibold">Auto-Triage Priority: High</span>
+</div>
+</div>
+</div>
+<!-- Quick Metrics Ribbon -->
+<div class="flex items-center gap-space-base shrink-0 bg-[#F8FAFC] border border-[#E2E8F0] p-space-md rounded-xl">
+<div class="text-center px-space-sm">
+<p class="font-data-mono text-data-mono text-[#64748B] uppercase tracking-wider">Profile</p>
+<div class="flex items-baseline justify-center gap-1 mt-0.5">
+<span class="font-headline-md text-headline-md text-[#0F766E] font-bold">100</span>
+<span class="font-label-sm text-label-sm text-[#64748B]">%</span>
+</div>
+<span class="font-status-badge text-status-badge text-[#0F766E] bg-[#0F766E]/10 border border-[#0F766E]/20 px-1.5 py-0.5 rounded mt-1 inline-block font-semibold">Complete</span>
+</div>
+<div class="w-px h-10 bg-[#E2E8F0]"></div>
+<div class="text-center px-space-sm">
+<p class="font-data-mono text-data-mono text-[#64748B] uppercase tracking-wider">Docs</p>
+<div class="flex items-baseline justify-center gap-1 mt-0.5">
+<span class="font-headline-md text-headline-md text-[#1A1A2E] font-bold">3/3</span>
+</div>
+<span class="font-status-badge text-status-badge text-[#0F766E] bg-[#0F766E]/10 px-1.5 py-0.5 rounded mt-1 inline-block font-medium">Attached</span>
+</div>
+<div class="w-px h-10 bg-[#E2E8F0]"></div>
+<div class="text-center px-space-sm">
+<p class="font-data-mono text-data-mono text-[#64748B] uppercase tracking-wider">History</p>
+<div class="flex items-baseline justify-center gap-1 mt-0.5">
+<span class="font-headline-md text-headline-md text-[#0F766E] font-bold">0</span>
+</div>
+<span class="font-status-badge text-status-badge text-[#64748B] bg-[#F8FAFC] px-1.5 py-0.5 rounded mt-1 inline-block">Complaints</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Two-Column Operational Workspace -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-space-lg items-start">
+<!-- LEFT MAIN COLUMN: Detailed Information & Verified Documents (7 Cols) -->
+<div class="lg:col-span-7 space-y-space-lg">
+<!-- Section 1: Basic Information -->
+<div class="bg-surface-container-lowest rounded-xl p-space-base shadow-sm border border-[#E2E8F0]">
+<div class="flex items-center justify-between pb-space-sm mb-space-base border-b border-[#F8FAFC]">
+<div class="flex items-center gap-space-sm">
+<div class="w-8 h-8 rounded-lg bg-[#0F766E]/10 border border-[#0F766E]/20 flex items-center justify-center text-[#0F766E]">
+<span class="material-symbols-outlined text-[18px]">badge</span>
+</div>
+<div>
+<h2 class="font-headline-sm text-headline-sm text-[#1A1A2E] font-semibold">1. Basic &amp; Identity Information</h2>
+<p class="font-body-sm text-body-sm text-[#64748B]">Verified against Government NADRA database checksums</p>
+</div>
+</div>
+<span class="px-space-sm py-space-2xs rounded bg-[#0F766E]/10 text-[#0F766E] border border-[#0F766E]/20 font-status-badge text-status-badge flex items-center gap-space-2xs font-semibold">
+<span class="material-symbols-outlined text-[13px]">check_circle</span>
+            NADRA Match
+          </span>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-space-md">
+<div class="p-space-sm rounded-lg bg-[#F8FAFC] border border-[#E2E8F0]">
+<span class="font-label-sm text-label-sm text-[#64748B]">Full Legal Name</span>
+<p class="font-label-md text-label-md text-[#1A1A2E] font-semibold mt-0.5">Ahmed Khan</p>
+<span class="font-data-mono text-[10px] text-[#64748B]">Urdu: احمد خان</span>
+</div>
+<div class="p-space-sm rounded-lg bg-[#F8FAFC] border border-[#E2E8F0]">
+<span class="font-label-sm text-label-sm text-[#64748B]">Father / Guardian Name</span>
+<p class="font-label-md text-label-md text-[#1A1A2E] font-semibold mt-0.5">Muhammad Khan</p>
+<span class="font-data-mono text-[10px] text-[#64748B]">Relationship verified</span>
+</div>
+<div class="p-space-sm rounded-lg bg-[#F8FAFC] border border-[#E2E8F0]">
+<div class="flex items-center justify-between">
+<span class="font-label-sm text-label-sm text-[#64748B]">CNIC (National ID)</span>
+<span class="material-symbols-outlined text-[14px] text-[#0F766E]" title="API Validated">check_circle</span>
+</div>
+<p class="font-data-mono text-data-mono text-[#0F766E] font-bold mt-0.5">35201-8392019-3</p>
+<span class="font-data-mono text-[10px] text-[#0F766E]">NADRA API Valid • Bio-metric linked</span>
+</div>
+<div class="p-space-sm rounded-lg bg-[#F8FAFC] border border-[#E2E8F0]">
+<div class="flex items-center justify-between">
+<span class="font-label-sm text-label-sm text-[#64748B]">Primary Mobile (OTP Verified)</span>
+<span class="material-symbols-outlined text-[14px] text-[#0F766E]">verified</span>
+</div>
+<p class="font-data-mono text-data-mono text-[#1A1A2E] font-semibold mt-0.5">+92 300 4829104</p>
+<span class="font-data-mono text-[10px] text-[#64748B]">Jazz Telecommunication • Active 4+ yrs</span>
+</div>
+<div class="p-space-sm rounded-lg bg-[#F8FAFC] border border-[#E2E8F0]">
+<span class="font-label-sm text-label-sm text-[#64748B]">Email Address</span>
+<p class="font-label-md text-label-md text-[#1A1A2E] font-medium mt-0.5">ahmed.electrician@gmail.com</p>
+<span class="font-data-mono text-[10px] text-[#64748B]">Google Auth Verified</span>
+</div>
+<div class="p-space-sm rounded-lg bg-[#F8FAFC] border border-[#E2E8F0]">
+<span class="font-label-sm text-label-sm text-[#64748B]">Date of Birth &amp; Age</span>
+<p class="font-label-md text-label-md text-[#1A1A2E] font-semibold mt-0.5">14 August 1988 (Age 38)</p>
+<span class="font-data-mono text-[10px] text-[#64748B]">Adult Labor Compliance Pass</span>
+</div>
+<div class="p-space-sm rounded-lg bg-[#F8FAFC] border border-[#E2E8F0] md:col-span-2">
+<div class="flex items-center justify-between">
+<span class="font-label-sm text-label-sm text-[#64748B]">Current Residential Address</span>
+<span class="font-data-mono text-[10px] text-[#0F766E] font-medium">GPS Geocoded</span>
+</div>
+<p class="font-body-md text-body-md text-[#1A1A2E] font-medium mt-0.5">House 42, Street 8, Sector C, DHA Phase 5, Lahore, Punjab</p>
+<p class="font-body-sm text-body-sm text-[#64748B] mt-0.5">Lahore Cantonment Zone • Union Council #218</p>
+</div>
+<div class="p-space-sm rounded-lg bg-[#F8FAFC] border border-[#E2E8F0] md:col-span-2 flex items-center justify-between">
+<div>
+<span class="font-label-sm text-label-sm text-[#64748B]">Emergency Next-of-Kin Contact</span>
+<p class="font-label-md text-label-md text-[#1A1A2E] font-semibold mt-0.5">Rashid Khan (Brother)</p>
+</div>
+<div class="text-right">
+<span class="font-data-mono text-data-mono text-[#1A1A2E] font-medium">+92 321 9920184</span>
+<p class="font-label-sm text-[11px] text-[#64748B]">Verified via secondary contact dial</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Section 2: Professional & Skills Information -->
+<div class="bg-surface-container-lowest rounded-xl p-space-base shadow-sm border border-[#E2E8F0]">
+<div class="flex items-center justify-between pb-space-sm mb-space-base border-b border-[#F8FAFC]">
+<div class="flex items-center gap-space-sm">
+<div class="w-8 h-8 rounded-lg bg-[#0F766E]/10 border border-[#0F766E]/20 flex items-center justify-center text-[#0F766E]">
+<span class="material-symbols-outlined text-[18px]">handyman</span>
+</div>
+<div>
+<h2 class="font-headline-sm text-headline-sm text-[#1A1A2E] font-semibold">2. Professional &amp; Trade Competency</h2>
+<p class="font-body-sm text-body-sm text-[#64748B]">Field experience, equipment readiness, and operational scope</p>
+</div>
+</div>
+<span class="px-space-sm py-space-2xs rounded bg-[#0F766E]/10 text-[#0F766E] font-status-badge text-status-badge font-bold border border-[#0F766E]/20">
+            Tier 1 — Master Artisan
+          </span>
+</div>
+<div class="space-y-space-md">
+<!-- Bio Box -->
+<div class="p-space-md rounded-lg bg-[#F8FAFC] border border-[#E2E8F0]">
+<span class="font-label-sm text-label-sm text-[#64748B] uppercase tracking-wider block mb-1">Worker Bio &amp; Profile Summary</span>
+<p class="font-body-md text-body-md text-[#1A1A2E] leading-relaxed italic">
+              "Certified electrical technician trained at TEVTA Punjab with 8 years of residential and industrial electrical work. Specialized in modern smart home wiring, hybrid solar inverter configurations, and commercial distribution boards."
+            </p>
+</div>
+<!-- Services Grid -->
+<div>
+<span class="font-label-sm text-label-sm text-[#64748B] uppercase tracking-wider block mb-space-xs">Sub-Services &amp; Specializations (6 Approved)</span>
+<div class="flex flex-wrap gap-space-xs">
+<span class="px-space-sm py-space-xs rounded bg-[#0F766E]/10 border border-[#0F766E]/20 font-label-md text-label-md text-[#0F766E] flex items-center gap-1.5 font-medium">
+<span class="w-1.5 h-1.5 rounded-full bg-[#0F766E]"></span>Short Circuit Repair
+              </span>
+<span class="px-space-sm py-space-xs rounded bg-[#0F766E]/10 border border-[#0F766E]/20 font-label-md text-label-md text-[#0F766E] flex items-center gap-1.5 font-medium">
+<span class="w-1.5 h-1.5 rounded-full bg-[#0F766E]"></span>DB Box Installation &amp; Dressing
+              </span>
+<span class="px-space-sm py-space-xs rounded bg-[#0F766E]/10 border border-[#0F766E]/20 font-label-md text-label-md text-[#0F766E] flex items-center gap-1.5 font-medium">
+<span class="w-1.5 h-1.5 rounded-full bg-[#0F766E]"></span>3-Phase Industrial Wiring
+              </span>
+<span class="px-space-sm py-space-xs rounded bg-[#0F766E]/10 border border-[#0F766E]/20 font-label-md text-label-md text-[#0F766E] flex items-center gap-1.5 font-medium">
+<span class="w-1.5 h-1.5 rounded-full bg-[#0F766E]"></span>Solar Inverter &amp; Net Metering Setup
+              </span>
+<span class="px-space-sm py-space-xs rounded bg-[#0F766E]/10 border border-[#0F766E]/20 font-label-md text-label-md text-[#0F766E] flex items-center gap-1.5 font-medium">
+<span class="w-1.5 h-1.5 rounded-full bg-[#0F766E]"></span>Automatic Generator Changeover Hookups
+              </span>
+<span class="px-space-sm py-space-xs rounded bg-[#0F766E]/10 border border-[#0F766E]/20 font-label-md text-label-md text-[#0F766E] flex items-center gap-1.5 font-medium">
+<span class="w-1.5 h-1.5 rounded-full bg-[#0F766E]"></span>Ceiling Fan &amp; Architectural Light Fixtures
+              </span>
+</div>
+</div>
+<!-- Coverage & Hours -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-space-md pt-space-xs">
+<div class="p-space-sm rounded-lg bg-[#F8FAFC] border border-[#E2E8F0]">
+<span class="font-label-sm text-label-sm text-[#64748B] flex items-center gap-1">
+<span class="material-symbols-outlined text-[15px] text-[#0F766E]">near_me</span>
+                Service Coverage Area
+              </span>
+<p class="font-label-md text-label-md text-[#1A1A2E] font-semibold mt-1">Lahore Central Cluster (15km radius)</p>
+<p class="font-body-sm text-body-sm text-[#64748B] mt-0.5">Covers DHA (Phases 1-8), Gulberg, Cantt, Model Town, Cavalry Ground.</p>
+</div>
+<div class="p-space-sm rounded-lg bg-[#F8FAFC] border border-[#E2E8F0]">
+<span class="font-label-sm text-label-sm text-[#64748B] flex items-center gap-1">
+<span class="material-symbols-outlined text-[15px] text-[#0F766E]">calendar_today</span>
+                Availability &amp; Shifts
+              </span>
+<p class="font-label-md text-label-md text-[#1A1A2E] font-semibold mt-1">Mon – Sat (8:00 AM – 7:00 PM)</p>
+<p class="font-body-sm text-body-sm text-[#64748B] mt-0.5">Emergency breakdown on-call active on Sundays.</p>
+</div>
+</div>
+<!-- Tools Kit Checklist -->
+<div class="p-space-sm rounded-lg bg-[#F8FAFC] border border-[#E2E8F0]">
+<span class="font-label-sm text-label-sm text-[#64748B] flex items-center gap-1 mb-space-xs">
+<span class="material-symbols-outlined text-[15px] text-[#0F766E]">construction</span>
+              Declared Tools &amp; PPE Inventory
+            </span>
+<p class="font-body-md text-body-md text-[#1A1A2E]">
+              Owns complete electrical testing kit, Fluke digital multimeter, Bosch SDS-Plus hammer drill, safety harness, 1000V insulated screwdriver set, PPE rated rubber insulating boots.
+            </p>
+</div>
+</div>
+</div>
+<!-- Section 3: Verification Documents & Inspectable Vault -->
+<div class="bg-surface-container-lowest rounded-xl p-space-base shadow-sm border border-[#E2E8F0]">
+<div class="flex items-center justify-between pb-space-sm mb-space-base border-b border-[#F8FAFC]">
+<div class="flex items-center gap-space-sm">
+<div class="w-8 h-8 rounded-lg bg-[#0F766E]/10 border border-[#0F766E]/20 flex items-center justify-center text-[#0F766E]">
+<span class="material-symbols-outlined text-[18px]">folder_shared</span>
+</div>
+<div>
+<h2 class="font-headline-sm text-headline-sm text-[#1A1A2E] font-semibold">3. Verification Documents &amp; Evidence Vault</h2>
+<p class="font-body-sm text-body-sm text-[#64748B]">Click any document to launch the dual-pane inspection drawer</p>
+</div>
+</div>
+<span class="px-space-xs py-space-2xs bg-[#F8FAFC] border border-[#E2E8F0] rounded font-data-mono text-data-mono text-[#64748B]">3 of 3 Files Present</span>
+</div>
+<div class="space-y-space-md">
+<!-- Document Card 1: CNIC -->
+<div class="p-space-md rounded-xl bg-surface-container-lowest border border-[#E2E8F0] hover:border-[#0F766E]/40 hover:shadow-sm transition-all flex flex-col sm:flex-row items-start sm:items-center justify-between gap-space-md">
+<div class="flex items-center gap-space-md">
+<div class="relative w-20 h-14 rounded-lg bg-[#F8FAFC] overflow-hidden shrink-0 shadow-sm border border-[#E2E8F0]">
+<img class="w-full h-full object-cover" data-alt="Close up view of an authentic high resolution Pakistani Smart National Identity Card document preview with holographic microprint and green header banner" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBr2Ro0ic86rBVMx8bjFuAkLiYHZbemOEr1IqFtpXxG-G3m0LdmqeMckDaUaPTkO86iZVZd4xuiTtIVe_AUnZkVIk8QwyCB7tvxCBaOBAuJyjOLmO3AeGrJeUlOX8xaKu6MtCL1kfZ--zI6Fx0A4ttOor8o9BDg-1Fqk0wa3V625fu0LtLSAV0LF0ycwyDdluDWYh6lFIr6lOrHj6qI10qyewa38PKZjCRKRf_B4BIeYte0ub18YV4Umg"/>
+<span class="absolute inset-0 bg-black/10"></span>
+<span class="material-symbols-outlined absolute inset-0 flex items-center justify-center text-white/90 text-[18px]">search</span>
+</div>
+<div>
+<div class="flex items-center gap-space-sm">
+<h3 class="font-headline-sm text-headline-sm text-[#1A1A2E] font-semibold">CNIC (National Identity Card - Front &amp; Back)</h3>
+</div>
+<div class="flex items-center gap-space-sm mt-0.5 font-body-sm text-body-sm text-[#64748B]">
+<span>Color Scan PDF • 2.4 MB</span>
+<span>•</span>
+<span class="font-data-mono text-[11px] text-[#0F766E] font-semibold">Auto-OCR Verified</span>
+</div>
+<div class="mt-1 flex items-center gap-space-xs">
+<span class="px-space-xs py-space-2xs rounded bg-[#F8FAFC] text-[#0F766E] font-status-badge text-status-badge">
+                    Pending Officer Sign-off
+                  </span>
+<span class="font-label-sm text-[11px] text-[#64748B]">Expires: 2031-10-12</span>
+</div>
+</div>
+</div>
+<div class="flex items-center gap-space-xs w-full sm:w-auto justify-end">
+<button class="px-space-sm py-space-xs rounded bg-[#0F766E]/10 text-[#0F766E] hover:bg-[#0F766E] hover:text-white transition-colors font-label-md text-label-md border border-[#0F766E]/20 flex items-center gap-1 font-medium" onclick="document.getElementById('docLightbox').classList.remove('hidden')" type="button">
+<span class="material-symbols-outlined text-[16px]">zoom_in</span>
+<span>Inspect Document</span>
+</button>
+</div>
+</div>
+<!-- Document Card 2: TEVTA Diploma -->
+<div class="p-space-md rounded-xl bg-surface-container-lowest border border-[#E2E8F0] hover:border-[#0F766E]/40 hover:shadow-sm transition-all flex flex-col sm:flex-row items-start sm:items-center justify-between gap-space-md">
+<div class="flex items-center gap-space-md">
+<div class="relative w-20 h-14 rounded-lg bg-[#F8FAFC] overflow-hidden shrink-0 shadow-sm border border-[#E2E8F0]">
+<img class="w-full h-full object-cover" data-alt="Government vocational training authority diploma certificate document scan with official government seal, gold crest, and calligraphy border" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCd_XG2LZW8odO1bSvie0GVHIzDuHCugXLzVn_CdQejF9TP4SANhc71QA7M6E8auTmaD8O1dczhiMqrlcz9qUSrmVLTC--YWKNlatMCxZf3KeNnJCtPtgOYw4cUDKCSUlMUz33Ycm8IEzIwj8miNXIN8LNHd6UQiqyxLkAJIizfWAoC0KXsENVtD779C2lkuNpgdQki2bnENH4GY3LGS-tigvgnm9nFDKtaRqaWplE8I4Oe2X6gGVDw0A"/>
+<span class="absolute inset-0 bg-black/10"></span>
+<span class="material-symbols-outlined absolute inset-0 flex items-center justify-center text-white/90 text-[18px]">search</span>
+</div>
+<div>
+<div class="flex items-center gap-space-sm">
+<h3 class="font-headline-sm text-headline-sm text-[#1A1A2E] font-semibold">TEVTA Electrical Technician Diploma</h3>
+</div>
+<div class="flex items-center gap-space-sm mt-0.5 font-body-sm text-body-sm text-[#64748B]">
+<span>Reg: TEVTA-2018-9382 • High Res Scan</span>
+<span>•</span>
+<span>Level-3 Trade Cert</span>
+</div>
+<div class="mt-1 flex items-center gap-space-xs">
+<span class="px-space-xs py-space-2xs rounded bg-[#0F766E]/10 text-[#0F766E] border border-[#0F766E]/20 font-status-badge text-status-badge flex items-center gap-1 font-semibold">
+<span class="material-symbols-outlined text-[12px]">verified</span>
+                    Verified Authentic
+                  </span>
+<span class="font-label-sm text-[11px] text-[#64748B]">Issued: June 2018</span>
+</div>
+</div>
+</div>
+<div class="flex items-center gap-space-xs w-full sm:w-auto justify-end">
+<button class="px-space-sm py-space-xs rounded bg-[#F8FAFC] text-[#0F766E] hover:bg-[#0F766E] hover:text-white transition-colors font-label-md text-label-md border border-[#E2E8F0] flex items-center gap-1 font-medium" onclick="document.getElementById('docLightbox').classList.remove('hidden')" type="button">
+<span class="material-symbols-outlined text-[16px]">visibility</span>
+<span>View Document</span>
+</button>
+</div>
+</div>
+<!-- Document Card 3: Police Character Clearance -->
+<div class="p-space-md rounded-xl bg-surface-container-lowest border border-[#E2E8F0] hover:border-[#0F766E]/40 hover:shadow-sm transition-all flex flex-col sm:flex-row items-start sm:items-center justify-between gap-space-md">
+<div class="flex items-center gap-space-md">
+<div class="relative w-20 h-14 rounded-lg bg-[#F8FAFC] overflow-hidden shrink-0 shadow-sm border border-[#E2E8F0]">
+<img class="w-full h-full object-cover" data-alt="Police character certificate paper document with official Punjab Police Khidmat Markaz circular stamp and QR validation badge" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDSx-MZje5zMTM6FgVKHi2s-xtI0HhDYwMb-eGwu_Hxn5ZvELmgCsvuKjE-xAQWUej7NaP7WzIsjUrfD3hsUWQ6HqUlN6PiTGu71DGJPJ6zeiCOY6fBu6Mg5iEdm5h7tM4EcdWWc-A19zGbDJi3AwPbEdmOP2y2R9NVt8QcDwTPm6UDeuoRf4n29XioDKTX1SftJDcgKGGPN3JjYBdTogNqaRbR9Rebb13nz0yVBHBC7OwpcIiPA83j-g"/>
+<span class="absolute inset-0 bg-black/10"></span>
+<span class="material-symbols-outlined absolute inset-0 flex items-center justify-center text-white/90 text-[18px]">search</span>
+</div>
+<div>
+<div class="flex items-center gap-space-sm">
+<h3 class="font-headline-sm text-headline-sm text-[#1A1A2E] font-semibold">Police Character Clearance Certificate</h3>
+</div>
+<div class="flex items-center gap-space-sm mt-0.5 font-body-sm text-body-sm text-[#64748B]">
+<span>Punjab Police Khidmat Markaz • Ref #PKM-LHE-4019</span>
+</div>
+<div class="mt-1 flex items-center gap-space-xs">
+<span class="px-space-xs py-space-2xs rounded bg-[#0F766E]/10 text-[#0F766E] border border-[#0F766E]/20 font-status-badge text-status-badge flex items-center gap-1 font-semibold">
+<span class="material-symbols-outlined text-[12px]">security</span>
+                    Clean Record Verified
+                  </span>
+<span class="font-label-sm text-[11px] text-[#64748B]">Valid until 2027</span>
+</div>
+</div>
+</div>
+<div class="flex items-center gap-space-xs w-full sm:w-auto justify-end">
+<button class="px-space-sm py-space-xs rounded bg-[#F8FAFC] text-[#0F766E] hover:bg-[#0F766E] hover:text-white transition-colors font-label-md text-label-md border border-[#E2E8F0] flex items-center gap-1 font-medium" onclick="document.getElementById('docLightbox').classList.remove('hidden')" type="button">
+<span class="material-symbols-outlined text-[16px]">visibility</span>
+<span>View Document</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- RIGHT COLUMN: Verification Review Engine & Decision Dock (5 Cols) -->
+<div class="lg:col-span-5 space-y-space-lg">
+<!-- Section 4: Mandatory Admin Verification Checklist -->
+<div class="bg-surface-container-lowest rounded-xl p-space-base shadow-sm border border-[#E2E8F0]">
+<div class="flex items-center justify-between pb-space-sm mb-space-base border-b border-[#F8FAFC]">
+<div class="flex items-center gap-space-sm">
+<div class="w-8 h-8 rounded-lg bg-[#0F766E]/10 border border-[#0F766E]/20 flex items-center justify-center text-[#0F766E]">
+<span class="material-symbols-outlined text-[18px]">checklist</span>
+</div>
+<div>
+<h2 class="font-headline-sm text-headline-sm text-[#1A1A2E] font-semibold">4. Verification Checklist</h2>
+<p class="font-body-sm text-body-sm text-[#64748B]">All 5 mandatory items must be fulfilled</p>
+</div>
+</div>
+<span class="font-data-mono text-data-mono font-bold text-[#0F766E] bg-[#0F766E]/10 border border-[#0F766E]/20 px-2 py-0.5 rounded" id="checklistCounter">
+            5/5 Complete
+          </span>
+</div>
+<!-- Progress Bar -->
+<div class="w-full bg-[#E2E8F0] rounded-full h-1.5 mb-space-base overflow-hidden">
+<div class="bg-[#0F766E] h-full rounded-full transition-all duration-300 w-full" id="checkProgressBar"></div>
+</div>
+<div class="space-y-space-sm" id="checklistGroup">
+<label class="flex items-start gap-space-sm p-space-sm rounded-lg bg-[#F8FAFC] border border-[#E2E8F0] hover:bg-[#0F766E]/10/50 transition-colors cursor-pointer select-none">
+<input checked="" class="mt-0.5 w-4 h-4 rounded text-[#0F766E] accent-[#0F766E] focus:ring-0" onchange="updateChecklist()" type="checkbox"/>
+<div class="flex-1">
+<span class="font-label-md text-label-md text-[#1A1A2E] font-medium block">Worker identity &amp; CNIC match NADRA records</span>
+<span class="font-body-sm text-[11px] text-[#64748B]">Name, father name, and photo verified against database</span>
+</div>
+<span class="material-symbols-outlined text-[16px] text-[#0F766E]">check_circle</span>
+</label>
+<label class="flex items-start gap-space-sm p-space-sm rounded-lg bg-[#F8FAFC] border border-[#E2E8F0] hover:bg-[#0F766E]/10/50 transition-colors cursor-pointer select-none">
+<input checked="" class="mt-0.5 w-4 h-4 rounded text-[#0F766E] accent-[#0F766E] focus:ring-0" onchange="updateChecklist()" type="checkbox"/>
+<div class="flex-1">
+<span class="font-label-md text-label-md text-[#1A1A2E] font-medium block">Phone number verified via OTP and active</span>
+<span class="font-body-sm text-[11px] text-[#64748B]">Jazz Telecom registration SIM active under applicant CNIC</span>
+</div>
+<span class="material-symbols-outlined text-[16px] text-[#0F766E]">check_circle</span>
+</label>
+<label class="flex items-start gap-space-sm p-space-sm rounded-lg bg-[#F8FAFC] border border-[#E2E8F0] hover:bg-[#0F766E]/10/50 transition-colors cursor-pointer select-none">
+<input checked="" class="mt-0.5 w-4 h-4 rounded text-[#0F766E] accent-[#0F766E] focus:ring-0" onchange="updateChecklist()" type="checkbox"/>
+<div class="flex-1">
+<span class="font-label-md text-label-md text-[#1A1A2E] font-medium block">Professional experience &amp; certifications checked</span>
+<span class="font-body-sm text-[11px] text-[#64748B]">TEVTA diploma number validated with Lahore registry</span>
+</div>
+<span class="material-symbols-outlined text-[16px] text-[#0F766E]">check_circle</span>
+</label>
+<label class="flex items-start gap-space-sm p-space-sm rounded-lg bg-[#F8FAFC] border border-[#E2E8F0] hover:bg-[#0F766E]/10/50 transition-colors cursor-pointer select-none">
+<input checked="" class="mt-0.5 w-4 h-4 rounded text-[#0F766E] accent-[#0F766E] focus:ring-0" onchange="updateChecklist()" type="checkbox"/>
+<div class="flex-1">
+<span class="font-label-md text-label-md text-[#1A1A2E] font-medium block">Service radius &amp; tools availability confirmed</span>
+<span class="font-body-sm text-[11px] text-[#64748B]">Full kit declared including safety harness and testing meters</span>
+</div>
+<span class="material-symbols-outlined text-[16px] text-[#0F766E]">check_circle</span>
+</label>
+<label class="flex items-start gap-space-sm p-space-sm rounded-lg bg-[#F8FAFC] border border-[#E2E8F0] hover:bg-[#0F766E]/10/50 transition-colors cursor-pointer select-none">
+<input checked="" class="mt-0.5 w-4 h-4 rounded text-[#0F766E] accent-[#0F766E] focus:ring-0" onchange="updateChecklist()" type="checkbox"/>
+<div class="flex-1">
+<span class="font-label-md text-label-md text-[#1A1A2E] font-medium block">Police clearance &amp; background check satisfactory</span>
+<span class="font-body-sm text-[11px] text-[#64748B]">Khidmat Markaz character certificate authenticated</span>
+</div>
+<span class="material-symbols-outlined text-[16px] text-[#0F766E]">check_circle</span>
+</label>
+</div>
+</div>
+<!-- Section 5: Admin Internal Notes -->
+<div class="bg-surface-container-lowest rounded-xl p-space-base shadow-sm border border-[#E2E8F0]">
+<div class="flex items-center justify-between pb-space-sm mb-space-base border-b border-[#F8FAFC]">
+<div class="flex items-center gap-space-sm">
+<div class="w-8 h-8 rounded-lg bg-[#0F766E]/10 border border-[#0F766E]/20 flex items-center justify-center text-[#0F766E]">
+<span class="material-symbols-outlined text-[18px]">rate_review</span>
+</div>
+<div>
+<h2 class="font-headline-sm text-headline-sm text-[#1A1A2E] font-semibold">5. Internal Review Notes</h2>
+<p class="font-body-sm text-body-sm text-[#64748B]">Visible to review ops team only — kept in permanent audit log</p>
+</div>
+</div>
+<span class="font-label-sm text-[11px] text-[#64748B]">Encrypted</span>
+</div>
+<div class="space-y-space-sm">
+<textarea class="w-full p-space-sm bg-[#F8FAFC] border border-[#E2E8F0] rounded font-body-sm text-body-sm text-[#1A1A2E] placeholder:text-[#64748B] focus:bg-surface-container-lowest focus:outline-none focus:ring-1 focus:ring-[#0F766E] transition-all resize-none" placeholder="e.g. Verified certificate number TEVTA-2018-9382 over phone. Candidate confirmed solar installation experience in DHA." rows="3">Verified certificate number TEVTA-2018-9382 with regional registrar. Candidate confirmed experience in commercial 3-phase wiring and DHA high-voltage setups.</textarea>
+<div class="flex items-center justify-between flex-wrap gap-2">
+<div class="flex flex-wrap gap-space-xs">
+<button class="px-space-xs py-space-2xs rounded bg-[#0F766E]/10 text-[#0F766E] border border-[#0F766E]/20 hover:bg-[#0F766E]/10 text-[11px] font-label-md font-medium" onclick="appendTag('Docs Clear')" type="button">
+                + Docs Clear
+              </button>
+<button class="px-space-xs py-space-2xs rounded bg-[#0F766E]/10 text-[#0F766E] border border-[#0F766E]/20 hover:bg-[#0F766E]/10 text-[11px] font-label-md font-medium" onclick="appendTag('Call Verified')" type="button">
+                + Call Verified
+              </button>
+<button class="px-space-xs py-space-2xs rounded bg-[#0F766E]/10 text-[#0F766E] border border-[#0F766E]/20 hover:bg-[#0F766E]/10 text-[11px] font-label-md font-medium" onclick="appendTag('High Demand Trade')" type="button">
+                + High Demand Trade
+              </button>
+<button class="px-space-xs py-space-2xs rounded bg-[#0F766E]/10 text-[#0F766E] border border-[#0F766E]/20 hover:bg-[#0F766E]/10 text-[11px] font-label-md font-medium" onclick="appendTag('Fast-track')" type="button">
+                + Fast-track
+              </button>
+</div>
+<span class="font-data-mono text-[10px] text-[#64748B]">Auto-saved</span>
+</div>
+</div>
+</div>
+<!-- Section 6: Sticky Verification Decision Panel -->
+<div class="sticky top-20 bg-surface-container-lowest rounded-xl p-space-base shadow-md border border-[#E2E8F0]">
+<div class="flex items-center gap-space-xs text-[#0F766E] mb-space-xs font-label-md text-label-md font-semibold">
+<span class="material-symbols-outlined text-[18px]">gavel</span>
+<span>6. Verification Decision Panel</span>
+</div>
+<p class="font-body-sm text-body-sm text-[#64748B] mb-space-base">
+          Applying a decision immediately executes SMS and in-app alerts to the worker and assigns Lahore dispatch availability.
+        </p>
+<div class="space-y-space-sm">
+<!-- Primary Approve Button -->
+<button class="w-full h-11 px-space-base rounded bg-[#0F766E] hover:bg-[#115E59] text-white font-headline-sm text-headline-sm flex items-center justify-between shadow transition-colors" onclick="document.getElementById('approveModal').classList.remove('hidden')" type="button">
+<span class="flex items-center gap-space-sm">
+<span class="material-symbols-outlined text-[20px]">check_circle</span>
+<span>Approve Worker Verification</span>
+</span>
+<span class="px-space-xs py-space-2xs bg-white/20 text-white font-data-mono text-[11px] rounded">Shift + A</span>
+</button>
+<!-- Split Secondary Actions -->
+<div class="grid grid-cols-2 gap-space-sm">
+<button class="h-9 px-space-sm rounded bg-[#F59E0B]/10 hover:bg-[#F59E0B]/10 text-[#F59E0B] border border-[#F59E0B]/30 font-label-md text-label-md flex items-center justify-center gap-1.5 transition-colors font-medium" onclick="document.getElementById('changesModal').classList.remove('hidden')" type="button">
+<span class="material-symbols-outlined text-[16px]">edit_note</span>
+<span>Request Changes</span>
+</button>
+<button class="h-9 px-space-sm rounded bg-[#DC2626]/10 hover:bg-[#DC2626]/10 text-[#DC2626] border border-[#DC2626]/30 font-label-md text-label-md flex items-center justify-center gap-1.5 transition-colors font-medium" onclick="document.getElementById('rejectModal').classList.remove('hidden')" type="button">
+<span class="material-symbols-outlined text-[16px]">cancel</span>
+<span>Reject Application</span>
+</button>
+</div>
+</div>
+<div class="mt-space-sm pt-space-xs flex items-center justify-between text-[#64748B] font-data-mono text-[11px] border-t border-[#F8FAFC]">
+<span>Reviewer: Tariq Mahmood</span>
+<span class="text-[#0F766E] font-semibold">Ready for Dispatch</span>
+</div>
+</div>
+<!-- Section 7: Audit Trail / Timeline -->
+<div class="bg-surface-container-lowest rounded-xl p-space-base shadow-sm border border-[#E2E8F0]">
+<div class="flex items-center justify-between pb-space-sm mb-space-base border-b border-[#F8FAFC]">
+<div class="flex items-center gap-space-sm">
+<div class="w-8 h-8 rounded-lg bg-[#0F766E]/10 border border-[#0F766E]/20 flex items-center justify-center text-[#0F766E]">
+<span class="material-symbols-outlined text-[18px]">history</span>
+</div>
+<div>
+<h2 class="font-headline-sm text-headline-sm text-[#1A1A2E] font-semibold">7. Verification Audit Trail</h2>
+<p class="font-body-sm text-body-sm text-[#64748B]">Immutable ledger of worker onboarding events</p>
+</div>
+</div>
+<span class="material-symbols-outlined text-[#64748B] text-[18px]">lock</span>
+</div>
+<div class="space-y-space-md relative before:absolute before:left-3 before:top-2 before:bottom-2 before:w-0.5 before:bg-[#E2E8F0]">
+<!-- Item 1 -->
+<div class="flex items-start gap-space-md relative pl-6">
+<span class="absolute left-1.5 top-1.5 w-3 h-3 rounded-full bg-[#0F766E] ring-4 ring-surface-container-lowest"></span>
+<div>
+<p class="font-label-md text-label-md text-[#1A1A2E] font-semibold">Tariq Mahmood (You) initiated verification review</p>
+<p class="font-body-sm text-body-sm text-[#64748B]">Officer assigned • Document package opened in high-security viewer</p>
+<span class="font-data-mono text-[11px] text-[#0F766E] font-medium">Today, 10:15 AM (PKT)</span>
+</div>
+</div>
+<!-- Item 2 -->
+<div class="flex items-start gap-space-md relative pl-6">
+<span class="absolute left-1.5 top-1.5 w-3 h-3 rounded-full bg-[#0F766E] ring-4 ring-surface-container-lowest"></span>
+<div>
+<p class="font-label-md text-label-md text-[#1A1A2E] font-semibold">System automated NADRA CNIC checksum verified</p>
+<p class="font-body-sm text-body-sm text-[#64748B]">Pass rate 99.4% • No previous blacklisting detected across Pakistan</p>
+<span class="font-data-mono text-[11px] text-[#64748B]">Today, 09:18 AM (PKT)</span>
+</div>
+</div>
+<!-- Item 3 -->
+<div class="flex items-start gap-space-md relative pl-6">
+<span class="absolute left-1.5 top-1.5 w-3 h-3 rounded-full bg-[#0F766E] ring-4 ring-surface-container-lowest"></span>
+<div>
+<p class="font-label-md text-label-md text-[#1A1A2E] font-semibold">Ahmed Khan submitted application</p>
+<p class="font-body-sm text-body-sm text-[#64748B]">Via HUNAR Worker App v3.2.1 for Android (Model: Infinix Hot 12)</p>
+<span class="font-data-mono text-[11px] text-[#64748B]">Today, 09:15 AM (PKT)</span>
+</div>
+</div>
+<!-- Item 4 -->
+<div class="flex items-start gap-space-md relative pl-6">
+<span class="absolute left-1.5 top-1.5 w-3 h-3 rounded-full bg-[#64748B] ring-4 ring-surface-container-lowest"></span>
+<div>
+<p class="font-label-md text-label-md text-[#1A1A2E] font-semibold">Worker profile registered &amp; SMS verified</p>
+<p class="font-body-sm text-body-sm text-[#64748B]">OTP delivered to +92 300 4829104 (Response latency 8s)</p>
+<span class="font-data-mono text-[11px] text-[#64748B]">Sep 04, 2026 • 11:42 PM</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- ==================== MODAL 1: APPROVE CONFIRMATION ==================== -->
+<div class="hidden fixed inset-0 z-50 flex items-center justify-center p-space-base bg-inverse-surface/45 backdrop-blur-sm" id="approveModal">
+<div class="w-full max-w-md bg-surface-container-lowest rounded-xl shadow-2xl p-space-lg border border-[#E2E8F0]">
+<div class="w-12 h-12 rounded-full bg-[#0F766E]/10 text-[#0F766E] border border-[#0F766E]/20 flex items-center justify-center mx-auto mb-space-base">
+<span class="material-symbols-outlined text-[28px]">verified</span>
+</div>
+<div class="text-center mb-space-lg">
+<h3 class="font-headline-md text-headline-md text-[#1A1A2E] font-bold">Approve Worker Verification?</h3>
+<p class="font-body-md text-body-md text-[#64748B] mt-space-xs">
+          Ahmed Khan will receive the official <strong>Verified Artisan Badge</strong>. His profile will immediately surface for electrical dispatch requests across DHA and Lahore Central.
+        </p>
+</div>
+<div class="bg-[#F8FAFC] border border-[#E2E8F0] p-space-sm rounded-lg mb-space-lg font-body-sm text-body-sm text-[#64748B] space-y-1">
+<div class="flex items-center justify-between">
+<span>Worker:</span>
+<span class="font-semibold text-[#1A1A2E]">Ahmed Khan (APP-84920)</span>
+</div>
+<div class="flex items-center justify-between">
+<span>Primary Trade:</span>
+<span class="font-semibold text-[#1A1A2E]">Master Electrician</span>
+</div>
+<div class="flex items-center justify-between">
+<span>Escrow Auto-Eligibility:</span>
+<span class="font-semibold text-[#0F766E]">Unlocked</span>
+</div>
+</div>
+<div class="flex items-center gap-space-sm">
+<button class="w-1/2 h-10 rounded bg-[#F8FAFC] hover:bg-[#E2E8F0] text-[#1A1A2E] font-label-md text-label-md transition-colors" onclick="document.getElementById('approveModal').classList.add('hidden')" type="button">
+          Cancel
+        </button>
+<button class="w-1/2 h-10 rounded bg-[#0F766E] hover:bg-[#115E59] text-white font-label-md text-label-md shadow transition-colors flex items-center justify-center gap-1.5 font-medium" onclick="executeDecision('approved')" type="button">
+<span class="material-symbols-outlined text-[18px]">check</span>
+<span>Confirm Approval</span>
+</button>
+</div>
+</div>
+</div>
+<!-- ==================== MODAL 2: REQUEST CHANGES ==================== -->
+<div class="hidden fixed inset-0 z-50 flex items-center justify-center p-space-base bg-inverse-surface/45 backdrop-blur-sm" id="changesModal">
+<div class="w-full max-w-lg bg-surface-container-lowest rounded-xl shadow-2xl p-space-lg border border-[#E2E8F0]">
+<div class="flex items-center justify-between pb-space-sm mb-space-base border-b border-[#F8FAFC]">
+<div class="flex items-center gap-space-sm">
+<div class="w-9 h-9 rounded-lg bg-[#F59E0B]/10 text-[#F59E0B] border border-[#F59E0B]/30 flex items-center justify-center">
+<span class="material-symbols-outlined text-[20px]">warning</span>
+</div>
+<div>
+<h3 class="font-headline-sm text-headline-sm text-[#1A1A2E] font-bold">Request Changes from Worker</h3>
+<p class="font-body-sm text-body-sm text-[#64748B]">Ahmed Khan will receive push notification instructions</p>
+</div>
+</div>
+<button class="text-[#64748B] hover:text-[#1A1A2E]" onclick="document.getElementById('changesModal').classList.add('hidden')" type="button">
+<span class="material-symbols-outlined">close</span>
+</button>
+</div>
+<div class="space-y-space-md mb-space-lg">
+<div>
+<label class="font-label-sm text-label-sm text-[#1A1A2E] font-medium block mb-1">Select Documents Requiring Re-upload</label>
+<div class="space-y-space-xs">
+<label class="flex items-center gap-space-sm p-space-xs rounded bg-[#F8FAFC] border border-[#E2E8F0] cursor-pointer font-body-sm text-body-sm">
+<input class="rounded text-[#0F766E] accent-[#0F766E]" type="checkbox"/>
+<span>National ID (CNIC) - Back side blurry or cropped</span>
+</label>
+<label class="flex items-center gap-space-sm p-space-xs rounded bg-[#F8FAFC] border border-[#E2E8F0] cursor-pointer font-body-sm text-body-sm">
+<input class="rounded text-[#0F766E] accent-[#0F766E]" type="checkbox"/>
+<span>TEVTA Certificate - Missing official registration stamp</span>
+</label>
+<label class="flex items-center gap-space-sm p-space-xs rounded bg-[#F8FAFC] border border-[#E2E8F0] cursor-pointer font-body-sm text-body-sm">
+<input class="rounded text-[#0F766E] accent-[#0F766E]" type="checkbox"/>
+<span>Police Clearance - Validity expired (&gt; 6 months old)</span>
+</label>
+</div>
+</div>
+<div>
+<label class="font-label-sm text-label-sm text-[#1A1A2E] font-medium block mb-1">Clear Instructions to Candidate <span class="text-[#DC2626]">*</span></label>
+<textarea class="w-full p-space-sm bg-[#F8FAFC] border border-[#E2E8F0] rounded font-body-sm text-body-sm text-[#1A1A2E] focus:outline-none focus:ring-1 focus:ring-[#0F766E] resize-none" placeholder="Please re-upload a clear photograph of your original physical CNIC back page with readable bar code..." rows="3"></textarea>
+</div>
+</div>
+<div class="flex items-center justify-end gap-space-sm">
+<button class="px-space-md h-9 rounded bg-[#F8FAFC] hover:bg-[#E2E8F0] text-[#1A1A2E] font-label-md text-label-md" onclick="document.getElementById('changesModal').classList.add('hidden')" type="button">
+          Cancel
+        </button>
+<button class="px-space-md h-9 rounded bg-[#F59E0B]/10 hover:bg-[#F59E0B]/10 text-[#F59E0B] border border-[#F59E0B]/30 font-label-md text-label-md font-semibold flex items-center gap-1.5" onclick="executeDecision('changes_requested')" type="button">
+<span class="material-symbols-outlined text-[16px]">send</span>
+<span>Send Change Request</span>
+</button>
+</div>
+</div>
+</div>
+<!-- ==================== MODAL 3: REJECT VERIFICATION ==================== -->
+<div class="hidden fixed inset-0 z-50 flex items-center justify-center p-space-base bg-inverse-surface/45 backdrop-blur-sm" id="rejectModal">
+<div class="w-full max-w-lg bg-surface-container-lowest rounded-xl shadow-2xl p-space-lg border border-[#E2E8F0]">
+<div class="flex items-center justify-between pb-space-sm mb-space-base border-b border-[#F8FAFC]">
+<div class="flex items-center gap-space-sm">
+<div class="w-9 h-9 rounded-lg bg-[#DC2626]/10 text-[#DC2626] border border-[#DC2626]/30 flex items-center justify-center">
+<span class="material-symbols-outlined text-[20px]">block</span>
+</div>
+<div>
+<h3 class="font-headline-sm text-headline-sm text-[#DC2626] font-bold">Reject Verification Application</h3>
+<p class="font-body-sm text-body-sm text-[#64748B]">Mandatory audit selection for compliance logs</p>
+</div>
+</div>
+<button class="text-[#64748B] hover:text-[#1A1A2E]" onclick="document.getElementById('rejectModal').classList.add('hidden')" type="button">
+<span class="material-symbols-outlined">close</span>
+</button>
+</div>
+<div class="space-y-space-md mb-space-lg">
+<div>
+<label class="font-label-sm text-label-sm text-[#1A1A2E] font-medium block mb-1">Primary Rejection Ground <span class="text-[#DC2626]">*</span></label>
+<select class="w-full h-10 px-space-sm bg-[#F8FAFC] border border-[#E2E8F0] rounded font-body-sm text-body-sm text-[#1A1A2E] focus:outline-none focus:ring-1 focus:ring-[#0F766E]">
+<option value="">Select mandatory audit reason...</option>
+<option value="forgery">Document Forgery / Tampered National CNIC</option>
+<option value="nadra_mismatch">NADRA Citizen Registry Discrepancy</option>
+<option value="criminal">Adverse Criminal Record in Police Clearance</option>
+<option value="underage">Applicant Does Not Meet Age Criteria</option>
+<option value="duplicate">Duplicate Registration Attempt / Suspended Account</option>
+<option value="trade_fraud">Unverifiable Trade Credentials</option>
+</select>
+</div>
+<div>
+<label class="font-label-sm text-label-sm text-[#1A1A2E] font-medium block mb-1">Mandatory Internal Justification <span class="text-[#DC2626]">*</span></label>
+<textarea class="w-full p-space-sm bg-[#F8FAFC] border border-[#E2E8F0] rounded font-body-sm text-body-sm text-[#1A1A2E] focus:outline-none focus:ring-1 focus:ring-[#DC2626] resize-none" placeholder="Detail the specific failure reason observed by reviewer..." rows="3"></textarea>
+</div>
+<div class="p-space-sm rounded-lg bg-[#DC2626]/10 border border-[#DC2626]/30 text-[#DC2626] font-body-sm text-[12px] flex items-start gap-space-xs">
+<span class="material-symbols-outlined text-[16px] shrink-0 mt-0.5">report</span>
+<span>Rejecting will revoke all pending job tenders and prevent re-application for 90 days.</span>
+</div>
+</div>
+<div class="flex items-center justify-end gap-space-sm">
+<button class="px-space-md h-9 rounded bg-[#F8FAFC] hover:bg-[#E2E8F0] text-[#1A1A2E] font-label-md text-label-md" onclick="document.getElementById('rejectModal').classList.add('hidden')" type="button">
+          Cancel
+        </button>
+<button class="px-space-md h-9 rounded bg-[#DC2626] hover:bg-red-800 text-white font-label-md text-label-md font-semibold flex items-center gap-1.5" onclick="executeDecision('rejected')" type="button">
+<span class="material-symbols-outlined text-[16px]">cancel</span>
+<span>Confirm Rejection</span>
+</button>
+</div>
+</div>
+</div>
+<!-- ==================== DOCUMENT INSPECTOR LIGHTBOX / DRAWER ==================== -->
+<div class="hidden fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-space-base bg-inverse-surface/60 backdrop-blur-md" id="docLightbox">
+<div class="w-full max-w-5xl h-[901px] bg-surface-container-lowest rounded-xl shadow-2xl flex flex-col overflow-hidden border border-[#E2E8F0]">
+<!-- Lightbox Header Bar -->
+<div class="h-14 px-space-base bg-surface-container-lowest border-b border-[#E2E8F0] flex items-center justify-between shrink-0">
+<div class="flex items-center gap-space-base">
+<span class="font-headline-sm text-headline-sm text-[#1A1A2E] font-bold">Document Inspector: CNIC Smart Card</span>
+<span class="px-space-xs py-space-2xs rounded bg-[#0F766E]/10 text-[#0F766E] border border-[#0F766E]/20 font-status-badge text-status-badge font-semibold">
+            Watermark Intact
+          </span>
+<span class="font-data-mono text-data-mono text-[#64748B]">35201-8392019-3</span>
+</div>
+<div class="flex items-center gap-space-sm">
+<div class="flex items-center bg-[#F8FAFC] rounded p-0.5 border border-[#E2E8F0]">
+<button class="p-1 hover:bg-white rounded text-[#64748B] hover:text-[#1A1A2E]" title="Zoom Out" type="button">
+<span class="material-symbols-outlined text-[18px]">zoom_out</span>
+</button>
+<span class="font-data-mono text-[11px] px-2 text-[#1A1A2E]">125%</span>
+<button class="p-1 hover:bg-white rounded text-[#64748B] hover:text-[#1A1A2E]" title="Zoom In" type="button">
+<span class="material-symbols-outlined text-[18px]">zoom_in</span>
+</button>
+<button class="p-1 hover:bg-white rounded text-[#64748B] hover:text-[#1A1A2E]" title="Rotate" type="button">
+<span class="material-symbols-outlined text-[18px]">rotate_right</span>
+</button>
+</div>
+<button class="w-8 h-8 rounded-full hover:bg-[#F8FAFC] flex items-center justify-center text-[#64748B] hover:text-[#1A1A2E] transition-colors" onclick="document.getElementById('docLightbox').classList.add('hidden')" type="button">
+<span class="material-symbols-outlined text-[20px]">close</span>
+</button>
+</div>
+</div>
+<!-- Lightbox Split Stage -->
+<div class="flex-1 grid grid-cols-1 md:grid-cols-12 overflow-hidden">
+<!-- Left: Document Darkroom Canvas -->
+<div class="md:col-span-8 bg-[#1A1A2E] p-space-base flex flex-col items-center justify-center relative overflow-hidden">
+<div class="relative max-w-full max-h-full rounded shadow-2xl overflow-hidden group">
+<img class="max-h-[665px] object-contain rounded" data-alt="Government issued Pakistani CNIC card smart chip front face inspection scan with green top ribbon, bilingual English and Urdu typography, high resolution with visible security microprint" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAKM7kQA5JLqDZOacw8ZgjOvSGEx0F2bvLmWcW8YidXppGi9mEsWLRUFLzoVlqaDbBFuWOaW2EcX6d1tHICS8RYxe_9j2kBo3yJLW16MzMb4jwHU_LYZ-URqWD6GqI2UXI9UMtOHcgMhQY07u6XvxoG9L13hbtzIyfUquGmOR8tdDebL3QIOAxaddS-JXKifEqYTzYwrcie_QEhoq5mq8zLp9Y7Ma5jEh3WXImBB3B8JOG4m3BtkqHKWA"/>
+<div class="absolute bottom-2 left-2 px-space-xs py-space-2xs bg-black/70 text-white rounded font-data-mono text-[10px] flex items-center gap-1 border border-white/20">
+<span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+<span>Hologram Validated • NADRA Digital Seal Verified</span>
+</div>
+</div>
+</div>
+<!-- Right: Side-by-Side OCR Field Comparator -->
+<div class="md:col-span-4 bg-surface-container-lowest border-l border-[#E2E8F0] p-space-base overflow-y-auto space-y-space-md">
+<div class="pb-space-xs border-b border-[#F8FAFC]">
+<h4 class="font-headline-sm text-headline-sm text-[#1A1A2E] font-semibold">Automated OCR Extraction</h4>
+<p class="font-body-sm text-body-sm text-[#64748B]">Real-time match comparison with profile inputs</p>
+</div>
+<div class="space-y-space-sm">
+<div class="p-space-sm rounded-lg bg-[#F8FAFC] border border-[#E2E8F0]">
+<div class="flex items-center justify-between">
+<span class="font-label-sm text-label-sm text-[#64748B]">Extracted Name</span>
+<span class="text-[#0F766E] font-data-mono text-[11px] font-bold">100% MATCH</span>
+</div>
+<p class="font-label-md text-label-md text-[#1A1A2E] font-semibold mt-0.5">AHMED KHAN</p>
+<div class="mt-1 flex items-center justify-between text-[#64748B] font-data-mono text-[10px]">
+<span>Candidate Input: Ahmed Khan</span>
+<span class="text-[#0F766E] font-bold">✓ PASS</span>
+</div>
+</div>
+<div class="p-space-sm rounded-lg bg-[#F8FAFC] border border-[#E2E8F0]">
+<div class="flex items-center justify-between">
+<span class="font-label-sm text-label-sm text-[#64748B]">Extracted CNIC</span>
+<span class="text-[#0F766E] font-data-mono text-[11px] font-bold">EXACT MATCH</span>
+</div>
+<p class="font-data-mono text-data-mono text-[#0F766E] font-bold mt-0.5">35201-8392019-3</p>
+<div class="mt-1 flex items-center justify-between text-[#64748B] font-data-mono text-[10px]">
+<span>Checksum Valid</span>
+<span class="text-[#0F766E] font-bold">✓ PASS</span>
+</div>
+</div>
+<div class="p-space-sm rounded-lg bg-[#F8FAFC] border border-[#E2E8F0]">
+<div class="flex items-center justify-between">
+<span class="font-label-sm text-label-sm text-[#64748B]">Date of Birth</span>
+<span class="text-[#0F766E] font-data-mono text-[11px] font-bold">MATCH</span>
+</div>
+<p class="font-data-mono text-data-mono text-[#1A1A2E] font-semibold mt-0.5">14.08.1988</p>
+<div class="mt-1 flex items-center justify-between text-[#64748B] font-data-mono text-[10px]">
+<span>Age: 38 years old</span>
+<span class="text-[#0F766E] font-bold">✓ PASS</span>
+</div>
+</div>
+<div class="p-space-sm rounded-lg bg-[#F8FAFC] border border-[#E2E8F0]">
+<div class="flex items-center justify-between">
+<span class="font-label-sm text-label-sm text-[#64748B]">Document Expiration</span>
+<span class="text-[#0F766E] font-data-mono text-[11px] font-bold">VALID</span>
+</div>
+<p class="font-data-mono text-data-mono text-[#1A1A2E] font-semibold mt-0.5">12.10.2031</p>
+<div class="mt-1 flex items-center justify-between text-[#64748B] font-data-mono text-[10px]">
+<span>Lifespan: 5+ years remaining</span>
+<span class="text-[#0F766E] font-bold">✓ PASS</span>
+</div>
+</div>
+</div>
+<div class="pt-space-sm">
+<button class="w-full h-10 rounded bg-[#0F766E] text-white font-label-md text-label-md hover:bg-[#115E59] transition-colors flex items-center justify-center gap-1 font-medium shadow-sm" onclick="document.getElementById('docLightbox').classList.add('hidden')" type="button">
+<span class="material-symbols-outlined text-[16px]">done</span>
+<span>Accept Document as Verified</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+<script>
+    function updateChecklist() {
+      const group = document.getElementById('checklistGroup');
+      const checkboxes = group.querySelectorAll('input[type="checkbox"]');
+      const total = checkboxes.length;
+      let checkedCount = 0;
+      checkboxes.forEach(cb => {
+        if (cb.checked) checkedCount++;
+      });
+      const percent = (checkedCount / total) * 100;
+      document.getElementById('checkProgressBar').style.width = percent + '%';
+      document.getElementById('checklistCounter').innerText = checkedCount + '/' + total + ' Complete';
+    }
+
+    function appendTag(tagText) {
+      const textarea = document.querySelector('textarea');
+      if (textarea.value.includes(tagText)) return;
+      textarea.value = textarea.value.trim() + ' [' + tagText + ']';
+      textarea.focus();
+    }
+
+    function executeDecision(type) {
+      if (type === 'approved') {
+        alert('Verification Successful: Ahmed Khan (APP-84920) has been approved. Status updated to Active Artisan.');
+        document.getElementById('approveModal').classList.add('hidden');
+      } else if (type === 'changes_requested') {
+        alert('Changes Requested: Notification and re-upload link sent to worker +92 300 4829104.');
+        document.getElementById('changesModal').classList.add('hidden');
+      } else if (type === 'rejected') {
+        alert('Application Rejected: Ahmed Khan marked as ineligible. Audit record filed.');
+        document.getElementById('rejectModal').classList.add('hidden');
+      }
+    }
+
+    // Keyboard shortcut helper for operators
+    document.addEventListener('keydown', function(e) {
+      if (e.shiftKey && e.key === 'A') {
+        e.preventDefault();
+        const modal = document.getElementById('approveModal');
+        if (modal.classList.contains('hidden')) {
+          modal.classList.remove('hidden');
+        } else {
+          modal.classList.add('hidden');
+        }
+      }
+      if (e.key === 'Escape') {
+        document.getElementById('approveModal').classList.add('hidden');
+        document.getElementById('changesModal').classList.add('hidden');
+        document.getElementById('rejectModal').classList.add('hidden');
+        document.getElementById('docLightbox').classList.add('hidden');
+      }
+    });
+  </script>
+</div></main></div></body></html>

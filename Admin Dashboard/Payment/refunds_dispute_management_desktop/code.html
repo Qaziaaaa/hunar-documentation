@@ -1,0 +1,745 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>HUNAR Console - Refunds &amp; Dispute Arbitration</title>
+<!-- Load Tailwind CSS v3 with forms and container queries plugins -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+tailwind.config = {
+  darkMode: "class",
+  theme: {
+    extend: {
+      colors: {
+        navy: "#1A1A2E",
+        teal: {
+          DEFAULT: "#0F766E",
+          dark: "#115E59",
+          light: "rgba(15, 118, 110, 0.1)"
+        },
+        orange: "#F59E0B",
+        success: "#16A34A",
+        error: "#DC2626",
+        gray: "#64748B",
+        background: "#F8FAFC",
+        border: "#E2E8F0",
+        surface: "#FFFFFF",
+        primary: "#0F766E",
+        "primary-dark": "#115E59",
+        secondary: "#1A1A2E",
+        
+        // Aliases used in templates
+        appBg: "#F8FAFC",
+        darkText: "#1A1A2E",
+        mutedText: "#64748B",
+        borderLine: "#E2E8F0",
+        "text-main": "#1A1A2E",
+        "surface-muted": "#F8FAFC",
+        "outline-border": "#E2E8F0",
+        
+        // Material Theme 3 Aliases
+        "on-surface": "#1A1A2E",
+        "on-surface-variant": "#64748B",
+        "on-background": "#1A1A2E",
+        "on-primary": "#FFFFFF",
+        "on-secondary": "#FFFFFF",
+        "on-error": "#FFFFFF",
+        "surface-container-lowest": "#FFFFFF",
+        "surface-container-low": "#F8FAFC",
+        "surface-container": "#F8FAFC",
+        "surface-container-high": "#F8FAFC",
+        "surface-container-highest": "#F8FAFC",
+        "surface-variant": "#F8FAFC",
+        "surface-tint": "#0F766E",
+        "surface-dim": "#E2E8F0",
+        "surface-bright": "#FFFFFF",
+        outline: "#64748B",
+        "outline-variant": "#E2E8F0",
+        "primary-container": "rgba(15, 118, 110, 0.1)",
+        "on-primary-container": "#0F766E",
+        "secondary-container": "rgba(26, 26, 46, 0.08)",
+        "on-secondary-container": "#1A1A2E",
+        "secondary-fixed": "rgba(15, 118, 110, 0.1)",
+        "secondary-fixed-dim": "rgba(15, 118, 110, 0.1)",
+        "on-secondary-fixed": "#1A1A2E",
+        "on-secondary-fixed-variant": "#115E59",
+        "primary-fixed": "rgba(15, 118, 110, 0.1)",
+        "primary-fixed-dim": "rgba(15, 118, 110, 0.1)",
+        "on-primary-fixed": "#1A1A2E",
+        "on-primary-fixed-variant": "#115E59",
+        "tertiary": "#F59E0B",
+        "tertiary-container": "rgba(245, 158, 11, 0.1)",
+        "on-tertiary-container": "#F59E0B",
+        "tertiary-fixed": "rgba(245, 158, 11, 0.1)",
+        "on-tertiary-fixed": "#1A1A2E",
+        "error-container": "rgba(220, 38, 38, 0.1)",
+        "on-error-container": "#DC2626",
+        "inverse-primary": "#0F766E",
+        "inverse-surface": "#1A1A2E",
+        "inverse-on-surface": "#F8FAFC"
+      },
+      spacing: {
+        "margin-desktop": "2rem",
+        "margin-tablet": "1.5rem",
+        "margin-mobile": "1rem",
+        "gutter-desktop": "1.5rem",
+        "gutter-mobile": "1rem",
+        "space-3xl": "4rem",
+        "space-2xl": "3rem",
+        "space-xl": "2rem",
+        "space-lg": "1.5rem",
+        "space-md": "1rem",
+        "space-base": "1rem",
+        "space-sm": "0.75rem",
+        "space-xs": "0.5rem",
+        "space-2xs": "0.25rem",
+        "space-xxs": "0.25rem",
+        "space-1": "0.25rem",
+        "space-2": "0.5rem",
+        "space-3": "0.75rem",
+        "space-4": "1rem",
+        "space-5": "1.25rem",
+        "space-6": "1.5rem",
+        "space-8": "2rem",
+        "space-12": "3rem",
+        "space-16": "4rem",
+        "space-20": "5rem",
+        "space-24": "6rem",
+        "space-stack-sm": "0.5rem",
+        "space-stack-md": "1rem",
+        "space-stack-lg": "1.5rem",
+        "section-gap": "2rem",
+        "gutter": "1.5rem"
+      },
+      fontSize: {
+        "stat-lg": ["28px", { lineHeight: "36px", letterSpacing: "-0.02em", fontWeight: "700" }],
+        "button-text": ["14px", { lineHeight: "20px", letterSpacing: "0.01em", fontWeight: "600" }],
+
+        "display-hero": ["48px", { lineHeight: "56px", letterSpacing: "-0.025em", fontWeight: "700" }],
+        "display-hero-mobile": ["32px", { lineHeight: "40px", letterSpacing: "-0.02em", fontWeight: "700" }],
+        "display-kpi": ["36px", { lineHeight: "44px", letterSpacing: "-0.02em", fontWeight: "700" }],
+        "display-kpi-mobile": ["28px", { lineHeight: "34px", letterSpacing: "-0.02em", fontWeight: "700" }],
+        "display-lg": ["36px", { lineHeight: "44px", letterSpacing: "-0.02em", fontWeight: "700" }],
+        "headline-page": ["28px", { lineHeight: "36px", letterSpacing: "-0.015em", fontWeight: "600" }],
+        "headline-page-mobile": ["24px", { lineHeight: "32px", letterSpacing: "-0.015em", fontWeight: "600" }],
+        "headline-section": ["20px", { lineHeight: "28px", letterSpacing: "-0.01em", fontWeight: "600" }],
+        "headline-subsection": ["16px", { lineHeight: "24px", letterSpacing: "-0.005em", fontWeight: "600" }],
+        "headline-lg": ["28px", { lineHeight: "36px", letterSpacing: "-0.015em", fontWeight: "600" }],
+        "headline-lg-mobile": ["24px", { lineHeight: "32px", letterSpacing: "-0.015em", fontWeight: "600" }],
+        "headline-md": ["20px", { lineHeight: "28px", letterSpacing: "-0.01em", fontWeight: "600" }],
+        "headline-sm": ["16px", { lineHeight: "24px", letterSpacing: "-0.005em", fontWeight: "600" }],
+        "headline-xl-mobile": ["26px", { lineHeight: "34px", letterSpacing: "-0.015em", fontWeight: "600" }],
+        "body-default": ["14px", { lineHeight: "22px", letterSpacing: "0em", fontWeight: "400" }],
+        "body-compact": ["13px", { lineHeight: "18px", letterSpacing: "0em", fontWeight: "400" }],
+        "body-strong": ["14px", { lineHeight: "22px", letterSpacing: "0em", fontWeight: "600" }],
+        "body-lg": ["16px", { lineHeight: "24px", letterSpacing: "0em", fontWeight: "400" }],
+        "body-md": ["14px", { lineHeight: "22px", letterSpacing: "0em", fontWeight: "400" }],
+        "body-md-medium": ["14px", { lineHeight: "22px", letterSpacing: "0em", fontWeight: "500" }],
+        "body-sm": ["12px", { lineHeight: "16px", letterSpacing: "0em", fontWeight: "400" }],
+        "label-badge": ["11px", { lineHeight: "14px", letterSpacing: "0.02em", fontWeight: "600" }],
+        "label-regular": ["12px", { lineHeight: "16px", letterSpacing: "0.01em", fontWeight: "500" }],
+        "label-md": ["12px", { lineHeight: "16px", letterSpacing: "0.01em", fontWeight: "500" }],
+        "label-sm": ["11px", { lineHeight: "14px", letterSpacing: "0.02em", fontWeight: "500" }],
+        "label-uppercase": ["10px", { lineHeight: "12px", letterSpacing: "0.05em", fontWeight: "700" }]
+      },
+      fontFamily: {
+        "stat-lg": ["Inter", "sans-serif"],
+        "button-text": ["Inter", "sans-serif"],
+
+        sans: ["Inter", "sans-serif"],
+        "body-default": ["Inter", "sans-serif"],
+        "body-compact": ["Inter", "sans-serif"],
+        "body-strong": ["Inter", "sans-serif"],
+        "body-md": ["Inter", "sans-serif"],
+        "body-sm": ["Inter", "sans-serif"],
+        "display-kpi": ["Inter", "sans-serif"],
+        "headline-page": ["Inter", "sans-serif"],
+        "headline-section": ["Inter", "sans-serif"],
+        "headline-subsection": ["Inter", "sans-serif"],
+        "headline-md": ["Inter", "sans-serif"],
+        "headline-sm": ["Inter", "sans-serif"],
+        "headline-lg": ["Inter", "sans-serif"],
+        "label-badge": ["Inter", "sans-serif"],
+        "label-regular": ["Inter", "sans-serif"],
+        "label-md": ["Inter", "sans-serif"],
+        "label-sm": ["Inter", "sans-serif"]
+      },
+      borderRadius: {
+        DEFAULT: "0.375rem",
+        sm: "0.25rem",
+        md: "0.375rem",
+        lg: "0.5rem",
+        xl: "0.75rem",
+        "2xl": "1rem",
+        full: "9999px"
+      }
+    }
+  }
+};
+</script>
+<script>
+    tailwind.config = {
+  darkMode: "class",
+  theme: {
+    extend: {
+      colors: {
+        navy: "#1A1A2E",
+        teal: {
+          DEFAULT: "#0F766E",
+          dark: "#115E59"
+        },
+        orange: "#F59E0B",
+        success: "#16A34A",
+        error: "#DC2626",
+        gray: "#64748B",
+        background: "#F8FAFC",
+        border: "#E2E8F0",
+        primary: "#0F766E",
+        "primary-dark": "#115E59",
+        secondary: "#1A1A2E",
+        surface: "#FFFFFF"
+      },
+      fontFamily: {
+        "stat-lg": ["Inter", "sans-serif"],
+        "button-text": ["Inter", "sans-serif"],
+
+        sans: ["Inter", "sans-serif"]
+      }
+    }
+  }
+}</script>
+<style data-purpose="custom-typography">
+    /* Serif titles consistent with HUNAR brand identity */
+    .brand-title {
+      font-family: 'Georgia', serif;
+    }
+  </style>
+</head>
+<body class="bg-[#F8FAFC] text-slate-800 antialiased font-sans flex h-screen overflow-hidden">
+<!-- BEGIN: MainSidebar -->
+<aside class="w-64 bg-white border-r border-[#E2E8F0] flex flex-col justify-between shrink-0 h-full select-none" data-purpose="sidebar-navigation">
+<!-- Top Part of Sidebar -->
+<div class="overflow-y-auto">
+<!-- Brand Logo Header -->
+<div class="h-16 flex items-center px-6 border-b border-[#E2E8F0] gap-2.5">
+<svg class="w-6 h-6 text-[#0F766E]" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24">
+<path d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+<span class="text-xl font-bold tracking-wider text-slate-900 brand-title">HUNAR</span>
+<span class="text-[11px] font-semibold tracking-widest text-slate-400 uppercase mt-0.5">CONSOLE</span>
+</div>
+<!-- Navigation Links -->
+<nav class="p-4 space-y-6 text-sm">
+<!-- Operations Section -->
+<div>
+<p class="text-[11px] font-bold text-slate-400 tracking-wider uppercase mb-2 px-3">OPERATIONS</p>
+<ul class="space-y-1">
+<li>
+<a class="flex items-center gap-3 px-3 py-2 rounded-md text-slate-600 hover:bg-slate-50 transition-colors" href="#">
+<svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h7"></path></svg>
+<span>Dashboard</span>
+</a>
+</li>
+<li>
+<a class="flex items-center gap-3 px-3 py-2 rounded-md text-slate-600 hover:bg-slate-50 transition-colors" href="#">
+<svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><path d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+<span>Users</span>
+</a>
+</li>
+<li>
+<a class="flex items-center gap-3 px-3 py-2 rounded-md text-slate-600 hover:bg-slate-50 transition-colors" href="#">
+<svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+<span>Verification</span>
+</a>
+</li>
+<li>
+<a class="flex items-center gap-3 px-3 py-2 rounded-md text-slate-600 hover:bg-slate-50 transition-colors" href="#">
+<svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><path d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+<span>Jobs</span>
+</a>
+</li>
+<li>
+<a class="flex items-center gap-3 px-3 py-2 rounded-md text-slate-600 hover:bg-slate-50 transition-colors" href="#">
+<svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+<span>Bookings</span>
+</a>
+</li>
+</ul>
+</div>
+<!-- Finance & Ledger Section -->
+<div>
+<p class="text-[11px] font-bold text-slate-400 tracking-wider uppercase mb-2 px-3">FINANCE &amp; LEDGER</p>
+<div class="space-y-1">
+<!-- Parent Collapsible Header -->
+<button class="w-full flex items-center justify-between px-3 py-2 text-slate-900 rounded-md font-medium hover:bg-slate-50">
+<span class="flex items-center gap-3">
+<svg class="w-4 h-4 text-[#0F766E]" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><path d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+<span class="brand-title">Payment &amp; Taxes</span>
+</span>
+<svg class="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><path d="M5 15l7-7 7 7" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+</button>
+<!-- Submenu Items exactly aligned with IMAGE_3 -->
+<ul class="pl-6 space-y-1 pt-1 font-serif text-slate-700">
+<li>
+<a class="block px-3 py-1.5 rounded-md hover:bg-slate-100 text-slate-600 transition-colors" href="#">Overview</a>
+</li>
+<li>
+<a class="block px-3 py-1.5 rounded-md hover:bg-slate-100 text-slate-600 transition-colors" href="#">Transactions</a>
+</li>
+<li>
+<a class="block px-3 py-1.5 rounded-md hover:bg-slate-100 text-slate-600 transition-colors" href="#">Payments</a>
+</li>
+<li>
+<a class="block px-3 py-1.5 rounded-md hover:bg-slate-100 text-slate-600 transition-colors" href="#">Worker Payouts</a>
+</li>
+<li>
+<a class="block px-3 py-1.5 rounded-md hover:bg-slate-100 text-slate-600 transition-colors" href="#">Commission</a>
+</li>
+<li>
+<a class="block px-3 py-1.5 rounded-md hover:bg-slate-100 text-slate-600 transition-colors" href="#">Taxes</a>
+</li>
+<!-- Active Submenu Item: Refunds -->
+<li>
+<a class="block px-3 py-1.5 rounded-md bg-[#0F766E] text-white font-medium shadow-sm" href="#">Refunds</a>
+</li>
+</ul>
+</div>
+</div>
+<!-- Governance Section -->
+<div>
+<p class="text-[11px] font-bold text-slate-400 tracking-wider uppercase mb-2 px-3">GOVERNANCE</p>
+<ul class="space-y-1">
+<li>
+<a class="flex items-center gap-3 px-3 py-2 rounded-md text-slate-600 hover:bg-slate-50 transition-colors" href="#">
+<svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><path d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+<span>Reviews</span>
+</a>
+</li>
+<li>
+<a class="flex items-center gap-3 px-3 py-2 rounded-md text-slate-600 hover:bg-slate-50 transition-colors" href="#">
+<svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+<span>Notifications</span>
+</a>
+</li>
+<li>
+<a class="flex items-center gap-3 px-3 py-2 rounded-md text-slate-600 hover:bg-slate-50 transition-colors" href="#">
+<svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+<span>Settings</span>
+</a>
+</li>
+</ul>
+</div>
+</nav>
+</div>
+<!-- Sidebar Bottom Gateway Health Status -->
+<div class="p-4 border-t border-[#E2E8F0] flex items-center justify-between text-xs text-slate-500 bg-slate-50">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+<span class="font-medium text-slate-700">API Gateway 99.98%</span>
+</div>
+<span class="text-slate-400 font-mono">v2.4.0</span>
+</div>
+</aside>
+<!-- END: MainSidebar -->
+<!-- BEGIN: MainContentArea -->
+<div class="flex-1 flex flex-col h-full overflow-hidden">
+<!-- BEGIN: TopBar -->
+<header class="h-16 bg-white border-b border-[#E2E8F0] px-8 flex items-center justify-between shrink-0" data-purpose="top-navigation-bar">
+<!-- Search Input -->
+<div class="relative w-96">
+<span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-400">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+</span>
+<input class="w-full pl-9 pr-4 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#0F766E] focus:border-[#0F766E] placeholder-slate-400" placeholder="Search refund ID, transactions, booking ref..." type="text"/>
+</div>
+<!-- Right Header Status & User Account -->
+<div class="flex items-center gap-6">
+<!-- Settlement Indicator Badge -->
+<div class="flex items-center gap-2 px-3 py-1 bg-slate-100 rounded-full text-xs font-mono border border-slate-200">
+<span class="w-2 h-2 rounded-full bg-emerald-600"></span>
+<span class="text-slate-500 font-sans uppercase font-bold text-[10px]">SETTLEMENT:</span>
+<span class="font-bold text-[#0F766E]">LIVE AUTO-CYCLE</span>
+</div>
+<!-- Alert Bell -->
+<div class="relative cursor-pointer text-slate-600 hover:text-slate-900">
+<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+<span class="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full ring-2 ring-white"></span>
+</div>
+<!-- User Profile Pill -->
+<div class="flex items-center gap-3 pl-3 border-l border-slate-200">
+<div class="text-right">
+<div class="text-xs font-bold text-slate-900 leading-tight">Admin Officer</div>
+<div class="text-[10px] text-slate-500">Tier-1 Global</div>
+</div>
+<div class="w-8 h-8 rounded-full bg-[#1A1A2E] text-white flex items-center justify-center font-bold text-xs">
+            AO
+          </div>
+</div>
+</div>
+</header>
+<!-- END: TopBar -->
+<!-- BEGIN: ScrollablePageBody -->
+<main class="flex-1 overflow-y-auto p-8 space-y-6" data-purpose="refunds-dispute-dashboard">
+<!-- BEGIN: PageHeaderSection -->
+<section class="bg-white rounded-lg p-6 border border-[#E2E8F0] shadow-sm flex flex-col md:flex-row md:items-center md:justify-between gap-4" data-purpose="page-title-actions">
+<div>
+<div class="flex items-center gap-2 mb-1.5">
+<span class="text-[11px] font-bold text-slate-400 tracking-wider uppercase">TREASURY &amp; SETTLEMENT ARCHITECTURE</span>
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-teal-50 text-[#0F766E] border border-teal-200">
+<span class="w-1.5 h-1.5 rounded-full bg-[#0F766E]"></span> RAAST v4.2 Active
+            </span>
+</div>
+<h1 class="text-2xl font-bold text-slate-900 brand-title tracking-tight">Refunds &amp; Dispute Arbitration</h1>
+<p class="text-xs text-slate-500 mt-1">Customer Escrow Reversals, Quality Guarantee Claims &amp; Worker Dispute Settlement</p>
+</div>
+<!-- Header Action Controls -->
+<div class="flex flex-wrap items-center gap-3">
+<button class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-700 bg-white border border-slate-300 rounded hover:bg-slate-50 shadow-sm transition-colors">
+<svg class="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+            Refund Policy Doctrine
+          </button>
+<button class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-amber-800 bg-amber-50 border border-amber-300 rounded hover:bg-amber-100 shadow-sm transition-colors">
+<svg class="w-3.5 h-3.5 text-amber-600" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><path d="M13 10V3L4 14h7v7l9-11h-7z" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+            Emergency Reversal Queue (2)
+          </button>
+<div class="relative">
+<select class="text-xs py-1.5 pl-3 pr-8 bg-white border border-slate-300 rounded text-slate-700 font-medium focus:outline-none focus:ring-1 focus:ring-[#0F766E] shadow-sm cursor-pointer">
+<option>All Dispute Statuses</option>
+<option>Under Review</option>
+<option>Approved &amp; Disbursed</option>
+<option>Escalated to Admin</option>
+<option>Rejected</option>
+</select>
+</div>
+</div>
+</section>
+<!-- END: PageHeaderSection -->
+<!-- BEGIN: MetricKPICards -->
+<section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4" data-purpose="metric-overview-cards">
+<!-- Card 1: Total Processed -->
+<div class="bg-white p-5 rounded-lg border border-[#E2E8F0] shadow-sm relative overflow-hidden">
+<div class="flex items-center justify-between text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
+<span>Total Refunds</span>
+<span class="text-rose-600 bg-rose-50 px-1.5 py-0.5 rounded text-[11px] font-bold">1.9%</span>
+</div>
+<div class="text-2xl font-bold text-slate-900 brand-title tracking-tight">Rs. 24,000</div>
+<p class="text-xs text-slate-500 mt-2">80 total processed refunds across 4,150 customer bookings</p>
+</div>
+<!-- Card 2: Open Requests -->
+<div class="bg-white p-5 rounded-lg border border-[#E2E8F0] shadow-sm relative overflow-hidden">
+<div class="flex items-center justify-between text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
+<span>Open Disputes</span>
+<span class="w-2 h-2 rounded-full bg-amber-500"></span>
+</div>
+<div class="text-2xl font-bold text-amber-600 brand-title tracking-tight">Rs. 6,000</div>
+<p class="text-xs text-slate-500 mt-2">20 active arbitration cases requiring specialist audit</p>
+</div>
+<!-- Card 3: Resolution Time -->
+<div class="bg-white p-5 rounded-lg border border-[#E2E8F0] shadow-sm relative overflow-hidden">
+<div class="flex items-center justify-between text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
+<span>Resolution SLA</span>
+<span class="text-teal-700 bg-teal-50 px-1.5 py-0.5 rounded text-[11px] font-bold">Escrow Hold</span>
+</div>
+<div class="text-2xl font-bold text-slate-900 brand-title tracking-tight">3.8 Hours</div>
+<p class="text-xs text-slate-500 mt-2">Within guaranteed 48-hour trade escrow release window</p>
+</div>
+<!-- Card 4: Disputed Commission Restored -->
+<div class="bg-white p-5 rounded-lg border border-[#E2E8F0] shadow-sm relative overflow-hidden">
+<div class="flex items-center justify-between text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
+<span>Platform Cut Reversals</span>
+<svg class="w-4 h-4 text-[#0F766E]" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+</div>
+<div class="text-2xl font-bold text-[#0F766E] brand-title tracking-tight">Rs. 2,400</div>
+<p class="text-xs text-slate-500 mt-2">HUNAR 10% fee fully waived on all verified customer claims</p>
+</div>
+</section>
+<!-- END: MetricKPICards -->
+<!-- BEGIN: RefundMechanicDoctrineBanner -->
+<section class="bg-gradient-to-r from-[#115E59] to-[#0F766E] text-white rounded-lg p-5 border border-teal-900 shadow-sm" data-purpose="reversal-mechanic-doctrine">
+<div class="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
+<div class="max-w-3xl">
+<div class="flex items-center gap-2 text-teal-200 text-xs font-semibold tracking-wider uppercase mb-1">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+              Standard 100% Escrow Reversal Mechanic
+            </div>
+<p class="text-sm font-light text-teal-50 leading-relaxed">
+              When a refund is approved on a standard <strong class="text-white font-semibold">Rs. 300 booking</strong>, HUNAR autonomously reverses the <strong class="text-white font-semibold">Rs. 30 platform commission (10%)</strong> and cancels the pending <strong class="text-white font-semibold">Rs. 270 worker escrow yield (90%)</strong>. The client receives their full <strong class="text-white font-semibold">Rs. 300</strong> back via direct RAAST settlement without surcharge deductions.
+            </p>
+</div>
+<!-- Escrow Pill Breakdown -->
+<div class="flex items-center gap-2 shrink-0 bg-white/10 p-3 rounded-lg border border-white/20 text-xs font-mono">
+<div class="text-center px-2">
+<span class="text-teal-200 text-[10px] block">CUSTOMER CREDIT</span>
+<span class="font-bold text-white text-sm">+Rs. 300</span>
+</div>
+<span class="text-teal-300 font-sans">=</span>
+<div class="text-center px-2">
+<span class="text-teal-200 text-[10px] block">HUNAR WAIVED (10%)</span>
+<span class="font-bold text-teal-200 text-sm">-Rs. 30</span>
+</div>
+<span class="text-teal-300 font-sans">+</span>
+<div class="text-center px-2">
+<span class="text-teal-200 text-[10px] block">WORKER VOID (90%)</span>
+<span class="font-bold text-teal-200 text-sm">-Rs. 270</span>
+</div>
+</div>
+</div>
+</section>
+<!-- END: RefundMechanicDoctrineBanner -->
+<!-- BEGIN: RefundManagementTable -->
+<section class="bg-white border border-[#E2E8F0] rounded-lg shadow-sm overflow-hidden" data-purpose="refund-dispute-table">
+<!-- Table Header Toolbar -->
+<div class="px-6 py-4 border-b border-[#E2E8F0] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+<div>
+<h2 class="text-base font-bold text-slate-900 brand-title">Active Dispute Ledger &amp; Refund Queue</h2>
+<p class="text-xs text-slate-500">Real-time audit log of customer complaints and automated trade cancellations</p>
+</div>
+<div class="flex items-center gap-2">
+<span class="text-xs text-slate-500">Displaying: <strong class="text-slate-800">6 priority cases</strong></span>
+<button class="px-2.5 py-1 text-xs border border-slate-300 text-slate-600 rounded hover:bg-slate-50 flex items-center gap-1">
+<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+              Export CSV
+            </button>
+</div>
+</div>
+<!-- Table Container -->
+<div class="overflow-x-auto">
+<table class="w-full text-left text-xs text-slate-600">
+<thead class="bg-slate-50 text-slate-500 uppercase tracking-wider text-[11px] font-semibold border-b border-[#E2E8F0]">
+<tr>
+<th class="px-6 py-3.5" scope="col">Refund Case ID</th>
+<th class="px-4 py-3.5" scope="col">Booking Ref</th>
+<th class="px-4 py-3.5" scope="col">Customer</th>
+<th class="px-4 py-3.5" scope="col">Assigned Specialist</th>
+<th class="px-4 py-3.5" scope="col">Claim Amount</th>
+<th class="px-4 py-3.5" scope="col">Reason Category</th>
+<th class="px-4 py-3.5" scope="col">Arbitration Status</th>
+<th class="px-4 py-3.5" scope="col">Gateway RRN</th>
+<th class="px-6 py-3.5 text-right" scope="col">Actions</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-slate-100">
+<!-- Case Row 1: Under Review (Worker No-Show) -->
+<tr class="hover:bg-slate-50/80 transition-colors">
+<td class="px-6 py-4 font-mono font-medium text-slate-900">
+                  REF-9801
+                  <span class="block text-[10px] text-slate-400 font-sans">Today, 10:14 AM</span>
+</td>
+<td class="px-4 py-4 font-mono text-slate-600">BK-77291</td>
+<td class="px-4 py-4 font-medium text-slate-900">Hamza Tariq</td>
+<td class="px-4 py-4">
+<div class="font-medium text-slate-800">Bilal Ahmed</div>
+<div class="text-[10px] text-slate-400">Plumber • Master Cert</div>
+</td>
+<td class="px-4 py-4">
+<div class="font-bold text-slate-900">Rs. 300</div>
+<div class="text-[10px] text-slate-400">Escrow Locked</div>
+</td>
+<td class="px-4 py-4">
+<span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-amber-50 text-amber-700 border border-amber-200">
+                    Worker No-Show
+                  </span>
+</td>
+<td class="px-4 py-4">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium bg-amber-50 text-amber-800 border border-amber-200">
+<span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                    Under Review
+                  </span>
+</td>
+<td class="px-4 py-4 font-mono text-slate-400">PK-RST-90312</td>
+<td class="px-6 py-4 text-right space-x-1">
+<button class="px-2.5 py-1 bg-[#0F766E] text-white rounded text-[11px] font-medium hover:bg-[#115E59] transition-colors">Approve</button>
+<button class="px-2 py-1 text-slate-500 hover:text-slate-800 border border-slate-200 rounded text-[11px]">Audit</button>
+</td>
+</tr>
+<!-- Case Row 2: Approved & Disbursed (Incomplete Repair) -->
+<tr class="hover:bg-slate-50/80 transition-colors">
+<td class="px-6 py-4 font-mono font-medium text-slate-900">
+                  REF-9799
+                  <span class="block text-[10px] text-slate-400 font-sans">Yesterday, 4:20 PM</span>
+</td>
+<td class="px-4 py-4 font-mono text-slate-600">BK-77180</td>
+<td class="px-4 py-4 font-medium text-slate-900">Zubair Malik</td>
+<td class="px-4 py-4">
+<div class="font-medium text-slate-800">Ali Raza</div>
+<div class="text-[10px] text-slate-400">Carpenter • Lic #PK-981</div>
+</td>
+<td class="px-4 py-4">
+<div class="font-bold text-rose-600">Rs. 300</div>
+<div class="text-[10px] text-slate-400">Reversed: -Rs.30 HUNAR</div>
+</td>
+<td class="px-4 py-4">
+<span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-rose-50 text-rose-700 border border-rose-200">
+                    Incomplete Repair
+                  </span>
+</td>
+<td class="px-4 py-4">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium bg-emerald-50 text-emerald-800 border border-emerald-200">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-600"></span>
+                    Approved &amp; Disbursed
+                  </span>
+</td>
+<td class="px-4 py-4 font-mono text-slate-600">PK-RST-89943</td>
+<td class="px-6 py-4 text-right">
+<button class="px-2.5 py-1 text-slate-600 hover:text-slate-900 border border-slate-200 rounded text-[11px] bg-slate-50">View Ledger</button>
+</td>
+</tr>
+<!-- Case Row 3: Escalated to Admin (Double Booking Charge) -->
+<tr class="hover:bg-slate-50/80 transition-colors bg-rose-50/20">
+<td class="px-6 py-4 font-mono font-medium text-slate-900">
+                  REF-9795
+                  <span class="block text-[10px] text-slate-400 font-sans">Oct 24, 09:30 AM</span>
+</td>
+<td class="px-4 py-4 font-mono text-slate-600">BK-77042</td>
+<td class="px-4 py-4 font-medium text-slate-900">Fatima Noor</td>
+<td class="px-4 py-4">
+<div class="font-medium text-slate-800">Ahmed Khan</div>
+<div class="text-[10px] text-slate-400">Electrician • Lic #PK-981</div>
+</td>
+<td class="px-4 py-4">
+<div class="font-bold text-slate-900">Rs. 600</div>
+<div class="text-[10px] text-slate-400">2x Gateway Charge</div>
+</td>
+<td class="px-4 py-4">
+<span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-indigo-50 text-indigo-700 border border-indigo-200">
+                    Double Charge
+                  </span>
+</td>
+<td class="px-4 py-4">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium bg-red-50 text-red-800 border border-red-200">
+<span class="w-1.5 h-1.5 rounded-full bg-red-600 animate-ping"></span>
+                    Escalated to Admin
+                  </span>
+</td>
+<td class="px-4 py-4 font-mono text-slate-400">PK-1LK-77621</td>
+<td class="px-6 py-4 text-right space-x-1">
+<button class="px-2.5 py-1 bg-[#0F766E] text-white rounded text-[11px] font-medium hover:bg-[#115E59]">Approve</button>
+<button class="px-2 py-1 text-red-600 hover:text-red-800 border border-red-200 rounded text-[11px]">Reject</button>
+</td>
+</tr>
+<!-- Case Row 4: Approved (Cancellation within policy window) -->
+<tr class="hover:bg-slate-50/80 transition-colors">
+<td class="px-6 py-4 font-mono font-medium text-slate-900">
+                  REF-9791
+                  <span class="block text-[10px] text-slate-400 font-sans">Oct 23, 11:15 AM</span>
+</td>
+<td class="px-4 py-4 font-mono text-slate-600">BK-76985</td>
+<td class="px-4 py-4 font-medium text-slate-900">Saad Hashmi</td>
+<td class="px-4 py-4">
+<div class="font-medium text-slate-800">Usman Liaqat</div>
+<div class="text-[10px] text-slate-400">HVAC Specialist • Tier 2</div>
+</td>
+<td class="px-4 py-4">
+<div class="font-bold text-slate-900">Rs. 300</div>
+<div class="text-[10px] text-slate-400">Standard Escrow</div>
+</td>
+<td class="px-4 py-4">
+<span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-slate-100 text-slate-700 border border-slate-200">
+                    Pre-Dispatch Cancel
+                  </span>
+</td>
+<td class="px-4 py-4">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium bg-emerald-50 text-emerald-800 border border-emerald-200">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-600"></span>
+                    Approved &amp; Disbursed
+                  </span>
+</td>
+<td class="px-4 py-4 font-mono text-slate-600">PK-RST-87114</td>
+<td class="px-6 py-4 text-right">
+<button class="px-2.5 py-1 text-slate-600 hover:text-slate-900 border border-slate-200 rounded text-[11px] bg-slate-50">View Ledger</button>
+</td>
+</tr>
+<!-- Case Row 5: Rejected (Work Verified Completed by Photos) -->
+<tr class="hover:bg-slate-50/80 transition-colors">
+<td class="px-6 py-4 font-mono font-medium text-slate-900">
+                  REF-9788
+                  <span class="block text-[10px] text-slate-400 font-sans">Oct 22, 02:45 PM</span>
+</td>
+<td class="px-4 py-4 font-mono text-slate-600">BK-76810</td>
+<td class="px-4 py-4 font-medium text-slate-900">Dr. Ayesha Mir</td>
+<td class="px-4 py-4">
+<div class="font-medium text-slate-800">Tariq Jamil</div>
+<div class="text-[10px] text-slate-400">Locksmith • Registered</div>
+</td>
+<td class="px-4 py-4">
+<div class="font-bold text-slate-500 line-through">Rs. 300</div>
+<div class="text-[10px] text-slate-400">Payout Released to Worker</div>
+</td>
+<td class="px-4 py-4">
+<span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-slate-100 text-slate-600 border border-slate-200">
+                    False Incomplete Claim
+                  </span>
+</td>
+<td class="px-4 py-4">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium bg-slate-100 text-slate-700 border border-slate-200">
+<span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
+                    Rejected &amp; Released
+                  </span>
+</td>
+<td class="px-4 py-4 font-mono text-slate-400">PK-RST-86920</td>
+<td class="px-6 py-4 text-right">
+<button class="px-2.5 py-1 text-slate-600 hover:text-slate-900 border border-slate-200 rounded text-[11px]">Audit Report</button>
+</td>
+</tr>
+<!-- Case Row 6: Under Review (Late Arrival Exceeding 2h Window) -->
+<tr class="hover:bg-slate-50/80 transition-colors">
+<td class="px-6 py-4 font-mono font-medium text-slate-900">
+                  REF-9784
+                  <span class="block text-[10px] text-slate-400 font-sans">Oct 21, 05:10 PM</span>
+</td>
+<td class="px-4 py-4 font-mono text-slate-600">BK-76790</td>
+<td class="px-4 py-4 font-medium text-slate-900">Kamran Baig</td>
+<td class="px-4 py-4">
+<div class="font-medium text-slate-800">Muhammad Danish</div>
+<div class="text-[10px] text-slate-400">Painter • Master ID</div>
+</td>
+<td class="px-4 py-4">
+<div class="font-bold text-slate-900">Rs. 300</div>
+<div class="text-[10px] text-slate-400">Disputed in Escrow</div>
+</td>
+<td class="px-4 py-4">
+<span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-amber-50 text-amber-700 border border-amber-200">
+                    Delayed SLA (&gt;120m)
+                  </span>
+</td>
+<td class="px-4 py-4">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium bg-amber-50 text-amber-800 border border-amber-200">
+<span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                    Under Review
+                  </span>
+</td>
+<td class="px-4 py-4 font-mono text-slate-400">PK-RST-86401</td>
+<td class="px-6 py-4 text-right space-x-1">
+<button class="px-2.5 py-1 bg-[#0F766E] text-white rounded text-[11px] font-medium hover:bg-[#115E59]">Approve</button>
+<button class="px-2 py-1 text-slate-500 hover:text-slate-800 border border-slate-200 rounded text-[11px]">Audit</button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Table Footer / Pagination Navigation -->
+<div class="px-6 py-3.5 bg-slate-50 border-t border-[#E2E8F0] flex items-center justify-between text-xs text-slate-500">
+<div class="flex items-center gap-2">
+<span>Showing <strong class="text-slate-700">1</strong> to <strong class="text-slate-700">6</strong> of <strong class="text-slate-700">20</strong> open disputes</span>
+</div>
+<div class="flex items-center gap-1">
+<button class="px-2.5 py-1 rounded border border-slate-200 bg-white text-slate-400 cursor-not-allowed">Previous</button>
+<button class="px-2.5 py-1 rounded border border-[#0F766E] bg-[#0F766E] text-white font-semibold">1</button>
+<button class="px-2.5 py-1 rounded border border-slate-200 bg-white hover:bg-slate-100 text-slate-700">2</button>
+<button class="px-2.5 py-1 rounded border border-slate-200 bg-white hover:bg-slate-100 text-slate-700">3</button>
+<button class="px-2.5 py-1 rounded border border-slate-200 bg-white hover:bg-slate-100 text-slate-700">Next</button>
+</div>
+</div>
+</section>
+<!-- END: RefundManagementTable -->
+<!-- BEGIN: SettlementGovernanceFooterNote -->
+<footer class="text-center text-[11px] text-slate-400 pt-2 pb-4">
+        HUNAR Financial Settlement Framework is audited per State Bank of Pakistan (SBP) RAAST Digital Merchant Specifications &amp; trade dispute governance guidelines.
+      </footer>
+<!-- END: SettlementGovernanceFooterNote -->
+</main>
+<!-- END: ScrollablePageBody -->
+</div>
+<!-- END: MainContentArea -->
+</body></html>
