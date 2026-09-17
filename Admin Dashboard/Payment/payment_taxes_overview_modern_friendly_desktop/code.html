@@ -1,0 +1,510 @@
+<!DOCTYPE html><html lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>HUNAR Console - Treasury &amp; Revenue Analytics</title>
+<link href="https://fonts.googleapis.com" rel="preconnect">
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+tailwind.config = {
+  darkMode: "class",
+  theme: {
+    extend: {
+      colors: {
+        navy: "#1A1A2E",
+        teal: {
+          DEFAULT: "#0F766E",
+          dark: "#115E59",
+          light: "rgba(15, 118, 110, 0.1)"
+        },
+        orange: "#F59E0B",
+        success: "#16A34A",
+        error: "#DC2626",
+        gray: "#64748B",
+        background: "#F8FAFC",
+        border: "#E2E8F0",
+        surface: "#FFFFFF",
+        primary: "#0F766E",
+        "primary-dark": "#115E59",
+        secondary: "#1A1A2E",
+        
+        // Aliases used in templates
+        appBg: "#F8FAFC",
+        darkText: "#1A1A2E",
+        mutedText: "#64748B",
+        borderLine: "#E2E8F0",
+        "text-main": "#1A1A2E",
+        "surface-muted": "#F8FAFC",
+        "outline-border": "#E2E8F0",
+        
+        // Material Theme 3 Aliases
+        "on-surface": "#1A1A2E",
+        "on-surface-variant": "#64748B",
+        "on-background": "#1A1A2E",
+        "on-primary": "#FFFFFF",
+        "on-secondary": "#FFFFFF",
+        "on-error": "#FFFFFF",
+        "surface-container-lowest": "#FFFFFF",
+        "surface-container-low": "#F8FAFC",
+        "surface-container": "#F8FAFC",
+        "surface-container-high": "#F8FAFC",
+        "surface-container-highest": "#F8FAFC",
+        "surface-variant": "#F8FAFC",
+        "surface-tint": "#0F766E",
+        "surface-dim": "#E2E8F0",
+        "surface-bright": "#FFFFFF",
+        outline: "#64748B",
+        "outline-variant": "#E2E8F0",
+        "primary-container": "rgba(15, 118, 110, 0.1)",
+        "on-primary-container": "#0F766E",
+        "secondary-container": "rgba(26, 26, 46, 0.08)",
+        "on-secondary-container": "#1A1A2E",
+        "secondary-fixed": "rgba(15, 118, 110, 0.1)",
+        "secondary-fixed-dim": "rgba(15, 118, 110, 0.1)",
+        "on-secondary-fixed": "#1A1A2E",
+        "on-secondary-fixed-variant": "#115E59",
+        "primary-fixed": "rgba(15, 118, 110, 0.1)",
+        "primary-fixed-dim": "rgba(15, 118, 110, 0.1)",
+        "on-primary-fixed": "#1A1A2E",
+        "on-primary-fixed-variant": "#115E59",
+        "tertiary": "#F59E0B",
+        "tertiary-container": "rgba(245, 158, 11, 0.1)",
+        "on-tertiary-container": "#F59E0B",
+        "tertiary-fixed": "rgba(245, 158, 11, 0.1)",
+        "on-tertiary-fixed": "#1A1A2E",
+        "error-container": "rgba(220, 38, 38, 0.1)",
+        "on-error-container": "#DC2626",
+        "inverse-primary": "#0F766E",
+        "inverse-surface": "#1A1A2E",
+        "inverse-on-surface": "#F8FAFC",
+        "accent-success": "#16A34A",
+        "accent-warning": "#F59E0B",
+        "accent-error": "#DC2626",
+        "accent-info": "#0F766E",
+        "border-structural": "#E2E8F0"
+      },
+      spacing: {
+        "margin-desktop": "2rem",
+        "margin-tablet": "1.5rem",
+        "margin-mobile": "1rem",
+        "gutter-desktop": "1.5rem",
+        "gutter-mobile": "1rem",
+        "space-3xl": "4rem",
+        "space-2xl": "3rem",
+        "space-xl": "2rem",
+        "space-lg": "1.5rem",
+        "space-md": "1rem",
+        "space-base": "1rem",
+        "space-sm": "0.75rem",
+        "space-xs": "0.5rem",
+        "space-2xs": "0.25rem",
+        "space-xxs": "0.25rem",
+        "space-1": "0.25rem",
+        "space-2": "0.5rem",
+        "space-3": "0.75rem",
+        "space-4": "1rem",
+        "space-5": "1.25rem",
+        "space-6": "1.5rem",
+        "space-8": "2rem",
+        "space-12": "3rem",
+        "space-16": "4rem",
+        "space-20": "5rem",
+        "space-24": "6rem",
+        "space-stack-sm": "0.5rem",
+        "space-stack-md": "1rem",
+        "space-stack-lg": "1.5rem",
+        "section-gap": "2rem",
+        "gutter": "1.5rem"
+      },
+      fontSize: {
+        "stat-lg": ["28px", { lineHeight: "36px", letterSpacing: "-0.02em", fontWeight: "700" }],
+        "button-text": ["14px", { lineHeight: "20px", letterSpacing: "0.01em", fontWeight: "600" }],
+
+        "display-hero": ["48px", { lineHeight: "56px", letterSpacing: "-0.025em", fontWeight: "700" }],
+        "display-hero-mobile": ["32px", { lineHeight: "40px", letterSpacing: "-0.02em", fontWeight: "700" }],
+        "display-kpi": ["36px", { lineHeight: "44px", letterSpacing: "-0.02em", fontWeight: "700" }],
+        "display-kpi-mobile": ["28px", { lineHeight: "34px", letterSpacing: "-0.02em", fontWeight: "700" }],
+        "display-lg": ["36px", { lineHeight: "44px", letterSpacing: "-0.02em", fontWeight: "700" }],
+        "headline-page": ["28px", { lineHeight: "36px", letterSpacing: "-0.015em", fontWeight: "600" }],
+        "headline-page-mobile": ["24px", { lineHeight: "32px", letterSpacing: "-0.015em", fontWeight: "600" }],
+        "headline-section": ["20px", { lineHeight: "28px", letterSpacing: "-0.01em", fontWeight: "600" }],
+        "headline-subsection": ["16px", { lineHeight: "24px", letterSpacing: "-0.005em", fontWeight: "600" }],
+        "headline-lg": ["28px", { lineHeight: "36px", letterSpacing: "-0.015em", fontWeight: "600" }],
+        "headline-lg-mobile": ["24px", { lineHeight: "32px", letterSpacing: "-0.015em", fontWeight: "600" }],
+        "headline-md": ["20px", { lineHeight: "28px", letterSpacing: "-0.01em", fontWeight: "600" }],
+        "headline-sm": ["16px", { lineHeight: "24px", letterSpacing: "-0.005em", fontWeight: "600" }],
+        "headline-xl-mobile": ["26px", { lineHeight: "34px", letterSpacing: "-0.015em", fontWeight: "600" }],
+        "body-default": ["14px", { lineHeight: "22px", letterSpacing: "0em", fontWeight: "400" }],
+        "body-compact": ["13px", { lineHeight: "18px", letterSpacing: "0em", fontWeight: "400" }],
+        "body-strong": ["14px", { lineHeight: "22px", letterSpacing: "0em", fontWeight: "600" }],
+        "body-lg": ["16px", { lineHeight: "24px", letterSpacing: "0em", fontWeight: "400" }],
+        "body-md": ["14px", { lineHeight: "22px", letterSpacing: "0em", fontWeight: "400" }],
+        "body-md-medium": ["14px", { lineHeight: "22px", letterSpacing: "0em", fontWeight: "500" }],
+        "body-sm": ["12px", { lineHeight: "16px", letterSpacing: "0em", fontWeight: "400" }],
+        "label-badge": ["11px", { lineHeight: "14px", letterSpacing: "0.02em", fontWeight: "600" }],
+        "label-regular": ["12px", { lineHeight: "16px", letterSpacing: "0.01em", fontWeight: "500" }],
+        "label-md": ["12px", { lineHeight: "16px", letterSpacing: "0.01em", fontWeight: "500" }],
+        "label-sm": ["11px", { lineHeight: "14px", letterSpacing: "0.02em", fontWeight: "500" }],
+        "label-uppercase": ["10px", { lineHeight: "12px", letterSpacing: "0.05em", fontWeight: "700" }],
+        "mono-spec": ["12px", { lineHeight: "18px", letterSpacing: "0.01em", fontWeight: "500" }]
+      },
+      fontFamily: {
+        "stat-lg": ["Inter", "sans-serif"],
+        "button-text": ["Inter", "sans-serif"],
+
+        sans: ["Inter", "sans-serif"],
+        "body-default": ["Inter", "sans-serif"],
+        "body-compact": ["Inter", "sans-serif"],
+        "body-strong": ["Inter", "sans-serif"],
+        "body-md": ["Inter", "sans-serif"],
+        "body-sm": ["Inter", "sans-serif"],
+        "display-kpi": ["Inter", "sans-serif"],
+        "headline-page": ["Inter", "sans-serif"],
+        "headline-section": ["Inter", "sans-serif"],
+        "headline-subsection": ["Inter", "sans-serif"],
+        "headline-md": ["Inter", "sans-serif"],
+        "headline-sm": ["Inter", "sans-serif"],
+        "headline-lg": ["Inter", "sans-serif"],
+        "label-badge": ["Inter", "sans-serif"],
+        "label-regular": ["Inter", "sans-serif"],
+        "label-md": ["Inter", "sans-serif"],
+        "label-sm": ["Inter", "sans-serif"],
+        "mono-spec": ["JetBrains Mono", "ui-monospace", "SFMono-Regular", "Menlo", "Consolas", "monospace"]
+      },
+      borderRadius: {
+        DEFAULT: "0.375rem",
+        sm: "0.25rem",
+        md: "0.375rem",
+        lg: "0.5rem",
+        xl: "0.75rem",
+        "2xl": "1rem",
+        full: "9999px"
+      }
+    }
+  }
+};
+</script>
+
+
+
+</head><body class="bg-surface font-body-md text-on-surface antialiased"><aside class="fixed left-0 top-0 h-full w-72 bg-surface-container-lowest border-r border-border-structural z-50 flex flex-col justify-between overflow-y-auto"><div class="flex flex-col"><div class="h-16 px-space-lg flex items-center border-b border-border-structural"><div class="flex items-center gap-space-xs"><div class="w-7 h-7 rounded bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[18px]">handyman</span></div><span class="font-headline-sm text-headline-sm text-on-surface uppercase tracking-tight">HUNAR</span><span class="font-mono-spec text-mono-spec text-on-surface-variant ml-space-2xs uppercase">Console</span></div></div><div class="px-space-md py-space-sm"><p class="font-label-sm text-label-sm text-on-surface-variant uppercase px-space-xs mb-space-2xs">Operations</p><nav class="flex flex-col gap-space-2xs" data-active-classes="bg-primary-container text-on-primary font-label-md rounded"><a class="flex items-center gap-space-xs px-space-sm py-space-xs rounded font-label-md text-label-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="dashboard" href="#"><span class="material-symbols-outlined text-[18px]">dashboard</span>Dashboard</a><a class="flex items-center gap-space-xs px-space-sm py-space-xs rounded font-label-md text-label-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="users" href="#"><span class="material-symbols-outlined text-[18px]">group</span>Users</a><a class="flex items-center gap-space-xs px-space-sm py-space-xs rounded font-label-md text-label-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="verification" href="#"><span class="material-symbols-outlined text-[18px]">verified</span>Verification</a><a class="flex items-center gap-space-xs px-space-sm py-space-xs rounded font-label-md text-label-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="jobs" href="#"><span class="material-symbols-outlined text-[18px]">engineering</span>Jobs</a><a class="flex items-center gap-space-xs px-space-sm py-space-xs rounded font-label-md text-label-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="bookings" href="#"><span class="material-symbols-outlined text-[18px]">calendar_month</span>Bookings</a></nav></div><div class="px-space-md py-space-xs"><p class="font-label-sm text-label-sm text-on-surface-variant uppercase px-space-xs mb-space-2xs">Finance &amp; Ledger</p><div class="flex flex-col gap-space-2xs"><div class="flex items-center justify-between px-space-sm py-space-xs rounded bg-surface-container text-primary"><div class="flex items-center gap-space-xs"><span class="material-symbols-outlined text-[18px]">account_balance_wallet</span><span class="font-label-md text-label-md font-semibold">Payment &amp; Taxes</span></div><span class="material-symbols-outlined text-[16px]">expand_less</span></div><nav class="flex flex-col pl-space-md border-l border-border-structural ml-space-sm mt-space-2xs gap-space-2xs" data-active-classes="bg-primary-container text-on-primary font-label-md rounded"><a aria-current="page" class="flex items-center px-space-xs py-space-2xs transition-colors bg-primary-container text-on-primary font-label-md rounded" data-path="finance-overview" href="#">Overview</a><a class="flex items-center px-space-xs py-space-2xs rounded font-label-md text-label-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="transactions" href="#">Transactions</a><a class="flex items-center px-space-xs py-space-2xs rounded font-label-md text-label-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="payments" href="#">Payments</a><a class="flex items-center px-space-xs py-space-2xs rounded font-label-md text-label-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="worker-payouts" href="#">Worker Payouts</a><a class="flex items-center px-space-xs py-space-2xs rounded font-label-md text-label-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="commission" href="#">Commission</a><a class="flex items-center px-space-xs py-space-2xs rounded font-label-md text-label-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="taxes" href="#">Taxes</a><a class="flex items-center px-space-xs py-space-2xs rounded font-label-md text-label-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="refunds" href="#">Refunds</a></nav></div></div><div class="px-space-md py-space-sm"><p class="font-label-sm text-label-sm text-on-surface-variant uppercase px-space-xs mb-space-2xs">Governance</p><nav class="flex flex-col gap-space-2xs" data-active-classes="bg-primary-container text-on-primary font-label-md rounded"><a class="flex items-center gap-space-xs px-space-sm py-space-xs rounded font-label-md text-label-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="reviews" href="#"><span class="material-symbols-outlined text-[18px]">rate_review</span>Reviews</a><a class="flex items-center gap-space-xs px-space-sm py-space-xs rounded font-label-md text-label-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="notifications" href="#"><span class="material-symbols-outlined text-[18px]">notifications</span>Notifications</a><a class="flex items-center gap-space-xs px-space-sm py-space-xs rounded font-label-md text-label-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="settings" href="#"><span class="material-symbols-outlined text-[18px]">settings</span>Settings</a></nav></div></div><div class="p-space-md border-t border-border-structural flex items-center justify-between"><div class="flex items-center gap-space-xs"><span class="w-2 h-2 rounded-full bg-accent-success"></span><span class="font-mono-spec text-mono-spec text-on-surface-variant">API Gateway 99.98%</span></div><span class="font-label-sm text-label-sm text-on-surface-variant">v2.4.0</span></div></aside><div class="pl-72"><header class="fixed top-0 left-72 right-0 h-16 bg-surface-container-lowest border-b border-border-structural z-40 flex items-center justify-between px-gutter-desktop"><div class="flex items-center gap-space-lg flex-1 max-w-xl"><div class="relative w-full"><span class="material-symbols-outlined absolute left-space-sm top-1/2 -translate-y-1/2 text-[18px] text-on-surface-variant">search</span><input class="w-full bg-surface border border-border-structural rounded pl-space-xl pr-space-md py-space-2xs font-body-sm text-body-sm text-on-surface placeholder:text-on-surface-variant focus:border-primary focus:outline-none" placeholder="Search workers, bookings, payouts..." type="text"/></div></div><div class="flex items-center gap-space-md"><div class="flex items-center gap-space-xs px-space-sm py-space-2xs rounded bg-surface border border-border-structural"><span class="w-2 h-2 rounded-full bg-accent-success animate-pulse"></span><span class="font-label-sm text-label-sm text-on-surface-variant uppercase">Settlement:</span><span class="font-mono-spec text-mono-spec text-primary font-semibold">LIVE AUTO-CYCLE</span></div><button class="relative p-space-xs text-on-surface-variant hover:text-on-surface rounded hover:bg-surface-container transition-colors" type="button"><span class="material-symbols-outlined text-[20px]">notifications</span><span class="absolute top-1 right-1 w-2 h-2 rounded-full bg-error"></span></button><div class="h-6 w-px bg-border-structural"></div><div class="flex items-center gap-space-sm"><div class="flex flex-col text-right"><span class="font-label-md text-label-md font-semibold text-on-surface leading-tight">Admin Officer</span><span class="font-mono-spec text-mono-spec text-on-surface-variant leading-tight">Tier-1 Global</span></div><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></div></header><main class="w-full pt-16 px-gutter-desktop py-space-lg bg-surface">
+<!-- RAAST Status + Fiscal Period + Period Tabs -->
+<div class="flex flex-col lg:flex-row lg:items-center justify-between gap-space-md mb-space-lg">
+<div class="flex items-center gap-space-sm flex-wrap">
+<span class="inline-flex items-center gap-1 px-space-sm py-space-2xs rounded-full bg-primary-container text-on-primary-container font-label-sm text-label-sm font-semibold"><span class="w-1.5 h-1.5 rounded-full bg-accent-success"></span>RAAST Instant Settlement Active</span>
+<span class="inline-flex items-center gap-1 px-space-sm py-space-2xs rounded-full bg-surface-container-low border border-border-structural font-label-sm text-label-sm text-on-surface-variant font-medium"><span class="material-symbols-outlined text-[14px]">calendar_month</span>Fiscal Period Q3/2026</span>
+</div>
+<div class="flex items-center gap-space-xs bg-surface-container-lowest border border-border-structural rounded-full p-space-2xs shadow-sm">
+<button class="px-space-md py-space-2xs rounded-full font-label-sm text-label-sm font-semibold bg-primary text-on-primary transition-colors" type="button">This Quarter</button>
+<button class="px-space-md py-space-2xs rounded-full font-label-sm text-label-sm text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" type="button">Monthly</button>
+<button class="px-space-md py-space-2xs rounded-full font-label-sm text-label-sm text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" type="button">Custom Range</button>
+</div>
+</div>
+<!-- Title Row + Download -->
+<div class="flex flex-col md:flex-row md:items-center justify-between gap-space-md mb-space-lg">
+<div>
+<div class="flex items-center gap-space-xs mb-space-2xs">
+<span class="font-mono-spec text-mono-spec text-on-surface-variant uppercase tracking-wider">Finance &amp; Ledger</span>
+<span class="text-on-surface-variant font-mono-spec text-mono-spec">•</span>
+<span class="font-mono-spec text-mono-spec text-primary font-semibold">Payment &amp; Taxes</span>
+</div>
+<h1 class="font-headline-lg text-headline-lg text-on-surface tracking-tight">Treasury &amp; Revenue Overview</h1>
+<p class="font-body-md text-body-md text-on-surface-variant mt-space-2xs">Transparent real-time escrow, automatic 90% artisan payouts, and platform commission tracking.</p>
+</div>
+<button class="flex items-center gap-space-xs bg-primary text-on-primary hover:bg-primary-dark px-space-md py-space-sm rounded-xl font-label-md text-label-md transition-colors shadow-sm" id="exportReportBtn" type="button">
+<span class="material-symbols-outlined text-[18px]">download</span>
+Download Financial Statement
+</button>
+</div>
+<!-- Hero KPI Cards -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-space-md mb-space-lg">
+<div class="bg-surface-container-lowest rounded-xl border border-border-structural p-space-md shadow-sm flex flex-col gap-space-sm">
+<div class="flex items-center justify-between">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider font-semibold">HUNAR Platform Share &amp; Earnings</span>
+<span class="w-9 h-9 rounded-lg bg-secondary-container flex items-center justify-center"><span class="material-symbols-outlined text-secondary text-[20px]">pie_chart</span></span>
+</div>
+<div class="flex items-end gap-space-sm flex-wrap">
+<span class="font-headline-lg text-headline-lg text-on-surface font-bold">Rs. 124,500</span>
+<span class="inline-flex items-center gap-1 px-space-xs py-space-2xs rounded-full bg-primary-container text-on-primary-container font-label-sm text-label-sm font-semibold"><span class="material-symbols-outlined text-[14px]">percent</span>10% Flat</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Secured escrow balance</p>
+</div>
+<div class="bg-surface-container-lowest rounded-xl border border-border-structural p-space-md shadow-sm flex flex-col gap-space-sm">
+<div class="flex items-center justify-between">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider font-semibold">Worker Net Payout</span>
+<span class="w-9 h-9 rounded-lg bg-primary-container flex items-center justify-center"><span class="material-symbols-outlined text-primary text-[20px]">payments</span></span>
+</div>
+<div class="flex items-end gap-space-sm flex-wrap">
+<span class="font-headline-lg text-headline-lg text-on-surface font-bold">Rs. 1,120,500</span>
+<span class="inline-flex items-center gap-1 px-space-xs py-space-2xs rounded-full bg-primary-container text-on-primary-container font-label-sm text-label-sm font-semibold"><span class="material-symbols-outlined text-[14px]">bolt</span>90% Instant</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant">2,656 skilled workers paid</p>
+</div>
+<div class="bg-surface-container-lowest rounded-xl border border-border-structural p-space-md shadow-sm flex flex-col gap-space-sm">
+<div class="flex items-center justify-between">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider font-semibold">Settlement Vault</span>
+<span class="w-9 h-9 rounded-lg bg-tertiary-container flex items-center justify-center"><span class="material-symbols-outlined text-tertiary text-[20px]">account_balance</span></span>
+</div>
+<div class="flex items-end gap-space-sm flex-wrap">
+<span class="font-headline-lg text-headline-lg text-on-surface font-bold">Rs. 4.82M</span>
+<span class="inline-flex items-center gap-1 px-space-xs py-space-2xs rounded-full bg-tertiary-container text-on-tertiary-container font-label-sm text-label-sm font-semibold"><span class="material-symbols-outlined text-[14px]">verified</span>100% Guaranteed</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Zero queue wait time</p>
+</div>
+</div>
+<!-- Inflow Chart + Payment Status -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-space-md mb-space-lg">
+<div class="lg:col-span-2 bg-surface-container-lowest rounded-xl border border-border-structural p-space-md shadow-sm flex flex-col gap-space-md">
+<div class="flex items-start justify-between gap-space-sm">
+<div>
+<h2 class="font-headline-md text-headline-md text-on-surface">Inflow &amp; Commission Trajectory</h2>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-space-2xs">Real-time split analytics across Gross Volume, HUNAR Commission (10%), and Artisan Yield.</p>
+</div>
+<span class="px-space-xs py-space-2xs rounded-full bg-surface-container font-label-sm text-label-sm text-on-surface-variant font-semibold shrink-0">3 Series</span>
+</div>
+<svg class="w-full h-auto" fill="none" viewBox="0 0 640 240" preserveAspectRatio="none">
+<defs>
+<linearGradient id="gxArea" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#1A1A2E" stop-opacity="0.12"></stop><stop offset="100%" stop-color="#1A1A2E" stop-opacity="0"></stop></linearGradient>
+<linearGradient id="wnArea" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#0F766E" stop-opacity="0.16"></stop><stop offset="100%" stop-color="#0F766E" stop-opacity="0"></stop></linearGradient>
+</defs>
+<line x1="0" y1="60" x2="640" y2="60" stroke="#E2E8F0"></line>
+<line x1="0" y1="120" x2="640" y2="120" stroke="#E2E8F0"></line>
+<line x1="0" y1="180" x2="640" y2="180" stroke="#E2E8F0"></line>
+<path class="text-on-surface opacity-10" d="M0 190 L90 140 L180 160 L270 90 L360 110 L450 50 L540 70 L640 20 L640 240 L0 240 Z" fill="url(#gxArea)"></path>
+<path class="text-primary opacity-10" d="M0 200 L90 160 L180 172 L270 120 L360 134 L450 84 L540 100 L640 56 L640 240 L0 240 Z" fill="url(#wnArea)"></path>
+<path class="text-secondary" d="M0 190 L90 140 L180 160 L270 90 L360 110 L450 50 L540 70 L640 20" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"></path>
+<path class="text-primary" d="M0 200 L90 160 L180 172 L270 120 L360 134 L450 84 L540 100 L640 56" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"></path>
+<path class="text-tertiary" d="M0 218 L90 200 L180 208 L270 178 L360 190 L450 158 L540 170 L640 140" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+<circle cx="450" cy="50" r="4" class="fill-secondary"></circle>
+<circle cx="450" cy="84" r="4" class="fill-primary"></circle>
+<circle cx="450" cy="158" r="4" class="fill-tertiary"></circle>
+</svg>
+<div class="flex items-center justify-between gap-space-sm flex-wrap pt-space-xs border-t border-border-structural">
+<div class="flex items-center gap-space-md flex-wrap">
+<span class="flex items-center gap-1 font-label-sm text-label-sm text-on-surface-variant"><span class="w-2.5 h-2.5 rounded-full bg-secondary"></span>Gross Volume (100%)</span>
+<span class="flex items-center gap-1 font-label-sm text-label-sm text-on-surface-variant"><span class="w-2.5 h-2.5 rounded-full bg-primary"></span>Worker Net (90%)</span>
+<span class="flex items-center gap-1 font-label-sm text-label-sm text-on-surface-variant"><span class="w-2.5 h-2.5 rounded-full bg-tertiary"></span>HUNAR Retained (10%)</span>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Gross inflow: <span class="font-bold text-on-surface">Rs. 360,000</span></span>
+</div>
+</div>
+<div class="bg-surface-container-lowest rounded-xl border border-border-structural p-space-md shadow-sm flex flex-col gap-space-md">
+<div class="flex items-center justify-between">
+<div>
+<h2 class="font-headline-md text-headline-md text-on-surface">Payment Status Breakdown</h2>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-space-2xs font-medium">4,150 transactions</p>
+</div>
+<span class="material-symbols-outlined text-[24px] text-on-surface-variant">donut_small</span>
+</div>
+<div class="flex h-3 w-full overflow-hidden rounded-full bg-surface-container">
+<div class="bg-primary" style="width:82%"></div>
+<div class="bg-tertiary" style="width:8%"></div>
+<div class="bg-error" style="width:5%"></div>
+<div class="bg-on-surface-variant" style="width:5%"></div>
+</div>
+<div class="flex flex-col gap-space-sm pt-space-xs">
+<div class="flex items-center justify-between"><span class="flex items-center gap-space-xs font-label-md text-label-md text-on-surface"><span class="w-2.5 h-2.5 rounded-full bg-primary"></span>Completed</span><span class="font-mono-spec text-mono-spec text-on-surface font-semibold">82%</span></div>
+<div class="flex items-center justify-between"><span class="flex items-center gap-space-xs font-label-md text-label-md text-on-surface"><span class="w-2.5 h-2.5 rounded-full bg-tertiary"></span>Pending</span><span class="font-mono-spec text-mono-spec text-on-surface font-semibold">8%</span></div>
+<div class="flex items-center justify-between"><span class="flex items-center gap-space-xs font-label-md text-label-md text-on-surface"><span class="w-2.5 h-2.5 rounded-full bg-error"></span>Failed</span><span class="font-mono-spec text-mono-spec text-on-surface font-semibold">5%</span></div>
+<div class="flex items-center justify-between"><span class="flex items-center gap-space-xs font-label-md text-label-md text-on-surface"><span class="w-2.5 h-2.5 rounded-full bg-on-surface-variant"></span>Refunded</span><span class="font-mono-spec text-mono-spec text-on-surface font-semibold">5%</span></div>
+</div>
+</div>
+</div>
+<!-- Fair Split Transparent Split Engine -->
+<div class="bg-surface-container-lowest rounded-xl border border-border-structural p-space-md shadow-sm mb-space-lg">
+<div class="flex flex-wrap items-center justify-between gap-space-sm mb-space-2xs">
+<div class="flex items-center gap-space-xs">
+<span class="px-space-xs py-space-2xs rounded-full bg-secondary-container text-secondary font-label-sm text-label-sm font-semibold uppercase tracking-wider">Fair Split</span>
+<span class="font-mono-spec text-mono-spec text-on-surface-variant">Fixed 10:90</span>
+</div>
+<h2 class="font-headline-md text-headline-md text-on-surface">Transparent Split Engine</h2>
+<div class="flex items-center gap-space-xs ml-auto">
+<span class="inline-flex items-center gap-1 px-space-sm py-space-2xs rounded-full bg-surface-container font-label-sm text-label-sm text-on-surface font-medium"><span class="material-symbols-outlined text-[14px] text-primary">bolt</span>Live Vault</span>
+<span class="inline-flex items-center gap-1 px-space-sm py-space-2xs rounded-full bg-surface-container font-label-sm text-label-sm text-on-surface font-medium"><span class="material-symbols-outlined text-[14px] text-primary">link</span>Live ledger connected</span>
+</div>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mb-space-md">Zero hidden deductions. Every customer booking is split instantly upon job confirmation.</p>
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-space-md">
+<div class="lg:col-span-2 flex flex-col sm:flex-row items-stretch gap-space-sm">
+<div class="flex-1 bg-surface-container-low rounded-xl border border-border-structural p-space-md text-center flex flex-col items-center justify-center gap-space-xs">
+<span class="text-[30px]"><span class="material-symbols-outlined text-on-surface-variant">person</span></span>
+<p class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Customer Pays</p>
+<p class="font-headline-md text-headline-md text-on-surface font-bold">Rs. 300</p>
+</div>
+<div class="flex items-center justify-center self-center shrink-0"><span class="material-symbols-outlined text-on-surface-variant">arrow_forward</span></div>
+<div class="flex-1 bg-primary-container rounded-xl border border-border-structural p-space-md text-center flex flex-col items-center justify-center gap-space-xs">
+<span class="text-[30px]"><span class="material-symbols-outlined text-primary">handyman</span></span>
+<p class="font-label-sm text-label-sm text-primary uppercase tracking-wider">Worker Receives (90%)</p>
+<p class="font-headline-md text-headline-md text-primary font-bold">Rs. 270</p>
+</div>
+<div class="flex items-center justify-center self-center shrink-0"><span class="material-symbols-outlined text-on-surface-variant">arrow_forward</span></div>
+<div class="flex-1 bg-secondary-container rounded-xl border border-border-structural p-space-md text-center flex flex-col items-center justify-center gap-space-xs">
+<span class="text-[30px]"><span class="material-symbols-outlined text-secondary">account_balance</span></span>
+<p class="font-label-sm text-label-sm text-secondary uppercase tracking-wider">Instant Settlement</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Sent straight to artisan bank/wallet accounts via RAAST.</p>
+</div>
+</div>
+<div class="bg-surface-container-low rounded-xl border border-border-structural p-space-md flex flex-col justify-center gap-space-sm">
+<div class="flex items-center justify-between">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider font-semibold">Today (Sep 08)</span>
+<span class="inline-flex items-center gap-1 font-label-sm text-label-sm text-accent-success font-semibold"><span class="material-symbols-outlined text-[14px]">trending_up</span>+4.2%</span>
+</div>
+<div class="flex items-center justify-between"><span class="font-label-md text-label-md text-on-surface-variant">Bookings</span><span class="font-mono-spec text-mono-spec text-on-surface font-semibold">128</span></div>
+<div class="flex items-center justify-between"><span class="font-label-md text-label-md text-on-surface-variant">Customer Paid</span><span class="font-mono-spec text-mono-spec text-on-surface font-semibold">Rs. 38,400</span></div>
+<div class="flex items-center justify-between"><span class="font-label-md text-label-md text-on-surface-variant">Worker Disbursed</span><span class="font-mono-spec text-mono-spec text-accent-success font-semibold">Rs. 34,560</span></div>
+</div>
+</div>
+</div>
+<!-- Recent Transactions + Express Payout Queue -->
+<div class="grid grid-cols-1 xl:grid-cols-5 gap-space-md">
+<div class="xl:col-span-3 bg-surface-container-lowest rounded-xl border border-border-structural shadow-sm overflow-hidden flex flex-col">
+<div class="p-space-md border-b border-border-structural flex items-center justify-between gap-space-sm">
+<h2 class="font-headline-md text-headline-md text-on-surface">Recent Transactions &amp; Split Breakdown</h2>
+<a class="flex items-center gap-1 font-label-md text-label-md text-primary font-semibold" href="#"><span class="">View All</span><span class="material-symbols-outlined text-[16px]">chevron_right</span></a>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container-low text-on-surface-variant font-label-sm text-label-sm uppercase tracking-wider">
+<th class="py-space-sm px-space-md font-semibold">Transaction ID &amp; Trade</th>
+<th class="py-space-sm px-space-md font-semibold">Booking #</th>
+<th class="py-space-sm px-space-md font-semibold">Customer Paid</th>
+<th class="py-space-sm px-space-md font-semibold">Split Breakdown</th>
+<th class="py-space-sm px-space-md font-semibold">Channel</th>
+<th class="py-space-sm px-space-md font-semibold">Status</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-border-structural">
+<tr class="hover:bg-surface-container-low transition-colors">
+<td class="py-space-md px-space-md">
+<span class="block font-mono-spec text-mono-spec text-on-surface font-semibold">TXN-10021</span>
+<span class="block font-body-sm text-body-sm text-on-surface-variant">Electrician · Ali Khan</span>
+</td>
+<td class="py-space-md px-space-md font-mono-spec text-mono-spec text-on-surface-variant">PK-10021</td>
+<td class="py-space-md px-space-md font-mono-spec text-mono-spec text-on-surface">Rs. 300</td>
+<td class="py-space-md px-space-md"><span class="block font-mono-spec text-mono-spec text-accent-success font-semibold">Rs. 270 · 90%</span><span class="block font-body-sm text-body-sm text-on-surface-variant">HUNAR Rs. 30 · 10%</span></td>
+<td class="py-space-md px-space-md"><span class="inline-flex items-center gap-1 px-space-xs py-space-2xs rounded-full bg-surface-container font-label-sm text-label-sm text-on-surface font-semibold"><span class="w-1.5 h-1.5 rounded-full bg-accent-success"></span>JazzCash</span></td>
+<td class="py-space-md px-space-md"><span class="inline-flex items-center gap-1 px-space-xs py-space-2xs rounded-full bg-primary-container text-on-primary-container font-label-sm text-label-sm font-semibold">Completed</span></td>
+</tr>
+<tr class="hover:bg-surface-container-low transition-colors">
+<td class="py-space-md px-space-md">
+<span class="block font-mono-spec text-mono-spec text-on-surface font-semibold">TXN-10020</span>
+<span class="block font-body-sm text-body-sm text-on-surface-variant">Plumber · Usman Khan</span>
+</td>
+<td class="py-space-md px-space-md font-mono-spec text-mono-spec text-on-surface-variant">PK-09920</td>
+<td class="py-space-md px-space-md font-mono-spec text-mono-spec text-on-surface">Rs. 300</td>
+<td class="py-space-md px-space-md"><span class="block font-mono-spec text-mono-spec text-accent-success font-semibold">Rs. 270 · 90%</span><span class="block font-body-sm text-body-sm text-on-surface-variant">HUNAR Rs. 30 · 10%</span></td>
+<td class="py-space-md px-space-md"><span class="inline-flex items-center gap-1 px-space-xs py-space-2xs rounded-full bg-surface-container font-label-sm text-label-sm text-on-surface font-semibold"><span class="w-1.5 h-1.5 rounded-full bg-accent-success"></span>RAAST</span></td>
+<td class="py-space-md px-space-md"><span class="inline-flex items-center gap-1 px-space-xs py-space-2xs rounded-full bg-primary-container text-on-primary-container font-label-sm text-label-sm font-semibold">Completed</span></td>
+</tr>
+<tr class="hover:bg-surface-container-low transition-colors">
+<td class="py-space-md px-space-md">
+<span class="block font-mono-spec text-mono-spec text-on-surface font-semibold">TXN-10019</span>
+<span class="block font-body-sm text-body-sm text-on-surface-variant">Carpenter · Ali Raza</span>
+</td>
+<td class="py-space-md px-space-md font-mono-spec text-mono-spec text-on-surface-variant">PK-09819</td>
+<td class="py-space-md px-space-md font-mono-spec text-mono-spec text-on-surface">Rs. 300</td>
+<td class="py-space-md px-space-md"><span class="block font-mono-spec text-mono-spec text-accent-success font-semibold">Rs. 270 · 90%</span><span class="block font-body-sm text-body-sm text-on-surface-variant">HUNAR Rs. 30 · 10%</span></td>
+<td class="py-space-md px-space-md"><span class="inline-flex items-center gap-1 px-space-xs py-space-2xs rounded-full bg-surface-container font-label-sm text-label-sm text-on-surface font-semibold"><span class="w-1.5 h-1.5 rounded-full bg-accent-success"></span>EasyPaisa</span></td>
+<td class="py-space-md px-space-md"><span class="inline-flex items-center gap-1 px-space-xs py-space-2xs rounded-full bg-primary-container text-on-primary-container font-label-sm text-label-sm font-semibold">Completed</span></td>
+</tr>
+<tr class="hover:bg-surface-container-low transition-colors">
+<td class="py-space-md px-space-md">
+<span class="block font-mono-spec text-mono-spec text-on-surface font-semibold">TXN-10018</span>
+<span class="block font-body-sm text-body-sm text-on-surface-variant">Painter · Zahid Iqbal</span>
+</td>
+<td class="py-space-md px-space-md font-mono-spec text-mono-spec text-on-surface-variant">PK-09718</td>
+<td class="py-space-md px-space-md font-mono-spec text-mono-spec text-on-surface">Rs. 300</td>
+<td class="py-space-md px-space-md"><span class="block font-mono-spec text-mono-spec text-accent-success font-semibold">Rs. 270 · 90%</span><span class="block font-body-sm text-body-sm text-on-surface-variant">HUNAR Rs. 30 · 10%</span></td>
+<td class="py-space-md px-space-md"><span class="inline-flex items-center gap-1 px-space-xs py-space-2xs rounded-full bg-surface-container font-label-sm text-label-sm text-on-surface font-semibold"><span class="w-1.5 h-1.5 rounded-full bg-accent-success"></span>RAAST</span></td>
+<td class="py-space-md px-space-md"><span class="inline-flex items-center gap-1 px-space-xs py-space-2xs rounded-full bg-tertiary-container text-on-tertiary-container font-label-sm text-label-sm font-semibold">Scheduled</span></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="px-space-md py-space-sm border-t border-border-structural flex flex-col sm:flex-row items-center justify-between gap-space-sm">
+<p class="font-body-sm text-body-sm text-on-surface-variant">Showing 4 of 4,150 lifetime transactions</p>
+<div class="flex items-center gap-space-xs">
+<button class="px-space-sm py-space-2xs rounded font-label-sm text-label-sm text-on-surface-variant hover:bg-surface-container transition-colors" type="button">Previous</button>
+<button class="w-7 h-7 rounded bg-primary text-on-primary font-label-sm text-label-sm font-bold flex items-center justify-center transition-colors" type="button">1</button>
+<button class="w-7 h-7 rounded font-label-sm text-label-sm text-on-surface-variant hover:bg-surface-container transition-colors" type="button">2</button>
+<button class="px-space-sm py-space-2xs rounded font-label-sm text-label-sm text-on-surface-variant hover:bg-surface-container transition-colors" type="button">Next</button>
+</div>
+</div>
+</div>
+<div class="xl:col-span-2 bg-surface-container-lowest rounded-xl border border-border-structural p-space-md shadow-sm flex flex-col gap-space-md">
+<div class="flex items-center gap-space-xs">
+<span class="px-space-xs py-space-2xs rounded-full bg-primary-container text-on-primary-container font-label-sm text-label-sm font-semibold uppercase tracking-wider">Direct Liquidity</span>
+<span class="font-mono-spec text-mono-spec text-on-surface-variant">RAAST Express</span>
+</div>
+<h2 class="font-headline-md text-headline-md text-on-surface">Express Payout Queue</h2>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Ready for instant disbursement to 12 verified specialists.</p>
+<div class="grid grid-cols-2 gap-space-sm">
+<div class="bg-surface-container-low rounded-xl border border-border-structural p-space-sm flex flex-col gap-space-2xs">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Ready to Disburse</span>
+<span class="font-headline-sm text-headline-sm text-on-surface font-bold">Rs. 85,000</span>
+</div>
+<div class="bg-surface-container-low rounded-xl border border-border-structural p-space-sm flex flex-col gap-space-2xs">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Transfer Speed</span>
+<span class="font-headline-sm text-headline-sm text-accent-success font-bold">~1.4 sec</span>
+</div>
+</div>
+<div class="flex flex-col gap-space-xs">
+<div class="flex items-center gap-space-xs bg-surface-container-low rounded-xl border border-border-structural px-space-sm py-space-xs">
+<span class="w-9 h-9 rounded-full bg-secondary-container text-secondary flex items-center justify-center font-label-md text-label-md font-bold shrink-0">AK</span>
+<div class="flex-1 min-w-0">
+<p class="font-label-md text-label-md text-on-surface font-semibold truncate">Ahmed Khan</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant truncate">Electrician · Ready</p>
+</div>
+<span class="font-mono-spec text-mono-spec text-primary font-bold shrink-0">Rs. 270</span>
+</div>
+<div class="flex items-center gap-space-xs bg-surface-container-low rounded-xl border border-border-structural px-space-sm py-space-xs">
+<span class="w-9 h-9 rounded-full bg-primary-container text-primary flex items-center justify-center font-label-md text-label-md font-bold shrink-0">AR</span>
+<div class="flex-1 min-w-0">
+<p class="font-label-md text-label-md text-on-surface font-semibold truncate">Ali Raza</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant truncate">Carpenter · Ready</p>
+</div>
+<span class="font-mono-spec text-mono-spec text-primary font-bold shrink-0">Rs. 270</span>
+</div>
+<div class="flex items-center gap-space-xs bg-surface-container-low rounded-xl border border-border-structural px-space-sm py-space-xs">
+<span class="w-9 h-9 rounded-full bg-tertiary-container text-tertiary flex items-center justify-center font-label-md text-label-md font-bold shrink-0">ZI</span>
+<div class="flex-1 min-w-0">
+<p class="font-label-md text-label-md text-on-surface font-semibold truncate">Zahid Iqbal</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant truncate">Painter · Ready</p>
+</div>
+<span class="font-mono-spec text-mono-spec text-primary font-bold shrink-0">Rs. 270</span>
+</div>
+</div>
+<button class="mt-auto flex items-center justify-center gap-space-xs bg-primary text-on-primary hover:bg-primary-dark px-space-md py-space-sm rounded-xl font-label-md text-label-md transition-colors shadow-sm" type="button">
+<span class="material-symbols-outlined text-[18px]">send</span>Disburse Scheduled Payouts Now
+</button>
+</div>
+</div>
+</main></div>
+<div class="hidden fixed bottom-6 right-6 z-50 bg-inverse-surface text-inverse-on-surface px-space-base py-space-sm rounded-xl shadow-xl flex items-center gap-space-sm" id="exportToast">
+<span class="material-symbols-outlined text-success text-[20px]">check_circle</span>
+<span class="font-label-md text-label-md">Report generated and queued for download.</span>
+</div>
+<script>
+(function () {
+  var filterButtons = document.querySelectorAll('.time-filter-btn');
+  filterButtons.forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      filterButtons.forEach(function (b) {
+        b.className = 'time-filter-btn px-3 py-1 rounded-full text-on-surface-variant bg-surface-container-low hover:bg-surface-container font-label-sm text-label-sm whitespace-nowrap transition-colors';
+      });
+      btn.className = 'time-filter-btn px-3 py-1 rounded-full text-on-primary bg-primary font-label-md text-label-md whitespace-nowrap shadow-sm';
+    });
+  });
+  var exportBtn = document.getElementById('exportReportBtn');
+  var exportToast = document.getElementById('exportToast');
+  if (exportBtn && exportToast) {
+    exportBtn.addEventListener('click', function () {
+      exportToast.classList.remove('hidden');
+      setTimeout(function () { exportToast.classList.add('hidden'); }, 3200);
+    });
+  }
+})();
+</script></body></html>

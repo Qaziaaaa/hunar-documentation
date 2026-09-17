@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">
+tailwind.config = {
+  darkMode: "class",
+  theme: {
+    extend: {
+      colors: {
+        navy: "#1A1A2E",
+        teal: {
+          DEFAULT: "#0F766E",
+          dark: "#115E59",
+          light: "rgba(15, 118, 110, 0.1)"
+        },
+        orange: "#F59E0B",
+        success: "#16A34A",
+        error: "#DC2626",
+        gray: "#64748B",
+        background: "#F8FAFC",
+        border: "#E2E8F0",
+        surface: "#FFFFFF",
+        primary: "#0F766E",
+        "primary-dark": "#115E59",
+        secondary: "#1A1A2E",
+        
+        // Aliases used in templates
+        appBg: "#F8FAFC",
+        darkText: "#1A1A2E",
+        mutedText: "#64748B",
+        borderLine: "#E2E8F0",
+        "text-main": "#1A1A2E",
+        "surface-muted": "#F8FAFC",
+        "outline-border": "#E2E8F0",
+        
+        // Material Theme 3 Aliases
+        "on-surface": "#1A1A2E",
+        "on-surface-variant": "#64748B",
+        "on-background": "#1A1A2E",
+        "on-primary": "#FFFFFF",
+        "on-secondary": "#FFFFFF",
+        "on-error": "#FFFFFF",
+        "surface-container-lowest": "#FFFFFF",
+        "surface-container-low": "#F8FAFC",
+        "surface-container": "#F8FAFC",
+        "surface-container-high": "#F8FAFC",
+        "surface-container-highest": "#F8FAFC",
+        "surface-variant": "#F8FAFC",
+        "surface-tint": "#0F766E",
+        "surface-dim": "#E2E8F0",
+        "surface-bright": "#FFFFFF",
+        outline: "#64748B",
+        "outline-variant": "#E2E8F0",
+        "primary-container": "rgba(15, 118, 110, 0.1)",
+        "on-primary-container": "#0F766E",
+        "secondary-container": "rgba(26, 26, 46, 0.08)",
+        "on-secondary-container": "#1A1A2E",
+        "secondary-fixed": "rgba(15, 118, 110, 0.1)",
+        "secondary-fixed-dim": "rgba(15, 118, 110, 0.1)",
+        "on-secondary-fixed": "#1A1A2E",
+        "on-secondary-fixed-variant": "#115E59",
+        "primary-fixed": "rgba(15, 118, 110, 0.1)",
+        "primary-fixed-dim": "rgba(15, 118, 110, 0.1)",
+        "on-primary-fixed": "#1A1A2E",
+        "on-primary-fixed-variant": "#115E59",
+        "tertiary": "#F59E0B",
+        "tertiary-container": "rgba(245, 158, 11, 0.1)",
+        "on-tertiary-container": "#F59E0B",
+        "tertiary-fixed": "rgba(245, 158, 11, 0.1)",
+        "on-tertiary-fixed": "#1A1A2E",
+        "error-container": "rgba(220, 38, 38, 0.1)",
+        "on-error-container": "#DC2626",
+        "inverse-primary": "#0F766E",
+        "inverse-surface": "#1A1A2E",
+        "inverse-on-surface": "#F8FAFC"
+      },
+      spacing: {
+        "margin-desktop": "2rem",
+        "margin-tablet": "1.5rem",
+        "margin-mobile": "1rem",
+        "gutter-desktop": "1.5rem",
+        "gutter-mobile": "1rem",
+        "space-3xl": "4rem",
+        "space-2xl": "3rem",
+        "space-xl": "2rem",
+        "space-lg": "1.5rem",
+        "space-md": "1rem",
+        "space-base": "1rem",
+        "space-sm": "0.75rem",
+        "space-xs": "0.5rem",
+        "space-2xs": "0.25rem",
+        "space-xxs": "0.25rem",
+        "space-1": "0.25rem",
+        "space-2": "0.5rem",
+        "space-3": "0.75rem",
+        "space-4": "1rem",
+        "space-5": "1.25rem",
+        "space-6": "1.5rem",
+        "space-8": "2rem",
+        "space-12": "3rem",
+        "space-16": "4rem",
+        "space-20": "5rem",
+        "space-24": "6rem",
+        "space-stack-sm": "0.5rem",
+        "space-stack-md": "1rem",
+        "space-stack-lg": "1.5rem",
+        "section-gap": "2rem",
+        "gutter": "1.5rem"
+      },
+      fontSize: {
+        "stat-lg": ["28px", { lineHeight: "36px", letterSpacing: "-0.02em", fontWeight: "700" }],
+        "button-text": ["14px", { lineHeight: "20px", letterSpacing: "0.01em", fontWeight: "600" }],
+
+        "display-hero": ["48px", { lineHeight: "56px", letterSpacing: "-0.025em", fontWeight: "700" }],
+        "display-hero-mobile": ["32px", { lineHeight: "40px", letterSpacing: "-0.02em", fontWeight: "700" }],
+        "display-kpi": ["36px", { lineHeight: "44px", letterSpacing: "-0.02em", fontWeight: "700" }],
+        "display-kpi-mobile": ["28px", { lineHeight: "34px", letterSpacing: "-0.02em", fontWeight: "700" }],
+        "display-lg": ["36px", { lineHeight: "44px", letterSpacing: "-0.02em", fontWeight: "700" }],
+        "headline-page": ["28px", { lineHeight: "36px", letterSpacing: "-0.015em", fontWeight: "600" }],
+        "headline-page-mobile": ["24px", { lineHeight: "32px", letterSpacing: "-0.015em", fontWeight: "600" }],
+        "headline-section": ["20px", { lineHeight: "28px", letterSpacing: "-0.01em", fontWeight: "600" }],
+        "headline-subsection": ["16px", { lineHeight: "24px", letterSpacing: "-0.005em", fontWeight: "600" }],
+        "headline-lg": ["28px", { lineHeight: "36px", letterSpacing: "-0.015em", fontWeight: "600" }],
+        "headline-lg-mobile": ["24px", { lineHeight: "32px", letterSpacing: "-0.015em", fontWeight: "600" }],
+        "headline-md": ["20px", { lineHeight: "28px", letterSpacing: "-0.01em", fontWeight: "600" }],
+        "headline-sm": ["16px", { lineHeight: "24px", letterSpacing: "-0.005em", fontWeight: "600" }],
+        "headline-xl-mobile": ["26px", { lineHeight: "34px", letterSpacing: "-0.015em", fontWeight: "600" }],
+        "body-default": ["14px", { lineHeight: "22px", letterSpacing: "0em", fontWeight: "400" }],
+        "body-compact": ["13px", { lineHeight: "18px", letterSpacing: "0em", fontWeight: "400" }],
+        "body-strong": ["14px", { lineHeight: "22px", letterSpacing: "0em", fontWeight: "600" }],
+        "body-lg": ["16px", { lineHeight: "24px", letterSpacing: "0em", fontWeight: "400" }],
+        "body-md": ["14px", { lineHeight: "22px", letterSpacing: "0em", fontWeight: "400" }],
+        "body-md-medium": ["14px", { lineHeight: "22px", letterSpacing: "0em", fontWeight: "500" }],
+        "body-sm": ["12px", { lineHeight: "16px", letterSpacing: "0em", fontWeight: "400" }],
+        "label-badge": ["11px", { lineHeight: "14px", letterSpacing: "0.02em", fontWeight: "600" }],
+        "label-regular": ["12px", { lineHeight: "16px", letterSpacing: "0.01em", fontWeight: "500" }],
+        "label-md": ["12px", { lineHeight: "16px", letterSpacing: "0.01em", fontWeight: "500" }],
+        "label-sm": ["11px", { lineHeight: "14px", letterSpacing: "0.02em", fontWeight: "500" }],
+        "label-uppercase": ["10px", { lineHeight: "12px", letterSpacing: "0.05em", fontWeight: "700" }]
+      },
+      fontFamily: {
+        "stat-lg": ["Inter", "sans-serif"],
+        "button-text": ["Inter", "sans-serif"],
+
+        sans: ["Inter", "sans-serif"],
+        "body-default": ["Inter", "sans-serif"],
+        "body-compact": ["Inter", "sans-serif"],
+        "body-strong": ["Inter", "sans-serif"],
+        "body-md": ["Inter", "sans-serif"],
+        "body-sm": ["Inter", "sans-serif"],
+        "display-kpi": ["Inter", "sans-serif"],
+        "headline-page": ["Inter", "sans-serif"],
+        "headline-section": ["Inter", "sans-serif"],
+        "headline-subsection": ["Inter", "sans-serif"],
+        "headline-md": ["Inter", "sans-serif"],
+        "headline-sm": ["Inter", "sans-serif"],
+        "headline-lg": ["Inter", "sans-serif"],
+        "label-badge": ["Inter", "sans-serif"],
+        "label-regular": ["Inter", "sans-serif"],
+        "label-md": ["Inter", "sans-serif"],
+        "label-sm": ["Inter", "sans-serif"]
+      },
+      borderRadius: {
+        DEFAULT: "0.375rem",
+        sm: "0.25rem",
+        md: "0.375rem",
+        lg: "0.5rem",
+        xl: "0.75rem",
+        "2xl": "1rem",
+        full: "9999px"
+      }
+    }
+  }
+};
+</script><style>@layer base { html, body { width: 100vw; margin: 0; padding: 0; } body { overscroll-behavior: none; } .pb-safe { padding-bottom: env(safe-area-inset-bottom, 0px); } .pt-safe { padding-top: env(safe-area-inset-top, 0px); } main > :first-child { margin-top: 0 !important; } main > :last-child { margin-bottom: 0 !important; } } ::-webkit-scrollbar { display: none; }</style>
+  <style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head><body class="bg-surface font-body-md text-body-md text-on-surface flex flex-col min-h-screen"><!-- Fixed Mobile Header -->
+<header class="fixed top-0 w-full z-50 pt-safe bg-surface-container-lowest/80 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)]"><div class="h-28 px-space-base flex flex-col justify-between py-space-xs"><div class="flex items-center justify-between gap-space-sm h-12"><div class="flex items-center gap-space-sm min-w-0"><button aria-label="Toggle Navigation Drawer" class="w-11 h-11 flex items-center justify-center text-on-surface hover:text-primary transition-colors focus:outline-none"><span class="material-symbols-outlined text-[24px]">menu</span></button><div class="flex flex-col min-w-0"><div class="flex items-center gap-space-xs"><span class="font-headline-sm text-headline-sm tracking-tight text-on-surface">HUNAR</span><span class="font-label-sm text-label-sm uppercase tracking-wider text-primary bg-secondary-container/40 px-space-xs py-0.5 rounded-lg">Console</span></div><span class="font-label-sm text-label-sm text-on-surface-variant truncate">Admin / Transaction Details</span></div></div><div class="flex items-center gap-space-xs shrink-0"><button aria-label="Search and Filter" class="w-11 h-11 flex items-center justify-center text-on-surface-variant hover:text-on-surface transition-colors focus:outline-none"><span class="material-symbols-outlined text-[20px]">search</span></button><button aria-label="Notifications" class="w-11 h-11 flex items-center justify-center text-on-surface-variant hover:text-on-surface relative transition-colors focus:outline-none"><span class="material-symbols-outlined text-[20px]">notifications</span><span class="absolute top-2.5 right-2.5 w-2 h-2 rounded-full bg-primary-container ring-2 ring-surface-container-lowest"></span></button><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></div><div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar"><span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Finance &amp; Ledger</span><span class="material-symbols-outlined text-[14px] text-outline">chevron_right</span><span class="font-label-sm text-label-sm text-primary font-medium whitespace-nowrap">Transaction TXN-10021</span></div></div></header><main class="w-full pt-28 pb-24 px-space-base flex flex-col gap-space-md"><!-- Breadcrumb & Back Link -->
+<div class="flex flex-col gap-space-xs pt-space-sm">
+<a class="flex items-center gap-1 font-label-md text-label-md text-secondary hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined text-[18px]">arrow_back</span>
+        Back to Transactions
+      </a>
+</div>
+<!-- Transaction Hero Header -->
+<div class="bg-surface-container-lowest rounded-xl p-space-base shadow-sm">
+<div class="flex items-center justify-between gap-space-sm flex-wrap">
+<div class="flex items-center gap-space-sm min-w-0">
+<div class="w-12 h-12 rounded-xl bg-surface-container flex items-center justify-center text-primary shrink-0">
+<span class="material-symbols-outlined text-[28px]">receipt_long</span>
+</div>
+<div class="min-w-0">
+<div class="flex items-center gap-space-sm flex-wrap">
+<h1 class="font-headline-md text-headline-md text-on-surface tracking-tight">TXN-10021</h1>
+<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-50 text-success font-label-sm text-label-sm uppercase tracking-wide">
+<span class="w-1.5 h-1.5 rounded-full bg-success"></span>
+            Completed
+          </span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">Settled October 24, 2024 • 02:45:12 PM PKT</p>
+</div>
+</div>
+</div>
+<div class="flex items-center gap-space-xs mt-space-sm pt-space-xs border-t border-borderLine">
+<span class="material-symbols-outlined text-[16px] text-on-surface-variant">verified_user</span>
+<span class="font-mono text-[11px] text-on-surface-variant truncate">Hash: 0x9b42...a7812f</span>
+</div>
+<!-- Action Buttons -->
+<div class="flex items-center gap-space-xs mt-space-sm">
+<button class="flex-1 h-11 flex items-center justify-center gap-1.5 rounded-xl bg-surface-container text-on-surface font-label-md text-label-md hover:bg-surface-container-high transition-colors" type="button">
+<span class="material-symbols-outlined text-[18px]">download</span>
+          Download Receipt
+        </button>
+<button class="flex-1 h-11 flex items-center justify-center gap-1.5 rounded-xl bg-primary text-on-primary font-label-md text-label-md shadow-sm transition-all" type="button">
+<span class="material-symbols-outlined text-[18px]">history_edu</span>
+          View Audit Log
+        </button>
+</div>
+</div>
+<!-- Gross-to-Net Reconciliation Panel -->
+<div class="bg-surface-container-lowest rounded-xl p-space-base shadow-sm">
+<div class="flex items-center justify-between gap-space-xs pb-space-sm">
+<div class="flex items-center gap-space-xs">
+<span class="w-2.5 h-2.5 rounded-full bg-primary"></span>
+<span class="font-label-sm text-label-sm uppercase tracking-wider text-on-surface-variant font-semibold">Gross-to-Net Reconciliation</span>
+</div>
+<span class="font-mono text-[10px] px-2 py-0.5 rounded bg-surface-container text-primary font-medium whitespace-nowrap">Auto-Split v4.2</span>
+</div>
+<!-- Hero Metric Strip -->
+<div class="grid grid-cols-3 gap-space-xs mt-space-sm p-space-sm bg-surface-container-low rounded-lg">
+<div class="flex flex-col min-w-0">
+<span class="font-label-sm text-label-sm uppercase text-on-surface-variant tracking-wider">Customer Charged</span>
+<span class="font-headline-sm text-headline-sm font-bold text-on-surface tracking-tight mt-1">Rs. 300.00</span>
+<span class="font-label-sm text-label-sm text-secondary mt-1 flex items-center gap-0.5">
+<span class="material-symbols-outlined text-[13px]">check_circle</span> 100% Gross
+          </span>
+</div>
+<div class="flex flex-col min-w-0">
+<span class="font-label-sm text-label-sm uppercase text-orange tracking-wider">Platform Fee (10%)</span>
+<span class="font-headline-sm text-headline-sm font-bold text-orange tracking-tight mt-1">-Rs. 30.00</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant mt-1">Retained</span>
+</div>
+<div class="flex flex-col min-w-0">
+<span class="font-label-sm text-label-sm uppercase text-primary tracking-wider">Worker Net</span>
+<span class="font-headline-sm text-headline-sm font-bold text-primary tracking-tight mt-1">Rs. 270.00</span>
+<span class="font-label-sm text-label-sm text-success font-semibold mt-1 flex items-center gap-0.5">
+<span class="material-symbols-outlined text-[13px]">bolt</span> Instantly
+          </span>
+</div>
+</div>
+<!-- Visual Distribution Bar -->
+<div class="mt-space-md flex flex-col gap-1.5">
+<div class="flex justify-between font-label-sm text-label-sm text-on-surface-variant">
+<span>Allocation Breakdown</span>
+<span>90% / 10%</span>
+</div>
+<div class="w-full h-3 rounded-full bg-surface-container overflow-hidden flex">
+<div class="h-full bg-primary transition-all" style="width: 90%;"></div>
+<div class="h-full bg-orange transition-all" style="width: 10%;"></div>
+</div>
+<div class="flex justify-between font-label-sm text-label-sm text-on-surface-variant">
+<span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-primary"></span> Rs. 270.00 Wallet</span>
+<span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-orange"></span> Rs. 30.00 Treasury</span>
+</div>
+</div>
+<!-- Commission Policy Banner -->
+<div class="mt-space-md p-space-sm rounded-lg bg-surface-container flex items-start gap-space-xs">
+<div class="w-8 h-8 rounded-lg bg-primary text-on-primary flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[18px]">policy</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-md text-label-md font-semibold text-on-surface">Platform Tariff Governance Rule #14-A</span>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">Customer does <span class="underline decoration-orange font-semibold text-on-surface">NOT</span> pay an extra 10% commission. The fee (Rs. 30.00) is deducted from gross worker earning. Client paid exact quotation.</p>
+</div>
+</div>
+</div>
+<!-- Settlement Topology Pipeline -->
+<section class="bg-surface-container-lowest rounded-xl p-space-base shadow-sm">
+<div class="flex items-center justify-between mb-space-md">
+<div class="flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-[20px] text-primary">account_tree</span>
+<h2 class="font-headline-sm text-headline-sm text-on-surface">Settlement Topology</h2>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface-variant bg-surface-container px-2 py-0.5 rounded-md whitespace-nowrap">Synchronous</span>
+</div>
+<div class="flex flex-col gap-space-sm">
+<!-- Step 1 -->
+<div class="flex items-center gap-space-sm bg-surface-container-low p-space-sm rounded-lg">
+<div class="w-10 h-10 rounded-full bg-secondary text-on-primary flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[20px]">person</span>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex items-center justify-between gap-2">
+<span class="font-label-md text-label-md font-semibold text-on-surface">Ali Khan</span>
+<span class="font-data-mono-md text-data-mono-md font-bold text-on-surface">Rs. 300.00</span>
+</div>
+<span class="font-label-sm text-label-sm text-success flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">done</span> JazzCash Captured
+        </span>
+</div>
+</div>
+<div class="flex justify-center -my-1 text-primary">
+<span class="material-symbols-outlined text-[18px]">keyboard_double_arrow_down</span>
+</div>
+<!-- Step 2 -->
+<div class="flex items-center gap-space-sm bg-surface-container-low p-space-sm rounded-lg">
+<div class="w-10 h-10 rounded-full bg-primary text-on-primary flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[20px]">assured_workload</span>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex items-center justify-between gap-2">
+<span class="font-label-md text-label-md font-semibold text-on-surface">HUNAR Clearing Core</span>
+<span class="font-label-sm text-label-sm text-primary font-semibold whitespace-nowrap">T+0 Realtime</span>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Validated booking VIS-10021</span>
+</div>
+</div>
+<div class="flex justify-center -my-1 text-primary">
+<span class="material-symbols-outlined text-[18px]">call_split</span>
+</div>
+<!-- Split branches -->
+<div class="grid grid-cols-2 gap-space-xs">
+<div class="bg-surface-container-low p-space-sm rounded-lg">
+<span class="font-label-sm text-label-sm uppercase font-semibold text-orange block">Branch A (10%)</span>
+<span class="font-data-mono-md text-data-mono-md font-bold text-on-surface block mt-0.5">Rs. 30.00</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant block mt-0.5 flex items-center gap-1"><span class="material-symbols-outlined text-[14px] text-orange">domain</span> Platform Fee</span>
+</div>
+<div class="bg-surface-container-low p-space-sm rounded-lg">
+<span class="font-label-sm text-label-sm uppercase font-semibold text-primary block">Branch B (90%)</span>
+<span class="font-data-mono-md text-data-mono-md font-bold text-primary block mt-0.5">Rs. 270.00</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant block mt-0.5 flex items-center gap-1"><span class="material-symbols-outlined text-[14px] text-primary">account_balance_wallet</span> Worker Wallet</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Cryptographic Audit Spine / Timeline -->
+<section class="bg-surface-container-lowest rounded-xl p-space-base shadow-sm">
+<div class="flex items-center justify-between mb-space-md">
+<div class="flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-[20px] text-primary">verified_user</span>
+<h2 class="font-headline-sm text-headline-sm text-on-surface">Audit Timeline</h2>
+</div>
+<span class="font-label-sm text-label-sm text-success font-semibold flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-success"></span> Immutable
+      </span>
+</div>
+<div class="relative pl-6 space-y-4 before:absolute before:left-2 before:top-2 before:bottom-2 before:w-0.5 before:bg-surface-container">
+<div class="relative flex items-start gap-space-sm">
+<div class="absolute -left-6 top-1 w-4 h-4 rounded-full bg-success flex items-center justify-center ring-4 ring-surface-container-lowest">
+<span class="material-symbols-outlined text-[10px] text-on-primary">check</span>
+</div>
+<div class="flex-1 bg-surface-container-low p-space-sm rounded-lg">
+<div class="flex flex-wrap items-center justify-between gap-1">
+<span class="font-label-md text-label-md font-semibold text-on-surface">Payment Settled</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">02:45:12 PM</span>
+</div>
+<span class="font-body-sm text-body-sm text-on-surface-variant mt-1 block">JazzCash Enterprise Node #04. Latency 420ms.</span>
+</div>
+</div>
+<div class="relative flex items-start gap-space-sm">
+<div class="absolute -left-6 top-1 w-4 h-4 rounded-full bg-primary flex items-center justify-center ring-4 ring-surface-container-lowest">
+<span class="material-symbols-outlined text-[10px] text-on-primary">remove</span>
+</div>
+<div class="flex-1 bg-surface-container-low p-space-sm rounded-lg">
+<div class="flex flex-wrap items-center justify-between gap-1">
+<span class="font-label-md text-label-md font-semibold text-on-surface">Commission Deducted</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">02:45:08 PM</span>
+</div>
+<span class="font-body-sm text-body-sm text-on-surface-variant mt-1 block">-Rs. 30.00 retained. Record #PL-00912.</span>
+</div>
+</div>
+<div class="relative flex items-start gap-space-sm">
+<div class="absolute -left-6 top-1 w-4 h-4 rounded-full bg-secondary flex items-center justify-center ring-4 ring-surface-container-lowest">
+<span class="material-symbols-outlined text-[10px] text-on-primary">add</span>
+</div>
+<div class="flex-1 bg-surface-container-low p-space-sm rounded-lg">
+<div class="flex flex-wrap items-center justify-between gap-1">
+<span class="font-label-md text-label-md font-semibold text-on-surface">Wallet Credited</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">02:45:07 PM</span>
+</div>
+<span class="font-body-sm text-body-sm text-on-surface-variant mt-1 block">+Rs. 270.00 minted to W-99104 (Ahmed Khan).</span>
+</div>
+</div>
+<div class="relative flex items-start gap-space-sm">
+<div class="absolute -left-6 top-1 w-4 h-4 rounded-full bg-outline-variant flex items-center justify-center ring-4 ring-surface-container-lowest">
+<span class="material-symbols-outlined text-[10px] text-on-surface">lock_open</span>
+</div>
+<div class="flex-1 bg-surface-container-low p-space-sm rounded-lg">
+<div class="flex flex-wrap items-center justify-between gap-1">
+<span class="font-label-md text-label-md font-semibold text-on-surface">Pre-Authorized</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">02:30:00 PM</span>
+</div>
+<span class="font-body-sm text-body-sm text-on-surface-variant mt-1 block">Gross Rs. 300.00 via One-Time Verification PIN.</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Payment Specifications Card -->
+<section class="bg-surface-container-lowest rounded-xl p-space-base shadow-sm">
+<div class="flex items-center justify-between pb-space-sm border-b border-borderLine">
+<div class="flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-[20px] text-secondary">tune</span>
+<h3 class="font-headline-sm text-headline-sm text-on-surface">Payment Specifications</h3>
+</div>
+<span class="font-mono text-[10px] px-2 py-0.5 rounded bg-surface-container text-on-surface-variant">PROD-ENV</span>
+</div>
+<dl class="divide-y divide-borderLine mt-space-xs">
+<div class="py-2.5 flex justify-between items-center gap-2">
+<dt class="font-body-sm text-body-sm text-on-surface-variant">Payment ID</dt>
+<dd class="font-mono text-[12px] font-semibold text-on-surface">PAY-994821</dd>
+</div>
+<div class="py-2.5 flex justify-between items-center gap-2">
+<dt class="font-body-sm text-body-sm text-on-surface-variant">Booking Reference</dt>
+<dd class="font-mono text-[12px] font-medium text-secondary">VIS-10021</dd>
+</div>
+<div class="py-2.5 flex justify-between items-center gap-2">
+<dt class="font-body-sm text-body-sm text-on-surface-variant">Customer (Payer)</dt>
+<dd class="font-label-md text-label-md text-on-surface font-medium">Ali Khan <span class="font-mono text-[11px] text-on-surface-variant">Lahore</span></dd>
+</div>
+<div class="py-2.5 flex justify-between items-center gap-2">
+<dt class="font-body-sm text-body-sm text-on-surface-variant">Assigned Worker</dt>
+<dd class="font-label-md text-label-md text-on-surface font-medium flex items-center gap-1">Ahmed Khan <span class="material-symbols-outlined text-[14px] text-primary">verified</span></dd>
+</div>
+<div class="py-2.5 flex justify-between items-center gap-2">
+<dt class="font-body-sm text-body-sm text-on-surface-variant">Payment Channel</dt>
+<dd class="font-label-md text-label-md text-on-surface">JazzCash / Debit</dd>
+</div>
+<div class="py-2.5 flex justify-between items-center gap-2">
+<dt class="font-body-sm text-body-sm text-on-surface-variant">Gateway Reference</dt>
+<dd class="font-mono text-[12px] text-on-surface-variant">GW-PK-8823910</dd>
+</div>
+<div class="py-2.5 flex justify-between items-center gap-2">
+<dt class="font-body-sm text-body-sm text-on-surface-variant">Currency</dt>
+<dd class="font-mono text-[12px] text-on-surface font-semibold">PKR</dd>
+</div>
+<div class="py-2.5 flex justify-between items-center gap-2">
+<dt class="font-body-sm text-body-sm text-on-surface-variant">Provincial Sales Tax</dt>
+<dd class="font-mono text-[12px] text-on-surface">Rs. 0.00 <span class="text-[10px] text-on-surface-variant">(Exempt)</span></dd>
+</div>
+</dl>
+</section>
+<!-- Worker Profile & Wallet Snapshot -->
+<section class="bg-surface-container-lowest rounded-xl p-space-base shadow-sm">
+<div class="flex items-center justify-between pb-space-sm border-b border-borderLine">
+<span class="font-label-sm text-label-sm uppercase tracking-wider text-on-surface-variant font-semibold">Beneficiary Specialist</span>
+<span class="inline-flex items-center gap-1 font-label-sm text-label-sm text-success font-semibold">
+<span class="material-symbols-outlined text-[14px]">shield</span> CNIC Verified
+      </span>
+</div>
+<div class="flex items-center gap-space-sm mt-space-md">
+<div class="relative shrink-0">
+<div class="w-14 h-14 rounded-full bg-surface-container text-primary flex items-center justify-center">
+<span class="material-symbols-outlined text-[26px]">electrical_services</span>
+</div>
+<div class="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-primary text-on-primary flex items-center justify-center ring-2 ring-surface-container-lowest">
+<span class="material-symbols-outlined text-[12px]">electric_bolt</span>
+</div>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex items-center justify-between">
+<h4 class="font-headline-sm text-headline-sm text-on-surface font-semibold truncate">Ahmed Khan</h4>
+<div class="flex items-center gap-0.5 text-orange shrink-0">
+<span class="material-symbols-outlined text-[15px]" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="font-label-md text-label-md font-bold text-on-surface">4.9</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">(128)</span>
+</div>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant truncate">Master Electrician • Since 2022</p>
+<span class="font-mono text-[10px] text-on-surface-variant">CNIC: 35201-********-3</span>
+</div>
+</div>
+<div class="mt-space-md p-space-sm rounded-lg bg-surface-container-low flex items-center justify-between gap-2">
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase">Total Ledger Balance</span>
+<div class="flex items-baseline gap-1 mt-0.5">
+<span class="font-label-sm text-label-sm font-semibold text-primary">Rs.</span>
+<span class="font-headline-md text-headline-md font-bold text-primary">27,000.00</span>
+</div>
+</div>
+<a class="flex items-center gap-1 font-label-md text-label-md text-primary font-medium transition-colors shrink-0" href="#">
+        Open Wallet
+        <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
+</a>
+</div>
+</section>
+<!-- Dispute & Refund Arbiter -->
+<section class="bg-surface-container-lowest rounded-xl p-space-base shadow-sm flex flex-col justify-between">
+<div>
+<div class="flex items-center justify-between pb-space-sm border-b border-borderLine">
+<div class="flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-[20px] text-on-surface-variant">gavel</span>
+<h3 class="font-headline-sm text-headline-sm text-on-surface">Dispute &amp; Refund Arbiter</h3>
+</div>
+<span class="w-2.5 h-2.5 rounded-full bg-success"></span>
+</div>
+<div class="mt-space-md flex flex-col gap-space-xs">
+<div class="flex items-center justify-between gap-2">
+<span class="font-body-sm text-body-sm text-on-surface-variant">Current Status:</span>
+<span class="font-label-md text-label-md font-semibold text-success text-right">Non-disputed, SLA Fulfilled</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant leading-relaxed">No claim within the mandatory 48-hour warranty window. Escrow lock decayed safely to final settlement.</p>
+</div>
+</div>
+<button class="mt-space-md w-full h-11 flex items-center justify-center gap-1.5 rounded-xl bg-surface-container hover:bg-surface-container-high text-on-surface font-label-md text-label-md font-medium transition-colors" type="button">
+<span class="material-symbols-outlined text-[18px]">balance</span>
+        Initiate Arbiter Review
+</button>
+</section>
+<!-- Interactive Feedback Toast -->
+<div class="fixed bottom-20 left-4 right-4 z-40 bg-secondary text-white p-space-base rounded-xl shadow-xl flex items-center justify-between transition-all duration-300 transform translate-y-24 opacity-0 pointer-events-none" id="txnToast">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[20px]">task_alt</span>
+<span class="font-body-sm text-body-sm" id="toastMessage">Audit log requested.</span>
+</div>
+<button class="text-white/80" id="dismissToast" type="button">
+<span class="material-symbols-outlined text-[18px]">close</span>
+</button>
+</div>
+</main><nav class="fixed bottom-0 w-full z-50 pb-safe bg-surface-container-lowest/85 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)]" data-active-classes="text-primary-container font-label-md"><div class="flex items-center justify-around h-16 px-space-xs overflow-x-auto no-scrollbar"><a class="flex flex-col items-center justify-center min-w-[48px] h-12 px-space-xs text-on-surface-variant transition-colors hover:text-on-surface" data-path="admin-dashboard" href="#"><span class="material-symbols-outlined text-[22px]">dashboard</span><span class="font-label-sm text-label-sm text-[10px] tracking-tight truncate">Dash</span></a><a class="flex flex-col items-center justify-center min-w-[48px] h-12 px-space-xs text-on-surface-variant transition-colors hover:text-on-surface" data-path="user-directory" href="#"><span class="material-symbols-outlined text-[22px]">group</span><span class="font-label-sm text-label-sm text-[10px] tracking-tight truncate">Users</span></a><a class="flex flex-col items-center justify-center min-w-[48px] h-12 px-space-xs text-on-surface-variant transition-colors hover:text-on-surface" data-path="worker-verification" href="#"><span class="material-symbols-outlined text-[22px]">verified</span><span class="font-label-sm text-label-sm text-[10px] tracking-tight truncate">Verify</span></a><a class="flex flex-col items-center justify-center min-w-[48px] h-12 px-space-xs text-on-surface-variant transition-colors hover:text-on-surface" data-path="finance" href="#"><span class="material-symbols-outlined text-[22px]">account_balance_wallet</span><span class="font-label-sm text-label-sm text-[10px] tracking-tight truncate">Finance</span></a><a class="flex flex-col items-center justify-center min-w-[48px] h-12 px-space-xs text-primary transition-colors" data-path="transaction-detail" href="#"><span class="material-symbols-outlined text-[22px]">receipt_long</span><span class="font-label-sm text-label-sm text-[10px] tracking-tight truncate">Txn Detail</span></a><a class="flex flex-col items-center justify-center min-w-[48px] h-12 px-space-xs text-on-surface-variant transition-colors hover:text-on-surface" data-path="payments-gateways" href="#"><span class="material-symbols-outlined text-[22px]">account_balance</span><span class="font-label-sm text-label-sm text-[10px] tracking-tight truncate">Payments</span></a><a class="flex flex-col items-center justify-center min-w-[48px] h-12 px-space-xs text-on-surface-variant transition-colors hover:text-on-surface" data-path="payouts" href="#"><span class="material-symbols-outlined text-[22px]">payments</span><span class="font-label-sm text-label-sm text-[10px] tracking-tight truncate">Payouts</span></a><a class="flex flex-col items-center justify-center min-w-[48px] h-12 px-space-xs text-on-surface-variant transition-colors hover:text-on-surface" data-path="taxes" href="#"><span class="material-symbols-outlined text-[22px]">receipt_long</span><span class="font-label-sm text-label-sm text-[10px] tracking-tight truncate">Taxes</span></a><a class="flex flex-col items-center justify-center min-w-[48px] h-12 px-space-xs text-on-surface-variant transition-colors hover:text-on-surface" data-path="settings" href="#"><span class="material-symbols-outlined text-[22px]">settings</span><span class="font-label-sm text-label-sm text-[10px] tracking-tight truncate">Settings</span></a></div></nav><script>
+(function () {
+  const toast = document.getElementById('txnToast');
+  const toastMsg = document.getElementById('toastMessage');
+  const dismissToast = document.getElementById('dismissToast');
+  const auditBtn = document.querySelector('button[type="button"]');
+  const buttons = document.querySelectorAll('main button[type="button"]');
+
+  function showNotification(text) {
+    if (!toast) return;
+    toastMsg.textContent = text;
+    toast.classList.remove('translate-y-24', 'opacity-0', 'pointer-events-none');
+    toast.classList.add('translate-y-0', 'opacity-100');
+    setTimeout(hideNotification, 3800);
+  }
+
+  function hideNotification() {
+    if (!toast) return;
+    toast.classList.add('translate-y-24', 'opacity-0', 'pointer-events-none');
+    toast.classList.remove('translate-y-0', 'opacity-100');
+  }
+
+  buttons.forEach(function (btn) {
+    if (btn.textContent.indexOf('Audit Log') !== -1) {
+      btn.addEventListener('click', function () { showNotification('Audit log export queued for TXN-10021.'); });
+    } else if (btn.textContent.indexOf('Receipt') !== -1) {
+      btn.addEventListener('click', function () { showNotification('Receipt downloaded as PDF.'); });
+    } else if (btn.textContent.indexOf('Arbiter') !== -1) {
+      btn.addEventListener('click', function () { showNotification('Arbiter review initiated. Case #ARB-8812 created.'); });
+    }
+  });
+
+  if (dismissToast) { dismissToast.addEventListener('click', hideNotification); }
+})();
+</script></body></html>
