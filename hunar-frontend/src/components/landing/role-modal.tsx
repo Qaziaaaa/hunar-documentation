@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useEffect, useState } from "react";
 import { ArrowRight, CircleCheck, Shield, User, Wrench, X } from "lucide-react";
+import { Link } from "@/i18n/navigation";
 
 type RoleModalContextValue = {
   open: () => void;
@@ -116,8 +117,8 @@ function RoleModalContent({
                 </div>
               </div>
             </a>
-            <a
-              href="#"
+            <Link
+              href="/worker/sign-up"
               className="group relative flex flex-col justify-between p-5 sm:p-6 rounded-2xl border-2 border-slate-200/90 bg-white hover:border-[#D97706] hover:shadow-xl transition-all duration-200 cursor-pointer overflow-hidden"
             >
               <div className="absolute top-0 left-0 right-0 h-1 bg-[#D97706] transition-colors" />
@@ -158,7 +159,7 @@ function RoleModalContent({
                   <ArrowRight className="w-[15px] h-[15px] group-hover:translate-x-1 transition-transform" />
                 </div>
               </div>
-            </a>
+            </Link>
             <a
               href="#"
               className="group relative flex flex-col justify-between p-5 sm:p-6 rounded-2xl border-2 border-slate-200/90 bg-white hover:border-[#123B5D] hover:shadow-xl transition-all duration-200 cursor-pointer overflow-hidden"

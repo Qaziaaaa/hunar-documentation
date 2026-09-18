@@ -1,4 +1,4 @@
-import { OpenRoleModalButton } from "./open-role-modal-button";
+import { Link } from "@/i18n/navigation";
 import { footerColumns } from "./data";
 
 const socialIcons = [
@@ -44,9 +44,12 @@ export function PreFooter() {
           >
             Post a Job
           </a>
-          <OpenRoleModalButton className="inline-flex items-center px-7 py-3 rounded-full bg-white/10 hover:bg-white/20 text-white font-semibold text-sm border border-white/20 transition-all duration-200">
+          <Link
+            href="/worker/sign-up"
+            className="inline-flex items-center px-7 py-3 rounded-full bg-white/10 hover:bg-white/20 text-white font-semibold text-sm border border-white/20 transition-all duration-200"
+          >
             Register as Professional
-          </OpenRoleModalButton>
+          </Link>
         </div>
       </div>
     </section>
