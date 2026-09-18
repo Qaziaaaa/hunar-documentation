@@ -19,5 +19,19 @@
     "title": "صفحہ نہیں ملا",
     "description": "آپ جس صفحے کی تلاش کر رہے ہیں وہ موجود نہیں ہے یا منتقل ہو گیا ہے۔",
     "backHome": "گھر واپس جائیں"
+  },
+  "Worker": {
+    "dashboard": "ورکر ڈیش بورڈ",
+    "nearbyJobs": "قریبی جاب کی درخواستیں",
+    "activeJobs": "جاری کام",
+    "sendOffer": "وزٹ آفر بھیجیں",
+    "visitCharge": "وزٹ چارج",
+    "startVisit": "وزٹ شروع کریں",
+    "arrived": "میں پہنچ گیا ہوں",
+    "startInspection": "معائنہ شروع کریں",
+    "submitInspection": "معائنہ جمع کروائیں",
+    "diagnosis": "مسئلہ کی تشخیص",
+    "repairPlan": "مرمت کا منصوبہ",
+    "repairPriceEstimate": "مرمت کا تخمینہ"
   }
 }
