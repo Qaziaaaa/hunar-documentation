@@ -88,7 +88,7 @@ After first signup (before the worker can see jobs), the worker must complete th
 **Step 6 — Review & Submit**
 - Worker reviews all entered info, then submits the profile for **admin verification**.
 
-**Wallet note:** The wallet system is built into the product but is **NOT active yet** — it will be activated later after our meeting with the third-party wallet API provider. For now, the worker does NOT need a wallet to work (see §12).
+**Wallet note:** Every worker now has a **HUNAR wallet**. The wallet balance is used to cover the **platform commission (10% of the visiting charge)** on completed jobs. Workers can **top up** their wallet any time by sending money to the HUNAR number **+92 314 0837519** and sending the payment screenshot on WhatsApp to the same number as proof (see §12).
 
 ---
 
@@ -229,7 +229,7 @@ The visit is a fixed sequence of worker actions. Each button only becomes active
 ### 9.2 I've Arrived
 - Worker taps **"I've Arrived"** → job status becomes **visit_completed**.
 - Customer is notified: **"Worker has arrived"**.
-- **Commission note (current mode):** The platform commission is **10% of the visiting charge**. With the wallet system inactive, the worker settles this commission into the **HUNAR platform bank account** and sends the payment screenshot to WhatsApp +92 3140837519 (see §12). An automatic wallet deduction will apply only later, once the wallet system is activated.
+- **Commission note:** The platform commission is **10% of the visiting charge**. It is **held (reserved) from the worker's HUNAR wallet** when the worker taps **"I've Arrived"** (job becomes visit_completed), and it is **deducted (paid to HUNAR)** when the worker confirms the OTP sent to the customer (see Section 12).
 
 ### 9.3 Start Inspection
 - Worker taps **"Start Inspection"** → status becomes **inspection_done** workspace; worker examines the problem.
@@ -268,7 +268,10 @@ The repair price is **negotiated separately** from the visit charge.
 1. Customer approval received → worker taps **"Start Repair"** → status **repair_in_progress**.
 2. Worker performs the repair.
 3. Worker taps **"Complete Repair"** → status **completed**.
-4. Customer is notified and asked to:
+4. An **OTP is sent to the customer** for verification of completion.
+5. The customer shares the **OTP** with the worker; the worker **enters/confirms the OTP** → job status becomes **confirmed / paid**.
+6. On OTP confirmation, the commission that was **held** at "I've Arrived" (10% of the visit charge) is **successfully deducted** from the worker's wallet and **credited to the HUNAR platform wallet** (see §12).
+7. The customer is then asked to:
    - Confirm completion
    - Pay
    - Rate & review the worker
@@ -277,63 +280,49 @@ The repair price is **negotiated separately** from the visit charge.
 
 ---
 
-## 12. Earnings & Commission (Payment Model — Current Mode)
-
-**Important status update:** The **wallet system is built into the product but is NOT in use yet.** We are waiting for our meeting with the third-party provider for their wallet API. Until the wallet API is integrated, HUNAR receives its commission directly through the **HUNAR platform bank account**, and payments are verified manually via **WhatsApp payment screenshots**.
-
-### 12.1 How the Worker Earns (Current Mode)
-- When a customer pays (visit charge + repair charge as agreed), the worker receives the money directly from the customer (in cash, or however the two agree in the current demo/MVP).
-- **HUNAR does not hold the worker's money** in a wallet for now.
+### 12.1 How the Worker Earns
+- When a customer pays (visiting charge + repair charge as agreed), the worker receives the money **directly from the customer** (cash or however the two agree in the current demo/MVP).
+- **HUNAR does not hold the worker's visit/repair earnings**; the worker keeps them.
+- Separately, the worker maintains a **HUNAR wallet** used only to pay the **platform commission** (see below).
 
 ### 12.2 HUNAR Platform Commission (10% of the Visiting Charge)
 - The platform charges **10% commission on the worker's visiting charge**.
-- Multiplication reference: `PlatformTake = VisitingCharge × 10%`.
-- Commission applies to the **visit charge** (not the repair price).
-- Example: Visit charge Rs. 500 → **Rs. 50** goes to HUNAR as commission.
-- Commission rate is editable by **super-admin only** (platform control), but the product default = 10% — see Module 4.
+- Multiplication reference: `PlatformTake = VisitingCharge * 10%`.
+- The commission applies to the **visiting charge** (not the repair price).
+- Example: visiting charge Rs. 500, so **Rs. 50** goes to HUNAR as commission.
+- The commission rate is editable by **super-admin only** (platform control); the product default is 10% (see Module 4).
 
-### 12.3 How the Commission is Paid to HUNAR (Current Mode — NO Wallet)
-1. The worker (or customer, as arranged) transfers the commission amount to the **HUNAR platform bank account**.
-   - The HUNAR platform bank account number belongs to the HUNAR platform itself (this is the account through which we receive the commission).
-2. After making the transfer, the payer must send the **payment screenshot on WhatsApp to HUNAR**: **+92 314 0837519**.
-3. The HUNAR team verifies the screenshot and records the commission as received.
+### 12.3 Commission: Held at "I've Arrived", Deducted on OTP (Wallet Active)
+1. When the worker taps **"I've Arrived"** (job status becomes **visit_completed**), the platform commission (**10% of the visiting charge**) is **HELD (reserved) from the worker's HUNAR wallet** for that job.
+2. When the worker later confirms the **OTP** that was sent to the customer (Step I of the visit flow), the held commission is **successfully deducted from the worker's wallet** and **credited to the HUNAR platform wallet** (see 12.4).
+3. If the worker's wallet balance is not enough to cover the hold at arrival, the worker is prompted to **top up** first (see 12.5).
 
-### 12.4 Commission Record Keeping (Current Mode)
-- Each job's commission (10% of the agreed visit charge) is recorded against that job.
-- The WhatsApp screenshot is the proof of payment and is used by admin to mark the commission as "received".
-- Until the screenshot is received and verified, the commission is shown as **pending**.
+### 12.4 Hold & Deduction Record Keeping
+- Each job's commission (10% of the agreed visiting charge) is recorded against that job.
+- A **hold** is placed on the worker's wallet at **"I've Arrived"** (status: **held**).
+- Once the OTP is confirmed, the hold is **deducted** from the worker's wallet (status: **deducted / paid**) and credited to the **HUNAR platform wallet**.
+- Holds and deductions appear in the worker's **wallet ledger** (12.5). If a job is cancelled before OTP confirmation, the hold is **released** back to the worker (see Section 18).
 
-### 12.5 The Wallet System (Planned — Will Be Activated Later)
-The wallet system is already created in the product and will be **switched on after the third-party wallet API meeting**, so nothing is thrown away:
-- When activated, every worker will have a **wallet**.
-- **Wallet starts at Rs. 0** on signup.
-- Earnings will be **credited to the wallet**, and the **platform commission auto-deducted** (see detailed planned rules below).
-
-**Planned wallet rules (for reference when wallet becomes active):**
-- **Online/offline status vs balance:** ONLINE when balance ≥ −500 Rs.; OFFLINE when balance is below −500 Rs. (until balance returns to ≥ −500).
-- **Wallet Top-Up:** Easypaisa, JazzCash, Bank Transfer.
+### 12.5 The HUNAR Wallet: Top-Up & Rules (Active)
+The wallet is now **active**. Every worker has a **HUNAR wallet**, starting at **Rs. 0** on signup:
+- **Wallet Top-Up:** the worker sends money to the HUNAR number **+92 314 0837519** (Easypaisa / JazzCash / Bank Transfer), then sends the **payment screenshot on WhatsApp to the same number +92 314 0837519** as proof. Once verified, the amount is **credited to the worker's wallet**.
 - **Withdraw:** minimum **Rs. 100**, self-service/automatic payout (no manual admin approval).
-- **Wallet Ledger:** every credit/debit is recorded (timestamped, with type and balance after change).
+- **Wallet Ledger:** every credit, debit, hold and release is recorded (timestamped, with type and balance after each change).
 - **Idempotency:** all wallet movements are idempotent (double-tap cannot double-charge; Redis keys).
 
-### 12.6 Not a Wallet Rule to Keep Today
-- In the current mode, worker online/offline is NOT controlled by a wallet balance. A worker is online/offline by their own toggle (Dashboard status banner).
+### 12.6 Online/Offline Not Controlled by Wallet Balance
+- Online/offline is **NOT** controlled by a wallet balance. A worker is online/offline by their own toggle (Dashboard status banner).
 
 ---
-
-## 13. Earnings Screen (Worker — Current Mode)
 
 The **Earnings** tab shows:
-- **Total earned** (gross from jobs)
-- **Total commission due / paid to HUNAR** (10% of visit charges)
-- **Pending commission** (jobs where the screenshot has not yet been sent)
-- **Commission payment instructions card:**
-  - **Bank Account:** HUNAR platform bank account
-  - **After paying:** send the payment screenshot on **WhatsApp +92 314 0837519**
-- **Transactions list** — chronological: job #, visit charge, repair charge, commission (10%), screenshot status (Pending / Received / Verified), date.
-
----
-
+- **Total earned** (gross from jobs, kept by the worker)
+- **Total commission held / deducted for HUNAR** (10% of visiting charges)
+- **Pending deductions** (jobs where the commission is held at "I've Arrived" but the OTP is not yet confirmed)
+- **Wallet balance card:**
+  - **Current HUNAR wallet balance** (used to pay the commission)
+  - **Top Up** button: send money to **+92 314 0837519**, then send the payment screenshot on **WhatsApp +92 314 0837519** as proof
+- **Commission ledger:** per-job hold of 10% of the visiting charge at "I've Arrived", then **deducted on OTP confirmation** and credited to the HUNAR platform wallet, with status (**held / deducted**) and date.
 ## 14. Reviews & Rating (Worker Receives)
 
 ### When a review is created
@@ -373,8 +362,8 @@ Worker receives realtime push/in-app notifications for every meaningful event:
 | Counter accepted | "Counter accepted. Visit scheduled." |
 | Visit window approaching | "Your visit starts in 30 minutes." |
 | New message | "New message from customer." |
-| Commission reminder | "Commission Rs. 50 is due. Pay to HUNAR bank account and send the screenshot on WhatsApp +92 314 0837519." |
-| Commission verified | "Commission received. Thank you." |
+| Commission held | "Commission Rs. 50 held in your HUNAR wallet for job #123 (10% of visiting charge). Confirmed after OTP." |
+| Commission deducted | "Commission Rs. 50 deducted from your wallet for job #123 after OTP; credited to HUNAR platform wallet." |
 | Earnings recorded | "Rs. 450 earned for job #123." |
 | New review | "You received a 5-star review." |
 | Verification result | "Your profile was verified/rejected." |
@@ -415,7 +404,7 @@ Displays what customers see:
 | Worker cancels after arrival | Must enter a reason; may affect reliability; admin can review. |
 | Customer cancels after acceptance | Worker is notified; no work done, no repair fee. Visit fee already earned rule applies per policy. |
 | Worker never shows up | Customer can report "No Show"; admin reviews; affects worker reliability rating. |
-| Commission not yet paid | Job's commission is marked "Pending"; HUNAR team follows up via WhatsApp until the payment screenshot is received. |
+| Commission hold before OTP | The job's commission is **held** in the worker's wallet at "I've Arrived"; if the job is cancelled before OTP confirmation, the hold is **released** back to the worker. |
 | No nearby jobs | Empty state on dashboard with "Check again later" + option to expand service area. |
 
 ---
@@ -428,7 +417,7 @@ Displays what customers see:
 | 2 | Login / auto-login via refresh token | Auth |
 | 3 | Complete profile wizard (name → photo → skills → experience → areas → documents) | Profile |
 | 4 | Submit for admin verification | Admin |
-| 5 | Go online (manual toggle — wallet threshold will apply only when wallet is activated) | Dashboard |
+| 5 | Go online (manual toggle; wallet balance does not control online/offline) | Dashboard |
 | 6 | See nearby matching jobs (feed + filters) | Dashboard |
 | 7 | View job details (photos, voice, location, preferred time) | Job detail |
 | 8 | Send visit offer (visit charge + message) | Offer |
@@ -437,7 +426,7 @@ Displays what customers see:
 | 11 | Negotiate repair price & get explicit approval | Repair |
 | 12 | Start Repair → Complete Repair | Repair |
 | 13 | Receive payment from customer (visit + repair) | Pay |
-| 14 | Pay 10% commission to HUNAR bank account + send screenshot on WhatsApp +92 314 0837519 | Commission |
+| 14 | Commission 10% of visiting charge: HELD in the worker's wallet at "I've Arrived", DEDUCTED on OTP confirmation, credited to HUNAR platform wallet | Commission |
 | 15 | Receive review + rating | Review |
 
 ---

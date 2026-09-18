@@ -4,13 +4,14 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { JobStatus, Prisma, Role } from '@prisma/client';
+import { JobStatus, Prisma, Role, WorkerVerificationStatus } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { EventBusService } from '../../common/event-bus/event-bus.service';
 import { JobStateMachine } from './jobs.state-machine';
 import { AvailableJobsQueryDto, CancelJobDto, CreateJobDto } from './jobs.validation';
 import { JwtPayload } from '../../common/types/jwt-payload.interface';
 import { normalizePage, toPageResult } from '../../common/helpers/pagination.util';
+import { getWorkerProfileCompletion } from '../../common/helpers/worker-profile.util';
 import { RealtimeService } from '../realtime/realtime.service';
 import { JOB_EVENTS, userRoom } from './jobs.events';
 
@@ -141,8 +142,42 @@ export class JobsService {
       throw new ForbiddenException('Only workers can view the nearby jobs feed');
     }
     const user = await this.prisma.user.findUnique({ where: { id: worker.sub } });
-    if (!user?.isVerified) {
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+    const [profile, serviceAreaCount, cnicDocuments] = await Promise.all([
+      this.prisma.workerProfile.findUnique({ where: { userId: worker.sub } }),
+      this.prisma.serviceArea.count({ where: { userId: worker.sub } }),
+      this.prisma.verificationDocument.findMany({
+        where: { userId: worker.sub, type: { in: ['CNIC_FRONT', 'CNIC_BACK'] } },
+        select: { type: true, url: true },
+      }),
+    ]);
+    if (
+      !user.isVerified ||
+      !profile ||
+      profile.verificationStatus !== WorkerVerificationStatus.APPROVED
+    ) {
       throw new ForbiddenException('WORKER_NOT_VERIFIED: verify your profile before viewing jobs');
+    }
+    const cnicFront = cnicDocuments.find((d) => d.type === 'CNIC_FRONT');
+    const cnicBack = cnicDocuments.find((d) => d.type === 'CNIC_BACK');
+    const completion = getWorkerProfileCompletion({
+      name: user.name,
+      avatarUrl: user.avatarUrl,
+      skills: profile.skills,
+      experienceYears: profile.experienceYears,
+      bio: profile.bio,
+      serviceAreaCount,
+      cnicFrontUrl: cnicFront?.url ?? null,
+      cnicBackUrl: cnicBack?.url ?? null,
+    });
+    if (!completion.complete) {
+      throw new ForbiddenException(
+        `WORKER_PROFILE_INCOMPLETE: complete your profile (missing ${completion.missingSteps.join(
+          ', ',
+        )}) before viewing jobs`,
+      );
     }
     if (query.lat == null || query.lng == null) {
       throw new BadRequestException('lat and lng are required for PostGIS proximity matching');

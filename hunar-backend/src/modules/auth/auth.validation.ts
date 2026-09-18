@@ -1,13 +1,50 @@
-import { IsString, MaxLength, MinLength } from 'class-validator';
+import { IsNotEmpty, IsString, Matches, MaxLength, MinLength } from 'class-validator';
+import { IsPakistaniPhone } from '../../common/helpers/phone.util';
 
-// TEMPORARY auth DTO — replaced by Hakim Ullah's real OTP-based auth flow later.
-export class LoginDto {
+export class SendOtpDto {
   @IsString()
-  @MinLength(10)
-  @MaxLength(15)
+  @IsPakistaniPhone()
+  phone: string;
+}
+
+export class VerifyOtpDto {
+  @IsString()
+  @IsPakistaniPhone()
   phone: string;
 
   @IsString()
-  @MinLength(6)
+  @Matches(/^\d{6}$/, { message: 'OTP must be exactly 6 digits' })
+  otp: string;
+}
+
+export class RegisterWorkerDto {
+  @IsString()
+  @IsPakistaniPhone()
+  phone: string;
+
+  @IsString()
+  @MinLength(8)
+  @MaxLength(72)
   password: string;
+
+  @IsString()
+  @IsNotEmpty()
+  verificationToken: string;
+}
+
+export class LoginDto {
+  @IsString()
+  @IsPakistaniPhone()
+  phone: string;
+
+  @IsString()
+  @MinLength(8)
+  @MaxLength(72)
+  password: string;
+}
+
+export class RefreshTokenDto {
+  @IsString()
+  @IsNotEmpty()
+  refreshToken: string;
 }

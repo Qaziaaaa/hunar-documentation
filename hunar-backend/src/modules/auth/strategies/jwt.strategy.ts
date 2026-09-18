@@ -1,10 +1,9 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { ConfigService } from '@nestjs/config';
 import { JwtPayload } from '../../../common/types/jwt-payload.interface';
 
-// TEMPORARY JWT strategy — part of the placeholder auth (Hakim Ullah's real Auth module replaces this).
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
   constructor(config: ConfigService) {
@@ -15,10 +14,9 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     });
   }
 
-  validate(payload: JwtPayload): JwtPayload {
-    // Access tokens only — refresh tokens carry `purpose: 'refresh'`.
-    if ((payload as unknown as { purpose?: string }).purpose === 'refresh') {
-      return payload as unknown as JwtPayload;
+  validate(payload: JwtPayload & { purpose?: string }): JwtPayload {
+    if (payload.purpose === 'refresh') {
+      throw new UnauthorizedException('Invalid token');
     }
     return { sub: payload.sub, phone: payload.phone, role: payload.role };
   }
