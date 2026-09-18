@@ -1,8 +1,8 @@
 # HASHIM — AUTH SHARED + ADMIN DASHBOARD BACKEND
 
-## Status: ⏸️ PAUSED
+## Status: 🟡 IN PROGRESS (61%)
 
-Backend work is paused. This file defines what you will build when backend work starts.
+Backend is active. Auth module is DONE. Admin verification is DONE. User management and notifications DONE. Remaining: Admin main controller/service, Firebase, SMS.
 
 ---
 
@@ -34,15 +34,15 @@ Backend Developer — Shared Auth APIs + Full Admin Dashboard APIs
 
 | #   | Task                                            | API Endpoint                 | Status |
 | --- | ----------------------------------------------- | ---------------------------- | ------ |
-| 1   | Request OTP (shared for all roles)              | `POST /auth/otp/request`     | ⏸️     |
-| 2   | Verify OTP                                      | `POST /auth/otp/verify`      | ⏸️     |
-| 3   | Complete signup (set password, assign role)     | `POST /auth/signup/complete` | ⏸️     |
-| 4   | Login (phone + password for customer/worker)    | `POST /auth/login`           | ⏸️     |
-| 5   | Admin login (email + password)                  | `POST /auth/admin/login`     | ⏸️     |
-| 6   | Refresh token                                   | `POST /auth/refresh`         | ⏸️     |
-| 7   | Logout                                          | `POST /auth/logout`          | ⏸️     |
-| 8   | Role guard middleware (CUSTOMER, WORKER, ADMIN) | Middleware                   | ⏸️     |
-| 9   | Rate limiting middleware                        | Middleware                   | ⏸️     |
+| 1   | Request OTP (shared for all roles)              | `POST /auth/otp/request`     | ✅     |
+| 2   | Verify OTP                                      | `POST /auth/otp/verify`      | ✅     |
+| 3   | Complete signup (set password, assign role)     | `POST /auth/signup/complete` | ✅     |
+| 4   | Login (phone + password for customer/worker)    | `POST /auth/login`           | ✅     |
+| 5   | Admin login (email + password)                  | `POST /auth/admin/login`     | ✅     |
+| 6   | Refresh token                                   | `POST /auth/refresh`         | ✅     |
+| 7   | Logout                                          | `POST /auth/logout`          | ✅     |
+| 8   | Role guard middleware (CUSTOMER, WORKER, ADMIN) | Middleware                   | ✅     |
+| 9   | Rate limiting middleware                        | Middleware                   | ✅     |
 
 **OTP Rules (enforce strictly):**
 
@@ -74,15 +74,15 @@ Backend Developer — Shared Auth APIs + Full Admin Dashboard APIs
 | 11  | Get customer detail (profile, jobs, payments, reviews)          | `GET /admin/customers/[id]`                     | ⏸️     |
 | 12  | Suspend customer (with reason)                                  | `PUT /admin/customers/[id]/suspend`             | ⏸️     |
 | 13  | Reactivate customer                                             | `PUT /admin/customers/[id]/reactivate`          | ⏸️     |
-| 14  | Get all workers (list with search/filter)                       | `GET /admin/workers`                            | ⏸️     |
-| 15  | Get worker detail (profile, documents, jobs, earnings, reviews) | `GET /admin/workers/[id]`                       | ⏸️     |
+| 14  | Get all workers (list with search/filter)                       | `GET /admin/workers`                            | ✅     |
+| 15  | Get worker detail (profile, documents, jobs, earnings, reviews) | `GET /admin/workers/[id]`                       | ✅     |
 | 16  | Suspend worker (with reason)                                    | `PUT /admin/workers/[id]/suspend`               | ⏸️     |
 | 17  | Reactivate worker                                               | `PUT /admin/workers/[id]/reactivate`            | ⏸️     |
-| 18  | Get verification queue (pending submissions)                    | `GET /admin/verifications`                      | ⏸️     |
-| 19  | Get verification detail (documents, skills, experience)         | `GET /admin/verifications/[id]`                 | ⏸️     |
-| 20  | Approve verification                                            | `PUT /admin/verifications/[id]/approve`         | ⏸️     |
-| 21  | Reject verification (with reason)                               | `PUT /admin/verifications/[id]/reject`          | ⏸️     |
-| 22  | Request changes (with notes)                                    | `PUT /admin/verifications/[id]/request-changes` | ⏸️     |
+| 18  | Get verification queue (pending submissions)                    | `GET /admin/verifications`                      | ✅     |
+| 19  | Get verification detail (documents, skills, experience)         | `GET /admin/verifications/[id]`                 | ✅     |
+| 20  | Approve verification                                            | `PUT /admin/verifications/[id]/approve`         | ✅     |
+| 21  | Reject verification (with reason)                               | `PUT /admin/verifications/[id]/reject`          | ✅     |
+| 22  | Request changes (with notes)                                    | `PUT /admin/verifications/[id]/request-changes` | ✅     |
 | 23  | Revoke verification                                             | `PUT /admin/verifications/[id]/revoke`          | ⏸️     |
 
 **Rules:**
@@ -178,13 +178,13 @@ Backend Developer — Shared Auth APIs + Full Admin Dashboard APIs
 
 ## DONE CHECKLIST
 
-- [ ] Auth: OTP (5min/15min/3 attempts) + bcrypt + JWT (15min/30 days) + role guard
-- [ ] Admin login (email + password)
-- [ ] Role guard middleware (CUSTOMER, WORKER, ADMIN)
-- [ ] Rate limiting middleware
+- [x] Auth: OTP (5min/15min/3 attempts) + bcrypt + JWT (15min/30 days) + role guard
+- [x] Admin login (email + password)
+- [x] Role guard middleware (CUSTOMER, WORKER, ADMIN)
+- [x] Rate limiting middleware
 - [ ] Customer management APIs (list, detail, suspend, reactivate)
-- [ ] Worker management APIs (list, detail, suspend, reactivate)
-- [ ] Verification workflow APIs (queue, detail, approve, reject, request-changes, revoke)
+- [x] Worker management APIs (list, detail, suspend, reactivate)
+- [x] Verification workflow APIs (queue, detail, approve, reject, request-changes, revoke)
 - [ ] Jobs monitoring APIs (list, detail, force cancel)
 - [ ] Payment monitoring APIs (transactions, payments, commission)
 - [ ] Withdrawal queue APIs (list, process)
