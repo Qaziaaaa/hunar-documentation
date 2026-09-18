@@ -4,11 +4,9 @@ import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
+import { SmsService } from './sms.service';
 import { JwtStrategy } from './strategies/jwt.strategy';
 
-// TEMPORARY / PLACEHOLDER AUTH MODULE — testing only.
-// The real HUNAR Auth module (OTP + password + refresh rotation, workers/customers registration)
-// is owned by Hakim Ullah. This module will be removed/replaced by his implementation.
 @Module({
   imports: [
     PassportModule.register({ defaultStrategy: 'jwt' }),
@@ -20,7 +18,7 @@ import { JwtStrategy } from './strategies/jwt.strategy';
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, JwtStrategy],
+  providers: [AuthService, SmsService, JwtStrategy],
   exports: [AuthService],
 })
 export class AuthModule {}
