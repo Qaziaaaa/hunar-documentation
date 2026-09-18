@@ -5,10 +5,10 @@ import { Link } from "@/i18n/navigation";
 export function Header() {
   return (
     <header
-      className="bg-brand-hero border-b border-white/10 sticky top-0 z-50 backdrop-blur-md bg-opacity-95"
+      className="bg-brand-hero border-b border-white/10 backdrop-blur-md bg-opacity-95"
       data-purpose="main-header"
     >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-14 flex items-center justify-between">
         <div className="flex items-center space-x-6">
           <Link
             className="flex items-center group hover:opacity-90 transition-opacity"
@@ -18,7 +18,7 @@ export function Header() {
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               alt="HUNAR Logo"
-              className="h-10 w-auto object-contain"
+              className="h-8 w-auto object-contain"
               src="/landing/hunar-logo-alt.png"
 />
           </Link>

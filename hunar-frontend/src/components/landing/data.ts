@@ -118,6 +118,7 @@ export const pros: Pro[] = [
 export type Service = {
   category: string;
   title: string;
+  description: string;
   image: string;
   alt: string;
   rating: string;
@@ -129,6 +130,7 @@ export const services: Service[] = [
   {
     category: "Cooling & AC",
     title: "Complete Inverter AC Deep Chemical Wash & Gas Pressure Topup",
+    description: "Deep chemical wash, coil cleaning & gas pressure topup for maximum cooling.",
     image: "/landing/ac-deep-wash-alt.png",
     alt: "AC Deep Chemical Wash",
     rating: "4.92",
@@ -138,6 +140,7 @@ export const services: Service[] = [
   {
     category: "Electrical & Power",
     title: "Master DB Panel Wiring, Breakers & Three-Phase Load Balancing",
+    description: "Complete DB wiring, breakers & three-phase load balancing done safely.",
     image: "/landing/db-panel-wiring.png",
     alt: "DB Panel Wiring",
     rating: "4.98",
@@ -147,6 +150,7 @@ export const services: Service[] = [
   {
     category: "Plumbing & Sanitary",
     title: "Concealed PPRC Water Leakage Detection & Pipe Burst Repair",
+    description: "Detect concealed PPRC leaks & repair pipe bursts without wrecking walls.",
     image: "/landing/plumbing-leakage-alt.png",
     alt: "Plumbing Leakage Detection",
     rating: "4.88",
@@ -156,6 +160,7 @@ export const services: Service[] = [
   {
     category: "Carpentry & Fitout",
     title: "Custom Kitchen Cabinetry & Hydraulic Soft-Close Hinge Fix",
+    description: "Custom kitchen cabinets with soft-close hinges, built to fit your space.",
     image: "/landing/kitchen-cabinetry-alt.png",
     alt: "Kitchen Cabinetry & Woodwork",
     rating: "4.95",
@@ -165,6 +170,7 @@ export const services: Service[] = [
   {
     category: "Painting & Polish",
     title: "Full House WeatherSheet & Interior Velvet Matte Finish",
+    description: "Full-house WeatherSheet & velvet matte finish with a clean edge.",
     image: "/landing/house-painting-alt.png",
     alt: "House Painting & Polish",
     rating: "4.90",
@@ -174,6 +180,7 @@ export const services: Service[] = [
   {
     category: "Home Care",
     title: "Automatic Underground & Overhead Water Tank Disinfection",
+    description: "Underground & overhead tank cleaning and disinfection, ready to drink.",
     image: "/landing/water-tank-disinfection.png",
     alt: "Water Tank Disinfection",
     rating: "4.85",
@@ -183,6 +190,7 @@ export const services: Service[] = [
   {
     category: "Solar & Renewable",
     title: "Solar Inverter Hybrid Net-Metering Setup & Distribution Wiring",
+    description: "Hybrid solar inverter, net-metering & distribution wiring installation.",
     image: "/landing/solar-inverter.png",
     alt: "Solar Inverter Hybrid Net-Metering",
     rating: "4.96",
@@ -192,6 +200,7 @@ export const services: Service[] = [
   {
     category: "Appliance Repair",
     title: "Automatic Washing Machine & Refrigerator Compressor Overhaul",
+    description: "Compressor & motor overhaul for washing machines and refrigerators.",
     image: "/landing/washing-machine-repair.png",
     alt: "Washing Machine & Refrigerator Repair",
     rating: "4.89",
