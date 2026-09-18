@@ -26,7 +26,7 @@ Task Contribution/
 ## 1. OVERALL PROJECT PROGRESS
 
 ```
-TOTAL PROGRESS: ██████░░░░░░░░░░░░░░ 30%
+TOTAL PROGRESS: ███░░░░░░░░░░░░░░░░░ 18%
 ```
 
 | Area | Built | Remaining | Progress |
@@ -92,7 +92,7 @@ PROGRESS: ░░░░░░░░░░░░░░░░░░░░ 0% (PAUSE
 
 ### Shahzad — Worker Flow Frontend
 ```
-PROGRESS: ██████░░░░░░░░░░░░░░ 16%
+PROGRESS: ██████░░░░░░░░░░░░░░ 31%
 ```
 
 | Milestone | Tasks | Done | Status |
@@ -136,7 +136,7 @@ PROGRESS: ░░░░░░░░░░░░░░░░░░░░ 0% (PAUSE
 
 ### Faizan — Auth Shared + Admin Dashboard Frontend
 ```
-PROGRESS: ████████░░░░░░░░░░░░ 21%
+PROGRESS: ████░░░░░░░░░░░░░░░░ 20%
 ```
 
 | Milestone | Tasks | Done | Status |
