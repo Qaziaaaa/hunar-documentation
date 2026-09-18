@@ -71,6 +71,20 @@
     "description": "The page you are looking for does not exist or has moved.",
     "backHome": "Go back home"
   },
+  "Worker": {
+    "dashboard": "Worker Dashboard",
+    "nearbyJobs": "Nearby Job Requests",
+    "activeJobs": "Active In-Flight Jobs",
+    "sendOffer": "Send Visit Offer",
+    "visitCharge": "Visit Charge",
+    "startVisit": "Start Visit",
+    "arrived": "I've Arrived",
+    "startInspection": "Start Inspection",
+    "submitInspection": "Submit Inspection",
+    "diagnosis": "Diagnosis",
+    "repairPlan": "Repair Plan",
+    "repairPriceEstimate": "Repair Price Estimate"
+  },
   "Verification": {
     "badgeTitle": "Worker Verification Status",
     "approvedTitle": "Profile Approved & Verified",
