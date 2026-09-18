@@ -25,9 +25,9 @@ export function WizardShell() {
   } = useWorkerWizard();
 
   return (
-    <div className="min-h-screen w-full bg-white text-navy flex flex-col antialiased">
+    <div className="min-h-screen min-h-[100dvh] w-full bg-white text-navy flex flex-col antialiased">
       <main
-        className="flex-1 grid grid-cols-1 lg:grid-cols-12 min-h-screen w-full"
+        className="flex-1 grid grid-cols-1 lg:grid-cols-12 min-h-screen min-h-[100dvh] w-full"
         data-purpose="worker-onboarding-wizard"
       >
         {/* Left Visual Showcase (Full-Screen Edge-to-Edge Panel) */}
@@ -35,19 +35,19 @@ export function WizardShell() {
 
         {/* Right Interactive Form Container (Seamless Workspace) */}
         <section
-          className="flex flex-col bg-white px-4 py-4 sm:px-8 sm:py-8 lg:px-12 lg:py-10 lg:col-span-7 xl:col-span-7 lg:min-h-screen lg:justify-between"
+          className="flex flex-1 flex-col justify-between bg-white px-4 py-5 sm:px-8 sm:py-8 lg:px-12 lg:py-10 lg:col-span-7 xl:col-span-7 min-h-screen min-h-[100dvh]"
           data-purpose="worker-registration-form"
         >
           <div
-            className="mx-auto flex w-full max-w-[480px] flex-col lg:h-full lg:justify-between lg:my-auto"
+            className="mx-auto flex w-full max-w-[540px] flex-1 flex-col justify-between"
             id="wizard-container"
           >
-            <div>
+            <div className="flex-1 flex flex-col justify-between">
               {/* Stepper Progress Header */}
               <StepProgressHeader currentStep={currentStep} />
 
               {/* Step Forms */}
-              <div className="pt-1 pb-2">
+              <div className="flex-1 flex flex-col justify-between pt-1 pb-2">
                 {currentStep === 1 && (
                   <Step1PersonalDetails
                     formData={formData}

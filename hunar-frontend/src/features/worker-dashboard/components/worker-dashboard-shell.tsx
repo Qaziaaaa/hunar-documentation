@@ -1,17 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import {
-  LayoutDashboard,
-  Briefcase,
-  Wallet,
-  MessageSquare,
-  User,
-} from "lucide-react";
 import { DashboardHeader } from "./dashboard-header";
-import { DashboardSidebar } from "./dashboard-sidebar";
-import { StatusBanner } from "./status-banner";
-import { StatsOverview } from "./stats-overview";
+import { JobRequestFeed } from "./job-request-feed";
+import { RadarSearchView } from "./radar-search-view";
 import { MobileNavBar } from "./mobile-nav-bar";
 import {
   INITIAL_WORKER_PROFILE,
@@ -28,6 +20,7 @@ export function WorkerDashboardShell() {
     INITIAL_WORKER_PROFILE
   );
   const [activeTab, setActiveTab] = useState<DashboardTab>("dashboard");
+  const [viewMode, setViewMode] = useState<"feed" | "radar">("feed");
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [notifications, setNotifications] = useState<DashboardNotification[]>(
     INITIAL_NOTIFICATIONS
@@ -68,105 +61,39 @@ export function WorkerDashboardShell() {
   };
 
   return (
-    <div className="min-h-screen flex bg-white text-dark">
-      {/* 1. Desktop Sidebar Navigation (§5.1 & Design Docs) */}
-      <DashboardSidebar
-        activeTab={activeTab}
-        onSelectTab={setActiveTab}
+    <div className="min-h-screen flex flex-col bg-white text-dark pb-20 md:pb-8">
+      {/* Top Header */}
+      <DashboardHeader
         profile={profile}
+        notifications={notifications}
+        searchQuery={searchQuery}
+        isOnline={profile.isOnline}
+        viewMode={viewMode}
+        onToggleOnline={handleToggleOnline}
+        onSearchChange={setSearchQuery}
+        onSelectTab={setActiveTab}
+        onMarkNotificationsRead={handleMarkNotificationsRead}
+        onSelectViewMode={setViewMode}
       />
 
-      {/* 2. Main Content Area */}
-      <div className="flex flex-1 flex-col min-w-0 pb-20 lg:pb-10">
-        {/* Header (HUNAR logo, search bar, notifications bell with unread badge, profile avatar) */}
-        <DashboardHeader
-          profile={profile}
-          notifications={notifications}
-          searchQuery={searchQuery}
-          onSearchChange={setSearchQuery}
-          onSelectTab={setActiveTab}
-          onMarkNotificationsRead={handleMarkNotificationsRead}
-        />
-
-        {/* Main Inner Container */}
-        <main className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-5 px-4 py-5 sm:px-6">
-          {/* Status Banner (Online/Offline switch with -500 Rs rule) */}
-          <StatusBanner
-            isOnline={profile.isOnline}
-            onToggleOnline={handleToggleOnline}
+      {/* Main Content Area - Job Requests Feed or Radar Searching View */}
+      <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col px-2.5 sm:px-4 py-3 sm:py-4">
+        {viewMode === "feed" ? (
+          <JobRequestFeed
+            searchQuery={searchQuery}
             city={profile.city}
-            serviceAreas={profile.serviceAreas}
+            isOnline={profile.isOnline}
           />
+        ) : (
+          <RadarSearchView
+            city={profile.city}
+            workerName={profile.fullName.split(" ")[0]}
+            onViewFeed={() => setViewMode("feed")}
+          />
+        )}
+      </main>
 
-          {/* Key Statistics Row (Active Jobs, Total Earnings, Customer Rating) */}
-          <StatsOverview profile={profile} onSelectTab={setActiveTab} />
-
-          {/* Tab Views Content Area */}
-          <div className="pt-2">
-            {activeTab === "dashboard" && (
-              <div className="rounded-2xl border border-slate-200 bg-white p-8 text-center shadow-xs">
-                <div className="mx-auto flex size-12 items-center justify-center rounded-2xl bg-teal/10 text-teal mb-3">
-                  <Briefcase className="size-6" />
-                </div>
-                <h3 className="text-base font-bold text-navy">Nearby Jobs</h3>
-                <p className="mt-1 text-xs text-slate-500 max-w-sm mx-auto">
-                  Matching job requests in your service areas will appear here when you are Online.
-                </p>
-              </div>
-            )}
-
-            {activeTab === "jobs" && (
-              <div className="rounded-2xl border border-slate-200 bg-white p-8 text-center shadow-xs">
-                <div className="mx-auto flex size-12 items-center justify-center rounded-2xl bg-teal/10 text-teal mb-3">
-                  <Briefcase className="size-6" />
-                </div>
-                <h3 className="text-base font-bold text-navy">Active Jobs</h3>
-                <p className="mt-1 text-xs text-slate-500">
-                  No active jobs in progress.
-                </p>
-              </div>
-            )}
-
-            {activeTab === "earnings" && (
-              <div className="rounded-2xl border border-slate-200 bg-white p-8 text-center shadow-xs">
-                <div className="mx-auto flex size-12 items-center justify-center rounded-2xl bg-teal/10 text-teal mb-3">
-                  <Wallet className="size-6" />
-                </div>
-                <h3 className="text-base font-bold text-navy">Earnings</h3>
-                <p className="mt-1 text-xs text-slate-500">
-                  Earnings history and payout records.
-                </p>
-              </div>
-            )}
-
-            {activeTab === "chat" && (
-              <div className="rounded-2xl border border-slate-200 bg-white p-8 text-center shadow-xs">
-                <div className="mx-auto flex size-12 items-center justify-center rounded-2xl bg-teal/10 text-teal mb-3">
-                  <MessageSquare className="size-6" />
-                </div>
-                <h3 className="text-base font-bold text-navy">Messages</h3>
-                <p className="mt-1 text-xs text-slate-500">
-                  No active messages.
-                </p>
-              </div>
-            )}
-
-            {activeTab === "profile" && (
-              <div className="rounded-2xl border border-slate-200 bg-white p-8 text-center shadow-xs">
-                <div className="mx-auto flex size-12 items-center justify-center rounded-2xl bg-teal/10 text-teal mb-3">
-                  <User className="size-6" />
-                </div>
-                <h3 className="text-base font-bold text-navy">{profile.fullName}</h3>
-                <p className="mt-1 text-xs text-slate-500">
-                  {profile.phone} · {profile.city}
-                </p>
-              </div>
-            )}
-          </div>
-        </main>
-      </div>
-
-      {/* 3. Mobile Bottom Navigation Bar (on small screens) */}
+      {/* Mobile Bottom Navigation Bar */}
       <MobileNavBar
         activeTab={activeTab}
         onSelectTab={setActiveTab}

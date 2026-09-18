@@ -26,7 +26,7 @@ export function StatusBanner({
   const [showRuleInfo, setShowRuleInfo] = useState(false);
 
   return (
-    <div className="w-full">
+    <div className="hidden w-full md:block">
       <div
         className={cn(
           "relative overflow-hidden rounded-2xl border transition-all duration-300 p-4 sm:p-5",
