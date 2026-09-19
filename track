@@ -1,0 +1,105 @@
+#!/bin/bash
+REPO_ROOT="$(cd "$(dirname "$0")" && pwd)"
+source "$REPO_ROOT/.track/config.sh"
+
+BASELINE_FILE="$REPO_ROOT/.track/baseline"
+[ -f "$BASELINE_FILE" ] && BASELINE=$(cat "$BASELINE_FILE") || BASELINE=$(date "+%Y-%m-%d %H:%M:%S")
+
+R='\033[0;31m'; G='\033[0;32m'; B='\033[1m'; NC='\033[0m'
+
+if [ "$1" = "reset" ]; then
+    date "+%Y-%m-%d %H:%M:%S" > "$BASELINE_FILE"
+    echo -e "${G}Baseline reset.${NC}"
+    exit 0
+fi
+
+clear
+echo ""
+echo -e "${B}HUNAR TRACKER${NC}"
+echo "========================================"
+
+bar() {
+    local p=$1; local f=$((p/5)); local e=$((20-f))
+    printf "%0.s█" $(seq 1 $f 2>/dev/null) 2>/dev/null
+    printf "%0.s░" $(seq 1 $e 2>/dev/null) 2>/dev/null
+}
+
+if [ -z "$1" ] || [ "$1" = "p" ]; then
+    echo ""
+    echo -e "${B}PROGRESS${NC}"
+    echo "----------------------------------------"
+    BE=0; BT=0
+    for mod in auth admin users notifications jobs offers visits repair commissions chat uploads reviews; do
+        D="$REPO_ROOT/hunar-backend/src/modules/$mod"
+        [ -d "$D" ] || continue
+        F=$(find "$D" -name "*.ts" ! -name "*.spec.ts" ! -name "*.validation.ts" 2>/dev/null | wc -l)
+        E=$(find "$D" -name "*.ts" ! -name "*.spec.ts" ! -name "*.validation.ts" -empty 2>/dev/null | wc -l)
+        BT=$((BT+F)); BE=$((BE+F-E))
+    done
+    BP=$((BT > 0 ? BE*100/BT : 0))
+
+    FE=0; FT=0
+    for feat in auth admin worker-onboarding worker-verification worker-dashboard; do
+        D="$REPO_ROOT/hunar-frontend/src/features/$feat"
+        [ -d "$D" ] || continue
+        F=$(find "$D" \( -name "*.tsx" -o -name "*.ts" \) 2>/dev/null | wc -l)
+        E=$(find "$D" \( -name "*.tsx" -o -name "*.ts" \) -empty 2>/dev/null | wc -l)
+        FT=$((FT+F)); FE=$((FE+F-E))
+    done
+    FP=$((FT > 0 ? FE*100/FT : 0))
+    OP=$(( (BP+FP)/2 ))
+
+    printf "  Backend:   $(bar $BP) %3d%%\n" $BP
+    printf "  Frontend:  $(bar $FP) %3d%%\n" $FP
+    printf "  ${B}Overall:   $(bar $OP) %3d%%${NC}\n" $OP
+fi
+
+if [ -z "$1" ] || [ "$1" = "v" ]; then
+    echo ""
+    echo -e "${B}VIOLATIONS${NC}"
+    echo "----------------------------------------"
+    VIOLATIONS=0
+    for PATTERN in "${!OWNERS[@]}"; do
+        OWNER="${OWNERS[$PATTERN]}"
+        DIR="$REPO_ROOT/$PATTERN"
+        [ -d "$DIR" ] || continue
+        while IFS= read -r FILE; do
+            [ -z "$FILE" ] && continue
+            REL="${FILE#$REPO_ROOT/}"
+            AUTHOR=$(git -C "$REPO_ROOT" log -1 --format="%an" -- "$REL" 2>/dev/null || echo "unknown")
+            TS=$(git -C "$REPO_ROOT" log -1 --format="%aI" -- "$REL" 2>/dev/null || echo "unknown")
+            TS_NORM=$(echo "$TS" | sed 's/T/ /;s/+.*//;s/Z//')
+            is_leader "$AUTHOR" && continue
+            [[ "$TS_NORM" < "$BASELINE" ]] && continue
+            GITHUB=$(resolve_github "$AUTHOR")
+            if [ "$GITHUB" != "$OWNER" ]; then
+                VIOLATIONS=$((VIOLATIONS + 1))
+                echo -e "  ${R}$(basename $REL)${NC}  @$OWNER by @$GITHUB"
+            fi
+        done < <(find "$DIR" \( -name "*.ts" -o -name "*.tsx" \) 2>/dev/null)
+    done
+    [ $VIOLATIONS -eq 0 ] && echo -e "  ${G}No violations${NC}"
+fi
+
+if [ -z "$1" ] || [ "$1" = "a" ]; then
+    echo ""
+    echo -e "${B}ACTIVITY (3 days)${NC}"
+    echo "----------------------------------------"
+    for name in abdullah faizan hakim hashim-malik shafqatullah shahzad; do
+        COUNT=$(git -C "$REPO_ROOT" log --all --author="$name" --oneline --since="3 days ago" 2>/dev/null | wc -l)
+        [ $COUNT -gt 0 ] && printf "  @%-18s %2d commits\n" "$name" "$COUNT"
+    done
+    TOTAL=$(git -C "$REPO_ROOT" log --all --oneline --since="3 days ago" 2>/dev/null | wc -l)
+    echo "  ──────────────────────────"
+    printf "  %-20s %2d commits\n" "TOTAL" "$TOTAL"
+fi
+
+echo ""
+echo "========================================"
+echo "  ./track          full dashboard"
+echo "  ./track v        violations only"
+echo "  ./track p        progress only"
+echo "  ./track a        activity only"
+echo "  ./track reset    reset baseline"
+echo "========================================"
+echo ""

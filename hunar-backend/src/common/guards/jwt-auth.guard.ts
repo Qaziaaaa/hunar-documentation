@@ -3,8 +3,6 @@ import { Reflector } from '@nestjs/core';
 import { AuthGuard } from '@nestjs/passport';
 import { Observable } from 'rxjs';
 
-// NOTE (TEMPORARY): the real HUNAR auth flow (OTP + refresh rotation + session checks)
-// belongs to Hakim Ullah's Auth module. This guard only verifies the JWT signature.
 @Injectable()
 export class JwtAuthGuard extends AuthGuard('jwt') {
   constructor(private readonly reflector: Reflector) {

@@ -10,6 +10,7 @@ import { OfferStatus, Role } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { EventBusService } from '../../common/event-bus/event-bus.service';
 import { normalizePage, toPageResult } from '../../common/helpers/pagination.util';
+import { assertWorkerEligible } from '../../common/helpers/worker-eligibility.util';
 import { JobsService } from '../jobs/jobs.service';
 import { JwtPayload } from '../../common/types/jwt-payload.interface';
 import { RealtimeService } from '../realtime/realtime.service';
@@ -37,6 +38,9 @@ export class OffersService {
   }
 
   async createOffer(workerId: string, jobId: string, dto: CreateOfferDto) {
+    // Only an approved + complete worker may send offers (Task 3 eligibility).
+    await assertWorkerEligible(this.prisma, workerId);
+
     const job = await this.prisma.serviceRequest.findUnique({ where: { id: jobId } });
     if (!job) {
       throw new NotFoundException('Job not found');
@@ -334,6 +338,8 @@ export class OffersService {
       if (offer.workerId !== user.sub) {
         throw new ForbiddenException('You can only counter your own offer');
       }
+      // Only an approved + complete worker may negotiate (Task 3 eligibility).
+      await assertWorkerEligible(this.prisma, offer.workerId);
       by = 'worker';
     } else {
       throw new ForbiddenException('Role not authorised to negotiate');

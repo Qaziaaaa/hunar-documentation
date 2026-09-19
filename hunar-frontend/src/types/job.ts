@@ -14,7 +14,23 @@ export type JobStatus =
   | "PAID"
   | "REVIEWED"
   | "CANCELLED"
-  | "DISPUTED";
+  | "DISPUTED"
+  | "open"
+  | "offer_sent"
+  | "accepted"
+  | "visit_in_progress"
+  | "visit_completed"
+  | "completed"
+  | "customer_viewing"
+  | "counter_received"
+  | "inspecting"
+  | "inspection_submitted"
+  | "repair_negotiating"
+  | "repair_approved"
+  | "repair_in_progress"
+  | "rejected"
+  | "closed_assigned"
+  | "cancelled";
 
 export type VisitStatus =
   | "SCHEDULED"
@@ -22,6 +38,17 @@ export type VisitStatus =
   | "COMPLETED"
   | "CANCELLED"
   | "NO_SHOW";
+
+export type JobCategoryName =
+  | "Electrician"
+  | "Plumber"
+  | "AC Technician"
+  | "Carpenter"
+  | "Painter"
+  | "Mechanic"
+  | "Cleaning & Sanitary";
+
+export type JobUrgency = "emergency" | "standard" | "flexible" | "LOW" | "NORMAL" | "HIGH" | "EMERGENCY";
 
 export interface JobReference {
   id: string;
@@ -42,6 +69,34 @@ export interface JobCustomer {
   avatarUrl?: string;
 }
 
+export interface CustomerSummary {
+  id: string;
+  name: string;
+  phone: string;
+  rating: number;
+  totalReviews: number;
+  avatarUrl?: string;
+  area: string;
+  isVerified: boolean;
+}
+
+export interface VoiceNoteAttachment {
+  url: string;
+  durationSeconds: number;
+  waveform?: number[];
+}
+
+export interface JobLocation {
+  area: string;
+  city: string;
+  distanceKm: number;
+  fullAddress: string;
+  coordinates: {
+    lat: number;
+    lng: number;
+  };
+}
+
 export interface Job {
   id: string;
   customerId: string;
@@ -57,7 +112,7 @@ export interface Job {
   city: string;
   area?: string;
   status: JobStatus;
-  urgency: "LOW" | "NORMAL" | "HIGH" | "EMERGENCY";
+  urgency: JobUrgency;
   suggestedVisitCharge?: number;
   lockedVisitCharge?: number;
   preferredVisitTime?: string;
@@ -66,6 +121,28 @@ export interface Job {
   completedAt?: string;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface JobRequest {
+  id: string;
+  title: string;
+  category: JobCategoryName;
+  urgency: JobUrgency;
+  problemSummary: string;
+  description: string;
+  location: JobLocation;
+  postedAt: string;
+  postedAgo: string;
+  preferredVisitWindow: {
+    date: string;
+    timeSlot: string;
+  };
+  customerSuggestedPrice?: number;
+  photos: string[];
+  voiceNote?: VoiceNoteAttachment;
+  customer: CustomerSummary;
+  totalOffers: number;
+  status: JobStatus;
 }
 
 export interface Visit {
@@ -89,4 +166,15 @@ export interface CreateVisitOfferInput {
   jobId: string;
   visitCharge: number;
   note?: string;
+}
+
+export interface JobFeedFilters {
+  category: string;
+  maxDistanceKm: number;
+  area: string;
+  minPrice?: number;
+  maxPrice?: number;
+  sortBy: "fresh_first" | "distance_nearest" | "price_highest";
+  onlyWithoutOffers: boolean;
+  hideFarJobs: boolean;
 }

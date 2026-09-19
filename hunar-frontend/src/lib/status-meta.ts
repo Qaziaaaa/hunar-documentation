@@ -46,7 +46,7 @@ export const DOT_TONE_CLASS: Record<Tone, string> = {
   danger: "bg-error",
 };
 
-const JOB_STATUS_TONE: Record<JobStatus, Tone> = {
+const JOB_STATUS_TONE: Partial<Record<JobStatus, Tone>> = {
   OPEN: "navy",
   OFFERS_RECEIVED: "navy",
   OFFER_ACCEPTED: "teal",
@@ -63,6 +63,22 @@ const JOB_STATUS_TONE: Record<JobStatus, Tone> = {
   REVIEWED: "success",
   CANCELLED: "danger",
   DISPUTED: "danger",
+  open: "navy",
+  offer_sent: "navy",
+  accepted: "teal",
+  visit_in_progress: "navy",
+  visit_completed: "teal",
+  completed: "success",
+  customer_viewing: "navy",
+  counter_received: "orange",
+  inspecting: "navy",
+  inspection_submitted: "teal",
+  repair_negotiating: "orange",
+  repair_approved: "teal",
+  repair_in_progress: "navy",
+  rejected: "danger",
+  closed_assigned: "neutral",
+  cancelled: "danger",
 };
 
 const VISIT_STATUS_TONE: Record<VisitStatus, Tone> = {

@@ -1,0 +1,24 @@
+# HUNAR CODEOWNERS
+* @Qaziaaaa
+/hunar-frontend/src/features/auth/ @Qaziaaaa @faizan
+/hunar-frontend/src/features/admin/ @Qaziaaaa @faizan
+/hunar-frontend/src/features/worker-onboarding/ @Qaziaaaa @shahzad
+/hunar-frontend/src/features/worker-verification/ @Qaziaaaa @shahzad
+/hunar-frontend/src/features/worker-dashboard/ @Qaziaaaa @shahzad
+/hunar-frontend/src/features/jobs/ @Qaziaaaa @abdullah
+/hunar-frontend/src/features/negotiation/ @Qaziaaaa @abdullah
+/hunar-backend/src/modules/auth/ @Qaziaaaa @hashim-malik
+/hunar-backend/src/modules/admin/ @Qaziaaaa @hashim-malik
+/hunar-backend/src/modules/users/ @Qaziaaaa @hashim-malik
+/hunar-backend/src/modules/notifications/ @Qaziaaaa @hashim-malik
+/hunar-backend/src/modules/jobs/ @Qaziaaaa @hakim
+/hunar-backend/src/modules/offers/ @Qaziaaaa @hakim
+/hunar-backend/src/modules/visits/ @Qaziaaaa @hakim
+/hunar-backend/src/modules/repair/ @Qaziaaaa @hakim
+/hunar-backend/src/modules/commissions/ @Qaziaaaa @hakim
+/hunar-backend/src/modules/chat/ @Qaziaaaa @hakim
+/hunar-backend/src/modules/uploads/ @Qaziaaaa @hakim
+/hunar-backend/src/modules/reviews/ @Qaziaaaa @hakim
+/hunar-backend/src/modules/payments/ @Qaziaaaa @shafqatullah
+/hunar-backend/src/modules/location/ @Qaziaaaa @shafqatullah
+/hunar-backend/src/modules/search/ @Qaziaaaa @shafqatullah

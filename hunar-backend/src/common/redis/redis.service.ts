@@ -32,6 +32,18 @@ export class RedisService implements OnModuleDestroy {
     return (await this.client.exists(key)) === 1;
   }
 
+  async incr(key: string): Promise<number> {
+    return this.client.incr(key);
+  }
+
+  async expire(key: string, ttlSeconds: number): Promise<void> {
+    await this.client.expire(key, ttlSeconds);
+  }
+
+  async ttl(key: string): Promise<number> {
+    return this.client.ttl(key);
+  }
+
   onModuleDestroy(): void {
     this.client.disconnect();
     this.logger.log('Redis connection closed');
