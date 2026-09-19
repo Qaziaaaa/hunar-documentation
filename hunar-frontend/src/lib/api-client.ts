@@ -1,6 +1,8 @@
 const API_URL =
   process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3000/api";
 
+export const API_BASE_URL = API_URL;
+
 const ACCESS_TOKEN_KEY = "hunar.access_token";
 const REFRESH_TOKEN_KEY = "hunar.refresh_token";
 

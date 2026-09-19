@@ -1,0 +1,38 @@
+"use client";
+
+import { useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Pencil, Save } from "lucide-react";
+import { useTranslations } from "next-intl";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { LoadingState } from "@/components/shared/loading-state";
+import { ErrorState } from "@/components/shared/error-state";
+import { PageHeader } from "@/components/shared/page-header";
+import { RatingStars } from "@/components/shared/rating-stars";
+import { VerifiedBadge } from "@/components/shared/verified-badge";
+import { getWorkerProfile, updateWorkerProfile, queryKeys } from "@/services/worker/profile.service";
+import type { UpdateWorkerProfileInput } from "@/types/worker";
+import { formatRs } from "@/lib/money";
+
+export default function ProfilePage() {
+  const t = useTranslations("Worker");
+  const client = useQueryClient();
+  const profile = useQuery({ queryKey: queryKeys.profile(), queryFn: getWorkerProfile });
+  const [editing, setEditing] = useState(false);
+  const [formState, setFormState] = useState<UpdateWorkerProfileInput | null>(null);
+  const update = useMutation({ mutationFn: updateWorkerProfile, onSuccess: (data) => { client.setQueryData(queryKeys.profile(), data); setEditing(false); } });
+  if (profile.isPending) return <LoadingState label={t("common.loading")} />;
+  if (profile.isError) return <ErrorState title={t("empty.errorTitle")} description={t("empty.errorDescription")} onRetry={() => void profile.refetch()} />;
+  const worker = profile.data;
+  const form = formState ?? { name: worker.name, bio: worker.bio, skills: worker.skills, yearsExperience: worker.yearsExperience, serviceAreas: worker.serviceAreas, defaultVisitCharge: worker.defaultVisitCharge };
+  const setText = (key: "name" | "bio" | "yearsExperience" | "defaultVisitCharge", value: string) => setFormState((current) => ({ ...form, ...current, [key]: key === "yearsExperience" || key === "defaultVisitCharge" ? Number(value) : value }));
+  const setList = (key: "skills" | "serviceAreas", value: string) => setFormState((current) => ({ ...form, ...current, [key]: value.split(",").map((item) => item.trim()).filter(Boolean) }));
+  return <div className="space-y-6"><PageHeader title={t("profile.title")} description={t("profile.subtitle")} actions={<Button variant="outline" onClick={() => setEditing((value) => !value)}><Pencil className="size-4" aria-hidden="true" />{t("profile.editProfile")}</Button>} /><div className="grid gap-6 lg:grid-cols-[0.8fr_1.2fr]"><Card><CardContent className="flex flex-col items-center gap-4 text-center"><Avatar className="size-24"><AvatarFallback className="bg-teal/10 text-2xl font-semibold text-teal">{worker.name.slice(0, 1)}</AvatarFallback></Avatar><div><div className="flex items-center justify-center gap-2"><h2 className="text-xl font-bold text-navy">{worker.name}</h2>{worker.isVerified ? <VerifiedBadge title={t("profile.verified")} /> : null}</div><div className="mt-2 flex items-center justify-center gap-2"><RatingStars rating={worker.rating} /><span className="text-sm text-muted-foreground">{t("profile.ratingValue", { value: worker.rating })}</span></div></div><div className="grid w-full grid-cols-2 gap-3 border-t border-border pt-4 text-sm"><div><p className="text-muted-foreground">{t("profile.reviews")}</p><p className="font-semibold text-navy">{worker.reviewsCount}</p></div><div><p className="text-muted-foreground">{t("profile.completedJobs")}</p><p className="font-semibold text-navy">{worker.completedJobs}</p></div></div><p className="text-sm text-muted-foreground">{worker.profileVisible ? t("profile.publicViewNote") : t("profile.notVerified")}</p></CardContent></Card><Card><CardHeader><CardTitle>{editing ? t("profile.editTitle") : t("profile.bio")}</CardTitle></CardHeader><CardContent className="space-y-5">{editing ? <><div className="grid gap-2"><Label htmlFor="profile-name">{t("profile.name")}</Label><Input id="profile-name" value={form.name ?? ""} onChange={(event) => setText("name", event.target.value)} /></div><div className="grid gap-2"><Label htmlFor="profile-bio">{t("profile.bioLabel")}</Label><Textarea id="profile-bio" value={form.bio ?? ""} onChange={(event) => setText("bio", event.target.value)} /></div><div className="grid gap-2"><Label htmlFor="profile-skills">{t("profile.skillsLabel")}</Label><Input id="profile-skills" value={(form.skills ?? []).join(", ")} onChange={(event) => setList("skills", event.target.value)} /></div><div className="grid gap-2"><Label htmlFor="profile-exp">{t("profile.experienceLabel")}</Label><Input id="profile-exp" type="number" min="0" value={form.yearsExperience ?? 0} onChange={(event) => setText("yearsExperience", event.target.value)} /></div><div className="grid gap-2"><Label htmlFor="profile-areas">{t("profile.serviceAreasLabel")}</Label><Input id="profile-areas" value={(form.serviceAreas ?? []).join(", ")} onChange={(event) => setList("serviceAreas", event.target.value)} /></div><div className="grid gap-2"><Label htmlFor="profile-charge">{t("profile.visitChargeLabel")}</Label><Input id="profile-charge" type="number" min="0" value={form.defaultVisitCharge ?? 0} onChange={(event) => setText("defaultVisitCharge", event.target.value)} /></div><Button className="bg-teal hover:bg-teal/85" disabled={update.isPending} onClick={() => update.mutate(form)}><Save className="size-4" aria-hidden="true" />{update.isPending ? t("common.saving") : t("profile.saveChanges")}</Button></> : <><p className="text-sm leading-relaxed text-muted-foreground">{worker.bio || t("profile.notProvided")}</p><ProfileList title={t("profile.skills")} values={worker.skills} /><ProfileList title={t("profile.categories")} values={worker.categories} /><ProfileList title={t("profile.serviceAreas")} values={worker.serviceAreas} /><div className="flex justify-between border-t border-border pt-3 text-sm"><span className="text-muted-foreground">{t("profile.experience")}</span><span className="font-medium text-navy">{t("profile.experienceYears", { count: worker.yearsExperience })}</span></div><div className="flex justify-between text-sm"><span className="text-muted-foreground">{t("profile.defaultVisitCharge")}</span><span className="font-medium text-navy">{worker.defaultVisitCharge == null ? t("profile.notProvided") : formatRs(worker.defaultVisitCharge)}</span></div></>}</CardContent></Card></div><Card><CardHeader><CardTitle>{t("profile.documents")}</CardTitle></CardHeader><CardContent className="space-y-3"><p className="rounded-lg bg-orange/10 p-3 text-sm text-orange">{t("profile.documentsReadOnlyHint")}</p>{worker.documents.map((document) => <div key={document.id} className="flex items-center justify-between gap-3 border-b border-border pb-2 text-sm"><span className="text-navy">{document.name}</span><span className="text-muted-foreground">{document.verified ? t("profile.documentVerified") : t("profile.documentPending")}</span></div>)}</CardContent></Card></div>;
+}
+
+function ProfileList({ title, values }: { title: string; values: string[] }) { return <div><p className="mb-2 text-sm font-medium text-navy">{title}</p><div className="flex flex-wrap gap-2">{values.map((value) => <span key={value} className="rounded-md bg-muted px-2 py-1 text-xs text-muted-foreground">{value}</span>)}</div></div>; }

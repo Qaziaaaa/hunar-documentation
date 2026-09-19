@@ -48,12 +48,10 @@ export default async function LocaleLayout({
 
   setRequestLocale(locale);
   const messages = await getMessages();
-  const dir = locale === "ur" ? "rtl" : "ltr";
-
   return (
     <html
       lang={locale}
-      dir={dir}
+      dir="ltr"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
