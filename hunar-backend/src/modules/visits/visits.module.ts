@@ -3,9 +3,10 @@ import { VisitsController } from './visits.controller';
 import { VisitsService } from './visits.service';
 import { JobsModule } from '../jobs/jobs.module';
 import { RealtimeModule } from '../realtime/realtime.module';
+import { PaymentsModule } from '../payments/payments.module';
 
 @Module({
-  imports: [JobsModule, RealtimeModule],
+  imports: [JobsModule, RealtimeModule, PaymentsModule],
   controllers: [VisitsController],
   providers: [VisitsService],
   exports: [VisitsService],

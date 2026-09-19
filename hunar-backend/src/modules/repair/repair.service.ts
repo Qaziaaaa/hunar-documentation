@@ -13,7 +13,6 @@ import { JobsService } from '../jobs/jobs.service';
 import { JwtPayload } from '../../common/types/jwt-payload.interface';
 import { RealtimeService } from '../realtime/realtime.service';
 import { JOB_EVENTS, userRoom } from '../jobs/jobs.events';
-import { calculateCommission } from '../../common/helpers/commission.util';
 import {
   RepairAcceptDto,
   RepairCounterDto,
@@ -285,11 +284,10 @@ export class RepairService {
     if (repair.revisions.some((r) => r.status === 'PENDING_APPROVAL')) {
       throw new BadRequestException('A scope-change revision is still pending approval');
     }
-    const rate = this.config.get<number>('app.commissionRate', 0.1);
-    const commissionAmount = repair.job.lockedVisitCharge
-      ? calculateCommission(Number(repair.job.lockedVisitCharge), rate)
-      : 0;
 
+    // The wallet module owns the commission lifecycle: it was HELD when the worker
+    // arrived (Task 7), so repair completion only finishes the job. No duplicate
+    // Commission row is created here (Commission.jobId is unique).
     const updated = await this.prisma.$transaction(async (tx) => {
       const r = await tx.repair.update({
         where: { id },
@@ -299,30 +297,9 @@ export class RepairService {
         where: { id: repair.jobId },
         data: { status: 'COMPLETED', completedAt: new Date() },
       });
-      // Auto-create commission (10% of locked visit charge, wallet disabled — paid via WhatsApp).
-      if (commissionAmount > 0) {
-        await tx.commission.create({
-          data: {
-            jobId: repair.jobId,
-            workerId: repair.workerId,
-            visitCharge: repair.job.lockedVisitCharge!,
-            commissionRate: rate,
-            amount: commissionAmount,
-            status: 'PENDING',
-          },
-        });
-      }
       return r;
     });
     this.eventBus.emit('repair.completed', { repairId: id, jobId: repair.jobId });
-    if (commissionAmount > 0) {
-      this.eventBus.emit('commission.recorded', {
-        commissionId: undefined,
-        jobId: repair.jobId,
-        workerId: repair.workerId,
-        amount: commissionAmount,
-      });
-    }
     this.realtime.emitToRoom(userRoom(repair.job.customerId), JOB_EVENTS.jobStatusChanged, {
       jobId: repair.jobId,
       oldStatus: 'IN_PROGRESS',
