@@ -8,6 +8,7 @@ export enum UploadCategory {
   CHAT_IMAGE = 'chat-image',
   WORKER_DOCUMENT = 'worker-document',
   CNIC_DOCUMENT = 'cnic-document',
+  WALLET_SCREENSHOT = 'wallet-screenshot',
 }
 
 export interface CompressOptions {
@@ -76,6 +77,14 @@ export const UPLOAD_PRESETS: Record<UploadCategory, UploadPreset> = {
     allowedMimeTypes: IMAGE_MIME_TYPES,
     maxBytes: 5 * MB,
     compress: { maxSizePx: 1600, quality: 75 },
+  },
+  [UploadCategory.WALLET_SCREENSHOT]: {
+    category: UploadCategory.WALLET_SCREENSHOT,
+    folder: 'wallet-screenshots',
+    isDocument: false,
+    allowedMimeTypes: IMAGE_MIME_TYPES,
+    maxBytes: 5 * MB,
+    compress: { maxSizePx: 1600, quality: 80 },
   },
 };
 
