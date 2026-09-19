@@ -62,6 +62,12 @@ export class VisitsController {
     return this.visitsService.trackLocation(user, jobId ?? undefined, dto);
   }
 
+  @Put('workers/me/location')
+  @Roles(Role.WORKER)
+  updateMyLocation(@CurrentUser() user: JwtPayload, @Body() dto: TrackLocationDto) {
+    return this.visitsService.trackLocation(user, undefined, dto);
+  }
+
   @Get('location/track/:jobId')
   history(
     @CurrentUser() user: JwtPayload,

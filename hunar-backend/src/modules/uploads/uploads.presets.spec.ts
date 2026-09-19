@@ -26,7 +26,7 @@ function invokeFilter(category: UploadCategory, mimetype: string): Promise<Error
 
 describe('uploads.presets', () => {
   it('defines exactly the six required categories', () => {
-    expect(Object.keys(UploadCategory)).toHaveLength(6);
+    expect(Object.keys(UploadCategory)).toHaveLength(7);
     for (const category of Object.values(UploadCategory)) {
       expect(UPLOAD_PRESETS[category].folder).toBeTruthy();
       expect(UPLOAD_PRESETS[category].compress).toBeTruthy();

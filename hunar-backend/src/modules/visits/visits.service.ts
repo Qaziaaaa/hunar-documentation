@@ -11,6 +11,7 @@ import { normalizePage, toPageResult } from '../../common/helpers/pagination.uti
 import { JobsService } from '../jobs/jobs.service';
 import { JwtPayload } from '../../common/types/jwt-payload.interface';
 import { RealtimeService } from '../realtime/realtime.service';
+import { WalletService } from '../payments/wallet.service';
 import { JOB_EVENTS, jobRoom, LOCATION_EVENTS, userRoom } from '../jobs/jobs.events';
 import { InspectionDto, TrackLocationDto, VisitQueryDto } from './visits.validation';
 
@@ -21,6 +22,7 @@ export class VisitsService {
     private readonly eventBus: EventBusService,
     private readonly jobsService: JobsService,
     private readonly realtime: RealtimeService,
+    private readonly wallet: WalletService,
   ) {}
 
   private async assertVisitAccess(visitId: string, user: JwtPayload) {
@@ -181,6 +183,11 @@ export class VisitsService {
     if (user.role !== Role.WORKER) {
       throw new ForbiddenException('Only the assigned worker can mark arrival');
     }
+
+    // Task 7 — hold 10% of the locked visit charge on arrival. Throws
+    // INSUFFICIENT_BALANCE when the worker's wallet cannot cover the hold,
+    // which blocks arrival (the rule in the wallet spec).
+    await this.wallet.holdCommissionForJob(visit.workerId, visit.jobId);
 
     const updated = await this.prisma.$transaction(async (tx) => {
       const v = await tx.visit.update({
