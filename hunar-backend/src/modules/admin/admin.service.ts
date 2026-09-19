@@ -122,7 +122,9 @@ export class AdminService {
         jobsCount: user._count.customerJobs,
         reviewsCount: reviews.length,
         ratingAverage: this.averageRating(reviews),
-        totalPaid: payments.reduce((sum, payment) => sum + Number(payment.amount ?? 0), 0),
+        totalPaid: Number(
+          payments.reduce((sum, payment) => sum + Number(payment.amount ?? 0), 0).toFixed(2),
+        ),
       },
       jobs,
       payments,

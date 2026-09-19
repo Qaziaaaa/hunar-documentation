@@ -13,13 +13,23 @@ describe('AdminController HTTP — GET /admin/customers', () => {
   let app: INestApplication;
   const findMany = jest.fn();
   const count = jest.fn();
+  const findFirst = jest.fn();
+  const findManyJobs = jest.fn();
+  const findManyReviews = jest.fn();
 
   beforeAll(async () => {
     const moduleRef = await Test.createTestingModule({
       controllers: [AdminController],
       providers: [
         AdminService,
-        { provide: PrismaService, useValue: { user: { findMany, count } } },
+        {
+          provide: PrismaService,
+          useValue: {
+            user: { findMany, count, findFirst },
+            serviceRequest: { findMany: findManyJobs },
+            review: { findMany: findManyReviews },
+          },
+        },
         { provide: AuditService, useValue: { record: jest.fn() } },
       ],
     }).compile();
@@ -37,6 +47,9 @@ describe('AdminController HTTP — GET /admin/customers', () => {
   beforeEach(() => {
     findMany.mockReset();
     count.mockReset();
+    findFirst.mockReset();
+    findManyJobs.mockReset();
+    findManyReviews.mockReset();
   });
 
   it('returns the paginated customer list', async () => {
@@ -67,5 +80,94 @@ describe('AdminController HTTP — GET /admin/customers', () => {
 
   it('rejects an invalid status filter with 400', async () => {
     await request(app.getHttpServer()).get('/api/v1/admin/customers?status=banana').expect(400);
+  });
+
+  describe('GET /admin/customers/:id (Task 11)', () => {
+    const validUuid = 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11';
+
+    it('rejects a non-UUID customer ID with 400', async () => {
+      const res = await request(app.getHttpServer())
+        .get('/api/v1/admin/customers/not-a-uuid')
+        .expect(400);
+
+      expect(res.body.message).toContain('Validation failed (uuid is expected)');
+    });
+
+    it('returns 404 when customer does not exist', async () => {
+      findFirst.mockResolvedValue(null);
+
+      const res = await request(app.getHttpServer())
+        .get(`/api/v1/admin/customers/${validUuid}`)
+        .expect(404);
+
+      expect(res.body.message).toBe('Customer not found');
+    });
+
+    it('returns 200 with customer detail payload when customer exists', async () => {
+      findFirst.mockResolvedValue({
+        id: validUuid,
+        phone: '03120000002',
+        name: 'Ali Customer',
+        avatarUrl: null,
+        isActive: true,
+        isVerified: true,
+        createdAt: new Date('2026-09-01T00:00:00Z'),
+        updatedAt: new Date('2026-09-01T00:00:00Z'),
+        _count: { customerJobs: 1 },
+      });
+      findManyJobs.mockResolvedValue([
+        {
+          id: 'job-1',
+          title: 'AC Fix',
+          status: 'COMPLETED',
+          urgency: 'HIGH',
+          city: 'Lahore',
+          area: 'Gulberg',
+          suggestedVisitCharge: 500,
+          lockedVisitCharge: 600,
+          selectedWorkerId: 'worker-1',
+          createdAt: new Date('2026-09-02T00:00:00Z'),
+          completedAt: new Date('2026-09-02T02:00:00Z'),
+          cancelledAt: null,
+          category: { id: 'cat-1', name: 'AC', nameUrdu: 'اے سی' },
+        },
+      ]);
+      findManyReviews.mockResolvedValue([
+        {
+          id: 'rev-1',
+          jobId: 'job-1',
+          rating: 5,
+          comment: 'Good customer',
+          createdAt: new Date('2026-09-02T03:00:00Z'),
+          reviewer: { id: 'worker-1', name: 'Worker Khan' },
+        },
+      ]);
+
+      const res = await request(app.getHttpServer())
+        .get(`/api/v1/admin/customers/${validUuid}`)
+        .expect(200);
+
+      expect(res.body.profile).toMatchObject({
+        id: validUuid,
+        name: 'Ali Customer',
+        phone: '03120000002',
+        isActive: true,
+      });
+      expect(res.body.stats).toEqual({
+        jobsCount: 1,
+        reviewsCount: 1,
+        ratingAverage: 5,
+        totalPaid: 600,
+      });
+      expect(res.body.jobs).toHaveLength(1);
+      expect(res.body.payments).toEqual([
+        expect.objectContaining({
+          jobId: 'job-1',
+          amount: 600,
+          status: 'COMPLETED',
+        }),
+      ]);
+      expect(res.body.reviews).toHaveLength(1);
+    });
   });
 });

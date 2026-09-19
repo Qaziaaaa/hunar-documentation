@@ -74,7 +74,7 @@ Backend Developer — Shared Auth APIs + Full Admin Dashboard APIs
 | #   | Task                                                            | API Endpoint                                    | Status |
 | --- | --------------------------------------------------------------- | ----------------------------------------------- | ------ |
 | 10  | Get all customers (list with search/filter)                     | `GET /admin/customers`                          | ✅     |
-| 11  | Get customer detail (profile, jobs, payments, reviews)          | `GET /admin/customers/[id]`                     | ⏸️     |
+| 11  | Get customer detail (profile, jobs, payments, reviews)          | `GET /admin/customers/[id]`                     | ✅     |
 | 12  | Suspend customer (with reason)                                  | `PUT /admin/customers/[id]/suspend`             | ⏸️     |
 | 13  | Reactivate customer                                             | `PUT /admin/customers/[id]/reactivate`          | ⏸️     |
 | 14  | Get all workers (list with search/filter)                       | `GET /admin/workers`                            | ✅     |

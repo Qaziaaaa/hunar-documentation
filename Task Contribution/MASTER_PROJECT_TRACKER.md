@@ -144,9 +144,9 @@ PROGRESS: ██████████░░░░░░░░░░ 47%
 | Milestone | Tasks | Done | Verified? | Status |
 |-----------|-------|------|-----------|--------|
 | M1: Auth Module (Shared) | 9 | 9 | Yes (build + tests) | 100% |
-| M2: User Management + Verification APIs | 14 | 8 | Partial | 57% |
+| M2: User Management + Verification APIs | 14 | 9 | Partial | 64% |
 | M3: Jobs, Payments, Disputes, Categories, Settings, Reports | 26 | 3 | Partial | 12% |
-| **TOTAL** | **49** | **20** | **Partially Verified** | **41%** |
+| **TOTAL** | **49** | **21** | **Partially Verified** | **43%** |
 
 Verified done (code reviewed + builds + tests pass):
 - Auth module (368 lines) - OTP, bcrypt, JWT, role guards, Redis
