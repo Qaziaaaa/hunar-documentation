@@ -1,0 +1,263 @@
+#!/bin/bash
+
+# ============================================
+# HUNAR TRACKER - Simple Dashboard
+# ============================================
+# Usage: ./track           # Full dashboard
+#        ./track violations # Just violations
+#        ./track progress   # Just progress
+#        ./track blame      # Just file ownership
+#        ./track reset      # Reset baseline
+
+REPO_ROOT="$(cd "$(dirname "$0")" && pwd)"
+BASELINE_FILE="$REPO_ROOT/Task Contribution/.audit-baseline"
+
+# Colors
+R='\033[0;31m'
+G='\033[0;32m'
+Y='\033[1;33m'
+C='\033[0;36m'
+B='\033[1m'
+NC='\033[0m'
+
+# Leader exclusion
+is_leader() {
+    [[ "$1" == *"Qaziaaaa"* || "$1" == *"qaziaaaa"* || "$1" == *"Muhammad Farhan Ahmad"* || "$1" == *"farhan"* ]]
+}
+
+# Get baseline
+if [ -f "$BASELINE_FILE" ]; then
+    BASELINE=$(cat "$BASELINE_FILE")
+else
+    BASELINE=$(date "+%Y-%m-%d %H:%M:%S")
+    echo "$BASELINE" > "$BASELINE_FILE"
+fi
+
+# Reset
+if [ "$1" = "reset" ]; then
+    date "+%Y-%m-%d %H:%M:%S" > "$BASELINE_FILE"
+    echo -e "${G}Baseline reset to now.${NC}"
+    exit 0
+fi
+
+clear
+echo ""
+echo -e "${B}╔══════════════════════════════════════════╗${NC}"
+echo -e "${B}║          HUNAR PROJECT TRACKER          ║${NC}"
+echo -e "${B}╚══════════════════════════════════════════╝${NC}"
+echo ""
+
+# ============================================
+# PROGRESS
+# ============================================
+if [ -z "$1" ] || [ "$1" = "progress" ]; then
+    echo -e "${B}📊 PROGRESS${NC}"
+    echo "────────────────────────────────────────"
+    
+    # Backend modules
+    BE_DONE=0; BE_TOTAL=0
+    for mod in auth admin users notifications jobs offers visits repair commissions chat uploads reviews; do
+        DIR="$REPO_ROOT/hunar-backend/src/modules/$mod"
+        if [ -d "$DIR" ]; then
+            FILES=$(find "$DIR" -name "*.ts" ! -name "*.spec.ts" ! -name "*.validation.ts" 2>/dev/null | wc -l)
+            EMPTY=$(find "$DIR" -name "*.ts" ! -name "*.spec.ts" ! -name "*.validation.ts" -empty 2>/dev/null | wc -l)
+            BE_TOTAL=$((BE_TOTAL + FILES))
+            BE_DONE=$((BE_DONE + FILES - EMPTY))
+        fi
+    done
+    
+    if [ $BE_TOTAL -gt 0 ]; then
+        BE_PCT=$((BE_DONE * 100 / BE_TOTAL))
+    else
+        BE_PCT=0
+    fi
+    
+    # Frontend features
+    FE_DONE=0; FE_TOTAL=0
+    for feat in auth admin worker-onboarding worker-verification worker-dashboard; do
+        DIR="$REPO_ROOT/hunar-frontend/src/features/$feat"
+        if [ -d "$DIR" ]; then
+            FILES=$(find "$DIR" -name "*.tsx" -o -name "*.ts" 2>/dev/null | wc -l)
+            EMPTY=$(find "$DIR" \( -name "*.tsx" -o -name "*.ts" \) -empty 2>/dev/null | wc -l)
+            FE_TOTAL=$((FE_TOTAL + FILES))
+            FE_DONE=$((FE_DONE + FILES - EMPTY))
+        fi
+    done
+    
+    if [ $FE_TOTAL -gt 0 ]; then
+        FE_PCT=$((FE_DONE * 100 / FE_TOTAL))
+    else
+        FE_PCT=0
+    fi
+    
+    TOTAL_PCT=$(( (BE_PCT + FE_PCT) / 2 ))
+    
+    # Progress bars
+    bar() {
+        local pct=$1
+        local filled=$((pct / 5))
+        local empty=$((20 - filled))
+        local b=""
+        for ((i=0; i<filled; i++)); do b+="█"; done
+        for ((i=0; i<empty; i++)); do b+="░"; done
+        echo "$b"
+    }
+    
+    printf "  Backend:   %s %3d%%\n" "$(bar $BE_PCT)" "$BE_PCT"
+    printf "  Frontend:  %s %3d%%\n" "$(bar $FE_PCT)" "$FE_PCT"
+    printf "  ${B}Overall:   %s %3d%%${NC}\n" "$(bar $TOTAL_PCT)" "$TOTAL_PCT"
+    echo ""
+fi
+
+# ============================================
+# VIOLATIONS
+# ============================================
+if [ -z "$1" ] || [ "$1" = "violations" ]; then
+    echo -e "${B}🚨 VIOLATIONS (since $BASELINE)${NC}"
+    echo "────────────────────────────────────────"
+    
+    declare -A OWNERS
+    OWNERS["hunar-frontend/src/features/auth/"]="faizan"
+    OWNERS["hunar-frontend/src/features/admin/"]="faizan"
+    OWNERS["hunar-frontend/src/features/worker-onboarding/"]="shahzad"
+    OWNERS["hunar-frontend/src/features/worker-verification/"]="shahzad"
+    OWNERS["hunar-frontend/src/features/worker-dashboard/"]="shahzad"
+    OWNERS["hunar-frontend/src/features/jobs/"]="abdullah"
+    OWNERS["hunar-frontend/src/features/negotiation/"]="abdullah"
+    OWNERS["hunar-frontend/src/features/chat/"]="abdullah"
+    OWNERS["hunar-frontend/src/features/payments/"]="abdullah"
+    OWNERS["hunar-frontend/src/features/tracking/"]="abdullah"
+    OWNERS["hunar-backend/src/modules/auth/"]="hashim-malik"
+    OWNERS["hunar-backend/src/modules/admin/"]="hashim-malik"
+    OWNERS["hunar-backend/src/modules/users/"]="hashim-malik"
+    OWNERS["hunar-backend/src/modules/notifications/"]="hashim-malik"
+    OWNERS["hunar-backend/src/modules/jobs/"]="hakim"
+    OWNERS["hunar-backend/src/modules/offers/"]="hakim"
+    OWNERS["hunar-backend/src/modules/visits/"]="hakim"
+    OWNERS["hunar-backend/src/modules/repair/"]="hakim"
+    OWNERS["hunar-backend/src/modules/commissions/"]="hakim"
+    OWNERS["hunar-backend/src/modules/chat/"]="hakim"
+    OWNERS["hunar-backend/src/modules/uploads/"]="hakim"
+    OWNERS["hunar-backend/src/modules/reviews/"]="hakim"
+    OWNERS["hunar-backend/src/modules/payments/"]="shafqatullah"
+    OWNERS["hunar-backend/src/modules/location/"]="shafqatullah"
+    OWNERS["hunar-backend/src/modules/search/"]="shafqatullah"
+    
+    VIOLATIONS=0
+    
+    for PATTERN in "${!OWNERS[@]}"; do
+        OWNER="${OWNERS[$PATTERN]}"
+        DIR="$REPO_ROOT/$PATTERN"
+        
+        [ -d "$DIR" ] || continue
+        
+        while IFS= read -r FILE; do
+            [ -z "$FILE" ] && continue
+            REL="${FILE#$REPO_ROOT/}"
+            
+            AUTHOR=$(git -C "$REPO_ROOT" log -1 --format="%an" -- "$REL" 2>/dev/null || echo "unknown")
+            EMAIL=$(git -C "$REPO_ROOT" log -1 --format="%ae" -- "$REL" 2>/dev/null || echo "unknown")
+            TS=$(git -C "$REPO_ROOT" log -1 --format="%aI" -- "$REL" 2>/dev/null || echo "unknown")
+            # Normalize timestamp for comparison
+            TS_NORM=$(echo "$TS" | sed 's/T/ /;s/+.*//;s/Z//')
+            
+            is_leader "$AUTHOR" && continue
+            [[ "$TS_NORM" < "$BASELINE" ]] && continue
+            
+            GITHUB="$AUTHOR"
+            [[ "$AUTHOR" == *"Shehzad"* ]] && GITHUB="shahzad"
+            [[ "$AUTHOR" == *"Abdullah"* ]] && GITHUB="abdullah"
+            [[ "$AUTHOR" == *"Hakim"* ]] && GITHUB="hakim"
+            [[ "$AUTHOR" == *"Shafqat"* ]] && GITHUB="shafqatullah"
+            [[ "$AUTHOR" == *"Hashim"* ]] && GITHUB="hashim-malik"
+            
+            if [ "$GITHUB" != "$OWNER" ]; then
+                VIOLATIONS=$((VIOLATIONS + 1))
+                FILENAME=$(basename "$REL")
+                echo -e "  ${R}✗ $FILENAME${NC}"
+                echo "    Owner: @$OWNER | Modified by: @$GITHUB"
+                echo ""
+            fi
+        done < <(find "$DIR" \( -name "*.ts" -o -name "*.tsx" \) 2>/dev/null)
+    done
+    
+    if [ $VIOLATIONS -eq 0 ]; then
+        echo -e "  ${G}✓ No violations${NC}"
+    else
+        echo -e "  ${R}$VIOLATIONS violation(s) found${NC}"
+    fi
+    echo ""
+fi
+
+# ============================================
+# BLAME (file ownership)
+# ============================================
+if [ "$1" = "blame" ]; then
+    echo -e "${B}📋 FILE OWNERSHIP${NC}"
+    echo "────────────────────────────────────────"
+    
+    declare -A OWNERS2
+    OWNERS2["hunar-frontend/src/features/auth/"]="faizan"
+    OWNERS2["hunar-frontend/src/features/worker-onboarding/"]="shahzad"
+    OWNERS2["hunar-frontend/src/features/worker-verification/"]="shahzad"
+    OWNERS2["hunar-frontend/src/features/worker-dashboard/"]="shahzad"
+    OWNERS2["hunar-frontend/src/features/jobs/"]="abdullah"
+    OWNERS2["hunar-frontend/src/features/negotiation/"]="abdullah"
+    OWNERS2["hunar-backend/src/modules/auth/"]="hashim-malik"
+    OWNERS2["hunar-backend/src/modules/admin/"]="hashim-malik"
+    OWNERS2["hunar-backend/src/modules/users/"]="hashim-malik"
+    OWNERS2["hunar-backend/src/modules/notifications/"]="hashim-malik"
+    OWNERS2["hunar-backend/src/modules/jobs/"]="hakim"
+    OWNERS2["hunar-backend/src/modules/offers/"]="hakim"
+    OWNERS2["hunar-backend/src/modules/visits/"]="hakim"
+    OWNERS2["hunar-backend/src/modules/repair/"]="hakim"
+    OWNERS2["hunar-backend/src/modules/commissions/"]="hakim"
+    OWNERS2["hunar-backend/src/modules/chat/"]="hakim"
+    OWNERS2["hunar-backend/src/modules/uploads/"]="hakim"
+    OWNERS2["hunar-backend/src/modules/reviews/"]="hakim"
+    
+    for PATTERN in "${!OWNERS2[@]}"; do
+        OWNER="${OWNERS2[$PATTERN]}"
+        DIR="$REPO_ROOT/$PATTERN"
+        [ -d "$DIR" ] || continue
+        
+        MODULE=$(echo "$PATTERN" | sed 's|.*/modules/||;s|.*/features/||;s|/$||')
+        printf "  ${C}%-25s${NC} @%-15s" "$MODULE" "$OWNER"
+        
+        COUNT=$(find "$DIR" \( -name "*.ts" -o -name "*.tsx" \) 2>/dev/null | wc -l)
+        echo "($COUNT files)"
+    done
+    echo ""
+fi
+
+# ============================================
+# GIT ACTIVITY
+# ============================================
+if [ -z "$1" ] || [ "$1" = "progress" ]; then
+    echo -e "${B}📝 RECENT ACTIVITY (last 3 days)${NC}"
+    echo "────────────────────────────────────────"
+    
+    for name in abdullah faizan hakim hashim shafqatullah shahzad; do
+        COUNT=$(git -C "$REPO_ROOT" log --all --author="$name" --oneline --since="3 days ago" 2>/dev/null | wc -l)
+        if [ $COUNT -gt 0 ]; then
+            printf "  %-15s %2d commits\n" "@$name" "$COUNT"
+        fi
+    done
+    
+    TOTAL=$(git -C "$REPO_ROOT" log --all --oneline --since="3 days ago" 2>/dev/null | wc -l)
+    echo "  ────────────────────"
+    printf "  %-15s %2d commits\n" "TOTAL" "$TOTAL"
+    echo ""
+fi
+
+# ============================================
+# SUMMARY
+# ============================================
+echo -e "${B}⚡ QUICK COMMANDS${NC}"
+echo "────────────────────────────────────────"
+echo "  ./track              # Full dashboard"
+echo "  ./track violations   # Just violations"
+echo "  ./track progress     # Just progress"
+echo "  ./track blame        # File ownership"
+echo "  ./track reset        # Reset baseline"
+echo ""

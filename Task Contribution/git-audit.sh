@@ -172,12 +172,14 @@ for PATTERN in "${!OWNERS[@]}"; do
             LAST_EMAIL=$(git -C "$REPO_ROOT" log -1 --format="%ae" -- "$REL_PATH" 2>/dev/null || echo "unknown")
             COMMIT_TIMESTAMP=$(git -C "$REPO_ROOT" log -1 --format="%aI" -- "$REL_PATH" 2>/dev/null || echo "unknown")
             COMMIT_DATE=$(echo "$COMMIT_TIMESTAMP" | cut -d'T' -f1)
+            # Normalize for comparison
+            TS_NORM=$(echo "$COMMIT_TIMESTAMP" | sed 's/T/ /;s/+.*//;s/Z//')
             
             # Skip if leader
             is_leader "$LAST_AUTHOR" "$LAST_EMAIL" && continue
             
             # Skip if before baseline (compare timestamps)
-            if [[ "$COMMIT_TIMESTAMP" < "$BASELINE_DATE" ]]; then
+            if [[ "$TS_NORM" < "$BASELINE_DATE" ]]; then
                 continue
             fi
             
