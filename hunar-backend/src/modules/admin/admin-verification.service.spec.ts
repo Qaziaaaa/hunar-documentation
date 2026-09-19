@@ -102,10 +102,7 @@ function makeDb(): any {
 }
 
 function makeService(db: any) {
-  return new AdminVerificationService(
-    db,
-    { emit: jest.fn() } as unknown as EventBusService,
-  );
+  return new AdminVerificationService(db, { emit: jest.fn() } as unknown as EventBusService);
 }
 
 function addWorker(db: any, id: string, overrides: Record<string, unknown> = {}) {

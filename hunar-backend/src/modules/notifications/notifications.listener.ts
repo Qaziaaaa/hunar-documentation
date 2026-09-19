@@ -334,7 +334,7 @@ export class NotificationsListener {
     } catch (error) {
       this.logger.error(
         `notification handler failed for ${name}`,
-        error instanceof Error ? error.stack ?? error.message : String(error),
+        error instanceof Error ? (error.stack ?? error.message) : String(error),
       );
     }
   }

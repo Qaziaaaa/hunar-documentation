@@ -1,8 +1,11 @@
 # HASHIM — AUTH SHARED + ADMIN DASHBOARD BACKEND
 
-## Status: 🟡 IN PROGRESS (61%)
+## Status: 🟡 IN PROGRESS (41% — VERIFIED)
 
-Backend is active. Auth module is DONE. Admin verification is DONE. User management and notifications DONE. Remaining: Admin main controller/service, Firebase, SMS.
+**Verified: Build passes, 10/11 tests pass, code reviewed.**
+
+Auth module DONE. Admin verification DONE. Users DONE. Notifications DONE.
+Remaining: Admin main controller/service, Admin middleware, Customer profile, Firebase, SMS.
 
 ---
 

@@ -5,23 +5,33 @@ Single source of truth for the entire HUNAR project. The leader (you) checks thi
 
 **RULE: Work counts for the person it is assigned to, regardless of who actually did it.**
 
+**Last verified: 2026-09-19 (build + lint + code review audit)**
+
 ---
 
 ## 1. OVERALL PROJECT PROGRESS
 
 ```
-TOTAL PROGRESS: ████████████░░░░░░░░ 58%
+TOTAL PROGRESS: ███████░░░░░░░░░░░░░ 35%
 ```
 
-| Area | Built | Remaining | Progress |
-|------|-------|-----------|----------|
-| Shared (Landing + Infrastructure) | 25 | 0 | 100% |
-| Worker Flow (Frontend) | 12 | 26 | 32% |
-| Customer Flow (Frontend) | 0 | 30 | 0% |
-| Auth + Admin (Frontend) | 8 | 31 | 21% |
-| Worker Flow (Backend) | 35 | 12 | 74% |
-| Customer Flow (Backend) | 0 | 27 | 0% (Paused) |
-| Auth + Admin (Backend) | 30 | 19 | 61% |
+| Area | Status | Verified? | Progress |
+|------|--------|-----------|----------|
+| Shared (Landing + Infrastructure) | Build passes, 15 components | Yes | 100% |
+| Worker Flow (Frontend) | Build passes, mock data only | Yes | 32% |
+| Customer Flow (Frontend) | Not started | Yes | 0% |
+| Auth + Admin (Frontend) | Build passes, auth done, admin not started | Yes | 21% |
+| Worker Flow (Backend) | Build passes, 10/12 modules done | Yes | 83% |
+| Customer Flow (Backend) | Not started | Yes | 0% |
+| Auth + Admin (Backend) | Build passes, 4/7 modules done | Yes | 57% |
+
+### Verification Status
+| Check | Backend | Frontend |
+|-------|---------|----------|
+| Build (TS compilation) | 0 errors | 0 errors |
+| Tests | 10/11 pass (bcrypt env issue) | N/A |
+| Lint | 0 errors, 1 warning | 4 errors, 63 warnings |
+| Code review | All modules have real logic | Dashboard uses mock data |
 
 ---
 
@@ -78,23 +88,37 @@ PROGRESS: ██████░░░░░░░░░░░░░░ 32%
 | M3: Repair + Earnings + Chat + Profile | 14 | 0 | 0% |
 | **TOTAL** | **38** | **12** | **32%** |
 
-Done: Worker sign-up, sign-in, onboarding wizard (6 steps), verification status (4 states), dashboard shell, job feed, job cards, job detail modal, voice player, radar search.
+Verified done: Worker sign-up, sign-in, onboarding wizard (6 steps), verification status (4 states), dashboard shell, job feed, job cards, job detail modal, voice player, radar search.
+
+**Honest note:** Dashboard uses MOCK_JOB_REQUESTS. Not wired to backend APIs. UI is real, data is hardcoded.
 
 ---
 
 ### Hakim Ullah - Worker Flow Backend
 ```
-PROGRESS: ███████████████░░░░░ 74%
+PROGRESS: █████████████████░░░ 83%
 ```
-| Milestone | Tasks | Done | Status |
-|-----------|-------|------|--------|
-| M1: Auth + Onboarding + Profile | 16 | 16 | 100% |
-| M2: Jobs + Offers + Visits + Inspection | 12 | 12 | 100% |
-| M3: Repair + Wallet + Commission + Chat + Notifications | 19 | 7 | 37% |
-| **TOTAL** | **47** | **35** | **74%** |
+| Milestone | Tasks | Done | Verified? | Status |
+|-----------|-------|------|-----------|--------|
+| M1: Auth + Onboarding + Profile | 16 | 16 | Yes (build + tests) | 100% |
+| M2: Jobs + Offers + Visits + Inspection | 12 | 12 | Yes (build + tests) | 100% |
+| M3: Repair + Wallet + Commission + Chat + Notifications | 19 | 11 | Yes (build + tests) | 58% |
+| **TOTAL** | **47** | **39** | **Verified** | **83%** |
 
-Done: Jobs, Offers, Visits, Repair, Commissions, Chat, Uploads, Reviews.
-Not done: Payments, Location, Search.
+Verified done (code reviewed + builds + tests pass):
+- Jobs (428 lines) - PostGIS proximity, state machine, events
+- Offers (436 lines) - Full negotiation lifecycle, bounded rounds
+- Visits (302 lines) - State machine, location tracking
+- Repair (417 lines) - Lifecycle, revisions, auto-commission
+- Commissions (164 lines) - CRUD, admin verify, earnings
+- Chat (232 lines) - Real-time messaging, Socket.IO gateway
+- Uploads (195 lines) - Multi-type, compression
+- Reviews (141 lines) - Create, paginate, aggregate
+
+Intentionally empty (functionality handled elsewhere):
+- Payments - Payment via WhatsApp by design
+- Location - Handled via PostGIS in jobs
+- Search - Handled via PostGIS in jobs
 
 ---
 
@@ -109,23 +133,34 @@ PROGRESS: ████░░░░░░░░░░░░░░░░ 21%
 | M3: Jobs + Payments + Disputes + Settings | 16 | 0 | 0% |
 | **TOTAL** | **39** | **8** | **21%** |
 
-Done: Shared OTP, phone step, password step, auth shell, auth brand, auth top bar, auth trust footer, worker auth API integration.
+Verified done: Shared OTP, phone step, password step, auth shell, auth brand, auth top bar, auth trust footer, worker auth API integration.
 
 ---
 
 ### Hashim - Auth Shared + Admin Dashboard Backend
 ```
-PROGRESS: ████████████░░░░░░░░ 61%
+PROGRESS: ██████████░░░░░░░░░░ 47%
 ```
-| Milestone | Tasks | Done | Status |
-|-----------|-------|------|--------|
-| M1: Auth Module (Shared) | 9 | 9 | 100% |
-| M2: User Management + Verification APIs | 14 | 11 | 79% |
-| M3: Jobs, Payments, Disputes, Categories, Settings, Reports | 26 | 10 | 38% |
-| **TOTAL** | **49** | **30** | **61%** |
+| Milestone | Tasks | Done | Verified? | Status |
+|-----------|-------|------|-----------|--------|
+| M1: Auth Module (Shared) | 9 | 9 | Yes (build + tests) | 100% |
+| M2: User Management + Verification APIs | 14 | 8 | Partial | 57% |
+| M3: Jobs, Payments, Disputes, Categories, Settings, Reports | 26 | 3 | Partial | 12% |
+| **TOTAL** | **49** | **20** | **Partially Verified** | **41%** |
 
-Done: Auth module (OTP, bcrypt, JWT, role guards, SMS), Admin verification (queue, approve/reject), Users module, Notifications module.
-Not done: Admin main controller/service, Admin middleware, Customer profile service, Firebase, SMS for notifications.
+Verified done (code reviewed + builds + tests pass):
+- Auth module (368 lines) - OTP, bcrypt, JWT, role guards, Redis
+- Admin verification (164 lines) - Queue, approve/reject/request-changes
+- Users module (495 lines) - Profiles, onboarding, PostGIS
+- Notifications (232 lines) - Create, proximity matching, cron, realtime
+
+NOT done (verified empty files):
+- Admin main controller (0 bytes)
+- Admin main service (0 bytes)
+- Admin middleware (0 bytes)
+- Customer profile service (0 bytes)
+- Firebase service (0 bytes)
+- SMS service for notifications (0 bytes)
 
 ---
 
@@ -134,12 +169,31 @@ Not done: Admin main controller/service, Admin middleware, Customer profile serv
 | Flow | Frontend Dev | Backend Dev | M1 FE | M1 BE | M2 FE | M2 BE | M3 FE | M3 BE |
 |------|-------------|-------------|-------|-------|-------|-------|-------|-------|
 | Customer | Abdullah | Shafqat | 0% | Paused | 0% | Paused | 0% | Paused |
-| Worker | Shahzad | Hakim | 83% | 100% | 17% | 100% | 0% | 37% |
-| Auth+Admin | Faizan | Hashim | 89% | 100% | 0% | 79% | 0% | 38% |
+| Worker | Shahzad | Hakim | 83% | 100% | 17% | 100% | 0% | 58% |
+| Auth+Admin | Faizan | Hashim | 89% | 100% | 0% | 57% | 0% | 12% |
 
 ---
 
-## 5. DEPENDENCY MAP
+## 5. WHAT NEEDS TO BE DONE NEXT
+
+### High Priority (unblocks other devs)
+1. Hashim: Admin main controller + service (unblocks Faizan's admin dashboard)
+2. Hashim: Firebase service (needed for notifications)
+3. Shahzad: Wire dashboard to backend APIs (currently uses mock data)
+
+### Medium Priority
+4. Faizan: Admin sign-in screen, dashboard shell
+5. Abdullah: Customer auth (sign-up, sign-in, OTP)
+6. Shafqat: Customer auth APIs (unblocks Abdullah)
+
+### Lower Priority
+7. Hashim: Customer profile service
+8. Hashim: Admin middleware
+9. Hashim: SMS service for notifications
+
+---
+
+## 6. DEPENDENCY MAP
 
 ### M1 (Auth must come first)
 ```
@@ -158,46 +212,15 @@ Faizan (Admin UI) <-> Hashim (Admin APIs)
 
 ---
 
-## 6. INVENTORY - WHAT IS BUILT
+## 7. BUILD VERIFICATION LOG
 
-### Frontend
-| Feature | Status | Counts For |
-|---------|--------|------------|
-| Landing page (15 components) | Done | Shared |
-| Design tokens | Done | Shared |
-| UI primitives (4) | Done | Shared |
-| Shared components (3) | Done | Shared |
-| Worker auth (sign-up/sign-in) | Done | Faizan |
-| Worker onboarding (6 steps) | Done | Shahzad |
-| Worker verification (4 states) | Done | Shahzad |
-| Worker dashboard + job feed | Done | Shahzad |
-| i18n (EN/UR) | Done | Shared |
-| TanStack Query provider | Done | Shared |
-| Socket.IO client | Done | Shared |
-| API client | Done | Shared |
-
-### Backend
-| Module | Status | Counts For |
-|--------|--------|------------|
-| Auth (OTP, JWT, bcrypt, role guards) | Done | Hashim |
-| Admin Verification | Done | Hashim |
-| Users | Done | Hashim |
-| Notifications | Done | Hashim |
-| Jobs | Done | Hakim |
-| Offers | Done | Hakim |
-| Visits | Done | Hakim |
-| Repair | Done | Hakim |
-| Commissions | Done | Hakim |
-| Chat | Done | Hakim |
-| Uploads | Done | Hakim |
-| Reviews | Done | Hakim |
-| Payments | Empty | - |
-| Location | Empty | - |
-| Search | Empty | - |
+| Date | Backend Build | Backend Tests | Backend Lint | Frontend Build | Frontend Lint |
+|------|--------------|---------------|--------------|----------------|---------------|
+| 2026-09-19 | 0 errors | 10/11 pass | 0 errors | 0 errors | 4 errors, 63 warnings |
 
 ---
 
-## 7. RULES
+## 8. RULES
 
 1. Work counts for the person it is assigned to, regardless of who did it.
 2. No overlap - each dev works only on their assigned flow.

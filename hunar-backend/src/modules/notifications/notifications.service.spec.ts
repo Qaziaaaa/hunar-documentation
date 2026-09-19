@@ -56,7 +56,9 @@ function makeFakes(db: Db, emitted: Array<{ userIds: string[]; event: string; da
       },
       async count({ where }: { where: { userId?: string; isRead?: boolean } }) {
         return Array.from(notifications.values()).filter(
-          (n) => (!where.userId || n.userId === where.userId) && (where.isRead === undefined || n.isRead === where.isRead),
+          (n) =>
+            (!where.userId || n.userId === where.userId) &&
+            (where.isRead === undefined || n.isRead === where.isRead),
         ).length;
       },
       async findFirst({ where }: { where: any }) {

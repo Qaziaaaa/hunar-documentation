@@ -4,7 +4,7 @@ import { UploadsService } from '../uploads/uploads.service';
 import { RealtimeService } from '../realtime/realtime.service';
 import { EventBusService } from '../../common/event-bus/event-bus.service';
 
-const makeEventBus = () => ({ emit: jest.fn() } as unknown as EventBusService);
+const makeEventBus = () => ({ emit: jest.fn() }) as unknown as EventBusService;
 
 class Db {
   users = new Map<string, any>();
@@ -193,7 +193,12 @@ describe('ChatService', () => {
   it('creates a conversation automatically on offer.accepted and is idempotent', async () => {
     const db = new Db();
     const { prisma } = makeFakes(db);
-    const service = new ChatService(prisma, {} as UploadsService, {} as RealtimeService, makeEventBus());
+    const service = new ChatService(
+      prisma,
+      {} as UploadsService,
+      {} as RealtimeService,
+      makeEventBus(),
+    );
 
     await service.handleOfferAccepted({ jobId: 'jobX', workerId: 'w1', customerId: 'c1' });
     await service.handleOfferAccepted({ jobId: 'jobX', workerId: 'w1', customerId: 'c1' });
@@ -209,7 +214,12 @@ describe('ChatService', () => {
     const db = new Db();
     const { prisma } = makeFakes(db);
     setupActiveConversation(db);
-    const service = new ChatService(prisma, {} as UploadsService, {} as RealtimeService, makeEventBus());
+    const service = new ChatService(
+      prisma,
+      {} as UploadsService,
+      {} as RealtimeService,
+      makeEventBus(),
+    );
 
     const listW1 = await service.listConversations('w1');
     expect(listW1).toHaveLength(3);
@@ -223,7 +233,12 @@ describe('ChatService', () => {
       const db = new Db();
       const { prisma } = makeFakes(db);
       setupActiveConversation(db);
-      const service = new ChatService(prisma, {} as UploadsService, {} as RealtimeService, makeEventBus());
+      const service = new ChatService(
+        prisma,
+        {} as UploadsService,
+        {} as RealtimeService,
+        makeEventBus(),
+      );
 
       await prisma.message.create({
         data: { conversationId: 'conv1', senderId: 'w1', text: 'first', imageUrl: null },
@@ -242,7 +257,12 @@ describe('ChatService', () => {
       const db = new Db();
       const { prisma } = makeFakes(db);
       setupActiveConversation(db);
-      const service = new ChatService(prisma, {} as UploadsService, {} as RealtimeService, makeEventBus());
+      const service = new ChatService(
+        prisma,
+        {} as UploadsService,
+        {} as RealtimeService,
+        makeEventBus(),
+      );
 
       await expect(service.getMessages('conv1', 'w2', {})).rejects.toThrow(ForbiddenException);
     });
@@ -251,7 +271,12 @@ describe('ChatService', () => {
       const db = new Db();
       const { prisma } = makeFakes(db);
       setupActiveConversation(db);
-      const service = new ChatService(prisma, {} as UploadsService, {} as RealtimeService, makeEventBus());
+      const service = new ChatService(
+        prisma,
+        {} as UploadsService,
+        {} as RealtimeService,
+        makeEventBus(),
+      );
 
       await expect(service.getMessages('conv-missing', 'w1', {})).rejects.toThrow(
         NotFoundException,
@@ -313,7 +338,12 @@ describe('ChatService', () => {
       const db = new Db();
       const { prisma } = makeFakes(db);
       setupActiveConversation(db);
-      const service = new ChatService(prisma, {} as UploadsService, {} as RealtimeService, makeEventBus());
+      const service = new ChatService(
+        prisma,
+        {} as UploadsService,
+        {} as RealtimeService,
+        makeEventBus(),
+      );
 
       await expect(service.sendMessage('conv1', 'w1', { text: '  ' })).rejects.toThrow(
         /MESSAGE_EMPTY/,
@@ -325,7 +355,12 @@ describe('ChatService', () => {
       const db = new Db();
       const { prisma } = makeFakes(db);
       setupActiveConversation(db);
-      const service = new ChatService(prisma, {} as UploadsService, {} as RealtimeService, makeEventBus());
+      const service = new ChatService(
+        prisma,
+        {} as UploadsService,
+        {} as RealtimeService,
+        makeEventBus(),
+      );
 
       await expect(service.sendMessage('conv1', 'w1', { text: 'x'.repeat(2001) })).rejects.toThrow(
         /MESSAGE_TOO_LONG/,
@@ -336,7 +371,12 @@ describe('ChatService', () => {
       const db = new Db();
       const { prisma } = makeFakes(db);
       setupActiveConversation(db);
-      const service = new ChatService(prisma, {} as UploadsService, {} as RealtimeService, makeEventBus());
+      const service = new ChatService(
+        prisma,
+        {} as UploadsService,
+        {} as RealtimeService,
+        makeEventBus(),
+      );
 
       await expect(service.sendMessage('conv1', 'w2', { text: 'hi' })).rejects.toThrow(
         ForbiddenException,
@@ -347,7 +387,12 @@ describe('ChatService', () => {
       const db = new Db();
       const { prisma } = makeFakes(db);
       setupActiveConversation(db);
-      const service = new ChatService(prisma, {} as UploadsService, {} as RealtimeService, makeEventBus());
+      const service = new ChatService(
+        prisma,
+        {} as UploadsService,
+        {} as RealtimeService,
+        makeEventBus(),
+      );
 
       await expect(service.sendMessage('conv-closed', 'w1', { text: 'hi' })).rejects.toThrow(
         /CHAT_JOB_CLOSED/,
@@ -358,7 +403,12 @@ describe('ChatService', () => {
       const db = new Db();
       const { prisma } = makeFakes(db);
       setupActiveConversation(db);
-      const service = new ChatService(prisma, {} as UploadsService, {} as RealtimeService, makeEventBus());
+      const service = new ChatService(
+        prisma,
+        {} as UploadsService,
+        {} as RealtimeService,
+        makeEventBus(),
+      );
 
       await expect(service.sendMessage('conv-unassigned', 'w1', { text: 'hi' })).rejects.toThrow(
         /CHAT_JOB_NOT_ACCEPTED/,
@@ -371,7 +421,12 @@ describe('ChatService', () => {
       const db = new Db();
       const { prisma } = makeFakes(db);
       setupActiveConversation(db);
-      const service = new ChatService(prisma, {} as UploadsService, {} as RealtimeService, makeEventBus());
+      const service = new ChatService(
+        prisma,
+        {} as UploadsService,
+        {} as RealtimeService,
+        makeEventBus(),
+      );
 
       await expect(service.ensureParticipant('conv1', 'w1')).resolves.toBeTruthy();
       await expect(service.ensureParticipant('conv1', 'c1')).resolves.toBeTruthy();
