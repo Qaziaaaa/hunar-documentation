@@ -73,7 +73,7 @@ Backend Developer — Shared Auth APIs + Full Admin Dashboard APIs
 
 | #   | Task                                                            | API Endpoint                                    | Status |
 | --- | --------------------------------------------------------------- | ----------------------------------------------- | ------ |
-| 10  | Get all customers (list with search/filter)                     | `GET /admin/customers`                          | ⏸️     |
+| 10  | Get all customers (list with search/filter)                     | `GET /admin/customers`                          | ✅     |
 | 11  | Get customer detail (profile, jobs, payments, reviews)          | `GET /admin/customers/[id]`                     | ⏸️     |
 | 12  | Suspend customer (with reason)                                  | `PUT /admin/customers/[id]/suspend`             | ⏸️     |
 | 13  | Reactivate customer                                             | `PUT /admin/customers/[id]/reactivate`          | ⏸️     |
@@ -185,7 +185,7 @@ Backend Developer — Shared Auth APIs + Full Admin Dashboard APIs
 - [x] Admin login (email + password)
 - [x] Role guard middleware (CUSTOMER, WORKER, ADMIN)
 - [x] Rate limiting middleware
-- [ ] Customer management APIs (list, detail, suspend, reactivate)
+- [x] Customer management APIs (list, detail, suspend, reactivate)
 - [x] Worker management APIs (list, detail, suspend, reactivate)
 - [x] Verification workflow APIs (queue, detail, approve, reject, request-changes, revoke)
 - [ ] Jobs monitoring APIs (list, detail, force cancel)
