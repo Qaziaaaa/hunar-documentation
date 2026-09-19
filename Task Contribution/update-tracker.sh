@@ -2,13 +2,24 @@
 
 # HUNAR PROJECT TRACKER AUTO-UPDATER
 # Run this script to update MASTER_PROJECT_TRACKER.md with current progress
-# Usage: bash update-tracker.sh
+# Usage: bash update-tracker.sh              # Show progress only
+#        bash update-tracker.sh --apply      # Update tracker file
+#        bash update-tracker.sh --audit      # Run full ownership audit
+#        bash update-tracker.sh --all        # Update tracker + run audit
 
 set -e
 
 TRACKER_FILE="MASTER_PROJECT_TRACKER.md"
 PROJECT_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 FRONTEND_DIR="$PROJECT_ROOT/hunar-frontend/src"
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+
+# Colors
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+CYAN='\033[0;36m'
+NC='\033[0m'
 
 echo "🔄 Updating HUNAR Project Tracker..."
 echo ""
@@ -216,4 +227,96 @@ $standup_entry" "$TRACKER_FILE"
 else
     echo "💡 Run with --apply to update the tracker file:"
     echo "   bash update-tracker.sh --apply"
+fi
+
+# ============================================================
+# OWNERSHIP AUDIT (runs with --audit or --all flag)
+# ============================================================
+
+if [[ "$1" == "--audit" ]] || [[ "$1" == "--all" ]]; then
+    echo ""
+    echo "============================================"
+    echo "  CODE OWNERSHIP AUDIT"
+    echo "============================================"
+    echo ""
+    
+    # Ownership rules
+    declare -A OWNERS
+    OWNERS["hunar-frontend/src/features/auth/"]="faizan"
+    OWNERS["hunar-frontend/src/features/admin/"]="faizan"
+    OWNERS["hunar-frontend/src/features/worker-onboarding/"]="shahzad"
+    OWNERS["hunar-frontend/src/features/worker-verification/"]="shahzad"
+    OWNERS["hunar-frontend/src/features/worker-dashboard/"]="shahzad"
+    OWNERS["hunar-frontend/src/features/jobs/"]="abdullah"
+    OWNERS["hunar-frontend/src/features/negotiation/"]="abdullah"
+    OWNERS["hunar-frontend/src/features/chat/"]="abdullah"
+    OWNERS["hunar-frontend/src/features/payments/"]="abdullah"
+    OWNERS["hunar-frontend/src/features/tracking/"]="abdullah"
+    OWNERS["hunar-backend/src/modules/auth/"]="hashim-malik"
+    OWNERS["hunar-backend/src/modules/admin/"]="hashim-malik"
+    OWNERS["hunar-backend/src/modules/users/"]="hashim-malik"
+    OWNERS["hunar-backend/src/modules/notifications/"]="hashim-malik"
+    OWNERS["hunar-backend/src/modules/jobs/"]="hakim"
+    OWNERS["hunar-backend/src/modules/offers/"]="hakim"
+    OWNERS["hunar-backend/src/modules/visits/"]="hakim"
+    OWNERS["hunar-backend/src/modules/repair/"]="hakim"
+    OWNERS["hunar-backend/src/modules/commissions/"]="hakim"
+    OWNERS["hunar-backend/src/modules/chat/"]="hakim"
+    OWNERS["hunar-backend/src/modules/uploads/"]="hakim"
+    OWNERS["hunar-backend/src/modules/reviews/"]="hakim"
+    OWNERS["hunar-backend/src/modules/payments/"]="shafqatullah"
+    OWNERS["hunar-backend/src/modules/location/"]="shafqatullah"
+    OWNERS["hunar-backend/src/modules/search/"]="shafqatullah"
+    
+    # Git aliases
+    declare -A GIT_TO_GITHUB
+    GIT_TO_GITHUB["hashim"]="hashim-malik"
+    GIT_TO_GITHUB["shafqat"]="shafqatullah"
+    
+    VIOLATIONS=0
+    TOTAL_FILES=0
+    
+    echo "Checking who last modified each file..."
+    echo ""
+    
+    for PATTERN in "${!OWNERS[@]}"; do
+        OWNER="${OWNERS[$PATTERN]}"
+        
+        SEARCH_DIR="$PROJECT_ROOT/$PATTERN"
+        if [ -d "$SEARCH_DIR" ]; then
+            while IFS= read -r FILE; do
+                [ -z "$FILE" ] && continue
+                REL_PATH="${FILE#$PROJECT_ROOT/}"
+                TOTAL_FILES=$((TOTAL_FILES + 1))
+                
+                LAST_AUTHOR=$(git -C "$PROJECT_ROOT" log -1 --format="%an" -- "$REL_PATH" 2>/dev/null || echo "unknown")
+                GITHUB_NAME="${GIT_TO_GITHUB[$LAST_AUTHOR]:-$LAST_AUTHOR}"
+                
+                if [ "$GITHUB_NAME" != "$OWNER" ] && [ "$LAST_AUTHOR" != "$OWNER" ]; then
+                    VIOLATIONS=$((VIOLATIONS + 1))
+                    COMMIT_DATE=$(git -C "$PROJECT_ROOT" log -1 --format="%ad" --date=short -- "$REL_PATH" 2>/dev/null || echo "unknown")
+                    echo -e "  ${RED}WRONG OWNER: $REL_PATH${NC}"
+                    echo "    Expected: @$OWNER"
+                    echo "    Last author: @$GITHUB_NAME ($COMMIT_DATE)"
+                    echo ""
+                fi
+            done < <(find "$SEARCH_DIR" \( -name "*.ts" -o -name "*.tsx" -o -name "*.js" -o -name "*.jsx" \) 2>/dev/null | head -30)
+        fi
+    done
+    
+    echo "============================================"
+    echo "  AUDIT SUMMARY"
+    echo "============================================"
+    echo ""
+    echo "Total files checked: $TOTAL_FILES"
+    echo -e "Ownership violations: ${RED}$VIOLATIONS${NC}"
+    echo ""
+    
+    if [ $VIOLATIONS -eq 0 ]; then
+        echo -e "${GREEN}ALL CLEAR - No ownership violations detected.${NC}"
+    else
+        echo -e "${RED}WARNING: $VIOLATIONS file(s) modified by wrong owner!${NC}"
+        echo "Review the violations above."
+    fi
+    echo ""
 fi

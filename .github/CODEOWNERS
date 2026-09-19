@@ -1,0 +1,73 @@
+# HUNAR CODEOWNERS
+# This file defines code ownership. Each line is a file pattern followed by one or more owners.
+# GitHub uses this to request reviews from the correct people.
+# LEADER (You) owns everything as final approver.
+
+# ============================================
+# LEADER - Owns everything (final approver)
+# ============================================
+*                                   @Qaziaaaa
+
+# ============================================
+# SHARED / INFRASTRUCTURE
+# ============================================
+/hunar-frontend/src/components/     @Qaziaaaa
+/hunar-frontend/src/lib/            @Qaziaaaa
+/hunar-frontend/src/i18n/           @Qaziaaaa
+/hunar-frontend/src/app/            @Qaziaaaa
+/hunar-backend/src/common/          @Qaziaaaa
+/hunar-backend/prisma/              @Qaziaaaa
+
+# ============================================
+# FAIZAN - Auth Shared + Admin Dashboard (Frontend)
+# ============================================
+/hunar-frontend/src/features/auth/                  @Qaziaaaa @faizan
+/hunar-frontend/src/features/admin/                 @Qaziaaaa @faizan
+
+# ============================================
+# SHAHZAD - Worker Flow (Frontend)
+# ============================================
+/hunar-frontend/src/features/worker-onboarding/     @Qaziaaaa @shahzad
+/hunar-frontend/src/features/worker-verification/   @Qaziaaaa @shahzad
+/hunar-frontend/src/features/worker-dashboard/      @Qaziaaaa @shahzad
+
+# ============================================
+# ABDULLAH - Customer Flow (Frontend)
+# ============================================
+/hunar-frontend/src/features/jobs/                  @Qaziaaaa @abdullah
+/hunar-frontend/src/features/negotiation/           @Qaziaaaa @abdullah
+/hunar-frontend/src/features/chat/                  @Qaziaaaa @abdullah
+/hunar-frontend/src/features/payments/              @Qaziaaaa @abdullah
+/hunar-frontend/src/features/tracking/              @Qaziaaaa @abdullah
+
+# ============================================
+# HASHIM - Auth + Admin Backend
+# ============================================
+/hunar-backend/src/modules/auth/                    @Qaziaaaa @hashim-malik
+/hunar-backend/src/modules/admin/                   @Qaziaaaa @hashim-malik
+/hunar-backend/src/modules/users/                   @Qaziaaaa @hashim-malik
+/hunar-backend/src/modules/notifications/           @Qaziaaaa @hashim-malik
+
+# ============================================
+# HAKIM - Worker Flow Backend
+# ============================================
+/hunar-backend/src/modules/jobs/                    @Qaziaaaa @hakim
+/hunar-backend/src/modules/offers/                  @Qaziaaaa @hakim
+/hunar-backend/src/modules/visits/                  @Qaziaaaa @hakim
+/hunar-backend/src/modules/repair/                  @Qaziaaaa @hakim
+/hunar-backend/src/modules/commissions/             @Qaziaaaa @hakim
+/hunar-backend/src/modules/chat/                    @Qaziaaaa @hakim
+/hunar-backend/src/modules/uploads/                 @Qaziaaaa @hakim
+/hunar-backend/src/modules/reviews/                 @Qaziaaaa @hakim
+
+# ============================================
+# SHAFQAT - Customer Flow Backend
+# ============================================
+/hunar-backend/src/modules/payments/                @Qaziaaaa @shafqatullah
+/hunar-backend/src/modules/location/                @Qaziaaaa @shafqatullah
+/hunar-backend/src/modules/search/                  @Qaziaaaa @shafqatullah
+
+# ============================================
+# TASK TRACKER - Leader Only
+# ============================================
+/Task%20Contribution/                               @Qaziaaaa
