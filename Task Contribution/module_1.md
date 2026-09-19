@@ -1,6 +1,6 @@
-# Faizan — Frontend Progress Summary (M1 & M2)
+# Faizan — Frontend Progress Summary (M1, M2 & M3)
 
-## 📌 Status: M1 & M2 Complete (100% Done & Verified)
+## 📌 Status: M1, M2 & M3 Complete (100% Done & Verified)
 
 ---
 
@@ -31,6 +31,21 @@
 - [x] Worker Verification Queue (`app/[locale]/(admin)/admin/verifications/page.tsx`)
 - [x] Verification Detail View (`app/[locale]/(admin)/admin/verifications/[id]/page.tsx`)
 - [x] Approval Actions (Approve, Reject, Request Changes)
+
+---
+
+### ✅ Module 3 (M3): Jobs + Payments + Disputes + Categories + Settings + Reports
+- [x] Jobs Monitoring Table & Filters (`app/[locale]/(admin)/admin/jobs/page.tsx`)
+- [x] Job Audit Trail Drill-Down & Force Cancel Modal (`app/[locale]/(admin)/admin/jobs/[id]/page.tsx`)
+- [x] Payments Ledger Feed & Commission Snapshot (`app/[locale]/(admin)/admin/payments/page.tsx`)
+- [x] Worker Withdrawal Payout Queue & Wallet Freeze Modal (`app/[locale]/(admin)/admin/payments/withdrawals/page.tsx`)
+- [x] Disputes Queue (`app/[locale]/(admin)/admin/disputes/page.tsx`)
+- [x] Dispute Evidence Trail & Resolution Actions (`app/[locale]/(admin)/admin/disputes/[id]/page.tsx`)
+- [x] Service Categories Management (`app/[locale]/(admin)/admin/categories/page.tsx`)
+- [x] Platform Configuration & Commission Settings (`app/[locale]/(admin)/admin/settings/page.tsx`)
+- [x] Analytics Reports & CSV/PDF Export (`app/[locale]/(admin)/admin/reports/page.tsx`)
+- [x] System Notifications Center (`app/[locale]/(admin)/admin/notifications/page.tsx`)
+- [x] Global Admin Audit Trail Viewer (`app/[locale]/(admin)/admin/audit/page.tsx`)
 
 ---
 

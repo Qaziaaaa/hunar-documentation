@@ -67,22 +67,22 @@ Frontend Developer — Shared Auth Components + Full Admin Dashboard
 
 | # | Task | Route | Status |
 |---|------|-------|--------|
-| 24 | Jobs monitoring (all jobs table with filters) | `(admin)/admin/jobs/` | 🔴 |
-| 25 | Job detail drill-down (full audit history) | `(admin)/admin/jobs/[id]/` | 🔴 |
-| 26 | Force cancel job (with reason) | Modal | 🔴 |
-| 27 | Payments monitoring (transactions feed) | `(admin)/admin/payments/` | 🔴 |
-| 28 | Commission snapshot (total revenue + per transaction) | `(admin)/admin/payments/` | 🔴 |
-| 29 | Withdrawal queue (pending/processed/failed) | `(admin)/admin/payments/withdrawals/` | 🔴 |
-| 30 | Wallet freeze (in dispute) | Modal | 🔴 |
-| 31 | Disputes queue (incoming reports) | `(admin)/admin/disputes/` | 🔴 |
-| 32 | Dispute detail (evidence trail, job history) | `(admin)/admin/disputes/[id]/` | 🔴 |
-| 33 | Resolve / dismiss / escalate dispute | `(admin)/admin/disputes/[id]/` | 🔴 |
-| 34 | Categories management (add/edit/deactivate) | `(admin)/admin/categories/` | 🔴 |
-| 35 | Platform settings (commission rate, radius, limits, feature flags) | `(admin)/admin/settings/` | 🔴 |
-| 36 | Reports & analytics (jobs funnel, worker performance, revenue, growth) | `(admin)/admin/reports/` | 🔴 |
-| 37 | Export reports (CSV/PDF) | `(admin)/admin/reports/` | 🔴 |
-| 38 | Notifications panel + unread badges | `(admin)/admin/notifications/` | 🔴 |
-| 39 | Audit trail viewer | `(admin)/admin/audit/` | 🔴 |
+| 24 | Jobs monitoring (all jobs table with filters) | `(admin)/admin/jobs/` | ✅ Done |
+| 25 | Job detail drill-down (full audit history) | `(admin)/admin/jobs/[id]/` | ✅ Done |
+| 26 | Force cancel job (with reason) | Modal | ✅ Done |
+| 27 | Payments monitoring (transactions feed) | `(admin)/admin/payments/` | ✅ Done |
+| 28 | Commission snapshot (total revenue + per transaction) | `(admin)/admin/payments/` | ✅ Done |
+| 29 | Withdrawal queue (pending/processed/failed) | `(admin)/admin/payments/withdrawals/` | ✅ Done |
+| 30 | Wallet freeze (in dispute) | Modal | ✅ Done |
+| 31 | Disputes queue (incoming reports) | `(admin)/admin/disputes/` | ✅ Done |
+| 32 | Dispute detail (evidence trail, job history) | `(admin)/admin/disputes/[id]/` | ✅ Done |
+| 33 | Resolve / dismiss / escalate dispute | `(admin)/admin/disputes/[id]/` | ✅ Done |
+| 34 | Categories management (add/edit/deactivate) | `(admin)/admin/categories/` | ✅ Done |
+| 35 | Platform settings (commission rate, radius, limits, feature flags) | `(admin)/admin/settings/` | ✅ Done |
+| 36 | Reports & analytics (jobs funnel, worker performance, revenue, growth) | `(admin)/admin/reports/` | ✅ Done |
+| 37 | Export reports (CSV/PDF) | `(admin)/admin/reports/` | ✅ Done |
+| 38 | Notifications panel + unread badges | `(admin)/admin/notifications/` | ✅ Done |
+| 39 | Audit trail viewer | `(admin)/admin/audit/` | ✅ Done |
 
 **M3 Deliverable:** Full admin dashboard working end-to-end.
 
@@ -138,18 +138,18 @@ Frontend Developer — Shared Auth Components + Full Admin Dashboard
 - [x] Suspend / deactivate / reactivate works
 - [x] Verification queue works
 - [x] Verification detail with approve/reject/request changes works
-- [ ] Jobs monitoring table works
-- [ ] Job detail drill-down works
-- [ ] Payments monitoring works
-- [ ] Commission snapshot works
-- [ ] Withdrawal queue works
-- [ ] Disputes queue works
-- [ ] Dispute detail with evidence trail works
-- [ ] Resolve / dismiss / escalate works
-- [ ] Categories management works
-- [ ] Platform settings work
-- [ ] Reports & analytics work
-- [ ] Export works
-- [ ] Notifications show with unread badges
-- [ ] Audit trail viewer works
-- [ ] Design tokens applied everywhere
+- [x] Jobs monitoring table works
+- [x] Job detail drill-down works
+- [x] Payments monitoring works
+- [x] Commission snapshot works
+- [x] Withdrawal queue works
+- [x] Disputes queue works
+- [x] Dispute detail with evidence trail works
+- [x] Resolve / dismiss / escalate works
+- [x] Categories management works
+- [x] Platform settings work
+- [x] Reports & analytics work
+- [x] Export works
+- [x] Notifications show with unread badges
+- [x] Audit trail viewer works
+- [x] Design tokens applied everywhere

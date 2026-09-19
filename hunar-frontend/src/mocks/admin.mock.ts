@@ -1,8 +1,15 @@
 import type {
   AdminKpiStats,
+  AuditLogEntry,
   CustomerUser,
+  DisputeReport,
+  JobDetailItem,
   LiveJobItem,
+  PaymentTransaction,
+  PlatformSettings,
+  ServiceCategory,
   VerificationRequest,
+  WithdrawalRequest,
   WorkerUser,
 } from "@/types/admin";
 
@@ -241,4 +248,135 @@ export const MOCK_LIVE_JOBS: LiveJobItem[] = [
     city: "Rawalpindi",
     createdAt: "2 hours ago",
   },
+];
+
+export const MOCK_JOB_DETAILS: JobDetailItem[] = [
+  {
+    id: "job-801",
+    title: "1.5 Ton Inverter AC Complete Master Servicing",
+    category: "HVAC & AC Repair",
+    customerName: "Tariq Mahmood",
+    workerName: "Mohammad Rashid",
+    amount: 3500,
+    status: "IN_PROGRESS",
+    city: "Lahore",
+    address: "House 42, Block C2, Gulberg III, Lahore",
+    visitCharge: 350,
+    estimatedTotal: 3500,
+    createdAt: "2026-03-19T10:15:00Z",
+    description: "Indoor unit jet washing, outdoor condenser coil chemical clean, gas pressure check, and drain line flushing.",
+    auditTrail: [
+      { step: "Posted", actor: "Customer (Tariq Mahmood)", action: "Job request created with 3 images", timestamp: "10:15 AM" },
+      { step: "Offer Sent", actor: "Worker (Mohammad Rashid)", action: "Sent offer Rs. 3,500 with visit estimate", timestamp: "10:20 AM" },
+      { step: "Accepted", actor: "Customer (Tariq Mahmood)", action: "Offer accepted & Rs. 350 visit charge locked in escrow", timestamp: "10:25 AM" },
+      { step: "On Site", actor: "Worker (Mohammad Rashid)", action: "Arrived at customer location", timestamp: "11:00 AM" },
+    ],
+  },
+  {
+    id: "job-804",
+    title: "Custom Wooden Door Lock Installation",
+    category: "Carpentry",
+    customerName: "Usman Ali",
+    workerName: "Bilal Ahmad",
+    amount: 1800,
+    status: "DISPUTED",
+    city: "Rawalpindi",
+    address: "Street 8, Sector F-6, Islamabad",
+    visitCharge: 200,
+    estimatedTotal: 1800,
+    createdAt: "2026-03-18T14:00:00Z",
+    description: "Mortise lock fitting on solid teak wood front door.",
+    cancelReason: "Customer reported incomplete lock fitting alignment.",
+    auditTrail: [
+      { step: "Posted", actor: "Customer (Usman Ali)", action: "Job created", timestamp: "02:00 PM" },
+      { step: "Offer Accepted", actor: "Customer (Usman Ali)", action: "Accepted offer Rs. 1,800", timestamp: "02:15 PM" },
+      { step: "Dispute Filed", actor: "Customer (Usman Ali)", action: "Filed dispute report: Lock alignment issue", timestamp: "04:30 PM" },
+    ],
+  },
+];
+
+export const MOCK_PAYMENTS: PaymentTransaction[] = [
+  {
+    id: "txn-901",
+    jobId: "job-803",
+    customerName: "Zahra Bilal",
+    workerName: "Kamran Hassan",
+    amount: 8500,
+    commission: 850,
+    netPayout: 7650,
+    paymentMethod: "JazzCash Escrow",
+    status: "SUCCESS",
+    timestamp: "2026-03-19T12:00:00Z",
+  },
+  {
+    id: "txn-902",
+    jobId: "job-801",
+    customerName: "Tariq Mahmood",
+    workerName: "Mohammad Rashid",
+    amount: 3500,
+    commission: 350,
+    netPayout: 3150,
+    paymentMethod: "EasyPaisa Wallet",
+    status: "ESCROW_HELD",
+    timestamp: "2026-03-19T10:25:00Z",
+  },
+];
+
+export const MOCK_WITHDRAWALS: WithdrawalRequest[] = [
+  {
+    id: "wd-501",
+    workerId: "wrk-1",
+    workerName: "Mohammad Rashid",
+    amount: 15000,
+    bankName: "Meezan Bank Ltd",
+    accountNumber: "0102030405060708",
+    requestedAt: "2026-03-18T16:00:00Z",
+    status: "PENDING",
+  },
+  {
+    id: "wd-502",
+    workerId: "wrk-3",
+    workerName: "Bilal Ahmad",
+    amount: 8000,
+    bankName: "HBL",
+    accountNumber: "9988776655443322",
+    requestedAt: "2026-03-17T09:30:00Z",
+    status: "PROCESSED",
+  },
+];
+
+export const MOCK_DISPUTES: DisputeReport[] = [
+  {
+    id: "disp-301",
+    jobId: "job-804",
+    reporterName: "Usman Ali",
+    reporterRole: "CUSTOMER",
+    targetName: "Bilal Ahmad",
+    issueCategory: "Quality / Incomplete Fitting",
+    description: "Worker left before aligning the mortise latch properly. Door does not lock smoothly.",
+    evidenceUrls: ["https://images.unsplash.com/photo-1558002038-1055907df827?w=600&auto=format&fit=crop"],
+    status: "OPEN",
+    createdAt: "2026-03-18T16:30:00Z",
+  },
+];
+
+export const MOCK_CATEGORIES: ServiceCategory[] = [
+  { id: "cat-1", name: "HVAC & AC Repair", iconName: "Flame", activeWorkersCount: 142, totalJobsCount: 520, isActive: true },
+  { id: "cat-2", name: "Electrical Work", iconName: "Zap", activeWorkersCount: 215, totalJobsCount: 680, isActive: true },
+  { id: "cat-3", name: "Plumbing Services", iconName: "Droplet", activeWorkersCount: 180, totalJobsCount: 490, isActive: true },
+  { id: "cat-4", name: "Carpentry & Woodwork", iconName: "Hammer", activeWorkersCount: 95, totalJobsCount: 240, isActive: true },
+  { id: "cat-5", name: "Painting & Wallpaper", iconName: "Paintbrush", activeWorkersCount: 88, totalJobsCount: 185, isActive: true },
+];
+
+export const MOCK_SETTINGS: PlatformSettings = {
+  commissionRate: 10,
+  defaultSearchRadiusKm: 15,
+  maxActiveOffersPerWorker: 5,
+  requireManualVerification: true,
+  maintenanceMode: false,
+};
+
+export const MOCK_AUDIT_LOGS: AuditLogEntry[] = [
+  { id: "aud-01", adminName: "System Administrator", actionType: "WORKER_VERIFY", targetResource: "Mohammad Rashid (wrk-1)", details: "Approved CNIC document verification", timestamp: "2026-03-19T09:00:00Z" },
+  { id: "aud-02", adminName: "System Administrator", actionType: "USER_SUSPEND", targetResource: "Usman Ali (cust-3)", details: "Suspended customer account due to payment dispute", timestamp: "2026-03-18T17:00:00Z" },
 ];
