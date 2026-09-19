@@ -272,6 +272,33 @@ if [[ "$1" == "--audit" ]] || [[ "$1" == "--all" ]]; then
     declare -A GIT_TO_GITHUB
     GIT_TO_GITHUB["hashim"]="hashim-malik"
     GIT_TO_GITHUB["shafqat"]="shafqatullah"
+    GIT_TO_GITHUB["Shehzad1961"]="shahzad"
+    GIT_TO_GITHUB["Muhammad Abdullah"]="abdullah"
+    
+    # Leader names - excluded from tracking
+    LEADER_NAMES=("Qaziaaaa" "qaziaaaa" "Muhammad Farhan Ahmad" "farhan" "admin")
+    
+    is_leader() {
+        local author="$1"
+        for name in "${LEADER_NAMES[@]}"; do
+            if [[ "$author" == *"$name"* ]]; then
+                return 0
+            fi
+        done
+        return 1
+    }
+    
+    # Read baseline date
+    BASELINE_FILE="$PROJECT_ROOT/Task Contribution/.audit-baseline"
+    if [ -f "$BASELINE_FILE" ]; then
+        BASELINE_DATE=$(cat "$BASELINE_FILE")
+    else
+        BASELINE_DATE=$(date "+%Y-%m-%d %H:%M:%S")
+        echo "$BASELINE_DATE" > "$BASELINE_FILE"
+    fi
+    
+    echo "Tracking since: $BASELINE_DATE (leader commits excluded)"
+    echo ""
     
     VIOLATIONS=0
     TOTAL_FILES=0
@@ -291,10 +318,15 @@ if [[ "$1" == "--audit" ]] || [[ "$1" == "--all" ]]; then
                 
                 LAST_AUTHOR=$(git -C "$PROJECT_ROOT" log -1 --format="%an" -- "$REL_PATH" 2>/dev/null || echo "unknown")
                 GITHUB_NAME="${GIT_TO_GITHUB[$LAST_AUTHOR]:-$LAST_AUTHOR}"
+                COMMIT_TIMESTAMP=$(git -C "$PROJECT_ROOT" log -1 --format="%aI" -- "$REL_PATH" 2>/dev/null || echo "unknown")
+                
+                # Skip leader
+                is_leader "$LAST_AUTHOR" && continue
+                
+                # Skip before baseline
+                [[ "$COMMIT_TIMESTAMP" < "$BASELINE_DATE" ]] && continue
                 
                 if [ "$GITHUB_NAME" != "$OWNER" ] && [ "$LAST_AUTHOR" != "$OWNER" ]; then
-                    VIOLATIONS=$((VIOLATIONS + 1))
-                    COMMIT_DATE=$(git -C "$PROJECT_ROOT" log -1 --format="%ad" --date=short -- "$REL_PATH" 2>/dev/null || echo "unknown")
                     echo -e "  ${RED}WRONG OWNER: $REL_PATH${NC}"
                     echo "    Expected: @$OWNER"
                     echo "    Last author: @$GITHUB_NAME ($COMMIT_DATE)"

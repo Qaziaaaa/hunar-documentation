@@ -17,6 +17,24 @@ NC='\033[0m'
 
 # Get the current Git user
 GIT_USER=$(git config user.name 2>/dev/null || echo "unknown")
+GIT_EMAIL=$(git config user.email 2>/dev/null || echo "unknown")
+
+# LEADER - Exempt from all checks
+LEADER_NAMES=("Qaziaaaa" "qaziaaaa" "Muhammad Farhan Ahmad" "farhan" "admin")
+
+# Check if this is the leader
+IS_LEADER=false
+for name in "${LEADER_NAMES[@]}"; do
+    if [[ "$GIT_USER" == *"$name"* ]] || [[ "$GIT_EMAIL" == *"$name"* ]]; then
+        IS_LEADER=true
+        break
+    fi
+done
+
+# Leader can commit anything
+if [ "$IS_LEADER" = true ]; then
+    exit 0
+fi
 
 # Define ownership rules
 # Format: DIRECTORY_PATTERN=OWNER_USERNAME

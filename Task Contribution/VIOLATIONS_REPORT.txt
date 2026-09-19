@@ -1,0 +1,723 @@
+
+============================================
+  HUNAR CODE OWNERSHIP AUDIT
+============================================
+
+Time range: ALL HISTORY
+
+[0;36m--- Checking branch: feat/abdullah (member: abdullah) ---[0m
+  No commits found.
+
+[0;36m--- Checking branch: feat/faizan (member: faizan) ---[0m
+  No commits found.
+
+[0;36m--- Checking branch: feat/hakim (member: hakim) ---[0m
+  No commits found.
+
+[0;36m--- Checking branch: feat/hashim-malik (member: hashim-malik) ---[0m
+  No commits found.
+
+[0;36m--- Checking branch: feat/shafqatullah (member: shafqatullah) ---[0m
+  No commits found.
+
+[0;36m--- Checking branch: feat/shahzad (member: shahzad) ---[0m
+  No commits found.
+
+
+============================================
+  CURRENT FILE OWNERSHIP (Git Blame)
+============================================
+
+Checking who last modified each file in assigned areas...
+
+  [0;31mWRONG OWNER: hunar-backend/src/modules/notifications/firebase.service.ts[0m
+    Expected: @hashim-malik
+    Last author: @Hakim Ullah
+
+  [0;31mWRONG OWNER: hunar-backend/src/modules/notifications/notifications.service.ts[0m
+    Expected: @hashim-malik
+    Last author: @qaziaaaa
+
+  [0;31mWRONG OWNER: hunar-backend/src/modules/notifications/notification.validation.ts[0m
+    Expected: @hashim-malik
+    Last author: @qaziaaaa
+
+  [0;31mWRONG OWNER: hunar-backend/src/modules/notifications/notifications.module.ts[0m
+    Expected: @hashim-malik
+    Last author: @qaziaaaa
+
+  [0;31mWRONG OWNER: hunar-backend/src/modules/notifications/notifications.events.ts[0m
+    Expected: @hashim-malik
+    Last author: @qaziaaaa
+
+  [0;31mWRONG OWNER: hunar-backend/src/modules/notifications/notifications.service.spec.ts[0m
+    Expected: @hashim-malik
+    Last author: @qaziaaaa
+
+  [0;31mWRONG OWNER: hunar-backend/src/modules/notifications/notifications.listener.ts[0m
+    Expected: @hashim-malik
+    Last author: @qaziaaaa
+
+  [0;31mWRONG OWNER: hunar-backend/src/modules/notifications/sms.service.ts[0m
+    Expected: @hashim-malik
+    Last author: @Hakim Ullah
+
+  [0;31mWRONG OWNER: hunar-backend/src/modules/notifications/notifications.controller.ts[0m
+    Expected: @hashim-malik
+    Last author: @qaziaaaa
+
+  [0;31mWRONG OWNER: hunar-backend/src/modules/notifications/templates/payment.template.ts[0m
+    Expected: @hashim-malik
+    Last author: @Hakim Ullah
+
+  [0;31mWRONG OWNER: hunar-backend/src/modules/notifications/templates/job-alert.template.ts[0m
+    Expected: @hashim-malik
+    Last author: @Hakim Ullah
+
+  [0;31mWRONG OWNER: hunar-backend/src/modules/notifications/templates/otp.template.ts[0m
+    Expected: @hashim-malik
+    Last author: @Hakim Ullah
+
+  [0;31mWRONG OWNER: hunar-backend/src/modules/notifications/templates/offer-received.template.ts[0m
+    Expected: @hashim-malik
+    Last author: @Hakim Ullah
+
+  [0;31mWRONG OWNER: hunar-backend/src/modules/notifications/notification.templates.ts[0m
+    Expected: @hashim-malik
+    Last author: @qaziaaaa
+
+  [0;31mWRONG OWNER: hunar-frontend/src/features/negotiation/index.ts[0m
+    Expected: @abdullah
+    Last author: @Shehzad1961
+
+  [0;31mWRONG OWNER: hunar-frontend/src/features/negotiation/components/offer-status-badge.tsx[0m
+    Expected: @abdullah
+    Last author: @Shehzad1961
+
+  [0;31mWRONG OWNER: hunar-frontend/src/features/negotiation/components/send-visit-offer-dialog.tsx[0m
+    Expected: @abdullah
+    Last author: @Shehzad1961
+
+  [0;31mWRONG OWNER: hunar-frontend/src/features/negotiation/components/counter-offer-panel.tsx[0m
+    Expected: @abdullah
+    Last author: @Shehzad1961
+
+  [0;31mWRONG OWNER: hunar-backend/src/modules/payments/payments.controller.ts[0m
+    Expected: @shafqatullah
+    Last author: @Hakim Ullah
+
+  [0;31mWRONG OWNER: hunar-backend/src/modules/payments/gateways/jazzcash.gateway.ts[0m
+    Expected: @shafqatullah
+    Last author: @Hakim Ullah
+
+  [0;31mWRONG OWNER: hunar-backend/src/modules/payments/gateways/easypaisa.gateway.ts[0m
+    Expected: @shafqatullah
+    Last author: @Hakim Ullah
+
+  [0;31mWRONG OWNER: hunar-backend/src/modules/payments/gateways/gateway.interface.ts[0m
+    Expected: @shafqatullah
+    Last author: @Hakim Ullah
+
+  [0;31mWRONG OWNER: hunar-backend/src/modules/payments/gateways/stripe.gateway.ts[0m
+    Expected: @shafqatullah
+    Last author: @Hakim Ullah
+
+  [0;31mWRONG OWNER: hunar-backend/src/modules/payments/payments.validation.ts[0m
+    Expected: @shafqatullah
+    Last author: @Hakim Ullah
+
+  [0;31mWRONG OWNER: hunar-backend/src/modules/payments/payments.service.ts[0m
+    Expected: @shafqatullah
+    Last author: @Hakim Ullah
+
+  [0;31mWRONG OWNER: hunar-backend/src/modules/payments/payments.module.ts[0m
+    Expected: @shafqatullah
+    Last author: @Hakim Ullah
+
+  [0;31mWRONG OWNER: hunar-backend/src/modules/payments/ledger.service.ts[0m
+    Expected: @shafqatullah
+    Last author: @Hakim Ullah
+
+  [0;31mWRONG OWNER: hunar-backend/src/modules/commissions/commissions.validation.ts[0m
+    Expected: @hakim
+    Last author: @Shafqat Ullah
+
+  [0;31mWRONG OWNER: hunar-backend/src/modules/commissions/commissions.controller.ts[0m
+    Expected: @hakim
+    Last author: @Shafqat Ullah
+
+  [0;31mWRONG OWNER: hunar-backend/src/modules/commissions/commissions.service.ts[0m
+    Expected: @hakim
+    Last author: @Shafqat Ullah
+
+  [0;31mWRONG OWNER: hunar-backend/src/modules/commissions/commissions.module.ts[0m
+    Expected: @hakim
+    Last author: @Shafqat Ullah
+
+  [0;31mWRONG OWNER: hunar-frontend/src/features/worker-dashboard/mock-job-requests.ts[0m
+    Expected: @shahzad
+    Last author: @Muhammad Abdullah
+
+  [0;31mWRONG OWNER: hunar-frontend/src/features/worker-dashboard/index.ts[0m
+    Expected: @shahzad
+    Last author: @Muhammad Abdullah
+
+  [0;31mWRONG OWNER: hunar-frontend/src/features/worker-dashboard/types/index.ts[0m
+    Expected: @shahzad
+    Last author: @Muhammad Abdullah
+
+  [0;31mWRONG OWNER: hunar-frontend/src/features/worker-dashboard/components/worker-dashboard-shell.tsx[0m
+    Expected: @shahzad
+    Last author: @Muhammad Abdullah
+
+  [0;31mWRONG OWNER: hunar-frontend/src/features/worker-dashboard/components/job-request-feed.tsx[0m
+    Expected: @shahzad
+    Last author: @Muhammad Abdullah
+
+  [0;31mWRONG OWNER: hunar-frontend/src/features/worker-dashboard/components/dashboard-sidebar.tsx[0m
+    Expected: @shahzad
+    Last author: @Muhammad Abdullah
+
+  [0;31mWRONG OWNER: hunar-frontend/src/features/worker-dashboard/components/mobile-nav-bar.tsx[0m
+    Expected: @shahzad
+    Last author: @Muhammad Abdullah
+
+  [0;31mWRONG OWNER: hunar-frontend/src/features/worker-dashboard/components/status-banner.tsx[0m
+    Expected: @shahzad
+    Last author: @Muhammad Abdullah
+
+  [0;31mWRONG OWNER: hunar-frontend/src/features/worker-dashboard/components/job-request-modal.tsx[0m
+    Expected: @shahzad
+    Last author: @Muhammad Abdullah
+
+  [0;31mWRONG OWNER: hunar-frontend/src/features/worker-dashboard/components/radar-search-view.tsx[0m
+    Expected: @shahzad
+    Last author: @Muhammad Abdullah
+
+  [0;31mWRONG OWNER: hunar-frontend/src/features/worker-dashboard/components/voice-player.tsx[0m
+    Expected: @shahzad
+    Last author: @Muhammad Abdullah
+
+  [0;31mWRONG OWNER: hunar-frontend/src/features/worker-dashboard/components/job-request-card.tsx[0m
+    Expected: @shahzad
+    Last author: @Muhammad Abdullah
+
+  [0;31mWRONG OWNER: hunar-frontend/src/features/worker-dashboard/components/stats-overview.tsx[0m
+    Expected: @shahzad
+    Last author: @Muhammad Abdullah
+
+  [0;31mWRONG OWNER: hunar-frontend/src/features/worker-dashboard/components/dashboard-header.tsx[0m
+    Expected: @shahzad
+    Last author: @Muhammad Abdullah
+
+  [0;31mWRONG OWNER: hunar-frontend/src/features/worker-dashboard/mock-data.ts[0m
+    Expected: @shahzad
+    Last author: @Muhammad Abdullah
+
+  [0;31mWRONG OWNER: hunar-backend/src/modules/reviews/reviews.service.ts[0m
+    Expected: @hakim
+    Last author: @Shafqat Ullah
+
+  [0;31mWRONG OWNER: hunar-backend/src/modules/reviews/reviews.module.ts[0m
+    Expected: @hakim
+    Last author: @Shafqat Ullah
+
+  [0;31mWRONG OWNER: hunar-backend/src/modules/reviews/reviews.validation.ts[0m
+    Expected: @hakim
+    Last author: @Shafqat Ullah
+
+  [0;31mWRONG OWNER: hunar-backend/src/modules/reviews/reviews.controller.ts[0m
+    Expected: @hakim
+    Last author: @Shafqat Ullah
+
+  [0;31mWRONG OWNER: hunar-frontend/src/features/auth/hooks/use-countdown.ts[0m
+    Expected: @faizan
+    Last author: @Muhammad Abdullah
+
+  [0;31mWRONG OWNER: hunar-frontend/src/features/auth/hooks/use-auth.ts[0m
+    Expected: @faizan
+    Last author: @Muhammad Abdullah
+
+  [0;31mWRONG OWNER: hunar-frontend/src/features/auth/lib/error.ts[0m
+    Expected: @faizan
+    Last author: @Muhammad Abdullah
+
+  [0;31mWRONG OWNER: hunar-frontend/src/features/auth/lib/phone.ts[0m
+    Expected: @faizan
+    Last author: @Muhammad Abdullah
+
+  [0;31mWRONG OWNER: hunar-frontend/src/features/auth/components/otp-step.tsx[0m
+    Expected: @faizan
+    Last author: @Muhammad Abdullah
+
+  [0;31mWRONG OWNER: hunar-frontend/src/features/auth/components/worker-signup-flow.tsx[0m
+    Expected: @faizan
+    Last author: @Muhammad Abdullah
+
+  [0;31mWRONG OWNER: hunar-frontend/src/features/auth/components/phone-step.tsx[0m
+    Expected: @faizan
+    Last author: @Muhammad Abdullah
+
+  [0;31mWRONG OWNER: hunar-frontend/src/features/auth/components/signup-success.tsx[0m
+    Expected: @faizan
+    Last author: @Muhammad Abdullah
+
+  [0;31mWRONG OWNER: hunar-frontend/src/features/auth/components/auth-shell.tsx[0m
+    Expected: @faizan
+    Last author: @Muhammad Abdullah
+
+  [0;31mWRONG OWNER: hunar-frontend/src/features/auth/components/password-step.tsx[0m
+    Expected: @faizan
+    Last author: @Muhammad Abdullah
+
+  [0;31mWRONG OWNER: hunar-frontend/src/features/auth/components/auth-top-bar.tsx[0m
+    Expected: @faizan
+    Last author: @Muhammad Abdullah
+
+  [0;31mWRONG OWNER: hunar-frontend/src/features/auth/components/auth-brand.tsx[0m
+    Expected: @faizan
+    Last author: @Muhammad Abdullah
+
+  [0;31mWRONG OWNER: hunar-frontend/src/features/auth/components/otp-input.tsx[0m
+    Expected: @faizan
+    Last author: @Muhammad Abdullah
+
+  [0;31mWRONG OWNER: hunar-frontend/src/features/auth/components/auth-trust-footer.tsx[0m
+    Expected: @faizan
+    Last author: @Muhammad Abdullah
+
+  [0;31mWRONG OWNER: hunar-frontend/src/features/auth/components/sign-in-form.tsx[0m
+    Expected: @faizan
+    Last author: @Muhammad Abdullah
+
+  [0;31mWRONG OWNER: hunar-frontend/src/features/auth/schemas/signup.ts[0m
+    Expected: @faizan
+    Last author: @Muhammad Abdullah
+
+  [0;31mWRONG OWNER: hunar-frontend/src/features/auth/api/auth-api.ts[0m
+    Expected: @faizan
+    Last author: @Muhammad Abdullah
+
+  [0;31mWRONG OWNER: hunar-backend/src/modules/uploads/uploads.service.spec.ts[0m
+    Expected: @hakim
+    Last author: @Hakim Ullah
+
+  [0;31mWRONG OWNER: hunar-backend/src/modules/uploads/uploads.service.ts[0m
+    Expected: @hakim
+    Last author: @Hakim Ullah
+
+  [0;31mWRONG OWNER: hunar-backend/src/modules/uploads/processors/image.processor.spec.ts[0m
+    Expected: @hakim
+    Last author: @Hakim Ullah
+
+  [0;31mWRONG OWNER: hunar-backend/src/modules/uploads/processors/voice.processor.ts[0m
+    Expected: @hakim
+    Last author: @Hakim Ullah
+
+  [0;31mWRONG OWNER: hunar-backend/src/modules/uploads/processors/image.processor.ts[0m
+    Expected: @hakim
+    Last author: @Hakim Ullah
+
+  [0;31mWRONG OWNER: hunar-backend/src/modules/uploads/uploads.controller.ts[0m
+    Expected: @hakim
+    Last author: @Hakim Ullah
+
+  [0;31mWRONG OWNER: hunar-backend/src/modules/uploads/uploads.presets.spec.ts[0m
+    Expected: @hakim
+    Last author: @Hakim Ullah
+
+  [0;31mWRONG OWNER: hunar-backend/src/modules/uploads/uploads.presets.ts[0m
+    Expected: @hakim
+    Last author: @Hakim Ullah
+
+  [0;31mWRONG OWNER: hunar-backend/src/modules/uploads/uploads.module.ts[0m
+    Expected: @hakim
+    Last author: @Hakim Ullah
+
+  [0;31mWRONG OWNER: hunar-backend/src/modules/uploads/storage/s3.storage.ts[0m
+    Expected: @hakim
+    Last author: @Hakim Ullah
+
+  [0;31mWRONG OWNER: hunar-backend/src/modules/uploads/storage/storage.interface.ts[0m
+    Expected: @hakim
+    Last author: @Hakim Ullah
+
+  [0;31mWRONG OWNER: hunar-backend/src/modules/uploads/storage/storage.provider.ts[0m
+    Expected: @hakim
+    Last author: @Hakim Ullah
+
+  [0;31mWRONG OWNER: hunar-backend/src/modules/uploads/storage/storage.provider.spec.ts[0m
+    Expected: @hakim
+    Last author: @Hakim Ullah
+
+  [0;31mWRONG OWNER: hunar-backend/src/modules/uploads/storage/minio.storage.ts[0m
+    Expected: @hakim
+    Last author: @Hakim Ullah
+
+  [0;31mWRONG OWNER: hunar-backend/src/modules/chat/chat.controller.ts[0m
+    Expected: @hakim
+    Last author: @Hakim Ullah
+
+  [0;31mWRONG OWNER: hunar-backend/src/modules/chat/chat.gateway.ts[0m
+    Expected: @hakim
+    Last author: @Hakim Ullah
+
+  [0;31mWRONG OWNER: hunar-backend/src/modules/chat/chat.validation.ts[0m
+    Expected: @hakim
+    Last author: @Hakim Ullah
+
+  [0;31mWRONG OWNER: hunar-backend/src/modules/chat/chat.module.ts[0m
+    Expected: @hakim
+    Last author: @Hakim Ullah
+
+  [0;31mWRONG OWNER: hunar-backend/src/modules/chat/chat.controller.spec.ts[0m
+    Expected: @hakim
+    Last author: @Hakim Ullah
+
+  [0;31mWRONG OWNER: hunar-backend/src/modules/chat/chat.events.ts[0m
+    Expected: @hakim
+    Last author: @Hakim Ullah
+
+  [0;31mWRONG OWNER: hunar-backend/src/modules/chat/chat.service.spec.ts[0m
+    Expected: @hakim
+    Last author: @qaziaaaa
+
+  [0;31mWRONG OWNER: hunar-backend/src/modules/chat/chat.gateway.spec.ts[0m
+    Expected: @hakim
+    Last author: @Hakim Ullah
+
+  [0;31mWRONG OWNER: hunar-backend/src/modules/chat/chat.service.ts[0m
+    Expected: @hakim
+    Last author: @Hakim Ullah
+
+  [0;31mWRONG OWNER: hunar-backend/src/modules/jobs/jobs.state-machine.ts[0m
+    Expected: @hakim
+    Last author: @Shafqat Ullah
+
+  [0;31mWRONG OWNER: hunar-backend/src/modules/jobs/jobs.validation.ts[0m
+    Expected: @hakim
+    Last author: @Shafqat Ullah
+
+  [0;31mWRONG OWNER: hunar-backend/src/modules/jobs/jobs.module.ts[0m
+    Expected: @hakim
+    Last author: @Shafqat Ullah
+
+  [0;31mWRONG OWNER: hunar-backend/src/modules/jobs/jobs.service.ts[0m
+    Expected: @hakim
+    Last author: @Hakim Ullah
+
+  [0;31mWRONG OWNER: hunar-backend/src/modules/jobs/jobs.controller.ts[0m
+    Expected: @hakim
+    Last author: @Shafqat Ullah
+
+  [0;31mWRONG OWNER: hunar-backend/src/modules/jobs/jobs.state-machine.spec.ts[0m
+    Expected: @hakim
+    Last author: @Shafqat Ullah
+
+  [0;31mWRONG OWNER: hunar-backend/src/modules/jobs/jobs.events.ts[0m
+    Expected: @hakim
+    Last author: @Shafqat Ullah
+
+  [0;31mWRONG OWNER: hunar-frontend/src/features/worker-verification/types/index.ts[0m
+    Expected: @shahzad
+    Last author: @Muhammad Abdullah
+
+  [0;31mWRONG OWNER: hunar-frontend/src/features/worker-verification/components/verification-left-showcase.tsx[0m
+    Expected: @shahzad
+    Last author: @Muhammad Abdullah
+
+  [0;31mWRONG OWNER: hunar-frontend/src/features/worker-verification/components/rejected-view.tsx[0m
+    Expected: @shahzad
+    Last author: @Muhammad Abdullah
+
+  [0;31mWRONG OWNER: hunar-frontend/src/features/worker-verification/components/status-tester-bar.tsx[0m
+    Expected: @shahzad
+    Last author: @Muhammad Abdullah
+
+  [0;31mWRONG OWNER: hunar-frontend/src/features/worker-verification/components/pending-view.tsx[0m
+    Expected: @shahzad
+    Last author: @Muhammad Abdullah
+
+  [0;31mWRONG OWNER: hunar-frontend/src/features/worker-verification/components/verification-shell.tsx[0m
+    Expected: @shahzad
+    Last author: @Muhammad Abdullah
+
+  [0;31mWRONG OWNER: hunar-frontend/src/features/worker-verification/components/approved-view.tsx[0m
+    Expected: @shahzad
+    Last author: @Muhammad Abdullah
+
+  [0;31mWRONG OWNER: hunar-frontend/src/features/worker-verification/components/request-changes-view.tsx[0m
+    Expected: @shahzad
+    Last author: @Muhammad Abdullah
+
+  [0;31mWRONG OWNER: hunar-frontend/src/features/worker-verification/api/verification-api.ts[0m
+    Expected: @shahzad
+    Last author: @Muhammad Abdullah
+
+  [0;31mWRONG OWNER: hunar-backend/src/modules/offers/offers.module.ts[0m
+    Expected: @hakim
+    Last author: @Shafqat Ullah
+
+  [0;31mWRONG OWNER: hunar-backend/src/modules/offers/offers.service.ts[0m
+    Expected: @hakim
+    Last author: @Hakim Ullah
+
+  [0;31mWRONG OWNER: hunar-backend/src/modules/offers/offers.controller.ts[0m
+    Expected: @hakim
+    Last author: @Shafqat Ullah
+
+  [0;31mWRONG OWNER: hunar-backend/src/modules/offers/offers.service.spec.ts[0m
+    Expected: @hakim
+    Last author: @Hakim Ullah
+
+  [0;31mWRONG OWNER: hunar-backend/src/modules/offers/offers.validation.ts[0m
+    Expected: @hakim
+    Last author: @Shafqat Ullah
+
+  [0;31mWRONG OWNER: hunar-backend/src/modules/location/location.module.ts[0m
+    Expected: @shafqatullah
+    Last author: @Hakim Ullah
+
+  [0;31mWRONG OWNER: hunar-backend/src/modules/location/geocoding.service.ts[0m
+    Expected: @shafqatullah
+    Last author: @Hakim Ullah
+
+  [0;31mWRONG OWNER: hunar-backend/src/modules/location/location.service.ts[0m
+    Expected: @shafqatullah
+    Last author: @Hakim Ullah
+
+  [0;31mWRONG OWNER: hunar-backend/src/modules/users/users.controller.ts[0m
+    Expected: @hashim-malik
+    Last author: @Hakim Ullah
+
+  [0;31mWRONG OWNER: hunar-backend/src/modules/users/mapbox.service.ts[0m
+    Expected: @hashim-malik
+    Last author: @Hakim Ullah
+
+  [0;31mWRONG OWNER: hunar-backend/src/modules/users/worker-profile.service.ts[0m
+    Expected: @hashim-malik
+    Last author: @Hakim Ullah
+
+  [0;31mWRONG OWNER: hunar-backend/src/modules/users/users.module.ts[0m
+    Expected: @hashim-malik
+    Last author: @Hakim Ullah
+
+  [0;31mWRONG OWNER: hunar-backend/src/modules/users/users.validation.ts[0m
+    Expected: @hashim-malik
+    Last author: @Hakim Ullah
+
+  [0;31mWRONG OWNER: hunar-backend/src/modules/users/customer-profile.service.ts[0m
+    Expected: @hashim-malik
+    Last author: @Hakim Ullah
+
+  [0;31mWRONG OWNER: hunar-backend/src/modules/users/users.service.ts[0m
+    Expected: @hashim-malik
+    Last author: @Hakim Ullah
+
+  [0;31mWRONG OWNER: hunar-backend/src/modules/users/worker-profile.service.spec.ts[0m
+    Expected: @hashim-malik
+    Last author: @Hakim Ullah
+
+  [0;31mWRONG OWNER: hunar-frontend/src/features/worker-onboarding/types/index.ts[0m
+    Expected: @shahzad
+    Last author: @Muhammad Abdullah
+
+  [0;31mWRONG OWNER: hunar-frontend/src/features/worker-onboarding/hooks/use-worker-wizard.ts[0m
+    Expected: @shahzad
+    Last author: @Muhammad Abdullah
+
+  [0;31mWRONG OWNER: hunar-frontend/src/features/worker-onboarding/components/left-showcase.tsx[0m
+    Expected: @shahzad
+    Last author: @Muhammad Abdullah
+
+  [0;31mWRONG OWNER: hunar-frontend/src/features/worker-onboarding/components/step2-skills.tsx[0m
+    Expected: @shahzad
+    Last author: @Muhammad Abdullah
+
+  [0;31mWRONG OWNER: hunar-frontend/src/features/worker-onboarding/components/step6-review.tsx[0m
+    Expected: @shahzad
+    Last author: @Muhammad Abdullah
+
+  [0;31mWRONG OWNER: hunar-frontend/src/features/worker-onboarding/components/wizard-shell.tsx[0m
+    Expected: @shahzad
+    Last author: @Muhammad Abdullah
+
+  [0;31mWRONG OWNER: hunar-frontend/src/features/worker-onboarding/components/onboarding-success.tsx[0m
+    Expected: @shahzad
+    Last author: @Muhammad Abdullah
+
+  [0;31mWRONG OWNER: hunar-frontend/src/features/worker-onboarding/components/step5-documents.tsx[0m
+    Expected: @shahzad
+    Last author: @Muhammad Abdullah
+
+  [0;31mWRONG OWNER: hunar-frontend/src/features/worker-onboarding/components/step-progress-header.tsx[0m
+    Expected: @shahzad
+    Last author: @Muhammad Abdullah
+
+  [0;31mWRONG OWNER: hunar-frontend/src/features/worker-onboarding/components/step3-experience.tsx[0m
+    Expected: @shahzad
+    Last author: @Muhammad Abdullah
+
+  [0;31mWRONG OWNER: hunar-frontend/src/features/worker-onboarding/components/step4-service-areas.tsx[0m
+    Expected: @shahzad
+    Last author: @Muhammad Abdullah
+
+  [0;31mWRONG OWNER: hunar-frontend/src/features/worker-onboarding/components/step1-personal-details.tsx[0m
+    Expected: @shahzad
+    Last author: @Muhammad Abdullah
+
+  [0;31mWRONG OWNER: hunar-frontend/src/features/worker-onboarding/schemas/index.ts[0m
+    Expected: @shahzad
+    Last author: @Muhammad Abdullah
+
+  [0;31mWRONG OWNER: hunar-frontend/src/features/worker-onboarding/api/onboarding-api.ts[0m
+    Expected: @shahzad
+    Last author: @Muhammad Abdullah
+
+  [0;31mWRONG OWNER: hunar-backend/src/modules/admin/admin.module.ts[0m
+    Expected: @hashim-malik
+    Last author: @Hakim Ullah
+
+  [0;31mWRONG OWNER: hunar-backend/src/modules/admin/admin.validation.ts[0m
+    Expected: @hashim-malik
+    Last author: @Hakim Ullah
+
+  [0;31mWRONG OWNER: hunar-backend/src/modules/admin/admin.controller.ts[0m
+    Expected: @hashim-malik
+    Last author: @Hakim Ullah
+
+  [0;31mWRONG OWNER: hunar-backend/src/modules/admin/admin-verification.validation.ts[0m
+    Expected: @hashim-malik
+    Last author: @Hakim Ullah
+
+  [0;31mWRONG OWNER: hunar-backend/src/modules/admin/admin-verification.controller.ts[0m
+    Expected: @hashim-malik
+    Last author: @Hakim Ullah
+
+  [0;31mWRONG OWNER: hunar-backend/src/modules/admin/admin-verification.service.ts[0m
+    Expected: @hashim-malik
+    Last author: @Hakim Ullah
+
+  [0;31mWRONG OWNER: hunar-backend/src/modules/admin/admin.middleware.ts[0m
+    Expected: @hashim-malik
+    Last author: @Hakim Ullah
+
+  [0;31mWRONG OWNER: hunar-backend/src/modules/admin/admin-verification.service.spec.ts[0m
+    Expected: @hashim-malik
+    Last author: @qaziaaaa
+
+  [0;31mWRONG OWNER: hunar-backend/src/modules/admin/admin.service.ts[0m
+    Expected: @hashim-malik
+    Last author: @Hakim Ullah
+
+  [0;31mWRONG OWNER: hunar-backend/src/modules/search/search.module.ts[0m
+    Expected: @shafqatullah
+    Last author: @Hakim Ullah
+
+  [0;31mWRONG OWNER: hunar-backend/src/modules/search/search.service.ts[0m
+    Expected: @shafqatullah
+    Last author: @Hakim Ullah
+
+  [0;31mWRONG OWNER: hunar-backend/src/modules/repair/repair.validation.ts[0m
+    Expected: @hakim
+    Last author: @Shafqat Ullah
+
+  [0;31mWRONG OWNER: hunar-backend/src/modules/repair/repair.service.ts[0m
+    Expected: @hakim
+    Last author: @Shafqat Ullah
+
+  [0;31mWRONG OWNER: hunar-backend/src/modules/repair/repair.controller.ts[0m
+    Expected: @hakim
+    Last author: @Shafqat Ullah
+
+  [0;31mWRONG OWNER: hunar-backend/src/modules/repair/repair.module.ts[0m
+    Expected: @hakim
+    Last author: @Shafqat Ullah
+
+  [0;31mWRONG OWNER: hunar-frontend/src/features/jobs/index.ts[0m
+    Expected: @abdullah
+    Last author: @Shehzad1961
+
+  [0;31mWRONG OWNER: hunar-frontend/src/features/jobs/components/visit-action-flow.tsx[0m
+    Expected: @abdullah
+    Last author: @Shehzad1961
+
+  [0;31mWRONG OWNER: hunar-frontend/src/features/jobs/components/job-card.tsx[0m
+    Expected: @abdullah
+    Last author: @Shehzad1961
+
+  [0;31mWRONG OWNER: hunar-frontend/src/features/jobs/components/nearby-jobs-feed.tsx[0m
+    Expected: @abdullah
+    Last author: @Shehzad1961
+
+  [0;31mWRONG OWNER: hunar-frontend/src/features/jobs/components/job-filters-bar.tsx[0m
+    Expected: @abdullah
+    Last author: @Shehzad1961
+
+  [0;31mWRONG OWNER: hunar-frontend/src/features/jobs/components/active-job-previsit.tsx[0m
+    Expected: @abdullah
+    Last author: @Shehzad1961
+
+  [0;31mWRONG OWNER: hunar-frontend/src/features/jobs/components/job-details-view.tsx[0m
+    Expected: @abdullah
+    Last author: @Shehzad1961
+
+  [0;31mWRONG OWNER: hunar-backend/src/modules/visits/visits.module.ts[0m
+    Expected: @hakim
+    Last author: @Shafqat Ullah
+
+  [0;31mWRONG OWNER: hunar-backend/src/modules/visits/visits.service.ts[0m
+    Expected: @hakim
+    Last author: @Shafqat Ullah
+
+  [0;31mWRONG OWNER: hunar-backend/src/modules/visits/visits.controller.ts[0m
+    Expected: @hakim
+    Last author: @Shafqat Ullah
+
+  [0;31mWRONG OWNER: hunar-backend/src/modules/visits/visits.validation.ts[0m
+    Expected: @hakim
+    Last author: @Shafqat Ullah
+
+  [0;31mWRONG OWNER: hunar-backend/src/modules/auth/auth.service.ts[0m
+    Expected: @hashim-malik
+    Last author: @Hakim Ullah
+
+  [0;31mWRONG OWNER: hunar-backend/src/modules/auth/strategies/jwt.strategy.ts[0m
+    Expected: @hashim-malik
+    Last author: @Hakim Ullah
+
+  [0;31mWRONG OWNER: hunar-backend/src/modules/auth/auth.controller.ts[0m
+    Expected: @hashim-malik
+    Last author: @Hakim Ullah
+
+  [0;31mWRONG OWNER: hunar-backend/src/modules/auth/auth.module.ts[0m
+    Expected: @hashim-malik
+    Last author: @Hakim Ullah
+
+  [0;31mWRONG OWNER: hunar-backend/src/modules/auth/sms.service.ts[0m
+    Expected: @hashim-malik
+    Last author: @Hakim Ullah
+
+  [0;31mWRONG OWNER: hunar-backend/src/modules/auth/auth.validation.ts[0m
+    Expected: @hashim-malik
+    Last author: @Hakim Ullah
+
+  [0;31mWRONG OWNER: hunar-backend/src/modules/auth/auth.service.spec.ts[0m
+    Expected: @hashim-malik
+    Last author: @Hakim Ullah
+
+
+============================================
+  AUDIT SUMMARY
+============================================
+
+Total files checked: 0
+Branch violations: [0;31m0[0m
+Blame violations:  [0;31m169[0m
+
+[0;31mWARNING: 169 ownership violation(s) detected![0m
+
+Review the violations above. Members may have worked on code
+that was assigned to someone else.
+
+============================================
