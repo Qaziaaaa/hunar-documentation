@@ -223,6 +223,47 @@ export class AuthService {
     return { ...tokens, user: this.toSafeUser(user) };
   }
 
+  async registerCustomer(
+    rawPhone: string,
+    password: string,
+    verificationToken: string,
+  ): Promise<AuthResult> {
+    const phone = this.requireValidPhone(rawPhone);
+
+    const verifyRaw = await this.redis.get(`${OTP_VERIFY_PREFIX}${phone}`);
+    if (!verifyRaw) {
+      throw new UnauthorizedException(
+        'OTP verification is required before completing registration',
+      );
+    }
+
+    let stored: { hash: string };
+    try {
+      stored = JSON.parse(verifyRaw) as { hash: string };
+    } catch {
+      stored = { hash: '' };
+    }
+    if (typeof stored.hash !== 'string' || !this.matchesHash(verificationToken, stored.hash)) {
+      throw new UnauthorizedException('Invalid verification token. Please verify the OTP again.');
+    }
+
+    const existing = await this.prisma.user.findUnique({ where: { phone } });
+    if (existing) {
+      throw new ConflictException('This phone number is already registered');
+    }
+
+    const passwordHash = await bcrypt.hash(password, BCRYPT_ROUNDS);
+    const user = await this.prisma.user.create({
+      data: { phone, passwordHash, role: Role.CUSTOMER },
+    });
+
+    await this.redis.del(`${OTP_VERIFY_PREFIX}${phone}`);
+    await this.redis.del(`${OTP_COOLDOWN_PREFIX}${phone}`);
+
+    const tokens = await this.issueTokens(user);
+    return { ...tokens, user: this.toSafeUser(user) };
+  }
+
   async login(rawPhone: string, password: string): Promise<AuthResult> {
     const phone = this.requireValidPhone(rawPhone);
 
@@ -241,6 +282,31 @@ export class AuthService {
     }
 
     if (user.role !== Role.WORKER) {
+      throw new UnauthorizedException('Invalid phone number or password');
+    }
+
+    const tokens = await this.issueTokens(user);
+    return { ...tokens, user: this.toSafeUser(user) };
+  }
+
+  async loginCustomer(rawPhone: string, password: string): Promise<AuthResult> {
+    const phone = this.requireValidPhone(rawPhone);
+
+    const user = await this.prisma.user.findUnique({ where: { phone } });
+    if (!user || !user.passwordHash) {
+      throw new UnauthorizedException('Invalid phone number or password');
+    }
+
+    const valid = await bcrypt.compare(password, user.passwordHash);
+    if (!valid) {
+      throw new UnauthorizedException('Invalid phone number or password');
+    }
+
+    if (!user.isActive) {
+      throw new UnauthorizedException('Account is deactivated');
+    }
+
+    if (user.role !== Role.CUSTOMER) {
       throw new UnauthorizedException('Invalid phone number or password');
     }
 
