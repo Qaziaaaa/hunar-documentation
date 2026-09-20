@@ -1,0 +1,225 @@
+import { NotFoundException } from '@nestjs/common';
+import { JobStatus, Role } from '@prisma/client';
+import { AdminService } from './admin.service';
+import { AuditService } from './audit.service';
+
+type UserRow = Record<string, unknown>;
+
+function makeService(users: UserRow[] = [], total = users.length) {
+  const user = {
+    findMany: jest.fn().mockResolvedValue(users),
+    count: jest.fn().mockResolvedValue(total),
+  };
+  const prisma = { user } as unknown as ConstructorParameters<typeof AdminService>[0];
+  const audit = { record: jest.fn() } as unknown as AuditService;
+  return { service: new AdminService(prisma, audit), user };
+}
+
+describe('AdminService.listCustomers (M2 step 1)', () => {
+  it('queries only CUSTOMER accounts, applies pagination and maps job counts', async () => {
+    const users: UserRow[] = [
+      {
+        id: 'c1',
+        phone: '03120000002',
+        name: 'Ali',
+        avatarUrl: null,
+        isActive: true,
+        isVerified: false,
+        createdAt: new Date('2026-09-01T00:00:00Z'),
+        workerProfile: null,
+        _count: { customerJobs: 3, offers: 0 },
+      },
+    ];
+    const { service, user } = makeService(users, 1);
+
+    const result = await service.listCustomers({ page: 2, limit: 10 });
+
+    expect(user.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { role: Role.CUSTOMER },
+        skip: 10,
+        take: 10,
+      }),
+    );
+    expect(result.meta).toEqual({ page: 2, limit: 10, total: 1, totalPages: 1 });
+    expect(result.items[0]).toMatchObject({ id: 'c1', jobsCount: 3, isActive: true });
+  });
+
+  it('builds the search + suspended filters', async () => {
+    const { service, user } = makeService();
+
+    await service.listCustomers({ search: 'ali', status: 'suspended' });
+
+    const where = user.findMany.mock.calls[0][0].where;
+    expect(where.role).toBe(Role.CUSTOMER);
+    expect(where.isActive).toBe(false);
+    expect(where.OR).toEqual([
+      { name: { contains: 'ali', mode: 'insensitive' } },
+      { phone: { contains: 'ali' } },
+    ]);
+  });
+
+  it('caps the page size at 50', async () => {
+    const { service, user } = makeService();
+
+    await service.listCustomers({ limit: 500 });
+
+    expect(user.findMany.mock.calls[0][0].take).toBe(50);
+  });
+});
+
+describe('AdminService.getCustomerDetail (Task 11)', () => {
+  it('returns customer profile, jobs, payments and review stats', async () => {
+    const userRow = {
+      id: 'c1',
+      phone: '03120000002',
+      name: 'Ali',
+      avatarUrl: null,
+      isActive: true,
+      isVerified: false,
+      createdAt: new Date('2026-09-01T00:00:00Z'),
+      updatedAt: new Date('2026-09-01T00:00:00Z'),
+      _count: { customerJobs: 2 },
+    };
+
+    const jobs = [
+      {
+        id: 'j1',
+        title: 'Fix AC',
+        status: JobStatus.COMPLETED,
+        urgency: 'HIGH',
+        city: 'Lahore',
+        area: 'Gulberg',
+        suggestedVisitCharge: 500,
+        lockedVisitCharge: 600,
+        selectedWorkerId: 'w1',
+        createdAt: new Date('2026-09-02T00:00:00Z'),
+        completedAt: new Date('2026-09-02T02:00:00Z'),
+        cancelledAt: null,
+        category: { id: 'cat1', name: 'AC Repair', nameUrdu: 'اے سی مرمت' },
+      },
+      {
+        id: 'j2',
+        title: 'Fix Pipe',
+        status: JobStatus.OPEN,
+        urgency: 'NORMAL',
+        city: 'Lahore',
+        area: 'Model Town',
+        suggestedVisitCharge: 300,
+        lockedVisitCharge: null,
+        selectedWorkerId: null,
+        createdAt: new Date('2026-09-03T00:00:00Z'),
+        completedAt: null,
+        cancelledAt: null,
+        category: { id: 'cat2', name: 'Plumbing', nameUrdu: 'پلمبنگ' },
+      },
+    ];
+
+    const reviews = [
+      {
+        id: 'r1',
+        jobId: 'j1',
+        rating: 5,
+        comment: 'Great customer, clear communication',
+        createdAt: new Date('2026-09-02T03:00:00Z'),
+        reviewer: { id: 'w1', name: 'Worker Khan' },
+      },
+      {
+        id: 'r2',
+        jobId: 'j1',
+        rating: 4,
+        comment: 'Nice experience',
+        createdAt: new Date('2026-09-02T04:00:00Z'),
+        reviewer: { id: 'w1', name: 'Worker Khan' },
+      },
+    ];
+
+    const user = {
+      findFirst: jest.fn().mockResolvedValue(userRow),
+    };
+    const serviceRequest = {
+      findMany: jest.fn().mockResolvedValue(jobs),
+    };
+    const review = {
+      findMany: jest.fn().mockResolvedValue(reviews),
+    };
+    const prisma = { user, serviceRequest, review } as unknown as ConstructorParameters<
+      typeof AdminService
+    >[0];
+    const audit = { record: jest.fn() } as unknown as AuditService;
+    const service = new AdminService(prisma, audit);
+
+    const result = await service.getCustomerDetail('c1');
+
+    expect(user.findFirst).toHaveBeenCalledWith({
+      where: { id: 'c1', role: Role.CUSTOMER },
+      select: expect.any(Object),
+    });
+    expect(result.profile).toEqual({
+      id: 'c1',
+      phone: '03120000002',
+      name: 'Ali',
+      avatarUrl: null,
+      isActive: true,
+      isVerified: false,
+      createdAt: userRow.createdAt,
+    });
+    expect(result.stats).toEqual({
+      jobsCount: 2,
+      reviewsCount: 2,
+      ratingAverage: 4.5,
+      totalPaid: 600,
+    });
+    expect(result.jobs).toHaveLength(2);
+    expect(result.payments).toHaveLength(1);
+    expect(result.payments[0]).toEqual({
+      jobId: 'j1',
+      title: 'Fix AC',
+      amount: 600,
+      status: JobStatus.COMPLETED,
+      paidAt: jobs[0].completedAt,
+    });
+    expect(result.reviews).toHaveLength(2);
+  });
+
+  it('handles customer with 0 jobs and 0 reviews gracefully', async () => {
+    const userRow = {
+      id: 'c2',
+      phone: '03120000003',
+      name: 'Usman',
+      avatarUrl: null,
+      isActive: true,
+      isVerified: false,
+      createdAt: new Date('2026-09-01T00:00:00Z'),
+      updatedAt: new Date('2026-09-01T00:00:00Z'),
+      _count: { customerJobs: 0 },
+    };
+    const user = { findFirst: jest.fn().mockResolvedValue(userRow) };
+    const serviceRequest = { findMany: jest.fn().mockResolvedValue([]) };
+    const review = { findMany: jest.fn().mockResolvedValue([]) };
+    const prisma = { user, serviceRequest, review } as unknown as ConstructorParameters<
+      typeof AdminService
+    >[0];
+    const service = new AdminService(prisma, { record: jest.fn() } as unknown as AuditService);
+
+    const result = await service.getCustomerDetail('c2');
+
+    expect(result.stats).toEqual({
+      jobsCount: 0,
+      reviewsCount: 0,
+      ratingAverage: null,
+      totalPaid: 0,
+    });
+    expect(result.jobs).toEqual([]);
+    expect(result.payments).toEqual([]);
+    expect(result.reviews).toEqual([]);
+  });
+
+  it('throws NotFoundException when customer is not found or not a CUSTOMER', async () => {
+    const user = { findFirst: jest.fn().mockResolvedValue(null) };
+    const prisma = { user } as unknown as ConstructorParameters<typeof AdminService>[0];
+    const service = new AdminService(prisma, { record: jest.fn() } as unknown as AuditService);
+
+    await expect(service.getCustomerDetail('unknown-id')).rejects.toThrow(NotFoundException);
+  });
+});

@@ -30,6 +30,7 @@ import { RealtimeModule } from './modules/realtime/realtime.module';
 import { UploadsModule } from './modules/uploads/uploads.module';
 import { ChatModule } from './modules/chat/chat.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
+import { PaymentsModule } from './modules/payments/payments.module';
 
 @Module({
   imports: [
@@ -56,6 +57,7 @@ import { NotificationsModule } from './modules/notifications/notifications.modul
     UploadsModule,
     ChatModule,
     NotificationsModule,
+    PaymentsModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: JwtAuthGuard },
