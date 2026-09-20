@@ -110,52 +110,7 @@ export class NotificationsListener {
     });
   }
 
-  // 6. Commission held (module-1 commission recorded on repair completion)
-  @OnEvent('commission.recorded')
-  async handleCommissionRecorded(payload: {
-    commissionId?: string;
-    jobId: string;
-    workerId: string;
-    amount: number;
-  }) {
-    await this.safe('commission.recorded', async () => {
-      const job = await this.getJobTitle(payload.jobId);
-      await this.notifications.createNotification(payload.workerId, 'COMMISSION_HELD', {
-        jobId: payload.jobId,
-        jobTitle: job?.title,
-        commissionId: payload.commissionId,
-        amount: Number(payload.amount),
-      });
-    });
-  }
-
-  // 6. Commission deducted (module-1 commission finalized)
-  @OnEvent('commission.statusChanged')
-  async handleCommissionStatusChanged(payload: {
-    commissionId: string;
-    jobId: string;
-    status: string;
-  }) {
-    await this.safe('commission.statusChanged', async () => {
-      if (payload.status !== 'RECEIVED') return;
-      const [commission, job] = await Promise.all([
-        this.prisma.commission.findUnique({
-          where: { id: payload.commissionId },
-          select: { workerId: true, amount: true },
-        }),
-        this.getJobTitle(payload.jobId),
-      ]);
-      if (!commission) return;
-      await this.notifications.createNotification(commission.workerId, 'COMMISSION_DEDUCTED', {
-        jobId: payload.jobId,
-        jobTitle: job?.title,
-        commissionId: payload.commissionId,
-        amount: Number(commission.amount),
-      });
-    });
-  }
-
-  // 6. Wallet commission lifecycle (Task 7 wallet module emits these)
+  // 6. Commission held (wallet module holds 10% on worker arrival, Task 7)
   @OnEvent('commission.held')
   async handleWalletCommissionHeld(payload: {
     commissionId: string;
