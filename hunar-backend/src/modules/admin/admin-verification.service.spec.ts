@@ -1,5 +1,6 @@
 import { NotFoundException } from '@nestjs/common';
 import { AdminVerificationService } from './admin-verification.service';
+import { AuditService } from './audit.service';
 import { EventBusService } from '../../common/event-bus/event-bus.service';
 
 class Db {
@@ -102,7 +103,11 @@ function makeDb(): any {
 }
 
 function makeService(db: any) {
-  return new AdminVerificationService(db, { emit: jest.fn() } as unknown as EventBusService);
+  return new AdminVerificationService(
+    db,
+    { emit: jest.fn() } as unknown as EventBusService,
+    { record: jest.fn() } as unknown as AuditService,
+  );
 }
 
 function addWorker(db: any, id: string, overrides: Record<string, unknown> = {}) {

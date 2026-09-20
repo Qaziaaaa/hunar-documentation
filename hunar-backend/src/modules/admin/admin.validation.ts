@@ -1,0 +1,63 @@
+import { Type } from 'class-transformer';
+import {
+  IsIn,
+  IsInt,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  Max,
+  MaxLength,
+  Min,
+} from 'class-validator';
+import { WorkerVerificationStatus } from '@prisma/client';
+
+export const USER_STATUS_FILTERS = ['active', 'suspended'] as const;
+export type UserStatusFilter = (typeof USER_STATUS_FILTERS)[number];
+
+export const VERIFICATION_STATUSES = [
+  WorkerVerificationStatus.NOT_SUBMITTED,
+  WorkerVerificationStatus.PENDING,
+  WorkerVerificationStatus.APPROVED,
+  WorkerVerificationStatus.REJECTED,
+  WorkerVerificationStatus.REQUEST_CHANGES,
+  WorkerVerificationStatus.REVOKED,
+] as const;
+
+// Shared list query for the admin customer/worker directories (search + status + pagination).
+export class AdminUserListQueryDto {
+  @IsOptional()
+  @IsString()
+  @MaxLength(100)
+  search?: string;
+
+  @IsOptional()
+  @IsIn(USER_STATUS_FILTERS)
+  status?: UserStatusFilter;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  page?: number;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(50)
+  limit?: number;
+}
+
+export class AdminWorkerListQueryDto extends AdminUserListQueryDto {
+  @IsOptional()
+  @IsIn(VERIFICATION_STATUSES)
+  verificationStatus?: WorkerVerificationStatus;
+}
+
+// Suspend is a sensitive action — the admin must always state why (stored in the audit trail).
+export class SuspendUserDto {
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(1000)
+  reason!: string;
+}

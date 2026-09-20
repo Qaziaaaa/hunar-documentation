@@ -24,6 +24,7 @@ enum WorkerVerificationStatus {
   APPROVED
   REJECTED
   REQUEST_CHANGES
+  REVOKED
 }
 
 enum VerificationDocumentType {
@@ -459,6 +460,25 @@ model WorkerNotification {
 
   @@index([userId, isRead, createdAt])
   @@index([userId, type, createdAt])
+}
+
+// Admin action audit trail (Admin flow §M2/M3). Records who did what, to whom, when and why.
+// actorId is intentionally a plain string (no FK) so history survives user deletion.
+model AuditLog {
+  id         String   @id @default(uuid())
+  actorId    String?
+  actorRole  Role?
+  action     String
+  targetType String
+  targetId   String
+  reason     String?
+  metadata   Json?
+  createdAt  DateTime @default(now())
+
+  @@index([targetType, targetId])
+  @@index([actorId])
+  @@index([action])
+  @@index([createdAt])
 }
 
 // ===== Task 7 — Worker Wallet (Hakim Ullah) =====
