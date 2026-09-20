@@ -1,7 +1,7 @@
-import { NotFoundException } from '@nestjs/common';
+import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { JobStatus, Role } from '@prisma/client';
 import { AdminService } from './admin.service';
-import { AuditService } from './audit.service';
+import { AUDIT_ACTIONS, AuditService } from './audit.service';
 
 type UserRow = Record<string, unknown>;
 
@@ -221,5 +221,235 @@ describe('AdminService.getCustomerDetail (Task 11)', () => {
     const service = new AdminService(prisma, { record: jest.fn() } as unknown as AuditService);
 
     await expect(service.getCustomerDetail('unknown-id')).rejects.toThrow(NotFoundException);
+  });
+});
+
+describe('AdminService.suspendCustomer (Task 12)', () => {
+  const actor = { sub: 'admin-1', phone: '', role: Role.ADMIN };
+  const customerRow = {
+    id: 'c1',
+    phone: '03120000002',
+    name: 'Ali',
+    isActive: true,
+  };
+
+  function buildFixture(overrides: {
+    findFirst?: jest.Mock | null;
+    update?: jest.Mock;
+    record?: jest.Mock;
+  } = {}) {
+    const findFirst =
+      overrides.findFirst ?? jest.fn().mockResolvedValue(customerRow);
+    const update =
+      overrides.update ??
+      jest.fn().mockResolvedValue({
+        id: customerRow.id,
+        isActive: false,
+        updatedAt: new Date('2026-09-05T00:00:00Z'),
+      });
+    const record = overrides.record ?? jest.fn();
+    const $transaction = jest.fn(
+      async (cb: (tx: { user: { update: jest.Mock } }) => Promise<unknown>) =>
+        cb({ user: { update } }),
+    );
+    const prisma = {
+      user: { findFirst, update },
+      $transaction,
+    } as unknown as ConstructorParameters<typeof AdminService>[0];
+    const audit = { record } as unknown as AuditService;
+    const service = new AdminService(prisma, audit);
+    return { service, findFirst, update, record };
+  }
+
+  it('sets the customer inactive and records the suspend with the mandatory reason', async () => {
+    const { service, findFirst, update, record } = buildFixture();
+
+    const result = await service.suspendCustomer('c1', actor, 'Fraud report');
+
+    expect(findFirst).toHaveBeenCalledWith({
+      where: { id: 'c1', role: Role.CUSTOMER },
+      select: expect.any(Object),
+    });
+    expect(update).toHaveBeenCalledWith({
+      where: { id: 'c1' },
+      data: { isActive: false },
+      select: expect.any(Object),
+    });
+    expect(record).toHaveBeenCalledWith(
+      {
+        actorId: actor.sub,
+        actorRole: actor.role,
+        action: AUDIT_ACTIONS.USER_SUSPENDED,
+        targetType: Role.CUSTOMER,
+        targetId: 'c1',
+        reason: 'Fraud report',
+        metadata: { phone: customerRow.phone, name: customerRow.name },
+      },
+      expect.anything(),
+    );
+    expect(result).toMatchObject({
+      id: 'c1',
+      role: Role.CUSTOMER,
+      isActive: false,
+    });
+  });
+
+  it('throws NotFoundException when the customer does not exist', async () => {
+    const { service, record } = buildFixture({ findFirst: jest.fn().mockResolvedValue(null) });
+
+    await expect(service.suspendCustomer('missing', actor, 'Reason')).rejects.toThrow(
+      NotFoundException,
+    );
+    expect(record).not.toHaveBeenCalled();
+  });
+
+  it('throws BadRequestException when the customer is already suspended', async () => {
+    const { service, record } = buildFixture({
+      findFirst: jest.fn().mockResolvedValue({ ...customerRow, isActive: false }),
+    });
+
+    await expect(service.suspendCustomer('c1', actor, 'Reason')).rejects.toThrow(
+      BadRequestException,
+    );
+    expect(record).not.toHaveBeenCalled();
+  });
+});
+
+describe('AdminService reactivate customer (Task 13) + worker suspend/reactivate (Tasks 16, 17)', () => {
+  const actor = { sub: 'admin-1', phone: '', role: Role.ADMIN };
+
+  function makeFixture(role: Role, existing: Record<string, unknown> | null) {
+    const findFirst = jest.fn().mockResolvedValue(existing);
+    const update = jest
+      .fn()
+      .mockResolvedValue({
+        id: 'u1',
+        isActive: existing ? !existing.isActive : false,
+        updatedAt: new Date('2026-09-06T00:00:00Z'),
+      });
+    const record = jest.fn();
+    const $transaction = jest.fn(
+      async (cb: (tx: { user: { update: jest.Mock } }) => Promise<unknown>) =>
+        cb({ user: { update } }),
+    );
+    const prisma = {
+      user: { findFirst, update },
+      $transaction,
+    } as unknown as ConstructorParameters<typeof AdminService>[0];
+    const audit = { record } as unknown as AuditService;
+    const service = new AdminService(prisma, audit);
+    return { service, findFirst, update, record };
+  }
+
+  it('Task 13: reactivates a suspended customer (no reason)', async () => {
+    const { service, findFirst, update, record } = makeFixture(Role.CUSTOMER, {
+      id: 'u1',
+      phone: '03120000002',
+      name: 'Ali',
+      isActive: false,
+    });
+
+    const result = await service.reactivateCustomer('u1', actor);
+
+    expect(findFirst).toHaveBeenCalledWith({
+      where: { id: 'u1', role: Role.CUSTOMER },
+      select: expect.any(Object),
+    });
+    expect(update).toHaveBeenCalledWith({
+      where: { id: 'u1' },
+      data: { isActive: true },
+      select: expect.any(Object),
+    });
+    expect(record).toHaveBeenCalledWith(
+      expect.objectContaining({
+        actorId: actor.sub,
+        action: AUDIT_ACTIONS.USER_REACTIVATED,
+        targetId: 'u1',
+        reason: null,
+      }),
+      expect.anything(),
+    );
+    expect(result).toMatchObject({ role: Role.CUSTOMER, isActive: true });
+  });
+
+  it('Task 13: throws 400 when the customer is already active', async () => {
+    const { service, record } = makeFixture(Role.CUSTOMER, {
+      id: 'u1',
+      isActive: true,
+    });
+
+    await expect(service.reactivateCustomer('u1', actor)).rejects.toThrow(BadRequestException);
+    expect(record).not.toHaveBeenCalled();
+  });
+
+  it('Task 16: suspends a worker with a mandatory reason', async () => {
+    const { service, findFirst, record } = makeFixture(Role.WORKER, {
+      id: 'u1',
+      phone: '03120000001',
+      name: 'Bilal',
+      isActive: true,
+    });
+
+    const result = await service.suspendWorker('u1', actor, 'No-show three times');
+
+    expect(findFirst).toHaveBeenCalledWith({
+      where: { id: 'u1', role: Role.WORKER },
+      select: expect.any(Object),
+    });
+    expect(record).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: AUDIT_ACTIONS.USER_SUSPENDED,
+        targetType: Role.WORKER,
+        targetId: 'u1',
+        reason: 'No-show three times',
+      }),
+      expect.anything(),
+    );
+    expect(result).toMatchObject({ role: Role.WORKER, isActive: false });
+  });
+
+  it('Task 16: throws 404 when the worker does not exist', async () => {
+    const { service, record } = makeFixture(Role.WORKER, null);
+
+    await expect(service.suspendWorker('missing', actor, 'Reason')).rejects.toThrow(
+      NotFoundException,
+    );
+    expect(record).not.toHaveBeenCalled();
+  });
+
+  it('Task 16: throws 400 when the worker is already suspended', async () => {
+    const { service, record } = makeFixture(Role.WORKER, {
+      id: 'u1',
+      isActive: false,
+    });
+
+    await expect(service.suspendWorker('u1', actor, 'Reason')).rejects.toThrow(
+      BadRequestException,
+    );
+    expect(record).not.toHaveBeenCalled();
+  });
+
+  it('Task 17: reactivates a suspended worker', async () => {
+    const { service, findFirst, record } = makeFixture(Role.WORKER, {
+      id: 'u1',
+      phone: '03120000001',
+      name: 'Bilal',
+      isActive: false,
+    });
+
+    const result = await service.reactivateWorker('u1', actor);
+
+    expect(findFirst).toHaveBeenCalledWith({
+      where: { id: 'u1', role: Role.WORKER },
+      select: expect.any(Object),
+    });
+    expect(record).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: AUDIT_ACTIONS.USER_REACTIVATED,
+        targetType: Role.WORKER,
+      }),
+      expect.anything(),
+    );
+    expect(result).toMatchObject({ role: Role.WORKER, isActive: true });
   });
 });

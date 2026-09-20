@@ -75,18 +75,18 @@ Backend Developer — Shared Auth APIs + Full Admin Dashboard APIs
 | --- | --------------------------------------------------------------- | ----------------------------------------------- | ------ |
 | 10  | Get all customers (list with search/filter)                     | `GET /admin/customers`                          | ✅     |
 | 11  | Get customer detail (profile, jobs, payments, reviews)          | `GET /admin/customers/[id]`                     | ✅     |
-| 12  | Suspend customer (with reason)                                  | `PUT /admin/customers/[id]/suspend`             | ⏸️     |
-| 13  | Reactivate customer                                             | `PUT /admin/customers/[id]/reactivate`          | ⏸️     |
+| 12  | Suspend customer (with reason)                                  | `PUT /admin/customers/[id]/suspend`             | ✅     |
+| 13  | Reactivate customer                                             | `PUT /admin/customers/[id]/reactivate`          | ✅     |
 | 14  | Get all workers (list with search/filter)                       | `GET /admin/workers`                            | ✅     |
 | 15  | Get worker detail (profile, documents, jobs, earnings, reviews) | `GET /admin/workers/[id]`                       | ✅     |
-| 16  | Suspend worker (with reason)                                    | `PUT /admin/workers/[id]/suspend`               | ⏸️     |
-| 17  | Reactivate worker                                               | `PUT /admin/workers/[id]/reactivate`            | ⏸️     |
+| 16  | Suspend worker (with reason)                                    | `PUT /admin/workers/[id]/suspend`               | ✅     |
+| 17  | Reactivate worker                                               | `PUT /admin/workers/[id]/reactivate`            | ✅     |
 | 18  | Get verification queue (pending submissions)                    | `GET /admin/verifications`                      | ✅     |
 | 19  | Get verification detail (documents, skills, experience)         | `GET /admin/verifications/[id]`                 | ✅     |
 | 20  | Approve verification                                            | `PUT /admin/verifications/[id]/approve`         | ✅     |
 | 21  | Reject verification (with reason)                               | `PUT /admin/verifications/[id]/reject`          | ✅     |
 | 22  | Request changes (with notes)                                    | `PUT /admin/verifications/[id]/request-changes` | ✅     |
-| 23  | Revoke verification                                             | `PUT /admin/verifications/[id]/revoke`          | ⏸️     |
+| 23  | Revoke verification                                             | `PUT /admin/verifications/[id]/revoke`          | ✅     |
 
 **Rules:**
 
