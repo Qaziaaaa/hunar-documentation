@@ -10,6 +10,12 @@ export type NegotiationEntry = {
 };
 
 export interface HunarDomainEvents {
+  // Payment workflow (Module 3 Ã¯Â¿Â½?" Payments Backend, Shafqat). Emitted by
+  // PaymentsService as the house screenshot-verification flow advances a row
+  // INITIATED -> PROCESSING -> COMPLETED/FAILED -> REFUNDED. The worker-ledger
+  // ("I have been promised X, where is the rest?") is a read-only projection
+  // over the same rows Ã¯Â¿Â½?" the event bus is how the wallet/notification modules
+
   'job.created': {
     jobId: string;
     customerId: string;
@@ -82,8 +88,18 @@ export interface HunarDomainEvents {
     adminNote?: string | null;
   };
 
-  // Wallet flows (Task 7 — wallet module emits these; Notifications subscribes).
+  // Wallet flows (Task 7 Ã¢â‚¬â€ wallet module emits these; Notifications subscribes).
   'commission.held': { commissionId: string; jobId: string; workerId: string; amount: number };
+  // Payment workflow (Module 3 -?"? Payments Backend, Shafqat). Emitted by
+  // PaymentsService as the house screenshot-verification flow advances a row
+  // INITIATED -> PROCESSING -> COMPLETED/FAILED -> REFUNDED, with erifiedAt
+  // set when the house verifier confirms the screenshot. Notifications and the
+  // wallet projection subscribe off this bus (the ledger never re-emits these).
+  'payment:initiated': { paymentId: string; jobId: string; customerId: string; workerId: string; amount: number };
+  'payment:processing': { paymentId: string; jobId: string; customerId: string; workerId: string; amount: number };
+  'payment:completed': { paymentId: string; jobId: string; customerId: string; workerId: string; amount: number };
+  'payment:failed': { paymentId: string; jobId: string; customerId: string; workerId: string; amount: number };
+  'payment:refunded': { paymentId: string; jobId: string; customerId: string; workerId: string; amount: number };
   'commission.deducted': { commissionId: string; jobId: string; workerId: string; amount: number };
   'commission.reversed': { commissionId: string; jobId: string; workerId: string; amount: number };
   'wallet.insufficientBalance': {

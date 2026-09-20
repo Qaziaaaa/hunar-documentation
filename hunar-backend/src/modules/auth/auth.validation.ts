@@ -32,6 +32,9 @@ export class RegisterWorkerDto {
   verificationToken: string;
 }
 
+export class RegisterCustomerDto extends RegisterWorkerDto {}
+
+
 export class LoginDto {
   @IsString()
   @IsPakistaniPhone()

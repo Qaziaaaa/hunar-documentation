@@ -8,7 +8,12 @@ import { JobStatus, Prisma, Role, WorkerVerificationStatus } from '@prisma/clien
 import { PrismaService } from '../../prisma/prisma.service';
 import { EventBusService } from '../../common/event-bus/event-bus.service';
 import { JobStateMachine } from './jobs.state-machine';
-import { AvailableJobsQueryDto, CancelJobDto, CreateJobDto } from './jobs.validation';
+import {
+  AvailableJobsQueryDto,
+  CancelJobDto,
+  CreateJobDto,
+  CustomerJobsQueryDto,
+} from './jobs.validation';
 import { JwtPayload } from '../../common/types/jwt-payload.interface';
 import { normalizePage, toPageResult } from '../../common/helpers/pagination.util';
 import { getWorkerProfileCompletion } from '../../common/helpers/worker-profile.util';
@@ -135,6 +140,45 @@ export class JobsService {
     });
 
     return job;
+  }
+
+  async getCustomerJobs(customerId: string, query: CustomerJobsQueryDto) {
+    const { page, limit, skip } = normalizePage(query);
+    const where: Prisma.ServiceRequestWhereInput = {
+      customerId,
+      ...(query.status ? { status: query.status } : {}),
+    };
+    const [rows, total] = await this.prisma.$transaction([
+      this.prisma.serviceRequest.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy: { createdAt: 'desc' },
+        include: {
+          category: { select: { id: true, name: true } },
+          _count: { select: { offers: true } },
+        },
+      }),
+      this.prisma.serviceRequest.count({ where }),
+    ]);
+    const items = rows.map((j) => ({
+      id: j.id,
+      title: j.title,
+      status: j.status,
+      categoryId: j.categoryId,
+      categoryName: j.category.name,
+      address: j.address,
+      city: j.city,
+      area: j.area,
+      suggestedVisitCharge:
+        j.suggestedVisitCharge != null ? Number(j.suggestedVisitCharge) : null,
+      preferredVisitTime: j.preferredVisitTime,
+      offerCount: j._count.offers,
+      images: j.images,
+      voiceNoteUrl: j.voiceNoteUrl,
+      createdAt: j.createdAt,
+    }));
+    return toPageResult(items, total, page, limit);
   }
 
   async getAvailableJobs(worker: JwtPayload, query: AvailableJobsQueryDto) {
