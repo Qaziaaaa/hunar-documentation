@@ -1,0 +1,14 @@
+import { setRequestLocale } from "next-intl/server";
+import { CustomerVisitsView } from "@/features/customer-visits/components/customer-visits-view";
+import { MOCK_SCHEDULED_VISITS } from "@/features/customer-visits/data/mock-customer-visits";
+
+export default async function SingularJobTrackingPage({
+  params,
+}: {
+  params: Promise<{ locale: string; id: string }>;
+}) {
+  const { locale } = await params;
+  setRequestLocale(locale);
+
+  return <CustomerVisitsView initialVisits={MOCK_SCHEDULED_VISITS} />;
+}

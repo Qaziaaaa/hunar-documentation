@@ -12,11 +12,11 @@ import { Footer, PreFooter } from "@/components/landing/footer";
 
 export default function HomePage() {
   return (
-    <div className="bg-gray-50 text-slate-800 antialiased selection:bg-[#5BBB7B] selection:text-white landing-fade-in flex-1">
+    <div className="w-full min-h-screen bg-gray-50 text-slate-800 antialiased selection:bg-[#5BBB7B] selection:text-white landing-fade-in flex flex-col">
       <RoleModalProvider>
         <TopUtilityBar />
         <Header />
-        <main>
+        <main className="w-full flex-1 flex flex-col">
           <Hero />
           <Features />
           <RatedProfessionals />
