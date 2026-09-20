@@ -1,7 +1,7 @@
-import { NotFoundException } from '@nestjs/common';
+import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { JobStatus, Role } from '@prisma/client';
 import { AdminService } from './admin.service';
-import { AuditService } from './audit.service';
+import { AUDIT_ACTIONS, AuditService } from './audit.service';
 
 type UserRow = Record<string, unknown>;
 
@@ -221,5 +221,96 @@ describe('AdminService.getCustomerDetail (Task 11)', () => {
     const service = new AdminService(prisma, { record: jest.fn() } as unknown as AuditService);
 
     await expect(service.getCustomerDetail('unknown-id')).rejects.toThrow(NotFoundException);
+  });
+});
+
+describe('AdminService.suspendCustomer (Task 12)', () => {
+  const actor = { sub: 'admin-1', phone: '', role: Role.ADMIN };
+  const customerRow = {
+    id: 'c1',
+    phone: '03120000002',
+    name: 'Ali',
+    isActive: true,
+  };
+
+  function buildFixture(overrides: {
+    findFirst?: jest.Mock | null;
+    update?: jest.Mock;
+    record?: jest.Mock;
+  } = {}) {
+    const findFirst =
+      overrides.findFirst ?? jest.fn().mockResolvedValue(customerRow);
+    const update =
+      overrides.update ??
+      jest.fn().mockResolvedValue({
+        id: customerRow.id,
+        isActive: false,
+        updatedAt: new Date('2026-09-05T00:00:00Z'),
+      });
+    const record = overrides.record ?? jest.fn();
+    const $transaction = jest.fn(
+      async (cb: (tx: { user: { update: jest.Mock } }) => Promise<unknown>) =>
+        cb({ user: { update } }),
+    );
+    const prisma = {
+      user: { findFirst, update },
+      $transaction,
+    } as unknown as ConstructorParameters<typeof AdminService>[0];
+    const audit = { record } as unknown as AuditService;
+    const service = new AdminService(prisma, audit);
+    return { service, findFirst, update, record };
+  }
+
+  it('sets the customer inactive and records the suspend with the mandatory reason', async () => {
+    const { service, findFirst, update, record } = buildFixture();
+
+    const result = await service.suspendCustomer('c1', actor, 'Fraud report');
+
+    expect(findFirst).toHaveBeenCalledWith({
+      where: { id: 'c1', role: Role.CUSTOMER },
+      select: expect.any(Object),
+    });
+    expect(update).toHaveBeenCalledWith({
+      where: { id: 'c1' },
+      data: { isActive: false },
+      select: expect.any(Object),
+    });
+    expect(record).toHaveBeenCalledWith(
+      {
+        actorId: actor.sub,
+        actorRole: actor.role,
+        action: AUDIT_ACTIONS.USER_SUSPENDED,
+        targetType: Role.CUSTOMER,
+        targetId: 'c1',
+        reason: 'Fraud report',
+        metadata: { phone: customerRow.phone, name: customerRow.name },
+      },
+      expect.anything(),
+    );
+    expect(result).toMatchObject({
+      id: 'c1',
+      role: Role.CUSTOMER,
+      isActive: false,
+    });
+  });
+
+  it('throws NotFoundException when the customer does not exist', async () => {
+    const { service, record } = buildFixture({ findFirst: jest.fn().mockResolvedValue(null) });
+
+    await expect(service.suspendCustomer('missing', actor, 'Reason')).rejects.toThrow(
+      NotFoundException,
+    );
+    expect(record).not.toHaveBeenCalled();
+  });
+
+  it('throws BadRequestException when the customer is already suspended', async () => {
+    const { service, record } = buildFixture({
+      findFirst: jest.fn().mockResolvedValue({ ...customerRow, isActive: false }),
+    });
+
+    await expect(service.suspendCustomer('c1', actor, 'Reason')).rejects.toThrow(
+      BadRequestException,
+    );
+    expect(record).not.toHaveBeenCalled();
   });
 });

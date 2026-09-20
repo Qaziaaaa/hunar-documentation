@@ -1,6 +1,7 @@
 import { INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import request from 'supertest';
+import { Role } from '@prisma/client';
 import { AdminController } from './admin.controller';
 import { AdminService } from './admin.service';
 import { AuditService } from './audit.service';
@@ -16,6 +17,7 @@ describe('AdminController HTTP — GET /admin/customers', () => {
   const findFirst = jest.fn();
   const findManyJobs = jest.fn();
   const findManyReviews = jest.fn();
+  const updateUser = jest.fn();
 
   beforeAll(async () => {
     const moduleRef = await Test.createTestingModule({
@@ -25,9 +27,13 @@ describe('AdminController HTTP — GET /admin/customers', () => {
         {
           provide: PrismaService,
           useValue: {
-            user: { findMany, count, findFirst },
+            user: { findMany, count, findFirst, update: updateUser },
             serviceRequest: { findMany: findManyJobs },
             review: { findMany: findManyReviews },
+            $transaction: jest.fn(
+              async (cb: (tx: { user: { update: jest.Mock } }) => Promise<unknown>) =>
+                cb({ user: { update: updateUser } }),
+            ),
           },
         },
         { provide: AuditService, useValue: { record: jest.fn() } },
@@ -37,6 +43,11 @@ describe('AdminController HTTP — GET /admin/customers', () => {
     app = moduleRef.createNestApplication();
     app.setGlobalPrefix('api/v1');
     app.useGlobalPipes(new AppValidationPipe());
+    // Simulate the authenticated admin (JwtAuthGuard normally sets req.user).
+    app.use((req: any, _res: any, next: () => void) => {
+      req.user = { sub: 'admin-1', phone: '', role: Role.ADMIN };
+      next();
+    });
     await app.init();
   });
 
@@ -50,6 +61,7 @@ describe('AdminController HTTP — GET /admin/customers', () => {
     findFirst.mockReset();
     findManyJobs.mockReset();
     findManyReviews.mockReset();
+    updateUser.mockReset();
   });
 
   it('returns the paginated customer list', async () => {
@@ -168,6 +180,61 @@ describe('AdminController HTTP — GET /admin/customers', () => {
         }),
       ]);
       expect(res.body.reviews).toHaveLength(1);
+    });
+  });
+
+  describe('PUT /admin/customers/:id/suspend (Task 12)', () => {
+    const validUuid = 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11';
+
+    it('suspends the customer with a reason', async () => {
+      findFirst.mockResolvedValue({
+        id: validUuid,
+        phone: '03120000002',
+        name: 'Ali',
+        isActive: true,
+      });
+      updateUser.mockResolvedValue({
+        id: validUuid,
+        isActive: false,
+        updatedAt: new Date('2026-09-05T00:00:00Z'),
+      });
+
+      const res = await request(app.getHttpServer())
+        .put(`/api/v1/admin/customers/${validUuid}/suspend`)
+        .send({ reason: 'Fraud report' })
+        .expect(200);
+
+      expect(res.body).toMatchObject({ id: validUuid, role: 'CUSTOMER', isActive: false });
+      expect(findFirst).toHaveBeenCalledWith(
+        expect.objectContaining({ where: { id: validUuid, role: Role.CUSTOMER } }),
+      );
+    });
+
+    it('rejects the request with 400 when the reason is missing', async () => {
+      await request(app.getHttpServer())
+        .put(`/api/v1/admin/customers/${validUuid}/suspend`)
+        .send({})
+        .expect(400);
+    });
+
+    it('returns 404 when the customer does not exist', async () => {
+      findFirst.mockResolvedValue(null);
+
+      const res = await request(app.getHttpServer())
+        .put(`/api/v1/admin/customers/${validUuid}/suspend`)
+        .send({ reason: 'Reason' })
+        .expect(404);
+
+      expect(res.body.message).toBe('Customer not found');
+    });
+
+    it('returns 400 when the customer is already suspended', async () => {
+      findFirst.mockResolvedValue({ id: validUuid, isActive: false });
+
+      await request(app.getHttpServer())
+        .put(`/api/v1/admin/customers/${validUuid}/suspend`)
+        .send({ reason: 'Reason' })
+        .expect(400);
     });
   });
 });
