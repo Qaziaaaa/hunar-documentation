@@ -36,8 +36,18 @@ function makeDb(): any {
     },
 
     workerProfile: {
-      async findUnique({ where }: { where: { userId: string } }) {
-        return db.workerProfiles.get(where.userId) ?? null;
+      async findUnique({ where, include }: { where: { userId: string }; include?: any }) {
+        const p = db.workerProfiles.get(where.userId) ?? null;
+        if (!p) {
+          return null;
+        }
+        if (include?.user?.select) {
+          const u = db.users.get(p.userId);
+          return u
+            ? { ...p, user: { id: u.id, name: u.name, phone: u.phone, avatarUrl: u.avatarUrl } }
+            : p;
+        }
+        return p;
       },
       async findMany({ where, include, _orderBy }: any) {
         let rows = Array.from(db.workerProfiles.values());
@@ -261,6 +271,91 @@ describe('AdminVerificationService', () => {
       db.workerProfiles.get('w1').verificationStatus = 'NOT_SUBMITTED';
 
       expect(await service.listPending()).toEqual([]);
+    });
+  });
+
+  describe('getDetail (Task 19)', () => {
+    it('returns the full submission detail for a worker', async () => {
+      const db = makeDb();
+      const service = makeService(db);
+      addWorker(db, 'w1');
+      db.workerProfiles.set('w1', {
+        ...db.workerProfiles.get('w1'),
+        verificationStatus: 'PENDING',
+        skills: ['cat-electric'],
+        experienceYears: 4,
+        bio: 'Plumber by trade',
+      });
+      db.serviceAreas.push({
+        userId: 'w1',
+        label: 'Hayatabad',
+        address: 'Phase 5',
+        latitude: 34,
+        longitude: 71.5,
+      });
+      db.verificationDocuments.push({
+        userId: 'w1',
+        type: 'CNIC_FRONT',
+        url: 'https://cdn/front.jpg',
+        fileName: 'front.jpg',
+        mimeType: 'image/jpeg',
+        uploadedAt: new Date(),
+      });
+
+      const view = await service.getDetail('w1');
+
+      expect(view.userId).toBe('w1');
+      expect(view.name).toBe('Bilal');
+      expect(view.phone).toBe('03120000001');
+      expect(view.verificationStatus).toBe('PENDING');
+      expect(view.skills[0].id).toBe('cat-electric');
+      expect(view.serviceAreas[0].label).toBe('Hayatabad');
+      expect(view.documents[0].type).toBe('CNIC_FRONT');
+      expect(view.experienceYears).toBe(4);
+    });
+
+    it('throws 404 when the worker submission does not exist', async () => {
+      const service = makeService(makeDb());
+
+      await expect(service.getDetail('nobody')).rejects.toThrow(NotFoundException);
+    });
+  });
+
+  describe('revoke (Task 23)', () => {
+    it('revokes an approved verification with a reason and clears the verified flag', async () => {
+      const db = makeDb();
+      const service = makeService(db);
+      addWorker(db, 'w1', { isVerified: true });
+      db.workerProfiles.set('w1', {
+        ...db.workerProfiles.get('w1'),
+        verificationStatus: 'APPROVED',
+        verifiedAt: new Date('2026-09-01T00:00:00Z'),
+      });
+
+      const result = await service.revoke('w1', { reason: 'Fraudulent certificate' });
+
+      expect(result.verificationStatus).toBe('REVOKED');
+      expect(result.rejectionReason).toBe('Fraudulent certificate');
+      expect(db.workerProfiles.get('w1').verificationStatus).toBe('REVOKED');
+      expect(db.users.get('w1').isVerified).toBe(false);
+    });
+
+    it('throws 404 when the user does not exist', async () => {
+      const service = makeService(makeDb());
+
+      await expect(service.revoke('nobody', { reason: 'Reason' })).rejects.toThrow(
+        NotFoundException,
+      );
+    });
+
+    it('throws 404 when the worker profile does not exist', async () => {
+      const db = makeDb();
+      const service = makeService(db);
+      db.users.set('w1', { id: 'w1', name: 'Bilal', isVerified: true });
+
+      await expect(service.revoke('w1', { reason: 'Reason' })).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 });

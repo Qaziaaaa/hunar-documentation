@@ -237,4 +237,64 @@ describe('AdminController HTTP — GET /admin/customers', () => {
         .expect(400);
     });
   });
+
+  describe('Tasks 13, 16, 17 — reactivate customer, worker suspend/reactivate', () => {
+    const validUuid = 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11';
+
+    it('reactivates a customer (Task 13)', async () => {
+      findFirst.mockResolvedValue({ id: validUuid, isActive: false });
+      updateUser.mockResolvedValue({
+        id: validUuid,
+        isActive: true,
+        updatedAt: new Date('2026-09-06T00:00:00Z'),
+      });
+
+      const res = await request(app.getHttpServer())
+        .put(`/api/v1/admin/customers/${validUuid}/reactivate`)
+        .expect(200);
+
+      expect(res.body).toMatchObject({ id: validUuid, role: 'CUSTOMER', isActive: true });
+    });
+
+    it('suspends a worker with a reason (Task 16)', async () => {
+      findFirst.mockResolvedValue({ id: validUuid, isActive: true });
+      updateUser.mockResolvedValue({
+        id: validUuid,
+        isActive: false,
+        updatedAt: new Date('2026-09-06T00:00:00Z'),
+      });
+
+      const res = await request(app.getHttpServer())
+        .put(`/api/v1/admin/workers/${validUuid}/suspend`)
+        .send({ reason: 'No-show' })
+        .expect(200);
+
+      expect(res.body).toMatchObject({ id: validUuid, role: 'WORKER', isActive: false });
+      expect(findFirst).toHaveBeenCalledWith(
+        expect.objectContaining({ where: { id: validUuid, role: Role.WORKER } }),
+      );
+    });
+
+    it('rejects a worker suspend without a reason (Task 16)', async () => {
+      await request(app.getHttpServer())
+        .put(`/api/v1/admin/workers/${validUuid}/suspend`)
+        .send({})
+        .expect(400);
+    });
+
+    it('reactivates a worker (Task 17)', async () => {
+      findFirst.mockResolvedValue({ id: validUuid, isActive: false });
+      updateUser.mockResolvedValue({
+        id: validUuid,
+        isActive: true,
+        updatedAt: new Date('2026-09-06T00:00:00Z'),
+      });
+
+      const res = await request(app.getHttpServer())
+        .put(`/api/v1/admin/workers/${validUuid}/reactivate`)
+        .expect(200);
+
+      expect(res.body).toMatchObject({ id: validUuid, role: 'WORKER', isActive: true });
+    });
+  });
 });
