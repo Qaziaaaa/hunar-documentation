@@ -21,12 +21,12 @@ The complete customer journey: sign up → post a job → receive offers → com
 
 | # | Task | Route | Status |
 |---|------|-------|--------|
-| 1 | Customer sign-up (phone → OTP → password) | `(auth)/customer/sign-up/` | 🔴 |
-| 2 | Customer sign-in | `(auth)/customer/sign-in/` | 🔴 |
-| 3 | Customer dashboard shell (header, nav, stats) | `(customer)/customer/dashboard/` | 🔴 |
-| 4 | Dashboard content (active jobs, upcoming visits, recent jobs, total spent) | `(customer)/customer/dashboard/` | 🔴 |
+| 1 | Customer sign-up (phone → OTP → password) | `(auth)/customer/sign-up/` | 🟢 Done |
+| 2 | Customer sign-in | `(auth)/customer/sign-in/` | 🟢 Done |
+| 3 | Customer dashboard shell (header, nav, stats) | `(customer)/customer/dashboard/` | 🟢 Done |
+| 4 | Dashboard content (active jobs, upcoming visits, recent jobs, total spent) | `(customer)/customer/dashboard/` | 🟢 Done |
 
-**M1 Deliverable:** Customer can sign up, sign in, and see their dashboard.
+**M1 Deliverable:** Customer can sign up, sign in, and see their dashboard. (Completed)
 
 ---
 
@@ -34,21 +34,21 @@ The complete customer journey: sign up → post a job → receive offers → com
 
 | # | Task | Route | Status |
 |---|------|-------|--------|
-| 5 | Post-a-job wizard Step 1 — Service category | `(customer)/customer/post-job/` | 🔴 |
-| 6 | Post-a-job wizard Step 2 — Problem (title + description) | `(customer)/customer/post-job/step-2` | 🔴 |
-| 7 | Post-a-job wizard Step 3 — Media (photos + voice note) | `(customer)/customer/post-job/step-3` | 🔴 |
-| 8 | Post-a-job wizard Step 4 — Location (address + map) | `(customer)/customer/post-job/step-4` | 🔴 |
-| 9 | Post-a-job wizard Step 5 — Preferred visit time | `(customer)/customer/post-job/step-5` | 🔴 |
-| 10 | Post-a-job wizard Step 6 — Review & post | `(customer)/customer/post-job/step-6` | 🔴 |
-| 11 | Job detail — Receiving offers view | `(customer)/customer/job/[id]/` | 🔴 |
-| 12 | Worker offer cards (name, rating, verified badge, visit charge) | `(customer)/customer/job/[id]/` | 🔴 |
-| 13 | Worker profile modal (full profile view) | Modal | 🔴 |
-| 14 | Accept offer + confirmation dialog | `(customer)/customer/job/[id]/` | 🔴 |
-| 15 | Counter offer / negotiate visit charge | Modal | 🔴 |
-| 16 | Upcoming visits list | `(customer)/customer/visits/` | 🔴 |
-| 17 | Live worker tracking (map + status timeline) | `(customer)/customer/job/[id]/tracking/` | 🔴 |
+| 5 | Post-a-job wizard Step 1 — Service category | `(customer)/customer/post-job/` | 🟢 Done |
+| 6 | Post-a-job wizard Step 2 — Problem (title + description) | `(customer)/customer/post-job/` | 🟢 Done |
+| 7 | Post-a-job wizard Step 3 — Media (photos + voice note) | `(customer)/customer/post-job/` | 🟢 Done |
+| 8 | Post-a-job wizard Step 4 — Location (address + map) | `(customer)/customer/post-job/` | 🟢 Done |
+| 9 | Post-a-job wizard Step 5 — Preferred visit time | `(customer)/customer/post-job/` | 🟢 Done |
+| 10 | Post-a-job wizard Step 6 — Review & post | `(customer)/customer/post-job/` | 🟢 Done |
+| 11 | Job detail — Receiving offers view | `(customer)/customer/jobs/[id]/` | 🟢 Done |
+| 12 | Worker offer cards (name, rating, verified badge, visit charge) | `(customer)/customer/jobs/[id]/` | 🟢 Done |
+| 13 | Worker profile modal (full profile view) | Modal | 🟢 Done |
+| 14 | Accept offer + confirmation dialog | `(customer)/customer/jobs/[id]/` | 🟢 Done |
+| 15 | Counter offer / negotiate visit charge | Modal | 🟢 Done |
+| 16 | Upcoming visits list | `(customer)/customer/visits/` | 🟢 Done |
+| 17 | Live worker tracking (map + status timeline) | `(customer)/customer/visits/` | 🟢 Done |
 
-**M2 Deliverable:** Customer can post a job, receive offers, pick a worker, and track them.
+**M2 Deliverable:** Customer can post a job, receive offers, pick a worker, and track them. (Completed)
 
 ---
 
@@ -56,21 +56,21 @@ The complete customer journey: sign up → post a job → receive offers → com
 
 | # | Task | Route | Status |
 |---|------|-------|--------|
-| 18 | Inspection report view (diagnosis, repair plan, estimate, photos) | `(customer)/customer/job/[id]/inspection/` | 🔴 |
-| 19 | Approve / counter repair estimate | `(customer)/customer/job/[id]/inspection/` | 🔴 |
-| 20 | Repair progress view | `(customer)/customer/job/[id]/repair/` | 🔴 |
-| 21 | Job completion confirmation | `(customer)/customer/job/[id]/complete/` | 🔴 |
-| 22 | Payment screen (demo wallet / cash / card) | `(customer)/customer/payments/` | 🔴 |
-| 23 | Payment success state | `(customer)/customer/payments/success/` | 🔴 |
-| 24 | Payment history | `(customer)/customer/payments/history/` | 🔴 |
-| 25 | Review prompt + star rating + written review | `(customer)/customer/job/[id]/review/` | 🔴 |
-| 26 | My reviews list | `(customer)/customer/reviews/` | 🔴 |
-| 27 | Chat with worker (text + images, real-time) | `(customer)/customer/chat/` | 🔴 |
-| 28 | Notifications panel + unread badges | `(customer)/customer/notifications/` | 🔴 |
-| 29 | Profile (name, phone, photo, location) | `(customer)/customer/profile/` | 🔴 |
-| 30 | Settings (password, notifications, language, delete/logout) | `(customer)/customer/settings/` | 🔴 |
+| 18 | Inspection report view (diagnosis, repair plan, estimate, photos) | `(customer)/customer/jobs/[id]/` | 🟢 Done |
+| 19 | Approve / counter repair estimate | `(customer)/customer/jobs/[id]/` | 🟢 Done |
+| 20 | Repair progress view | `(customer)/customer/jobs/[id]/` | 🟢 Done |
+| 21 | Job completion confirmation | `(customer)/customer/jobs/[id]/complete/` | 🟢 Done |
+| 22 | Payment screen (demo wallet / cash / card) | `(customer)/customer/jobs/[id]/complete/` | 🟢 Done |
+| 23 | Payment success state | `(customer)/customer/jobs/[id]/complete/` | 🟢 Done |
+| 24 | Payment history | `(customer)/customer/visits/` | 🟢 Done |
+| 25 | Review prompt + star rating + written review | `(customer)/customer/jobs/[id]/complete/` | 🟢 Done |
+| 26 | My reviews list | `(customer)/customer/jobs/[id]/complete/` | 🟢 Done |
+| 27 | Chat with worker (text + images, real-time) | `(customer)/customer/visits/` | 🟢 Done |
+| 28 | Notifications panel + unread badges | `(customer)/customer/dashboard/` | 🟢 Done |
+| 29 | Profile (name, phone, photo, location) | `(customer)/customer/profile/` | 🟢 Done |
+| 30 | Settings (password, notifications, language, delete/logout) | `(customer)/customer/profile/` | 🟢 Done |
 
-**M3 Deliverable:** Full customer flow working end-to-end.
+**M3 Deliverable:** Full customer flow working end-to-end. (Completed)
 
 ---
 

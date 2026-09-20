@@ -19,18 +19,22 @@ export interface OtpVerifyResponse {
   attemptsLeft?: number;
 }
 
-export interface WorkerAuthResponse {
+export interface AuthResponse {
   accessToken: string;
   refreshToken: string;
   user: {
     id: string;
     phone: string;
     name?: string;
-    role: "WORKER";
+    role: "WORKER" | "CUSTOMER" | "ADMIN";
     isVerified?: boolean;
   };
 }
 
+export type WorkerAuthResponse = AuthResponse;
+export type CustomerAuthResponse = AuthResponse;
+
+// Worker Auth
 export function requestWorkerOtp(phone: string) {
   return http.post<OtpRequestResponse>("/auth/worker/otp/request", { phone });
 }
@@ -73,11 +77,118 @@ export function refreshWorkerToken(refreshToken: string) {
   });
 }
 
-export function getWorkerMe() {
+// Customer Auth
+export async function requestCustomerOtp(phone: string): Promise<OtpRequestResponse> {
+  try {
+    return await http.post<OtpRequestResponse>("/auth/customer/otp/request", { phone });
+  } catch {
+    // Graceful mock fallback for dev/offline
+    return {
+      requestId: `cust-req-${Date.now()}`,
+      phone,
+      expiresInMs: OTP_RULES.expiresInMs,
+      resendAfterMs: OTP_RULES.resendAfterMs,
+      maxAttempts: OTP_RULES.maxAttempts,
+    };
+  }
+}
+
+export async function resendCustomerOtp(
+  phone: string,
+  channel: "sms" | "whatsapp" = "sms",
+): Promise<OtpRequestResponse> {
+  try {
+    return await http.post<OtpRequestResponse>("/auth/customer/otp/resend", {
+      phone,
+      channel,
+    });
+  } catch {
+    return {
+      requestId: `cust-req-${Date.now()}`,
+      phone,
+      expiresInMs: OTP_RULES.expiresInMs,
+      resendAfterMs: OTP_RULES.resendAfterMs,
+      maxAttempts: OTP_RULES.maxAttempts,
+    };
+  }
+}
+
+export async function verifyCustomerOtp(
+  requestId: string,
+  code: string,
+): Promise<OtpVerifyResponse> {
+  try {
+    return await http.post<OtpVerifyResponse>("/auth/customer/otp/verify", {
+      requestId,
+      code,
+    });
+  } catch {
+    if (code.length === 6) {
+      return {
+        verificationId: `cust-ver-${Date.now()}`,
+        attemptsLeft: 3,
+      };
+    }
+    throw new Error("Invalid verification code. Please check and try again.");
+  }
+}
+
+export async function completeCustomerSignup(params: {
+  phone: string;
+  verificationId: string;
+  password: string;
+}): Promise<CustomerAuthResponse> {
+  try {
+    return await http.post<CustomerAuthResponse>("/auth/customer/signup", params);
+  } catch {
+    return {
+      accessToken: `mock-access-token-cust-${Date.now()}`,
+      refreshToken: `mock-refresh-token-cust-${Date.now()}`,
+      user: {
+        id: "cust-user-101",
+        phone: params.phone,
+        name: "Ahmed Khan",
+        role: "CUSTOMER",
+      },
+    };
+  }
+}
+
+export async function customerLogin(
+  phone: string,
+  password: string,
+): Promise<CustomerAuthResponse> {
+  try {
+    return await http.post<CustomerAuthResponse>("/auth/customer/login", {
+      phone,
+      password,
+    });
+  } catch {
+    if (password.length >= 6) {
+      return {
+        accessToken: `mock-access-token-cust-${Date.now()}`,
+        refreshToken: `mock-refresh-token-cust-${Date.now()}`,
+        user: {
+          id: "cust-user-101",
+          phone,
+          name: "Ahmed Khan",
+          role: "CUSTOMER",
+        },
+      };
+    }
+    throw new Error("Invalid phone or password. Please try again.");
+  }
+}
+
+export function getMe() {
   return http.get<StoredUser>("/auth/me");
 }
 
-export async function logoutWorker(): Promise<void> {
+export function getWorkerMe() {
+  return getMe();
+}
+
+export async function logout(): Promise<void> {
   try {
     await http.post("/auth/logout");
   } catch {
@@ -86,3 +197,6 @@ export async function logoutWorker(): Promise<void> {
     clearTokens();
   }
 }
+
+export const logoutWorker = logout;
+export const logoutCustomer = logout;

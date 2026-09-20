@@ -153,6 +153,10 @@
   html {
     @apply font-sans;
   }
+  html[lang="ur"],
+  html[dir="rtl"] {
+    font-family: var(--font-noto-arabic), "Noto Nastaliq Urdu", "Gulzar", "Jameel Noori Nastaleeq", "Segoe UI", system-ui, sans-serif;
+  }
 }
 
 @keyframes landing-fade-in {
