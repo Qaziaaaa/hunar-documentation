@@ -123,7 +123,7 @@ Backend Developer — Shared Auth APIs + Full Admin Dashboard APIs
 | 43  | Update commission rate (super-admin only)                      | `PUT /admin/settings/commission`        | ⏸️     |
 | 44  | Update other settings                                          | `PUT /admin/settings`                   | ⏸️     |
 | 45  | Get reports (jobs funnel, worker performance, revenue, growth) | `GET /admin/reports/[type]`             | ⏸️     |
-| 46  | Export report (CSV/PDF)                                        | `GET /admin/reports/[type]/export`      | ⏸️     |
+| 46  | Export report (CSV/PDF)                                        | `GET /admin/reports/[type]/export`      | ✅     |
 | 47  | Get audit trail                                                | `GET /admin/audit`                      | ⏸️     |
 | 48  | Admin notifications                                            | `GET /admin/notifications`              | ⏸️     |
 | 49  | Mark notifications read                                        | `PUT /admin/notifications/read`         | ⏸️     |
