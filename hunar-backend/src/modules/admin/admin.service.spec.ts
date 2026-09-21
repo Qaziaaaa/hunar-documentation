@@ -930,3 +930,89 @@ describe('AdminService.listTransactions (Task 27)', () => {
     });
   });
 });
+
+describe('AdminService.listPayments (Task 28)', () => {
+  const payRow = {
+    id: 'j1',
+    title: 'Fix AC',
+    status: 'COMPLETED',
+    lockedVisitCharge: 600,
+    suggestedVisitCharge: 500,
+    city: 'Lahore',
+    area: 'Gulberg',
+    completedAt: new Date('2026-09-02T02:00:00Z'),
+    createdAt: new Date('2026-09-02T00:00:00Z'),
+    category: { id: 'cat-1', name: 'AC', nameUrdu: 'اے سی' },
+    customer: { id: 'c1', name: 'Ali', phone: '03120000002' },
+    selectedWorker: { id: 'w1', name: 'Worker Khan', phone: '03120000003' },
+  };
+
+  function makeFixture() {
+    const findMany = jest.fn().mockResolvedValue([payRow]);
+    const count = jest.fn().mockResolvedValue(1);
+    const prisma = { serviceRequest: { findMany, count } } as unknown as ConstructorParameters<
+      typeof AdminService
+    >[0];
+    const service = new AdminService(prisma, { record: jest.fn() } as unknown as AuditService);
+    return { service, findMany, count };
+  }
+
+  it('returns a paginated payments feed with amount, worker and paidAt', async () => {
+    const { service, findMany } = makeFixture();
+
+    const result = await service.listPayments({});
+
+    expect(findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        orderBy: { completedAt: 'desc' },
+        skip: 0,
+        select: expect.anything(),
+      }),
+    );
+    expect(result.items).toEqual([
+      {
+        id: 'j1',
+        jobTitle: 'Fix AC',
+        amount: 600,
+        status: 'COMPLETED',
+        paidAt: payRow.completedAt,
+        city: 'Lahore',
+        area: 'Gulberg',
+        category: payRow.category,
+        customer: payRow.customer,
+        worker: payRow.selectedWorker,
+      },
+    ]);
+    expect(result.meta.total).toBe(1);
+  });
+
+  it('only queries jobs in paid statuses', async () => {
+    const { service, findMany } = makeFixture();
+
+    await service.listPayments({});
+
+    const where = (findMany.mock.calls[0][0] as { where: Record<string, unknown> }).where;
+    expect(where.status).toEqual({ in: ['COMPLETED', 'PAID', 'REVIEWED'] });
+  });
+
+  it('builds status, city and date filters and falls back to suggested charge', async () => {
+    const { service, findMany } = makeFixture();
+    findMany.mockResolvedValue([{ ...payRow, lockedVisitCharge: null }]);
+
+    const result = await service.listPayments({
+      status: 'PAID',
+      city: 'Lahore',
+      from: '2026-09-01T00:00:00Z',
+      to: '2026-09-03T00:00:00Z',
+    });
+
+    const where = (findMany.mock.calls[0][0] as { where: Record<string, unknown> }).where;
+    expect(where.status).toBe('PAID');
+    expect(where.city).toBe('Lahore');
+    expect(where.completedAt).toEqual({
+      gte: new Date('2026-09-01T00:00:00Z'),
+      lte: new Date('2026-09-03T00:00:00Z'),
+    });
+    expect(result.items[0].amount).toBe(500);
+  });
+});

@@ -566,6 +566,71 @@ describe('AdminController HTTP — GET /admin/customers', () => {
     });
   });
 
+  describe('GET /admin/payments (Task 28)', () => {
+    const payRow = {
+      id: 'j1',
+      title: 'Fix AC',
+      status: 'COMPLETED',
+      lockedVisitCharge: 600,
+      suggestedVisitCharge: 500,
+      city: 'Lahore',
+      area: 'Gulberg',
+      completedAt: new Date('2026-09-02T02:00:00Z'),
+      createdAt: new Date('2026-09-02T00:00:00Z'),
+      category: { id: 'cat-1', name: 'AC', nameUrdu: 'اے سی' },
+      customer: { id: 'c1', name: 'Ali', phone: '03120000002' },
+      selectedWorker: { id: 'w1', name: 'Worker Khan', phone: '03120000003' },
+    };
+
+    it('returns the paginated payments feed with amount, worker and paidAt', async () => {
+      findManyJobs.mockResolvedValue([payRow]);
+      count.mockResolvedValue(1);
+
+      const res = await request(app.getHttpServer()).get('/api/v1/admin/payments').expect(200);
+
+      expect(res.body.items).toEqual([
+        {
+          id: 'j1',
+          jobTitle: 'Fix AC',
+          amount: 600,
+          status: 'COMPLETED',
+          paidAt: payRow.completedAt.toISOString(),
+          city: 'Lahore',
+          area: 'Gulberg',
+          category: payRow.category,
+          customer: payRow.customer,
+          worker: payRow.selectedWorker,
+        },
+      ]);
+      expect(res.body.meta.total).toBe(1);
+    });
+
+    it('rejects an invalid status filter with 400', async () => {
+      await request(app.getHttpServer())
+        .get('/api/v1/admin/payments?status=NOT_A_STATUS')
+        .expect(400);
+    });
+
+    it('passes status, search and date filters to the service', async () => {
+      findManyJobs.mockResolvedValue([]);
+      count.mockResolvedValue(0);
+
+      await request(app.getHttpServer())
+        .get(
+          '/api/v1/admin/payments?status=PAID&search=Khan&from=2026-09-01T00:00:00Z&to=2026-09-03T00:00:00Z',
+        )
+        .expect(200);
+
+      const where = (findManyJobs.mock.calls[0][0] as { where: Record<string, unknown> }).where;
+      expect(where.status).toBe('PAID');
+      expect((where.OR as unknown[]).length).toBeGreaterThan(0);
+      expect(where.completedAt).toEqual({
+        gte: new Date('2026-09-01T00:00:00Z'),
+        lte: new Date('2026-09-03T00:00:00Z'),
+      });
+    });
+  });
+
   describe('PUT /admin/customers/:id/suspend (Task 12)', () => {
     const validUuid = 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11';
 

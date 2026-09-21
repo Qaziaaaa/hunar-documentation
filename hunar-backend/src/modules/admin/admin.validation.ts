@@ -151,3 +151,47 @@ export class AdminTransactionListQueryDto {
   @Max(100)
   limit?: number;
 }
+
+// Payments feed (Admin flow §8 — Step F). Payments are derived from paid jobs: there is no
+// standalone Payment table, so this lists jobs whose status means the customer has paid.
+export class AdminPaymentListQueryDto {
+  @IsOptional()
+  @IsEnum(JobStatus)
+  status?: JobStatus;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(200)
+  search?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(100)
+  city?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(100)
+  area?: string;
+
+  @IsOptional()
+  @IsDateString()
+  from?: string;
+
+  @IsOptional()
+  @IsDateString()
+  to?: string;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  page?: number;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(100)
+  limit?: number;
+}

@@ -3,6 +3,7 @@ import { Role } from '@prisma/client';
 import { AdminService } from './admin.service';
 import {
   AdminJobListQueryDto,
+  AdminPaymentListQueryDto,
   AdminTransactionListQueryDto,
   AdminUserListQueryDto,
   AdminWorkerListQueryDto,
@@ -98,5 +99,10 @@ export class AdminController {
   @Get('transactions')
   listTransactions(@Query() query: AdminTransactionListQueryDto) {
     return this.adminService.listTransactions(query);
+  }
+
+  @Get('payments')
+  listPayments(@Query() query: AdminPaymentListQueryDto) {
+    return this.adminService.listPayments(query);
   }
 }

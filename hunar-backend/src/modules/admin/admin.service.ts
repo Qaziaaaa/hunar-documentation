@@ -13,6 +13,7 @@ import {
   AdminJobListQueryDto,
   AdminWorkerListQueryDto,
   AdminTransactionListQueryDto,
+  AdminPaymentListQueryDto,
 } from './admin.validation';
 
 // Job states that mean the customer has paid for the (locked) visit charge.
@@ -75,6 +76,24 @@ const TRANSACTION_SELECT = {
 } satisfies Prisma.WalletLedgerSelect;
 
 type AdminTransactionRow = Prisma.WalletLedgerGetPayload<{ select: typeof TRANSACTION_SELECT }>;
+
+// Payments feed (Admin flow §8 — Step F). Payments are derived from paid jobs.
+const PAYMENT_SELECT = {
+  id: true,
+  title: true,
+  status: true,
+  lockedVisitCharge: true,
+  suggestedVisitCharge: true,
+  city: true,
+  area: true,
+  completedAt: true,
+  createdAt: true,
+  category: { select: { id: true, name: true, nameUrdu: true } },
+  customer: { select: { id: true, name: true, phone: true } },
+  selectedWorker: { select: { id: true, name: true, phone: true } },
+} satisfies Prisma.ServiceRequestSelect;
+
+type AdminPaymentRow = Prisma.ServiceRequestGetPayload<{ select: typeof PAYMENT_SELECT }>;
 
 @Injectable()
 export class AdminService {
@@ -437,6 +456,63 @@ export class AdminService {
       note: row.note,
       worker: row.user,
       timestamp: row.createdAt,
+    }));
+
+    return toPageResult(items, total, page, limit);
+  }
+
+  // Payments feed (Admin flow §8 — Step F): all paid jobs with amount, job, customer, worker,
+  // date and status. Amount = locked visit charge (falling back to suggested charge).
+  async listPayments(query: AdminPaymentListQueryDto) {
+    const { page, limit, skip } = normalizePage(query);
+
+    const where: Prisma.ServiceRequestWhereInput = {
+      status: { in: PAID_JOB_STATUSES },
+      ...(query.status ? { status: query.status } : {}),
+      ...(query.city ? { city: query.city } : {}),
+      ...(query.area ? { area: query.area } : {}),
+      ...(query.from || query.to
+        ? {
+            completedAt: {
+              ...(query.from ? { gte: new Date(query.from) } : {}),
+              ...(query.to ? { lte: new Date(query.to) } : {}),
+            },
+          }
+        : {}),
+      ...(query.search
+        ? {
+            OR: [
+              { title: { contains: query.search, mode: 'insensitive' } },
+              { customer: { is: { name: { contains: query.search, mode: 'insensitive' } } } },
+              { customer: { is: { phone: { contains: query.search } } } },
+              { selectedWorker: { is: { name: { contains: query.search, mode: 'insensitive' } } } },
+            ],
+          }
+        : {}),
+    };
+
+    const [rows, total] = await Promise.all([
+      this.prisma.serviceRequest.findMany({
+        where,
+        orderBy: { completedAt: 'desc' },
+        skip,
+        take: limit,
+        select: PAYMENT_SELECT,
+      }),
+      this.prisma.serviceRequest.count({ where }),
+    ]);
+
+    const items = rows.map((row: AdminPaymentRow) => ({
+      id: row.id,
+      jobTitle: row.title,
+      amount: row.lockedVisitCharge ?? row.suggestedVisitCharge ?? null,
+      status: row.status,
+      paidAt: row.completedAt ?? row.createdAt,
+      city: row.city,
+      area: row.area,
+      category: row.category,
+      customer: row.customer,
+      worker: row.selectedWorker,
     }));
 
     return toPageResult(items, total, page, limit);
