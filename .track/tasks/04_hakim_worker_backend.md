@@ -110,8 +110,8 @@ ST_DWithin(worker_location, ST_MakePoint(:lng, :lat)::geography, :radius_meters)
 | 41 | Get earnings summary | `GET /workers/me/earnings` | ⏸️ |
 | 42 | Chat — send message | `POST /chat/send` | ✅ |
 | 43 | Chat — get history | `GET /chat/[jobId]` | ✅ |
-| 44 | Notifications — list | `GET /notifications` | ⏸️ |
-| 45 | Notifications — mark read | `PUT /notifications/read` | ⏸️ |
+| 44 | Notifications — list | `GET /notifications` | ✅ |
+| 45 | Notifications — mark read | `PUT /notifications/read` | ✅ |
 | 46 | File upload (photos, documents, chat images) | `POST /uploads` | ✅ |
 | 47 | Socket.IO setup (real-time events) | WebSocket | ✅ |
 

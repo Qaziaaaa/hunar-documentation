@@ -173,6 +173,8 @@ model User {
   walletLedger            WalletLedger[]
   walletTopUps            WalletTopup[]
   withdrawals             Withdrawal[]
+  reportedDisputes        Dispute[]        @relation("DisputeReporter")
+  respondedDisputes       Dispute[]        @relation("DisputeRespondent")
 
   @@index([role])
 }
@@ -276,6 +278,7 @@ model ServiceRequest {
   locationTracks LocationTracking[]
   payments       Payment[]
   conversation   Conversation?
+  disputes       Dispute[]
 
   @@index([status])
   @@index([categoryId])
@@ -556,6 +559,9 @@ model WorkerWallet {
   user        User            @relation(fields: [userId], references: [id], onDelete: Cascade)
   balance     Decimal         @default(0) @db.Decimal(10, 2)
   heldBalance Decimal         @default(0) @db.Decimal(10, 2)
+  isFrozen    Boolean         @default(false)
+  frozenAt    DateTime?
+  frozenBy    String?
   createdAt   DateTime        @default(now())
   updatedAt   DateTime        @updatedAt
 
@@ -626,4 +632,58 @@ model PlatformWallet {
   balance          Decimal  @default(0) @db.Decimal(10, 2)
   totalCommissions Decimal  @default(0) @db.Decimal(10, 2)
   updatedAt        DateTime @updatedAt
+}
+
+enum DisputeStatus {
+  OPEN
+  UNDER_REVIEW
+  RESOLVED
+  DISMISSED
+  ESCALATED
+}
+
+enum DisputeType {
+  PAYMENT
+  SERVICE_QUALITY
+  NO_SHOW
+  PRICE_CHANGE
+  OTHER
+}
+
+model Dispute {
+  id           String        @id @default(uuid())
+  jobId        String
+  job          ServiceRequest @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  reporterId   String
+  reporter     User          @relation("DisputeReporter", fields: [reporterId], references: [id])
+  respondentId String
+  respondent   User          @relation("DisputeRespondent", fields: [respondentId], references: [id])
+  type         DisputeType
+  description  String
+  evidence     Json?
+  status       DisputeStatus @default(OPEN)
+  resolution   String?
+  resolvedBy   String?
+  resolvedAt   DateTime?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  @@index([jobId])
+  @@index([reporterId])
+  @@index([respondentId])
+  @@index([status])
+}
+
+model AdminNotification {
+  id        String   @id @default(uuid())
+  type      String
+  title     String
+  body      String
+  data      Json?
+  isRead    Boolean  @default(false)
+  readAt    DateTime?
+  createdAt DateTime @default(now())
+
+  @@index([isRead, createdAt])
+  @@index([type, createdAt])
 }
