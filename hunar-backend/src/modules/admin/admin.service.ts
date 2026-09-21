@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable, NotFoundException, Optional } from '@nestjs/common';
-import { CommissionStatus, JobStatus, Prisma, Role } from '@prisma/client';
+import { CommissionStatus, JobStatus, Prisma, Role, WithdrawalStatus } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { normalizePage, toPageResult } from '../../common/helpers/pagination.util';
 import { EventBusService } from '../../common/event-bus/event-bus.service';
@@ -14,6 +14,8 @@ import {
   AdminWorkerListQueryDto,
   AdminTransactionListQueryDto,
   AdminPaymentListQueryDto,
+  AdminCommissionListQueryDto,
+  AdminWithdrawalListQueryDto,
 } from './admin.validation';
 
 // Job states that mean the customer has paid for the (locked) visit charge.
@@ -94,6 +96,39 @@ const PAYMENT_SELECT = {
 } satisfies Prisma.ServiceRequestSelect;
 
 type AdminPaymentRow = Prisma.ServiceRequestGetPayload<{ select: typeof PAYMENT_SELECT }>;
+
+// Commission snapshot feed (Admin flow §8 — Step F). Platform revenue = Commission.amount.
+const COMMISSION_SELECT = {
+  id: true,
+  jobId: true,
+  visitCharge: true,
+  commissionRate: true,
+  amount: true,
+  status: true,
+  paidAt: true,
+  verifiedAt: true,
+  createdAt: true,
+  worker: { select: { id: true, name: true, phone: true } },
+  job: { select: { id: true, title: true } },
+} satisfies Prisma.CommissionSelect;
+
+type AdminCommissionRow = Prisma.CommissionGetPayload<{ select: typeof COMMISSION_SELECT }>;
+
+// Withdrawal queue feed (Admin flow §8 — Step F). Worker withdrawal requests.
+const WITHDRAWAL_SELECT = {
+  id: true,
+  workerId: true,
+  amount: true,
+  status: true,
+  note: true,
+  requestedAt: true,
+  processedAt: true,
+  processedBy: true,
+  createdAt: true,
+  worker: { select: { id: true, name: true, phone: true } },
+} satisfies Prisma.WithdrawalSelect;
+
+type AdminWithdrawalRow = Prisma.WithdrawalGetPayload<{ select: typeof WITHDRAWAL_SELECT }>;
 
 @Injectable()
 export class AdminService {
@@ -516,6 +551,235 @@ export class AdminService {
     }));
 
     return toPageResult(items, total, page, limit);
+  }
+
+  // Commission snapshot (Admin flow §8 — Step F): total platform revenue (sum of commission
+  // amounts / visit charges, avg rate) + the per-transaction list with worker and job.
+  async getCommissionSnapshot(query: AdminCommissionListQueryDto) {
+    const { page, limit, skip } = normalizePage(query);
+
+    const where: Prisma.CommissionWhereInput = {
+      ...(query.status ? { status: query.status } : {}),
+      ...(query.from || query.to
+        ? {
+            createdAt: {
+              ...(query.from ? { gte: new Date(query.from) } : {}),
+              ...(query.to ? { lte: new Date(query.to) } : {}),
+            },
+          }
+        : {}),
+      ...(query.search
+        ? {
+            OR: [
+              { job: { is: { title: { contains: query.search, mode: 'insensitive' } } } },
+              { worker: { is: { name: { contains: query.search, mode: 'insensitive' } } } },
+              { worker: { is: { phone: { contains: query.search } } } },
+            ],
+          }
+        : {}),
+    };
+
+    const [rows, total, agg] = await Promise.all([
+      this.prisma.commission.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limit,
+        select: COMMISSION_SELECT,
+      }),
+      this.prisma.commission.count({ where }),
+      this.prisma.commission.aggregate({
+        where,
+        _sum: { amount: true, visitCharge: true },
+        _avg: { commissionRate: true },
+      }),
+    ]);
+
+    const items = rows.map((row: AdminCommissionRow) => ({
+      id: row.id,
+      jobId: row.jobId,
+      jobTitle: row.job.title,
+      worker: row.worker,
+      visitCharge: row.visitCharge,
+      rate: row.commissionRate,
+      amount: row.amount,
+      status: row.status,
+      paidAt: row.paidAt,
+      date: row.createdAt,
+    }));
+
+    return {
+      summary: {
+        totalRevenue: (agg._sum.amount ?? 0).toFixed(2),
+        totalVisitCharges: (agg._sum.visitCharge ?? 0).toFixed(2),
+        totalCount: total,
+        averageRate: agg._avg.commissionRate ?? null,
+      },
+      items,
+      meta: { page, limit, total, totalPages: Math.ceil(total / limit) },
+    };
+  }
+
+  // Withdrawal queue (Admin flow §8 — Step F): list of worker withdrawal requests with
+  // status (pending/processed/failed/rejected), filters, and pagination.
+  async listWithdrawals(query: AdminWithdrawalListQueryDto) {
+    const { page, limit, skip } = normalizePage(query);
+
+    const where: Prisma.WithdrawalWhereInput = {
+      ...(query.status ? { status: query.status } : {}),
+      ...(query.from || query.to
+        ? {
+            requestedAt: {
+              ...(query.from ? { gte: new Date(query.from) } : {}),
+              ...(query.to ? { lte: new Date(query.to) } : {}),
+            },
+          }
+        : {}),
+      ...(query.search
+        ? {
+            OR: [
+              { worker: { is: { name: { contains: query.search, mode: 'insensitive' } } } },
+              { worker: { is: { phone: { contains: query.search } } } },
+            ],
+          }
+        : {}),
+    };
+
+    const [rows, total] = await Promise.all([
+      this.prisma.withdrawal.findMany({
+        where,
+        orderBy: { requestedAt: 'desc' },
+        skip,
+        take: limit,
+        select: WITHDRAWAL_SELECT,
+      }),
+      this.prisma.withdrawal.count({ where }),
+    ]);
+
+    const items = rows.map((row: AdminWithdrawalRow) => ({
+      id: row.id,
+      workerId: row.workerId,
+      worker: row.worker,
+      amount: row.amount,
+      status: row.status,
+      note: row.note,
+      requestedAt: row.requestedAt,
+      processedAt: row.processedAt,
+      processedBy: row.processedBy,
+    }));
+
+    return toPageResult(items, total, page, limit);
+  }
+
+  // Admin processes a withdrawal request (approve/reject). On approve, moves money and
+  // creates wallet ledger entry. Audit-logged.
+  async processWithdrawal(id: string, actor: JwtPayload, action: 'approve' | 'reject', note?: string) {
+    const withdrawal = await this.prisma.withdrawal.findUnique({
+      where: { id },
+      select: { id: true, workerId: true, amount: true, status: true },
+    });
+    if (!withdrawal) {
+      throw new NotFoundException('Withdrawal not found');
+    }
+    if (withdrawal.status !== 'PENDING') {
+      throw new BadRequestException('Withdrawal already processed');
+    }
+
+    if (action === 'approve') {
+      const wallet = await this.prisma.workerWallet.findUnique({
+        where: { userId: withdrawal.workerId },
+        select: { userId: true, balance: true },
+      });
+      if (!wallet) {
+        throw new NotFoundException('Worker wallet not found');
+      }
+      const balance = Number(wallet.balance);
+      const amount = Number(withdrawal.amount);
+      if (balance < amount) {
+        throw new BadRequestException('Insufficient balance for withdrawal');
+      }
+      const balanceAfter = balance - amount;
+
+      return this.prisma.$transaction(async (tx) => {
+        await tx.workerWallet.update({
+          where: { userId: wallet.userId },
+          data: { balance: new Prisma.Decimal(balanceAfter) },
+        });
+
+        await tx.walletLedger.create({
+          data: {
+            user: { connect: { id: wallet.userId } },
+            type: 'WITHDRAWAL',
+            amount: new Prisma.Decimal(-amount),
+            balanceAfter: new Prisma.Decimal(balanceAfter),
+            note: 'Admin-approved withdrawal payout',
+            idempotencyKey: `withdrawal-${id}-${Date.now()}`,
+          },
+        });
+
+        const updated = await tx.withdrawal.update({
+          where: { id },
+          data: {
+            status: 'PROCESSED',
+            processedAt: new Date(),
+            processedBy: actor.sub,
+            note,
+          },
+          select: {
+            id: true,
+            workerId: true,
+            amount: true,
+            status: true,
+            processedAt: true,
+            processedBy: true,
+            note: true,
+          },
+        });
+
+        await this.audit.record(
+          {
+            actorId: actor.sub,
+            actorRole: actor.role,
+            action: 'WITHDRAWAL_APPROVED',
+            targetType: 'WITHDRAWAL',
+            targetId: id,
+            reason: note,
+            metadata: { workerId: withdrawal.workerId, amount: withdrawal.amount },
+          },
+          tx,
+        );
+
+        return updated;
+      });
+    } else {
+      const updated = await this.prisma.withdrawal.update({
+        where: { id },
+        data: { status: 'REJECTED', processedAt: new Date(), processedBy: actor.sub, note },
+        select: {
+          id: true,
+          workerId: true,
+          amount: true,
+          status: true,
+          processedAt: true,
+          processedBy: true,
+          note: true,
+        },
+      });
+
+      await this.audit.record(
+        {
+          actorId: actor.sub,
+          actorRole: actor.role,
+          action: 'WITHDRAWAL_REJECTED',
+          targetType: 'WITHDRAWAL',
+          targetId: id,
+          reason: note,
+          metadata: { workerId: withdrawal.workerId, amount: withdrawal.amount },
+        },
+      );
+
+      return updated;
+    }
   }
 
   // Full job detail with its entire audit history (Admin flow §7.2):

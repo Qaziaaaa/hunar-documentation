@@ -1016,3 +1016,107 @@ describe('AdminService.listPayments (Task 28)', () => {
     expect(result.items[0].amount).toBe(500);
   });
 });
+
+describe('AdminService.getCommissionSnapshot (Task 29)', () => {
+  const cmRow = {
+    id: 'cm1',
+    jobId: 'j1',
+    visitCharge: 600,
+    commissionRate: 0.1,
+    amount: 60,
+    status: 'VERIFIED',
+    paidAt: new Date('2026-09-02T06:00:00Z'),
+    verifiedAt: new Date('2026-09-02T05:30:00Z'),
+    createdAt: new Date('2026-09-02T05:05:00Z'),
+    worker: { id: 'w1', name: 'Worker Khan', phone: '03120000003' },
+    job: { id: 'j1', title: 'Fix AC' },
+  };
+
+  function makeFixture() {
+    const findMany = jest.fn().mockResolvedValue([cmRow]);
+    const count = jest.fn().mockResolvedValue(1);
+    const aggregate = jest.fn().mockResolvedValue({
+      _sum: { amount: 60, visitCharge: 600 },
+      _avg: { commissionRate: 0.1 },
+    });
+    const prisma = {
+      commission: { findMany, count, aggregate },
+    } as unknown as ConstructorParameters<typeof AdminService>[0];
+    const service = new AdminService(prisma, { record: jest.fn() } as unknown as AuditService);
+    return { service, findMany, count, aggregate };
+  }
+
+  it('returns the summary + paginated per-transaction list', async () => {
+    const { service, findMany } = makeFixture();
+
+    const result = await service.getCommissionSnapshot({});
+
+    expect(findMany).toHaveBeenCalledWith(
+      expect.objectContaining({ orderBy: { createdAt: 'desc' }, skip: 0 }),
+    );
+    expect(result.summary).toEqual({
+      totalRevenue: '60.00',
+      totalVisitCharges: '600.00',
+      totalCount: 1,
+      averageRate: 0.1,
+    });
+    expect(result.items).toEqual([
+      {
+        id: 'cm1',
+        jobId: 'j1',
+        jobTitle: 'Fix AC',
+        worker: { id: 'w1', name: 'Worker Khan', phone: '03120000003' },
+        visitCharge: 600,
+        rate: 0.1,
+        amount: 60,
+        status: 'VERIFIED',
+        paidAt: cmRow.paidAt,
+        date: cmRow.createdAt,
+      },
+    ]);
+    expect(result.meta).toEqual({ page: 1, limit: 20, total: 1, totalPages: 1 });
+  });
+
+  it('applies the same filters to the list, count and aggregate', async () => {
+    const { service, findMany, count, aggregate } = makeFixture();
+
+    await service.getCommissionSnapshot({
+      status: 'PENDING',
+      search: 'Khan',
+      from: '2026-09-01T00:00:00Z',
+      to: '2026-09-07T00:00:00Z',
+    });
+
+    const where = (findMany.mock.calls[0][0] as { where: Record<string, unknown> }).where;
+    expect(where.status).toBe('PENDING');
+    expect(where.createdAt).toEqual({
+      gte: new Date('2026-09-01T00:00:00Z'),
+      lte: new Date('2026-09-07T00:00:00Z'),
+    });
+    expect(count).toHaveBeenCalledWith({ where });
+    expect(aggregate).toHaveBeenCalledWith(
+      expect.objectContaining({ where, _sum: { amount: true, visitCharge: true } }),
+    );
+  });
+
+  it('defaults aggregates to zero/null when empty', async () => {
+    const { service, findMany, count, aggregate } = makeFixture();
+    findMany.mockResolvedValue([]);
+    count.mockResolvedValue(0);
+    aggregate.mockResolvedValue({
+      _sum: { amount: null, visitCharge: null },
+      _avg: { commissionRate: null },
+    });
+
+    const result = await service.getCommissionSnapshot({});
+
+    expect(result.summary).toEqual({
+      totalRevenue: '0.00',
+      totalVisitCharges: '0.00',
+      totalCount: 0,
+      averageRate: null,
+    });
+    expect(result.items).toEqual([]);
+    expect(result.meta.totalPages).toBe(0);
+  });
+});

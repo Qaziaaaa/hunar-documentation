@@ -150,6 +150,7 @@ model User {
   wallet                  WorkerWallet?
   walletLedger            WalletLedger[]
   walletTopUps            WalletTopup[]
+  withdrawals             Withdrawal[]
 
   @@index([role])
 }
@@ -492,6 +493,7 @@ enum WalletLedgerType {
   COMMISSION_DEDUCTED
   TOPUP_CREDIT
   EARNINGS_CREDIT
+  WITHDRAWAL
 }
 
 enum TopupStatus {
@@ -544,6 +546,29 @@ model WalletTopup {
   updatedAt     DateTime    @updatedAt
 
   @@index([workerId, status, createdAt])
+}
+
+enum WithdrawalStatus {
+  PENDING
+  PROCESSED
+  FAILED
+  REJECTED
+}
+
+model Withdrawal {
+  id           String           @id @default(uuid())
+  workerId     String
+  worker       User             @relation(fields: [workerId], references: [id], onDelete: Cascade)
+  amount       Decimal          @db.Decimal(10, 2)
+  status       WithdrawalStatus @default(PENDING)
+  note         String?
+  requestedAt  DateTime         @default(now())
+  processedAt  DateTime?
+  processedBy  String?
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+
+  @@index([workerId, status, requestedAt])
 }
 
 // Single-row ledger that stores every deducted commission (platform side).

@@ -2,11 +2,14 @@ import { Body, Controller, Get, Param, ParseUUIDPipe, Put, Query } from '@nestjs
 import { Role } from '@prisma/client';
 import { AdminService } from './admin.service';
 import {
+  AdminCommissionListQueryDto,
   AdminJobListQueryDto,
   AdminPaymentListQueryDto,
   AdminTransactionListQueryDto,
   AdminUserListQueryDto,
   AdminWorkerListQueryDto,
+  AdminWithdrawalListQueryDto,
+  AdminProcessWithdrawalDto,
   ForceCancelJobDto,
   SuspendUserDto,
 } from './admin.validation';
@@ -104,5 +107,26 @@ export class AdminController {
   @Get('payments')
   listPayments(@Query() query: AdminPaymentListQueryDto) {
     return this.adminService.listPayments(query);
+  }
+
+  @Get('commission')
+  getCommissionSnapshot(@Query() query: AdminCommissionListQueryDto) {
+    return this.adminService.getCommissionSnapshot(query);
+  }
+
+  // ----- Withdrawal queue -----
+
+  @Get('withdrawals')
+  listWithdrawals(@Query() query: AdminWithdrawalListQueryDto) {
+    return this.adminService.listWithdrawals(query);
+  }
+
+  @Put('withdrawals/:id/process')
+  processWithdrawal(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: AdminProcessWithdrawalDto,
+    @CurrentUser() actor: JwtPayload,
+  ) {
+    return this.adminService.processWithdrawal(id, actor, dto.action, dto.note);
   }
 }

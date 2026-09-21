@@ -12,7 +12,7 @@ import {
   MaxLength,
   Min,
 } from 'class-validator';
-import { JobStatus, WalletLedgerType, WorkerVerificationStatus } from '@prisma/client';
+import { CommissionStatus, JobStatus, WalletLedgerType, WorkerVerificationStatus, WithdrawalStatus } from '@prisma/client';
 
 export const USER_STATUS_FILTERS = ['active', 'suspended'] as const;
 export type UserStatusFilter = (typeof USER_STATUS_FILTERS)[number];
@@ -194,4 +194,80 @@ export class AdminPaymentListQueryDto {
   @Min(1)
   @Max(100)
   limit?: number;
+}
+
+// Commission snapshot feed (Admin flow §8 — Step F). Read-only oversight of platform revenue.
+export class AdminCommissionListQueryDto {
+  @IsOptional()
+  @IsEnum(CommissionStatus)
+  status?: CommissionStatus;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(200)
+  search?: string;
+
+  @IsOptional()
+  @IsDateString()
+  from?: string;
+
+  @IsOptional()
+  @IsDateString()
+  to?: string;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  page?: number;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(100)
+  limit?: number;
+}
+
+// Withdrawal queue (Admin flow §8 — Step F). Admin oversight of worker withdrawal requests.
+export class AdminWithdrawalListQueryDto {
+  @IsOptional()
+  @IsEnum(WithdrawalStatus)
+  status?: WithdrawalStatus;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(200)
+  search?: string;
+
+  @IsOptional()
+  @IsDateString()
+  from?: string;
+
+  @IsOptional()
+  @IsDateString()
+  to?: string;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  page?: number;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(100)
+  limit?: number;
+}
+
+export class AdminProcessWithdrawalDto {
+  @IsEnum(['approve', 'reject'])
+  action: 'approve' | 'reject';
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(500)
+  note?: string;
 }
