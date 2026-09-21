@@ -224,6 +224,93 @@ describe('AdminService.getCustomerDetail (Task 11)', () => {
   });
 });
 
+describe('AdminService.listJobs (Task 24)', () => {
+  const jobRow = {
+    id: 'j1',
+    title: 'Fix AC',
+    description: 'Not cooling',
+    images: ['img1'],
+    status: JobStatus.OPEN,
+    urgency: 'HIGH',
+    city: 'Lahore',
+    area: 'Gulberg',
+    suggestedVisitCharge: 500,
+    lockedVisitCharge: null,
+    cancelReason: null,
+    cancelledAt: null,
+    completedAt: null,
+    createdAt: new Date('2026-09-02T00:00:00Z'),
+    category: { id: 'cat1', name: 'AC Repair', nameUrdu: 'اے سی مرمت' },
+    customer: { id: 'c1', name: 'Ali', phone: '03120000002' },
+    selectedWorker: null,
+  };
+
+  function makeService() {
+    const findMany = jest.fn().mockResolvedValue([jobRow]);
+    const count = jest.fn().mockResolvedValue(1);
+    const prisma = {
+      serviceRequest: { findMany, count },
+    } as unknown as ConstructorParameters<typeof AdminService>[0];
+    const audit = { record: jest.fn() } as unknown as AuditService;
+    return { service: new AdminService(prisma, audit), findMany, count };
+  }
+
+  it('queries jobs with pagination and maps category, customer and worker', async () => {
+    const { service, findMany, count } = makeService();
+
+    const result = await service.listJobs({ page: 1, limit: 20 });
+
+    expect(count).toHaveBeenCalledWith({ where: {} });
+    expect(findMany).toHaveBeenCalledWith(
+      expect.objectContaining({ where: {}, skip: 0, take: 20, orderBy: { createdAt: 'desc' } }),
+    );
+    expect(result.meta).toEqual({ page: 1, limit: 20, total: 1, totalPages: 1 });
+    expect(result.items[0]).toMatchObject({
+      id: 'j1',
+      title: 'Fix AC',
+      status: JobStatus.OPEN,
+      category: { id: 'cat1' },
+      customer: { id: 'c1' },
+      worker: null,
+    });
+  });
+
+  it('builds search + status + city/area + date-range filters', async () => {
+    const { service, findMany } = makeService();
+
+    await service.listJobs({
+      search: 'ali',
+      status: JobStatus.COMPLETED,
+      categoryId: 'cat1',
+      city: 'Lahore',
+      area: 'Gulberg',
+      from: '2026-09-01',
+      to: '2026-09-30',
+    });
+
+    const where = findMany.mock.calls[0][0].where;
+    expect(where.status).toBe(JobStatus.COMPLETED);
+    expect(where.categoryId).toBe('cat1');
+    expect(where.city).toBe('Lahore');
+    expect(where.area).toBe('Gulberg');
+    expect(where.createdAt.gte).toEqual(new Date('2026-09-01'));
+    expect(where.createdAt.lte).toEqual(new Date('2026-09-30'));
+    expect(where.OR).toEqual([
+      { title: { contains: 'ali', mode: 'insensitive' } },
+      { customer: { is: { name: { contains: 'ali', mode: 'insensitive' } } } },
+      { customer: { is: { phone: { contains: 'ali' } } } },
+    ]);
+  });
+
+  it('caps the page size at 50', async () => {
+    const { service, findMany } = makeService();
+
+    await service.listJobs({ limit: 500 });
+
+    expect(findMany.mock.calls[0][0].take).toBe(50);
+  });
+});
+
 describe('AdminService.suspendCustomer (Task 12)', () => {
   const actor = { sub: 'admin-1', phone: '', role: Role.ADMIN };
   const customerRow = {
@@ -233,13 +320,14 @@ describe('AdminService.suspendCustomer (Task 12)', () => {
     isActive: true,
   };
 
-  function buildFixture(overrides: {
-    findFirst?: jest.Mock | null;
-    update?: jest.Mock;
-    record?: jest.Mock;
-  } = {}) {
-    const findFirst =
-      overrides.findFirst ?? jest.fn().mockResolvedValue(customerRow);
+  function buildFixture(
+    overrides: {
+      findFirst?: jest.Mock | null;
+      update?: jest.Mock;
+      record?: jest.Mock;
+    } = {},
+  ) {
+    const findFirst = overrides.findFirst ?? jest.fn().mockResolvedValue(customerRow);
     const update =
       overrides.update ??
       jest.fn().mockResolvedValue({
@@ -320,13 +408,11 @@ describe('AdminService reactivate customer (Task 13) + worker suspend/reactivate
 
   function makeFixture(role: Role, existing: Record<string, unknown> | null) {
     const findFirst = jest.fn().mockResolvedValue(existing);
-    const update = jest
-      .fn()
-      .mockResolvedValue({
-        id: 'u1',
-        isActive: existing ? !existing.isActive : false,
-        updatedAt: new Date('2026-09-06T00:00:00Z'),
-      });
+    const update = jest.fn().mockResolvedValue({
+      id: 'u1',
+      isActive: existing ? !existing.isActive : false,
+      updatedAt: new Date('2026-09-06T00:00:00Z'),
+    });
     const record = jest.fn();
     const $transaction = jest.fn(
       async (cb: (tx: { user: { update: jest.Mock } }) => Promise<unknown>) =>
@@ -423,9 +509,7 @@ describe('AdminService reactivate customer (Task 13) + worker suspend/reactivate
       isActive: false,
     });
 
-    await expect(service.suspendWorker('u1', actor, 'Reason')).rejects.toThrow(
-      BadRequestException,
-    );
+    await expect(service.suspendWorker('u1', actor, 'Reason')).rejects.toThrow(BadRequestException);
     expect(record).not.toHaveBeenCalled();
   });
 

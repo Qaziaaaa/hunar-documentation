@@ -353,9 +353,7 @@ describe('AdminVerificationService', () => {
       const service = makeService(db);
       db.users.set('w1', { id: 'w1', name: 'Bilal', isVerified: true });
 
-      await expect(service.revoke('w1', { reason: 'Reason' })).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(service.revoke('w1', { reason: 'Reason' })).rejects.toThrow(NotFoundException);
     });
   });
 });

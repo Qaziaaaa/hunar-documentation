@@ -1,7 +1,12 @@
 import { Body, Controller, Get, Param, ParseUUIDPipe, Put, Query } from '@nestjs/common';
 import { Role } from '@prisma/client';
 import { AdminService } from './admin.service';
-import { AdminUserListQueryDto, AdminWorkerListQueryDto, SuspendUserDto } from './admin.validation';
+import {
+  AdminJobListQueryDto,
+  AdminUserListQueryDto,
+  AdminWorkerListQueryDto,
+  SuspendUserDto,
+} from './admin.validation';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { JwtPayload } from '../../common/types/jwt-payload.interface';
@@ -63,5 +68,12 @@ export class AdminController {
   @Put('workers/:id/reactivate')
   reactivateWorker(@Param('id', ParseUUIDPipe) id: string, @CurrentUser() actor: JwtPayload) {
     return this.adminService.reactivateWorker(id, actor);
+  }
+
+  // ----- Jobs -----
+
+  @Get('jobs')
+  listJobs(@Query() query: AdminJobListQueryDto) {
+    return this.adminService.listJobs(query);
   }
 }

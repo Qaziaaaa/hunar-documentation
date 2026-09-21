@@ -27,13 +27,11 @@ describe('AdminController HTTP — GET /admin/customers', () => {
         {
           provide: PrismaService,
           useValue: {
+            $transaction: (fn: (tx: unknown) => Promise<unknown>) =>
+              fn({ user: { update: updateUser } }),
             user: { findMany, count, findFirst, update: updateUser },
-            serviceRequest: { findMany: findManyJobs },
+            serviceRequest: { findMany: findManyJobs, count },
             review: { findMany: findManyReviews },
-            $transaction: jest.fn(
-              async (cb: (tx: { user: { update: jest.Mock } }) => Promise<unknown>) =>
-                cb({ user: { update: updateUser } }),
-            ),
           },
         },
         { provide: AuditService, useValue: { record: jest.fn() } },
@@ -180,6 +178,58 @@ describe('AdminController HTTP — GET /admin/customers', () => {
         }),
       ]);
       expect(res.body.reviews).toHaveLength(1);
+    });
+  });
+
+  describe('GET /admin/jobs (Task 24)', () => {
+    const jobRow = {
+      id: 'j1',
+      title: 'Fix AC',
+      description: 'Not cooling',
+      images: ['img1'],
+      status: 'COMPLETED',
+      urgency: 'HIGH',
+      city: 'Lahore',
+      area: 'Gulberg',
+      suggestedVisitCharge: 500,
+      lockedVisitCharge: 600,
+      cancelReason: null,
+      cancelledAt: null,
+      completedAt: new Date('2026-09-02T02:00:00Z'),
+      createdAt: new Date('2026-09-02T00:00:00Z'),
+      category: { id: 'cat-1', name: 'AC', nameUrdu: 'اے سی' },
+      customer: { id: 'c1', name: 'Ali', phone: '03120000002' },
+      selectedWorker: { id: 'w1', name: 'Worker Khan', phone: '03120000003' },
+    };
+
+    it('returns the paginated job list', async () => {
+      findManyJobs.mockResolvedValue([jobRow]);
+      count.mockResolvedValue(1);
+
+      const res = await request(app.getHttpServer())
+        .get('/api/v1/admin/jobs?status=COMPLETED&city=Lahore&page=1&limit=20')
+        .expect(200);
+
+      expect(res.body.items).toHaveLength(1);
+      expect(res.body.items[0]).toMatchObject({
+        id: 'j1',
+        title: 'Fix AC',
+        status: 'COMPLETED',
+        category: { id: 'cat-1' },
+        customer: { id: 'c1' },
+        worker: { id: 'w1' },
+      });
+      expect(res.body.meta).toEqual({ page: 1, limit: 20, total: 1, totalPages: 1 });
+    });
+
+    it('rejects an invalid status with 400', async () => {
+      await request(app.getHttpServer()).get('/api/v1/admin/jobs?status=banana').expect(400);
+    });
+
+    it('rejects an invalid category id with 400', async () => {
+      await request(app.getHttpServer())
+        .get('/api/v1/admin/jobs?categoryId=not-a-uuid')
+        .expect(400);
     });
   });
 

@@ -4,7 +4,11 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { normalizePage, toPageResult } from '../../common/helpers/pagination.util';
 import { JwtPayload } from '../../common/types/jwt-payload.interface';
 import { AUDIT_ACTIONS, AuditService } from './audit.service';
-import { AdminUserListQueryDto, AdminWorkerListQueryDto } from './admin.validation';
+import {
+  AdminUserListQueryDto,
+  AdminJobListQueryDto,
+  AdminWorkerListQueryDto,
+} from './admin.validation';
 
 // Job states that mean the customer has paid for the (locked) visit charge.
 const PAID_JOB_STATUSES: JobStatus[] = [JobStatus.COMPLETED, JobStatus.PAID, JobStatus.REVIEWED];
@@ -29,6 +33,28 @@ const LIST_USER_SELECT = {
 } satisfies Prisma.UserSelect;
 
 type AdminUserRow = Prisma.UserGetPayload<{ select: typeof LIST_USER_SELECT }>;
+
+const LIST_JOB_SELECT = {
+  id: true,
+  title: true,
+  description: true,
+  images: true,
+  status: true,
+  urgency: true,
+  city: true,
+  area: true,
+  suggestedVisitCharge: true,
+  lockedVisitCharge: true,
+  cancelReason: true,
+  cancelledAt: true,
+  completedAt: true,
+  createdAt: true,
+  category: { select: { id: true, name: true, nameUrdu: true } },
+  customer: { select: { id: true, name: true, phone: true } },
+  selectedWorker: { select: { id: true, name: true, phone: true } },
+} satisfies Prisma.ServiceRequestSelect;
+
+type AdminJobRow = Prisma.ServiceRequestGetPayload<{ select: typeof LIST_JOB_SELECT }>;
 
 @Injectable()
 export class AdminService {
@@ -276,6 +302,68 @@ export class AdminService {
   }
 
   // ----- Shared internals -----
+
+  // Job directory with search, status, category, city/area and date-range filters.
+  async listJobs(query: AdminJobListQueryDto) {
+    const { page, limit, skip } = normalizePage(query);
+
+    const where: Prisma.ServiceRequestWhereInput = {
+      ...(query.status ? { status: query.status } : {}),
+      ...(query.categoryId ? { categoryId: query.categoryId } : {}),
+      ...(query.city ? { city: query.city } : {}),
+      ...(query.area ? { area: query.area } : {}),
+      ...(query.from || query.to
+        ? {
+            createdAt: {
+              ...(query.from ? { gte: new Date(query.from) } : {}),
+              ...(query.to ? { lte: new Date(query.to) } : {}),
+            },
+          }
+        : {}),
+      ...(query.search
+        ? {
+            OR: [
+              { title: { contains: query.search, mode: 'insensitive' } },
+              { customer: { is: { name: { contains: query.search, mode: 'insensitive' } } } },
+              { customer: { is: { phone: { contains: query.search } } } },
+            ],
+          }
+        : {}),
+    };
+
+    const [jobs, total] = await Promise.all([
+      this.prisma.serviceRequest.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limit,
+        select: LIST_JOB_SELECT,
+      }),
+      this.prisma.serviceRequest.count({ where }),
+    ]);
+
+    const items = jobs.map((job: AdminJobRow) => ({
+      id: job.id,
+      title: job.title,
+      description: job.description,
+      images: job.images,
+      status: job.status,
+      urgency: job.urgency,
+      city: job.city,
+      area: job.area,
+      suggestedVisitCharge: job.suggestedVisitCharge,
+      lockedVisitCharge: job.lockedVisitCharge,
+      category: job.category,
+      customer: job.customer,
+      worker: job.selectedWorker,
+      cancelReason: job.cancelReason,
+      cancelledAt: job.cancelledAt,
+      completedAt: job.completedAt,
+      createdAt: job.createdAt,
+    }));
+
+    return toPageResult(items, total, page, limit);
+  }
 
   private async listUsers(
     role: Role,
