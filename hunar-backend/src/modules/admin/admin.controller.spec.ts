@@ -28,6 +28,7 @@ describe('AdminController HTTP — GET /admin/customers', () => {
   const updateJob = jest.fn();
   const emitDomainEvent = jest.fn();
   const emitToRoom = jest.fn();
+  const findManyTransactions = jest.fn();
 
   beforeAll(async () => {
     const moduleRef = await Test.createTestingModule({
@@ -41,6 +42,7 @@ describe('AdminController HTTP — GET /admin/customers', () => {
               fn({ user: { update: updateUser }, serviceRequest: { update: updateJob } }),
             user: { findMany, count, findFirst, update: updateUser },
             serviceRequest: { findMany: findManyJobs, count, findFirst, findUnique: findUniqueJob },
+            walletLedger: { findMany: findManyTransactions, count },
             review: { findMany: findManyReviews },
             jobOffer: { findMany: findManyOffers },
             visit: { findMany: findManyVisits },
@@ -84,6 +86,7 @@ describe('AdminController HTTP — GET /admin/customers', () => {
     updateJob.mockReset();
     emitDomainEvent.mockReset();
     emitToRoom.mockReset();
+    findManyTransactions.mockReset();
   });
 
   it('returns the paginated customer list', async () => {
@@ -495,6 +498,71 @@ describe('AdminController HTTP — GET /admin/customers', () => {
       });
       expect(emitToRoom).toHaveBeenCalledWith('user:c1', 'job:cancelled', { jobId: validUuid });
       expect(emitToRoom).toHaveBeenCalledWith('user:w1', 'job:cancelled', { jobId: validUuid });
+    });
+  });
+
+  describe('GET /admin/transactions (Task 27)', () => {
+    const txRow = {
+      id: 'tx1',
+      type: 'TOPUP_CREDIT',
+      amount: 500,
+      balanceAfter: 1500,
+      referenceType: 'WALLET_TOPUP',
+      referenceId: 'tp1',
+      note: 'Top up',
+      createdAt: new Date('2026-09-07T00:00:00Z'),
+      user: { id: 'w1', name: 'Worker Khan', phone: '03120000003' },
+    };
+
+    it('returns the paginated transaction feed with worker and timestamp', async () => {
+      findManyTransactions.mockResolvedValue([txRow]);
+      count.mockResolvedValue(1);
+
+      const res = await request(app.getHttpServer()).get('/api/v1/admin/transactions').expect(200);
+
+      expect(res.body.items).toEqual([
+        {
+          id: 'tx1',
+          type: 'TOPUP_CREDIT',
+          amount: 500,
+          balanceAfter: 1500,
+          referenceType: 'WALLET_TOPUP',
+          referenceId: 'tp1',
+          note: 'Top up',
+          worker: { id: 'w1', name: 'Worker Khan', phone: '03120000003' },
+          timestamp: txRow.createdAt.toISOString(),
+        },
+      ]);
+      expect(res.body.meta.total).toBe(1);
+    });
+
+    it('rejects an invalid transaction type with 400', async () => {
+      await request(app.getHttpServer())
+        .get('/api/v1/admin/transactions?type=NOT_A_TYPE')
+        .expect(400);
+    });
+
+    it('passes the type, search and date filters to the service', async () => {
+      findManyTransactions.mockResolvedValue([]);
+      count.mockResolvedValue(0);
+
+      await request(app.getHttpServer())
+        .get(
+          '/api/v1/admin/transactions?type=EARNINGS_CREDIT&search=Khan&from=2026-09-01T00:00:00Z&to=2026-09-07T00:00:00Z&page=2&limit=10',
+        )
+        .expect(200);
+
+      const where = (findManyTransactions.mock.calls[0][0] as { where: Record<string, unknown> })
+        .where;
+      expect(where.type).toBe('EARNINGS_CREDIT');
+      expect((where.user as { is: { OR: unknown[] } }).is.OR).toHaveLength(2);
+      expect(where.createdAt).toEqual({
+        gte: new Date('2026-09-01T00:00:00Z'),
+        lte: new Date('2026-09-07T00:00:00Z'),
+      });
+      const args = findManyTransactions.mock.calls[0][0] as { skip: number; take: number };
+      expect(args.skip).toBe(10);
+      expect(args.take).toBe(10);
     });
   });
 

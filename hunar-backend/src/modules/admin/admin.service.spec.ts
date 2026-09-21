@@ -846,3 +846,87 @@ describe('AdminService.forceCancelJob (Task 26)', () => {
     );
   });
 });
+
+describe('AdminService.listTransactions (Task 27)', () => {
+  const txRow = {
+    id: 'tx1',
+    type: 'TOPUP_CREDIT',
+    amount: 500,
+    balanceAfter: 1500,
+    referenceType: 'WALLET_TOPUP',
+    referenceId: 'tp1',
+    note: 'Top up',
+    createdAt: new Date('2026-09-07T00:00:00Z'),
+    user: { id: 'w1', name: 'Worker Khan', phone: '03120000003' },
+  };
+
+  function makeFixture() {
+    const findMany = jest.fn().mockResolvedValue([txRow]);
+    const count = jest.fn().mockResolvedValue(1);
+    const prisma = { walletLedger: { findMany, count } } as unknown as ConstructorParameters<
+      typeof AdminService
+    >[0];
+    const service = new AdminService(prisma, { record: jest.fn() } as unknown as AuditService);
+    return { service, findMany, count };
+  }
+
+  it('returns a paginated transaction feed with worker info and timestamp', async () => {
+    const { service, findMany } = makeFixture();
+
+    const result = await service.listTransactions({});
+
+    expect(findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        orderBy: { createdAt: 'desc' },
+        take: expect.any(Number),
+        skip: 0,
+        select: expect.anything(),
+      }),
+    );
+    expect(result.items).toEqual([
+      {
+        id: 'tx1',
+        type: 'TOPUP_CREDIT',
+        amount: 500,
+        balanceAfter: 1500,
+        referenceType: 'WALLET_TOPUP',
+        referenceId: 'tp1',
+        note: 'Top up',
+        worker: { id: 'w1', name: 'Worker Khan', phone: '03120000003' },
+        timestamp: txRow.createdAt,
+      },
+    ]);
+    expect(result.meta.total).toBe(1);
+    expect(result.meta.page).toBe(1);
+  });
+
+  it('passes the type filter to the query', async () => {
+    const { service, findMany } = makeFixture();
+
+    await service.listTransactions({ type: 'EARNINGS_CREDIT' });
+
+    const where = (findMany.mock.calls[0][0] as { where: Record<string, unknown> }).where;
+    expect(where).toMatchObject({ type: 'EARNINGS_CREDIT' });
+  });
+
+  it('builds the date-range and worker search filters', async () => {
+    const { service, findMany } = makeFixture();
+
+    await service.listTransactions({
+      search: 'Khan',
+      from: '2026-09-01T00:00:00Z',
+      to: '2026-09-07T00:00:00Z',
+    });
+
+    const where = (findMany.mock.calls[0][0] as { where: Record<string, unknown> }).where;
+    expect(where.user).toEqual({
+      is: {
+        OR: [{ name: { contains: 'Khan', mode: 'insensitive' } }, { phone: { contains: 'Khan' } }],
+      },
+    });
+    expect(where.createdAt).toEqual({
+      gte: new Date('2026-09-01T00:00:00Z'),
+      lte: new Date('2026-09-07T00:00:00Z'),
+    });
+  });
+});

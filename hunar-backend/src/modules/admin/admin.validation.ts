@@ -12,7 +12,7 @@ import {
   MaxLength,
   Min,
 } from 'class-validator';
-import { JobStatus, WorkerVerificationStatus } from '@prisma/client';
+import { JobStatus, WalletLedgerType, WorkerVerificationStatus } from '@prisma/client';
 
 export const USER_STATUS_FILTERS = ['active', 'suspended'] as const;
 export type UserStatusFilter = (typeof USER_STATUS_FILTERS)[number];
@@ -118,4 +118,36 @@ export class ForceCancelJobDto {
   @IsNotEmpty()
   @MaxLength(1000)
   reason!: string;
+}
+
+export class AdminTransactionListQueryDto {
+  @IsOptional()
+  @IsEnum(WalletLedgerType)
+  type?: WalletLedgerType;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(200)
+  search?: string;
+
+  @IsOptional()
+  @IsDateString()
+  from?: string;
+
+  @IsOptional()
+  @IsDateString()
+  to?: string;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  page?: number;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(100)
+  limit?: number;
 }

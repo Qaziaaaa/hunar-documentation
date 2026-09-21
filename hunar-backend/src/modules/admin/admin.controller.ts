@@ -3,6 +3,7 @@ import { Role } from '@prisma/client';
 import { AdminService } from './admin.service';
 import {
   AdminJobListQueryDto,
+  AdminTransactionListQueryDto,
   AdminUserListQueryDto,
   AdminWorkerListQueryDto,
   ForceCancelJobDto,
@@ -90,5 +91,12 @@ export class AdminController {
     @CurrentUser() actor: JwtPayload,
   ) {
     return this.adminService.forceCancelJob(id, actor, dto.reason);
+  }
+
+  // ----- Wallet / transactions -----
+
+  @Get('transactions')
+  listTransactions(@Query() query: AdminTransactionListQueryDto) {
+    return this.adminService.listTransactions(query);
   }
 }

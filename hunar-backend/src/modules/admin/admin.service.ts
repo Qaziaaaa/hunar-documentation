@@ -12,6 +12,7 @@ import {
   AdminUserListQueryDto,
   AdminJobListQueryDto,
   AdminWorkerListQueryDto,
+  AdminTransactionListQueryDto,
 } from './admin.validation';
 
 // Job states that mean the customer has paid for the (locked) visit charge.
@@ -59,6 +60,21 @@ const LIST_JOB_SELECT = {
 } satisfies Prisma.ServiceRequestSelect;
 
 type AdminJobRow = Prisma.ServiceRequestGetPayload<{ select: typeof LIST_JOB_SELECT }>;
+
+// Admin-only transactions feed (Admin flow §8 — Step F). Read/oversight, never moves money.
+const TRANSACTION_SELECT = {
+  id: true,
+  type: true,
+  amount: true,
+  balanceAfter: true,
+  referenceType: true,
+  referenceId: true,
+  note: true,
+  createdAt: true,
+  user: { select: { id: true, name: true, phone: true } },
+} satisfies Prisma.WalletLedgerSelect;
+
+type AdminTransactionRow = Prisma.WalletLedgerGetPayload<{ select: typeof TRANSACTION_SELECT }>;
 
 @Injectable()
 export class AdminService {
@@ -366,6 +382,61 @@ export class AdminService {
       cancelledAt: job.cancelledAt,
       completedAt: job.completedAt,
       createdAt: job.createdAt,
+    }));
+
+    return toPageResult(items, total, page, limit);
+  }
+
+  // Wallet ledger feed for admins (Admin flow §8 — Step F): type, worker search and
+  // date-range filters, sorted newest-first. Amounts are signed (+credit / −debit).
+  async listTransactions(query: AdminTransactionListQueryDto) {
+    const { page, limit, skip } = normalizePage(query);
+
+    const where: Prisma.WalletLedgerWhereInput = {
+      ...(query.type ? { type: query.type } : {}),
+      ...(query.from || query.to
+        ? {
+            createdAt: {
+              ...(query.from ? { gte: new Date(query.from) } : {}),
+              ...(query.to ? { lte: new Date(query.to) } : {}),
+            },
+          }
+        : {}),
+      ...(query.search
+        ? {
+            user: {
+              is: {
+                OR: [
+                  { name: { contains: query.search, mode: 'insensitive' } },
+                  { phone: { contains: query.search } },
+                ],
+              },
+            },
+          }
+        : {}),
+    };
+
+    const [rows, total] = await Promise.all([
+      this.prisma.walletLedger.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limit,
+        select: TRANSACTION_SELECT,
+      }),
+      this.prisma.walletLedger.count({ where }),
+    ]);
+
+    const items = rows.map((row: AdminTransactionRow) => ({
+      id: row.id,
+      type: row.type,
+      amount: row.amount,
+      balanceAfter: row.balanceAfter,
+      referenceType: row.referenceType,
+      referenceId: row.referenceId,
+      note: row.note,
+      worker: row.user,
+      timestamp: row.createdAt,
     }));
 
     return toPageResult(items, total, page, limit);
