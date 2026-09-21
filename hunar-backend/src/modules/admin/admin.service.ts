@@ -365,6 +365,191 @@ export class AdminService {
     return toPageResult(items, total, page, limit);
   }
 
+  // Full job detail with its entire audit history (Admin flow §7.2):
+  // offers, visits, repairs + revisions, commission, review, payments and a merged timeline.
+  async getJobDetail(id: string) {
+    const job = await this.prisma.serviceRequest.findFirst({
+      where: { id },
+      select: {
+        id: true,
+        title: true,
+        description: true,
+        images: true,
+        voiceNoteUrl: true,
+        status: true,
+        urgency: true,
+        city: true,
+        area: true,
+        address: true,
+        suggestedVisitCharge: true,
+        lockedVisitCharge: true,
+        preferredVisitTime: true,
+        cancelReason: true,
+        cancelledAt: true,
+        completedAt: true,
+        createdAt: true,
+        updatedAt: true,
+        category: { select: { id: true, name: true, nameUrdu: true } },
+        customer: { select: { id: true, name: true, phone: true } },
+        selectedWorker: { select: { id: true, name: true, phone: true } },
+      },
+    });
+    if (!job) {
+      throw new NotFoundException('Job not found');
+    }
+
+    const [offers, visits, repairs, commission, reviews] = await Promise.all([
+      this.prisma.jobOffer.findMany({
+        where: { jobId: id },
+        orderBy: { createdAt: 'asc' },
+        select: {
+          id: true,
+          workerId: true,
+          visitCharge: true,
+          message: true,
+          status: true,
+          negotiationRound: true,
+          negotiationHistory: true,
+          lockedAt: true,
+          createdAt: true,
+          updatedAt: true,
+          worker: { select: { id: true, name: true, phone: true } },
+        },
+      }),
+      this.prisma.visit.findMany({
+        where: { jobId: id },
+        orderBy: { scheduledDate: 'asc' },
+        select: {
+          id: true,
+          workerId: true,
+          scheduledDate: true,
+          actualDate: true,
+          status: true,
+          diagnosis: true,
+          repairPlan: true,
+          repairEstimate: true,
+          estimatedRepairTimeMin: true,
+          inspectionSubmittedAt: true,
+          createdAt: true,
+          worker: { select: { id: true, name: true, phone: true } },
+        },
+      }),
+      this.prisma.repair.findMany({
+        where: { jobId: id },
+        orderBy: { createdAt: 'asc' },
+        select: {
+          id: true,
+          visitId: true,
+          workerId: true,
+          description: true,
+          amount: true,
+          itemsBreakdown: true,
+          status: true,
+          negotiationRound: true,
+          lockedAmount: true,
+          lockedAt: true,
+          startedAt: true,
+          completedAt: true,
+          createdAt: true,
+          worker: { select: { id: true, name: true, phone: true } },
+          revisions: {
+            orderBy: { createdAt: 'asc' },
+            select: {
+              id: true,
+              proposedAmount: true,
+              reason: true,
+              status: true,
+              requestedBy: true,
+              createdAt: true,
+              decidedAt: true,
+            },
+          },
+        },
+      }),
+      this.prisma.commission.findFirst({
+        where: { jobId: id },
+        select: {
+          id: true,
+          workerId: true,
+          visitCharge: true,
+          commissionRate: true,
+          amount: true,
+          status: true,
+          screenshotUrl: true,
+          paidAt: true,
+          verifiedAt: true,
+          createdAt: true,
+        },
+      }),
+      this.prisma.review.findMany({
+        where: { jobId: id },
+        orderBy: { createdAt: 'asc' },
+        select: {
+          id: true,
+          reviewerId: true,
+          revieweeId: true,
+          rating: true,
+          comment: true,
+          isVisible: true,
+          createdAt: true,
+          reviewer: { select: { id: true, name: true } },
+          reviewee: { select: { id: true, name: true } },
+        },
+      }),
+    ]);
+
+    const payments = PAID_JOB_STATUSES.includes(job.status)
+      ? [
+          {
+            jobId: job.id,
+            amount: job.lockedVisitCharge ?? job.suggestedVisitCharge ?? null,
+            status: job.status,
+            paidAt: job.completedAt ?? job.createdAt,
+          },
+        ]
+      : [];
+
+    return {
+      job: {
+        id: job.id,
+        title: job.title,
+        description: job.description,
+        images: job.images,
+        voiceNoteUrl: job.voiceNoteUrl,
+        status: job.status,
+        urgency: job.urgency,
+        city: job.city,
+        area: job.area,
+        address: job.address,
+        suggestedVisitCharge: job.suggestedVisitCharge,
+        lockedVisitCharge: job.lockedVisitCharge,
+        preferredVisitTime: job.preferredVisitTime,
+        cancelReason: job.cancelReason,
+        cancelledAt: job.cancelledAt,
+        completedAt: job.completedAt,
+        createdAt: job.createdAt,
+        updatedAt: job.updatedAt,
+        category: job.category,
+        customer: job.customer,
+        worker: job.selectedWorker,
+      },
+      timeline: this.buildJobTimeline({
+        job,
+        offers,
+        visits,
+        repairs,
+        commission,
+        reviews,
+      }),
+      offers,
+      visits,
+      repairs,
+      commission,
+      reviews,
+      payments,
+    };
+  }
+
   private async listUsers(
     role: Role,
     query: AdminUserListQueryDto,
@@ -468,5 +653,155 @@ export class AdminService {
     }
     const total = reviews.reduce((sum, review) => sum + review.rating, 0);
     return Number((total / reviews.length).toFixed(2));
+  }
+
+  // Merges every job-lifecycle event into one chronological audit timeline (§7.2),
+  // used by admins as the record of truth when resolving a dispute.
+  private buildJobTimeline(input: {
+    job: {
+      createdAt: Date;
+      completedAt: Date | null;
+      cancelledAt: Date | null;
+      cancelReason: string | null;
+      selectedWorker?: { id: string; name: string } | null;
+    };
+    offers: Array<{
+      createdAt: Date;
+      visitCharge: { toNumber(): number } | number | string;
+      status: string;
+      worker?: { id: string; name: string } | null;
+    }>;
+    visits: Array<{
+      scheduledDate: Date;
+      actualDate: Date | null;
+      status: string;
+      worker?: { id: string; name: string } | null;
+    }>;
+    repairs: Array<{
+      createdAt: Date;
+      startedAt: Date | null;
+      completedAt: Date | null;
+      amount: { toNumber(): number } | number | string;
+      description: string;
+      status: string;
+      revisions?: Array<{
+        createdAt: Date;
+        proposedAmount: { toNumber(): number } | number | string;
+        status: string;
+        reason: string;
+        requestedBy: string;
+      }>;
+    }>;
+    commission: {
+      createdAt: Date;
+      amount: { toNumber(): number } | number | string;
+      status: string;
+      verifiedAt: Date | null;
+      paidAt: Date | null;
+    } | null;
+    reviews: Array<{ createdAt: Date; rating: number; comment: string | null }>;
+  }): Array<{ at: Date; type: string; detail: string }> {
+    const events: Array<{ at: Date; type: string; detail: string }> = [];
+
+    events.push({
+      at: input.job.createdAt,
+      type: 'JOB_CREATED',
+      detail: 'Service request created',
+    });
+    if (input.job.cancelledAt) {
+      events.push({
+        at: input.job.cancelledAt,
+        type: 'JOB_CANCELLED',
+        detail: input.job.cancelReason ?? 'Cancelled by customer or admin',
+      });
+    }
+    if (input.job.completedAt) {
+      events.push({ at: input.job.completedAt, type: 'JOB_COMPLETED', detail: 'Job completed' });
+    }
+
+    for (const offer of input.offers) {
+      const charge = Number(offer.visitCharge);
+      events.push({
+        at: offer.createdAt,
+        type: 'OFFER_CREATED',
+        detail: `${offer.worker?.name ?? 'Worker'} offered Rs ${charge} (${offer.status})`,
+      });
+    }
+
+    for (const visit of input.visits) {
+      events.push({
+        at: visit.scheduledDate,
+        type: 'VISIT_SCHEDULED',
+        detail: `Visit scheduled with ${visit.worker?.name ?? 'worker'}`,
+      });
+      if (visit.actualDate) {
+        events.push({
+          at: visit.actualDate,
+          type: `VISIT_${visit.status}`,
+          detail: `Visit ${visit.status.toLowerCase().replaceAll('_', ' ')}`,
+        });
+      }
+    }
+
+    for (const repair of input.repairs) {
+      events.push({
+        at: repair.createdAt,
+        type: 'REPAIR_PROPOSED',
+        detail: `${repair.description} — Rs ${Number(repair.amount)} (${repair.status})`,
+      });
+      if (repair.startedAt) {
+        events.push({
+          at: repair.startedAt,
+          type: 'REPAIR_STARTED',
+          detail: 'Repair work started',
+        });
+      }
+      if (repair.completedAt) {
+        events.push({
+          at: repair.completedAt,
+          type: 'REPAIR_COMPLETED',
+          detail: 'Repair work completed',
+        });
+      }
+      for (const revision of repair.revisions ?? []) {
+        events.push({
+          at: revision.createdAt,
+          type: 'REPAIR_REVISION',
+          detail: `${revision.requestedBy} proposed Rs ${Number(revision.proposedAmount)} — ${revision.reason} (${revision.status})`,
+        });
+      }
+    }
+
+    if (input.commission) {
+      events.push({
+        at: input.commission.createdAt,
+        type: 'COMMISSION_ISSUED',
+        detail: `Platform commission Rs ${Number(input.commission.amount)} (${input.commission.status})`,
+      });
+      if (input.commission.verifiedAt) {
+        events.push({
+          at: input.commission.verifiedAt,
+          type: 'COMMISSION_VERIFIED',
+          detail: 'Commission verified by admin',
+        });
+      }
+      if (input.commission.paidAt) {
+        events.push({
+          at: input.commission.paidAt,
+          type: 'COMMISSION_PAID',
+          detail: 'Commission paid to worker',
+        });
+      }
+    }
+
+    for (const review of input.reviews) {
+      events.push({
+        at: review.createdAt,
+        type: 'REVIEW',
+        detail: `${review.rating}/5 star${review.comment ? ` — ${review.comment}` : ''}`,
+      });
+    }
+
+    return events.sort((a, b) => a.at.getTime() - b.at.getTime());
   }
 }

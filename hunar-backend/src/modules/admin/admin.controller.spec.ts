@@ -18,6 +18,10 @@ describe('AdminController HTTP — GET /admin/customers', () => {
   const findManyJobs = jest.fn();
   const findManyReviews = jest.fn();
   const updateUser = jest.fn();
+  const findManyOffers = jest.fn();
+  const findManyVisits = jest.fn();
+  const findManyRepairs = jest.fn();
+  const findCommission = jest.fn();
 
   beforeAll(async () => {
     const moduleRef = await Test.createTestingModule({
@@ -30,8 +34,12 @@ describe('AdminController HTTP — GET /admin/customers', () => {
             $transaction: (fn: (tx: unknown) => Promise<unknown>) =>
               fn({ user: { update: updateUser } }),
             user: { findMany, count, findFirst, update: updateUser },
-            serviceRequest: { findMany: findManyJobs, count },
+            serviceRequest: { findMany: findManyJobs, count, findFirst },
             review: { findMany: findManyReviews },
+            jobOffer: { findMany: findManyOffers },
+            visit: { findMany: findManyVisits },
+            repair: { findMany: findManyRepairs },
+            commission: { findFirst: findCommission },
           },
         },
         { provide: AuditService, useValue: { record: jest.fn() } },
@@ -60,6 +68,10 @@ describe('AdminController HTTP — GET /admin/customers', () => {
     findManyJobs.mockReset();
     findManyReviews.mockReset();
     updateUser.mockReset();
+    findManyOffers.mockReset();
+    findManyVisits.mockReset();
+    findManyRepairs.mockReset();
+    findCommission.mockReset();
   });
 
   it('returns the paginated customer list', async () => {
@@ -230,6 +242,164 @@ describe('AdminController HTTP — GET /admin/customers', () => {
       await request(app.getHttpServer())
         .get('/api/v1/admin/jobs?categoryId=not-a-uuid')
         .expect(400);
+    });
+  });
+
+  describe('GET /admin/jobs/:id (Task 25)', () => {
+    const validUuid = 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11';
+    const jobRow = {
+      id: validUuid,
+      title: 'Fix AC',
+      description: 'Not cooling',
+      images: ['img1'],
+      voiceNoteUrl: null,
+      status: 'COMPLETED',
+      urgency: 'HIGH',
+      city: 'Lahore',
+      area: 'Gulberg',
+      address: 'Gulberg 3',
+      suggestedVisitCharge: 500,
+      lockedVisitCharge: 600,
+      preferredVisitTime: null,
+      cancelReason: null,
+      cancelledAt: null,
+      completedAt: new Date('2026-09-02T02:00:00Z'),
+      createdAt: new Date('2026-09-02T00:00:00Z'),
+      updatedAt: new Date('2026-09-02T02:00:00Z'),
+      category: { id: 'cat-1', name: 'AC', nameUrdu: 'اے سی' },
+      customer: { id: 'c1', name: 'Ali', phone: '03120000002' },
+      selectedWorker: { id: 'w1', name: 'Worker Khan', phone: '03120000003' },
+    };
+
+    it('rejects a non-UUID job ID with 400', async () => {
+      await request(app.getHttpServer()).get('/api/v1/admin/jobs/not-a-uuid').expect(400);
+    });
+
+    it('returns 404 when the job does not exist', async () => {
+      findFirst.mockResolvedValue(null);
+
+      const res = await request(app.getHttpServer())
+        .get(`/api/v1/admin/jobs/${validUuid}`)
+        .expect(404);
+
+      expect(res.body.message).toBe('Job not found');
+    });
+
+    it('returns the full job detail with audit timeline', async () => {
+      findFirst.mockResolvedValue(jobRow);
+      findManyOffers.mockResolvedValue([
+        {
+          id: 'o1',
+          workerId: 'w1',
+          worker: { id: 'w1', name: 'Worker Khan', phone: '03120000003' },
+          visitCharge: 600,
+          message: 'Can fix',
+          status: 'ACCEPTED',
+          negotiationRound: 1,
+          negotiationHistory: null,
+          lockedAt: null,
+          createdAt: new Date('2026-09-02T00:30:00Z'),
+          updatedAt: new Date('2026-09-02T01:00:00Z'),
+        },
+      ]);
+      findManyVisits.mockResolvedValue([
+        {
+          id: 'v1',
+          workerId: 'w1',
+          worker: { id: 'w1', name: 'Worker Khan', phone: '03120000003' },
+          scheduledDate: new Date('2026-09-02T03:00:00Z'),
+          actualDate: new Date('2026-09-02T03:30:00Z'),
+          status: 'COMPLETED',
+          diagnosis: 'Compressor dead',
+          repairPlan: 'Replace compressor',
+          repairEstimate: 600,
+          estimatedRepairTimeMin: 120,
+          inspectionSubmittedAt: new Date('2026-09-02T03:35:00Z'),
+          createdAt: new Date('2026-09-02T01:05:00Z'),
+        },
+      ]);
+      findManyRepairs.mockResolvedValue([
+        {
+          id: 'r1',
+          visitId: 'v1',
+          workerId: 'w1',
+          worker: { id: 'w1', name: 'Worker Khan', phone: '03120000003' },
+          description: 'Replace compressor',
+          amount: 600,
+          itemsBreakdown: null,
+          status: 'ACCEPTED',
+          negotiationRound: 0,
+          lockedAmount: 600,
+          lockedAt: new Date('2026-09-02T03:40:00Z'),
+          startedAt: new Date('2026-09-02T03:45:00Z'),
+          completedAt: new Date('2026-09-02T05:00:00Z'),
+          createdAt: new Date('2026-09-02T03:38:00Z'),
+          revisions: [
+            {
+              id: 'rev1',
+              proposedAmount: 700,
+              reason: 'Extra parts',
+              status: 'APPROVED',
+              requestedBy: 'w1',
+              createdAt: new Date('2026-09-02T03:39:00Z'),
+              decidedAt: new Date('2026-09-02T03:40:00Z'),
+            },
+          ],
+        },
+      ]);
+      findCommission.mockResolvedValue({
+        id: 'cm1',
+        workerId: 'w1',
+        visitCharge: 600,
+        commissionRate: 0.1,
+        amount: 60,
+        status: 'VERIFIED',
+        screenshotUrl: null,
+        paidAt: new Date('2026-09-02T06:00:00Z'),
+        verifiedAt: new Date('2026-09-02T05:30:00Z'),
+        createdAt: new Date('2026-09-02T05:05:00Z'),
+      });
+      findManyReviews.mockResolvedValue([
+        {
+          id: 'rv1',
+          reviewerId: 'c1',
+          revieweeId: 'w1',
+          reviewer: { id: 'c1', name: 'Ali' },
+          reviewee: { id: 'w1', name: 'Worker Khan' },
+          rating: 5,
+          comment: 'Great work',
+          isVisible: true,
+          createdAt: new Date('2026-09-02T07:00:00Z'),
+        },
+      ]);
+
+      const res = await request(app.getHttpServer())
+        .get(`/api/v1/admin/jobs/${validUuid}`)
+        .expect(200);
+
+      expect(res.body.job).toMatchObject({
+        id: validUuid,
+        title: 'Fix AC',
+        status: 'COMPLETED',
+        category: { id: 'cat-1' },
+        customer: { id: 'c1' },
+        worker: { id: 'w1' },
+      });
+      expect(res.body.offers).toHaveLength(1);
+      expect(res.body.visits).toHaveLength(1);
+      expect(res.body.repairs).toHaveLength(1);
+      expect(res.body.commission).toMatchObject({ id: 'cm1', amount: 60 });
+      expect(res.body.reviews).toHaveLength(1);
+      expect(res.body.payments).toEqual([
+        {
+          jobId: validUuid,
+          amount: 600,
+          status: 'COMPLETED',
+          paidAt: jobRow.completedAt.toISOString(),
+        },
+      ]);
+      expect(res.body.timeline[0]).toMatchObject({ type: 'JOB_CREATED' });
+      expect(res.body.timeline[res.body.timeline.length - 1]).toMatchObject({ type: 'REVIEW' });
     });
   });
 

@@ -537,3 +537,220 @@ describe('AdminService reactivate customer (Task 13) + worker suspend/reactivate
     expect(result).toMatchObject({ role: Role.WORKER, isActive: true });
   });
 });
+
+describe('AdminService.getJobDetail (Task 25)', () => {
+  const jobRow = {
+    id: 'j1',
+    title: 'Fix AC',
+    description: 'Not cooling',
+    images: ['img1'],
+    voiceNoteUrl: null,
+    status: JobStatus.COMPLETED,
+    urgency: 'HIGH',
+    city: 'Lahore',
+    area: 'Gulberg',
+    address: 'Gulberg 3',
+    suggestedVisitCharge: 500,
+    lockedVisitCharge: 600,
+    preferredVisitTime: null,
+    cancelReason: null,
+    cancelledAt: null,
+    completedAt: new Date('2026-09-02T02:00:00Z'),
+    createdAt: new Date('2026-09-02T00:00:00Z'),
+    updatedAt: new Date('2026-09-02T02:00:00Z'),
+    category: { id: 'cat1', name: 'AC Repair', nameUrdu: 'اے سی مرمت' },
+    customer: { id: 'c1', name: 'Ali', phone: '03120000002' },
+    selectedWorker: { id: 'w1', name: 'Worker Khan', phone: '03120000003' },
+  };
+
+  const offerRow = {
+    id: 'o1',
+    workerId: 'w1',
+    visitCharge: 600,
+    message: 'Can fix',
+    status: 'ACCEPTED',
+    negotiationRound: 1,
+    negotiationHistory: null,
+    lockedAt: null,
+    createdAt: new Date('2026-09-02T00:30:00Z'),
+    updatedAt: new Date('2026-09-02T01:00:00Z'),
+    worker: { id: 'w1', name: 'Worker Khan', phone: '03120000003' },
+  };
+
+  const visitRow = {
+    id: 'v1',
+    workerId: 'w1',
+    scheduledDate: new Date('2026-09-02T03:00:00Z'),
+    actualDate: new Date('2026-09-02T03:30:00Z'),
+    status: 'COMPLETED',
+    diagnosis: 'Compressor dead',
+    repairPlan: 'Replace compressor',
+    repairEstimate: 600,
+    estimatedRepairTimeMin: 120,
+    inspectionSubmittedAt: new Date('2026-09-02T03:35:00Z'),
+    createdAt: new Date('2026-09-02T01:05:00Z'),
+    worker: { id: 'w1', name: 'Worker Khan', phone: '03120000003' },
+  };
+
+  const repairRow = {
+    id: 'r1',
+    visitId: 'v1',
+    workerId: 'w1',
+    description: 'Replace compressor',
+    amount: 600,
+    itemsBreakdown: null,
+    status: 'ACCEPTED',
+    negotiationRound: 0,
+    lockedAmount: 600,
+    lockedAt: new Date('2026-09-02T03:40:00Z'),
+    startedAt: new Date('2026-09-02T03:45:00Z'),
+    completedAt: new Date('2026-09-02T05:00:00Z'),
+    createdAt: new Date('2026-09-02T03:38:00Z'),
+    worker: { id: 'w1', name: 'Worker Khan', phone: '03120000003' },
+    revisions: [
+      {
+        id: 'rev1',
+        proposedAmount: 700,
+        reason: 'Extra parts',
+        status: 'APPROVED',
+        requestedBy: 'w1',
+        createdAt: new Date('2026-09-02T03:39:00Z'),
+        decidedAt: new Date('2026-09-02T03:40:00Z'),
+      },
+    ],
+  };
+
+  const commissionRow = {
+    id: 'cm1',
+    workerId: 'w1',
+    visitCharge: 600,
+    commissionRate: 0.1,
+    amount: 60,
+    status: 'VERIFIED',
+    screenshotUrl: null,
+    paidAt: new Date('2026-09-02T06:00:00Z'),
+    verifiedAt: new Date('2026-09-02T05:30:00Z'),
+    createdAt: new Date('2026-09-02T05:05:00Z'),
+  };
+
+  const reviewRow = {
+    id: 'rv1',
+    reviewerId: 'c1',
+    revieweeId: 'w1',
+    rating: 5,
+    comment: 'Great work',
+    isVisible: true,
+    createdAt: new Date('2026-09-02T07:00:00Z'),
+    reviewer: { id: 'c1', name: 'Ali' },
+    reviewee: { id: 'w1', name: 'Worker Khan' },
+  };
+
+  function makeFixture() {
+    const serviceRequest = { findFirst: jest.fn().mockResolvedValue(jobRow) };
+    const jobOffer = { findMany: jest.fn().mockResolvedValue([offerRow]) };
+    const visit = { findMany: jest.fn().mockResolvedValue([visitRow]) };
+    const repair = { findMany: jest.fn().mockResolvedValue([repairRow]) };
+    const commission = { findFirst: jest.fn().mockResolvedValue(commissionRow) };
+    const review = { findMany: jest.fn().mockResolvedValue([reviewRow]) };
+    const prisma = {
+      serviceRequest,
+      jobOffer,
+      visit,
+      repair,
+      commission,
+      review,
+    } as unknown as ConstructorParameters<typeof AdminService>[0];
+    const service = new AdminService(prisma, { record: jest.fn() } as unknown as AuditService);
+    return { service, serviceRequest, jobOffer, visit, repair, commission, review };
+  }
+
+  it('returns job core, offers, visits, repairs, commission, reviews and payments', async () => {
+    const { service } = makeFixture();
+
+    const result = await service.getJobDetail('j1');
+
+    expect(result.job).toMatchObject({
+      id: 'j1',
+      title: 'Fix AC',
+      status: JobStatus.COMPLETED,
+      category: { id: 'cat1' },
+      customer: { id: 'c1' },
+      worker: { id: 'w1' },
+    });
+    expect(result.offers).toHaveLength(1);
+    expect(result.offers[0]).toMatchObject({ id: 'o1', status: 'ACCEPTED' });
+    expect(result.visits).toHaveLength(1);
+    expect(result.visits[0]).toMatchObject({ id: 'v1', status: 'COMPLETED' });
+    expect(result.repairs).toHaveLength(1);
+    expect(result.repairs[0].revisions).toHaveLength(1);
+    expect(result.commission).toMatchObject({ id: 'cm1', amount: 60 });
+    expect(result.reviews).toHaveLength(1);
+    expect(result.payments).toEqual([
+      { jobId: 'j1', amount: 600, status: JobStatus.COMPLETED, paidAt: jobRow.completedAt },
+    ]);
+  });
+
+  it('builds a chronological audit timeline with all lifecycle events', async () => {
+    const { service } = makeFixture();
+
+    const result = await service.getJobDetail('j1');
+
+    const types = result.timeline.map((event) => event.type);
+    expect(new Set(types)).toEqual(
+      new Set([
+        'JOB_CREATED',
+        'OFFER_CREATED',
+        'JOB_COMPLETED',
+        'VISIT_SCHEDULED',
+        'VISIT_COMPLETED',
+        'REPAIR_PROPOSED',
+        'REPAIR_REVISION',
+        'REPAIR_STARTED',
+        'REPAIR_COMPLETED',
+        'COMMISSION_ISSUED',
+        'COMMISSION_VERIFIED',
+        'COMMISSION_PAID',
+        'REVIEW',
+      ]),
+    );
+    expect(result.timeline.map((event) => event.at.getTime())).toEqual(
+      [...result.timeline].map((event) => event.at.getTime()).sort((a, b) => a - b),
+    );
+  });
+
+  it('throws NotFoundException when the job does not exist', async () => {
+    const serviceRequest = { findFirst: jest.fn().mockResolvedValue(null) };
+    const prisma = { serviceRequest } as unknown as ConstructorParameters<typeof AdminService>[0];
+    const service = new AdminService(prisma, { record: jest.fn() } as unknown as AuditService);
+
+    await expect(service.getJobDetail('unknown-id')).rejects.toThrow(NotFoundException);
+  });
+
+  it('returns empty timeline and no payments for a job that is not paid', async () => {
+    const serviceRequest = {
+      findFirst: jest.fn().mockResolvedValue({
+        ...jobRow,
+        status: JobStatus.OPEN,
+        completedAt: null,
+        lockedVisitCharge: null,
+      }),
+    };
+    const empty = { findMany: jest.fn().mockResolvedValue([]) };
+    const prisma = {
+      serviceRequest,
+      jobOffer: empty,
+      visit: empty,
+      repair: empty,
+      commission: { findFirst: jest.fn().mockResolvedValue(null) },
+      review: empty,
+    } as unknown as ConstructorParameters<typeof AdminService>[0];
+    const service = new AdminService(prisma, { record: jest.fn() } as unknown as AuditService);
+
+    const result = await service.getJobDetail('j1');
+
+    expect(result.payments).toEqual([]);
+    expect(result.timeline).toEqual([
+      { at: jobRow.createdAt, type: 'JOB_CREATED', detail: 'Service request created' },
+    ]);
+  });
+});

@@ -76,4 +76,9 @@ export class AdminController {
   listJobs(@Query() query: AdminJobListQueryDto) {
     return this.adminService.listJobs(query);
   }
+
+  @Get('jobs/:id')
+  getJob(@Param('id', ParseUUIDPipe) id: string) {
+    return this.adminService.getJobDetail(id);
+  }
 }
