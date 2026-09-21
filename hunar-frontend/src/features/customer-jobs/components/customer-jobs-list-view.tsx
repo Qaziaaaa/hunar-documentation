@@ -62,23 +62,16 @@ export function CustomerJobsListView({ initialJobs }: CustomerJobsListViewProps)
               {isUrdu ? "• پشاور، خیبر پختونخوا" : "• Peshawar, Khyber Pakhtunkhwa"}
             </span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-[#1A1A2E] tracking-tight">
-            {isUrdu ? "میری پوسٹ کردہ جابز اور ورک آرڈرز" : "My Posted Jobs & Work Orders"}
-          </h1>
-          <p className="text-sm sm:text-base text-[#64748B] mt-1">
-            {isUrdu
-              ? "جاری کام ٹریک کریں، موصولہ آفرز کا جائزہ لیں اور اپنی بکنگز مینیج کریں۔"
-              : "Track active jobs, review incoming bids, and manage your bookings across Peshawar."}
-          </p>
+        
         </div>
 
-        <Link
+        {/* <Link
           href="/customer/post-job"
           className="h-11 px-5 bg-[#0F766E] hover:bg-[#115E59] text-white rounded-xl font-semibold text-sm flex items-center justify-center gap-2 shadow-sm transition-all active:scale-[0.99] shrink-0 self-start md:self-end cursor-pointer"
         >
           <Plus className="size-4.5" />
           <span>{isUrdu ? "+ نئی جاب پوسٹ کریں" : "Post a New Job"}</span>
-        </Link>
+        </Link> */}
       </div>
 
       {/* Filter Tabs & Search Bar */}
@@ -208,7 +201,7 @@ export function CustomerJobsListView({ initialJobs }: CustomerJobsListViewProps)
                   </div>
 
                   {/* Pricing / Budget Detail Callout */}
-                  <div className="flex items-center sm:flex-col sm:items-end rtl:sm:items-start justify-between bg-[#F8FAFC] sm:bg-transparent p-3 sm:p-0 rounded-xl border sm:border-0 border-[#E2E8F0] shrink-0">
+                  <div className="flex items-center sm:flex-col sm:items-end rtl:sm:items-start justify-between bg-white sm:bg-transparent p-3 sm:p-0 rounded-xl border sm:border-0 border-[#E2E8F0] shrink-0">
                     <span className="text-xs text-[#64748B]">
                       {job.status === "completed"
                         ? isUrdu ? "کل ادائیگی" : "Total Paid"
@@ -237,7 +230,7 @@ export function CustomerJobsListView({ initialJobs }: CustomerJobsListViewProps)
                 </div>
 
                 {/* Pro Info & Location Block */}
-                <div className="bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl p-4 grid grid-cols-1 md:grid-cols-2 gap-3 items-center">
+                <div className="bg-white border border-[#E2E8F0] rounded-xl p-4 grid grid-cols-1 md:grid-cols-2 gap-3 items-center">
                   {/* Left Column: Pro Details or Offers Count */}
                   <div className="flex items-center gap-3">
                     {hasAssignedWorker && assignedWorker ? (
@@ -318,7 +311,7 @@ export function CustomerJobsListView({ initialJobs }: CustomerJobsListViewProps)
                   <div className="flex items-center gap-2.5 ml-auto rtl:ml-0 rtl:mr-auto">
                     <Link
                       href={`/customer/jobs/${job.id}`}
-                      className="h-9 px-4 rounded-xl font-semibold text-xs sm:text-sm text-[#1A1A2E] bg-white border border-[#E2E8F0] hover:bg-[#F8FAFC] transition-colors flex items-center justify-center"
+                      className="h-9 px-4 rounded-xl font-semibold text-xs sm:text-sm text-[#1A1A2E] bg-white border border-[#E2E8F0] hover:bg-slate-50 transition-colors flex items-center justify-center"
                     >
                       {isUrdu ? "تفصیلات دیکھیں" : "View Details"}
                     </Link>

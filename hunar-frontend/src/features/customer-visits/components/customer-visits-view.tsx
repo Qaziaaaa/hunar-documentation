@@ -113,7 +113,7 @@ export function CustomerVisitsView({ initialVisits }: CustomerVisitsViewProps) {
             <span className="text-[#64748B] text-xs">•</span>
             <span className="text-[#64748B] text-xs font-medium flex items-center gap-1">
               <MapPin className="size-3.5 text-[#0F766E]" />
-              {isUrdu ? "یونیورسٹی ٹاؤن اور حیات آباد، پشاور" : "University Town & Hayatabad, Peshawar"}
+              {isUrdu ? "ڈیفنس کالونی تا ایس ایم آئی ٹی پشاور" : "Defence Colony to SMIT Peshawar"}
             </span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-extrabold text-[#123B5D] tracking-tight">
@@ -183,7 +183,7 @@ export function CustomerVisitsView({ initialVisits }: CustomerVisitsViewProps) {
                         </h2>
                         <span className="text-xs text-[#16A34A] font-semibold flex items-center gap-1">
                           <Navigation className="size-3.5" />
-                          {isUrdu ? "لائیو جی پی ایس فعال ہے • یونیورسٹی روڈ روٹ" : "Live GPS Broadcast Active • University Road Route"}
+                          {isUrdu ? "لائیو جی پی ایس فعال ہے • ڈیفنس کالونی تا ایس ایم آئی ٹی پشاور" : "Live GPS Broadcast Active • Defence Colony to SMIT Peshawar"}
                         </span>
                       </div>
                     </div>
@@ -203,7 +203,7 @@ export function CustomerVisitsView({ initialVisits }: CustomerVisitsViewProps) {
                   </div>
 
                   {/* Job Title & Order Ref */}
-                  <div className="p-3.5 rounded-2xl bg-[#F8FAFC] border border-[#E2E8F0] flex items-start gap-3">
+                  <div className="p-3.5 rounded-2xl bg-white border border-[#E2E8F0] flex items-start gap-3">
                     <div className="size-10 rounded-xl bg-[#0F766E]/10 text-[#0F766E] flex items-center justify-center shrink-0 mt-0.5">
                       <Wrench className="size-5" />
                     </div>
@@ -233,6 +233,17 @@ export function CustomerVisitsView({ initialVisits }: CustomerVisitsViewProps) {
                           {isUrdu
                             ? `تخمینی کل رقم: Rs. ${liveVisit.escrowAmount.toLocaleString()}`
                             : `Estimated Total: Rs. ${liveVisit.escrowAmount.toLocaleString()}`}
+                        </span>
+                      </div>
+
+                      {/* Service Location */}
+                      <div className="flex items-center gap-2 text-xs pt-2 border-t border-slate-100 mt-2 flex-wrap">
+                        <span className="text-slate-500 font-medium">
+                          {isUrdu ? "سروس کا پتہ:" : "Service Location:"}
+                        </span>
+                        <span className="inline-flex items-center gap-1 font-bold text-[#123B5D] bg-slate-100 px-2.5 py-0.5 rounded-md border border-slate-200">
+                          <MapPin className="size-3.5 text-[#0F766E]" />
+                          {isUrdu ? (liveVisit.customerAreaUr || liveVisit.customerAddress) : liveVisit.customerAddress}
                         </span>
                       </div>
                     </div>
@@ -308,42 +319,30 @@ export function CustomerVisitsView({ initialVisits }: CustomerVisitsViewProps) {
                     </div>
                   </div>
 
-                  {/* Doorstep Security OTP PIN Card */}
-                  <div className="p-4 rounded-2xl bg-[#F8FAFC] border border-[#E2E8F0] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                    <div className="flex items-start gap-3">
-                      <div className="size-9 rounded-xl bg-[#123B5D] text-white flex items-center justify-center shrink-0">
-                        <ShieldCheck className="size-5" />
+                  {/* Doorstep OTP */}
+                  <div className="px-3.5 py-2 rounded-xl bg-slate-50/90 border border-[#E2E8F0] flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-2">
+                      <div className="size-6 rounded-md bg-[#123B5D] text-white flex items-center justify-center shrink-0">
+                        <ShieldCheck className="size-3.5" />
                       </div>
-                      <div className="space-y-0.5">
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs font-bold text-[#123B5D]">
-                            {isUrdu ? "ڈور سٹیپ سیکیورٹی PIN" : "Doorstep Security PIN"}
-                          </span>
-                          <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-[#16A34A]/10 text-[#16A34A] border border-[#16A34A]/20">
-                            {isUrdu ? "انٹری کے لیے لازمی" : "Required for Entry"}
-                          </span>
-                        </div>
-                        <p className="text-xs text-slate-500">
-                          {isUrdu
-                            ? "دروازہ یا گیٹ کھولنے سے پہلے کاریگر سے یہ کوڈ ضرور سنیں۔"
-                            : "Ask the technician to recite this code before unlocking your door or gate."}
-                        </p>
-                      </div>
+                      <span className="text-xs font-bold text-[#123B5D]">
+                        {isUrdu ? "ڈور سٹیپ OTP" : "Doorstep OTP"}
+                      </span>
                     </div>
 
-                    {/* 4 Digit PIN Block */}
-                    <div className="flex items-center gap-2 self-start sm:self-auto">
-                      <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-2xl border-2 border-[#0F766E] shadow-2xs">
-                        <span className="font-mono text-lg sm:text-xl font-extrabold text-[#123B5D] tracking-widest">
+                    {/* 4 Digit OTP Block */}
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      <div className="flex items-center gap-1.5 bg-white px-2.5 py-1 rounded-lg border border-[#0F766E] shadow-2xs">
+                        <span className="font-mono text-sm font-extrabold text-[#123B5D] tracking-widest">
                           {liveVisit.securityPin.split("").join(" ")}
                         </span>
                         <button
                           type="button"
                           onClick={() => handleCopyPin(liveVisit.securityPin)}
-                          className="ml-1 rtl:ml-0 rtl:mr-1 text-slate-400 hover:text-[#0F766E] p-1 rounded-lg transition-colors cursor-pointer"
-                          title={isUrdu ? "PIN کاپی کریں" : "Copy Security PIN"}
+                          className="ml-0.5 rtl:ml-0 rtl:mr-0.5 text-slate-400 hover:text-[#0F766E] p-0.5 rounded transition-colors cursor-pointer"
+                          title={isUrdu ? "OTP کاپی کریں" : "Copy OTP"}
                         >
-                          <Copy className="size-4" />
+                          <Copy className="size-3.5" />
                         </button>
                       </div>
                     </div>
@@ -361,7 +360,7 @@ export function CustomerVisitsView({ initialVisits }: CustomerVisitsViewProps) {
                       </span>
                       <span className="text-[#0F766E] font-bold flex items-center gap-1">
                         <span className="size-2 rounded-full bg-[#0F766E] animate-ping" />
-                        {isUrdu ? "2. راستے میں (~18m)" : "2. En Route (~18m)"}
+                        {isUrdu ? "2. راستے میں" : "2. En Route"}
                       </span>
                       <span className="text-slate-400 flex items-center gap-1">
                         <MapPin className="size-4" />
@@ -387,7 +386,7 @@ export function CustomerVisitsView({ initialVisits }: CustomerVisitsViewProps) {
                       className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-[#0F766E] hover:bg-[#115E59] text-white text-xs sm:text-sm font-bold shadow-xs transition-all active:scale-[0.98] cursor-pointer"
                     >
                       <Phone className="size-4" />
-                      <span>{isUrdu ? "کاریگر کو کال کریں" : "Call Technician"}</span>
+                      <span>{isUrdu ? "کال کریں" : "Call"}</span>
                     </a>
 
                     <button
@@ -396,7 +395,7 @@ export function CustomerVisitsView({ initialVisits }: CustomerVisitsViewProps) {
                       className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-white border border-[#123B5D] hover:bg-slate-50 text-[#123B5D] text-xs sm:text-sm font-bold transition-all active:scale-[0.98] cursor-pointer"
                     >
                       <MessageSquare className="size-4" />
-                      <span>{isUrdu ? "پیغام بھیجیں" : "Message Pro"}</span>
+                      <span>{isUrdu ? "پیغام" : "Message"}</span>
                     </button>
 
                     <button
@@ -429,7 +428,7 @@ export function CustomerVisitsView({ initialVisits }: CustomerVisitsViewProps) {
                     </span>
                   </div>
 
-                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 rounded-2xl bg-[#F8FAFC] border border-[#E2E8F0]">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 rounded-2xl bg-white border border-[#E2E8F0]">
                     <div className="flex items-start gap-3.5">
                       <div className="size-12 rounded-2xl bg-[#0F766E]/10 text-[#0F766E] flex items-center justify-center shrink-0">
                         <Wrench className="size-6 stroke-[2.2]" />
@@ -503,7 +502,7 @@ export function CustomerVisitsView({ initialVisits }: CustomerVisitsViewProps) {
                 </div>
 
                 <div className="space-y-3">
-                  <label className="flex items-start gap-3 p-3 rounded-2xl bg-[#F8FAFC] border border-[#E2E8F0] cursor-pointer hover:bg-white transition-all">
+                  <label className="flex items-start gap-3 p-3 rounded-2xl bg-white border border-[#E2E8F0] cursor-pointer hover:bg-slate-50 transition-all">
                     <input
                       type="checkbox"
                       defaultChecked
@@ -521,7 +520,7 @@ export function CustomerVisitsView({ initialVisits }: CustomerVisitsViewProps) {
                     </div>
                   </label>
 
-                  <label className="flex items-start gap-3 p-3 rounded-2xl bg-[#F8FAFC] border border-[#E2E8F0] cursor-pointer hover:bg-white transition-all">
+                  <label className="flex items-start gap-3 p-3 rounded-2xl bg-white border border-[#E2E8F0] cursor-pointer hover:bg-slate-50 transition-all">
                     <input
                       type="checkbox"
                       defaultChecked
@@ -539,7 +538,7 @@ export function CustomerVisitsView({ initialVisits }: CustomerVisitsViewProps) {
                     </div>
                   </label>
 
-                  <label className="flex items-start gap-3 p-3 rounded-2xl bg-[#F8FAFC] border border-[#E2E8F0] cursor-pointer hover:bg-white transition-all">
+                  <label className="flex items-start gap-3 p-3 rounded-2xl bg-white border border-[#E2E8F0] cursor-pointer hover:bg-slate-50 transition-all">
                     <input
                       type="checkbox"
                       defaultChecked
@@ -610,7 +609,7 @@ export function CustomerVisitsView({ initialVisits }: CustomerVisitsViewProps) {
               {pastVisits.map((visit) => (
                 <div
                   key={visit.id}
-                  className="p-4 sm:p-5 rounded-2xl bg-[#F8FAFC] border border-[#E2E8F0] flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-white hover:shadow-xs transition-all"
+                  className="p-4 sm:p-5 rounded-2xl bg-white border border-[#E2E8F0] flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:shadow-xs transition-all"
                 >
                   <div className="flex items-start gap-3.5">
                     <div className="size-11 rounded-2xl bg-[#16A34A]/10 text-[#16A34A] flex items-center justify-center shrink-0 font-bold">

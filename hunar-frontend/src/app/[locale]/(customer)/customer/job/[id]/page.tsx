@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { setRequestLocale } from "next-intl/server";
 import { CustomerJobDetailsView } from "@/features/customer-jobs/components/customer-job-details-view";
-import { MOCK_CUSTOMER_JOBS } from "@/features/customer-jobs/data/mock-customer-jobs";
+import { getJobDetail } from "@/features/customer-jobs/api/customer-jobs-api";
 
 export default async function CustomerJobSingularDetailsPage({
   params,
@@ -11,9 +11,7 @@ export default async function CustomerJobSingularDetailsPage({
   const { locale, id } = await params;
   setRequestLocale(locale);
 
-  const job =
-    MOCK_CUSTOMER_JOBS.find((j) => j.id.toLowerCase() === id.toLowerCase()) ||
-    MOCK_CUSTOMER_JOBS[0];
+  const job = await getJobDetail(id);
 
   if (!job) {
     notFound();

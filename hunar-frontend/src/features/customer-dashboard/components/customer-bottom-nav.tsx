@@ -1,6 +1,6 @@
 "use client";
 
-import { Briefcase, Home } from "lucide-react";
+import { Briefcase, Home, MessageSquare } from "lucide-react";
 import { useLocale } from "next-intl";
 import { Link, usePathname } from "@/i18n/navigation";
 
@@ -11,6 +11,12 @@ export function CustomerBottomNav() {
 
   const isHome = pathname.includes("/customer/dashboard") || pathname === "/customer";
   const isJobs = pathname.includes("/customer/jobs") || pathname.includes("/customer/job/");
+  const isChat = pathname.includes("/customer/chat");
+
+  // Hide bottom navigation bar on mobile when inside chat screen
+  if (isChat) {
+    return null;
+  }
 
   const navItems = [
     {

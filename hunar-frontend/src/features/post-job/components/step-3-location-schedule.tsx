@@ -77,17 +77,58 @@ export function Step3LocationSchedule({
 
   const handleUseCurrentLocation = () => {
     setIsLocating(true);
-    setTimeout(() => {
+    if (typeof window !== "undefined" && "geolocation" in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const lat = position.coords.latitude;
+          const lng = position.coords.longitude;
+
+          // Find closest hotspot to name the neighborhood in Peshawar
+          let closest = PESHAWAR_HOTSPOTS[0];
+          let minDistance = Number.MAX_VALUE;
+          PESHAWAR_HOTSPOTS.forEach((h) => {
+            const dist = Math.hypot(h.lat - lat, h.lng - lng);
+            if (dist < minDistance) {
+              minDistance = dist;
+              closest = h;
+            }
+          });
+
+          onChange({
+            latitude: lat,
+            longitude: lng,
+            area: closest.areaKey,
+            landmark: closest.landmark,
+            city: "Peshawar",
+            address: `GPS Location, ${closest.areaKey}`,
+          });
+          setIsLocating(false);
+        },
+        () => {
+          // Fallback to University Town, Peshawar default if location permission denied
+          onChange({
+            area: "University Town, Peshawar",
+            address: "House 45, Street 12, Block C, University Town",
+            city: "Peshawar",
+            landmark: "Near Islamia College Gate",
+            latitude: 34.0043,
+            longitude: 71.5034,
+          });
+          setIsLocating(false);
+        },
+        { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 }
+      );
+    } else {
       onChange({
-        area: "Hayatabad",
-        address: "Phase 3, Sector D-2, Street 8",
+        area: "University Town, Peshawar",
+        address: "House 45, Street 12, Block C, University Town",
         city: "Peshawar",
-        landmark: "Near Tatara Park",
-        latitude: 33.9934,
-        longitude: 71.4398,
+        landmark: "Near Islamia College Gate",
+        latitude: 34.0043,
+        longitude: 71.5034,
       });
       setIsLocating(false);
-    }, 600);
+    }
   };
 
   const handleAreaSelectChange = (selectedArea: string) => {
@@ -104,7 +145,7 @@ export function Step3LocationSchedule({
         city: "Peshawar",
       });
     } else {
-      onChange({ area: selectedArea });
+      onChange({ area: selectedArea, city: "Peshawar" });
     }
   };
 
@@ -152,9 +193,20 @@ export function Step3LocationSchedule({
             {/* Service Area Selector & Address Input */}
             <div className="space-y-2.5">
               <div>
-                <label className="block text-xs font-medium text-slate-600 mb-1">
-                  {isUrdu ? "علاقہ / نیبرہڈ" : "Area / Neighborhood"}
-                </label>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block text-xs font-medium text-slate-600">
+                    {isUrdu ? "علاقہ / نیبرہڈ" : "Area / Neighborhood"}
+                  </label>
+                  <button
+                    type="button"
+                    onClick={handleUseCurrentLocation}
+                    disabled={isLocating}
+                    className="text-[11px] font-bold text-[#0F766E] hover:underline flex items-center gap-1 cursor-pointer disabled:opacity-50"
+                  >
+                    <Crosshair className={`size-3 ${isLocating ? "animate-spin" : ""}`} />
+                    <span>{isUrdu ? "میری موجودہ لوکیشن" : "Use Live Location"}</span>
+                  </button>
+                </div>
                 <select
                   value={data.area}
                   onChange={(e) => handleAreaSelectChange(e.target.value)}

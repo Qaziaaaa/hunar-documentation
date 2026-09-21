@@ -91,7 +91,7 @@ export function CustomerSignupFlow() {
     setSubmitting(true);
     setSubmitError(null);
     try {
-      const response = await verifyCustomerOtp(requestId, values.code);
+      const response = await verifyCustomerOtp(requestId, values.code, phone);
       setVerificationId(response.verificationId);
       if (typeof response.attemptsLeft === "number") {
         setAttemptsLeft(response.attemptsLeft);

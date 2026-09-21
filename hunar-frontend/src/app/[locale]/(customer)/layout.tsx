@@ -23,8 +23,10 @@ export default function CustomerLayout({
     );
   }
 
+  const isChat = pathname.includes("/customer/chat");
+
   return (
-    <div className="min-h-screen bg-white text-slate-900 font-sans antialiased">
+    <div className={`min-h-screen ${isChat ? "h-[100dvh] overflow-hidden" : ""} bg-white text-slate-900 font-sans antialiased`}>
       {/* Desktop Sidebar & Mobile Drawer */}
       <CustomerSidebar
         isOpen={mobileMenuOpen}
@@ -32,12 +34,14 @@ export default function CustomerLayout({
       />
 
       {/* Main Content Area - uses logical padding-inline-start (ps) for auto LTR / RTL mirroring */}
-      <div className="w-full lg:ps-[260px] min-h-screen flex flex-col pb-16 lg:pb-0 bg-white">
-        {/* Minimal Header with Sidebar Toggle */}
-        <CustomerHeader onOpenSidebar={() => setMobileMenuOpen((prev) => !prev)} />
+      <div className={`w-full lg:ps-[260px] ${isChat ? "h-[100dvh] overflow-hidden pb-0" : "min-h-screen pb-16 lg:pb-0"} flex flex-col bg-white`}>
+        {/* Minimal Header with Sidebar Toggle (Hidden on mobile chat for full WhatsApp view) */}
+        <div className={isChat ? "hidden lg:block shrink-0" : "shrink-0"}>
+          <CustomerHeader onOpenSidebar={() => setMobileMenuOpen((prev) => !prev)} />
+        </div>
 
         {/* Page Content */}
-        <main className="w-full flex-1 bg-white">
+        <main className={`w-full flex-1 bg-white ${isChat ? "overflow-hidden flex flex-col min-h-0" : ""}`}>
           {children}
         </main>
       </div>
