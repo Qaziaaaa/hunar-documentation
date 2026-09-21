@@ -111,3 +111,11 @@ export class SuspendUserDto {
   @MaxLength(1000)
   reason!: string;
 }
+
+// Force-cancel is a sensitive action — the admin must always state why (stored in the audit trail).
+export class ForceCancelJobDto {
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(1000)
+  reason!: string;
+}

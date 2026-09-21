@@ -754,3 +754,95 @@ describe('AdminService.getJobDetail (Task 25)', () => {
     ]);
   });
 });
+
+describe('AdminService.forceCancelJob (Task 26)', () => {
+  const actor = { sub: 'admin-1', phone: '', role: Role.ADMIN };
+
+  const jobRow: {
+    id: string;
+    customerId: string;
+    selectedWorkerId: string | null;
+    status: JobStatus;
+    title: string;
+  } = {
+    id: 'j1',
+    customerId: 'c1',
+    selectedWorkerId: 'w1',
+    status: JobStatus.REPAIR_APPROVED,
+    title: 'Fix AC',
+  };
+
+  function makeFixture(overrides: Partial<typeof jobRow> = {}) {
+    const findUnique = jest.fn().mockResolvedValue({ ...jobRow, ...overrides });
+    const update = jest.fn().mockResolvedValue({
+      id: 'j1',
+      status: JobStatus.CANCELLED,
+      cancelReason: 'Admin decision',
+      cancelledAt: new Date('2026-09-06T00:00:00Z'),
+    });
+    const $transaction = jest.fn().mockImplementation((fn: (tx: unknown) => unknown) =>
+      fn({
+        serviceRequest: { update },
+      }),
+    );
+    const record = jest.fn();
+    const emit = jest.fn();
+    const emitToRoom = jest.fn();
+    const prisma = {
+      serviceRequest: { findUnique },
+      $transaction,
+    } as unknown as ConstructorParameters<typeof AdminService>[0];
+    const audit = { record } as unknown as AuditService;
+    const eventBus = { emit } as unknown as ConstructorParameters<typeof AdminService>[2];
+    const realtime = { emitToRoom } as unknown as ConstructorParameters<typeof AdminService>[3];
+    const service = new AdminService(prisma, audit, eventBus, realtime);
+    return { service, findUnique, update, record, emit, emitToRoom };
+  }
+
+  it('suspends... cancels an in-progress job with reason, audit and notifications', async () => {
+    const { service, update, record, emit, emitToRoom } = makeFixture();
+
+    const result = await service.forceCancelJob('j1', actor, 'Admin decision');
+
+    expect(update).toHaveBeenCalledWith({
+      where: { id: 'j1' },
+      data: expect.objectContaining({
+        status: JobStatus.CANCELLED,
+        cancelReason: 'Admin decision',
+        cancelledAt: expect.any(Date),
+      }),
+      select: { id: true, status: true, cancelReason: true, cancelledAt: true },
+    });
+    expect(record).toHaveBeenCalledWith(
+      expect.objectContaining({
+        actorId: actor.sub,
+        action: AUDIT_ACTIONS.JOB_FORCE_CANCELLED,
+        targetType: 'SERVICE_REQUEST',
+        targetId: 'j1',
+        reason: 'Admin decision',
+      }),
+      expect.anything(),
+    );
+    expect(emit).toHaveBeenCalledWith('job.cancelled', { jobId: 'j1', reason: 'Admin decision' });
+    expect(emitToRoom).toHaveBeenCalledWith('user:c1', 'job:cancelled', { jobId: 'j1' });
+    expect(emitToRoom).toHaveBeenCalledWith('user:w1', 'job:cancelled', { jobId: 'j1' });
+    expect(result).toMatchObject({ status: JobStatus.CANCELLED });
+  });
+
+  it('throws NotFoundException when the job does not exist', async () => {
+    const { service, findUnique } = makeFixture();
+    findUnique.mockResolvedValue(null);
+
+    await expect(service.forceCancelJob('unknown', actor, 'Reason')).rejects.toThrow(
+      NotFoundException,
+    );
+  });
+
+  it('rejects cancelling a job in a terminal state', async () => {
+    const { service } = makeFixture({ status: JobStatus.CANCELLED });
+
+    await expect(service.forceCancelJob('j1', actor, 'Reason')).rejects.toThrow(
+      BadRequestException,
+    );
+  });
+});

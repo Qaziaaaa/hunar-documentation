@@ -1,7 +1,11 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException, Optional } from '@nestjs/common';
 import { CommissionStatus, JobStatus, Prisma, Role } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { normalizePage, toPageResult } from '../../common/helpers/pagination.util';
+import { EventBusService } from '../../common/event-bus/event-bus.service';
+import { RealtimeService } from '../realtime/realtime.service';
+import { JOB_EVENTS, userRoom } from '../jobs/jobs.events';
+import { JobStateMachine } from '../jobs/jobs.state-machine';
 import { JwtPayload } from '../../common/types/jwt-payload.interface';
 import { AUDIT_ACTIONS, AuditService } from './audit.service';
 import {
@@ -61,6 +65,8 @@ export class AdminService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly audit: AuditService,
+    @Optional() private readonly eventBus?: EventBusService,
+    @Optional() private readonly realtime?: RealtimeService,
   ) {}
 
   // ----- Customers -----
@@ -548,6 +554,58 @@ export class AdminService {
       reviews,
       payments,
     };
+  }
+
+  // Admin force-cancel a job. Mandatory reason, state-machine check, audit trail, and both
+  // parties (customer + assigned worker) are notified in realtime (Admin flow §7 / rules 11, 14).
+  async forceCancelJob(id: string, actor: JwtPayload, reason: string) {
+    const job = await this.prisma.serviceRequest.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        customerId: true,
+        selectedWorkerId: true,
+        status: true,
+        title: true,
+      },
+    });
+    if (!job) {
+      throw new NotFoundException('Job not found');
+    }
+    JobStateMachine.assertCanTransition(job.status, JobStatus.CANCELLED);
+
+    const updated = await this.prisma.$transaction(async (tx) => {
+      const cancelled = await tx.serviceRequest.update({
+        where: { id },
+        data: { status: JobStatus.CANCELLED, cancelReason: reason, cancelledAt: new Date() },
+        select: { id: true, status: true, cancelReason: true, cancelledAt: true },
+      });
+
+      await this.audit.record(
+        {
+          actorId: actor.sub,
+          actorRole: actor.role,
+          action: AUDIT_ACTIONS.JOB_FORCE_CANCELLED,
+          targetType: 'SERVICE_REQUEST',
+          targetId: id,
+          reason,
+          metadata: { jobTitle: job.title },
+        },
+        tx,
+      );
+
+      return cancelled;
+    });
+
+    this.eventBus.emit('job.cancelled', { jobId: id, reason });
+    const recipients = job.selectedWorkerId
+      ? [job.customerId, job.selectedWorkerId]
+      : [job.customerId];
+    recipients.forEach((userId) => {
+      this.realtime.emitToRoom(userRoom(userId), JOB_EVENTS.jobCancelled, { jobId: id });
+    });
+
+    return updated;
   }
 
   private async listUsers(

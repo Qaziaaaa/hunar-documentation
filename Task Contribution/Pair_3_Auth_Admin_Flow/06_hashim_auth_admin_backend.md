@@ -103,7 +103,7 @@ Backend Developer — Shared Auth APIs + Full Admin Dashboard APIs
 | --- | -------------------------------------------------------------- | --------------------------------------- | ------ |
 | 24  | Get all jobs (list with filters)                               | `GET /admin/jobs`                       | ✅     |
 | 25  | Get job detail (full audit history)                            | `GET /admin/jobs/[id]`                  | ✅     |
-| 26  | Force cancel job (with reason)                                 | `PUT /admin/jobs/[id]/cancel`           | ⏸️     |
+| 26  | Force cancel job (with reason)                                 | `PUT /admin/jobs/[id]/cancel`           | ✅     |
 | 27  | Get transactions feed (wallet ledger)                          | `GET /admin/transactions`               | ⏸️     |
 | 28  | Get payments feed                                              | `GET /admin/payments`                   | ⏸️     |
 | 29  | Commission snapshot (total + per transaction)                  | `GET /admin/commission`                 | ⏸️     |

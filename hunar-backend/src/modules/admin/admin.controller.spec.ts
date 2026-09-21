@@ -5,6 +5,8 @@ import { Role } from '@prisma/client';
 import { AdminController } from './admin.controller';
 import { AdminService } from './admin.service';
 import { AuditService } from './audit.service';
+import { EventBusService } from '../../common/event-bus/event-bus.service';
+import { RealtimeService } from '../realtime/realtime.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AppValidationPipe } from '../../common/pipes/validation.pipe';
 
@@ -22,6 +24,10 @@ describe('AdminController HTTP — GET /admin/customers', () => {
   const findManyVisits = jest.fn();
   const findManyRepairs = jest.fn();
   const findCommission = jest.fn();
+  const findUniqueJob = jest.fn();
+  const updateJob = jest.fn();
+  const emitDomainEvent = jest.fn();
+  const emitToRoom = jest.fn();
 
   beforeAll(async () => {
     const moduleRef = await Test.createTestingModule({
@@ -32,9 +38,9 @@ describe('AdminController HTTP — GET /admin/customers', () => {
           provide: PrismaService,
           useValue: {
             $transaction: (fn: (tx: unknown) => Promise<unknown>) =>
-              fn({ user: { update: updateUser } }),
+              fn({ user: { update: updateUser }, serviceRequest: { update: updateJob } }),
             user: { findMany, count, findFirst, update: updateUser },
-            serviceRequest: { findMany: findManyJobs, count, findFirst },
+            serviceRequest: { findMany: findManyJobs, count, findFirst, findUnique: findUniqueJob },
             review: { findMany: findManyReviews },
             jobOffer: { findMany: findManyOffers },
             visit: { findMany: findManyVisits },
@@ -43,6 +49,8 @@ describe('AdminController HTTP — GET /admin/customers', () => {
           },
         },
         { provide: AuditService, useValue: { record: jest.fn() } },
+        { provide: EventBusService, useValue: { emit: emitDomainEvent } },
+        { provide: RealtimeService, useValue: { emitToRoom } },
       ],
     }).compile();
 
@@ -72,6 +80,10 @@ describe('AdminController HTTP — GET /admin/customers', () => {
     findManyVisits.mockReset();
     findManyRepairs.mockReset();
     findCommission.mockReset();
+    findUniqueJob.mockReset();
+    updateJob.mockReset();
+    emitDomainEvent.mockReset();
+    emitToRoom.mockReset();
   });
 
   it('returns the paginated customer list', async () => {
@@ -400,6 +412,89 @@ describe('AdminController HTTP — GET /admin/customers', () => {
       ]);
       expect(res.body.timeline[0]).toMatchObject({ type: 'JOB_CREATED' });
       expect(res.body.timeline[res.body.timeline.length - 1]).toMatchObject({ type: 'REVIEW' });
+    });
+  });
+
+  describe('PUT /admin/jobs/:id/cancel (Task 26)', () => {
+    const validUuid = 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11';
+
+    function mockCancellableJob(status: string) {
+      findUniqueJob.mockResolvedValue({
+        id: validUuid,
+        customerId: 'c1',
+        selectedWorkerId: 'w1',
+        status,
+        title: 'Fix AC',
+      });
+      updateJob.mockResolvedValue({
+        id: validUuid,
+        status: 'CANCELLED',
+        cancelReason: 'Admin decision',
+        cancelledAt: new Date('2026-09-06T00:00:00Z'),
+      });
+    }
+
+    it('rejects a non-UUID job ID with 400', async () => {
+      await request(app.getHttpServer())
+        .put('/api/v1/admin/jobs/not-a-uuid/cancel')
+        .send({ reason: 'Admin decision' })
+        .expect(400);
+    });
+
+    it('rejects the request with 400 when the reason is missing', async () => {
+      mockCancellableJob('REPAIR_APPROVED');
+
+      await request(app.getHttpServer())
+        .put(`/api/v1/admin/jobs/${validUuid}/cancel`)
+        .send({})
+        .expect(400);
+    });
+
+    it('returns 404 when the job does not exist', async () => {
+      findUniqueJob.mockResolvedValue(null);
+
+      const res = await request(app.getHttpServer())
+        .put(`/api/v1/admin/jobs/${validUuid}/cancel`)
+        .send({ reason: 'Admin decision' })
+        .expect(404);
+
+      expect(res.body.message).toBe('Job not found');
+    });
+
+    it('returns 400 when the job is in a terminal state', async () => {
+      mockCancellableJob('CANCELLED');
+
+      await request(app.getHttpServer())
+        .put(`/api/v1/admin/jobs/${validUuid}/cancel`)
+        .send({ reason: 'Admin decision' })
+        .expect(400);
+    });
+
+    it('force-cancels an active job, emits job.cancelled and notifies both parties', async () => {
+      mockCancellableJob('REPAIR_APPROVED');
+
+      const res = await request(app.getHttpServer())
+        .put(`/api/v1/admin/jobs/${validUuid}/cancel`)
+        .send({ reason: 'Admin decision' })
+        .expect(200);
+
+      expect(res.body).toMatchObject({
+        id: validUuid,
+        status: 'CANCELLED',
+        cancelReason: 'Admin decision',
+      });
+      expect(updateJob).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: validUuid },
+          data: expect.objectContaining({ status: 'CANCELLED', cancelReason: 'Admin decision' }),
+        }),
+      );
+      expect(emitDomainEvent).toHaveBeenCalledWith('job.cancelled', {
+        jobId: validUuid,
+        reason: 'Admin decision',
+      });
+      expect(emitToRoom).toHaveBeenCalledWith('user:c1', 'job:cancelled', { jobId: validUuid });
+      expect(emitToRoom).toHaveBeenCalledWith('user:w1', 'job:cancelled', { jobId: validUuid });
     });
   });
 

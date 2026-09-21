@@ -5,6 +5,7 @@ import {
   AdminJobListQueryDto,
   AdminUserListQueryDto,
   AdminWorkerListQueryDto,
+  ForceCancelJobDto,
   SuspendUserDto,
 } from './admin.validation';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
@@ -80,5 +81,14 @@ export class AdminController {
   @Get('jobs/:id')
   getJob(@Param('id', ParseUUIDPipe) id: string) {
     return this.adminService.getJobDetail(id);
+  }
+
+  @Put('jobs/:id/cancel')
+  forceCancelJob(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: ForceCancelJobDto,
+    @CurrentUser() actor: JwtPayload,
+  ) {
+    return this.adminService.forceCancelJob(id, actor, dto.reason);
   }
 }
