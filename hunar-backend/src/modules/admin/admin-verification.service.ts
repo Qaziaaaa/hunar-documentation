@@ -2,9 +2,11 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import { Prisma, WorkerVerificationStatus } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { EventBusService } from '../../common/event-bus/event-bus.service';
+import { RealtimeService } from '../realtime/realtime.service';
 import { JwtPayload } from '../../common/types/jwt-payload.interface';
 import { AUDIT_ACTIONS, AuditService } from './audit.service';
 import { RevokeVerificationDto, VerificationDecisionDto } from './admin-verification.validation';
+import { ADMIN_EVENTS, ADMIN_ROOM } from './admin.events';
 
 interface VerificationOutcome {
   verificationStatus: WorkerVerificationStatus;
@@ -27,6 +29,7 @@ export class AdminVerificationService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly eventBus: EventBusService,
+    private readonly realtime: RealtimeService,
     private readonly audit: AuditService,
   ) {}
 
@@ -175,6 +178,19 @@ export class AdminVerificationService {
       adminNote: result.adminNote,
     });
 
+    // Emit admin alert for verification revoked
+    this.realtime.emitToRoom(ADMIN_ROOM, ADMIN_EVENTS.verificationRevoked, {
+      userId,
+      verificationStatus: result.verificationStatus,
+      rejectionReason: result.rejectionReason,
+    });
+    this.realtime.emitToRoom(ADMIN_ROOM, ADMIN_EVENTS.newAlert, {
+      type: 'verification',
+      event: ADMIN_EVENTS.verificationRevoked,
+      userId,
+      timestamp: new Date(),
+    });
+
     return result;
   }
 
@@ -197,6 +213,11 @@ export class AdminVerificationService {
       });
       await tx.user.update({ where: { id: userId }, data: { isVerified: decision.isVerified } });
 
+      const user = await tx.user.findUnique({
+        where: { id: userId },
+        select: { name: true },
+      });
+
       if (actor) {
         await this.audit.record(
           {
@@ -214,6 +235,7 @@ export class AdminVerificationService {
 
       return {
         userId,
+        name: user?.name ?? null,
         verificationStatus: profile.verificationStatus,
         rejectionReason: profile.rejectionReason,
         adminNote: profile.adminNote,
@@ -227,6 +249,39 @@ export class AdminVerificationService {
       verificationStatus: result.verificationStatus,
       rejectionReason: result.rejectionReason,
       adminNote: result.adminNote,
+    });
+
+    // Emit admin alert for verification decision
+    let adminEvent: string;
+    switch (result.verificationStatus) {
+      case WorkerVerificationStatus.APPROVED:
+        adminEvent = ADMIN_EVENTS.verificationApproved;
+        break;
+      case WorkerVerificationStatus.REJECTED:
+        adminEvent = ADMIN_EVENTS.verificationRejected;
+        break;
+      case WorkerVerificationStatus.REQUEST_CHANGES:
+        adminEvent = ADMIN_EVENTS.verificationChangesRequested;
+        break;
+      case WorkerVerificationStatus.REVOKED:
+        adminEvent = ADMIN_EVENTS.verificationRevoked;
+        break;
+      default:
+        adminEvent = ADMIN_EVENTS.verificationSubmitted;
+    }
+    this.realtime.emitToRoom(ADMIN_ROOM, adminEvent, {
+      userId,
+      workerName: result.name,
+      verificationStatus: result.verificationStatus,
+      rejectionReason: result.rejectionReason,
+      adminNote: result.adminNote,
+    });
+    this.realtime.emitToRoom(ADMIN_ROOM, ADMIN_EVENTS.newAlert, {
+      type: 'verification',
+      event: adminEvent,
+      userId,
+      workerName: result.name,
+      timestamp: new Date(),
     });
 
     return result;

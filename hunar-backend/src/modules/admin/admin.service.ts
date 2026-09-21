@@ -1,10 +1,12 @@
-import { BadRequestException, Injectable, NotFoundException, Optional } from '@nestjs/common';
-import { CommissionStatus, JobStatus, Prisma, Role, WithdrawalStatus } from '@prisma/client';
+import { BadRequestException, ForbiddenException, Injectable, NotFoundException, Optional } from '@nestjs/common';
+import type { Response as ExpressResponse } from 'express';
+import { CommissionStatus, DisputeStatus, DisputeType, JobStatus, Prisma, Role, WithdrawalStatus } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { normalizePage, toPageResult } from '../../common/helpers/pagination.util';
 import { EventBusService } from '../../common/event-bus/event-bus.service';
 import { RealtimeService } from '../realtime/realtime.service';
 import { JOB_EVENTS, userRoom } from '../jobs/jobs.events';
+import { ADMIN_EVENTS, ADMIN_ROOM } from './admin.events';
 import { JobStateMachine } from '../jobs/jobs.state-machine';
 import { JwtPayload } from '../../common/types/jwt-payload.interface';
 import { AUDIT_ACTIONS, AuditService } from './audit.service';
@@ -16,6 +18,18 @@ import {
   AdminPaymentListQueryDto,
   AdminCommissionListQueryDto,
   AdminWithdrawalListQueryDto,
+  AdminFreezeWalletDto,
+  AdminDisputeListQueryDto,
+  AdminResolveDisputeDto,
+  AdminCategoryListQueryDto,
+  AdminCreateCategoryDto,
+  AdminUpdateCategoryDto,
+  AdminUpdateCommissionRateDto,
+  AdminUpdateSettingsDto,
+  AdminReportQueryDto,
+  AdminAuditListQueryDto,
+  AdminNotificationListQueryDto,
+  AdminMarkNotificationsReadDto,
 } from './admin.validation';
 
 // Job states that mean the customer has paid for the (locked) visit charge.
@@ -751,18 +765,320 @@ export class AdminService {
 
         return updated;
       });
-    } else {
-      const updated = await this.prisma.withdrawal.update({
-        where: { id },
-        data: { status: 'REJECTED', processedAt: new Date(), processedBy: actor.sub, note },
+    }
+
+    this.emitWithdrawalAlert('approve', id, withdrawal.workerId, Number(withdrawal.amount), actor.sub);
+
+    const updated = await this.prisma.withdrawal.update({
+      where: { id },
+      data: { status: 'REJECTED', processedAt: new Date(), processedBy: actor.sub, note },
+      select: {
+        id: true,
+        workerId: true,
+        amount: true,
+        status: true,
+        processedAt: true,
+        processedBy: true,
+        note: true,
+      },
+    });
+
+    await this.audit.record(
+      {
+        actorId: actor.sub,
+        actorRole: actor.role,
+        action: 'WITHDRAWAL_REJECTED',
+        targetType: 'WITHDRAWAL',
+        targetId: id,
+        reason: note,
+        metadata: { workerId: withdrawal.workerId, amount: withdrawal.amount },
+      },
+    );
+
+    this.emitWithdrawalAlert('rejected', id, withdrawal.workerId, Number(withdrawal.amount), actor.sub);
+
+    return updated;
+  }
+
+  private emitWithdrawalAlert(action: string, withdrawalId: string, workerId: string, amount: number, actorId: string): void {
+    const adminEvent = action === 'approve' ? ADMIN_EVENTS.withdrawalProcessed : ADMIN_EVENTS.withdrawalRejected;
+    this.realtime.emitToRoom(ADMIN_ROOM, adminEvent, {
+      withdrawalId,
+      workerId,
+      amount,
+      processedBy: actorId,
+      timestamp: new Date(),
+    });
+    this.realtime.emitToRoom(ADMIN_ROOM, ADMIN_EVENTS.newAlert, {
+      type: 'withdrawal',
+      event: adminEvent,
+      withdrawalId,
+      workerId,
+      amount,
+      timestamp: new Date(),
+    });
+  }
+
+  // Wallet freeze (Admin flow §8). Admin freezes a worker's wallet during a dispute.
+  async freezeWallet(workerId: string, actor: JwtPayload, dto: AdminFreezeWalletDto) {
+    const wallet = await this.prisma.workerWallet.findUnique({
+      where: { userId: workerId },
+      select: { userId: true, isFrozen: true, balance: true },
+    });
+    if (!wallet) {
+      throw new NotFoundException('Worker wallet not found');
+    }
+    if (wallet.isFrozen) {
+      throw new BadRequestException('Wallet is already frozen');
+    }
+
+    const updated = await this.prisma.workerWallet.update({
+      where: { userId: workerId },
+      data: {
+        isFrozen: true,
+        frozenAt: new Date(),
+        frozenBy: actor.sub,
+      },
+      select: { userId: true, isFrozen: true, frozenAt: true, frozenBy: true },
+    });
+
+    await this.audit.record(
+      {
+        actorId: actor.sub,
+        actorRole: actor.role,
+        action: 'WALLET_FROZEN',
+        targetType: 'WORKER_WALLET',
+        targetId: workerId,
+        reason: dto.reason,
+        metadata: { balance: wallet.balance },
+      },
+    );
+
+    this.realtime.emitToRoom(ADMIN_ROOM, ADMIN_EVENTS.walletFrozen, {
+      workerId,
+      reason: dto.reason,
+      frozenBy: actor.sub,
+      timestamp: new Date(),
+    });
+    this.realtime.emitToRoom(ADMIN_ROOM, ADMIN_EVENTS.newAlert, {
+      type: 'wallet',
+      event: ADMIN_EVENTS.walletFrozen,
+      workerId,
+      timestamp: new Date(),
+    });
+
+    return updated;
+  }
+
+  // Admin unfreezes a worker's wallet.
+  async unfreezeWallet(workerId: string, actor: JwtPayload) {
+    const wallet = await this.prisma.workerWallet.findUnique({
+      where: { userId: workerId },
+      select: { userId: true, isFrozen: true },
+    });
+    if (!wallet) {
+      throw new NotFoundException('Worker wallet not found');
+    }
+    if (!wallet.isFrozen) {
+      throw new BadRequestException('Wallet is not frozen');
+    }
+
+    const updated = await this.prisma.workerWallet.update({
+      where: { userId: workerId },
+      data: {
+        isFrozen: false,
+        frozenAt: null,
+        frozenBy: null,
+      },
+      select: { userId: true, isFrozen: true, frozenAt: true, frozenBy: true },
+    });
+
+    await this.audit.record(
+      {
+        actorId: actor.sub,
+        actorRole: actor.role,
+        action: 'WALLET_UNFROZEN',
+        targetType: 'WORKER_WALLET',
+        targetId: workerId,
+        reason: null,
+        metadata: {},
+      },
+    );
+
+    this.realtime.emitToRoom(ADMIN_ROOM, ADMIN_EVENTS.walletUnfrozen, {
+      workerId,
+      unfrozenBy: actor.sub,
+      timestamp: new Date(),
+    });
+    this.realtime.emitToRoom(ADMIN_ROOM, ADMIN_EVENTS.newAlert, {
+      type: 'wallet',
+      event: ADMIN_EVENTS.walletUnfrozen,
+      workerId,
+      timestamp: new Date(),
+    });
+
+    return updated;
+  }
+
+  // Dispute queue (Admin flow §10). List disputes with filters and pagination.
+  async listDisputes(query: AdminDisputeListQueryDto) {
+    const { page, limit, skip } = normalizePage(query);
+
+    const where: Prisma.DisputeWhereInput = {
+      ...(query.status ? { status: query.status } : {}),
+      ...(query.type ? { type: query.type } : {}),
+      ...(query.from || query.to
+        ? {
+            createdAt: {
+              ...(query.from ? { gte: new Date(query.from) } : {}),
+              ...(query.to ? { lte: new Date(query.to) } : {}),
+            },
+          }
+        : {}),
+      ...(query.search
+        ? {
+            OR: [
+              { job: { is: { title: { contains: query.search, mode: 'insensitive' } } } },
+              { reporter: { is: { name: { contains: query.search, mode: 'insensitive' } } } },
+              { respondent: { is: { name: { contains: query.search, mode: 'insensitive' } } } },
+            ],
+          }
+        : {}),
+    };
+
+    const [rows, total] = await Promise.all([
+      this.prisma.dispute.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limit,
         select: {
           id: true,
-          workerId: true,
-          amount: true,
+          jobId: true,
+          type: true,
+          description: true,
           status: true,
-          processedAt: true,
-          processedBy: true,
-          note: true,
+          createdAt: true,
+          updatedAt: true,
+          reporter: { select: { id: true, name: true, phone: true } },
+          respondent: { select: { id: true, name: true, phone: true } },
+          job: { select: { id: true, title: true, status: true } },
+        },
+      }),
+      this.prisma.dispute.count({ where }),
+    ]);
+
+    const items = rows.map((row) => ({
+      id: row.id,
+      jobId: row.jobId,
+      jobTitle: row.job.title,
+      jobStatus: row.job.status,
+      type: row.type,
+      description: row.description,
+      status: row.status,
+      reporter: row.reporter,
+      respondent: row.respondent,
+      createdAt: row.createdAt,
+      updatedAt: row.updatedAt,
+    }));
+
+    return toPageResult(items, total, page, limit);
+  }
+
+  // Dispute detail (Admin flow §10). Full dispute with job evidence trail.
+  async getDisputeDetail(id: string) {
+    const dispute = await this.prisma.dispute.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        jobId: true,
+        type: true,
+        description: true,
+        evidence: true,
+        status: true,
+        resolution: true,
+        resolvedBy: true,
+        resolvedAt: true,
+        createdAt: true,
+        updatedAt: true,
+        reporter: { select: { id: true, name: true, phone: true } },
+        respondent: { select: { id: true, name: true, phone: true } },
+        job: {
+          select: {
+            id: true,
+            title: true,
+            description: true,
+            status: true,
+            city: true,
+            area: true,
+            suggestedVisitCharge: true,
+            lockedVisitCharge: true,
+            customer: { select: { id: true, name: true, phone: true } },
+            selectedWorker: { select: { id: true, name: true, phone: true } },
+            category: { select: { id: true, name: true } },
+            createdAt: true,
+            completedAt: true,
+          },
+        },
+      },
+    });
+    if (!dispute) {
+      throw new NotFoundException('Dispute not found');
+    }
+    return dispute;
+  }
+
+  // Dispute resolution (Admin flow §10). Admin resolves, dismisses, or escalates a dispute.
+  async resolveDispute(id: string, actor: JwtPayload, dto: AdminResolveDisputeDto) {
+    const dispute = await this.prisma.dispute.findUnique({
+      where: { id },
+      select: { id: true, jobId: true, status: true, reporterId: true, respondentId: true },
+    });
+    if (!dispute) {
+      throw new NotFoundException('Dispute not found');
+    }
+    if (dispute.status !== 'OPEN' && dispute.status !== 'UNDER_REVIEW') {
+      throw new BadRequestException('Dispute already resolved');
+    }
+
+    let newStatus: DisputeStatus;
+    let action: string;
+    let auditAction: 'DISPUTE_RESOLVED' | 'DISPUTE_DISMISSED' | 'DISPUTE_ESCALATED';
+
+    if (dto.action === 'resolve') {
+      if (!dto.resolution) {
+        throw new BadRequestException('Resolution is required when resolving a dispute');
+      }
+      newStatus = 'RESOLVED';
+      action = 'resolved';
+      auditAction = 'DISPUTE_RESOLVED';
+    } else if (dto.action === 'dismiss') {
+      newStatus = 'DISMISSED';
+      action = 'dismissed';
+      auditAction = 'DISPUTE_DISMISSED';
+    } else {
+      newStatus = 'ESCALATED';
+      action = 'escalated';
+      auditAction = 'DISPUTE_ESCALATED';
+    }
+
+    const updated = await this.prisma.$transaction(async (tx) => {
+      const updated = await tx.dispute.update({
+        where: { id },
+        data: {
+          status: newStatus,
+          resolution: dto.resolution ?? dto.note ?? null,
+          resolvedBy: actor.sub,
+          resolvedAt: new Date(),
+        },
+        select: {
+          id: true,
+          jobId: true,
+          type: true,
+          status: true,
+          resolution: true,
+          resolvedBy: true,
+          resolvedAt: true,
         },
       });
 
@@ -770,16 +1086,602 @@ export class AdminService {
         {
           actorId: actor.sub,
           actorRole: actor.role,
-          action: 'WITHDRAWAL_REJECTED',
-          targetType: 'WITHDRAWAL',
+          action: auditAction,
+          targetType: 'DISPUTE',
           targetId: id,
-          reason: note,
-          metadata: { workerId: withdrawal.workerId, amount: withdrawal.amount },
+          reason: dto.resolution ?? dto.note,
+          metadata: { jobId: dispute.jobId, previousStatus: dispute.status },
         },
+        tx,
       );
 
       return updated;
+    });
+
+    // Emit admin alert for dispute resolution
+    this.emitDisputeAlert(action, id, dispute.jobId, actor.sub);
+
+    return { ...updated, action };
+  }
+
+  private emitDisputeAlert(action: string, disputeId: string, jobId: string, actorId: string): void {
+    let adminEvent: string;
+    switch (action) {
+      case 'resolved':
+        adminEvent = ADMIN_EVENTS.disputeResolved;
+        break;
+      case 'dismissed':
+        adminEvent = ADMIN_EVENTS.disputeDismissed;
+        break;
+      case 'escalated':
+        adminEvent = ADMIN_EVENTS.disputeEscalated;
+        break;
+      default:
+        adminEvent = ADMIN_EVENTS.disputeCreated;
     }
+    this.realtime.emitToRoom(ADMIN_ROOM, adminEvent, {
+      disputeId,
+      jobId,
+      resolvedBy: actorId,
+      timestamp: new Date(),
+    });
+    this.realtime.emitToRoom(ADMIN_ROOM, ADMIN_EVENTS.newAlert, {
+      type: 'dispute',
+      event: adminEvent,
+      disputeId,
+      jobId,
+      timestamp: new Date(),
+    });
+  }
+
+  // Category management (Admin flow §11). List categories with filters.
+  async listCategories(query: AdminCategoryListQueryDto) {
+    const { page, limit, skip } = normalizePage(query);
+
+    const where: Prisma.ServiceCategoryWhereInput = {
+      ...(query.isActive !== undefined ? { isActive: query.isActive === 'true' } : {}),
+      ...(query.search
+        ? {
+            OR: [
+              { name: { contains: query.search, mode: 'insensitive' } },
+              { nameUrdu: { contains: query.search, mode: 'insensitive' } },
+            ],
+          }
+        : {}),
+    };
+
+    const [rows, total] = await Promise.all([
+      this.prisma.serviceCategory.findMany({
+        where,
+        orderBy: { sortOrder: 'asc' },
+        skip,
+        take: limit,
+        select: { id: true, name: true, nameUrdu: true, isActive: true, sortOrder: true, createdAt: true },
+      }),
+      this.prisma.serviceCategory.count({ where }),
+    ]);
+
+    return toPageResult(rows, total, page, limit);
+  }
+
+  // Create a new category.
+  async createCategory(dto: AdminCreateCategoryDto, actor: JwtPayload) {
+    const category = await this.prisma.serviceCategory.create({
+      data: {
+        name: dto.name,
+        nameUrdu: dto.nameUrdu,
+        sortOrder: dto.sortOrder ?? 0,
+      },
+      select: { id: true, name: true, nameUrdu: true, isActive: true, sortOrder: true, createdAt: true },
+    });
+
+    await this.audit.record(
+      {
+        actorId: actor.sub,
+        actorRole: actor.role,
+        action: 'CATEGORY_CREATED',
+        targetType: 'SERVICE_CATEGORY',
+        targetId: category.id,
+        reason: null,
+        metadata: { name: category.name, nameUrdu: category.nameUrdu, sortOrder: category.sortOrder },
+      },
+    );
+
+    this.realtime.emitToRoom(ADMIN_ROOM, ADMIN_EVENTS.categoryCreated, {
+      categoryId: category.id,
+      name: category.name,
+      nameUrdu: category.nameUrdu,
+      createdBy: actor.sub,
+      timestamp: new Date(),
+    });
+    this.realtime.emitToRoom(ADMIN_ROOM, ADMIN_EVENTS.newAlert, {
+      type: 'category',
+      event: ADMIN_EVENTS.categoryCreated,
+      categoryId: category.id,
+      name: category.name,
+      timestamp: new Date(),
+    });
+
+    return category;
+  }
+
+  // Update a category.
+  async updateCategory(id: string, dto: AdminUpdateCategoryDto, actor: JwtPayload) {
+    const existing = await this.prisma.serviceCategory.findUnique({
+      where: { id },
+      select: { id: true, name: true, nameUrdu: true, isActive: true, sortOrder: true },
+    });
+    if (!existing) {
+      throw new NotFoundException('Category not found');
+    }
+
+    const updated = await this.prisma.serviceCategory.update({
+      where: { id },
+      data: {
+        ...(dto.name !== undefined ? { name: dto.name } : {}),
+        ...(dto.nameUrdu !== undefined ? { nameUrdu: dto.nameUrdu } : {}),
+        ...(dto.sortOrder !== undefined ? { sortOrder: dto.sortOrder } : {}),
+      },
+      select: { id: true, name: true, nameUrdu: true, isActive: true, sortOrder: true },
+    });
+
+    await this.audit.record(
+      {
+        actorId: actor.sub,
+        actorRole: actor.role,
+        action: 'CATEGORY_UPDATED',
+        targetType: 'SERVICE_CATEGORY',
+        targetId: id,
+        reason: null,
+        metadata: { from: existing, to: updated },
+      },
+    );
+
+    this.realtime.emitToRoom(ADMIN_ROOM, ADMIN_EVENTS.categoryUpdated, {
+      categoryId: id,
+      changes: { from: existing, to: updated },
+      updatedBy: actor.sub,
+      timestamp: new Date(),
+    });
+    this.realtime.emitToRoom(ADMIN_ROOM, ADMIN_EVENTS.newAlert, {
+      type: 'category',
+      event: ADMIN_EVENTS.categoryUpdated,
+      categoryId: id,
+      timestamp: new Date(),
+    });
+
+    return updated;
+  }
+
+  // Deactivate a category (soft delete - existing jobs finish, new posts blocked).
+  async deactivateCategory(id: string, actor: JwtPayload) {
+    const existing = await this.prisma.serviceCategory.findUnique({
+      where: { id },
+      select: { id: true, name: true, isActive: true },
+    });
+    if (!existing) {
+      throw new NotFoundException('Category not found');
+    }
+    if (!existing.isActive) {
+      throw new BadRequestException('Category is already deactivated');
+    }
+
+    const updated = await this.prisma.serviceCategory.update({
+      where: { id },
+      data: { isActive: false },
+      select: { id: true, name: true, isActive: true },
+    });
+
+    await this.audit.record(
+      {
+        actorId: actor.sub,
+        actorRole: actor.role,
+        action: 'CATEGORY_DEACTIVATED',
+        targetType: 'SERVICE_CATEGORY',
+        targetId: id,
+        reason: null,
+        metadata: { name: existing.name },
+      },
+    );
+
+    this.realtime.emitToRoom(ADMIN_ROOM, ADMIN_EVENTS.categoryDeactivated, {
+      categoryId: id,
+      name: existing.name,
+      deactivatedBy: actor.sub,
+      timestamp: new Date(),
+    });
+    this.realtime.emitToRoom(ADMIN_ROOM, ADMIN_EVENTS.newAlert, {
+      type: 'category',
+      event: ADMIN_EVENTS.categoryDeactivated,
+      categoryId: id,
+      name: existing.name,
+      timestamp: new Date(),
+    });
+
+    return updated;
+  }
+
+  // Platform settings (Admin flow §12). Get all platform settings.
+  async getSettings() {
+    const settings = await this.prisma.platformSetting.findMany({
+      select: { key: true, value: true, updatedAt: true },
+    });
+    return settings.reduce((acc, s) => ({ ...acc, [s.key]: s.value }), {});
+  }
+
+  // Update commission rate (super-admin only).
+  async updateCommissionRate(dto: AdminUpdateCommissionRateDto, actor: JwtPayload) {
+    if (actor.role !== 'SUPER_ADMIN') {
+      throw new ForbiddenException('Only super-admin can change commission rate');
+    }
+
+    const existing = await this.prisma.platformSetting.findUnique({
+      where: { key: 'commissionRate' },
+      select: { key: true, value: true },
+    });
+    const oldValue = existing?.value ?? '0.1';
+
+    const updated = await this.prisma.platformSetting.upsert({
+      where: { key: 'commissionRate' },
+      update: { value: dto.commissionRate.toString() },
+      create: { key: 'commissionRate', value: dto.commissionRate.toString() },
+      select: { key: true, value: true, updatedAt: true },
+    });
+
+    await this.audit.record(
+      {
+        actorId: actor.sub,
+        actorRole: actor.role,
+        action: 'COMMISSION_RATE_CHANGED',
+        targetType: 'PLATFORM_SETTING',
+        targetId: 'commissionRate',
+        reason: null,
+        metadata: { from: oldValue, to: updated.value },
+      },
+    );
+
+    this.realtime.emitToRoom(ADMIN_ROOM, ADMIN_EVENTS.commissionRateChanged, {
+      oldRate: oldValue,
+      newRate: updated.value,
+      changedBy: actor.sub,
+      timestamp: new Date(),
+    });
+    this.realtime.emitToRoom(ADMIN_ROOM, ADMIN_EVENTS.newAlert, {
+      type: 'settings',
+      event: ADMIN_EVENTS.commissionRateChanged,
+      oldRate: oldValue,
+      newRate: updated.value,
+      timestamp: new Date(),
+    });
+
+    return updated;
+  }
+
+  // Update other platform settings.
+  async updateSettings(dto: AdminUpdateSettingsDto, actor: JwtPayload) {
+    const results = [];
+
+    for (const [key, value] of Object.entries(dto)) {
+      if (value !== undefined) {
+        const existing = await this.prisma.platformSetting.findUnique({
+          where: { key },
+          select: { key: true, value: true },
+        });
+        const oldValue = existing?.value ?? null;
+
+        const updated = await this.prisma.platformSetting.upsert({
+          where: { key },
+          update: { value: String(value) },
+          create: { key, value: String(value) },
+          select: { key: true, value: true, updatedAt: true },
+        });
+
+        await this.audit.record(
+          {
+            actorId: actor.sub,
+            actorRole: actor.role,
+            action: 'SETTING_UPDATED',
+            targetType: 'PLATFORM_SETTING',
+            targetId: key,
+            reason: null,
+            metadata: { from: oldValue, to: updated.value },
+          },
+        );
+
+        results.push(updated);
+      }
+    }
+
+    return results;
+  }
+
+  // Reports (Admin flow §13). Generate analytics reports.
+  async getReport(query: AdminReportQueryDto) {
+    const { type, from, to } = query;
+    const fromDate = from ? new Date(from) : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+    const toDate = to ? new Date(to) : new Date();
+
+    const dateFilter = { gte: fromDate, lte: toDate };
+
+    switch (type) {
+      case 'jobs-funnel': {
+        const [posted, offersReceived, accepted, completed, cancelled] = await Promise.all([
+          this.prisma.serviceRequest.count({ where: { createdAt: dateFilter } }),
+          this.prisma.serviceRequest.count({ where: { status: { in: ['OFFERS_RECEIVED', 'OFFER_ACCEPTED'] }, createdAt: dateFilter } }),
+          this.prisma.serviceRequest.count({ where: { status: { in: ['WORKER_ASSIGNED', 'VISIT_SCHEDULED', 'VISIT_IN_PROGRESS', 'INSPECTION_DONE', 'REPAIR_NEGOTIATING', 'REPAIR_APPROVED', 'IN_PROGRESS'] }, createdAt: dateFilter } }),
+          this.prisma.serviceRequest.count({ where: { status: { in: ['COMPLETED', 'PAID', 'REVIEWED'] }, completedAt: dateFilter } }),
+          this.prisma.serviceRequest.count({ where: { status: 'CANCELLED', cancelledAt: dateFilter } }),
+        ]);
+        return {
+          type: 'jobs-funnel',
+          period: { from: fromDate, to: toDate },
+          data: {
+            posted,
+            offersReceived,
+            accepted,
+            completed,
+            cancelled,
+            conversionRate: posted > 0 ? ((completed / posted) * 100).toFixed(2) : '0',
+          },
+        };
+      }
+
+      case 'worker-performance': {
+        const workers = await this.prisma.user.findMany({
+          where: { role: 'WORKER', createdAt: dateFilter },
+          select: {
+            id: true,
+            name: true,
+            phone: true,
+            workerProfile: { select: { verificationStatus: true, skills: true, experienceYears: true } },
+            _count: { select: { selectedJobs: true, offers: true } },
+            commissions: { where: { status: { in: ['RECEIVED', 'VERIFIED'] }, createdAt: dateFilter }, select: { amount: true } },
+          },
+        });
+        const data = workers.map((w) => ({
+          workerId: w.id,
+          name: w.name,
+          phone: w.phone,
+          verificationStatus: w.workerProfile?.verificationStatus,
+          skills: w.workerProfile?.skills,
+          experienceYears: w.workerProfile?.experienceYears,
+          jobsCount: w._count.selectedJobs,
+          offersCount: w._count.offers,
+          totalEarnings: w.commissions.reduce((sum, c) => sum + Number(c.amount), 0).toFixed(2),
+        }));
+        return { type: 'worker-performance', period: { from: fromDate, to: toDate }, data };
+      }
+
+      case 'revenue': {
+        const [totalCommissions, totalVisitCharges, avgRate, topCategories] = await Promise.all([
+          this.prisma.commission.aggregate({ where: { status: { in: ['RECEIVED', 'VERIFIED'] }, createdAt: dateFilter }, _sum: { amount: true } }),
+          this.prisma.commission.aggregate({ where: { status: { in: ['RECEIVED', 'VERIFIED'] }, createdAt: dateFilter }, _sum: { visitCharge: true } }),
+          this.prisma.commission.aggregate({ where: { status: { in: ['RECEIVED', 'VERIFIED'] }, createdAt: dateFilter }, _avg: { commissionRate: true } }),
+          this.prisma.serviceRequest.groupBy({
+            by: ['categoryId'],
+            where: { status: { in: ['COMPLETED', 'PAID', 'REVIEWED'] }, completedAt: dateFilter },
+            _sum: { lockedVisitCharge: true },
+            _count: { _all: true },
+            orderBy: { _sum: { lockedVisitCharge: 'desc' } },
+            take: 10,
+          }),
+        ]);
+        const categories = await Promise.all(
+          topCategories.map(async (c) => {
+            const cat = await this.prisma.serviceCategory.findUnique({ where: { id: c.categoryId }, select: { name: true } });
+            return { category: cat?.name ?? c.categoryId, revenue: c._sum.lockedVisitCharge?.toFixed(2) ?? '0', jobsCount: c._count._all };
+          }),
+        );
+        return {
+          type: 'revenue',
+          period: { from: fromDate, to: toDate },
+          data: {
+            totalCommissions: totalCommissions._sum.amount?.toFixed(2) ?? '0',
+            totalVisitCharges: totalVisitCharges._sum.visitCharge?.toFixed(2) ?? '0',
+            averageCommissionRate: avgRate._avg.commissionRate ?? 0,
+            topCategories: categories,
+          },
+        };
+      }
+
+      case 'growth': {
+        const [newCustomers, newWorkers, newJobs] = await Promise.all([
+          this.prisma.user.count({ where: { role: 'CUSTOMER', createdAt: dateFilter } }),
+          this.prisma.user.count({ where: { role: 'WORKER', createdAt: dateFilter } }),
+          this.prisma.serviceRequest.count({ where: { createdAt: dateFilter } }),
+        ]);
+        return {
+          type: 'growth',
+          period: { from: fromDate, to: toDate },
+          data: { newCustomers, newWorkers, newJobs },
+        };
+      }
+
+      default:
+        throw new BadRequestException('Invalid report type');
+    }
+  }
+
+  // Audit trail (Admin flow §15). Admin views audit log with filters.
+  async listAuditLogs(query: AdminAuditListQueryDto) {
+    const { page, limit, skip } = normalizePage(query);
+
+    const where: Prisma.AuditLogWhereInput = {
+      ...(query.action ? { action: query.action } : {}),
+      ...(query.targetType ? { targetType: query.targetType } : {}),
+      ...(query.actorId ? { actorId: query.actorId } : {}),
+      ...(query.from || query.to
+        ? {
+            createdAt: {
+              ...(query.from ? { gte: new Date(query.from) } : {}),
+              ...(query.to ? { lte: new Date(query.to) } : {}),
+            },
+          }
+        : {}),
+    };
+
+    const [rows, total] = await Promise.all([
+      this.prisma.auditLog.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limit,
+        select: {
+          id: true,
+          actorId: true,
+          actorRole: true,
+          action: true,
+          targetType: true,
+          targetId: true,
+          reason: true,
+          metadata: true,
+          createdAt: true,
+        },
+      }),
+      this.prisma.auditLog.count({ where }),
+    ]);
+
+    return toPageResult(rows, total, page, limit);
+  }
+
+  // Admin notifications (Admin flow §14). List admin notifications with filters.
+  async listNotifications(query: AdminNotificationListQueryDto) {
+    const { page, limit, skip } = normalizePage(query);
+
+    const where: Prisma.AdminNotificationWhereInput = {
+      ...(query.isRead !== undefined ? { isRead: query.isRead === 'true' } : {}),
+      ...(query.from || query.to
+        ? {
+            createdAt: {
+              ...(query.from ? { gte: new Date(query.from) } : {}),
+              ...(query.to ? { lte: new Date(query.to) } : {}),
+            },
+          }
+        : {}),
+    };
+
+    const [rows, total] = await Promise.all([
+      this.prisma.adminNotification.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limit,
+        select: { id: true, type: true, title: true, body: true, data: true, isRead: true, readAt: true, createdAt: true },
+      }),
+      this.prisma.adminNotification.count({ where }),
+    ]);
+
+    return toPageResult(rows, total, page, limit);
+  }
+
+  // Admin marks notifications as read.
+  async markNotificationsRead(dto: AdminMarkNotificationsReadDto, actor: JwtPayload) {
+    await this.prisma.adminNotification.updateMany({
+      where: { id: { in: dto.notificationIds } },
+      data: { isRead: true, readAt: new Date() },
+    });
+
+    await this.audit.record(
+      {
+        actorId: actor.sub,
+        actorRole: actor.role,
+        action: 'NOTIFICATIONS_MARKED_READ',
+        targetType: 'ADMIN_NOTIFICATION',
+        targetId: dto.notificationIds.join(','),
+        reason: null,
+        metadata: { count: dto.notificationIds.length },
+      },
+    );
+
+    return { markedRead: dto.notificationIds.length };
+  }
+
+  // Export report as CSV or PDF (Admin flow §13).
+  async exportReport(query: AdminReportQueryDto, res: ExpressResponse): Promise<void> {
+    const report = await this.getReport(query);
+    const format = query.format ?? 'csv';
+    const timestamp = new Date().toISOString().split('T')[0];
+    const filename = `${query.type}-report-${timestamp}.${format}`;
+
+    if (format === 'csv') {
+      const csv = this.convertReportToCsv(report);
+      res.setHeader('Content-Type', 'text/csv');
+      res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+      res.send(csv);
+    } else {
+      // For PDF, we'll return JSON with a note that PDF generation requires a library
+      // In production, integrate with a PDF library like pdfkit or puppeteer
+      res.setHeader('Content-Type', 'application/json');
+      res.setHeader('Content-Disposition', `attachment; filename="${filename.replace('.pdf', '.json')}"`);
+      res.send(JSON.stringify({ ...report, note: 'PDF generation not implemented. Use CSV format or integrate a PDF library.' }, null, 2));
+    }
+  }
+
+  private convertReportToCsv(report: any): string {
+    const { type, period, data } = report;
+
+    if (type === 'jobs-funnel') {
+      const headers = ['Metric', 'Value'];
+      const rows = [
+        ['Posted', data.posted],
+        ['Offers Received', data.offersReceived],
+        ['Accepted', data.accepted],
+        ['Completed', data.completed],
+        ['Cancelled', data.cancelled],
+        ['Conversion Rate (%)', data.conversionRate],
+      ];
+      return this.arrayToCsv([headers, ...rows]);
+    }
+
+    if (type === 'worker-performance') {
+      const headers = ['Worker ID', 'Name', 'Phone', 'Verification Status', 'Skills', 'Experience (Years)', 'Jobs Count', 'Offers Count', 'Total Earnings'];
+      const rows = data.data.map((w: any) => [
+        w.workerId,
+        w.name,
+        w.phone,
+        w.verificationStatus,
+        (w.skills ?? []).join('; '),
+        w.experienceYears ?? '',
+        w.jobsCount,
+        w.offersCount,
+        w.totalEarnings,
+      ]);
+      return this.arrayToCsv([headers, ...rows]);
+    }
+
+    if (type === 'revenue') {
+      const headers = ['Metric', 'Value'];
+      const rows = [
+        ['Total Commissions', data.totalCommissions],
+        ['Total Visit Charges', data.totalVisitCharges],
+        ['Average Commission Rate', data.averageCommissionRate],
+      ];
+      const csv = this.arrayToCsv([headers, ...rows]);
+      if (data.topCategories?.length) {
+        const catHeaders = ['\nTop Categories', 'Revenue', 'Jobs Count'];
+        const catRows = data.topCategories.map((c: any) => [c.category, c.revenue, c.jobsCount]);
+        return csv + this.arrayToCsv([catHeaders, ...catRows]);
+      }
+      return csv;
+    }
+
+    if (type === 'growth') {
+      const headers = ['Metric', 'Value'];
+      const rows = [
+        ['New Customers', data.newCustomers],
+        ['New Workers', data.newWorkers],
+        ['New Jobs', data.newJobs],
+      ];
+      return this.arrayToCsv([headers, ...rows]);
+    }
+
+    return 'Report type not supported for CSV export';
+  }
+
+  private arrayToCsv(data: string[][]): string {
+    return data
+      .map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(','))
+      .join('\n');
   }
 
   // Full job detail with its entire audit history (Admin flow §7.2):

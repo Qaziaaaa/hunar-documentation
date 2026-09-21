@@ -2,6 +2,7 @@ import { NotFoundException } from '@nestjs/common';
 import { AdminVerificationService } from './admin-verification.service';
 import { AuditService } from './audit.service';
 import { EventBusService } from '../../common/event-bus/event-bus.service';
+import { RealtimeService } from '../realtime/realtime.service';
 
 class Db {
   users = new Map<string, any>();
@@ -116,6 +117,7 @@ function makeService(db: any) {
   return new AdminVerificationService(
     db,
     { emit: jest.fn() } as unknown as EventBusService,
+    { emitToRoom: jest.fn() } as unknown as RealtimeService,
     { record: jest.fn() } as unknown as AuditService,
   );
 }

@@ -773,4 +773,51 @@ export class WalletService {
       );
     }
   }
+
+  /** Admin freezes a worker's wallet (e.g., during a dispute). */
+  async freezeWallet(workerId: string, adminId: string, reason?: string) {
+    const wallet = await this.prisma.workerWallet.findUnique({ where: { userId: workerId } });
+    if (!wallet) {
+      throw new NotFoundException('WALLET_NOT_FOUND');
+    }
+    if (wallet.isFrozen) {
+      throw new BadRequestException('WALLET_ALREADY_FROZEN');
+    }
+    return this.prisma.workerWallet.update({
+      where: { userId: workerId },
+      data: {
+        isFrozen: true,
+        frozenAt: new Date(),
+        frozenBy: adminId,
+      },
+    });
+  }
+
+  /** Admin unfreezes a worker's wallet. */
+  async unfreezeWallet(workerId: string, adminId: string) {
+    const wallet = await this.prisma.workerWallet.findUnique({ where: { userId: workerId } });
+    if (!wallet) {
+      throw new NotFoundException('WALLET_NOT_FOUND');
+    }
+    if (!wallet.isFrozen) {
+      throw new BadRequestException('WALLET_NOT_FROZEN');
+    }
+    return this.prisma.workerWallet.update({
+      where: { userId: workerId },
+      data: {
+        isFrozen: false,
+        frozenAt: null,
+        frozenBy: null,
+      },
+    });
+  }
+
+  /** Check if a worker's wallet is frozen. */
+  async isWalletFrozen(workerId: string): Promise<boolean> {
+    const wallet = await this.prisma.workerWallet.findUnique({
+      where: { userId: workerId },
+      select: { isFrozen: true },
+    });
+    return wallet?.isFrozen ?? false;
+  }
 }
