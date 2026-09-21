@@ -15,6 +15,7 @@ import {
 import { useLocale, useTranslations } from "next-intl";
 import { Link, usePathname, useRouter } from "@/i18n/navigation";
 import { logoutCustomer } from "@/features/auth/api/auth-api";
+import { OrderworkerLogo } from "@/components/shared/orderworker-logo";
 import { MOCK_CUSTOMER_USER } from "../mock/customer-mock-data";
 
 interface CustomerSidebarProps {
@@ -106,26 +107,13 @@ export function CustomerSidebar({ isOpen, onClose }: CustomerSidebarProps) {
           <div className="flex items-center justify-between pb-5 border-b border-slate-200 mb-4">
             <Link
               href="/"
-              className="flex items-center gap-3 group cursor-pointer hover:opacity-90 transition-opacity"
+              className="flex flex-col gap-1 group cursor-pointer hover:opacity-90 transition-opacity"
               title="Back to Landing Page"
             >
-              <div className="w-9 h-9 rounded-xl bg-[#123B5D] flex items-center justify-center text-white text-base font-bold shadow-xs">
-                <span>H</span>
-                <span className="w-1.5 h-1.5 rounded-full bg-[#0F8B8D] ml-0.5"></span>
-              </div>
-              <div>
-                <div className="flex items-center gap-1.5">
-                  <span className="text-base font-bold tracking-tight text-[#123B5D]">
-                    HUNAR
-                  </span>
-                  <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold bg-[#0F8B8D]/10 text-[#0F8B8D] uppercase tracking-wider">
-                    PK
-                  </span>
-                </div>
-                <p className="text-[10px] text-slate-500 font-medium">
-                  {locale === "ur" ? "کسٹمر پورٹل" : "Customer Portal"}
-                </p>
-              </div>
+              <OrderworkerLogo variant="dark" size="sm" showBadge={true} />
+              <p className="text-[10px] text-slate-500 font-semibold uppercase tracking-wider pl-0.5">
+                {locale === "ur" ? "کسٹمر پورٹل" : "Customer Portal"}
+              </p>
             </Link>
 
             {onClose ? (

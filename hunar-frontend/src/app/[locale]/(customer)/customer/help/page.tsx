@@ -3,7 +3,7 @@ import { CustomerHelpView } from "@/features/customer-help/components/customer-h
 
 export async function generateMetadata() {
   return {
-    title: "Customer Help Center & FAQ Hub — HUNAR",
+    title: "Customer Help Center & FAQ Hub — Orderworker",
     description:
       "Interactive FAQs on pricing, safety PINs, and booking changes. Direct ticket creation and 24/7 customer helpline.",
   };

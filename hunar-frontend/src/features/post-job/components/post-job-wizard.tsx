@@ -13,6 +13,7 @@ import { Step1ServiceSelect } from "./step-1-service-select";
 import { Step2JobDetails } from "./step-2-job-details";
 import { Step3LocationSchedule } from "./step-3-location-schedule";
 import { Step4ReviewPost } from "./step-4-review-post";
+import { OrderworkerLogo } from "@/components/shared/orderworker-logo";
 
 const INITIAL_FORM_DATA: PostJobData = {
   category: "",
@@ -160,13 +161,9 @@ export function PostJobWizard() {
       <header className="sticky top-0 z-40 bg-white border-b border-slate-200 px-4 sm:px-8 py-3 flex items-center justify-between">
         <Link
           href="/customer/dashboard"
-          className="flex items-center gap-2 text-xl font-bold text-[#123B5D] hover:opacity-90 transition-opacity"
+          className="flex items-center hover:opacity-90 transition-opacity"
         >
-          <div className="size-8 rounded-xl bg-[#123B5D] flex items-center justify-center text-white text-sm font-bold shadow-xs">
-            <span>H</span>
-            <span className="size-1.5 rounded-full bg-[#0F766E] ml-0.5"></span>
-          </div>
-          <span className="tracking-tight">HUNAR</span>
+          <OrderworkerLogo variant="dark" size="sm" showBadge={false} />
         </Link>
 
         <div className="flex items-center gap-3">

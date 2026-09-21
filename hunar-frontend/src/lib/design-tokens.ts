@@ -22,7 +22,7 @@ export const DESIGN_TOKENS = {
   },
 } as const;
 
-export type HunarStatus =
+export type OrderworkerStatus =
   | "pending"
   | "accepted"
   | "active"
@@ -32,7 +32,9 @@ export type HunarStatus =
   | "cancelled"
   | "rejected";
 
-export function statusColor(status: HunarStatus): string {
+export type HunarStatus = OrderworkerStatus;
+
+export function statusColor(status: OrderworkerStatus): string {
   return DESIGN_TOKENS.status[status] ?? DESIGN_TOKENS.status.pending;
 }
 

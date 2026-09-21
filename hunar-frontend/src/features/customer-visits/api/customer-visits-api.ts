@@ -95,7 +95,7 @@ function transformBackendVisit(v: any): ScheduledVisit {
       totalReviews: 64,
       tradeCategory: "Licensed Plumber",
       tradeCategoryUr: "لائسنس یافتہ پلمبر",
-      hunarBadgeId: "#HN-9021",
+      hunarBadgeId: "#OW-9021",
       vehicleModel: "Honda CD 70 (Red)",
       vehiclePlate: "PSH-8821",
       isCnicVerified: true,

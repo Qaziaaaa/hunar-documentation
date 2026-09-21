@@ -273,8 +273,8 @@ export function Step4ReviewPost({
           <div>
             <h4 className="text-xs font-bold text-[#123B5D]">
               {isUrdu
-                ? "ہنر 100% تصدیق شدہ کوالٹی اور تسلی بخش کام کی ضمانت"
-                : "HUNAR 100% Verified Quality Guaranteed"}
+                ? "آرڈر ورکر 100% تصدیق شدہ کوالٹی اور تسلی بخش کام کی ضمانت"
+                : "Orderworker 100% Verified Quality Guaranteed"}
             </h4>
             <p className="text-[11px] text-slate-500">
               {isUrdu

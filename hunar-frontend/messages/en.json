@@ -1,11 +1,11 @@
 {
   "Metadata": {
-    "title": "HUNAR — Home Services Marketplace",
-    "description": "Find trusted, verified professionals for your home in Pakistan. Hunar connects customers with skilled workers — electricians, plumbers, AC technicians and more."
+    "title": "Orderworker — Home Services Marketplace",
+    "description": "Find trusted, verified professionals for your home in Pakistan. Orderworker connects customers with skilled workers — electricians, plumbers, AC technicians and more."
   },
   "Common": {
     "slogan": "Verified skilled workers at your doorstep",
-    "appName": "HUNAR"
+    "appName": "Orderworker"
   },
   "Home": {
     "heroBadge": "Pakistan's trusted home services marketplace",
@@ -57,7 +57,7 @@
     "backToHome": "Back to home",
     "trustCnic": "Nadra CNIC Verified",
     "trustSecure": "100% Secure & Encrypted",
-    "copyright": "© 2026 HUNAR Services Inc. Guaranteed tradesperson protection.",
+    "copyright": "© 2026 Orderworker Services Inc. Guaranteed tradesperson protection.",
     "signInTitle": "Welcome back",
     "signInSubtitle": "Sign in to your worker account.",
     "signInPasswordPlaceholder": "Enter your password",
@@ -125,7 +125,7 @@
     "completedJobs": "Completed Jobs",
     "totalSpent": "Total Spent",
     "invoices": "Invoices & Receipts",
-    "escrowProtected": "HUNAR Quality Guarantee"
+    "escrowProtected": "Orderworker Quality Guarantee"
   },
   "CustomerPortal": {
     "Nav": {
@@ -139,7 +139,7 @@
       "postJob": "+ Post a Job",
       "signOut": "Sign Out",
       "language": "Language",
-      "verifiedBadge": "HUNAR Verified",
+      "verifiedBadge": "Orderworker Verified",
       "verifiedDesc": "100% NADRA CNIC Verified Pros & doorstep satisfaction guarantee.",
       "qualityGuarantee": "Quality Guarantee"
     },

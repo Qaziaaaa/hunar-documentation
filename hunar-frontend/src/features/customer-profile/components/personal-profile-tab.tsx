@@ -99,8 +99,8 @@ export function PersonalProfileTab({
                 <ShieldCheck className="size-4 shrink-0" />
                 <span>
                   {isUrdu
-                    ? "ہنر تصدیق شدہ رہائشی (نادرا شناختی کارڈ اور موبائل تصدیق)"
-                    : "Hunar Verified Resident (NADRA CNIC & Phone Linked)"}
+                    ? "آرڈر ورکر تصدیق شدہ رہائشی (نادرا شناختی کارڈ اور موبائل تصدیق)"
+                    : "Orderworker Verified Resident (NADRA CNIC & Phone Linked)"}
                 </span>
               </div>
             </div>

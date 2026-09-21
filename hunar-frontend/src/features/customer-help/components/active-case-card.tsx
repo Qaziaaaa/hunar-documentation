@@ -133,8 +133,8 @@ export function ActiveCaseCard({ ticket }: ActiveCaseCardProps) {
             <UserCheck className="size-4 text-[#0F8B8D] shrink-0" />
             <span>
               {isUrdu
-                ? "ہنر آپریشنز سپروائزر اس معاملے میں کاریگر کے ساتھ براہ راست رابطہ کر رہا ہے۔"
-                : "HUNAR operations supervisor is mediating this case directly with the technician."}
+                ? "آرڈر ورکر آپریشنز سپروائزر اس معاملے میں کاریگر کے ساتھ براہ راست رابطہ کر رہا ہے۔"
+                : "Orderworker operations supervisor is mediating this case directly with the technician."}
             </span>
           </div>
           <button

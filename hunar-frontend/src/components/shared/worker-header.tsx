@@ -16,6 +16,8 @@ import {
   Globe,
 } from "lucide-react";
 
+import { OrderworkerLogo } from "@/components/shared/orderworker-logo";
+
 export function WorkerHeader() {
   const locale = useLocale();
   const pathname = usePathname();
@@ -48,19 +50,10 @@ export function WorkerHeader() {
             href="/worker"
             className="flex items-center gap-2 group"
           >
-            <div className="w-9 h-9 rounded-xl bg-[#123B5D] flex items-center justify-center text-white font-black text-lg shadow-xs group-hover:bg-[#0F8B8D] transition-colors">
-              H
-            </div>
-            <div>
-              <div className="flex items-center gap-1.5">
-                <span className="font-extrabold text-slate-900 tracking-tight text-lg">
-                  HUNAR
-                </span>
-                <span className="px-1.5 py-0.5 rounded text-[10px] bg-[#0F8B8D] text-white font-bold tracking-wider">
-                  PRO
-                </span>
-              </div>
-            </div>
+            <OrderworkerLogo variant="dark" size="sm" showBadge={false} />
+            <span className="px-1.5 py-0.5 rounded text-[10px] bg-[#0F8B8D] text-white font-bold tracking-wider">
+              PRO
+            </span>
           </Link>
 
           {/* Navigation Links */}

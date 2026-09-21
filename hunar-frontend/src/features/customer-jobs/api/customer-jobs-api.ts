@@ -169,7 +169,7 @@ function transformBackendWorker(worker: any): WorkerProfile {
     isCnicVerified: true,
     isNadraCleared: true,
     isPoliceCleared: true,
-    hunarBadgeId: "#HN-4821",
+    hunarBadgeId: "#OW-4821",
     expertiseTags: worker.skills || ["Pipe Fitting", "Geyser Repair", "Leak Detection"],
     workProjects: [],
     reviews: [],

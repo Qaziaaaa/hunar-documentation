@@ -10,8 +10,8 @@ export async function generateMetadata({
   return {
     title:
       locale === "ur"
-        ? "ورکر رجسٹریشن اور پروفائل سیٹ اپ — ہنر"
-        : "Worker Onboarding & Profile Setup — HUNAR",
+        ? "ورکر رجسٹریشن اور پروفائل سیٹ اپ — آرڈر ورکر"
+        : "Worker Onboarding & Profile Setup — Orderworker",
   };
 }
 

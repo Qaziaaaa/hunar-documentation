@@ -3,7 +3,7 @@ import { CustomerDashboardView } from "@/features/customer-dashboard/components/
 
 export async function generateMetadata() {
   return {
-    title: "Customer Dashboard — HUNAR",
+    title: "Customer Dashboard — Orderworker",
     description:
       "Manage your active service requests, bids from verified technicians, and scheduled visits.",
   };

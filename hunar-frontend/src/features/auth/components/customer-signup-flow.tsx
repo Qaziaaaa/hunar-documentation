@@ -169,7 +169,7 @@ export function CustomerSignupFlow() {
           </svg>
         </div>
         <h2 className="text-xl font-bold text-slate-900">
-          {isUrdu ? "ہنر میں خوش آمدید!" : "Welcome to HUNAR!"}
+          {isUrdu ? "آرڈر ورکر میں خوش آمدید!" : "Welcome to Orderworker!"}
         </h2>
         <p className="text-sm text-slate-500 mt-2 max-w-sm mx-auto">
           {isUrdu

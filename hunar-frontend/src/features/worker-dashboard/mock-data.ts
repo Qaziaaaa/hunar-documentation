@@ -37,7 +37,7 @@ export const INITIAL_NOTIFICATIONS: DashboardNotification[] = [
   {
     id: "notif-2",
     title: "System Update",
-    message: "Welcome to HUNAR Worker Portal.",
+    message: "Welcome to Orderworker Worker Portal.",
     time: "1 day ago",
     read: true,
     type: "job",
