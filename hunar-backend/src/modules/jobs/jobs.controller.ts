@@ -1,6 +1,11 @@
 import { Body, Controller, Get, Param, ParseUUIDPipe, Post, Put, Query } from '@nestjs/common';
 import { JobsService } from './jobs.service';
-import { AvailableJobsQueryDto, CancelJobDto, CreateJobDto } from './jobs.validation';
+import {
+  AvailableJobsQueryDto,
+  CancelJobDto,
+  CreateJobDto,
+  CustomerJobsQueryDto,
+} from './jobs.validation';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { JwtPayload } from '../../common/types/jwt-payload.interface';
@@ -20,6 +25,12 @@ export class JobsController {
   @Roles(Role.WORKER)
   getAvailable(@CurrentUser() user: JwtPayload, @Query() query: AvailableJobsQueryDto) {
     return this.jobsService.getAvailableJobs(user, query);
+  }
+
+  @Get('customer')
+  @Roles(Role.CUSTOMER)
+  getCustomerJobs(@CurrentUser() user: JwtPayload, @Query() query: CustomerJobsQueryDto) {
+    return this.jobsService.getCustomerJobs(user.sub, query);
   }
 
   @Get(':id')

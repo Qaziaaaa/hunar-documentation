@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import Link from "next/link";
+import { Link } from "@/i18n/navigation";
 import { useParams } from "next/navigation";
 import { JobRequest } from "@/types/job";
 import { VisitOffer } from "@/types/offer";
@@ -178,11 +178,11 @@ export function JobCard({ job, workerOffer }: JobCardProps) {
           )}
 
           <Link
-            href={`/${locale}/worker/jobs/${job.id}`}
+            href={`/worker/jobs/${job.id}`}
             className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#0F8B8D] hover:bg-[#0B7F74] text-white text-xs font-bold shadow-xs hover:shadow transition-all"
           >
-            <span>{workerOffer ? "Manage Offer" : "Send Offer"}</span>
-            <ArrowRight className="w-3.5 h-3.5" />
+            <span>{workerOffer ? (locale === "ur" ? "آفر دیکھیں" : "Manage Offer") : (locale === "ur" ? "آفر بھیجیں" : "Send Offer")}</span>
+            <ArrowRight className="w-3.5 h-3.5 rtl:rotate-180" />
           </Link>
         </div>
       </div>
