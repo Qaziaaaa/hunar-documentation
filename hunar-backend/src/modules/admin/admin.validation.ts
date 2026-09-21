@@ -1,15 +1,18 @@
 import { Type } from 'class-transformer';
 import {
+  IsDateString,
+  IsEnum,
   IsIn,
   IsInt,
   IsNotEmpty,
   IsOptional,
   IsString,
+  IsUUID,
   Max,
   MaxLength,
   Min,
 } from 'class-validator';
-import { WorkerVerificationStatus } from '@prisma/client';
+import { CommissionStatus, JobStatus, WalletLedgerType, WorkerVerificationStatus, WithdrawalStatus } from '@prisma/client';
 
 export const USER_STATUS_FILTERS = ['active', 'suspended'] as const;
 export type UserStatusFilter = (typeof USER_STATUS_FILTERS)[number];
@@ -54,10 +57,217 @@ export class AdminWorkerListQueryDto extends AdminUserListQueryDto {
   verificationStatus?: WorkerVerificationStatus;
 }
 
+// Job directory query for the admin jobs screen (Admin flow §7.1).
+export class AdminJobListQueryDto {
+  @IsOptional()
+  @IsString()
+  @MaxLength(200)
+  search?: string;
+
+  @IsOptional()
+  @IsEnum(JobStatus)
+  status?: JobStatus;
+
+  @IsOptional()
+  @IsUUID()
+  categoryId?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(100)
+  city?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(100)
+  area?: string;
+
+  @IsOptional()
+  @IsDateString()
+  from?: string;
+
+  @IsOptional()
+  @IsDateString()
+  to?: string;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  page?: number;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(50)
+  limit?: number;
+}
+
 // Suspend is a sensitive action — the admin must always state why (stored in the audit trail).
 export class SuspendUserDto {
   @IsString()
   @IsNotEmpty()
   @MaxLength(1000)
   reason!: string;
+}
+
+// Force-cancel is a sensitive action — the admin must always state why (stored in the audit trail).
+export class ForceCancelJobDto {
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(1000)
+  reason!: string;
+}
+
+export class AdminTransactionListQueryDto {
+  @IsOptional()
+  @IsEnum(WalletLedgerType)
+  type?: WalletLedgerType;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(200)
+  search?: string;
+
+  @IsOptional()
+  @IsDateString()
+  from?: string;
+
+  @IsOptional()
+  @IsDateString()
+  to?: string;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  page?: number;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(100)
+  limit?: number;
+}
+
+// Payments feed (Admin flow §8 — Step F). Payments are derived from paid jobs: there is no
+// standalone Payment table, so this lists jobs whose status means the customer has paid.
+export class AdminPaymentListQueryDto {
+  @IsOptional()
+  @IsEnum(JobStatus)
+  status?: JobStatus;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(200)
+  search?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(100)
+  city?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(100)
+  area?: string;
+
+  @IsOptional()
+  @IsDateString()
+  from?: string;
+
+  @IsOptional()
+  @IsDateString()
+  to?: string;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  page?: number;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(100)
+  limit?: number;
+}
+
+// Commission snapshot feed (Admin flow §8 — Step F). Read-only oversight of platform revenue.
+export class AdminCommissionListQueryDto {
+  @IsOptional()
+  @IsEnum(CommissionStatus)
+  status?: CommissionStatus;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(200)
+  search?: string;
+
+  @IsOptional()
+  @IsDateString()
+  from?: string;
+
+  @IsOptional()
+  @IsDateString()
+  to?: string;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  page?: number;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(100)
+  limit?: number;
+}
+
+// Withdrawal queue (Admin flow §8 — Step F). Admin oversight of worker withdrawal requests.
+export class AdminWithdrawalListQueryDto {
+  @IsOptional()
+  @IsEnum(WithdrawalStatus)
+  status?: WithdrawalStatus;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(200)
+  search?: string;
+
+  @IsOptional()
+  @IsDateString()
+  from?: string;
+
+  @IsOptional()
+  @IsDateString()
+  to?: string;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  page?: number;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(100)
+  limit?: number;
+}
+
+export class AdminProcessWithdrawalDto {
+  @IsEnum(['approve', 'reject'])
+  action: 'approve' | 'reject';
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(500)
+  note?: string;
 }

@@ -244,42 +244,145 @@ export class WalletService {
 
   // ---------------- Withdraw ----------------
 
-  async withdraw(workerId: string, dto: WithdrawDto) {
+  /** Worker requests a withdrawal — creates a PENDING record for admin approval. */
+  async requestWithdrawal(workerId: string, dto: WithdrawDto) {
     const amount = roundMoney(dto.amount);
     if (amount < WALLET_MIN_WITHDRAWAL) {
       throw new BadRequestException(
         `WALLET_WITHDRAWAL_MIN: minimum withdrawal is Rs. ${WALLET_MIN_WITHDRAWAL}`,
       );
     }
-    let idemKey: string | null = null;
-    if (dto.requestId) {
-      idemKey = `${WALLET_IDEM_WITHDRAWAL}${dto.requestId}`;
-      if (await this.isIdempotent(idemKey)) {
-        return { status: 'ALREADY_PROCESSED', amount };
-      }
+    const wallet = await this.getOrCreateWallet(workerId);
+    const balance = this.toNumber(wallet.balance);
+    if (balance < amount) {
+      throw new BadRequestException(
+        'WALLET_INSUFFICIENT_BALANCE: withdrawal exceeds available balance',
+      );
     }
-    return this.prisma.$transaction(async (tx) => {
-      const wallet = await this.getOrCreateWalletWith(tx, workerId);
-      const balance = this.toNumber(wallet.balance);
-      if (balance < amount) {
-        throw new BadRequestException(
-          'WALLET_INSUFFICIENT_BALANCE: withdrawal exceeds available balance',
-        );
-      }
-      const balanceAfter = roundMoney(balance - amount);
-      await tx.workerWallet.update({
-        where: { id: wallet.id },
-        data: { balance: new Prisma.Decimal(balanceAfter) },
-      });
-      await this.addLedgerEntry(tx, wallet.id, 'WITHDRAWAL', amount, balanceAfter, {
-        note: 'Self-service withdrawal payout',
-      });
-      await this.enforceOfflineRule(tx, workerId, balanceAfter);
-      if (idemKey) {
-        await this.markIdempotent(idemKey);
-      }
-      return { status: 'PROCESSED', amount, balanceAfter };
+    const withdrawal = await this.prisma.withdrawal.create({
+      data: {
+        workerId,
+        amount: new Prisma.Decimal(amount),
+        status: 'PENDING',
+      },
     });
+    this.eventBus.emit('withdrawal.requested', {
+      withdrawalId: withdrawal.id,
+      workerId,
+      amount,
+    });
+    return {
+      id: withdrawal.id,
+      amount: this.toNumber(withdrawal.amount),
+      status: withdrawal.status,
+      requestedAt: withdrawal.requestedAt,
+    };
+  }
+
+  /** Admin processes a pending withdrawal — moves money, creates ledger entry. */
+  async processWithdrawal(withdrawalId: string, adminId: string, action: 'approve' | 'reject', note?: string) {
+    const withdrawal = await this.prisma.withdrawal.findUnique({ where: { id: withdrawalId } });
+    if (!withdrawal) {
+      throw new NotFoundException('WITHDRAWAL_NOT_FOUND');
+    }
+    if (withdrawal.status !== 'PENDING') {
+      throw new BadRequestException('WITHDRAWAL_ALREADY_DECIDED');
+    }
+
+    if (action === 'approve') {
+      const idemKey = `${WALLET_IDEM_WITHDRAWAL}${withdrawalId}`;
+      if (await this.isIdempotent(idemKey)) {
+        return { status: 'ALREADY_PROCESSED', amount: this.toNumber(withdrawal.amount) };
+      }
+      return this.prisma.$transaction(async (tx) => {
+        const wallet = await this.getOrCreateWalletWith(tx, withdrawal.workerId);
+        const balance = this.toNumber(wallet.balance);
+        const amount = this.toNumber(withdrawal.amount);
+        if (balance < amount) {
+          throw new BadRequestException('WALLET_INSUFFICIENT_BALANCE: balance dropped below withdrawal amount');
+        }
+        const balanceAfter = roundMoney(balance - amount);
+        await tx.workerWallet.update({
+          where: { id: wallet.id },
+          data: { balance: new Prisma.Decimal(balanceAfter) },
+        });
+        await this.addLedgerEntry(tx, wallet.id, 'WITHDRAWAL', amount, balanceAfter, {
+          note: 'Admin-approved withdrawal payout',
+        });
+        await this.enforceOfflineRule(tx, withdrawal.workerId, balanceAfter);
+        const updated = await tx.withdrawal.update({
+          where: { id: withdrawalId },
+          data: {
+            status: 'PROCESSED',
+            processedAt: new Date(),
+            processedBy: adminId,
+            note,
+          },
+        });
+        await this.markIdempotent(idemKey);
+        this.eventBus.emit('withdrawal.processed', {
+          withdrawalId,
+          workerId: withdrawal.workerId,
+          amount,
+          adminId,
+        });
+        return {
+          id: updated.id,
+          amount: this.toNumber(updated.amount),
+          status: updated.status,
+          processedAt: updated.processedAt,
+        };
+      });
+    } else {
+      const updated = await this.prisma.withdrawal.update({
+        where: { id: withdrawalId },
+        data: { status: 'REJECTED', note, processedAt: new Date(), processedBy: adminId },
+      });
+      this.eventBus.emit('withdrawal.rejected', {
+        withdrawalId,
+        workerId: withdrawal.workerId,
+        amount: this.toNumber(withdrawal.amount),
+        reason: note,
+      });
+      return {
+        id: updated.id,
+        amount: this.toNumber(updated.amount),
+        status: updated.status,
+        note: updated.note,
+      };
+    }
+  }
+
+  /** Worker checks their own withdrawal request history. */
+  async getWithdrawalHistory(workerId: string, query: WalletQueryDto) {
+    const { page, limit, skip } = normalizePage(query);
+    const [withdrawals, total] = await this.prisma.$transaction([
+      this.prisma.withdrawal.findMany({
+        where: { workerId },
+        orderBy: { requestedAt: 'desc' },
+        skip,
+        take: limit,
+      }),
+      this.prisma.withdrawal.count({ where: { workerId } }),
+    ]);
+    return toPageResult(
+      withdrawals.map((w) => ({
+        id: w.id,
+        amount: this.toNumber(w.amount),
+        status: w.status,
+        note: w.note,
+        requestedAt: w.requestedAt,
+        processedAt: w.processedAt,
+      })),
+      total,
+      page,
+      limit,
+    );
+  }
+
+  // Kept for backward compatibility — now delegates to requestWithdrawal.
+  async withdraw(workerId: string, dto: WithdrawDto) {
+    return this.requestWithdrawal(workerId, dto);
   }
 
   // ---------------- Earnings + completion OTP (repair.completed) ----------------

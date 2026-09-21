@@ -75,18 +75,18 @@ Backend Developer — Shared Auth APIs + Full Admin Dashboard APIs
 | --- | --------------------------------------------------------------- | ----------------------------------------------- | ------ |
 | 10  | Get all customers (list with search/filter)                     | `GET /admin/customers`                          | ✅     |
 | 11  | Get customer detail (profile, jobs, payments, reviews)          | `GET /admin/customers/[id]`                     | ✅     |
-| 12  | Suspend customer (with reason)                                  | `PUT /admin/customers/[id]/suspend`             | ⏸️     |
-| 13  | Reactivate customer                                             | `PUT /admin/customers/[id]/reactivate`          | ⏸️     |
+| 12  | Suspend customer (with reason)                                  | `PUT /admin/customers/[id]/suspend`             | ✅     |
+| 13  | Reactivate customer                                             | `PUT /admin/customers/[id]/reactivate`          | ✅     |
 | 14  | Get all workers (list with search/filter)                       | `GET /admin/workers`                            | ✅     |
 | 15  | Get worker detail (profile, documents, jobs, earnings, reviews) | `GET /admin/workers/[id]`                       | ✅     |
-| 16  | Suspend worker (with reason)                                    | `PUT /admin/workers/[id]/suspend`               | ⏸️     |
-| 17  | Reactivate worker                                               | `PUT /admin/workers/[id]/reactivate`            | ⏸️     |
+| 16  | Suspend worker (with reason)                                    | `PUT /admin/workers/[id]/suspend`               | ✅     |
+| 17  | Reactivate worker                                               | `PUT /admin/workers/[id]/reactivate`            | ✅     |
 | 18  | Get verification queue (pending submissions)                    | `GET /admin/verifications`                      | ✅     |
 | 19  | Get verification detail (documents, skills, experience)         | `GET /admin/verifications/[id]`                 | ✅     |
 | 20  | Approve verification                                            | `PUT /admin/verifications/[id]/approve`         | ✅     |
 | 21  | Reject verification (with reason)                               | `PUT /admin/verifications/[id]/reject`          | ✅     |
 | 22  | Request changes (with notes)                                    | `PUT /admin/verifications/[id]/request-changes` | ✅     |
-| 23  | Revoke verification                                             | `PUT /admin/verifications/[id]/revoke`          | ⏸️     |
+| 23  | Revoke verification                                             | `PUT /admin/verifications/[id]/revoke`          | ✅     |
 
 **Rules:**
 
@@ -101,11 +101,11 @@ Backend Developer — Shared Auth APIs + Full Admin Dashboard APIs
 
 | #   | Task                                                           | API Endpoint                            | Status |
 | --- | -------------------------------------------------------------- | --------------------------------------- | ------ |
-| 24  | Get all jobs (list with filters)                               | `GET /admin/jobs`                       | ⏸️     |
-| 25  | Get job detail (full audit history)                            | `GET /admin/jobs/[id]`                  | ⏸️     |
-| 26  | Force cancel job (with reason)                                 | `PUT /admin/jobs/[id]/cancel`           | ⏸️     |
-| 27  | Get transactions feed (wallet ledger)                          | `GET /admin/transactions`               | ⏸️     |
-| 28  | Get payments feed                                              | `GET /admin/payments`                   | ⏸️     |
+| 24  | Get all jobs (list with filters)                               | `GET /admin/jobs`                       | ✅     |
+| 25  | Get job detail (full audit history)                            | `GET /admin/jobs/[id]`                  | ✅     |
+| 26  | Force cancel job (with reason)                                 | `PUT /admin/jobs/[id]/cancel`           | ✅     |
+| 27  | Get transactions feed (wallet ledger)                          | `GET /admin/transactions`               | ✅     |
+| 28  | Get payments feed                                              | `GET /admin/payments`                   | ✅     |
 | 29  | Commission snapshot (total + per transaction)                  | `GET /admin/commission`                 | ⏸️     |
 | 30  | Get withdrawal queue                                           | `GET /admin/withdrawals`                | ⏸️     |
 | 31  | Process withdrawal                                             | `PUT /admin/withdrawals/[id]/process`   | ⏸️     |

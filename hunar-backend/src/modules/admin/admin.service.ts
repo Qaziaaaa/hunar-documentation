@@ -1,10 +1,22 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { CommissionStatus, JobStatus, Prisma, Role } from '@prisma/client';
+import { BadRequestException, Injectable, NotFoundException, Optional } from '@nestjs/common';
+import { CommissionStatus, JobStatus, Prisma, Role, WithdrawalStatus } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { normalizePage, toPageResult } from '../../common/helpers/pagination.util';
+import { EventBusService } from '../../common/event-bus/event-bus.service';
+import { RealtimeService } from '../realtime/realtime.service';
+import { JOB_EVENTS, userRoom } from '../jobs/jobs.events';
+import { JobStateMachine } from '../jobs/jobs.state-machine';
 import { JwtPayload } from '../../common/types/jwt-payload.interface';
 import { AUDIT_ACTIONS, AuditService } from './audit.service';
-import { AdminUserListQueryDto, AdminWorkerListQueryDto } from './admin.validation';
+import {
+  AdminUserListQueryDto,
+  AdminJobListQueryDto,
+  AdminWorkerListQueryDto,
+  AdminTransactionListQueryDto,
+  AdminPaymentListQueryDto,
+  AdminCommissionListQueryDto,
+  AdminWithdrawalListQueryDto,
+} from './admin.validation';
 
 // Job states that mean the customer has paid for the (locked) visit charge.
 const PAID_JOB_STATUSES: JobStatus[] = [JobStatus.COMPLETED, JobStatus.PAID, JobStatus.REVIEWED];
@@ -30,11 +42,101 @@ const LIST_USER_SELECT = {
 
 type AdminUserRow = Prisma.UserGetPayload<{ select: typeof LIST_USER_SELECT }>;
 
+const LIST_JOB_SELECT = {
+  id: true,
+  title: true,
+  description: true,
+  images: true,
+  status: true,
+  urgency: true,
+  city: true,
+  area: true,
+  suggestedVisitCharge: true,
+  lockedVisitCharge: true,
+  cancelReason: true,
+  cancelledAt: true,
+  completedAt: true,
+  createdAt: true,
+  category: { select: { id: true, name: true, nameUrdu: true } },
+  customer: { select: { id: true, name: true, phone: true } },
+  selectedWorker: { select: { id: true, name: true, phone: true } },
+} satisfies Prisma.ServiceRequestSelect;
+
+type AdminJobRow = Prisma.ServiceRequestGetPayload<{ select: typeof LIST_JOB_SELECT }>;
+
+// Admin-only transactions feed (Admin flow §8 — Step F). Read/oversight, never moves money.
+const TRANSACTION_SELECT = {
+  id: true,
+  type: true,
+  amount: true,
+  balanceAfter: true,
+  referenceType: true,
+  referenceId: true,
+  note: true,
+  createdAt: true,
+  user: { select: { id: true, name: true, phone: true } },
+} satisfies Prisma.WalletLedgerSelect;
+
+type AdminTransactionRow = Prisma.WalletLedgerGetPayload<{ select: typeof TRANSACTION_SELECT }>;
+
+// Payments feed (Admin flow §8 — Step F). Payments are derived from paid jobs.
+const PAYMENT_SELECT = {
+  id: true,
+  title: true,
+  status: true,
+  lockedVisitCharge: true,
+  suggestedVisitCharge: true,
+  city: true,
+  area: true,
+  completedAt: true,
+  createdAt: true,
+  category: { select: { id: true, name: true, nameUrdu: true } },
+  customer: { select: { id: true, name: true, phone: true } },
+  selectedWorker: { select: { id: true, name: true, phone: true } },
+} satisfies Prisma.ServiceRequestSelect;
+
+type AdminPaymentRow = Prisma.ServiceRequestGetPayload<{ select: typeof PAYMENT_SELECT }>;
+
+// Commission snapshot feed (Admin flow §8 — Step F). Platform revenue = Commission.amount.
+const COMMISSION_SELECT = {
+  id: true,
+  jobId: true,
+  visitCharge: true,
+  commissionRate: true,
+  amount: true,
+  status: true,
+  paidAt: true,
+  verifiedAt: true,
+  createdAt: true,
+  worker: { select: { id: true, name: true, phone: true } },
+  job: { select: { id: true, title: true } },
+} satisfies Prisma.CommissionSelect;
+
+type AdminCommissionRow = Prisma.CommissionGetPayload<{ select: typeof COMMISSION_SELECT }>;
+
+// Withdrawal queue feed (Admin flow §8 — Step F). Worker withdrawal requests.
+const WITHDRAWAL_SELECT = {
+  id: true,
+  workerId: true,
+  amount: true,
+  status: true,
+  note: true,
+  requestedAt: true,
+  processedAt: true,
+  processedBy: true,
+  createdAt: true,
+  worker: { select: { id: true, name: true, phone: true } },
+} satisfies Prisma.WithdrawalSelect;
+
+type AdminWithdrawalRow = Prisma.WithdrawalGetPayload<{ select: typeof WITHDRAWAL_SELECT }>;
+
 @Injectable()
 export class AdminService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly audit: AuditService,
+    @Optional() private readonly eventBus?: EventBusService,
+    @Optional() private readonly realtime?: RealtimeService,
   ) {}
 
   // ----- Customers -----
@@ -277,6 +379,646 @@ export class AdminService {
 
   // ----- Shared internals -----
 
+  // Job directory with search, status, category, city/area and date-range filters.
+  async listJobs(query: AdminJobListQueryDto) {
+    const { page, limit, skip } = normalizePage(query);
+
+    const where: Prisma.ServiceRequestWhereInput = {
+      ...(query.status ? { status: query.status } : {}),
+      ...(query.categoryId ? { categoryId: query.categoryId } : {}),
+      ...(query.city ? { city: query.city } : {}),
+      ...(query.area ? { area: query.area } : {}),
+      ...(query.from || query.to
+        ? {
+            createdAt: {
+              ...(query.from ? { gte: new Date(query.from) } : {}),
+              ...(query.to ? { lte: new Date(query.to) } : {}),
+            },
+          }
+        : {}),
+      ...(query.search
+        ? {
+            OR: [
+              { title: { contains: query.search, mode: 'insensitive' } },
+              { customer: { is: { name: { contains: query.search, mode: 'insensitive' } } } },
+              { customer: { is: { phone: { contains: query.search } } } },
+            ],
+          }
+        : {}),
+    };
+
+    const [jobs, total] = await Promise.all([
+      this.prisma.serviceRequest.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limit,
+        select: LIST_JOB_SELECT,
+      }),
+      this.prisma.serviceRequest.count({ where }),
+    ]);
+
+    const items = jobs.map((job: AdminJobRow) => ({
+      id: job.id,
+      title: job.title,
+      description: job.description,
+      images: job.images,
+      status: job.status,
+      urgency: job.urgency,
+      city: job.city,
+      area: job.area,
+      suggestedVisitCharge: job.suggestedVisitCharge,
+      lockedVisitCharge: job.lockedVisitCharge,
+      category: job.category,
+      customer: job.customer,
+      worker: job.selectedWorker,
+      cancelReason: job.cancelReason,
+      cancelledAt: job.cancelledAt,
+      completedAt: job.completedAt,
+      createdAt: job.createdAt,
+    }));
+
+    return toPageResult(items, total, page, limit);
+  }
+
+  // Wallet ledger feed for admins (Admin flow §8 — Step F): type, worker search and
+  // date-range filters, sorted newest-first. Amounts are signed (+credit / −debit).
+  async listTransactions(query: AdminTransactionListQueryDto) {
+    const { page, limit, skip } = normalizePage(query);
+
+    const where: Prisma.WalletLedgerWhereInput = {
+      ...(query.type ? { type: query.type } : {}),
+      ...(query.from || query.to
+        ? {
+            createdAt: {
+              ...(query.from ? { gte: new Date(query.from) } : {}),
+              ...(query.to ? { lte: new Date(query.to) } : {}),
+            },
+          }
+        : {}),
+      ...(query.search
+        ? {
+            user: {
+              is: {
+                OR: [
+                  { name: { contains: query.search, mode: 'insensitive' } },
+                  { phone: { contains: query.search } },
+                ],
+              },
+            },
+          }
+        : {}),
+    };
+
+    const [rows, total] = await Promise.all([
+      this.prisma.walletLedger.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limit,
+        select: TRANSACTION_SELECT,
+      }),
+      this.prisma.walletLedger.count({ where }),
+    ]);
+
+    const items = rows.map((row: AdminTransactionRow) => ({
+      id: row.id,
+      type: row.type,
+      amount: row.amount,
+      balanceAfter: row.balanceAfter,
+      referenceType: row.referenceType,
+      referenceId: row.referenceId,
+      note: row.note,
+      worker: row.user,
+      timestamp: row.createdAt,
+    }));
+
+    return toPageResult(items, total, page, limit);
+  }
+
+  // Payments feed (Admin flow §8 — Step F): all paid jobs with amount, job, customer, worker,
+  // date and status. Amount = locked visit charge (falling back to suggested charge).
+  async listPayments(query: AdminPaymentListQueryDto) {
+    const { page, limit, skip } = normalizePage(query);
+
+    const where: Prisma.ServiceRequestWhereInput = {
+      status: { in: PAID_JOB_STATUSES },
+      ...(query.status ? { status: query.status } : {}),
+      ...(query.city ? { city: query.city } : {}),
+      ...(query.area ? { area: query.area } : {}),
+      ...(query.from || query.to
+        ? {
+            completedAt: {
+              ...(query.from ? { gte: new Date(query.from) } : {}),
+              ...(query.to ? { lte: new Date(query.to) } : {}),
+            },
+          }
+        : {}),
+      ...(query.search
+        ? {
+            OR: [
+              { title: { contains: query.search, mode: 'insensitive' } },
+              { customer: { is: { name: { contains: query.search, mode: 'insensitive' } } } },
+              { customer: { is: { phone: { contains: query.search } } } },
+              { selectedWorker: { is: { name: { contains: query.search, mode: 'insensitive' } } } },
+            ],
+          }
+        : {}),
+    };
+
+    const [rows, total] = await Promise.all([
+      this.prisma.serviceRequest.findMany({
+        where,
+        orderBy: { completedAt: 'desc' },
+        skip,
+        take: limit,
+        select: PAYMENT_SELECT,
+      }),
+      this.prisma.serviceRequest.count({ where }),
+    ]);
+
+    const items = rows.map((row: AdminPaymentRow) => ({
+      id: row.id,
+      jobTitle: row.title,
+      amount: row.lockedVisitCharge ?? row.suggestedVisitCharge ?? null,
+      status: row.status,
+      paidAt: row.completedAt ?? row.createdAt,
+      city: row.city,
+      area: row.area,
+      category: row.category,
+      customer: row.customer,
+      worker: row.selectedWorker,
+    }));
+
+    return toPageResult(items, total, page, limit);
+  }
+
+  // Commission snapshot (Admin flow §8 — Step F): total platform revenue (sum of commission
+  // amounts / visit charges, avg rate) + the per-transaction list with worker and job.
+  async getCommissionSnapshot(query: AdminCommissionListQueryDto) {
+    const { page, limit, skip } = normalizePage(query);
+
+    const where: Prisma.CommissionWhereInput = {
+      ...(query.status ? { status: query.status } : {}),
+      ...(query.from || query.to
+        ? {
+            createdAt: {
+              ...(query.from ? { gte: new Date(query.from) } : {}),
+              ...(query.to ? { lte: new Date(query.to) } : {}),
+            },
+          }
+        : {}),
+      ...(query.search
+        ? {
+            OR: [
+              { job: { is: { title: { contains: query.search, mode: 'insensitive' } } } },
+              { worker: { is: { name: { contains: query.search, mode: 'insensitive' } } } },
+              { worker: { is: { phone: { contains: query.search } } } },
+            ],
+          }
+        : {}),
+    };
+
+    const [rows, total, agg] = await Promise.all([
+      this.prisma.commission.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limit,
+        select: COMMISSION_SELECT,
+      }),
+      this.prisma.commission.count({ where }),
+      this.prisma.commission.aggregate({
+        where,
+        _sum: { amount: true, visitCharge: true },
+        _avg: { commissionRate: true },
+      }),
+    ]);
+
+    const items = rows.map((row: AdminCommissionRow) => ({
+      id: row.id,
+      jobId: row.jobId,
+      jobTitle: row.job.title,
+      worker: row.worker,
+      visitCharge: row.visitCharge,
+      rate: row.commissionRate,
+      amount: row.amount,
+      status: row.status,
+      paidAt: row.paidAt,
+      date: row.createdAt,
+    }));
+
+    return {
+      summary: {
+        totalRevenue: (agg._sum.amount ?? 0).toFixed(2),
+        totalVisitCharges: (agg._sum.visitCharge ?? 0).toFixed(2),
+        totalCount: total,
+        averageRate: agg._avg.commissionRate ?? null,
+      },
+      items,
+      meta: { page, limit, total, totalPages: Math.ceil(total / limit) },
+    };
+  }
+
+  // Withdrawal queue (Admin flow §8 — Step F): list of worker withdrawal requests with
+  // status (pending/processed/failed/rejected), filters, and pagination.
+  async listWithdrawals(query: AdminWithdrawalListQueryDto) {
+    const { page, limit, skip } = normalizePage(query);
+
+    const where: Prisma.WithdrawalWhereInput = {
+      ...(query.status ? { status: query.status } : {}),
+      ...(query.from || query.to
+        ? {
+            requestedAt: {
+              ...(query.from ? { gte: new Date(query.from) } : {}),
+              ...(query.to ? { lte: new Date(query.to) } : {}),
+            },
+          }
+        : {}),
+      ...(query.search
+        ? {
+            OR: [
+              { worker: { is: { name: { contains: query.search, mode: 'insensitive' } } } },
+              { worker: { is: { phone: { contains: query.search } } } },
+            ],
+          }
+        : {}),
+    };
+
+    const [rows, total] = await Promise.all([
+      this.prisma.withdrawal.findMany({
+        where,
+        orderBy: { requestedAt: 'desc' },
+        skip,
+        take: limit,
+        select: WITHDRAWAL_SELECT,
+      }),
+      this.prisma.withdrawal.count({ where }),
+    ]);
+
+    const items = rows.map((row: AdminWithdrawalRow) => ({
+      id: row.id,
+      workerId: row.workerId,
+      worker: row.worker,
+      amount: row.amount,
+      status: row.status,
+      note: row.note,
+      requestedAt: row.requestedAt,
+      processedAt: row.processedAt,
+      processedBy: row.processedBy,
+    }));
+
+    return toPageResult(items, total, page, limit);
+  }
+
+  // Admin processes a withdrawal request (approve/reject). On approve, moves money and
+  // creates wallet ledger entry. Audit-logged.
+  async processWithdrawal(id: string, actor: JwtPayload, action: 'approve' | 'reject', note?: string) {
+    const withdrawal = await this.prisma.withdrawal.findUnique({
+      where: { id },
+      select: { id: true, workerId: true, amount: true, status: true },
+    });
+    if (!withdrawal) {
+      throw new NotFoundException('Withdrawal not found');
+    }
+    if (withdrawal.status !== 'PENDING') {
+      throw new BadRequestException('Withdrawal already processed');
+    }
+
+    if (action === 'approve') {
+      const wallet = await this.prisma.workerWallet.findUnique({
+        where: { userId: withdrawal.workerId },
+        select: { userId: true, balance: true },
+      });
+      if (!wallet) {
+        throw new NotFoundException('Worker wallet not found');
+      }
+      const balance = Number(wallet.balance);
+      const amount = Number(withdrawal.amount);
+      if (balance < amount) {
+        throw new BadRequestException('Insufficient balance for withdrawal');
+      }
+      const balanceAfter = balance - amount;
+
+      return this.prisma.$transaction(async (tx) => {
+        await tx.workerWallet.update({
+          where: { userId: wallet.userId },
+          data: { balance: new Prisma.Decimal(balanceAfter) },
+        });
+
+        await tx.walletLedger.create({
+          data: {
+            user: { connect: { id: wallet.userId } },
+            type: 'WITHDRAWAL',
+            amount: new Prisma.Decimal(-amount),
+            balanceAfter: new Prisma.Decimal(balanceAfter),
+            note: 'Admin-approved withdrawal payout',
+            idempotencyKey: `withdrawal-${id}-${Date.now()}`,
+          },
+        });
+
+        const updated = await tx.withdrawal.update({
+          where: { id },
+          data: {
+            status: 'PROCESSED',
+            processedAt: new Date(),
+            processedBy: actor.sub,
+            note,
+          },
+          select: {
+            id: true,
+            workerId: true,
+            amount: true,
+            status: true,
+            processedAt: true,
+            processedBy: true,
+            note: true,
+          },
+        });
+
+        await this.audit.record(
+          {
+            actorId: actor.sub,
+            actorRole: actor.role,
+            action: 'WITHDRAWAL_APPROVED',
+            targetType: 'WITHDRAWAL',
+            targetId: id,
+            reason: note,
+            metadata: { workerId: withdrawal.workerId, amount: withdrawal.amount },
+          },
+          tx,
+        );
+
+        return updated;
+      });
+    } else {
+      const updated = await this.prisma.withdrawal.update({
+        where: { id },
+        data: { status: 'REJECTED', processedAt: new Date(), processedBy: actor.sub, note },
+        select: {
+          id: true,
+          workerId: true,
+          amount: true,
+          status: true,
+          processedAt: true,
+          processedBy: true,
+          note: true,
+        },
+      });
+
+      await this.audit.record(
+        {
+          actorId: actor.sub,
+          actorRole: actor.role,
+          action: 'WITHDRAWAL_REJECTED',
+          targetType: 'WITHDRAWAL',
+          targetId: id,
+          reason: note,
+          metadata: { workerId: withdrawal.workerId, amount: withdrawal.amount },
+        },
+      );
+
+      return updated;
+    }
+  }
+
+  // Full job detail with its entire audit history (Admin flow §7.2):
+  // offers, visits, repairs + revisions, commission, review, payments and a merged timeline.
+  async getJobDetail(id: string) {
+    const job = await this.prisma.serviceRequest.findFirst({
+      where: { id },
+      select: {
+        id: true,
+        title: true,
+        description: true,
+        images: true,
+        voiceNoteUrl: true,
+        status: true,
+        urgency: true,
+        city: true,
+        area: true,
+        address: true,
+        suggestedVisitCharge: true,
+        lockedVisitCharge: true,
+        preferredVisitTime: true,
+        cancelReason: true,
+        cancelledAt: true,
+        completedAt: true,
+        createdAt: true,
+        updatedAt: true,
+        category: { select: { id: true, name: true, nameUrdu: true } },
+        customer: { select: { id: true, name: true, phone: true } },
+        selectedWorker: { select: { id: true, name: true, phone: true } },
+      },
+    });
+    if (!job) {
+      throw new NotFoundException('Job not found');
+    }
+
+    const [offers, visits, repairs, commission, reviews] = await Promise.all([
+      this.prisma.jobOffer.findMany({
+        where: { jobId: id },
+        orderBy: { createdAt: 'asc' },
+        select: {
+          id: true,
+          workerId: true,
+          visitCharge: true,
+          message: true,
+          status: true,
+          negotiationRound: true,
+          negotiationHistory: true,
+          lockedAt: true,
+          createdAt: true,
+          updatedAt: true,
+          worker: { select: { id: true, name: true, phone: true } },
+        },
+      }),
+      this.prisma.visit.findMany({
+        where: { jobId: id },
+        orderBy: { scheduledDate: 'asc' },
+        select: {
+          id: true,
+          workerId: true,
+          scheduledDate: true,
+          actualDate: true,
+          status: true,
+          diagnosis: true,
+          repairPlan: true,
+          repairEstimate: true,
+          estimatedRepairTimeMin: true,
+          inspectionSubmittedAt: true,
+          createdAt: true,
+          worker: { select: { id: true, name: true, phone: true } },
+        },
+      }),
+      this.prisma.repair.findMany({
+        where: { jobId: id },
+        orderBy: { createdAt: 'asc' },
+        select: {
+          id: true,
+          visitId: true,
+          workerId: true,
+          description: true,
+          amount: true,
+          itemsBreakdown: true,
+          status: true,
+          negotiationRound: true,
+          lockedAmount: true,
+          lockedAt: true,
+          startedAt: true,
+          completedAt: true,
+          createdAt: true,
+          worker: { select: { id: true, name: true, phone: true } },
+          revisions: {
+            orderBy: { createdAt: 'asc' },
+            select: {
+              id: true,
+              proposedAmount: true,
+              reason: true,
+              status: true,
+              requestedBy: true,
+              createdAt: true,
+              decidedAt: true,
+            },
+          },
+        },
+      }),
+      this.prisma.commission.findFirst({
+        where: { jobId: id },
+        select: {
+          id: true,
+          workerId: true,
+          visitCharge: true,
+          commissionRate: true,
+          amount: true,
+          status: true,
+          screenshotUrl: true,
+          paidAt: true,
+          verifiedAt: true,
+          createdAt: true,
+        },
+      }),
+      this.prisma.review.findMany({
+        where: { jobId: id },
+        orderBy: { createdAt: 'asc' },
+        select: {
+          id: true,
+          reviewerId: true,
+          revieweeId: true,
+          rating: true,
+          comment: true,
+          isVisible: true,
+          createdAt: true,
+          reviewer: { select: { id: true, name: true } },
+          reviewee: { select: { id: true, name: true } },
+        },
+      }),
+    ]);
+
+    const payments = PAID_JOB_STATUSES.includes(job.status)
+      ? [
+          {
+            jobId: job.id,
+            amount: job.lockedVisitCharge ?? job.suggestedVisitCharge ?? null,
+            status: job.status,
+            paidAt: job.completedAt ?? job.createdAt,
+          },
+        ]
+      : [];
+
+    return {
+      job: {
+        id: job.id,
+        title: job.title,
+        description: job.description,
+        images: job.images,
+        voiceNoteUrl: job.voiceNoteUrl,
+        status: job.status,
+        urgency: job.urgency,
+        city: job.city,
+        area: job.area,
+        address: job.address,
+        suggestedVisitCharge: job.suggestedVisitCharge,
+        lockedVisitCharge: job.lockedVisitCharge,
+        preferredVisitTime: job.preferredVisitTime,
+        cancelReason: job.cancelReason,
+        cancelledAt: job.cancelledAt,
+        completedAt: job.completedAt,
+        createdAt: job.createdAt,
+        updatedAt: job.updatedAt,
+        category: job.category,
+        customer: job.customer,
+        worker: job.selectedWorker,
+      },
+      timeline: this.buildJobTimeline({
+        job,
+        offers,
+        visits,
+        repairs,
+        commission,
+        reviews,
+      }),
+      offers,
+      visits,
+      repairs,
+      commission,
+      reviews,
+      payments,
+    };
+  }
+
+  // Admin force-cancel a job. Mandatory reason, state-machine check, audit trail, and both
+  // parties (customer + assigned worker) are notified in realtime (Admin flow §7 / rules 11, 14).
+  async forceCancelJob(id: string, actor: JwtPayload, reason: string) {
+    const job = await this.prisma.serviceRequest.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        customerId: true,
+        selectedWorkerId: true,
+        status: true,
+        title: true,
+      },
+    });
+    if (!job) {
+      throw new NotFoundException('Job not found');
+    }
+    JobStateMachine.assertCanTransition(job.status, JobStatus.CANCELLED);
+
+    const updated = await this.prisma.$transaction(async (tx) => {
+      const cancelled = await tx.serviceRequest.update({
+        where: { id },
+        data: { status: JobStatus.CANCELLED, cancelReason: reason, cancelledAt: new Date() },
+        select: { id: true, status: true, cancelReason: true, cancelledAt: true },
+      });
+
+      await this.audit.record(
+        {
+          actorId: actor.sub,
+          actorRole: actor.role,
+          action: AUDIT_ACTIONS.JOB_FORCE_CANCELLED,
+          targetType: 'SERVICE_REQUEST',
+          targetId: id,
+          reason,
+          metadata: { jobTitle: job.title },
+        },
+        tx,
+      );
+
+      return cancelled;
+    });
+
+    this.eventBus.emit('job.cancelled', { jobId: id, reason });
+    const recipients = job.selectedWorkerId
+      ? [job.customerId, job.selectedWorkerId]
+      : [job.customerId];
+    recipients.forEach((userId) => {
+      this.realtime.emitToRoom(userRoom(userId), JOB_EVENTS.jobCancelled, { jobId: id });
+    });
+
+    return updated;
+  }
+
   private async listUsers(
     role: Role,
     query: AdminUserListQueryDto,
@@ -380,5 +1122,155 @@ export class AdminService {
     }
     const total = reviews.reduce((sum, review) => sum + review.rating, 0);
     return Number((total / reviews.length).toFixed(2));
+  }
+
+  // Merges every job-lifecycle event into one chronological audit timeline (§7.2),
+  // used by admins as the record of truth when resolving a dispute.
+  private buildJobTimeline(input: {
+    job: {
+      createdAt: Date;
+      completedAt: Date | null;
+      cancelledAt: Date | null;
+      cancelReason: string | null;
+      selectedWorker?: { id: string; name: string } | null;
+    };
+    offers: Array<{
+      createdAt: Date;
+      visitCharge: { toNumber(): number } | number | string;
+      status: string;
+      worker?: { id: string; name: string } | null;
+    }>;
+    visits: Array<{
+      scheduledDate: Date;
+      actualDate: Date | null;
+      status: string;
+      worker?: { id: string; name: string } | null;
+    }>;
+    repairs: Array<{
+      createdAt: Date;
+      startedAt: Date | null;
+      completedAt: Date | null;
+      amount: { toNumber(): number } | number | string;
+      description: string;
+      status: string;
+      revisions?: Array<{
+        createdAt: Date;
+        proposedAmount: { toNumber(): number } | number | string;
+        status: string;
+        reason: string;
+        requestedBy: string;
+      }>;
+    }>;
+    commission: {
+      createdAt: Date;
+      amount: { toNumber(): number } | number | string;
+      status: string;
+      verifiedAt: Date | null;
+      paidAt: Date | null;
+    } | null;
+    reviews: Array<{ createdAt: Date; rating: number; comment: string | null }>;
+  }): Array<{ at: Date; type: string; detail: string }> {
+    const events: Array<{ at: Date; type: string; detail: string }> = [];
+
+    events.push({
+      at: input.job.createdAt,
+      type: 'JOB_CREATED',
+      detail: 'Service request created',
+    });
+    if (input.job.cancelledAt) {
+      events.push({
+        at: input.job.cancelledAt,
+        type: 'JOB_CANCELLED',
+        detail: input.job.cancelReason ?? 'Cancelled by customer or admin',
+      });
+    }
+    if (input.job.completedAt) {
+      events.push({ at: input.job.completedAt, type: 'JOB_COMPLETED', detail: 'Job completed' });
+    }
+
+    for (const offer of input.offers) {
+      const charge = Number(offer.visitCharge);
+      events.push({
+        at: offer.createdAt,
+        type: 'OFFER_CREATED',
+        detail: `${offer.worker?.name ?? 'Worker'} offered Rs ${charge} (${offer.status})`,
+      });
+    }
+
+    for (const visit of input.visits) {
+      events.push({
+        at: visit.scheduledDate,
+        type: 'VISIT_SCHEDULED',
+        detail: `Visit scheduled with ${visit.worker?.name ?? 'worker'}`,
+      });
+      if (visit.actualDate) {
+        events.push({
+          at: visit.actualDate,
+          type: `VISIT_${visit.status}`,
+          detail: `Visit ${visit.status.toLowerCase().replaceAll('_', ' ')}`,
+        });
+      }
+    }
+
+    for (const repair of input.repairs) {
+      events.push({
+        at: repair.createdAt,
+        type: 'REPAIR_PROPOSED',
+        detail: `${repair.description} — Rs ${Number(repair.amount)} (${repair.status})`,
+      });
+      if (repair.startedAt) {
+        events.push({
+          at: repair.startedAt,
+          type: 'REPAIR_STARTED',
+          detail: 'Repair work started',
+        });
+      }
+      if (repair.completedAt) {
+        events.push({
+          at: repair.completedAt,
+          type: 'REPAIR_COMPLETED',
+          detail: 'Repair work completed',
+        });
+      }
+      for (const revision of repair.revisions ?? []) {
+        events.push({
+          at: revision.createdAt,
+          type: 'REPAIR_REVISION',
+          detail: `${revision.requestedBy} proposed Rs ${Number(revision.proposedAmount)} — ${revision.reason} (${revision.status})`,
+        });
+      }
+    }
+
+    if (input.commission) {
+      events.push({
+        at: input.commission.createdAt,
+        type: 'COMMISSION_ISSUED',
+        detail: `Platform commission Rs ${Number(input.commission.amount)} (${input.commission.status})`,
+      });
+      if (input.commission.verifiedAt) {
+        events.push({
+          at: input.commission.verifiedAt,
+          type: 'COMMISSION_VERIFIED',
+          detail: 'Commission verified by admin',
+        });
+      }
+      if (input.commission.paidAt) {
+        events.push({
+          at: input.commission.paidAt,
+          type: 'COMMISSION_PAID',
+          detail: 'Commission paid to worker',
+        });
+      }
+    }
+
+    for (const review of input.reviews) {
+      events.push({
+        at: review.createdAt,
+        type: 'REVIEW',
+        detail: `${review.rating}/5 star${review.comment ? ` — ${review.comment}` : ''}`,
+      });
+    }
+
+    return events.sort((a, b) => a.at.getTime() - b.at.getTime());
   }
 }
