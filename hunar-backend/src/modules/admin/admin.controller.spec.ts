@@ -29,6 +29,8 @@ describe('AdminController HTTP — GET /admin/customers', () => {
   const emitDomainEvent = jest.fn();
   const emitToRoom = jest.fn();
   const findManyTransactions = jest.fn();
+  const findManyCommissions = jest.fn();
+  const aggregateCommissions = jest.fn();
 
   beforeAll(async () => {
     const moduleRef = await Test.createTestingModule({
