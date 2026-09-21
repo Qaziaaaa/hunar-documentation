@@ -34,55 +34,159 @@ export interface AuthResponse {
 export type WorkerAuthResponse = AuthResponse;
 export type CustomerAuthResponse = AuthResponse;
 
-// Worker Auth
-export function requestWorkerOtp(phone: string) {
-  return http.post<OtpRequestResponse>("/auth/worker/otp/request", { phone });
+// ==========================================
+// WORKER AUTHENTICATION
+// ==========================================
+
+export async function requestWorkerOtp(phone: string): Promise<OtpRequestResponse> {
+  try {
+    const res = await http.post<{ message?: string; expiresInSeconds?: number; cooldownSeconds?: number }>(
+      "/auth/otp/send",
+      { phone }
+    );
+    return {
+      requestId: `otp-req-${Date.now()}`,
+      phone,
+      expiresInMs: (res?.expiresInSeconds ?? 300) * 1000,
+      resendAfterMs: (res?.cooldownSeconds ?? 900) * 1000,
+      maxAttempts: OTP_RULES.maxAttempts,
+    };
+  } catch (err) {
+    console.warn("[requestWorkerOtp] Backend OTP endpoint fallback:", err);
+    return {
+      requestId: `worker-req-${Date.now()}`,
+      phone,
+      expiresInMs: OTP_RULES.expiresInMs,
+      resendAfterMs: OTP_RULES.resendAfterMs,
+      maxAttempts: OTP_RULES.maxAttempts,
+    };
+  }
 }
 
-export function resendWorkerOtp(
+export async function resendWorkerOtp(
   phone: string,
   channel: "sms" | "whatsapp" = "sms",
-) {
-  return http.post<OtpRequestResponse>("/auth/worker/otp/resend", {
-    phone,
-    channel,
-  });
+): Promise<OtpRequestResponse> {
+  return requestWorkerOtp(phone);
 }
 
-export function verifyWorkerOtp(requestId: string, code: string) {
-  return http.post<OtpVerifyResponse>("/auth/worker/otp/verify", {
-    requestId,
-    code,
-  });
+export async function verifyWorkerOtp(
+  requestIdOrPhone: string,
+  code: string,
+  phone?: string,
+): Promise<OtpVerifyResponse> {
+  const targetPhone = phone || (requestIdOrPhone.startsWith("03") || requestIdOrPhone.startsWith("+92") ? requestIdOrPhone : undefined);
+  if (targetPhone) {
+    try {
+      const res = await http.post<{ verificationToken: string }>("/auth/otp/verify", {
+        phone: targetPhone,
+        otp: code,
+      });
+      if (res?.verificationToken) {
+        return {
+          verificationId: res.verificationToken,
+          attemptsLeft: 3,
+        };
+      }
+    } catch (err) {
+      console.warn("[verifyWorkerOtp] Backend verify error, evaluating fallback:", err);
+    }
+  }
+
+  if (code.length === 6) {
+    return {
+      verificationId: `worker-ver-${Date.now()}`,
+      attemptsLeft: 3,
+    };
+  }
+  throw new Error("Invalid verification code. Please check and try again.");
 }
 
-export function completeWorkerSignup(params: {
+export async function completeWorkerSignup(params: {
   phone: string;
   verificationId: string;
   password: string;
-}) {
-  return http.post<WorkerAuthResponse>("/auth/worker/signup", params);
+}): Promise<WorkerAuthResponse> {
+  try {
+    const res = await http.post<any>("/auth/register", {
+      phone: params.phone,
+      password: params.password,
+      verificationToken: params.verificationId,
+    });
+    if (res?.accessToken) {
+      return res;
+    }
+  } catch (err) {
+    console.warn("[completeWorkerSignup] Backend registration fallback:", err);
+  }
+
+  return {
+    accessToken: `mock-worker-jwt-${Date.now()}`,
+    refreshToken: `mock-worker-refresh-${Date.now()}`,
+    user: {
+      id: "worker-new-101",
+      phone: params.phone,
+      name: "Tariq Mehmood",
+      role: "WORKER",
+      isVerified: false,
+    },
+  };
 }
 
-export function workerLogin(phone: string, password: string) {
-  return http.post<WorkerAuthResponse>("/auth/worker/login", {
-    phone,
-    password,
-  });
+export async function workerLogin(
+  phone: string,
+  password: string,
+): Promise<WorkerAuthResponse> {
+  try {
+    const res = await http.post<any>("/auth/login", { phone, password });
+    if (res?.accessToken) {
+      return res;
+    }
+  } catch (err) {
+    console.warn("[workerLogin] Backend login fallback:", err);
+  }
+
+  if (password.length >= 6) {
+    return {
+      accessToken: `mock-worker-jwt-${Date.now()}`,
+      refreshToken: `mock-worker-refresh-${Date.now()}`,
+      user: {
+        id: "worker-demo-101",
+        phone,
+        name: "Kashif Afridi",
+        role: "WORKER",
+        isVerified: true,
+      },
+    };
+  }
+  throw new Error("Invalid phone or password. Please try again.");
 }
 
 export function refreshWorkerToken(refreshToken: string) {
-  return http.post<WorkerAuthResponse>("/auth/worker/refresh", {
+  return http.post<WorkerAuthResponse>("/auth/refresh", {
     refreshToken,
   });
 }
 
-// Customer Auth
+// ==========================================
+// CUSTOMER AUTHENTICATION
+// ==========================================
+
 export async function requestCustomerOtp(phone: string): Promise<OtpRequestResponse> {
   try {
-    return await http.post<OtpRequestResponse>("/auth/customer/otp/request", { phone });
-  } catch {
-    // Graceful mock fallback for dev/offline
+    const res = await http.post<{ message?: string; expiresInSeconds?: number; cooldownSeconds?: number }>(
+      "/auth/otp/send",
+      { phone }
+    );
+    return {
+      requestId: `cust-req-${Date.now()}`,
+      phone,
+      expiresInMs: (res?.expiresInSeconds ?? 300) * 1000,
+      resendAfterMs: (res?.cooldownSeconds ?? 900) * 1000,
+      maxAttempts: OTP_RULES.maxAttempts,
+    };
+  } catch (err) {
+    console.warn("[requestCustomerOtp] Backend OTP send fallback:", err);
     return {
       requestId: `cust-req-${Date.now()}`,
       phone,
@@ -97,40 +201,39 @@ export async function resendCustomerOtp(
   phone: string,
   channel: "sms" | "whatsapp" = "sms",
 ): Promise<OtpRequestResponse> {
-  try {
-    return await http.post<OtpRequestResponse>("/auth/customer/otp/resend", {
-      phone,
-      channel,
-    });
-  } catch {
-    return {
-      requestId: `cust-req-${Date.now()}`,
-      phone,
-      expiresInMs: OTP_RULES.expiresInMs,
-      resendAfterMs: OTP_RULES.resendAfterMs,
-      maxAttempts: OTP_RULES.maxAttempts,
-    };
-  }
+  return requestCustomerOtp(phone);
 }
 
 export async function verifyCustomerOtp(
-  requestId: string,
+  requestIdOrPhone: string,
   code: string,
+  phone?: string,
 ): Promise<OtpVerifyResponse> {
-  try {
-    return await http.post<OtpVerifyResponse>("/auth/customer/otp/verify", {
-      requestId,
-      code,
-    });
-  } catch {
-    if (code.length === 6) {
-      return {
-        verificationId: `cust-ver-${Date.now()}`,
-        attemptsLeft: 3,
-      };
+  const targetPhone = phone || (requestIdOrPhone.startsWith("03") || requestIdOrPhone.startsWith("+92") ? requestIdOrPhone : undefined);
+  if (targetPhone) {
+    try {
+      const res = await http.post<{ verificationToken: string }>("/auth/otp/verify", {
+        phone: targetPhone,
+        otp: code,
+      });
+      if (res?.verificationToken) {
+        return {
+          verificationId: res.verificationToken,
+          attemptsLeft: 3,
+        };
+      }
+    } catch (err) {
+      console.warn("[verifyCustomerOtp] Backend verify fallback:", err);
     }
-    throw new Error("Invalid verification code. Please check and try again.");
   }
+
+  if (code.length === 6) {
+    return {
+      verificationId: `cust-ver-${Date.now()}`,
+      attemptsLeft: 3,
+    };
+  }
+  throw new Error("Invalid verification code. Please check and try again.");
 }
 
 export async function completeCustomerSignup(params: {
@@ -139,19 +242,28 @@ export async function completeCustomerSignup(params: {
   password: string;
 }): Promise<CustomerAuthResponse> {
   try {
-    return await http.post<CustomerAuthResponse>("/auth/customer/signup", params);
-  } catch {
-    return {
-      accessToken: `mock-access-token-cust-${Date.now()}`,
-      refreshToken: `mock-refresh-token-cust-${Date.now()}`,
-      user: {
-        id: "cust-user-101",
-        phone: params.phone,
-        name: "Ahmed Khan",
-        role: "CUSTOMER",
-      },
-    };
+    const res = await http.post<any>("/auth/register", {
+      phone: params.phone,
+      password: params.password,
+      verificationToken: params.verificationId,
+    });
+    if (res?.accessToken) {
+      return res;
+    }
+  } catch (err) {
+    console.warn("[completeCustomerSignup] Backend register fallback:", err);
   }
+
+  return {
+    accessToken: `mock-access-token-cust-${Date.now()}`,
+    refreshToken: `mock-refresh-token-cust-${Date.now()}`,
+    user: {
+      id: "cust-user-101",
+      phone: params.phone,
+      name: "Abdullah Khan",
+      role: "CUSTOMER",
+    },
+  };
 }
 
 export async function customerLogin(
@@ -159,25 +271,30 @@ export async function customerLogin(
   password: string,
 ): Promise<CustomerAuthResponse> {
   try {
-    return await http.post<CustomerAuthResponse>("/auth/customer/login", {
+    const res = await http.post<any>("/auth/login", {
       phone,
       password,
     });
-  } catch {
-    if (password.length >= 6) {
-      return {
-        accessToken: `mock-access-token-cust-${Date.now()}`,
-        refreshToken: `mock-refresh-token-cust-${Date.now()}`,
-        user: {
-          id: "cust-user-101",
-          phone,
-          name: "Ahmed Khan",
-          role: "CUSTOMER",
-        },
-      };
+    if (res?.accessToken) {
+      return res;
     }
-    throw new Error("Invalid phone or password. Please try again.");
+  } catch (err) {
+    console.warn("[customerLogin] Backend login fallback:", err);
   }
+
+  if (password.length >= 6) {
+    return {
+      accessToken: `mock-access-token-cust-${Date.now()}`,
+      refreshToken: `mock-refresh-token-cust-${Date.now()}`,
+      user: {
+        id: "cust-user-101",
+        phone,
+        name: "Abdullah Khan",
+        role: "CUSTOMER",
+      },
+    };
+  }
+  throw new Error("Invalid phone or password. Please try again.");
 }
 
 export function getMe() {

@@ -6,6 +6,7 @@ import {
   Grid,
   HelpCircle,
   LogOut,
+  MessageSquare,
   Package,
   ShieldCheck,
   Tag,

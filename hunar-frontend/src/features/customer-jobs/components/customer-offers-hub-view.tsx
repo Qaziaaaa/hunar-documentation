@@ -17,6 +17,7 @@ import { useLocale } from "next-intl";
 import { WorkerOfferCard } from "./worker-offer-card";
 import { WorkerProfileModal } from "./worker-profile-modal";
 import { SelectWorkerModal } from "./select-worker-modal";
+import { acceptWorkerOffer } from "../api/customer-jobs-api";
 import type { CustomerJob, WorkerOffer } from "../types";
 
 interface CustomerOffersHubViewProps {
@@ -49,7 +50,12 @@ export function CustomerOffersHubView({ initialJobs }: CustomerOffersHubViewProp
   }, [allOffers]);
 
   // Handle direct booking confirmation
-  const handleConfirmBooking = (offer: WorkerOffer) => {
+  const handleConfirmBooking = async (offer: WorkerOffer) => {
+    try {
+      await acceptWorkerOffer(offer.jobId, offer.id);
+    } catch (err) {
+      console.warn("acceptWorkerOffer error:", err);
+    }
     setJobs((prevJobs) =>
       prevJobs.map((job) => {
         if (job.id === offer.jobId) {

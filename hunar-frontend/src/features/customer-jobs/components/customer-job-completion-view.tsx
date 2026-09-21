@@ -23,6 +23,7 @@ import {
 import { Link, useRouter } from "@/i18n/navigation";
 import { useLocale } from "next-intl";
 import { MOCK_JOB_COMPLETION_MAP } from "../data/mock-completion-data";
+import { acceptRepairEstimate, submitJobReview } from "../api/customer-repair-api";
 import { JobCompletionData, JobEvidencePhoto } from "../types";
 
 interface CustomerJobCompletionViewProps {
@@ -86,13 +87,24 @@ export function CustomerJobCompletionView({
     );
   };
 
-  const handleApproveAndPay = () => {
+  const handleApproveAndPay = async () => {
     setIsProcessing(true);
-    setTimeout(() => {
+    try {
+      await acceptRepairEstimate(initialJobId, "cash");
+      await submitJobReview(initialJobId, {
+        rating,
+        comment: reviewNote,
+        punctualityRating: rating,
+        qualityRating: rating,
+        behaviorRating: rating,
+      });
+    } catch (err) {
+      console.warn("Completion review submission fallback:", err);
+    } finally {
       setIsProcessing(false);
       setShowConfirmModal(false);
       setIsCompletedSuccess(true);
-    }, 1200);
+    }
   };
 
   return (

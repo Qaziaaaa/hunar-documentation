@@ -1,7 +1,7 @@
 "use client";
 
 import { useLocale, useTranslations } from "next-intl";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Bell,
   CheckCircle2,
@@ -15,6 +15,7 @@ import { SavedAddressesTab } from "./saved-addresses-tab";
 import { NotificationsTab } from "./notifications-tab";
 import { SecurityTab } from "./security-tab";
 import { MOCK_CUSTOMER_PROFILE } from "../data/mock-profile-data";
+import { getCustomerProfile, updateCustomerProfile } from "../api/customer-profile-api";
 import type {
   CustomerProfileData,
   NotificationPreferences,
@@ -34,6 +35,12 @@ export function CustomerProfileView() {
   >("personal");
   const [successToast, setSuccessToast] = useState<string | null>(null);
 
+  useEffect(() => {
+    getCustomerProfile().then((data) => {
+      if (data) setProfile(data);
+    });
+  }, []);
+
   const showToast = (msg: string) => {
     setSuccessToast(msg);
     setTimeout(() => {
@@ -41,11 +48,16 @@ export function CustomerProfileView() {
     }, 4000);
   };
 
-  const handleUpdateProfile = (updated: Partial<CustomerProfileData>) => {
+  const handleUpdateProfile = async (updated: Partial<CustomerProfileData>) => {
     setProfile((prev) => ({
       ...prev,
       ...updated,
     }));
+    try {
+      await updateCustomerProfile(updated);
+    } catch (err) {
+      console.warn("Error persisting customer profile update:", err);
+    }
   };
 
   const handleSaveAddress = (address: SavedAddress) => {

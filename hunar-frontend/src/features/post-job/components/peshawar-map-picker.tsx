@@ -4,13 +4,12 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import {
   Crosshair,
   Layers,
-  MapPin,
   Maximize2,
   Minimize2,
   Plus,
   Minus,
-  Sparkles,
-  Check,
+  Navigation,
+  Loader2,
 } from "lucide-react";
 import type { PostJobData } from "../types";
 import "leaflet/dist/leaflet.css";
@@ -199,24 +198,76 @@ export const PESHAWAR_HOTSPOTS: PeshawarHotspot[] = [
   },
 ];
 
+// Helper to find closest named neighborhood in Peshawar
+export function findClosestHotspot(lat: number, lng: number): PeshawarHotspot {
+  let closest = PESHAWAR_HOTSPOTS[0];
+  let minDistance = Number.MAX_VALUE;
+
+  PESHAWAR_HOTSPOTS.forEach((h) => {
+    const dist = Math.hypot(h.lat - lat, h.lng - lng);
+    if (dist < minDistance) {
+      minDistance = dist;
+      closest = h;
+    }
+  });
+  return closest;
+}
+
+// Reverse Geocode helper with OpenStreetMap Nominatim
+export async function reverseGeocodePeshawar(lat: number, lng: number): Promise<{
+  area: string;
+  address: string;
+  landmark: string;
+}> {
+  try {
+    const res = await fetch(
+      `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&addressdetails=1`,
+      { headers: { "Accept-Language": "en" } }
+    );
+    if (res.ok) {
+      const json = await res.json();
+      const addr = json.address || {};
+      const road = addr.road || addr.residential || addr.suburb || addr.neighbourhood || "Peshawar Street";
+      const suburb = addr.suburb || addr.neighbourhood || addr.city_district || "Peshawar";
+      const houseNumber = addr.house_number ? `House ${addr.house_number}, ` : "";
+      const closest = findClosestHotspot(lat, lng);
+
+      return {
+        area: closest.areaKey,
+        address: `${houseNumber}${road}, ${suburb}`.trim(),
+        landmark: closest.landmark || `Near ${road}`,
+      };
+    }
+  } catch (err) {
+    console.warn("Reverse geocoding fallback:", err);
+  }
+
+  const closest = findClosestHotspot(lat, lng);
+  return {
+    area: closest.areaKey,
+    address: closest.addressPrefix,
+    landmark: closest.landmark,
+  };
+}
+
 // Tile Layer options with reliable public CDNs
 const TILE_LAYERS = {
   streets: {
     name: "Streets",
     url: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
-    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+    attribution: '&copy; OpenStreetMap',
     subdomains: ["a", "b", "c"],
   },
   dark: {
-    name: "Dark GPS",
-    url: "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png",
-    attribution: '&copy; <a href="https://carto.com/">CARTO</a>',
-    subdomains: ["a", "b", "c", "d"],
+    name: "Clean",
+    url: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+    attribution: '&copy; OpenStreetMap',
+    subdomains: ["a", "b", "c"],
   },
   satellite: {
     name: "Satellite",
     url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
-    attribution: '&copy; Esri &mdash; Source: Esri, Maxar, GeoEye',
+    attribution: '&copy; Esri',
     subdomains: [],
   },
 };
@@ -246,42 +297,72 @@ export function PeshawarMapPicker({
 
   const [currentStyleKey, setCurrentStyleKey] = useState<"streets" | "dark" | "satellite">("streets");
   const [isExpanded, setIsExpanded] = useState<boolean>(false);
+  const [isLocalLocating, setIsLocalLocating] = useState<boolean>(false);
 
   // Active coordinates (default to University Town, Peshawar)
   const currentLng = data.longitude ?? 71.5034;
   const currentLat = data.latitude ?? 34.0043;
 
-  // Find matching hotspot based on area name or distance
-  const findClosestHotspot = useCallback((lat: number, lng: number) => {
-    let closest = PESHAWAR_HOTSPOTS[0];
-    let minDistance = Number.MAX_VALUE;
-
-    PESHAWAR_HOTSPOTS.forEach((h) => {
-      const dist = Math.hypot(h.lat - lat, h.lng - lng);
-      if (dist < minDistance) {
-        minDistance = dist;
-        closest = h;
-      }
-    });
-    return closest;
-  }, []);
-
   // Update position handler (called on map click or marker drag)
   const handlePositionUpdate = useCallback(
-    (lat: number, lng: number) => {
-      const closest = findClosestHotspot(lat, lng);
-
+    async (lat: number, lng: number) => {
+      const geo = await reverseGeocodePeshawar(lat, lng);
       onChange({
         latitude: lat,
         longitude: lng,
-        area: closest.areaKey,
-        landmark: closest.landmark,
+        area: geo.area,
+        landmark: geo.landmark,
         city: "Peshawar",
-        address: closest.addressPrefix,
+        address: geo.address,
       });
     },
-    [findClosestHotspot, onChange]
+    [onChange]
   );
+
+  // Live GPS locator
+  const handleLiveGPSLocate = useCallback(() => {
+    if (onAutoDetect) {
+      onAutoDetect();
+      return;
+    }
+
+    if (typeof window === "undefined" || !("geolocation" in navigator)) {
+      alert("Geolocation is not supported by your browser.");
+      return;
+    }
+
+    setIsLocalLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        const lat = pos.coords.latitude;
+        const lng = pos.coords.longitude;
+
+        if (markerInstanceRef.current) {
+          markerInstanceRef.current.setLatLng([lat, lng]);
+        }
+        if (mapInstanceRef.current) {
+          mapInstanceRef.current.flyTo([lat, lng], 16, { duration: 0.8 });
+        }
+
+        const geo = await reverseGeocodePeshawar(lat, lng);
+        onChange({
+          latitude: lat,
+          longitude: lng,
+          area: geo.area,
+          landmark: geo.landmark,
+          address: geo.address,
+          city: "Peshawar",
+        });
+
+        setIsLocalLocating(false);
+      },
+      (err) => {
+        console.warn("GPS error:", err);
+        setIsLocalLocating(false);
+      },
+      { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 }
+    );
+  }, [onAutoDetect, onChange]);
 
   // Initialize Leaflet Map on client mount
   useEffect(() => {
@@ -300,7 +381,7 @@ export function PeshawarMapPicker({
         // Create Leaflet Map instance
         const map = L.map(mapContainerRef.current, {
           center: [currentLat, currentLng],
-          zoom: 14,
+          zoom: 15,
           zoomControl: false,
           attributionControl: false,
         });
@@ -443,14 +524,14 @@ export function PeshawarMapPicker({
     }
   }, [currentStyleKey]);
 
-  // Reactive Fly-To whenever data.latitude / data.longitude changes from parent or dropdown
+  // Reactive Fly-To whenever data.latitude / data.longitude changes from parent, dropdown, or GPS
   useEffect(() => {
     if (!mapInstanceRef.current || !markerInstanceRef.current) return;
     if (data.latitude && data.longitude) {
       const latLng = [data.latitude, data.longitude];
       markerInstanceRef.current.setLatLng(latLng);
-      mapInstanceRef.current.flyTo(latLng, mapInstanceRef.current.getZoom() || 14.5, {
-        duration: 0.8,
+      mapInstanceRef.current.flyTo(latLng, mapInstanceRef.current.getZoom() || 15, {
+        duration: 0.7,
       });
     }
   }, [data.latitude, data.longitude]);
@@ -468,40 +549,18 @@ export function PeshawarMapPicker({
     }
   };
 
-  // Recenter / Auto-Detect handler
-  const handleRecenter = () => {
-    if (onAutoDetect) {
-      onAutoDetect();
-    }
-  };
-
-  // Hotspot chip click handler
-  const handleSelectHotspot = (hotspot: PeshawarHotspot) => {
-    onChange({
-      area: hotspot.areaKey,
-      landmark: hotspot.landmark,
-      city: "Peshawar",
-      latitude: hotspot.lat,
-      longitude: hotspot.lng,
-      address: hotspot.addressPrefix,
-    });
-  };
-
-  // Determine active hotspot based on data.area or closest coordinates
-  const activeHotspot =
-    PESHAWAR_HOTSPOTS.find((h) => h.areaKey === data.area) ||
-    findClosestHotspot(currentLat, currentLng);
+  const isDetecting = isLocating || isLocalLocating;
 
   return (
     <div className="space-y-2.5">
       {/* Map Canvas Container */}
       <div
         className={`w-full ${
-          isExpanded ? "h-80 sm:h-96" : "h-56 sm:h-64"
+          isExpanded ? "h-80 sm:h-96" : "h-60 sm:h-72"
         } rounded-2xl relative overflow-hidden transition-all duration-300 select-none shadow-xs border border-slate-200 bg-slate-100 z-0`}
       >
         {/* Top-Left Floating Info Badge (Syncs LIVE with data.area & landmark) */}
-        <div className="absolute top-3 left-3 z-[1000] flex flex-col gap-1 max-w-[78%] pointer-events-none">
+        <div className="absolute top-3 left-3 z-[1000] flex flex-col gap-1 max-w-[75%] pointer-events-none">
           <div className="bg-white/95 backdrop-blur-md px-3 py-1.5 rounded-xl shadow-xs border border-slate-200 flex items-center gap-2">
             <span className="relative flex h-2.5 w-2.5 shrink-0">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
@@ -518,11 +577,22 @@ export function PeshawarMapPicker({
           </div>
         </div>
 
-        {/* Top-Right Live GPS Badge */}
-        <div className="absolute top-3 right-3 z-[1000] hidden sm:flex items-center gap-1.5 pointer-events-none">
-          <div className="bg-white/90 backdrop-blur-md px-2.5 py-1 rounded-lg text-[10px] font-semibold text-slate-700 shadow-2xs border border-slate-200 flex items-center gap-1">
-            <span className="text-[#0F766E] font-bold">GPS:</span> Live Map
-          </div>
+        {/* Top-Right Live GPS Action Button */}
+        <div className="absolute top-3 right-3 z-[1000] flex items-center gap-1.5">
+          <button
+            type="button"
+            onClick={handleLiveGPSLocate}
+            disabled={isDetecting}
+            className="bg-[#0F766E] hover:bg-[#115E59] text-white px-2.5 py-1.5 rounded-xl text-[11px] font-bold shadow-md border border-white/30 flex items-center gap-1.5 transition-all active:scale-95 cursor-pointer disabled:opacity-75"
+            title="Detect my exact live GPS location"
+          >
+            {isDetecting ? (
+              <Loader2 className="size-3.5 animate-spin" />
+            ) : (
+              <Navigation className="size-3.5 fill-white" />
+            )}
+            <span>{isDetecting ? "Locating..." : "Locate Me"}</span>
+          </button>
         </div>
 
         {/* Real Map Mount Container */}
@@ -539,12 +609,9 @@ export function PeshawarMapPicker({
               )
             }
             className="p-1.5 sm:p-2 rounded-xl bg-white/95 hover:bg-white text-slate-700 hover:text-[#0F766E] shadow-sm border border-slate-200 transition-all cursor-pointer flex items-center gap-1"
-            title="Toggle Map Style (Streets / Voyager / Satellite)"
+            title="Toggle Map Style"
           >
             <Layers className="size-3.5 sm:size-4" />
-            <span className="text-[10px] font-bold capitalize hidden sm:inline">
-              {TILE_LAYERS[currentStyleKey].name}
-            </span>
           </button>
 
           {/* Zoom Controls */}
@@ -568,15 +635,16 @@ export function PeshawarMapPicker({
             </button>
           </div>
 
-          {/* Recenter Pin */}
+          {/* Recenter Pin / GPS */}
           <button
             type="button"
-            onClick={handleRecenter}
+            onClick={handleLiveGPSLocate}
+            disabled={isDetecting}
             className="p-1.5 sm:p-2 rounded-xl bg-white/95 hover:bg-white text-slate-700 hover:text-[#0F766E] shadow-sm border border-slate-200 transition-all cursor-pointer"
-            title="Recenter Map Pin"
+            title="Center on My GPS Location"
           >
             <Crosshair
-              className={`size-3.5 sm:size-4 ${isLocating ? "animate-spin text-[#0F766E]" : ""}`}
+              className={`size-3.5 sm:size-4 ${isDetecting ? "animate-spin text-[#0F766E]" : ""}`}
             />
           </button>
 
@@ -605,40 +673,6 @@ export function PeshawarMapPicker({
           <div className="bg-white/90 backdrop-blur-md px-2.5 py-1 rounded-lg text-[9.5px] font-semibold text-slate-600 shadow-2xs border border-slate-200">
             Coordinates: {currentLat.toFixed(4)}° N, {currentLng.toFixed(4)}° E
           </div>
-        </div>
-      </div>
-
-      {/* Quick Peshawar Neighborhood Hotspot Chips */}
-      <div className="space-y-1.5">
-        <div className="flex items-center justify-between">
-          <span className="text-[11px] font-semibold text-slate-500 flex items-center gap-1">
-            <Sparkles className="size-3 text-[#0F766E]" />
-            Popular Peshawar Hotspots:
-          </span>
-          <span className="text-[10px] text-slate-400">
-            Tap to fly to location
-          </span>
-        </div>
-
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
-          {PESHAWAR_HOTSPOTS.slice(0, 10).map((hotspot) => {
-            const isSelected = (data.area || "").toLowerCase() === hotspot.areaKey.toLowerCase();
-            return (
-              <button
-                key={hotspot.id}
-                type="button"
-                onClick={() => handleSelectHotspot(hotspot)}
-                className={`px-2.5 py-1 rounded-lg text-xs whitespace-nowrap transition-all cursor-pointer flex items-center gap-1 shrink-0 ${
-                  isSelected
-                    ? "bg-[#0F766E] text-white font-bold shadow-2xs"
-                    : "bg-slate-100/80 text-slate-600 hover:bg-slate-200/80"
-                }`}
-              >
-                {isSelected && <Check className="size-3 stroke-[3]" />}
-                <span>{hotspot.name}</span>
-              </button>
-            );
-          })}
         </div>
       </div>
     </div>

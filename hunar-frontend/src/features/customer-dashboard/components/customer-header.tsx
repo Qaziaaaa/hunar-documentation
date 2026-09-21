@@ -32,8 +32,8 @@ export function CustomerHeader({ onOpenSidebar }: CustomerHeaderProps) {
 
   return (
     <header className="sticky top-0 start-0 end-0 z-30 bg-transparent px-4 sm:px-6 lg:px-8 py-2.5 sm:py-3 flex items-center justify-between gap-3">
-      {/* Start: Sidebar Toggle Icon Button */}
-      <div className="flex items-center shrink-0">
+      {/* Start: Sidebar Toggle Icon Button (Visible on mobile & tablet) */}
+      <div className="flex items-center shrink-0 lg:hidden">
         <button
           type="button"
           onClick={onOpenSidebar}
@@ -46,7 +46,7 @@ export function CustomerHeader({ onOpenSidebar }: CustomerHeaderProps) {
       </div>
 
       {/* End Corner: Search & Language Switcher */}
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 ms-auto">
         {/* Desktop / Expanded Search Form */}
         <form
           onSubmit={handleSearch}

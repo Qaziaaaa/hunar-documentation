@@ -51,6 +51,8 @@ export interface ScheduledVisit {
   customerLng: number;
   originLat: number;
   originLng: number;
+  originName?: string;
+  originNameUr?: string;
   technician: TechnicianInfo;
   currentStreetLandmark: string;
   currentStreetLandmarkUr?: string;

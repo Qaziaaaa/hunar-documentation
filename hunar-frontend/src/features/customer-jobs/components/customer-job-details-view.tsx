@@ -20,6 +20,7 @@ import { useLocale } from "next-intl";
 import { WorkerOfferCard } from "./worker-offer-card";
 import { WorkerProfileModal } from "./worker-profile-modal";
 import { SelectWorkerModal } from "./select-worker-modal";
+import { acceptWorkerOffer } from "../api/customer-jobs-api";
 import type { CustomerJob, WorkerOffer } from "../types";
 
 interface CustomerJobDetailsViewProps {
@@ -52,7 +53,12 @@ export function CustomerJobDetailsView({ initialJob }: CustomerJobDetailsViewPro
   };
 
   // Direct Booking Confirmation Handler
-  const handleConfirmBooking = (offer: WorkerOffer) => {
+  const handleConfirmBooking = async (offer: WorkerOffer) => {
+    try {
+      await acceptWorkerOffer(job.id, offer.id);
+    } catch (err) {
+      console.warn("acceptWorkerOffer error:", err);
+    }
     setJob((prev) => ({
       ...prev,
       status: "visit_scheduled",

@@ -133,7 +133,7 @@ export async function apiClient<T>(
   isRetry = false,
 ): Promise<T> {
   const headers = new Headers(options.headers);
-  if (!headers.has("Content-Type")) {
+  if (!headers.has("Content-Type") && !(options.body instanceof FormData)) {
     headers.set("Content-Type", "application/json");
   }
   const token = getAccessToken();
@@ -161,9 +161,14 @@ export async function apiClient<T>(
   if (!res.ok) {
     let payload: unknown;
     try {
-      payload = await res.json();
+      const cloned = res.clone();
+      try {
+        payload = await cloned.json();
+      } catch {
+        payload = await res.text();
+      }
     } catch {
-      payload = await res.text();
+      payload = null;
     }
     const message =
       (payload as { message?: string } | null)?.message ?? res.statusText;
@@ -198,4 +203,10 @@ export const http = {
       ...options,
     }),
   delete: <T>(path: string) => apiClient<T>(path, { method: "DELETE" }),
+  upload: <T>(path: string, formData: FormData, options?: RequestInit) =>
+    apiClient<T>(path, {
+      method: "POST",
+      body: formData,
+      ...options,
+    }),
 };

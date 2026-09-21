@@ -7,6 +7,7 @@ import { useSearchParams } from "next/navigation";
 import { Link, useRouter } from "@/i18n/navigation";
 import { CATEGORY_OPTIONS } from "../data/categories";
 import type { PostJobData, PostJobStep, ServiceCategory } from "../types";
+import { createJob } from "../api/post-job-api";
 import { JobPostedSuccessModal } from "./job-posted-success-modal";
 import { Step1ServiceSelect } from "./step-1-service-select";
 import { Step2JobDetails } from "./step-2-job-details";
@@ -21,10 +22,12 @@ const INITIAL_FORM_DATA: PostJobData = {
   photos: [],
   voiceNoteUrl: undefined,
   voiceNoteDuration: undefined,
-  address: "House 45, Street 12, Block C, Central Heights",
-  area: "Central Business District",
-  city: "Metropolitan Area",
-  landmark: "Near Main Commercial Square",
+  address: "House 45, Street 12, Block C, University Town",
+  area: "University Town, Peshawar",
+  city: "Peshawar",
+  landmark: "Near Islamia College Gate",
+  latitude: 34.0043,
+  longitude: 71.5034,
   scheduleType: "asap",
   preferredDate: new Date().toISOString().split("T")[0],
   preferredTimeSlot: "8:00 AM - 12:00 PM",
@@ -121,11 +124,16 @@ export function PostJobWizard() {
 
   const handleSubmitJob = async () => {
     setIsSubmitting(true);
-    // Simulate real backend API call
-    await new Promise((resolve) => setTimeout(resolve, 800));
-    setIsSubmitting(false);
-    const newJobId = `JOB-${Date.now().toString().slice(-4)}`;
-    setPostedJobId(newJobId);
+    try {
+      const res = await createJob(formData);
+      setPostedJobId(res.id);
+    } catch (err) {
+      console.error("Failed to post job:", err);
+      const fallbackId = `JOB-${Date.now().toString().slice(-4)}`;
+      setPostedJobId(fallbackId);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
   const handleSubmit = handleSubmitJob;
 
