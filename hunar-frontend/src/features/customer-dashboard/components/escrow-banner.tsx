@@ -12,7 +12,7 @@ export function EscrowBanner() {
         </div>
         <div>
           <h3 className="text-sm sm:text-base font-bold text-white">
-            How HUNAR Protects Your Service Experience
+            How Orderworker Protects Your Service Experience
           </h3>
           <p className="text-xs text-slate-200 mt-1 leading-relaxed">
             All technicians are NADRA CNIC verified with doorstep OTP PIN confirmation and transparent pricing.

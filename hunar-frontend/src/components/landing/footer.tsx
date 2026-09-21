@@ -1,5 +1,6 @@
 import { Link } from "@/i18n/navigation";
 import { footerColumns } from "./data";
+import { OrderworkerLogo } from "@/components/shared/orderworker-logo";
 
 const socialIcons = [
   {
@@ -64,6 +65,9 @@ export function Footer() {
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col md:flex-row items-center justify-between pb-10 border-b border-white/10 gap-4">
+          <Link href="/" className="hover:opacity-90 transition-opacity">
+            <OrderworkerLogo variant="light" size="sm" showBadge={true} />
+          </Link>
           <div className="flex flex-wrap items-center gap-6 text-xs text-slate-300 font-medium">
             <a className="hover:text-white transition" href="#">
               Terms of Service
@@ -141,7 +145,7 @@ export function Footer() {
           </div>
         </div>
         <div className="pt-8 mt-6 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-400 gap-4">
-          <p>© 2026 HUNAR Technologies Inc. All rights reserved.</p>
+          <p>© 2026 Orderworker Technologies Inc. All rights reserved.</p>
           <div className="flex items-center space-x-4">
             <span>PKR (₨)</span>
             <span className="w-1 h-1 bg-slate-500 rounded-full" />

@@ -1,11 +1,11 @@
 {
   "Metadata": {
-    "title": "ہنر — گھریلو خدمات کا بازار",
-    "description": "پاکستان میں اپنے گھر کے لیے بھروسہ مند، تصدیق شدہ پیشہ ور تلاش کریں۔ ہنر صارفین کو ہنرمند کارکنوں سے جوڑتا ہے — الیکٹریشن، پلمبر، اے سی ٹیکنیشن وغیرہ۔"
+    "title": "Orderworker — گھریلو خدمات کا بازار",
+    "description": "پاکستان میں اپنے گھر کے لیے بھروسہ مند، تصدیق شدہ پیشہ ور تلاش کریں۔ Orderworker صارفین کو ہنرمند کارکنوں سے جوڑتا ہے — الیکٹریشن، پلمبر، اے سی ٹیکنیشن وغیرہ۔"
   },
   "Common": {
     "slogan": "آپ کی دہلیز پر تصدیق شدہ ہنرمند کارکن",
-    "appName": "ہنر"
+    "appName": "Orderworker"
   },
   "Home": {
     "heroBadge": "پاکستان کا بھروسہ مند گھریلو خدمات کا بازار",
@@ -57,7 +57,7 @@
     "backToHome": "واپس ہوم",
     "trustCnic": "نادرا سی این آئی سی تصدیق شدہ",
     "trustSecure": "100% محفوظ اور انکرپٹڈ",
-    "copyright": "© 2026 ہنار سروسز انکارپوریٹڈ۔ ہنرمندوں کا تحفظ یقینی۔",
+    "copyright": "© 2026 Orderworker Services Inc. Guaranteed tradesperson protection.",
     "signInTitle": "خوش آمدید",
     "signInSubtitle": "اپنے ورکر اکاؤنٹ میں سائن ان کریں۔",
     "signInPasswordPlaceholder": "اپنا پاس ورڈ لکھیں",
@@ -125,7 +125,7 @@
     "completedJobs": "مکمل شدہ کام",
     "totalSpent": "کل خرچ",
     "invoices": "رسیدیں اور بل",
-    "escrowProtected": "ہنر کوالٹی ضمانت"
+    "escrowProtected": "Orderworker کوالٹی ضمانت"
   },
   "CustomerPortal": {
     "Nav": {
@@ -139,7 +139,7 @@
       "postJob": "+ جاب پوسٹ کریں",
       "signOut": "لاگ آؤٹ",
       "language": "زبان",
-      "verifiedBadge": "ہنر تصدیق شدہ",
+      "verifiedBadge": "Orderworker تصدیق شدہ",
       "verifiedDesc": "100% نادرا سی این آئی سی تصدیق شدہ ماہرین اور تسلی بخش کام کی ضمانت۔",
       "qualityGuarantee": "معیار کی ضمانت"
     },

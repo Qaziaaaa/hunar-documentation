@@ -20,7 +20,7 @@ export const MOCK_WORKER_PROFILES: Record<string, WorkerProfile> = {
     isCnicVerified: true,
     isNadraCleared: true,
     isPoliceCleared: true,
-    hunarBadgeId: "#HN-4821",
+    hunarBadgeId: "#OW-4821",
     expertiseTags: [
       "Inverter AC Troubleshooting",
       "PCB Circuit Board Repair",
@@ -109,7 +109,7 @@ export const MOCK_WORKER_PROFILES: Record<string, WorkerProfile> = {
     isCnicVerified: true,
     isNadraCleared: true,
     isPoliceCleared: true,
-    hunarBadgeId: "#HN-3319",
+    hunarBadgeId: "#OW-3319",
     expertiseTags: [
       "PPRC Hot/Cold Pipe Welding",
       "Geyser Gas Valve Calibration",
@@ -181,7 +181,7 @@ export const MOCK_WORKER_PROFILES: Record<string, WorkerProfile> = {
     isCnicVerified: true,
     isNadraCleared: true,
     isPoliceCleared: true,
-    hunarBadgeId: "#HN-1904",
+    hunarBadgeId: "#OW-1904",
     expertiseTags: [
       "3-Phase DB Board Wiring",
       "Short Circuit Megger Test",

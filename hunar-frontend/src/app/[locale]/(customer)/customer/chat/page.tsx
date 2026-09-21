@@ -3,7 +3,7 @@ import { CustomerChatView } from "@/features/chat/components/customer-chat-view"
 
 export async function generateMetadata() {
   return {
-    title: "Live Chat & Voice Notes — HUNAR Customer Hub",
+    title: "Live Chat & Voice Notes — Orderworker Customer Hub",
     description: "Send direct text messages and voice notes to your assigned technicians in Peshawar.",
   };
 }

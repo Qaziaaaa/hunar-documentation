@@ -592,8 +592,8 @@ export function CustomerJobCompletionView({
 
               <p className="text-[11px] text-slate-400 text-center leading-snug mt-1">
                 {isUrdu
-                  ? "تکمیل کی تصدیق پر آپ کو ہنر کا آفیشل 5 روزہ وارنٹی سرٹیفکیٹ جاری کیا جائے گا۔"
-                  : "Confirming completion issues your official HUNAR 5-Day Craftsmanship Warranty Certificate."}
+                  ? "تکمیل کی تصدیق پر آپ کو آرڈر ورکر کا آفیشل 5 روزہ وارنٹی سرٹیفکیٹ جاری کیا جائے گا۔"
+                  : "Confirming completion issues your official Orderworker 5-Day Craftsmanship Warranty Certificate."}
               </p>
             </section>
           </div>

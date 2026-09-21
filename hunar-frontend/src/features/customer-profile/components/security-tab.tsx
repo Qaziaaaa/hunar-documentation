@@ -152,8 +152,8 @@ export function SecurityTab({ devices, onSaveFeedback }: SecurityTabProps) {
           <div className="pt-3 border-t border-slate-100 text-center">
             <span className="text-[11px] text-slate-400">
               {isUrdu
-                ? "مدد چاہیے؟ ہنر کی 24/7 کسٹمر ہیلپ لائن سے رابطہ کریں۔"
-                : "Need assistance? Contact Hunar 24/7 Support Helpline"}
+                ? "مدد چاہیے؟ آرڈر ورکر کی 24/7 کسٹمر ہیلپ لائن سے رابطہ کریں۔"
+                : "Need assistance? Contact Orderworker 24/7 Support Helpline"}
             </span>
           </div>
         </div>

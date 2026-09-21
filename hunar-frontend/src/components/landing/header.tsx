@@ -1,6 +1,6 @@
 import { ChevronDownIcon, GridIcon, SearchIcon } from "./icons";
-import { OpenRoleModalButton } from "./open-role-modal-button";
 import { Link } from "@/i18n/navigation";
+import { OrderworkerLogo } from "@/components/shared/orderworker-logo";
 
 export function Header() {
   return (
@@ -11,16 +11,11 @@ export function Header() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-14 flex items-center justify-between">
         <div className="flex items-center space-x-6">
           <Link
-            className="flex items-center group hover:opacity-90 transition-opacity"
+            className="flex items-center gap-2.5 group hover:opacity-95 transition-opacity"
             href="/"
-            title="HUNAR Home"
+            title="Orderworker Home"
           >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              alt="HUNAR Logo"
-              className="h-8 w-auto object-contain"
-              src="/landing/hunar-logo-alt.png"
-/>
+            <OrderworkerLogo variant="light" size="md" showBadge={true} />
           </Link>
           <a
             href="#services"
@@ -53,9 +48,12 @@ export function Header() {
           >
             <SearchIcon className="w-5 h-5" strokeWidth={2} />
           </a>
-          <OpenRoleModalButton className="bg-white hover:bg-slate-100 text-brand-hero text-xs sm:text-sm font-bold px-5 py-2.5 rounded-full shadow transition-all duration-200">
+          <Link
+            href="/customer/dashboard"
+            className="bg-white hover:bg-slate-100 text-brand-hero text-xs sm:text-sm font-bold px-5 py-2.5 rounded-full shadow transition-all duration-200 inline-flex items-center justify-center"
+          >
             Get started
-          </OpenRoleModalButton>
+          </Link>
         </div>
       </div>
     </header>

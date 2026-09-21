@@ -82,8 +82,8 @@ export function CustomerHelpView() {
               <div className="flex items-center gap-2.5 flex-wrap">
                 <span className="text-sm sm:text-base font-bold text-[#123B5D]">
                   {isUrdu
-                    ? "ہنر کسٹمر تحفظ اور نگہداشت ڈیسک"
-                    : "HUNAR Customer Protection & Care Desk"}
+                    ? "آرڈر ورکر کسٹمر تحفظ اور نگہداشت ڈیسک"
+                    : "Orderworker Customer Protection & Care Desk"}
                 </span>
                 <span className="px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] uppercase tracking-wider font-extrabold">
                   {isUrdu ? "محفوظ اور تصدیق شدہ" : "PROTECTED & VERIFIED"}
@@ -287,8 +287,8 @@ export function CustomerHelpView() {
                 <div>
                   <h3 className="text-sm font-bold text-[#123B5D]">
                     {isUrdu
-                      ? "ہنر کسٹمر اطمینان کے 4 بنیادی اصول"
-                      : "HUNAR Customer Peace of Mind Checklist"}
+                      ? "آرڈر ورکر کسٹمر اطمینان کے 4 بنیادی اصول"
+                      : "Orderworker Customer Peace of Mind Checklist"}
                   </h3>
                   <p className="text-[11px] text-slate-500">
                     {isUrdu
@@ -357,8 +357,8 @@ export function CustomerHelpView() {
                     </span>
                     <span className="text-[11px] text-slate-500">
                       {isUrdu
-                        ? "5 دنوں کے اندر دوبارہ خرابی کی صورت میں ہنر بلا معاوضہ کاریگر بھیجے گا۔"
-                        : "Any recurring fault within 5 days is resolved free of charge by HUNAR."}
+                        ? "5 دنوں کے اندر دوبارہ خرابی کی صورت میں آرڈر ورکر بلا معاوضہ کاریگر بھیجے گا۔"
+                        : "Any recurring fault within 5 days is resolved free of charge by Orderworker."}
                     </span>
                   </div>
                 </div>

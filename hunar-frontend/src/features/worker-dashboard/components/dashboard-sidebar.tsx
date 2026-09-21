@@ -19,6 +19,7 @@ import {
   ChevronRight,
 } from "lucide-react";
 import type { DashboardTab, WorkerDashboardProfile } from "../types";
+import { OrderworkerLogo } from "@/components/shared/orderworker-logo";
 
 export function DashboardSidebar({
   activeTab,
@@ -79,19 +80,12 @@ export function DashboardSidebar({
     <aside className="hidden lg:flex w-64 shrink-0 flex-col justify-between border-r border-slate-200 bg-white p-4">
       <div className="space-y-6">
         {/* Brand Logo & Portal Tag */}
-        <div className="flex items-center gap-3 px-2 py-1">
-          <div className="flex size-10 items-center justify-center rounded-2xl bg-teal text-white shadow-md shadow-teal/20">
-            <span className="text-xl font-black tracking-wider">H</span>
-          </div>
-          <div>
-            <div className="flex items-center gap-1.5">
-              <span className="text-lg font-black tracking-tight text-navy">
-                HUNAR
-              </span>
-              <span className="rounded-full bg-teal/15 px-2 py-0.2 text-[10px] font-extrabold uppercase tracking-wide text-teal">
-                PRO
-              </span>
-            </div>
+        <div className="flex flex-col gap-1 px-2 py-1">
+          <OrderworkerLogo variant="dark" size="sm" showBadge={false} />
+          <div className="flex items-center gap-1.5 pl-0.5">
+            <span className="rounded-full bg-teal/15 px-2 py-0.2 text-[10px] font-extrabold uppercase tracking-wide text-teal">
+              PRO
+            </span>
             <p className="text-[11px] font-medium text-slate-500">
               Worker Portal · Peshawar
             </p>
@@ -159,7 +153,7 @@ export function DashboardSidebar({
       <div className="border-t border-slate-200 pt-3 text-[11px] text-slate-500 space-y-1 px-1">
         <div className="flex items-center gap-1.5 font-bold text-navy">
           <ShieldCheck className="size-3.5 text-teal" />
-          <span>HUNAR Verified Portal</span>
+          <span>Orderworker Verified Portal</span>
         </div>
         <p className="text-[10px] text-slate-400">Peshawar Pro Network · v1.0</p>
       </div>

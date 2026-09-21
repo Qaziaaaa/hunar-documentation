@@ -3,7 +3,7 @@ import { CustomerProfileView } from "@/features/customer-profile/components/cust
 
 export async function generateMetadata() {
   return {
-    title: "Account Profile & Saved Addresses — HUNAR",
+    title: "Account Profile & Saved Addresses — Orderworker",
     description:
       "Manage your personal profile, saved Peshawar service addresses, contact preferences, and security settings.",
   };

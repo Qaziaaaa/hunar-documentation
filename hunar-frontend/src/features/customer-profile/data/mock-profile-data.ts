@@ -78,7 +78,7 @@ export const MOCK_CUSTOMER_PROFILE: CustomerProfileData = {
     },
     {
       id: "dev-2",
-      deviceName: "Hunar Mobile App (iPhone 15 Pro)",
+      deviceName: "Orderworker Mobile App (iPhone 15 Pro)",
       browser: "iOS App v2.4",
       ipAddress: "39.42.18.91 (Jazz 4G)",
       location: "Peshawar, KP, Pakistan",

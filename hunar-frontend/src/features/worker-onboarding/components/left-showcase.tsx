@@ -12,6 +12,8 @@ import {
   Zap,
 } from "lucide-react";
 
+import { OrderworkerLogo } from "@/components/shared/orderworker-logo";
+
 export function LeftShowcase() {
   return (
     <section
@@ -22,18 +24,11 @@ export function LeftShowcase() {
         <div>
           {/* Header Branding and Escrow Badge */}
           <div className="mb-5 flex items-center justify-between gap-2">
-            <div className="flex items-center gap-3">
-              <div className="flex size-10 items-center justify-center rounded-xl bg-navy text-white shadow-xs">
-                <span className="font-extrabold text-teal text-lg">H</span>
-              </div>
-              <div className="leading-none">
-                <span className="block text-xl font-extrabold tracking-tight text-navy">
-                  HUNAR
-                </span>
-                <span className="block text-[11px] font-bold uppercase tracking-wider text-teal">
-                  Pakistan Verified
-                </span>
-              </div>
+            <div className="flex flex-col gap-0.5">
+              <OrderworkerLogo variant="dark" size="sm" showBadge={false} />
+              <span className="block text-[10px] font-bold uppercase tracking-wider text-teal pl-0.5">
+                Pakistan Verified
+              </span>
             </div>
             <span className="inline-flex items-center rounded-full border border-teal/20 bg-teal/10 px-3 py-1 text-xs font-bold text-teal">
               Escrow Guaranteed

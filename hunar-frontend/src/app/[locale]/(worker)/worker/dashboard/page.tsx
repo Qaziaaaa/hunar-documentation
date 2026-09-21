@@ -3,7 +3,7 @@ import { WorkerDashboardShell } from "@/features/worker-dashboard";
 
 export async function generateMetadata() {
   return {
-    title: "Worker Pro Dashboard — HUNAR",
+    title: "Worker Pro Dashboard — Orderworker",
     description:
       "Manage nearby home service jobs, track active visits, view 10% commission status, and chat with customers across Peshawar.",
   };

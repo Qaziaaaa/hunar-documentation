@@ -3,7 +3,9 @@
 import { CheckCircle2, Lock, ShieldCheck } from "lucide-react";
 import { useLocale } from "next-intl";
 
-export function HunarBrandBanner() {
+import { OrderworkerLogo } from "@/components/shared/orderworker-logo";
+
+export function OrderworkerBrandBanner() {
   const locale = useLocale();
 
   return (
@@ -14,23 +16,11 @@ export function HunarBrandBanner() {
       <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         {/* Brand identity */}
         <div className="flex items-center gap-3">
-          <div className="size-9 sm:size-10 rounded-xl bg-white/10 backdrop-blur-xs flex items-center justify-center text-white font-black text-sm border border-white/20 shrink-0 shadow-xs">
-            <span>H</span>
-            <span className="size-1.5 rounded-full bg-[#0F8B8D] ml-0.5"></span>
-          </div>
-
+          <OrderworkerLogo variant="light" size="sm" showBadge={true} />
           <div className="flex flex-col">
-            <div className="flex items-center gap-1.5">
-              <span className="text-sm sm:text-base font-extrabold tracking-tight text-white">
-                HUNAR
-              </span>
-              <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-[#0F8B8D] text-white uppercase tracking-wider">
-                PK
-              </span>
-              <span className="text-[11px] text-slate-300 font-medium hidden xs:inline">
-                • {locale === "ur" ? "سرٹیفائیڈ پرو مارکیٹ پلیس" : "Certified Pro Marketplace"}
-              </span>
-            </div>
+            <span className="text-[11px] text-teal-300 font-semibold">
+              {locale === "ur" ? "سرٹیفائیڈ پرو مارکیٹ پلیس" : "Certified Pro Marketplace"}
+            </span>
             <p className="text-[11px] sm:text-xs text-slate-300 line-clamp-1">
               {locale === "ur"
                 ? "100% تصدیق شدہ ماہر کاریگر، ڈور سٹیپ سیکیورٹی پن اور تسلی بخش کام کی گارنٹی"
@@ -60,3 +50,5 @@ export function HunarBrandBanner() {
     </section>
   );
 }
+
+export const HunarBrandBanner = OrderworkerBrandBanner;

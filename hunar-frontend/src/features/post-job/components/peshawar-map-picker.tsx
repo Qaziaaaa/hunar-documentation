@@ -398,7 +398,7 @@ export function PeshawarMapPicker({
 
         // Custom HTML Pin Marker
         const customIcon = L.divIcon({
-          className: "hunar-pin-wrapper",
+          className: "orderworker-pin-wrapper",
           html: `
             <div style="position: relative; display: flex; flex-direction: column; align-items: center; transform: translate(-50%, -100%);">
               <!-- Animated Pulse Ring -->
