@@ -23,7 +23,7 @@ export function VerificationLeftShowcase() {
           {/* Header Branding & Badge */}
           <div className="mb-4 flex items-center justify-between gap-2">
             <div className="flex flex-col gap-0.5">
-              <OrderworkerLogo variant="dark" size="sm" showBadge={false} />
+              <OrderworkerLogo variant="dark" size="sm" />
               <span className="block text-[9px] font-bold uppercase tracking-wider text-teal pl-0.5">
                 Worker Verification
               </span>
