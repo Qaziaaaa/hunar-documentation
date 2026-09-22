@@ -205,8 +205,6 @@ export function CustomerJobsListView({ initialJobs }: CustomerJobsListViewProps)
                     <span className="text-xs text-[#64748B]">
                       {job.status === "completed"
                         ? isUrdu ? "کل ادائیگی" : "Total Paid"
-                        : job.status === "visit_scheduled"
-                        ? isUrdu ? "طے شدہ رقم" : "Agreed Charge"
                         : isUrdu ? "وزٹ چارجز" : "Visit Charges"}
                     </span>
                     <div className="flex items-center gap-1 text-lg sm:text-xl font-bold text-[#1A1A2E]">

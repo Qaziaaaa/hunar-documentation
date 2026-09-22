@@ -81,7 +81,7 @@ export function DashboardSidebar({
       <div className="space-y-6">
         {/* Brand Logo & Portal Tag */}
         <div className="flex flex-col gap-1 px-2 py-1">
-          <OrderworkerLogo variant="dark" size="sm" showBadge={false} />
+          <OrderworkerLogo variant="dark" size="sm" />
           <div className="flex items-center gap-1.5 pl-0.5">
             <span className="rounded-full bg-teal/15 px-2 py-0.2 text-[10px] font-extrabold uppercase tracking-wide text-teal">
               PRO

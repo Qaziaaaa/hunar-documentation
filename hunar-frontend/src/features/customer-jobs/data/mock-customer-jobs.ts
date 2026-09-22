@@ -316,7 +316,6 @@ export const MOCK_CUSTOMER_JOBS: CustomerJob[] = [
         estimatedArrival: "Tomorrow, 1:00 PM",
         distanceKm: 1.8,
         createdAt: "25 mins ago",
-        note: "Will bring rotary snake cable and replacement washer kits.",
       },
     ],
   },

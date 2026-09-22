@@ -8,7 +8,7 @@ export function AuthBrand() {
       title="Orderworker Home"
       className="group flex items-center gap-2 transition-opacity hover:opacity-90"
     >
-      <OrderworkerLogo variant="dark" size="md" showBadge={true} />
+      <OrderworkerLogo variant="dark" size="md" />
     </Link>
   );
 }

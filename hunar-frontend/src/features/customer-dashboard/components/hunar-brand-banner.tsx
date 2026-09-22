@@ -16,7 +16,7 @@ export function OrderworkerBrandBanner() {
       <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         {/* Brand identity */}
         <div className="flex items-center gap-3">
-          <OrderworkerLogo variant="light" size="sm" showBadge={true} />
+          <OrderworkerLogo variant="light" size="sm" />
           <div className="flex flex-col">
             <span className="text-[11px] text-teal-300 font-semibold">
               {locale === "ur" ? "سرٹیفائیڈ پرو مارکیٹ پلیس" : "Certified Pro Marketplace"}

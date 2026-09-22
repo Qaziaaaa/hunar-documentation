@@ -2,9 +2,7 @@
 
 import { useState } from "react";
 import {
-  ArrowRight,
   Check,
-  Clock,
   Copy,
   MapPin,
   Navigation,
@@ -31,14 +29,17 @@ export function ActiveVisitBanner() {
   };
 
   return (
-    <div className="relative overflow-hidden bg-white rounded-2xl sm:rounded-3xl border border-[#0F766E]/20 shadow-sm p-4 sm:p-5 transition-all duration-200 hover:shadow-md">
+    <Link
+      href="/customer/visits"
+      className="group relative block overflow-hidden bg-white rounded-2xl sm:rounded-3xl border border-[#0F766E]/20 shadow-sm p-4 sm:p-5 transition-all duration-200 hover:shadow-md hover:border-[#0F766E]/40 cursor-pointer"
+    >
       {/* Top Gradient Accent Bar */}
       <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-[#0F766E] via-[#14B8A6] to-[#16A34A]" />
 
       {/* Top Section: Live Dispatch Status & Service Details */}
       <div className="flex items-start gap-3.5 min-w-0">
         {/* Pulsing Motorcycle / Van Icon */}
-        <div className="relative size-11 sm:size-12 rounded-2xl bg-[#0F766E]/10 text-[#0F766E] flex items-center justify-center shrink-0 mt-0.5">
+        <div className="relative size-11 sm:size-12 rounded-2xl bg-[#0F766E]/10 text-[#0F766E] flex items-center justify-center shrink-0 mt-0.5 group-hover:scale-105 transition-transform">
           <Navigation className="size-5 sm:size-6 stroke-[2.2]" />
           <span className="absolute -top-1 -right-1 size-3 bg-[#16A34A] rounded-full ring-2 ring-white animate-ping" />
         </div>
@@ -55,7 +56,7 @@ export function ActiveVisitBanner() {
             </span>
           </div>
 
-          <h3 className="text-sm sm:text-base font-bold text-[#123B5D] truncate">
+          <h3 className="text-sm sm:text-base font-bold text-[#123B5D] truncate group-hover:text-[#0F766E] transition-colors">
             {locale === "ur" ? (liveVisit.jobTitleUr ?? liveVisit.jobTitle) : liveVisit.jobTitle}
           </h3>
 
@@ -93,7 +94,7 @@ export function ActiveVisitBanner() {
           </div>
         </div>
 
-        {/* Row 2: Doorstep OTP (Left) ---------------- Track Live (Right) */}
+        {/* Row 2: Doorstep OTP */}
         <div className="flex items-center justify-between gap-3">
           {/* Left: Doorstep OTP Badge */}
           <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-xl shadow-2xs shrink-0">
@@ -117,17 +118,8 @@ export function ActiveVisitBanner() {
               )}
             </button>
           </div>
-
-          {/* Right: Track Live CTA Button */}
-          <Link
-            href="/customer/visits"
-            className="inline-flex items-center justify-center gap-1.5 px-3.5 sm:px-4 py-2 rounded-xl bg-[#0F766E] hover:bg-[#115E59] text-white text-xs sm:text-sm font-bold shadow-2xs transition-all active:scale-[0.98] cursor-pointer shrink-0 whitespace-nowrap ms-auto"
-          >
-            <span>{locale === "ur" ? "لائیو ٹریک کریں" : "Track Live"}</span>
-            <ArrowRight className="size-3.5 sm:size-4 rtl:rotate-180" />
-          </Link>
         </div>
       </div>
-    </div>
+    </Link>
   );
 }

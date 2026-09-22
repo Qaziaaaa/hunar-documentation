@@ -34,6 +34,15 @@ export async function generateMetadata({
   return {
     title: t("title"),
     description: t("description"),
+    icons: {
+      icon: [
+        { url: "/orderworker-icon.png", type: "image/png" },
+        { url: "/orderworker-icon.png", sizes: "32x32", type: "image/png" },
+        { url: "/orderworker-icon.png", sizes: "192x192", type: "image/png" },
+      ],
+      shortcut: "/orderworker-icon.png",
+      apple: "/orderworker-icon.png",
+    },
   };
 }
 
@@ -62,6 +71,9 @@ export default async function LocaleLayout({
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
+        <link rel="icon" href="/orderworker-icon.png" type="image/png" />
+        <link rel="shortcut icon" href="/orderworker-icon.png" type="image/png" />
+        <link rel="apple-touch-icon" href="/orderworker-icon.png" />
       </head>
       <body className="min-h-screen w-full overflow-x-hidden flex flex-col">
         <NextIntlClientProvider messages={messages}>
