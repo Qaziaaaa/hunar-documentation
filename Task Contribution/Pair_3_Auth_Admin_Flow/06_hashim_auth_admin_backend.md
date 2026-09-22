@@ -1,6 +1,6 @@
 # HASHIM — AUTH SHARED + ADMIN DASHBOARD BACKEND
 
-## Status: 🟢 CODE COMPLETE & VERIFIED (46/49 tasks)
+## Status: 🟢 CODE COMPLETE & VERIFIED (49/49 tasks)
 
 **Verified: build passes, typecheck passes, 214/214 tests pass.**
 
@@ -196,7 +196,7 @@ Backend Developer — Shared Auth APIs + Full Admin Dashboard APIs
 - [x] Category management APIs (list, add, edit, deactivate)
 - [x] Platform settings APIs (get, update commission, update other)
 - [x] Reports APIs (jobs funnel, worker performance, revenue, growth)
-- [ ] Export APIs (CSV/PDF)
+- [x] Export APIs (CSV/PDF)
 - [x] Audit trail API
-- [ ] Admin notification APIs (list, mark read)
-- [ ] Socket.IO events for admin alerts
+- [x] Admin notification APIs (list, mark read)
+- [x] Socket.IO events for admin alerts
