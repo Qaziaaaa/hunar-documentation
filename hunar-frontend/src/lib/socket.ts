@@ -22,7 +22,10 @@ export function connectSocket(): Socket | null {
   const s = getSocket();
   if (!s) return null;
 
-  const token = window.localStorage.getItem("hunar.access_token") ?? undefined;
+  const token =
+    window.localStorage.getItem("orderworker.access_token") ??
+    window.localStorage.getItem("hunar.access_token") ??
+    undefined;
   s.auth = { token };
   s.connect();
   return s;

@@ -13,7 +13,7 @@ import {
   MaxLength,
   Min,
 } from 'class-validator';
-import { Urgency } from '@prisma/client';
+import { JobStatus, Urgency } from '@prisma/client';
 
 export class CreateJobDto {
   @IsUUID()
@@ -75,6 +75,24 @@ export class CancelJobDto {
   @IsOptional()
   @IsString()
   reason?: string;
+}
+
+export class CustomerJobsQueryDto {
+  @IsOptional()
+  @IsEnum(JobStatus)
+  status?: JobStatus;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  page?: number;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  limit?: number;
 }
 
 export class AvailableJobsQueryDto {

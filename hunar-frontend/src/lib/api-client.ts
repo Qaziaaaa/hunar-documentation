@@ -3,9 +3,14 @@ const API_URL =
 
 export const API_BASE_URL = API_URL;
 
-export const ACCESS_TOKEN_KEY = "hunar.access_token";
-export const REFRESH_TOKEN_KEY = "hunar.refresh_token";
-export const AUTH_USER_KEY = "hunar.auth_user";
+export const ACCESS_TOKEN_KEY = "orderworker.access_token";
+export const REFRESH_TOKEN_KEY = "orderworker.refresh_token";
+export const AUTH_USER_KEY = "orderworker.auth_user";
+
+// Legacy keys for seamless migration
+const LEGACY_ACCESS_TOKEN_KEY = "hunar.access_token";
+const LEGACY_REFRESH_TOKEN_KEY = "hunar.refresh_token";
+const LEGACY_AUTH_USER_KEY = "hunar.auth_user";
 
 export class ApiError extends Error {
   status: number;
@@ -29,17 +34,17 @@ export interface StoredUser {
 
 export function getAccessToken(): string | null {
   if (typeof window === "undefined") return null;
-  return window.localStorage.getItem(ACCESS_TOKEN_KEY);
+  return window.localStorage.getItem(ACCESS_TOKEN_KEY) ?? window.localStorage.getItem(LEGACY_ACCESS_TOKEN_KEY);
 }
 
 export function getRefreshToken(): string | null {
   if (typeof window === "undefined") return null;
-  return window.localStorage.getItem(REFRESH_TOKEN_KEY);
+  return window.localStorage.getItem(REFRESH_TOKEN_KEY) ?? window.localStorage.getItem(LEGACY_REFRESH_TOKEN_KEY);
 }
 
 export function getStoredUser(): StoredUser | null {
   if (typeof window === "undefined") return null;
-  const raw = window.localStorage.getItem(AUTH_USER_KEY);
+  const raw = window.localStorage.getItem(AUTH_USER_KEY) ?? window.localStorage.getItem(LEGACY_AUTH_USER_KEY);
   if (!raw) return null;
   try {
     return JSON.parse(raw) as StoredUser;
@@ -135,7 +140,7 @@ export async function apiClient<T>(
   isRetry = false,
 ): Promise<T> {
   const headers = new Headers(options.headers);
-  if (!headers.has("Content-Type")) {
+  if (!headers.has("Content-Type") && !(options.body instanceof FormData)) {
     headers.set("Content-Type", "application/json");
   }
   const token = getAccessToken();
@@ -163,9 +168,14 @@ export async function apiClient<T>(
   if (!res.ok) {
     let payload: unknown;
     try {
-      payload = await res.json();
+      const cloned = res.clone();
+      try {
+        payload = await cloned.json();
+      } catch {
+        payload = await res.text();
+      }
     } catch {
-      payload = await res.text();
+      payload = null;
     }
     const message =
       (payload as { message?: string } | null)?.message ?? res.statusText;
@@ -200,4 +210,10 @@ export const http = {
       ...options,
     }),
   delete: <T>(path: string) => apiClient<T>(path, { method: "DELETE" }),
+  upload: <T>(path: string, formData: FormData, options?: RequestInit) =>
+    apiClient<T>(path, {
+      method: "POST",
+      body: formData,
+      ...options,
+    }),
 };

@@ -1,0 +1,674 @@
+// Real road navigation data: Defence Colony -> SMIT Peshawar (Saylani Mass IT Training Centre)
+export interface NavigationStep {
+  instruction: string;
+  street: string;
+  streetUr?: string;
+  distance: number;
+  duration: number;
+  location: [number, number];
+  modifier?: string;
+  type: string;
+}
+
+// Traveled portion: Defence Colony to Current Technician Location on University Road
+export const DEFENCE_COLONY_TO_SMIT_TRAVELED: [number, number][] = [
+  [
+    34.011449,
+    71.536697
+  ],
+  [
+    34.01107,
+    71.537142
+  ],
+  [
+    34.010847,
+    71.536821
+  ],
+  [
+    34.010809,
+    71.536774
+  ],
+  [
+    34.010394,
+    71.536267
+  ],
+  [
+    34.010323,
+    71.536198
+  ],
+  [
+    34.009985,
+    71.535887
+  ],
+  [
+    34.009398,
+    71.535448
+  ],
+  [
+    34.008964,
+    71.535113
+  ],
+  [
+    34.008529,
+    71.534727
+  ],
+  [
+    34.008146,
+    71.53532
+  ],
+  [
+    34.007876,
+    71.535737
+  ],
+  [
+    34.007544,
+    71.536248
+  ],
+  [
+    34.007426,
+    71.536363
+  ],
+  [
+    34.006528,
+    71.535615
+  ],
+  [
+    34.006284,
+    71.535355
+  ],
+  [
+    34.006197,
+    71.535225
+  ],
+  [
+    34.005999,
+    71.534996
+  ],
+  [
+    34.005903,
+    71.534903
+  ],
+  [
+    34.005831,
+    71.534883
+  ],
+  [
+    34.005654,
+    71.534709
+  ],
+  [
+    34.00556,
+    71.5346
+  ],
+  [
+    34.00545,
+    71.534375
+  ],
+  [
+    34.005426,
+    71.534273
+  ],
+  [
+    34.00543,
+    71.534181
+  ],
+  [
+    34.005437,
+    71.534112
+  ],
+  [
+    34.005486,
+    71.534016
+  ],
+  [
+    34.005596,
+    71.533841
+  ],
+  [
+    34.005654,
+    71.53379
+  ],
+  [
+    34.005764,
+    71.533699
+  ],
+  [
+    34.0062,
+    71.53346
+  ],
+  [
+    34.006296,
+    71.533381
+  ],
+  [
+    34.006341,
+    71.533338
+  ],
+  [
+    34.00638,
+    71.53329
+  ],
+  [
+    34.006421,
+    71.53322
+  ],
+  [
+    34.006452,
+    71.533143
+  ],
+  [
+    34.006479,
+    71.533073
+  ],
+  [
+    34.006499,
+    71.532988
+  ],
+  [
+    34.006515,
+    71.532818
+  ],
+  [
+    34.00652,
+    71.532632
+  ],
+  [
+    34.006491,
+    71.532255
+  ],
+  [
+    34.006482,
+    71.531717
+  ],
+  [
+    34.006485,
+    71.53117
+  ],
+  [
+    34.006492,
+    71.530089
+  ],
+  [
+    34.006574,
+    71.528083
+  ],
+  [
+    34.006578,
+    71.527823
+  ],
+  [
+    34.006612,
+    71.527017
+  ],
+  [
+    34.006617,
+    71.526736
+  ],
+  [
+    34.006676,
+    71.526176
+  ],
+  [
+    34.006716,
+    71.525951
+  ],
+  [
+    34.006754,
+    71.525834
+  ],
+  [
+    34.007062,
+    71.524865
+  ],
+  [
+    34.007093,
+    71.524773
+  ],
+  [
+    34.007134,
+    71.524644
+  ],
+  [
+    34.007339,
+    71.523953
+  ],
+  [
+    34.0077,
+    71.522741
+  ],
+  [
+    34.00806,
+    71.521498
+  ]
+];
+
+// Remaining portion: Technician Location on University Road to SMIT Peshawar
+export const DEFENCE_COLONY_TO_SMIT_REMAINING: [number, number][] = [
+  [
+    34.00806,
+    71.521498
+  ],
+  [
+    34.008121,
+    71.521287
+  ],
+  [
+    34.008148,
+    71.521074
+  ],
+  [
+    34.008139,
+    71.519192
+  ],
+  [
+    34.008151,
+    71.51861
+  ],
+  [
+    34.008272,
+    71.51759
+  ],
+  [
+    34.008438,
+    71.516323
+  ],
+  [
+    34.0086,
+    71.515129
+  ],
+  [
+    34.008745,
+    71.514086
+  ],
+  [
+    34.008853,
+    71.513222
+  ],
+  [
+    34.00886,
+    71.513046
+  ],
+  [
+    34.008856,
+    71.512958
+  ],
+  [
+    34.008842,
+    71.51287
+  ],
+  [
+    34.008807,
+    71.512734
+  ],
+  [
+    34.00876,
+    71.512628
+  ],
+  [
+    34.008288,
+    71.511815
+  ],
+  [
+    34.007397,
+    71.510265
+  ],
+  [
+    34.006888,
+    71.509379
+  ],
+  [
+    34.006863,
+    71.509316
+  ],
+  [
+    34.006837,
+    71.50927
+  ],
+  [
+    34.006157,
+    71.507856
+  ],
+  [
+    34.005793,
+    71.507158
+  ],
+  [
+    34.005201,
+    71.506091
+  ],
+  [
+    34.004998,
+    71.50569
+  ],
+  [
+    34.004801,
+    71.505299
+  ],
+  [
+    34.004653,
+    71.505007
+  ],
+  [
+    34.003952,
+    71.503709
+  ],
+  [
+    34.003301,
+    71.502505
+  ],
+  [
+    34.003205,
+    71.502318
+  ],
+  [
+    34.002768,
+    71.501477
+  ],
+  [
+    34.002142,
+    71.500292
+  ],
+  [
+    34.001092,
+    71.500296
+  ],
+  [
+    34.000564,
+    71.500289
+  ],
+  [
+    34.00024,
+    71.500285
+  ],
+  [
+    33.999179,
+    71.500328
+  ],
+  [
+    33.998009,
+    71.500319
+  ],
+  [
+    33.997915,
+    71.500355
+  ],
+  [
+    33.997828,
+    71.500402
+  ],
+  [
+    33.99779,
+    71.500444
+  ],
+  [
+    33.997755,
+    71.500593
+  ],
+  [
+    33.997733,
+    71.500767
+  ],
+  [
+    33.997679,
+    71.500925
+  ],
+  [
+    33.997631,
+    71.500938
+  ],
+  [
+    33.997582,
+    71.500939
+  ],
+  [
+    33.996745,
+    71.500896
+  ],
+  [
+    33.996471,
+    71.500888
+  ],
+  [
+    33.996006,
+    71.500874
+  ],
+  [
+    33.995904,
+    71.500871
+  ],
+  [
+    33.995749,
+    71.500876
+  ],
+  [
+    33.995665,
+    71.500904
+  ],
+  [
+    33.995286,
+    71.500876
+  ],
+  [
+    33.994215,
+    71.500797
+  ],
+  [
+    33.993397,
+    71.500748
+  ],
+  [
+    33.993025,
+    71.50068
+  ],
+  [
+    33.992862,
+    71.500631
+  ],
+  [
+    33.992304,
+    71.500464
+  ],
+  [
+    33.991588,
+    71.500191
+  ],
+  [
+    33.991404,
+    71.500104
+  ],
+  [
+    33.991233,
+    71.500018
+  ],
+  [
+    33.991086,
+    71.499898
+  ],
+  [
+    33.990941,
+    71.499776
+  ],
+  [
+    33.990707,
+    71.499549
+  ],
+  [
+    33.990507,
+    71.499287
+  ],
+  [
+    33.990284,
+    71.49894
+  ],
+  [
+    33.990142,
+    71.498596
+  ],
+  [
+    33.99013,
+    71.498486
+  ],
+  [
+    33.990248,
+    71.497139
+  ],
+  [
+    33.990357,
+    71.495848
+  ],
+  [
+    33.990399,
+    71.49533
+  ]
+];
+
+// Turn-by-turn navigation steps
+export const DEFENCE_COLONY_TO_SMIT_STEPS: NavigationStep[] = [
+  {
+    "instruction": "Head south on Defence Colony Street towards Khyber Road",
+    "street": "Defence Colony Link Road",
+    "streetUr": "ڈیفنس کالونی گلی سے جنوب کی طرف روانہ ہوں",
+    "distance": 59,
+    "duration": 11,
+    "location": [
+      34.011449,
+      71.536697
+    ],
+    "modifier": "right",
+    "type": "depart"
+  },
+  {
+    "instruction": "Turn right onto Defence Colony Sector Road",
+    "street": "Defence Colony Link Road",
+    "streetUr": "ڈیفنس کالونی سیکٹر روڈ پر دائیں مڑیں",
+    "distance": 362,
+    "duration": 57,
+    "location": [
+      34.01107,
+      71.537142
+    ],
+    "modifier": "right",
+    "type": "turn"
+  },
+  {
+    "instruction": "Turn left towards Khyber Road / GT Road Link",
+    "street": "Defence Colony Link Road",
+    "streetUr": "خیبر روڈ لنک کی طرف بائیں مڑیں",
+    "distance": 178,
+    "duration": 26,
+    "location": [
+      34.008529,
+      71.534727
+    ],
+    "modifier": "left",
+    "type": "turn"
+  },
+  {
+    "instruction": "Turn right onto Grand Trunk Road (GT Road)",
+    "street": "گرینڈ ٹرنک روڈ",
+    "streetUr": "گرینڈ ٹرنک روڈ پر دائیں مڑیں",
+    "distance": 282,
+    "duration": 23,
+    "location": [
+      34.007544,
+      71.536248
+    ],
+    "modifier": "right",
+    "type": "end of road"
+  },
+  {
+    "instruction": "Continue straight onto University Road",
+    "street": "گرینڈ ٹرنک روڈ",
+    "streetUr": "یونیورسٹی روڈ پر سیدھا جاری رکھیں",
+    "distance": 155,
+    "duration": 12,
+    "location": [
+      34.00556,
+      71.5346
+    ],
+    "modifier": "straight",
+    "type": "continue"
+  },
+  {
+    "instruction": "Follow University Road past Islamia College & Board",
+    "street": "گرینڈ ٹرنک روڈ",
+    "streetUr": "یونیورسٹی روڈ فلائی اوور اور اسلامیہ کالج کے قریب سے گزریں",
+    "distance": 3330,
+    "duration": 262,
+    "location": [
+      34.0062,
+      71.53346
+    ],
+    "modifier": "slight left",
+    "type": "fork"
+  },
+  {
+    "instruction": "Turn left onto Abdarra Road (University Town Entry)",
+    "street": "Abdarra Road",
+    "streetUr": "ابدرہ روڈ کی طرف بائیں مڑیں (یونیورسٹی ٹاؤن داخلہ)",
+    "distance": 459,
+    "duration": 52,
+    "location": [
+      34.002142,
+      71.500292
+    ],
+    "modifier": "left",
+    "type": "turn"
+  },
+  {
+    "instruction": "Turn left onto Connecting Lane",
+    "street": "Defence Colony Link Road",
+    "streetUr": "کنیکٹنگ گلی میں بائیں مڑیں",
+    "distance": 74,
+    "duration": 9,
+    "location": [
+      33.998009,
+      71.500319
+    ],
+    "modifier": "left",
+    "type": "turn"
+  },
+  {
+    "instruction": "Turn right onto Abdarra Road",
+    "street": "Abdarra Road",
+    "streetUr": "ابدرہ روڈ پر دائیں مڑیں",
+    "distance": 908,
+    "duration": 102,
+    "location": [
+      33.997679,
+      71.500925
+    ],
+    "modifier": "right",
+    "type": "turn"
+  },
+  {
+    "instruction": "Continue straight onto Circular Road / Lane",
+    "street": "سرکلر روڈ",
+    "streetUr": "سرکلر روڈ پر سیدھا جاری رکھیں",
+    "distance": 303,
+    "duration": 34,
+    "location": [
+      33.990142,
+      71.498596
+    ],
+    "modifier": "straight",
+    "type": "new name"
+  },
+  {
+    "instruction": "Arrive at SMIT Peshawar (Saylani Mass IT Training Centre)",
+    "street": "سرکلر روڈ",
+    "streetUr": "منزل پر پہنچ گئے: ایس ایم آئی ٹی پشاور (سیلانی ماس آئی ٹی سینٹر)",
+    "distance": 0,
+    "duration": 0,
+    "location": [
+      33.990399,
+      71.49533
+    ],
+    "type": "arrive"
+  }
+];
+
+// Backward compatibility aliases
+export const UNIVERSITY_TOWN_TRAVELED_COORDS = DEFENCE_COLONY_TO_SMIT_TRAVELED;
+export const UNIVERSITY_TOWN_REMAINING_COORDS = DEFENCE_COLONY_TO_SMIT_REMAINING;
+export const UNIVERSITY_TOWN_NAVIGATION_STEPS = DEFENCE_COLONY_TO_SMIT_STEPS;

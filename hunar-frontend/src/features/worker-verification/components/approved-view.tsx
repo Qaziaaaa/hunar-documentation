@@ -28,7 +28,7 @@ export function ApprovedView({ data }: { data: WorkerVerificationData }) {
           Congratulations, {data.fullName}! 🎉
         </h2>
         <p className="mt-1 text-xs sm:text-sm text-muted-foreground">
-          Your credentials and Pakistani Smart CNIC documents have been verified by HUNAR compliance.
+          Your credentials and Pakistani Smart CNIC documents have been verified by Orderworker compliance.
         </p>
       </div>
 
@@ -49,7 +49,7 @@ export function ApprovedView({ data }: { data: WorkerVerificationData }) {
                 {/* Official Teal Verified Badge */}
                 <span
                   className="inline-flex items-center gap-0.5 rounded-full bg-teal px-2 py-0.2 text-[10px] font-bold text-white shadow-2xs"
-                  title="Official HUNAR Verified Badge"
+                  title="Official Orderworker Verified Badge"
                 >
                   <BadgeCheck className="size-3" />
                   <span>Verified Pro</span>

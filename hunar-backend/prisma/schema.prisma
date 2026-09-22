@@ -24,6 +24,7 @@ enum WorkerVerificationStatus {
   APPROVED
   REJECTED
   REQUEST_CHANGES
+  REVOKED
 }
 
 enum VerificationDocumentType {
@@ -94,6 +95,26 @@ enum CommissionStatus {
   VERIFIED
 }
 
+enum PaymentStatus {
+  INITIATED
+  PROCESSING
+  COMPLETED
+  FAILED
+  REFUNDED
+}
+
+enum PaymentMethod {
+  CARD
+  MOBILE_WALLET
+  COD
+}
+
+enum PaymentGateway {
+  STRIPE
+  JAZZCASH
+  EASYPAISA
+}
+
 // Worker notification types (Task 6 — Notifications Backend, Hakim Ullah).
 // One type per required worker notification — no unrelated types.
 enum NotificationType {
@@ -134,6 +155,8 @@ model User {
   visits         Visit[]
   repairs        Repair[]
   commissions    Commission[]
+  customerPayments Payment[] @relation("CustomerPayments")
+  workerPayments   Payment[] @relation("WorkerPayments")
   ratings        Review[]           @relation("RevieweeReviews")
   writtenReviews Review[]           @relation("ReviewerReviews")
   locationTracks LocationTracking[]
@@ -146,6 +169,12 @@ model User {
   conversationsAsWorker   Conversation[] @relation("ConversationWorker")
   chatMessages            Message[]
   notifications           WorkerNotification[] @relation("WorkerNotifications")
+  wallet                  WorkerWallet?
+  walletLedger            WalletLedger[]
+  walletTopUps            WalletTopup[]
+  withdrawals             Withdrawal[]
+  reportedDisputes        Dispute[]        @relation("DisputeReporter")
+  respondedDisputes       Dispute[]        @relation("DisputeRespondent")
 
   @@index([role])
 }
@@ -247,7 +276,9 @@ model ServiceRequest {
   commissions    Commission[]
   reviews        Review[]
   locationTracks LocationTracking[]
+  payments       Payment[]
   conversation   Conversation?
+  disputes       Dispute[]
 
   @@index([status])
   @@index([categoryId])
@@ -380,6 +411,32 @@ model Commission {
   @@index([workerId, status])
 }
 
+model Payment {
+  id             String         @id @default(uuid())
+  jobId          String
+  job            ServiceRequest @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  customerId     String
+  customer       User           @relation("CustomerPayments", fields: [customerId], references: [id])
+  workerId       String
+  worker         User           @relation("WorkerPayments", fields: [workerId], references: [id])
+  visitCharge    Decimal        @db.Decimal(10, 2)
+  amount         Decimal        @db.Decimal(10, 2)
+  method         PaymentMethod  @default(COD)
+  status         PaymentStatus  @default(INITIATED)
+  gateway        PaymentGateway?
+  transactionRef String?
+  screenshotUrl  String?
+  paidAt         DateTime?
+  verifiedAt     DateTime?
+  note           String?
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  @@index([jobId])
+  @@index([workerId, status])
+  @@index([customerId, status])
+}
+
 model Review {
   id         String         @id @default(uuid())
   jobId      String
@@ -456,4 +513,177 @@ model WorkerNotification {
 
   @@index([userId, isRead, createdAt])
   @@index([userId, type, createdAt])
+}
+
+// Admin action audit trail (Admin flow §M2/M3). Records who did what, to whom, when and why.
+// actorId is intentionally a plain string (no FK) so history survives user deletion.
+model AuditLog {
+  id         String   @id @default(uuid())
+  actorId    String?
+  actorRole  Role?
+  action     String
+  targetType String
+  targetId   String
+  reason     String?
+  metadata   Json?
+  createdAt  DateTime @default(now())
+
+  @@index([targetType, targetId])
+  @@index([actorId])
+  @@index([action])
+  @@index([createdAt])
+}
+
+// ===== Task 7 — Worker Wallet (Hakim Ullah) =====
+// Every worker starts with a Rs. 0 wallet (lazily created on first touch).
+// Commission flow: Hold on visit arrival -> Deduct to PlatformWallet on payment
+// confirmation (screenshot submitted) -> Reverse back if the job is cancelled
+// before confirmation. All movements are idempotent (Redis key + unique ledger key).
+enum WalletLedgerType {
+  COMMISSION_HELD
+  COMMISSION_RELEASED
+  COMMISSION_DEDUCTED
+  TOPUP_CREDIT
+  EARNINGS_CREDIT
+  WITHDRAWAL
+}
+
+enum TopupStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model WorkerWallet {
+  userId      String          @id
+  user        User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  balance     Decimal         @default(0) @db.Decimal(10, 2)
+  heldBalance Decimal         @default(0) @db.Decimal(10, 2)
+  isFrozen    Boolean         @default(false)
+  frozenAt    DateTime?
+  frozenBy    String?
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  @@index([createdAt])
+}
+
+model WalletLedger {
+  id             String           @id @default(uuid())
+  userId         String
+  user           User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type           WalletLedgerType
+  // Signed amount: positive credits (+) / negative debits (-).
+  amount         Decimal          @db.Decimal(10, 2)
+  balanceAfter   Decimal          @db.Decimal(10, 2)
+  referenceType  String?
+  referenceId    String?
+  note           String?
+  idempotencyKey String           @unique
+  createdAt      DateTime         @default(now())
+
+  @@index([userId, createdAt])
+  @@index([referenceType, referenceId])
+}
+
+model WalletTopup {
+  id            String      @id @default(uuid())
+  workerId      String
+  worker        User        @relation(fields: [workerId], references: [id], onDelete: Cascade)
+  amount        Decimal     @db.Decimal(10, 2)
+  screenshotUrl String
+  note          String?
+  status        TopupStatus @default(PENDING)
+  reason        String?
+  decidedBy     String?
+  decidedAt     DateTime?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  @@index([workerId, status, createdAt])
+}
+
+enum WithdrawalStatus {
+  PENDING
+  PROCESSED
+  FAILED
+  REJECTED
+}
+
+model Withdrawal {
+  id           String           @id @default(uuid())
+  workerId     String
+  worker       User             @relation(fields: [workerId], references: [id], onDelete: Cascade)
+  amount       Decimal          @db.Decimal(10, 2)
+  status       WithdrawalStatus @default(PENDING)
+  note         String?
+  requestedAt  DateTime         @default(now())
+  processedAt  DateTime?
+  processedBy  String?
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+
+  @@index([workerId, status, requestedAt])
+}
+
+// Single-row ledger that stores every deducted commission (platform side).
+model PlatformWallet {
+  id               String   @id @default(uuid())
+  balance          Decimal  @default(0) @db.Decimal(10, 2)
+  totalCommissions Decimal  @default(0) @db.Decimal(10, 2)
+  updatedAt        DateTime @updatedAt
+}
+
+enum DisputeStatus {
+  OPEN
+  UNDER_REVIEW
+  RESOLVED
+  DISMISSED
+  ESCALATED
+}
+
+enum DisputeType {
+  PAYMENT
+  SERVICE_QUALITY
+  NO_SHOW
+  PRICE_CHANGE
+  OTHER
+}
+
+model Dispute {
+  id           String        @id @default(uuid())
+  jobId        String
+  job          ServiceRequest @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  reporterId   String
+  reporter     User          @relation("DisputeReporter", fields: [reporterId], references: [id])
+  respondentId String
+  respondent   User          @relation("DisputeRespondent", fields: [respondentId], references: [id])
+  type         DisputeType
+  description  String
+  evidence     Json?
+  status       DisputeStatus @default(OPEN)
+  resolution   String?
+  resolvedBy   String?
+  resolvedAt   DateTime?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  @@index([jobId])
+  @@index([reporterId])
+  @@index([respondentId])
+  @@index([status])
+}
+
+model AdminNotification {
+  id        String   @id @default(uuid())
+  type      String
+  title     String
+  body      String
+  data      Json?
+  isRead    Boolean  @default(false)
+  readAt    DateTime?
+  createdAt DateTime @default(now())
+
+  @@index([isRead, createdAt])
+  @@index([type, createdAt])
 }
