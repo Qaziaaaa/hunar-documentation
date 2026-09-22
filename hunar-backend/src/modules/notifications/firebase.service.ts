@@ -1,5 +1,6 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import * as admin from 'firebase-admin';
 
 export interface PushNotificationPayload {
   title: string;
@@ -21,7 +22,7 @@ export class FirebaseService implements OnModuleInit {
   private messaging: any = null;
   private initialized = false;
 
-  constructor(private readonly configService: ConfigService) {}
+  constructor(private readonly configService: ConfigService) { }
 
   async onModuleInit(): Promise<void> {
     await this.initialize();
@@ -35,7 +36,6 @@ export class FirebaseService implements OnModuleInit {
         return;
       }
 
-      import * as admin from 'firebase-admin';
       const { getMessaging } = await import('firebase-admin/messaging');
 
       if (!admin.apps.length) {
