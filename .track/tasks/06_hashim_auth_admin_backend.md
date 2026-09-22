@@ -73,20 +73,20 @@ Backend Developer — Shared Auth APIs + Full Admin Dashboard APIs
 
 | #   | Task                                                            | API Endpoint                                    | Status |
 | --- | --------------------------------------------------------------- | ----------------------------------------------- | ------ |
-| 10  | Get all customers (list with search/filter)                     | `GET /admin/customers`                          | ⏸️     |
-| 11  | Get customer detail (profile, jobs, payments, reviews)          | `GET /admin/customers/[id]`                     | ⏸️     |
-| 12  | Suspend customer (with reason)                                  | `PUT /admin/customers/[id]/suspend`             | ⏸️     |
-| 13  | Reactivate customer                                             | `PUT /admin/customers/[id]/reactivate`          | ⏸️     |
+| 10  | Get all customers (list with search/filter)                     | `GET /admin/customers`                          | ✅     |
+| 11  | Get customer detail (profile, jobs, payments, reviews)          | `GET /admin/customers/[id]`                     | ✅     |
+| 12  | Suspend customer (with reason)                                  | `PUT /admin/customers/[id]/suspend`             | ✅     |
+| 13  | Reactivate customer                                             | `PUT /admin/customers/[id]/reactivate`          | ✅     |
 | 14  | Get all workers (list with search/filter)                       | `GET /admin/workers`                            | ✅     |
 | 15  | Get worker detail (profile, documents, jobs, earnings, reviews) | `GET /admin/workers/[id]`                       | ✅     |
-| 16  | Suspend worker (with reason)                                    | `PUT /admin/workers/[id]/suspend`               | ⏸️     |
-| 17  | Reactivate worker                                               | `PUT /admin/workers/[id]/reactivate`            | ⏸️     |
+| 16  | Suspend worker (with reason)                                    | `PUT /admin/workers/[id]/suspend`               | ✅     |
+| 17  | Reactivate worker                                               | `PUT /admin/workers/[id]/reactivate`            | ✅     |
 | 18  | Get verification queue (pending submissions)                    | `GET /admin/verifications`                      | ✅     |
 | 19  | Get verification detail (documents, skills, experience)         | `GET /admin/verifications/[id]`                 | ✅     |
 | 20  | Approve verification                                            | `PUT /admin/verifications/[id]/approve`         | ✅     |
 | 21  | Reject verification (with reason)                               | `PUT /admin/verifications/[id]/reject`          | ✅     |
 | 22  | Request changes (with notes)                                    | `PUT /admin/verifications/[id]/request-changes` | ✅     |
-| 23  | Revoke verification                                             | `PUT /admin/verifications/[id]/revoke`          | ⏸️     |
+| 23  | Revoke verification                                             | `PUT /admin/verifications/[id]/revoke`          | ✅     |
 
 **Rules:**
 
@@ -101,11 +101,11 @@ Backend Developer — Shared Auth APIs + Full Admin Dashboard APIs
 
 | #   | Task                                                           | API Endpoint                            | Status |
 | --- | -------------------------------------------------------------- | --------------------------------------- | ------ |
-| 24  | Get all jobs (list with filters)                               | `GET /admin/jobs`                       | ⏸️     |
-| 25  | Get job detail (full audit history)                            | `GET /admin/jobs/[id]`                  | ⏸️     |
-| 26  | Force cancel job (with reason)                                 | `PUT /admin/jobs/[id]/cancel`           | ⏸️     |
-| 27  | Get transactions feed (wallet ledger)                          | `GET /admin/transactions`               | ⏸️     |
-| 28  | Get payments feed                                              | `GET /admin/payments`                   | ⏸️     |
+| 24  | Get all jobs (list with filters)                               | `GET /admin/jobs`                       | ✅     |
+| 25  | Get job detail (full audit history)                            | `GET /admin/jobs/[id]`                  | ✅     |
+| 26  | Force cancel job (with reason)                                 | `PUT /admin/jobs/[id]/cancel`           | ✅     |
+| 27  | Get transactions feed (wallet ledger)                          | `GET /admin/transactions`               | ✅     |
+| 28  | Get payments feed                                              | `GET /admin/payments`                   | ✅     |
 | 29  | Commission snapshot (total + per transaction)                  | `GET /admin/commission`                 | ⏸️     |
 | 30  | Get withdrawal queue                                           | `GET /admin/withdrawals`                | ⏸️     |
 | 31  | Process withdrawal                                             | `PUT /admin/withdrawals/[id]/process`   | ⏸️     |
@@ -123,7 +123,7 @@ Backend Developer — Shared Auth APIs + Full Admin Dashboard APIs
 | 43  | Update commission rate (super-admin only)                      | `PUT /admin/settings/commission`        | ⏸️     |
 | 44  | Update other settings                                          | `PUT /admin/settings`                   | ⏸️     |
 | 45  | Get reports (jobs funnel, worker performance, revenue, growth) | `GET /admin/reports/[type]`             | ⏸️     |
-| 46  | Export report (CSV/PDF)                                        | `GET /admin/reports/[type]/export`      | ⏸️     |
+| 46  | Export report (CSV/PDF)                                        | `GET /admin/reports/[type]/export`      | ✅     |
 | 47  | Get audit trail                                                | `GET /admin/audit`                      | ⏸️     |
 | 48  | Admin notifications                                            | `GET /admin/notifications`              | ⏸️     |
 | 49  | Mark notifications read                                        | `PUT /admin/notifications/read`         | ⏸️     |
@@ -185,7 +185,7 @@ Backend Developer — Shared Auth APIs + Full Admin Dashboard APIs
 - [x] Admin login (email + password)
 - [x] Role guard middleware (CUSTOMER, WORKER, ADMIN)
 - [x] Rate limiting middleware
-- [ ] Customer management APIs (list, detail, suspend, reactivate)
+- [x] Customer management APIs (list, detail, suspend, reactivate)
 - [x] Worker management APIs (list, detail, suspend, reactivate)
 - [x] Verification workflow APIs (queue, detail, approve, reject, request-changes, revoke)
 - [ ] Jobs monitoring APIs (list, detail, force cancel)

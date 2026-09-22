@@ -10,6 +10,8 @@ import {
   Users,
 } from "lucide-react";
 
+import { OrderworkerLogo } from "@/components/shared/orderworker-logo";
+
 export function VerificationLeftShowcase() {
   return (
     <section
@@ -20,18 +22,11 @@ export function VerificationLeftShowcase() {
         <div>
           {/* Header Branding & Badge */}
           <div className="mb-4 flex items-center justify-between gap-2">
-            <div className="flex items-center gap-2.5">
-              <div className="flex size-9 items-center justify-center rounded-xl bg-navy text-white shadow-xs">
-                <span className="font-extrabold text-teal text-base">H</span>
-              </div>
-              <div className="leading-none">
-                <span className="block text-lg font-extrabold tracking-tight text-navy">
-                  HUNAR
-                </span>
-                <span className="block text-[9px] font-bold uppercase tracking-wider text-teal">
-                  Worker Verification
-                </span>
-              </div>
+            <div className="flex flex-col gap-0.5">
+              <OrderworkerLogo variant="dark" size="sm" />
+              <span className="block text-[9px] font-bold uppercase tracking-wider text-teal pl-0.5">
+                Worker Verification
+              </span>
             </div>
             <span className="inline-flex items-center rounded-full border border-teal/20 bg-teal/10 px-2.5 py-1 text-[11px] font-bold text-teal">
               NADRA Protected
@@ -44,7 +39,7 @@ export function VerificationLeftShowcase() {
               Trust & Safety Verification System
             </h1>
             <p className="mt-1.5 text-xs text-muted-foreground leading-relaxed">
-              Every tradesperson on HUNAR passes rigorous identity verification before receiving customer jobs in Peshawar.
+              Every tradesperson on Orderworker passes rigorous identity verification before receiving customer jobs in Peshawar.
             </p>
           </div>
 

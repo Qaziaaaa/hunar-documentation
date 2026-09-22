@@ -87,7 +87,7 @@ export function WorkerSignupFlow() {
     setSubmitting(true);
     setSubmitError(null);
     try {
-      const response = await verifyWorkerOtp(requestId, values.code);
+      const response = await verifyWorkerOtp(requestId, values.code, phone);
       setVerificationId(response.verificationId);
       if (typeof response.attemptsLeft === "number") {
         setAttemptsLeft(response.attemptsLeft);

@@ -3,9 +3,9 @@ import { VerificationShell } from "@/features/worker-verification/components/ver
 
 export async function generateMetadata() {
   return {
-    title: "Verification Status | HUNAR Worker Portal",
+    title: "Verification Status | Orderworker Worker Portal",
     description:
-      "Check the admin verification status of your HUNAR tradesperson profile and Smart CNIC documents.",
+      "Check the admin verification status of your Orderworker tradesperson profile and Smart CNIC documents.",
   };
 }
 

@@ -1,3 +1,7 @@
+// HUNAR backend — Prisma schema
+// Scope: Shafqat Ullah's Module 1 worker-flow modules (Task Contribution/module_1.md lines 808–946).
+// Tables for Jobs/Matching, Offers, Visits, Inspection, Repair, Commission, Reviews + minimal User/Category/Location support.
+
 generator client {
   provider = "prisma-client-js"
 }
@@ -5,428 +9,6 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
-}
-
-model User {
-  id                      String                 @id @default(uuid())
-  phone                   String                 @unique
-  passwordHash            String?
-  name                    String?
-  role                    Role                   @default(CUSTOMER)
-  avatarUrl               String?
-  isActive                Boolean                @default(true)
-  isVerified              Boolean                @default(false)
-  createdAt               DateTime               @default(now())
-  updatedAt               DateTime               @updatedAt
-  commissions             Commission[]
-  conversationsAsCustomer Conversation[]         @relation("ConversationCustomer")
-  conversationsAsWorker   Conversation[]         @relation("ConversationWorker")
-  offers                  JobOffer[]
-  locationTracks          LocationTracking[]
-  chatMessages            Message[]
-  customerPayments        Payment[]              @relation("CustomerPayments")
-  workerPayments          Payment[]              @relation("WorkerPayments")
-  repairs                 Repair[]
-  ratings                 Review[]               @relation("RevieweeReviews")
-  writtenReviews          Review[]               @relation("ReviewerReviews")
-  serviceAreas            ServiceArea[]
-  customerJobs            ServiceRequest[]       @relation("CustomerJobs")
-  selectedJobs            ServiceRequest[]       @relation("SelectedWorkerJobs")
-  verificationDocuments   VerificationDocument[]
-  visits                  Visit[]
-  walletLedger            WalletLedger[]
-  walletTopUps            WalletTopup[]
-  notifications           WorkerNotification[]   @relation("WorkerNotifications")
-  workerProfile           WorkerProfile?
-  wallet                  WorkerWallet?
-
-  @@index([role])
-}
-
-model WorkerProfile {
-  userId             String                   @id
-  skills             String[]                 @default([])
-  experienceYears    Int?
-  bio                String?
-  isAvailable        Boolean                  @default(false)
-  serviceRadiusKm    Int                      @default(10)
-  verificationStatus WorkerVerificationStatus @default(NOT_SUBMITTED)
-  rejectionReason    String?
-  adminNote          String?
-  submittedAt        DateTime?
-  verifiedAt         DateTime?
-  createdAt          DateTime                 @default(now())
-  updatedAt          DateTime                 @updatedAt
-  user               User                     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([skills])
-  @@index([verificationStatus])
-  @@index([isAvailable])
-}
-
-model ServiceArea {
-  id        String                   @id @default(uuid())
-  userId    String
-  label     String
-  address   String
-  latitude  Float
-  longitude Float
-  location  Unsupported("geometry")?
-  createdAt DateTime                 @default(now())
-  user      User                     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId])
-}
-
-model VerificationDocument {
-  id         String                   @id @default(uuid())
-  userId     String
-  type       VerificationDocumentType
-  url        String
-  fileName   String?
-  mimeType   String?
-  uploadedAt DateTime                 @default(now())
-  user       User                     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@unique([userId, type])
-  @@index([userId])
-}
-
-model ServiceCategory {
-  id        String           @id @default(uuid())
-  name      String
-  nameUrdu  String?
-  isActive  Boolean          @default(true)
-  sortOrder Int              @default(0)
-  createdAt DateTime         @default(now())
-  jobs      ServiceRequest[]
-
-  @@index([isActive])
-}
-
-model ServiceRequest {
-  id                   String                   @id @default(uuid())
-  customerId           String
-  categoryId           String
-  title                String
-  description          String?
-  voiceNoteUrl         String?
-  images               String[]                 @default([])
-  latitude             Float
-  longitude            Float
-  location             Unsupported("geometry")?
-  address              String
-  city                 String
-  area                 String?
-  status               JobStatus                @default(OPEN)
-  urgency              Urgency                  @default(NORMAL)
-  suggestedVisitCharge Decimal?                 @db.Decimal(10, 2)
-  preferredVisitTime   DateTime?
-  selectedWorkerId     String?
-  lockedVisitCharge    Decimal?                 @db.Decimal(10, 2)
-  cancelReason         String?
-  cancelledAt          DateTime?
-  completedAt          DateTime?
-  createdAt            DateTime                 @default(now())
-  updatedAt            DateTime                 @updatedAt
-  commissions          Commission?
-  conversation         Conversation?
-  offers               JobOffer[]
-  locationTracks       LocationTracking[]
-  payments             Payment[]
-  repairs              Repair[]
-  reviews              Review[]
-  category             ServiceCategory          @relation(fields: [categoryId], references: [id])
-  customer             User                     @relation("CustomerJobs", fields: [customerId], references: [id])
-  selectedWorker       User?                    @relation("SelectedWorkerJobs", fields: [selectedWorkerId], references: [id])
-  visits               Visit[]
-
-  @@index([status])
-  @@index([categoryId])
-  @@index([customerId])
-  @@index([city, area])
-  @@index([createdAt])
-}
-
-model JobOffer {
-  id                 String         @id @default(uuid())
-  jobId              String
-  workerId           String
-  visitCharge        Decimal        @db.Decimal(10, 2)
-  message            String?
-  status             OfferStatus    @default(PENDING)
-  negotiationRound   Int            @default(0)
-  negotiationHistory Json?
-  lockedAt           DateTime?
-  createdAt          DateTime       @default(now())
-  updatedAt          DateTime       @updatedAt
-  job                ServiceRequest @relation(fields: [jobId], references: [id], onDelete: Cascade)
-  worker             User           @relation(fields: [workerId], references: [id])
-  visit              Visit?
-
-  @@unique([jobId, workerId])
-  @@index([jobId])
-  @@index([workerId])
-}
-
-model Visit {
-  id                     String         @id @default(uuid())
-  jobId                  String
-  workerId               String
-  offerId                String         @unique
-  scheduledDate          DateTime
-  actualDate             DateTime?
-  status                 VisitStatus    @default(SCHEDULED)
-  diagnosis              String?
-  repairPlan             String?
-  repairEstimate         Decimal?       @db.Decimal(10, 2)
-  inspectionPhotos       String[]       @default([])
-  estimatedRepairTimeMin Int?
-  inspectionSubmittedAt  DateTime?
-  createdAt              DateTime       @default(now())
-  updatedAt              DateTime       @updatedAt
-  repairs                Repair[]
-  job                    ServiceRequest @relation(fields: [jobId], references: [id])
-  offer                  JobOffer       @relation(fields: [offerId], references: [id])
-  worker                 User           @relation(fields: [workerId], references: [id])
-
-  @@index([jobId])
-  @@index([workerId])
-}
-
-model LocationTracking {
-  id         String          @id @default(uuid())
-  userId     String
-  jobId      String?
-  latitude   Float
-  longitude  Float
-  accuracy   Float?
-  recordedAt DateTime        @default(now())
-  job        ServiceRequest? @relation(fields: [jobId], references: [id])
-  user       User            @relation(fields: [userId], references: [id])
-
-  @@index([jobId])
-  @@index([userId, recordedAt])
-}
-
-model Repair {
-  id                 String           @id @default(uuid())
-  visitId            String
-  jobId              String
-  workerId           String
-  description        String
-  amount             Decimal          @db.Decimal(10, 2)
-  itemsBreakdown     Json?
-  status             RepairStatus     @default(PROPOSED)
-  negotiationRound   Int              @default(0)
-  negotiationHistory Json?
-  lockedAmount       Decimal?         @db.Decimal(10, 2)
-  lockedAt           DateTime?
-  startedAt          DateTime?
-  completedAt        DateTime?
-  createdAt          DateTime         @default(now())
-  updatedAt          DateTime         @updatedAt
-  job                ServiceRequest   @relation(fields: [jobId], references: [id])
-  visit              Visit            @relation(fields: [visitId], references: [id])
-  worker             User             @relation(fields: [workerId], references: [id])
-  revisions          RepairRevision[]
-
-  @@index([jobId])
-  @@index([visitId])
-}
-
-model RepairRevision {
-  id             String               @id @default(uuid())
-  repairId       String
-  proposedAmount Decimal              @db.Decimal(10, 2)
-  reason         String
-  status         RepairRevisionStatus @default(PENDING_APPROVAL)
-  requestedBy    String
-  createdAt      DateTime             @default(now())
-  decidedAt      DateTime?
-  repair         Repair               @relation(fields: [repairId], references: [id], onDelete: Cascade)
-
-  @@index([repairId])
-}
-
-model Commission {
-  id             String           @id @default(uuid())
-  jobId          String           @unique
-  workerId       String
-  visitCharge    Decimal          @db.Decimal(10, 2)
-  commissionRate Decimal          @db.Decimal(5, 4)
-  amount         Decimal          @db.Decimal(10, 2)
-  status         CommissionStatus @default(PENDING)
-  screenshotUrl  String?
-  paidAt         DateTime?
-  verifiedAt     DateTime?
-  note           String?
-  createdAt      DateTime         @default(now())
-  updatedAt      DateTime         @updatedAt
-  job            ServiceRequest   @relation(fields: [jobId], references: [id])
-  worker         User             @relation(fields: [workerId], references: [id])
-
-  @@index([workerId, status])
-}
-
-model Payment {
-  id             String          @id @default(uuid())
-  jobId          String
-  customerId     String
-  workerId       String
-  visitCharge    Decimal         @db.Decimal(10, 2)
-  amount         Decimal         @db.Decimal(10, 2)
-  method         PaymentMethod   @default(COD)
-  status         PaymentStatus   @default(INITIATED)
-  gateway        PaymentGateway?
-  transactionRef String?
-  screenshotUrl  String?
-  paidAt         DateTime?
-  verifiedAt     DateTime?
-  note           String?
-  createdAt      DateTime        @default(now())
-  updatedAt      DateTime        @updatedAt
-  customer       User            @relation("CustomerPayments", fields: [customerId], references: [id])
-  job            ServiceRequest  @relation(fields: [jobId], references: [id], onDelete: Cascade)
-  worker         User            @relation("WorkerPayments", fields: [workerId], references: [id])
-
-  @@index([jobId])
-  @@index([workerId, status])
-  @@index([customerId, status])
-}
-
-model Review {
-  id         String         @id @default(uuid())
-  jobId      String
-  reviewerId String
-  revieweeId String
-  rating     Int
-  comment    String?
-  isVisible  Boolean        @default(true)
-  createdAt  DateTime       @default(now())
-  job        ServiceRequest @relation(fields: [jobId], references: [id], onDelete: Cascade)
-  reviewee   User           @relation("RevieweeReviews", fields: [revieweeId], references: [id])
-  reviewer   User           @relation("ReviewerReviews", fields: [reviewerId], references: [id])
-
-  @@unique([jobId, reviewerId])
-  @@index([revieweeId])
-}
-
-model PlatformSetting {
-  key       String   @id
-  value     String
-  updatedAt DateTime @updatedAt
-}
-
-model Conversation {
-  id            String         @id @default(uuid())
-  jobId         String         @unique
-  customerId    String
-  workerId      String
-  lastMessage   String?
-  lastMessageAt DateTime?
-  isActive      Boolean        @default(true)
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
-  customer      User           @relation("ConversationCustomer", fields: [customerId], references: [id])
-  job           ServiceRequest @relation(fields: [jobId], references: [id], onDelete: Cascade)
-  worker        User           @relation("ConversationWorker", fields: [workerId], references: [id])
-  messages      Message[]
-
-  @@index([customerId])
-  @@index([workerId])
-  @@index([lastMessageAt])
-}
-
-model Message {
-  id             String       @id @default(uuid())
-  conversationId String
-  senderId       String
-  text           String?
-  imageUrl       String?
-  isRead         Boolean      @default(false)
-  createdAt      DateTime     @default(now())
-  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
-  sender         User         @relation(fields: [senderId], references: [id])
-
-  @@index([conversationId, createdAt])
-}
-
-model WorkerNotification {
-  id        String           @id @default(uuid())
-  userId    String
-  type      NotificationType
-  title     String
-  body      String
-  data      Json?
-  isRead    Boolean          @default(false)
-  readAt    DateTime?
-  createdAt DateTime         @default(now())
-  user      User             @relation("WorkerNotifications", fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId, isRead, createdAt])
-  @@index([userId, type, createdAt])
-}
-
-model WorkerWallet {
-  userId      String   @id
-  balance     Decimal  @default(0) @db.Decimal(10, 2)
-  heldBalance Decimal  @default(0) @db.Decimal(10, 2)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([createdAt])
-}
-
-model WalletLedger {
-  id             String           @id @default(uuid())
-  userId         String
-  type           WalletLedgerType
-  amount         Decimal          @db.Decimal(10, 2)
-  balanceAfter   Decimal          @db.Decimal(10, 2)
-  referenceType  String?
-  referenceId    String?
-  note           String?
-  idempotencyKey String           @unique
-  createdAt      DateTime         @default(now())
-  user           User             @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId, createdAt])
-  @@index([referenceType, referenceId])
-}
-
-model WalletTopup {
-  id            String      @id @default(uuid())
-  workerId      String
-  amount        Decimal     @db.Decimal(10, 2)
-  screenshotUrl String
-  note          String?
-  status        TopupStatus @default(PENDING)
-  reason        String?
-  decidedBy     String?
-  decidedAt     DateTime?
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
-  worker        User        @relation(fields: [workerId], references: [id], onDelete: Cascade)
-
-  @@index([workerId, status, createdAt])
-}
-
-model PlatformWallet {
-  id               String   @id @default(uuid())
-  balance          Decimal  @default(0) @db.Decimal(10, 2)
-  totalCommissions Decimal  @default(0) @db.Decimal(10, 2)
-  updatedAt        DateTime @updatedAt
-}
-
-/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
-model spatial_ref_sys {
-  srid      Int     @id
-  auth_name String? @db.VarChar(256)
-  auth_srid Int?
-  srtext    String? @db.VarChar(2048)
-  proj4text String? @db.VarChar(2048)
 }
 
 enum Role {
@@ -442,6 +24,7 @@ enum WorkerVerificationStatus {
   APPROVED
   REJECTED
   REQUEST_CHANGES
+  REVOKED
 }
 
 enum VerificationDocumentType {
@@ -532,6 +115,8 @@ enum PaymentGateway {
   EASYPAISA
 }
 
+// Worker notification types (Task 6 — Notifications Backend, Hakim Ullah).
+// One type per required worker notification — no unrelated types.
 enum NotificationType {
   JOB_MATCHED
   OFFER_ACCEPTED
@@ -550,15 +135,410 @@ enum NotificationType {
   EARNINGS_RECORDED
   REVIEW_RECEIVED
   VERIFICATION_RESULT
-  NEW_OFFER
-  VISIT_SCHEDULED
-  INSPECTION_SUBMITTED
-  REPAIR_ESTIMATE_READY
-  REPAIR_APPROVED
-  PAYMENT_CONFIRMED
-  JOB_COMPLETED
 }
 
+model User {
+  id           String   @id @default(uuid())
+  phone        String   @unique
+  passwordHash String?
+  name         String?
+  role         Role     @default(CUSTOMER)
+  avatarUrl    String?
+  isActive     Boolean  @default(true)
+  isVerified   Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  customerJobs   ServiceRequest[]   @relation("CustomerJobs")
+  selectedJobs   ServiceRequest[]   @relation("SelectedWorkerJobs")
+  offers         JobOffer[]
+  visits         Visit[]
+  repairs        Repair[]
+  commissions    Commission[]
+  customerPayments Payment[] @relation("CustomerPayments")
+  workerPayments   Payment[] @relation("WorkerPayments")
+  ratings        Review[]           @relation("RevieweeReviews")
+  writtenReviews Review[]           @relation("ReviewerReviews")
+  locationTracks LocationTracking[]
+
+  workerProfile         WorkerProfile?
+  serviceAreas          ServiceArea[]
+  verificationDocuments VerificationDocument[]
+
+  conversationsAsCustomer Conversation[] @relation("ConversationCustomer")
+  conversationsAsWorker   Conversation[] @relation("ConversationWorker")
+  chatMessages            Message[]
+  notifications           WorkerNotification[] @relation("WorkerNotifications")
+  wallet                  WorkerWallet?
+  walletLedger            WalletLedger[]
+  walletTopUps            WalletTopup[]
+  withdrawals             Withdrawal[]
+  reportedDisputes        Dispute[]        @relation("DisputeReporter")
+  respondedDisputes       Dispute[]        @relation("DisputeRespondent")
+
+  @@index([role])
+}
+
+model WorkerProfile {
+  userId             String                   @id
+  user               User                     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  skills             String[]                 @default([])
+  experienceYears    Int?
+  bio                String?
+  isAvailable        Boolean                  @default(false)
+  serviceRadiusKm    Int                      @default(10)
+  verificationStatus WorkerVerificationStatus @default(NOT_SUBMITTED)
+  rejectionReason    String?
+  adminNote          String?
+  submittedAt        DateTime?
+  verifiedAt         DateTime?
+  createdAt          DateTime                 @default(now())
+  updatedAt          DateTime                 @updatedAt
+
+  @@index([skills])
+  @@index([verificationStatus])
+  @@index([isAvailable])
+}
+
+model ServiceArea {
+  id        String                                @id @default(uuid())
+  userId    String
+  user      User                                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  label     String
+  address   String
+  latitude  Float
+  longitude Float
+  location  Unsupported("geometry(Point, 4326)")?
+  createdAt DateTime                              @default(now())
+
+  @@index([userId])
+}
+
+model VerificationDocument {
+  id         String                   @id @default(uuid())
+  userId     String
+  user       User                     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type       VerificationDocumentType
+  url        String
+  fileName   String?
+  mimeType   String?
+  uploadedAt DateTime                 @default(now())
+
+  @@unique([userId, type])
+  @@index([userId])
+}
+
+model ServiceCategory {
+  id        String   @id @default(uuid())
+  name      String
+  nameUrdu  String?
+  isActive  Boolean  @default(true)
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+
+  jobs ServiceRequest[]
+
+  @@index([isActive])
+}
+
+model ServiceRequest {
+  id                   String                                @id @default(uuid())
+  customerId           String
+  customer             User                                  @relation("CustomerJobs", fields: [customerId], references: [id])
+  categoryId           String
+  category             ServiceCategory                       @relation(fields: [categoryId], references: [id])
+  title                String
+  description          String?
+  voiceNoteUrl         String?
+  images               String[]                              @default([])
+  latitude             Float
+  longitude            Float
+  location             Unsupported("geometry(Point, 4326)")?
+  address              String
+  city                 String
+  area                 String?
+  status               JobStatus                             @default(OPEN)
+  urgency              Urgency                               @default(NORMAL)
+  suggestedVisitCharge Decimal?                              @db.Decimal(10, 2)
+  preferredVisitTime   DateTime?
+  selectedWorkerId     String?
+  selectedWorker       User?                                 @relation("SelectedWorkerJobs", fields: [selectedWorkerId], references: [id])
+  lockedVisitCharge    Decimal?                              @db.Decimal(10, 2)
+  cancelReason         String?
+  cancelledAt          DateTime?
+  completedAt          DateTime?
+  createdAt            DateTime                              @default(now())
+  updatedAt            DateTime                              @updatedAt
+
+  offers         JobOffer[]
+  visits         Visit[]
+  repairs        Repair[]
+  commissions    Commission[]
+  reviews        Review[]
+  locationTracks LocationTracking[]
+  payments       Payment[]
+  conversation   Conversation?
+  disputes       Dispute[]
+
+  @@index([status])
+  @@index([categoryId])
+  @@index([customerId])
+  @@index([city, area])
+  @@index([createdAt])
+}
+
+model JobOffer {
+  id                 String         @id @default(uuid())
+  jobId              String
+  job                ServiceRequest @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  workerId           String
+  worker             User           @relation(fields: [workerId], references: [id])
+  visitCharge        Decimal        @db.Decimal(10, 2)
+  message            String?
+  status             OfferStatus    @default(PENDING)
+  negotiationRound   Int            @default(0)
+  negotiationHistory Json?
+  lockedAt           DateTime?
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt
+
+  visit Visit?
+
+  @@unique([jobId, workerId])
+  @@index([jobId])
+  @@index([workerId])
+}
+
+model Visit {
+  id                     String         @id @default(uuid())
+  jobId                  String
+  job                    ServiceRequest @relation(fields: [jobId], references: [id])
+  workerId               String
+  worker                 User           @relation(fields: [workerId], references: [id])
+  offerId                String         @unique
+  offer                  JobOffer       @relation(fields: [offerId], references: [id])
+  scheduledDate          DateTime
+  actualDate             DateTime?
+  status                 VisitStatus    @default(SCHEDULED)
+  diagnosis              String?
+  repairPlan             String?
+  repairEstimate         Decimal?       @db.Decimal(10, 2)
+  inspectionPhotos       String[]       @default([])
+  estimatedRepairTimeMin Int?
+  inspectionSubmittedAt  DateTime?
+  createdAt              DateTime       @default(now())
+  updatedAt              DateTime       @updatedAt
+
+  repairs Repair[]
+
+  @@index([jobId])
+  @@index([workerId])
+}
+
+model LocationTracking {
+  id         String          @id @default(uuid())
+  userId     String
+  user       User            @relation(fields: [userId], references: [id])
+  jobId      String?
+  job        ServiceRequest? @relation(fields: [jobId], references: [id])
+  latitude   Float
+  longitude  Float
+  accuracy   Float?
+  recordedAt DateTime        @default(now())
+
+  @@index([jobId])
+  @@index([userId, recordedAt])
+}
+
+model Repair {
+  id                 String         @id @default(uuid())
+  visitId            String
+  visit              Visit          @relation(fields: [visitId], references: [id])
+  jobId              String
+  job                ServiceRequest @relation(fields: [jobId], references: [id])
+  workerId           String
+  worker             User           @relation(fields: [workerId], references: [id])
+  description        String
+  amount             Decimal        @db.Decimal(10, 2)
+  itemsBreakdown     Json?
+  status             RepairStatus   @default(PROPOSED)
+  negotiationRound   Int            @default(0)
+  negotiationHistory Json?
+  lockedAmount       Decimal?       @db.Decimal(10, 2)
+  lockedAt           DateTime?
+  startedAt          DateTime?
+  completedAt        DateTime?
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt
+
+  revisions RepairRevision[]
+
+  @@index([jobId])
+  @@index([visitId])
+}
+
+model RepairRevision {
+  id             String               @id @default(uuid())
+  repairId       String
+  repair         Repair               @relation(fields: [repairId], references: [id], onDelete: Cascade)
+  proposedAmount Decimal              @db.Decimal(10, 2)
+  reason         String
+  status         RepairRevisionStatus @default(PENDING_APPROVAL)
+  requestedBy    String
+  createdAt      DateTime             @default(now())
+  decidedAt      DateTime?
+
+  @@index([repairId])
+}
+
+model Commission {
+  id             String           @id @default(uuid())
+  jobId          String           @unique
+  job            ServiceRequest   @relation(fields: [jobId], references: [id])
+  workerId       String
+  worker         User             @relation(fields: [workerId], references: [id])
+  visitCharge    Decimal          @db.Decimal(10, 2)
+  commissionRate Decimal          @db.Decimal(5, 4)
+  amount         Decimal          @db.Decimal(10, 2)
+  status         CommissionStatus @default(PENDING)
+  screenshotUrl  String?
+  paidAt         DateTime?
+  verifiedAt     DateTime?
+  note           String?
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  @@index([workerId, status])
+}
+
+model Payment {
+  id             String         @id @default(uuid())
+  jobId          String
+  job            ServiceRequest @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  customerId     String
+  customer       User           @relation("CustomerPayments", fields: [customerId], references: [id])
+  workerId       String
+  worker         User           @relation("WorkerPayments", fields: [workerId], references: [id])
+  visitCharge    Decimal        @db.Decimal(10, 2)
+  amount         Decimal        @db.Decimal(10, 2)
+  method         PaymentMethod  @default(COD)
+  status         PaymentStatus  @default(INITIATED)
+  gateway        PaymentGateway?
+  transactionRef String?
+  screenshotUrl  String?
+  paidAt         DateTime?
+  verifiedAt     DateTime?
+  note           String?
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  @@index([jobId])
+  @@index([workerId, status])
+  @@index([customerId, status])
+}
+
+model Review {
+  id         String         @id @default(uuid())
+  jobId      String
+  job        ServiceRequest @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  reviewerId String
+  reviewer   User           @relation("ReviewerReviews", fields: [reviewerId], references: [id])
+  revieweeId String
+  reviewee   User           @relation("RevieweeReviews", fields: [revieweeId], references: [id])
+  rating     Int
+  comment    String?
+  isVisible  Boolean        @default(true)
+  createdAt  DateTime       @default(now())
+
+  @@unique([jobId, reviewerId])
+  @@index([revieweeId])
+}
+
+model PlatformSetting {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt
+}
+
+// One-to-one worker-customer chat scoped to an accepted/active job (Module 9).
+// Created automatically when an offer is accepted (offer.accepted event).
+model Conversation {
+  id            String         @id @default(uuid())
+  jobId         String         @unique
+  job           ServiceRequest @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  customerId    String
+  customer      User           @relation("ConversationCustomer", fields: [customerId], references: [id])
+  workerId      String
+  worker        User           @relation("ConversationWorker", fields: [workerId], references: [id])
+  lastMessage   String?
+  lastMessageAt DateTime?
+  isActive      Boolean        @default(true)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  messages Message[]
+
+  @@index([customerId])
+  @@index([workerId])
+  @@index([lastMessageAt])
+}
+
+model Message {
+  id             String       @id @default(uuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  senderId       String
+  sender         User         @relation(fields: [senderId], references: [id])
+  text           String?
+  imageUrl       String?
+  isRead         Boolean      @default(false)
+  createdAt      DateTime     @default(now())
+
+  @@index([conversationId, createdAt])
+}
+
+// Worker notification inbox (Task 6). Persisted so unread state survives offline
+// sessions; delivered instantly over Socket.IO via the realtime module.
+model WorkerNotification {
+  id        String           @id @default(uuid())
+  userId    String
+  user      User             @relation("WorkerNotifications", fields: [userId], references: [id], onDelete: Cascade)
+  type      NotificationType
+  title     String
+  body      String
+  data      Json?
+  isRead    Boolean          @default(false)
+  readAt    DateTime?
+  createdAt DateTime         @default(now())
+
+  @@index([userId, isRead, createdAt])
+  @@index([userId, type, createdAt])
+}
+
+// Admin action audit trail (Admin flow §M2/M3). Records who did what, to whom, when and why.
+// actorId is intentionally a plain string (no FK) so history survives user deletion.
+model AuditLog {
+  id         String   @id @default(uuid())
+  actorId    String?
+  actorRole  Role?
+  action     String
+  targetType String
+  targetId   String
+  reason     String?
+  metadata   Json?
+  createdAt  DateTime @default(now())
+
+  @@index([targetType, targetId])
+  @@index([actorId])
+  @@index([action])
+  @@index([createdAt])
+}
+
+// ===== Task 7 — Worker Wallet (Hakim Ullah) =====
+// Every worker starts with a Rs. 0 wallet (lazily created on first touch).
+// Commission flow: Hold on visit arrival -> Deduct to PlatformWallet on payment
+// confirmation (screenshot submitted) -> Reverse back if the job is cancelled
+// before confirmation. All movements are idempotent (Redis key + unique ledger key).
 enum WalletLedgerType {
   COMMISSION_HELD
   COMMISSION_RELEASED
@@ -572,4 +552,138 @@ enum TopupStatus {
   PENDING
   APPROVED
   REJECTED
+}
+
+model WorkerWallet {
+  userId      String          @id
+  user        User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  balance     Decimal         @default(0) @db.Decimal(10, 2)
+  heldBalance Decimal         @default(0) @db.Decimal(10, 2)
+  isFrozen    Boolean         @default(false)
+  frozenAt    DateTime?
+  frozenBy    String?
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  @@index([createdAt])
+}
+
+model WalletLedger {
+  id             String           @id @default(uuid())
+  userId         String
+  user           User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type           WalletLedgerType
+  // Signed amount: positive credits (+) / negative debits (-).
+  amount         Decimal          @db.Decimal(10, 2)
+  balanceAfter   Decimal          @db.Decimal(10, 2)
+  referenceType  String?
+  referenceId    String?
+  note           String?
+  idempotencyKey String           @unique
+  createdAt      DateTime         @default(now())
+
+  @@index([userId, createdAt])
+  @@index([referenceType, referenceId])
+}
+
+model WalletTopup {
+  id            String      @id @default(uuid())
+  workerId      String
+  worker        User        @relation(fields: [workerId], references: [id], onDelete: Cascade)
+  amount        Decimal     @db.Decimal(10, 2)
+  screenshotUrl String
+  note          String?
+  status        TopupStatus @default(PENDING)
+  reason        String?
+  decidedBy     String?
+  decidedAt     DateTime?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  @@index([workerId, status, createdAt])
+}
+
+enum WithdrawalStatus {
+  PENDING
+  PROCESSED
+  FAILED
+  REJECTED
+}
+
+model Withdrawal {
+  id           String           @id @default(uuid())
+  workerId     String
+  worker       User             @relation(fields: [workerId], references: [id], onDelete: Cascade)
+  amount       Decimal          @db.Decimal(10, 2)
+  status       WithdrawalStatus @default(PENDING)
+  note         String?
+  requestedAt  DateTime         @default(now())
+  processedAt  DateTime?
+  processedBy  String?
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+
+  @@index([workerId, status, requestedAt])
+}
+
+// Single-row ledger that stores every deducted commission (platform side).
+model PlatformWallet {
+  id               String   @id @default(uuid())
+  balance          Decimal  @default(0) @db.Decimal(10, 2)
+  totalCommissions Decimal  @default(0) @db.Decimal(10, 2)
+  updatedAt        DateTime @updatedAt
+}
+
+enum DisputeStatus {
+  OPEN
+  UNDER_REVIEW
+  RESOLVED
+  DISMISSED
+  ESCALATED
+}
+
+enum DisputeType {
+  PAYMENT
+  SERVICE_QUALITY
+  NO_SHOW
+  PRICE_CHANGE
+  OTHER
+}
+
+model Dispute {
+  id           String        @id @default(uuid())
+  jobId        String
+  job          ServiceRequest @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  reporterId   String
+  reporter     User          @relation("DisputeReporter", fields: [reporterId], references: [id])
+  respondentId String
+  respondent   User          @relation("DisputeRespondent", fields: [respondentId], references: [id])
+  type         DisputeType
+  description  String
+  evidence     Json?
+  status       DisputeStatus @default(OPEN)
+  resolution   String?
+  resolvedBy   String?
+  resolvedAt   DateTime?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  @@index([jobId])
+  @@index([reporterId])
+  @@index([respondentId])
+  @@index([status])
+}
+
+model AdminNotification {
+  id        String   @id @default(uuid())
+  type      String
+  title     String
+  body      String
+  data      Json?
+  isRead    Boolean  @default(false)
+  readAt    DateTime?
+  createdAt DateTime @default(now())
+
+  @@index([isRead, createdAt])
+  @@index([type, createdAt])
 }

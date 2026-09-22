@@ -69,7 +69,7 @@ function RoleModalContent({
               Choose Your Account Role
             </h2>
             <p className="text-slate-500 text-xs sm:text-sm mt-1.5">
-              Select how you want to use HUNAR to enter your designated
+              Select how you want to use Orderworker to enter your designated
               dashboard.
             </p>
           </div>

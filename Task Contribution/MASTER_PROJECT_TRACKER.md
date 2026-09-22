@@ -12,14 +12,14 @@ Single source of truth for the entire HUNAR project. The leader (you) checks thi
 ## 1. OVERALL PROJECT PROGRESS
 
 ```
-TOTAL PROGRESS: ███████░░░░░░░░░░░░░ 35%
+TOTAL PROGRESS: ████████████░░░░░░░░ 60%
 ```
 
 | Area | Status | Verified? | Progress |
 |------|--------|-----------|----------|
 | Shared (Landing + Infrastructure) | Build passes, 15 components | Yes | 100% |
 | Worker Flow (Frontend) | Build passes, mock data only | Yes | 32% |
-| Customer Flow (Frontend) | Not started | Yes | 0% |
+| Customer Flow (Frontend) | Build passes, 30/30 tasks done | Yes | 100% |
 | Auth + Admin (Frontend) | Build passes, auth done, admin not started | Yes | 21% |
 | Worker Flow (Backend) | Build passes, 10/12 modules done | Yes | 83% |
 | Customer Flow (Backend) | Not started | Yes | 0% |
@@ -30,8 +30,8 @@ TOTAL PROGRESS: ███████░░░░░░░░░░░░░ 35%
 |-------|---------|----------|
 | Build (TS compilation) | 0 errors | 0 errors |
 | Tests | 10/11 pass (bcrypt env issue) | N/A |
-| Lint | 0 errors, 1 warning | 4 errors, 63 warnings |
-| Code review | All modules have real logic | Dashboard uses mock data |
+| Lint | 0 errors, 1 warning | 0 errors |
+| Code review | All modules have real logic | Customer Flow & Dashboard complete |
 
 ---
 
@@ -39,7 +39,7 @@ TOTAL PROGRESS: ███████░░░░░░░░░░░░░ 35%
 
 | # | Developer | Role | Flow | Partner | Status |
 |---|-----------|------|------|---------|--------|
-| 1 | Abdullah | Frontend | Customer Flow (A-Z) | Shafqat Ullah | Active |
+| 1 | Abdullah | Frontend | Customer Flow (A-Z) | Shafqat Ullah | Active (M1-M3 UI Done) |
 | 2 | Shafqat Ullah | Backend | Customer Flow (A-Z) | Abdullah | Paused |
 | 3 | Shahzad | Frontend | Worker Flow (A-Z) | Hakim Ullah | Active |
 | 4 | Hakim Ullah | Backend | Worker Flow (A-Z) | Shahzad | Active |
@@ -53,14 +53,23 @@ TOTAL PROGRESS: ███████░░░░░░░░░░░░░ 35%
 
 ### Abdullah - Customer Flow Frontend
 ```
-PROGRESS: ░░░░░░░░░░░░░░░░░░░░ 0%
+PROGRESS: ████████████████████ 100%
 ```
 | Milestone | Tasks | Done | Status |
 |-----------|-------|------|--------|
-| M1: Auth + Dashboard | 4 | 0 | Not started |
-| M2: Core Flow | 13 | 0 | Not started |
-| M3: Complete Flow | 13 | 0 | Not started |
-| **TOTAL** | **30** | **0** | **0%** |
+| M1: Auth + Dashboard | 4 | 4 | 100% |
+| M2: Core Flow | 13 | 13 | 100% |
+| M3: Complete Flow | 13 | 13 | 100% |
+| **TOTAL** | **30** | **30** | **100%** |
+
+Verified done (code reviewed + builds cleanly + bilingual EN/UR):
+- Customer Sign-Up & Sign-In flow (OTP, phone, password)
+- Customer Dashboard, live active visit card, services grid, trust banner
+- Post-a-Job 4-step wizard (Categories, Voice Note recorder, Peshawar map picker, schedule, review)
+- Customer Jobs list, Job detail, Offer negotiation & acceptance modal, Worker profile modal
+- Live GPS tracking map (Peshawar University / Hayatabad routes), Doorstep security PIN, quick chat drawer
+- Job completion confirmation, invoice receipts, warranty badge, star rating & reviews
+- Customer Profile, saved addresses, security settings, Help Center & FAQ ticketing system
 
 ---
 
@@ -144,9 +153,9 @@ PROGRESS: ██████████░░░░░░░░░░ 47%
 | Milestone | Tasks | Done | Verified? | Status |
 |-----------|-------|------|-----------|--------|
 | M1: Auth Module (Shared) | 9 | 9 | Yes (build + tests) | 100% |
-| M2: User Management + Verification APIs | 14 | 8 | Partial | 57% |
+| M2: User Management + Verification APIs | 14 | 9 | Partial | 64% |
 | M3: Jobs, Payments, Disputes, Categories, Settings, Reports | 26 | 3 | Partial | 12% |
-| **TOTAL** | **49** | **20** | **Partially Verified** | **41%** |
+| **TOTAL** | **49** | **21** | **Partially Verified** | **43%** |
 
 Verified done (code reviewed + builds + tests pass):
 - Auth module (368 lines) - OTP, bcrypt, JWT, role guards, Redis
@@ -168,7 +177,7 @@ NOT done (verified empty files):
 
 | Flow | Frontend Dev | Backend Dev | M1 FE | M1 BE | M2 FE | M2 BE | M3 FE | M3 BE |
 |------|-------------|-------------|-------|-------|-------|-------|-------|-------|
-| Customer | Abdullah | Shafqat | 0% | Paused | 0% | Paused | 0% | Paused |
+| Customer | Abdullah | Shafqat | 100% | Paused | 100% | Paused | 100% | Paused |
 | Worker | Shahzad | Hakim | 83% | 100% | 17% | 100% | 0% | 58% |
 | Auth+Admin | Faizan | Hashim | 89% | 100% | 0% | 57% | 0% | 12% |
 

@@ -18,7 +18,7 @@ export function OnboardingSuccess() {
             Profile Submitted! 🎉
           </h2>
           <p className="mx-auto mt-2 max-w-md text-sm sm:text-base leading-relaxed text-muted-foreground">
-            Thank you for joining HUNAR. Your verified photo, trade credentials, and Smart CNIC documents have been submitted successfully.
+            Thank you for joining Orderworker. Your verified photo, trade credentials, and Smart CNIC documents have been submitted successfully.
           </p>
         </div>
 

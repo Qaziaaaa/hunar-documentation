@@ -11,7 +11,7 @@ const metrics = [
 export function Hero() {
   return (
     <section
-      className="hero-topo text-white min-h-[calc(100vh-114px)] flex items-center relative overflow-hidden py-10 lg:py-14"
+      className="hero-topo text-white min-h-[calc(100dvh-92px)] min-h-[calc(100vh-92px)] flex items-center relative overflow-hidden py-12 lg:py-16"
       data-purpose="hero-section"
       id="home"
     >
@@ -120,7 +120,7 @@ export function Hero() {
               </a>
               <a
                 href="#pros"
-                className="absolute -bottom-4 left-6 z-30 bg-white/95 backdrop-blur border border-slate-100 text-slate-800 px-3.5 py-2 rounded-full shadow-2xl flex items-center space-x-2.5 hover:scale-105 transition-transform"
+                className="hidden sm:flex absolute -bottom-4 left-6 z-30 bg-white/95 backdrop-blur border border-slate-100 text-slate-800 px-3.5 py-2 rounded-full shadow-2xl items-center space-x-2.5 hover:scale-105 transition-transform"
                 title="Explore Verified Pros"
               >
                 <span className="text-xs font-bold text-slate-900">
