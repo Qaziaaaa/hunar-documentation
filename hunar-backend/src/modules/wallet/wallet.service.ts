@@ -64,9 +64,9 @@ export class WalletService {
 
   async getOrCreateWallet(workerId: string) {
     return this.prisma.workerWallet.upsert({
-      where: { workerId },
+      where: { userId: workerId },
       update: {},
-      create: { workerId },
+      create: { userId: workerId },
     });
   }
 
@@ -80,12 +80,12 @@ export class WalletService {
     const { page, limit, skip } = normalizePage(query);
     const [entries, total] = await this.prisma.$transaction([
       this.prisma.walletLedger.findMany({
-        where: { walletId: wallet.id },
+        where: { userId: wallet.userId },
         skip,
         take: limit,
         orderBy: { createdAt: 'desc' },
       }),
-      this.prisma.walletLedger.count({ where: { walletId: wallet.id } }),
+      this.prisma.walletLedger.count({ where: { userId: wallet.userId } }),
     ]);
     return toPageResult(
       entries.map((e) => ({
@@ -93,9 +93,9 @@ export class WalletService {
         type: e.type,
         amount: this.toNumber(e.amount),
         balanceAfter: this.toNumber(e.balanceAfter),
-        jobId: e.jobId,
-        topUpId: e.topUpId,
-        commissionId: e.commissionId,
+        jobId: e.referenceType === 'job' ? e.referenceId : undefined,
+        topUpId: e.referenceType === 'topup' ? e.referenceId : undefined,
+        commissionId: e.referenceType === 'commission' ? e.referenceId : undefined,
         note: e.note,
         createdAt: e.createdAt,
       })),
@@ -119,15 +119,12 @@ export class WalletService {
 
   async requestTopUp(workerId: string, dto: TopUpDto) {
     const wallet = await this.getOrCreateWallet(workerId);
-    const topUp = await this.prisma.walletTopUp.create({
+    const topUp = await this.prisma.walletTopup.create({
       data: {
         workerId,
-        walletId: wallet.id,
         amount: new Prisma.Decimal(dto.amount),
-        paymentMethod: dto.paymentMethod,
-        transactionRef: dto.transactionRef,
-        accountNumber: dto.accountNumber,
         screenshotUrl: dto.screenshotUrl,
+        note: dto.transactionRef ? `Ref: ${dto.transactionRef}` : undefined,
         status: 'PENDING',
       },
     });
@@ -143,19 +140,19 @@ export class WalletService {
     const { page, limit, skip } = normalizePage(query);
     const where = { workerId };
     const [topUps, total] = await this.prisma.$transaction([
-      this.prisma.walletTopUp.findMany({
+      this.prisma.walletTopup.findMany({
         where,
         skip,
         take: limit,
         orderBy: { createdAt: 'desc' },
       }),
-      this.prisma.walletTopUp.count({ where }),
+      this.prisma.walletTopup.count({ where }),
     ]);
     return toPageResult(topUps.map((t) => this.toTopUpView(t)), total, page, limit);
   }
 
   async verifyTopUp(topUpId: string, action: 'approve' | 'reject', note?: string) {
-    const topUp = await this.prisma.walletTopUp.findUnique({ where: { id: topUpId } });
+    const topUp = await this.prisma.walletTopup.findUnique({ where: { id: topUpId } });
     if (!topUp) {
       throw new NotFoundException('WALLET_TOPUP_NOT_FOUND: top-up not found');
     }
@@ -170,31 +167,33 @@ export class WalletService {
       await this.ensureNotIdempotent(idemKey, 'WALLET_TOPUP_ALREADY_DECIDED');
       const amount = this.toNumber(topUp.amount);
       await this.prisma.$transaction(async (tx) => {
-        const wallet = await tx.workerWallet.findUnique({ where: { id: topUp.walletId } });
+        const wallet = await tx.workerWallet.findUnique({ where: { userId: topUp.workerId } });
         if (!wallet) {
           throw new NotFoundException('WALLET_NOT_FOUND');
         }
         const balanceAfter = roundMoney(this.toNumber(wallet.balance) + amount);
         await tx.workerWallet.update({
-          where: { id: wallet.id },
+          where: { userId: wallet.userId },
           data: { balance: new Prisma.Decimal(balanceAfter) },
         });
-        await tx.walletTopUp.update({
+        await tx.walletTopup.update({
           where: { id: topUpId },
-          data: { status: 'APPROVED', adminNote: note, decidedAt: new Date() },
+          data: { status: 'APPROVED', reason: note, decidedAt: new Date() },
         });
-        await this.addLedgerEntry(tx, wallet.id, 'TOPUP_CREDIT', amount, balanceAfter, {
-          topUpId,
+        await this.addLedgerEntry(tx, wallet.userId, 'TOPUP_CREDIT', amount, balanceAfter, {
+          referenceType: 'topup',
+          referenceId: topUpId,
           note,
+          idempotencyKey: idemKey,
         });
         await this.enforceOfflineRule(tx, topUp.workerId, balanceAfter);
       });
       await this.markIdempotent(idemKey);
       this.eventBus.emit('topup.approved', { topUpId, workerId: topUp.workerId, amount });
     } else {
-      await this.prisma.walletTopUp.update({
+      await this.prisma.walletTopup.update({
         where: { id: topUpId },
-        data: { status: 'REJECTED', adminNote: note, decidedAt: new Date() },
+        data: { status: 'REJECTED', reason: note, decidedAt: new Date() },
       });
       this.eventBus.emit('topup.rejected', {
         topUpId,
@@ -203,7 +202,7 @@ export class WalletService {
         reason: note,
       });
     }
-    return this.prisma.walletTopUp.findUniqueOrThrow({ where: { id: topUpId } });
+    return this.prisma.walletTopup.findUniqueOrThrow({ where: { id: topUpId } });
   }
 
   // ---------------- Commission lifecycle ----------------
@@ -230,7 +229,7 @@ export class WalletService {
       where: { jobId: dto.jobId },
       select: { id: true, status: true, amount: true },
     });
-    if (existing && existing.status === 'DEDUCTED') {
+    if (existing && (existing.status === 'RECEIVED' || existing.status === 'VERIFIED')) {
       return { commission: existing, balanceAfter: 0, finalized: true, alreadyFinalized: true };
     }
     await this.verifyCompletionOtp(dto.jobId, dto.otp);
@@ -401,7 +400,7 @@ export class WalletService {
       const workerId = repair.workerId;
       const amount = this.toNumber(repair.job.lockedVisitCharge);
       const existingCredit = await this.prisma.walletLedger.findFirst({
-        where: { jobId, type: 'EARNINGS_CREDIT' },
+        where: { userId: workerId, referenceType: 'job', referenceId: jobId, type: 'EARNINGS_CREDIT' },
       });
       if (existingCredit) {
         return;
@@ -410,11 +409,13 @@ export class WalletService {
         const wallet = await this.getOrCreateWalletWith(tx, workerId);
         const balanceAfter = roundMoney(this.toNumber(wallet.balance) + amount);
         await tx.workerWallet.update({
-          where: { id: wallet.id },
+          where: { userId: wallet.userId },
           data: { balance: new Prisma.Decimal(balanceAfter) },
         });
-        await this.addLedgerEntry(tx, wallet.id, 'EARNINGS_CREDIT', amount, balanceAfter, {
-          jobId,
+        await this.addLedgerEntry(tx, wallet.userId, 'EARNINGS_CREDIT', amount, balanceAfter, {
+          referenceType: 'job',
+          referenceId: jobId,
+          idempotencyKey: `${WALLET_IDEM_EARNINGS_CREDIT}${jobId}`,
         });
         await this.enforceOfflineRule(tx, workerId, balanceAfter);
       });
@@ -460,7 +461,7 @@ export class WalletService {
 
     const existing = await db.commission.findFirst({ where: { jobId: params.jobId } });
     if (existing) {
-      if (existing.status !== 'HELD') {
+      if (existing.status !== 'PENDING') {
         throw new BadRequestException(
           `WALLET_COMMISSION_NOT_HOLDABLE: commission is already ${existing.status}`,
         );
@@ -496,16 +497,17 @@ export class WalletService {
         visitCharge: job.lockedVisitCharge,
         commissionRate: new Prisma.Decimal(rate),
         amount: new Prisma.Decimal(amount),
-        status: 'HELD',
+        status: 'PENDING',
       },
     });
     await db.workerWallet.update({
-      where: { id: wallet.id },
+      where: { userId: wallet.userId },
       data: { balance: new Prisma.Decimal(balanceAfter) },
     });
-    await this.addLedgerEntry(db, wallet.id, 'COMMISSION_HOLD', amount, balanceAfter, {
-      jobId: params.jobId,
-      commissionId: commission.id,
+    await this.addLedgerEntry(db, wallet.userId, 'COMMISSION_HELD', amount, balanceAfter, {
+      referenceType: 'commission',
+      referenceId: commission.id,
+      idempotencyKey: `${WALLET_IDEM_COMMISSION_HOLD}${params.jobId}`,
     });
     await this.enforceOfflineRule(db, params.workerId, balanceAfter);
     await this.markIdempotent(`${WALLET_IDEM_COMMISSION_HOLD}${params.jobId}`);
@@ -532,23 +534,23 @@ export class WalletService {
     if (commission.workerId !== workerId) {
       throw new ForbiddenException('WALLET_COMMISSION_WORKER_MISMATCH');
     }
-    if (commission.status === 'DEDUCTED') {
+    if (commission.status === 'RECEIVED' || commission.status === 'VERIFIED') {
       return { commission: { id: commission.id, status: commission.status, amount: this.toNumber(commission.amount) }, balanceAfter: 0, finalized: true, alreadyFinalized: true };
     }
-    if (commission.status !== 'HELD') {
+    if (commission.status !== 'PENDING') {
       throw new BadRequestException(
         `WALLET_COMMISSION_NOT_HELD: cannot confirm a ${commission.status} commission`,
       );
     }
 
     const amount = this.toNumber(commission.amount);
-    const wallet = await db.workerWallet.findUnique({ where: { workerId } });
+    const wallet = await db.workerWallet.findUnique({ where: { userId: workerId } });
     if (!wallet) {
       throw new NotFoundException('WALLET_NOT_FOUND');
     }
     const updated = await db.commission.update({
       where: { id: commission.id },
-      data: { status: 'DEDUCTED', verifiedAt: new Date() },
+      data: { status: 'RECEIVED', verifiedAt: new Date() },
     });
     await db.platformWallet.upsert({
       where: { id: PLATFORM_WALLET_ID },
@@ -556,9 +558,10 @@ export class WalletService {
       create: { id: PLATFORM_WALLET_ID, balance: new Prisma.Decimal(amount) },
     });
     const balanceAfter = this.toNumber(wallet.balance);
-    await this.addLedgerEntry(db, wallet.id, 'COMMISSION_DEDUCTION', amount, balanceAfter, {
-      jobId,
-      commissionId: commission.id,
+    await this.addLedgerEntry(db, wallet.userId, 'COMMISSION_DEDUCTED', amount, balanceAfter, {
+      referenceType: 'commission',
+      referenceId: commission.id,
+      idempotencyKey: `${WALLET_IDEM_COMMISSION_DEDUCT}${jobId}`,
     });
     await this.markIdempotent(`${WALLET_IDEM_COMMISSION_DEDUCT}${jobId}`);
     await this.redis.del(`${WALLET_OTP_PREFIX}${jobId}`);
@@ -586,36 +589,32 @@ export class WalletService {
     if (requireWorkerId && commission.workerId !== requireWorkerId) {
       throw new ForbiddenException('WALLET_COMMISSION_WORKER_MISMATCH');
     }
-    if (commission.status === 'REVERSED') {
+    // Can only reverse if commission is still in PENDING state (not yet confirmed/deducted)
+    if (commission.status !== 'PENDING') {
       return {
         commission: { id: commission.id, status: commission.status, amount: this.toNumber(commission.amount) },
         balanceAfter: 0,
-        reversed: true,
+        reversed: false,
         alreadyReversed: true,
+        reason: 'Commission already confirmed or verified',
       };
-    }
-    if (commission.status !== 'HELD') {
-      return null;
     }
 
     const amount = this.toNumber(commission.amount);
     const workerId = commission.workerId;
-    const wallet = await db.workerWallet.findUnique({ where: { workerId } });
+    const wallet = await db.workerWallet.findUnique({ where: { userId: workerId } });
     if (!wallet) {
       throw new NotFoundException('WALLET_NOT_FOUND');
     }
     const balanceAfter = roundMoney(this.toNumber(wallet.balance) + amount);
-    const updated = await db.commission.update({
-      where: { id: commission.id },
-      data: { status: 'REVERSED', verifiedAt: new Date() },
-    });
     await db.workerWallet.update({
-      where: { id: wallet.id },
+      where: { userId: wallet.userId },
       data: { balance: new Prisma.Decimal(balanceAfter) },
     });
-    await this.addLedgerEntry(db, wallet.id, 'COMMISSION_REVERSAL', amount, balanceAfter, {
-      jobId,
-      commissionId: commission.id,
+    await this.addLedgerEntry(db, wallet.userId, 'COMMISSION_RELEASED', amount, balanceAfter, {
+      referenceType: 'commission',
+      referenceId: commission.id,
+      idempotencyKey: `${WALLET_IDEM_COMMISSION_REVERSE}${jobId}`,
     });
     await this.markIdempotent(`${WALLET_IDEM_COMMISSION_REVERSE}${jobId}`);
 
@@ -626,7 +625,7 @@ export class WalletService {
       amount,
     });
     return {
-      commission: { id: updated.id, status: updated.status, amount },
+      commission: { id: commission.id, status: commission.status, amount },
       balanceAfter,
       reversed: true,
       alreadyReversed: false,
@@ -637,30 +636,31 @@ export class WalletService {
 
   private async getOrCreateWalletWith(db: WalletDb, workerId: string) {
     return db.workerWallet.upsert({
-      where: { workerId },
+      where: { userId: workerId },
       update: {},
-      create: { workerId },
+      create: { userId: workerId },
     });
   }
 
   private async addLedgerEntry(
     db: WalletDb,
-    walletId: string,
+    userId: string,
     type: WalletLedgerType,
     amount: number,
     balanceAfter: number,
-    ref: { jobId?: string; topUpId?: string; commissionId?: string; note?: string } = {},
+    ref: { referenceType?: string; referenceId?: string; jobId?: string; note?: string; idempotencyKey?: string } = {},
   ) {
+    const idempotencyKey = ref.idempotencyKey ?? `${type}:${userId}:${ref.referenceType ?? 'none'}:${ref.referenceId ?? ref.jobId ?? 'none'}:${Date.now()}`;
     await db.walletLedger.create({
       data: {
-        walletId,
+        userId,
         type,
         amount: new Prisma.Decimal(amount),
         balanceAfter: new Prisma.Decimal(balanceAfter),
-        jobId: ref.jobId,
-        topUpId: ref.topUpId,
-        commissionId: ref.commissionId,
+        referenceType: ref.referenceType,
+        referenceId: ref.referenceId,
         note: ref.note,
+        idempotencyKey,
       },
     });
   }
@@ -730,12 +730,11 @@ export class WalletService {
   private toTopUpView(t: {
     id: string;
     amount: Prisma.Decimal | number;
-    paymentMethod: string;
-    transactionRef: string | null;
-    accountNumber: string | null;
     screenshotUrl: string;
+    note: string | null;
     status: string;
-    adminNote: string | null;
+    reason: string | null;
+    decidedBy: string | null;
     decidedAt: Date | null;
     createdAt: Date;
     updatedAt: Date;
@@ -743,12 +742,11 @@ export class WalletService {
     return {
       id: t.id,
       amount: this.toNumber(t.amount),
-      paymentMethod: t.paymentMethod,
-      transactionRef: t.transactionRef,
-      accountNumber: t.accountNumber,
       screenshotUrl: t.screenshotUrl,
+      note: t.note,
       status: t.status,
-      adminNote: t.adminNote,
+      reason: t.reason,
+      decidedBy: t.decidedBy,
       decidedAt: t.decidedAt,
       createdAt: t.createdAt,
       updatedAt: t.updatedAt,

@@ -11,7 +11,7 @@ import {
   MaxLength,
   Min,
 } from 'class-validator';
-import { TopUpPaymentMethod } from '@prisma/client';
+import { PaymentMethod } from '@prisma/client';
 
 export class TopUpDto {
   @Type(() => Number)
@@ -19,8 +19,8 @@ export class TopUpDto {
   @Min(0.01)
   amount: number;
 
-  @IsEnum(TopUpPaymentMethod)
-  paymentMethod: TopUpPaymentMethod;
+  @IsEnum(PaymentMethod)
+  paymentMethod: PaymentMethod;
 
   @IsOptional()
   @IsString()
