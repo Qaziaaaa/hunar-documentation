@@ -8,9 +8,9 @@ import {
   Home,
   Loader2,
   RefreshCw,
-  ShieldCheck,
   Sparkles,
 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import { Button, buttonVariants } from "@/components/ui/button";
 import type { WorkerVerificationData } from "../types";
@@ -22,6 +22,7 @@ export function PendingView({
   data: WorkerVerificationData;
   onRefresh: () => void;
 }) {
+  const t = useTranslations("WorkerVerification.Pending");
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   const handleRefresh = () => {
@@ -33,28 +34,28 @@ export function PendingView({
   };
 
   return (
-    <div className="space-y-4 text-left">
+    <div className="space-y-4 text-left rtl:text-right">
       {/* Top Header */}
-      <div className="text-center sm:text-left">
+      <div className="text-center sm:text-left rtl:sm:text-right">
         <div className="inline-flex items-center gap-1.5 rounded-full border border-orange/30 bg-orange/10 px-3 py-1 text-xs font-bold text-orange mb-2">
           <Clock className="size-3.5 animate-spin" />
-          <span>Under Compliance Review</span>
+          <span>{t("badge")}</span>
         </div>
-        <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-navy">
-          Verification in Progress ⏳
+        <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-navy leading-snug">
+          {t("title")}
         </h2>
-        <p className="mt-1 text-xs sm:text-sm text-muted-foreground">
-          Thank you for submitting your profile, {data.fullName}. Our compliance team is verifying your Smart CNIC and trade skills.
+        <p className="mt-1 text-xs sm:text-sm text-muted-foreground leading-relaxed">
+          {t("subtitle", { name: data.fullName })}
         </p>
       </div>
 
       {/* 3-Step Verification Timeline Card */}
       <div className="rounded-2xl bg-white p-2 space-y-4">
         <h3 className="text-xs font-extrabold uppercase tracking-wider text-navy">
-          Verification Progress Timeline:
+          {t("timelineTitle")}
         </h3>
 
-        <div className="relative space-y-4 before:absolute before:left-3.5 before:top-3 before:bottom-3 before:w-0.5 before:bg-slate-200">
+        <div className="relative space-y-4 before:absolute before:left-3.5 rtl:before:left-auto rtl:before:right-3.5 before:top-3 before:bottom-3 before:w-0.5 before:bg-slate-200">
           {/* Stage 1: Profile Submitted */}
           <div className="relative flex items-start gap-3">
             <div className="relative z-10 flex size-7 shrink-0 items-center justify-center rounded-full bg-success text-white shadow-xs">
@@ -62,10 +63,10 @@ export function PendingView({
             </div>
             <div className="leading-tight">
               <p className="text-xs font-bold text-navy">
-                1. Profile & Documents Submitted
+                {t("step1Title")}
               </p>
-              <p className="text-[11px] text-muted-foreground mt-0.5">
-                Portrait photo, Peshawar service areas, and Smart CNIC attached.
+              <p className="text-[11px] text-muted-foreground mt-0.5 leading-relaxed">
+                {t("step1Desc")}
               </p>
             </div>
           </div>
@@ -78,14 +79,14 @@ export function PendingView({
             <div className="leading-tight">
               <div className="flex items-center gap-1.5">
                 <p className="text-xs font-bold text-orange">
-                  2. Document & Identity Verification
+                  {t("step2Title")}
                 </p>
                 <span className="rounded-full bg-orange/10 px-1.5 py-0.2 text-[9px] font-bold text-orange">
-                  In Progress
+                  {t("step2Badge")}
                 </span>
               </div>
-              <p className="text-[11px] text-muted-foreground mt-0.5">
-                Human compliance officer matching Smart CNIC with NADRA records.
+              <p className="text-[11px] text-muted-foreground mt-0.5 leading-relaxed">
+                {t("step2Desc")}
               </p>
             </div>
           </div>
@@ -97,10 +98,10 @@ export function PendingView({
             </div>
             <div className="leading-tight">
               <p className="text-xs font-bold text-slate-700">
-                3. Verified Pro Badge Activation
+                {t("step3Title")}
               </p>
-              <p className="text-[11px] text-muted-foreground mt-0.5">
-                Worker portal unlocked to receive nearby customer jobs and send offers.
+              <p className="text-[11px] text-muted-foreground mt-0.5 leading-relaxed">
+                {t("step3Desc")}
               </p>
             </div>
           </div>
@@ -110,11 +111,11 @@ export function PendingView({
       {/* Turnaround Time & SMS Notice */}
       <div className="rounded-2xl border border-teal/20 bg-teal/5 p-3.5 text-xs text-slate-700 space-y-1.5">
         <div className="flex items-center gap-2 font-bold text-navy">
-          <Bell className="size-4 text-teal" />
-          <span>Expected Review Turnaround:</span>
+          <Bell className="size-4 text-teal shrink-0" />
+          <span>{t("turnaroundTitle")}</span>
         </div>
-        <p className="text-[11px] text-muted-foreground leading-relaxed pl-6">
-          Admin verification typically takes <strong>2 to 24 hours</strong>. You will receive an instant SMS notification on <strong>+92 {data.phone}</strong> once your verified badge is activated.
+        <p className="text-[11px] text-muted-foreground leading-relaxed pl-6 rtl:pl-0 rtl:pr-6">
+          {t("turnaroundDesc", { phone: data.phone })}
         </p>
       </div>
 
@@ -128,11 +129,11 @@ export function PendingView({
           className="h-12 w-full sm:flex-1 rounded-full bg-teal text-sm font-bold text-white shadow-md shadow-teal/20 hover:bg-teal/90"
         >
           {isRefreshing ? (
-            <Loader2 className="mr-2 size-4 animate-spin" />
+            <Loader2 className="mr-2 rtl:mr-0 rtl:ml-2 size-4 animate-spin" />
           ) : (
-            <RefreshCw className="mr-2 size-4" />
+            <RefreshCw className="mr-2 rtl:mr-0 rtl:ml-2 size-4" />
           )}
-          <span>Check Status Now</span>
+          <span>{t("checkStatusBtn")}</span>
         </Button>
 
         <Link
@@ -144,10 +145,11 @@ export function PendingView({
               "h-12 w-full sm:w-auto rounded-full border-2 border-navy text-xs sm:text-sm font-bold text-navy hover:bg-slate-50",
           })}
         >
-          <Home className="mr-1.5 size-4" />
-          <span>Back to Home</span>
+          <Home className="mr-1.5 rtl:mr-0 rtl:ml-1.5 size-4" />
+          <span>{t("backToHome")}</span>
         </Link>
       </div>
     </div>
   );
 }
+

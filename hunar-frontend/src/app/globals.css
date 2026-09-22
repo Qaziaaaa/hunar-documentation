@@ -155,7 +155,46 @@
   }
   html[lang="ur"],
   html[dir="rtl"] {
-    font-family: var(--font-noto-arabic), "Noto Nastaliq Urdu", "Gulzar", "Jameel Noori Nastaleeq", "Segoe UI", system-ui, sans-serif;
+    font-family: var(--font-noto-nastaliq), "Noto Nastaliq Urdu", "Gulzar", "Jameel Noori Nastaleeq", serif, sans-serif;
+    font-size: 80%;
+    line-height: 1.9;
+  }
+  [lang="ur"],
+  [dir="rtl"] {
+    font-family: var(--font-noto-nastaliq), "Noto Nastaliq Urdu", "Gulzar", "Jameel Noori Nastaleeq", serif, sans-serif;
+  }
+
+  /* Prevent Nastaliq tall ascenders and deep descenders from overlapping */
+  html[lang="ur"] h1,
+  html[lang="ur"] h2,
+  html[lang="ur"] h3,
+  html[lang="ur"] h4,
+  html[lang="ur"] h5,
+  html[lang="ur"] h6,
+  html[dir="rtl"] h1,
+  html[dir="rtl"] h2,
+  html[dir="rtl"] h3,
+  html[dir="rtl"] h4,
+  html[dir="rtl"] h5,
+  html[dir="rtl"] h6 {
+    line-height: 1.85 !important;
+    margin-bottom: 0.35rem;
+    padding-top: 0.1rem;
+    padding-bottom: 0.15rem;
+  }
+
+  html[lang="ur"] p,
+  html[dir="rtl"] p {
+    line-height: 1.85;
+  }
+
+  html[lang="ur"] .leading-tight,
+  html[lang="ur"] .leading-snug,
+  html[lang="ur"] .leading-none,
+  html[dir="rtl"] .leading-tight,
+  html[dir="rtl"] .leading-snug,
+  html[dir="rtl"] .leading-none {
+    line-height: 1.85 !important;
   }
 }
 

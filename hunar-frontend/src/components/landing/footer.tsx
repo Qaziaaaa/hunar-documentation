@@ -46,7 +46,7 @@ export function PreFooter() {
             Post a Job
           </a>
           <Link
-            href="/worker/sign-up"
+            href="/worker/onboarding"
             className="inline-flex items-center px-7 py-3 rounded-full bg-white/10 hover:bg-white/20 text-white font-semibold text-sm border border-white/20 transition-all duration-200"
           >
             Register as Professional

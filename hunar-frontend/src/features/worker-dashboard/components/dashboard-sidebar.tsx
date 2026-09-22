@@ -1,21 +1,12 @@
 "use client";
 
-import Link from "next/link";
 import {
   LayoutDashboard,
-  Radio,
   Briefcase,
-  FileText,
-  Clock,
-  CheckCircle2,
   Wallet,
-  Star,
-  Bell,
   MessageSquare,
   User,
-  Settings,
   ShieldCheck,
-  Power,
   ChevronRight,
 } from "lucide-react";
 import type { DashboardTab, WorkerDashboardProfile } from "../types";
@@ -61,6 +52,7 @@ export function DashboardSidebar({
           id: "chat" as DashboardTab,
           label: "Messages",
           icon: MessageSquare,
+          badge: unreadNotificationsCount > 0 ? unreadNotificationsCount : undefined,
         },
       ],
     },
@@ -77,7 +69,7 @@ export function DashboardSidebar({
   ];
 
   return (
-    <aside className="hidden lg:flex w-64 shrink-0 flex-col justify-between border-r border-slate-200 bg-white p-4">
+    <aside className="hidden lg:flex w-64 shrink-0 flex-col justify-between border-r border-teal/15 bg-white p-4">
       <div className="space-y-6">
         {/* Brand Logo & Portal Tag */}
         <div className="flex flex-col gap-1 px-2 py-1">
@@ -86,7 +78,7 @@ export function DashboardSidebar({
             <span className="rounded-full bg-teal/15 px-2 py-0.2 text-[10px] font-extrabold uppercase tracking-wide text-teal">
               PRO
             </span>
-            <p className="text-[11px] font-medium text-slate-500">
+            <p className="text-[11px] font-medium text-muted-foreground">
               Worker Portal · Peshawar
             </p>
           </div>
@@ -96,7 +88,7 @@ export function DashboardSidebar({
         <nav className="space-y-4 pt-2">
           {navSections.map((section) => (
             <div key={section.heading} className="space-y-1">
-              <p className="px-3 text-[10px] font-extrabold uppercase tracking-wider text-slate-400">
+              <p className="px-3 text-[10px] font-extrabold uppercase tracking-wider text-muted-foreground/70">
                 {section.heading}
               </p>
               <div className="space-y-0.5">
@@ -111,7 +103,7 @@ export function DashboardSidebar({
                       className={`group flex w-full items-center justify-between rounded-xl px-3 py-2 text-xs font-bold transition-all ${
                         isActive
                           ? "bg-teal text-white shadow-xs shadow-teal/20"
-                          : "text-slate-600 hover:bg-slate-50 hover:text-navy"
+                          : "text-foreground/80 hover:bg-background hover:text-navy"
                       }`}
                     >
                       <div className="flex items-center gap-2.5">
@@ -119,7 +111,7 @@ export function DashboardSidebar({
                           className={`size-4 transition-colors ${
                             isActive
                               ? "text-white"
-                              : "text-slate-500 group-hover:text-teal"
+                              : "text-muted-foreground group-hover:text-teal"
                           }`}
                         />
                         <span>{item.label}</span>
@@ -150,12 +142,14 @@ export function DashboardSidebar({
       </div>
 
       {/* Footer Support Info */}
-      <div className="border-t border-slate-200 pt-3 text-[11px] text-slate-500 space-y-1 px-1">
+      <div className="border-t border-teal/15 pt-3 text-[11px] space-y-1 px-1">
         <div className="flex items-center gap-1.5 font-bold text-navy">
           <ShieldCheck className="size-3.5 text-teal" />
           <span>Orderworker Verified Portal</span>
         </div>
-        <p className="text-[10px] text-slate-400">Peshawar Pro Network · v1.0</p>
+        <p className="text-[10px] text-muted-foreground/70">
+          Peshawar Pro Network · v1.0
+        </p>
       </div>
     </aside>
   );
