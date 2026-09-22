@@ -1,5 +1,5 @@
 import { Type } from 'class-transformer';
-import { IsInt, IsOptional, IsString, Max, Min, MinLength } from 'class-validator';
+import { IsInt, IsOptional, IsString, IsUUID, Max, Min, MinLength } from 'class-validator';
 
 export class CreateReviewDto {
   @Type(() => Number)
@@ -12,6 +12,13 @@ export class CreateReviewDto {
   @IsString()
   @MinLength(10)
   comment?: string;
+}
+
+/** Accepted by POST /reviews (Task 19) — job is supplied in the body. */
+export class SubmitReviewByJobDto extends CreateReviewDto {
+  @IsString()
+  @IsUUID()
+  jobId: string;
 }
 
 export class ReviewQueryDto {

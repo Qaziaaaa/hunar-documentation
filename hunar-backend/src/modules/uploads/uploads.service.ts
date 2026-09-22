@@ -10,6 +10,7 @@ import { randomUUID } from 'crypto';
 import { STORAGE } from './storage/storage.provider';
 import { StorageClient } from './storage/storage.interface';
 import { ImageProcessor } from './processors/image.processor';
+import { VoiceProcessor } from './processors/voice.processor';
 import { extensionFromMime, UploadCategory, UPLOAD_PRESETS } from './uploads.presets';
 
 export interface UploadFileResult {
@@ -18,6 +19,13 @@ export interface UploadFileResult {
   mimeType: string;
   width: number;
   height: number;
+  sizeBytes: number;
+}
+
+export interface UploadAudioResult {
+  key: string;
+  url: string;
+  mimeType: string;
   sizeBytes: number;
 }
 
@@ -48,6 +56,7 @@ export class UploadsService {
   constructor(
     @Inject(STORAGE) private readonly storage: StorageClient,
     private readonly imageProcessor: ImageProcessor,
+    private readonly voiceProcessor: VoiceProcessor,
   ) {}
 
   uploadProfilePhoto(userId: string, file: Express.Multer.File): Promise<UploadFileResult> {
@@ -72,6 +81,53 @@ export class UploadsService {
 
   uploadCnicDocument(userId: string, file: Express.Multer.File): Promise<UploadDocumentResult> {
     return this.uploadDocument(UploadCategory.CNIC_DOCUMENT, userId, file);
+  }
+
+  /** Task 27 — voice note upload (verbatim audio, no image compression). */
+  async uploadVoiceNote(userId: string, file: Express.Multer.File): Promise<UploadAudioResult> {
+    const preset = UPLOAD_PRESETS[UploadCategory.VOICE_NOTE];
+    const fileToStore = this.requireFile(file);
+    const processed = this.voiceProcessor.process(fileToStore.buffer, fileToStore.mimetype);
+    const key = `${preset.folder}/${userId}/${randomUUID()}.${extensionFromMime(fileToStore.mimetype)}`;
+    await this.store(key, processed.mimeType, processed.data);
+    return {
+      key,
+      url: this.storage.getPublicUrl(key),
+      mimeType: processed.mimeType,
+      sizeBytes: processed.sizeBytes,
+    };
+  }
+
+  /** Task 27 — generic upload dispatcher (superset of the documented contract). */
+  async upload(userId: string, category: UploadCategory, file: Express.Multer.File) {
+    switch (category) {
+      case UploadCategory.PROFILE_PHOTO:
+        return this.uploadProfilePhoto(userId, file);
+      case UploadCategory.JOB_PHOTO:
+        return this.uploadJobPhoto(userId, file);
+      case UploadCategory.INSPECTION_PHOTO:
+        return this.uploadInspectionPhoto(userId, file);
+      case UploadCategory.CHAT_IMAGE:
+        return this.uploadChatImage(userId, file);
+      case UploadCategory.WORKER_DOCUMENT:
+        return this.uploadWorkerDocument(userId, file);
+      case UploadCategory.CNIC_DOCUMENT:
+        return this.uploadCnicDocument(userId, file);
+      case UploadCategory.WALLET_SCREENSHOT:
+        return this.uploadWalletScreenshot(userId, file);
+      case UploadCategory.VOICE_NOTE:
+        return this.uploadVoiceNote(userId, file);
+      default:
+        throw new HttpException(
+          `UNKNOWN_CATEGORY: unsupported upload category "${category}"`,
+          HttpStatus.BAD_REQUEST,
+        );
+    }
+  }
+
+  /** Wallet screenshot upload (used by the top-up flow; kept category-complete). */
+  uploadWalletScreenshot(userId: string, file: Express.Multer.File): Promise<UploadFileResult> {
+    return this.uploadPhoto(UploadCategory.WALLET_SCREENSHOT, userId, file);
   }
 
   getUrl(key: string): string {

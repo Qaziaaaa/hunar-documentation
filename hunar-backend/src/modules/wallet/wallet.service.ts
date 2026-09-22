@@ -148,7 +148,12 @@ export class WalletService {
       }),
       this.prisma.walletTopup.count({ where }),
     ]);
-    return toPageResult(topUps.map((t) => this.toTopUpView(t)), total, page, limit);
+    return toPageResult(
+      topUps.map((t) => this.toTopUpView(t)),
+      total,
+      page,
+      limit,
+    );
   }
 
   async verifyTopUp(topUpId: string, action: 'approve' | 'reject', note?: string) {
@@ -298,7 +303,12 @@ export class WalletService {
       const workerId = repair.workerId;
       const amount = this.toNumber(repair.job.lockedVisitCharge);
       const existingCredit = await this.prisma.walletLedger.findFirst({
-        where: { userId: workerId, referenceType: 'job', referenceId: jobId, type: 'EARNINGS_CREDIT' },
+        where: {
+          userId: workerId,
+          referenceType: 'job',
+          referenceId: jobId,
+          type: 'EARNINGS_CREDIT',
+        },
       });
       if (existingCredit) {
         return;
@@ -365,7 +375,11 @@ export class WalletService {
         );
       }
       return {
-        commission: { id: existing.id, status: existing.status, amount: this.toNumber(existing.amount) },
+        commission: {
+          id: existing.id,
+          status: existing.status,
+          amount: this.toNumber(existing.amount),
+        },
         balanceAfter: 0,
         held: true,
         skipped: false,
@@ -433,7 +447,16 @@ export class WalletService {
       throw new ForbiddenException('WALLET_COMMISSION_WORKER_MISMATCH');
     }
     if (commission.status === 'RECEIVED' || commission.status === 'VERIFIED') {
-      return { commission: { id: commission.id, status: commission.status, amount: this.toNumber(commission.amount) }, balanceAfter: 0, finalized: true, alreadyFinalized: true };
+      return {
+        commission: {
+          id: commission.id,
+          status: commission.status,
+          amount: this.toNumber(commission.amount),
+        },
+        balanceAfter: 0,
+        finalized: true,
+        alreadyFinalized: true,
+      };
     }
     if (commission.status !== 'PENDING') {
       throw new BadRequestException(
@@ -490,7 +513,11 @@ export class WalletService {
     // Can only reverse if commission is still in PENDING state (not yet confirmed/deducted)
     if (commission.status !== 'PENDING') {
       return {
-        commission: { id: commission.id, status: commission.status, amount: this.toNumber(commission.amount) },
+        commission: {
+          id: commission.id,
+          status: commission.status,
+          amount: this.toNumber(commission.amount),
+        },
         balanceAfter: 0,
         reversed: false,
         alreadyReversed: true,
@@ -546,9 +573,17 @@ export class WalletService {
     type: WalletLedgerType,
     amount: number,
     balanceAfter: number,
-    ref: { referenceType?: string; referenceId?: string; jobId?: string; note?: string; idempotencyKey?: string } = {},
+    ref: {
+      referenceType?: string;
+      referenceId?: string;
+      jobId?: string;
+      note?: string;
+      idempotencyKey?: string;
+    } = {},
   ) {
-    const idempotencyKey = ref.idempotencyKey ?? `${type}:${userId}:${ref.referenceType ?? 'none'}:${ref.referenceId ?? ref.jobId ?? 'none'}:${Date.now()}`;
+    const idempotencyKey =
+      ref.idempotencyKey ??
+      `${type}:${userId}:${ref.referenceType ?? 'none'}:${ref.referenceId ?? ref.jobId ?? 'none'}:${Date.now()}`;
     await db.walletLedger.create({
       data: {
         userId,
@@ -665,7 +700,7 @@ export class WalletService {
     } catch (error) {
       this.logger.error(
         `wallet event handler failed for ${name}`,
-        error instanceof Error ? error.stack ?? error.message : String(error),
+        error instanceof Error ? (error.stack ?? error.message) : String(error),
       );
     }
   }

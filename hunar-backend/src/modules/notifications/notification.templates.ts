@@ -155,4 +155,40 @@ export const notificationTemplates: Record<string, (d: NotificationData) => Noti
           return { title: 'Verification result', body: 'Your verification status was updated.' };
       }
     },
+
+    // ----- Customer-facing notifications (Task 24) -----
+    NEW_OFFER: (d) => ({
+      title: 'New offer received',
+      body: `A worker sent you an offer of Rs. ${fmtAmount(d.amount)} for "${d.jobTitle ?? 'the job'}".`,
+    }),
+
+    VISIT_SCHEDULED: (d) => ({
+      title: 'Visit scheduled',
+      body: `Your visit for "${d.jobTitle ?? 'the job'}" is scheduled for ${fmtTime(d.scheduledAt)}.`,
+    }),
+
+    INSPECTION_SUBMITTED: (d) => ({
+      title: 'Inspection ready',
+      body: `The worker submitted the inspection report for "${d.jobTitle ?? 'the job'}".`,
+    }),
+
+    REPAIR_ESTIMATE_READY: (d) => ({
+      title: 'Repair estimate ready',
+      body: `A repair estimate of Rs. ${fmtAmount(d.amount)} is awaiting your approval for "${d.jobTitle ?? 'the job'}".`,
+    }),
+
+    REPAIR_APPROVED: (d) => ({
+      title: 'Repair approved',
+      body: `The repair estimate of Rs. ${fmtAmount(d.amount)} for "${d.jobTitle ?? 'the job'}" was approved.`,
+    }),
+
+    PAYMENT_CONFIRMED: (d) => ({
+      title: 'Payment confirmed',
+      body: `Your payment of Rs. ${fmtAmount(d.amount)} for "${d.jobTitle ?? 'the job'}" was confirmed.`,
+    }),
+
+    JOB_COMPLETED: (d) => ({
+      title: 'Job completed',
+      body: `The job "${d.jobTitle ?? 'the job'}" has been completed. Please leave a review.`,
+    }),
   };

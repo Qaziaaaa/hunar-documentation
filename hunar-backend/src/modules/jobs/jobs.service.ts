@@ -170,8 +170,7 @@ export class JobsService {
       address: j.address,
       city: j.city,
       area: j.area,
-      suggestedVisitCharge:
-        j.suggestedVisitCharge != null ? Number(j.suggestedVisitCharge) : null,
+      suggestedVisitCharge: j.suggestedVisitCharge != null ? Number(j.suggestedVisitCharge) : null,
       preferredVisitTime: j.preferredVisitTime,
       offerCount: j._count.offers,
       images: j.images,

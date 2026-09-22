@@ -213,6 +213,14 @@ export class OffersService {
     );
   }
 
+  /** Task 12-14 aliases: POST /offers/:offerId/accept|reject|counter (jobId resolved internally). */
+  getOfferJobId(offerId: string): Promise<{ jobId: string } | null> {
+    return this.prisma.jobOffer.findUnique({
+      where: { id: offerId },
+      select: { jobId: true },
+    });
+  }
+
   async acceptOffer(jobId: string, offerId: string, user: JwtPayload, dto: RespondOfferDto) {
     const job = await this.prisma.serviceRequest.findUnique({ where: { id: jobId } });
     if (!job) {

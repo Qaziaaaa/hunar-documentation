@@ -95,11 +95,41 @@ export interface HunarDomainEvents {
   // INITIATED -> PROCESSING -> COMPLETED/FAILED -> REFUNDED, with erifiedAt
   // set when the house verifier confirms the screenshot. Notifications and the
   // wallet projection subscribe off this bus (the ledger never re-emits these).
-  'payment:initiated': { paymentId: string; jobId: string; customerId: string; workerId: string; amount: number };
-  'payment:processing': { paymentId: string; jobId: string; customerId: string; workerId: string; amount: number };
-  'payment:completed': { paymentId: string; jobId: string; customerId: string; workerId: string; amount: number };
-  'payment:failed': { paymentId: string; jobId: string; customerId: string; workerId: string; amount: number };
-  'payment:refunded': { paymentId: string; jobId: string; customerId: string; workerId: string; amount: number };
+  'payment:initiated': {
+    paymentId: string;
+    jobId: string;
+    customerId: string;
+    workerId: string;
+    amount: number;
+  };
+  'payment:processing': {
+    paymentId: string;
+    jobId: string;
+    customerId: string;
+    workerId: string;
+    amount: number;
+  };
+  'payment:completed': {
+    paymentId: string;
+    jobId: string;
+    customerId: string;
+    workerId: string;
+    amount: number;
+  };
+  'payment:failed': {
+    paymentId: string;
+    jobId: string;
+    customerId: string;
+    workerId: string;
+    amount: number;
+  };
+  'payment:refunded': {
+    paymentId: string;
+    jobId: string;
+    customerId: string;
+    workerId: string;
+    amount: number;
+  };
   'commission.deducted': { commissionId: string; jobId: string; workerId: string; amount: number };
   'commission.reversed': { commissionId: string; jobId: string; workerId: string; amount: number };
   'wallet.insufficientBalance': {

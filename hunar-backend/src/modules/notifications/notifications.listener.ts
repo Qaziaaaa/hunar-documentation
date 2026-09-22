@@ -69,6 +69,128 @@ export class NotificationsListener {
     });
   }
 
+  // New offer on the customer's job (Task 24 — customer notifications).
+  @OnEvent('offer.submitted')
+  async handleOfferSubmitted(payload: {
+    offerId: string;
+    jobId: string;
+    workerId: string;
+    visitCharge: number;
+  }) {
+    await this.safe('offer.submitted', async () => {
+      const job = await this.prisma.serviceRequest.findUnique({
+        where: { id: payload.jobId },
+        select: { customerId: true, title: true },
+      });
+      if (!job) return;
+      await this.notifications.createNotification(job.customerId, 'NEW_OFFER', {
+        jobId: payload.jobId,
+        jobTitle: job.title,
+        offerId: payload.offerId,
+        amount: Number(payload.visitCharge),
+      });
+    });
+  }
+
+  // Visit scheduled (job status → VISIT_SCHEDULED).
+  @OnEvent('job.statusChanged')
+  async handleJobStatusChanged(payload: { jobId: string; oldStatus: string; newStatus: string }) {
+    if (payload.newStatus !== 'VISIT_SCHEDULED') return;
+    await this.safe('job.statusChanged', async () => {
+      const job = await this.prisma.serviceRequest.findUnique({
+        where: { id: payload.jobId },
+        select: {
+          customerId: true,
+          title: true,
+          visits: { where: { status: 'SCHEDULED' }, orderBy: { scheduledDate: 'desc' }, take: 1 },
+        },
+      });
+      if (!job) return;
+      await this.notifications.createNotification(job.customerId, 'VISIT_SCHEDULED', {
+        jobId: payload.jobId,
+        jobTitle: job.title,
+        scheduledAt: job.visits[0]?.scheduledDate?.toISOString(),
+      });
+    });
+  }
+
+  // Inspection submitted → customer can view the report.
+  @OnEvent('visit.inspectionSubmitted')
+  async handleVisitInspectionSubmitted(payload: { visitId: string; jobId: string }) {
+    await this.safe('visit.inspectionSubmitted', async () => {
+      const job = await this.prisma.serviceRequest.findUnique({
+        where: { id: payload.jobId },
+        select: { customerId: true, title: true },
+      });
+      if (!job) return;
+      await this.notifications.createNotification(job.customerId, 'INSPECTION_SUBMITTED', {
+        jobId: payload.jobId,
+        jobTitle: job.title,
+        visitId: payload.visitId,
+      });
+    });
+  }
+
+  // Repair estimate proposed → customer approves/counters.
+  @OnEvent('repair.proposed')
+  async handleRepairProposed(payload: { repairId: string; jobId: string; amount: number }) {
+    await this.safe('repair.proposed', async () => {
+      const job = await this.getJobCustomer(payload.jobId);
+      if (!job) return;
+      await this.notifications.createNotification(job.customerId, 'REPAIR_ESTIMATE_READY', {
+        jobId: payload.jobId,
+        jobTitle: job.title,
+        amount: Number(payload.amount),
+      });
+    });
+  }
+
+  // Repair approved → customer confirmation.
+  @OnEvent('repair.approved')
+  async handleRepairApproved(payload: { repairId: string; jobId: string; lockedAmount: number }) {
+    await this.safe('repair.approved', async () => {
+      const job = await this.getJobCustomer(payload.jobId);
+      if (!job) return;
+      await this.notifications.createNotification(job.customerId, 'REPAIR_APPROVED', {
+        jobId: payload.jobId,
+        jobTitle: job.title,
+        amount: Number(payload.lockedAmount),
+      });
+    });
+  }
+
+  // Job completed → customer reviews + pays.
+  @OnEvent('repair.completed')
+  async handleRepairCompleted(payload: { repairId: string; jobId: string }) {
+    await this.safe('repair.completed', async () => {
+      const job = await this.getJobCustomer(payload.jobId);
+      if (!job) return;
+      await this.notifications.createNotification(job.customerId, 'JOB_COMPLETED', {
+        jobId: payload.jobId,
+        jobTitle: job.title,
+      });
+    });
+  }
+
+  // Payment confirmed → customer receipt.
+  @OnEvent('payment:completed')
+  async handlePaymentCompleted(payload: {
+    paymentId: string;
+    jobId: string;
+    customerId: string;
+    workerId: string;
+    amount: number;
+  }) {
+    await this.safe('payment:completed', async () => {
+      const job = await this.getJobTitle(payload.jobId);
+      await this.notifications.createNotification(payload.customerId, 'PAYMENT_CONFIRMED', {
+        jobId: payload.jobId,
+        jobTitle: job?.title,
+        amount: Number(payload.amount),
+      });
+    });
+  }
+
   // 2. Offer rejected
   @OnEvent('offer.rejected')
   async handleOfferRejected(payload: { offerId: string; jobId: string; workerId: string }) {
@@ -280,6 +402,13 @@ export class NotificationsListener {
     return this.prisma.serviceRequest.findUnique({
       where: { id: jobId },
       select: { id: true, title: true },
+    });
+  }
+
+  private async getJobCustomer(jobId: string) {
+    return this.prisma.serviceRequest.findUnique({
+      where: { id: jobId },
+      select: { customerId: true, title: true },
     });
   }
 

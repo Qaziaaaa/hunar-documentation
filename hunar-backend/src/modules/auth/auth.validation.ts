@@ -34,7 +34,6 @@ export class RegisterWorkerDto {
 
 export class RegisterCustomerDto extends RegisterWorkerDto {}
 
-
 export class LoginDto {
   @IsString()
   @IsPakistaniPhone()
