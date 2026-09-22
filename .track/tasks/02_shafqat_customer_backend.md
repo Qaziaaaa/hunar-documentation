@@ -1,8 +1,8 @@
 # SHAFQAT ULLAH — CUSTOMER FLOW BACKEND (A to Z)
 
-## Status: ⏸️ PAUSED
+## Status: 🟢 ACTIVE (resumed) — 74% ✅ (VERIFIED 2026-09-22 — build passes)
 
-Backend work is paused. This file defines what you will build when backend work starts.
+Shafqat resumed backend on 09-22: payments module (wallet balance/ledger/topup/commission hold-confirm-reverse, earnings) + customer auth APIs merged to origin/dev. Rule: work counts for the person assigned it — customer flow APIs built in shared modules count for Shafqat.
 
 ---
 
