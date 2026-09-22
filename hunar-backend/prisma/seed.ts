@@ -68,14 +68,14 @@ async function main(): Promise<void> {
   console.log('Seeding service categories...');
   const categories: Record<string, string> = {};
   categories.Plumbing = await upsertCategory('Plumbing', 'پلمبرنگ', 1);
-  await upsertCategory('Electrical', 'الیکٹریکل', 2);
-  await upsertCategory('AC & Refrigeration', 'ایئر کنڈیشن اور ریفریجریشن', 3);
-  await upsertCategory('Carpentry', 'لکڑ کا کام', 4);
-  await upsertCategory('Painting', 'پینٹنگ', 5);
-  await upsertCategory('Cleaning', 'صفائی', 6);
-  await upsertCategory('Masonry', 'دھاتی', 7);
-  await upsertCategory('Pest Control', 'کیڑے مار دوا', 8);
-  await upsertCategory('General Handyman', 'عمومی مہارت', 9);
+  categories.Electrical = await upsertCategory('Electrical', 'الیکٹریکل', 2);
+  categories['AC & Refrigeration'] = await upsertCategory('AC & Refrigeration', 'ایئر کنڈیشن اور ریفریجریشن', 3);
+  categories.Carpentry = await upsertCategory('Carpentry', 'لکڑ کا کام', 4);
+  categories.Painting = await upsertCategory('Painting', 'پینٹنگ', 5);
+  categories.Cleaning = await upsertCategory('Cleaning', 'صفائی', 6);
+  categories.Masonry = await upsertCategory('Masonry', 'دھاتی', 7);
+  categories['Pest Control'] = await upsertCategory('Pest Control', 'کیڑے مار دوا', 8);
+  categories['General Handyman'] = await upsertCategory('General Handyman', 'عمومی مہارت', 9);
 
   console.log('Seeding test users...');
   const hash = (pw: string): string => bcrypt.hashSync(pw, 10);
