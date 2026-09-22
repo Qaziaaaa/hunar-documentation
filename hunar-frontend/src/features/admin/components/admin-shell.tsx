@@ -127,7 +127,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
 
       {/* Sidebar Navigation */}
       <aside
-        className={`fixed inset-y-0 left-0 z-50 flex w-72 flex-col justify-between border-r border-slate-200 bg-white transition-transform duration-300 lg:static lg:translate-x-0 ${
+        className={`fixed inset-y-0 left-0 z-50 flex w-72 flex-col justify-between border-r border-slate-200 bg-white transition-transform duration-300 lg:sticky lg:top-0 lg:h-screen lg:translate-x-0 ${
           mobileOpen ? "translate-x-0 shadow-2xl" : "-translate-x-full"
         }`}
       >
@@ -233,28 +233,28 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
       {/* Main Content Area */}
       <div className="flex flex-1 flex-col overflow-hidden">
         {/* Header Bar */}
-        <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-slate-200 bg-white/95 px-6 backdrop-blur">
+        <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-slate-200 bg-white/95 px-5 backdrop-blur">
           <div className="flex items-center gap-4">
             <button
               type="button"
               onClick={() => setMobileOpen(true)}
-              className="flex size-10 items-center justify-center rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-100 lg:hidden"
+              className="flex size-9 items-center justify-center rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-100 lg:hidden"
             >
-              <Menu className="size-5" />
+              <Menu className="size-4" />
             </button>
             <div className="relative hidden w-72 md:block">
-              <Search className="absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
+              <Search className="absolute left-3.5 top-1/2 size-3.5 -translate-y-1/2 text-slate-400" />
               <input
                 type="text"
                 placeholder="Search jobs, workers, users..."
-                className="h-10 w-full rounded-xl border border-slate-200 bg-slate-50 pl-10 pr-4 text-xs outline-none transition focus:border-teal focus:bg-white focus:ring-2 focus:ring-teal/15"
+                className="h-9 w-full rounded-xl border border-slate-200 bg-slate-50 pl-9 pr-4 text-xs outline-none transition focus:border-teal focus:bg-white focus:ring-2 focus:ring-teal/15"
               />
             </div>
           </div>
 
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
             {/* Live Operational Pulse */}
-            <div className="hidden items-center gap-2 rounded-full border border-green-200 bg-green-50 px-3 py-1 text-xs font-semibold text-green-700 sm:flex">
+            <div className="hidden items-center gap-2 rounded-full border border-green-200 bg-green-50 px-2.5 py-0.5 text-[11px] font-semibold text-green-700 sm:flex">
               <span className="relative flex size-2">
                 <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-400 opacity-75" />
                 <span className="relative inline-flex size-2 rounded-full bg-green-500" />
@@ -265,7 +265,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
             {/* Notifications */}
             <button
               type="button"
-              className="relative flex size-10 items-center justify-center rounded-xl border border-slate-200 text-slate-600 transition hover:bg-slate-100"
+              className="relative flex size-9 items-center justify-center rounded-xl border border-slate-200 text-slate-600 transition hover:bg-slate-100"
             >
               <Bell className="size-4" />
               <span className="absolute right-2 top-2 size-2 rounded-full bg-orange" />
@@ -276,16 +276,16 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
               <button
                 type="button"
                 onClick={() => setProfileOpen((val) => !val)}
-                className="flex items-center gap-3 rounded-xl border border-slate-200 p-1.5 transition hover:bg-slate-50"
+                className="flex items-center gap-2.5 rounded-xl border border-slate-200 p-1 transition hover:bg-slate-50"
               >
-                <div className="flex size-8 items-center justify-center rounded-lg bg-navy text-xs font-bold text-white">
+                <div className="flex size-7 items-center justify-center rounded-lg bg-navy text-[11px] font-bold text-white">
                   SA
                 </div>
                 <div className="hidden text-left sm:block">
-                  <p className="text-xs font-extrabold text-navy">System Admin</p>
-                  <p className="text-[10px] font-semibold text-teal">SUPER ADMIN</p>
+                  <p className="text-[11px] font-extrabold text-navy leading-tight">System Admin</p>
+                  <p className="text-[9px] font-semibold text-teal leading-tight">SUPER ADMIN</p>
                 </div>
-                <ChevronDown className="size-4 text-slate-400" />
+                <ChevronDown className="size-3.5 text-slate-400" />
               </button>
 
               {profileOpen ? (
@@ -309,7 +309,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
         </header>
 
         {/* Dynamic Main Body Content */}
-        <main className="flex-1 overflow-y-auto p-6 md:p-8">{children}</main>
+        <main className="flex-1 overflow-y-auto p-2 md:p-3">{children}</main>
       </div>
     </div>
   );

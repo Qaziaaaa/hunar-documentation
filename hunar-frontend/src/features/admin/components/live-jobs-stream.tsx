@@ -21,68 +21,68 @@ export function LiveJobsStream({ jobs }: { jobs: LiveJobItem[] }) {
   };
 
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-      <div className="flex items-center justify-between border-b border-slate-100 pb-4">
-        <div className="flex items-center gap-2.5">
-          <div className="flex size-9 items-center justify-center rounded-xl bg-navy/10 text-navy">
-            <Activity className="size-5" />
+    <div className="rounded-2xl border border-slate-200 bg-white p-3.5 shadow-xs">
+      <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
+        <div className="flex items-center gap-2">
+          <div className="flex size-7 items-center justify-center rounded-lg bg-navy/10 text-navy">
+            <Activity className="size-4" />
           </div>
           <div>
-            <h3 className="text-base font-extrabold text-navy">Live Jobs Stream</h3>
-            <p className="text-xs text-slate-500">
+            <h3 className="text-sm font-extrabold text-navy">Live Jobs Stream</h3>
+            <p className="text-[11px] text-slate-500">
               Real-time feed of active customer requests & job updates
             </p>
           </div>
         </div>
         <Link
           href="/admin/jobs"
-          className="flex items-center gap-1 text-xs font-bold text-teal transition hover:underline"
+          className="flex items-center gap-1 text-[11px] font-bold text-teal transition hover:underline"
         >
           <span>All Jobs</span>
-          <ArrowUpRight className="size-4" />
+          <ArrowUpRight className="size-3.5" />
         </Link>
       </div>
 
-      <div className="mt-4 overflow-x-auto">
-        <table className="w-full text-left text-xs">
+      <div className="mt-2 overflow-x-auto">
+        <table className="w-full text-left text-[11px]">
           <thead>
-            <tr className="border-b border-slate-100 text-[10px] font-bold uppercase tracking-wider text-slate-400">
-              <th className="py-3 px-2">Job Title / Category</th>
-              <th className="py-3 px-2">Customer</th>
-              <th className="py-3 px-2">Assigned Worker</th>
-              <th className="py-3 px-2">Amount</th>
-              <th className="py-3 px-2">Status</th>
-              <th className="py-3 px-2 text-right">Time</th>
+            <tr className="border-b border-slate-100 text-[9px] font-bold uppercase tracking-wider text-slate-400">
+              <th className="py-2 px-2">Job Title / Category</th>
+              <th className="py-2 px-2">Customer</th>
+              <th className="py-2 px-2">Assigned Worker</th>
+              <th className="py-2 px-2">Amount</th>
+              <th className="py-2 px-2">Status</th>
+              <th className="py-2 px-2 text-right">Time</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 font-medium">
             {jobs.map((job) => (
-              <tr key={job.id} className="transition hover:bg-slate-50">
-                <td className="py-3.5 px-2">
+              <tr key={job.id} className="transition hover:bg-slate-50/80">
+                <td className="py-2 px-2">
                   <p className="font-extrabold text-navy">{job.title}</p>
-                  <p className="text-[10px] text-slate-400">
+                  <p className="text-[9px] text-slate-400">
                     {job.category} • {job.city}
                   </p>
                 </td>
-                <td className="py-3.5 px-2 font-semibold text-slate-700">
+                <td className="py-2 px-2 font-semibold text-slate-700">
                   {job.customerName}
                 </td>
-                <td className="py-3.5 px-2 text-slate-600">
+                <td className="py-2 px-2 text-slate-600">
                   {job.workerName || "Unassigned"}
                 </td>
-                <td className="py-3.5 px-2 font-extrabold text-navy">
+                <td className="py-2 px-2 font-extrabold text-navy">
                   Rs. {job.amount.toLocaleString()}
                 </td>
-                <td className="py-3.5 px-2">
+                <td className="py-2 px-2">
                   <span
-                    className={`inline-flex rounded-full border px-2.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wide ${getStatusBadge(
+                    className={`inline-flex rounded-full border px-2 py-0.5 text-[9px] font-extrabold uppercase tracking-wide ${getStatusBadge(
                       job.status
                     )}`}
                   >
                     {job.status.replace("_", " ")}
                   </span>
                 </td>
-                <td className="py-3.5 px-2 text-right font-semibold text-slate-400">
+                <td className="py-2 px-2 text-right font-semibold text-slate-400">
                   {job.createdAt}
                 </td>
               </tr>

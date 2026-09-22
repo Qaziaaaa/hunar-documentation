@@ -2,55 +2,66 @@ import {
   MOCK_ADMIN_KPIS,
   MOCK_LIVE_JOBS,
   MOCK_VERIFICATIONS,
+  MOCK_PAYMENTS,
+  MOCK_WORKERS,
+  MOCK_DISPUTES,
+  MOCK_WITHDRAWALS,
+  MOCK_SETTINGS,
+  MOCK_AUDIT_LOGS,
 } from "@/mocks/admin.mock";
 import { AdminShell } from "@/features/admin/components/admin-shell";
-import { JobStatusDonutChart } from "@/features/admin/components/job-status-donut-chart";
 import { KpiStatCards } from "@/features/admin/components/kpi-stat-cards";
 import { LiveJobsStream } from "@/features/admin/components/live-jobs-stream";
-import { MarketplaceActivityChart } from "@/features/admin/components/marketplace-activity-chart";
 import { PendingVerificationsWidget } from "@/features/admin/components/pending-verifications-widget";
+import { RecentTransactionsTable } from "@/features/admin/components/recent-transactions-table";
+import { TopWorkersLeaderboard } from "@/features/admin/components/top-workers-leaderboard";
+import { DisputesQueueWidget } from "@/features/admin/components/disputes-queue-widget";
+import { CategorySupplyDemandChart } from "@/features/admin/components/category-supply-demand-chart";
+import { WithdrawalRequestsWidget } from "@/features/admin/components/withdrawal-requests-widget";
+import { PlatformSettingsCard } from "@/features/admin/components/platform-settings-card";
+import { AuditLogsFeed } from "@/features/admin/components/audit-logs-feed";
 import { Link } from "@/i18n/navigation";
 import { FileCheck2, ShieldCheck, Users } from "lucide-react";
 
 export const metadata = {
   title: "Admin Dashboard — HUNAR Operations",
-  description: "Live marketplace overview, analytics, and worker verification management",
+  description: "Live marketplace overview, analytics, financial ledger, infrastructure health, and worker verification management",
 };
 
 export default function AdminDashboardPage() {
   return (
     <AdminShell>
-      <div className="space-y-8">
+      <div className="space-y-2.5">
         {/* Page Header */}
-        <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
+        <div className="flex flex-col justify-between gap-2 md:flex-row md:items-center border-b border-slate-200/60 pb-2">
           <div>
-            <div className="flex items-center gap-2">
-              <span className="inline-flex items-center gap-1.5 rounded-full border border-teal/20 bg-teal/10 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-teal">
-                <ShieldCheck className="size-3.5" />
+            <div className="flex items-center gap-1.5">
+              <span className="inline-flex items-center gap-1 rounded-full border border-teal/20 bg-teal/10 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-teal">
+                <ShieldCheck className="size-2.5" />
                 Live Control Center
               </span>
             </div>
-            <h1 className="mt-2 text-3xl font-black tracking-tight text-navy">
+            <h1 className="mt-0.5 text-xl font-black tracking-tight text-navy">
               Operations Dashboard
             </h1>
-            <p className="mt-1 text-sm font-medium text-slate-500">
-              Real-time performance metrics, verification review queue, and active jobs stream
+            <p className="text-[11px] font-medium text-slate-500">
+              Real-time performance metrics, verification review queue, transactions ledger, and active jobs stream
             </p>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
             <Link
               href="/admin/users/workers"
-              className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-bold text-navy shadow-sm transition hover:bg-slate-50"
+              className="inline-flex items-center gap-1 rounded-xl border border-slate-200 bg-white px-2.5 py-1.5 text-[11px] font-bold text-navy shadow-xs transition hover:bg-slate-50"
             >
-              <Users className="size-4 text-teal" />
+              <Users className="size-3 text-teal" />
               <span>Manage Workers</span>
             </Link>
             <Link
               href="/admin/verifications"
-              className="inline-flex items-center gap-2 rounded-xl bg-navy px-4 py-2.5 text-xs font-bold text-white shadow-md shadow-navy/20 transition hover:bg-navy/90"
+              className="inline-flex items-center gap-1 rounded-xl bg-navy px-2.5 py-1.5 text-[11px] font-bold text-white shadow-xs shadow-navy/20 transition hover:bg-navy/90"
             >
-              <FileCheck2 className="size-4 text-teal-300" />
+              <FileCheck2 className="size-3 text-teal-300" />
               <span>Verification Queue</span>
             </Link>
           </div>
@@ -59,25 +70,42 @@ export default function AdminDashboardPage() {
         {/* 1. KPI Stat Cards */}
         <KpiStatCards stats={MOCK_ADMIN_KPIS} />
 
-        {/* 2. Charts Row (Marketplace Activity Chart + Job Status Donut Chart) */}
-        <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
-          <div className="lg:col-span-2">
-            <MarketplaceActivityChart />
+        {/* 2. Financial Ledger Table (Full Width 100%) */}
+        <RecentTransactionsTable transactions={MOCK_PAYMENTS} />
+
+        {/* 4. Operational Verifications & Payouts (Left) + Vertical Category Graph (Right) */}
+        <div className="grid grid-cols-1 gap-2.5 lg:grid-cols-12">
+          {/* Left Column: Stacked Verifications & Clearances Widgets */}
+          <div className="space-y-2.5 lg:col-span-7">
+            <PendingVerificationsWidget requests={MOCK_VERIFICATIONS} />
+            <WithdrawalRequestsWidget withdrawals={MOCK_WITHDRAWALS} />
           </div>
-          <div className="lg:col-span-1">
-            <JobStatusDonutChart />
+
+          {/* Right Column: Vertical Category Supply vs Demand Column Graph */}
+          <div className="lg:col-span-5">
+            <CategorySupplyDemandChart />
           </div>
         </div>
 
-        {/* 3. Operational Grid Layout for Widgets */}
-        <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
-          {/* Pending Verifications Widget */}
-          <PendingVerificationsWidget requests={MOCK_VERIFICATIONS} />
-
-          {/* Live Jobs Stream Table */}
-          <LiveJobsStream jobs={MOCK_LIVE_JOBS} />
+        {/* 5. Top Verified Professionals & Active Disputes */}
+        <div className="grid grid-cols-1 gap-2.5 lg:grid-cols-2">
+          <TopWorkersLeaderboard workers={MOCK_WORKERS} />
+          <DisputesQueueWidget disputes={MOCK_DISPUTES} />
         </div>
+
+        {/* 6. Live Jobs Stream Table (Full Width 100%) */}
+        <LiveJobsStream jobs={MOCK_LIVE_JOBS} />
+
+        {/* 7. System Audit Log Feed */}
+        <AuditLogsFeed logs={MOCK_AUDIT_LOGS} />
+
+        {/* 8. Platform Rules & Settings Card (Placed at the Bottom) */}
+        <PlatformSettingsCard settings={MOCK_SETTINGS} />
       </div>
     </AdminShell>
   );
 }
+
+
+
+
