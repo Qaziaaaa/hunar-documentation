@@ -1,14 +1,14 @@
 import {
-  MOCK_ADMIN_KPIS,
-  MOCK_LIVE_JOBS,
-  MOCK_VERIFICATIONS,
-  MOCK_PAYMENTS,
-  MOCK_WORKERS,
-  MOCK_DISPUTES,
-  MOCK_WITHDRAWALS,
-  MOCK_SETTINGS,
-  MOCK_AUDIT_LOGS,
-} from "@/mocks/admin.mock";
+  fetchAdminKpis,
+  fetchAuditLogsFeed,
+  fetchDisputesQueue,
+  fetchLiveJobsStream,
+  fetchPendingVerifications,
+  fetchPlatformSettings,
+  fetchRecentTransactions,
+  fetchTopWorkers,
+  fetchWithdrawalRequests,
+} from "@/features/admin/api/admin-api";
 import { AdminShell } from "@/features/admin/components/admin-shell";
 import { KpiStatCards } from "@/features/admin/components/kpi-stat-cards";
 import { LiveJobsStream } from "@/features/admin/components/live-jobs-stream";
@@ -28,7 +28,29 @@ export const metadata = {
   description: "Live marketplace overview, analytics, financial ledger, infrastructure health, and worker verification management",
 };
 
-export default function AdminDashboardPage() {
+export default async function AdminDashboardPage() {
+  const [
+    kpis,
+    verifications,
+    transactions,
+    withdrawals,
+    disputes,
+    liveJobs,
+    auditLogs,
+    settings,
+    topWorkers,
+  ] = await Promise.all([
+    fetchAdminKpis(),
+    fetchPendingVerifications(),
+    fetchRecentTransactions(),
+    fetchWithdrawalRequests(),
+    fetchDisputesQueue(),
+    fetchLiveJobsStream(),
+    fetchAuditLogsFeed(),
+    fetchPlatformSettings(),
+    fetchTopWorkers(),
+  ]);
+
   return (
     <AdminShell>
       <div className="space-y-2.5">
@@ -68,17 +90,17 @@ export default function AdminDashboardPage() {
         </div>
 
         {/* 1. KPI Stat Cards */}
-        <KpiStatCards stats={MOCK_ADMIN_KPIS} />
+        <KpiStatCards stats={kpis} />
 
         {/* 2. Financial Ledger Table (Full Width 100%) */}
-        <RecentTransactionsTable transactions={MOCK_PAYMENTS} />
+        <RecentTransactionsTable transactions={transactions} />
 
         {/* 4. Operational Verifications & Payouts (Left) + Vertical Category Graph (Right) */}
         <div className="grid grid-cols-1 gap-2.5 lg:grid-cols-12">
           {/* Left Column: Stacked Verifications & Clearances Widgets */}
           <div className="space-y-2.5 lg:col-span-7">
-            <PendingVerificationsWidget requests={MOCK_VERIFICATIONS} />
-            <WithdrawalRequestsWidget withdrawals={MOCK_WITHDRAWALS} />
+            <PendingVerificationsWidget requests={verifications} />
+            <WithdrawalRequestsWidget withdrawals={withdrawals} />
           </div>
 
           {/* Right Column: Vertical Category Supply vs Demand Column Graph */}
@@ -89,18 +111,18 @@ export default function AdminDashboardPage() {
 
         {/* 5. Top Verified Professionals & Active Disputes */}
         <div className="grid grid-cols-1 gap-2.5 lg:grid-cols-2">
-          <TopWorkersLeaderboard workers={MOCK_WORKERS} />
-          <DisputesQueueWidget disputes={MOCK_DISPUTES} />
+          <TopWorkersLeaderboard workers={topWorkers} />
+          <DisputesQueueWidget disputes={disputes} />
         </div>
 
         {/* 6. Live Jobs Stream Table (Full Width 100%) */}
-        <LiveJobsStream jobs={MOCK_LIVE_JOBS} />
+        <LiveJobsStream jobs={liveJobs} />
 
         {/* 7. System Audit Log Feed */}
-        <AuditLogsFeed logs={MOCK_AUDIT_LOGS} />
+        <AuditLogsFeed logs={auditLogs} />
 
         {/* 8. Platform Rules & Settings Card (Placed at the Bottom) */}
-        <PlatformSettingsCard settings={MOCK_SETTINGS} />
+        <PlatformSettingsCard settings={settings} />
       </div>
     </AdminShell>
   );

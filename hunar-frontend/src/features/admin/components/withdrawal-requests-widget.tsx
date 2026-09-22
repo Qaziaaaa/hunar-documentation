@@ -1,10 +1,22 @@
 "use client";
 
+import { useState } from "react";
 import { Wallet, ArrowUpRight, Banknote, CheckCircle, Clock } from "lucide-react";
 import { Link } from "@/i18n/navigation";
 import type { WithdrawalRequest } from "@/types/admin";
+import { processWithdrawalRequest } from "@/features/admin/api/admin-api";
 
-export function WithdrawalRequestsWidget({ withdrawals }: { withdrawals: WithdrawalRequest[] }) {
+export function WithdrawalRequestsWidget({ withdrawals: initialWithdrawals }: { withdrawals: WithdrawalRequest[] }) {
+  const [items, setItems] = useState<WithdrawalRequest[]>(initialWithdrawals);
+  const [processingId, setProcessingId] = useState<string | null>(null);
+
+  const handleApprove = async (id: string) => {
+    setProcessingId(id);
+    await processWithdrawalRequest(id, "approve");
+    setItems((prev) => prev.map((w) => (w.id === id ? { ...w, status: "PROCESSED" } : w)));
+    setProcessingId(null);
+  };
+
   return (
     <div className="rounded-xl border border-slate-200 bg-white p-2.5 shadow-2xs">
       <div className="flex items-center justify-between border-b border-slate-100 pb-2">
@@ -29,7 +41,7 @@ export function WithdrawalRequestsWidget({ withdrawals }: { withdrawals: Withdra
       </div>
 
       <div className="mt-1.5 space-y-1.5">
-        {withdrawals.map((wd) => (
+        {items.map((wd) => (
           <div
             key={wd.id}
             className="flex flex-col gap-1.5 rounded-lg border border-slate-100 bg-slate-50/50 p-2 transition hover:bg-slate-50 sm:flex-row sm:items-center sm:justify-between"
@@ -52,17 +64,21 @@ export function WithdrawalRequestsWidget({ withdrawals }: { withdrawals: Withdra
             <div className="flex items-center gap-2.5 self-end sm:self-auto">
               <div className="text-right">
                 <p className="text-xs font-extrabold text-navy">Rs. {wd.amount.toLocaleString()}</p>
-                <p className="text-[8px] text-amber-600 font-bold flex items-center justify-end gap-0.5">
+                <p className={`text-[8px] font-bold flex items-center justify-end gap-0.5 ${wd.status === "PROCESSED" ? "text-green-600" : "text-amber-600"}`}>
                   <Clock className="size-2" /> {wd.status}
                 </p>
               </div>
-              <button
-                type="button"
-                className="inline-flex items-center gap-1 rounded-md bg-teal px-2 py-0.5 text-[9px] font-bold text-white shadow-2xs transition hover:bg-teal/90"
-              >
-                <CheckCircle className="size-2.5" />
-                <span>Approve</span>
-              </button>
+              {wd.status !== "PROCESSED" && (
+                <button
+                  type="button"
+                  disabled={processingId === wd.id}
+                  onClick={() => handleApprove(wd.id)}
+                  className="inline-flex items-center gap-1 rounded-md bg-teal px-2 py-0.5 text-[9px] font-bold text-white shadow-2xs transition hover:bg-teal/90 disabled:opacity-50"
+                >
+                  <CheckCircle className="size-2.5" />
+                  <span>Approve</span>
+                </button>
+              )}
             </div>
           </div>
         ))}
