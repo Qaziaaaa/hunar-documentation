@@ -3,28 +3,23 @@
 import React from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { useWorkerJobs, workerStore } from "@/stores/worker-jobs-store";
+import { useWorkerJobs } from "@/stores/worker-jobs-store";
 import { formatRs } from "@/lib/design-tokens";
 import { NearbyJobsFeed } from "@/features/jobs/components/nearby-jobs-feed";
 import {
   ShieldCheck,
   Star,
   Zap,
-  Wrench,
-  CheckCircle,
-  TrendingUp,
   Wallet,
   Compass,
-  ArrowUpRight,
   Briefcase,
-  Layers,
 } from "lucide-react";
 
 export default function WorkerDashboardPage() {
   const params = useParams();
   const locale = (params?.locale as string) || "en";
 
-  const { jobs, offers, walletBalance, workerOnline } = useWorkerJobs();
+  const { jobs, walletBalance } = useWorkerJobs();
 
   // Active jobs count
   const activeJobsCount = jobs.filter(
@@ -86,9 +81,8 @@ export default function WorkerDashboardPage() {
         </div>
       </div>
 
-      {/* 2. Key Statistics Row (Bento Metric Strip) */}
+      {/* 2. Key Statistics Row */}
       <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Metric 1: Nearby Requests */}
         <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col justify-between">
           <div className="flex items-center justify-between text-slate-500">
             <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
@@ -111,7 +105,6 @@ export default function WorkerDashboardPage() {
           </span>
         </div>
 
-        {/* Metric 2: Active Jobs */}
         <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col justify-between">
           <div className="flex items-center justify-between text-slate-500">
             <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
@@ -134,7 +127,6 @@ export default function WorkerDashboardPage() {
           </span>
         </div>
 
-        {/* Metric 3: Total Earnings */}
         <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col justify-between">
           <div className="flex items-center justify-between text-slate-500">
             <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
@@ -148,9 +140,8 @@ export default function WorkerDashboardPage() {
             <div className="text-2xl sm:text-3xl font-black text-[#123B5D]">
               {formatRs(walletBalance)}
             </div>
-            <div className="text-[11px] text-emerald-600 font-semibold mt-0.5 flex items-center gap-1">
-              <TrendingUp className="w-3 h-3" />
-              <span>Above -500 Rs. limit</span>
+            <div className="text-[11px] text-emerald-600 font-semibold mt-0.5">
+              Above -500 Rs. limit
             </div>
           </div>
           <span className="text-[10px] text-slate-400">
@@ -158,7 +149,6 @@ export default function WorkerDashboardPage() {
           </span>
         </div>
 
-        {/* Metric 4: Pro Rating */}
         <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col justify-between">
           <div className="flex items-center justify-between text-slate-500">
             <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
@@ -182,7 +172,6 @@ export default function WorkerDashboardPage() {
         </div>
       </div>
 
-      {/* 3. Section Title & Task 1 / 2 Nearby Jobs Feed */}
       <div className="space-y-4">
         <div>
           <h2 className="text-lg sm:text-xl font-extrabold text-slate-900">

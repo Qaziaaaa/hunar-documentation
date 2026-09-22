@@ -51,7 +51,7 @@ export default async function LocaleLayout({
 
   setRequestLocale(locale);
   const messages = await getMessages();
-  const dir = locale === "ur" ? "rtl" : "ltr";
+  const dir = (locale as string) === "ur" ? "rtl" : "ltr";
 
   return (
     <html
