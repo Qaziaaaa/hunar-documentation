@@ -1,9 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { Globe, Menu, Search, X } from "lucide-react";
+import { Menu, Search, X } from "lucide-react";
 import { useLocale } from "next-intl";
-import { usePathname, useRouter } from "@/i18n/navigation";
+import { useRouter } from "@/i18n/navigation";
 
 interface CustomerHeaderProps {
   onOpenSidebar: () => void;
@@ -11,7 +11,6 @@ interface CustomerHeaderProps {
 
 export function CustomerHeader({ onOpenSidebar }: CustomerHeaderProps) {
   const router = useRouter();
-  const pathname = usePathname();
   const locale = useLocale();
   const [searchOpen, setSearchOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -21,11 +20,6 @@ export function CustomerHeader({ onOpenSidebar }: CustomerHeaderProps) {
     if (query.trim()) {
       router.push(`/customer/post-job?search=${encodeURIComponent(query.trim())}`);
     }
-  };
-
-  const toggleLanguage = () => {
-    const nextLocale = locale === "en" ? "ur" : "en";
-    router.replace(pathname, { locale: nextLocale });
   };
 
   const placeholderText = locale === "ur" ? "سروس تلاش کریں..." : "Search services...";
@@ -90,17 +84,6 @@ export function CustomerHeader({ onOpenSidebar }: CustomerHeaderProps) {
             <Search className="size-5 stroke-[2.2]" />
           </button>
         ) : null}
-
-        {/* Header Language Toggle Button (Hidden on mobile, available in sidebar) */}
-        <button
-          type="button"
-          onClick={toggleLanguage}
-          className="hidden sm:flex h-10 items-center gap-1.5 rounded-xl border border-slate-200 bg-white/90 px-3 text-xs font-bold text-slate-700 shadow-2xs transition-all hover:border-[#0F8B8D]/40 hover:bg-slate-50 active:scale-95 cursor-pointer"
-          title={locale === "en" ? "اردو میں دیکھیں" : "Switch to English"}
-        >
-          <Globe className="size-3.5 text-[#0F8B8D]" />
-          <span>{locale === "en" ? "اردو" : "EN"}</span>
-        </button>
       </div>
     </header>
   );
