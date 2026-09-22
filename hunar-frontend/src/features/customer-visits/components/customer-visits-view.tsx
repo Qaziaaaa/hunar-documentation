@@ -170,36 +170,15 @@ export function CustomerVisitsView({ initialVisits }: CustomerVisitsViewProps) {
                 <div className="h-2 w-full bg-gradient-to-r from-[#0F766E] via-[#14B8A6] to-[#16A34A]" />
 
                 <div className="p-5 sm:p-6 space-y-5">
-                  {/* Live Status Header & ETA Pill */}
-                  <div className="flex flex-wrap items-center justify-between gap-3">
-                    <div className="flex items-center gap-2.5">
-                      <span className="relative flex size-3.5">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#16A34A] opacity-75" />
-                        <span className="relative inline-flex rounded-full size-3.5 bg-[#16A34A]" />
-                      </span>
-                      <div>
-                        <h2 className="text-base sm:text-lg font-bold text-[#123B5D] leading-tight">
-                          {isUrdu ? "کاریگر راستے میں ہے!" : "Technician On The Way!"}
-                        </h2>
-                        <span className="text-xs text-[#16A34A] font-semibold flex items-center gap-1">
-                          <Navigation className="size-3.5" />
-                          {isUrdu ? "لائیو جی پی ایس فعال ہے • ڈیفنس کالونی تا ایس ایم آئی ٹی پشاور" : "Live GPS Broadcast Active • Defence Colony to SMIT Peshawar"}
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Countdown ETA Pill */}
-                    <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-[#0F766E]/10 border border-[#0F766E]/20 text-[#0F766E]">
-                      <Clock className="size-4.5 animate-pulse" />
-                      <div className="flex flex-col text-right rtl:text-left">
-                        <span className="text-xs sm:text-sm font-extrabold text-[#0F766E] leading-none">
-                          {isUrdu ? `متوقع آمد: ~${liveVisit.etaMinutes} منٹ` : `ETA ~${liveVisit.etaMinutes} mins`}
-                        </span>
-                        <span className="text-[10px] text-slate-500 font-medium mt-0.5">
-                          {isUrdu ? "آمد: آج، صبح کا وقت" : "Arrival: Today, Morning"}
-                        </span>
-                      </div>
-                    </div>
+                  {/* Live Status Header */}
+                  <div className="flex items-center gap-2.5">
+                    <span className="relative flex size-3.5">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#16A34A] opacity-75" />
+                      <span className="relative inline-flex rounded-full size-3.5 bg-[#16A34A]" />
+                    </span>
+                    <h2 className="text-base sm:text-lg font-bold text-[#123B5D] leading-tight">
+                      {isUrdu ? "کاریگر راستے میں ہے!" : "Technician On The Way!"}
+                    </h2>
                   </div>
 
                   {/* Job Title & Order Ref */}
@@ -227,12 +206,6 @@ export function CustomerVisitsView({ initialVisits }: CustomerVisitsViewProps) {
                         <span>•</span>
                         <span className="inline-flex items-center gap-1 font-bold text-[#0F766E]">
                           {isUrdu ? `وزٹ چارجز: ${liveVisit.visitCharges ?? 300} روپے` : `Visit Charges: Rs. ${liveVisit.visitCharges ?? 300}`}
-                        </span>
-                        <span>•</span>
-                        <span className="text-[#123B5D] font-medium">
-                          {isUrdu
-                            ? `تخمینی کل رقم: Rs. ${liveVisit.escrowAmount.toLocaleString()}`
-                            : `Estimated Total: Rs. ${liveVisit.escrowAmount.toLocaleString()}`}
                         </span>
                       </div>
 
@@ -288,35 +261,10 @@ export function CustomerVisitsView({ initialVisits }: CustomerVisitsViewProps) {
                             <Star className="size-3.5 fill-[#F59E0B]" />
                             {liveVisit.technician.rating.toFixed(1)} ({liveVisit.technician.totalReviews})
                           </span>
-                          <span>•</span>
-                          <span>
-                            {liveVisit.technician.vehicleModel} (
-                            <strong className="text-[#123B5D]">
-                              {liveVisit.technician.vehiclePlate}
-                            </strong>
-                            )
-                          </span>
                         </div>
                       </div>
                     </div>
 
-                    {/* Direct Technician Contact */}
-                    <div className="flex sm:flex-col items-start sm:items-end rtl:sm:items-start justify-between sm:justify-center border-t sm:border-t-0 pt-2 sm:pt-0 border-slate-100">
-                      <span className="text-[10.5px] font-bold uppercase tracking-wider text-[#64748B]">
-                        {isUrdu ? "کاریگر کا موبائل نمبر" : "Technician Mobile"}
-                      </span>
-                      <a
-                        href={`tel:${liveVisit.technician.phone}`}
-                        className="text-xs sm:text-sm font-extrabold text-[#0F766E] hover:underline flex items-center gap-1"
-                      >
-                        <Phone className="size-3.5" />
-                        {liveVisit.technician.phone}
-                      </a>
-                      <span className="text-[10.5px] text-[#16A34A] font-semibold flex items-center gap-1 mt-0.5">
-                        <span className="size-1.5 rounded-full bg-[#16A34A]" />
-                        {isUrdu ? "بائیومیٹرک تصدیق شدہ" : "Biometric ID Checked"}
-                      </span>
-                    </div>
                   </div>
 
                   {/* Doorstep OTP */}
@@ -451,13 +399,8 @@ export function CustomerVisitsView({ initialVisits }: CustomerVisitsViewProps) {
                     </div>
 
                     <div className="flex items-center sm:flex-col items-start sm:items-end rtl:sm:items-start gap-1 shrink-0">
-                      <span className="text-[11px] font-bold text-[#0F766E]">
+                      <span className="inline-flex items-center font-bold text-xs sm:text-sm text-[#0F766E] bg-[#0F766E]/10 px-2.5 py-1 rounded-lg border border-[#0F766E]/20">
                         {isUrdu ? `وزٹ چارجز: ${visits[1].visitCharges ?? 300} روپے` : `Visit Charges: Rs. ${visits[1].visitCharges ?? 300}`}
-                      </span>
-                      <span className="text-sm font-extrabold text-[#123B5D]">
-                        {isUrdu
-                          ? `تخمینی کل: Rs. ${visits[1].escrowAmount.toLocaleString()}`
-                          : `Estimated Total: Rs. ${visits[1].escrowAmount.toLocaleString()}`}
                       </span>
                     </div>
                   </div>

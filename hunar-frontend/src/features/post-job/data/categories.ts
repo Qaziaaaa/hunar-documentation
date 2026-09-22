@@ -308,3 +308,89 @@ export const PESHAWAR_AREAS = [
 ];
 
 export const SERVICE_AREAS = PESHAWAR_AREAS;
+
+const CATEGORY_ALIASES: Record<string, ServiceCategory> = {
+  cleaning: "cleaner",
+  clean: "cleaner",
+  "deep-cleaning": "cleaner",
+  "deep-clean": "cleaner",
+  "home-cleaning": "cleaner",
+  cleaner: "cleaner",
+  cctv: "cctv-security",
+  security: "cctv-security",
+  "cctv-security": "cctv-security",
+  "cctv_security": "cctv-security",
+  "cctv-camera": "cctv-security",
+  cameras: "cctv-security",
+  camera: "cctv-security",
+  mason: "mason-mistry",
+  mistri: "mason-mistry",
+  mistry: "mason-mistry",
+  masonry: "mason-mistry",
+  "mason-mistry": "mason-mistry",
+  solar: "solar-technician",
+  "solar-panel": "solar-technician",
+  "solar-technician": "solar-technician",
+  "solar_technician": "solar-technician",
+  ups: "solar-technician",
+  geyser: "plumber",
+  heating: "plumber",
+  "water-tank": "cleaner",
+  tank: "cleaner",
+  plumber: "plumber",
+  plumb: "plumber",
+  electrician: "electrician",
+  electric: "electrician",
+  electricity: "electrician",
+  ac: "ac-technician",
+  "ac-technician": "ac-technician",
+  hvac: "ac-technician",
+  aircon: "ac-technician",
+  carpenter: "carpenter",
+  carpentry: "carpenter",
+  woodwork: "carpenter",
+  painter: "painter",
+  paint: "painter",
+  welder: "welder",
+  weld: "welder",
+  welding: "welder",
+  gardener: "gardener",
+  garden: "gardener",
+  mali: "gardener",
+  "pest-control": "pest-control",
+  pest: "pest-control",
+  fumigation: "pest-control",
+  movers: "movers",
+  mover: "movers",
+  shifting: "movers",
+  transport: "movers",
+};
+
+export function resolveCategoryOption(
+  query: string | null | undefined
+): CategoryOption | undefined {
+  if (!query) return undefined;
+  const normalized = query.trim().toLowerCase();
+
+  // 1. Exact ID match
+  const directMatch = CATEGORY_OPTIONS.find(
+    (c) => c.id.toLowerCase() === normalized
+  );
+  if (directMatch) return directMatch;
+
+  // 2. Alias dictionary
+  const mappedCategory = CATEGORY_ALIASES[normalized];
+  if (mappedCategory) {
+    const found = CATEGORY_OPTIONS.find((c) => c.id === mappedCategory);
+    if (found) return found;
+  }
+
+  // 3. Substring match against name, Urdu name, subtitle, or subcategories
+  return CATEGORY_OPTIONS.find(
+    (cat) =>
+      cat.name.toLowerCase().includes(normalized) ||
+      cat.urduName.includes(normalized) ||
+      cat.subtitle.toLowerCase().includes(normalized) ||
+      cat.subCategories.some((sub) => sub.toLowerCase().includes(normalized))
+  );
+}

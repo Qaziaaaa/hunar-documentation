@@ -4,18 +4,9 @@ import { useLocale } from "next-intl";
 import { useState } from "react";
 import {
   CheckCircle2,
-  Headphones,
-  HelpCircle,
-  Key,
-  MessageSquare,
-  Phone,
   Plus,
-  Search,
   Shield,
-  ShieldCheck,
-  Sparkles,
   UserCheck,
-  Zap,
 } from "lucide-react";
 import {
   MOCK_ACTIVE_TICKET,
@@ -72,37 +63,6 @@ export function CustomerHelpView() {
 
       {/* Main Container */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex flex-col gap-6 w-full">
-        {/* Top Notice Banner: HUNAR Guarantee Desk */}
-        <div className="w-full bg-slate-50 rounded-2xl p-4 sm:p-5 border border-slate-200 shadow-2xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <div className="flex items-center gap-3.5 min-w-0 rtl:text-right">
-            <div className="size-11 rounded-xl bg-[#0F8B8D]/10 flex items-center justify-center shrink-0 text-[#0F8B8D]">
-              <ShieldCheck className="size-6" />
-            </div>
-            <div className="flex flex-col min-w-0">
-              <div className="flex items-center gap-2.5 flex-wrap">
-                <span className="text-sm sm:text-base font-bold text-[#123B5D]">
-                  {isUrdu
-                    ? "آرڈر ورکر کسٹمر تحفظ اور نگہداشت ڈیسک"
-                    : "Orderworker Customer Protection & Care Desk"}
-                </span>
-                <span className="px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] uppercase tracking-wider font-extrabold">
-                  {isUrdu ? "محفوظ اور تصدیق شدہ" : "PROTECTED & VERIFIED"}
-                </span>
-              </div>
-              <p className="text-xs text-slate-500 mt-0.5">
-                {isUrdu
-                  ? "تمام بکنگز پر 5 روزہ کاریگری وارنٹی۔ براہِ راست آپریشنز سپورٹ اوسطاً 20 منٹ میں دستیاب۔"
-                  : "5-Day Craftsmanship Warranty on all bookings. Direct operations support with 20-min average response time."}
-              </p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2 self-stretch sm:self-auto shrink-0">
-            <div className="flex items-center gap-1.5 text-xs font-bold text-[#123B5D] bg-white border border-slate-200 px-3.5 py-2 rounded-xl shadow-2xs">
-              <span className="size-2 rounded-full bg-emerald-500 animate-pulse"></span>
-              <span>{isUrdu ? "آپریشنز ڈیسک لائیو" : "Operations Desk Live"}</span>
-            </div>
-          </div>
-        </div>
 
         {/* Header & Main Page Actions */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -119,135 +79,17 @@ export function CustomerHelpView() {
                 ? "کسٹمر ہیلپ سینٹر اور سپورٹ ہب"
                 : "Customer Help Center & Support Hub"}
             </h1>
-            <p className="text-xs sm:text-sm text-slate-500 max-w-2xl">
-              {isUrdu
-                ? "فیس، سیکیورٹی پن اور بکنگز کے بارے میں فوری معلومات حاصل کریں، یا ہماری 24/7 آپریشنز سپورٹ ٹیم سے رابطہ کریں۔"
-                : "Get instant answers to pricing, safety PINs, and bookings, or connect directly with our 24/7 operations support team."}
-            </p>
           </div>
 
           {/* Primary Modal Action */}
           <button
             type="button"
             onClick={() => setIsTicketModalOpen(true)}
-            className="self-start sm:self-auto h-11 px-5 rounded-xl bg-[#0F8B8D] hover:bg-[#0F8B8D]/90 text-white text-xs font-bold shadow-xs flex items-center justify-center gap-2 transition-all active:scale-[0.99] cursor-pointer shrink-0"
+            className="self-start sm:self-auto h-11 px-5 rounded-xl bg-[#0F766E] hover:bg-[#115E59] text-white text-xs font-bold shadow-xs flex items-center justify-center gap-2 transition-all active:scale-[0.99] cursor-pointer shrink-0"
           >
             <Plus className="size-4" />
             <span>{isUrdu ? "سپورٹ ٹکٹ درج کریں" : "Open Support Ticket"}</span>
           </button>
-        </div>
-
-        {/* Quick Action Assistance Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {/* Card 1: 24/7 Helpline */}
-          <a
-            href={`tel:${MOCK_HELPLINE_INFO.hotlineNumber}`}
-            className="p-4 rounded-2xl bg-white border border-slate-200 shadow-2xs hover:border-[#0F8B8D] hover:shadow-xs transition-all group flex flex-col justify-between gap-3 cursor-pointer rtl:text-right"
-          >
-            <div className="flex items-center justify-between">
-              <div className="size-10 rounded-xl bg-[#123B5D]/10 text-[#123B5D] flex items-center justify-center group-hover:scale-105 transition-transform">
-                <Phone className="size-5" />
-              </div>
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">
-                {isUrdu ? "24/7 فون" : "24/7 Phone"}
-              </span>
-            </div>
-            <div>
-              <h3 className="text-xs font-bold text-[#123B5D]">
-                {isUrdu ? "کسٹمر ہیلپ لائن" : "Customer Helpline"}
-              </h3>
-              <p className="text-[11px] text-slate-500 mt-0.5">{MOCK_HELPLINE_INFO.hotlineDisplay}</p>
-            </div>
-            <span className="text-[11px] font-bold text-[#0F8B8D] flex items-center gap-1">
-              <span>{isUrdu ? "کال ہیلپ لائن" : "Call Helpline"}</span>
-              <span className="rtl:rotate-180">→</span>
-            </span>
-          </a>
-
-          {/* Card 2: WhatsApp Desk */}
-          <a
-            href={`https://wa.me/${MOCK_HELPLINE_INFO.whatsappNumber}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="p-4 rounded-2xl bg-white border border-slate-200 shadow-2xs hover:border-emerald-500 hover:shadow-xs transition-all group flex flex-col justify-between gap-3 cursor-pointer rtl:text-right"
-          >
-            <div className="flex items-center justify-between">
-              <div className="size-10 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center group-hover:scale-105 transition-transform">
-                <MessageSquare className="size-5" />
-              </div>
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
-                {isUrdu ? "فوری چیٹ" : "Instant Chat"}
-              </span>
-            </div>
-            <div>
-              <h3 className="text-xs font-bold text-emerald-950">
-                {isUrdu ? "واٹس ایپ ترجیحی ڈیسک" : "WhatsApp Priority"}
-              </h3>
-              <p className="text-[11px] text-emerald-700 mt-0.5">
-                {isUrdu ? "تصاویر اور وائس نوٹس بھیجیں" : "Send photos & voice notes"}
-              </p>
-            </div>
-            <span className="text-[11px] font-bold text-emerald-700 flex items-center gap-1">
-              <span>{isUrdu ? "واٹس ایپ چیٹ" : "Chat on WhatsApp"}</span>
-              <span className="rtl:rotate-180">→</span>
-            </span>
-          </a>
-
-          {/* Card 3: Safety PIN Guide */}
-          <div
-            onClick={() => {
-              setSearchQuery(isUrdu ? "حفاظتی پن" : "Safety PIN");
-            }}
-            className="p-4 rounded-2xl bg-white border border-slate-200 shadow-2xs hover:border-[#0F8B8D] hover:shadow-xs transition-all group flex flex-col justify-between gap-3 cursor-pointer rtl:text-right"
-          >
-            <div className="flex items-center justify-between">
-              <div className="size-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center group-hover:scale-105 transition-transform">
-                <Key className="size-5" />
-              </div>
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200">
-                {isUrdu ? "تحفظ اول" : "Safety First"}
-              </span>
-            </div>
-            <div>
-              <h3 className="text-xs font-bold text-[#123B5D]">
-                {isUrdu ? "حفاظتی PIN اور او ٹی پی" : "Safety PIN & OTP"}
-              </h3>
-              <p className="text-[11px] text-slate-500 mt-0.5">
-                {isUrdu ? "آمد پر دہلیز پر تصدیق" : "Doorstep arrival verification"}
-              </p>
-            </div>
-            <span className="text-[11px] font-bold text-amber-700 flex items-center gap-1">
-              <span>{isUrdu ? "حفاظتی اصول دیکھیں" : "View Safety Rules"}</span>
-              <span className="rtl:rotate-180">→</span>
-            </span>
-          </div>
-
-          {/* Card 4: 5-Day Warranty */}
-          <div
-            onClick={() => setIsTicketModalOpen(true)}
-            className="p-4 rounded-2xl bg-white border border-slate-200 shadow-2xs hover:border-[#0F8B8D] hover:shadow-xs transition-all group flex flex-col justify-between gap-3 cursor-pointer rtl:text-right"
-          >
-            <div className="flex items-center justify-between">
-              <div className="size-10 rounded-xl bg-[#0F8B8D]/10 text-[#0F8B8D] flex items-center justify-center group-hover:scale-105 transition-transform">
-                <Sparkles className="size-5" />
-              </div>
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#0F8B8D]/10 text-[#0F8B8D]">
-                {isUrdu ? "مفت مرمت" : "Free Rework"}
-              </span>
-            </div>
-            <div>
-              <h3 className="text-xs font-bold text-[#123B5D]">
-                {isUrdu ? "5 روزہ وارنٹی کلیم" : "5-Day Warranty Claim"}
-              </h3>
-              <p className="text-[11px] text-slate-500 mt-0.5">
-                {isUrdu ? "دوبارہ کام کے لیے ٹکٹ بنائیں" : "Submit ticket for rework"}
-              </p>
-            </div>
-            <span className="text-[11px] font-bold text-[#0F8B8D] flex items-center gap-1">
-              <span>{isUrdu ? "کلیم درج کریں" : "File a Claim"}</span>
-              <span className="rtl:rotate-180">→</span>
-            </span>
-          </div>
         </div>
 
         {/* Active Support Case / Dispute Tracker (if any active) */}

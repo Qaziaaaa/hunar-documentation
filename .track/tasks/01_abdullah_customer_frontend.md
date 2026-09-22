@@ -1,5 +1,13 @@
 # ABDULLAH — CUSTOMER FLOW FRONTEND (A to Z)
 
+## Status: 🟢 ACTIVE — 83% (VERIFIED 2026-09-22)
+
+**Verified (build passes, routes wired to backend) — 25/30 done (83%)**
+- M1 4/4: sign-up, sign-in, dashboard shell, dashboard content (all wired to APIs)
+- M2 13/13: post-a-job wizard (4 steps incl. map picker + voice note), job detail, offers hub, worker offer cards, worker profile modal, select worker, counter offer, upcoming visits, live tracking — DONE
+- M3 8/13: inspection report view, approve/counter estimate, repair progress, job completion — DONE. Payments (3), reviews (2) NOT done yet.
+- **Your M3 payments + reviews are unblocked** — Shafqat's backend is resumed and payments/wallet backends exist.
+
 ## Your Role
 Frontend Developer — Full Customer Flow
 
