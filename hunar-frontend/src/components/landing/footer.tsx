@@ -66,7 +66,7 @@ export function Footer() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col md:flex-row items-center justify-between pb-10 border-b border-white/10 gap-4">
           <Link href="/" className="hover:opacity-90 transition-opacity">
-            <OrderworkerLogo variant="light" size="sm" showBadge={true} />
+            <OrderworkerLogo variant="light" size="sm" />
           </Link>
           <div className="flex flex-wrap items-center gap-6 text-xs text-slate-300 font-medium">
             <a className="hover:text-white transition" href="#">

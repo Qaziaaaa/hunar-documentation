@@ -9,10 +9,10 @@ interface OrderworkerLogoProps {
 }
 
 const SIZES = {
-  sm: { img: "h-7", badge: "text-[9px] px-1 py-0.2" },
-  md: { img: "h-9", badge: "text-[10px] px-1.5 py-0.5" },
-  lg: { img: "h-11", badge: "text-xs px-2 py-0.5" },
-  xl: { img: "h-14", badge: "text-xs px-2 py-0.5" },
+  sm: { img: "h-7" },
+  md: { img: "h-9" },
+  lg: { img: "h-11" },
+  xl: { img: "h-14" },
 };
 
 export function OrderworkerLogo({
@@ -23,7 +23,7 @@ export function OrderworkerLogo({
   className = "",
 }: OrderworkerLogoProps) {
   const isLight = variant === "light";
-  const { img, badge } = SIZES[size] || SIZES.md;
+  const { img } = SIZES[size] || SIZES.md;
   const src = showText
     ? isLight
       ? "/orderworker-logo-white.png"
@@ -39,17 +39,6 @@ export function OrderworkerLogo({
         className={`${img} w-auto object-contain`}
         loading="eager"
       />
-      {showBadge && (
-        <span
-          className={`font-bold rounded uppercase tracking-wider ${badge} ${
-            isLight
-              ? "bg-teal-500/20 text-teal-300 border border-teal-500/30"
-              : "bg-teal-50 text-teal-700 border border-teal-200"
-          }`}
-        >
-          PK
-        </span>
-      )}
     </div>
   );
 }
@@ -57,3 +46,4 @@ export function OrderworkerLogo({
 export const OrderworkerIcon = (props: OrderworkerLogoProps) => (
   <OrderworkerLogo {...props} showText={false} />
 );
+

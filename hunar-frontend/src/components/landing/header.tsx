@@ -15,7 +15,7 @@ export function Header() {
             href="/"
             title="Orderworker Home"
           >
-            <OrderworkerLogo variant="light" size="md" showBadge={true} />
+            <OrderworkerLogo variant="light" size="md" />
           </Link>
           <a
             href="#services"

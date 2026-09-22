@@ -163,7 +163,7 @@ export function PostJobWizard() {
           href="/customer/dashboard"
           className="flex items-center hover:opacity-90 transition-opacity"
         >
-          <OrderworkerLogo variant="dark" size="sm" showBadge={false} />
+          <OrderworkerLogo variant="dark" size="sm" />
         </Link>
 
         <div className="flex items-center gap-3">
