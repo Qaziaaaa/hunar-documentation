@@ -14,16 +14,18 @@ interface Step1ServiceSelectProps {
   data: PostJobData;
   onChange: (updates: Partial<PostJobData>) => void;
   onNext: () => void;
+  initialSearch?: string;
 }
 
 export function Step1ServiceSelect({
   data,
   onChange,
   onNext,
+  initialSearch = "",
 }: Step1ServiceSelectProps) {
   const locale = useLocale();
   const isUrdu = locale === "ur";
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery, setSearchQuery] = useState(initialSearch);
 
   // Filtered categories based on search
   const filteredCategories = useMemo(() => {

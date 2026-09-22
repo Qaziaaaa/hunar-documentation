@@ -5,7 +5,7 @@ import { Check, X } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useSearchParams } from "next/navigation";
 import { Link, useRouter } from "@/i18n/navigation";
-import { CATEGORY_OPTIONS } from "../data/categories";
+import { CATEGORY_OPTIONS, resolveCategoryOption } from "../data/categories";
 import type { PostJobData, PostJobStep, ServiceCategory } from "../types";
 import { createJob } from "../api/post-job-api";
 import { JobPostedSuccessModal } from "./job-posted-success-modal";
@@ -40,10 +40,11 @@ export function PostJobWizard() {
   const locale = useLocale();
   const t = useTranslations("CustomerPortal.PostJob");
   const searchParams = useSearchParams();
-  const categoryParam = searchParams.get("category") as ServiceCategory | null;
-  const initialCategoryMatch = categoryParam
-    ? CATEGORY_OPTIONS.find((c) => c.id === categoryParam)
-    : null;
+  const categoryParam = searchParams.get("category");
+  const subCategoryParam = searchParams.get("subCategory") || searchParams.get("sub");
+  const searchParam = searchParams.get("search");
+
+  const initialCategoryMatch = resolveCategoryOption(categoryParam || searchParam);
 
   const [currentStep, setCurrentStep] = useState<PostJobStep>(
     initialCategoryMatch ? 2 : 1
@@ -53,10 +54,10 @@ export function PostJobWizard() {
       return {
         ...INITIAL_FORM_DATA,
         category: initialCategoryMatch.id,
-        subCategory: initialCategoryMatch.subCategories[0] || "",
-        title: initialCategoryMatch.defaultTitle || "",
+        subCategory: subCategoryParam || initialCategoryMatch.subCategories[0] || "",
+        title: subCategoryParam || initialCategoryMatch.defaultTitle || "",
         description: initialCategoryMatch.defaultDescription || "",
-        suggestedVisitFee: 300,
+        suggestedVisitFee: initialCategoryMatch.suggestedFee || 300,
       };
     }
     return INITIAL_FORM_DATA;
@@ -66,21 +67,22 @@ export function PostJobWizard() {
 
   // Sync if category search param changes dynamically
   useEffect(() => {
-    if (categoryParam) {
-      const match = CATEGORY_OPTIONS.find((c) => c.id === categoryParam);
+    const rawParam = categoryParam || searchParam;
+    if (rawParam) {
+      const match = resolveCategoryOption(rawParam);
       if (match) {
         setFormData((prev) => ({
           ...prev,
           category: match.id,
-          subCategory: match.subCategories[0] || "",
-          title: prev.title || match.defaultTitle || "",
+          subCategory: subCategoryParam || match.subCategories[0] || "",
+          title: subCategoryParam || prev.title || match.defaultTitle || "",
           description: prev.description || match.defaultDescription || "",
-          suggestedVisitFee: 300,
+          suggestedVisitFee: match.suggestedFee || 300,
         }));
         setCurrentStep(2);
       }
     }
-  }, [categoryParam]);
+  }, [categoryParam, subCategoryParam, searchParam]);
 
   // Form Field Updaters
   const handleUpdateField = <K extends keyof PostJobData>(
@@ -246,6 +248,7 @@ export function PostJobWizard() {
               data={formData}
               onChange={updateFormData}
               onNext={handleNextStep}
+              initialSearch={searchParam || ""}
             />
           )}
 

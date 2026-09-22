@@ -30,6 +30,8 @@ export interface ServiceItem {
   icon: React.ElementType;
   iconColor: string;
   iconBg: string;
+  subCategory?: string;
+  href?: string;
 }
 
 export const ALL_SERVICES: ServiceItem[] = [
@@ -77,7 +79,7 @@ export const ALL_SERVICES: ServiceItem[] = [
     iconBg: "bg-violet-50 border-violet-200/60",
   },
   {
-    id: "mason",
+    id: "mason-mistry",
     title: "Mason / Mistri",
     titleUr: "مستری",
     icon: BrickWall,
@@ -87,7 +89,7 @@ export const ALL_SERVICES: ServiceItem[] = [
 
   // Line 3 (3 items)
   {
-    id: "cleaning",
+    id: "cleaner",
     title: "Deep Cleaning",
     titleUr: "صفائی و کلیننگ",
     icon: Sparkles,
@@ -103,7 +105,7 @@ export const ALL_SERVICES: ServiceItem[] = [
     iconBg: "bg-rose-50 border-rose-200/60",
   },
   {
-    id: "cctv",
+    id: "cctv-security",
     title: "CCTV & Security",
     titleUr: "سی سی ٹی وی",
     icon: Cctv,
@@ -113,7 +115,7 @@ export const ALL_SERVICES: ServiceItem[] = [
 
   // Extra hidden rows (Expanded on "Show All")
   {
-    id: "solar",
+    id: "solar-technician",
     title: "Solar Panel Setup",
     titleUr: "سولر پینل",
     icon: Sun,
@@ -121,20 +123,24 @@ export const ALL_SERVICES: ServiceItem[] = [
     iconBg: "bg-yellow-50 border-yellow-200/60",
   },
   {
-    id: "geyser",
+    id: "plumber",
     title: "Geyser & Heating",
     titleUr: "گیزر و ہیٹنگ",
     icon: Flame,
     iconColor: "text-orange-600",
     iconBg: "bg-orange-50 border-orange-200/60",
+    subCategory: "Geyser Installation (Gas/Electric)",
+    href: "/customer/post-job?category=plumber&subCategory=Geyser+Installation+(Gas/Electric)",
   },
   {
-    id: "water-tank",
+    id: "cleaner",
     title: "Water Tank Clean",
     titleUr: "واٹر ٹینک صفائی",
     icon: Droplets,
     iconColor: "text-cyan-600",
     iconBg: "bg-cyan-50 border-cyan-200/60",
+    subCategory: "Water Tank Deep Cleaning",
+    href: "/customer/post-job?category=cleaner&subCategory=Water+Tank+Deep+Cleaning",
   },
   {
     id: "movers",
@@ -204,10 +210,13 @@ export function ServicesGrid() {
         {displayedServices.map((service) => {
           const Icon = service.icon;
           const displayTitle = locale === "ur" ? service.titleUr : service.title;
+          const serviceHref =
+            service.href || `/customer/post-job?category=${service.id}`;
+
           return (
             <Link
-              key={service.id}
-              href={`/customer/post-job?category=${service.id}`}
+              key={`${service.id}-${service.title}`}
+              href={serviceHref}
               className="group flex flex-col items-center justify-center p-3.5 sm:p-5 rounded-2xl border border-slate-200 bg-white hover:border-[#0F8B8D] shadow-2xs hover:shadow-xs transition-all text-center gap-2 cursor-pointer active:scale-95"
             >
               {/* Icon */}
