@@ -1,8 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { MapPin, Star, Clock, Zap, Wrench, AirVent, SunMedium, Hammer, Paintbrush, Flame, Sparkles } from "lucide-react";
-import { VoicePlayer } from "./voice-player";
+import { MapPin, Star, Zap, Wrench, AirVent, SunMedium, Hammer, Paintbrush, Flame, Sparkles } from "lucide-react";
 import type { JobRequest } from "../types";
 
 const CATEGORY_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -119,13 +118,6 @@ export function JobRequestCard({
                   />
                 </div>
               ))}
-            </div>
-          )}
-
-          {/* Voice Message Player */}
-          {job.voiceNote && (
-            <div className="flex-1 min-w-[140px]">
-              <VoicePlayer voiceNote={job.voiceNote} variant="compact" />
             </div>
           )}
         </div>

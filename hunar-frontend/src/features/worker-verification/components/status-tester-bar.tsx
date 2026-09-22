@@ -1,6 +1,7 @@
 "use client";
 
 import { CheckCircle2, Clock, Edit3, XCircle } from "lucide-react";
+import { useTranslations } from "next-intl";
 import type { VerificationOutcome } from "../types";
 
 export function StatusTesterBar({
@@ -10,13 +11,15 @@ export function StatusTesterBar({
   currentStatus: VerificationOutcome;
   onSelectStatus: (status: VerificationOutcome) => void;
 }) {
+  const t = useTranslations("WorkerVerification.TesterBar");
+
   return (
     <div className="mb-4 rounded-2xl border border-teal/20 bg-slate-50/90 p-2 sm:p-2.5 shadow-2xs">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
         <div className="flex items-center gap-1.5 px-1">
           <span className="flex size-2 rounded-full bg-teal animate-pulse" />
           <span className="text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider text-navy">
-            Outcome Simulator (Preview 4 States):
+            {t("title")}
           </span>
         </div>
 
@@ -31,7 +34,7 @@ export function StatusTesterBar({
             }`}
           >
             <Clock className="size-3 shrink-0" />
-            <span>Under Review</span>
+            <span>{t("underReview")}</span>
           </button>
 
           <button
@@ -44,7 +47,7 @@ export function StatusTesterBar({
             }`}
           >
             <CheckCircle2 className="size-3 shrink-0" />
-            <span>Approved</span>
+            <span>{t("approved")}</span>
           </button>
 
           <button
@@ -57,7 +60,7 @@ export function StatusTesterBar({
             }`}
           >
             <Edit3 className="size-3 shrink-0" />
-            <span>Changes Requested</span>
+            <span>{t("changesRequested")}</span>
           </button>
 
           <button
@@ -70,10 +73,11 @@ export function StatusTesterBar({
             }`}
           >
             <XCircle className="size-3 shrink-0" />
-            <span>Rejected</span>
+            <span>{t("rejected")}</span>
           </button>
         </div>
       </div>
     </div>
   );
 }
+

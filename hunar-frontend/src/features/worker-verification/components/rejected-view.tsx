@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  AlertCircle,
   ArrowRight,
   FileX,
   HelpCircle,
@@ -11,22 +10,25 @@ import {
 } from "lucide-react";
 import { Link } from "@/i18n/navigation";
 import { buttonVariants } from "@/components/ui/button";
+import { useTranslations } from "next-intl";
 import type { WorkerVerificationData } from "../types";
 
 export function RejectedView({ data }: { data: WorkerVerificationData }) {
+  const t = useTranslations("WorkerVerification.Rejected");
+
   return (
-    <div className="space-y-4 text-left">
+    <div className="space-y-4 text-left rtl:text-right">
       {/* Top Header */}
-      <div className="text-center sm:text-left">
+      <div className="text-center sm:text-left rtl:sm:text-right">
         <div className="inline-flex items-center gap-1.5 rounded-full border border-error/30 bg-error/10 px-3 py-1 text-xs font-bold text-error mb-2">
           <XCircle className="size-3.5" />
-          <span>Verification Unsuccessful</span>
+          <span>{t("badge")}</span>
         </div>
         <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-navy">
-          Action Required: Profile Not Approved
+          {t("title")}
         </h2>
         <p className="mt-1 text-xs sm:text-sm text-muted-foreground">
-          Our compliance team could not verify your identity documents. Please review the reason below and re-submit.
+          {t("subtitle")}
         </p>
       </div>
 
@@ -38,11 +40,10 @@ export function RejectedView({ data }: { data: WorkerVerificationData }) {
           </div>
           <div className="space-y-1">
             <h3 className="text-xs sm:text-sm font-extrabold text-navy uppercase tracking-wider">
-              Reason for Rejection:
+              {t("reasonTitle")}
             </h3>
             <p className="text-xs sm:text-sm font-medium leading-relaxed text-slate-800">
-              {data.rejectionReason ||
-                "Identity verification failed: The photo of your Smart CNIC front is blurry or the 13-digit identification number does not match your account details."}
+              {data.rejectionReason || t("defaultReason")}
             </p>
           </div>
         </div>
@@ -52,20 +53,20 @@ export function RejectedView({ data }: { data: WorkerVerificationData }) {
       <div className="rounded-2xl bg-white p-2 space-y-2.5">
         <h4 className="text-xs font-extrabold uppercase tracking-wider text-navy flex items-center gap-1.5">
           <HelpCircle className="size-3.5 text-teal" />
-          How to get approved on re-submission:
+          {t("howToGetApproved")}
         </h4>
         <ul className="space-y-1.5 text-xs text-slate-700">
           <li className="flex items-start gap-2">
             <span className="text-teal font-bold">1.</span>
-            <span>Take high-resolution, glare-free photos of your original <strong>Smart CNIC</strong> (both Front & Back).</span>
+            <span>{t("guide1")}</span>
           </li>
           <li className="flex items-start gap-2">
             <span className="text-teal font-bold">2.</span>
-            <span>Ensure all 4 corners of the identity card and your face portrait are clearly visible.</span>
+            <span>{t("guide2")}</span>
           </li>
           <li className="flex items-start gap-2">
             <span className="text-teal font-bold">3.</span>
-            <span>Verify that the full name on your profile matches the name on your NADRA CNIC.</span>
+            <span>{t("guide3")}</span>
           </li>
         </ul>
       </div>
@@ -81,7 +82,7 @@ export function RejectedView({ data }: { data: WorkerVerificationData }) {
           })}
         >
           <RefreshCw className="size-4" />
-          <span>Fix Details & Re-Submit</span>
+          <span>{t("fixAndResubmitBtn")}</span>
           <ArrowRight className="size-4 rtl:rotate-180" />
         </Link>
 
@@ -97,7 +98,7 @@ export function RejectedView({ data }: { data: WorkerVerificationData }) {
           })}
         >
           <MessageSquare className="size-4 text-success" />
-          <span>WhatsApp Support (+92 314 0837519)</span>
+          <span>{t("whatsappSupport")}</span>
         </a>
       </div>
     </div>

@@ -1,11 +1,16 @@
-import { setRequestLocale } from "next-intl/server";
+import { getTranslations, setRequestLocale } from "next-intl/server";
 import { VerificationShell } from "@/features/worker-verification/components/verification-shell";
 
-export async function generateMetadata() {
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}) {
+  const { locale } = await params;
+  const t = await getTranslations({ locale, namespace: "WorkerVerification.Metadata" });
   return {
-    title: "Verification Status | Orderworker Worker Portal",
-    description:
-      "Check the admin verification status of your Orderworker tradesperson profile and Smart CNIC documents.",
+    title: t("title"),
+    description: t("description"),
   };
 }
 
@@ -19,3 +24,4 @@ export default async function WorkerVerificationPage({
 
   return <VerificationShell />;
 }
+

@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter, Noto_Sans_Arabic } from "next/font/google";
+import { Inter, Noto_Nastaliq_Urdu } from "next/font/google";
 import { hasLocale, NextIntlClientProvider } from "next-intl";
 import { getMessages, getTranslations, setRequestLocale } from "next-intl/server";
 import { notFound } from "next/navigation";
@@ -13,10 +13,10 @@ const inter = Inter({
   display: "swap",
 });
 
-const notoSansArabic = Noto_Sans_Arabic({
-  variable: "--font-noto-arabic",
+const notoNastaliqUrdu = Noto_Nastaliq_Urdu({
+  variable: "--font-noto-nastaliq",
   subsets: ["arabic"],
-  weight: ["400", "500", "600", "700", "800"],
+  weight: ["400", "500", "600", "700"],
   display: "swap",
 });
 
@@ -66,11 +66,15 @@ export default async function LocaleLayout({
     <html
       lang={locale}
       dir={dir}
-      className={`${inter.variable} ${notoSansArabic.variable} h-full antialiased`}
+      className={`${inter.variable} ${notoNastaliqUrdu.variable} h-full antialiased`}
     >
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
+        <link
+          rel="stylesheet"
+          href="https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu:wght@400;500;600;700&display=swap"
+        />
         <link rel="icon" href="/orderworker-icon.png" type="image/png" />
         <link rel="shortcut icon" href="/orderworker-icon.png" type="image/png" />
         <link rel="apple-touch-icon" href="/orderworker-icon.png" />
