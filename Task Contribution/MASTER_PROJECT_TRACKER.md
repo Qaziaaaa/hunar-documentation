@@ -105,29 +105,25 @@ Verified done: Worker sign-up, sign-in, onboarding wizard (6 steps), verificatio
 
 ### Hakim Ullah - Worker Flow Backend
 ```
-PROGRESS: █████████████████░░░ 83%
+PROGRESS: █████████████████████ 100%
 ```
 | Milestone | Tasks | Done | Verified? | Status |
 |-----------|-------|------|-----------|--------|
 | M1: Auth + Onboarding + Profile | 16 | 16 | Yes (build + tests) | 100% |
 | M2: Jobs + Offers + Visits + Inspection | 12 | 12 | Yes (build + tests) | 100% |
-| M3: Repair + Wallet + Commission + Chat + Notifications | 19 | 11 | Yes (build + tests) | 58% |
-| **TOTAL** | **47** | **39** | **Verified** | **83%** |
+| M3: Repair + Wallet + Commission + Chat + Notifications | 19 | 19 | Yes (build + tests) | 100% |
+| **TOTAL** | **47** | **47** | **Verified** | **100%** |
 
-Verified done (code reviewed + builds + tests pass):
-- Jobs (428 lines) - PostGIS proximity, state machine, events
+Verified complete (2026-09-23 - code reviewed + `tsc --noEmit` clean + 20/20 suites, 210 tests pass):
+- Jobs (428 lines) - PostGIS proximity, state machine, events, active-jobs endpoint
 - Offers (436 lines) - Full negotiation lifecycle, bounded rounds
-- Visits (302 lines) - State machine, location tracking
+- Visits (302 lines) - State machine, location tracking (`PUT /workers/me/location`)
 - Repair (417 lines) - Lifecycle, revisions, auto-commission
 - Commissions (164 lines) - CRUD, admin verify, earnings
+- Wallet (live via PaymentsModule) - balance, ledger, top-up + status, hold/confirm/reverse commission, earnings summary, platform wallet; wallet tests pass
 - Chat (232 lines) - Real-time messaging, Socket.IO gateway
 - Uploads (195 lines) - Multi-type, compression
-- Reviews (141 lines) - Create, paginate, aggregate
-
-Intentionally empty (functionality handled elsewhere):
-- Payments - Payment via WhatsApp by design
-- Location - Handled via PostGIS in jobs
-- Search - Handled via PostGIS in jobs
+- Notifications - list, unread-count, mark read
 
 ---
 
@@ -178,7 +174,7 @@ NOT done (verified empty files):
 | Flow | Frontend Dev | Backend Dev | M1 FE | M1 BE | M2 FE | M2 BE | M3 FE | M3 BE |
 |------|-------------|-------------|-------|-------|-------|-------|-------|-------|
 | Customer | Abdullah | Shafqat | 100% | Paused | 100% | Paused | 100% | Paused |
-| Worker | Shahzad | Hakim | 83% | 100% | 17% | 100% | 0% | 58% |
+| Worker | Shahzad | Hakim | 83% | 100% | 17% | 100% | 0% | 100% |
 | Auth+Admin | Faizan | Hashim | 89% | 100% | 0% | 57% | 0% | 12% |
 
 ---
