@@ -33,8 +33,8 @@ Frontend Developer — Shared Auth Components + Full Admin Dashboard
 | 5 | Shared auth brand (logo + tagline) | `features/auth/components/auth-brand.tsx` | ✅ Done |
 | 6 | Shared auth top bar | `features/auth/components/auth-top-bar.tsx` | ✅ Done |
 | 7 | Shared auth trust footer | `features/auth/components/auth-trust-footer.tsx` | ✅ Done |
-| 8 | Admin sign-in screen (email + password, distinct from worker/customer) | `(auth)/admin/sign-in/` | 🔴 |
-| 9 | Admin auth guard (role check) | Middleware | 🔴 |
+| 8 | Admin sign-in screen (email + password, distinct from worker/customer) | `(auth)/admin/sign-in/` | ✅ Done |
+| 9 | Admin auth guard (role check) | `features/auth/components/admin-guard.tsx` | ✅ Done |
 
 **M1 Deliverable:** Auth components shared across all flows. Admin can sign in.
 
@@ -44,20 +44,20 @@ Frontend Developer — Shared Auth Components + Full Admin Dashboard
 
 | # | Task | Route | Status |
 |---|------|-------|--------|
-| 10 | Admin dashboard shell (sidebar, header, content area) | `(admin)/admin/dashboard/` | 🔴 |
-| 11 | KPI stat cards (Total Jobs, Customers, Workers, Revenue, Active Now) | `(admin)/admin/dashboard/` | 🔴 |
-| 12 | Marketplace activity chart (jobs posted vs completed vs disputes) | `(admin)/admin/dashboard/` | 🔴 |
-| 13 | Pending verifications widget (quick approve/reject) | `(admin)/admin/dashboard/` | 🔴 |
-| 14 | Live jobs stream table | `(admin)/admin/dashboard/` | 🔴 |
-| 15 | Job status distribution chart (donut) | `(admin)/admin/dashboard/` | 🔴 |
-| 16 | Users — Customers list (table: name, phone, join date, jobs, spent, status) | `(admin)/admin/users/customers/` | 🔴 |
-| 17 | Users — Workers list (table: name, phone, skills, verification, rating, wallet, status) | `(admin)/admin/users/workers/` | 🔴 |
-| 18 | User detail modal (profile, jobs, payments, reviews) | Modal | 🔴 |
-| 19 | Suspend / deactivate user (with reason) | Modal | 🔴 |
-| 20 | Reactivate user | Modal | 🔴 |
-| 21 | Verification queue (pending submissions list) | `(admin)/admin/verifications/` | 🔴 |
-| 22 | Verification detail (documents, skills, experience, service areas) | `(admin)/admin/verifications/[id]/` | 🔴 |
-| 23 | Approve / reject / request changes actions | `(admin)/admin/verifications/[id]/` | 🔴 |
+| 10 | Admin dashboard shell (sidebar, header, content area) | `(admin)/admin/dashboard/` | ✅ Done |
+| 11 | KPI stat cards (Total Jobs, Customers, Workers, Revenue, Active Now) | `(admin)/admin/dashboard/` | ✅ Done |
+| 12 | Marketplace activity chart (jobs posted vs completed vs disputes) | `(admin)/admin/dashboard/` | ✅ Done |
+| 13 | Pending verifications widget (quick approve/reject) | `(admin)/admin/dashboard/` | ✅ Done |
+| 14 | Live jobs stream table | `(admin)/admin/dashboard/` | ✅ Done |
+| 15 | Job status distribution chart (donut) | `(admin)/admin/dashboard/` | ✅ Done |
+| 16 | Users — Customers list (table: name, phone, join date, jobs, spent, status) | `(admin)/admin/users/customers/` | ✅ Done |
+| 17 | Users — Workers list (table: name, phone, skills, verification, rating, wallet, status) | `(admin)/admin/users/workers/` | ✅ Done |
+| 18 | User detail modal (profile, jobs, payments, reviews) | Modal | ✅ Done |
+| 19 | Suspend / deactivate user (with reason) | Modal | ✅ Done |
+| 20 | Reactivate user | Modal | ✅ Done |
+| 21 | Verification queue (pending submissions list) | `(admin)/admin/verifications/` | ✅ Done |
+| 22 | Verification detail (documents, skills, experience, service areas) | `(admin)/admin/verifications/[id]/` | ✅ Done |
+| 23 | Approve / reject / request changes actions | `(admin)/admin/verifications/[id]/` | ✅ Done |
 
 **M2 Deliverable:** Admin can see KPIs, manage users, and verify workers.
 
@@ -67,22 +67,22 @@ Frontend Developer — Shared Auth Components + Full Admin Dashboard
 
 | # | Task | Route | Status |
 |---|------|-------|--------|
-| 24 | Jobs monitoring (all jobs table with filters) | `(admin)/admin/jobs/` | 🔴 |
-| 25 | Job detail drill-down (full audit history) | `(admin)/admin/jobs/[id]/` | 🔴 |
-| 26 | Force cancel job (with reason) | Modal | 🔴 |
-| 27 | Payments monitoring (transactions feed) | `(admin)/admin/payments/` | 🔴 |
-| 28 | Commission snapshot (total revenue + per transaction) | `(admin)/admin/payments/` | 🔴 |
-| 29 | Withdrawal queue (pending/processed/failed) | `(admin)/admin/payments/withdrawals/` | 🔴 |
-| 30 | Wallet freeze (in dispute) | Modal | 🔴 |
-| 31 | Disputes queue (incoming reports) | `(admin)/admin/disputes/` | 🔴 |
-| 32 | Dispute detail (evidence trail, job history) | `(admin)/admin/disputes/[id]/` | 🔴 |
-| 33 | Resolve / dismiss / escalate dispute | `(admin)/admin/disputes/[id]/` | 🔴 |
-| 34 | Categories management (add/edit/deactivate) | `(admin)/admin/categories/` | 🔴 |
-| 35 | Platform settings (commission rate, radius, limits, feature flags) | `(admin)/admin/settings/` | 🔴 |
-| 36 | Reports & analytics (jobs funnel, worker performance, revenue, growth) | `(admin)/admin/reports/` | 🔴 |
-| 37 | Export reports (CSV/PDF) | `(admin)/admin/reports/` | 🔴 |
-| 38 | Notifications panel + unread badges | `(admin)/admin/notifications/` | 🔴 |
-| 39 | Audit trail viewer | `(admin)/admin/audit/` | 🔴 |
+| 24 | Jobs monitoring (all jobs table with filters) | `(admin)/admin/jobs/` | ✅ Done |
+| 25 | Job detail drill-down (full audit history) | `(admin)/admin/jobs/[id]/` | ✅ Done |
+| 26 | Force cancel job (with reason) | Modal | ✅ Done |
+| 27 | Payments monitoring (transactions feed) | `(admin)/admin/payments/` | ✅ Done |
+| 28 | Commission snapshot (total revenue + per transaction) | `(admin)/admin/payments/` | ✅ Done |
+| 29 | Withdrawal queue (pending/processed/failed) | `(admin)/admin/payments/withdrawals/` | ✅ Done |
+| 30 | Wallet freeze (in dispute) | Modal | ✅ Done |
+| 31 | Disputes queue (incoming reports) | `(admin)/admin/disputes/` | ✅ Done |
+| 32 | Dispute detail (evidence trail, job history) | `(admin)/admin/disputes/[id]/` | ✅ Done |
+| 33 | Resolve / dismiss / escalate dispute | `(admin)/admin/disputes/[id]/` | ✅ Done |
+| 34 | Categories management (add/edit/deactivate) | `(admin)/admin/categories/` | ✅ Done |
+| 35 | Platform settings (commission rate, radius, limits, feature flags) | `(admin)/admin/settings/` | ✅ Done |
+| 36 | Reports & analytics (jobs funnel, worker performance, revenue, growth) | `(admin)/admin/reports/` | ✅ Done |
+| 37 | Export reports (CSV/PDF) | `(admin)/admin/reports/` | ✅ Done |
+| 38 | Notifications panel + unread badges | `(admin)/admin/notifications/` | ✅ Done |
+| 39 | Audit trail viewer | `(admin)/admin/audit/` | ✅ Done |
 
 **M3 Deliverable:** Full admin dashboard working end-to-end.
 
@@ -125,31 +125,31 @@ Frontend Developer — Shared Auth Components + Full Admin Dashboard
 
 ## DONE CHECKLIST
 
-- [ ] Auth components are reusable (OTP, phone, password, shell)
-- [ ] Admin can sign in (email + password)
-- [ ] Admin dashboard shows KPI cards (5 stats)
-- [ ] Marketplace activity chart works
-- [ ] Pending verifications widget works
-- [ ] Live jobs stream table works
-- [ ] Job status distribution chart works
-- [ ] Customer list table with search/filter works
-- [ ] Worker list table with search/filter works
-- [ ] User detail modal works
-- [ ] Suspend / deactivate / reactivate works
-- [ ] Verification queue works
-- [ ] Verification detail with approve/reject/request changes works
-- [ ] Jobs monitoring table works
-- [ ] Job detail drill-down works
-- [ ] Payments monitoring works
-- [ ] Commission snapshot works
-- [ ] Withdrawal queue works
-- [ ] Disputes queue works
-- [ ] Dispute detail with evidence trail works
-- [ ] Resolve / dismiss / escalate works
-- [ ] Categories management works
-- [ ] Platform settings work
-- [ ] Reports & analytics work
-- [ ] Export works
-- [ ] Notifications show with unread badges
-- [ ] Audit trail viewer works
-- [ ] Design tokens applied everywhere
+- [x] Auth components are reusable (OTP, phone, password, shell)
+- [x] Admin can sign in (email + password)
+- [x] Admin dashboard shows KPI cards (5 stats)
+- [x] Marketplace activity chart works
+- [x] Pending verifications widget works
+- [x] Live jobs stream table works
+- [x] Job status distribution chart works
+- [x] Customer list table with search/filter works
+- [x] Worker list table with search/filter works
+- [x] User detail modal works
+- [x] Suspend / deactivate / reactivate works
+- [x] Verification queue works
+- [x] Verification detail with approve/reject/request changes works
+- [x] Jobs monitoring table works
+- [x] Job detail drill-down works
+- [x] Payments monitoring works
+- [x] Commission snapshot works
+- [x] Withdrawal queue works
+- [x] Disputes queue works
+- [x] Dispute detail with evidence trail works
+- [x] Resolve / dismiss / escalate works
+- [x] Categories management works
+- [x] Platform settings work
+- [x] Reports & analytics work
+- [x] Export works
+- [x] Notifications show with unread badges
+- [x] Audit trail viewer works
+- [x] Design tokens applied everywhere

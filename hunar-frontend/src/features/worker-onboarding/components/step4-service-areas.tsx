@@ -8,6 +8,7 @@ import {
   Compass,
   MapPin,
 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { WorkerProfileFormData } from "../types";
@@ -25,7 +26,7 @@ const PESHAWAR_AREAS = [
   "Kohat Road",
   "City Center",
   "Charsadda Road",
-];
+] as const;
 
 const RADIUS_OPTIONS = [
   "Up to 5 km",
@@ -33,7 +34,7 @@ const RADIUS_OPTIONS = [
   "Up to 20 km",
   "Up to 35 km",
   "Entire City",
-];
+] as const;
 
 export function Step4ServiceAreas({
   formData,
@@ -48,6 +49,10 @@ export function Step4ServiceAreas({
   onPrev: () => void;
   stepError: string | null;
 }) {
+  const t = useTranslations("WorkerOnboarding.Step4");
+  const tAreas = useTranslations("WorkerOnboarding.Areas");
+  const tRadii = useTranslations("WorkerOnboarding.Radii");
+
   const toggleArea = (area: string) => {
     const current = formData.serviceAreas || [];
     if (current.includes(area)) {
@@ -63,19 +68,19 @@ export function Step4ServiceAreas({
         <div>
           <div className="mb-1 flex items-center justify-between gap-2">
             <div>
-              <span className="block text-xs font-bold uppercase tracking-wider text-teal">
-                Service Radius
+              <span className="block text-xs font-bold uppercase tracking-wider text-teal mb-1">
+                {t("badge")}
               </span>
-              <h2 className="text-2xl font-extrabold tracking-tight text-navy sm:text-3xl leading-tight">
-                Service Areas in Peshawar
+              <h2 className="text-2xl font-extrabold tracking-tight text-navy sm:text-3xl leading-snug">
+                {t("title")}
               </h2>
             </div>
             <span className="shrink-0 self-start rounded-full border border-teal/20 bg-teal/10 px-3 py-1 text-xs font-bold text-teal">
-              Matching Radar
+              {t("radarBadge")}
             </span>
           </div>
-          <p className="text-sm sm:text-base text-muted-foreground">
-            Select the Peshawar localities you can visit for client jobs.
+          <p className="mt-2 text-sm sm:text-base text-muted-foreground leading-relaxed">
+            {t("subtitle")}
           </p>
         </div>
 
@@ -83,10 +88,10 @@ export function Step4ServiceAreas({
         <div className="rounded-2xl bg-white p-1">
           <div className="mb-2.5 flex items-center justify-between">
             <label className="text-xs font-bold uppercase tracking-wider text-navy">
-              Select Towns / Localities <span className="text-error">*</span>
+              {t("selectTowns")} <span className="text-error">*</span>
             </label>
             <span className="text-sm font-bold text-teal">
-              {formData.serviceAreas?.length || 0} Selected
+              {t("selectedCount", { count: formData.serviceAreas?.length || 0 })}
             </span>
           </div>
 
@@ -105,7 +110,7 @@ export function Step4ServiceAreas({
                   }`}
                 >
                   {isSelected && <Check className="size-3.5" />}
-                  <span>{area}</span>
+                  <span>{tAreas(area)}</span>
                 </button>
               );
             })}
@@ -119,7 +124,7 @@ export function Step4ServiceAreas({
               htmlFor="primary-address"
               className="ml-1 block text-xs font-bold uppercase tracking-wider text-navy"
             >
-              Base Workshop Location <span className="text-error">*</span>
+              {t("baseLocation")} <span className="text-error">*</span>
             </label>
             <div className="relative">
               <MapPin className="absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
@@ -128,7 +133,7 @@ export function Step4ServiceAreas({
                 type="text"
                 value={formData.primaryAddress}
                 onChange={(e) => updateFormData({ primaryAddress: e.target.value })}
-                placeholder="e.g. Phase 3 Chowk, Hayatabad"
+                placeholder={t("baseLocationPlaceholder")}
                 className="h-11 sm:h-12 pl-10 rounded-full text-sm sm:text-base shadow-2xs"
               />
             </div>
@@ -139,7 +144,7 @@ export function Step4ServiceAreas({
               htmlFor="coverage-radius"
               className="ml-1 block text-xs font-bold uppercase tracking-wider text-navy"
             >
-              Radius
+              {t("radiusLabel")}
             </label>
             <div className="relative">
               <Compass className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
@@ -151,7 +156,7 @@ export function Step4ServiceAreas({
               >
                 {RADIUS_OPTIONS.map((r) => (
                   <option key={r} value={r}>
-                    {r}
+                    {tRadii(r)}
                   </option>
                 ))}
               </select>
@@ -160,7 +165,7 @@ export function Step4ServiceAreas({
         </div>
 
         <div className="rounded-xl border border-teal/20 bg-teal/5 p-3 text-xs sm:text-sm text-slate-700">
-          <span className="font-bold text-navy">📍 GPS Matching:</span> Nearby jobs within your chosen radius in Peshawar will match automatically.
+          <span className="font-bold text-navy">📍 {t("gpsMatching")}:</span> {t("gpsMatchingDesc")}
         </div>
 
         {stepError && (
@@ -181,7 +186,7 @@ export function Step4ServiceAreas({
           className="h-12 sm:h-13 w-1/3 rounded-full border-2 border-navy text-sm sm:text-base font-bold text-navy hover:bg-slate-50"
         >
           <ArrowLeft className="mr-1.5 size-4 rtl:rotate-180" />
-          <span>Back</span>
+          <span>{t("backBtn")}</span>
         </Button>
         <Button
           type="button"
@@ -189,7 +194,7 @@ export function Step4ServiceAreas({
           onClick={onNext}
           className="h-12 sm:h-13 flex-1 rounded-full bg-teal text-sm sm:text-base font-bold text-white shadow-md shadow-teal/20 hover:bg-teal/90 transition-all"
         >
-          <span>Continue to Documents</span>
+          <span>{t("continueBtn")}</span>
           <ArrowRight className="ml-1.5 size-4 rtl:rotate-180" />
         </Button>
       </div>

@@ -14,7 +14,6 @@ import {
 } from 'class-validator';
 import { PaymentGateway, PaymentMethod } from '@prisma/client';
 
-
 /** Customer initiates a Payment for a completed job (Module 3 ΓÇö Payments Backend). */
 export class CreatePaymentDto {
   /** Job this payment settles. The service derives customer/worker/visitCharge from it. */

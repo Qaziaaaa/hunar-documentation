@@ -1,0 +1,113 @@
+import type { ChatMessage, Conversation } from "@/types/chat";
+import { isoDaysAgo, isoHoursAgo } from "./utils";
+
+export const mockConversations: Conversation[] = [
+  {
+    id: "conv-elc-101",
+    jobId: "job-elc-101",
+    jobTitle: "Wiring fault in living room",
+    customerId: "customer-demo-1",
+    customerName: "Ayesha Khan",
+    customerAvatar: "",
+    lastMessage: "Can you come earlier if the repair is approved?",
+    lastMessageAt: isoHoursAgo(1),
+    unreadCount: 2,
+    active: true,
+  },
+  {
+    id: "conv-plumb-303",
+    jobId: "job-plumb-303",
+    jobTitle: "Kitchen sink leaking",
+    customerId: "customer-demo-2",
+    customerName: "Sana Malik",
+    customerAvatar: "",
+    lastMessage: "Thank you for the quick fix!",
+    lastMessageAt: isoDaysAgo(8, 17),
+    unreadCount: 0,
+    active: true,
+  },
+  {
+    id: "conv-ac-202",
+    jobId: "job-ac-202",
+    jobTitle: "AC not cooling",
+    customerId: "customer-demo-1",
+    customerName: "Imran Ali",
+    customerAvatar: "",
+    lastMessage: "Approved — see you tomorrow.",
+    lastMessageAt: isoHoursAgo(27),
+    unreadCount: 0,
+    active: true,
+  },
+];
+
+export const mockMessages: Record<string, ChatMessage[]> = {
+  "conv-elc-101": [
+    {
+      id: "msg-elc-1",
+      conversationId: "conv-elc-101",
+      senderId: "worker-demo-1",
+      senderRole: "worker",
+      text: "Assalam-o-Alaikum! I inspected the sockets today. Two sockets and the junction box need replacement.",
+      status: "sent",
+      createdAt: isoHoursAgo(6),
+    },
+    {
+      id: "msg-elc-2",
+      conversationId: "conv-elc-101",
+      senderId: "customer-demo-1",
+      senderRole: "customer",
+      text: "Okay, how much will it be total?",
+      status: "sent",
+      createdAt: isoHoursAgo(5),
+    },
+    {
+      id: "msg-elc-3",
+      conversationId: "conv-elc-101",
+      senderId: "worker-demo-1",
+      senderRole: "worker",
+      text: "Including parts it would be around Rs. 1,800. I sent the breakdown in the repair estimate.",
+      status: "read",
+      createdAt: isoHoursAgo(2),
+    },
+    {
+      id: "msg-elc-4",
+      conversationId: "conv-elc-101",
+      senderId: "customer-demo-1",
+      senderRole: "customer",
+      text: "Can you come earlier if the repair is approved?",
+      status: "sent",
+      createdAt: isoHoursAgo(1),
+    },
+  ],
+  "conv-plumb-303": [
+    {
+      id: "msg-plumb-1",
+      conversationId: "conv-plumb-303",
+      senderId: "worker-demo-1",
+      senderRole: "worker",
+      text: "The leak is fixed. Let it dry for today and it will be fine.",
+      status: "read",
+      createdAt: isoDaysAgo(9, 16),
+    },
+    {
+      id: "msg-plumb-2",
+      conversationId: "conv-plumb-303",
+      senderId: "customer-demo-2",
+      senderRole: "customer",
+      text: "Thank you for the quick fix!",
+      status: "sent",
+      createdAt: isoDaysAgo(8, 17),
+    },
+  ],
+  "conv-ac-202": [
+    {
+      id: "msg-ac-1",
+      conversationId: "conv-ac-202",
+      senderId: "worker-demo-1",
+      senderRole: "worker",
+      text: "Approved your counter of Rs. 2,500. I will bring the gas cylinder and tools.",
+      status: "read",
+      createdAt: isoHoursAgo(28),
+    },
+  ],
+};

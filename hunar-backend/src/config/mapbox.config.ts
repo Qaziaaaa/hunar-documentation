@@ -7,5 +7,5 @@ export default () => {
     // Mapbox geocoding token (https://account.mapbox.com). Empty = geocoding disabled.
     accessToken: process.env.MAPBOX_TOKEN ?? '',
   };
-  return mapboxConfig;
+  return { mapbox: mapboxConfig };
 };

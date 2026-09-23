@@ -11,24 +11,27 @@ import {
   Sparkles,
   Zap,
 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import { buttonVariants } from "@/components/ui/button";
 import type { WorkerVerificationData } from "../types";
 
 export function ApprovedView({ data }: { data: WorkerVerificationData }) {
+  const t = useTranslations("WorkerVerification.Approved");
+
   return (
-    <div className="space-y-4 text-left">
+    <div className="space-y-4 text-left rtl:text-right">
       {/* Top Celebratory Header */}
-      <div className="text-center sm:text-left">
+      <div className="text-center sm:text-left rtl:sm:text-right">
         <div className="inline-flex items-center gap-1.5 rounded-full border border-teal/20 bg-teal/10 px-3 py-1 text-xs font-bold text-teal mb-2">
           <Sparkles className="size-3.5" />
-          <span>Admin Verification Approved</span>
+          <span>{t("badge")}</span>
         </div>
         <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-navy">
-          Congratulations, {data.fullName}! 🎉
+          {t("title", { name: data.fullName })}
         </h2>
         <p className="mt-1 text-xs sm:text-sm text-muted-foreground">
-          Your credentials and Pakistani Smart CNIC documents have been verified by Orderworker compliance.
+          {t("subtitle")}
         </p>
       </div>
 
@@ -49,10 +52,9 @@ export function ApprovedView({ data }: { data: WorkerVerificationData }) {
                 {/* Official Teal Verified Badge */}
                 <span
                   className="inline-flex items-center gap-0.5 rounded-full bg-teal px-2 py-0.2 text-[10px] font-bold text-white shadow-2xs"
-                  title="Official Orderworker Verified Badge"
                 >
                   <BadgeCheck className="size-3" />
-                  <span>Verified Pro</span>
+                  <span>{t("verifiedPro")}</span>
                 </span>
               </div>
               <p className="text-xs text-muted-foreground">
@@ -63,7 +65,7 @@ export function ApprovedView({ data }: { data: WorkerVerificationData }) {
 
           <div className="flex items-center gap-1.5 text-xs font-bold text-success">
             <ShieldCheck className="size-4 text-success" />
-            <span>NADRA Cleared</span>
+            <span>{t("nadraCleared")}</span>
           </div>
         </div>
 
@@ -71,7 +73,7 @@ export function ApprovedView({ data }: { data: WorkerVerificationData }) {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-3 text-xs">
           <div className="space-y-1">
             <span className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider text-navy">
-              <Briefcase className="size-3.5 text-teal" /> Approved Trades
+              <Briefcase className="size-3.5 text-teal" /> {t("approvedTrades")}
             </span>
             <div className="flex flex-wrap gap-1">
               {data.skills.map((s) => (
@@ -87,7 +89,7 @@ export function ApprovedView({ data }: { data: WorkerVerificationData }) {
 
           <div className="space-y-1">
             <span className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider text-navy">
-              <MapPin className="size-3.5 text-teal" /> Service Radar
+              <MapPin className="size-3.5 text-teal" /> {t("serviceRadar")}
             </span>
             <p className="text-xs font-medium text-slate-700">
               {data.serviceAreas.join(", ")} ({data.city})
@@ -99,16 +101,16 @@ export function ApprovedView({ data }: { data: WorkerVerificationData }) {
       {/* Unlocked Capabilities Grid */}
       <div className="rounded-2xl bg-white p-2">
         <h3 className="text-xs font-extrabold uppercase tracking-wider text-navy mb-2.5">
-          Unlocked Capabilities:
+          {t("unlockedTitle")}
         </h3>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 text-xs">
           <div className="rounded-xl bg-white p-2.5 shadow-2xs">
             <div className="flex size-7 items-center justify-center rounded-lg bg-teal/10 text-teal mb-1.5">
               <Zap className="size-4" />
             </div>
-            <p className="font-bold text-navy">Nearby Job Alerts</p>
+            <p className="font-bold text-navy">{t("cap1Title")}</p>
             <p className="text-[11px] text-muted-foreground mt-0.5">
-              Instant match alerts in your Peshawar towns.
+              {t("cap1Desc")}
             </p>
           </div>
 
@@ -116,9 +118,9 @@ export function ApprovedView({ data }: { data: WorkerVerificationData }) {
             <div className="flex size-7 items-center justify-center rounded-lg bg-teal/10 text-teal mb-1.5">
               <CheckCircle2 className="size-4" />
             </div>
-            <p className="font-bold text-navy">Send Visit Offers</p>
+            <p className="font-bold text-navy">{t("cap2Title")}</p>
             <p className="text-[11px] text-muted-foreground mt-0.5">
-              Quote custom inspection fees and arrive on-site.
+              {t("cap2Desc")}
             </p>
           </div>
 
@@ -126,9 +128,9 @@ export function ApprovedView({ data }: { data: WorkerVerificationData }) {
             <div className="flex size-7 items-center justify-center rounded-lg bg-teal/10 text-teal mb-1.5">
               <DollarSign className="size-4" />
             </div>
-            <p className="font-bold text-navy">Escrow Guaranteed</p>
+            <p className="font-bold text-navy">{t("cap3Title")}</p>
             <p className="text-[11px] text-muted-foreground mt-0.5">
-              100% protected payouts for completed visits.
+              {t("cap3Desc")}
             </p>
           </div>
         </div>
@@ -144,7 +146,7 @@ export function ApprovedView({ data }: { data: WorkerVerificationData }) {
               "h-12 w-full rounded-full bg-teal text-sm font-bold text-white shadow-md shadow-teal/20 hover:bg-teal/90 flex items-center justify-center gap-2",
           })}
         >
-          <span>Go to Worker Dashboard</span>
+          <span>{t("dashboardBtn")}</span>
           <ArrowRight className="size-4 rtl:rotate-180" />
         </Link>
       </div>

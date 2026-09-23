@@ -1,5 +1,7 @@
 const API_URL =
-  process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3000/api";
+  process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3000/api/v1";
+
+export const API_BASE_URL = API_URL;
 
 export const ACCESS_TOKEN_KEY = "orderworker.access_token";
 export const REFRESH_TOKEN_KEY = "orderworker.refresh_token";

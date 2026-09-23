@@ -210,10 +210,7 @@ export class AdminController {
   }
 
   @Post('categories')
-  createCategory(
-    @Body() dto: AdminCreateCategoryDto,
-    @CurrentUser() actor: JwtPayload,
-  ) {
+  createCategory(@Body() dto: AdminCreateCategoryDto, @CurrentUser() actor: JwtPayload) {
     return this.adminService.createCategory(dto, actor);
   }
 
@@ -227,10 +224,7 @@ export class AdminController {
   }
 
   @Put('categories/:id/deactivate')
-  deactivateCategory(
-    @Param('id', ParseUUIDPipe) id: string,
-    @CurrentUser() actor: JwtPayload,
-  ) {
+  deactivateCategory(@Param('id', ParseUUIDPipe) id: string, @CurrentUser() actor: JwtPayload) {
     return this.adminService.deactivateCategory(id, actor);
   }
 
@@ -250,10 +244,7 @@ export class AdminController {
   }
 
   @Put('settings')
-  updateSettings(
-    @Body() dto: AdminUpdateSettingsDto,
-    @CurrentUser() actor: JwtPayload,
-  ) {
+  updateSettings(@Body() dto: AdminUpdateSettingsDto, @CurrentUser() actor: JwtPayload) {
     return this.adminService.updateSettings(dto, actor);
   }
 

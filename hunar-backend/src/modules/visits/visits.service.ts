@@ -259,6 +259,57 @@ export class VisitsService {
     return updated;
   }
 
+  /**
+   * Task 22 — inspection report for a job (worker submits via the visit; the job
+   * owner — and the assigned worker — can both read the submitted report).
+   */
+  async getJobInspection(jobId: string, user: JwtPayload) {
+    const job = await this.prisma.serviceRequest.findUnique({
+      where: { id: jobId },
+      select: { id: true, customerId: true, selectedWorkerId: true },
+    });
+    if (!job) {
+      throw new NotFoundException('Job not found');
+    }
+    if (user.role === Role.CUSTOMER && job.customerId !== user.sub) {
+      throw new ForbiddenException('You are not the owner of this job');
+    }
+    if (user.role === Role.WORKER && job.selectedWorkerId !== user.sub) {
+      throw new ForbiddenException('You are not the assigned worker for this job');
+    }
+
+    const visit = await this.prisma.visit.findFirst({
+      where: { jobId },
+      select: {
+        id: true,
+        status: true,
+        diagnosis: true,
+        repairPlan: true,
+        repairEstimate: true,
+        inspectionPhotos: true,
+        estimatedRepairTimeMin: true,
+        inspectionSubmittedAt: true,
+        worker: { select: { id: true, name: true, avatarUrl: true } },
+      },
+    });
+    if (!visit || !visit.inspectionSubmittedAt) {
+      throw new NotFoundException('INSPECTION_NOT_FOUND: no inspection has been submitted');
+    }
+
+    return {
+      jobId,
+      visitId: visit.id,
+      visitStatus: visit.status,
+      diagnosis: visit.diagnosis,
+      repairPlan: visit.repairPlan,
+      repairEstimate: Number(visit.repairEstimate),
+      inspectionPhotos: visit.inspectionPhotos ?? [],
+      estimatedRepairTimeMin: visit.estimatedRepairTimeMin,
+      submittedAt: visit.inspectionSubmittedAt,
+      worker: visit.worker,
+    };
+  }
+
   async trackLocation(user: JwtPayload, jobId: string | undefined, dto: TrackLocationDto) {
     const cleanJobId =
       jobId && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(jobId)

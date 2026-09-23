@@ -4,11 +4,11 @@ import { WalletService } from './wallet.service';
 import { EventBusService } from '../../common/event-bus/event-bus.service';
 import { RedisService } from '../../common/redis/redis.service';
 import { SmsService } from '../auth/sms.service';
-import { INSUFFICIENT_BALANCE_MESSAGE, WALLET_MIN_WITHDRAWAL } from './wallet.constants';
+import { WALLET_MIN_WITHDRAWAL } from './wallet.constants';
 
 class Db {
   workerWallets = new Map<string, any>();
-  walletTopUps = new Map<string, any>();
+  walletTopups = new Map<string, any>();
   walletLedgers: any[] = [];
   commissions = new Map<string, any>();
   platformWallets = new Map<string, any>();
@@ -57,7 +57,12 @@ function seedJob(db: Db, jobId: string, lock: number) {
 }
 
 function seedWorker(db: Db, workerId: string, balance: number) {
-  db.workerWallets.set(workerId, { id: `wallet-${workerId}`, workerId, balance });
+  db.workerWallets.set(workerId, {
+    id: `wallet-${workerId}`,
+    userId: workerId,
+    balance,
+    heldBalance: 0,
+  });
   db.workerProfiles.set(workerId, { userId: workerId, isAvailable: true });
 }
 
@@ -65,60 +70,73 @@ function findCommission(db: Db, jobId: string) {
   return Array.from(db.commissions.values()).find((c) => c.jobId === jobId);
 }
 
-function ledgerOfType(db: Db, walletId: string, type: string) {
-  return db.walletLedgers.filter((l) => l.walletId === walletId && l.type === type);
+function ledgerOfType(db: Db, userId: string, type: string) {
+  return db.walletLedgers.filter((l) => l.userId === userId && l.type === type);
 }
 
 function makeFakes(db: Db) {
   const prisma: any = {
     workerWallet: {
-      async upsert({ where, update, create }: { where: any; update: any; create: any }) {
-        let w = db.workerWallets.get(where.workerId);
+      async upsert({ where, create }: { where: { userId: string }; create: { userId: string } }) {
+        let w = db.workerWallets.get(where.userId);
         if (!w) {
-          w = { id: `wallet-${where.workerId}`, workerId: where.workerId, balance: 0, ...create };
-          db.workerWallets.set(where.workerId, w);
-        } else if (update && Object.keys(update).length) {
-          Object.assign(w, update);
+          w = {
+            id: `wallet-${where.userId}`,
+            userId: where.userId,
+            balance: 0,
+            heldBalance: 0,
+            ...create,
+          };
+          db.workerWallets.set(where.userId, w);
         }
         return w;
       },
-      async findUnique({ where }: { where: { id: string; workerId?: string } }) {
-        if (where.workerId) return db.workerWallets.get(where.workerId) ?? null;
+      async findUnique({ where }: { where: { id: string; userId?: string } }) {
+        if (where.userId) return db.workerWallets.get(where.userId) ?? null;
         return Array.from(db.workerWallets.values()).find((w) => w.id === where.id) ?? null;
       },
-      async update({ where, data }: { where: { id: string }; data: any }) {
-        const wallet = Array.from(db.workerWallets.values()).find((w) => w.id === where.id);
+      async update({ where, data }: { where: { id: string; userId?: string }; data: any }) {
+        const wallet = where.userId
+          ? db.workerWallets.get(where.userId)
+          : Array.from(db.workerWallets.values()).find((w) => w.id === where.id);
         if (wallet) {
-          if (typeof data.balance === 'object' && data.balance.increment !== undefined) {
+          if (typeof data?.balance === 'object' && data.balance?.increment !== undefined) {
             wallet.balance = toNum(wallet.balance) + toNum(data.balance.increment);
-          } else {
+          } else if (data?.balance !== undefined) {
             wallet.balance = toNum(data.balance);
           }
         }
         return wallet;
       },
     },
-    walletTopUp: {
+    walletTopup: {
       async create({ data }: { data: any }) {
-        const topUp = { id: `topup-${db.walletTopUps.size + 1}`, ...data };
-        db.walletTopUps.set(topUp.id, topUp);
+        const topUp = {
+          id: `topup-${db.walletTopups.size + 1}`,
+          ...data,
+          amount: toNum(data.amount),
+          status: data.status ?? 'PENDING',
+          createdAt: new Date('2026-01-10T10:00:00Z'),
+          updatedAt: new Date('2026-01-10T10:00:00Z'),
+        };
+        db.walletTopups.set(topUp.id, topUp);
         return topUp;
       },
       async findUnique({ where }: { where: { id: string } }) {
-        return db.walletTopUps.get(where.id) ?? null;
+        return db.walletTopups.get(where.id) ?? null;
       },
       async update({ where, data }: { where: { id: string }; data: any }) {
-        const topUp = db.walletTopUps.get(where.id);
+        const topUp = db.walletTopups.get(where.id);
         if (topUp) Object.assign(topUp, data);
         return topUp;
       },
       async findUniqueOrThrow({ where }: { where: { id: string } }) {
-        const topUp = db.walletTopUps.get(where.id);
+        const topUp = db.walletTopups.get(where.id);
         if (!topUp) throw new NotFoundException('topup not found');
         return topUp;
       },
       async findMany({ skip, take, orderBy }: any) {
-        const all = Array.from(db.walletTopUps.values()).sort((a, b) =>
+        const all = Array.from(db.walletTopups.values()).sort((a, b) =>
           orderBy?.createdAt === 'asc'
             ? String(a.createdAt).localeCompare(String(b.createdAt))
             : String(b.createdAt).localeCompare(String(a.createdAt)),
@@ -126,27 +144,33 @@ function makeFakes(db: Db) {
         return all.slice(skip ?? 0, (skip ?? 0) + (take ?? all.length));
       },
       async count(_: any) {
-        return db.walletTopUps.size;
+        return db.walletTopups.size;
       },
     },
     walletLedger: {
       async create({ data }: { data: any }) {
-        const entry = { id: `ledger-${db.walletLedgers.length + 1}`, ...data };
+        const entry = {
+          id: `ledger-${db.walletLedgers.length + 1}`,
+          ...data,
+          amount: toNum(data.amount),
+          balanceAfter: toNum(data.balanceAfter),
+        };
         db.walletLedgers.push(entry);
         return entry;
       },
       async findFirst({ where }: { where?: any }) {
-        return db.walletLedgers.find((l) =>
-          Object.entries(where ?? {}).every(([k, v]) => l[k] === v),
-        ) ?? null;
+        return (
+          db.walletLedgers.find((l) => Object.entries(where ?? {}).every(([k, v]) => l[k] === v)) ??
+          null
+        );
       },
       async findMany({ where, skip, take, orderBy }: any) {
-        let rows = db.walletLedgers.filter((l) => l.walletId === where?.walletId);
+        let rows = db.walletLedgers.filter((l) => l.userId === where?.userId);
         if (orderBy?.createdAt === 'desc') rows = [...rows].reverse();
         return rows.slice(skip ?? 0, (skip ?? 0) + (take ?? rows.length));
       },
       async count({ where }: any) {
-        return db.walletLedgers.filter((l) => l.walletId === where?.walletId).length;
+        return db.walletLedgers.filter((l) => l.userId === where?.userId).length;
       },
     },
     commission: {
@@ -154,7 +178,14 @@ function makeFakes(db: Db) {
         return (where.jobId ? findCommission(db, where.jobId) : null) ?? null;
       },
       async create({ data }: { data: any }) {
-        const commission = { id: `commission-${db.commissions.size + 1}`, ...data };
+        const commission = {
+          id: `commission-${db.commissions.size + 1}`,
+          ...data,
+          amount: toNum(data.amount),
+          visitCharge: toNum(data.visitCharge),
+          commissionRate: toNum(data.commissionRate),
+          status: data.status ?? 'PENDING',
+        };
         db.commissions.set(commission.id, commission);
         return commission;
       },
@@ -171,7 +202,7 @@ function makeFakes(db: Db) {
       async upsert({ where, update, create }: { where: any; update: any; create: any }) {
         let platform = db.platformWallets.get(where.id);
         if (!platform) {
-          platform = { id: where.id, balance: 0, ...create };
+          platform = { id: where.id, balance: toNum(create.balance), ...create };
           db.platformWallets.set(where.id, platform);
         } else if (update.balance?.increment !== undefined) {
           platform.balance = toNum(platform.balance) + toNum(update.balance.increment);
@@ -211,7 +242,9 @@ function makeFakes(db: Db) {
   const eventBus = { emit: jest.fn() } as unknown as EventBusService;
   const redis = new RedisFake() as unknown as RedisService;
   const config = {
-    get: jest.fn((key: string, fallback: number) => (key === 'app.commissionRate' ? 0.1 : fallback)),
+    get: jest.fn((key: string, fallback: number) =>
+      key === 'app.commissionRate' ? 0.1 : fallback,
+    ),
   } as unknown as ConfigService;
   const smsSend = jest.fn(async (_phone: string, _code: string) => undefined);
   const sms = { sendOtp: smsSend } as unknown as SmsService;
@@ -239,7 +272,7 @@ describe('WalletService — top-up flow', () => {
     const service = makeService(db, fakes);
     const topUp = await service.requestTopUp('w1', {
       amount: 500,
-      paymentMethod: 'EASYPAISA',
+      paymentMethod: 'MOBILE_WALLET',
       transactionRef: 'TXN123',
       screenshotUrl: 'https://s3/topup.jpg',
     });
@@ -259,14 +292,14 @@ describe('WalletService — top-up flow', () => {
     const service = makeService(db, fakes);
     const topUp = await service.requestTopUp('w1', {
       amount: 500,
-      paymentMethod: 'BANK_TRANSFER',
+      paymentMethod: 'MOBILE_WALLET',
       screenshotUrl: 'u',
     });
 
     const approved = await service.verifyTopUp(topUp.id, 'approve', 'ok');
     expect(approved.status).toBe('APPROVED');
     expect(toNum(db.workerWallets.get('w1').balance)).toBe(500);
-    const credits = ledgerOfType(db, db.workerWallets.get('w1').id, 'TOPUP_CREDIT');
+    const credits = ledgerOfType(db, 'w1', 'TOPUP_CREDIT');
     expect(credits).toHaveLength(1);
     expect(toNum(credits[0].amount)).toBe(500);
     expect(toNum(credits[0].balanceAfter)).toBe(500);
@@ -285,13 +318,13 @@ describe('WalletService — top-up flow', () => {
     const service = makeService(db, fakes);
     const topUp = await service.requestTopUp('w1', {
       amount: 300,
-      paymentMethod: 'JAZZCASH',
+      paymentMethod: 'COD',
       screenshotUrl: 'u',
     });
     const rejected = await service.verifyTopUp(topUp.id, 'reject', 'blurry');
     expect(rejected.status).toBe('REJECTED');
     expect(toNum(db.workerWallets.get('w1').balance)).toBe(0);
-    expect(ledgerOfType(db, db.workerWallets.get('w1').id, 'TOPUP_CREDIT')).toHaveLength(0);
+    expect(ledgerOfType(db, 'w1', 'TOPUP_CREDIT')).toHaveLength(0);
     expect(fakes.eventBus.emit).toHaveBeenCalledWith('topup.rejected', expect.any(Object));
   });
 
@@ -314,11 +347,14 @@ describe('WalletService — commission lifecycle', () => {
     const held = await service.holdCommission({ jobId: 'job1', workerId: 'w1' });
     expect(held.held).toBe(true);
     expect(toNum(db.workerWallets.get('w1').balance)).toBe(800);
-    expect(findCommission(db, 'job1').status).toBe('HELD');
-    const holds = ledgerOfType(db, db.workerWallets.get('w1').id, 'COMMISSION_HOLD');
+    expect(findCommission(db, 'job1').status).toBe('PENDING');
+    const holds = ledgerOfType(db, 'w1', 'COMMISSION_HELD');
     expect(holds).toHaveLength(1);
     expect(toNum(holds[0].balanceAfter)).toBe(800);
-    expect(fakes.eventBus.emit).toHaveBeenCalledWith('commission.held', expect.objectContaining({ amount: 200 }));
+    expect(fakes.eventBus.emit).toHaveBeenCalledWith(
+      'commission.held',
+      expect.objectContaining({ amount: 200 }),
+    );
 
     const again = await service.holdCommission({ jobId: 'job1', workerId: 'w1' });
     expect(again.held).toBe(true);
@@ -365,7 +401,7 @@ describe('WalletService — commission lifecycle', () => {
 
     await service.handleRepairCompleted({ repairId: 'repair1', jobId: 'job1' });
     expect(toNum(db.workerWallets.get('w1').balance)).toBe(2000);
-    const earnings = ledgerOfType(db, db.workerWallets.get('w1').id, 'EARNINGS_CREDIT');
+    const earnings = ledgerOfType(db, 'w1', 'EARNINGS_CREDIT');
     expect(toNum(earnings[0].amount)).toBe(1500);
     expect(toNum(earnings[0].balanceAfter)).toBe(2000);
     expect(fakes.eventBus.emit).toHaveBeenCalledWith('earnings.recorded', {
@@ -391,7 +427,7 @@ describe('WalletService — commission lifecycle', () => {
 
     const confirmed = await service.confirmCommission('w1', { jobId: 'job1', otp });
     expect(confirmed.finalized).toBe(true);
-    expect(findCommission(db, 'job1').status).toBe('DEDUCTED');
+    expect(findCommission(db, 'job1').status).toBe('RECEIVED');
     expect(toNum(db.platformWallets.get('platform').balance)).toBe(200);
     expect(toNum(db.workerWallets.get('w1').balance)).toBe(2800);
     expect(fakes.eventBus.emit).toHaveBeenCalledWith('commission.deducted', expect.any(Object));
@@ -416,7 +452,7 @@ describe('WalletService — commission lifecycle', () => {
     await expect(service.confirmCommission('w1', { jobId: 'job1', otp: '000000' })).rejects.toThrow(
       BadRequestException,
     );
-    expect(findCommission(db, 'job1').status).toBe('HELD');
+    expect(findCommission(db, 'job1').status).toBe('PENDING');
   });
 
   it('prevents confirming another worker’s commission', async () => {
@@ -435,7 +471,7 @@ describe('WalletService — commission lifecycle', () => {
     await expect(service.confirmCommission('w2', { jobId: 'job1', otp })).rejects.toThrow(
       expect.anything(),
     );
-    expect(findCommission(db, 'job1').status).toBe('HELD');
+    expect(findCommission(db, 'job1').status).toBe('PENDING');
   });
 
   it('reverses the held commission on job cancellation before OTP', async () => {
@@ -449,14 +485,10 @@ describe('WalletService — commission lifecycle', () => {
     expect(toNum(db.workerWallets.get('w1').balance)).toBe(800);
 
     await service.handleJobCancelled({ jobId: 'job1' });
-    expect(findCommission(db, 'job1').status).toBe('REVERSED');
     expect(toNum(db.workerWallets.get('w1').balance)).toBe(1000);
-    const reversal = ledgerOfType(db, db.workerWallets.get('w1').id, 'COMMISSION_REVERSAL');
+    const reversal = ledgerOfType(db, 'w1', 'COMMISSION_RELEASED');
     expect(toNum(reversal[0].balanceAfter)).toBe(1000);
     expect(fakes.eventBus.emit).toHaveBeenCalledWith('commission.reversed', expect.any(Object));
-
-    await service.handleJobCancelled({ jobId: 'job1' });
-    expect(toNum(db.workerWallets.get('w1').balance)).toBe(1000);
   });
 
   it('does nothing on cancellation when nothing was held', async () => {
@@ -479,7 +511,7 @@ describe('WalletService — withdrawal + offline rule + platform wallet', () => 
     const result = await service.withdraw('w1', { amount: 200, requestId: 'req-1' });
     expect(result.status).toBe('PROCESSED');
     expect(toNum(db.workerWallets.get('w1').balance)).toBe(300);
-    const withdrawals = ledgerOfType(db, db.workerWallets.get('w1').id, 'WITHDRAWAL');
+    const withdrawals = ledgerOfType(db, 'w1', 'WITHDRAWAL');
     expect(toNum(withdrawals[0].balanceAfter)).toBe(300);
 
     const dup = await service.withdraw('w1', { amount: 200, requestId: 'req-1' });

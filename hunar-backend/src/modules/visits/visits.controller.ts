@@ -52,6 +52,12 @@ export class VisitsController {
     return this.visitsService.submitInspection(id, user, dto);
   }
 
+  /** Task 22 — job-level inspection report (customer views, worker can re-read). */
+  @Get('jobs/:jobId/inspection')
+  jobInspection(@CurrentUser() user: JwtPayload, @Param('jobId', ParseUUIDPipe) jobId: string) {
+    return this.visitsService.getJobInspection(jobId, user);
+  }
+
   @Post('location/track')
   @Roles(Role.WORKER)
   track(

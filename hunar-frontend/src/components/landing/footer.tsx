@@ -46,7 +46,7 @@ export function PreFooter() {
             Post a Job
           </a>
           <Link
-            href="/worker/sign-up"
+            href="/worker/onboarding"
             className="inline-flex items-center px-7 py-3 rounded-full bg-white/10 hover:bg-white/20 text-white font-semibold text-sm border border-white/20 transition-all duration-200"
           >
             Register as Professional
@@ -69,31 +69,33 @@ export function Footer() {
             <OrderworkerLogo variant="light" size="sm" />
           </Link>
           <div className="flex flex-wrap items-center gap-6 text-xs text-slate-300 font-medium">
-            <a className="hover:text-white transition" href="#">
+            <span className="text-slate-400">
               Terms of Service
-            </a>
-            <a className="hover:text-white transition" href="#">
+            </span>
+            <span className="text-slate-400">
               Privacy Policy
-            </a>
-            <a className="hover:text-white transition" href="#">
+            </span>
+            <Link
+              href="/customer/dashboard"
+              className="hover:text-white transition"
+            >
               My Jobs Hub
-            </a>
+            </Link>
           </div>
           <div className="flex items-center space-x-4 text-slate-400">
             <span className="text-xs font-medium text-slate-300">
               Follow Us:
             </span>
             {socialIcons.map((icon) => (
-              <a
+              <span
                 key={icon.ariaLabel}
                 aria-label={icon.ariaLabel}
                 className="hover:text-white transition"
-                href="#"
               >
                 <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
                   <path d={icon.path} />
                 </svg>
-              </a>
+              </span>
             ))}
           </div>
         </div>

@@ -86,8 +86,7 @@ export function Hero() {
                   </p>
                 </div>
               </a>
-              <a
-                href="#"
+              <span
                 className="absolute -top-4 -left-4 z-30 bg-white/95 backdrop-blur text-slate-800 px-4 py-2.5 rounded-2xl shadow-xl border border-slate-100 flex items-center space-x-3 hover:scale-105 transition-transform"
               >
                 <div className="w-9 h-9 rounded-full bg-emerald-100 text-brand-accent flex items-center justify-center flex-shrink-0">
@@ -101,9 +100,8 @@ export function Hero() {
                     100% CNIC & Police Verified
                   </p>
                 </div>
-              </a>
-              <a
-                href="#"
+              </span>
+              <span
                 className="absolute -bottom-6 -right-2 z-30 bg-white/95 backdrop-blur text-slate-800 px-4 py-2.5 rounded-2xl shadow-xl border border-slate-100 flex items-center space-x-3 hover:scale-105 transition-transform"
               >
                 <div className="w-9 h-9 rounded-full bg-teal-50 text-brand-hero flex items-center justify-center flex-shrink-0">
@@ -117,7 +115,7 @@ export function Hero() {
                     Escrow milestone release
                   </p>
                 </div>
-              </a>
+              </span>
               <a
                 href="#pros"
                 className="hidden sm:flex absolute -bottom-4 left-6 z-30 bg-white/95 backdrop-blur border border-slate-100 text-slate-800 px-3.5 py-2 rounded-full shadow-2xl items-center space-x-2.5 hover:scale-105 transition-transform"

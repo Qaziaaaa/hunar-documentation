@@ -1,4 +1,14 @@
-import { Body, Controller, Get, Param, ParseUUIDPipe, Post, Put, Query } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  NotFoundException,
+  Param,
+  ParseUUIDPipe,
+  Post,
+  Put,
+  Query,
+} from '@nestjs/common';
 import { Role } from '@prisma/client';
 import { OffersService } from './offers.service';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
@@ -14,6 +24,45 @@ import {
 @Controller()
 export class OffersController {
   constructor(private readonly offersService: OffersService) {}
+
+  // Tasks 12-14 aliases: POST /offers/:offerId/{accept,reject,counter}
+  // (documented customer contract; jobId is resolved from the offer).
+  private async resolveJobId(offerId: string): Promise<string> {
+    const offer = await this.offersService.getOfferJobId(offerId);
+    if (!offer) {
+      throw new NotFoundException('Offer not found');
+    }
+    return offer.jobId;
+  }
+
+  @Post('offers/:offerId/accept')
+  @Roles(Role.CUSTOMER)
+  async acceptAlias(
+    @CurrentUser() user: JwtPayload,
+    @Param('offerId', ParseUUIDPipe) offerId: string,
+    @Body() dto: RespondOfferDto,
+  ) {
+    return this.offersService.acceptOffer(await this.resolveJobId(offerId), offerId, user, dto);
+  }
+
+  @Post('offers/:offerId/reject')
+  @Roles(Role.CUSTOMER)
+  async rejectAlias(
+    @CurrentUser() user: JwtPayload,
+    @Param('offerId', ParseUUIDPipe) offerId: string,
+  ) {
+    return this.offersService.rejectOffer(await this.resolveJobId(offerId), offerId, user);
+  }
+
+  @Post('offers/:offerId/counter')
+  @Roles(Role.CUSTOMER)
+  async counterAlias(
+    @CurrentUser() user: JwtPayload,
+    @Param('offerId', ParseUUIDPipe) offerId: string,
+    @Body() dto: CounterOfferDto,
+  ) {
+    return this.offersService.counterOffer(await this.resolveJobId(offerId), offerId, user, dto);
+  }
 
   @Post('jobs/:jobId/offers')
   @Roles(Role.WORKER)

@@ -18,5 +18,5 @@ export default () => {
     commissionBankAccount: process.env.COMMISSION_BANK_ACCOUNT ?? 'HUNAR Platform Bank Account',
     maxNegotiationRounds: parseInt(process.env.MAX_NEGOTIATION_ROUNDS ?? '5', 10),
   };
-  return appConfig;
+  return { app: appConfig };
 };

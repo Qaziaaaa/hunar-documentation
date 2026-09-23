@@ -1,13 +1,4 @@
-import {
-  Body,
-  Controller,
-  Get,
-  Param,
-  ParseUUIDPipe,
-  Post,
-  Put,
-  Query,
-} from '@nestjs/common';
+import { Body, Controller, Get, Param, ParseUUIDPipe, Post, Put, Query } from '@nestjs/common';
 import { Role } from '@prisma/client';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Roles } from '../../common/decorators/roles.decorator';
@@ -77,10 +68,7 @@ export class WalletController {
 
   @Put('topup/:id/verify')
   @Roles(Role.ADMIN, Role.SUPER_ADMIN)
-  verifyTopUp(
-    @Param('id', ParseUUIDPipe) id: string,
-    @Body() dto: VerifyTopUpDto,
-  ) {
+  verifyTopUp(@Param('id', ParseUUIDPipe) id: string, @Body() dto: VerifyTopUpDto) {
     return this.wallet.verifyTopUp(id, dto.action, dto.note);
   }
 }

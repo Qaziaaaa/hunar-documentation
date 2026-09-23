@@ -1,11 +1,4 @@
-import {
-  Body,
-  Controller,
-  Get,
-  HttpCode,
-  HttpStatus,
-  Post,
-} from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, HttpStatus, Post } from '@nestjs/common';
 import { Role } from '@prisma/client';
 import { AuthService } from './auth.service';
 import {
@@ -48,11 +41,7 @@ export class CustomerAuthController {
   @Public()
   @Post('signup/complete')
   register(@Body() dto: RegisterCustomerDto) {
-    return this.authService.registerCustomer(
-      dto.phone,
-      dto.password,
-      dto.verificationToken,
-    );
+    return this.authService.registerCustomer(dto.phone, dto.password, dto.verificationToken);
   }
 
   @Public()

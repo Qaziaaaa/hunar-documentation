@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 import { VerificationLeftShowcase } from "./verification-left-showcase";
 import { StatusTesterBar } from "./status-tester-bar";
 import { ApprovedView } from "./approved-view";
@@ -14,6 +15,7 @@ import {
 import type { VerificationOutcome, WorkerVerificationData } from "../types";
 
 export function VerificationShell() {
+  const t = useTranslations("WorkerVerification.Shell");
   const [data, setData] = useState<WorkerVerificationData | null>(null);
   const [currentStatus, setCurrentStatus] =
     useState<VerificationOutcome>("pending");
@@ -84,14 +86,14 @@ export function VerificationShell() {
             {/* Bottom Support Note */}
             <div className="mt-3 border-t border-slate-100 pt-2.5 text-center">
               <p className="text-xs text-muted-foreground">
-                Need assistance with verification?{" "}
+                {t("needAssistance")}{" "}
                 <a
                   href="https://wa.me/923140837519"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="font-bold text-teal hover:underline"
+                  className="font-bold text-teal hover:underline inline-flex items-center gap-1"
                 >
-                  Contact Compliance on WhatsApp →
+                  <span>{t("contactWhatsapp")}</span>
                 </a>
               </p>
             </div>
@@ -101,3 +103,4 @@ export function VerificationShell() {
     </div>
   );
 }
+
