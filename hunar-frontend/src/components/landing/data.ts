@@ -17,7 +17,7 @@ export const steps: Step[] = [
     description:
       "Describe your home repair or skilled service need in under a minute with photos or details.",
     linkText: "Start Posting",
-    href: "#services",
+    href: "/customer/dashboard",
   },
   {
     step: "Step 2",
@@ -27,7 +27,7 @@ export const steps: Step[] = [
     description:
       "Compare verified tradespeople, check real ratings, CNIC verification, and transparent upfront quotes.",
     linkText: "View Offers Hub",
-    href: "#pros",
+    href: "/customer/dashboard",
   },
   {
     step: "Step 3",
@@ -37,7 +37,7 @@ export const steps: Step[] = [
     description:
       "The certified local artisan completes the job with guaranteed craft quality and 5-day rework warranty.",
     linkText: "Completion Flow",
-    href: "#",
+    href: "/customer/dashboard",
   },
   {
     step: "Step 4",
@@ -47,7 +47,7 @@ export const steps: Step[] = [
     description:
       "Pay with complete confidence using secure milestone escrow. Funds released only when you're 100% satisfied.",
     linkText: "Escrow & Wallet",
-    href: "#",
+    href: "/customer/dashboard",
   },
 ];
 
