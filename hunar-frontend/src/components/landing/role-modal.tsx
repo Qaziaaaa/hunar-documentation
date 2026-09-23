@@ -118,7 +118,7 @@ function RoleModalContent({
               </div>
             </Link>
             <Link
-              href="/worker/onboarding"
+              href="/worker/sign-in"
               className="group relative flex flex-col justify-between p-5 sm:p-6 rounded-2xl border-2 border-slate-200/90 bg-white hover:border-[#D97706] hover:shadow-xl transition-all duration-200 cursor-pointer overflow-hidden"
             >
               <div className="absolute top-0 left-0 right-0 h-1 bg-[#D97706] transition-colors" />
