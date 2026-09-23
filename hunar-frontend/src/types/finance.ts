@@ -41,8 +41,24 @@ export interface EarningsSummary {
   totalJobs: number;
 }
 
-export interface SubmitScreenshotInput {
-  commissionId: string;
-  screenshotUrl: string;
-  note?: string;
+export type WalletTransactionType = "TOP_UP" | "DEDUCTION";
+
+export interface WalletTransaction {
+  id: string;
+  type: WalletTransactionType;
+  amount: number;
+  date: string;
+  displayDate: string;
+  displayTime?: string;
+  jobId?: string;
+  jobTitle?: string;
+  description?: string;
+  resultingBalance?: number;
+}
+
+export interface WalletSummary {
+  currentBalance: number;
+  totalTopUps: number;
+  totalDeductions: number;
+  totalTransactions: number;
 }

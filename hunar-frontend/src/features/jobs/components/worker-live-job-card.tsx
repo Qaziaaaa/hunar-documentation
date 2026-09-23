@@ -148,7 +148,7 @@ export function WorkerLiveJobCard({
   ];
 
   return (
-    <div className="relative overflow-hidden bg-white rounded-2xl sm:rounded-3xl border-2 border-[#0F8B8D]/30 shadow-sm transition-all w-full">
+    <div className="relative overflow-hidden bg-white rounded-2xl sm:rounded-3xl border-2 border-[#0F8B8D]/30 shadow-[0_10px_24px_-4px_rgba(18,59,93,0.16)] transition-all w-full">
       {/* Top Gradient Active Beacon */}
       <div className="h-1.5 sm:h-2 bg-gradient-to-r from-[#123B5D] via-[#0F8B8D] to-[#16A34A] animate-pulse" />
 

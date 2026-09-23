@@ -82,16 +82,23 @@ export function JobRequestFeed({
         </div>
       )}
 
-      {/* JOB REQUESTS LIST OR LIVE RADAR WHEN EMPTY */}
+      {/* JOB REQUESTS LIST WITH REDUCED THICKNESS DIVIDER BETWEEN REQUESTS */}
       {filteredJobs.length > 0 ? (
-        <div className="flex flex-col w-full gap-3 sm:gap-4">
-          {filteredJobs.map((job) => (
-            <JobRequestCard
-              key={job.id}
-              job={job}
-              onClick={handleCardClick}
-              onHide={handleHideJob}
-            />
+        <div className="flex flex-col w-full">
+          {filteredJobs.map((job, index) => (
+            <div key={job.id} className="w-full">
+              <JobRequestCard
+                job={job}
+                onClick={handleCardClick}
+                onHide={handleHideJob}
+              />
+              {index < filteredJobs.length - 1 && (
+                <div
+                  className="w-full h-[3px] rounded-full bg-slate-200/80 my-3.5"
+                  aria-hidden="true"
+                />
+              )}
+            </div>
           ))}
         </div>
       ) : (

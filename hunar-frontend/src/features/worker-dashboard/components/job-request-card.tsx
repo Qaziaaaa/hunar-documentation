@@ -173,7 +173,7 @@ export function JobRequestCard({
           transform: `translateX(${offsetX}px)`,
           transition: isDragging ? "none" : "transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1)",
         }}
-        className="group relative flex w-full cursor-pointer select-none gap-2.5 sm:gap-3.5 bg-white p-3 sm:p-4 border-b-2 border-slate-300 last:border-b-0 transition-colors hover:bg-slate-50/80 active:scale-[0.995]"
+        className="group relative flex w-full cursor-pointer select-none gap-2.5 sm:gap-3.5 bg-white p-3 sm:p-4 rounded-xl shadow-[0_6px_14px_-3px_rgba(18,59,93,0.12)] hover:shadow-[0_10px_20px_-3px_rgba(18,59,93,0.18)] transition-all hover:bg-slate-50/80 active:scale-[0.995]"
         data-purpose="job-request-card"
       >
         {/* LEFT SIDE — Customer Profile */}

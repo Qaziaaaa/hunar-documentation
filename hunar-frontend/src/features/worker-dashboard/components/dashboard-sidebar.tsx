@@ -4,14 +4,15 @@ import {
   LayoutDashboard,
   Briefcase,
   Wallet,
-  MessageSquare,
+  TrendingUp,
   User,
-  ShieldCheck,
   ChevronRight,
   X,
 } from "lucide-react";
 import type { DashboardTab, WorkerDashboardProfile } from "../types";
 import { OrderworkerLogo } from "@/components/shared/orderworker-logo";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { RatingStars } from "@/components/shared/rating-stars";
 
 export function DashboardSidebar({
   activeTab,
@@ -46,18 +47,17 @@ export function DashboardSidebar({
       ],
     },
     {
-      heading: "Finances & Comms",
+      heading: "Finances & Earnings",
       items: [
         {
-          id: "earnings" as DashboardTab,
-          label: "Earnings & Wallet",
+          id: "wallet" as DashboardTab,
+          label: "Wallet",
           icon: Wallet,
         },
         {
-          id: "chat" as DashboardTab,
-          label: "Messages",
-          icon: MessageSquare,
-          badge: unreadNotificationsCount > 0 ? unreadNotificationsCount : undefined,
+          id: "earnings" as DashboardTab,
+          label: "Earnings",
+          icon: TrendingUp,
         },
       ],
     },
@@ -80,37 +80,35 @@ export function DashboardSidebar({
     }
   };
 
+  const ratingValue = profile.rating ?? 4.8;
+  const completedCount = profile.completedJobsCount ?? 14;
+
   return (
     <>
-      {/* Mobile Drawer Backdrop */}
+      {/* Mobile Drawer Backdrop (z-40 behind sidebar z-50) */}
       {isOpen && (
         <div
           onClick={onClose}
-          className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs lg:hidden transition-opacity"
+          className="fixed inset-0 z-40 bg-slate-900/60 backdrop-blur-xs lg:hidden transition-opacity"
         />
       )}
 
-      {/* Sidebar (Desktop static / Mobile slide-over drawer) */}
+      {/* Full-Height Fixed Desktop Sidebar / Slide-over Mobile Drawer (z-50) */}
       <aside
-        className={`fixed lg:static top-0 start-0 z-50 lg:z-auto h-full min-h-screen w-64 shrink-0 flex flex-col justify-between border-r border-slate-200 bg-white p-4 transition-transform duration-300 ${
+        className={`fixed top-0 start-0 z-50 h-screen w-64 shrink-0 flex flex-col justify-between border-r border-slate-200 bg-white p-4 transition-transform duration-300 overflow-hidden ${
           isOpen
-            ? "translate-x-0 shadow-2xl"
+            ? "translate-x-0 shadow-2xl flex"
             : "-translate-x-full lg:translate-x-0 hidden lg:flex"
         }`}
       >
         <div className="space-y-6">
           {/* Brand Logo & Portal Tag + Mobile Close button */}
           <div className="flex items-center justify-between px-2 py-1 border-b border-slate-100 pb-3 lg:border-none lg:pb-0">
-            <div className="flex flex-col gap-1">
+            <div className="flex flex-col gap-0.5">
               <OrderworkerLogo variant="dark" size="sm" />
-              <div className="flex items-center gap-1.5 pl-0.5">
-                <span className="rounded-full bg-[#0F8B8D]/15 px-2 py-0.2 text-[10px] font-extrabold uppercase tracking-wide text-[#0F8B8D]">
-                  PRO
-                </span>
-                <p className="text-[11px] font-medium text-slate-500">
-                  Worker Portal · Peshawar
-                </p>
-              </div>
+              <p className="text-[11px] font-medium text-slate-500 pl-0.5">
+                Worker Portal · Peshawar
+              </p>
             </div>
 
             {onClose && (
@@ -183,15 +181,47 @@ export function DashboardSidebar({
           </nav>
         </div>
 
-        {/* Footer Support Info */}
-        <div className="border-t border-slate-100 pt-3 text-[11px] space-y-1 px-1">
-          <div className="flex items-center gap-1.5 font-bold text-[#123B5D]">
-            <ShieldCheck className="size-3.5 text-[#0F8B8D]" />
-            <span>Orderworker Verified Portal</span>
-          </div>
-          <p className="text-[10px] text-slate-400">
-            Peshawar Pro Network · v1.0
-          </p>
+        {/* Worker Profile Section at Very Bottom */}
+        <div className="border-t border-slate-100 pt-3">
+          <button
+            type="button"
+            onClick={() => handleItemClick("profile")}
+            className={`group w-full text-start flex items-center justify-between gap-2.5 rounded-xl border p-2.5 transition-all cursor-pointer ${
+              activeTab === "profile"
+                ? "border-[#0F8B8D]/30 bg-[#0F8B8D]/10"
+                : "border-slate-100 bg-slate-50/80 hover:bg-slate-100 hover:border-slate-200"
+            }`}
+          >
+            <div className="flex items-center gap-2.5 min-w-0 flex-1">
+              <Avatar className="size-9 border border-[#0F8B8D]/20 shrink-0">
+                {profile.avatarUrl ? (
+                  <AvatarImage src={profile.avatarUrl} alt={profile.fullName} />
+                ) : null}
+                <AvatarFallback className="bg-[#0F8B8D]/10 font-bold text-[#0F8B8D] text-xs">
+                  {profile.fullName ? profile.fullName[0].toUpperCase() : "W"}
+                </AvatarFallback>
+              </Avatar>
+
+              <div className="min-w-0 flex-1 space-y-0.5">
+                <p className="text-xs font-bold text-[#123B5D] truncate leading-tight">
+                  {profile.fullName || "Worker Profile"}
+                </p>
+
+                <div className="flex items-center gap-1">
+                  <RatingStars rating={ratingValue} size="size-3" />
+                  <span className="text-[10px] font-bold text-[#123B5D]">
+                    {ratingValue.toFixed(1)}
+                  </span>
+                </div>
+
+                <p className="text-[10px] font-medium text-slate-500">
+                  {completedCount} Completed Orders
+                </p>
+              </div>
+            </div>
+
+            <ChevronRight className="size-4 text-slate-400 group-hover:text-[#0F8B8D] shrink-0 transition-colors" />
+          </button>
         </div>
       </aside>
     </>
