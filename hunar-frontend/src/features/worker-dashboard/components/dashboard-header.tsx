@@ -1,6 +1,6 @@
 "use client";
 
-import { Globe, Radio, LayoutList } from "lucide-react";
+import { Globe, Menu } from "lucide-react";
 import { cn } from "cn";
 import { usePathname, useRouter } from "@/i18n/navigation";
 import { useLocale } from "next-intl";
@@ -15,23 +15,21 @@ export function DashboardHeader({
   notifications,
   searchQuery,
   isOnline,
-  viewMode = "feed",
   onToggleOnline,
   onSearchChange,
   onSelectTab,
   onMarkNotificationsRead,
-  onSelectViewMode,
+  onOpenSidebar,
 }: {
   profile?: WorkerDashboardProfile;
   notifications?: DashboardNotification[];
   searchQuery?: string;
   isOnline: boolean;
-  viewMode?: "feed" | "radar";
-  onToggleOnline: () => void;
+  onToggleOnline: (status?: boolean) => void;
   onSearchChange?: (q: string) => void;
   onSelectTab?: (tab: DashboardTab) => void;
   onMarkNotificationsRead?: () => void;
-  onSelectViewMode?: (mode: "feed" | "radar") => void;
+  onOpenSidebar?: () => void;
 }) {
   const locale = useLocale();
   const router = useRouter();
@@ -44,70 +42,53 @@ export function DashboardHeader({
 
   return (
     <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/95 backdrop-blur-md">
-      <div className="relative mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6">
-        {/* LEFT: Screen Switch Toggle (Feed vs Radar) */}
+      <div className="relative mx-auto flex max-w-7xl items-center justify-between px-3 sm:px-6 py-2.5 sm:py-3 gap-2">
+        {/* LEFT: Mobile Menu Button */}
         <div className="flex items-center">
-          {onSelectViewMode && (
-            <div className="flex items-center rounded-full border border-slate-200 bg-slate-100/90 p-1 shadow-2xs">
-              <button
-                type="button"
-                onClick={() => onSelectViewMode("feed")}
-                className={cn(
-                  "flex size-8 items-center justify-center rounded-full transition-all cursor-pointer",
-                  viewMode === "feed"
-                    ? "bg-navy text-white shadow-xs"
-                    : "text-slate-500 hover:text-navy"
-                )}
-                title="Job Requests Feed"
-                aria-label="Job Requests Feed"
-              >
-                <LayoutList className="size-4" />
-              </button>
-              <button
-                type="button"
-                onClick={() => onSelectViewMode("radar")}
-                className={cn(
-                  "flex size-8 items-center justify-center rounded-full transition-all cursor-pointer",
-                  viewMode === "radar"
-                    ? "bg-teal text-white shadow-xs"
-                    : "text-slate-500 hover:text-teal"
-                )}
-                title="Radar Searching Screen"
-                aria-label="Radar Searching Screen"
-              >
-                <Radio className="size-4" />
-              </button>
-            </div>
+          {onOpenSidebar && (
+            <button
+              type="button"
+              onClick={onOpenSidebar}
+              className="lg:hidden size-9 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 flex items-center justify-center transition-colors cursor-pointer"
+              title="Open Navigation Menu"
+              aria-label="Open Navigation Menu"
+            >
+              <Menu className="size-5" />
+            </button>
           )}
         </div>
 
         {/* MID: Online / Offline Segmented Toggle */}
         <div className="flex items-center justify-center">
-          <button
-            type="button"
-            role="switch"
-            aria-checked={isOnline}
-            onClick={onToggleOnline}
-            className="flex items-center rounded-full border-2 border-slate-200 bg-white p-1 cursor-pointer transition-all hover:border-slate-300 shadow-2xs"
-            title={isOnline ? "Tap to go Offline" : "Tap to go Online"}
+          <div
+            className="flex items-center rounded-full border-2 border-slate-200 bg-slate-100/90 p-1 shadow-2xs select-none"
+            title={isOnline ? "Current Status: Online (Tap Offline to disconnect)" : "Current Status: Offline (Tap Online to connect)"}
           >
-            <span
+            <button
+              type="button"
+              onClick={() => onToggleOnline(false)}
               className={cn(
-                "flex items-center gap-1 rounded-full px-3.5 py-1 text-xs font-extrabold uppercase tracking-wide transition-colors duration-200",
-                !isOnline ? "bg-red-500 text-white shadow-sm" : "text-slate-400"
+                "flex items-center gap-1 rounded-full px-3.5 py-1 text-xs font-extrabold uppercase tracking-wide transition-all cursor-pointer active:scale-95",
+                !isOnline
+                  ? "bg-red-500 text-white shadow-xs"
+                  : "text-slate-500 hover:text-red-600"
               )}
             >
               Offline
-            </span>
-            <span
+            </button>
+            <button
+              type="button"
+              onClick={() => onToggleOnline(true)}
               className={cn(
-                "flex items-center gap-1 rounded-full px-3.5 py-1 text-xs font-extrabold uppercase tracking-wide transition-colors duration-200",
-                isOnline ? "bg-[#16A34A] text-white shadow-sm" : "text-slate-400"
+                "flex items-center gap-1 rounded-full px-3.5 py-1 text-xs font-extrabold uppercase tracking-wide transition-all cursor-pointer active:scale-95",
+                isOnline
+                  ? "bg-[#16A34A] text-white shadow-xs"
+                  : "text-slate-500 hover:text-[#16A34A]"
               )}
             >
               Online
-            </span>
-          </button>
+            </button>
+          </div>
         </div>
 
         {/* RIGHT: Urdu / English Language Switcher */}

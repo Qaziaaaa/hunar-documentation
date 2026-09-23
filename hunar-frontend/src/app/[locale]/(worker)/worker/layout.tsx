@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
-import { WorkerShell } from "@/components/worker/worker-shell";
 
 export async function generateMetadata({
   params,
@@ -17,5 +16,5 @@ export default function WorkerLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return <WorkerShell>{children}</WorkerShell>;
+  return <>{children}</>;
 }

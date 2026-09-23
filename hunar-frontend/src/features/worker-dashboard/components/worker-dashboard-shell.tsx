@@ -1,12 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useRouter, usePathname } from "@/i18n/navigation";
 import { Briefcase, MessageSquare, Settings, Wallet } from "lucide-react";
+import { http } from "@/lib/api-client";
 import { DashboardHeader } from "./dashboard-header";
 import { DashboardSidebar } from "./dashboard-sidebar";
 import { JobRequestFeed } from "./job-request-feed";
 import { RadarSearchView } from "./radar-search-view";
 import { MobileNavBar } from "./mobile-nav-bar";
+import { WorkerJobsHub } from "@/features/jobs/components/worker-jobs-hub";
 import {
   INITIAL_WORKER_PROFILE,
   INITIAL_NOTIFICATIONS,
@@ -21,6 +24,9 @@ function loadInitialProfile(): WorkerDashboardProfile {
   if (typeof window === "undefined") return INITIAL_WORKER_PROFILE;
   try {
     const saved = window.localStorage.getItem("hunar_worker_onboarding");
+    const savedOnline = window.localStorage.getItem("hunar_worker_online");
+    const isOnline = savedOnline !== null ? savedOnline === "true" : INITIAL_WORKER_PROFILE.isOnline;
+
     if (saved) {
       const parsed = JSON.parse(saved);
       if (parsed.fullName) {
@@ -32,31 +38,111 @@ function loadInitialProfile(): WorkerDashboardProfile {
           serviceAreas: parsed.serviceAreas?.length ? parsed.serviceAreas : INITIAL_WORKER_PROFILE.serviceAreas,
           bio: parsed.bio || INITIAL_WORKER_PROFILE.bio,
           experienceYears: Number(parsed.experienceYears) || INITIAL_WORKER_PROFILE.experienceYears,
+          isOnline,
         };
       }
     }
+    return {
+      ...INITIAL_WORKER_PROFILE,
+      isOnline,
+    };
   } catch {
     // ignore
   }
   return INITIAL_WORKER_PROFILE;
 }
 
-export function WorkerDashboardShell() {
+export function WorkerDashboardShell({
+  initialTab = "dashboard",
+}: {
+  initialTab?: DashboardTab;
+} = {}) {
+  const router = useRouter();
+  const pathname = usePathname();
+
   const [profile, setProfile] = useState<WorkerDashboardProfile>(
     loadInitialProfile
   );
-  const [activeTab, setActiveTab] = useState<DashboardTab>("dashboard");
-  const [viewMode, setViewMode] = useState<"feed" | "radar">("feed");
+  const [activeTab, setActiveTab] = useState<DashboardTab>(initialTab);
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [notifications, setNotifications] = useState<DashboardNotification[]>(
     INITIAL_NOTIFICATIONS
   );
 
-  const handleToggleOnline = () => {
-    setProfile((prev) => ({
-      ...prev,
-      isOnline: !prev.isOnline,
-    }));
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+
+  // Synchronize activeTab with URL pathname
+  useEffect(() => {
+    if (pathname.includes("/worker/jobs")) {
+      setActiveTab("jobs");
+    } else if (pathname.includes("/worker/dashboard") || pathname.endsWith("/worker")) {
+      setActiveTab("dashboard");
+    }
+  }, [pathname]);
+
+  const handleSelectTab = (tab: DashboardTab) => {
+    setActiveTab(tab);
+    setIsMobileSidebarOpen(false);
+    if (tab === "dashboard") {
+      router.push("/worker");
+    } else if (tab === "jobs") {
+      router.push("/worker/jobs");
+    }
+  };
+
+  // Sync profile & online status from live backend on mount
+  useEffect(() => {
+    async function syncBackendProfile() {
+      try {
+        const raw = await http.get<any>("/users/worker/me");
+        const data = raw?.data ?? raw;
+        if (data?.user) {
+          const wp = data.workerProfile;
+          const areas = data.serviceAreas?.map((a: any) => a.label) || [];
+          setProfile((prev) => ({
+            ...prev,
+            id: data.user.id || prev.id,
+            workerId: data.user.id ? `WRK-${data.user.id.slice(0, 8).toUpperCase()}` : prev.workerId,
+            fullName: data.user.name || prev.fullName,
+            phone: data.user.phone || prev.phone,
+            avatarUrl: data.user.avatarUrl || prev.avatarUrl,
+            skills: wp?.skills?.length ? wp.skills : prev.skills,
+            serviceAreas: areas.length ? areas : prev.serviceAreas,
+            bio: wp?.bio || prev.bio,
+            experienceYears: Number(wp?.experienceYears) || prev.experienceYears,
+            isOnline: wp?.isAvailable ?? prev.isOnline,
+            isVerified: wp?.verificationStatus === "APPROVED",
+          }));
+        }
+      } catch (err) {
+        console.warn("[WorkerDashboardShell] Syncing live profile:", err);
+      }
+    }
+    syncBackendProfile();
+  }, []);
+
+  const handleToggleOnline = (targetStatus?: boolean) => {
+    setProfile((prev) => {
+      const nextStatus = typeof targetStatus === "boolean" ? targetStatus : !prev.isOnline;
+
+      if (typeof window !== "undefined") {
+        try {
+          window.localStorage.setItem("hunar_worker_online", String(nextStatus));
+        } catch {
+          // ignore
+        }
+      }
+
+      // Sync with server in background without breaking UI
+      http.put("/users/worker/availability", { isAvailable: nextStatus }).catch((err) => {
+        console.warn("[handleToggleOnline] Server sync notice:", err);
+      });
+
+      return {
+        ...prev,
+        isOnline: nextStatus,
+      };
+    });
   };
 
   const handleMarkNotificationsRead = () => {
@@ -85,20 +171,20 @@ export function WorkerDashboardShell() {
   const placeholder = placeholderTabs[activeTab];
 
   const renderMainContent = () => {
-    if (activeTab === "dashboard" || activeTab === "jobs") {
-      return viewMode === "feed" ? (
-        <JobRequestFeed
-          searchQuery={searchQuery}
-          city={profile.city}
-          isOnline={profile.isOnline}
-        />
-      ) : (
-        <RadarSearchView
-          city={profile.city}
-          workerName={profile.fullName.split(" ")[0]}
-          onViewFeed={() => setViewMode("feed")}
-        />
+    if (activeTab === "dashboard") {
+      return (
+        <div className="space-y-4 max-w-7xl mx-auto w-full animate-in fade-in duration-200">
+          <JobRequestFeed
+            searchQuery={searchQuery}
+            city={profile.city}
+            isOnline={profile.isOnline}
+          />
+        </div>
       );
+    }
+
+    if (activeTab === "jobs") {
+      return <WorkerJobsHub />;
     }
 
     const PlaceholderIcon = placeholder?.icon ?? Briefcase;
@@ -121,39 +207,40 @@ export function WorkerDashboardShell() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-background text-foreground pb-20 md:pb-8">
+    <div className="min-h-screen flex flex-col bg-white text-slate-900 pb-20 md:pb-8">
       {/* Top Header */}
       <DashboardHeader
         profile={profile}
         notifications={notifications}
         searchQuery={searchQuery}
         isOnline={profile.isOnline}
-        viewMode={viewMode}
         onToggleOnline={handleToggleOnline}
         onSearchChange={setSearchQuery}
-        onSelectTab={setActiveTab}
+        onSelectTab={handleSelectTab}
         onMarkNotificationsRead={handleMarkNotificationsRead}
-        onSelectViewMode={setViewMode}
+        onOpenSidebar={() => setIsMobileSidebarOpen(true)}
       />
 
       {/* Sidebar + Main Content Area */}
-      <div className="flex flex-1 items-stretch">
+      <div className="flex flex-1 items-stretch bg-white">
         <DashboardSidebar
           activeTab={activeTab}
-          onSelectTab={setActiveTab}
+          onSelectTab={handleSelectTab}
           profile={profile}
           unreadNotificationsCount={unreadNotificationsCount}
+          isOpen={isMobileSidebarOpen}
+          onClose={() => setIsMobileSidebarOpen(false)}
         />
 
-        <main className="flex-1 px-2.5 sm:px-4 py-3 sm:py-4">
+        <main className="flex-1 bg-white px-2.5 sm:px-4 py-3 sm:py-4">
           {renderMainContent()}
         </main>
       </div>
 
-      {/* Mobile Bottom Navigation Bar */}
+      {/* Mobile Bottom Navigation Bar (Only Home & Jobs) */}
       <MobileNavBar
         activeTab={activeTab}
-        onSelectTab={setActiveTab}
+        onSelectTab={handleSelectTab}
         activeJobsCount={profile.activeJobsCount}
       />
     </div>
