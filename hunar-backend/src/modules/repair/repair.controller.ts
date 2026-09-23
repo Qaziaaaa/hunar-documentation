@@ -55,6 +55,17 @@ export class RepairController {
     return this.repairService.acceptRepair(id, user, dto);
   }
 
+  /** Task 23 — approve the repair estimate from the job contract. */
+  @Put('jobs/:jobId/repair/approve')
+  @Roles(Role.CUSTOMER)
+  approveForJob(
+    @CurrentUser() user: JwtPayload,
+    @Param('jobId', ParseUUIDPipe) jobId: string,
+    @Body() dto: RepairAcceptDto,
+  ) {
+    return this.repairService.approveRepairForJob(jobId, user, dto);
+  }
+
   @Put('repairs/:id/reject')
   @Roles(Role.CUSTOMER)
   reject(@CurrentUser() user: JwtPayload, @Param('id', ParseUUIDPipe) id: string) {

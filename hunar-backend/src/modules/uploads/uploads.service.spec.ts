@@ -1,5 +1,6 @@
 import { ForbiddenException, HttpException } from '@nestjs/common';
 import { ImageProcessor } from './processors/image.processor';
+import { VoiceProcessor } from './processors/voice.processor';
 import { CompressOptions } from './uploads.presets';
 import { StorageClient } from './storage/storage.interface';
 import { isDocumentResult, UploadsService } from './uploads.service';
@@ -41,12 +42,20 @@ function makeFile(overrides: Partial<Express.Multer.File> = {}): Express.Multer.
 describe('UploadsService', () => {
   let storage: jest.Mocked<StorageClient>;
   let processor: jest.Mocked<ImageProcessor>;
+  let voiceProcessor: jest.Mocked<VoiceProcessor>;
   let service: UploadsService;
 
   beforeEach(() => {
     storage = makeStorage();
     processor = makeProcessor();
-    service = new UploadsService(storage, processor);
+    voiceProcessor = {
+      process: jest.fn((input: Buffer, mimeType: string) => ({
+        data: Buffer.from(input),
+        mimeType,
+        sizeBytes: input.length,
+      })),
+    } as jest.Mocked<VoiceProcessor>;
+    service = new UploadsService(storage, processor, voiceProcessor);
   });
 
   describe('photo categories', () => {

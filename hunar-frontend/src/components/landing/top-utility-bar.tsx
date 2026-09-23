@@ -19,16 +19,13 @@ export function TopUtilityBar() {
             Currency:{" "}
             <strong className="text-white font-medium">PKR (Rs.)</strong>
           </span>
-          <a className="hover:text-white transition-colors" href="#">
+          <span className="text-slate-300">
             Help Center
-          </a>
-          <a
-            className="hover:text-white transition-colors flex items-center gap-1"
-            href="#lang"
-          >
+          </span>
+          <span className="text-slate-300 flex items-center gap-1">
             <GlobeIcon className="w-3.5 h-3.5" />
-            English / Urdu
-          </a>
+            English
+          </span>
         </div>
       </div>
     </aside>

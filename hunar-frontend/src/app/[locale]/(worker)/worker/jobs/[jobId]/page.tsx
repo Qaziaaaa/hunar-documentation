@@ -1,7 +1,6 @@
 "use client";
 
 import React, { use } from "react";
-import { notFound } from "next/navigation";
 import { useWorkerJobs } from "@/stores/worker-jobs-store";
 import { WorkerJourneyFullscreen } from "@/features/jobs/components/worker-journey-fullscreen";
 

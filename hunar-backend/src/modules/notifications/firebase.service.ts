@@ -1,6 +1,6 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import * as admin from 'firebase-admin';
+import { getApps, initializeApp, cert } from 'firebase-admin/app';
 
 export interface PushNotificationPayload {
   title: string;
@@ -22,7 +22,7 @@ export class FirebaseService implements OnModuleInit {
   private messaging: any = null;
   private initialized = false;
 
-  constructor(private readonly configService: ConfigService) { }
+  constructor(private readonly configService: ConfigService) {}
 
   async onModuleInit(): Promise<void> {
     await this.initialize();
@@ -38,9 +38,9 @@ export class FirebaseService implements OnModuleInit {
 
       const { getMessaging } = await import('firebase-admin/messaging');
 
-      if (!admin.apps.length) {
-        admin.initializeApp({
-          credential: admin.credential.cert({
+      if (!getApps().length) {
+        initializeApp({
+          credential: cert({
             projectId: firebaseConfig.projectId,
             clientEmail: firebaseConfig.clientEmail,
             privateKey: firebaseConfig.privateKey?.replace(/\\n/g, '\n'),
@@ -92,7 +92,9 @@ export class FirebaseService implements OnModuleInit {
     }
   }
 
-  async sendMulticastPushNotification(payload: MulticastPushNotificationPayload): Promise<{ successCount: number; failureCount: number }> {
+  async sendMulticastPushNotification(
+    payload: MulticastPushNotificationPayload,
+  ): Promise<{ successCount: number; failureCount: number }> {
     if (!this.initialized || !this.messaging) {
       this.logger.warn('Firebase not initialized. Skipping multicast push notification.');
       return { successCount: 0, failureCount: payload.tokens.length };
@@ -123,7 +125,9 @@ export class FirebaseService implements OnModuleInit {
       };
 
       const response = await this.messaging.sendEachForMulticast(message);
-      this.logger.debug(`Multicast push sent: ${response.successCount} success, ${response.failureCount} failed`);
+      this.logger.debug(
+        `Multicast push sent: ${response.successCount} success, ${response.failureCount} failed`,
+      );
       return { successCount: response.successCount, failureCount: response.failureCount };
     } catch (error) {
       this.logger.error('Failed to send multicast push notification', error);
@@ -131,7 +135,10 @@ export class FirebaseService implements OnModuleInit {
     }
   }
 
-  async sendToTopic(topic: string, payload: Omit<PushNotificationPayload, 'token'>): Promise<string | null> {
+  async sendToTopic(
+    topic: string,
+    payload: Omit<PushNotificationPayload, 'token'>,
+  ): Promise<string | null> {
     if (!this.initialized || !this.messaging) {
       this.logger.warn('Firebase not initialized. Skipping topic push notification.');
       return null;

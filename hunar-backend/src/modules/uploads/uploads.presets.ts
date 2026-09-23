@@ -9,6 +9,7 @@ export enum UploadCategory {
   WORKER_DOCUMENT = 'worker-document',
   CNIC_DOCUMENT = 'cnic-document',
   WALLET_SCREENSHOT = 'wallet-screenshot',
+  VOICE_NOTE = 'voice-note',
 }
 
 export interface CompressOptions {
@@ -26,6 +27,16 @@ export interface UploadPreset {
 }
 
 const IMAGE_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+
+const AUDIO_MIME_TYPES = [
+  'audio/mpeg',
+  'audio/mp3',
+  'audio/ogg',
+  'audio/wav',
+  'audio/webm',
+  'audio/mp4',
+  'audio/x-m4a',
+];
 
 const MB = 1024 * 1024;
 
@@ -86,6 +97,13 @@ export const UPLOAD_PRESETS: Record<UploadCategory, UploadPreset> = {
     maxBytes: 5 * MB,
     compress: { maxSizePx: 1600, quality: 80 },
   },
+  [UploadCategory.VOICE_NOTE]: {
+    category: UploadCategory.VOICE_NOTE,
+    folder: 'voice-notes',
+    isDocument: false,
+    allowedMimeTypes: AUDIO_MIME_TYPES,
+    maxBytes: 10 * MB,
+  },
 };
 
 export interface MulterUploadOptions {
@@ -118,6 +136,31 @@ export function multerOptions(category: UploadCategory): MulterUploadOptions {
   };
 }
 
+/**
+ * Permissive filter for the generic POST /uploads dispatcher: accepts every mime
+ * type covered by the presets; the service then validates against the category.
+ */
+export function multerGenericOptions(): MulterUploadOptions {
+  const allowed = [...new Set(Object.values(UPLOAD_PRESETS).flatMap((p) => p.allowedMimeTypes))];
+  const maxBytes = Math.max(...Object.values(UPLOAD_PRESETS).map((p) => p.maxBytes));
+  return {
+    storage: memoryStorage(),
+    limits: { fileSize: maxBytes, files: 1 },
+    fileFilter: (_req, file, cb) => {
+      if (!allowed.includes(file.mimetype)) {
+        return cb(
+          new HttpException(
+            `UNSUPPORTED_FILE_TYPE: this endpoint accepts ${allowed.join(', ')}`,
+            HttpStatus.UNSUPPORTED_MEDIA_TYPE,
+          ),
+          false,
+        );
+      }
+      return cb(null, true);
+    },
+  };
+}
+
 export function extensionFromMime(mimeType: string): string {
   switch (mimeType) {
     case 'image/jpeg':
@@ -126,6 +169,19 @@ export function extensionFromMime(mimeType: string): string {
       return 'png';
     case 'image/webp':
       return 'webp';
+    case 'audio/mpeg':
+    case 'audio/mp3':
+      return 'mp3';
+    case 'audio/ogg':
+      return 'ogg';
+    case 'audio/wav':
+      return 'wav';
+    case 'audio/webm':
+      return 'webm';
+    case 'audio/mp4':
+      return 'm4a';
+    case 'audio/x-m4a':
+      return 'm4a';
     default:
       return 'bin';
   }

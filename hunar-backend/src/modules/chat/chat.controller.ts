@@ -16,6 +16,24 @@ export class ChatController {
     return this.chatService.listConversations(user.sub);
   }
 
+  /** Task 26 — GET /chat/[jobId] (documented customer contract). */
+  @Get(':jobId')
+  @Roles(Role.WORKER, Role.CUSTOMER)
+  getMessagesByJob(
+    @CurrentUser() user: JwtPayload,
+    @Param('jobId', ParseUUIDPipe) jobId: string,
+    @Query() query: MessageListQueryDto,
+  ) {
+    return this.chatService.getMessagesByJob(jobId, user.sub, query);
+  }
+
+  /** Task 26 — POST /chat/send (documented customer contract). */
+  @Post('send')
+  @Roles(Role.WORKER, Role.CUSTOMER)
+  sendByJob(@CurrentUser() user: JwtPayload, @Body() dto: SendMessageDto & { jobId: string }) {
+    return this.chatService.sendMessageByJob(dto.jobId, user.sub, dto);
+  }
+
   @Get(':conversationId/messages')
   @Roles(Role.WORKER, Role.CUSTOMER)
   getMessages(

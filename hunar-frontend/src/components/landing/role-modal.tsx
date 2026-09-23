@@ -74,8 +74,8 @@ function RoleModalContent({
             </p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-            <a
-              href="#"
+            <Link
+              href="/customer/sign-in"
               className="group relative flex flex-col justify-between p-5 sm:p-6 rounded-2xl border-2 border-slate-200/90 bg-white hover:border-[#5BBB7B] hover:shadow-xl transition-all duration-200 cursor-pointer overflow-hidden"
             >
               <div className="absolute top-0 left-0 right-0 h-1 bg-[#1F4B3F] group-hover:bg-[#5BBB7B] transition-colors" />
@@ -116,7 +116,7 @@ function RoleModalContent({
                   <ArrowRight className="w-[15px] h-[15px] group-hover:translate-x-1 transition-transform" />
                 </div>
               </div>
-            </a>
+            </Link>
             <Link
               href="/worker/onboarding"
               className="group relative flex flex-col justify-between p-5 sm:p-6 rounded-2xl border-2 border-slate-200/90 bg-white hover:border-[#D97706] hover:shadow-xl transition-all duration-200 cursor-pointer overflow-hidden"
@@ -160,8 +160,8 @@ function RoleModalContent({
                 </div>
               </div>
             </Link>
-            <a
-              href="#"
+            <Link
+              href="/admin/sign-in"
               className="group relative flex flex-col justify-between p-5 sm:p-6 rounded-2xl border-2 border-slate-200/90 bg-white hover:border-[#123B5D] hover:shadow-xl transition-all duration-200 cursor-pointer overflow-hidden"
             >
               <div className="absolute top-0 left-0 right-0 h-1 bg-[#123B5D] transition-colors" />
@@ -202,7 +202,7 @@ function RoleModalContent({
                   <ArrowRight className="w-[15px] h-[15px] group-hover:translate-x-1 transition-transform" />
                 </div>
               </div>
-            </a>
+            </Link>
           </div>
           <div className="mt-6 pt-3 border-t border-slate-100 text-center text-xs text-slate-400">
             Protected by SBP-compliant escrow guarantees and NADRA biometric

@@ -14,7 +14,15 @@ export class MapboxService {
 
   constructor(config: ConfigService) {
     const accessToken = config.get<string>('mapbox.accessToken', '');
-    this.client = accessToken ? geocodingFactory({ accessToken }) : null;
+    let client: GeocodingService | null = null;
+    if (accessToken) {
+      try {
+        client = geocodingFactory({ accessToken });
+      } catch {
+        client = null;
+      }
+    }
+    this.client = client;
   }
 
   /**

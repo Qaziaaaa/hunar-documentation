@@ -33,9 +33,7 @@ export class WalletListener {
   /** A cancelled job returns any pending held commission to the worker. */
   @OnEvent('job.cancelled')
   async handleJobCancelled(payload: { jobId: string; reason?: string }) {
-    await this.safe('reverse commission', () =>
-      this.wallet.reverseCommissionForJob(payload.jobId),
-    );
+    await this.safe('reverse commission', () => this.wallet.reverseCommissionForJob(payload.jobId));
   }
 
   /** A completed job credits the worker's gross visit charge as earnings. */
@@ -48,9 +46,7 @@ export class WalletListener {
       select: { status: true },
     });
     if (job?.status !== 'COMPLETED') return;
-    await this.safe('record earnings', () =>
-      this.wallet.recordEarningsForJob(payload.jobId),
-    );
+    await this.safe('record earnings', () => this.wallet.recordEarningsForJob(payload.jobId));
   }
 
   private async safe(name: string, fn: () => Promise<unknown>): Promise<void> {

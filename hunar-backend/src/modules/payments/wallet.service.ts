@@ -58,7 +58,11 @@ export class WalletService {
     });
   }
 
-  private snapshot(wallet: { userId: string; balance: unknown; heldBalance: unknown }): WalletSnapshot {
+  private snapshot(wallet: {
+    userId: string;
+    balance: unknown;
+    heldBalance: unknown;
+  }): WalletSnapshot {
     const balance = Number(wallet.balance);
     const heldBalance = Number(wallet.heldBalance);
     return {
@@ -82,7 +86,10 @@ export class WalletService {
     return this.snapshot(wallet);
   }
 
-  async getLedger(userId: string, query: { page?: number; limit?: number; type?: WalletLedgerType }) {
+  async getLedger(
+    userId: string,
+    query: { page?: number; limit?: number; type?: WalletLedgerType },
+  ) {
     return this.ledger.listForWorker(userId, query);
   }
 
@@ -144,7 +151,12 @@ export class WalletService {
       amount: Number(topUp.amount),
       status: 'PENDING',
     });
-    return { id: topUp.id, amount: Number(topUp.amount), status: topUp.status, createdAt: topUp.createdAt };
+    return {
+      id: topUp.id,
+      amount: Number(topUp.amount),
+      status: topUp.status,
+      createdAt: topUp.createdAt,
+    };
   }
 
   async getMyTopups(workerId: string, query: TopupQueryDto = {}) {
@@ -186,9 +198,7 @@ export class WalletService {
       throw new NotFoundException('Top-up not found');
     }
     if (topUp.status !== 'PENDING') {
-      throw new BadRequestException(
-        'TOPUP_ALREADY_DECIDED: top-up has already been processed',
-      );
+      throw new BadRequestException('TOPUP_ALREADY_DECIDED: top-up has already been processed');
     }
 
     if (dto.action === 'REJECTED') {
@@ -325,7 +335,13 @@ export class WalletService {
           note: `Commission held for job ${jobId}`,
           idempotencyKey: `hold:${jobId}`,
         });
-        return { commissionId: commission.id, held: true, amount, balanceAfter: newBalance, heldAfter: newHeld };
+        return {
+          commissionId: commission.id,
+          held: true,
+          amount,
+          balanceAfter: newBalance,
+          heldAfter: newHeld,
+        };
       });
 
       this.eventBus.emit('commission.held', {
@@ -456,7 +472,10 @@ export class WalletService {
       select: { id: true, workerId: true, amount: true, status: true },
     });
     if (!commission || commission.status !== 'PENDING') {
-      return { reversed: false, reason: commission?.status === 'RECEIVED' ? 'ALREADY_CONFIRMED' : 'NOT_HELD' };
+      return {
+        reversed: false,
+        reason: commission?.status === 'RECEIVED' ? 'ALREADY_CONFIRMED' : 'NOT_HELD',
+      };
     }
     const workerId = commission.workerId;
     const amount = Number(commission.amount);
@@ -500,7 +519,12 @@ export class WalletService {
         return { balanceAfter: newBalance, heldAfter: newHeld, amount };
       });
 
-      this.eventBus.emit('commission.reversed', { commissionId: commission.id, jobId, workerId, amount });
+      this.eventBus.emit('commission.reversed', {
+        commissionId: commission.id,
+        jobId,
+        workerId,
+        amount,
+      });
       this.realtime.emitToRoom(walletRoom(workerId), WALLET_EVENTS.commissionReversed, {
         jobId,
         commissionId: commission.id,
