@@ -58,6 +58,37 @@ export class ChatService {
     });
   }
 
+  /**
+   * Task 26 — resolve the conversation for a job (conversation is keyed by the
+   * unique jobId and created when the offer is accepted), then return its messages.
+   */
+  async getMessagesByJob(jobId: string, userId: string, query: MessageListQueryDto = {}) {
+    const conversation = await this.getConversationByJob(jobId, userId);
+    return this.getMessages(conversation.id, userId, query);
+  }
+
+  /**
+   * Task 26 — send a message to the conversation belonging to a job.
+   * Delegates to sendMessage so realtime + the chat.message event are preserved.
+   */
+  async sendMessageByJob(jobId: string, userId: string, dto: SendMessageDto) {
+    const conversation = await this.getConversationByJob(jobId, userId);
+    return this.sendMessage(conversation.id, userId, dto);
+  }
+
+  async getConversationByJob(jobId: string, userId: string) {
+    const conversation = await this.prisma.conversation.findUnique({ where: { jobId } });
+    if (!conversation) {
+      throw new NotFoundException('CONVERSATION_NOT_FOUND');
+    }
+    if (conversation.customerId !== userId && conversation.workerId !== userId) {
+      throw new ForbiddenException(
+        'CONVERSATION_ACCESS_FORBIDDEN: you are not part of this conversation',
+      );
+    }
+    return conversation;
+  }
+
   async getMessages(conversationId: string, userId: string, query: MessageListQueryDto = {}) {
     await this.ensureParticipant(conversationId, userId);
     const { page, limit, skip } = normalizePage(query);

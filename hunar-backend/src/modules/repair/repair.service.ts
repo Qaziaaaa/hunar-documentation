@@ -245,6 +245,22 @@ export class RepairService {
     return this.prisma.repair.update({ where: { id }, data: { status: 'REJECTED' } });
   }
 
+  /**
+   * Task 23 — approve the repair estimate from the job-level contract
+   * (`PUT /jobs/[id]/repair/approve`). Resolves the latest negotiable repair
+   * for the job and delegates to acceptRepair (price locking + state transition).
+   */
+  async approveRepairForJob(jobId: string, user: JwtPayload, dto: RepairAcceptDto) {
+    const repair = await this.prisma.repair.findFirst({
+      where: { jobId, status: { in: ['PROPOSED', 'COUNTERED'] } },
+      orderBy: { createdAt: 'desc' },
+    });
+    if (!repair) {
+      throw new NotFoundException('Repair not found: no pending estimate for this job');
+    }
+    return this.acceptRepair(repair.id, user, dto);
+  }
+
   async startRepair(id: string, user: JwtPayload) {
     const repair = await this.loadRepair(id);
     if (repair.workerId !== user.sub) {

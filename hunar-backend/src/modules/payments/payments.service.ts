@@ -50,7 +50,13 @@ export class PaymentsService {
     method: string;
     gateway?: string | null;
   }): string {
-    return [payment.jobId, payment.customerId, payment.workerId, payment.method, payment.gateway ?? ''].join(':');
+    return [
+      payment.jobId,
+      payment.customerId,
+      payment.workerId,
+      payment.method,
+      payment.gateway ?? '',
+    ].join(':');
   }
 
   async createPayment(customerId: string, dto: CreatePaymentDto): Promise<unknown> {
@@ -125,11 +131,11 @@ export class PaymentsService {
       workerId: job.selectedWorkerId!,
       amount: Number(payment.amount),
     });
-    await this.realtime?.emitToUsers?.(
-      [customerId, job.selectedWorkerId!],
-      'payment:initiated',
-      { paymentId: payment.id, jobId: job.id, amount: Number(payment.amount) },
-    );
+    await this.realtime?.emitToUsers?.([customerId, job.selectedWorkerId!], 'payment:initiated', {
+      paymentId: payment.id,
+      jobId: job.id,
+      amount: Number(payment.amount),
+    });
 
     return { paymentId: payment.id, status: payment.status, idempotent: false };
   }
@@ -148,7 +154,16 @@ export class PaymentsService {
         take,
         orderBy: { createdAt: 'desc' },
         include: {
-          job: { select: { id: true, title: true, status: true, area: true, city: true, createdAt: true } },
+          job: {
+            select: {
+              id: true,
+              title: true,
+              status: true,
+              area: true,
+              city: true,
+              createdAt: true,
+            },
+          },
           worker: { select: { id: true, name: true, phone: true, avatarUrl: true } },
         },
       }),

@@ -14,7 +14,15 @@ import {
   MaxLength,
   Min,
 } from 'class-validator';
-import { CommissionStatus, DisputeStatus, DisputeType, JobStatus, WalletLedgerType, WorkerVerificationStatus, WithdrawalStatus } from '@prisma/client';
+import {
+  CommissionStatus,
+  DisputeStatus,
+  DisputeType,
+  JobStatus,
+  WalletLedgerType,
+  WorkerVerificationStatus,
+  WithdrawalStatus,
+} from '@prisma/client';
 
 export const USER_STATUS_FILTERS = ['active', 'suspended'] as const;
 export type UserStatusFilter = (typeof USER_STATUS_FILTERS)[number];

@@ -4,19 +4,42 @@ import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { JwtPayload } from '../../common/types/jwt-payload.interface';
 import {
+  CreatePaymentDto,
+  CustomerPaymentsQueryDto,
   JobActionDto,
   TopupDecideDto,
   TopupDto,
   TopupQueryDto,
   WalletLedgerQueryDto,
 } from './payments.validation';
+import { PaymentsService } from './payments.service';
 import { WalletService } from './wallet.service';
 
 // Task 7 — Worker Wallet. All money endpoints are worker-scoped; the only
 // admin route is the top-up decision (Approve/Reject).
+// Task 17/18 — Customer payments (process + history) live on the same controller.
 @Controller()
 export class PaymentsController {
-  constructor(private readonly wallet: WalletService) {}
+  constructor(
+    private readonly wallet: WalletService,
+    private readonly payments: PaymentsService,
+  ) {}
+
+  // ----- Customer payments (Module 3 — Payments Backend) -----
+
+  /** Task 17 — Process a payment for a completed job (incl. house flow + idempotency). */
+  @Post('payments')
+  @Roles(Role.CUSTOMER)
+  processPayment(@CurrentUser() user: JwtPayload, @Body() dto: CreatePaymentDto) {
+    return this.payments.createPayment(user.sub, dto);
+  }
+
+  /** Task 18 — Payment history for the current customer. */
+  @Get('payments/customer')
+  @Roles(Role.CUSTOMER)
+  customerPayments(@CurrentUser() user: JwtPayload, @Query() query: CustomerPaymentsQueryDto) {
+    return this.payments.getCustomerPayments(user.sub, query);
+  }
 
   // ----- Wallet balance & ledger -----
 
@@ -72,7 +95,10 @@ export class PaymentsController {
 
   @Post('wallet/confirm-commission')
   @Roles(Role.WORKER)
-  confirmCommission(@CurrentUser() user: JwtPayload, @Body() dto: JobActionDto & { commissionId?: string }) {
+  confirmCommission(
+    @CurrentUser() user: JwtPayload,
+    @Body() dto: JobActionDto & { commissionId?: string },
+  ) {
     const commissionId = dto.commissionId ?? dto.jobId;
     return this.wallet.confirmCommission(dto.jobId, commissionId);
   }
