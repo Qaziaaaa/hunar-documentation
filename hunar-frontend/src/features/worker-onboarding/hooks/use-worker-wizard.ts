@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import { getStoredUser } from "@/lib/api-client";
 import type { WizardStep, WorkerProfileFormData } from "../types";
-import { submitWorkerProfile } from "../api/onboarding-api";
+import { fetchWorkerOnboardingProfile, submitWorkerProfile } from "../api/onboarding-api";
 
 const STORAGE_KEY = "hunar.worker_onboarding_draft";
 
@@ -37,7 +37,7 @@ export function useWorkerWizard() {
   const [stepError, setStepError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Initialize from storage or logged in user phone
+  // Initialize from storage and sync with server draft
   useEffect(() => {
     const storedUser = getStoredUser();
     const savedDraft = typeof window !== "undefined" ? window.localStorage.getItem(STORAGE_KEY) : null;
@@ -61,6 +61,34 @@ export function useWorkerWizard() {
         fullName: storedUser.name || prev.fullName,
       }));
     }
+
+    // Server profile sync
+    fetchWorkerOnboardingProfile().then((serverData) => {
+      if (!serverData) return;
+      setFormData((prev) => {
+        const cnicFrontDoc = serverData.documents?.find((d) => d.type === "CNIC_FRONT");
+        const cnicBackDoc = serverData.documents?.find((d) => d.type === "CNIC_BACK");
+        const certDoc = serverData.documents?.find((d) => d.type === "CERTIFICATE");
+        const areaLabels = serverData.serviceAreas?.map((a) => a.label) || [];
+
+        return {
+          ...prev,
+          fullName: serverData.user?.name || prev.fullName,
+          phone: serverData.user?.phone || prev.phone,
+          profilePhoto: serverData.user?.avatarUrl || prev.profilePhoto,
+          skills: serverData.workerProfile?.skills?.length ? serverData.workerProfile.skills : prev.skills,
+          experienceYears: serverData.workerProfile?.experienceYears ? String(serverData.workerProfile.experienceYears) : prev.experienceYears,
+          bio: serverData.workerProfile?.bio || prev.bio,
+          serviceAreas: areaLabels.length ? areaLabels : prev.serviceAreas,
+          cnicFront: cnicFrontDoc?.url || prev.cnicFront,
+          cnicFrontName: cnicFrontDoc?.fileName || prev.cnicFrontName,
+          cnicBack: cnicBackDoc?.url || prev.cnicBack,
+          cnicBackName: cnicBackDoc?.fileName || prev.cnicBackName,
+          certificateFile: certDoc?.url || prev.certificateFile,
+          certificateName: certDoc?.fileName || prev.certificateName,
+        };
+      });
+    });
   }, []);
 
   const updateFormData = useCallback((partial: Partial<WorkerProfileFormData>) => {
