@@ -28,6 +28,7 @@ export type JobStatus =
   | "repair_negotiating"
   | "repair_approved"
   | "repair_in_progress"
+  | "repair_declined"
   | "rejected"
   | "closed_assigned"
   | "cancelled";
