@@ -1,8 +1,13 @@
-import { Check, Clock, Home, LayoutDashboard } from "lucide-react";
+"use client";
+
+import { Check, Clock, LayoutDashboard } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import { buttonVariants } from "@/components/ui/button";
 
 export function OnboardingSuccess() {
+  const t = useTranslations("WorkerOnboarding.Success");
+
   return (
     <div className="flex flex-col justify-between flex-1 space-y-6 py-4 text-center">
       <div className="space-y-5">
@@ -14,11 +19,11 @@ export function OnboardingSuccess() {
         </div>
 
         <div>
-          <h2 className="text-3xl font-extrabold tracking-tight text-navy sm:text-4xl">
-            Profile Submitted! 🎉
+          <h2 className="text-3xl font-extrabold tracking-tight text-navy sm:text-4xl leading-snug">
+            {t("title")}
           </h2>
-          <p className="mx-auto mt-2 max-w-md text-sm sm:text-base leading-relaxed text-muted-foreground">
-            Thank you for joining Orderworker. Your verified photo, trade credentials, and Smart CNIC documents have been submitted successfully.
+          <p className="mx-auto mt-3 max-w-md text-sm sm:text-base leading-relaxed text-muted-foreground">
+            {t("subtitle")}
           </p>
         </div>
 
@@ -27,14 +32,14 @@ export function OnboardingSuccess() {
           <div className="mb-2 flex items-center justify-between">
             <div className="flex items-center gap-2 text-sm font-bold text-navy sm:text-base">
               <Clock className="size-4.5 text-orange" />
-              <span>Under Review</span>
+              <span>{t("underReview")}</span>
             </div>
             <span className="rounded-full border border-orange/30 bg-orange/10 px-2.5 py-0.5 text-xs font-bold text-orange">
-              Pending Admin Check
+              {t("pendingAdmin")}
             </span>
           </div>
           <p className="text-xs sm:text-sm leading-relaxed text-muted-foreground">
-            Our compliance team is verifying your Smart CNIC, photo match, and trade certificate with NADRA records. We will notify you via SMS when you are approved to receive customer visits.
+            {t("reviewNotice")}
           </p>
         </div>
       </div>
@@ -50,7 +55,7 @@ export function OnboardingSuccess() {
           })}
         >
           <Clock className="size-4.5" />
-          <span>Track Verification Status</span>
+          <span>{t("trackStatusBtn")}</span>
         </Link>
         <Link
           href="/worker/dashboard"
@@ -62,7 +67,7 @@ export function OnboardingSuccess() {
           })}
         >
           <LayoutDashboard className="size-4.5" />
-          <span>Go to Worker Portal</span>
+          <span>{t("portalBtn")}</span>
         </Link>
       </div>
     </div>

@@ -4,18 +4,13 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useWorkerJobs } from "@/stores/worker-jobs-store";
-import { JobCard } from "@/features/jobs/components/job-card";
 import { NearbyJobsFeed } from "@/features/jobs/components/nearby-jobs-feed";
 import { OfferStatusBadge } from "@/features/negotiation/components/offer-status-badge";
 import { formatRs } from "@/lib/design-tokens";
 import {
-  Briefcase,
   Compass,
   CheckCircle,
-  Clock,
   ArrowRight,
-  Layers,
-  Sparkles,
 } from "lucide-react";
 
 export default function WorkerJobsPage() {

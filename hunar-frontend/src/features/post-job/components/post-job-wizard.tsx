@@ -13,6 +13,7 @@ import { Step1ServiceSelect } from "./step-1-service-select";
 import { Step2JobDetails } from "./step-2-job-details";
 import { Step3LocationSchedule } from "./step-3-location-schedule";
 import { Step4ReviewPost } from "./step-4-review-post";
+import { WizardProgressStepper } from "./wizard-progress-stepper";
 import { OrderworkerLogo } from "@/components/shared/orderworker-logo";
 
 const INITIAL_FORM_DATA: PostJobData = {
@@ -140,23 +141,6 @@ export function PostJobWizard() {
   };
   const handleSubmit = handleSubmitJob;
 
-  // Step Progress Calculation
-  const progressPercent =
-    currentStep === 1
-      ? 0
-      : currentStep === 2
-      ? 33.33
-      : currentStep === 3
-      ? 66.66
-      : 100;
-
-  const stepsList = [
-    { step: 1 as PostJobStep, label: locale === "ur" ? "1. سروس" : "1. Service" },
-    { step: 2 as PostJobStep, label: locale === "ur" ? "2. تفصیل" : "2. Details" },
-    { step: 3 as PostJobStep, label: locale === "ur" ? "3. وقت و مقام" : "3. Schedule" },
-    { step: 4 as PostJobStep, label: locale === "ur" ? "4. جائزہ" : "4. Review" },
-  ];
-
   return (
     <div className="min-h-screen bg-white text-[#1A1A2E] flex flex-col justify-between">
       {/* Top Header */}
@@ -169,9 +153,6 @@ export function PostJobWizard() {
         </Link>
 
         <div className="flex items-center gap-3">
-          <span className="text-xs font-semibold text-slate-400 hidden sm:inline">
-            {locale === "ur" ? `مرحلہ ${currentStep} از 4` : `Step ${currentStep} of 4`}
-          </span>
           <Link
             href="/customer/dashboard"
             className="text-slate-500 hover:text-[#123B5D] text-xs font-semibold flex items-center gap-1 px-3 py-1.5 rounded-lg hover:bg-slate-50 transition-colors"
@@ -184,62 +165,12 @@ export function PostJobWizard() {
 
       {/* Main Content Area */}
       <main className="flex-grow w-full max-w-4xl mx-auto px-4 sm:px-6 py-4 flex flex-col">
-        {/* Step Progression Bar */}
-        <div className="w-full max-w-xl mx-auto mb-5 px-4">
-          <div className="relative flex items-center justify-between">
-            {/* Background Connecting Track */}
-            <div className="absolute top-1/2 left-0 right-0 -translate-y-1/2 h-[2px] bg-slate-200 z-0" />
-            {/* Active Progress Fill */}
-            <div
-              className="absolute top-1/2 left-0 -translate-y-1/2 h-[2px] bg-[#0F766E] transition-all duration-300 z-0"
-              style={{ width: `${progressPercent}%` }}
-            />
-
-            {stepsList.map((item) => {
-              const isCompleted = currentStep > item.step;
-              const isActive = currentStep === item.step;
-
-              return (
-                <div
-                  key={item.step}
-                  onClick={() => {
-                    if (isCompleted) handleGoToStep(item.step);
-                  }}
-                  className={`relative z-10 flex flex-col items-center select-none ${
-                    isCompleted ? "cursor-pointer group" : ""
-                  }`}
-                >
-                  <div
-                    className={`size-8 rounded-full flex items-center justify-center font-bold text-xs transition-all shadow-xs ${
-                      isActive
-                        ? "text-white bg-[#0F766E] ring-4 ring-[#0F766E]/15"
-                        : isCompleted
-                        ? "text-white bg-[#0F766E]"
-                        : "bg-white border-2 border-slate-300 text-slate-400"
-                    }`}
-                  >
-                    {isCompleted ? (
-                      <Check className="size-4 stroke-[3]" />
-                    ) : (
-                      item.step
-                    )}
-                  </div>
-                  <span
-                    className={`text-[11px] mt-1 whitespace-nowrap font-medium transition-colors ${
-                      isActive
-                        ? "text-[#0F766E] font-bold"
-                        : isCompleted
-                        ? "text-[#0F766E] font-semibold"
-                        : "text-slate-400"
-                    }`}
-                  >
-                    {item.label}
-                  </span>
-                </div>
-              );
-            })}
-          </div>
-        </div>
+        {/* Modern Redesigned Step Progression Stepper */}
+        <WizardProgressStepper
+          currentStep={currentStep}
+          onGoToStep={handleGoToStep}
+          locale={locale}
+        />
 
         {/* Step View Component */}
         <div className="flex-1">

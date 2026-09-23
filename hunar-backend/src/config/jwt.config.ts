@@ -12,5 +12,5 @@ export default () => {
     refreshTokenTtl: process.env.JWT_REFRESH_TOKEN_TTL ?? '2592000s',
     refreshTokenTtlSeconds: parseInt(process.env.JWT_REFRESH_TOKEN_TTL ?? '2592000', 10),
   };
-  return jwtConfig;
+  return { jwt: jwtConfig };
 };

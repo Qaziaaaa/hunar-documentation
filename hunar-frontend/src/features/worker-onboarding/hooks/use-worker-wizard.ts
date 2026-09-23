@@ -1,15 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 import { getStoredUser } from "@/lib/api-client";
 import type { WizardStep, WorkerProfileFormData } from "../types";
-import {
-  step1PersonalSchema,
-  step2SkillsSchema,
-  step3ExperienceSchema,
-  step4ServiceAreasSchema,
-  step5DocumentsSchema,
-} from "../schemas";
 import { submitWorkerProfile } from "../api/onboarding-api";
 
 const STORAGE_KEY = "hunar.worker_onboarding_draft";
@@ -27,7 +21,7 @@ const cleanDefaultFormData: WorkerProfileFormData = {
   certificateFile: "",
   certificateName: "",
   serviceAreas: [],
-  coverageRadius: "20 km",
+  coverageRadius: "Up to 20 km",
   primaryAddress: "",
   cnicFront: "",
   cnicFrontName: "",
@@ -37,6 +31,7 @@ const cleanDefaultFormData: WorkerProfileFormData = {
 };
 
 export function useWorkerWizard() {
+  const tVal = useTranslations("WorkerOnboarding.Validation");
   const [currentStep, setCurrentStep] = useState<WizardStep>(1);
   const [formData, setFormData] = useState<WorkerProfileFormData>(cleanDefaultFormData);
   const [stepError, setStepError] = useState<string | null>(null);
@@ -86,52 +81,70 @@ export function useWorkerWizard() {
   const validateStep = useCallback(
     (step: WizardStep): boolean => {
       setStepError(null);
-      try {
-        if (step === 1) {
-          step1PersonalSchema.parse({
-            fullName: formData.fullName,
-            email: formData.email,
-            phone: formData.phone,
-            city: formData.city,
-            profilePhoto: formData.profilePhoto,
-          });
-        } else if (step === 2) {
-          step2SkillsSchema.parse({
-            skills: formData.skills,
-          });
-        } else if (step === 3) {
-          step3ExperienceSchema.parse({
-            experienceYears: formData.experienceYears,
-            bio: formData.bio,
-            certificateFile: formData.certificateFile,
-          });
-        } else if (step === 4) {
-          step4ServiceAreasSchema.parse({
-            serviceAreas: formData.serviceAreas,
-            coverageRadius: formData.coverageRadius,
-            primaryAddress: formData.primaryAddress,
-          });
-        } else if (step === 5) {
-          step5DocumentsSchema.parse({
-            cnicFront: formData.cnicFront,
-            cnicBack: formData.cnicBack,
-            cnicNumber: formData.cnicNumber,
-          });
+      if (step === 1) {
+        if (!formData.profilePhoto || formData.profilePhoto.trim() === "") {
+          setStepError(tVal("photoRequired"));
+          return false;
         }
-        return true;
-      } catch (err: unknown) {
-        if (err && typeof err === "object" && "issues" in err) {
-          const issues = (err as { issues: { message: string }[] }).issues;
-          if (issues.length > 0) {
-            setStepError(issues[0].message);
+        if (!formData.fullName || formData.fullName.trim().length < 2) {
+          setStepError(tVal("fullNameRequired"));
+          return false;
+        }
+        if (!formData.phone || formData.phone.trim().length < 10) {
+          setStepError(tVal("phoneRequired"));
+          return false;
+        }
+        if (!formData.city || formData.city.trim() === "") {
+          setStepError(tVal("cityRequired"));
+          return false;
+        }
+        if (formData.email && formData.email.trim() !== "") {
+          const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+          if (!emailRegex.test(formData.email)) {
+            setStepError(tVal("validEmail"));
+            return false;
           }
-        } else {
-          setStepError("Please check all required fields.");
         }
-        return false;
+      } else if (step === 2) {
+        if (!formData.skills || formData.skills.length === 0) {
+          setStepError(tVal("skillRequired"));
+          return false;
+        }
+      } else if (step === 3) {
+        if (!formData.experienceYears || formData.experienceYears.trim() === "") {
+          setStepError(tVal("experienceRequired"));
+          return false;
+        }
+        if (!formData.bio || formData.bio.trim().length < 10) {
+          setStepError(tVal("bioRequired"));
+          return false;
+        }
+      } else if (step === 4) {
+        if (!formData.serviceAreas || formData.serviceAreas.length === 0) {
+          setStepError(tVal("areaRequired"));
+          return false;
+        }
+        if (!formData.primaryAddress || formData.primaryAddress.trim().length < 3) {
+          setStepError(tVal("addressRequired"));
+          return false;
+        }
+        if (!formData.coverageRadius || formData.coverageRadius.trim() === "") {
+          setStepError(tVal("radiusRequired"));
+          return false;
+        }
+      } else if (step === 5) {
+        if (!formData.cnicFront || formData.cnicFront.trim() === "") {
+          setStepError(tVal("cnicFrontRequired"));
+          return false;
+        }
+        if (!formData.cnicBack || formData.cnicBack.trim() === "") {
+          setStepError(tVal("cnicBackRequired"));
+          return false;
+        }
       }
+      return true;
     },
-    [formData],
+    [formData, tVal],
   );
 
   const goToStep = useCallback(
