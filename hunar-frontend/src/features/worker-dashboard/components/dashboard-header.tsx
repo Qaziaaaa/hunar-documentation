@@ -49,7 +49,7 @@ export function DashboardHeader({
             <button
               type="button"
               onClick={onOpenSidebar}
-              className="lg:hidden size-9 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 flex items-center justify-center transition-colors cursor-pointer"
+              className="lg:hidden p-2 rounded-xl text-slate-700 hover:text-slate-900 transition-colors cursor-pointer"
               title="Open Navigation Menu"
               aria-label="Open Navigation Menu"
             >

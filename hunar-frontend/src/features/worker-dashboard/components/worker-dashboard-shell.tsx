@@ -212,8 +212,8 @@ export function WorkerDashboardShell({
         onClose={() => setIsMobileSidebarOpen(false)}
       />
 
-      {/* Main Container offset by lg:pl-64 on desktop */}
-      <div className="flex-1 lg:pl-64 flex flex-col min-w-0 bg-white">
+      {/* Main Container offset by lg:ps-64 on desktop */}
+      <div className="flex-1 lg:ps-64 flex flex-col min-w-0 bg-white">
         {/* Top Header */}
         <DashboardHeader
           profile={profile}

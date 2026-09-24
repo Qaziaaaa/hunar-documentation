@@ -82,8 +82,12 @@ export function WorkerJobsHub() {
 
         <span className="text-xs text-slate-500 font-medium hidden sm:block">
           {activeTab === "upcoming"
-            ? `${upcomingVisits.length} scheduled visit${upcomingVisits.length === 1 ? "" : "s"}`
-            : `${pastJobs.length} settled & completed job${pastJobs.length === 1 ? "" : "s"}`}
+            ? isUrdu
+              ? `${upcomingVisits.length} شیڈول شدہ وزٹس`
+              : `${upcomingVisits.length} scheduled visit${upcomingVisits.length === 1 ? "" : "s"}`
+            : isUrdu
+              ? `${pastJobs.length} مکمل شدہ جابز`
+              : `${pastJobs.length} settled & completed job${pastJobs.length === 1 ? "" : "s"}`}
         </span>
       </div>
 
@@ -103,9 +107,13 @@ export function WorkerJobsHub() {
           ) : (
             <div className="bg-white rounded-3xl border border-slate-200/80 p-10 text-center space-y-2">
               <Calendar className="size-8 text-slate-300 mx-auto" />
-              <h3 className="text-sm font-bold text-slate-700">No Upcoming Visits</h3>
+              <h3 className="text-sm font-bold text-slate-700">
+                {isUrdu ? "کوئی آنے والی جابز نہیں ہیں" : "No Upcoming Visits"}
+              </h3>
               <p className="text-xs text-slate-500 max-w-sm mx-auto">
-                You do not have any upcoming scheduled visits. Submit visit offers on available jobs to schedule new appointments.
+                {isUrdu
+                  ? "آپ کے پاس کوئی شیڈول شدہ وزٹ نہیں ہے۔ نئی جابز حاصل کرنے کے لیے آفر بھیجیں۔"
+                  : "You do not have any upcoming scheduled visits. Submit visit offers on available jobs to schedule new appointments."}
               </p>
             </div>
           )}
@@ -124,9 +132,13 @@ export function WorkerJobsHub() {
           ) : (
             <div className="bg-white rounded-3xl border border-slate-200/80 p-10 text-center space-y-2">
               <CheckCircle2 className="size-8 text-slate-300 mx-auto" />
-              <h3 className="text-sm font-bold text-slate-700">No Completed Jobs Yet</h3>
+              <h3 className="text-sm font-bold text-slate-700">
+                {isUrdu ? "ابھی کوئی مکمل شدہ جاب نہیں ہے" : "No Completed Jobs Yet"}
+              </h3>
               <p className="text-xs text-slate-500 max-w-sm mx-auto">
-                Your past completed jobs, earnings breakdown, and customer ratings will be displayed here.
+                {isUrdu
+                  ? "آپ کی ماضی کی مکمل شدہ جابز، آمدنی کی تفصیلات، اور کسٹمر ریٹنگ یہاں نظر آئیں گی۔"
+                  : "Your past completed jobs, earnings breakdown, and customer ratings will be displayed here."}
               </p>
             </div>
           )}

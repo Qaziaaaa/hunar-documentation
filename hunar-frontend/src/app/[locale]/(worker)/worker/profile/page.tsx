@@ -46,7 +46,11 @@ const PESHAWAR_LOCATIONS = [
   "Hashtnagri",
 ];
 
+import { useLocale } from "next-intl";
+
 function ProfileContent() {
+  const locale = useLocale();
+  const isUrdu = locale === "ur";
   const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -146,13 +150,17 @@ function ProfileContent() {
     <div className="space-y-6 pb-10">
       {/* Top Header */}
       <PageHeader
-        title="Worker Profile & Settings"
-        description="Manage your personal information, shop workshop location, and service coverage areas."
+        title={isUrdu ? "ورکر پروفائل اور ترتیبات" : "Worker Profile & Settings"}
+        description={
+          isUrdu
+            ? "اپنی ذاتی معلومات، ورکشاپ کے مقام اور سروس ایریا کا انتظام کریں۔"
+            : "Manage your personal information, shop workshop location, and service coverage areas."
+        }
         actions={
           <div className="flex items-center gap-2">
             {saveSuccess ? (
               <span className="flex items-center gap-1.5 text-xs font-bold text-emerald-600 bg-emerald-50 px-3 py-2 rounded-xl border border-emerald-200 animate-in fade-in">
-                <CheckCircle2 className="size-4" /> Profile Updated!
+                <CheckCircle2 className="size-4" /> {isUrdu ? "پروفائل اپ ڈیٹ ہو گئی!" : "Profile Updated!"}
               </span>
             ) : null}
             <Button
@@ -186,7 +194,7 @@ function ProfileContent() {
               }}
             >
               <Pencil className="mr-1.5 size-4" aria-hidden="true" />
-              {editing ? "Cancel Editing" : "Edit Profile"}
+              {editing ? (isUrdu ? "منسوخی" : "Cancel Editing") : (isUrdu ? "پروفائل میں ترمیم کریں" : "Edit Profile")}
             </Button>
           </div>
         }
@@ -222,7 +230,7 @@ function ProfileContent() {
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
                     className="absolute bottom-0 right-0 flex size-9 items-center justify-center rounded-full bg-[#0F8B8D] text-white shadow-md hover:bg-[#0F8B8D]/90 transition-transform active:scale-95 cursor-pointer"
-                    title="Change Profile Photo"
+                    title={isUrdu ? "پروفائل فوٹو تبدیل کریں" : "Change Profile Photo"}
                   >
                     <Camera className="size-4.5" />
                   </button>
@@ -235,13 +243,13 @@ function ProfileContent() {
                 <h2 className="text-xl font-extrabold text-[#123B5D]">
                   {editing ? form.name : worker.name}
                 </h2>
-                {worker.isVerified ? <VerifiedBadge title="Verified Pro" /> : null}
+                {worker.isVerified ? <VerifiedBadge title={isUrdu ? "تصدیق شدہ ہنرمند" : "Verified Pro"} /> : null}
               </div>
 
               <div className="flex items-center justify-center gap-2 pt-0.5">
                 <RatingStars rating={worker.rating} size="size-4" />
                 <span className="text-xs font-bold text-[#123B5D]">
-                  {worker.rating.toFixed(1)} / 5.0 ({worker.reviewsCount} reviews)
+                  {worker.rating.toFixed(1)} / 5.0 ({worker.reviewsCount} {isUrdu ? "جائزے" : "reviews"})
                 </span>
               </div>
             </div>
@@ -249,14 +257,14 @@ function ProfileContent() {
             {/* Quick Stats Grid */}
             <div className="grid w-full grid-cols-2 gap-3 border-y border-border py-4 my-1 text-xs">
               <div className="rounded-xl bg-slate-50 p-2.5">
-                <p className="text-slate-500 font-medium">Completed Orders</p>
+                <p className="text-slate-500 font-medium">{isUrdu ? "مکمل شدہ کام" : "Completed Orders"}</p>
                 <p className="text-base font-extrabold text-[#123B5D] mt-0.5">
-                  {worker.completedJobs} Jobs
+                  {worker.completedJobs} {isUrdu ? "جابز" : "Jobs"}
                 </p>
               </div>
 
               <div className="rounded-xl bg-slate-50 p-2.5">
-                <p className="text-slate-500 font-medium">Default Visit Fee</p>
+                <p className="text-slate-500 font-medium">{isUrdu ? "طے شدہ وزٹ فیس" : "Default Visit Fee"}</p>
                 <p className="text-base font-extrabold text-emerald-600 mt-0.5">
                   {formatRs(form.defaultVisitCharge ?? 300)}
                 </p>
@@ -283,7 +291,7 @@ function ProfileContent() {
             <CardHeader className="pb-3 border-b border-slate-100">
               <CardTitle className="text-base font-bold text-[#123B5D] flex items-center gap-2">
                 <User className="size-4.5 text-[#0F8B8D]" />
-                Personal Information
+                {isUrdu ? "ذاتی معلومات" : "Personal Information"}
               </CardTitle>
             </CardHeader>
             <CardContent className="p-5 space-y-4">
@@ -291,7 +299,7 @@ function ProfileContent() {
                 <>
                   <div className="grid gap-1.5">
                     <Label htmlFor="prof-name" className="text-xs font-semibold text-[#123B5D]">
-                      Full Name
+                      {isUrdu ? "پورا نام" : "Full Name"}
                     </Label>
                     <Input
                       id="prof-name"
@@ -304,7 +312,7 @@ function ProfileContent() {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="grid gap-1.5">
                       <Label htmlFor="prof-phone" className="text-xs font-semibold text-[#123B5D]">
-                        Phone Number
+                        {isUrdu ? "موبائل نمبر" : "Phone Number"}
                       </Label>
                       <Input
                         id="prof-phone"
@@ -316,7 +324,7 @@ function ProfileContent() {
 
                     <div className="grid gap-1.5">
                       <Label htmlFor="prof-email" className="text-xs font-semibold text-[#123B5D]">
-                        Email Address
+                        {isUrdu ? "ای میل ایڈریس" : "Email Address"}
                       </Label>
                       <Input
                         id="prof-email"
@@ -331,15 +339,15 @@ function ProfileContent() {
               ) : (
                 <dl className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
                   <div className="rounded-xl bg-slate-50 p-3">
-                    <dt className="text-slate-500 font-medium">Full Name</dt>
+                    <dt className="text-slate-500 font-medium">{isUrdu ? "پورا نام" : "Full Name"}</dt>
                     <dd className="text-sm font-bold text-[#123B5D] mt-0.5">{worker.name}</dd>
                   </div>
                   <div className="rounded-xl bg-slate-50 p-3">
-                    <dt className="text-slate-500 font-medium">Phone Number</dt>
+                    <dt className="text-slate-500 font-medium">{isUrdu ? "موبائل نمبر" : "Phone Number"}</dt>
                     <dd className="text-sm font-bold text-[#123B5D] mt-0.5">{worker.phone ?? "+92 300 1234567"}</dd>
                   </div>
                   <div className="rounded-xl bg-slate-50 p-3 sm:col-span-2">
-                    <dt className="text-slate-500 font-medium">Email Address</dt>
+                    <dt className="text-slate-500 font-medium">{isUrdu ? "ای میل ایڈریس" : "Email Address"}</dt>
                     <dd className="text-sm font-bold text-[#123B5D] mt-0.5">{worker.email ?? "faizan.ahmed@hunar.pk"}</dd>
                   </div>
                 </dl>
@@ -352,7 +360,7 @@ function ProfileContent() {
             <CardHeader className="pb-3 border-b border-slate-100">
               <CardTitle className="text-base font-bold text-[#123B5D] flex items-center gap-2">
                 <MapPin className="size-4.5 text-[#0F8B8D]" />
-                Location & Coverage Management
+                {isUrdu ? "مقام اور سروس ایریا" : "Location & Coverage Management"}
               </CardTitle>
             </CardHeader>
             <CardContent className="p-5 space-y-5">
@@ -361,11 +369,13 @@ function ProfileContent() {
                 <div className="flex items-center gap-2">
                   <Landmark className="size-4 text-[#0F8B8D]" />
                   <h4 className="text-xs font-extrabold uppercase tracking-wide text-[#123B5D]">
-                    1. Workshop Location (Physical Shop)
+                    {isUrdu ? "1۔ ورکشاپ / دوکان کا مقام" : "1. Workshop Location (Physical Shop)"}
                   </h4>
                 </div>
                 <p className="text-[11px] text-slate-500">
-                  Your physical shop, store, or workshop base address in Peshawar.
+                  {isUrdu
+                    ? "پشاور میں آپ کی دوکان یا ورکشاپ کا مکمل پتہ۔"
+                    : "Your physical shop, store, or workshop base address in Peshawar."}
                 </p>
 
                 {editing ? (
@@ -375,7 +385,7 @@ function ProfileContent() {
                       onChange={(e) =>
                         handleTextChange("workshopLocation", e.target.value)
                       }
-                      placeholder="e.g. Shop #14, Main Saddar Road, Peshawar Cantt"
+                      placeholder={isUrdu ? "مثلاً دوکان نمبر 14، پشاور کینٹ" : "e.g. Shop #14, Main Saddar Road, Peshawar Cantt"}
                       className="h-10 text-xs font-semibold bg-white border-teal/30"
                     />
                   </div>
@@ -392,11 +402,13 @@ function ProfileContent() {
                 <div className="flex items-center gap-2">
                   <MapPin className="size-4 text-emerald-600" />
                   <h4 className="text-xs font-extrabold uppercase tracking-wide text-[#123B5D]">
-                    2. Service Location (Doorstep Coverage Areas)
+                    {isUrdu ? "2۔ دہلیز سروس کے علاقے" : "2. Service Location (Doorstep Coverage Areas)"}
                   </h4>
                 </div>
                 <p className="text-[11px] text-slate-500">
-                  Select all Peshawar sectors where you visit customers for doorstep service calls.
+                  {isUrdu
+                    ? "پشاور کے وہ تمام علاقے منتخب کریں جہاں آپ سروس فراہم کرتے ہیں۔"
+                    : "Select all Peshawar sectors where you visit customers for doorstep service calls."}
                 </p>
 
                 {editing ? (
@@ -442,7 +454,7 @@ function ProfileContent() {
             <CardHeader className="pb-3 border-b border-slate-100">
               <CardTitle className="text-base font-bold text-[#123B5D] flex items-center gap-2">
                 <ShieldCheck className="size-4.5 text-[#0F8B8D]" />
-                Professional Summary & Bio
+                {isUrdu ? "پیشہ ورانہ تفصیلات اور تعارف" : "Professional Summary & Bio"}
               </CardTitle>
             </CardHeader>
             <CardContent className="p-5 space-y-4">
@@ -450,7 +462,7 @@ function ProfileContent() {
                 <>
                   <div className="grid gap-1.5">
                     <Label htmlFor="prof-bio" className="text-xs font-semibold text-[#123B5D]">
-                      Bio & Trade Experience
+                      {isUrdu ? "تعارف اور تجارتی تجربہ" : "Bio & Trade Experience"}
                     </Label>
                     <Textarea
                       id="prof-bio"
@@ -464,7 +476,7 @@ function ProfileContent() {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="grid gap-1.5">
                       <Label htmlFor="prof-exp" className="text-xs font-semibold text-[#123B5D]">
-                        Years of Experience
+                        {isUrdu ? "تجربہ (سالوں میں)" : "Years of Experience"}
                       </Label>
                       <Input
                         id="prof-exp"
@@ -480,7 +492,7 @@ function ProfileContent() {
 
                     <div className="grid gap-1.5">
                       <Label htmlFor="prof-charge" className="text-xs font-semibold text-[#123B5D]">
-                        Default Visit Fee (PKR)
+                        {isUrdu ? "بنیادی وزٹ فیس (روپے)" : "Default Visit Fee (PKR)"}
                       </Label>
                       <Input
                         id="prof-charge"
@@ -504,27 +516,33 @@ function ProfileContent() {
                     className="w-full bg-[#0F8B8D] hover:bg-[#0F8B8D]/90 text-white font-bold h-11 shadow-sm mt-2"
                   >
                     <Save className="mr-2 size-4" />
-                    {updateMutation.isPending ? "Saving Profile..." : "Save Profile Changes"}
+                    {updateMutation.isPending
+                      ? isUrdu
+                        ? "محفوظ کیا جا رہا ہے..."
+                        : "Saving Profile..."
+                      : isUrdu
+                        ? "پروفائل کی تبدیلیاں محفوظ کریں"
+                        : "Save Profile Changes"}
                   </Button>
                 </>
               ) : (
                 <div className="space-y-4 text-xs">
                   <div>
-                    <p className="text-slate-500 font-medium">Bio</p>
+                    <p className="text-slate-500 font-medium">{isUrdu ? "تعارف" : "Bio"}</p>
                     <p className="text-sm font-normal text-slate-700 leading-relaxed mt-1">
-                      {worker.bio || "No bio added yet."}
+                      {worker.bio || (isUrdu ? "ابھی تک کوئی تعارف شامل نہیں کیا گیا۔" : "No bio added yet.")}
                     </p>
                   </div>
 
                   <div className="grid grid-cols-2 gap-4 pt-2 border-t border-slate-100">
                     <div>
-                      <p className="text-slate-500 font-medium">Years of Experience</p>
+                      <p className="text-slate-500 font-medium">{isUrdu ? "تجربہ (سال)" : "Years of Experience"}</p>
                       <p className="text-sm font-bold text-[#123B5D] mt-0.5">
-                        {worker.yearsExperience} Years
+                        {worker.yearsExperience} {isUrdu ? "سال" : "Years"}
                       </p>
                     </div>
                     <div>
-                      <p className="text-slate-500 font-medium">Default Visit Fee</p>
+                      <p className="text-slate-500 font-medium">{isUrdu ? "طے شدہ وزٹ فیس" : "Default Visit Fee"}</p>
                       <p className="text-sm font-bold text-emerald-600 mt-0.5">
                         {formatRs(worker.defaultVisitCharge ?? 300)}
                       </p>

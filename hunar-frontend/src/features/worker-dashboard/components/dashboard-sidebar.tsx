@@ -14,6 +14,8 @@ import { OrderworkerLogo } from "@/components/shared/orderworker-logo";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { RatingStars } from "@/components/shared/rating-stars";
 
+import { useLocale } from "next-intl";
+
 export function DashboardSidebar({
   activeTab,
   onSelectTab,
@@ -29,45 +31,38 @@ export function DashboardSidebar({
   isOpen?: boolean;
   onClose?: () => void;
 }) {
+  const locale = useLocale();
+  const isUrdu = locale === "ur";
+
   const navSections = [
     {
-      heading: "Work & Jobs",
+      heading: isUrdu ? "کام اور جابز" : "Work & Jobs",
       items: [
         {
           id: "dashboard" as DashboardTab,
-          label: "Dashboard",
+          label: isUrdu ? "ڈیش بورڈ" : "Dashboard",
           icon: LayoutDashboard,
         },
         {
           id: "jobs" as DashboardTab,
-          label: "Active Jobs",
+          label: isUrdu ? "جاری جابز" : "Active Jobs",
           icon: Briefcase,
           badge: profile.activeJobsCount > 0 ? profile.activeJobsCount : undefined,
         },
       ],
     },
     {
-      heading: "Finances & Earnings",
+      heading: isUrdu ? "مالیات اور کمائی" : "Finances & Earnings",
       items: [
         {
           id: "wallet" as DashboardTab,
-          label: "Wallet",
+          label: isUrdu ? "والٹ" : "Wallet",
           icon: Wallet,
         },
         {
           id: "earnings" as DashboardTab,
-          label: "Earnings",
+          label: isUrdu ? "کمائی" : "Earnings",
           icon: TrendingUp,
-        },
-      ],
-    },
-    {
-      heading: "Account",
-      items: [
-        {
-          id: "profile" as DashboardTab,
-          label: "Profile & Settings",
-          icon: User,
         },
       ],
     },
@@ -95,10 +90,10 @@ export function DashboardSidebar({
 
       {/* Full-Height Fixed Desktop Sidebar / Slide-over Mobile Drawer (z-50) */}
       <aside
-        className={`fixed top-0 start-0 z-50 h-screen w-64 shrink-0 flex flex-col justify-between border-r border-slate-200 bg-white p-4 transition-transform duration-300 overflow-hidden ${
+        className={`fixed top-0 start-0 z-50 h-screen w-64 shrink-0 flex flex-col justify-between border-e border-slate-200 bg-white p-4 transition-transform duration-300 overflow-hidden ${
           isOpen
             ? "translate-x-0 shadow-2xl flex"
-            : "-translate-x-full lg:translate-x-0 hidden lg:flex"
+            : "-translate-x-full rtl:translate-x-full lg:translate-x-0 hidden lg:flex"
         }`}
       >
         <div className="space-y-6">

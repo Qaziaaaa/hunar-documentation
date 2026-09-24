@@ -182,7 +182,7 @@ export function WorkerChatModal({
       ];
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-white text-slate-900 font-sans antialiased max-w-md mx-auto shadow-2xl animate-in fade-in slide-in-from-bottom-6">
+    <div className="fixed inset-0 z-50 flex flex-col bg-white text-slate-900 font-sans antialiased w-full max-w-3xl sm:max-w-4xl mx-auto shadow-2xl animate-in fade-in slide-in-from-bottom-6">
       {/* ======================================================== */}
       {/* 1. CHAT TOP HEADER BAR */}
       {/* ======================================================== */}

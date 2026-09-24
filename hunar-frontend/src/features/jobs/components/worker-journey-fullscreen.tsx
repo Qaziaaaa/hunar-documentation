@@ -27,6 +27,10 @@ import {
   Check,
   XCircle,
   HelpCircle,
+  Camera,
+  Upload,
+  Plus,
+  Trash2,
 } from "lucide-react";
 
 interface WorkerJourneyFullscreenProps {
@@ -62,6 +66,10 @@ export function WorkerJourneyFullscreen({
     "Faulty main breaker overheating under peak load. Terminal lug insulation degraded."
   );
   const [repairPrice, setRepairPrice] = useState<number>(1500);
+  const [photos, setPhotos] = useState<string[]>([
+    "https://images.unsplash.com/photo-1621905251189-08b45d6a269e?auto=format&fit=crop&w=800&q=80",
+  ]);
+  const fileInputRef = React.useRef<HTMLInputElement | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const agreedVisitCharge =
@@ -71,12 +79,37 @@ export function WorkerJourneyFullscreen({
     job.customerSuggestedPrice ??
     800;
 
+  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    Array.from(files).forEach((file) => {
+      if (!file.type.startsWith("image/")) return;
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        if (event.target?.result) {
+          setPhotos((prev) => [...prev, event.target!.result as string]);
+        }
+      };
+      reader.readAsDataURL(file);
+    });
+    e.target.value = "";
+  };
+
+  const handleRemovePhoto = (index: number) => {
+    setPhotos((prev) => prev.filter((_, i) => i !== index));
+  };
+
   // 1. Handle Submit Inspection
   const handleSubmitInspection = (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg(null);
     if (!diagnosis.trim() || !repairPrice) {
       setErrorMsg("Please fill in diagnosis and price estimate.");
+      return;
+    }
+    if (photos.length === 0) {
+      setErrorMsg(isUrdu ? "کم از کم ایک فوٹو منسلک کریں۔" : "Please attach at least one fault photo.");
       return;
     }
 
@@ -86,9 +119,7 @@ export function WorkerJourneyFullscreen({
       repairPlan: "Standard on-site repair and parts replacement",
       repairPriceEstimate: repairPrice,
       estimatedRepairTime: "Standard",
-      photos: [
-        "https://images.unsplash.com/photo-1621905251189-08b45d6a269e?auto=format&fit=crop&w=800&q=80",
-      ],
+      photos: photos,
     });
     setIsSubmitting(false);
   };
@@ -172,7 +203,7 @@ export function WorkerJourneyFullscreen({
   const netEarnings = grossJobValue - platformFee;
 
   return (
-    <div className="min-h-screen bg-white text-slate-900 font-sans antialiased select-none flex flex-col max-w-md mx-auto shadow-2xl relative border-x border-slate-200/70">
+    <div className="min-h-screen bg-white text-slate-900 font-sans antialiased select-none flex flex-col w-full max-w-3xl sm:max-w-4xl mx-auto shadow-2xl relative border-x border-slate-200/70">
       {/* ======================================================== */}
       {/* 1. TOP HEADER (Cancel visit on left, Headphone Support on right) */}
       {/* ======================================================== */}
@@ -421,33 +452,76 @@ export function WorkerJourneyFullscreen({
               </div>
 
               {/* Field 3: Fault Photo Evidence */}
-              <div className="space-y-1.5 pt-2 border-t border-slate-100">
-                <label className="text-xs font-black text-slate-800 flex items-center gap-1.5">
-                  <span className="size-4.5 rounded-md bg-teal-50 text-[#0F8B8D] text-[10px] font-black flex items-center justify-center">
-                    3
-                  </span>
-                  <span>{isUrdu ? "ثبوت فوٹو (On-Site Photo)" : "Fault Photo Evidence"}</span>
-                </label>
-
-                <div className="flex items-center gap-3 p-2.5 rounded-2xl bg-slate-50 border border-slate-200">
-                  <div className="size-14 rounded-xl bg-slate-200 border border-slate-300 overflow-hidden shrink-0 shadow-2xs">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src="https://images.unsplash.com/photo-1621905251189-08b45d6a269e?auto=format&fit=crop&w=800&q=80"
-                      alt="Fault photo"
-                      className="size-full object-cover"
-                    />
-                  </div>
-                  <div className="text-xs">
-                    <span className="font-black text-emerald-700 flex items-center gap-1">
-                      <CheckCircle2 className="size-3.5 text-emerald-600" />
-                      {isUrdu ? "فوٹو منسلک ہے" : "Photo Attached"}
+              <div className="space-y-2 pt-2 border-t border-slate-100">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-black text-slate-800 flex items-center gap-1.5">
+                    <span className="size-4.5 rounded-md bg-teal-50 text-[#0F8B8D] text-[10px] font-black flex items-center justify-center">
+                      3
                     </span>
-                    <p className="text-[10.5px] text-slate-500 mt-0.5">
-                      Main breaker panel captured
-                    </p>
-                  </div>
+                    <span>{isUrdu ? "ثبوت فوٹو (On-Site Photo)" : "Fault Photo Evidence"}</span>
+                  </label>
+                  <span className="text-[10.5px] font-semibold text-slate-500">
+                    {photos.length} {isUrdu ? "تصاویر" : photos.length === 1 ? "photo" : "photos"}
+                  </span>
                 </div>
+
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  onChange={handlePhotoUpload}
+                  accept="image/*"
+                  multiple
+                  className="hidden"
+                  id="fault-photo-upload"
+                />
+
+                {/* Grid of uploaded fault photos */}
+                <div className="grid grid-cols-3 gap-2.5 pt-1">
+                  {photos.map((photoUrl, idx) => (
+                    <div
+                      key={idx}
+                      className="relative group rounded-xl overflow-hidden border border-slate-200 aspect-square bg-slate-100 shadow-2xs"
+                    >
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={photoUrl}
+                        alt={`Fault evidence ${idx + 1}`}
+                        className="size-full object-cover"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => handleRemovePhoto(idx)}
+                        className="absolute top-1 right-1 size-6 rounded-full bg-slate-900/80 hover:bg-red-600 text-white flex items-center justify-center transition-colors cursor-pointer shadow-sm"
+                        title={isUrdu ? "حذف کریں" : "Remove photo"}
+                      >
+                        <X className="size-3.5" />
+                      </button>
+                    </div>
+                  ))}
+
+                  {/* Add Photo Button */}
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="flex flex-col items-center justify-center aspect-square rounded-xl border-2 border-dashed border-slate-300 hover:border-[#0F8B8D] bg-slate-50 hover:bg-teal-50/50 text-slate-500 hover:text-[#0F8B8D] transition-all cursor-pointer p-2"
+                  >
+                    <div className="size-8 rounded-full bg-white border border-slate-200 flex items-center justify-center shadow-2xs mb-1">
+                      <Camera className="size-4 text-[#0F8B8D]" />
+                    </div>
+                    <span className="text-[10px] font-bold text-center leading-tight">
+                      {isUrdu ? "فوٹو اپ لوڈ کریں" : "+ Upload Photo"}
+                    </span>
+                  </button>
+                </div>
+
+                <p className="text-[10.5px] text-slate-500 flex items-center gap-1 pt-0.5">
+                  <CheckCircle2 className="size-3 text-emerald-600 shrink-0" />
+                  <span>
+                    {isUrdu
+                      ? "کسٹمر اور ہنر سپورٹ اس فوٹو کو دیکھ سکتے ہیں۔"
+                      : "Clear photos help customer approve quote instantly."}
+                  </span>
+                </p>
               </div>
             </div>
 
