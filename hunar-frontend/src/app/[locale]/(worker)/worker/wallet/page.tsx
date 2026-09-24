@@ -21,7 +21,7 @@ import {
   mockWalletTransactions,
 } from "@/mocks/earnings.mock";
 
-import { useWorkerJobs } from "@/stores/worker-jobs-store";
+import { workerStore, useWorkerJobs } from "@/stores/worker-jobs-store";
 
 export function WalletContent() {
   const { walletBalance } = useWorkerJobs();
