@@ -84,33 +84,30 @@ async function executeSilentRefresh(): Promise<string | null> {
   }
 
   try {
-    // Attempt worker refresh endpoint first, fallback to generic auth refresh
-    let res = await fetch(`${API_URL}/auth/worker/refresh`, {
+    // Single refresh endpoint; the backend /auth/refresh is role-agnostic.
+    const res = await fetch(`${API_URL}/auth/refresh`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ refreshToken }),
     });
 
     if (!res.ok) {
-      res = await fetch(`${API_URL}/auth/refresh`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ refreshToken }),
-      });
-    }
-
-    if (!res.ok) {
       clearTokens();
       return null;
     }
 
-    const data = (await res.json()) as {
-      accessToken: string;
+    const envelope = (await res.json()) as {
+      success?: boolean;
+      data?: { accessToken: string; refreshToken?: string; user?: StoredUser };
+    };
+
+    const data = (envelope?.data ?? envelope ?? {}) as {
+      accessToken?: string;
       refreshToken?: string;
       user?: StoredUser;
     };
 
-    if (!data.accessToken) {
+    if (!data?.accessToken) {
       clearTokens();
       return null;
     }
@@ -153,8 +150,11 @@ export async function apiClient<T>(
   // Handle 401 Unauthorized via Silent Token Refresh (once per request)
   const isAuthEndpoint =
     path.includes("/auth/login") ||
-    path.includes("/auth/worker/login") ||
-    path.includes("/auth/worker/signup") ||
+    path.includes("/auth/customer/login") ||
+    path.includes("/auth/register") ||
+    path.includes("/auth/customer/signup/complete") ||
+    path.includes("/auth/otp/") ||
+    path.includes("/auth/customer/otp/") ||
     path.includes("/auth/refresh");
 
   if (res.status === 401 && !isRetry && !isAuthEndpoint && getRefreshToken()) {
@@ -186,7 +186,13 @@ export async function apiClient<T>(
     return undefined as T;
   }
 
-  return (await res.json()) as T;
+  const raw = (await res.json()) as T | { success: boolean; data?: T; meta?: unknown };
+  // The backend wraps every successful response in { success: true, data }.
+  // Unwrap it here once so all callers receive the payload directly.
+  if (raw && typeof raw === "object" && "success" in raw) {
+    return (raw as { data?: T }).data as T;
+  }
+  return raw as T;
 }
 
 export const http = {

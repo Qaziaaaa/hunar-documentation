@@ -411,6 +411,31 @@ export class AuthService {
     await this.redis.del(`${REFRESH_TOKEN_PREFIX}${userId}`);
   }
 
+  async changePassword(
+    userId: string,
+    currentPassword: string,
+    newPassword: string,
+  ): Promise<{ success: boolean }> {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user || !user.passwordHash) {
+      throw new UnauthorizedException('Account has no password set');
+    }
+
+    const valid = await bcrypt.compare(currentPassword, user.passwordHash);
+    if (!valid) {
+      throw new UnauthorizedException('Current password is incorrect');
+    }
+
+    const passwordHash = await bcrypt.hash(newPassword, BCRYPT_ROUNDS);
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { passwordHash },
+    });
+
+    await this.redis.del(`${REFRESH_TOKEN_PREFIX}${userId}`);
+    return { success: true };
+  }
+
   private async issueTokens(user: User): Promise<AuthTokens> {
     const payload: JwtPayload = { sub: user.id, phone: user.phone, role: user.role };
 

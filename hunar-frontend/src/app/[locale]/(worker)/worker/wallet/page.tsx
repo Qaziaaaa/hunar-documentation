@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Wallet } from "lucide-react";
 import { ErrorState } from "@/components/shared/error-state";
@@ -8,15 +9,19 @@ import { WalletTransactionHistory } from "@/components/shared/wallet-transaction
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { WorkerDashboardShell } from "@/features/worker-dashboard";
 import { formatRsExact } from "@/lib/money";
+import { getSocket } from "@/lib/socket";
+import { isMockMode } from "@/lib/data-source";
 import {
   getWalletSummary,
   getWalletTransactions,
   queryKeys,
 } from "@/services/worker/earnings.service";
-import { useWorkerJobs } from "@/stores/worker-jobs-store";
+import { useWorkerJobs, workerStore } from "@/stores/worker-jobs-store";
 
 function WalletContent() {
   const { walletBalance } = useWorkerJobs();
+  const setWalletBalance = workerStore.setWalletBalance;
+  const [hydrated, setHydrated] = useState(false);
 
   const summary = useQuery({
     queryKey: queryKeys.summary,
@@ -27,6 +32,26 @@ function WalletContent() {
     queryKey: queryKeys.transactions,
     queryFn: getWalletTransactions,
   });
+
+  useEffect(() => {
+    if (isMockMode()) return;
+    const s = getSocket();
+    const handler = (snapshot: { totalBalance?: number; balance?: number }) => {
+      const next = Number(snapshot?.totalBalance ?? snapshot?.balance ?? 0);
+      if (Number.isFinite(next)) setWalletBalance(next);
+    };
+    s?.on("wallet:balanceUpdated", handler);
+    return () => {
+      s?.off("wallet:balanceUpdated", handler);
+    };
+  }, [setWalletBalance]);
+
+  useEffect(() => {
+    if (!hydrated && summary.data) {
+      setHydrated(true);
+      setWalletBalance(Number(summary.data.currentBalance ?? 0));
+    }
+  }, [summary.data, hydrated, setWalletBalance]);
 
   if (summary.isPending || transactions.isPending) {
     return <LoadingState label="Loading wallet details..." />;

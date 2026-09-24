@@ -1,8 +1,9 @@
-import { Body, Controller, Get, HttpCode, HttpStatus, Post } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, HttpStatus, Post, Put } from '@nestjs/common';
 import { Role } from '@prisma/client';
 import { AuthService } from './auth.service';
 import {
   AdminLoginDto,
+  ChangePasswordDto,
   LoginDto,
   RefreshTokenDto,
   RegisterWorkerDto,
@@ -74,5 +75,11 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   logout(@CurrentUser() user: JwtPayload) {
     return this.authService.logout(user.sub);
+  }
+
+  @Put('change-password')
+  @HttpCode(HttpStatus.OK)
+  changePassword(@CurrentUser() user: JwtPayload, @Body() dto: ChangePasswordDto) {
+    return this.authService.changePassword(user.sub, dto.currentPassword, dto.newPassword);
   }
 }
