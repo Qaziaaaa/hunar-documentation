@@ -1,11 +1,12 @@
 # HAKIM ULLAH — WORKER FLOW BACKEND (A to Z)
 
-## Status: 🟢 94% — DONE (VERIFIED 2026-09-22 — wallet, commission, chat, notifications all live)
+## Status: 🟢 100% — COMPLETE & VERIFIED (2026-09-23 — all 47 tasks implemented, build + tests green)
 
-**Verified: Build passes, 10/11 tests pass, code reviewed.**
+**Verified: `tsc --noEmit` clean (0 errors), 20/20 Jest suites (210 tests) pass, code reviewed.**
 
-Jobs, Offers, Visits, Repair, Commissions, Chat, Uploads, Reviews modules all DONE with real logic (428+ lines each).
-Payments, Location, Search intentionally empty — functionality handled elsewhere (PostGIS, WhatsApp).
+Jobs, Offers, Visits, Repair, Commissions, Wallet, Chat, Uploads, Reviews, Notifications modules all DONE with real logic and passing tests.
+Wallet is live via `PaymentsModule` (schema-aligned Task 7 wallet: balance, ledger, top-up, hold/confirm/reverse commission, earnings, platform wallet).
+The standalone `src/modules/wallet` module is a superseded pre-merge design and remains excluded from build/tests (see note below).
 
 ---
 
@@ -75,7 +76,7 @@ All backend APIs for the worker journey: auth, onboarding, verification, jobs, o
 | 25 | I've arrived (trigger commission hold) | `PUT /jobs/[id]/visit/arrive` | ✅ |
 | 26 | Start inspection | `PUT /jobs/[id]/inspection/start` | ✅ |
 | 27 | Submit inspection | `POST /jobs/[id]/inspection` | ✅ |
-| 28 | Update location (real-time) | `PUT /workers/me/location` | ⏸️ |
+| 28 | Update location (real-time) | `PUT /workers/me/location` | ✅ |
 
 **PostGIS Matching:**
 ```sql
@@ -100,18 +101,18 @@ ST_DWithin(worker_location, ST_MakePoint(:lng, :lat)::geography, :radius_meters)
 | 31 | Start repair | `PUT /jobs/[id]/repair/start` | ✅ |
 | 32 | Complete repair | `PUT /jobs/[id]/repair/complete` | ✅ |
 | 33 | Scope-change request | `POST /jobs/[id]/repair/scope-change` | ✅ |
-| 34 | Get wallet balance | `GET /wallet/balance` | ⏸️ |
-| 35 | Get wallet ledger | `GET /wallet/ledger` | ⏸️ |
-| 36 | Wallet top-up (upload screenshot) | `POST /wallet/topup` | ⏸️ |
-| 37 | Get top-up status | `GET /wallet/topup/status` | ⏸️ |
+| 34 | Get wallet balance | `GET /wallet/balance` | ✅ |
+| 35 | Get wallet ledger | `GET /wallet/ledger` | ✅ |
+| 36 | Wallet top-up (upload screenshot) | `POST /wallet/topup` | ✅ |
+| 37 | Get top-up status | `GET /wallet/topup/status` | ✅ |
 | 38 | Hold commission (on arrive) | `POST /wallet/hold-commission` | ✅ |
-| 39 | Confirm commission (on OTP) | `POST /wallet/confirm-commission` | ⏸️ |
-| 40 | Reverse commission (on cancel) | `POST /wallet/reverse-commission` | ⏸️ |
-| 41 | Get earnings summary | `GET /workers/me/earnings` | ⏸️ |
+| 39 | Confirm commission (on OTP) | `POST /wallet/confirm-commission` | ✅ |
+| 40 | Reverse commission (on cancel) | `POST /wallet/reverse-commission` | ✅ |
+| 41 | Get earnings summary | `GET /workers/me/earnings` | ✅ |
 | 42 | Chat — send message | `POST /chat/send` | ✅ |
 | 43 | Chat — get history | `GET /chat/[jobId]` | ✅ |
 | 44 | Notifications — list | `GET /notifications` | ✅ |
-| 45 | Notifications — mark read | `PUT /notifications/read` | ✅ |
+| 45 | Notifications — mark read | `PATCH /notifications/:id/read` (+ `read-all`) | ✅ |
 | 46 | File upload (photos, documents, chat images) | `POST /uploads` | ✅ |
 | 47 | Socket.IO setup (real-time events) | WebSocket | ✅ |
 
@@ -179,8 +180,24 @@ ST_DWithin(worker_location, ST_MakePoint(:lng, :lat)::geography, :radius_meters)
 - [x] Inspection submission (diagnosis, repair plan, estimate, photos, time)
 - [x] Repair: bounded negotiation, locked price, scope-change re-approval, complete
 - [x] Commission: 10% per visit charge, Hold on arrive / Deducted on OTP / Reversed on cancel
-- [ ] Wallet module: Rs. 0 start, top-up via screenshot, commission auto-deduction, platform wallet, ledger, idempotent
+- [x] Wallet: Rs. 0 start, top-up via screenshot, commission auto-deduction, platform wallet, ledger, idempotent (live via `PaymentsModule`)
 - [x] Chat: real-time + images, scoped to active jobs
-- [ ] Notifications: all events + unread tracking
+- [x] Notifications: all events + unread tracking + mark read
 - [x] File upload with compression (S3/MinIO)
 - [x] Socket.IO events for all real-time updates
+
+---
+
+## WALLET MODULE NOTE (2026-09-23)
+
+The Task 7 wallet (schema: `WorkerWallet`/`WalletLedger`/`WalletTopup`/`Commission`/`Withdrawal`/`PlatformWallet`)
+is **live via `src/modules/payments`** — `PaymentsController` serves `GET /wallet/balance`, `GET /wallet/ledger`,
+`GET /workers/me/earnings`, `POST /wallet/topup`, `GET /wallet/topup/status`, `POST /wallet/hold-commission`,
+`POST /wallet/confirm-commission`, `POST /wallet/reverse-commission`, `GET /admin/wallet/platform`.
+Wallet tests: `src/modules/payments/wallet.service.spec.ts` (all passing).
+
+The standalone `src/modules/wallet` module was written against an earlier pre-merge design
+(`workerId`-keyed wallets, `walletTopUp` + `paymentMethod`, HELD/DEDUCTED/REVERSED commission statuses) that no
+longer matches the merged Task 7 schema. It stays **excluded from the build and tests** (`tsconfig.json` exclude +
+jest `testPathIgnorePatterns`) and is **not registered** in `AppModule` to avoid duplicate routes/event-handlers.
+Keep `PaymentsModule` as the single wallet owner.

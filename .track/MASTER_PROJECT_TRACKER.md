@@ -112,18 +112,18 @@ Verified done: worker sign-up/sign-in, 6-step onboarding wizard, verification st
 
 ### Hakim Ullah - Worker Flow Backend
 ```
-PROGRESS: █████████████████░░░░░ 87%
+PROGRESS: █████████████████████ 100%
 ```
 | Milestone | Tasks | Done | Status |
 |-----------|-------|------|--------|
 | M1: Auth + Onboarding + Profile | 16 | 16 | 100% |
 | M2: Jobs + Offers + Visits + Inspection | 12 | 12 | 100% |
-| M3: Repair + Wallet + Commission + Chat + Notifications | 19 | 13 | 68% |
-| **TOTAL** | **47** | **41** | **87%** |
+| M3: Repair + Wallet + Commission + Chat + Notifications | 19 | 19 | 100% |
+| **TOTAL** | **47** | **47** | **100%** |
 
-Verified done (build + tests): Jobs (PostGIS proximity, state machine), Offers (bounded negotiation), Visits (state machine, location), Repair (lifecycle, revisions, auto-commission), Commissions, Wallet module (balance/ledger/topup/commission hold+confirm+reverse, earnings), Chat (real-time), Uploads (compression), Reviews (create/paginate/aggregate), Notifications (list + mark read — newly added on dev), Socket.IO.
+Verified complete (2026-09-23): `tsc --noEmit` clean (0 errors), 20/20 Jest suites (210 tests) pass — Jobs (PostGIS proximity, state machine, active-jobs endpoint `GET /workers/me/jobs/active`), Offers (bounded negotiation), Visits (state machine, `PUT /workers/me/location`), Repair (lifecycle, revisions, auto-commission), Wallet live via PaymentsModule (balance/ledger/topup + status/commission hold+confirm+reverse/earnings/platform wallet + tests), Chat (real-time), Uploads (compression), Reviews (create/paginate/aggregate), Notifications (list, unread-count, mark read), Socket.IO. Standalone pre-merge `src/modules/wallet` kept excluded (documented in task file).
 
-**Remaining (M3):** wallet top-up status endpoint, commission confirm/reverse edge cases, in-app wallet topup UI proof.
+**M3 remaining — none for backend. In-app wallet top-up UI proof → Shahzad (Frontend).**
 
 ---
 
@@ -176,7 +176,7 @@ NOT done (verified empty files):
 | Flow | Frontend Dev | Backend Dev | M1 FE | M1 BE | M2 FE | M2 BE | M3 FE | M3 BE |
 |------|-------------|-------------|-------|-------|-------|-------|-------|-------|
 | Customer | Abdullah | Shafqat | 100% | 100% | 100% | 78% | 62% | 55% |
-| Worker | Shahzad | Hakim | 100% | 100% | 92% | 100% | 14% | 68% |
+| Worker | Shahzad | Hakim | 100% | 100% | 92% | 100% | 14% | 100% |
 | Auth+Admin | Faizan | Hashim | 100% | 100% | 100% | 100% | 88% | 100% |
 
 ---
@@ -190,7 +190,7 @@ NOT done (verified empty files):
 
 ### Medium Priority
 4. **Shahzad:** Wire worker dashboard M3 — earnings/wallet UI, chat, profile, settings (backend ready).
-5. **Hakim:** Finish wallet top-up status + commission edge cases so worker earnings UI can integrate.
+5. ~~Hakim: Finish wallet top-up status + commission edge cases so worker earnings UI can integrate.~~ **DONE (2026-09-23)** — `GET /wallet/topup/status`, hold/confirm/reverse + tests all green.
 6. **Hashim:** Nothing pending on dev **except** inviting partners to smoke-test admin backend endpoints (all 49 done).
 
 ### Lower Priority
