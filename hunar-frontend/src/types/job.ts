@@ -28,6 +28,7 @@ export type JobStatus =
   | "repair_negotiating"
   | "repair_approved"
   | "repair_in_progress"
+  | "repair_declined"
   | "rejected"
   | "closed_assigned"
   | "cancelled";
@@ -143,6 +144,20 @@ export interface JobRequest {
   customer: CustomerSummary;
   totalOffers: number;
   status: JobStatus;
+  completedAt?: string;
+  invoiceNumber?: string;
+  customerReview?: {
+    rating: number;
+    comment: string;
+    date: string;
+  };
+  visitCharge?: number;
+  repairCharge?: number;
+  platformCommission?: number;
+  workerNetEarnings?: number;
+  warrantyDays?: number;
+  securityPin?: string;
+  etaMinutes?: number;
 }
 
 export interface Visit {

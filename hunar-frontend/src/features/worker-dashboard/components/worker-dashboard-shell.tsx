@@ -1,10 +1,14 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
+import { useRouter, usePathname } from "@/i18n/navigation";
+import { Briefcase } from "lucide-react";
+import { http } from "@/lib/api-client";
 import { DashboardHeader } from "./dashboard-header";
+import { DashboardSidebar } from "./dashboard-sidebar";
 import { JobRequestFeed } from "./job-request-feed";
-import { RadarSearchView } from "./radar-search-view";
 import { MobileNavBar } from "./mobile-nav-bar";
+import { WorkerJobsHub } from "@/features/jobs/components/worker-jobs-hub";
 import {
   INITIAL_WORKER_PROFILE,
   INITIAL_NOTIFICATIONS,
@@ -15,88 +19,224 @@ import type {
   DashboardNotification,
 } from "../types";
 
-export function WorkerDashboardShell() {
+function loadInitialProfile(): WorkerDashboardProfile {
+  if (typeof window === "undefined") return INITIAL_WORKER_PROFILE;
+  try {
+    const saved = window.localStorage.getItem("hunar_worker_onboarding");
+    const savedOnline = window.localStorage.getItem("hunar_worker_online");
+    const isOnline = savedOnline !== null ? savedOnline === "true" : INITIAL_WORKER_PROFILE.isOnline;
+
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      if (parsed.fullName) {
+        return {
+          ...INITIAL_WORKER_PROFILE,
+          fullName: parsed.fullName || INITIAL_WORKER_PROFILE.fullName,
+          phone: parsed.phone || INITIAL_WORKER_PROFILE.phone,
+          skills: parsed.skills?.length ? parsed.skills : INITIAL_WORKER_PROFILE.skills,
+          serviceAreas: parsed.serviceAreas?.length ? parsed.serviceAreas : INITIAL_WORKER_PROFILE.serviceAreas,
+          bio: parsed.bio || INITIAL_WORKER_PROFILE.bio,
+          experienceYears: Number(parsed.experienceYears) || INITIAL_WORKER_PROFILE.experienceYears,
+          isOnline,
+        };
+      }
+    }
+    return {
+      ...INITIAL_WORKER_PROFILE,
+      isOnline,
+    };
+  } catch {
+    // ignore
+  }
+  return INITIAL_WORKER_PROFILE;
+}
+
+export function WorkerDashboardShell({
+  initialTab = "dashboard",
+  children,
+}: {
+  initialTab?: DashboardTab;
+  children?: React.ReactNode;
+} = {}) {
+  const router = useRouter();
+  const pathname = usePathname();
+
   const [profile, setProfile] = useState<WorkerDashboardProfile>(
-    INITIAL_WORKER_PROFILE
+    loadInitialProfile
   );
-  const [activeTab, setActiveTab] = useState<DashboardTab>("dashboard");
-  const [viewMode, setViewMode] = useState<"feed" | "radar">("feed");
+  const [activeTab, setActiveTab] = useState<DashboardTab>(initialTab);
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [notifications, setNotifications] = useState<DashboardNotification[]>(
     INITIAL_NOTIFICATIONS
   );
 
-  // Load any onboarding profile name/phone from localStorage if available
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+
+  // Synchronize activeTab with URL pathname
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem("hunar_worker_onboarding");
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (parsed.fullName) {
+    if (pathname.includes("/worker/jobs")) {
+      setActiveTab("jobs");
+    } else if (pathname.includes("/worker/wallet")) {
+      setActiveTab("wallet");
+    } else if (pathname.includes("/worker/earnings")) {
+      setActiveTab("earnings");
+    } else if (pathname.includes("/worker/profile")) {
+      setActiveTab("profile");
+    } else if (pathname.includes("/worker/dashboard") || pathname.endsWith("/worker")) {
+      setActiveTab("dashboard");
+    }
+  }, [pathname]);
+
+  const handleSelectTab = (tab: DashboardTab) => {
+    setActiveTab(tab);
+    setIsMobileSidebarOpen(false);
+    if (tab === "dashboard") {
+      router.push("/worker");
+    } else if (tab === "jobs") {
+      router.push("/worker/jobs");
+    } else if (tab === "wallet") {
+      router.push("/worker/wallet");
+    } else if (tab === "earnings") {
+      router.push("/worker/earnings");
+    } else if (tab === "profile") {
+      router.push("/worker/profile");
+    }
+  };
+
+  // Sync profile & online status from live backend on mount
+  useEffect(() => {
+    async function syncBackendProfile() {
+      try {
+        const raw = await http.get<any>("/users/worker/me");
+        const data = raw?.data ?? raw;
+        if (data?.user) {
+          const wp = data.workerProfile;
+          const areas = data.serviceAreas?.map((a: any) => a.label) || [];
           setProfile((prev) => ({
             ...prev,
-            fullName: parsed.fullName || prev.fullName,
-            phone: parsed.phone || prev.phone,
-            skills: parsed.skills?.length ? parsed.skills : prev.skills,
-            serviceAreas: parsed.serviceAreas?.length ? parsed.serviceAreas : prev.serviceAreas,
-            bio: parsed.bio || prev.bio,
-            experienceYears: Number(parsed.experienceYears) || prev.experienceYears,
+            id: data.user.id || prev.id,
+            workerId: data.user.id ? `WRK-${data.user.id.slice(0, 8).toUpperCase()}` : prev.workerId,
+            fullName: data.user.name || prev.fullName,
+            phone: data.user.phone || prev.phone,
+            avatarUrl: data.user.avatarUrl || prev.avatarUrl,
+            skills: wp?.skills?.length ? wp.skills : prev.skills,
+            serviceAreas: areas.length ? areas : prev.serviceAreas,
+            bio: wp?.bio || prev.bio,
+            experienceYears: Number(wp?.experienceYears) || prev.experienceYears,
+            isOnline: wp?.isAvailable ?? prev.isOnline,
+            isVerified: wp?.verificationStatus === "APPROVED",
           }));
         }
+      } catch (err) {
+        console.warn("[WorkerDashboardShell] Syncing live profile:", err);
       }
-    } catch {
-      // ignore
     }
+    syncBackendProfile();
   }, []);
 
-  const handleToggleOnline = () => {
-    setProfile((prev) => ({
-      ...prev,
-      isOnline: !prev.isOnline,
-    }));
+  const handleToggleOnline = (targetStatus?: boolean) => {
+    setProfile((prev) => {
+      const nextStatus = typeof targetStatus === "boolean" ? targetStatus : !prev.isOnline;
+
+      if (typeof window !== "undefined") {
+        try {
+          window.localStorage.setItem("hunar_worker_online", String(nextStatus));
+        } catch {
+          // ignore
+        }
+      }
+
+      // Sync with server in background without breaking UI
+      http.put("/users/worker/availability", { isAvailable: nextStatus }).catch((err) => {
+        console.warn("[handleToggleOnline] Server sync notice:", err);
+      });
+
+      return {
+        ...prev,
+        isOnline: nextStatus,
+      };
+    });
   };
 
   const handleMarkNotificationsRead = () => {
     setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
   };
 
-  return (
-    <div className="min-h-screen flex flex-col bg-white text-dark pb-20 md:pb-8">
-      {/* Top Header */}
-      <DashboardHeader
-        profile={profile}
-        notifications={notifications}
-        searchQuery={searchQuery}
-        isOnline={profile.isOnline}
-        viewMode={viewMode}
-        onToggleOnline={handleToggleOnline}
-        onSearchChange={setSearchQuery}
-        onSelectTab={setActiveTab}
-        onMarkNotificationsRead={handleMarkNotificationsRead}
-        onSelectViewMode={setViewMode}
-      />
+  const unreadNotificationsCount = notifications.filter((n) => !n.read).length;
 
-      {/* Main Content Area - Job Requests Feed or Radar Searching View */}
-      <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col px-2.5 sm:px-4 py-3 sm:py-4">
-        {viewMode === "feed" ? (
+  const renderMainContent = () => {
+    if (children) {
+      return <div className="space-y-4 max-w-7xl mx-auto w-full">{children}</div>;
+    }
+
+    if (activeTab === "dashboard") {
+      return (
+        <div className="space-y-4 max-w-7xl mx-auto w-full animate-in fade-in duration-200">
           <JobRequestFeed
             searchQuery={searchQuery}
             city={profile.city}
             isOnline={profile.isOnline}
           />
-        ) : (
-          <RadarSearchView
-            city={profile.city}
-            workerName={profile.fullName.split(" ")[0]}
-            onViewFeed={() => setViewMode("feed")}
-          />
-        )}
-      </main>
+        </div>
+      );
+    }
+
+    if (activeTab === "jobs") {
+      return <WorkerJobsHub />;
+    }
+
+    return (
+      <div className="flex h-full min-h-[60vh] flex-col items-center justify-center rounded-3xl border border-teal/15 bg-white p-8 text-center shadow-xs">
+        <div className="flex size-14 items-center justify-center rounded-2xl bg-teal/10 text-teal">
+          <Briefcase className="size-7" />
+        </div>
+        <h2 className="mt-4 text-xl font-extrabold tracking-tight text-navy">
+          Worker Portal Section
+        </h2>
+        <p className="mt-1.5 max-w-sm text-sm text-muted-foreground leading-relaxed">
+          Select a tab from the sidebar navigation.
+        </p>
+      </div>
+    );
+  };
+
+  return (
+    <div className="min-h-screen flex flex-col bg-white text-slate-900 pb-20 md:pb-8">
+      {/* Full-Height Fixed Desktop Sidebar */}
+      <DashboardSidebar
+        activeTab={activeTab}
+        onSelectTab={handleSelectTab}
+        profile={profile}
+        unreadNotificationsCount={unreadNotificationsCount}
+        isOpen={isMobileSidebarOpen}
+        onClose={() => setIsMobileSidebarOpen(false)}
+      />
+
+      {/* Main Container offset by lg:ps-64 on desktop */}
+      <div className="flex-1 lg:ps-64 flex flex-col min-w-0 bg-white">
+        {/* Top Header */}
+        <DashboardHeader
+          profile={profile}
+          notifications={notifications}
+          searchQuery={searchQuery}
+          isOnline={profile.isOnline}
+          onToggleOnline={handleToggleOnline}
+          onSearchChange={setSearchQuery}
+          onSelectTab={handleSelectTab}
+          onMarkNotificationsRead={handleMarkNotificationsRead}
+          onOpenSidebar={() => setIsMobileSidebarOpen(true)}
+        />
+
+        {/* Main Content Area */}
+        <main className="flex-1 bg-white px-3 sm:px-6 py-4 sm:py-6">
+          {renderMainContent()}
+        </main>
+      </div>
 
       {/* Mobile Bottom Navigation Bar */}
       <MobileNavBar
         activeTab={activeTab}
-        onSelectTab={setActiveTab}
+        onSelectTab={handleSelectTab}
         activeJobsCount={profile.activeJobsCount}
       />
     </div>

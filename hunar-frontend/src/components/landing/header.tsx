@@ -8,7 +8,7 @@ export function Header() {
       className="bg-brand-hero border-b border-white/10 backdrop-blur-md bg-opacity-95"
       data-purpose="main-header"
     >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-14 flex items-center justify-between">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 min-h-16 py-2 flex items-center justify-between">
         <div className="flex items-center space-x-6">
           <Link
             className="flex items-center gap-2.5 group hover:opacity-95 transition-opacity"

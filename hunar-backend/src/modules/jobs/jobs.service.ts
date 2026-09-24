@@ -85,6 +85,22 @@ function mapJobCard(row: JobCardRow): JobCard {
   };
 }
 
+/**
+ * Job statuses that count as "active" for an assigned worker: the job has moved
+ * past the offer stage (worker selected) and has not reached a terminal state.
+ * Everything from the chosen-worker/visit stage through the in-progress repair.
+ */
+const ACTIVE_JOB_STATUSES: JobStatus[] = [
+  'WORKER_ASSIGNED',
+  'VISIT_SCHEDULED',
+  'VISIT_IN_PROGRESS',
+  'VISIT_COMPLETED',
+  'INSPECTION_DONE',
+  'REPAIR_NEGOTIATING',
+  'REPAIR_APPROVED',
+  'IN_PROGRESS',
+];
+
 @Injectable()
 export class JobsService {
   constructor(
@@ -305,6 +321,57 @@ export class JobsService {
     const total = Number(countRows[0]?.total ?? 0);
 
     return toPageResult(rows.map(mapJobCard), total, page, limit);
+  }
+
+  /** Tasks 23 — active jobs for the assigned worker (all non-terminal states). */
+  async getActiveJobs(workerId: string, query: CustomerJobsQueryDto = {}) {
+    const { page, limit, skip } = normalizePage(query);
+    const where: Prisma.ServiceRequestWhereInput = {
+      selectedWorkerId: workerId,
+      status: { in: ACTIVE_JOB_STATUSES },
+    };
+    const [rows, total] = await this.prisma.$transaction([
+      this.prisma.serviceRequest.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy: { createdAt: 'desc' },
+        include: {
+          category: { select: { id: true, name: true } },
+          customer: { select: { id: true, name: true, phone: true } },
+          visits: {
+            where: { workerId },
+            orderBy: { scheduledDate: 'asc' },
+            take: 1,
+            select: { id: true, status: true, scheduledDate: true },
+          },
+          _count: { select: { offers: true } },
+        },
+      }),
+      this.prisma.serviceRequest.count({ where }),
+    ]);
+    const items = rows.map((j) => ({
+      id: j.id,
+      title: j.title,
+      description: j.description,
+      status: j.status,
+      categoryId: j.categoryId,
+      categoryName: j.category.name,
+      address: j.address,
+      city: j.city,
+      area: j.area,
+      suggestedVisitCharge:
+        j.suggestedVisitCharge != null ? Number(j.suggestedVisitCharge) : null,
+      lockedVisitCharge: j.lockedVisitCharge != null ? Number(j.lockedVisitCharge) : null,
+      preferredVisitTime: j.preferredVisitTime,
+      images: j.images,
+      voiceNoteUrl: j.voiceNoteUrl,
+      nextVisit: j.visits[0] ?? null,
+      customer: j.customer,
+      offerCount: j._count.offers,
+      createdAt: j.createdAt,
+    }));
+    return toPageResult(items, total, page, limit);
   }
 
   async getJobDetail(jobId: string, user: JwtPayload, lat?: number, lng?: number) {

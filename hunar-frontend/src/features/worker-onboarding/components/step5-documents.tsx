@@ -11,6 +11,7 @@ import {
   Trash2,
   Upload,
 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { WorkerProfileFormData } from "../types";
@@ -28,6 +29,7 @@ export function Step5Documents({
   onPrev: () => void;
   stepError: string | null;
 }) {
+  const t = useTranslations("WorkerOnboarding.Step5");
   const frontInputRef = useRef<HTMLInputElement>(null);
   const backInputRef = useRef<HTMLInputElement>(null);
 
@@ -72,19 +74,19 @@ export function Step5Documents({
         <div>
           <div className="mb-1 flex items-center justify-between gap-2">
             <div>
-              <span className="block text-xs font-bold uppercase tracking-wider text-teal">
-                NADRA Verification
+              <span className="block text-xs font-bold uppercase tracking-wider text-teal mb-1">
+                {t("badge")}
               </span>
-              <h2 className="text-2xl font-extrabold tracking-tight text-navy sm:text-3xl leading-tight">
-                Pakistani Smart CNIC Verification
+              <h2 className="text-2xl font-extrabold tracking-tight text-navy sm:text-3xl leading-snug">
+                {t("title")}
               </h2>
             </div>
             <span className="shrink-0 self-start rounded-full border border-teal/20 bg-teal/10 px-3 py-1 text-xs font-bold text-teal">
-              NADRA Protected
+              {t("protectedBadge")}
             </span>
           </div>
-          <p className="text-sm sm:text-base text-muted-foreground">
-            Upload clear photos of your original National Identity Card (Smart CNIC).
+          <p className="mt-2 text-sm sm:text-base text-muted-foreground leading-relaxed">
+            {t("subtitle")}
           </p>
         </div>
 
@@ -92,7 +94,7 @@ export function Step5Documents({
         <div className="flex items-center gap-3 rounded-2xl border border-teal-200 bg-teal/10 p-3.5 text-xs sm:text-sm text-navy">
           <ShieldCheck className="size-5.5 shrink-0 text-teal" />
           <span className="leading-relaxed text-muted-foreground">
-            <strong className="text-navy font-bold">256-bit Encrypted:</strong> Identity data is protected strictly for verified payouts & client safety.
+            <strong className="text-navy font-bold">{t("encryptionTitle")}</strong> {t("encryptionDesc")}
           </span>
         </div>
 
@@ -102,7 +104,7 @@ export function Step5Documents({
             htmlFor="cnic-number"
             className="ml-1 block text-xs font-bold uppercase tracking-wider text-navy"
           >
-            13-Digit CNIC Number (Optional)
+            {t("cnicNumberLabel")}
           </label>
           <div className="relative">
             <CreditCard className="absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
@@ -111,7 +113,7 @@ export function Step5Documents({
               type="text"
               value={formData.cnicNumber || ""}
               onChange={(e) => updateFormData({ cnicNumber: e.target.value })}
-              placeholder="e.g. 17301-1234567-1"
+              placeholder={t("cnicNumberPlaceholder")}
               className="h-11 sm:h-12 pl-10 rounded-full text-sm sm:text-base font-mono shadow-2xs"
             />
           </div>
@@ -123,10 +125,10 @@ export function Step5Documents({
           <div className="rounded-2xl bg-white p-1.5">
             <div className="mb-2 flex items-center justify-between">
               <span className="text-sm font-bold text-navy">
-                🪪 CNIC Front <span className="text-error">*</span>
+                🪪 {t("cnicFront")} <span className="text-error">*</span>
               </span>
               <span className="rounded-full border border-teal/20 bg-teal/10 px-2 py-0.5 text-xs font-bold text-teal">
-                {formData.cnicFront ? "✓ Attached" : "Required"}
+                {formData.cnicFront ? t("attached") : t("required")}
               </span>
             </div>
 
@@ -160,7 +162,7 @@ export function Step5Documents({
                       onClick={() => frontInputRef.current?.click()}
                       className="h-7 rounded-full border-teal/40 px-2.5 text-xs font-bold text-teal hover:bg-teal/10"
                     >
-                      Replace
+                      {t("replace")}
                     </Button>
                     <Button
                       type="button"
@@ -181,9 +183,9 @@ export function Step5Documents({
               >
                 <Upload className="mb-1.5 size-5 text-teal group-hover:scale-105 transition-transform" />
                 <p className="text-sm font-bold text-navy">
-                  <span className="text-teal underline">Upload Front</span>
+                  <span className="text-teal underline">{t("uploadFront")}</span>
                 </p>
-                <p className="text-xs text-muted-foreground mt-0.5">Max 5MB</p>
+                <p className="text-xs text-muted-foreground mt-0.5">{t("maxSize")}</p>
               </div>
             )}
           </div>
@@ -192,10 +194,10 @@ export function Step5Documents({
           <div className="rounded-2xl bg-white p-1.5">
             <div className="mb-2 flex items-center justify-between">
               <span className="text-sm font-bold text-navy">
-                🪪 CNIC Back <span className="text-error">*</span>
+                🪪 {t("cnicBack")} <span className="text-error">*</span>
               </span>
               <span className="rounded-full border border-teal/20 bg-teal/10 px-2 py-0.5 text-xs font-bold text-teal">
-                {formData.cnicBack ? "✓ Attached" : "Required"}
+                {formData.cnicBack ? t("attached") : t("required")}
               </span>
             </div>
 
@@ -229,7 +231,7 @@ export function Step5Documents({
                       onClick={() => backInputRef.current?.click()}
                       className="h-7 rounded-full border-teal/40 px-2.5 text-xs font-bold text-teal hover:bg-teal/10"
                     >
-                      Replace
+                      {t("replace")}
                     </Button>
                     <Button
                       type="button"
@@ -250,9 +252,9 @@ export function Step5Documents({
               >
                 <Upload className="mb-1.5 size-5 text-teal group-hover:scale-105 transition-transform" />
                 <p className="text-sm font-bold text-navy">
-                  <span className="text-teal underline">Upload Back</span>
+                  <span className="text-teal underline">{t("uploadBack")}</span>
                 </p>
-                <p className="text-xs text-muted-foreground mt-0.5">Max 5MB</p>
+                <p className="text-xs text-muted-foreground mt-0.5">{t("maxSize")}</p>
               </div>
             )}
           </div>
@@ -260,9 +262,9 @@ export function Step5Documents({
 
         {/* Guidelines (1 line) */}
         <div className="rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-xs sm:text-sm text-muted-foreground flex items-center justify-between">
-          <span className="text-teal font-semibold">✓ 4 corners visible</span>
-          <span className="text-teal font-semibold">✓ No glare / blur</span>
-          <span className="text-teal font-semibold">✓ Smart CNIC</span>
+          <span className="text-teal font-semibold">{t("guideCorners")}</span>
+          <span className="text-teal font-semibold">{t("guideGlare")}</span>
+          <span className="text-teal font-semibold">{t("guideSmart")}</span>
         </div>
 
         {stepError && (
@@ -283,7 +285,7 @@ export function Step5Documents({
           className="h-12 sm:h-13 w-1/3 rounded-full border-2 border-navy text-sm sm:text-base font-bold text-navy hover:bg-slate-50"
         >
           <ArrowLeft className="mr-1.5 size-4 rtl:rotate-180" />
-          <span>Back</span>
+          <span>{t("backBtn")}</span>
         </Button>
         <Button
           type="button"
@@ -291,7 +293,7 @@ export function Step5Documents({
           onClick={onNext}
           className="h-12 sm:h-13 flex-1 rounded-full bg-teal text-sm sm:text-base font-bold text-white shadow-md shadow-teal/20 hover:bg-teal/90 transition-all"
         >
-          <span>Verify & Review</span>
+          <span>{t("continueBtn")}</span>
           <ArrowRight className="ml-1.5 size-4 rtl:rotate-180" />
         </Button>
       </div>

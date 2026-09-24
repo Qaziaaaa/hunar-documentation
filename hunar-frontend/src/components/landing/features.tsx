@@ -1,3 +1,4 @@
+import { Link } from "@/i18n/navigation";
 import { ArrowRightIcon } from "./icons";
 import { steps } from "./data";
 
@@ -20,7 +21,7 @@ export function Features() {
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {steps.map((s) => (
-            <a
+            <Link
               key={s.title}
               href={s.href}
               className="border border-slate-100 rounded-2xl p-6 hover:shadow-xl hover:border-brand-accent transition-all bg-white text-center flex flex-col items-center group cursor-pointer block"
@@ -46,7 +47,7 @@ export function Features() {
                 {s.linkText}
                 <ArrowRightIcon className="w-3.5 h-3.5" />
               </span>
-            </a>
+            </Link>
           ))}
         </div>
       </div>

@@ -167,7 +167,7 @@ export class AdminService {
     private readonly audit: AuditService,
     @Optional() private readonly eventBus?: EventBusService,
     @Optional() private readonly realtime?: RealtimeService,
-  ) {}
+  ) { }
 
   // ----- Customers -----
 
@@ -303,9 +303,9 @@ export class AdminService {
     const [skills, jobs, earningsAggregate, commissions, reviews] = await Promise.all([
       skillIds.length
         ? this.prisma.serviceCategory.findMany({
-            where: { id: { in: skillIds } },
-            select: { id: true, name: true, nameUrdu: true },
-          })
+          where: { id: { in: skillIds } },
+          select: { id: true, name: true, nameUrdu: true },
+        })
         : Promise.resolve([]),
       this.prisma.serviceRequest.findMany({
         where: { OR: [{ selectedWorkerId: id }, { offers: { some: { workerId: id } } }] },
@@ -420,20 +420,20 @@ export class AdminService {
       ...(query.area ? { area: query.area } : {}),
       ...(query.from || query.to
         ? {
-            createdAt: {
-              ...(query.from ? { gte: new Date(query.from) } : {}),
-              ...(query.to ? { lte: new Date(query.to) } : {}),
-            },
-          }
+          createdAt: {
+            ...(query.from ? { gte: new Date(query.from) } : {}),
+            ...(query.to ? { lte: new Date(query.to) } : {}),
+          },
+        }
         : {}),
       ...(query.search
         ? {
-            OR: [
-              { title: { contains: query.search, mode: 'insensitive' } },
-              { customer: { is: { name: { contains: query.search, mode: 'insensitive' } } } },
-              { customer: { is: { phone: { contains: query.search } } } },
-            ],
-          }
+          OR: [
+            { title: { contains: query.search, mode: 'insensitive' } },
+            { customer: { is: { name: { contains: query.search, mode: 'insensitive' } } } },
+            { customer: { is: { phone: { contains: query.search } } } },
+          ],
+        }
         : {}),
     };
 
@@ -480,23 +480,23 @@ export class AdminService {
       ...(query.type ? { type: query.type } : {}),
       ...(query.from || query.to
         ? {
-            createdAt: {
-              ...(query.from ? { gte: new Date(query.from) } : {}),
-              ...(query.to ? { lte: new Date(query.to) } : {}),
-            },
-          }
+          createdAt: {
+            ...(query.from ? { gte: new Date(query.from) } : {}),
+            ...(query.to ? { lte: new Date(query.to) } : {}),
+          },
+        }
         : {}),
       ...(query.search
         ? {
-            user: {
-              is: {
-                OR: [
-                  { name: { contains: query.search, mode: 'insensitive' } },
-                  { phone: { contains: query.search } },
-                ],
-              },
+          user: {
+            is: {
+              OR: [
+                { name: { contains: query.search, mode: 'insensitive' } },
+                { phone: { contains: query.search } },
+              ],
             },
-          }
+          },
+        }
         : {}),
     };
 
@@ -538,21 +538,21 @@ export class AdminService {
       ...(query.area ? { area: query.area } : {}),
       ...(query.from || query.to
         ? {
-            completedAt: {
-              ...(query.from ? { gte: new Date(query.from) } : {}),
-              ...(query.to ? { lte: new Date(query.to) } : {}),
-            },
-          }
+          completedAt: {
+            ...(query.from ? { gte: new Date(query.from) } : {}),
+            ...(query.to ? { lte: new Date(query.to) } : {}),
+          },
+        }
         : {}),
       ...(query.search
         ? {
-            OR: [
-              { title: { contains: query.search, mode: 'insensitive' } },
-              { customer: { is: { name: { contains: query.search, mode: 'insensitive' } } } },
-              { customer: { is: { phone: { contains: query.search } } } },
-              { selectedWorker: { is: { name: { contains: query.search, mode: 'insensitive' } } } },
-            ],
-          }
+          OR: [
+            { title: { contains: query.search, mode: 'insensitive' } },
+            { customer: { is: { name: { contains: query.search, mode: 'insensitive' } } } },
+            { customer: { is: { phone: { contains: query.search } } } },
+            { selectedWorker: { is: { name: { contains: query.search, mode: 'insensitive' } } } },
+          ],
+        }
         : {}),
     };
 
@@ -592,20 +592,20 @@ export class AdminService {
       ...(query.status ? { status: query.status } : {}),
       ...(query.from || query.to
         ? {
-            createdAt: {
-              ...(query.from ? { gte: new Date(query.from) } : {}),
-              ...(query.to ? { lte: new Date(query.to) } : {}),
-            },
-          }
+          createdAt: {
+            ...(query.from ? { gte: new Date(query.from) } : {}),
+            ...(query.to ? { lte: new Date(query.to) } : {}),
+          },
+        }
         : {}),
       ...(query.search
         ? {
-            OR: [
-              { job: { is: { title: { contains: query.search, mode: 'insensitive' } } } },
-              { worker: { is: { name: { contains: query.search, mode: 'insensitive' } } } },
-              { worker: { is: { phone: { contains: query.search } } } },
-            ],
-          }
+          OR: [
+            { job: { is: { title: { contains: query.search, mode: 'insensitive' } } } },
+            { worker: { is: { name: { contains: query.search, mode: 'insensitive' } } } },
+            { worker: { is: { phone: { contains: query.search } } } },
+          ],
+        }
         : {}),
     };
 
@@ -659,19 +659,19 @@ export class AdminService {
       ...(query.status ? { status: query.status } : {}),
       ...(query.from || query.to
         ? {
-            requestedAt: {
-              ...(query.from ? { gte: new Date(query.from) } : {}),
-              ...(query.to ? { lte: new Date(query.to) } : {}),
-            },
-          }
+          requestedAt: {
+            ...(query.from ? { gte: new Date(query.from) } : {}),
+            ...(query.to ? { lte: new Date(query.to) } : {}),
+          },
+        }
         : {}),
       ...(query.search
         ? {
-            OR: [
-              { worker: { is: { name: { contains: query.search, mode: 'insensitive' } } } },
-              { worker: { is: { phone: { contains: query.search } } } },
-            ],
-          }
+          OR: [
+            { worker: { is: { name: { contains: query.search, mode: 'insensitive' } } } },
+            { worker: { is: { phone: { contains: query.search } } } },
+          ],
+        }
         : {}),
     };
 
@@ -963,20 +963,20 @@ export class AdminService {
       ...(query.type ? { type: query.type } : {}),
       ...(query.from || query.to
         ? {
-            createdAt: {
-              ...(query.from ? { gte: new Date(query.from) } : {}),
-              ...(query.to ? { lte: new Date(query.to) } : {}),
-            },
-          }
+          createdAt: {
+            ...(query.from ? { gte: new Date(query.from) } : {}),
+            ...(query.to ? { lte: new Date(query.to) } : {}),
+          },
+        }
         : {}),
       ...(query.search
         ? {
-            OR: [
-              { job: { is: { title: { contains: query.search, mode: 'insensitive' } } } },
-              { reporter: { is: { name: { contains: query.search, mode: 'insensitive' } } } },
-              { respondent: { is: { name: { contains: query.search, mode: 'insensitive' } } } },
-            ],
-          }
+          OR: [
+            { job: { is: { title: { contains: query.search, mode: 'insensitive' } } } },
+            { reporter: { is: { name: { contains: query.search, mode: 'insensitive' } } } },
+            { respondent: { is: { name: { contains: query.search, mode: 'insensitive' } } } },
+          ],
+        }
         : {}),
     };
 
@@ -1181,11 +1181,11 @@ export class AdminService {
       ...(query.isActive !== undefined ? { isActive: query.isActive === 'true' } : {}),
       ...(query.search
         ? {
-            OR: [
-              { name: { contains: query.search, mode: 'insensitive' } },
-              { nameUrdu: { contains: query.search, mode: 'insensitive' } },
-            ],
-          }
+          OR: [
+            { name: { contains: query.search, mode: 'insensitive' } },
+            { nameUrdu: { contains: query.search, mode: 'insensitive' } },
+          ],
+        }
         : {}),
     };
 
@@ -1657,11 +1657,11 @@ export class AdminService {
       ...(query.actorId ? { actorId: query.actorId } : {}),
       ...(query.from || query.to
         ? {
-            createdAt: {
-              ...(query.from ? { gte: new Date(query.from) } : {}),
-              ...(query.to ? { lte: new Date(query.to) } : {}),
-            },
-          }
+          createdAt: {
+            ...(query.from ? { gte: new Date(query.from) } : {}),
+            ...(query.to ? { lte: new Date(query.to) } : {}),
+          },
+        }
         : {}),
     };
 
@@ -1697,11 +1697,11 @@ export class AdminService {
       ...(query.isRead !== undefined ? { isRead: query.isRead === 'true' } : {}),
       ...(query.from || query.to
         ? {
-            createdAt: {
-              ...(query.from ? { gte: new Date(query.from) } : {}),
-              ...(query.to ? { lte: new Date(query.to) } : {}),
-            },
-          }
+          createdAt: {
+            ...(query.from ? { gte: new Date(query.from) } : {}),
+            ...(query.to ? { lte: new Date(query.to) } : {}),
+          },
+        }
         : {}),
     };
 
@@ -1993,13 +1993,13 @@ export class AdminService {
 
     const payments = PAID_JOB_STATUSES.includes(job.status)
       ? [
-          {
-            jobId: job.id,
-            amount: job.lockedVisitCharge ?? job.suggestedVisitCharge ?? null,
-            status: job.status,
-            paidAt: job.completedAt ?? job.createdAt,
-          },
-        ]
+        {
+          jobId: job.id,
+          amount: job.lockedVisitCharge ?? job.suggestedVisitCharge ?? null,
+          status: job.status,
+          paidAt: job.completedAt ?? job.createdAt,
+        },
+      ]
       : [];
 
     return {
@@ -2107,11 +2107,11 @@ export class AdminService {
       ...(query.status ? { isActive: query.status === 'active' } : {}),
       ...(query.search
         ? {
-            OR: [
-              { name: { contains: query.search, mode: 'insensitive' } },
-              { phone: { contains: query.search } },
-            ],
-          }
+          OR: [
+            { name: { contains: query.search, mode: 'insensitive' } },
+            { phone: { contains: query.search } },
+          ],
+        }
         : {}),
       ...(verificationStatus ? { workerProfile: { is: { verificationStatus } } } : {}),
     };

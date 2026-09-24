@@ -12,6 +12,8 @@ import {
 } from "lucide-react";
 import { cn } from "cn";
 
+import { useLocale } from "next-intl";
+
 export function StatusBanner({
   isOnline,
   onToggleOnline,
@@ -23,6 +25,8 @@ export function StatusBanner({
   city?: string;
   serviceAreas?: string[];
 }) {
+  const locale = useLocale();
+  const isUrdu = locale === "ur";
   const [showRuleInfo, setShowRuleInfo] = useState(false);
 
   return (
@@ -60,7 +64,13 @@ export function StatusBanner({
             <div className="space-y-0.5">
               <div className="flex items-center gap-2 flex-wrap">
                 <span className="text-sm sm:text-base font-extrabold text-navy">
-                  {isOnline ? "Status: Online & Ready for Jobs" : "Status: Currently Offline"}
+                  {isOnline
+                    ? isUrdu
+                      ? "اسٹیٹس: آن لائن اور جابز کے لیے تیار"
+                      : "Status: Online & Ready for Jobs"
+                    : isUrdu
+                      ? "اسٹیٹس: اس وقت آف لائن"
+                      : "Status: Currently Offline"}
                 </span>
                 <span
                   className={cn(
@@ -76,7 +86,13 @@ export function StatusBanner({
                       isOnline ? "bg-teal animate-pulse" : "bg-slate-500"
                     )}
                   />
-                  {isOnline ? "LIVE ON RADAR" : "OFF RADAR"}
+                  {isOnline
+                    ? isUrdu
+                      ? "لائیو آن رڈار"
+                      : "LIVE ON RADAR"
+                    : isUrdu
+                      ? "آف رڈار"
+                      : "OFF RADAR"}
                 </span>
               </div>
 
@@ -84,8 +100,12 @@ export function StatusBanner({
                 {isOnline ? (
                   <span className="flex items-center gap-1">
                     <MapPin className="size-3 text-teal shrink-0" />
-                    Receiving customer job requests across {city} ({serviceAreas.slice(0, 3).join(", ")}).
+                    {isUrdu
+                      ? `${city} میں کسٹمر جاب کی درخواستیں موصول ہو رہی ہیں۔`
+                      : `Receiving customer job requests across ${city} (${serviceAreas.slice(0, 3).join(", ")}).`}
                   </span>
+                ) : isUrdu ? (
+                  "آپ کسٹمر کی تلاش سے چھپے ہوئے ہیں۔ نئی جابز حاصل کرنے کے لیے آن لائن ہوں۔"
                 ) : (
                   "You are hidden from customer searches. Switch Online to receive new jobs."
                 )}

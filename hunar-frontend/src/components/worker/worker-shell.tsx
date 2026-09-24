@@ -16,6 +16,7 @@ import {
 import { connectSocket, disconnectSocket } from "@/lib/socket";
 import { isMockMode } from "@/lib/data-source";
 import { cn } from "@/lib/utils";
+import { OrderworkerLogo } from "@/components/shared/orderworker-logo";
 
 function Brand() {
   return (
@@ -23,12 +24,7 @@ function Brand() {
       href="/worker"
       className="flex items-center gap-2 outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
     >
-      <span className="flex size-8 items-center justify-center rounded-lg bg-navy text-sm font-bold text-white">
-        H
-      </span>
-      <span className="text-base font-bold tracking-tight text-navy">
-        HUNAR
-      </span>
+      <OrderworkerLogo variant="dark" size="sm" />
     </Link>
   );
 }
