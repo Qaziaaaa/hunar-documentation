@@ -266,6 +266,27 @@ export function WorkerChatModal({
         {messages.map((msg) => {
           const isMe = msg.sender === "worker";
 
+          if (msg.type === "voice") {
+            return (
+              <div
+                key={msg.id}
+                className={`flex flex-col ${isMe ? "items-end" : "items-start"}`}
+              >
+                <VoiceMessageBubble
+                  audioUrl={msg.audioUrl}
+                  durationSeconds={msg.durationSeconds}
+                  isSender={isMe}
+                />
+                <div
+                  className={`flex items-center gap-1 mt-1 justify-end text-[10px] text-slate-400`}
+                >
+                  <span>{msg.time}</span>
+                  {isMe && <CheckCheck className="size-3.5 text-[#0F8B8D]" />}
+                </div>
+              </div>
+            );
+          }
+
           return (
             <div
               key={msg.id}
@@ -278,15 +299,6 @@ export function WorkerChatModal({
                     : "bg-white text-slate-900 border border-slate-200/90 rounded-bl-xs"
                 }`}
               >
-                {/* Voice Message */}
-                {msg.type === "voice" && (
-                  <VoiceMessageBubble
-                    audioUrl={msg.audioUrl}
-                    durationSeconds={msg.durationSeconds}
-                    isSender={isMe}
-                  />
-                )}
-
                 {/* Photo Message */}
                 {msg.type === "image" && msg.imageUrl && (
                   <div className="rounded-xl overflow-hidden border border-black/10 my-1 max-w-[220px]">

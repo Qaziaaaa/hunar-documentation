@@ -13,22 +13,29 @@ import {
   getWalletTransactions,
   queryKeys,
 } from "@/services/worker/earnings.service";
+import {
+  mockWalletSummary,
+  mockWalletTransactions,
+} from "@/mocks/earnings.mock";
+
 import { useWorkerJobs } from "@/stores/worker-jobs-store";
 
-function WalletContent() {
+export function WalletContent() {
   const { walletBalance } = useWorkerJobs();
 
   const summary = useQuery({
     queryKey: queryKeys.summary,
     queryFn: getWalletSummary,
+    initialData: mockWalletSummary,
   });
 
   const transactions = useQuery({
     queryKey: queryKeys.transactions,
     queryFn: getWalletTransactions,
+    initialData: mockWalletTransactions,
   });
 
-  if (summary.isPending || transactions.isPending) {
+  if (!summary.data || !transactions.data) {
     return <LoadingState label="Loading wallet details..." />;
   }
 

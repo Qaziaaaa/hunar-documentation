@@ -8,14 +8,14 @@ import {
 
 export async function getWalletSummary(): Promise<WalletSummary> {
   if (isMockMode()) {
-    return simulateLatency({ ...mockWalletSummary });
+    return { ...mockWalletSummary };
   }
   return http.get<WalletSummary>(`/wallet/summary`);
 }
 
 export async function getWalletTransactions(): Promise<WalletTransaction[]> {
   if (isMockMode()) {
-    return simulateLatency([...mockWalletTransactions]);
+    return [...mockWalletTransactions];
   }
   return http.get<WalletTransaction[]>(`/wallet/ledger`);
 }

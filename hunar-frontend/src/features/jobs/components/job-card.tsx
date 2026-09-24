@@ -58,7 +58,7 @@ export function JobCard({ job, workerOffer }: JobCardProps) {
   const hasVoice = !!job.voiceNote;
 
   return (
-    <div className="group bg-white rounded-2xl border border-slate-200/80 shadow-[0_8px_18px_-4px_rgba(18,59,93,0.12)] hover:shadow-[0_12px_24px_-4px_rgba(18,59,93,0.18)] hover:border-[#0F8B8D]/40 transition-all duration-200 p-5 flex flex-col justify-between relative overflow-hidden">
+    <div className="group bg-white rounded-2xl border border-slate-200/80 shadow-[0_12px_16px_-6px_rgba(18,59,93,0.14)] hover:shadow-[0_16px_22px_-6px_rgba(18,59,93,0.20)] hover:border-[#0F8B8D]/40 transition-all duration-200 p-5 flex flex-col justify-between relative overflow-hidden">
       {/* Top Accent Strip for Emergency Jobs */}
       {job.urgency === "emergency" && (
         <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-red-500 to-amber-500" />

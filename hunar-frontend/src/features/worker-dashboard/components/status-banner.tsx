@@ -125,37 +125,38 @@ export function StatusBanner({
             </button>
 
             {/* Toggle Button */}
-            <button
-              type="button"
-              role="switch"
-              aria-checked={isOnline}
+            <div
               onClick={onToggleOnline}
-              className={cn(
-                "group relative inline-flex h-10 w-24 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-teal/30 focus:ring-offset-2",
-                isOnline ? "bg-teal" : "bg-slate-300"
-              )}
+              className="relative inline-flex h-10 w-40 shrink-0 items-center rounded-full bg-slate-200/80 shadow-inner select-none cursor-pointer overflow-hidden"
+              title={
+                isUrdu
+                  ? isOnline
+                    ? "موجودہ اسٹیٹس: آن لائن"
+                    : "موجودہ اسٹیٹس: آف لائن"
+                  : isOnline
+                  ? "Current Status: Online"
+                  : "Current Status: Offline"
+              }
             >
-              <span
+              <div className="z-10 flex h-full flex-1 items-center justify-center text-xs font-bold text-slate-500">
+                {!isOnline ? null : isUrdu ? "آف لائن" : "Offline"}
+              </div>
+              <div className="z-10 flex h-full flex-1 items-center justify-center text-xs font-bold text-slate-500">
+                {isOnline ? null : isUrdu ? "آن لائن" : "Online"}
+              </div>
+              <div
                 className={cn(
-                  "pointer-events-none inline-flex size-8 transform items-center justify-center rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out",
+                  "absolute top-0 bottom-0 start-0 z-20 w-1/2 rounded-full flex items-center justify-center text-xs font-extrabold text-white shadow-md transition-all duration-300 ease-in-out pointer-events-none",
                   isOnline
-                    ? "translate-x-14 rtl:-translate-x-14 text-teal"
-                    : "translate-x-1 rtl:-translate-x-1 text-slate-400"
+                    ? "translate-x-full rtl:-translate-x-full bg-[#16A34A]"
+                    : "translate-x-0 bg-red-500"
                 )}
               >
-                <Power className="size-4" />
-              </span>
-              <span
-                className={cn(
-                  "absolute text-[11px] font-bold uppercase transition-all select-none",
-                  isOnline
-                    ? "left-3 rtl:left-auto rtl:right-3 text-white"
-                    : "right-3 rtl:right-auto rtl:left-3 text-slate-600"
-                )}
-              >
-                {isOnline ? "ON" : "OFF"}
-              </span>
-            </button>
+                {isOnline
+                  ? isUrdu ? "آن لائن" : "Online"
+                  : isUrdu ? "آف لائن" : "Offline"}
+              </div>
+            </div>
           </div>
         </div>
 

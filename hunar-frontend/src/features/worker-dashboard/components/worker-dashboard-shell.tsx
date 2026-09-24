@@ -9,6 +9,8 @@ import { DashboardSidebar } from "./dashboard-sidebar";
 import { JobRequestFeed } from "./job-request-feed";
 import { MobileNavBar } from "./mobile-nav-bar";
 import { WorkerJobsHub } from "@/features/jobs/components/worker-jobs-hub";
+import { WorkerEarningsContent } from "@/app/[locale]/(worker)/worker/earnings/page";
+import { WalletContent } from "@/app/[locale]/(worker)/worker/wallet/page";
 import {
   INITIAL_WORKER_PROFILE,
   INITIAL_NOTIFICATIONS,
@@ -62,7 +64,7 @@ export function WorkerDashboardShell({
   const pathname = usePathname();
 
   const [profile, setProfile] = useState<WorkerDashboardProfile>(
-    loadInitialProfile
+    INITIAL_WORKER_PROFILE
   );
   const [activeTab, setActiveTab] = useState<DashboardTab>(initialTab);
   const [searchQuery, setSearchQuery] = useState<string>("");
@@ -71,6 +73,11 @@ export function WorkerDashboardShell({
   );
 
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+
+  // Sync profile & online status from client localStorage on mount to prevent hydration mismatch
+  useEffect(() => {
+    setProfile(loadInitialProfile());
+  }, []);
 
   // Synchronize activeTab with URL pathname
   useEffect(() => {
@@ -183,6 +190,14 @@ export function WorkerDashboardShell({
 
     if (activeTab === "jobs") {
       return <WorkerJobsHub />;
+    }
+
+    if (activeTab === "earnings") {
+      return <WorkerEarningsContent />;
+    }
+
+    if (activeTab === "wallet") {
+      return <WalletContent />;
     }
 
     return (
