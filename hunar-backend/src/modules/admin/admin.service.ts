@@ -1,6 +1,21 @@
-import { BadRequestException, ForbiddenException, Injectable, NotFoundException, Optional } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+  Optional,
+} from '@nestjs/common';
 import type { Response as ExpressResponse } from 'express';
-import { CommissionStatus, DisputeStatus, DisputeType, JobStatus, Prisma, Role, WithdrawalStatus } from '@prisma/client';
+import {
+  CommissionStatus,
+  DisputeStatus,
+  DisputeType,
+  JobStatus,
+  Prisma,
+  Role,
+  WalletLedgerType,
+  WithdrawalStatus,
+} from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { normalizePage, toPageResult } from '../../common/helpers/pagination.util';
 import { EventBusService } from '../../common/event-bus/event-bus.service';
@@ -30,6 +45,7 @@ import {
   AdminAuditListQueryDto,
   AdminNotificationListQueryDto,
   AdminMarkNotificationsReadDto,
+  AdminKpiStatsDto,
 } from './admin.validation';
 
 // Job states that mean the customer has paid for the (locked) visit charge.
@@ -687,7 +703,12 @@ export class AdminService {
 
   // Admin processes a withdrawal request (approve/reject). On approve, moves money and
   // creates wallet ledger entry. Audit-logged.
-  async processWithdrawal(id: string, actor: JwtPayload, action: 'approve' | 'reject', note?: string) {
+  async processWithdrawal(
+    id: string,
+    actor: JwtPayload,
+    action: 'approve' | 'reject',
+    note?: string,
+  ) {
     const withdrawal = await this.prisma.withdrawal.findUnique({
       where: { id },
       select: { id: true, workerId: true, amount: true, status: true },
@@ -767,7 +788,13 @@ export class AdminService {
       });
     }
 
-    this.emitWithdrawalAlert('approve', id, withdrawal.workerId, Number(withdrawal.amount), actor.sub);
+    this.emitWithdrawalAlert(
+      'approve',
+      id,
+      withdrawal.workerId,
+      Number(withdrawal.amount),
+      actor.sub,
+    );
 
     const updated = await this.prisma.withdrawal.update({
       where: { id },
@@ -783,25 +810,36 @@ export class AdminService {
       },
     });
 
-    await this.audit.record(
-      {
-        actorId: actor.sub,
-        actorRole: actor.role,
-        action: 'WITHDRAWAL_REJECTED',
-        targetType: 'WITHDRAWAL',
-        targetId: id,
-        reason: note,
-        metadata: { workerId: withdrawal.workerId, amount: withdrawal.amount },
-      },
-    );
+    await this.audit.record({
+      actorId: actor.sub,
+      actorRole: actor.role,
+      action: 'WITHDRAWAL_REJECTED',
+      targetType: 'WITHDRAWAL',
+      targetId: id,
+      reason: note,
+      metadata: { workerId: withdrawal.workerId, amount: withdrawal.amount },
+    });
 
-    this.emitWithdrawalAlert('rejected', id, withdrawal.workerId, Number(withdrawal.amount), actor.sub);
+    this.emitWithdrawalAlert(
+      'rejected',
+      id,
+      withdrawal.workerId,
+      Number(withdrawal.amount),
+      actor.sub,
+    );
 
     return updated;
   }
 
-  private emitWithdrawalAlert(action: string, withdrawalId: string, workerId: string, amount: number, actorId: string): void {
-    const adminEvent = action === 'approve' ? ADMIN_EVENTS.withdrawalProcessed : ADMIN_EVENTS.withdrawalRejected;
+  private emitWithdrawalAlert(
+    action: string,
+    withdrawalId: string,
+    workerId: string,
+    amount: number,
+    actorId: string,
+  ): void {
+    const adminEvent =
+      action === 'approve' ? ADMIN_EVENTS.withdrawalProcessed : ADMIN_EVENTS.withdrawalRejected;
     this.realtime.emitToRoom(ADMIN_ROOM, adminEvent, {
       withdrawalId,
       workerId,
@@ -842,17 +880,15 @@ export class AdminService {
       select: { userId: true, isFrozen: true, frozenAt: true, frozenBy: true },
     });
 
-    await this.audit.record(
-      {
-        actorId: actor.sub,
-        actorRole: actor.role,
-        action: 'WALLET_FROZEN',
-        targetType: 'WORKER_WALLET',
-        targetId: workerId,
-        reason: dto.reason,
-        metadata: { balance: wallet.balance },
-      },
-    );
+    await this.audit.record({
+      actorId: actor.sub,
+      actorRole: actor.role,
+      action: 'WALLET_FROZEN',
+      targetType: 'WORKER_WALLET',
+      targetId: workerId,
+      reason: dto.reason,
+      metadata: { balance: wallet.balance },
+    });
 
     this.realtime.emitToRoom(ADMIN_ROOM, ADMIN_EVENTS.walletFrozen, {
       workerId,
@@ -893,17 +929,15 @@ export class AdminService {
       select: { userId: true, isFrozen: true, frozenAt: true, frozenBy: true },
     });
 
-    await this.audit.record(
-      {
-        actorId: actor.sub,
-        actorRole: actor.role,
-        action: 'WALLET_UNFROZEN',
-        targetType: 'WORKER_WALLET',
-        targetId: workerId,
-        reason: null,
-        metadata: {},
-      },
-    );
+    await this.audit.record({
+      actorId: actor.sub,
+      actorRole: actor.role,
+      action: 'WALLET_UNFROZEN',
+      targetType: 'WORKER_WALLET',
+      targetId: workerId,
+      reason: null,
+      metadata: {},
+    });
 
     this.realtime.emitToRoom(ADMIN_ROOM, ADMIN_EVENTS.walletUnfrozen, {
       workerId,
@@ -1104,7 +1138,12 @@ export class AdminService {
     return { ...updated, action };
   }
 
-  private emitDisputeAlert(action: string, disputeId: string, jobId: string, actorId: string): void {
+  private emitDisputeAlert(
+    action: string,
+    disputeId: string,
+    jobId: string,
+    actorId: string,
+  ): void {
     let adminEvent: string;
     switch (action) {
       case 'resolved':
@@ -1156,7 +1195,14 @@ export class AdminService {
         orderBy: { sortOrder: 'asc' },
         skip,
         take: limit,
-        select: { id: true, name: true, nameUrdu: true, isActive: true, sortOrder: true, createdAt: true },
+        select: {
+          id: true,
+          name: true,
+          nameUrdu: true,
+          isActive: true,
+          sortOrder: true,
+          createdAt: true,
+        },
       }),
       this.prisma.serviceCategory.count({ where }),
     ]);
@@ -1172,20 +1218,25 @@ export class AdminService {
         nameUrdu: dto.nameUrdu,
         sortOrder: dto.sortOrder ?? 0,
       },
-      select: { id: true, name: true, nameUrdu: true, isActive: true, sortOrder: true, createdAt: true },
+      select: {
+        id: true,
+        name: true,
+        nameUrdu: true,
+        isActive: true,
+        sortOrder: true,
+        createdAt: true,
+      },
     });
 
-    await this.audit.record(
-      {
-        actorId: actor.sub,
-        actorRole: actor.role,
-        action: 'CATEGORY_CREATED',
-        targetType: 'SERVICE_CATEGORY',
-        targetId: category.id,
-        reason: null,
-        metadata: { name: category.name, nameUrdu: category.nameUrdu, sortOrder: category.sortOrder },
-      },
-    );
+    await this.audit.record({
+      actorId: actor.sub,
+      actorRole: actor.role,
+      action: 'CATEGORY_CREATED',
+      targetType: 'SERVICE_CATEGORY',
+      targetId: category.id,
+      reason: null,
+      metadata: { name: category.name, nameUrdu: category.nameUrdu, sortOrder: category.sortOrder },
+    });
 
     this.realtime.emitToRoom(ADMIN_ROOM, ADMIN_EVENTS.categoryCreated, {
       categoryId: category.id,
@@ -1225,17 +1276,15 @@ export class AdminService {
       select: { id: true, name: true, nameUrdu: true, isActive: true, sortOrder: true },
     });
 
-    await this.audit.record(
-      {
-        actorId: actor.sub,
-        actorRole: actor.role,
-        action: 'CATEGORY_UPDATED',
-        targetType: 'SERVICE_CATEGORY',
-        targetId: id,
-        reason: null,
-        metadata: { from: existing, to: updated },
-      },
-    );
+    await this.audit.record({
+      actorId: actor.sub,
+      actorRole: actor.role,
+      action: 'CATEGORY_UPDATED',
+      targetType: 'SERVICE_CATEGORY',
+      targetId: id,
+      reason: null,
+      metadata: { from: existing, to: updated },
+    });
 
     this.realtime.emitToRoom(ADMIN_ROOM, ADMIN_EVENTS.categoryUpdated, {
       categoryId: id,
@@ -1272,17 +1321,15 @@ export class AdminService {
       select: { id: true, name: true, isActive: true },
     });
 
-    await this.audit.record(
-      {
-        actorId: actor.sub,
-        actorRole: actor.role,
-        action: 'CATEGORY_DEACTIVATED',
-        targetType: 'SERVICE_CATEGORY',
-        targetId: id,
-        reason: null,
-        metadata: { name: existing.name },
-      },
-    );
+    await this.audit.record({
+      actorId: actor.sub,
+      actorRole: actor.role,
+      action: 'CATEGORY_DEACTIVATED',
+      targetType: 'SERVICE_CATEGORY',
+      targetId: id,
+      reason: null,
+      metadata: { name: existing.name },
+    });
 
     this.realtime.emitToRoom(ADMIN_ROOM, ADMIN_EVENTS.categoryDeactivated, {
       categoryId: id,
@@ -1309,6 +1356,66 @@ export class AdminService {
     return settings.reduce((acc, s) => ({ ...acc, [s.key]: s.value }), {});
   }
 
+  // Admin KPI stats (Admin flow — KPI cards for dashboard).
+  async getKpis(): Promise<{
+    totalJobs: number;
+    openJobs: number;
+    activeJobs: number;
+    completedJobs: number;
+    cancelledJobs: number;
+    totalCustomers: number;
+    newCustomersThisWeek: number;
+    totalWorkers: number;
+    verifiedWorkers: number;
+    pendingWorkers: number;
+    suspendedWorkers: number;
+    totalRevenue: number;
+    totalPaymentsProcessed: number;
+    activeNowCount: number;
+  }> {
+    const [totalJobs, openJobs, activeJobs, completedJobs, cancelledJobs] = await Promise.all([
+      this.prisma.serviceRequest.count({}),
+      this.prisma.serviceRequest.count({ where: { status: 'OPEN' } }),
+      this.prisma.serviceRequest.count({ where: { status: 'IN_PROGRESS' } }),
+      this.prisma.serviceRequest.count({ where: { status: 'COMPLETED' } }),
+      this.prisma.serviceRequest.count({ where: { status: 'CANCELLED' } }),
+    ]);
+
+    const [totalCustomers, newCustomersThisWeek, totalWorkers, verifiedWorkers] = await Promise.all([
+      this.prisma.user.count({ where: { role: 'CUSTOMER' } }),
+      this.prisma.user.count({ where: { role: 'CUSTOMER', createdAt: { gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) } } }),
+      this.prisma.user.count({ where: { role: 'WORKER' } }),
+      this.prisma.user.count({ where: { role: 'WORKER', isVerified: true } }),
+    ]);
+
+    // Pending/suspended workers are determined by isActive and verification status
+    const pendingWorkersCount = await this.prisma.user.count({ where: { role: 'WORKER', isVerified: false, isActive: true } });
+    const suspendedWorkersCount = await this.prisma.user.count({ where: { role: 'WORKER', isActive: false } });
+
+    const [totalRevenue, totalPaymentsProcessed, activeNowCount] = await Promise.all([
+      this.prisma.commission.aggregate({ _sum: { amount: true } }).then((r) => r._sum.amount ?? 0),
+      this.prisma.walletLedger.count({ where: { type: WalletLedgerType.COMMISSION_RELEASED } }),
+      this.prisma.user.count({ where: { role: 'WORKER', isActive: true } }),
+    ]);
+
+    return {
+      totalJobs,
+      openJobs,
+      activeJobs,
+      completedJobs,
+      cancelledJobs,
+      totalCustomers,
+      newCustomersThisWeek,
+      totalWorkers,
+      verifiedWorkers,
+      pendingWorkers: pendingWorkersCount,
+      suspendedWorkers: suspendedWorkersCount,
+      totalRevenue: Number(totalRevenue.toFixed(2)),
+      totalPaymentsProcessed: totalPaymentsProcessed,
+      activeNowCount: activeNowCount,
+    };
+  }
+
   // Update commission rate (super-admin only).
   async updateCommissionRate(dto: AdminUpdateCommissionRateDto, actor: JwtPayload) {
     if (actor.role !== 'SUPER_ADMIN') {
@@ -1328,17 +1435,15 @@ export class AdminService {
       select: { key: true, value: true, updatedAt: true },
     });
 
-    await this.audit.record(
-      {
-        actorId: actor.sub,
-        actorRole: actor.role,
-        action: 'COMMISSION_RATE_CHANGED',
-        targetType: 'PLATFORM_SETTING',
-        targetId: 'commissionRate',
-        reason: null,
-        metadata: { from: oldValue, to: updated.value },
-      },
-    );
+    await this.audit.record({
+      actorId: actor.sub,
+      actorRole: actor.role,
+      action: 'COMMISSION_RATE_CHANGED',
+      targetType: 'PLATFORM_SETTING',
+      targetId: 'commissionRate',
+      reason: null,
+      metadata: { from: oldValue, to: updated.value },
+    });
 
     this.realtime.emitToRoom(ADMIN_ROOM, ADMIN_EVENTS.commissionRateChanged, {
       oldRate: oldValue,
@@ -1376,17 +1481,15 @@ export class AdminService {
           select: { key: true, value: true, updatedAt: true },
         });
 
-        await this.audit.record(
-          {
-            actorId: actor.sub,
-            actorRole: actor.role,
-            action: 'SETTING_UPDATED',
-            targetType: 'PLATFORM_SETTING',
-            targetId: key,
-            reason: null,
-            metadata: { from: oldValue, to: updated.value },
-          },
-        );
+        await this.audit.record({
+          actorId: actor.sub,
+          actorRole: actor.role,
+          action: 'SETTING_UPDATED',
+          targetType: 'PLATFORM_SETTING',
+          targetId: key,
+          reason: null,
+          metadata: { from: oldValue, to: updated.value },
+        });
 
         results.push(updated);
       }
@@ -1407,10 +1510,31 @@ export class AdminService {
       case 'jobs-funnel': {
         const [posted, offersReceived, accepted, completed, cancelled] = await Promise.all([
           this.prisma.serviceRequest.count({ where: { createdAt: dateFilter } }),
-          this.prisma.serviceRequest.count({ where: { status: { in: ['OFFERS_RECEIVED', 'OFFER_ACCEPTED'] }, createdAt: dateFilter } }),
-          this.prisma.serviceRequest.count({ where: { status: { in: ['WORKER_ASSIGNED', 'VISIT_SCHEDULED', 'VISIT_IN_PROGRESS', 'INSPECTION_DONE', 'REPAIR_NEGOTIATING', 'REPAIR_APPROVED', 'IN_PROGRESS'] }, createdAt: dateFilter } }),
-          this.prisma.serviceRequest.count({ where: { status: { in: ['COMPLETED', 'PAID', 'REVIEWED'] }, completedAt: dateFilter } }),
-          this.prisma.serviceRequest.count({ where: { status: 'CANCELLED', cancelledAt: dateFilter } }),
+          this.prisma.serviceRequest.count({
+            where: { status: { in: ['OFFERS_RECEIVED', 'OFFER_ACCEPTED'] }, createdAt: dateFilter },
+          }),
+          this.prisma.serviceRequest.count({
+            where: {
+              status: {
+                in: [
+                  'WORKER_ASSIGNED',
+                  'VISIT_SCHEDULED',
+                  'VISIT_IN_PROGRESS',
+                  'INSPECTION_DONE',
+                  'REPAIR_NEGOTIATING',
+                  'REPAIR_APPROVED',
+                  'IN_PROGRESS',
+                ],
+              },
+              createdAt: dateFilter,
+            },
+          }),
+          this.prisma.serviceRequest.count({
+            where: { status: { in: ['COMPLETED', 'PAID', 'REVIEWED'] }, completedAt: dateFilter },
+          }),
+          this.prisma.serviceRequest.count({
+            where: { status: 'CANCELLED', cancelledAt: dateFilter },
+          }),
         ]);
         return {
           type: 'jobs-funnel',
@@ -1433,9 +1557,14 @@ export class AdminService {
             id: true,
             name: true,
             phone: true,
-            workerProfile: { select: { verificationStatus: true, skills: true, experienceYears: true } },
+            workerProfile: {
+              select: { verificationStatus: true, skills: true, experienceYears: true },
+            },
             _count: { select: { selectedJobs: true, offers: true } },
-            commissions: { where: { status: { in: ['RECEIVED', 'VERIFIED'] }, createdAt: dateFilter }, select: { amount: true } },
+            commissions: {
+              where: { status: { in: ['RECEIVED', 'VERIFIED'] }, createdAt: dateFilter },
+              select: { amount: true },
+            },
           },
         });
         const data = workers.map((w) => ({
@@ -1454,9 +1583,18 @@ export class AdminService {
 
       case 'revenue': {
         const [totalCommissions, totalVisitCharges, avgRate, topCategories] = await Promise.all([
-          this.prisma.commission.aggregate({ where: { status: { in: ['RECEIVED', 'VERIFIED'] }, createdAt: dateFilter }, _sum: { amount: true } }),
-          this.prisma.commission.aggregate({ where: { status: { in: ['RECEIVED', 'VERIFIED'] }, createdAt: dateFilter }, _sum: { visitCharge: true } }),
-          this.prisma.commission.aggregate({ where: { status: { in: ['RECEIVED', 'VERIFIED'] }, createdAt: dateFilter }, _avg: { commissionRate: true } }),
+          this.prisma.commission.aggregate({
+            where: { status: { in: ['RECEIVED', 'VERIFIED'] }, createdAt: dateFilter },
+            _sum: { amount: true },
+          }),
+          this.prisma.commission.aggregate({
+            where: { status: { in: ['RECEIVED', 'VERIFIED'] }, createdAt: dateFilter },
+            _sum: { visitCharge: true },
+          }),
+          this.prisma.commission.aggregate({
+            where: { status: { in: ['RECEIVED', 'VERIFIED'] }, createdAt: dateFilter },
+            _avg: { commissionRate: true },
+          }),
           this.prisma.serviceRequest.groupBy({
             by: ['categoryId'],
             where: { status: { in: ['COMPLETED', 'PAID', 'REVIEWED'] }, completedAt: dateFilter },
@@ -1468,8 +1606,15 @@ export class AdminService {
         ]);
         const categories = await Promise.all(
           topCategories.map(async (c) => {
-            const cat = await this.prisma.serviceCategory.findUnique({ where: { id: c.categoryId }, select: { name: true } });
-            return { category: cat?.name ?? c.categoryId, revenue: c._sum.lockedVisitCharge?.toFixed(2) ?? '0', jobsCount: c._count._all };
+            const cat = await this.prisma.serviceCategory.findUnique({
+              where: { id: c.categoryId },
+              select: { name: true },
+            });
+            return {
+              category: cat?.name ?? c.categoryId,
+              revenue: c._sum.lockedVisitCharge?.toFixed(2) ?? '0',
+              jobsCount: c._count._all,
+            };
           }),
         );
         return {
@@ -1566,7 +1711,16 @@ export class AdminService {
         orderBy: { createdAt: 'desc' },
         skip,
         take: limit,
-        select: { id: true, type: true, title: true, body: true, data: true, isRead: true, readAt: true, createdAt: true },
+        select: {
+          id: true,
+          type: true,
+          title: true,
+          body: true,
+          data: true,
+          isRead: true,
+          readAt: true,
+          createdAt: true,
+        },
       }),
       this.prisma.adminNotification.count({ where }),
     ]);
@@ -1581,17 +1735,15 @@ export class AdminService {
       data: { isRead: true, readAt: new Date() },
     });
 
-    await this.audit.record(
-      {
-        actorId: actor.sub,
-        actorRole: actor.role,
-        action: 'NOTIFICATIONS_MARKED_READ',
-        targetType: 'ADMIN_NOTIFICATION',
-        targetId: dto.notificationIds.join(','),
-        reason: null,
-        metadata: { count: dto.notificationIds.length },
-      },
-    );
+    await this.audit.record({
+      actorId: actor.sub,
+      actorRole: actor.role,
+      action: 'NOTIFICATIONS_MARKED_READ',
+      targetType: 'ADMIN_NOTIFICATION',
+      targetId: dto.notificationIds.join(','),
+      reason: null,
+      metadata: { count: dto.notificationIds.length },
+    });
 
     return { markedRead: dto.notificationIds.length };
   }
@@ -1612,8 +1764,20 @@ export class AdminService {
       // For PDF, we'll return JSON with a note that PDF generation requires a library
       // In production, integrate with a PDF library like pdfkit or puppeteer
       res.setHeader('Content-Type', 'application/json');
-      res.setHeader('Content-Disposition', `attachment; filename="${filename.replace('.pdf', '.json')}"`);
-      res.send(JSON.stringify({ ...report, note: 'PDF generation not implemented. Use CSV format or integrate a PDF library.' }, null, 2));
+      res.setHeader(
+        'Content-Disposition',
+        `attachment; filename="${filename.replace('.pdf', '.json')}"`,
+      );
+      res.send(
+        JSON.stringify(
+          {
+            ...report,
+            note: 'PDF generation not implemented. Use CSV format or integrate a PDF library.',
+          },
+          null,
+          2,
+        ),
+      );
     }
   }
 
@@ -1634,7 +1798,17 @@ export class AdminService {
     }
 
     if (type === 'worker-performance') {
-      const headers = ['Worker ID', 'Name', 'Phone', 'Verification Status', 'Skills', 'Experience (Years)', 'Jobs Count', 'Offers Count', 'Total Earnings'];
+      const headers = [
+        'Worker ID',
+        'Name',
+        'Phone',
+        'Verification Status',
+        'Skills',
+        'Experience (Years)',
+        'Jobs Count',
+        'Offers Count',
+        'Total Earnings',
+      ];
       const rows = data.data.map((w: any) => [
         w.workerId,
         w.name,

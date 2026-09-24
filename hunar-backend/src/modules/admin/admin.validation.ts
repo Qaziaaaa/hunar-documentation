@@ -14,7 +14,15 @@ import {
   MaxLength,
   Min,
 } from 'class-validator';
-import { CommissionStatus, DisputeStatus, DisputeType, JobStatus, WalletLedgerType, WorkerVerificationStatus, WithdrawalStatus } from '@prisma/client';
+import {
+  CommissionStatus,
+  DisputeStatus,
+  DisputeType,
+  JobStatus,
+  WalletLedgerType,
+  WorkerVerificationStatus,
+  WithdrawalStatus,
+} from '@prisma/client';
 
 export const USER_STATUS_FILTERS = ['active', 'suspended'] as const;
 export type UserStatusFilter = (typeof USER_STATUS_FILTERS)[number];
@@ -532,4 +540,48 @@ export class AdminMarkNotificationsReadDto {
   @IsArray()
   @IsUUID(4, { each: true })
   notificationIds: string[];
+}
+
+export class AdminKpiStatsDto {
+  @IsInt()
+  totalJobs: number;
+
+  @IsInt()
+  openJobs: number;
+
+  @IsInt()
+  activeJobs: number;
+
+  @IsInt()
+  completedJobs: number;
+
+  @IsInt()
+  cancelledJobs: number;
+
+  @IsInt()
+  totalCustomers: number;
+
+  @IsInt()
+  newCustomersThisWeek: number;
+
+  @IsInt()
+  totalWorkers: number;
+
+  @IsInt()
+  verifiedWorkers: number;
+
+  @IsInt()
+  pendingWorkers: number;
+
+  @IsInt()
+  suspendedWorkers: number;
+
+  @IsNumber()
+  totalRevenue: number;
+
+  @IsInt()
+  totalPaymentsProcessed: number;
+
+  @IsInt()
+  activeNowCount: number;
 }

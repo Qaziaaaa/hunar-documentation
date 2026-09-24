@@ -1,10 +1,13 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { ConfigService } from '@nestjs/config';
 import { WalletService, WalletSnapshot } from './wallet.service';
 import { TopupDto, TopupDecideDto } from './payments.validation';
 import { WALLET_EVENTS, walletRoom } from './wallet.events';
 import { PrismaService } from '../../prisma/prisma.service';
 import { RedisService } from '../../common/redis/redis.service';
-import { LedgerService } from '../../common/audit/ledger.service';
+import { EventBusService } from '../../common/event-bus/event-bus.service';
+import { RealtimeService } from '../realtime/realtime.service';
+import { LedgerService } from './ledger.service';
 
 describe('WalletService', () => {
   let moduleRef: TestingModule;
@@ -37,7 +40,12 @@ describe('WalletService', () => {
     }),
   };
 
-  const redis = { get: jest.fn(), set: jest.fn(), del: jest.fn() };
+  const redis = {
+    get: jest.fn(),
+    set: jest.fn(),
+    del: jest.fn(),
+    getClient: jest.fn().mockReturnValue({ set: jest.fn().mockResolvedValue('OK') }),
+  };
   const realtime = { emitToRoom: jest.fn() };
   const eventBus = { emit: jest.fn() };
   const config = { get: jest.fn().mockReturnValue('0.10') };
@@ -50,9 +58,9 @@ describe('WalletService', () => {
         WalletService,
         { provide: PrismaService, useValue: prisma },
         { provide: RedisService, useValue: redis },
-        { provide: 'IEventBus', useValue: eventBus },
-        { provide: 'IRealtime', useValue: realtime },
-        { provide: 'IConfig', useValue: config },
+        { provide: EventBusService, useValue: eventBus },
+        { provide: RealtimeService, useValue: realtime },
+        { provide: ConfigService, useValue: config },
         { provide: LedgerService, useValue: ledger },
       ],
     }).compile();

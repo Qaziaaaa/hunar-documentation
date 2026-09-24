@@ -72,7 +72,10 @@ export class PaymentsController {
 
   @Post('wallet/confirm-commission')
   @Roles(Role.WORKER)
-  confirmCommission(@CurrentUser() user: JwtPayload, @Body() dto: JobActionDto & { commissionId?: string }) {
+  confirmCommission(
+    @CurrentUser() user: JwtPayload,
+    @Body() dto: JobActionDto & { commissionId?: string },
+  ) {
     const commissionId = dto.commissionId ?? dto.jobId;
     return this.wallet.confirmCommission(dto.jobId, commissionId);
   }

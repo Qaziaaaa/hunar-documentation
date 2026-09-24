@@ -90,10 +90,7 @@ export class LedgerService {
 
   async getWorkerLedger(workerId: string, query: CustomerPaymentsQueryDto) {
     const { page, limit, skip } = normalizePage(query);
-    const inFlight: PaymentStatus[] = [
-      PaymentStatus.INITIATED,
-      PaymentStatus.PROCESSING,
-    ];
+    const inFlight: PaymentStatus[] = [PaymentStatus.INITIATED, PaymentStatus.PROCESSING];
     const where = {
       workerId,
       ...(query.status ? { status: query.status as PaymentStatus } : {}),

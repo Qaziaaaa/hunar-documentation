@@ -69,7 +69,11 @@ async function main(): Promise<void> {
   const categories: Record<string, string> = {};
   categories.Plumbing = await upsertCategory('Plumbing', 'پلمبرنگ', 1);
   categories.Electrical = await upsertCategory('Electrical', 'الیکٹریکل', 2);
-  categories['AC & Refrigeration'] = await upsertCategory('AC & Refrigeration', 'ایئر کنڈیشن اور ریفریجریشن', 3);
+  categories['AC & Refrigeration'] = await upsertCategory(
+    'AC & Refrigeration',
+    'ایئر کنڈیشن اور ریفریجریشن',
+    3,
+  );
   categories.Carpentry = await upsertCategory('Carpentry', 'لکڑ کا کام', 4);
   categories.Painting = await upsertCategory('Painting', 'پینٹنگ', 5);
   categories.Cleaning = await upsertCategory('Cleaning', 'صفائی', 6);
