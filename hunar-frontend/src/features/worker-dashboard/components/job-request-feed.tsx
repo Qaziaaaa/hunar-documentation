@@ -7,6 +7,8 @@ import { RadarSearchView } from "./radar-search-view";
 import { MOCK_JOB_REQUESTS } from "../mock-job-requests";
 import type { JobRequest } from "../types";
 
+import { useLocale } from "next-intl";
+
 export function JobRequestFeed({
   searchQuery = "",
   city = "Peshawar",
@@ -16,6 +18,8 @@ export function JobRequestFeed({
   city?: string;
   isOnline?: boolean;
 }) {
+  const locale = useLocale();
+  const isUrdu = locale === "ur";
   const [selectedJob, setSelectedJob] = useState<JobRequest | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [sentOfferIds, setSentOfferIds] = useState<string[]>([]);
@@ -63,7 +67,10 @@ export function JobRequestFeed({
       {!isOnline && (
         <div className="flex items-center justify-between gap-3 rounded-2xl border border-amber-200 bg-amber-50/80 p-3.5 text-xs text-amber-900">
           <p className="font-medium">
-            <strong>You are currently Offline.</strong> Switch your status to <strong>Online</strong> in the header to receive realtime push notifications when new requests are posted.
+            <strong>{isUrdu ? "آپ اس وقت آف لائن ہیں۔" : "You are currently Offline."}</strong>{" "}
+            {isUrdu
+              ? "نئے کام کے نوٹیفیکیشنز موصول کرنے کے لیے ہیڈر میں اپنا اسٹیٹس آن لائن کریں۔"
+              : "Switch your status to Online in the header to receive realtime push notifications when new requests are posted."}
           </p>
         </div>
       )}
@@ -71,13 +78,17 @@ export function JobRequestFeed({
       {/* HIDDEN JOBS BAR (if any) */}
       {hiddenJobIds.length > 0 && (
         <div className="flex items-center justify-between px-3.5 py-2 rounded-xl bg-slate-100 border border-slate-200 text-xs text-slate-600">
-          <span>{hiddenJobIds.length} job request{hiddenJobIds.length === 1 ? "" : "s"} hidden (swiped right)</span>
+          <span>
+            {isUrdu
+              ? `${hiddenJobIds.length} کام کی درخواستیں چھپائی گئیں`
+              : `${hiddenJobIds.length} job request${hiddenJobIds.length === 1 ? "" : "s"} hidden (swiped right)`}
+          </span>
           <button
             type="button"
             onClick={() => setHiddenJobIds([])}
             className="text-[#0F8B8D] hover:underline font-bold text-xs cursor-pointer"
           >
-            Reset &amp; show all
+            {isUrdu ? "دوبارہ تمام دکھائیں" : "Reset & show all"}
           </button>
         </div>
       )}

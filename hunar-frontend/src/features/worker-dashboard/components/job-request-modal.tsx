@@ -123,7 +123,7 @@ export function JobRequestModal({
               {job.category} Request
             </span>
             {job.status === "URGENT" && (
-              <span className="rounded-full bg-red-500/10 px-2.5 py-0.5 text-[11px] font-bold text-red-600 flex items-center gap-1">
+              <span className="rounded-full bg-amber-500/10 px-2.5 py-0.5 text-[11px] font-bold text-amber-700 border border-amber-200/80 flex items-center gap-1">
                 <Sparkles className="size-3" /> Urgent
               </span>
             )}

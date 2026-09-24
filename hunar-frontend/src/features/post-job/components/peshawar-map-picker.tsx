@@ -376,6 +376,20 @@ export function PeshawarMapPicker({
         const L = leafletModule.default || leafletModule;
         LRef.current = L;
 
+        // Patch Leaflet DomUtil.getPosition to prevent '_leaflet_pos' TypeError when unmounting or accessing detached DOM elements
+        if (L && L.DomUtil && L.DomUtil.getPosition && !(L.DomUtil as any)._patchedPosition) {
+          const origGetPos = L.DomUtil.getPosition;
+          L.DomUtil.getPosition = function (el: any) {
+            if (!el) return new L.Point(0, 0);
+            try {
+              return origGetPos.call(L.DomUtil, el);
+            } catch {
+              return new L.Point(0, 0);
+            }
+          };
+          (L.DomUtil as any)._patchedPosition = true;
+        }
+
         if (isCancelled || !mapContainerRef.current) return;
 
         // Create Leaflet Map instance
@@ -484,7 +498,9 @@ export function PeshawarMapPicker({
         markerInstanceRef.current = marker;
 
         setTimeout(() => {
-          map.invalidateSize();
+          try {
+            map.invalidateSize();
+          } catch {}
         }, 200);
       } catch (err) {
         console.error("Leaflet initialization error:", err);
@@ -496,7 +512,10 @@ export function PeshawarMapPicker({
     return () => {
       isCancelled = true;
       if (mapInstanceRef.current) {
-        mapInstanceRef.current.remove();
+        try {
+          mapInstanceRef.current.off();
+          mapInstanceRef.current.remove();
+        } catch {}
         mapInstanceRef.current = null;
       }
     };

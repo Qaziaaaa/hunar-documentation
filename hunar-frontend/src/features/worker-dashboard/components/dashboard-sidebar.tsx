@@ -34,7 +34,15 @@ export function DashboardSidebar({
   const locale = useLocale();
   const isUrdu = locale === "ur";
 
-  const navSections = [
+  const navSections: Array<{
+    heading: string;
+    items: Array<{
+      id: DashboardTab;
+      label: string;
+      icon: any;
+      badge?: number;
+    }>;
+  }> = [
     {
       heading: isUrdu ? "کام اور جابز" : "Work & Jobs",
       items: [
@@ -45,9 +53,8 @@ export function DashboardSidebar({
         },
         {
           id: "jobs" as DashboardTab,
-          label: isUrdu ? "جاری جابز" : "Active Jobs",
+          label: isUrdu ? "تمام جابز" : "All Jobs",
           icon: Briefcase,
-          badge: profile.activeJobsCount > 0 ? profile.activeJobsCount : undefined,
         },
       ],
     },
@@ -93,7 +100,7 @@ export function DashboardSidebar({
         className={`fixed top-0 start-0 z-50 h-screen w-64 shrink-0 flex flex-col justify-between border-e border-slate-200 bg-white p-4 transition-transform duration-300 overflow-hidden ${
           isOpen
             ? "translate-x-0 shadow-2xl flex"
-            : "-translate-x-full rtl:translate-x-full lg:translate-x-0 hidden lg:flex"
+            : "-translate-x-full rtl:translate-x-full lg:translate-x-0 lg:rtl:translate-x-0 lg:transform-none hidden lg:flex"
         }`}
       >
         <div className="space-y-6">
@@ -199,7 +206,7 @@ export function DashboardSidebar({
 
               <div className="min-w-0 flex-1 space-y-0.5">
                 <p className="text-xs font-bold text-[#123B5D] truncate leading-tight">
-                  {profile.fullName || "Worker Profile"}
+                  {profile.fullName || (isUrdu ? "ورکر پروفائل" : "Worker Profile")}
                 </p>
 
                 <div className="flex items-center gap-1">
@@ -210,7 +217,7 @@ export function DashboardSidebar({
                 </div>
 
                 <p className="text-[10px] font-medium text-slate-500">
-                  {completedCount} Completed Orders
+                  {isUrdu ? `${completedCount} مکمل شدہ آرڈرز` : `${completedCount} Completed Orders`}
                 </p>
               </div>
             </div>

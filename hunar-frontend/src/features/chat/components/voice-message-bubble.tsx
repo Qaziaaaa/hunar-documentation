@@ -103,32 +103,32 @@ export function VoiceMessageBubble({
 
   return (
     <div
-      className={`flex items-center gap-2.5 p-2 rounded-xl min-w-[200px] max-w-[280px] sm:max-w-[320px] ${
+      className={`flex items-center gap-2 px-2.5 py-1.5 rounded-xl min-w-[170px] max-w-[220px] sm:max-w-[250px] shadow-2xs ${
         isSender
-          ? "bg-[#0F766E] text-white"
-          : "bg-white text-[#123B5D] border border-slate-200 shadow-2xs"
+          ? "bg-[#0F8B8D] text-white rounded-br-xs"
+          : "bg-teal-50/90 text-[#0F8B8D] border border-teal-200/80 rounded-bl-xs"
       }`}
     >
       {/* Play/Pause Button */}
       <button
         type="button"
         onClick={togglePlay}
-        className={`size-9 rounded-full flex items-center justify-center shrink-0 transition-transform active:scale-95 cursor-pointer shadow-xs ${
+        className={`size-7 rounded-full flex items-center justify-center shrink-0 transition-transform active:scale-95 cursor-pointer shadow-xs ${
           isSender
-            ? "bg-white text-[#0F766E] hover:bg-slate-100"
-            : "bg-[#0F766E] text-white hover:bg-[#115E59]"
+            ? "bg-white text-[#0F8B8D] hover:bg-slate-100"
+            : "bg-[#0F8B8D] text-white hover:bg-[#0F8B8D]/90"
         }`}
       >
         {isPlaying ? (
-          <Pause className="size-4 fill-current" />
+          <Pause className="size-3 fill-current stroke-none" />
         ) : (
-          <Play className="size-4 fill-current ml-0.5" />
+          <Play className="size-3 fill-current stroke-none ml-0.5" />
         )}
       </button>
 
       {/* Waveform & Timeline */}
-      <div className="flex-1 flex flex-col gap-1 min-w-0">
-        <div className="flex items-center gap-0.5 h-6">
+      <div className="flex-1 flex flex-col gap-0.5 min-w-0">
+        <div className="flex items-center gap-0.5 h-4">
           {bars.map((height, i) => {
             const barProgress = (i / bars.length) * 100;
             const isPlayed = progress >= barProgress;
@@ -143,7 +143,7 @@ export function VoiceMessageBubble({
                       ? "#FFFFFF"
                       : "rgba(255, 255, 255, 0.4)"
                     : isPlayed
-                    ? "#0F766E"
+                    ? "#0F8B8D"
                     : "#CBD5E1",
                 }}
               />
@@ -151,17 +151,17 @@ export function VoiceMessageBubble({
           })}
         </div>
 
-        <div className="flex items-center justify-between text-[10px] font-mono leading-none">
-          <span className={isSender ? "text-teal-100" : "text-slate-500"}>
+        <div className="flex items-center justify-between text-[9.5px] font-mono leading-none">
+          <span className={isSender ? "text-white font-bold" : "text-teal-900 font-bold"}>
             {isPlaying ? formattedTime : totalFormatted}
           </span>
           <button
             type="button"
             onClick={toggleSpeed}
-            className={`px-1.5 py-0.5 rounded font-bold text-[9px] uppercase cursor-pointer transition-colors ${
+            className={`px-1 py-0.2 rounded font-bold text-[8.5px] uppercase cursor-pointer transition-colors ${
               isSender
                 ? "bg-white/20 hover:bg-white/30 text-white"
-                : "bg-slate-100 hover:bg-slate-200 text-slate-700"
+                : "bg-teal-100 hover:bg-teal-200 text-teal-900"
             }`}
           >
             {speed}x

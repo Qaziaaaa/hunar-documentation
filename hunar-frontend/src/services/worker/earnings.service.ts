@@ -59,7 +59,7 @@ function mapLedgerEntry(entry: BackendLedgerEntry): WalletTransaction {
 
 export async function getWalletSummary(): Promise<WalletSummary> {
   if (isMockMode()) {
-    return simulateLatency({ ...mockWalletSummary });
+    return { ...mockWalletSummary };
   }
   const snapshot = await http.get<BackendWalletSnapshot>("/wallet/balance");
   return {
@@ -72,7 +72,7 @@ export async function getWalletSummary(): Promise<WalletSummary> {
 
 export async function getWalletTransactions(): Promise<WalletTransaction[]> {
   if (isMockMode()) {
-    return simulateLatency([...mockWalletTransactions]);
+    return [...mockWalletTransactions];
   }
   const res = await http.get<BackendPage<BackendLedgerEntry> | BackendLedgerEntry[]>("/wallet/ledger");
   const items = Array.isArray(res) ? res : res.items;

@@ -136,8 +136,25 @@ export function WorkerVisitTrackingView({
       const L = (await import("leaflet")).default;
       if (!isMounted || !mapContainerRef.current) return;
 
+      // Patch Leaflet DomUtil.getPosition to prevent '_leaflet_pos' TypeError when unmounting or accessing detached DOM elements
+      if (L && L.DomUtil && L.DomUtil.getPosition && !(L.DomUtil as any)._patchedPosition) {
+        const origGetPos = L.DomUtil.getPosition;
+        L.DomUtil.getPosition = function (el: any) {
+          if (!el) return new L.Point(0, 0);
+          try {
+            return origGetPos.call(L.DomUtil, el);
+          } catch {
+            return new L.Point(0, 0);
+          }
+        };
+        (L.DomUtil as any)._patchedPosition = true;
+      }
+
       if (mapInstanceRef.current) {
-        mapInstanceRef.current.remove();
+        try {
+          mapInstanceRef.current.off();
+          mapInstanceRef.current.remove();
+        } catch {}
         mapInstanceRef.current = null;
       }
 
@@ -239,26 +256,34 @@ export function WorkerVisitTrackingView({
       // Force recalculation of map tile dimensions after DOM settle
       setTimeout(() => {
         if (isMounted && mapInstanceRef.current) {
-          mapInstanceRef.current.invalidateSize();
+          try {
+            mapInstanceRef.current.invalidateSize();
+          } catch {}
           if (routeBoundsRef.current) {
-            mapInstanceRef.current.fitBounds(routeBoundsRef.current, {
-              padding: [50, 50],
-              maxZoom: 16,
-            });
+            try {
+              mapInstanceRef.current.fitBounds(routeBoundsRef.current, {
+                padding: [50, 50],
+                maxZoom: 16,
+              });
+            } catch {}
           }
         }
       }, 200);
 
       setTimeout(() => {
         if (isMounted && mapInstanceRef.current) {
-          mapInstanceRef.current.invalidateSize();
+          try {
+            mapInstanceRef.current.invalidateSize();
+          } catch {}
         }
       }, 500);
 
       if (mapContainerRef.current) {
         resizeObserver = new ResizeObserver(() => {
           if (mapInstanceRef.current) {
-            mapInstanceRef.current.invalidateSize();
+            try {
+              mapInstanceRef.current.invalidateSize();
+            } catch {}
           }
         });
         resizeObserver.observe(mapContainerRef.current);
@@ -273,7 +298,10 @@ export function WorkerVisitTrackingView({
         resizeObserver.disconnect();
       }
       if (mapInstanceRef.current) {
-        mapInstanceRef.current.remove();
+        try {
+          mapInstanceRef.current.off();
+          mapInstanceRef.current.remove();
+        } catch {}
         mapInstanceRef.current = null;
       }
     };

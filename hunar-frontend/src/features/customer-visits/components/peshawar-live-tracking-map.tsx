@@ -116,9 +116,26 @@ export function PeshawarLiveTrackingMap({
 
       if (!isMounted || !mapContainerRef.current) return;
 
+      // Patch Leaflet DomUtil.getPosition to prevent '_leaflet_pos' TypeError when unmounting or accessing detached DOM elements
+      if (L && L.DomUtil && L.DomUtil.getPosition && !(L.DomUtil as any)._patchedPosition) {
+        const origGetPos = L.DomUtil.getPosition;
+        L.DomUtil.getPosition = function (el: any) {
+          if (!el) return new L.Point(0, 0);
+          try {
+            return origGetPos.call(L.DomUtil, el);
+          } catch {
+            return new L.Point(0, 0);
+          }
+        };
+        (L.DomUtil as any)._patchedPosition = true;
+      }
+
       // Clean up previous instance
       if (mapInstanceRef.current) {
-        mapInstanceRef.current.remove();
+        try {
+          mapInstanceRef.current.off();
+          mapInstanceRef.current.remove();
+        } catch {}
         mapInstanceRef.current = null;
       }
 
@@ -267,7 +284,10 @@ export function PeshawarLiveTrackingMap({
     return () => {
       isMounted = false;
       if (mapInstanceRef.current) {
-        mapInstanceRef.current.remove();
+        try {
+          mapInstanceRef.current.off();
+          mapInstanceRef.current.remove();
+        } catch {}
         mapInstanceRef.current = null;
       }
     };

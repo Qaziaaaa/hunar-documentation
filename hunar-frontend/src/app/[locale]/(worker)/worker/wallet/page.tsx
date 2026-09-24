@@ -16,9 +16,14 @@ import {
   getWalletTransactions,
   queryKeys,
 } from "@/services/worker/earnings.service";
-import { useWorkerJobs, workerStore } from "@/stores/worker-jobs-store";
+import {
+  mockWalletSummary,
+  mockWalletTransactions,
+} from "@/mocks/earnings.mock";
 
-function WalletContent() {
+import { workerStore, useWorkerJobs } from "@/stores/worker-jobs-store";
+
+export function WalletContent() {
   const { walletBalance } = useWorkerJobs();
   const setWalletBalance = workerStore.setWalletBalance;
   const [hydrated, setHydrated] = useState(false);
@@ -26,34 +31,16 @@ function WalletContent() {
   const summary = useQuery({
     queryKey: queryKeys.summary,
     queryFn: getWalletSummary,
+    initialData: mockWalletSummary,
   });
 
   const transactions = useQuery({
     queryKey: queryKeys.transactions,
     queryFn: getWalletTransactions,
+    initialData: mockWalletTransactions,
   });
 
-  useEffect(() => {
-    if (isMockMode()) return;
-    const s = getSocket();
-    const handler = (snapshot: { totalBalance?: number; balance?: number }) => {
-      const next = Number(snapshot?.totalBalance ?? snapshot?.balance ?? 0);
-      if (Number.isFinite(next)) setWalletBalance(next);
-    };
-    s?.on("wallet:balanceUpdated", handler);
-    return () => {
-      s?.off("wallet:balanceUpdated", handler);
-    };
-  }, [setWalletBalance]);
-
-  useEffect(() => {
-    if (!hydrated && summary.data) {
-      setHydrated(true);
-      setWalletBalance(Number(summary.data.currentBalance ?? 0));
-    }
-  }, [summary.data, hydrated, setWalletBalance]);
-
-  if (summary.isPending || transactions.isPending) {
+  if (!summary.data || !transactions.data) {
     return <LoadingState label="Loading wallet details..." />;
   }
 
