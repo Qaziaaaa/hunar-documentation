@@ -21,12 +21,16 @@ interface WorkerUpcomingVisitCardProps {
   onStartVisit?: (jobId: string) => void;
 }
 
+import { useLocale } from "next-intl";
+
 export function WorkerUpcomingVisitCard({
   job,
   offer,
   onStartVisit,
 }: WorkerUpcomingVisitCardProps) {
   const router = useRouter();
+  const locale = useLocale();
+  const isUrdu = locale === "ur";
 
   const [isStarting, setIsStarting] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
@@ -92,7 +96,7 @@ export function WorkerUpcomingVisitCard({
               </span>
               {job.urgency === "emergency" && (
                 <span className="px-2 py-0.5 rounded-lg bg-rose-50 text-rose-600 font-bold text-[10px] uppercase tracking-wider border border-rose-100">
-                  Priority
+                  {isUrdu ? "ارجنٹ" : "Priority"}
                 </span>
               )}
             </div>
@@ -121,14 +125,14 @@ export function WorkerUpcomingVisitCard({
                   {job.customer.name}
                 </span>
                 <span className="text-[10.5px] text-slate-500 truncate block">
-                  ⭐ {job.customer.rating} ({job.customer.totalReviews} reviews)
+                  ⭐ {job.customer.rating} ({job.customer.totalReviews} {isUrdu ? "جائزے" : "reviews"})
                 </span>
               </div>
             </div>
 
             <div className="text-right shrink-0">
               <span className="text-[9px] uppercase font-bold text-slate-400 block">
-                Agreed Fee
+                {isUrdu ? "طے شدہ فیس" : "Agreed Fee"}
               </span>
               <span className="text-xs sm:text-sm font-extrabold text-[#123B5D]">
                 {formatRs(agreedVisitCharge)}
@@ -146,7 +150,7 @@ export function WorkerUpcomingVisitCard({
             className="w-full sm:w-auto py-2 sm:py-2.5 px-4 rounded-xl bg-[#0F8B8D] hover:bg-[#123B5D] text-white text-xs font-extrabold shadow-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer active:scale-98"
           >
             <Navigation className="size-3.5 shrink-0" />
-            <span className="truncate">Start Visit &amp; En Route</span>
+            <span className="truncate">{isUrdu ? "وزٹ اور راستے کا آغاز کریں" : "Start Visit & En Route"}</span>
           </button>
         </div>
       </div>

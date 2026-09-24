@@ -313,7 +313,7 @@ export function WorkerVisitTrackingView({
   };
 
   return (
-    <div className="fixed inset-0 z-40 flex flex-col bg-white text-slate-900 font-sans antialiased select-none overflow-hidden max-w-md mx-auto shadow-2xl">
+    <div className="fixed inset-0 z-40 flex flex-col bg-white text-slate-900 font-sans antialiased select-none overflow-hidden w-full max-w-3xl sm:max-w-4xl mx-auto shadow-2xl">
       {/* ======================================================== */}
       {/* 1. TOP HEADER (Cancel visit on left, Headphone Support on right) */}
       {/* ======================================================== */}

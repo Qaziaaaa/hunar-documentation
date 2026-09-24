@@ -14,6 +14,7 @@ import {
   Wrench,
   Camera,
   ShieldAlert,
+  X,
 } from "lucide-react";
 
 interface VisitActionFlowProps {
@@ -32,8 +33,26 @@ export function VisitActionFlow({ job, offer }: VisitActionFlowProps) {
   const [inspectionPhotos, setInspectionPhotos] = useState<string[]>([
     "https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=800&q=80",
   ]);
+  const fileInputRef = React.useRef<HTMLInputElement | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    Array.from(files).forEach((file) => {
+      if (!file.type.startsWith("image/")) return;
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        if (event.target?.result) {
+          setInspectionPhotos((prev) => [...prev, event.target!.result as string]);
+        }
+      };
+      reader.readAsDataURL(file);
+    });
+    e.target.value = "";
+  };
 
   // Wallet top-up warning
   const [walletAlert, setWalletAlert] = useState<string | null>(null);
@@ -289,7 +308,15 @@ export function VisitActionFlow({ job, offer }: VisitActionFlowProps) {
             <label className="text-xs font-bold text-slate-700">
               Photos <span className="text-red-500">*</span>
             </label>
-            <div className="flex items-center gap-2 pt-0.5">
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handlePhotoUpload}
+              accept="image/*"
+              multiple
+              className="hidden"
+            />
+            <div className="flex flex-wrap items-center gap-2 pt-0.5">
               {inspectionPhotos.map((url, i) => (
                 <div
                   key={i}
@@ -300,18 +327,23 @@ export function VisitActionFlow({ job, offer }: VisitActionFlowProps) {
                     alt={`Photo ${i + 1}`}
                     className="w-full h-full object-cover"
                   />
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setInspectionPhotos((prev) => prev.filter((_, idx) => idx !== i))
+                    }
+                    className="absolute top-1 right-1 size-5 rounded-full bg-slate-900/80 hover:bg-red-600 text-white flex items-center justify-center transition-colors cursor-pointer shadow-sm"
+                    title="Remove photo"
+                  >
+                    <X className="size-3" />
+                  </button>
                 </div>
               ))}
 
               <button
                 type="button"
-                onClick={() => {
-                  setInspectionPhotos((prev) => [
-                    ...prev,
-                    "https://images.unsplash.com/photo-1585771724684-38269d6639fd?auto=format&fit=crop&w=800&q=80",
-                  ]);
-                }}
-                className="w-16 h-16 rounded-xl border-2 border-dashed border-slate-300 hover:border-[#0F8B8D] flex flex-col items-center justify-center text-slate-400 hover:text-[#0F8B8D] transition-colors shrink-0"
+                onClick={() => fileInputRef.current?.click()}
+                className="w-16 h-16 rounded-xl border-2 border-dashed border-slate-300 hover:border-[#0F8B8D] bg-slate-50 hover:bg-teal-50 flex flex-col items-center justify-center text-slate-400 hover:text-[#0F8B8D] transition-colors shrink-0 cursor-pointer"
               >
                 <Camera className="w-4 h-4" />
                 <span className="text-[9px] mt-0.5 font-semibold">+ Add</span>

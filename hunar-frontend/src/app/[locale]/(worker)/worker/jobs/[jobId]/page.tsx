@@ -15,7 +15,7 @@ export default function WorkerJobDetailsPage({
   const job = jobs.find((j) => j.id === resolvedParams.jobId);
   if (!job) {
     return (
-      <div className="bg-white rounded-3xl border border-slate-200/80 p-12 text-center space-y-3 max-w-md mx-auto my-8">
+      <div className="bg-white rounded-3xl border border-slate-200/80 p-12 text-center space-y-3 w-full max-w-3xl sm:max-w-4xl mx-auto my-8">
         <h2 className="font-bold text-slate-900 text-lg">Job Not Found</h2>
         <p className="text-xs sm:text-sm text-slate-500">
           The requested job may have been closed, completed, or removed by the customer.

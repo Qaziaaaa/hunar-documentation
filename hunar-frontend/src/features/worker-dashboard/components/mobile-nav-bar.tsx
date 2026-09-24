@@ -6,6 +6,8 @@ import {
 } from "lucide-react";
 import type { DashboardTab } from "../types";
 
+import { useLocale } from "next-intl";
+
 export function MobileNavBar({
   activeTab,
   onSelectTab,
@@ -16,14 +18,17 @@ export function MobileNavBar({
   activeJobsCount: number;
   unreadMessagesCount?: number;
 }) {
+  const locale = useLocale();
+  const isUrdu = locale === "ur";
+
   const tabs: {
     id: DashboardTab;
     label: string;
     icon: React.ComponentType<{ className?: string }>;
     badge?: number;
   }[] = [
-    { id: "dashboard", label: "Home", icon: LayoutDashboard },
-    { id: "jobs", label: "Jobs", icon: Briefcase, badge: activeJobsCount },
+    { id: "dashboard", label: isUrdu ? "ہوم" : "Home", icon: LayoutDashboard },
+    { id: "jobs", label: isUrdu ? "جابز" : "Jobs", icon: Briefcase, badge: activeJobsCount },
   ];
 
   return (

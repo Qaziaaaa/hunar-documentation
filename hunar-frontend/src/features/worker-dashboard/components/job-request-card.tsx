@@ -27,6 +27,8 @@ const CATEGORY_ICONS: Record<string, React.ComponentType<{ className?: string }>
   Welder: Flame,
 };
 
+import { useLocale } from "next-intl";
+
 export function JobRequestCard({
   job,
   onClick,
@@ -36,6 +38,8 @@ export function JobRequestCard({
   onClick: (job: JobRequest) => void;
   onHide?: (jobId: string) => void;
 }) {
+  const locale = useLocale();
+  const isUrdu = locale === "ur";
   const Icon = CATEGORY_ICONS[job.category] || Wrench;
   const isUrgent = job.status === "URGENT";
 
@@ -156,7 +160,15 @@ export function JobRequestCard({
           <div className="size-8 rounded-full bg-rose-100 flex items-center justify-center">
             <EyeOff className="size-4 text-rose-600" />
           </div>
-          <span>{offsetX > 90 ? "Release to Hide Request" : "Slide right to hide"}</span>
+          <span>
+            {offsetX > 90
+              ? isUrdu
+                ? "چھپانے کے لیے چھوڑیں"
+                : "Release to Hide Request"
+              : isUrdu
+                ? "چھپانے کے لیے دائیں سلائیڈ کریں"
+                : "Slide right to hide"}
+          </span>
         </div>
       </div>
 
@@ -229,7 +241,7 @@ export function JobRequestCard({
               <div className="flex items-center gap-1 shrink-0">
                 {isUrgent && (
                   <span className="inline-flex items-center gap-0.5 rounded-full bg-rose-50 px-2 py-0.5 text-[10px] font-bold text-rose-600 border border-rose-100">
-                    <Sparkles className="size-2.5" /> Urgent
+                    <Sparkles className="size-2.5" /> {isUrdu ? "ارجنٹ" : "Urgent"}
                   </span>
                 )}
                 <span className="inline-flex items-center gap-1 rounded-full bg-slate-100/80 px-2 py-0.5 text-[10.5px] font-bold text-[#123B5D]">
