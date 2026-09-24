@@ -2,6 +2,7 @@ export type DashboardTab =
   | "dashboard"
   | "jobs"
   | "earnings"
+  | "wallet"
   | "chat"
   | "profile";
 

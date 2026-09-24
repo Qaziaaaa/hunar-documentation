@@ -41,7 +41,7 @@ export function WorkerPastJobCard({ job }: WorkerPastJobCardProps) {
     <>
       <div
         onClick={() => setShowDetails(true)}
-        className="bg-white rounded-2xl sm:rounded-3xl border border-slate-200/80 p-3.5 sm:p-5 shadow-xs hover:shadow-md transition-all space-y-3.5 flex flex-col justify-between w-full cursor-pointer group"
+        className="bg-white rounded-2xl sm:rounded-3xl border border-slate-200/80 p-3.5 sm:p-5 shadow-[0_6px_16px_-4px_rgba(18,59,93,0.12)] hover:shadow-[0_10px_22px_-4px_rgba(18,59,93,0.18)] transition-all space-y-3.5 flex flex-col justify-between w-full cursor-pointer group"
       >
         <div className="space-y-3">
           {/* Top Status & Invoice Header */}

@@ -10,6 +10,7 @@ export interface WorkerProfile {
   id: string;
   name: string;
   phone?: string;
+  email?: string;
   avatarUrl?: string;
   isVerified: boolean;
   rating: number;
@@ -19,7 +20,8 @@ export interface WorkerProfile {
   categories: string[];
   yearsExperience: number;
   bio: string;
-  serviceAreas: string[];
+  workshopLocation: string; // Fixed shop / workshop base address
+  serviceAreas: string[]; // Service coverage areas / sectors
   defaultVisitCharge?: number;
   documents: WorkerDocument[];
   profileVisible: boolean;
@@ -27,10 +29,13 @@ export interface WorkerProfile {
 
 export interface UpdateWorkerProfileInput {
   name?: string;
+  phone?: string;
+  email?: string;
   avatarUrl?: string;
   bio?: string;
   skills?: string[];
   yearsExperience?: number;
+  workshopLocation?: string;
   serviceAreas?: string[];
   defaultVisitCharge?: number;
   documents?: WorkerDocument[];
