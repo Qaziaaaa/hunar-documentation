@@ -10,14 +10,35 @@ import {
   Trash2,
   Upload,
 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import type { WorkerProfileFormData } from "../types";
 
 const EXP_OPTIONS = [
-  { label: "< 1 Year", sub: "Beginner", icon: "🌱" },
-  { label: "1 - 3 Years", sub: "Intermediate", icon: "⚡" },
-  { label: "4 - 7 Years", sub: "Skilled Pro", icon: "🏆" },
-  { label: "8+ Years", sub: "Master", icon: "👑" },
+  {
+    key: "expUnder1" as const,
+    subKey: "expUnder1Sub" as const,
+    rawValue: "< 1 Year (Beginner)",
+    icon: "🌱",
+  },
+  {
+    key: "exp1to3" as const,
+    subKey: "exp1to3Sub" as const,
+    rawValue: "1 - 3 Years (Intermediate)",
+    icon: "⚡",
+  },
+  {
+    key: "exp4to7" as const,
+    subKey: "exp4to7Sub" as const,
+    rawValue: "4 - 7 Years (Skilled Pro)",
+    icon: "🏆",
+  },
+  {
+    key: "exp8Plus" as const,
+    subKey: "exp8PlusSub" as const,
+    rawValue: "8+ Years (Master)",
+    icon: "👑",
+  },
 ];
 
 export function Step3Experience({
@@ -33,6 +54,7 @@ export function Step3Experience({
   onPrev: () => void;
   stepError: string | null;
 }) {
+  const t = useTranslations("WorkerOnboarding.Step3");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleCertUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -65,37 +87,39 @@ export function Step3Experience({
         <div>
           <div className="mb-1 flex items-center justify-between gap-2">
             <div>
-              <span className="block text-xs font-bold uppercase tracking-wider text-teal">
-                Experience & Proof
+              <span className="block text-xs font-bold uppercase tracking-wider text-teal mb-1">
+                {t("badge")}
               </span>
-              <h2 className="text-2xl font-extrabold tracking-tight text-navy sm:text-3xl leading-tight">
-                Experience & Qualifications
+              <h2 className="text-2xl font-extrabold tracking-tight text-navy sm:text-3xl leading-snug">
+                {t("title")}
               </h2>
             </div>
             <span className="shrink-0 self-start rounded-full border border-teal/20 bg-teal/10 px-3 py-1 text-xs font-bold text-teal">
-              Pro Credential
+              {t("credentialBadge")}
             </span>
           </div>
-          <p className="text-sm sm:text-base text-muted-foreground">
-            Tell clients how long you&apos;ve worked in your trade and attach any skill proof.
+          <p className="mt-2 text-sm sm:text-base text-muted-foreground leading-relaxed">
+            {t("subtitle")}
           </p>
         </div>
 
         {/* Years of Experience Selector */}
         <div className="rounded-2xl bg-white p-1">
           <label className="mb-2 block text-xs font-bold uppercase tracking-wider text-navy">
-            Years of Experience <span className="text-error">*</span>
+            {t("experienceYears")} <span className="text-error">*</span>
           </label>
           <div className="grid grid-cols-4 gap-2 text-center">
             {EXP_OPTIONS.map((opt) => {
-              const isSelected = formData.experienceYears?.includes(opt.label);
+              const isSelected =
+                formData.experienceYears === opt.rawValue ||
+                formData.experienceYears?.includes(opt.rawValue.split(" ")[0]);
               return (
                 <button
-                  key={opt.label}
+                  key={opt.key}
                   type="button"
                   onClick={() =>
                     updateFormData({
-                      experienceYears: `${opt.label} (${opt.sub})`,
+                      experienceYears: opt.rawValue,
                     })
                   }
                   className={`flex flex-col items-center justify-center rounded-xl p-3 text-sm transition-all ${
@@ -106,10 +130,10 @@ export function Step3Experience({
                 >
                   <span className="text-xl">{opt.icon}</span>
                   <span className="text-xs sm:text-sm font-bold leading-tight text-navy mt-1">
-                    {opt.label}
+                    {t(opt.key)}
                   </span>
                   <span className="text-xs text-muted-foreground mt-0.5">
-                    {opt.sub}
+                    {t(opt.subKey)}
                   </span>
                 </button>
               );
@@ -124,10 +148,10 @@ export function Step3Experience({
               htmlFor="bio"
               className="ml-1 block text-xs font-bold uppercase tracking-wider text-navy"
             >
-              Work Summary / Bio <span className="text-error">*</span>
+              {t("bioLabel")} <span className="text-error">*</span>
             </label>
             <span className="text-xs sm:text-sm text-muted-foreground">
-              Shown on your visit quotes
+              {t("bioHint")}
             </span>
           </div>
           <textarea
@@ -135,7 +159,7 @@ export function Step3Experience({
             rows={3}
             value={formData.bio}
             onChange={(e) => updateFormData({ bio: e.target.value })}
-            placeholder="Tell clients about your hands-on experience, equipment, and reliability in Peshawar..."
+            placeholder={t("bioPlaceholder")}
             className="w-full rounded-2xl border border-slate-200 bg-white p-3.5 text-sm sm:text-base leading-relaxed text-slate-800 focus:border-teal focus:outline-none focus:ring-2 focus:ring-teal/20"
           />
         </div>
@@ -146,14 +170,14 @@ export function Step3Experience({
             <div>
               <span className="flex items-center gap-1.5 text-sm font-bold text-navy">
                 <FileText className="size-4.5 text-teal" />
-                Trade Certificate
+                {t("certificateTitle")}
               </span>
               <p className="text-xs text-muted-foreground">
-                NAVTTC, TEVTA, apprenticeship letter or trade proof
+                {t("certificateHint")}
               </p>
             </div>
             <span className="rounded-full border border-teal/20 bg-teal/10 px-2.5 py-0.5 text-xs font-bold text-teal">
-              {formData.certificateName ? "✓ Attached" : "Optional"}
+              {formData.certificateName ? t("certificateAttached") : t("certificateOptional")}
             </span>
           </div>
 
@@ -176,7 +200,7 @@ export function Step3Experience({
                     {formData.certificateName}
                   </p>
                   <p className="text-xs font-semibold text-teal">
-                    Attached for priority verification
+                    {t("priorityVerification")}
                   </p>
                 </div>
               </div>
@@ -188,7 +212,7 @@ export function Step3Experience({
                   onClick={() => fileInputRef.current?.click()}
                   className="h-8 rounded-full border-teal/40 px-3 text-xs font-bold text-teal hover:bg-teal/10"
                 >
-                  Replace
+                  {t("replace")}
                 </Button>
                 <Button
                   type="button"
@@ -210,9 +234,9 @@ export function Step3Experience({
                 <Upload className="size-4.5" />
               </div>
               <p className="text-sm font-bold text-navy">
-                <span className="text-teal underline">Click to upload</span> certificate
+                <span className="text-teal underline">{t("clickToUpload")}</span> {t("certificateText")}
               </p>
-              <p className="text-xs text-muted-foreground">PDF, JPG, PNG (Max 10MB)</p>
+              <p className="text-xs text-muted-foreground">{t("fileLimits")}</p>
             </div>
           )}
         </div>
@@ -235,7 +259,7 @@ export function Step3Experience({
           className="h-12 sm:h-13 w-1/3 rounded-full border-2 border-navy text-sm sm:text-base font-bold text-navy hover:bg-slate-50"
         >
           <ArrowLeft className="mr-1.5 size-4 rtl:rotate-180" />
-          <span>Back</span>
+          <span>{t("backBtn")}</span>
         </Button>
         <Button
           type="button"
@@ -243,7 +267,7 @@ export function Step3Experience({
           onClick={onNext}
           className="h-12 sm:h-13 flex-1 rounded-full bg-teal text-sm sm:text-base font-bold text-white shadow-md shadow-teal/20 hover:bg-teal/90 transition-all"
         >
-          <span>Continue to Service Areas</span>
+          <span>{t("continueBtn")}</span>
           <ArrowRight className="ml-1.5 size-4 rtl:rotate-180" />
         </Button>
       </div>

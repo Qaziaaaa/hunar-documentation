@@ -15,76 +15,77 @@ import {
   Wrench,
   Zap,
 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import type { WorkerProfileFormData } from "../types";
 
-interface SkillItem {
+interface SkillItemConfig {
   id: string;
-  name: string;
+  nameKey: string;
+  descKey: string;
   icon: React.ComponentType<{ className?: string }>;
-  description: string;
 }
 
-const AVAILABLE_SKILLS: SkillItem[] = [
+const AVAILABLE_SKILLS: SkillItemConfig[] = [
   {
     id: "Electrician",
-    name: "Electrician",
+    nameKey: "Electrician",
+    descKey: "ElectricianDesc",
     icon: Zap,
-    description: "Wiring, DBs, UPS & circuits",
   },
   {
     id: "Plumber",
-    name: "Plumber",
+    nameKey: "Plumber",
+    descKey: "PlumberDesc",
     icon: Wrench,
-    description: "Pipes, geysers & motors",
   },
   {
     id: "AC Technician",
-    name: "AC Tech",
+    nameKey: "AC Technician",
+    descKey: "AC TechnicianDesc",
     icon: AirVent,
-    description: "Inverter AC service & gas",
   },
   {
     id: "Carpenter",
-    name: "Carpenter",
+    nameKey: "Carpenter",
+    descKey: "CarpenterDesc",
     icon: Hammer,
-    description: "Doors, locks & cabinetry",
   },
   {
     id: "Painter",
-    name: "Painter",
+    nameKey: "Painter",
+    descKey: "PainterDesc",
     icon: Paintbrush,
-    description: "Interior & exterior polish",
   },
   {
     id: "Mechanic",
-    name: "Mechanic",
+    nameKey: "Mechanic",
+    descKey: "MechanicDesc",
     icon: Wrench,
-    description: "Generators & home machinery",
   },
   {
     id: "Solar Technician",
-    name: "Solar Tech",
+    nameKey: "Solar Technician",
+    descKey: "Solar TechnicianDesc",
     icon: SunMedium,
-    description: "Panels, inverters & wiring",
   },
   {
     id: "Mason",
-    name: "Mason",
+    nameKey: "Mason",
+    descKey: "MasonDesc",
     icon: Pipette,
-    description: "Tiles, plaster & civil work",
   },
   {
     id: "Welder",
-    name: "Welder",
+    nameKey: "Welder",
+    descKey: "WelderDesc",
     icon: Flame,
-    description: "Grills & metal fabrication",
   },
   {
     id: "Appliance Repair",
-    name: "Appliance",
+    nameKey: "Appliance Repair",
+    descKey: "Appliance RepairDesc",
     icon: Tv,
-    description: "Washing machines & fridges",
   },
 ];
 
@@ -101,6 +102,9 @@ export function Step2Skills({
   onPrev: () => void;
   stepError: string | null;
 }) {
+  const t = useTranslations("WorkerOnboarding.Step2");
+  const tSkills = useTranslations("WorkerOnboarding.Skills");
+
   const toggleSkill = (skillId: string) => {
     const current = formData.skills || [];
     if (current.includes(skillId)) {
@@ -117,18 +121,18 @@ export function Step2Skills({
       <div className="space-y-4">
         <div className="flex items-center justify-between gap-2">
           <div>
-            <span className="block text-xs font-bold uppercase tracking-wider text-teal">
-              Trade Skills
+            <span className="block text-xs font-bold uppercase tracking-wider text-teal mb-1">
+              {t("badge")}
             </span>
-            <h2 className="text-2xl font-extrabold tracking-tight text-navy sm:text-3xl leading-tight">
-              What services do you provide?
+            <h2 className="text-2xl font-extrabold tracking-tight text-navy sm:text-3xl leading-snug">
+              {t("title")}
             </h2>
-            <p className="mt-1 text-sm sm:text-base text-muted-foreground">
-              Select one or more skills to receive matching client jobs in Peshawar.
+            <p className="mt-2 text-sm sm:text-base text-muted-foreground leading-relaxed">
+              {t("subtitle")}
             </p>
           </div>
           <span className="shrink-0 self-start rounded-full border border-teal/30 bg-teal/10 px-3 py-1 text-xs font-bold text-teal">
-            {selectedCount} Selected
+            {t("selectedCount", { count: selectedCount })}
           </span>
         </div>
 
@@ -137,6 +141,8 @@ export function Step2Skills({
           {AVAILABLE_SKILLS.map((skill) => {
             const isSelected = formData.skills?.includes(skill.id);
             const Icon = skill.icon;
+            const skillName = tSkills(skill.nameKey);
+            const skillDesc = tSkills(skill.descKey);
 
             return (
               <div
@@ -159,19 +165,19 @@ export function Step2Skills({
                 </div>
 
                 <span className="text-sm sm:text-base font-bold text-navy">
-                  {skill.name}
+                  {skillName}
                 </span>
                 <span className="text-xs sm:text-[13px] text-muted-foreground line-clamp-1 mt-0.5">
-                  {skill.description}
+                  {skillDesc}
                 </span>
 
                 {isSelected ? (
                   <span className="mt-2 flex items-center gap-1 text-xs font-bold text-teal">
-                    <Check className="size-3.5" /> Selected
+                    <Check className="size-3.5" /> {t("selected")}
                   </span>
                 ) : (
                   <span className="mt-2 text-xs font-medium text-slate-400">
-                    Tap to select
+                    {t("tapToSelect")}
                   </span>
                 )}
               </div>
@@ -197,7 +203,7 @@ export function Step2Skills({
           className="h-12 sm:h-13 w-1/3 rounded-full border-2 border-navy text-sm sm:text-base font-bold text-navy hover:bg-slate-50"
         >
           <ArrowLeft className="mr-1.5 size-4 rtl:rotate-180" />
-          <span>Back</span>
+          <span>{t("backBtn")}</span>
         </Button>
         <Button
           type="button"
@@ -205,7 +211,7 @@ export function Step2Skills({
           onClick={onNext}
           className="h-12 sm:h-13 flex-1 rounded-full bg-teal text-sm sm:text-base font-bold text-white shadow-md shadow-teal/20 hover:bg-teal/90 transition-all"
         >
-          <span>Continue to Experience</span>
+          <span>{t("continueBtn")}</span>
           <ArrowRight className="ml-1.5 size-4 rtl:rotate-180" />
         </Button>
       </div>

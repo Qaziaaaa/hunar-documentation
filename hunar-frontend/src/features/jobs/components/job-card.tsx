@@ -58,7 +58,7 @@ export function JobCard({ job, workerOffer }: JobCardProps) {
   const hasVoice = !!job.voiceNote;
 
   return (
-    <div className="group bg-white rounded-2xl border border-slate-200/80 hover:border-[#0F8B8D]/40 hover:shadow-md transition-all duration-200 p-5 flex flex-col justify-between relative overflow-hidden">
+    <div className="group bg-white rounded-2xl border border-slate-200/80 shadow-[0_8px_18px_-4px_rgba(18,59,93,0.12)] hover:shadow-[0_12px_24px_-4px_rgba(18,59,93,0.18)] hover:border-[#0F8B8D]/40 transition-all duration-200 p-5 flex flex-col justify-between relative overflow-hidden">
       {/* Top Accent Strip for Emergency Jobs */}
       {job.urgency === "emergency" && (
         <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-red-500 to-amber-500" />
@@ -102,89 +102,71 @@ export function JobCard({ job, workerOffer }: JobCardProps) {
             )}
           </div>
 
-          <div className="flex items-center gap-1 text-slate-400 text-xs shrink-0">
-            <Clock className="w-3 h-3" />
-            <span>{job.postedAgo}</span>
-          </div>
+          <span className="text-xs text-slate-500 font-medium">
+            {job.postedAt || "Recently posted"}
+          </span>
         </div>
 
-        {/* Row 2: Title & Problem Summary */}
+        {/* Row 2: Title */}
         <div>
-          <h3 className="font-bold text-slate-900 text-base group-hover:text-[#0F8B8D] transition-colors leading-snug">
+          <h3 className="font-extrabold text-[#123B5D] text-base group-hover:text-[#0F8B8D] transition-colors line-clamp-1">
             {job.title}
           </h3>
-          <p className="text-slate-600 text-xs sm:text-sm mt-1 line-clamp-2 leading-relaxed">
-            {job.problemSummary}
+          <p className="text-slate-600 text-xs line-clamp-2 mt-1 leading-relaxed">
+            {job.description}
           </p>
         </div>
 
-        {/* Row 3: Location & Preferred Visit Window */}
-        <div className="flex flex-wrap items-center gap-y-1.5 gap-x-4 text-xs text-slate-600 pt-1">
-          <div className="flex items-center gap-1 font-medium">
-            <MapPin className="w-3.5 h-3.5 text-[#0F8B8D] shrink-0" />
-            <span>{job.location.area}</span>
-            <span className="text-slate-400 font-normal">
-              ({job.location.distanceKm} km away)
+        {/* Row 3: Customer Suggested Price & Meta Indicators */}
+        <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-xs">
+          <div className="flex items-center gap-3 text-slate-500">
+            <span className="flex items-center gap-1 font-semibold text-slate-700">
+              <MapPin className="w-3.5 h-3.5 text-[#0F8B8D]" />
+              <span>{job.location.area}</span>
+              <span className="text-slate-500 font-normal">({job.location.distanceKm} km)</span>
             </span>
+
+            {/* Media indicators */}
+            <div className="flex items-center gap-1.5 border-l border-slate-200 pl-3">
+              {hasPhotos && (
+                <span className="flex items-center text-slate-500 font-medium" title="Photos attached">
+                  <ImageIcon className="w-3.5 h-3.5 text-slate-600" />
+                </span>
+              )}
+              {hasVoice && (
+                <span className="flex items-center text-amber-600 font-medium" title="Voice note attached">
+                  <Mic className="w-3.5 h-3.5" />
+                </span>
+              )}
+            </div>
           </div>
 
-          {job.preferredVisitWindow && (
-            <div className="flex items-center gap-1 text-slate-500">
-              <Calendar className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-              <span>
-                {job.preferredVisitWindow.date} • {job.preferredVisitWindow.timeSlot}
-              </span>
-            </div>
-          )}
+          {/* Pricing Info */}
+          <div className="text-right">
+            <span className="text-[10px] uppercase font-bold text-slate-500 block">
+              Suggested Visit
+            </span>
+            <span className="font-extrabold text-[#123B5D] text-sm">
+              {formatRs(job.customerSuggestedPrice || 300)}
+            </span>
+          </div>
         </div>
       </div>
 
-      {/* Row 4: Footer Strip with Media Badges, Suggested Price, & CTA */}
-      <div className="mt-4 pt-4 border-t border-slate-100 flex items-center justify-between gap-3">
-        {/* Media indicators (Photos / Voice Note) */}
-        <div className="flex items-center gap-2">
-          {hasPhotos && (
-            <span
-              title={`${job.photos.length} photos attached`}
-              className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-slate-100 text-slate-700 text-xs font-medium"
-            >
-              <ImageIcon className="w-3.5 h-3.5 text-slate-500" />
-              <span>{job.photos.length}</span>
-            </span>
-          )}
+      {/* Bottom CTA Bar */}
+      <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
+        <span className="inline-flex items-center gap-1 text-xs font-semibold text-[#0F8B8D]">
+          <ShieldCheck className="w-3.5 h-3.5" />
+          <span>10% Commission Escrow</span>
+        </span>
 
-          {hasVoice && (
-            <span
-              title={`Voice note attached (${job.voiceNote?.durationSeconds}s)`}
-              className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-teal-50 border border-teal-100 text-[#0F8B8D] text-xs font-semibold"
-            >
-              <Mic className="w-3.5 h-3.5" />
-              <span>Voice Note ({job.voiceNote?.durationSeconds}s)</span>
-            </span>
-          )}
-        </div>
-
-        {/* Suggested Visit Charge & Action Button */}
-        <div className="flex items-center gap-3">
-          {job.customerSuggestedPrice && (
-            <div className="text-right">
-              <span className="block text-[10px] uppercase font-bold text-slate-400">
-                Suggested Visit
-              </span>
-              <span className="font-extrabold text-[#123B5D] text-sm sm:text-base">
-                {formatRs(job.customerSuggestedPrice)}
-              </span>
-            </div>
-          )}
-
-          <Link
-            href={`/worker/jobs/${job.id}`}
-            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#0F8B8D] hover:bg-[#0B7F74] text-white text-xs font-bold shadow-xs hover:shadow transition-all"
-          >
-            <span>{workerOffer ? (locale === "ur" ? "آفر دیکھیں" : "Manage Offer") : (locale === "ur" ? "آفر بھیجیں" : "Send Offer")}</span>
-            <ArrowRight className="w-3.5 h-3.5 rtl:rotate-180" />
-          </Link>
-        </div>
+        <Link
+          href={`/worker/jobs/${job.id}`}
+          className="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-[#0F8B8D] hover:bg-[#0F8B8D]/90 text-white font-bold text-xs transition-all shadow-xs group-hover:shadow-md"
+        >
+          <span>View Job Details</span>
+          <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
+        </Link>
       </div>
     </div>
   );

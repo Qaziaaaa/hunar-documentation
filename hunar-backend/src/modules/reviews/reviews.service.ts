@@ -138,4 +138,33 @@ export class ReviewsService {
       pagination: { page, limit, total },
     };
   }
+
+  /** Task 20 — reviews the current customer submitted (my reviews). */
+  async getCustomerReviews(customerId: string, query: ReviewQueryDto) {
+    const { page, limit, skip } = normalizePage(query);
+    const where = { reviewerId: customerId, isVisible: true };
+    const [reviews, total] = await this.prisma.$transaction([
+      this.prisma.review.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy: { createdAt: 'desc' },
+        select: {
+          id: true,
+          jobId: true,
+          rating: true,
+          comment: true,
+          createdAt: true,
+          reviewee: {
+            select: { id: true, name: true, avatarUrl: true },
+          },
+          job: {
+            select: { id: true, title: true, status: true },
+          },
+        },
+      }),
+      this.prisma.review.count({ where }),
+    ]);
+    return toPageResult(reviews, total, page, limit);
+  }
 }

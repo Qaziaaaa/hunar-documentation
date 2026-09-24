@@ -7,10 +7,15 @@ import { JwtPayload } from '../../../common/types/jwt-payload.interface';
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
   constructor(config: ConfigService) {
+    const secret =
+      config.get<string>('jwt.secret') || config.get<string>('secret') || process.env.JWT_SECRET;
+    if (!secret) {
+      throw new Error('JWT secret not configured');
+    }
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,
-      secretOrKey: config.get<string>('jwt.secret'),
+      secretOrKey: secret,
     });
   }
 

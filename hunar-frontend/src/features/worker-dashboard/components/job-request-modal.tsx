@@ -35,6 +35,8 @@ const CATEGORY_ICONS: Record<string, React.ComponentType<{ className?: string }>
   Welder: Flame,
 };
 
+import { useLocale } from "next-intl";
+
 export function JobRequestModal({
   job,
   isOpen,
@@ -46,6 +48,8 @@ export function JobRequestModal({
   onClose: () => void;
   onOfferSent?: (jobId: string, visitCharge: number) => void;
 }) {
+  const locale = useLocale();
+  const isUrdu = locale === "ur";
   const [selectedImagePreview, setSelectedImagePreview] = useState<string | null>(null);
   const [isSending, setIsSending] = useState(false);
   const [isSent, setIsSent] = useState(false);
@@ -207,7 +211,7 @@ export function JobRequestModal({
                 </div>
                 <div className="min-w-0">
                   <span className="text-xs font-extrabold uppercase tracking-wider text-slate-600 block mb-0.5">
-                    Location ({job.distance})
+                    {isUrdu ? "مقام" : "Location"} ({job.distance})
                   </span>
                   <p className="font-extrabold text-navy text-sm sm:text-base leading-snug">
                     {job.fullAddress || job.locationArea}
@@ -221,10 +225,10 @@ export function JobRequestModal({
                 </div>
                 <div className="min-w-0">
                   <span className="text-xs font-extrabold uppercase tracking-wider text-slate-600 block mb-0.5">
-                    Preferred Visit Window
+                    {isUrdu ? "ترجیحی وقت" : "Preferred Visit Window"}
                   </span>
                   <p className="font-extrabold text-navy text-sm sm:text-base leading-snug">
-                    {job.preferredTiming || "Flexible Timing"}
+                    {job.preferredTiming || (isUrdu ? "کسی بھی وقت" : "Flexible Timing")}
                   </p>
                 </div>
               </div>
@@ -234,7 +238,7 @@ export function JobRequestModal({
           {/* SECTION 3: Complete Problem Description */}
           <div className="space-y-2 pt-2">
             <h4 className="text-sm sm:text-base font-extrabold text-navy">
-              Detailed Description
+              {isUrdu ? "تفصیلی وضاحت" : "Detailed Description"}
             </h4>
             <p className="text-sm sm:text-[15px] font-normal leading-relaxed text-slate-900">
               {job.description}
@@ -245,7 +249,7 @@ export function JobRequestModal({
           {(job.images?.length > 0 || job.voiceNote) && (
             <div className="space-y-2.5 pt-2">
               <h4 className="text-sm sm:text-base font-extrabold text-navy">
-                Attached Media & Voice Note
+                {isUrdu ? "منسلک تصویر اور وائس نوٹ" : "Attached Media & Voice Note"}
               </h4>
 
               {/* Photos Gallery */}
@@ -289,7 +293,7 @@ export function JobRequestModal({
             onClick={onClose}
             className="rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-bold px-5 h-10 cursor-pointer"
           >
-            Close
+            {isUrdu ? "بند کریں" : "Close"}
           </Button>
 
           <Button
@@ -305,17 +309,17 @@ export function JobRequestModal({
             {isSending ? (
               <>
                 <Loader2 className="size-4 animate-spin" />
-                <span>Sending Offer...</span>
+                <span>{isUrdu ? "آفر بھیجی جا رہی ہے..." : "Sending Offer..."}</span>
               </>
             ) : isSent ? (
               <>
                 <CheckCircle2 className="size-4" />
-                <span>Offer Sent (Rs. 300)</span>
+                <span>{isUrdu ? "آفر بھیج دی گئی (روپے 300)" : "Offer Sent (Rs. 300)"}</span>
               </>
             ) : (
               <>
                 <Send className="size-4" />
-                <span>Send Offer for Rs. 300</span>
+                <span>{isUrdu ? "روپے 300 میں آفر بھیجیں" : "Send Offer for Rs. 300"}</span>
               </>
             )}
           </Button>

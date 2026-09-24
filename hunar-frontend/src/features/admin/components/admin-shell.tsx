@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { Link, usePathname, useRouter } from "@/i18n/navigation";
+import { OrderworkerLogo } from "@/components/shared/orderworker-logo";
 
 interface NavItem {
   label: string;
@@ -134,24 +135,16 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
         <div className="flex flex-col flex-1 overflow-y-auto px-5 py-6">
           {/* Logo Header */}
           <div className="flex items-center justify-between border-b border-slate-100 pb-6">
-            <Link href="/admin/dashboard" className="flex items-center gap-3">
-              <div className="flex size-11 items-center justify-center rounded-2xl bg-navy text-xl font-black text-white shadow-md shadow-navy/20">
-                <span>H</span>
-                <span className="size-2.5 rounded-full bg-teal" />
+            <Link href="/admin/dashboard" className="flex flex-col gap-1">
+              <div className="flex items-center gap-2">
+                <OrderworkerLogo variant="dark" size="sm" />
+                <span className="rounded bg-teal/10 px-1.5 py-0.5 text-[9px] font-extrabold uppercase tracking-widest text-teal border border-teal/20">
+                  ADMIN
+                </span>
               </div>
-              <div className="flex flex-col">
-                <div className="flex items-center gap-2">
-                  <span className="text-lg font-black tracking-tight text-navy">
-                    HUNAR
-                  </span>
-                  <span className="rounded bg-teal/10 px-1.5 py-0.5 text-[9px] font-extrabold uppercase tracking-widest text-teal border border-teal/20">
-                    ADMIN
-                  </span>
-                </div>
-                <p className="text-[11px] font-medium text-slate-500">
-                  Operations Control Center
-                </p>
-              </div>
+              <p className="text-[11px] font-medium text-slate-500 pl-0.5">
+                Operations Control Center
+              </p>
             </Link>
             <button
               type="button"

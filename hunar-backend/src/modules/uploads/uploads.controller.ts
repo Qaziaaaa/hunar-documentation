@@ -1,4 +1,5 @@
 import {
+  Body,
   Controller,
   Delete,
   Get,
@@ -12,7 +13,7 @@ import { Role } from '@prisma/client';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { JwtPayload } from '../../common/types/jwt-payload.interface';
-import { multerOptions, UploadCategory } from './uploads.presets';
+import { multerGenericOptions, multerOptions, UploadCategory } from './uploads.presets';
 import { UploadsService } from './uploads.service';
 
 // Path params hold dot-free object keys; clients must URL-encode the bucket key
@@ -64,6 +65,26 @@ export class UploadsController {
   @UseInterceptors(FileInterceptor('file', multerOptions(UploadCategory.CNIC_DOCUMENT)))
   uploadCnicDocument(@CurrentUser() user: JwtPayload, @UploadedFile() file: Express.Multer.File) {
     return this.uploadsService.uploadCnicDocument(user.sub, file);
+  }
+
+  /** Task 27 — voice notes (customer ↔ worker, e.g. chat audio). */
+  @Post('voice-note')
+  @Roles(Role.WORKER, Role.CUSTOMER)
+  @UseInterceptors(FileInterceptor('file', multerOptions(UploadCategory.VOICE_NOTE)))
+  uploadVoiceNote(@CurrentUser() user: JwtPayload, @UploadedFile() file: Express.Multer.File) {
+    return this.uploadsService.uploadVoiceNote(user.sub, file);
+  }
+
+  /** Task 27 — generic POST /uploads (category passed as a multipart field). */
+  @Post()
+  @Roles(Role.WORKER, Role.CUSTOMER)
+  @UseInterceptors(FileInterceptor('file', multerGenericOptions()))
+  upload(
+    @CurrentUser() user: JwtPayload,
+    @Body('category') category: string,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    return this.uploadsService.upload(user.sub, category as UploadCategory, file);
   }
 
   @Get(':key/url')

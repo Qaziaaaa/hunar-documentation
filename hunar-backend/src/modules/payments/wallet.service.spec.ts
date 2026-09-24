@@ -2,7 +2,6 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
 import { WalletService, WalletSnapshot } from './wallet.service';
 import { TopupDto, TopupDecideDto } from './payments.validation';
-import { WALLET_EVENTS, walletRoom } from './wallet.events';
 import { PrismaService } from '../../prisma/prisma.service';
 import { RedisService } from '../../common/redis/redis.service';
 import { EventBusService } from '../../common/event-bus/event-bus.service';
@@ -96,7 +95,12 @@ describe('WalletService', () => {
       );
       expect(result.status).toBe('PENDING');
       expect(result.amount).toBe(250);
-      expect(redis.set).toHaveBeenCalled();
+      expect(eventBus.emit).toHaveBeenCalledWith('topup.submitted', {
+        topUpId: 'topup_1',
+        workerId: 'worker_1',
+        amount: 250,
+      });
+      expect(realtime.emitToRoom).toHaveBeenCalled();
     });
   });
 
@@ -132,7 +136,7 @@ describe('WalletService', () => {
 
   describe('getBalance / snapshot', () => {
     it('derives snapshot totals from the wallet row', async () => {
-      prisma.workerWallet.findUnique.mockResolvedValue({
+      prisma.workerWallet.upsert.mockResolvedValue({
         userId: 'worker_1',
         balance: BigInt(1750),
         heldBalance: BigInt(250),

@@ -106,7 +106,6 @@ export class NotificationsService {
     const windowEnd = new Date(now.getTime() + VISIT_WINDOW_AHEAD_MINUTES * 60_000);
     const visits = await this.prisma.visit.findMany({
       where: {
-        workerId: { not: null },
         status: 'SCHEDULED',
         scheduledDate: { gte: now, lte: windowEnd },
       },

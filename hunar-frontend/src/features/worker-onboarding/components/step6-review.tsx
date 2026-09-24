@@ -12,6 +12,7 @@ import {
   User,
   Wrench,
 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import type { WizardStep, WorkerProfileFormData } from "../types";
 
@@ -30,25 +31,63 @@ export function Step6Review({
   isSubmitting: boolean;
   stepError: string | null;
 }) {
+  const t = useTranslations("WorkerOnboarding.Step6");
+  const tSkills = useTranslations("WorkerOnboarding.Skills");
+  const tCities = useTranslations("WorkerOnboarding.Cities");
+  const tAreas = useTranslations("WorkerOnboarding.Areas");
+  const tRadii = useTranslations("WorkerOnboarding.Radii");
+
+  const getTranslatedSkill = (skillId: string) => {
+    try {
+      return tSkills(skillId);
+    } catch {
+      return skillId;
+    }
+  };
+
+  const getTranslatedCity = (city: string) => {
+    try {
+      return tCities(city);
+    } catch {
+      return city;
+    }
+  };
+
+  const getTranslatedArea = (area: string) => {
+    try {
+      return tAreas(area);
+    } catch {
+      return area;
+    }
+  };
+
+  const getTranslatedRadius = (radius: string) => {
+    try {
+      return tRadii(radius);
+    } catch {
+      return radius;
+    }
+  };
+
   return (
     <div className="flex flex-col justify-between flex-1 space-y-5 sm:space-y-6">
       <div className="space-y-4">
         <div>
           <div className="mb-1 flex items-center justify-between gap-2">
             <div>
-              <span className="block text-xs font-bold uppercase tracking-wider text-teal">
-                Verification Review
+              <span className="block text-xs font-bold uppercase tracking-wider text-teal mb-1">
+                {t("badge")}
               </span>
-              <h2 className="text-2xl font-extrabold tracking-tight text-navy sm:text-3xl leading-tight">
-                Review your profile
+              <h2 className="text-2xl font-extrabold tracking-tight text-navy sm:text-3xl leading-snug">
+                {t("title")}
               </h2>
             </div>
             <span className="shrink-0 self-start rounded-full border border-teal/20 bg-teal/10 px-3 py-1 text-xs font-bold text-teal">
-              Final Step
+              {t("finalBadge")}
             </span>
           </div>
-          <p className="text-sm sm:text-base text-muted-foreground">
-            Please check your details before submitting for admin verification.
+          <p className="mt-2 text-sm sm:text-base text-muted-foreground leading-relaxed">
+            {t("subtitle")}
           </p>
         </div>
 
@@ -57,14 +96,14 @@ export function Step6Review({
           <div className="rounded-2xl bg-white p-3 shadow-2xs border border-slate-100">
             <div className="mb-2 flex items-center justify-between">
               <span className="flex items-center gap-1.5 font-bold text-navy text-sm">
-                <User className="size-4 text-teal" /> Personal Info
+                <User className="size-4 text-teal" /> {t("personalInfo")}
               </span>
               <button
                 type="button"
                 onClick={() => onGoToStep(1)}
                 className="text-xs sm:text-sm font-bold text-teal hover:underline cursor-pointer"
               >
-                [ Edit ]
+                {t("edit")}
               </button>
             </div>
             <div className="flex items-center gap-3.5 border-b border-slate-200/80 pb-3 mb-2.5">
@@ -84,27 +123,31 @@ export function Step6Review({
               )}
               <div className="leading-tight">
                 <span className="block text-sm sm:text-base font-bold text-navy">
-                  {formData.fullName || "Not specified"}
+                  {formData.fullName || t("notSpecified")}
                 </span>
                 <span className="text-xs font-semibold text-teal mt-0.5 block">
-                  {formData.profilePhoto ? "✓ Photo Attached" : "⚠️ Photo Missing"}
+                  {formData.profilePhoto ? t("photoAttached") : t("photoMissing")}
                 </span>
               </div>
             </div>
             <div className="space-y-1.5 text-xs sm:text-sm text-slate-600">
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Phone:</span>
-                <span className="font-semibold text-navy">+92 {formData.phone || "Not set"}</span>
+                <span className="text-muted-foreground">{t("phone")}</span>
+                <span className="font-semibold text-navy">
+                  +92 {formData.phone || t("notSpecified")}
+                </span>
               </div>
               {formData.email && (
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Email:</span>
+                  <span className="text-muted-foreground">{t("email")}</span>
                   <span className="font-semibold text-navy">{formData.email}</span>
                 </div>
               )}
               <div className="flex justify-between">
-                <span className="text-muted-foreground">City:</span>
-                <span className="font-semibold text-navy">{formData.city || "Peshawar"}</span>
+                <span className="text-muted-foreground">{t("city")}</span>
+                <span className="font-semibold text-navy">
+                  {getTranslatedCity(formData.city || "Peshawar")}
+                </span>
               </div>
             </div>
           </div>
@@ -113,15 +156,15 @@ export function Step6Review({
           <div className="rounded-2xl bg-white p-3 shadow-2xs border border-slate-100">
             <div className="mb-2 flex items-center justify-between">
               <span className="flex items-center gap-1.5 font-bold text-navy text-sm">
-                <Wrench className="size-4 text-teal" /> Selected Services (
-                {formData.skills?.length || 0})
+                <Wrench className="size-4 text-teal" />{" "}
+                {t("selectedServices", { count: formData.skills?.length || 0 })}
               </span>
               <button
                 type="button"
                 onClick={() => onGoToStep(2)}
                 className="text-xs sm:text-sm font-bold text-teal hover:underline cursor-pointer"
               >
-                [ Edit ]
+                {t("edit")}
               </button>
             </div>
             {formData.skills && formData.skills.length > 0 ? (
@@ -131,12 +174,12 @@ export function Step6Review({
                     key={skill}
                     className="rounded-full border border-teal/20 bg-teal/10 px-3 py-1 text-xs sm:text-sm font-semibold text-teal"
                   >
-                    {skill}
+                    {getTranslatedSkill(skill)}
                   </span>
                 ))}
               </div>
             ) : (
-              <p className="text-xs sm:text-sm text-error">No skills selected.</p>
+              <p className="text-xs sm:text-sm text-error">{t("noSkillsSelected")}</p>
             )}
           </div>
 
@@ -144,27 +187,27 @@ export function Step6Review({
           <div className="rounded-2xl bg-white p-3 shadow-2xs border border-slate-100">
             <div className="mb-2 flex items-center justify-between">
               <span className="flex items-center gap-1.5 font-bold text-navy text-sm">
-                <Briefcase className="size-4 text-teal" /> Experience
+                <Briefcase className="size-4 text-teal" /> {t("experience")}
               </span>
               <button
                 type="button"
                 onClick={() => onGoToStep(3)}
                 className="text-xs sm:text-sm font-bold text-teal hover:underline cursor-pointer"
               >
-                [ Edit ]
+                {t("edit")}
               </button>
             </div>
             <div className="space-y-1.5 text-xs sm:text-sm text-slate-600">
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Trade Experience:</span>
+                <span className="text-muted-foreground">{t("tradeExperience")}</span>
                 <span className="font-semibold text-navy">
-                  {formData.experienceYears || "Not specified"}
+                  {formData.experienceYears || t("notSpecified")}
                 </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Certificate:</span>
+                <span className="text-muted-foreground">{t("certificate")}</span>
                 <span className="font-semibold text-teal">
-                  {formData.certificateName ? `✓ Attached` : "Not Attached"}
+                  {formData.certificateName ? t("attached") : t("notAttached")}
                 </span>
               </div>
             </div>
@@ -174,27 +217,29 @@ export function Step6Review({
           <div className="rounded-2xl bg-white p-3 shadow-2xs border border-slate-100">
             <div className="mb-2 flex items-center justify-between">
               <span className="flex items-center gap-1.5 font-bold text-navy text-sm">
-                <MapPin className="size-4 text-teal" /> Service Coverage
+                <MapPin className="size-4 text-teal" /> {t("serviceCoverage")}
               </span>
               <button
                 type="button"
                 onClick={() => onGoToStep(4)}
                 className="text-xs sm:text-sm font-bold text-teal hover:underline cursor-pointer"
               >
-                [ Edit ]
+                {t("edit")}
               </button>
             </div>
             <div className="space-y-1.5 text-xs sm:text-sm text-slate-600">
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Peshawar Areas:</span>
+                <span className="text-muted-foreground">{t("peshawarAreas")}</span>
                 <span className="font-semibold text-navy truncate max-w-[240px]">
-                  {formData.serviceAreas?.join(", ") || "None"}
+                  {formData.serviceAreas && formData.serviceAreas.length > 0
+                    ? formData.serviceAreas.map(getTranslatedArea).join(", ")
+                    : t("none")}
                 </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Radius:</span>
+                <span className="text-muted-foreground">{t("radius")}</span>
                 <span className="font-semibold text-navy">
-                  {formData.coverageRadius || "20 km"}
+                  {getTranslatedRadius(formData.coverageRadius || "Up to 20 km")}
                 </span>
               </div>
             </div>
@@ -204,27 +249,27 @@ export function Step6Review({
           <div className="rounded-2xl bg-white p-3 shadow-2xs border border-slate-100">
             <div className="mb-2 flex items-center justify-between">
               <span className="flex items-center gap-1.5 font-bold text-navy text-sm">
-                <ShieldCheck className="size-4 text-teal" /> NADRA CNIC
+                <ShieldCheck className="size-4 text-teal" /> {t("nadraCnic")}
               </span>
               <button
                 type="button"
                 onClick={() => onGoToStep(5)}
                 className="text-xs sm:text-sm font-bold text-teal hover:underline cursor-pointer"
               >
-                [ Edit ]
+                {t("edit")}
               </button>
             </div>
             <div className="space-y-1.5 text-xs sm:text-sm text-slate-600">
               <div className="flex justify-between">
-                <span className="text-muted-foreground">CNIC Front (*):</span>
+                <span className="text-muted-foreground">{t("cnicFront")}</span>
                 <span className="font-semibold text-teal">
-                  {formData.cnicFront ? `✓ Attached` : "⚠️ Pending"}
+                  {formData.cnicFront ? t("attached") : t("pending")}
                 </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-muted-foreground">CNIC Back (*):</span>
+                <span className="text-muted-foreground">{t("cnicBack")}</span>
                 <span className="font-semibold text-teal">
-                  {formData.cnicBack ? `✓ Attached` : "⚠️ Pending"}
+                  {formData.cnicBack ? t("attached") : t("pending")}
                 </span>
               </div>
             </div>
@@ -250,7 +295,7 @@ export function Step6Review({
           className="h-12 sm:h-13 w-1/3 rounded-full border-2 border-navy text-sm sm:text-base font-bold text-navy hover:bg-slate-50"
         >
           <ArrowLeft className="mr-1.5 size-4 rtl:rotate-180" />
-          <span>Back</span>
+          <span>{t("backBtn")}</span>
         </Button>
         <Button
           type="button"
@@ -264,7 +309,7 @@ export function Step6Review({
           ) : (
             <>
               <FileCheck className="mr-2 size-5" />
-              <span>Submit Profile</span>
+              <span>{t("submitBtn")}</span>
             </>
           )}
         </Button>
