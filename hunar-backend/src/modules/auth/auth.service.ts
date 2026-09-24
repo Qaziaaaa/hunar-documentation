@@ -14,6 +14,7 @@ import { createHash, randomUUID, timingSafeEqual } from 'crypto';
 import { PrismaService } from '../../prisma/prisma.service';
 import { RedisService } from '../../common/redis/redis.service';
 import {
+  LOGIN_RATE_PREFIX,
   OTP_ATTEMPTS_PREFIX,
   OTP_COOLDOWN_PREFIX,
   OTP_PREFIX,
@@ -35,6 +36,8 @@ const OTP_SEND_RATE_MAX = 3;
 const OTP_SEND_RATE_WINDOW_SECONDS = 5 * 60;
 const OTP_VERIFY_RATE_MAX = 5;
 const OTP_VERIFY_RATE_WINDOW_SECONDS = 5 * 60;
+const LOGIN_RATE_MAX = 5;
+const LOGIN_RATE_WINDOW_SECONDS = 5 * 60;
 const ACCESS_TOKEN_TTL = '900s';
 const REFRESH_TOKEN_TTL = '2592000s';
 const REFRESH_TOKEN_TTL_SECONDS = 30 * 24 * 60 * 60;
@@ -267,6 +270,13 @@ export class AuthService {
   async login(rawPhone: string, password: string): Promise<AuthResult> {
     const phone = this.requireValidPhone(rawPhone);
 
+    await this.enforceRateLimit(
+      `${LOGIN_RATE_PREFIX}${phone}`,
+      LOGIN_RATE_MAX,
+      LOGIN_RATE_WINDOW_SECONDS,
+      'Too many login attempts. Please try again later.',
+    );
+
     const user = await this.prisma.user.findUnique({ where: { phone } });
     if (!user || !user.passwordHash) {
       throw new UnauthorizedException('Invalid phone number or password');
@@ -292,6 +302,13 @@ export class AuthService {
   async loginCustomer(rawPhone: string, password: string): Promise<AuthResult> {
     const phone = this.requireValidPhone(rawPhone);
 
+    await this.enforceRateLimit(
+      `${LOGIN_RATE_PREFIX}${phone}`,
+      LOGIN_RATE_MAX,
+      LOGIN_RATE_WINDOW_SECONDS,
+      'Too many login attempts. Please try again later.',
+    );
+
     const user = await this.prisma.user.findUnique({ where: { phone } });
     if (!user || !user.passwordHash) {
       throw new UnauthorizedException('Invalid phone number or password');
@@ -308,6 +325,38 @@ export class AuthService {
 
     if (user.role !== Role.CUSTOMER) {
       throw new UnauthorizedException('Invalid phone number or password');
+    }
+
+    const tokens = await this.issueTokens(user);
+    return { ...tokens, user: this.toSafeUser(user) };
+  }
+
+  async loginAdmin(email: string, password: string): Promise<AuthResult> {
+    const normalizedEmail = email.trim().toLowerCase();
+
+    await this.enforceRateLimit(
+      `${LOGIN_RATE_PREFIX}admin:${normalizedEmail}`,
+      LOGIN_RATE_MAX,
+      LOGIN_RATE_WINDOW_SECONDS,
+      'Too many login attempts. Please try again later.',
+    );
+
+    const user = await this.prisma.user.findUnique({ where: { email: normalizedEmail } as any });
+    if (!user || !user.passwordHash) {
+      throw new UnauthorizedException('Invalid email or password');
+    }
+
+    const valid = await bcrypt.compare(password, user.passwordHash);
+    if (!valid) {
+      throw new UnauthorizedException('Invalid email or password');
+    }
+
+    if (!user.isActive) {
+      throw new UnauthorizedException('Account is deactivated');
+    }
+
+    if (user.role !== Role.ADMIN && user.role !== Role.SUPER_ADMIN) {
+      throw new UnauthorizedException('Invalid email or password');
     }
 
     const tokens = await this.issueTokens(user);

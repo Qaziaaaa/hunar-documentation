@@ -140,6 +140,7 @@ enum NotificationType {
 model User {
   id           String   @id @default(uuid())
   phone        String   @unique
+  email        String?  @unique
   passwordHash String?
   name         String?
   role         Role     @default(CUSTOMER)
@@ -539,7 +540,6 @@ model AuditLog {
 // Commission flow: Hold on visit arrival -> Deduct to PlatformWallet on payment
 // confirmation (screenshot submitted) -> Reverse back if the job is cancelled
 // before confirmation. All movements are idempotent (Redis key + unique ledger key).
-
 enum WalletLedgerType {
   COMMISSION_HELD
   COMMISSION_RELEASED

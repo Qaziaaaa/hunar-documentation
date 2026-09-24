@@ -6,6 +6,7 @@ export const OTP_COOLDOWN_PREFIX = 'otp:cooldown:';
 export const OTP_VERIFY_PREFIX = 'otp:verify:';
 export const OTP_RATE_PREFIX = 'rate:otp:';
 export const OTP_VERIFY_RATE_PREFIX = 'rate:verify:';
+export const LOGIN_RATE_PREFIX = 'rate:login:';
 
 // Wallet-specific Redis constants
 export const WALLET_OTP_PREFIX = 'wallet:otp:';

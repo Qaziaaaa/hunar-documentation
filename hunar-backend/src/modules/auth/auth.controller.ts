@@ -2,6 +2,7 @@ import { Body, Controller, Get, HttpCode, HttpStatus, Post } from '@nestjs/commo
 import { Role } from '@prisma/client';
 import { AuthService } from './auth.service';
 import {
+  AdminLoginDto,
   LoginDto,
   RefreshTokenDto,
   RegisterWorkerDto,
@@ -42,6 +43,13 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   login(@Body() dto: LoginDto) {
     return this.authService.login(dto.phone, dto.password);
+  }
+
+  @Public()
+  @Post('admin/login')
+  @HttpCode(HttpStatus.OK)
+  adminLogin(@Body() dto: AdminLoginDto) {
+    return this.authService.loginAdmin(dto.email, dto.password);
   }
 
   @Public()

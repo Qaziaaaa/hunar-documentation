@@ -541,3 +541,47 @@ export class AdminMarkNotificationsReadDto {
   @IsUUID(4, { each: true })
   notificationIds: string[];
 }
+
+export class AdminKpiStatsDto {
+  @IsInt()
+  totalJobs: number;
+
+  @IsInt()
+  openJobs: number;
+
+  @IsInt()
+  activeJobs: number;
+
+  @IsInt()
+  completedJobs: number;
+
+  @IsInt()
+  cancelledJobs: number;
+
+  @IsInt()
+  totalCustomers: number;
+
+  @IsInt()
+  newCustomersThisWeek: number;
+
+  @IsInt()
+  totalWorkers: number;
+
+  @IsInt()
+  verifiedWorkers: number;
+
+  @IsInt()
+  pendingWorkers: number;
+
+  @IsInt()
+  suspendedWorkers: number;
+
+  @IsNumber()
+  totalRevenue: number;
+
+  @IsInt()
+  totalPaymentsProcessed: number;
+
+  @IsInt()
+  activeNowCount: number;
+}
