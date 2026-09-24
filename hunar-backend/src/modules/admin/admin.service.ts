@@ -13,6 +13,7 @@ import {
   JobStatus,
   Prisma,
   Role,
+  WalletLedgerType,
   WithdrawalStatus,
 } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
@@ -44,6 +45,7 @@ import {
   AdminAuditListQueryDto,
   AdminNotificationListQueryDto,
   AdminMarkNotificationsReadDto,
+  AdminKpiStatsDto,
 } from './admin.validation';
 
 // Job states that mean the customer has paid for the (locked) visit charge.
@@ -165,7 +167,7 @@ export class AdminService {
     private readonly audit: AuditService,
     @Optional() private readonly eventBus?: EventBusService,
     @Optional() private readonly realtime?: RealtimeService,
-  ) {}
+  ) { }
 
   // ----- Customers -----
 
@@ -301,9 +303,9 @@ export class AdminService {
     const [skills, jobs, earningsAggregate, commissions, reviews] = await Promise.all([
       skillIds.length
         ? this.prisma.serviceCategory.findMany({
-            where: { id: { in: skillIds } },
-            select: { id: true, name: true, nameUrdu: true },
-          })
+          where: { id: { in: skillIds } },
+          select: { id: true, name: true, nameUrdu: true },
+        })
         : Promise.resolve([]),
       this.prisma.serviceRequest.findMany({
         where: { OR: [{ selectedWorkerId: id }, { offers: { some: { workerId: id } } }] },
@@ -418,20 +420,20 @@ export class AdminService {
       ...(query.area ? { area: query.area } : {}),
       ...(query.from || query.to
         ? {
-            createdAt: {
-              ...(query.from ? { gte: new Date(query.from) } : {}),
-              ...(query.to ? { lte: new Date(query.to) } : {}),
-            },
-          }
+          createdAt: {
+            ...(query.from ? { gte: new Date(query.from) } : {}),
+            ...(query.to ? { lte: new Date(query.to) } : {}),
+          },
+        }
         : {}),
       ...(query.search
         ? {
-            OR: [
-              { title: { contains: query.search, mode: 'insensitive' } },
-              { customer: { is: { name: { contains: query.search, mode: 'insensitive' } } } },
-              { customer: { is: { phone: { contains: query.search } } } },
-            ],
-          }
+          OR: [
+            { title: { contains: query.search, mode: 'insensitive' } },
+            { customer: { is: { name: { contains: query.search, mode: 'insensitive' } } } },
+            { customer: { is: { phone: { contains: query.search } } } },
+          ],
+        }
         : {}),
     };
 
@@ -478,23 +480,23 @@ export class AdminService {
       ...(query.type ? { type: query.type } : {}),
       ...(query.from || query.to
         ? {
-            createdAt: {
-              ...(query.from ? { gte: new Date(query.from) } : {}),
-              ...(query.to ? { lte: new Date(query.to) } : {}),
-            },
-          }
+          createdAt: {
+            ...(query.from ? { gte: new Date(query.from) } : {}),
+            ...(query.to ? { lte: new Date(query.to) } : {}),
+          },
+        }
         : {}),
       ...(query.search
         ? {
-            user: {
-              is: {
-                OR: [
-                  { name: { contains: query.search, mode: 'insensitive' } },
-                  { phone: { contains: query.search } },
-                ],
-              },
+          user: {
+            is: {
+              OR: [
+                { name: { contains: query.search, mode: 'insensitive' } },
+                { phone: { contains: query.search } },
+              ],
             },
-          }
+          },
+        }
         : {}),
     };
 
@@ -536,21 +538,21 @@ export class AdminService {
       ...(query.area ? { area: query.area } : {}),
       ...(query.from || query.to
         ? {
-            completedAt: {
-              ...(query.from ? { gte: new Date(query.from) } : {}),
-              ...(query.to ? { lte: new Date(query.to) } : {}),
-            },
-          }
+          completedAt: {
+            ...(query.from ? { gte: new Date(query.from) } : {}),
+            ...(query.to ? { lte: new Date(query.to) } : {}),
+          },
+        }
         : {}),
       ...(query.search
         ? {
-            OR: [
-              { title: { contains: query.search, mode: 'insensitive' } },
-              { customer: { is: { name: { contains: query.search, mode: 'insensitive' } } } },
-              { customer: { is: { phone: { contains: query.search } } } },
-              { selectedWorker: { is: { name: { contains: query.search, mode: 'insensitive' } } } },
-            ],
-          }
+          OR: [
+            { title: { contains: query.search, mode: 'insensitive' } },
+            { customer: { is: { name: { contains: query.search, mode: 'insensitive' } } } },
+            { customer: { is: { phone: { contains: query.search } } } },
+            { selectedWorker: { is: { name: { contains: query.search, mode: 'insensitive' } } } },
+          ],
+        }
         : {}),
     };
 
@@ -590,20 +592,20 @@ export class AdminService {
       ...(query.status ? { status: query.status } : {}),
       ...(query.from || query.to
         ? {
-            createdAt: {
-              ...(query.from ? { gte: new Date(query.from) } : {}),
-              ...(query.to ? { lte: new Date(query.to) } : {}),
-            },
-          }
+          createdAt: {
+            ...(query.from ? { gte: new Date(query.from) } : {}),
+            ...(query.to ? { lte: new Date(query.to) } : {}),
+          },
+        }
         : {}),
       ...(query.search
         ? {
-            OR: [
-              { job: { is: { title: { contains: query.search, mode: 'insensitive' } } } },
-              { worker: { is: { name: { contains: query.search, mode: 'insensitive' } } } },
-              { worker: { is: { phone: { contains: query.search } } } },
-            ],
-          }
+          OR: [
+            { job: { is: { title: { contains: query.search, mode: 'insensitive' } } } },
+            { worker: { is: { name: { contains: query.search, mode: 'insensitive' } } } },
+            { worker: { is: { phone: { contains: query.search } } } },
+          ],
+        }
         : {}),
     };
 
@@ -657,19 +659,19 @@ export class AdminService {
       ...(query.status ? { status: query.status } : {}),
       ...(query.from || query.to
         ? {
-            requestedAt: {
-              ...(query.from ? { gte: new Date(query.from) } : {}),
-              ...(query.to ? { lte: new Date(query.to) } : {}),
-            },
-          }
+          requestedAt: {
+            ...(query.from ? { gte: new Date(query.from) } : {}),
+            ...(query.to ? { lte: new Date(query.to) } : {}),
+          },
+        }
         : {}),
       ...(query.search
         ? {
-            OR: [
-              { worker: { is: { name: { contains: query.search, mode: 'insensitive' } } } },
-              { worker: { is: { phone: { contains: query.search } } } },
-            ],
-          }
+          OR: [
+            { worker: { is: { name: { contains: query.search, mode: 'insensitive' } } } },
+            { worker: { is: { phone: { contains: query.search } } } },
+          ],
+        }
         : {}),
     };
 
@@ -961,20 +963,20 @@ export class AdminService {
       ...(query.type ? { type: query.type } : {}),
       ...(query.from || query.to
         ? {
-            createdAt: {
-              ...(query.from ? { gte: new Date(query.from) } : {}),
-              ...(query.to ? { lte: new Date(query.to) } : {}),
-            },
-          }
+          createdAt: {
+            ...(query.from ? { gte: new Date(query.from) } : {}),
+            ...(query.to ? { lte: new Date(query.to) } : {}),
+          },
+        }
         : {}),
       ...(query.search
         ? {
-            OR: [
-              { job: { is: { title: { contains: query.search, mode: 'insensitive' } } } },
-              { reporter: { is: { name: { contains: query.search, mode: 'insensitive' } } } },
-              { respondent: { is: { name: { contains: query.search, mode: 'insensitive' } } } },
-            ],
-          }
+          OR: [
+            { job: { is: { title: { contains: query.search, mode: 'insensitive' } } } },
+            { reporter: { is: { name: { contains: query.search, mode: 'insensitive' } } } },
+            { respondent: { is: { name: { contains: query.search, mode: 'insensitive' } } } },
+          ],
+        }
         : {}),
     };
 
@@ -1179,11 +1181,11 @@ export class AdminService {
       ...(query.isActive !== undefined ? { isActive: query.isActive === 'true' } : {}),
       ...(query.search
         ? {
-            OR: [
-              { name: { contains: query.search, mode: 'insensitive' } },
-              { nameUrdu: { contains: query.search, mode: 'insensitive' } },
-            ],
-          }
+          OR: [
+            { name: { contains: query.search, mode: 'insensitive' } },
+            { nameUrdu: { contains: query.search, mode: 'insensitive' } },
+          ],
+        }
         : {}),
     };
 
@@ -1352,6 +1354,66 @@ export class AdminService {
       select: { key: true, value: true, updatedAt: true },
     });
     return settings.reduce((acc, s) => ({ ...acc, [s.key]: s.value }), {});
+  }
+
+  // Admin KPI stats (Admin flow — KPI cards for dashboard).
+  async getKpis(): Promise<{
+    totalJobs: number;
+    openJobs: number;
+    activeJobs: number;
+    completedJobs: number;
+    cancelledJobs: number;
+    totalCustomers: number;
+    newCustomersThisWeek: number;
+    totalWorkers: number;
+    verifiedWorkers: number;
+    pendingWorkers: number;
+    suspendedWorkers: number;
+    totalRevenue: number;
+    totalPaymentsProcessed: number;
+    activeNowCount: number;
+  }> {
+    const [totalJobs, openJobs, activeJobs, completedJobs, cancelledJobs] = await Promise.all([
+      this.prisma.serviceRequest.count({}),
+      this.prisma.serviceRequest.count({ where: { status: 'OPEN' } }),
+      this.prisma.serviceRequest.count({ where: { status: 'IN_PROGRESS' } }),
+      this.prisma.serviceRequest.count({ where: { status: 'COMPLETED' } }),
+      this.prisma.serviceRequest.count({ where: { status: 'CANCELLED' } }),
+    ]);
+
+    const [totalCustomers, newCustomersThisWeek, totalWorkers, verifiedWorkers] = await Promise.all([
+      this.prisma.user.count({ where: { role: 'CUSTOMER' } }),
+      this.prisma.user.count({ where: { role: 'CUSTOMER', createdAt: { gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) } } }),
+      this.prisma.user.count({ where: { role: 'WORKER' } }),
+      this.prisma.user.count({ where: { role: 'WORKER', isVerified: true } }),
+    ]);
+
+    // Pending/suspended workers are determined by isActive and verification status
+    const pendingWorkersCount = await this.prisma.user.count({ where: { role: 'WORKER', isVerified: false, isActive: true } });
+    const suspendedWorkersCount = await this.prisma.user.count({ where: { role: 'WORKER', isActive: false } });
+
+    const [totalRevenue, totalPaymentsProcessed, activeNowCount] = await Promise.all([
+      this.prisma.commission.aggregate({ _sum: { amount: true } }).then((r) => r._sum.amount ?? 0),
+      this.prisma.walletLedger.count({ where: { type: WalletLedgerType.COMMISSION_RELEASED } }),
+      this.prisma.user.count({ where: { role: 'WORKER', isActive: true } }),
+    ]);
+
+    return {
+      totalJobs,
+      openJobs,
+      activeJobs,
+      completedJobs,
+      cancelledJobs,
+      totalCustomers,
+      newCustomersThisWeek,
+      totalWorkers,
+      verifiedWorkers,
+      pendingWorkers: pendingWorkersCount,
+      suspendedWorkers: suspendedWorkersCount,
+      totalRevenue: Number(totalRevenue.toFixed(2)),
+      totalPaymentsProcessed: totalPaymentsProcessed,
+      activeNowCount: activeNowCount,
+    };
   }
 
   // Update commission rate (super-admin only).
@@ -1595,11 +1657,11 @@ export class AdminService {
       ...(query.actorId ? { actorId: query.actorId } : {}),
       ...(query.from || query.to
         ? {
-            createdAt: {
-              ...(query.from ? { gte: new Date(query.from) } : {}),
-              ...(query.to ? { lte: new Date(query.to) } : {}),
-            },
-          }
+          createdAt: {
+            ...(query.from ? { gte: new Date(query.from) } : {}),
+            ...(query.to ? { lte: new Date(query.to) } : {}),
+          },
+        }
         : {}),
     };
 
@@ -1635,11 +1697,11 @@ export class AdminService {
       ...(query.isRead !== undefined ? { isRead: query.isRead === 'true' } : {}),
       ...(query.from || query.to
         ? {
-            createdAt: {
-              ...(query.from ? { gte: new Date(query.from) } : {}),
-              ...(query.to ? { lte: new Date(query.to) } : {}),
-            },
-          }
+          createdAt: {
+            ...(query.from ? { gte: new Date(query.from) } : {}),
+            ...(query.to ? { lte: new Date(query.to) } : {}),
+          },
+        }
         : {}),
     };
 
@@ -1931,13 +1993,13 @@ export class AdminService {
 
     const payments = PAID_JOB_STATUSES.includes(job.status)
       ? [
-          {
-            jobId: job.id,
-            amount: job.lockedVisitCharge ?? job.suggestedVisitCharge ?? null,
-            status: job.status,
-            paidAt: job.completedAt ?? job.createdAt,
-          },
-        ]
+        {
+          jobId: job.id,
+          amount: job.lockedVisitCharge ?? job.suggestedVisitCharge ?? null,
+          status: job.status,
+          paidAt: job.completedAt ?? job.createdAt,
+        },
+      ]
       : [];
 
     return {
@@ -2045,11 +2107,11 @@ export class AdminService {
       ...(query.status ? { isActive: query.status === 'active' } : {}),
       ...(query.search
         ? {
-            OR: [
-              { name: { contains: query.search, mode: 'insensitive' } },
-              { phone: { contains: query.search } },
-            ],
-          }
+          OR: [
+            { name: { contains: query.search, mode: 'insensitive' } },
+            { phone: { contains: query.search } },
+          ],
+        }
         : {}),
       ...(verificationStatus ? { workerProfile: { is: { verificationStatus } } } : {}),
     };

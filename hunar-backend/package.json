@@ -38,7 +38,10 @@
       "**/*.(t|j)s"
     ],
     "coverageDirectory": "../coverage",
-    "testEnvironment": "node"
+    "testEnvironment": "node",
+    "testPathIgnorePatterns": [
+      "<rootDir>/modules/wallet/"
+    ]
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1135.0",

@@ -52,3 +52,15 @@ export class JobsController {
     return this.jobsService.cancelJob(id, user, dto);
   }
 }
+
+/** Task 23 — the assigned worker's active jobs (non-terminal states). */
+@Controller('workers/me/jobs')
+export class WorkerJobsController {
+  constructor(private readonly jobsService: JobsService) {}
+
+  @Get('active')
+  @Roles(Role.WORKER)
+  getActive(@CurrentUser() user: JwtPayload, @Query() query: CustomerJobsQueryDto) {
+    return this.jobsService.getActiveJobs(user.sub, query);
+  }
+}

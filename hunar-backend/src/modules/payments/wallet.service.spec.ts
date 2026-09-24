@@ -39,7 +39,12 @@ describe('WalletService', () => {
     }),
   };
 
-  const redis = { get: jest.fn(), set: jest.fn(), del: jest.fn() };
+  const redis = {
+    get: jest.fn(),
+    set: jest.fn(),
+    del: jest.fn(),
+    getClient: jest.fn().mockReturnValue({ set: jest.fn().mockResolvedValue('OK') }),
+  };
   const realtime = { emitToRoom: jest.fn() };
   const eventBus = { emit: jest.fn() };
   const config = { get: jest.fn().mockReturnValue('0.10') };

@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Wallet } from "lucide-react";
 import { ErrorState } from "@/components/shared/error-state";
@@ -8,6 +9,8 @@ import { WalletTransactionHistory } from "@/components/shared/wallet-transaction
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { WorkerDashboardShell } from "@/features/worker-dashboard";
 import { formatRsExact } from "@/lib/money";
+import { getSocket } from "@/lib/socket";
+import { isMockMode } from "@/lib/data-source";
 import {
   getWalletSummary,
   getWalletTransactions,
@@ -22,6 +25,8 @@ import { useWorkerJobs } from "@/stores/worker-jobs-store";
 
 export function WalletContent() {
   const { walletBalance } = useWorkerJobs();
+  const setWalletBalance = workerStore.setWalletBalance;
+  const [hydrated, setHydrated] = useState(false);
 
   const summary = useQuery({
     queryKey: queryKeys.summary,
