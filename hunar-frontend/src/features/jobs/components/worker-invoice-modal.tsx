@@ -20,8 +20,7 @@ export function WorkerInvoiceModal({ job, onClose }: WorkerInvoiceModalProps) {
   const visitCharge = job.visitCharge ?? 500;
   const repairCharge = job.repairCharge ?? 1500;
   const grossTotal = visitCharge + repairCharge;
-  const platformFee = job.platformCommission ?? Math.round(grossTotal * 0.1);
-  const netEarnings = job.workerNetEarnings ?? grossTotal - platformFee;
+  const netEarnings = grossTotal;
   const invoiceNumber = job.invoiceNumber || `INV-2026-${job.id.slice(-4)}`;
   const warrantyDays = job.warrantyDays || 30;
 
@@ -129,15 +128,8 @@ export function WorkerInvoiceModal({ job, onClose }: WorkerInvoiceModalProps) {
             )}
 
             <div className="p-2.5 sm:p-3.5 flex justify-between items-center bg-slate-50">
-              <span className="font-bold text-slate-700">Gross Value</span>
+              <span className="font-bold text-slate-700">Total Value</span>
               <span className="font-bold text-slate-900">{formatRs(grossTotal)}</span>
-            </div>
-
-            <div className="p-2.5 sm:p-3.5 flex justify-between items-center text-slate-600">
-              <div className="min-w-0 flex-1">
-                <span className="truncate block">Commission (10%)</span>
-              </div>
-              <span className="font-bold text-red-600 shrink-0">−{formatRs(platformFee)}</span>
             </div>
 
             <div className="p-3 sm:p-4 flex justify-between items-center bg-emerald-50/80 text-emerald-900">

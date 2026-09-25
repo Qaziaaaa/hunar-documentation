@@ -199,8 +199,7 @@ export function WorkerJourneyFullscreen({
   // Financial calculations
   const finalRepairAmount = isDeclined ? 0 : repairPrice;
   const grossJobValue = agreedVisitCharge + finalRepairAmount;
-  const platformFee = Math.round(grossJobValue * 0.1);
-  const netEarnings = grossJobValue - platformFee;
+  const netEarnings = grossJobValue;
 
   return (
     <div className="min-h-screen bg-white text-slate-900 font-sans antialiased select-none flex flex-col w-full max-w-3xl sm:max-w-4xl mx-auto shadow-2xl relative border-x border-slate-200/70">
@@ -318,15 +317,11 @@ export function WorkerJourneyFullscreen({
               {/* Transparent Financial Settlement Breakdown */}
               <div className="bg-emerald-50/80 rounded-2xl p-4 border border-emerald-200 space-y-2 text-xs text-left">
                 <div className="flex justify-between items-center text-emerald-950 font-bold">
-                  <span>Gross Job Value:</span>
-                  <span>{formatRs(grossJobValue)}</span>
-                </div>
-                <div className="flex justify-between items-center text-slate-600 text-[11px]">
-                  <span>Platform Commission (10%):</span>
-                  <span className="text-red-600 font-bold">−{formatRs(platformFee)}</span>
+                  <span>{isUrdu ? "کل رقم (Total Amount):" : "Total Job Value:"}</span>
+                  <span className="font-mono">{formatRs(grossJobValue)}</span>
                 </div>
                 <div className="border-t border-emerald-200 pt-2 flex justify-between items-center text-emerald-950 font-black text-sm">
-                  <span>Net Credited to Wallet:</span>
+                  <span>{isUrdu ? "والٹ میں منتقل شدہ رقم:" : "Net Credited to Wallet:"}</span>
                   <span className="text-base text-emerald-800 font-mono">+{formatRs(netEarnings)}</span>
                 </div>
               </div>
