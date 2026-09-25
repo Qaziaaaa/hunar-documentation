@@ -1,12 +1,12 @@
 {
   "Metadata": {
-    "title": "Orderworker — گھریلو خدمات کا بازار",
-    "description": "پاکستان میں اپنے گھر کے لیے بھروسہ مند، تصدیق شدہ پیشہ ور تلاش کریں۔ Orderworker صارفین کو ہنرمند کارکنوں سے جوڑتا ہے — الیکٹریشن، پلمبر، اے سی ٹیکنیشن وغیرہ۔",
-    "workerTitle": "ورکر ڈیش بورڈ — Orderworker"
+    "title": "WorkerFIX — گھریلو خدمات کا بازار",
+    "description": "پاکستان میں اپنے گھر کے لیے بھروسہ مند، تصدیق شدہ پیشہ ور تلاش کریں۔ WorkerFIX صارفین کو ہنرمند کارکنوں سے جوڑتا ہے — الیکٹریشن، پلمبر، اے سی ٹیکنیشن وغیرہ۔",
+    "workerTitle": "ورکر ڈیش بورڈ — WorkerFIX"
   },
   "Common": {
     "slogan": "آپ کی دہلیز پر تصدیق شدہ ہنرمند کارکن",
-    "appName": "Orderworker"
+    "appName": "WorkerFIX"
   },
   "Home": {
     "heroBadge": "پاکستان کا بھروسہ مند گھریلو خدمات کا بازار",
@@ -58,7 +58,7 @@
     "backToHome": "واپس ہوم",
     "trustCnic": "نادرا سی این آئی سی تصدیق شدہ",
     "trustSecure": "100% محفوظ اور انکرپٹڈ",
-    "copyright": "© 2026 Orderworker Services Inc. Guaranteed tradesperson protection.",
+    "copyright": "© 2026 WorkerFIX Services Inc. Guaranteed tradesperson protection.",
     "signInTitle": "خوش آمدید",
     "signInSubtitle": "اپنے ورکر اکاؤنٹ میں سائن ان کریں۔",
     "signInPasswordPlaceholder": "اپنا پاس ورڈ لکھیں",
@@ -325,7 +325,7 @@
     },
     "earnings": {
       "title": "آمدنی",
-      "description": "آپ کی آمدنی، ہنر (HUNAR) کمیشن اور ادائیگی کی صورتحال۔",
+      "description": "آپ کی آمدنی، WorkerFIX کمیشن اور ادائیگی کی صورتحال۔",
       "totalEarned": "کل آمدنی",
       "totalEarnedHint": "مکمل شدہ کاموں سے کل آمدنی",
       "totalCommission": "کل کمیشن",
@@ -334,16 +334,16 @@
       "pendingCommissionHint": "کمیشن جو ابھی تصدیق نہیں ہوا",
       "completedJobs": "مکمل شدہ کام",
       "commissionRuleTitle": "کمیشن کا طریقہ کار",
-      "commissionRuleDescription": "ہنر (HUNAR) کا کمیشن وزٹ فیس کا {percent} ہے۔ یہ مرمت کی قیمت سے نہیں کاٹا جاتا۔",
+      "commissionRuleDescription": "WorkerFIX کا کمیشن وزٹ فیس کا {percent} ہے۔ یہ مرمت کی قیمت سے نہیں کاٹا جاتا۔",
       "commissionExample": "مثال: وزٹ فیس {visit} → کمیشن {commission}۔",
-      "commissionInstructionsTitle": "اپنا ہنر کمیشن ادا کریں",
-      "bankAccountLabel": "ہنر (HUNAR) پلیٹ فارم بینک اکاؤنٹ",
+      "commissionInstructionsTitle": "اپنا WorkerFIX کمیشن ادا کریں",
+      "bankAccountLabel": "WorkerFIX پلیٹ فارم بینک اکاؤنٹ",
       "bankAccountPlaceholder": "بینک اکاؤنٹ کی تفصیلات یہاں نظر آئیں گی۔",
       "paymentMethodLabel": "ادائیگی کا طریقہ",
       "paymentMethodValue": "بینک ٹرانسفر",
       "afterPaymentTitle": "ادائیگی کے بعد",
       "whatsappInstruction": "ادائیگی کی رسید کا اسکرین شاٹ واٹس ایپ پر {number} پر بھیجیں۔",
-      "whatsappMessageExample": "\"اپنا ہنر کمیشن ادا کرنے کے بعد، رسید کا اسکرین شاٹ واٹس ایپ پر {number} پر بھیجیں۔\"",
+      "whatsappMessageExample": "\"اپنا WorkerFIX کمیشن ادا کرنے کے بعد، رسید کا اسکرین شاٹ واٹس ایپ پر {number} پر بھیجیں۔\"",
       "transactionsTitle": "ٹرانزیکشنز",
       "transactionsDescription": "آپ کی کمیشن ادائیگیوں کا ریکارڈ۔",
       "colJob": "کام #",
@@ -641,7 +641,7 @@
     "completedJobs": "مکمل شدہ کام",
     "totalSpent": "کل خرچ",
     "invoices": "رسیدیں اور بل",
-    "escrowProtected": "Orderworker کوالٹی ضمانت"
+    "escrowProtected": "WorkerFIX کوالٹی ضمانت"
   },
   "CustomerPortal": {
     "Nav": {
@@ -655,7 +655,7 @@
       "postJob": "+ جاب پوسٹ کریں",
       "signOut": "لاگ آؤٹ",
       "language": "زبان",
-      "verifiedBadge": "Orderworker تصدیق شدہ",
+      "verifiedBadge": "WorkerFIX تصدیق شدہ",
       "verifiedDesc": "100% نادرا سی این آئی سی تصدیق شدہ ماہرین اور تسلی بخش کام کی ضمانت۔",
       "qualityGuarantee": "معیار کی ضمانت"
     },
@@ -947,7 +947,7 @@
     },
     "Success": {
       "title": "پروفائل جمع ہو گئی! 🎉",
-      "subtitle": "آرڈر ورکر میں شامل ہونے کا شکریہ۔ آپ کی تصویر، فنی اسناد اور سمارٹ شناختی کارڈ کامیابی سے موصول ہو گئے ہیں۔",
+      "subtitle": "WorkerFIX میں شامل ہونے کا شکریہ۔ آپ کی تصویر، فنی اسناد اور سمارٹ شناختی کارڈ کامیابی سے موصول ہو گئے ہیں۔",
       "underReview": "زیرِ جائزہ",
       "pendingAdmin": "ایڈمن ویریفیکیشن جاری ہے",
       "reviewNotice": "ہماری ٹیم آپ کے شناختی کارڈ اور دستاویزات کی تصدیق کر رہی ہے۔ تصدیق مکمل ہوتے ہی آپ کو بذریعہ ایس ایم ایس مطلع کر دیا جائے گا تاکہ آپ کام شروع کر سکیں۔",
@@ -1023,14 +1023,14 @@
   },
   "WorkerVerification": {
     "Metadata": {
-      "title": "تصدیقی کیفیت | ورکر پورٹل — آرڈر ورکر",
-      "description": "اپنے آرڈر ورکر پروفائل اور اسمارٹ شناختی کارڈ کی ایڈمن تصدیقی صورتحال دیکھیں۔"
+      "title": "تصدیقی کیفیت | ورکر پورٹل — WorkerFIX",
+      "description": "اپنے WorkerFIX پروفائل اور اسمارٹ شناختی کارڈ کی ایڈمن تصدیقی صورتحال دیکھیں۔"
     },
     "Showcase": {
       "badgeVerified": "ورکر تصدیق",
       "badgeNadra": "نادرا سے محفوظ شدہ",
       "title": "اعتماد اور سیکیورٹی تصدیقی نظام",
-      "subtitle": "آرڈر ورکر پر ہر کاریگر پشاور میں کسٹمرز کے آرڈرز وصول کرنے سے پہلے تفصیلی تصدیق سے گزرتا ہے۔",
+      "subtitle": "WorkerFIX پر ہر کاریگر پشاور میں کسٹمرز کے آرڈرز وصول کرنے سے پہلے تفصیلی تصدیق سے گزرتا ہے۔",
       "whyMatters": "تصدیق کیوں ضروری ہے:",
       "badgeTitle": "سرکاری تصدیق شدہ بیج",
       "badgeDesc": "پشاور بھر میں کسٹمرز کی جانب سے کام ملنے کے امکانات میں ساڑھے 3 گنا اضافہ۔",

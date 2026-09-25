@@ -29,12 +29,12 @@ export async function generateMetadata({
     description: t("description"),
     icons: {
       icon: [
-        { url: "/orderworker-icon.png", type: "image/png" },
-        { url: "/orderworker-icon.png", sizes: "32x32", type: "image/png" },
-        { url: "/orderworker-icon.png", sizes: "192x192", type: "image/png" },
+        { url: "/workerfix-icon.png", type: "image/png" },
+        { url: "/workerfix-icon.png", sizes: "32x32", type: "image/png" },
+        { url: "/workerfix-icon.png", sizes: "192x192", type: "image/png" },
       ],
-      shortcut: "/orderworker-icon.png",
-      apple: "/orderworker-icon.png",
+      shortcut: "/workerfix-icon.png",
+      apple: "/workerfix-icon.png",
     },
   };
 }
@@ -68,9 +68,9 @@ export default async function LocaleLayout({
           rel="stylesheet"
           href="https://fonts.googleapis.com/css2?family=Noto+Sans+Arabic:wght@400;500;600;700;800&display=swap"
         />
-        <link rel="icon" href="/orderworker-icon.png" type="image/png" />
-        <link rel="shortcut icon" href="/orderworker-icon.png" type="image/png" />
-        <link rel="apple-touch-icon" href="/orderworker-icon.png" />
+        <link rel="icon" href="/workerfix-icon.png" type="image/png" />
+        <link rel="shortcut icon" href="/workerfix-icon.png" type="image/png" />
+        <link rel="apple-touch-icon" href="/workerfix-icon.png" />
       </head>
       <body className="min-h-screen w-full overflow-x-hidden flex flex-col">
         <NextIntlClientProvider messages={messages}>

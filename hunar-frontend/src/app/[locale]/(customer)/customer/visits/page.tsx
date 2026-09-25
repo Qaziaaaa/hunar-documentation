@@ -4,7 +4,7 @@ import { getCustomerVisits } from "@/features/customer-visits/api/customer-visit
 
 export async function generateMetadata() {
   return {
-    title: "Scheduled Visits & Live Tracker — Orderworker",
+    title: "Scheduled Visits & Live Tracker — WorkerFIX",
     description: "Track technician live dispatch in real-time, view verified doorstep safety PINs, and manage your visits across Peshawar.",
   };
 }

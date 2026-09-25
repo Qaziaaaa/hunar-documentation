@@ -164,7 +164,7 @@ export function CustomerOffersHubView({ initialJobs }: CustomerOffersHubViewProp
           </h1>
           <p className="text-xs sm:text-sm text-slate-500 max-w-2xl">
             {isUrdu
-              ? "تصدیق شدہ کاریگروں کے ریٹس کا موازنہ کریں، نادرا اسناد دیکھیں اور آرڈر ورکر تحفظ کے ساتھ وزٹ بک کریں۔"
+              ? "تصدیق شدہ کاریگروں کے ریٹس کا موازنہ کریں، نادرا اسناد دیکھیں اور WorkerFIX تحفظ کے ساتھ وزٹ بک کریں۔"
               : "Compare verified technician quotes, inspect NADRA credentials, and confirm bookings with Orderworker verified protection."}
           </p>
         </div>
@@ -412,7 +412,7 @@ export function CustomerOffersHubView({ initialJobs }: CustomerOffersHubViewProp
 
         {/* Right Column: Verified Security & Pro Tips (4 Cols) */}
         <div className="lg:col-span-4 space-y-6">
-          {/* Orderworker Verified Security Card */}
+          {/* WorkerFIX Verified Security Card */}
           <div className="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 space-y-4">
             <div className="flex items-center gap-3">
               <div className="size-12 rounded-2xl bg-[#0F766E]/10 text-[#0F766E] flex items-center justify-center shrink-0">
@@ -420,7 +420,7 @@ export function CustomerOffersHubView({ initialJobs }: CustomerOffersHubViewProp
               </div>
               <div>
                 <h4 className="text-base font-bold text-[#123B5D]">
-                  {isUrdu ? "آرڈر ورکر تصدیق شدہ کوالٹی" : "Orderworker Verified Quality"}
+                  {isUrdu ? "WorkerFIX تصدیق شدہ کوالٹی" : "WorkerFIX Verified Quality"}
                 </h4>
                 <span className="text-xs font-semibold text-[#0F766E]">
                   {isUrdu ? "100% گارنٹی شدہ تحفظ" : "100% Guaranteed Protection"}
@@ -431,11 +431,11 @@ export function CustomerOffersHubView({ initialJobs }: CustomerOffersHubViewProp
             <p className="text-xs text-slate-600 leading-relaxed">
               {isUrdu ? (
                 <>
-                  آپ کی سروس <strong className="text-[#123B5D]">آرڈر ورکر ویریفائیڈ گارنٹی</strong> کے تحت محفوظ ہے۔ تمام کاریگر نادرا سی این آئی سی سے تصدیق شدہ ہیں اور موقع پر شفاف معائنہ فراہم کرتے ہیں۔
+                  آپ کی سروس <strong className="text-[#123B5D]">WorkerFIX ویریفائیڈ گارنٹی</strong> کے تحت محفوظ ہے۔ تمام کاریگر نادرا سی این آئی سی سے تصدیق شدہ ہیں اور موقع پر شفاف معائنہ فراہم کرتے ہیں۔
                 </>
               ) : (
                 <>
-                  Your service is protected by <strong className="text-[#123B5D]">Orderworker Verified Guarantee</strong>. Technicians are NADRA CNIC verified and provide transparent diagnosis directly on site.
+                  Your service is protected by <strong className="text-[#123B5D]">WorkerFIX Verified Guarantee</strong>. Technicians are NADRA CNIC verified and provide transparent diagnosis directly on site.
                 </>
               )}
             </p>

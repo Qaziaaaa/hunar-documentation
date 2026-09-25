@@ -157,7 +157,7 @@ export function WorkerInvoiceModal({ job, onClose }: WorkerInvoiceModalProps) {
           <ShieldCheck className="size-4 sm:size-5 text-[#0F8B8D] shrink-0" />
           <div className="text-slate-700 leading-relaxed">
             <strong className="text-[#0F8B8D] font-extrabold">{warrantyDays}-Day Guarantee: </strong>
-            Customer is covered under Hunar Pro protection warranty.
+            Customer is covered under WorkerFIX Pro protection warranty.
           </div>
         </div>
 

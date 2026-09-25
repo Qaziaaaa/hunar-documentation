@@ -129,8 +129,8 @@ export function CustomerHelpView() {
                 <div>
                   <h3 className="text-sm font-bold text-[#123B5D]">
                     {isUrdu
-                      ? "آرڈر ورکر کسٹمر اطمینان کے 4 بنیادی اصول"
-                      : "Orderworker Customer Peace of Mind Checklist"}
+                      ? "WorkerFIX کسٹمر اطمینان کے 4 بنیادی اصول"
+                      : "WorkerFIX Customer Peace of Mind Checklist"}
                   </h3>
                   <p className="text-[11px] text-slate-500">
                     {isUrdu
@@ -199,8 +199,8 @@ export function CustomerHelpView() {
                     </span>
                     <span className="text-[11px] text-slate-500">
                       {isUrdu
-                        ? "5 دنوں کے اندر دوبارہ خرابی کی صورت میں آرڈر ورکر بلا معاوضہ کاریگر بھیجے گا۔"
-                        : "Any recurring fault within 5 days is resolved free of charge by Orderworker."}
+                        ? "5 دنوں کے اندر دوبارہ خرابی کی صورت میں WorkerFIX بلا معاوضہ کاریگر بھیجے گا۔"
+                        : "Any recurring fault within 5 days is resolved free of charge by WorkerFIX."}
                     </span>
                   </div>
                 </div>

@@ -2,7 +2,7 @@
 
 import { useLocale } from "next-intl";
 import { ActiveVisitBanner } from "./active-visit-banner";
-import { OrderworkerBrandBanner } from "./hunar-brand-banner";
+import { WorkerFixBrandBanner } from "./hunar-brand-banner";
 import { ServicesGrid } from "./services-grid";
 
 export function CustomerDashboardView() {
@@ -25,8 +25,8 @@ export function CustomerDashboardView() {
       {/* Small Service Cards (3 in 1 line, max 3 lines with Show All button) */}
       <ServicesGrid />
 
-      {/* Orderworker Branding Banner below service grid */}
-      <OrderworkerBrandBanner />
+      {/* WorkerFIX Branding Banner below service grid */}
+      <WorkerFixBrandBanner />
     </div>
   );
 }

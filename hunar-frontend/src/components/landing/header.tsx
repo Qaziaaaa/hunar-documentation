@@ -13,7 +13,7 @@ export function Header() {
           <Link
             className="flex items-center gap-2.5 group hover:opacity-95 transition-opacity"
             href="/"
-            title="Orderworker Home"
+            title="WorkerFIX Home"
           >
             <OrderworkerLogo variant="light" size="md" />
           </Link>

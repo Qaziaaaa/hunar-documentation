@@ -359,7 +359,7 @@ export function WorkerVisitTrackingView({
           type="button"
           onClick={() => setShowSupportModal(true)}
           className="size-9 rounded-full bg-white/95 backdrop-blur-md border border-slate-200/90 shadow-xs flex items-center justify-center text-[#123B5D] hover:text-[#0F8B8D] hover:bg-white active:scale-95 transition-all cursor-pointer"
-          title={isUrdu ? "ہنر سپورٹ" : "Hunar 24/7 Support"}
+          title={isUrdu ? "WorkerFIX سپورٹ" : "WorkerFIX 24/7 Support"}
         >
           <Headphones className="size-4.5" />
         </button>
@@ -675,7 +675,7 @@ export function WorkerVisitTrackingView({
         </div>
       )}
 
-      {/* 24/7 Hunar Support Modal */}
+      {/* 24/7 WorkerFIX Support Modal */}
       {showSupportModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4 animate-in fade-in">
           <div className="bg-white rounded-3xl max-w-xs w-full p-5 shadow-2xl space-y-4 animate-in zoom-in-95">
@@ -686,7 +686,7 @@ export function WorkerVisitTrackingView({
                 </div>
                 <div>
                   <h3 className="font-extrabold text-slate-900 text-base">
-                    {isUrdu ? "ہنر ہیلپ لائن" : "Hunar Support"}
+                    {isUrdu ? "WorkerFIX ہیلپ لائن" : "WorkerFIX Support"}
                   </h3>
                   <p className="text-[11px] text-emerald-600 font-bold flex items-center gap-1">
                     <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
@@ -716,11 +716,11 @@ export function WorkerVisitTrackingView({
 
             <div className="space-y-2">
               <a
-                href="tel:0800-48627"
+                href="tel:0800-WORKERFIX"
                 className="w-full py-3 px-4 rounded-xl bg-[#0F8B8D] hover:bg-[#0B7F74] text-white text-xs font-extrabold flex items-center justify-center gap-2 shadow-sm transition-all"
               >
                 <PhoneCall className="size-4" />
-                <span>{isUrdu ? "ہیلپ لائن پر کال کریں" : "Call Helpline (0800-HUNAR)"}</span>
+                <span>{isUrdu ? "ہیلپ لائن پر کال کریں" : "Call Helpline (0800-WORKERFIX)"}</span>
               </a>
 
               <a

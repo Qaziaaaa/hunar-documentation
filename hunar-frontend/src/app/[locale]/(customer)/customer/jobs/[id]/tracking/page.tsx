@@ -4,7 +4,7 @@ import { getCustomerVisits } from "@/features/customer-visits/api/customer-visit
 
 export async function generateMetadata() {
   return {
-    title: "Live Technician Arrival Tracker — Orderworker",
+    title: "Live Technician Arrival Tracker — WorkerFIX",
     description: "Real-time GPS tracking and doorstep OTP PIN verification for your booked service.",
   };
 }

@@ -493,7 +493,7 @@ export function CustomerVisitsView({ initialVisits }: CustomerVisitsViewProps) {
                   </div>
                   <div>
                     <h4 className="text-sm font-bold text-[#123B5D]">
-                      {isUrdu ? "آرڈر ورکر تصدیق شدہ سیکیورٹی" : "Orderworker Verified Security"}
+                      {isUrdu ? "WorkerFIX تصدیق شدہ سیکیورٹی" : "WorkerFIX Verified Security"}
                     </h4>
                     <span className="text-xs font-semibold text-[#0F766E]">
                       {isUrdu ? "نادرا بائیومیٹرک تصدیق شدہ" : "NADRA Biometric Cleared"}
