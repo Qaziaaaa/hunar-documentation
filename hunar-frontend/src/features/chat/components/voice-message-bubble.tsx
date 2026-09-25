@@ -7,12 +7,14 @@ interface VoiceMessageBubbleProps {
   audioUrl?: string;
   durationSeconds?: number;
   isSender?: boolean;
+  variant?: "navy" | "teal";
 }
 
 export function VoiceMessageBubble({
   audioUrl,
   durationSeconds = 12,
   isSender = true,
+  variant = "navy",
 }: VoiceMessageBubbleProps) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -101,11 +103,17 @@ export function VoiceMessageBubble({
     }
   };
 
+  const isNavy = variant === "navy";
+
   return (
     <div
       className={`flex items-center gap-2 px-2.5 py-1.5 rounded-xl min-w-[170px] max-w-[220px] sm:max-w-[250px] shadow-2xs ${
         isSender
-          ? "bg-[#0F8B8D] text-white rounded-br-xs"
+          ? isNavy
+            ? "bg-[#123B5D] text-white rounded-br-xs"
+            : "bg-[#0F8B8D] text-white rounded-br-xs"
+          : isNavy
+          ? "bg-white text-slate-900 border border-slate-200/90 rounded-bl-xs"
           : "bg-teal-50/90 text-[#0F8B8D] border border-teal-200/80 rounded-bl-xs"
       }`}
     >
@@ -115,7 +123,11 @@ export function VoiceMessageBubble({
         onClick={togglePlay}
         className={`size-7 rounded-full flex items-center justify-center shrink-0 transition-transform active:scale-95 cursor-pointer shadow-xs ${
           isSender
-            ? "bg-white text-[#0F8B8D] hover:bg-slate-100"
+            ? isNavy
+              ? "bg-white text-[#123B5D] hover:bg-slate-100"
+              : "bg-white text-[#0F8B8D] hover:bg-slate-100"
+            : isNavy
+            ? "bg-[#123B5D] text-white hover:bg-[#0E2E49]"
             : "bg-[#0F8B8D] text-white hover:bg-[#0F8B8D]/90"
         }`}
       >
@@ -142,6 +154,10 @@ export function VoiceMessageBubble({
                     ? isPlayed
                       ? "#FFFFFF"
                       : "rgba(255, 255, 255, 0.4)"
+                    : isNavy
+                    ? isPlayed
+                      ? "#123B5D"
+                      : "#CBD5E1"
                     : isPlayed
                     ? "#0F8B8D"
                     : "#CBD5E1",
@@ -152,7 +168,15 @@ export function VoiceMessageBubble({
         </div>
 
         <div className="flex items-center justify-between text-[9.5px] font-mono leading-none">
-          <span className={isSender ? "text-white font-bold" : "text-teal-900 font-bold"}>
+          <span
+            className={
+              isSender
+                ? "text-white font-bold"
+                : isNavy
+                ? "text-slate-700 font-bold"
+                : "text-teal-900 font-bold"
+            }
+          >
             {isPlaying ? formattedTime : totalFormatted}
           </span>
           <button
@@ -161,6 +185,8 @@ export function VoiceMessageBubble({
             className={`px-1 py-0.2 rounded font-bold text-[8.5px] uppercase cursor-pointer transition-colors ${
               isSender
                 ? "bg-white/20 hover:bg-white/30 text-white"
+                : isNavy
+                ? "bg-slate-100 hover:bg-slate-200 text-slate-700"
                 : "bg-teal-100 hover:bg-teal-200 text-teal-900"
             }`}
           >
