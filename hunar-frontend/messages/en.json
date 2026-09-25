@@ -1,12 +1,12 @@
 {
   "Metadata": {
-    "title": "Orderworker — Home Services Marketplace",
-    "description": "Find trusted, verified professionals for your home in Pakistan. Orderworker connects customers with skilled workers — electricians, plumbers, AC technicians and more.",
-    "workerTitle": "Worker Dashboard — Orderworker"
+    "title": "WorkerFIX — Home Services Marketplace",
+    "description": "Find trusted, verified professionals for your home in Pakistan. WorkerFIX connects customers with skilled workers — electricians, plumbers, AC technicians and more.",
+    "workerTitle": "Worker Dashboard — WorkerFIX"
   },
   "Common": {
     "slogan": "Verified skilled workers at your doorstep",
-    "appName": "Orderworker"
+    "appName": "WorkerFIX"
   },
   "Home": {
     "heroBadge": "Pakistan's trusted home services marketplace",
@@ -22,11 +22,11 @@
     },
     "login": {
       "title": "Welcome back",
-      "description": "Continue to your Hunar workspace.",
+      "description": "Continue to your WorkerFIX workspace.",
       "continue": "Continue to dashboard"
     },
     "workerSignup": {
-      "title": "Join Hunar as a worker",
+      "title": "Join WorkerFIX as a worker",
       "description": "Create your worker profile and start receiving trusted local job requests.",
       "continue": "Continue"
     },
@@ -71,7 +71,7 @@
     "backToHome": "Back to home",
     "trustCnic": "Nadra CNIC Verified",
     "trustSecure": "100% Secure & Encrypted",
-    "copyright": "© 2026 Orderworker Services Inc. Guaranteed tradesperson protection.",
+    "copyright": "© 2026 WorkerFIX Services Inc. Guaranteed tradesperson protection.",
     "signInTitle": "Welcome back",
     "signInSubtitle": "Sign in to your worker account.",
     "signInPasswordPlaceholder": "Enter your password",
@@ -354,10 +354,10 @@
       "pendingCommissionHint": "Commission not yet verified",
       "completedJobs": "Completed jobs",
       "commissionRuleTitle": "How commission works",
-      "commissionRuleDescription": "HUNAR commission is {percent} of the visit charge. It is never calculated from the repair price.",
+      "commissionRuleDescription": "WorkerFIX commission is {percent} of the visit charge. It is never calculated from the repair price.",
       "commissionExample": "Example: visit charge {visit} → commission {commission}.",
-      "commissionInstructionsTitle": "Pay your HUNAR commission",
-      "bankAccountLabel": "HUNAR Platform Bank Account",
+      "commissionInstructionsTitle": "Pay your WorkerFIX commission",
+      "bankAccountLabel": "WorkerFIX Platform Bank Account",
       "bankAccountPlaceholder": "Bank account details will appear here.",
       "paymentMethodLabel": "Payment method",
       "paymentMethodValue": "Bank transfer",
@@ -380,10 +380,10 @@
       "emptyTitle": "No transactions yet",
       "emptyDescription": "Earnings from completed jobs will appear here.",
       "submitScreenshot": "Submit payment screenshot",
-      "submitScreenshotHint": "Upload the screenshot of the commission payment you sent to HUNAR.",
+      "submitScreenshotHint": "Upload the screenshot of the commission payment you sent to WorkerFIX.",
       "chooseFile": "Choose image",
       "selectedFile": "Selected: {name}",
-      "screenshotSuccess": "Screenshot submitted. HUNAR will verify your payment.",
+      "screenshotSuccess": "Screenshot submitted. WorkerFIX will verify your payment.",
       "screenshotFailure": "Unable to submit the screenshot. Please try again.",
       "screenshotPending": "Pending",
       "screenshotReceived": "Received",
@@ -431,7 +431,7 @@
       "statusRead": "Read",
       "statusSending": "Sending",
       "statusFailed": "Failed",
-      "paymentSafetyNotice": "Use the official HUNAR payment and commission processes for payments.",
+      "paymentSafetyNotice": "Use the official WorkerFIX payment and commission processes for payments.",
       "noActiveJob": "This conversation is not linked to an active job.",
       "emptyMessages": "No messages yet. Say hello!",
       "backToConversations": "Back to conversations",
@@ -468,8 +468,8 @@
       "publicViewNote": "This is what customers see.",
       "verified": "Verified",
       "notVerified": "Not verified",
-      "verifiedHint": "Your identity was verified by the HUNAR team.",
-      "notVerifiedHint": "Your profile is pending HUNAR verification.",
+      "verifiedHint": "Your identity was verified by the WorkerFIX team.",
+      "notVerifiedHint": "Your profile is pending WorkerFIX verification.",
       "rating": "Rating",
       "reviews": "Reviews",
       "completedJobs": "Completed jobs",
@@ -499,7 +499,7 @@
       "profileSaved": "Profile updated.",
       "profileSaveFailure": "Unable to update your profile. Please try again.",
       "documentReVerificationWarning": "Document changes require re-verification.",
-      "documentReVerificationHint": "If you change your documents, your profile must be verified by HUNAR again.",
+      "documentReVerificationHint": "If you change your documents, your profile must be verified by WorkerFIX again.",
       "documentsReadOnlyHint": "Document changes require re-verification.",
       "notProvided": "Not provided",
       "ratingValue": "{value} / 5"
@@ -542,7 +542,7 @@
       "deleteConsequences": [
         "Your profile and verification will be removed.",
         "You will lose access to your jobs, chats and earnings history.",
-        "Any pending commission will still be due to HUNAR."
+        "Any pending commission will still be due to WorkerFIX."
       ],
       "deleteConfirmHint": "Type DELETE to confirm.",
       "deletePlaceholder": "DELETE",
@@ -584,7 +584,7 @@
       },
       "otherExplanationLabel": "Please explain",
       "otherExplanationPlaceholder": "Describe the reason for cancellation.",
-      "reliabilityWarning": "Cancelling after arrival may affect your reliability rating and can be reviewed by HUNAR admin.",
+      "reliabilityWarning": "Cancelling after arrival may affect your reliability rating and can be reviewed by WorkerFIX admin.",
       "confirmCancel": "Confirm cancellation",
       "cancelling": "Cancelling…",
       "cancelSuccess": "Job cancelled.",
@@ -661,7 +661,7 @@
     "completedJobs": "Completed Jobs",
     "totalSpent": "Total Spent",
     "invoices": "Invoices & Receipts",
-    "escrowProtected": "Orderworker Quality Guarantee"
+    "escrowProtected": "WorkerFIX Quality Guarantee"
   },
   "CustomerPortal": {
     "Nav": {
@@ -675,7 +675,7 @@
       "postJob": "+ Post a Job",
       "signOut": "Sign Out",
       "language": "Language",
-      "verifiedBadge": "Orderworker Verified",
+      "verifiedBadge": "WorkerFIX Verified",
       "verifiedDesc": "100% NADRA CNIC Verified Pros & doorstep satisfaction guarantee.",
       "qualityGuarantee": "Quality Guarantee"
     },
@@ -967,7 +967,7 @@
     },
     "Success": {
       "title": "Profile Submitted! 🎉",
-      "subtitle": "Thank you for joining Orderworker. Your verified photo, trade credentials, and Smart CNIC documents have been submitted successfully.",
+      "subtitle": "Thank you for joining WorkerFIX. Your verified photo, trade credentials, and Smart CNIC documents have been submitted successfully.",
       "underReview": "Under Review",
       "pendingAdmin": "Pending Admin Check",
       "reviewNotice": "Our compliance team is verifying your Smart CNIC, photo match, and trade certificate with NADRA records. We will notify you via SMS when you are approved to receive customer visits.",
@@ -1043,14 +1043,14 @@
   },
   "WorkerVerification": {
     "Metadata": {
-      "title": "Verification Status | Orderworker Worker Portal",
-      "description": "Check the admin verification status of your Orderworker tradesperson profile and Smart CNIC documents."
+      "title": "Verification Status | WorkerFIX Worker Portal",
+      "description": "Check the admin verification status of your WorkerFIX tradesperson profile and Smart CNIC documents."
     },
     "Showcase": {
       "badgeVerified": "Worker Verification",
       "badgeNadra": "NADRA Protected",
       "title": "Trust & Safety Verification System",
-      "subtitle": "Every tradesperson on Orderworker passes rigorous identity verification before receiving customer jobs in Peshawar.",
+      "subtitle": "Every tradesperson on WorkerFIX passes rigorous identity verification before receiving customer jobs in Peshawar.",
       "whyMatters": "Why Verification Matters:",
       "badgeTitle": "Official Verified Badge",
       "badgeDesc": "Increases customer hire rate by over 3.5x across Peshawar.",
@@ -1088,7 +1088,7 @@
     "Approved": {
       "badge": "Admin Verification Approved",
       "title": "Congratulations, {name}! 🎉",
-      "subtitle": "Your credentials and Pakistani Smart CNIC documents have been verified by Orderworker compliance.",
+      "subtitle": "Your credentials and Pakistani Smart CNIC documents have been verified by WorkerFIX compliance.",
       "verifiedPro": "Verified Pro",
       "nadraCleared": "NADRA Cleared",
       "approvedTrades": "Approved Trades",

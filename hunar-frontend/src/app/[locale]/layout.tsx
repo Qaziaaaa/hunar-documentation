@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter, Noto_Nastaliq_Urdu } from "next/font/google";
+import { Inter } from "next/font/google";
 import { hasLocale, NextIntlClientProvider } from "next-intl";
 import { getMessages, getTranslations, setRequestLocale } from "next-intl/server";
 import { notFound } from "next/navigation";
@@ -10,13 +10,6 @@ import "../globals.css";
 const inter = Inter({
   variable: "--font-inter",
   subsets: ["latin"],
-  display: "swap",
-});
-
-const notoNastaliqUrdu = Noto_Nastaliq_Urdu({
-  variable: "--font-noto-nastaliq",
-  subsets: ["arabic"],
-  weight: ["400", "500", "600", "700"],
   display: "swap",
 });
 
@@ -36,12 +29,12 @@ export async function generateMetadata({
     description: t("description"),
     icons: {
       icon: [
-        { url: "/orderworker-icon.png", type: "image/png" },
-        { url: "/orderworker-icon.png", sizes: "32x32", type: "image/png" },
-        { url: "/orderworker-icon.png", sizes: "192x192", type: "image/png" },
+        { url: "/workerfix-icon.png", type: "image/png" },
+        { url: "/workerfix-icon.png", sizes: "32x32", type: "image/png" },
+        { url: "/workerfix-icon.png", sizes: "192x192", type: "image/png" },
       ],
-      shortcut: "/orderworker-icon.png",
-      apple: "/orderworker-icon.png",
+      shortcut: "/workerfix-icon.png",
+      apple: "/workerfix-icon.png",
     },
   };
 }
@@ -66,18 +59,18 @@ export default async function LocaleLayout({
     <html
       lang={locale}
       dir={dir}
-      className={`${inter.variable} ${notoNastaliqUrdu.variable} h-full antialiased`}
+      className={`${inter.variable} h-full antialiased`}
     >
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
         <link
           rel="stylesheet"
-          href="https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu:wght@400;500;600;700&display=swap"
+          href="https://fonts.googleapis.com/css2?family=Noto+Sans+Arabic:wght@400;500;600;700;800&display=swap"
         />
-        <link rel="icon" href="/orderworker-icon.png" type="image/png" />
-        <link rel="shortcut icon" href="/orderworker-icon.png" type="image/png" />
-        <link rel="apple-touch-icon" href="/orderworker-icon.png" />
+        <link rel="icon" href="/workerfix-icon.png" type="image/png" />
+        <link rel="shortcut icon" href="/workerfix-icon.png" type="image/png" />
+        <link rel="apple-touch-icon" href="/workerfix-icon.png" />
       </head>
       <body className="min-h-screen w-full overflow-x-hidden flex flex-col">
         <NextIntlClientProvider messages={messages}>

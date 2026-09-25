@@ -77,13 +77,13 @@ export function Step1ServiceSelect({
   };
 
   return (
-    <div className="space-y-5 animate-in fade-in-50 duration-300">
+    <div className="space-y-5 animate-in fade-in-50 duration-300 pb-20 lg:pb-8">
       {/* Header Section */}
       <div className="text-center">
-        <h1 className="text-xl sm:text-2xl font-extrabold tracking-tight text-[#123B5D]">
+        <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#123B5D]">
           {isUrdu ? "آج آپ کو کس سروس کی ضرورت ہے؟" : "What service do you need today?"}
         </h1>
-        <p className="text-xs sm:text-sm text-slate-500 max-w-md mx-auto mt-1">
+        <p className="text-xs sm:text-sm text-slate-600 font-medium max-w-md mx-auto mt-1">
           {isUrdu
             ? "تصدیق شدہ مقامی کاریگروں سے فوری معائنہ اور شفاف فکسڈ فیس حاصل کریں۔"
             : "Choose from our verified local technicians with guaranteed on-time arrival and transparent pricing."}
@@ -100,16 +100,16 @@ export function Step1ServiceSelect({
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder={
               isUrdu
-                ? "اے سی سروس، پائپ لیک، الیکٹریکل وائرنگ، کارپینٹر تلاش کریں..."
-                : "Search for AC repair, leaking pipe, electrical wiring, carpenter..."
+                ? "سروس یا کاریگر تلاش کریں..."
+                : "Search service, e.g. AC repair, plumber..."
             }
-            className="w-full pl-10 rtl:pl-4 rtl:pr-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl text-xs sm:text-sm text-[#1A1A2E] placeholder-slate-400 focus:outline-none focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E] shadow-2xs transition-all"
+            className="w-full pl-10 rtl:pl-4 rtl:pr-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl text-xs sm:text-sm text-[#123B5D] font-medium placeholder:text-slate-400 focus:outline-none focus:border-[#0F8B8D] focus:ring-1 focus:ring-[#0F8B8D] shadow-2xs transition-all"
           />
           {searchQuery ? (
             <button
               type="button"
               onClick={() => setSearchQuery("")}
-              className="absolute right-3 rtl:right-auto rtl:left-3 text-xs text-slate-400 hover:text-slate-600"
+              className="absolute right-3 rtl:right-auto rtl:left-3 text-xs text-slate-500 hover:text-slate-800 font-bold cursor-pointer"
             >
               {isUrdu ? "صاف کریں" : "Clear"}
             </button>
@@ -118,7 +118,7 @@ export function Step1ServiceSelect({
 
         {/* Popular Tags */}
         <div className="flex items-center gap-1.5 overflow-x-auto text-[11px] pb-1 scrollbar-none">
-          <span className="text-slate-400 font-medium whitespace-nowrap shrink-0 flex items-center gap-1">
+          <span className="text-slate-600 font-bold whitespace-nowrap shrink-0 flex items-center gap-1">
             <Sparkles className="size-3 text-amber-500" />
             {isUrdu ? "مقبول:" : "Popular:"}
           </span>
@@ -127,7 +127,7 @@ export function Step1ServiceSelect({
               key={tag.label}
               type="button"
               onClick={() => handleQuickTagClick(tag)}
-              className="px-2.5 py-1 rounded-full bg-white border border-slate-200 text-slate-600 hover:border-[#0F766E] hover:text-[#0F766E] transition-colors whitespace-nowrap font-medium shadow-2xs cursor-pointer active:scale-95"
+              className="px-2.5 py-1 rounded-full bg-white border border-slate-200 text-slate-700 hover:border-[#0F8B8D] hover:text-[#0F8B8D] transition-colors whitespace-nowrap font-bold shadow-2xs cursor-pointer active:scale-95"
             >
               {isUrdu && tag.urduLabel ? tag.urduLabel : tag.label}
             </button>
@@ -147,25 +147,25 @@ export function Step1ServiceSelect({
               onClick={() => handleSelectCategory(category)}
               className={`p-3.5 sm:p-4 rounded-xl border transition-all cursor-pointer flex items-center justify-between gap-3 ${
                 isSelected
-                  ? "bg-[#0F766E]/5 border-[#0F766E] shadow-xs"
-                  : "bg-white border-slate-200 hover:border-slate-300 shadow-2xs"
+                  ? "bg-[#0F8B8D]/10 border-[#0F8B8D] shadow-xs"
+                  : "bg-white border-slate-200 hover:border-[#0F8B8D]/40 shadow-2xs"
               }`}
             >
               <div className="flex items-center gap-3">
                 <div
                   className={`size-10 rounded-xl flex items-center justify-center shrink-0 ${
                     isSelected
-                      ? "bg-[#0F766E] text-white"
+                      ? "bg-[#0F8B8D] text-white"
                       : "bg-slate-100 text-slate-700"
                   }`}
                 >
                   <Icon className="size-5" />
                 </div>
-                <div>
-                  <h3 className="text-xs sm:text-sm font-bold text-[#123B5D]">
+                <div className="text-left rtl:text-right">
+                  <h3 className="text-xs sm:text-sm font-extrabold text-[#123B5D]">
                     {isUrdu ? category.urduName : category.name}
                   </h3>
-                  <p className="text-[11px] text-slate-500 line-clamp-1">
+                  <p className="text-[11px] text-slate-600 font-medium line-clamp-1">
                     {category.subtitle}
                   </p>
                 </div>
@@ -174,7 +174,7 @@ export function Step1ServiceSelect({
               <div
                 className={`size-5 rounded-full flex items-center justify-center shrink-0 border ${
                   isSelected
-                    ? "bg-[#0F766E] border-[#0F766E] text-white"
+                    ? "bg-[#0F8B8D] border-[#0F8B8D] text-white"
                     : "border-slate-300 bg-white"
                 }`}
               >
@@ -187,13 +187,15 @@ export function Step1ServiceSelect({
 
       {/* Subcategory Selector when Category is Selected */}
       {selectedCategory && (
-        <div className="w-full max-w-3xl mx-auto p-4 rounded-2xl bg-slate-50/80 border border-slate-200 space-y-2.5 animate-in fade-in-50 duration-200">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-[#123B5D]">
-              Specific task in {selectedCategory.name}:
+        <div className="w-full max-w-3xl mx-auto p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2.5 animate-in fade-in-50 duration-200">
+          <div className="flex items-center justify-between flex-wrap gap-1">
+            <span className="text-xs font-extrabold text-[#123B5D]">
+              {isUrdu
+                ? `${selectedCategory.urduName} میں مخصوص کام:`
+                : `Specific task in ${selectedCategory.name}:`}
             </span>
-            <span className="text-[11px] text-slate-500">
-              Select one or type custom in next step
+            <span className="text-[11px] text-slate-600 font-medium">
+              {isUrdu ? "ایک منتخب کریں یا اگلے قدم پر اپنی مرضی سے لکھیں" : "Select one or type custom details in next step"}
             </span>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -204,10 +206,10 @@ export function Step1ServiceSelect({
                   key={sub}
                   type="button"
                   onClick={() => onChange({ subCategory: sub, title: sub })}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-medium border transition-all cursor-pointer ${
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
                     isSubSelected
-                      ? "bg-[#0F766E] text-white border-[#0F766E] shadow-2xs font-bold"
-                      : "bg-white text-slate-600 border-slate-200 hover:border-[#0F766E]/50 hover:bg-slate-50"
+                      ? "bg-[#0F8B8D] text-white border-[#0F8B8D] shadow-2xs"
+                      : "bg-white text-slate-700 border-slate-200 hover:border-[#0F8B8D]/50 hover:bg-slate-50"
                   }`}
                 >
                   {sub}
@@ -224,14 +226,14 @@ export function Step1ServiceSelect({
           type="button"
           disabled={!data.category}
           onClick={onNext}
-          className={`px-6 py-2.5 rounded-full flex items-center gap-2 text-xs sm:text-sm font-semibold transition-all shadow-sm active:scale-[0.99] ${
+          className={`px-6 py-2.5 rounded-full flex items-center gap-2 text-xs sm:text-sm font-bold transition-all shadow-xs active:scale-95 ${
             data.category
-              ? "bg-[#0F766E] text-white hover:bg-[#115E59] cursor-pointer"
+              ? "bg-[#0F8B8D] text-white hover:bg-[#0F8B8D]/90 cursor-pointer"
               : "bg-slate-200 text-slate-400 cursor-not-allowed"
           }`}
         >
-          <span>Continue to Details</span>
-          <ArrowRight className="size-4" />
+          <span>{isUrdu ? "تفصیلات کی طرف بڑھیں" : "Continue to Details"}</span>
+          <ArrowRight className="size-4 rtl:rotate-180" />
         </button>
       </div>
     </div>

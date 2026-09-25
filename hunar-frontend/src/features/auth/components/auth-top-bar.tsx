@@ -4,7 +4,7 @@ import { ArrowLeft, HelpCircle } from "lucide-react";
 import { AuthBrand } from "./auth-brand";
 import { useRouter } from "@/i18n/navigation";
 
-export function AuthTopBar({ helpHref = "mailto:support@orderworker.pk" }: { helpHref?: string }) {
+export function AuthTopBar({ helpHref = "mailto:support@workerfix.pk" }: { helpHref?: string }) {
   const router = useRouter();
 
   const goBack = () => {

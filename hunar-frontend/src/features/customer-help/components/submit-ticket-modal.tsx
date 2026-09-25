@@ -310,8 +310,8 @@ export function SubmitTicketModal({
                   </h3>
                   <p className="text-[11px] text-slate-500">
                     {isUrdu
-                      ? "آرڈر ورکر کسٹمر تحفظ اور نگہداشت پالیسی کے تحت محفوظ"
-                      : "Protected under Orderworker Customer Care Policy"}
+                      ? "WorkerFIX کسٹمر تحفظ اور نگہداشت پالیسی کے تحت محفوظ"
+                      : "Protected under WorkerFIX Customer Care Policy"}
                   </p>
                 </div>
               </div>

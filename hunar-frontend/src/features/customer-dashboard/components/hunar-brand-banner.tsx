@@ -51,4 +51,5 @@ export function OrderworkerBrandBanner() {
   );
 }
 
+export const WorkerFixBrandBanner = OrderworkerBrandBanner;
 export const HunarBrandBanner = OrderworkerBrandBanner;

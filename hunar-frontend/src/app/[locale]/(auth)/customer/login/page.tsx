@@ -3,7 +3,7 @@ import { AuthShell } from "@/features/auth/components/auth-shell";
 import { CustomerSignInForm } from "@/features/auth/components/customer-sign-in-form";
 
 export async function generateMetadata() {
-  return { title: "Customer Sign In — Orderworker" };
+  return { title: "Customer Sign In — WorkerFIX" };
 }
 
 export default async function CustomerLoginPage({

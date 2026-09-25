@@ -147,7 +147,7 @@ export function Footer() {
           </div>
         </div>
         <div className="pt-8 mt-6 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-400 gap-4">
-          <p>© 2026 Orderworker Technologies Inc. All rights reserved.</p>
+          <p>© 2026 WorkerFIX Technologies Inc. All rights reserved.</p>
           <div className="flex items-center space-x-4">
             <span>PKR (₨)</span>
             <span className="w-1 h-1 bg-slate-500 rounded-full" />

@@ -105,25 +105,9 @@ export function CustomerVisitsView({ initialVisits }: CustomerVisitsViewProps) {
       {/* Page Header & Live Hub Status Banner */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 pb-4 border-b border-[#E2E8F0]">
         <div className="space-y-1">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-white text-[#123B5D] border border-[#E2E8F0] shadow-2xs">
-              <span className="size-2 rounded-full bg-[#16A34A] animate-ping" />
-              {isUrdu ? "لائیو جی پی ایس ٹریکنگ فعال ہے" : "Live GPS Tracking Active"}
-            </span>
-            <span className="text-[#64748B] text-xs">•</span>
-            <span className="text-[#64748B] text-xs font-medium flex items-center gap-1">
-              <MapPin className="size-3.5 text-[#0F766E]" />
-              {isUrdu ? "ڈیفنس کالونی تا ایس ایم آئی ٹی پشاور" : "Defence Colony to SMIT Peshawar"}
-            </span>
-          </div>
           <h1 className="text-2xl sm:text-3xl font-extrabold text-[#123B5D] tracking-tight">
             {isUrdu ? "شیڈول وزٹس اور لائیو ٹریکر" : "Scheduled Visits & Arrival Tracker"}
           </h1>
-          <p className="text-xs sm:text-sm text-slate-500 max-w-3xl">
-            {isUrdu
-              ? "کاریگر کی لائیو لوکیشن اور متوقع آمد ٹریک کریں، ڈور سٹیپ سیکیورٹی PIN دیکھیں اور اپنے وزٹس مینیج کریں۔"
-              : "Monitor technician live dispatch in real-time, view verified doorstep safety PINs, and manage your home repair appointments across Peshawar."}
-          </p>
         </div>
 
         {/* Interactive Tab Switcher (Upcoming & Live vs Past Visits) */}
@@ -509,7 +493,7 @@ export function CustomerVisitsView({ initialVisits }: CustomerVisitsViewProps) {
                   </div>
                   <div>
                     <h4 className="text-sm font-bold text-[#123B5D]">
-                      {isUrdu ? "آرڈر ورکر تصدیق شدہ سیکیورٹی" : "Orderworker Verified Security"}
+                      {isUrdu ? "WorkerFIX تصدیق شدہ سیکیورٹی" : "WorkerFIX Verified Security"}
                     </h4>
                     <span className="text-xs font-semibold text-[#0F766E]">
                       {isUrdu ? "نادرا بائیومیٹرک تصدیق شدہ" : "NADRA Biometric Cleared"}

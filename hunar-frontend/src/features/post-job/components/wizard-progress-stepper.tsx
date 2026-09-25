@@ -36,7 +36,7 @@ export function WizardProgressStepper({
       {/* Desktop & Tablet Breadcrumb Chevron Stepper */}
       <nav
         aria-label="Progress"
-        className="hidden sm:flex items-center justify-between bg-white border border-slate-200 rounded-2xl p-1.5 shadow-2xs"
+        className="hidden sm:flex items-center justify-between py-2"
       >
         <ol className="flex items-center w-full">
           {STEPS.map((s, idx) => {
@@ -53,22 +53,22 @@ export function WizardProgressStepper({
                   onClick={() => {
                     if (isCompleted) onGoToStep(s.step);
                   }}
-                  className={`w-full flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl text-xs transition-all select-none ${
+                  className={`w-full flex items-center justify-center gap-2 py-2 px-3 rounded-xl text-xs transition-all select-none ${
                     isActive
-                      ? "bg-[#0F766E] text-white font-bold shadow-xs"
+                      ? "bg-[#0F8B8D] text-white font-bold shadow-xs"
                       : isCompleted
-                      ? "bg-slate-50 hover:bg-[#0F766E]/10 text-[#0F766E] font-semibold cursor-pointer active:scale-95"
-                      : "bg-transparent text-slate-400 font-medium cursor-not-allowed opacity-70"
+                      ? "bg-transparent text-[#0F8B8D] font-bold cursor-pointer hover:bg-[#0F8B8D]/10 active:scale-95"
+                      : "bg-transparent text-slate-500 font-medium cursor-not-allowed opacity-75"
                   }`}
                 >
                   {/* Step Badge */}
                   <span
                     className={`size-6 rounded-full flex items-center justify-center text-[11px] font-bold shrink-0 transition-colors ${
                       isActive
-                        ? "bg-white text-[#0F766E] shadow-2xs"
+                        ? "bg-white text-[#0F8B8D] shadow-2xs"
                         : isCompleted
-                        ? "bg-[#0F766E] text-white"
-                        : "bg-slate-200 text-slate-500"
+                        ? "bg-[#0F8B8D] text-white"
+                        : "bg-slate-200 text-slate-600"
                     }`}
                   >
                     {isCompleted ? (
@@ -84,7 +84,7 @@ export function WizardProgressStepper({
 
                 {/* Chevron Arrow between steps */}
                 {idx < STEPS.length - 1 && (
-                  <ChevronRight className="size-4 text-slate-300 mx-1 shrink-0 rtl:rotate-180" />
+                  <ChevronRight className="size-4 text-slate-400 mx-1 shrink-0 rtl:rotate-180" />
                 )}
               </li>
             );
@@ -93,7 +93,7 @@ export function WizardProgressStepper({
       </nav>
 
       {/* Mobile Breadcrumb Chevron Stepper */}
-      <div className="sm:hidden bg-white border border-slate-200 rounded-2xl p-2 shadow-2xs">
+      <div className="sm:hidden py-1.5">
         <ol className="flex items-center w-full justify-between gap-1">
           {STEPS.map((s, idx) => {
             const isCompleted = currentStep > s.step;
@@ -112,19 +112,19 @@ export function WizardProgressStepper({
                     }}
                     className={`w-full flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-xl text-[11px] transition-all whitespace-nowrap ${
                       isActive
-                        ? "bg-[#0F766E] text-white font-bold shadow-2xs"
+                        ? "bg-[#0F8B8D] text-white font-bold shadow-2xs"
                         : isCompleted
-                        ? "bg-slate-50 text-[#0F766E] font-semibold cursor-pointer active:scale-95"
-                        : "text-slate-400 font-medium opacity-60"
+                        ? "bg-transparent text-[#0F8B8D] font-bold cursor-pointer hover:bg-[#0F8B8D]/10 active:scale-95"
+                        : "bg-transparent text-slate-500 font-medium opacity-75"
                     }`}
                   >
                     <span
                       className={`size-5 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 ${
                         isActive
-                          ? "bg-white text-[#0F766E]"
+                          ? "bg-white text-[#0F8B8D]"
                           : isCompleted
-                          ? "bg-[#0F766E] text-white"
-                          : "bg-slate-200 text-slate-500"
+                          ? "bg-[#0F8B8D] text-white"
+                          : "bg-slate-200 text-slate-600"
                       }`}
                     >
                       {isCompleted ? (
@@ -140,7 +140,7 @@ export function WizardProgressStepper({
                 </li>
 
                 {idx < STEPS.length - 1 && (
-                  <ChevronRight className="size-3.5 text-slate-300 shrink-0 rtl:rotate-180" />
+                  <ChevronRight className="size-3.5 text-slate-400 shrink-0 rtl:rotate-180" />
                 )}
               </React.Fragment>
             );
@@ -149,9 +149,9 @@ export function WizardProgressStepper({
       </div>
 
       {/* Slim Progress Indicator Line */}
-      <div className="w-full h-1 bg-slate-100 rounded-full overflow-hidden mt-2 px-1">
+      <div className="w-full h-1 bg-slate-200/50 rounded-full overflow-hidden mt-1 px-0">
         <div
-          className="h-full bg-gradient-to-r from-[#0F766E] to-[#14B8A6] rounded-full transition-all duration-500 ease-out"
+          className="h-full bg-gradient-to-r from-[#0F8B8D] to-[#14B8A6] rounded-full transition-all duration-500 ease-out"
           style={{ width: `${progressPercent}%` }}
         />
       </div>

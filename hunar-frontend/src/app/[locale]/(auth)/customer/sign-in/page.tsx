@@ -9,7 +9,7 @@ export async function generateMetadata({
 }) {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: "Auth" });
-  return { title: "Customer Sign In — Orderworker" };
+  return { title: "Customer Sign In — WorkerFIX" };
 }
 
 export default async function CustomerSignInPage({

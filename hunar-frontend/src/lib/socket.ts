@@ -23,6 +23,7 @@ export function connectSocket(): Socket | null {
   if (!s) return null;
 
   const token =
+    window.localStorage.getItem("workerfix.access_token") ??
     window.localStorage.getItem("orderworker.access_token") ??
     window.localStorage.getItem("hunar.access_token") ??
     undefined;

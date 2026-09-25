@@ -5,7 +5,7 @@ export function AuthBrand() {
   return (
     <Link
       href="/"
-      title="Orderworker Home"
+      title="WorkerFIX Home"
       className="group flex items-center gap-2 transition-opacity hover:opacity-90"
     >
       <OrderworkerLogo variant="dark" size="md" />

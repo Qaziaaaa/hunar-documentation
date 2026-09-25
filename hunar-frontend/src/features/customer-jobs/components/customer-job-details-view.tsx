@@ -442,8 +442,8 @@ export function CustomerJobDetailsView({ initialJob }: CustomerJobDetailsViewPro
               <div>
                 <h4 className="text-xs font-bold text-[#123B5D]">
                   {isUrdu
-                    ? "آرڈر ورکر 100% تصدیق شدہ کوالٹی کی ضمانت"
-                    : "Orderworker 100% Verified Quality Guarantee"}
+                    ? "WorkerFIX 100% تصدیق شدہ کوالٹی کی ضمانت"
+                    : "WorkerFIX 100% Verified Quality Guarantee"}
                 </h4>
                 <p className="text-[11px] text-slate-500">
                   {isUrdu

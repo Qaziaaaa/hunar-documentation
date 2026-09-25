@@ -30,7 +30,7 @@ export const MOCK_FAQS: FaqItem[] = [
     category: "pricing",
     question: "Are there any hidden platform charges or commission markups?",
     answer:
-      "Zero hidden markups. The amount agreed upon during the technician's on-site quote is the exact total you pay. Orderworker believes in fair, transparent pricing on all home service bookings.",
+      "Zero hidden markups. The amount agreed upon during the technician's on-site quote is the exact total you pay. WorkerFIX believes in fair, transparent pricing on all home service bookings.",
   },
   {
     id: "faq-price-4",
@@ -46,7 +46,7 @@ export const MOCK_FAQS: FaqItem[] = [
     category: "safety",
     question: "What is the 4-digit Safety PIN and how do I use it?",
     answer:
-      "For your family's protection, a unique 4-digit Safety PIN is generated when you book any visit. When the technician reaches your doorstep, ask for the PIN or have them verify it to ensure they are the exact authorized Orderworker professional.",
+      "For your family's protection, a unique 4-digit Safety PIN is generated when you book any visit. When the technician reaches your doorstep, ask for the PIN or have them verify it to ensure they are the exact authorized WorkerFIX professional.",
     badge: "Doorstep Security",
     isPopular: true,
   },
@@ -55,7 +55,7 @@ export const MOCK_FAQS: FaqItem[] = [
     category: "safety",
     question: "Are all technicians NADRA CNIC verified and background checked?",
     answer:
-      "Yes, 100%. Every technician on Orderworker undergoes strict biometric NADRA CNIC verification, police background checks, hands-on trade skill testing, and phone verification before being admitted to our verified network.",
+      "Yes, 100%. Every technician on WorkerFIX undergoes strict biometric NADRA CNIC verification, police background checks, hands-on trade skill testing, and phone verification before being admitted to our verified network.",
     badge: "100% Verified",
     isPopular: true,
   },
@@ -71,7 +71,7 @@ export const MOCK_FAQS: FaqItem[] = [
     category: "safety",
     question: "What safety precautions do technicians follow on visits?",
     answer:
-      "All technicians carry official Orderworker photo badges, bring proper insulated safety gear/tools, and follow a strict household decorum checklist.",
+      "All technicians carry official WorkerFIX photo badges, bring proper insulated safety gear/tools, and follow a strict household decorum checklist.",
   },
 
   // BOOKING & RESCHEDULING
@@ -103,9 +103,9 @@ export const MOCK_FAQS: FaqItem[] = [
   {
     id: "faq-guarantee-1",
     category: "guarantee",
-    question: "What is the Orderworker 5-Day Craftsmanship Warranty?",
+    question: "What is the WorkerFIX 5-Day Craftsmanship Warranty?",
     answer:
-      "If a repaired plumbing pipe leaks, an electrical breaker trips, or an AC unit malfunctions within 5 days of completion, Orderworker dispatches the technician back for a 100% free rework or sends an Elite specialist at zero extra charge.",
+      "If a repaired plumbing pipe leaks, an electrical breaker trips, or an AC unit malfunctions within 5 days of completion, WorkerFIX dispatches the technician back for a 100% free rework or sends an Elite specialist at zero extra charge.",
     badge: "5-Day Warranty",
     isPopular: true,
   },
@@ -220,9 +220,9 @@ export const MOCK_HELPLINE_INFO: HelplineDeskInfo = {
   hotlineDisplay: "091-5840000 / 021-3849201",
   whatsappNumber: "923005559821",
   whatsappDisplay: "+92 300 5559821",
-  supportEmail: "support@orderworker.pk",
+  supportEmail: "support@workerfix.pk",
   hoursDisplay: "24/7 Round the Clock Support",
-  deskLocation: "Orderworker Central Operations & Support Desk",
+  deskLocation: "WorkerFIX Central Operations & Support Desk",
   avgResolutionTime: "1.8 hrs",
   resolutionRateText: "94% resolved same-day nationwide",
   isDeskOnline: true,
