@@ -12,7 +12,7 @@ export interface CreateJobPayload {
   address: string;
   city: string;
   area?: string;
-  urgency?: "NORMAL" | "URGENT" | "EMERGENCY";
+  urgency?: "NORMAL" | "HIGH" | "EMERGENCY";
   suggestedVisitCharge?: number;
   preferredVisitTime?: string;
 }
@@ -78,7 +78,7 @@ export async function createJob(data: PostJobData): Promise<CreatedJobResponse> 
     address: data.address || "Peshawar, Khyber Pakhtunkhwa",
     city: data.city || "Peshawar",
     area: data.area || "Hayatabad",
-    urgency: data.scheduleType === "asap" ? "URGENT" : "NORMAL",
+    urgency: data.scheduleType === "asap" ? "EMERGENCY" : "NORMAL",
     suggestedVisitCharge: Number(data.suggestedVisitFee || 300),
     preferredVisitTime: data.preferredDate
       ? new Date(data.preferredDate).toISOString()
