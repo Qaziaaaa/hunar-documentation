@@ -1,4 +1,5 @@
 import { http } from "@/lib/api-client";
+import { isMockMode } from "@/lib/data-source";
 import type { PostJobData } from "../types";
 
 export interface CreateJobPayload {
@@ -45,6 +46,9 @@ const CATEGORY_ID_MAP: Record<string, string> = {
  * Upload a job photo to the backend S3/MinIO bucket.
  */
 export async function uploadJobPhoto(file: File): Promise<{ key: string; url: string }> {
+  if (isMockMode()) {
+    return { key: `local-job-photo-${Date.now()}`, url: URL.createObjectURL(file) };
+  }
   try {
     const formData = new FormData();
     formData.append("file", file);
@@ -84,6 +88,22 @@ export async function createJob(data: PostJobData): Promise<CreatedJobResponse> 
       ? new Date(data.preferredDate).toISOString()
       : undefined,
   };
+
+  if (isMockMode()) {
+    return {
+      id: `JOB-${Date.now().toString().slice(-4)}`,
+      customerId: "cust-current-user",
+      categoryId,
+      title: payload.title,
+      description: payload.description,
+      status: "OPEN",
+      address: payload.address,
+      city: payload.city,
+      area: payload.area,
+      suggestedVisitCharge: payload.suggestedVisitCharge,
+      createdAt: new Date().toISOString(),
+    };
+  }
 
   try {
     return await http.post<CreatedJobResponse>("/jobs", payload);

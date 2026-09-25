@@ -1,5 +1,7 @@
 import { http } from "@/lib/api-client";
+import { isMockMode } from "@/lib/data-source";
 import { VisitStatus } from "@/features/customer-visits/types";
+import { MOCK_SCHEDULED_VISITS } from "../data/mock-customer-visits";
 import type { ScheduledVisit } from "../types";
 
 const FALLBACK_IMAGE =
@@ -9,6 +11,9 @@ const FALLBACK_IMAGE =
  * Fetch all customer visits / bookings
  */
 export async function getCustomerVisits(): Promise<ScheduledVisit[]> {
+  if (isMockMode()) {
+    return MOCK_SCHEDULED_VISITS;
+  }
   const res = await http.get<any[]>("/visits/my");
   if (!Array.isArray(res)) {
     throw new Error("INVALID_VISITS_RESPONSE");
@@ -20,6 +25,15 @@ export async function getCustomerVisits(): Promise<ScheduledVisit[]> {
  * Get visit details by visit ID
  */
 export async function getVisitDetail(visitId: string): Promise<ScheduledVisit> {
+  if (isMockMode()) {
+    const mock =
+      MOCK_SCHEDULED_VISITS.find((visit) => visit.id === visitId) ??
+      MOCK_SCHEDULED_VISITS[0];
+    if (!mock) {
+      throw new Error(`VISIT_NOT_FOUND: ${visitId}`);
+    }
+    return mock;
+  }
   const res = await http.get<any>(`/visits/${visitId}`);
   if (!res || !res.id) {
     throw new Error(`VISIT_NOT_FOUND: ${visitId}`);

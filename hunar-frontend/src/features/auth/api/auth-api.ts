@@ -119,7 +119,7 @@ export async function completeWorkerSignup(params: {
     }
   } catch (err) {
     console.warn("[completeWorkerSignup] Backend register error:", err);
-    throw err;
+    if (!isMockMode()) throw err;
   }
 
   if (isMockMode()) {
@@ -149,7 +149,7 @@ export async function workerLogin(
     }
   } catch (err) {
     console.warn("[workerLogin] Backend login error:", err);
-    throw err;
+    if (!isMockMode()) throw err;
   }
 
   if (isMockMode() && password.length >= 6) {
@@ -258,7 +258,7 @@ export async function completeCustomerSignup(params: {
     }
   } catch (err) {
     console.warn("[completeCustomerSignup] Backend register error:", err);
-    throw err;
+    if (!isMockMode()) throw err;
   }
 
   if (isMockMode()) {
@@ -290,7 +290,7 @@ export async function customerLogin(
     }
   } catch (err) {
     console.warn("[customerLogin] Backend login error:", err);
-    throw err;
+    if (!isMockMode()) throw err;
   }
 
   if (isMockMode() && password.length >= 6) {
