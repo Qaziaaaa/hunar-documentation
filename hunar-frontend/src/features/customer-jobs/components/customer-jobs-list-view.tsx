@@ -50,7 +50,7 @@ export function CustomerJobsListView({ initialJobs }: CustomerJobsListViewProps)
   const completedCount = initialJobs.filter((j) => j.status === "completed").length;
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-6 pb-16 animate-in fade-in-50 duration-300 text-[#123B5D]">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-6 pb-24 lg:pb-8 animate-in fade-in-50 duration-300 text-[#123B5D]">
       {/* Main Header Section */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 pb-2 border-b border-[#E2E8F0]">
         <div>
@@ -58,33 +58,35 @@ export function CustomerJobsListView({ initialJobs }: CustomerJobsListViewProps)
             <span className="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-semibold bg-[#123B5D]/10 text-[#123B5D]">
               {isUrdu ? "کسٹمر ہب" : "Customer Hub"}
             </span>
-            <span className="text-xs text-[#64748B]">
+            <span className="text-xs text-slate-600 font-medium">
               {isUrdu ? "• پشاور، خیبر پختونخوا" : "• Peshawar, Khyber Pakhtunkhwa"}
             </span>
           </div>
-        
+          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#123B5D]">
+            {isUrdu ? "میری پوسٹ کردہ جابز" : "My Posted Jobs & Requests"}
+          </h1>
         </div>
 
-        {/* <Link
+        <Link
           href="/customer/post-job"
-          className="h-11 px-5 bg-[#0F766E] hover:bg-[#115E59] text-white rounded-xl font-semibold text-sm flex items-center justify-center gap-2 shadow-sm transition-all active:scale-[0.99] shrink-0 self-start md:self-end cursor-pointer"
+          className="h-11 px-5 bg-[#0F8B8D] hover:bg-[#0F8B8D]/90 text-white rounded-xl font-bold text-sm flex items-center justify-center gap-2 shadow-xs transition-all active:scale-[0.99] shrink-0 self-start md:self-end cursor-pointer"
         >
           <Plus className="size-4.5" />
           <span>{isUrdu ? "+ نئی جاب پوسٹ کریں" : "Post a New Job"}</span>
-        </Link> */}
+        </Link>
       </div>
 
       {/* Filter Tabs & Search Bar */}
-      <div className="bg-white rounded-2xl p-4 shadow-sm border border-[#E2E8F0] flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
+      <div className="bg-white rounded-2xl p-4 shadow-2xs border border-[#E2E8F0] flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
         {/* Filter Tabs */}
         <div className="flex items-center gap-2 overflow-x-auto pb-1 md:pb-0 scrollbar-none">
           <button
             type="button"
             onClick={() => setSelectedFilter("all")}
-            className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold whitespace-nowrap transition-all cursor-pointer ${
+            className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold whitespace-nowrap transition-all cursor-pointer ${
               selectedFilter === "all"
-                ? "bg-[#0F766E] text-white shadow-sm"
-                : "bg-white text-[#64748B] border border-[#E2E8F0] hover:text-[#1A1A2E] hover:border-[#1A1A2E]"
+                ? "bg-[#0F8B8D] text-white shadow-2xs"
+                : "bg-white text-slate-600 border border-[#E2E8F0] hover:text-[#123B5D] hover:border-[#0F8B8D]"
             }`}
           >
             {isUrdu ? `تمام جابز (${initialJobs.length})` : `All Jobs (${initialJobs.length})`}
@@ -93,10 +95,10 @@ export function CustomerJobsListView({ initialJobs }: CustomerJobsListViewProps)
           <button
             type="button"
             onClick={() => setSelectedFilter("active")}
-            className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold whitespace-nowrap transition-all cursor-pointer flex items-center gap-1.5 ${
+            className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold whitespace-nowrap transition-all cursor-pointer flex items-center gap-1.5 ${
               selectedFilter === "active"
-                ? "bg-[#0F766E] text-white shadow-sm"
-                : "bg-white text-[#64748B] border border-[#E2E8F0] hover:text-[#1A1A2E] hover:border-[#1A1A2E]"
+                ? "bg-[#0F8B8D] text-white shadow-2xs"
+                : "bg-white text-slate-600 border border-[#E2E8F0] hover:text-[#123B5D] hover:border-[#0F8B8D]"
             }`}
           >
             <span className="size-2 rounded-full bg-emerald-400 animate-ping" />
@@ -106,10 +108,10 @@ export function CustomerJobsListView({ initialJobs }: CustomerJobsListViewProps)
           <button
             type="button"
             onClick={() => setSelectedFilter("scheduled")}
-            className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold whitespace-nowrap transition-all cursor-pointer ${
+            className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold whitespace-nowrap transition-all cursor-pointer ${
               selectedFilter === "scheduled"
-                ? "bg-[#0F766E] text-white shadow-sm"
-                : "bg-white text-[#64748B] border border-[#E2E8F0] hover:text-[#1A1A2E] hover:border-[#1A1A2E]"
+                ? "bg-[#0F8B8D] text-white shadow-2xs"
+                : "bg-white text-slate-600 border border-[#E2E8F0] hover:text-[#123B5D] hover:border-[#0F8B8D]"
             }`}
           >
             {isUrdu ? `شیڈول وزٹس (${scheduledCount})` : `Scheduled Visits (${scheduledCount})`}
@@ -118,10 +120,10 @@ export function CustomerJobsListView({ initialJobs }: CustomerJobsListViewProps)
           <button
             type="button"
             onClick={() => setSelectedFilter("completed")}
-            className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold whitespace-nowrap transition-all cursor-pointer ${
+            className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold whitespace-nowrap transition-all cursor-pointer ${
               selectedFilter === "completed"
-                ? "bg-[#0F766E] text-white shadow-sm"
-                : "bg-white text-[#64748B] border border-[#E2E8F0] hover:text-[#1A1A2E] hover:border-[#1A1A2E]"
+                ? "bg-[#0F8B8D] text-white shadow-2xs"
+                : "bg-white text-slate-600 border border-[#E2E8F0] hover:text-[#123B5D] hover:border-[#0F8B8D]"
             }`}
           >
             {isUrdu ? `مکمل شدہ (${completedCount})` : `Completed (${completedCount})`}
@@ -136,7 +138,7 @@ export function CustomerJobsListView({ initialJobs }: CustomerJobsListViewProps)
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder={isUrdu ? "عنوان، ریفرنس نمبر یا علاقہ تلاش کریں..." : "Search by title, ref ID or area..."}
-            className="w-full pl-9 rtl:pl-3.5 rtl:pr-9 pr-3.5 py-2 rounded-xl text-xs bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#0F766E]/20 text-[#1A1A2E] border border-[#E2E8F0]"
+            className="w-full pl-9 rtl:pl-3.5 rtl:pr-9 pr-3.5 py-2.5 rounded-xl text-xs bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#0F8B8D]/20 text-[#123B5D] font-medium border border-[#E2E8F0]"
           />
         </div>
       </div>
@@ -340,15 +342,15 @@ export function CustomerJobsListView({ initialJobs }: CustomerJobsListViewProps)
           })}
         </div>
       ) : (
-        <div className="bg-white rounded-2xl p-12 text-center space-y-4 shadow-sm border border-[#E2E8F0]">
-          <div className="size-16 rounded-2xl bg-slate-50 text-slate-300 flex items-center justify-center mx-auto">
+        <div className="bg-white rounded-2xl p-10 sm:p-12 text-center space-y-4 shadow-2xs border border-[#E2E8F0]">
+          <div className="size-16 rounded-2xl bg-teal-50 text-[#0F8B8D] flex items-center justify-center mx-auto shadow-2xs">
             <Layers className="size-8" />
           </div>
           <div className="space-y-1">
-            <h3 className="text-base font-bold text-[#1A1A2E]">
+            <h3 className="text-base font-extrabold text-[#123B5D]">
               {isUrdu ? "کوئی جاب یا درخواست نہیں ملی" : "No service requests found"}
             </h3>
-            <p className="text-xs text-slate-500 max-w-sm mx-auto">
+            <p className="text-xs text-slate-600 font-medium max-w-sm mx-auto">
               {isUrdu
                 ? "آپ کے منتخب کردہ فلٹر یا سرچ کے مطابق کوئی کام موجود نہیں ہے۔"
                 : "There are no jobs matching your active filter or search terms."}
@@ -357,10 +359,10 @@ export function CustomerJobsListView({ initialJobs }: CustomerJobsListViewProps)
           <div className="pt-2">
             <Link
               href="/customer/post-job"
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#0F766E] hover:bg-[#115E59] text-white text-xs font-bold shadow-sm transition-all"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#0F8B8D] hover:bg-[#0F8B8D]/90 text-white text-xs font-bold shadow-xs transition-all active:scale-95"
             >
               <Plus className="size-4" />
-              <span>{isUrdu ? "نئی جاب پوسٹ کریں" : "Post a New Job"}</span>
+              <span>{isUrdu ? "نئی جاب پوسٹ کریں" : "Post a New Job in 2 Mins"}</span>
             </Link>
           </div>
         </div>

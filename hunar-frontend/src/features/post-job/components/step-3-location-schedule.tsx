@@ -194,14 +194,14 @@ export function Step3LocationSchedule({
             <div className="space-y-2.5">
               <div>
                 <div className="flex items-center justify-between mb-1">
-                  <label className="block text-xs font-medium text-slate-600">
+                  <label className="block text-xs font-semibold text-slate-700">
                     {isUrdu ? "علاقہ / نیبرہڈ" : "Area / Neighborhood"}
                   </label>
                   <button
                     type="button"
                     onClick={handleUseCurrentLocation}
                     disabled={isLocating}
-                    className="text-[11px] font-bold text-[#0F766E] hover:underline flex items-center gap-1 cursor-pointer disabled:opacity-50"
+                    className="text-[11px] font-bold text-[#0F8B8D] hover:underline flex items-center gap-1 cursor-pointer disabled:opacity-50"
                   >
                     <Crosshair className={`size-3 ${isLocating ? "animate-spin" : ""}`} />
                     <span>{isUrdu ? "میری موجودہ لوکیشن" : "Use Live Location"}</span>
@@ -210,7 +210,7 @@ export function Step3LocationSchedule({
                 <select
                   value={data.area}
                   onChange={(e) => handleAreaSelectChange(e.target.value)}
-                  className="w-full px-3 py-2.5 rounded-xl text-xs sm:text-sm text-[#1A1A2E] bg-slate-50/70 border border-slate-200 focus:outline-none focus:bg-white focus:ring-2 focus:ring-[#0F766E]/20"
+                  className="w-full px-3 py-2.5 rounded-xl text-xs sm:text-sm text-[#1A1A2E] bg-slate-50/70 border border-slate-200 focus:outline-none focus:bg-white focus:ring-2 focus:ring-[#0F8B8D]/20 font-medium"
                 >
                   <option value="">{isUrdu ? "علاقہ منتخب کریں" : "Select Area"}</option>
                   {SERVICE_AREAS.map((area) => (
@@ -222,7 +222,7 @@ export function Step3LocationSchedule({
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-slate-600 mb-1">
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
                   {isUrdu ? "گلی کا پتہ / مکان نمبر" : "Street Address / House #"}
                 </label>
                 <input
@@ -230,41 +230,41 @@ export function Step3LocationSchedule({
                   value={data.address}
                   onChange={(e) => onChange({ address: e.target.value })}
                   placeholder={isUrdu ? "مثلاً مکان 12، گلی 4" : "e.g. House 12, Street 4"}
-                  className="w-full px-3 py-2.5 rounded-xl text-xs sm:text-sm text-[#1A1A2E] bg-slate-50/70 border border-slate-200 focus:outline-none focus:bg-white focus:ring-2 focus:ring-[#0F766E]/20"
+                  className="w-full px-3 py-2.5 rounded-xl text-xs sm:text-sm text-[#1A1A2E] bg-slate-50/70 border border-slate-200 focus:outline-none focus:bg-white focus:ring-2 focus:ring-[#0F8B8D]/20 font-medium"
                 />
               </div>
 
               {/* City & Nearest Landmark */}
               <div className="grid grid-cols-2 gap-2.5">
                 <div>
-                  <label className="block text-xs font-medium text-slate-600 mb-1">
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
                     {isUrdu ? "شہر" : "City"}
                   </label>
                   <input
                     type="text"
                     value={data.city || "Peshawar"}
                     onChange={(e) => onChange({ city: e.target.value })}
-                    className="w-full px-3 py-2.5 rounded-xl text-xs sm:text-sm text-[#1A1A2E] bg-slate-50/70 border border-slate-200 focus:outline-none"
+                    className="w-full px-3 py-2.5 rounded-xl text-xs sm:text-sm text-[#1A1A2E] bg-slate-50/70 border border-slate-200 focus:outline-none font-medium"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-slate-600 mb-1">
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
                     {isUrdu ? "قریبی مشہور جگہ / لینڈ مارک" : "Nearest Landmark"}
                   </label>
                   <input
                     type="text"
                     value={data.landmark || ""}
                     onChange={(e) => onChange({ landmark: e.target.value })}
-                    placeholder={isUrdu ? "مثلاً اسلامیہ کالج گیٹ کے قریب" : "e.g. Near Islamia College Gate"}
-                    className="w-full px-3 py-2.5 rounded-xl text-xs sm:text-sm text-[#1A1A2E] bg-slate-50/70 border border-slate-200 focus:outline-none focus:bg-white focus:ring-2 focus:ring-[#0F766E]/20"
+                    placeholder={isUrdu ? "مثلاً اسلامیہ کالج کے قریب" : "e.g. Near Islamia College"}
+                    className="w-full px-3 py-2.5 rounded-xl text-xs sm:text-sm text-[#1A1A2E] bg-slate-50/70 border border-slate-200 focus:outline-none focus:bg-white focus:ring-2 focus:ring-[#0F8B8D]/20 font-medium"
                   />
                 </div>
               </div>
             </div>
           </div>
 
-          <div className="px-4 py-2.5 border border-slate-100 rounded-xl text-[11px] text-slate-500 flex items-center gap-1.5 bg-white">
-            <Lock className="size-3.5 text-[#0F766E]" />
+          <div className="px-4 py-2.5 border border-slate-200 rounded-xl text-[11.5px] text-slate-600 font-medium flex items-center gap-1.5 bg-white shadow-2xs">
+            <Lock className="size-3.5 text-[#0F8B8D] shrink-0" />
             <span>
               {isUrdu
                 ? "مکمل پتہ صرف تصدیق شدہ اور منظور شدہ ورکر کے ساتھ شیئر کیا جاتا ہے۔"
@@ -276,7 +276,7 @@ export function Step3LocationSchedule({
         {/* Right Column: Date & Time Panels (5 cols) */}
         <div className="md:col-span-5 flex flex-col gap-3.5">
           {/* ASAP vs Scheduled Mode Selector */}
-          <div className="bg-white rounded-2xl shadow-sm p-3.5 space-y-2">
+          <div className="bg-white rounded-2xl shadow-sm p-3.5 space-y-2 border border-slate-100">
             <label className="block text-xs font-bold text-[#123B5D]">
               {isUrdu ? "آپ کو ورکر کب چاہیے؟" : "When do you need the technician?"}
             </label>
@@ -286,15 +286,15 @@ export function Step3LocationSchedule({
                 onClick={() => onChange({ scheduleType: "asap" })}
                 className={`p-2.5 rounded-xl text-start flex flex-col gap-1 transition-all cursor-pointer ${
                   data.scheduleType === "asap"
-                    ? "bg-[#0F766E]/10 ring-2 ring-[#0F766E]"
-                    : "bg-slate-50 hover:bg-slate-100"
+                    ? "bg-[#0F8B8D]/10 ring-2 ring-[#0F8B8D]"
+                    : "bg-slate-50 hover:bg-slate-100 border border-slate-200/60"
                 }`}
               >
-                <div className="flex items-center gap-1.5 font-bold text-xs text-[#0F766E]">
-                  <Zap className="size-3.5 fill-[#0F766E]" />
+                <div className="flex items-center gap-1.5 font-bold text-xs text-[#0F8B8D]">
+                  <Zap className="size-3.5 fill-[#0F8B8D]" />
                   <span>{isUrdu ? "فوری / ASAP" : "Immediate / ASAP"}</span>
                 </div>
-                <span className="text-[10.5px] text-slate-500">
+                <span className="text-[10.5px] text-slate-600 font-medium">
                   {isUrdu ? "30-60 منٹ کے اندر پہنچیں" : "Arrival within 30-60 mins"}
                 </span>
               </button>
@@ -304,15 +304,15 @@ export function Step3LocationSchedule({
                 onClick={() => onChange({ scheduleType: "scheduled" })}
                 className={`p-2.5 rounded-xl text-start flex flex-col gap-1 transition-all cursor-pointer ${
                   data.scheduleType === "scheduled"
-                    ? "bg-[#0F766E]/10 ring-2 ring-[#0F766E]"
-                    : "bg-slate-50 hover:bg-slate-100"
+                    ? "bg-[#0F8B8D]/10 ring-2 ring-[#0F8B8D]"
+                    : "bg-slate-50 hover:bg-slate-100 border border-slate-200/60"
                 }`}
               >
                 <div className="flex items-center gap-1.5 font-bold text-xs text-[#123B5D]">
-                  <CalendarIcon className="size-3.5 text-[#0F766E]" />
+                  <CalendarIcon className="size-3.5 text-[#0F8B8D]" />
                   <span>{isUrdu ? "طے شدہ وقت" : "Scheduled Visit"}</span>
                 </div>
-                <span className="text-[10.5px] text-slate-500">
+                <span className="text-[10.5px] text-slate-600 font-medium">
                   {isUrdu ? "تاریخ اور وقت منتخب کریں" : "Pick date & time window"}
                 </span>
               </button>
@@ -320,15 +320,15 @@ export function Step3LocationSchedule({
           </div>
 
           {/* Date Selector Card */}
-          <div className="bg-white rounded-2xl shadow-sm p-3.5 space-y-2.5">
+          <div className="bg-white rounded-2xl shadow-sm p-3.5 space-y-2.5 border border-slate-100">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-1.5">
-                <CalendarIcon className="size-4 text-[#0F766E]" />
+                <CalendarIcon className="size-4 text-[#0F8B8D]" />
                 <h2 className="text-xs font-bold text-[#123B5D]">
                   {isUrdu ? "پسندیدہ تاریخ" : "Preferred Date"}
                 </h2>
               </div>
-              <span className="text-[11px] font-semibold text-[#0F766E]">
+              <span className="text-[11px] font-bold text-[#0F8B8D] bg-[#0F8B8D]/10 px-2 py-0.5 rounded-md">
                 {data.preferredDate
                   ? new Date(data.preferredDate).toLocaleDateString(isUrdu ? "ur-PK" : "en-US", {
                       month: "short",
@@ -351,11 +351,11 @@ export function Step3LocationSchedule({
                     onClick={() => onChange({ preferredDate: day.dateString })}
                     className={`flex flex-col items-center justify-center min-w-[50px] py-2 px-1.5 rounded-xl text-center transition-all cursor-pointer active:scale-95 ${
                       isSelected
-                        ? "bg-[#0F766E] text-white shadow-2xs font-bold"
-                        : "bg-slate-50 text-slate-600 hover:bg-slate-100"
+                        ? "bg-[#0F8B8D] text-white shadow-xs font-bold"
+                        : "bg-slate-50 text-slate-700 hover:bg-slate-100 border border-slate-200/50"
                     }`}
                   >
-                    <span className="text-[10px] uppercase font-semibold">
+                    <span className="text-[10px] uppercase font-bold">
                       {day.isToday ? (isUrdu ? "آج" : "Today") : day.dayName}
                     </span>
                     <span className="text-sm font-bold mt-0.5">
@@ -368,9 +368,9 @@ export function Step3LocationSchedule({
           </div>
 
           {/* Time Window Card */}
-          <div className="bg-white rounded-2xl shadow-sm p-3.5 space-y-2">
+          <div className="bg-white rounded-2xl shadow-sm p-3.5 space-y-2 border border-slate-100">
             <div className="flex items-center gap-1.5">
-              <Clock className="size-4 text-[#0F766E]" />
+              <Clock className="size-4 text-[#0F8B8D]" />
               <h2 className="text-xs font-bold text-[#123B5D]">
                 {isUrdu ? "وقت کا سلاٹ" : "Time Window"}
               </h2>
@@ -385,12 +385,12 @@ export function Step3LocationSchedule({
                     onClick={() => onChange({ preferredTimeSlot: slot.time })}
                     className={`flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium transition-all cursor-pointer ${
                       isSelected
-                        ? "bg-[#0F766E]/10 text-[#0F766E] font-bold ring-2 ring-[#0F766E]"
-                        : "bg-slate-50 text-slate-600 hover:bg-slate-100"
+                        ? "bg-[#0F8B8D]/10 text-[#0F8B8D] font-bold ring-2 ring-[#0F8B8D]"
+                        : "bg-slate-50 text-slate-700 hover:bg-slate-100 border border-slate-200/50"
                     }`}
                   >
                     <span>{slot.label}</span>
-                    <span className="text-[11px] text-slate-400 font-normal">
+                    <span className={`text-[11px] font-semibold ${isSelected ? "text-[#0F8B8D]" : "text-slate-500"}`}>
                       {slot.time}
                     </span>
                   </label>
@@ -402,11 +402,11 @@ export function Step3LocationSchedule({
       </div>
 
       {/* Actions */}
-      <div className="pt-3 border-t border-slate-200 flex justify-between items-center gap-4">
+      <div className="pt-4 border-t border-slate-200 flex justify-between items-center gap-4 pb-20 lg:pb-8">
         <button
           type="button"
           onClick={onBack}
-          className="px-5 py-2 rounded-full border border-slate-200 text-slate-600 font-semibold text-xs hover:bg-slate-50 transition-colors flex items-center gap-1.5 cursor-pointer"
+          className="px-5 py-2.5 rounded-full border border-slate-200 text-slate-700 font-bold text-xs hover:bg-slate-50 transition-colors flex items-center gap-1.5 cursor-pointer"
         >
           <ArrowLeft className="size-4 rtl:rotate-180" />
           <span>{isUrdu ? "پیچھے" : "Back"}</span>
@@ -415,7 +415,7 @@ export function Step3LocationSchedule({
         <button
           type="button"
           onClick={handleProceed}
-          className="px-6 py-2.5 rounded-full transition-all duration-200 flex items-center gap-2 text-xs sm:text-sm font-semibold text-white shadow-sm bg-[#0F766E] hover:bg-[#115E59] active:scale-[0.99] cursor-pointer"
+          className="px-6 py-2.5 rounded-full transition-all duration-200 flex items-center gap-2 text-xs sm:text-sm font-bold text-white shadow-sm bg-[#0F8B8D] hover:bg-[#0D7A7C] active:scale-[0.99] cursor-pointer"
         >
           <span>{isUrdu ? "اگلا مرحلہ: جائزہ لیں" : "Next Step: Review"}</span>
           <ArrowRight className="size-4 rtl:rotate-180" />
