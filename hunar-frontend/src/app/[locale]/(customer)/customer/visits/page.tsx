@@ -1,23 +1,31 @@
-import { setRequestLocale } from "next-intl/server";
+"use client";
+
+import { useQuery } from "@tanstack/react-query";
 import { CustomerVisitsView } from "@/features/customer-visits/components/customer-visits-view";
 import { getCustomerVisits } from "@/features/customer-visits/api/customer-visits-api";
+import { LoadingState } from "@/components/shared/loading-state";
+import { ErrorState } from "@/components/shared/error-state";
 
-export async function generateMetadata() {
-  return {
-    title: "Scheduled Visits & Live Tracker — WorkerFIX",
-    description: "Track technician live dispatch in real-time, view verified doorstep safety PINs, and manage your visits across Peshawar.",
-  };
-}
+export default function CustomerVisitsPage() {
+  const { data, isPending, isError, refetch } = useQuery({
+    queryKey: ["customer", "visits"],
+    queryFn: getCustomerVisits,
+    staleTime: 30_000,
+  });
 
-export default async function CustomerVisitsPage({
-  params,
-}: {
-  params: Promise<{ locale: string }>;
-}) {
-  const { locale } = await params;
-  setRequestLocale(locale);
+  if (isPending) {
+    return <LoadingState label="Loading your visits..." />;
+  }
 
-  const visits = await getCustomerVisits();
+  if (isError) {
+    return (
+      <ErrorState
+        title="Unable to load visits"
+        description="Please check your network connection and try again."
+        onRetry={() => void refetch()}
+      />
+    );
+  }
 
-  return <CustomerVisitsView initialVisits={visits} />;
+  return <CustomerVisitsView initialVisits={data ?? []} />;
 }

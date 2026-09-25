@@ -1,20 +1,39 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { AdminShell } from "@/features/admin/components/admin-shell";
-import { MOCK_SETTINGS } from "@/mocks/admin.mock";
+import { adminApi } from "@/features/admin/api/admin-api";
 import type { PlatformSettings } from "@/types/admin";
 import { Check, Settings, ShieldCheck } from "lucide-react";
 
 export default function SettingsPage() {
-  const [settings, setSettings] = useState<PlatformSettings>(MOCK_SETTINGS);
+  const [settings, setSettings] = useState<PlatformSettings | null>(null);
   const [saved, setSaved] = useState(false);
+
+  useEffect(() => {
+    adminApi
+      .getSettings()
+      .then(setSettings)
+      .catch(() => setSettings(null));
+  }, []);
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!settings) return;
     setSaved(true);
+    void adminApi.saveSettings(settings).catch(() => undefined);
     setTimeout(() => setSaved(false), 2000);
   };
+
+  if (!settings) {
+    return (
+      <AdminShell>
+        <div className="mx-auto max-w-3xl space-y-6">
+          <p className="text-sm font-medium text-slate-500">Loading platform settings...</p>
+        </div>
+      </AdminShell>
+    );
+  }
 
   return (
     <AdminShell>

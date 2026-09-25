@@ -24,6 +24,9 @@ import { customerLogin } from "../api/auth-api";
 import { getErrorMessage } from "../lib/error";
 import { normalizePkPhone } from "../lib/phone";
 import { phoneSchema } from "../schemas/signup";
+// import { isMockMode } from "@/lib/data-source";
+import { isMockMode } from "@/lib/data-source";
+// test
 
 const signInSchema = z.object({
   phone: phoneSchema,
@@ -171,6 +174,16 @@ export function CustomerSignInForm() {
             {submitError}
           </p>
         ) : null}
+
+        {/* Test credentials hint for development */}
+        {isMockMode() && (
+          <div className="flex items-start gap-1.5 rounded-xl bg-teal-100 px-3 py-2 text-xs font-medium text-teal-800">
+            <span className="mt-0.5 size-3.5 shrink-0">🧪</span>
+            <span>
+              <strong>Test login: </strong>any phone + password (6+ chars)
+            </span>
+          </div>
+        )}
 
         <div className="flex items-center gap-1.5 rounded-xl bg-slate-50 px-3 py-2 text-[11px] text-muted-foreground">
           <ShieldCheck className="size-3.5 text-teal shrink-0" />

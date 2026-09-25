@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   AlertTriangle,
   Award,
@@ -22,23 +22,35 @@ import {
 } from "lucide-react";
 import { Link, useRouter } from "@/i18n/navigation";
 import { useLocale } from "next-intl";
-import { MOCK_JOB_COMPLETION_MAP } from "../data/mock-completion-data";
-import { acceptRepairEstimate, submitJobReview } from "../api/customer-repair-api";
-import { JobCompletionData, JobEvidencePhoto } from "../types";
+import { useQuery } from "@tanstack/react-query";
+import { LoadingState } from "@/components/shared/loading-state";
+import { ErrorState } from "@/components/shared/error-state";
+import { JobEvidencePhoto } from "@/features/customer-jobs/types";
+import { getJobRepairInvoice, acceptRepairEstimate, submitJobReview } from "../api/customer-repair-api";
+import type { JobCompletionData } from "../types";
 
 interface CustomerJobCompletionViewProps {
   initialJobId?: string;
 }
 
 export function CustomerJobCompletionView({
-  initialJobId = "job-1",
+  initialJobId,
 }: CustomerJobCompletionViewProps) {
   const router = useRouter();
   const locale = useLocale();
   const isUrdu = locale === "ur";
 
-  const completionData: JobCompletionData =
-    MOCK_JOB_COMPLETION_MAP[initialJobId] || MOCK_JOB_COMPLETION_MAP["job-1"];
+  const {
+    data: completionData,
+    isPending,
+    isError,
+    refetch,
+  } = useQuery({
+    queryKey: ["customer", "repair-invoice", initialJobId],
+    queryFn: () => getJobRepairInvoice(initialJobId ?? ""),
+    enabled: !!initialJobId,
+    staleTime: 30_000,
+  });
 
   // Interactive Form States
   const [rating, setRating] = useState<number>(5);
@@ -49,11 +61,18 @@ export function CustomerJobCompletionView({
     isUrdu ? "مناسب قیمت" : "Fair Pricing",
     isUrdu ? "خوش اخلاق اور پیشہ ور" : "Polite & Professional",
   ]);
-  const [reviewNote, setReviewNote] = useState<string>(
-    isUrdu
-      ? `${completionData.worker.name} نے بہت زبردست کام کیا۔ وقت پر پہنچے، مسئلہ واضح سمجھایا اور صفائی سے کام کیا۔ میں پوری طرح مطمئن ہوں!`
-      : `${completionData.worker.name} did an exceptional job. Arrived right on time, explained the issue clearly, and completed the repair cleanly. Highly recommended!`
-  );
+  const [reviewNote, setReviewNote] = useState<string>("");
+
+  useEffect(() => {
+    if (completionData && reviewNote === "") {
+      setReviewNote(
+        isUrdu
+          ? `${completionData.worker.name} نے بہت زبردست کام کیا۔ وقت پر پہنچے، مسئلہ واضح سمجھایا اور صفائی سے کام کیا۔ میں پوری طرح مطمئن ہوں!`
+          : `${completionData.worker.name} did an exceptional job. Arrived right on time, explained the issue clearly, and completed the repair cleanly. Highly recommended!`
+      );
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [completionData, isUrdu]);
 
   // Modals & States
   const [showConfirmModal, setShowConfirmModal] = useState<boolean>(false);
@@ -90,8 +109,8 @@ export function CustomerJobCompletionView({
   const handleApproveAndPay = async () => {
     setIsProcessing(true);
     try {
-      await acceptRepairEstimate(initialJobId, "cash");
-      await submitJobReview(initialJobId, {
+      await acceptRepairEstimate(initialJobId!, "cash");
+      await submitJobReview(initialJobId!, {
         rating,
         comment: reviewNote,
         punctualityRating: rating,
@@ -106,6 +125,20 @@ export function CustomerJobCompletionView({
       setIsCompletedSuccess(true);
     }
   };
+
+  if (isPending) {
+    return <LoadingState label="Loading completion details..." />;
+  }
+
+  if (isError || !completionData) {
+    return (
+      <ErrorState
+        title="Unable to load completion details"
+        description="Please check your network connection and try again."
+        onRetry={() => void refetch()}
+      />
+    );
+  }
 
   return (
     <div className="w-full min-h-screen bg-white text-slate-800 flex flex-col">

@@ -1,14 +1,26 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { AdminShell } from "@/features/admin/components/admin-shell";
 import { Link } from "@/i18n/navigation";
-import { MOCK_ADMIN_KPIS, MOCK_PAYMENTS } from "@/mocks/admin.mock";
+import { adminApi } from "@/features/admin/api/admin-api";
 import type { PaymentTransaction } from "@/types/admin";
 import { Coins, CreditCard, DollarSign, Lock } from "lucide-react";
 
 export default function PaymentsPage() {
-  const [payments] = useState<PaymentTransaction[]>(MOCK_PAYMENTS);
+  const [payments, setPayments] = useState<PaymentTransaction[]>([]);
+  const [kpis, setKpis] = useState<{ totalRevenue: number; totalPaymentsProcessed: number } | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    Promise.all([adminApi.listTransactions(), adminApi.getKpis()])
+      .then(([txns, kpiData]) => {
+        setPayments(txns);
+        setKpis({ totalRevenue: kpiData.totalRevenue, totalPaymentsProcessed: kpiData.totalPaymentsProcessed });
+      })
+      .catch(() => undefined)
+      .finally(() => setLoading(false));
+  }, []);
 
   return (
     <AdminShell>
@@ -37,7 +49,7 @@ export default function PaymentsPage() {
               <Coins className="size-5 text-teal" />
             </div>
             <p className="mt-2 text-3xl font-black text-navy">
-              Rs. {MOCK_ADMIN_KPIS.totalRevenue.toLocaleString()}
+              Rs. {(kpis?.totalRevenue ?? 0).toLocaleString()}
             </p>
             <p className="mt-1 text-[11px] text-slate-400">10% earned on visit fees</p>
           </div>
@@ -50,7 +62,7 @@ export default function PaymentsPage() {
               <DollarSign className="size-5 text-navy" />
             </div>
             <p className="mt-2 text-3xl font-black text-navy">
-              Rs. {MOCK_ADMIN_KPIS.totalPaymentsProcessed.toLocaleString()}
+              Rs. {(kpis?.totalPaymentsProcessed ?? 0).toLocaleString()}
             </p>
             <p className="mt-1 text-[11px] text-slate-400">Escrow & payment total</p>
           </div>
@@ -89,7 +101,12 @@ export default function PaymentsPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 font-medium">
-              {payments.map((p) => (
+              {loading ? (
+                <tr><td colSpan={7} className="py-6 px-4 text-center text-slate-500">Loading transactions...</td></tr>
+              ) : payments.length === 0 ? (
+                <tr><td colSpan={7} className="py-6 px-4 text-center text-slate-500">No transactions yet.</td></tr>
+              ) : (
+              payments.map((p) => (
                 <tr key={p.id} className="transition hover:bg-slate-50">
                   <td className="py-4 px-4 font-extrabold text-navy">{p.id}</td>
                   <td className="py-4 px-4 font-semibold text-slate-700">{p.customerName}</td>
@@ -103,7 +120,7 @@ export default function PaymentsPage() {
                     </span>
                   </td>
                 </tr>
-              ))}
+              )))}
             </tbody>
           </table>
         </div>

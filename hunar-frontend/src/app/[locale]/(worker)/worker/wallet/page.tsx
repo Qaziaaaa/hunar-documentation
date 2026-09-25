@@ -16,10 +16,6 @@ import {
   getWalletTransactions,
   queryKeys,
 } from "@/services/worker/earnings.service";
-import {
-  mockWalletSummary,
-  mockWalletTransactions,
-} from "@/mocks/earnings.mock";
 
 import { workerStore, useWorkerJobs } from "@/stores/worker-jobs-store";
 
@@ -31,13 +27,11 @@ export function WalletContent() {
   const summary = useQuery({
     queryKey: queryKeys.summary,
     queryFn: getWalletSummary,
-    initialData: mockWalletSummary,
   });
 
   const transactions = useQuery({
     queryKey: queryKeys.transactions,
     queryFn: getWalletTransactions,
-    initialData: mockWalletTransactions,
   });
 
   if (!summary.data || !transactions.data) {

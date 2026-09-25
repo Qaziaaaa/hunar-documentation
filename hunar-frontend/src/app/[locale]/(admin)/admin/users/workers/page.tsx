@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { AdminShell } from "@/features/admin/components/admin-shell";
-import { MOCK_WORKERS } from "@/mocks/admin.mock";
+import { adminApi } from "@/features/admin/api/admin-api";
 import type { WorkerUser } from "@/types/admin";
 
 import {
@@ -21,28 +21,47 @@ import {
 } from "lucide-react";
 
 export default function WorkersPage() {
-  const [workers, setWorkers] = useState<WorkerUser[]>(MOCK_WORKERS);
+  const [workers, setWorkers] = useState<WorkerUser[]>([]);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<"ALL" | "VERIFIED" | "PENDING" | "SUSPENDED">("ALL");
   const [selectedWorker, setSelectedWorker] = useState<WorkerUser | null>(null);
   const [actionWorker, setActionWorker] = useState<WorkerUser | null>(null);
 
-  const filtered = workers.filter((w) => {
-    const matchesSearch =
-      w.name.toLowerCase().includes(search.toLowerCase()) ||
-      w.phone.includes(search) ||
-      w.skills.some((s) => s.toLowerCase().includes(search.toLowerCase()));
-    
-    let matchesStatus = true;
-    if (statusFilter === "VERIFIED") matchesStatus = w.verificationStatus === "VERIFIED";
-    if (statusFilter === "PENDING") matchesStatus = w.verificationStatus === "PENDING";
-    if (statusFilter === "SUSPENDED") matchesStatus = w.status === "SUSPENDED";
+  useEffect(() => {
+    adminApi
+      .listWorkers({ limit: 100 })
+      .then((res) => setWorkers(res.items))
+      .catch(() => setWorkers([]))
+      .finally(() => setLoading(false));
+  }, []);
 
-    return matchesSearch && matchesStatus;
-  });
+  const filtered = useMemo(
+    () =>
+      workers.filter((w) => {
+        const matchesSearch =
+          w.name.toLowerCase().includes(search.toLowerCase()) ||
+          w.phone.includes(search) ||
+          w.skills.some((s) => s.toLowerCase().includes(search.toLowerCase()));
+
+        let matchesStatus = true;
+        if (statusFilter === "VERIFIED") matchesStatus = w.verificationStatus === "VERIFIED";
+        if (statusFilter === "PENDING") matchesStatus = w.verificationStatus === "PENDING";
+        if (statusFilter === "SUSPENDED") matchesStatus = w.status === "SUSPENDED";
+
+        return matchesSearch && matchesStatus;
+      }),
+    [workers, search, statusFilter],
+  );
 
   const handleToggleStatus = () => {
     if (!actionWorker) return;
+
+    const suspending = actionWorker.status === "ACTIVE";
+    void (suspending
+      ? adminApi.suspendWorker(actionWorker.id)
+      : adminApi.reactivateWorker(actionWorker.id)
+    ).catch(() => undefined);
 
     setWorkers((prev) =>
       prev.map((w) => {

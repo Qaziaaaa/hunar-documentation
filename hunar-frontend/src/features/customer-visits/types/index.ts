@@ -4,7 +4,13 @@ export type VisitStatus =
   | "arrived"
   | "inspection_in_progress"
   | "completed"
-  | "cancelled";
+  | "cancelled"
+  | "scheduled"
+  | "started"
+  | "in_progress"
+  | "approved"
+  | "reviewed"
+  | "paid";
 
 export interface TechnicianInfo {
   id: string;

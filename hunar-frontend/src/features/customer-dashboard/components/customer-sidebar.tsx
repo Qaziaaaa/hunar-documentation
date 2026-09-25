@@ -16,7 +16,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { Link, usePathname, useRouter } from "@/i18n/navigation";
 import { logoutCustomer } from "@/features/auth/api/auth-api";
 import { OrderworkerLogo } from "@/components/shared/orderworker-logo";
-import { MOCK_CUSTOMER_USER } from "../mock/customer-mock-data";
+import { getStoredUser } from "@/lib/api-client";
 
 interface CustomerSidebarProps {
   isOpen?: boolean;
@@ -28,6 +28,9 @@ export function CustomerSidebar({ isOpen, onClose }: CustomerSidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
   const locale = useLocale();
+  const storedUser = getStoredUser();
+  const customerName = storedUser?.name || storedUser?.phone || "Customer";
+  const customerInitial = customerName.charAt(0).toUpperCase() || "C";
 
   const handleLogout = async () => {
     await logoutCustomer();
@@ -208,14 +211,14 @@ export function CustomerSidebar({ isOpen, onClose }: CustomerSidebarProps) {
           <div className="flex items-center justify-between pt-1">
             <div className="flex items-center gap-2.5 min-w-0">
               <div className="w-8 h-8 rounded-full bg-[#123B5D] flex items-center justify-center text-white font-bold text-xs shrink-0">
-                {locale === "ur" ? "ع" : MOCK_CUSTOMER_USER.avatarInitials}
+                {customerInitial}
               </div>
               <div className="flex flex-col min-w-0">
                 <span className="text-xs font-semibold text-slate-900 truncate">
-                  {locale === "ur" ? "عبداللہ" : MOCK_CUSTOMER_USER.name}
+                  {customerName}
                 </span>
                 <span className="text-[10px] font-medium text-slate-500 truncate">
-                  {locale === "ur" ? "یونیورسٹی ٹاؤن، پشاور" : MOCK_CUSTOMER_USER.area}
+                  {locale === "ur" ? "پشاور" : "Peshawar"}
                 </span>
               </div>
             </div>

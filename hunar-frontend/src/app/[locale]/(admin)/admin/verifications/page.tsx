@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { AdminShell } from "@/features/admin/components/admin-shell";
 import { Link } from "@/i18n/navigation";
-import { MOCK_VERIFICATIONS } from "@/mocks/admin.mock";
+import { adminApi } from "@/features/admin/api/admin-api";
 import type { VerificationRequest } from "@/types/admin";
 
 import {
@@ -19,15 +19,28 @@ import {
 } from "lucide-react";
 
 export default function VerificationsQueuePage() {
-  const [items, setItems] = useState<VerificationRequest[]>(MOCK_VERIFICATIONS);
+  const [items, setItems] = useState<VerificationRequest[]>([]);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
 
-  const filtered = items.filter(
-    (item) =>
-      item.workerName.toLowerCase().includes(search.toLowerCase()) ||
-      item.workerPhone.includes(search) ||
-      item.serviceCity.toLowerCase().includes(search.toLowerCase()) ||
-      item.skills.some((s) => s.toLowerCase().includes(search.toLowerCase()))
+  useEffect(() => {
+    adminApi
+      .listVerifications("PENDING")
+      .then(setItems)
+      .catch(() => setItems([]))
+      .finally(() => setLoading(false));
+  }, []);
+
+  const filtered = useMemo(
+    () =>
+      items.filter(
+        (item) =>
+          item.workerName.toLowerCase().includes(search.toLowerCase()) ||
+          item.workerPhone.includes(search) ||
+          item.serviceCity.toLowerCase().includes(search.toLowerCase()) ||
+          item.skills.some((s) => s.toLowerCase().includes(search.toLowerCase()))
+      ),
+    [items, search]
   );
 
   return (
@@ -66,6 +79,11 @@ export default function VerificationsQueuePage() {
         </div>
 
         {/* Verification Cards Queue Grid */}
+        {loading ? (
+          <p className="text-sm font-medium text-slate-500">Loading verification queue...</p>
+        ) : filtered.length === 0 ? (
+          <p className="text-sm font-medium text-slate-500">No pending verifications in the queue.</p>
+        ) : (
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
           {filtered.map((item) => (
             <div
@@ -139,6 +157,7 @@ export default function VerificationsQueuePage() {
             </div>
           ))}
         </div>
+        )}
       </div>
     </AdminShell>
   );

@@ -1,37 +1,30 @@
 import { http } from "@/lib/api-client";
-import { MOCK_SCHEDULED_VISITS } from "../data/mock-customer-visits";
+import { VisitStatus } from "@/features/customer-visits/types";
 import type { ScheduledVisit } from "../types";
+
+const FALLBACK_IMAGE =
+  "https://images.unsplash.com/photo-1540569014015-19a7be504e3a?w=150&auto=format&fit=crop&q=80";
 
 /**
  * Fetch all customer visits / bookings
  */
 export async function getCustomerVisits(): Promise<ScheduledVisit[]> {
-  try {
-    const res = await http.get<any[]>("/visits/my");
-    if (Array.isArray(res) && res.length > 0) {
-      return res.map((item: any) => transformBackendVisit(item));
-    }
-  } catch (err) {
-    console.warn("[getCustomerVisits] Backend offline, using mock visits:", err);
+  const res = await http.get<any[]>("/visits/my");
+  if (!Array.isArray(res)) {
+    throw new Error("INVALID_VISITS_RESPONSE");
   }
-  return MOCK_SCHEDULED_VISITS;
+  return res.map((item: any) => transformBackendVisit(item));
 }
 
 /**
  * Get visit details by visit ID
  */
 export async function getVisitDetail(visitId: string): Promise<ScheduledVisit> {
-  try {
-    const res = await http.get<any>(`/visits/${visitId}`);
-    if (res && res.id) {
-      return transformBackendVisit(res);
-    }
-  } catch (err) {
-    console.warn(`[getVisitDetail] Backend offline, using mock for ${visitId}:`, err);
+  const res = await http.get<any>(`/visits/${visitId}`);
+  if (!res || !res.id) {
+    throw new Error(`VISIT_NOT_FOUND: ${visitId}`);
   }
-
-  const match = MOCK_SCHEDULED_VISITS.find((v) => v.id === visitId);
-  return match || MOCK_SCHEDULED_VISITS[0];
+  return transformBackendVisit(res);
 }
 
 /**
@@ -40,73 +33,86 @@ export async function getVisitDetail(visitId: string): Promise<ScheduledVisit> {
 export async function getWorkerLocationTrack(
   jobId: string
 ): Promise<{ latitude: number; longitude: number; recordedAt: string }[]> {
-  try {
-    const res = await http.get<any[]>(`/location/track/${jobId}`);
-    if (Array.isArray(res) && res.length > 0) {
-      return res.map((item: any) => ({
-        latitude: item.latitude,
-        longitude: item.longitude,
-        recordedAt: item.recordedAt,
-      }));
-    }
-  } catch (err) {
-    console.warn(`[getWorkerLocationTrack] Backend offline for job ${jobId}, using simulated track:`, err);
+  const res = await http.get<any[]>(`/location/track/${jobId}`);
+  if (!Array.isArray(res)) {
+    throw new Error(`INVALID_TRACK_RESPONSE: ${jobId}`);
   }
-
-  // Simulated GPS track around Hayatabad, Peshawar
-  return [
-    { latitude: 33.9982, longitude: 71.4395, recordedAt: new Date().toISOString() },
-  ];
+  return res.map((item: any) => ({
+    latitude: item.latitude,
+    longitude: item.longitude,
+    recordedAt: item.recordedAt,
+  }));
 }
 
 function transformBackendVisit(v: any): ScheduledVisit {
+  const worker = v.worker || {};
+  const job = v.job || {};
   return {
     id: v.id,
     jobId: v.jobId || `job-${v.id}`,
-    jobTitle: v.job?.title || "Home Repair & Inspection",
+    jobTitle: job.title || "Home Repair & Inspection",
     jobTitleUr: "گھریلو مرمت اور معائنہ",
-    category: v.job?.category?.name || "Plumbing",
+    category: job.category?.name || "General Service",
     subCategory: "Emergency Repair",
     subCategoryUr: "ہنگامی مرمت",
-    status: (v.status?.toLowerCase() as any) || "en_route",
-    scheduledDate: v.scheduledDate || new Date().toISOString().split("T")[0],
+    status: mapVisitStatus(v.status),
+    scheduledDate:
+      v.scheduledDate || v.scheduledAt || new Date().toISOString().split("T")[0],
     scheduledTimeSlot: "11:30 AM - 12:30 PM",
-    etaMinutes: 12,
-    remainingDistanceKm: 1.8,
-    securityPin: "8492",
-    visitCharges: Number(v.offer?.visitCharge || 350),
-    escrowAmount: 350,
-    customerAddress: v.job?.address || "House 42, Street 8, Phase 4, Hayatabad",
-    customerArea: v.job?.area || "Hayatabad, Peshawar",
-    customerAreaUr: "حیات آباد، پشاور",
-    customerLat: Number(v.job?.latitude || 33.9982),
-    customerLng: Number(v.job?.longitude || 71.4395),
-    originLat: 34.0045,
-    originLng: 71.477,
+    etaMinutes: Number(v.etaMinutes || v.estimatedArrivalMinutes || 0),
+    remainingDistanceKm: Number(v.remainingDistanceKm || 0),
+    securityPin: v.securityPin || v.pin,
+    visitCharges: Number(v.offer?.visitCharge || v.visitCharge || v.lockedVisitCharge || 0),
+    escrowAmount: Number(v.offer?.visitCharge || v.visitCharge || v.lockedVisitCharge || 0),
+    customerAddress: job.address || "Peshawar",
+    customerArea: job.area || "Peshawar",
+    customerAreaUr: "پشاور",
+    customerLat: Number(job.latitude || v.customerLat || 33.9944),
+    customerLng: Number(job.longitude || v.customerLng || 71.4999),
+    originLat: Number(v.originLat || 34.0045),
+    originLng: Number(v.originLng || 71.477),
     technician: {
-      id: v.workerId || "worker-1",
-      name: v.worker?.name || "Kashif Afridi",
-      nameUr: "کاشف آفریدی",
-      businessName: "Afridi Quick Fixers",
-      businessNameUr: "آفریدی کوئیک فکسرز",
-      avatarUrl: v.worker?.avatarUrl || "https://images.unsplash.com/photo-1540569014015-19a7be504e3a?w=150&auto=format&fit=crop&q=80",
-      phone: v.worker?.phone || "0300-1234567",
-      rating: 4.9,
-      totalReviews: 64,
-      tradeCategory: "Licensed Plumber",
-      tradeCategoryUr: "لائسنس یافتہ پلمبر",
-      hunarBadgeId: "#OW-9021",
-      vehicleModel: "Honda CD 70 (Red)",
-      vehiclePlate: "PSH-8821",
-      isCnicVerified: true,
-      isBiometricChecked: true,
-      currentLat: 34.0012,
-      currentLng: 71.4421,
-      speedKmh: 28,
+      id: v.workerId || worker.id || "worker-unknown",
+      name: worker.name || "Technician",
+      nameUr: worker.name || "ٹیکنیشن",
+      businessName: worker.businessName,
+      businessNameUr: worker.businessName,
+      avatarUrl: worker.avatarUrl || worker.avatar || FALLBACK_IMAGE,
+      phone: worker.phone || "",
+      rating: Number(worker.rating || 0),
+      totalReviews: Number(worker.totalReviews || 0),
+      tradeCategory: worker.tradeCategory || "Technician",
+      tradeCategoryUr: worker.tradeCategory || "ٹیکنیشن",
+      hunarBadgeId: worker.hunarBadgeId || `#OW-${(worker.id || "0000").slice(0, 4).toUpperCase()}`,
+      vehicleModel: v.vehicleModel,
+      vehiclePlate: v.vehiclePlate,
+      isCnicVerified: !!worker.isCnicVerified || !!v.isCnicVerified,
+      isBiometricChecked: !!v.isBiometricChecked,
+      currentLat: Number(v.currentLat || worker.currentLat || 0),
+      currentLng: Number(v.currentLng || worker.currentLng || 0),
+      speedKmh: Number(v.speedKmh || worker.speedKmh || 0),
     },
-    currentStreetLandmark: "Passing Phase 3 Commercial Market",
-    currentStreetLandmarkUr: "فیز 3 کمرشل مارکیٹ کے قریب",
+    currentStreetLandmark: v.currentStreetLandmark || "En route",
+    currentStreetLandmarkUr: v.currentStreetLandmark || "روانہ",
     updatedAt: v.updatedAt || new Date().toISOString(),
     createdAt: v.createdAt || new Date().toISOString(),
   };
+}
+
+function mapVisitStatus(status?: string): VisitStatus {
+  switch (status) {
+    case "SCHEDULED":
+    case "EN_ROUTE":
+    case "ARRIVED":
+    case "STARTED":
+    case "IN_PROGRESS":
+    case "COMPLETED":
+    case "CANCELLED":
+    case "APPROVED":
+    case "REVIEWED":
+    case "PAID":
+      return status.toLowerCase() as VisitStatus;
+    default:
+      return (status || "en_route") as VisitStatus;
+  }
 }

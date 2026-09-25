@@ -1,9 +1,9 @@
 "use client";
 
-import { use, useState } from "react";
+import { useEffect, useState } from "react";
 import { AdminShell } from "@/features/admin/components/admin-shell";
+import { adminApi } from "@/features/admin/api/admin-api";
 import { Link } from "@/i18n/navigation";
-import { MOCK_JOB_DETAILS } from "@/mocks/admin.mock";
 import type { JobDetailItem } from "@/types/admin";
 import {
   AlertCircle,
@@ -21,12 +21,44 @@ export default function JobDetailPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  const resolvedParams = use(params);
-  const [job, setJob] = useState<JobDetailItem | undefined>(
-    MOCK_JOB_DETAILS.find((j) => j.id === resolvedParams.id) || MOCK_JOB_DETAILS[0]
-  );
+  const [resolvedParams, setResolvedParams] = useState<{ id: string } | null>(null);
+  const [job, setJob] = useState<JobDetailItem | null>(null);
+  const [loading, setLoading] = useState(true);
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [cancelReason, setCancelReason] = useState("");
+
+  useEffect(() => {
+    let cancelled = false;
+    void params.then((p) => {
+      if (cancelled) return;
+      setResolvedParams(p);
+      setLoading(true);
+      adminApi
+        .getJobDetail(p.id)
+        .then((detail) => {
+          if (!cancelled) setJob(detail);
+        })
+        .catch(() => {
+          if (!cancelled) setJob(null);
+        })
+        .finally(() => {
+          if (!cancelled) setLoading(false);
+        });
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [params]);
+
+  if (loading) {
+    return (
+      <AdminShell>
+        <div className="p-8 text-center">
+          <p className="text-base font-bold text-navy">Loading job audit record...</p>
+        </div>
+      </AdminShell>
+    );
+  }
 
   if (!job) {
     return (
@@ -51,6 +83,9 @@ export default function JobDetailPage({
           }
         : prev
     );
+    if (resolvedParams) {
+      void adminApi.cancelJob(resolvedParams.id, cancelReason).catch(() => undefined);
+    }
     setShowCancelModal(false);
   };
 

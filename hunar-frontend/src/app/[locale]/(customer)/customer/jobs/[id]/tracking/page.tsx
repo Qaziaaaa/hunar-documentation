@@ -1,23 +1,37 @@
-import { setRequestLocale } from "next-intl/server";
+"use client";
+
+import { useParams } from "next/navigation";
+import { useQuery } from "@tanstack/react-query";
 import { CustomerVisitsView } from "@/features/customer-visits/components/customer-visits-view";
 import { getCustomerVisits } from "@/features/customer-visits/api/customer-visits-api";
+import { LoadingState } from "@/components/shared/loading-state";
+import { ErrorState } from "@/components/shared/error-state";
 
-export async function generateMetadata() {
-  return {
-    title: "Live Technician Arrival Tracker — WorkerFIX",
-    description: "Real-time GPS tracking and doorstep OTP PIN verification for your booked service.",
-  };
-}
+export default function JobTrackingPage() {
+  const { id } = useParams<{ id: string }>();
 
-export default async function JobTrackingPage({
-  params,
-}: {
-  params: Promise<{ locale: string; id: string }>;
-}) {
-  const { locale } = await params;
-  setRequestLocale(locale);
+  const { data: visits, isPending, isError, refetch } = useQuery({
+    queryKey: ["customer", "visits"],
+    queryFn: getCustomerVisits,
+    staleTime: 30_000,
+  });
 
-  const visits = await getCustomerVisits();
+  if (isPending) {
+    return <LoadingState label="Loading live visit tracking..." />;
+  }
 
-  return <CustomerVisitsView initialVisits={visits} />;
+  if (isError) {
+    return (
+      <ErrorState
+        title="Unable to load visit tracking"
+        description="Please check your network connection and try again."
+        onRetry={() => void refetch()}
+      />
+    );
+  }
+
+  const visitsForJob =
+    id && visits ? visits.filter((v) => v.jobId === id || v.id === id) : visits ?? [];
+
+  return <CustomerVisitsView initialVisits={visitsForJob.length > 0 ? visitsForJob : (visits ?? [])} />;
 }

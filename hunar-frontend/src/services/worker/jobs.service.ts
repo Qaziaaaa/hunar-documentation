@@ -90,13 +90,24 @@ export async function listWorkerJobs(): Promise<Job[]> {
   return (items ?? []).map(mapBackendJob);
 }
 
-export async function listNearbyJobs(): Promise<Job[]> {
+export async function listNearbyJobs(location?: {
+  lat: number;
+  lng: number;
+  radiusKm?: number;
+}): Promise<Job[]> {
   if (isMockMode()) {
     return simulateLatency(
       mockJobs.filter((job) => isNearbyJob(job.status)),
     );
   }
-  const res = await http.get<BackendPage<BackendJobRow> | BackendJobRow[]>("/jobs/available");
+  const resolved = location ?? { lat: 33.98, lng: 71.43, radiusKm: 25 };
+  const params = new URLSearchParams();
+  params.set("lat", String(resolved.lat));
+  params.set("lng", String(resolved.lng));
+  params.set("radiusKm", String(resolved.radiusKm ?? 25));
+  const res = await http.get<BackendPage<BackendJobRow> | BackendJobRow[]>(
+    `/jobs/available?${params.toString()}`,
+  );
   const items = Array.isArray(res) ? res : res.items;
   return (items ?? []).map(mapBackendJob);
 }

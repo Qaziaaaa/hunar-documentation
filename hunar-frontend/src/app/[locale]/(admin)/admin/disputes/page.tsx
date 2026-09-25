@@ -1,14 +1,23 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { AdminShell } from "@/features/admin/components/admin-shell";
 import { Link } from "@/i18n/navigation";
-import { MOCK_DISPUTES } from "@/mocks/admin.mock";
+import { adminApi } from "@/features/admin/api/admin-api";
 import type { DisputeReport } from "@/types/admin";
 import { AlertTriangle, Eye, ShieldAlert } from "lucide-react";
 
 export default function DisputesPage() {
-  const [disputes] = useState<DisputeReport[]>(MOCK_DISPUTES);
+  const [disputes, setDisputes] = useState<DisputeReport[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    adminApi
+      .listDisputes()
+      .then(setDisputes)
+      .catch(() => setDisputes([]))
+      .finally(() => setLoading(false));
+  }, []);
 
   return (
     <AdminShell>
@@ -41,7 +50,12 @@ export default function DisputesPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 font-medium">
-              {disputes.map((d) => (
+              {loading ? (
+                <tr><td colSpan={7} className="py-6 px-4 text-center text-slate-500">Loading disputes...</td></tr>
+              ) : disputes.length === 0 ? (
+                <tr><td colSpan={7} className="py-6 px-4 text-center text-slate-500">No disputes reported yet.</td></tr>
+              ) : (
+              disputes.map((d) => (
                 <tr key={d.id} className="transition hover:bg-slate-50">
                   <td className="py-4 px-4 font-extrabold text-navy">{d.id}</td>
                   <td className="py-4 px-4 font-extrabold text-navy">
@@ -64,7 +78,7 @@ export default function DisputesPage() {
                     </Link>
                   </td>
                 </tr>
-              ))}
+              )))}
             </tbody>
           </table>
         </div>

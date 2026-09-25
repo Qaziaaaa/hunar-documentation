@@ -1,18 +1,28 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { AdminShell } from "@/features/admin/components/admin-shell";
 import { Link } from "@/i18n/navigation";
-import { MOCK_WITHDRAWALS } from "@/mocks/admin.mock";
+import { adminApi } from "@/features/admin/api/admin-api";
 import type { WithdrawalRequest } from "@/types/admin";
 import { AlertCircle, ArrowLeft, Ban, CheckCircle2, Lock, Wallet } from "lucide-react";
 
 export default function WithdrawalsPage() {
-  const [items, setItems] = useState<WithdrawalRequest[]>(MOCK_WITHDRAWALS);
+  const [items, setItems] = useState<WithdrawalRequest[]>([]);
+  const [loading, setLoading] = useState(true);
   const [showFreezeModal, setShowFreezeModal] = useState(false);
   const [freezeWorkerName, setFreezeWorkerName] = useState("");
 
+  useEffect(() => {
+    adminApi
+      .listWithdrawals()
+      .then(setItems)
+      .catch(() => setItems([]))
+      .finally(() => setLoading(false));
+  }, []);
+
   const handleApproveWithdrawal = (id: string) => {
+    void adminApi.processWithdrawal(id, "APPROVE").catch(() => undefined);
     setItems((prev) =>
       prev.map((item) =>
         item.id === id ? { ...item, status: "PROCESSED" } : item
@@ -55,7 +65,12 @@ export default function WithdrawalsPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 font-medium">
-              {items.map((w) => (
+              {loading ? (
+                <tr><td colSpan={7} className="py-6 px-4 text-center text-slate-500">Loading withdrawal requests...</td></tr>
+              ) : items.length === 0 ? (
+                <tr><td colSpan={7} className="py-6 px-4 text-center text-slate-500">No withdrawal requests yet.</td></tr>
+              ) : (
+              items.map((w) => (
                 <tr key={w.id} className="transition hover:bg-slate-50">
                   <td className="py-4 px-4 font-extrabold text-navy">{w.id}</td>
                   <td className="py-4 px-4 font-extrabold text-navy">{w.workerName}</td>
@@ -95,7 +110,7 @@ export default function WithdrawalsPage() {
                     </div>
                   </td>
                 </tr>
-              ))}
+              )))}
             </tbody>
           </table>
         </div>

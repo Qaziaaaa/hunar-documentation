@@ -1,20 +1,33 @@
-import { notFound } from "next/navigation";
-import { setRequestLocale } from "next-intl/server";
+"use client";
+
+import { useParams } from "next/navigation";
+import { useQuery } from "@tanstack/react-query";
 import { CustomerJobDetailsView } from "@/features/customer-jobs/components/customer-job-details-view";
 import { getJobDetail } from "@/features/customer-jobs/api/customer-jobs-api";
+import { LoadingState } from "@/components/shared/loading-state";
+import { ErrorState } from "@/components/shared/error-state";
 
-export default async function CustomerJobSingularDetailsPage({
-  params,
-}: {
-  params: Promise<{ locale: string; id: string }>;
-}) {
-  const { locale, id } = await params;
-  setRequestLocale(locale);
+export default function CustomerJobSingularDetailsPage() {
+  const { id } = useParams<{ id: string }>();
 
-  const job = await getJobDetail(id);
+  const { data: job, isPending, isError, refetch } = useQuery({
+    queryKey: ["customer", "job", id],
+    queryFn: () => getJobDetail(id),
+    staleTime: 30_000,
+  });
 
-  if (!job) {
-    notFound();
+  if (isPending) {
+    return <LoadingState label="Loading job details..." />;
+  }
+
+  if (isError || !job) {
+    return (
+      <ErrorState
+        title="Unable to load this job"
+        description="Please check your network connection and try again."
+        onRetry={() => void refetch()}
+      />
+    );
   }
 
   return <CustomerJobDetailsView initialJob={job} />;
