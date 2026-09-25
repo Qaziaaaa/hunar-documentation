@@ -1,8 +1,8 @@
 import { cn } from "cn";
 import { Badge } from "@/components/ui/badge";
-import type { OrderworkerStatus } from "@/lib/design-tokens";
+import type { WorkerFixStatus } from "@/lib/design-tokens";
 
-const STATUS_CLASS: Record<OrderworkerStatus, string> = {
+const STATUS_CLASS: Record<WorkerFixStatus, string> = {
   pending: "bg-status-pending/10 text-status-pending",
   accepted: "bg-status-active/10 text-status-active",
   active: "bg-status-active/10 text-status-active",
@@ -18,7 +18,7 @@ export function StatusBadge({
   label,
   className,
 }: {
-  status: OrderworkerStatus;
+  status: WorkerFixStatus;
   label: string;
   className?: string;
 }) {

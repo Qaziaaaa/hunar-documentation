@@ -3,9 +3,9 @@
 import { CheckCircle2, Lock, ShieldCheck } from "lucide-react";
 import { useLocale } from "next-intl";
 
-import { OrderworkerLogo } from "@/components/shared/orderworker-logo";
+import { WorkerFixLogo } from "@/components/shared/workerfix-logo";
 
-export function OrderworkerBrandBanner() {
+export function WorkerFixBrandBanner() {
   const locale = useLocale();
 
   return (
@@ -16,7 +16,7 @@ export function OrderworkerBrandBanner() {
       <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         {/* Brand identity */}
         <div className="flex items-center gap-3">
-          <OrderworkerLogo variant="light" size="sm" />
+          <WorkerFixLogo variant="light" size="sm" />
           <div className="flex flex-col">
             <span className="text-[11px] text-teal-300 font-semibold">
               {locale === "ur" ? "سرٹیفائیڈ پرو مارکیٹ پلیس" : "Certified Pro Marketplace"}
@@ -51,5 +51,4 @@ export function OrderworkerBrandBanner() {
   );
 }
 
-export const WorkerFixBrandBanner = OrderworkerBrandBanner;
-export const HunarBrandBanner = OrderworkerBrandBanner;
+export const HunarBrandBanner = WorkerFixBrandBanner;

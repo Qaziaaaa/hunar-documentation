@@ -14,7 +14,7 @@ import { Step2JobDetails } from "./step-2-job-details";
 import { Step3LocationSchedule } from "./step-3-location-schedule";
 import { Step4ReviewPost } from "./step-4-review-post";
 import { WizardProgressStepper } from "./wizard-progress-stepper";
-import { OrderworkerLogo } from "@/components/shared/orderworker-logo";
+import { WorkerFixLogo } from "@/components/shared/workerfix-logo";
 
 const INITIAL_FORM_DATA: PostJobData = {
   category: "",
@@ -149,7 +149,7 @@ export function PostJobWizard() {
           href="/customer/dashboard"
           className="flex items-center hover:opacity-90 transition-opacity"
         >
-          <OrderworkerLogo variant="dark" size="sm" />
+          <WorkerFixLogo variant="dark" size="sm" />
         </Link>
 
         <div className="flex items-center gap-3">

@@ -165,7 +165,7 @@ export function CustomerOffersHubView({ initialJobs }: CustomerOffersHubViewProp
           <p className="text-xs sm:text-sm text-slate-500 max-w-2xl">
             {isUrdu
               ? "تصدیق شدہ کاریگروں کے ریٹس کا موازنہ کریں، نادرا اسناد دیکھیں اور WorkerFIX تحفظ کے ساتھ وزٹ بک کریں۔"
-              : "Compare verified technician quotes, inspect NADRA credentials, and confirm bookings with Orderworker verified protection."}
+              : "Compare verified technician quotes, inspect NADRA credentials, and confirm bookings with WorkerFIX verified protection."}
           </p>
         </div>
 

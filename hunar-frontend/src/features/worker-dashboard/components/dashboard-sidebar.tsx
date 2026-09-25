@@ -10,7 +10,7 @@ import {
   X,
 } from "lucide-react";
 import type { DashboardTab, WorkerDashboardProfile } from "../types";
-import { OrderworkerLogo } from "@/components/shared/orderworker-logo";
+import { WorkerFixLogo } from "@/components/shared/workerfix-logo";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { RatingStars } from "@/components/shared/rating-stars";
 
@@ -107,7 +107,7 @@ export function DashboardSidebar({
           {/* Brand Logo & Portal Tag + Mobile Close button */}
           <div className="flex items-center justify-between px-2 py-1 border-b border-slate-100 pb-3 lg:border-none lg:pb-0">
             <div className="flex flex-col gap-0.5">
-              <OrderworkerLogo variant="dark" size="sm" />
+              <WorkerFixLogo variant="dark" size="sm" />
               <p className="text-[11px] font-medium text-slate-500 pl-0.5">
                 Worker Portal · Peshawar
               </p>

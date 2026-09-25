@@ -1,6 +1,6 @@
 import { ChevronDownIcon, GridIcon, SearchIcon } from "./icons";
 import { Link } from "@/i18n/navigation";
-import { OrderworkerLogo } from "@/components/shared/orderworker-logo";
+import { WorkerFixLogo } from "@/components/shared/workerfix-logo";
 
 export function Header() {
   return (
@@ -15,7 +15,7 @@ export function Header() {
             href="/"
             title="WorkerFIX Home"
           >
-            <OrderworkerLogo variant="light" size="md" />
+            <WorkerFixLogo variant="light" size="md" />
           </Link>
           <a
             href="#services"
