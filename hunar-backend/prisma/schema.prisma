@@ -210,7 +210,7 @@ model ServiceArea {
   address   String
   latitude  Float
   longitude Float
-  location  Unsupported("geometry(Point, 4326)")?
+  // location  Unsupported("geometry(Point, 4326)")?
   createdAt DateTime                              @default(now())
 
   @@index([userId])
@@ -255,7 +255,7 @@ model ServiceRequest {
   images               String[]                              @default([])
   latitude             Float
   longitude            Float
-  location             Unsupported("geometry(Point, 4326)")?
+  // location             Unsupported("geometry(Point, 4326)")?
   address              String
   city                 String
   area                 String?
