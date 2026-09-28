@@ -17,6 +17,8 @@ import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useRouter } from "@/i18n/navigation";
+import { adminApi } from "@/features/admin/api/admin-api";
+import { setTokens } from "@/lib/api-client";
 
 const adminSignInSchema = z.object({
   email: z.string().email("Please enter a valid admin email address"),
@@ -46,40 +48,16 @@ export function AdminSignInForm() {
     setSubmitting(true);
     setSubmitError(null);
     try {
-      // Simulate Admin Login (Mock Data mode until backend API is ready)
-      await new Promise((resolve) => setTimeout(resolve, 800));
-
-      if (values.email === "admin@hunar.pk" || values.email.endsWith("@hunar.pk") || values.password === "admin123") {
-        // Save mock admin session
-        if (typeof window !== "undefined") {
-          localStorage.setItem("hunar_admin_token", "mock-admin-jwt-token-12345");
-          localStorage.setItem(
-            "hunar_admin_user",
-            JSON.stringify({
-              id: "admin-1",
-              name: "System Administrator",
-              email: values.email,
-              role: "ADMIN",
-            })
-          );
-        }
-        router.push("/admin/dashboard");
-      } else {
-        // Allow fallback demo sign in for testing
-        if (typeof window !== "undefined") {
-          localStorage.setItem("hunar_admin_token", "mock-admin-jwt-token-demo");
-          localStorage.setItem(
-            "hunar_admin_user",
-            JSON.stringify({
-              id: "admin-demo",
-              name: values.email.split("@")[0] || "Admin",
-              email: values.email,
-              role: "ADMIN",
-            })
-          );
-        }
-        router.push("/admin/dashboard");
+      const res = await adminApi.login(values.email, values.password);
+      if (typeof window !== "undefined") {
+        setTokens(res.accessToken, res.refreshToken ?? "", {
+          id: res.user.id,
+          phone: "",
+          name: res.user.name ?? "Admin",
+          role: "ADMIN",
+        });
       }
+      router.push("/admin/dashboard");
     } catch {
       setSubmitError("Invalid admin credentials or server error. Please try again.");
     } finally {

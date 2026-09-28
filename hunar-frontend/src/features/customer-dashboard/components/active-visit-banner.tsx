@@ -8,13 +8,21 @@ import {
 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
-import { MOCK_SCHEDULED_VISITS } from "@/features/customer-visits/data/mock-customer-visits";
 import { arrivalService } from "@/features/jobs/services/arrival-verification-service";
+import { useQuery } from "@tanstack/react-query";
+import { getCustomerVisits } from "@/features/customer-visits/api/customer-visits-api";
 
 export function ActiveVisitBanner() {
   const locale = useLocale();
   const t = useTranslations("CustomerPortal.Visits");
-  const liveVisit = MOCK_SCHEDULED_VISITS[0]; // Active visit
+
+  const { data: visits } = useQuery({
+    queryKey: ["customer", "visits"],
+    queryFn: getCustomerVisits,
+    staleTime: 30_000,
+  });
+
+  const liveVisit = (visits ?? [])[0];
 
   const [isVerified, setIsVerified] = useState<boolean>(() => {
     const session = arrivalService.getSession();

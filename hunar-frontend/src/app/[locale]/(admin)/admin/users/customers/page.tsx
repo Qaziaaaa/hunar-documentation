@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { AdminShell } from "@/features/admin/components/admin-shell";
-import { MOCK_CUSTOMERS } from "@/mocks/admin.mock";
+import { adminApi } from "@/features/admin/api/admin-api";
 import type { CustomerUser } from "@/types/admin";
 import {
   AlertCircle,
@@ -17,25 +17,44 @@ import {
 } from "lucide-react";
 
 export default function CustomersPage() {
-  const [customers, setCustomers] = useState<CustomerUser[]>(MOCK_CUSTOMERS);
+  const [customers, setCustomers] = useState<CustomerUser[]>([]);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<"ALL" | "ACTIVE" | "SUSPENDED">("ALL");
   const [selectedCustomer, setSelectedCustomer] = useState<CustomerUser | null>(null);
   const [actionCustomer, setActionCustomer] = useState<CustomerUser | null>(null);
   const [suspendReason, setSuspendReason] = useState("");
 
-  const filtered = customers.filter((c) => {
-    const matchesSearch =
-      c.name.toLowerCase().includes(search.toLowerCase()) ||
-      c.phone.includes(search) ||
-      c.email.toLowerCase().includes(search.toLowerCase());
-    const matchesStatus =
-      statusFilter === "ALL" ? true : c.status === statusFilter;
-    return matchesSearch && matchesStatus;
-  });
+  useEffect(() => {
+    adminApi
+      .listCustomers({ limit: 100 })
+      .then((res) => setCustomers(res.items))
+      .catch(() => setCustomers([]))
+      .finally(() => setLoading(false));
+  }, []);
+
+  const filtered = useMemo(
+    () =>
+      customers.filter((c) => {
+        const matchesSearch =
+          c.name.toLowerCase().includes(search.toLowerCase()) ||
+          c.phone.includes(search) ||
+          c.email.toLowerCase().includes(search.toLowerCase());
+        const matchesStatus =
+          statusFilter === "ALL" ? true : c.status === statusFilter;
+        return matchesSearch && matchesStatus;
+      }),
+    [customers, search, statusFilter],
+  );
 
   const handleToggleStatus = () => {
     if (!actionCustomer) return;
+
+    const suspending = actionCustomer.status === "ACTIVE";
+    void (suspending
+      ? adminApi.suspendCustomer(actionCustomer.id, suspendReason)
+      : adminApi.reactivateCustomer(actionCustomer.id)
+    ).catch(() => undefined);
 
     setCustomers((prev) =>
       prev.map((c) => {

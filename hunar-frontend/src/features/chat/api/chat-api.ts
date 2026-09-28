@@ -1,4 +1,5 @@
 import { http } from "@/lib/api-client";
+import { isMockMode } from "@/lib/data-source";
 
 export interface ChatMessage {
   id: string;
@@ -53,6 +54,15 @@ export async function sendChatMessage(
   conversationId: string,
   content: string
 ): Promise<ChatMessage> {
+  if (isMockMode()) {
+    return {
+      id: `msg-${Date.now()}`,
+      senderId: "current-user",
+      senderRole: "CUSTOMER",
+      content,
+      createdAt: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+    };
+  }
   try {
     return await http.post<ChatMessage>(`/chat/${conversationId}/messages`, {
       content,
@@ -75,6 +85,9 @@ export async function sendChatMessage(
 export async function uploadChatImage(
   file: File
 ): Promise<{ key: string; url: string }> {
+  if (isMockMode()) {
+    return { key: `chat-img-${Date.now()}`, url: URL.createObjectURL(file) };
+  }
   try {
     const formData = new FormData();
     formData.append("file", file);

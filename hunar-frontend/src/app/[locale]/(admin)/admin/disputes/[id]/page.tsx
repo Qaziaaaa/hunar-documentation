@@ -1,9 +1,9 @@
 "use client";
 
-import { use, useState } from "react";
+import { useEffect, useState } from "react";
 import { AdminShell } from "@/features/admin/components/admin-shell";
 import { Link, useRouter } from "@/i18n/navigation";
-import { MOCK_DISPUTES } from "@/mocks/admin.mock";
+import { adminApi } from "@/features/admin/api/admin-api";
 import type { DisputeReport } from "@/types/admin";
 import {
   AlertTriangle,
@@ -20,12 +20,40 @@ export default function DisputeDetailPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  const resolvedParams = use(params);
   const router = useRouter();
-  const [dispute, setDispute] = useState<DisputeReport | undefined>(
-    MOCK_DISPUTES.find((d) => d.id === resolvedParams.id) || MOCK_DISPUTES[0]
-  );
+  const [dispute, setDispute] = useState<DisputeReport | null>(null);
+  const [loading, setLoading] = useState(true);
   const [resolutionNotes, setResolutionNotes] = useState("");
+
+  useEffect(() => {
+    let cancelled = false;
+    void params.then((p) => {
+      adminApi
+        .getDisputeDetail(p.id)
+        .then((d) => {
+          if (!cancelled) setDispute(d);
+        })
+        .catch(() => {
+          if (!cancelled) setDispute(null);
+        })
+        .finally(() => {
+          if (!cancelled) setLoading(false);
+        });
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [params]);
+
+  if (loading) {
+    return (
+      <AdminShell>
+        <div className="p-8 text-center">
+          <p className="text-base font-bold text-navy">Loading dispute report...</p>
+        </div>
+      </AdminShell>
+    );
+  }
 
   if (!dispute) {
     return (
@@ -41,28 +69,34 @@ export default function DisputeDetailPage({
   }
 
   const handleResolve = () => {
-    setDispute((prev) =>
-      prev
-        ? {
-            ...prev,
-            status: "RESOLVED",
-            resolutionNotes: resolutionNotes || "Resolved: Refund released to customer.",
-          }
-        : prev
-    );
+    void adminApi.resolveDispute(dispute.id, "RESOLVED", resolutionNotes || "Resolved: Refund released to customer.")
+      .then(() =>
+        setDispute((prev) =>
+          prev
+            ? {
+                ...prev,
+                status: "RESOLVED",
+                resolutionNotes: resolutionNotes || "Resolved: Refund released to customer.",
+              }
+            : prev
+        )
+      );
     setTimeout(() => router.push("/admin/disputes"), 1000);
   };
 
   const handleDismiss = () => {
-    setDispute((prev) =>
-      prev
-        ? {
-            ...prev,
-            status: "DISMISSED",
-            resolutionNotes: resolutionNotes || "Dispute report dismissed after review.",
-          }
-        : prev
-    );
+    void adminApi.resolveDispute(dispute.id, "DISMISSED", resolutionNotes || "Dispute report dismissed after review.")
+      .then(() =>
+        setDispute((prev) =>
+          prev
+            ? {
+                ...prev,
+                status: "DISMISSED",
+                resolutionNotes: resolutionNotes || "Dispute report dismissed after review.",
+              }
+            : prev
+        )
+      );
     setTimeout(() => router.push("/admin/disputes"), 1000);
   };
 

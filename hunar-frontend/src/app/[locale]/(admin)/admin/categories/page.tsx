@@ -1,17 +1,29 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { AdminShell } from "@/features/admin/components/admin-shell";
-import { MOCK_CATEGORIES } from "@/mocks/admin.mock";
+import { adminApi } from "@/features/admin/api/admin-api";
 import type { ServiceCategory } from "@/types/admin";
 import { FolderTree, Plus, Power, Wrench } from "lucide-react";
 
 export default function CategoriesPage() {
-  const [categories, setCategories] = useState<ServiceCategory[]>(MOCK_CATEGORIES);
+  const [categories, setCategories] = useState<ServiceCategory[]>([]);
+  const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
   const [newCatName, setNewCatName] = useState("");
 
+  useEffect(() => {
+    adminApi
+      .listCategories()
+      .then(setCategories)
+      .catch(() => setCategories([]))
+      .finally(() => setLoading(false));
+  }, []);
+
   const handleToggleCategory = (id: string) => {
+    const target = categories.find((c) => c.id === id);
+    if (!target) return;
+    void adminApi.toggleCategory(id, !target.isActive).catch(() => undefined);
     setCategories((prev) =>
       prev.map((c) => (c.id === id ? { ...c, isActive: !c.isActive } : c))
     );
@@ -19,15 +31,9 @@ export default function CategoriesPage() {
 
   const handleAddCategory = () => {
     if (!newCatName) return;
-    const newCat: ServiceCategory = {
-      id: `cat-${categories.length + 1}`,
-      name: newCatName,
-      iconName: "Wrench",
-      activeWorkersCount: 0,
-      totalJobsCount: 0,
-      isActive: true,
-    };
-    setCategories((prev) => [...prev, newCat]);
+    void adminApi.createCategory(newCatName).then((created) => {
+      setCategories((prev) => [...prev, created]);
+    }).catch(() => undefined);
     setNewCatName("");
     setShowAddModal(false);
   };
@@ -59,6 +65,9 @@ export default function CategoriesPage() {
           </button>
         </div>
 
+        {loading ? (
+          <p className="text-sm font-medium text-slate-500">Loading categories...</p>
+        ) : (
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
           {categories.map((cat) => (
             <div
@@ -92,6 +101,7 @@ export default function CategoriesPage() {
             </div>
           ))}
         </div>
+        )}
 
         {/* Add Modal */}
         {showAddModal ? (

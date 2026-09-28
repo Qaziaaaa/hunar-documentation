@@ -14,7 +14,8 @@ import { useRouter } from "@/i18n/navigation";
 import { ChatInputBar } from "./chat-input-bar";
 import { VoiceMessageBubble } from "./voice-message-bubble";
 import { sendChatMessage, uploadChatImage } from "../api/chat-api";
-import { MOCK_SCHEDULED_VISITS } from "@/features/customer-visits/data/mock-customer-visits";
+import { getCustomerVisits } from "@/features/customer-visits/api/customer-visits-api";
+import { useQuery } from "@tanstack/react-query";
 
 interface ChatMessage {
   id: string;
@@ -33,15 +34,20 @@ export function CustomerChatView() {
   const router = useRouter();
 
   // Active Job & Assigned Technician
-  const activeVisit = MOCK_SCHEDULED_VISITS[0];
+  const { data: visits } = useQuery({
+    queryKey: ["customer", "visits"],
+    queryFn: getCustomerVisits,
+    staleTime: 30_000,
+  });
+  const activeVisit = (visits ?? [])[0];
   const technician = activeVisit?.technician || {
-    name: "Tariq Khan",
-    nameUr: "طارق خان",
+    name: "Technician",
+    nameUr: "ٹیکنیشن",
     avatarUrl:
       "https://images.unsplash.com/photo-1540569014015-19a7be504e3a?w=150&auto=format&fit=crop&q=80",
-    businessName: "Tariq Electrical Services",
-    businessNameUr: "طارق الیکٹریکل سروسز",
-    phone: "0300-1234567",
+    businessName: "Orderworker Pro",
+    businessNameUr: "آرڈر ورکر پرو",
+    phone: "",
   };
 
   const defaultMessagesUrdu: ChatMessage[] = [

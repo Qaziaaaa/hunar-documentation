@@ -1,9 +1,9 @@
 "use client";
 
-import { use, useState } from "react";
+import { useEffect, useState } from "react";
 import { AdminShell } from "@/features/admin/components/admin-shell";
 import { Link, useRouter } from "@/i18n/navigation";
-import { MOCK_VERIFICATIONS } from "@/mocks/admin.mock";
+import { adminApi } from "@/features/admin/api/admin-api";
 import type { VerificationRequest } from "@/types/admin";
 import {
   AlertCircle,
@@ -23,14 +23,42 @@ export default function VerificationDetailPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  const resolvedParams = use(params);
   const router = useRouter();
-  const [request, setRequest] = useState<VerificationRequest | undefined>(
-    MOCK_VERIFICATIONS.find((v) => v.id === resolvedParams.id) || MOCK_VERIFICATIONS[0]
-  );
+  const [request, setRequest] = useState<VerificationRequest | null>(null);
+  const [loading, setLoading] = useState(true);
   const [showRejectModal, setShowRejectModal] = useState(false);
   const [showChangesModal, setShowChangesModal] = useState(false);
   const [reasonInput, setReasonInput] = useState("");
+
+  useEffect(() => {
+    let cancelled = false;
+    void params.then((p) => {
+      adminApi
+        .getVerificationDetail(p.id)
+        .then((v) => {
+          if (!cancelled) setRequest(v);
+        })
+        .catch(() => {
+          if (!cancelled) setRequest(null);
+        })
+        .finally(() => {
+          if (!cancelled) setLoading(false);
+        });
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [params]);
+
+  if (loading) {
+    return (
+      <AdminShell>
+        <div className="p-8 text-center">
+          <p className="text-base font-bold text-navy">Loading verification request...</p>
+        </div>
+      </AdminShell>
+    );
+  }
 
   if (!request) {
     return (
@@ -49,35 +77,45 @@ export default function VerificationDetailPage({
   }
 
   const handleApprove = () => {
-    setRequest((prev) => (prev ? { ...prev, status: "VERIFIED" } : prev));
+    void adminApi
+      .decideVerification(request.id, "APPROVE")
+      .then(() => setRequest((prev) => (prev ? { ...prev, status: "VERIFIED" } : prev)));
     setTimeout(() => {
       router.push("/admin/verifications");
     }, 1000);
   };
 
   const handleRejectConfirm = () => {
-    setRequest((prev) =>
-      prev
-        ? {
-            ...prev,
-            status: "REJECTED",
-            rejectionReason: reasonInput || "Identity documents failed verification rules.",
-          }
-        : prev
-    );
+    void adminApi
+      .decideVerification(request.id, "REJECT", reasonInput || "Identity documents failed verification rules.")
+      .then(() =>
+        setRequest((prev) =>
+          prev
+            ? {
+                ...prev,
+                status: "REJECTED",
+                rejectionReason: reasonInput || "Identity documents failed verification rules.",
+              }
+            : prev
+        )
+      );
     setShowRejectModal(false);
   };
 
   const handleChangesConfirm = () => {
-    setRequest((prev) =>
-      prev
-        ? {
-            ...prev,
-            status: "CHANGES_REQUESTED",
-            rejectionReason: reasonInput || "Please re-upload clearer photos of your CNIC.",
-          }
-        : prev
-    );
+    void adminApi
+      .decideVerification(request.id, "REQUEST_CHANGES", reasonInput || "Please re-upload clearer photos of your CNIC.")
+      .then(() =>
+        setRequest((prev) =>
+          prev
+            ? {
+                ...prev,
+                status: "CHANGES_REQUESTED",
+                rejectionReason: reasonInput || "Please re-upload clearer photos of your CNIC.",
+              }
+            : prev
+        )
+      );
     setShowChangesModal(false);
   };
 

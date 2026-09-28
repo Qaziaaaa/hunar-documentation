@@ -1,10 +1,23 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { AdminShell } from "@/features/admin/components/admin-shell";
-import { MOCK_AUDIT_LOGS } from "@/mocks/admin.mock";
+import { adminApi } from "@/features/admin/api/admin-api";
+import type { AuditLogEntry } from "@/types/admin";
 import { ShieldCheck } from "lucide-react";
 
 export default function AuditTrailPage() {
+  const [logs, setLogs] = useState<AuditLogEntry[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    adminApi
+      .listAuditLogs()
+      .then(setLogs)
+      .catch(() => setLogs([]))
+      .finally(() => setLoading(false));
+  }, []);
+
   return (
     <AdminShell>
       <div className="space-y-6">
@@ -35,7 +48,12 @@ export default function AuditTrailPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 font-medium">
-              {MOCK_AUDIT_LOGS.map((log) => (
+              {loading ? (
+                <tr><td colSpan={6} className="py-6 px-4 text-center text-slate-500">Loading audit log...</td></tr>
+              ) : logs.length === 0 ? (
+                <tr><td colSpan={6} className="py-6 px-4 text-center text-slate-500">No audit entries recorded yet.</td></tr>
+              ) : (
+              logs.map((log) => (
                 <tr key={log.id} className="transition hover:bg-slate-50">
                   <td className="py-4 px-4 font-mono font-extrabold text-navy">{log.id}</td>
                   <td className="py-4 px-4 font-bold text-navy">{log.adminName}</td>
@@ -46,7 +64,7 @@ export default function AuditTrailPage() {
                     {new Date(log.timestamp).toLocaleString()}
                   </td>
                 </tr>
-              ))}
+              )))}
             </tbody>
           </table>
         </div>
