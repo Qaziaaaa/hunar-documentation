@@ -32,6 +32,7 @@ export function WorkerSignupFlow() {
   const [expiresAt, setExpiresAt] = useState<number | null>(null);
   const [resendAt, setResendAt] = useState<number | null>(null);
   const [attemptsLeft, setAttemptsLeft] = useState<number | null>(null);
+  const [devOtp, setDevOtp] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
@@ -43,6 +44,7 @@ export function WorkerSignupFlow() {
       setExpiresAt(now + (response.expiresInMs ?? OTP_RULES.expiresInMs));
       setResendAt(now + (response.resendAfterMs ?? OTP_RULES.resendAfterMs));
       setAttemptsLeft(response.maxAttempts ?? OTP_RULES.maxAttempts);
+      setDevOtp(response.devOtp ?? null);
       setSubmitError(null);
     },
     [],
@@ -136,6 +138,7 @@ export function WorkerSignupFlow() {
         attemptsLeft={attemptsLeft}
         submitting={submitting}
         submitError={submitError}
+        devOtp={devOtp}
         onEdit={() => {
           setStep("phone");
           setSubmitError(null);
