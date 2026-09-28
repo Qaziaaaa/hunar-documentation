@@ -128,16 +128,6 @@ export function CustomerSidebar({ isOpen, onClose }: CustomerSidebarProps) {
             ) : null}
           </div>
 
-          {/* Post a Job Primary CTA in Sidebar */}
-          <div className="mb-4">
-            <Link
-              href="/customer/post-job"
-              onClick={onClose}
-              className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-[#0F8B8D] hover:bg-[#0F8B8D]/90 text-white text-xs font-bold shadow-xs transition-all active:scale-[0.98]"
-            >
-              <span>{t("postJob")}</span>
-            </Link>
-          </div>
 
           {/* Navigation Links */}
           <nav className="flex flex-col gap-1">

@@ -16,7 +16,7 @@ describe("CustomerDashboardView", () => {
 
   it("renders services grid", () => {
     render(<CustomerDashboardView />);
-    expect(screen.getByText(/popular services/i)).toBeInTheDocument();
+    expect(screen.getByText(/select service/i)).toBeInTheDocument();
   });
 
   it("renders hero CTA", () => {

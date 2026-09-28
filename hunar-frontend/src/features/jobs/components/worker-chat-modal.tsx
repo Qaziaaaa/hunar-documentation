@@ -254,9 +254,6 @@ export function WorkerChatModal({
         <span className="font-bold text-[#0F8B8D] truncate">
           Active Job: #{job.id}
         </span>
-        <span className="text-[10px] text-slate-400 font-mono">
-          PIN: {job.securityPin || "7294"}
-        </span>
       </div>
 
       {/* ======================================================== */}

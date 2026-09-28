@@ -10,13 +10,12 @@ export function CustomerDashboardView() {
   const isUrdu = locale === "ur";
 
   return (
-    <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 flex flex-col gap-4 sm:gap-6 flex-1">
+    <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-0 pb-4 sm:pb-6 flex flex-col gap-4 sm:gap-6 flex-1">
       {/* Top Greeting Header */}
-      <div className="flex flex-col gap-1">
-        {/* Removed welcome greeting */}
-        <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-[#123B5D]">
+      <div className="flex flex-col">
+        <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-[#123B5D]">
           {isUrdu ? "آج آپ کو کس سروس کی ضرورت ہے؟" : "What service do you need today?"}
-        </h2>
+        </h1>
       </div>
 
       {/* Active Visit & Doorstep OTP PIN Banner */}

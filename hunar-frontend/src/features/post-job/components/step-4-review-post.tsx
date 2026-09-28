@@ -59,7 +59,7 @@ export function Step4ReviewPost({
   };
 
   return (
-    <div className="w-full max-w-3xl mx-auto space-y-4 animate-in fade-in-50 duration-300 pb-20 lg:pb-8">
+    <div className="w-full max-w-3xl mx-auto space-y-4 animate-in fade-in-50 duration-300 pb-24">
       {/* Header Section */}
       <div>
         <h1 className="text-2xl sm:text-3xl font-extrabold text-[#123B5D]">
@@ -286,32 +286,34 @@ export function Step4ReviewPost({
         <CheckCircle2 className="size-5 text-green-600 shrink-0" />
       </div>
 
-      {/* Bottom Actions */}
-      <div className="pt-3 flex items-center justify-between gap-4">
-        <button
-          type="button"
-          onClick={() => onGoToStep(3)}
-          className="px-5 py-2.5 rounded-full border border-slate-200 text-slate-700 font-bold text-xs hover:bg-slate-50 transition-colors flex items-center gap-1.5 cursor-pointer"
-        >
-          <ArrowLeft className="size-4 rtl:rotate-180" />
-          <span>{isUrdu ? "پیچھے" : "Back"}</span>
-        </button>
+      {/* Fixed Bottom Actions Bar */}
+      <div className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200 py-3 sm:py-3.5 shadow-[0_-4px_20px_rgba(0,0,0,0.08)]">
+        <div className="w-full max-w-4xl mx-auto px-4 sm:px-6 flex items-center justify-between gap-3">
+          <button
+            type="button"
+            onClick={() => onGoToStep(3)}
+            className="px-5 py-2.5 rounded-full border border-slate-200 text-slate-700 font-bold text-xs sm:text-sm hover:bg-slate-50 transition-colors flex items-center gap-1.5 cursor-pointer active:scale-95"
+          >
+            <ArrowLeft className="size-4 rtl:rotate-180" />
+            <span>{isUrdu ? "پیچھے" : "Back"}</span>
+          </button>
 
-        <button
-          type="button"
-          disabled={isSubmitting}
-          onClick={onSubmit}
-          className="px-6 py-2.5 rounded-full bg-[#0F8B8D] hover:bg-[#0D7A7C] text-white font-bold text-xs sm:text-sm shadow-sm flex items-center gap-2 transition-all active:scale-[0.99] cursor-pointer disabled:opacity-50"
-        >
-          {isSubmitting ? (
-            <span>{isUrdu ? "جاب پوسٹ ہو رہی ہے..." : "Publishing Job Request..."}</span>
-          ) : (
-            <>
-              <span>{isUrdu ? "جاب پوسٹ کریں اور آفرز حاصل کریں" : "Post Job & Get Offers"}</span>
-              <ArrowRight className="size-4 rtl:rotate-180" />
-            </>
-          )}
-        </button>
+          <button
+            type="button"
+            disabled={isSubmitting}
+            onClick={onSubmit}
+            className="px-6 py-2.5 rounded-full bg-[#0F8B8D] hover:bg-[#0D7A7C] text-white font-bold text-xs sm:text-sm shadow-sm flex items-center gap-2 transition-all active:scale-[0.99] cursor-pointer disabled:opacity-50"
+          >
+            {isSubmitting ? (
+              <span>{isUrdu ? "جاب پوسٹ ہو رہی ہے..." : "Publishing Job Request..."}</span>
+            ) : (
+              <>
+                <span>{isUrdu ? "جاب پوسٹ کریں اور آفرز حاصل کریں" : "Post Job & Get Offers"}</span>
+                <ArrowRight className="size-4 rtl:rotate-180" />
+              </>
+            )}
+          </button>
+        </div>
       </div>
     </div>
   );

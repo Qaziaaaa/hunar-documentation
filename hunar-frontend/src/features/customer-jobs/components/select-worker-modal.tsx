@@ -4,8 +4,6 @@ import { useState } from "react";
 import {
   Calendar,
   CheckCircle2,
-  Copy,
-  Lock,
   MapPin,
   ShieldCheck,
   X,
@@ -30,19 +28,11 @@ export function SelectWorkerModal({
 }: SelectWorkerModalProps) {
   const locale = useLocale();
   const isUrdu = locale === "ur";
-  const [copiedPin, setCopiedPin] = useState(false);
   const [isConfirming, setIsConfirming] = useState(false);
 
   if (!isOpen || !offer) return null;
 
   const { worker } = offer;
-  const pin = job.securityPin || "6492";
-
-  const handleCopyPin = () => {
-    navigator.clipboard.writeText(pin);
-    setCopiedPin(true);
-    setTimeout(() => setCopiedPin(false), 2000);
-  };
 
   const handleConfirm = () => {
     setIsConfirming(true);
@@ -140,46 +130,6 @@ export function SelectWorkerModal({
             </div>
           </div>
 
-          {/* Doorstep Security PIN Card */}
-          <div className="p-4 rounded-2xl bg-[#123B5D] text-white space-y-2">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-1.5 text-xs font-bold">
-                <Lock className="size-3.5 text-[#0F766E]" />
-                <span>{isUrdu ? "ڈور سٹیپ سیکیورٹی OTP PIN" : "Doorstep Security OTP PIN"}</span>
-              </div>
-              <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-green-500/20 text-green-300">
-                {isUrdu ? "انٹری کے لیے لازمی" : "Required for Entry"}
-              </span>
-            </div>
-
-            <p className="text-[11px] text-slate-300 leading-snug">
-              {isUrdu
-                ? "کاریگر کے پہنچنے پر گیٹ یا دروازہ کھولنے سے پہلے یہ 4 ہندسوں کا کوڈ سن کر تصدیق کریں۔"
-                : "Ask the technician to recite this code before opening your gate or entrance."}
-            </p>
-
-            <div className="flex items-center justify-between pt-1">
-              <div className="flex items-center gap-2 bg-white/10 px-3.5 py-1.5 rounded-xl">
-                <span className="font-mono text-lg font-black tracking-widest text-white">
-                  {pin}
-                </span>
-                <button
-                  type="button"
-                  onClick={handleCopyPin}
-                  className="text-slate-300 hover:text-white p-1 rounded transition-colors cursor-pointer"
-                  title={isUrdu ? "PIN کاپی کریں" : "Copy Security PIN"}
-                >
-                  <Copy className="size-3.5" />
-                </button>
-              </div>
-
-              {copiedPin && (
-                <span className="text-[11px] font-bold text-green-400 animate-in fade-in">
-                  {isUrdu ? "PIN کاپی ہو گیا!" : "PIN Copied!"}
-                </span>
-              )}
-            </div>
-          </div>
 
           {/* Safety Trust Note */}
           <div className="flex items-center gap-2 text-[11px] text-slate-500 pt-1">

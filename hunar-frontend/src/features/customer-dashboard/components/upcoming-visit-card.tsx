@@ -97,13 +97,6 @@ export function UpcomingVisitCard() {
           </p>
         </div>
 
-        {/* Security OTP Pill */}
-        <div className="bg-slate-50 border border-slate-200 p-2.5 rounded-lg flex items-center justify-between text-xs">
-          <span className="text-slate-500 font-medium">Completion OTP:</span>
-          <span className="font-mono font-bold tracking-widest text-slate-900 bg-white border border-slate-200 px-2.5 py-0.5 rounded shadow-2xs">
-            {booking.completionOtp}
-          </span>
-        </div>
       </div>
 
       {/* Buttons */}
