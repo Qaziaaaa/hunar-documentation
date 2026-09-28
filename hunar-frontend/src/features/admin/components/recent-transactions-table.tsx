@@ -35,7 +35,7 @@ export function RecentTransactionsTable({ transactions }: { transactions: Paymen
   };
 
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-2.5 shadow-2xs">
+    <div className="h-full rounded-xl border border-slate-200 bg-white p-2.5 shadow-2xs flex flex-col">
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-2">
         <div className="flex items-center gap-2">
           <div className="flex size-6 items-center justify-center rounded-md bg-teal/10 text-teal">
@@ -57,7 +57,7 @@ export function RecentTransactionsTable({ transactions }: { transactions: Paymen
         </Link>
       </div>
 
-      <div className="mt-1.5 overflow-x-auto">
+      <div className="mt-1.5 flex-1 overflow-x-auto">
         <table className="w-full text-left text-[10px]">
           <thead>
             <tr className="border-b border-slate-100 text-[8px] font-bold uppercase tracking-wider text-slate-400">

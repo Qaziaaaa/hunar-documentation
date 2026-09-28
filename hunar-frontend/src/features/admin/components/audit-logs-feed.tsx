@@ -17,7 +17,7 @@ export function AuditLogsFeed({ logs }: { logs: AuditLogEntry[] }) {
   };
 
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-3.5 shadow-xs">
+    <div className="rounded-2xl border border-slate-200 bg-white p-3.5 shadow-xs h-full">
       <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
         <div className="flex items-center gap-2">
           <div className="flex size-7 items-center justify-center rounded-lg bg-navy/10 text-navy">

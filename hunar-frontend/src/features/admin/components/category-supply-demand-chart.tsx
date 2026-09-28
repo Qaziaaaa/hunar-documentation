@@ -120,17 +120,17 @@ export function CategorySupplyDemandChart() {
                 </span>
 
                 {/* Vertical Bars */}
-                <div className="flex w-full items-end justify-center gap-1 h-full">
+                <div className="flex w-full items-end justify-center gap-1.5 h-full">
                   {/* Demand Column Bar */}
-                  <div className="flex flex-col items-center w-4 sm:w-5 transition-transform duration-300 group-hover:-translate-y-0.5" style={{ height: `${demandHeight}%` }}>
+                  <div className="flex flex-col items-center w-2.5 sm:w-3 transition-transform duration-300 group-hover:-translate-y-0.5" style={{ height: `${demandHeight}%` }}>
                     <span className="text-[8px] font-black text-navy mb-0.5">{cat.demandJobs}</span>
-                    <div className="w-full h-full rounded-t-md bg-gradient-to-t from-navy to-slate-800 shadow-xs" />
+                    <div className="w-full h-full rounded-none bg-gradient-to-t from-navy to-slate-800 shadow-2xs" />
                   </div>
 
                   {/* Supply Column Bar */}
-                  <div className="flex flex-col items-center w-4 sm:w-5 transition-transform duration-300 group-hover:-translate-y-0.5" style={{ height: `${supplyHeight}%` }}>
+                  <div className="flex flex-col items-center w-2.5 sm:w-3 transition-transform duration-300 group-hover:-translate-y-0.5" style={{ height: `${supplyHeight}%` }}>
                     <span className="text-[8px] font-black text-teal mb-0.5">{cat.activeWorkers}</span>
-                    <div className="w-full h-full rounded-t-md bg-gradient-to-t from-teal to-emerald-400 shadow-xs" />
+                    <div className="w-full h-full rounded-none bg-gradient-to-t from-teal to-emerald-500 shadow-2xs" />
                   </div>
                 </div>
 

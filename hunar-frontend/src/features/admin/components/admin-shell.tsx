@@ -116,7 +116,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
   ];
 
   return (
-    <div className="flex min-h-screen bg-slate-50 text-slate-900 font-sans">
+    <div className="flex h-screen overflow-hidden bg-slate-50 text-slate-900 font-sans">
       {/* Mobile Drawer Overlay */}
       {mobileOpen ? (
         <div
@@ -127,11 +127,11 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
 
       {/* Sidebar Navigation */}
       <aside
-        className={`fixed inset-y-0 left-0 z-50 flex w-72 flex-col justify-between border-r border-slate-200 bg-white transition-transform duration-300 lg:sticky lg:top-0 lg:h-screen lg:translate-x-0 ${
+        className={`fixed inset-y-0 left-0 z-50 flex w-72 flex-col justify-between border-r border-slate-200 bg-white transition-transform duration-300 lg:relative lg:inset-auto lg:flex lg:h-full lg:translate-x-0 lg:shrink-0 ${
           mobileOpen ? "translate-x-0 shadow-2xl" : "-translate-x-full"
         }`}
       >
-        <div className="flex flex-col flex-1 overflow-y-auto px-5 py-6">
+        <div className="flex flex-col flex-1 overflow-y-auto px-5 py-6 min-h-0">
           {/* Logo Header */}
           <div className="flex items-center justify-between border-b border-slate-100 pb-6">
             <Link href="/admin/dashboard" className="flex items-center gap-3">
@@ -231,7 +231,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
       </aside>
 
       {/* Main Content Area */}
-      <div className="flex flex-1 flex-col overflow-hidden">
+      <div className="flex flex-1 flex-col overflow-hidden min-w-0">
         {/* Header Bar */}
         <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-slate-200 bg-white/95 px-5 backdrop-blur">
           <div className="flex items-center gap-4">
@@ -309,7 +309,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
         </header>
 
         {/* Dynamic Main Body Content */}
-        <main className="flex-1 overflow-y-auto p-2 md:p-3">{children}</main>
+        <main className="flex-1 overflow-y-auto p-2 md:p-3 min-h-0">{children}</main>
       </div>
     </div>
   );
