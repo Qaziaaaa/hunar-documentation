@@ -1,6 +1,6 @@
 export function Testimonials() {
   const stats = [
-    { value: "4.9/5", label: "Clients rate professionals on Orderworker" },
+    { value: "4.9/5", label: "Clients rate professionals on WorkerFIX" },
     { value: "95%", label: "95% of customers book repeat services" },
     { value: "Award winner", label: "G2 2025 Best Service Platform" },
   ];
@@ -11,7 +11,7 @@ export function Testimonials() {
         <div className="p-8 sm:p-14 rounded-3xl bg-slate-50 border border-slate-100 grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
           <div className="lg:col-span-7 space-y-6">
             <h2 className="text-2xl sm:text-3xl font-bold text-slate-900">
-              People Love To Work With Orderworker
+              People Love To Work With WorkerFIX
             </h2>
             <p className="text-slate-500 text-sm max-w-lg">
               Transparent quotes, real-time tracking of technicians, and
@@ -36,7 +36,7 @@ export function Testimonials() {
               “
             </div>
             <p className="text-slate-700 text-sm sm:text-base leading-relaxed mb-6 italic">
-              &quot;Orderworker took all the anxiety out of emergency plumbing and
+              &quot;WorkerFIX took all the anxiety out of emergency plumbing and
               electrical repairs. Transparent price quote received in 10
               minutes, pro arrived with complete tools, immaculate craft.&quot;
             </p>

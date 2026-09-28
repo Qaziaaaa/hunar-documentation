@@ -1,11 +1,11 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import {
   ArrowRight,
+  Check,
   CheckCircle2,
   Clock,
-  Copy,
   History,
   MapPin,
   MessageSquare,
@@ -23,6 +23,11 @@ import { PeshawarLiveTrackingMap } from "./peshawar-live-tracking-map";
 import { RescheduleModal } from "./reschedule-modal";
 import { QuickChatDrawer } from "./quick-chat-drawer";
 import type { ScheduledVisit } from "../types";
+import {
+  arrivalService,
+  SUCCESS_VERIFICATION_MESSAGE,
+  SUCCESS_VERIFICATION_MESSAGE_UR,
+} from "@/features/jobs/services/arrival-verification-service";
 
 interface CustomerVisitsViewProps {
   initialVisits: ScheduledVisit[];
@@ -33,19 +38,63 @@ export function CustomerVisitsView({ initialVisits }: CustomerVisitsViewProps) {
   const isUrdu = locale === "ur";
   const [visits, setVisits] = useState<ScheduledVisit[]>(initialVisits);
   const [activeTab, setActiveTab] = useState<"upcoming" | "past">("upcoming");
-  const [copiedPin, setCopiedPin] = useState(false);
   const [selectedVisitForReschedule, setSelectedVisitForReschedule] = useState<ScheduledVisit | null>(null);
   const [selectedVisitForChat, setSelectedVisitForChat] = useState<ScheduledVisit | null>(null);
   const [successToast, setSuccessToast] = useState<string | null>(null);
 
-  // Live en-route visit
+  // Sync with arrival service state
+  useEffect(() => {
+    const session = arrivalService.getSession();
+    if (session && session.status === "otp_verified") {
+      setVisits((prev) =>
+        prev.map((v) =>
+          v.jobId === session.jobId || v.id === session.visitId
+            ? { ...v, status: "inspection_in_progress" as const }
+            : v
+        )
+      );
+    }
+
+    const unsubscribe = arrivalService.subscribe((s, eventType) => {
+      if (s && (eventType === "OTP_VERIFIED" || s.status === "otp_verified")) {
+        setVisits((prev) =>
+          prev.map((v) =>
+            v.jobId === s.jobId || v.id === s.visitId
+              ? { ...v, status: "inspection_in_progress" as const }
+              : v
+          )
+        );
+      }
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  // Live en-route or in-premises visit
   const liveVisit = useMemo(() => {
-    return visits.find((v) => v.status === "en_route" || v.status === "dispatched") || visits[0];
+    return (
+      visits.find(
+        (v) =>
+          v.status === "en_route" ||
+          v.status === "dispatched" ||
+          v.status === "arrived" ||
+          v.status === "inspection_in_progress"
+      ) || visits[0]
+    );
   }, [visits]);
+
+  const isVerifiedInside =
+    liveVisit.status === "inspection_in_progress" || liveVisit.status === "arrived";
 
   // Upcoming scheduled visits
   const upcomingVisits = useMemo(() => {
-    return visits.filter((v) => v.status === "dispatched" || v.status === "en_route");
+    return visits.filter(
+      (v) =>
+        v.status === "dispatched" ||
+        v.status === "en_route" ||
+        v.status === "arrived" ||
+        v.status === "inspection_in_progress"
+    );
   }, [visits]);
 
   // Past completed visits
@@ -53,19 +102,6 @@ export function CustomerVisitsView({ initialVisits }: CustomerVisitsViewProps) {
     return visits.filter((v) => v.status === "completed" || v.status === "cancelled");
   }, [visits]);
 
-  const handleCopyPin = (pin: string) => {
-    navigator.clipboard.writeText(pin);
-    setCopiedPin(true);
-    setSuccessToast(
-      isUrdu
-        ? `ڈور سٹیپ PIN ${pin} کاپی ہو گیا!`
-        : `Doorstep PIN ${pin} copied to clipboard!`
-    );
-    setTimeout(() => {
-      setCopiedPin(false);
-      setSuccessToast(null);
-    }, 3000);
-  };
 
   const handleConfirmReschedule = (newDate: string, newSlot: string) => {
     if (!selectedVisitForReschedule) return;
@@ -161,7 +197,13 @@ export function CustomerVisitsView({ initialVisits }: CustomerVisitsViewProps) {
                       <span className="relative inline-flex rounded-full size-3.5 bg-[#16A34A]" />
                     </span>
                     <h2 className="text-base sm:text-lg font-bold text-[#123B5D] leading-tight">
-                      {isUrdu ? "کاریگر راستے میں ہے!" : "Technician On The Way!"}
+                      {isVerifiedInside
+                        ? isUrdu
+                          ? "کاریگر احاطے کے اندر موجود ہے - معائنہ جاری ہے!"
+                          : "Technician Inside Premises — Inspection in Progress!"
+                        : isUrdu
+                        ? "کاریگر راستے میں ہے!"
+                        : "Technician On The Way!"}
                     </h2>
                   </div>
 
@@ -251,34 +293,6 @@ export function CustomerVisitsView({ initialVisits }: CustomerVisitsViewProps) {
 
                   </div>
 
-                  {/* Doorstep OTP */}
-                  <div className="px-3.5 py-2 rounded-xl bg-slate-50/90 border border-[#E2E8F0] flex items-center justify-between gap-3">
-                    <div className="flex items-center gap-2">
-                      <div className="size-6 rounded-md bg-[#123B5D] text-white flex items-center justify-center shrink-0">
-                        <ShieldCheck className="size-3.5" />
-                      </div>
-                      <span className="text-xs font-bold text-[#123B5D]">
-                        {isUrdu ? "ڈور سٹیپ OTP" : "Doorstep OTP"}
-                      </span>
-                    </div>
-
-                    {/* 4 Digit OTP Block */}
-                    <div className="flex items-center gap-1.5 shrink-0">
-                      <div className="flex items-center gap-1.5 bg-white px-2.5 py-1 rounded-lg border border-[#0F766E] shadow-2xs">
-                        <span className="font-mono text-sm font-extrabold text-[#123B5D] tracking-widest">
-                          {liveVisit.securityPin.split("").join(" ")}
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => handleCopyPin(liveVisit.securityPin)}
-                          className="ml-0.5 rtl:ml-0 rtl:mr-0.5 text-slate-400 hover:text-[#0F766E] p-0.5 rounded transition-colors cursor-pointer"
-                          title={isUrdu ? "OTP کاپی کریں" : "Copy OTP"}
-                        >
-                          <Copy className="size-3.5" />
-                        </button>
-                      </div>
-                    </div>
-                  </div>
 
                   {/* INTERACTIVE LEAFLET PESHAWAR TRACKING MAP */}
                   <PeshawarLiveTrackingMap visit={liveVisit} />
@@ -291,14 +305,26 @@ export function CustomerVisitsView({ initialVisits }: CustomerVisitsViewProps) {
                         {isUrdu ? "1. تصدیق شدہ" : "1. Confirmed"}
                       </span>
                       <span className="text-[#0F766E] font-bold flex items-center gap-1">
-                        <span className="size-2 rounded-full bg-[#0F766E] animate-ping" />
+                        <CheckCircle2 className="size-4" />
                         {isUrdu ? "2. راستے میں" : "2. En Route"}
                       </span>
-                      <span className="text-slate-400 flex items-center gap-1">
-                        <MapPin className="size-4" />
+                      <span
+                        className={`flex items-center gap-1 font-bold ${
+                          isVerifiedInside ? "text-[#0F766E]" : "text-amber-600"
+                        }`}
+                      >
+                        {isVerifiedInside ? (
+                          <CheckCircle2 className="size-4" />
+                        ) : (
+                          <MapPin className="size-4 text-amber-500 animate-bounce" />
+                        )}
                         {isUrdu ? "3. دہلیز پر PIN" : "3. Doorstep PIN"}
                       </span>
-                      <span className="text-slate-400 flex items-center gap-1">
+                      <span
+                        className={`flex items-center gap-1 font-bold ${
+                          isVerifiedInside ? "text-[#0F766E]" : "text-slate-400"
+                        }`}
+                      >
                         <Wrench className="size-4" />
                         {isUrdu ? "4. معائنہ و کام" : "4. Diagnosis & Work"}
                       </span>
@@ -306,7 +332,7 @@ export function CustomerVisitsView({ initialVisits }: CustomerVisitsViewProps) {
                     <div className="w-full h-2 bg-slate-200 rounded-full overflow-hidden">
                       <div
                         className="h-full bg-gradient-to-r from-[#0F766E] to-[#16A34A] rounded-full transition-all duration-500"
-                        style={{ width: "55%" }}
+                        style={{ width: isVerifiedInside ? "100%" : "65%" }}
                       />
                     </div>
                   </div>
@@ -455,12 +481,12 @@ export function CustomerVisitsView({ initialVisits }: CustomerVisitsViewProps) {
                     />
                     <div className="space-y-0.5">
                       <span className="text-xs font-bold text-[#123B5D]">
-                        {isUrdu ? `2. PIN کوڈ طلب کریں: ${liveVisit.securityPin}` : `2. Demand PIN Code: ${liveVisit.securityPin}`}
+                        {isUrdu ? "2. PIN کوڈ طلب کریں" : "2. Demand PIN Code"}
                       </span>
                       <p className="text-xs text-[#64748B]">
                         {isUrdu
-                          ? `کاریگر کو گیٹ کھولنے سے پہلے یہ کوڈ ${liveVisit.securityPin} بتانا لازمی ہے۔`
-                          : `Technician must state code ${liveVisit.securityPin} before unlocking your premises.`}
+                          ? "کاریگر کو گیٹ کھولنے سے پہلے یہ کوڈ بتانا لازمی ہے۔"
+                          : "Technician must state code before unlocking your premises."}
                       </p>
                     </div>
                   </label>

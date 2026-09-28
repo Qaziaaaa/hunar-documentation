@@ -15,7 +15,7 @@ import {
 import { useLocale, useTranslations } from "next-intl";
 import { Link, usePathname, useRouter } from "@/i18n/navigation";
 import { logoutCustomer } from "@/features/auth/api/auth-api";
-import { OrderworkerLogo } from "@/components/shared/orderworker-logo";
+import { WorkerFixLogo } from "@/components/shared/workerfix-logo";
 import { getStoredUser } from "@/lib/api-client";
 
 interface CustomerSidebarProps {
@@ -113,7 +113,7 @@ export function CustomerSidebar({ isOpen, onClose }: CustomerSidebarProps) {
               className="flex flex-col gap-1 group cursor-pointer hover:opacity-90 transition-opacity"
               title="Back to Landing Page"
             >
-              <OrderworkerLogo variant="dark" size="sm" />
+              <WorkerFixLogo variant="dark" size="sm" />
               <p className="text-[10px] text-slate-500 font-semibold uppercase tracking-wider pl-0.5">
                 {locale === "ur" ? "کسٹمر پورٹل" : "Customer Portal"}
               </p>
@@ -131,16 +131,6 @@ export function CustomerSidebar({ isOpen, onClose }: CustomerSidebarProps) {
             ) : null}
           </div>
 
-          {/* Post a Job Primary CTA in Sidebar */}
-          <div className="mb-4">
-            <Link
-              href="/customer/post-job"
-              onClick={onClose}
-              className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-[#0F8B8D] hover:bg-[#0F8B8D]/90 text-white text-xs font-bold shadow-xs transition-all active:scale-[0.98]"
-            >
-              <span>{t("postJob")}</span>
-            </Link>
-          </div>
 
           {/* Navigation Links */}
           <nav className="flex flex-col gap-1">

@@ -77,7 +77,7 @@ export function HelplineCard({ info, onOpenTicketModal }: HelplineCardProps) {
 
         {/* WhatsApp Channel */}
         <a
-          href={`https://wa.me/${info.whatsappNumber}?text=Assalam-o-Alaikum%20Orderworker%20Help%20Desk%2C%20I%20need%20assistance%20with%20my%20service.`}
+          href={`https://wa.me/${info.whatsappNumber}?text=Assalam-o-Alaikum%20WorkerFIX%20Help%20Desk%2C%20I%20need%20assistance%20with%20my%20service.`}
           target="_blank"
           rel="noopener noreferrer"
           className="flex items-center justify-between p-3.5 rounded-xl bg-emerald-50/50 border border-emerald-200 hover:border-emerald-400 hover:bg-emerald-50 transition-all group cursor-pointer"

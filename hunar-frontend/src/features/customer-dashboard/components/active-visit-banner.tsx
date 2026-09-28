@@ -1,20 +1,18 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Check,
-  Copy,
   MapPin,
   Navigation,
-  ShieldCheck,
 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
+import { arrivalService } from "@/features/jobs/services/arrival-verification-service";
 import { useQuery } from "@tanstack/react-query";
 import { getCustomerVisits } from "@/features/customer-visits/api/customer-visits-api";
 
 export function ActiveVisitBanner() {
-  const [copied, setCopied] = useState(false);
   const locale = useLocale();
   const t = useTranslations("CustomerPortal.Visits");
 
@@ -26,15 +24,22 @@ export function ActiveVisitBanner() {
 
   const liveVisit = (visits ?? [])[0];
 
+  const [isVerified, setIsVerified] = useState<boolean>(() => {
+    const session = arrivalService.getSession();
+    return session?.status === "otp_verified";
+  });
+
+  useEffect(() => {
+    const unsubscribe = arrivalService.subscribe((session, eventType) => {
+      if (eventType === "OTP_VERIFIED" || session?.status === "otp_verified") {
+        setIsVerified(true);
+      }
+    });
+    return () => unsubscribe();
+  }, []);
+
   if (!liveVisit) return null;
 
-  const handleCopy = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    navigator.clipboard.writeText(liveVisit.securityPin);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2500);
-  };
 
   return (
     <Link
@@ -54,13 +59,24 @@ export function ActiveVisitBanner() {
 
         <div className="space-y-1 min-w-0 flex-1 text-left rtl:text-right">
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-              <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
-              {t("technicianOnTheWay")}
-            </span>
+            {isVerified ? (
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-300">
+                <Check className="size-3 text-emerald-600 stroke-[3]" />
+                {locale === "ur" ? "کاریگر احاطے میں موجود ہے" : "Technician Inside Premises"}
+              </span>
+            ) : (
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                {t("technicianOnTheWay")}
+              </span>
+            )}
             <span className="text-slate-300 text-xs">•</span>
             <span className="text-xs font-bold text-[#0F8B8D]">
-              {t("arrivingIn")} ~{liveVisit.etaMinutes} {locale === "ur" ? "منٹ" : "mins"} ({liveVisit.remainingDistanceKm} {locale === "ur" ? "کلومیٹر دور" : "km away"})
+              {isVerified
+                ? locale === "ur"
+                  ? "OTP تصدیق شدہ • معائنہ جاری ہے"
+                  : "OTP Verified • Diagnosis in progress"
+                : `${t("arrivingIn")} ~${liveVisit.etaMinutes} ${locale === "ur" ? "منٹ" : "mins"} (${liveVisit.remainingDistanceKm} ${locale === "ur" ? "کلومیٹر دور" : "km away"})`}
             </span>
           </div>
 
@@ -99,32 +115,6 @@ export function ActiveVisitBanner() {
             <span className="inline-flex items-center font-bold text-xs sm:text-sm text-[#0F8B8D] bg-[#0F8B8D]/10 px-2.5 py-0.5 rounded-lg border border-[#0F8B8D]/20">
               {locale === "ur" ? `روپے ${liveVisit.visitCharges ?? 300}` : `Rs. ${liveVisit.visitCharges ?? 300}`}
             </span>
-          </div>
-        </div>
-
-        {/* Row 2: Doorstep OTP */}
-        <div className="flex items-center justify-between gap-3">
-          {/* Left: Doorstep OTP Badge */}
-          <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-xl shadow-2xs shrink-0">
-            <ShieldCheck className="size-4 text-[#0F8B8D] shrink-0" />
-            <span className="text-[11px] sm:text-xs text-slate-600 font-bold">
-              {locale === "ur" ? "ڈور اسٹیپ OTP:" : "Doorstep OTP:"}
-            </span>
-            <span className="font-mono text-xs sm:text-sm font-extrabold text-[#123B5D] tracking-widest leading-none bg-white px-2 py-0.5 rounded border border-slate-200">
-              {liveVisit.securityPin}
-            </span>
-            <button
-              type="button"
-              onClick={handleCopy}
-              className="ms-1 p-1 rounded-lg hover:bg-white text-slate-400 hover:text-[#0F8B8D] transition-colors cursor-pointer border border-transparent hover:border-slate-200"
-              title="Copy Doorstep OTP PIN"
-            >
-              {copied ? (
-                <Check className="size-3.5 text-[#16A34A]" />
-              ) : (
-                <Copy className="size-3.5" />
-              )}
-            </button>
           </div>
         </div>
       </div>

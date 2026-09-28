@@ -126,7 +126,7 @@ export function ServicesGrid() {
       {/* Top Header with "Show All Services" Button on the Right */}
       <div className="flex items-center justify-between">
         <span className="text-xs sm:text-sm font-bold text-[#123B5D]">
-          {locale === "ur" ? "مقبول سروسز کیٹیگریز" : "Popular Services"}
+          {locale === "ur" ? "سروس منتخب کریں" : "Select Service"}
         </span>
         <button
           type="button"

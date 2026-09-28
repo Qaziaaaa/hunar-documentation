@@ -16,7 +16,7 @@ import {
   Globe,
 } from "lucide-react";
 
-import { OrderworkerLogo } from "@/components/shared/orderworker-logo";
+import { WorkerFixLogo } from "@/components/shared/workerfix-logo";
 
 export function WorkerHeader() {
   const locale = useLocale();
@@ -50,7 +50,7 @@ export function WorkerHeader() {
             href="/worker"
             className="flex items-center gap-2 group"
           >
-            <OrderworkerLogo variant="dark" size="sm" />
+            <WorkerFixLogo variant="dark" size="sm" />
             <span className="px-1.5 py-0.5 rounded text-[10px] bg-[#0F8B8D] text-white font-bold tracking-wider">
               PRO
             </span>
