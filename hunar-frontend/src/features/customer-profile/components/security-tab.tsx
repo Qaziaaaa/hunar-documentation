@@ -153,7 +153,7 @@ export function SecurityTab({ devices, onSaveFeedback }: SecurityTabProps) {
             <span className="text-[11px] text-slate-400">
               {isUrdu
                 ? "مدد چاہیے؟ WorkerFIX کی 24/7 کسٹمر ہیلپ لائن سے رابطہ کریں۔"
-                : "Need assistance? Contact Orderworker 24/7 Support Helpline"}
+                : "Need assistance? Contact WorkerFIX 24/7 Support Helpline"}
             </span>
           </div>
         </div>

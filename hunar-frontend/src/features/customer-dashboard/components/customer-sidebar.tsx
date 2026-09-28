@@ -15,7 +15,7 @@ import {
 import { useLocale, useTranslations } from "next-intl";
 import { Link, usePathname, useRouter } from "@/i18n/navigation";
 import { logoutCustomer } from "@/features/auth/api/auth-api";
-import { OrderworkerLogo } from "@/components/shared/orderworker-logo";
+import { WorkerFixLogo } from "@/components/shared/workerfix-logo";
 import { MOCK_CUSTOMER_USER } from "../mock/customer-mock-data";
 
 interface CustomerSidebarProps {
@@ -110,7 +110,7 @@ export function CustomerSidebar({ isOpen, onClose }: CustomerSidebarProps) {
               className="flex flex-col gap-1 group cursor-pointer hover:opacity-90 transition-opacity"
               title="Back to Landing Page"
             >
-              <OrderworkerLogo variant="dark" size="sm" />
+              <WorkerFixLogo variant="dark" size="sm" />
               <p className="text-[10px] text-slate-500 font-semibold uppercase tracking-wider pl-0.5">
                 {locale === "ur" ? "کسٹمر پورٹل" : "Customer Portal"}
               </p>

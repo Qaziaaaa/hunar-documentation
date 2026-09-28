@@ -106,12 +106,6 @@ export function WorkerFixLogo({
   );
 }
 
-// Backward-compatible exports for all existing files
-export const OrderworkerLogo = WorkerFixLogo;
-export type OrderworkerLogoProps = WorkerFixLogoProps;
-
 export const WorkerFixIcon = (props: WorkerFixLogoProps) => (
   <WorkerFixLogo {...props} showText={false} />
 );
-
-export const OrderworkerIcon = WorkerFixIcon;
