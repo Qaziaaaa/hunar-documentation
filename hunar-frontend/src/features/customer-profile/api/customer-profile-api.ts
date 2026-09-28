@@ -1,4 +1,5 @@
 import { http } from "@/lib/api-client";
+import { isMockMode } from "@/lib/data-source";
 import { MOCK_CUSTOMER_PROFILE } from "../data/mock-profile-data";
 import type { CustomerProfileData } from "../types";
 
@@ -6,6 +7,9 @@ import type { CustomerProfileData } from "../types";
  * Fetch authenticated customer profile
  */
 export async function getCustomerProfile(): Promise<CustomerProfileData> {
+  if (isMockMode()) {
+    return MOCK_CUSTOMER_PROFILE;
+  }
   try {
     const res = await http.get<any>("/users/me");
     if (res && res.id) {
@@ -31,6 +35,9 @@ export async function getCustomerProfile(): Promise<CustomerProfileData> {
 export async function updateCustomerProfile(
   data: Partial<CustomerProfileData>
 ): Promise<CustomerProfileData> {
+  if (isMockMode()) {
+    return { ...MOCK_CUSTOMER_PROFILE, ...data };
+  }
   try {
     const res = await http.put<any>("/users/me", {
       name: data.fullName,
@@ -57,6 +64,9 @@ export async function updateCustomerProfile(
 export async function uploadCustomerAvatar(
   file: File
 ): Promise<{ key: string; url: string }> {
+  if (isMockMode()) {
+    return { key: `avatar-${Date.now()}`, url: URL.createObjectURL(file) };
+  }
   try {
     const formData = new FormData();
     formData.append("file", file);

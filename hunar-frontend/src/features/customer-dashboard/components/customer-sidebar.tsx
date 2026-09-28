@@ -16,7 +16,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { Link, usePathname, useRouter } from "@/i18n/navigation";
 import { logoutCustomer } from "@/features/auth/api/auth-api";
 import { WorkerFixLogo } from "@/components/shared/workerfix-logo";
-import { MOCK_CUSTOMER_USER } from "../mock/customer-mock-data";
+import { getStoredUser } from "@/lib/api-client";
 
 interface CustomerSidebarProps {
   isOpen?: boolean;
@@ -28,6 +28,9 @@ export function CustomerSidebar({ isOpen, onClose }: CustomerSidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
   const locale = useLocale();
+  const storedUser = getStoredUser();
+  const customerName = storedUser?.name || storedUser?.phone || "Customer";
+  const customerInitial = customerName.charAt(0).toUpperCase() || "C";
 
   const handleLogout = async () => {
     await logoutCustomer();
@@ -128,16 +131,6 @@ export function CustomerSidebar({ isOpen, onClose }: CustomerSidebarProps) {
             ) : null}
           </div>
 
-          {/* Post a Job Primary CTA in Sidebar */}
-          <div className="mb-4">
-            <Link
-              href="/customer/post-job"
-              onClick={onClose}
-              className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-[#0F8B8D] hover:bg-[#0F8B8D]/90 text-white text-xs font-bold shadow-xs transition-all active:scale-[0.98]"
-            >
-              <span>{t("postJob")}</span>
-            </Link>
-          </div>
 
           {/* Navigation Links */}
           <nav className="flex flex-col gap-1">
@@ -208,14 +201,14 @@ export function CustomerSidebar({ isOpen, onClose }: CustomerSidebarProps) {
           <div className="flex items-center justify-between pt-1">
             <div className="flex items-center gap-2.5 min-w-0">
               <div className="w-8 h-8 rounded-full bg-[#123B5D] flex items-center justify-center text-white font-bold text-xs shrink-0">
-                {locale === "ur" ? "ع" : MOCK_CUSTOMER_USER.avatarInitials}
+                {customerInitial}
               </div>
               <div className="flex flex-col min-w-0">
                 <span className="text-xs font-semibold text-slate-900 truncate">
-                  {locale === "ur" ? "عبداللہ" : MOCK_CUSTOMER_USER.name}
+                  {customerName}
                 </span>
                 <span className="text-[10px] font-medium text-slate-500 truncate">
-                  {locale === "ur" ? "یونیورسٹی ٹاؤن، پشاور" : MOCK_CUSTOMER_USER.area}
+                  {locale === "ur" ? "پشاور" : "Peshawar"}
                 </span>
               </div>
             </div>

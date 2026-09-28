@@ -105,9 +105,9 @@ export function Step3LocationSchedule({
     };
   })();
 
-  // Calendar dates: next 14 days
+  // Calendar dates: next 4 days max
   const today = new Date();
-  const calendarDays = Array.from({ length: 14 }, (_, i) => {
+  const calendarDays = Array.from({ length: 4 }, (_, i) => {
     const d = new Date();
     d.setDate(today.getDate() + i);
     return {
@@ -237,7 +237,7 @@ export function Step3LocationSchedule({
   };
 
   return (
-    <div className="space-y-4 animate-in fade-in-50 duration-300 pb-20 lg:pb-8">
+    <div className="space-y-4 animate-in fade-in-50 duration-300 pb-24">
       {/* Header Section */}
       <div className="space-y-1">
         <h1 className="text-2xl sm:text-3xl font-extrabold text-[#123B5D] tracking-tight">
@@ -417,25 +417,27 @@ export function Step3LocationSchedule({
         </div>
       </div>
 
-      {/* Actions */}
-      <div className="pt-4 border-t border-slate-200 flex justify-between items-center gap-4 pb-20 lg:pb-8">
-        <button
-          type="button"
-          onClick={onBack}
-          className="px-5 py-2.5 rounded-full border border-slate-200 text-slate-700 font-bold text-xs hover:bg-slate-50 transition-colors flex items-center gap-1.5 cursor-pointer"
-        >
-          <ArrowLeft className="size-4 rtl:rotate-180" />
-          <span>{isUrdu ? "پیچھے" : "Back"}</span>
-        </button>
+      {/* Fixed Bottom Actions Bar */}
+      <div className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200 py-3 sm:py-3.5 shadow-[0_-4px_20px_rgba(0,0,0,0.08)]">
+        <div className="w-full max-w-4xl mx-auto px-4 sm:px-6 flex items-center justify-between gap-3">
+          <button
+            type="button"
+            onClick={onBack}
+            className="px-5 py-2.5 rounded-full border border-slate-200 text-slate-700 font-bold text-xs sm:text-sm hover:bg-slate-50 transition-colors flex items-center gap-1.5 cursor-pointer active:scale-95"
+          >
+            <ArrowLeft className="size-4 rtl:rotate-180" />
+            <span>{isUrdu ? "پیچھے" : "Back"}</span>
+          </button>
 
-        <button
-          type="button"
-          onClick={handleProceed}
-          className="px-6 py-2.5 rounded-full transition-all duration-200 flex items-center gap-2 text-xs sm:text-sm font-bold text-white shadow-sm bg-[#0F8B8D] hover:bg-[#0D7A7C] active:scale-[0.99] cursor-pointer"
-        >
-          <span>{isUrdu ? "اگلا مرحلہ: جائزہ لیں" : "Next Step: Review"}</span>
-          <ArrowRight className="size-4 rtl:rotate-180" />
-        </button>
+          <button
+            type="button"
+            onClick={handleProceed}
+            className="px-6 py-2.5 rounded-full transition-all duration-200 flex items-center gap-2 text-xs sm:text-sm font-bold text-white shadow-sm bg-[#0F8B8D] hover:bg-[#0D7A7C] active:scale-[0.99] cursor-pointer"
+          >
+            <span>{isUrdu ? "اگلا مرحلہ: جائزہ لیں" : "Next Step: Review"}</span>
+            <ArrowRight className="size-4 rtl:rotate-180" />
+          </button>
+        </div>
       </div>
 
       {/* Date & Time Selection Pop-up Modal */}
@@ -490,25 +492,29 @@ export function Step3LocationSchedule({
                   </span>
                 </div>
 
-                {/* Calendar Days Horizontal Grid */}
-                <div className="grid grid-cols-4 sm:grid-cols-7 gap-1.5">
-                  {calendarDays.slice(0, 14).map((day) => {
+                {/* Calendar Days Horizontal Grid (4 days max) */}
+                <div className="grid grid-cols-4 gap-2">
+                  {calendarDays.map((day) => {
                     const isSelected = data.preferredDate === day.dateString;
                     return (
                       <button
                         key={day.dateString}
                         type="button"
                         onClick={() => onChange({ preferredDate: day.dateString })}
-                        className={`flex flex-col items-center justify-center py-2 px-1 rounded-xl text-center transition-all cursor-pointer active:scale-95 ${
+                        className={`flex flex-col items-center justify-center py-2.5 px-1.5 rounded-xl text-center transition-all cursor-pointer active:scale-95 ${
                           isSelected
                             ? "bg-[#0F8B8D] text-white shadow-md font-bold ring-2 ring-[#0F8B8D]/30"
                             : "bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200/70"
                         }`}
                       >
                         <span className="text-[10px] uppercase font-bold">
-                          {day.isToday ? (isUrdu ? "آج" : "Today") : day.dayName}
+                          {day.isToday
+                            ? (isUrdu ? "آج" : "Today")
+                            : day.isTomorrow
+                            ? (isUrdu ? "کل" : "Tomorrow")
+                            : day.dayName}
                         </span>
-                        <span className="text-sm font-extrabold mt-0.5">
+                        <span className="text-sm sm:text-base font-extrabold mt-0.5">
                           {day.dayNumber}
                         </span>
                         <span className="text-[9.5px] opacity-80">

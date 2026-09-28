@@ -70,7 +70,7 @@ export function Step2JobDetails({
   };
 
   return (
-    <div className="w-full max-w-3xl mx-auto space-y-4 animate-in fade-in-50 duration-300 pb-20 lg:pb-8">
+    <div className="w-full max-w-3xl mx-auto space-y-4 animate-in fade-in-50 duration-300 pb-24">
       {/* Container Card */}
       <div className="bg-white rounded-2xl border border-slate-200 shadow-2xs p-4 sm:p-6 space-y-5">
         {/* Header */}
@@ -329,12 +329,15 @@ export function Step2JobDetails({
           </div>
         </section>
 
-        {/* Footer Navigation Buttons */}
-        <div className="flex items-center justify-between pt-4 border-t border-slate-200 gap-3">
+      </div>
+
+      {/* Fixed Footer Navigation Bar */}
+      <div className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200 py-3 sm:py-3.5 shadow-[0_-4px_20px_rgba(0,0,0,0.08)]">
+        <div className="w-full max-w-4xl mx-auto px-4 sm:px-6 flex items-center justify-between gap-3">
           <button
             type="button"
             onClick={onBack}
-            className="px-4 sm:px-5 py-2.5 rounded-xl border border-slate-200 text-slate-700 hover:bg-slate-50 text-xs sm:text-sm font-bold flex items-center gap-1.5 transition-colors cursor-pointer active:scale-95"
+            className="px-4 sm:px-5 py-2.5 rounded-full border border-slate-200 text-slate-700 hover:bg-slate-50 text-xs sm:text-sm font-bold flex items-center gap-1.5 transition-colors cursor-pointer active:scale-95"
           >
             <ArrowLeft className="size-4 rtl:rotate-180" />
             <span>{isUrdu ? "واپس" : "Back"}</span>
@@ -343,7 +346,7 @@ export function Step2JobDetails({
           <button
             type="button"
             onClick={handleProceed}
-            className="px-5 sm:px-6 py-2.5 rounded-xl bg-[#0F8B8D] hover:bg-[#0F8B8D]/90 text-white text-xs sm:text-sm font-bold shadow-xs hover:shadow-sm transition-all flex items-center gap-2 cursor-pointer active:scale-95"
+            className="px-5 sm:px-6 py-2.5 rounded-full bg-[#0F8B8D] hover:bg-[#0F8B8D]/90 text-white text-xs sm:text-sm font-bold shadow-xs hover:shadow-sm transition-all flex items-center gap-2 cursor-pointer active:scale-95"
           >
             <span>{isUrdu ? "وقت اور مقام کی طرف بڑھیں" : "Continue to Schedule"}</span>
             <ArrowRight className="size-4 rtl:rotate-180" />

@@ -77,7 +77,7 @@ export function Step1ServiceSelect({
   };
 
   return (
-    <div className="space-y-5 animate-in fade-in-50 duration-300 pb-20 lg:pb-8">
+    <div className="space-y-5 animate-in fade-in-50 duration-300 pb-24">
       {/* Header Section */}
       <div className="text-center">
         <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#123B5D]">
@@ -220,21 +220,32 @@ export function Step1ServiceSelect({
         </div>
       )}
 
-      {/* Bottom Action */}
-      <div className="w-full max-w-3xl mx-auto pt-3 border-t border-slate-200 flex justify-end">
-        <button
-          type="button"
-          disabled={!data.category}
-          onClick={onNext}
-          className={`px-6 py-2.5 rounded-full flex items-center gap-2 text-xs sm:text-sm font-bold transition-all shadow-xs active:scale-95 ${
-            data.category
-              ? "bg-[#0F8B8D] text-white hover:bg-[#0F8B8D]/90 cursor-pointer"
-              : "bg-slate-200 text-slate-400 cursor-not-allowed"
-          }`}
-        >
-          <span>{isUrdu ? "تفصیلات کی طرف بڑھیں" : "Continue to Details"}</span>
-          <ArrowRight className="size-4 rtl:rotate-180" />
-        </button>
+      {/* Fixed Bottom Action Bar */}
+      <div className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200 py-3 sm:py-3.5 shadow-[0_-4px_20px_rgba(0,0,0,0.08)]">
+        <div className="w-full max-w-4xl mx-auto px-4 sm:px-6 flex items-center justify-between gap-3">
+          <div className="text-xs text-slate-500 font-medium hidden sm:block">
+            {data.category ? (
+              <span className="text-[#0F8B8D] font-bold">
+                ✓ {isUrdu ? "سروس منتخب ہو گئی" : "Service selected"}
+              </span>
+            ) : (
+              <span>{isUrdu ? "جاری رکھنے کے لیے ایک سروس منتخب کریں" : "Select a service to continue"}</span>
+            )}
+          </div>
+          <button
+            type="button"
+            disabled={!data.category}
+            onClick={onNext}
+            className={`ms-auto px-6 py-2.5 rounded-full flex items-center gap-2 text-xs sm:text-sm font-bold transition-all shadow-xs active:scale-95 ${
+              data.category
+                ? "bg-[#0F8B8D] text-white hover:bg-[#0F8B8D]/90 cursor-pointer"
+                : "bg-slate-200 text-slate-400 cursor-not-allowed"
+            }`}
+          >
+            <span>{isUrdu ? "تفصیلات کی طرف بڑھیں" : "Continue to Details"}</span>
+            <ArrowRight className="size-4 rtl:rotate-180" />
+          </button>
+        </div>
       </div>
     </div>
   );

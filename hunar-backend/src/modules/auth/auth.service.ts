@@ -66,6 +66,11 @@ export interface OtpSendResult {
   message: string;
   expiresInSeconds: number;
   cooldownSeconds: number;
+  /**
+   * Returned only while no real SMS gateway is wired (OTP_DEBUG !== 'false').
+   * Lets a real user read their code on screen so signup can be completed.
+   */
+  devOtp?: string;
 }
 
 export interface OtpVerifyResult {
@@ -118,7 +123,17 @@ export class AuthService {
       message: 'OTP sent to your phone',
       expiresInSeconds: OTP_TTL_SECONDS,
       cooldownSeconds: OTP_COOLDOWN_SECONDS,
+      ...(this.returnOtpInResponse() ? { devOtp: otp } : {}),
     };
+  }
+
+  /**
+   * No SMS gateway is connected yet (SmsService only logs the code), so the
+   * code is also returned to the caller. Set OTP_DEBUG=false the moment a real
+   * provider is added in SmsService.
+   */
+  private returnOtpInResponse(): boolean {
+    return process.env.OTP_DEBUG !== 'false';
   }
 
   async verifyOtp(rawPhone: string, otp: string): Promise<OtpVerifyResult> {

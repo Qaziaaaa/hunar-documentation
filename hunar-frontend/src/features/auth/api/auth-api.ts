@@ -13,6 +13,8 @@ export interface OtpRequestResponse {
   expiresInMs?: number;
   resendAfterMs?: number;
   maxAttempts?: number;
+  /** Provided by the API while no SMS gateway is connected (OTP_DEBUG). */
+  devOtp?: string;
 }
 
 export interface OtpVerifyResponse {
@@ -41,7 +43,7 @@ export type CustomerAuthResponse = AuthResponse;
 
 export async function requestWorkerOtp(phone: string): Promise<OtpRequestResponse> {
   try {
-    const res = await http.post<{ message?: string; expiresInSeconds?: number; cooldownSeconds?: number }>(
+    const res = await http.post<{ message?: string; expiresInSeconds?: number; cooldownSeconds?: number; devOtp?: string }>(
       "/auth/otp/send",
       { phone }
     );
@@ -51,6 +53,7 @@ export async function requestWorkerOtp(phone: string): Promise<OtpRequestRespons
       expiresInMs: (res?.expiresInSeconds ?? 300) * 1000,
       resendAfterMs: (res?.cooldownSeconds ?? 900) * 1000,
       maxAttempts: OTP_RULES.maxAttempts,
+      devOtp: res?.devOtp,
     };
   } catch (err) {
     console.warn("[requestWorkerOtp] Backend OTP endpoint fallback:", err);
@@ -119,7 +122,7 @@ export async function completeWorkerSignup(params: {
     }
   } catch (err) {
     console.warn("[completeWorkerSignup] Backend register error:", err);
-    throw err;
+    if (!isMockMode()) throw err;
   }
 
   if (isMockMode()) {
@@ -149,7 +152,7 @@ export async function workerLogin(
     }
   } catch (err) {
     console.warn("[workerLogin] Backend login error:", err);
-    throw err;
+    if (!isMockMode()) throw err;
   }
 
   if (isMockMode() && password.length >= 6) {
@@ -180,7 +183,7 @@ export function refreshWorkerToken(refreshToken: string) {
 
 export async function requestCustomerOtp(phone: string): Promise<OtpRequestResponse> {
   try {
-    const res = await http.post<{ message?: string; expiresInSeconds?: number; cooldownSeconds?: number }>(
+    const res = await http.post<{ message?: string; expiresInSeconds?: number; cooldownSeconds?: number; devOtp?: string }>(
       "/auth/customer/otp/request",
       { phone }
     );
@@ -190,6 +193,7 @@ export async function requestCustomerOtp(phone: string): Promise<OtpRequestRespo
       expiresInMs: (res?.expiresInSeconds ?? 300) * 1000,
       resendAfterMs: (res?.cooldownSeconds ?? 900) * 1000,
       maxAttempts: OTP_RULES.maxAttempts,
+      devOtp: res?.devOtp,
     };
   } catch (err) {
     console.warn("[requestCustomerOtp] Backend OTP send fallback:", err);
@@ -258,7 +262,7 @@ export async function completeCustomerSignup(params: {
     }
   } catch (err) {
     console.warn("[completeCustomerSignup] Backend register error:", err);
-    throw err;
+    if (!isMockMode()) throw err;
   }
 
   if (isMockMode()) {
@@ -290,7 +294,7 @@ export async function customerLogin(
     }
   } catch (err) {
     console.warn("[customerLogin] Backend login error:", err);
-    throw err;
+    if (!isMockMode()) throw err;
   }
 
   if (isMockMode() && password.length >= 6) {

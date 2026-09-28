@@ -1,27 +1,34 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { AdminShell } from "@/features/admin/components/admin-shell";
+import { adminApi } from "@/features/admin/api/admin-api";
+import { useAdminResource } from "@/features/admin/hooks/use-admin-resource";
 import { Link } from "@/i18n/navigation";
-import { MOCK_LIVE_JOBS } from "@/mocks/admin.mock";
 import type { LiveJobItem } from "@/types/admin";
 import { Briefcase, Eye, Filter, Search } from "lucide-react";
 
 export default function JobsPage() {
-  const [jobs] = useState<LiveJobItem[]>(MOCK_LIVE_JOBS);
+  const jobsRes = useAdminResource(() => adminApi.listJobs({ limit: 100 }));
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
 
-  const filtered = jobs.filter((j) => {
-    const matchesSearch =
-      j.title.toLowerCase().includes(search.toLowerCase()) ||
-      j.customerName.toLowerCase().includes(search.toLowerCase()) ||
-      (j.workerName && j.workerName.toLowerCase().includes(search.toLowerCase())) ||
-      j.category.toLowerCase().includes(search.toLowerCase());
+  const jobs = jobsRes.data?.items ?? [];
 
-    const matchesStatus = statusFilter === "ALL" ? true : j.status === statusFilter;
-    return matchesSearch && matchesStatus;
-  });
+  const filtered = useMemo(
+    () =>
+      jobs.filter((j) => {
+        const matchesSearch =
+          j.title.toLowerCase().includes(search.toLowerCase()) ||
+          j.customerName.toLowerCase().includes(search.toLowerCase()) ||
+          (j.workerName && j.workerName.toLowerCase().includes(search.toLowerCase())) ||
+          j.category.toLowerCase().includes(search.toLowerCase());
+
+        const matchesStatus = statusFilter === "ALL" ? true : j.status === statusFilter;
+        return matchesSearch && matchesStatus;
+      }),
+    [jobs, search, statusFilter],
+  );
 
   return (
     <AdminShell>

@@ -8,13 +8,17 @@ import { VisitOffer } from "@/types/offer";
 import { formatRs } from "@/lib/design-tokens";
 import { workerStore } from "@/stores/worker-jobs-store";
 import { WorkerChatModal } from "./worker-chat-modal";
+import { WorkerArrivalOtpModal } from "./worker-arrival-otp-modal";
+import {
+  arrivalService,
+  SUCCESS_VERIFICATION_MESSAGE,
+  SUCCESS_VERIFICATION_MESSAGE_UR,
+} from "../services/arrival-verification-service";
 import {
   Phone,
   MessageCircle,
   Navigation as NavigationIcon,
   CheckCircle2,
-  Copy,
-  Check,
   X,
   AlertTriangle,
   Wallet,
@@ -22,7 +26,6 @@ import {
   PhoneCall,
   ShieldCheck,
   MapPin,
-  KeyRound,
   Clock,
 } from "lucide-react";
 import "leaflet/dist/leaflet.css";
@@ -63,7 +66,6 @@ export function WorkerVisitTrackingView({
   const mapInstanceRef = useRef<any>(null);
   const routeBoundsRef = useRef<any>(null);
 
-  const [copiedPin, setCopiedPin] = useState(false);
   const [showCallModal, setShowCallModal] = useState(false);
   const [showChatModal, setShowChatModal] = useState(false);
   const [showCancelModal, setShowCancelModal] = useState(false);
@@ -71,6 +73,9 @@ export function WorkerVisitTrackingView({
   const [cancelReason, setCancelReason] = useState("");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isArriving, setIsArriving] = useState(false);
+  const [showWorkerOtpModal, setShowWorkerOtpModal] = useState(false);
+  const [arrivedAtTime, setArrivedAtTime] = useState<number>(Date.now());
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [routePoints, setRoutePoints] = useState<[number, number][]>(
     PESHAWAR_ROAD_POINTS
   );
@@ -307,30 +312,62 @@ export function WorkerVisitTrackingView({
     };
   }, [customerLat, customerLng, workerLat, workerLng, routePoints, customerFirstName]);
 
-  const handleCopyPin = () => {
-    navigator.clipboard.writeText(securityPin);
-    setCopiedPin(true);
-    setTimeout(() => setCopiedPin(false), 2000);
-  };
+
+  // Subscribe to real-time arrival OTP verification
+  useEffect(() => {
+    const unsubscribe = arrivalService.subscribe((session, eventType) => {
+      if (
+        session &&
+        (session.jobId === job.id || session.otp === securityPin) &&
+        (eventType === "OTP_VERIFIED" || session.status === "otp_verified")
+      ) {
+        setShowWorkerOtpModal(false);
+        setIsArriving(false);
+        const successMsg = isUrdu ? SUCCESS_VERIFICATION_MESSAGE_UR : SUCCESS_VERIFICATION_MESSAGE;
+        setSuccessMessage(successMsg);
+
+        // Update state to arrived and entering premises for inspection
+        workerStore.arriveAtSite(job.id);
+        workerStore.startInspection(job.id);
+
+        setTimeout(() => {
+          if (onArrived) {
+            onArrived();
+          }
+        }, 2200);
+      }
+    });
+
+    return () => unsubscribe();
+  }, [job.id, securityPin, isUrdu, onArrived]);
 
   // Handle "I'm here" / Reached Doorstep CTA
   const handleReachedDoorstep = () => {
     setErrorMessage(null);
-    setIsArriving(true);
 
-    const result = workerStore.arriveAtSite(job.id);
-    if (!result.success) {
+    // Verify 10% commission hold
+    const visitCharge = agreedVisitCharge;
+    const requiredHold = Math.round(visitCharge * 0.1);
+    const state = workerStore.getState();
+    if (state.walletBalance < requiredHold) {
       setErrorMessage(
-        result.error ||
-          `Insufficient wallet balance. Minimum ${formatRs(commissionHold)} commission hold required.`
+        `Insufficient wallet balance. Minimum ${formatRs(requiredHold)} commission hold required.`
       );
-      setIsArriving(false);
       return;
     }
 
-    if (onArrived) {
-      onArrived();
-    }
+    const now = Date.now();
+    setArrivedAtTime(now);
+
+    arrivalService.startArrivalSession({
+      jobId: job.id,
+      otp: securityPin,
+      workerName: "Ali Khan",
+      customerName: job.customer.name,
+      customerAddress: job.location.address || job.location.area,
+    });
+
+    setShowWorkerOtpModal(true);
   };
 
   const handleCancelSubmit = (e: React.FormEvent) => {
@@ -523,7 +560,7 @@ export function WorkerVisitTrackingView({
           </div>
         </div>
 
-        {/* PAYMENT / FEE & DOORSTEP PIN ROW */}
+        {/* PAYMENT / FEE ROW */}
         <div className="flex items-center justify-between pt-2 border-t border-slate-100 text-xs">
           <div className="flex items-center gap-2">
             <div className="size-6 rounded-full bg-teal-50 text-[#0F8B8D] border border-teal-200 flex items-center justify-center font-black text-[11px]">
@@ -533,23 +570,6 @@ export function WorkerVisitTrackingView({
               {formatRs(agreedVisitCharge)}{" "}
               <span className="text-slate-400 font-medium text-xs">· Agreed Visit Fee</span>
             </span>
-          </div>
-
-          {/* Doorstep Verification PIN */}
-          <div className="flex items-center gap-1.5 bg-amber-50 px-2.5 py-1 rounded-xl border border-amber-200 text-xs">
-            <KeyRound className="size-3.5 text-amber-800 shrink-0" />
-            <span className="text-amber-800 text-[10.5px] font-bold">PIN:</span>
-            <span className="font-mono font-black text-[#123B5D] text-xs tracking-wider">
-              {securityPin}
-            </span>
-            <button
-              type="button"
-              onClick={handleCopyPin}
-              className="p-1 rounded text-amber-800 hover:text-amber-950 transition-colors cursor-pointer"
-              title="Copy PIN"
-            >
-              {copiedPin ? <Check className="size-3.5 text-emerald-600" /> : <Copy className="size-3.5" />}
-            </button>
           </div>
         </div>
 
@@ -744,6 +764,24 @@ export function WorkerVisitTrackingView({
           </div>
         </div>
       )}
+
+      {/* Success Toast Banner */}
+      {successMessage && (
+        <div className="fixed top-5 inset-x-4 z-50 max-w-md mx-auto bg-[#0F766E] text-white px-5 py-3.5 rounded-2xl shadow-xl flex items-center gap-3 animate-in slide-in-from-top-4 duration-300">
+          <CheckCircle2 className="size-6 text-emerald-300 shrink-0" />
+          <p className="text-xs sm:text-sm font-bold leading-snug">{successMessage}</p>
+        </div>
+      )}
+
+      {/* Worker Doorstep OTP Modal */}
+      <WorkerArrivalOtpModal
+        isOpen={showWorkerOtpModal}
+        otp={securityPin}
+        arrivedAt={arrivedAtTime}
+        customerName={job.customer.name}
+        onClose={() => setShowWorkerOtpModal(false)}
+        isUrdu={isUrdu}
+      />
     </div>
   );
 }
