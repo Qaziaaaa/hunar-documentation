@@ -1,4 +1,4 @@
-export type StorageDriver = 's3' | 'minio';
+export type StorageDriver = 's3' | 'minio' | 'local';
 
 export interface StorageConfig {
   driver: StorageDriver;
@@ -10,15 +10,15 @@ export interface StorageConfig {
   port?: number;
   useSSL?: boolean;
   publicBaseUrl?: string;
+  localPath?: string;
 }
 
 export default () => {
   const env = process.env.NODE_ENV ?? 'development';
 
-  // S3 in production, MinIO in development (backend-internal-libraries.md #14).
   const driver: StorageDriver =
     (process.env.STORAGE_DRIVER as StorageDriver | undefined) ??
-    (env === 'production' ? 's3' : 'minio');
+    (env === 'production' ? 's3' : 'local');
 
   const bucket = process.env.STORAGE_BUCKET ?? process.env.AWS_S3_BUCKET ?? 'hunar-uploads';
 
@@ -32,6 +32,7 @@ export default () => {
     port: Number(process.env.MINIO_PORT ?? 9000),
     useSSL: (process.env.MINIO_USE_SSL ?? 'false') === 'true',
     publicBaseUrl: process.env.STORAGE_PUBLIC_BASE_URL || undefined,
+    localPath: process.env.STORAGE_LOCAL_PATH ?? './uploads',
   };
 
   return { storage: storageConfig };
