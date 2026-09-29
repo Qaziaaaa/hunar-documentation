@@ -23,6 +23,9 @@ import {
 } from "lucide-react";
 import { VoicePlayer } from "./voice-player";
 import { Button } from "@/components/ui/button";
+import { submitWorkerOffer } from "@/services/worker/offers.service";
+import { isMockMode } from "@/lib/data-source";
+import { ApiError } from "@/lib/api-client";
 import type { JobRequest } from "../types";
 
 const CATEGORY_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -53,28 +56,45 @@ export function JobRequestModal({
   const [selectedImagePreview, setSelectedImagePreview] = useState<string | null>(null);
   const [isSending, setIsSending] = useState(false);
   const [isSent, setIsSent] = useState(false);
+  const [sendError, setSendError] = useState<string | null>(null);
 
   useEffect(() => {
     if (job) {
       setSelectedImagePreview(null);
       setIsSending(false);
       setIsSent(false);
+      setSendError(null);
     }
   }, [job]);
 
-  const handleSendOffer300 = () => {
+  const visitCharge = job?.suggestedVisitCharge ?? 300;
+
+  const handleSendOffer = async () => {
     if (!job || isSending || isSent) return;
     setIsSending(true);
-    setTimeout(() => {
+    setSendError(null);
+    try {
+      if (!isMockMode()) {
+        await submitWorkerOffer(job.id, visitCharge);
+      }
       setIsSending(false);
       setIsSent(true);
-      if (onOfferSent) {
-        onOfferSent(job.id, 300);
-      }
+      onOfferSent?.(job.id, visitCharge);
       setTimeout(() => {
         onClose();
       }, 1000);
-    }, 450);
+    } catch (err) {
+      setIsSending(false);
+      if (err instanceof ApiError && err.status === 401) {
+        setSendError("Your session expired. Please sign in again to send an offer.");
+      } else if (err instanceof ApiError && err.status === 403) {
+        setSendError("Sign in with a worker account to send offers.");
+      } else if (err instanceof ApiError && err.status === 409) {
+        setSendError("You already sent an offer for this job.");
+      } else {
+        setSendError("Could not send your offer. Please try again.");
+      }
+    }
   };
 
   useEffect(() => {
@@ -123,7 +143,7 @@ export function JobRequestModal({
               {job.category} Request
             </span>
             {job.status === "URGENT" && (
-              <span className="rounded-full bg-red-500/10 px-2.5 py-0.5 text-[11px] font-bold text-red-600 flex items-center gap-1">
+              <span className="rounded-full bg-amber-500/10 px-2.5 py-0.5 text-[11px] font-bold text-amber-700 border border-amber-200/80 flex items-center gap-1">
                 <Sparkles className="size-3" /> Urgent
               </span>
             )}
@@ -286,43 +306,61 @@ export function JobRequestModal({
         </div>
 
         {/* MODAL BOTTOM ACTION / FOOTER */}
-        <div className="sticky bottom-0 z-20 bg-white/95 backdrop-blur-md px-4 sm:px-6 py-3.5 flex items-center justify-between gap-3">
-          <Button
-            type="button"
-            variant="ghost"
-            onClick={onClose}
-            className="rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-bold px-5 h-10 cursor-pointer"
-          >
-            {isUrdu ? "بند کریں" : "Close"}
-          </Button>
+        <div className="sticky bottom-0 z-20 bg-white/95 backdrop-blur-md px-4 sm:px-6 py-3.5 space-y-2">
+          {sendError && (
+            <p
+              className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs font-bold text-red-700"
+              role="alert"
+            >
+              {sendError}
+            </p>
+          )}
+          <div className="flex items-center justify-between gap-3">
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={onClose}
+              className="rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-bold px-5 h-10 cursor-pointer"
+            >
+              {isUrdu ? "بند کریں" : "Close"}
+            </Button>
 
-          <Button
-            type="button"
-            onClick={handleSendOffer300}
-            disabled={isSending || isSent}
-            className={`rounded-full text-xs sm:text-sm font-bold px-6 h-10 shadow-md transition-all cursor-pointer flex items-center gap-1.5 ${
-              isSent
-                ? "bg-[#16A34A] hover:bg-[#16A34A] text-white"
-                : "bg-teal hover:bg-teal/90 text-white shadow-teal/20"
-            }`}
-          >
-            {isSending ? (
-              <>
-                <Loader2 className="size-4 animate-spin" />
-                <span>{isUrdu ? "آفر بھیجی جا رہی ہے..." : "Sending Offer..."}</span>
-              </>
-            ) : isSent ? (
-              <>
-                <CheckCircle2 className="size-4" />
-                <span>{isUrdu ? "آفر بھیج دی گئی (روپے 300)" : "Offer Sent (Rs. 300)"}</span>
-              </>
-            ) : (
-              <>
-                <Send className="size-4" />
-                <span>{isUrdu ? "روپے 300 میں آفر بھیجیں" : "Send Offer for Rs. 300"}</span>
-              </>
-            )}
-          </Button>
+            <Button
+              type="button"
+              onClick={handleSendOffer}
+              disabled={isSending || isSent}
+              className={`rounded-full text-xs sm:text-sm font-bold px-6 h-10 shadow-md transition-all cursor-pointer flex items-center gap-1.5 ${
+                isSent
+                  ? "bg-[#16A34A] hover:bg-[#16A34A] text-white"
+                  : "bg-teal hover:bg-teal/90 text-white shadow-teal/20"
+              }`}
+            >
+              {isSending ? (
+                <>
+                  <Loader2 className="size-4 animate-spin" />
+                  <span>{isUrdu ? "آفر بھیجی جا رہی ہے..." : "Sending Offer..."}</span>
+                </>
+              ) : isSent ? (
+                <>
+                  <CheckCircle2 className="size-4" />
+                  <span>
+                    {isUrdu
+                      ? `آفر بھیج دی گئی (روپے ${visitCharge})`
+                      : `Offer Sent (Rs. ${visitCharge})`}
+                  </span>
+                </>
+              ) : (
+                <>
+                  <Send className="size-4" />
+                  <span>
+                    {isUrdu
+                      ? `روپے ${visitCharge} میں آفر بھیجیں`
+                      : `Send Offer for Rs. ${visitCharge}`}
+                  </span>
+                </>
+              )}
+            </Button>
+          </div>
         </div>
 
         {/* IMAGE ZOOM OVERLAY (If clicked thumbnail) */}

@@ -164,8 +164,8 @@ export function CustomerOffersHubView({ initialJobs }: CustomerOffersHubViewProp
           </h1>
           <p className="text-xs sm:text-sm text-slate-500 max-w-2xl">
             {isUrdu
-              ? "تصدیق شدہ کاریگروں کے ریٹس کا موازنہ کریں، نادرا اسناد دیکھیں اور آرڈر ورکر تحفظ کے ساتھ وزٹ بک کریں۔"
-              : "Compare verified technician quotes, inspect NADRA credentials, and confirm bookings with Orderworker verified protection."}
+              ? "تصدیق شدہ کاریگروں کے ریٹس کا موازنہ کریں، نادرا اسناد دیکھیں اور WorkerFIX تحفظ کے ساتھ وزٹ بک کریں۔"
+              : "Compare verified technician quotes, inspect NADRA credentials, and confirm bookings with WorkerFIX verified protection."}
           </p>
         </div>
 
@@ -228,13 +228,19 @@ export function CustomerOffersHubView({ initialJobs }: CustomerOffersHubViewProp
             onClick={() => setStatusFilter("pending")}
             className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 shrink-0 ${
               statusFilter === "pending"
-                ? "bg-[#0F766E] text-white shadow-2xs"
+                ? "bg-[#123B5D] text-white shadow-2xs"
                 : "bg-slate-50 text-slate-600 hover:bg-slate-100"
             }`}
           >
             <span className="size-2 rounded-full bg-amber-400" />
             <span>{isUrdu ? "زیر غور" : "Pending Action"}</span>
-            <span className="px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-800 text-[10px] font-bold">
+            <span
+              className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
+                statusFilter === "pending"
+                  ? "bg-white/20 text-white"
+                  : "bg-amber-100 text-amber-800"
+              }`}
+            >
               {jobs.filter((j) => j.status === "receiving_offers").length}
             </span>
           </button>
@@ -244,13 +250,23 @@ export function CustomerOffersHubView({ initialJobs }: CustomerOffersHubViewProp
             onClick={() => setStatusFilter("accepted")}
             className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 shrink-0 ${
               statusFilter === "accepted"
-                ? "bg-[#0F766E] text-white shadow-2xs"
+                ? "bg-[#123B5D] text-white shadow-2xs"
                 : "bg-slate-50 text-slate-600 hover:bg-slate-100"
             }`}
           >
-            <CheckCircle2 className="size-3.5 text-emerald-500" />
+            <CheckCircle2
+              className={`size-3.5 ${
+                statusFilter === "accepted" ? "text-emerald-300" : "text-emerald-500"
+              }`}
+            />
             <span>{isUrdu ? "بُک شدہ وزٹس" : "Booked Visits"}</span>
-            <span className="px-1.5 py-0.5 rounded-full bg-slate-200 text-slate-700 text-[10px] font-bold">
+            <span
+              className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
+                statusFilter === "accepted"
+                  ? "bg-white/20 text-white"
+                  : "bg-slate-200 text-slate-700"
+              }`}
+            >
               {jobs.filter((j) => j.status === "visit_scheduled" || j.status === "completed").length}
             </span>
           </button>
@@ -412,7 +428,7 @@ export function CustomerOffersHubView({ initialJobs }: CustomerOffersHubViewProp
 
         {/* Right Column: Verified Security & Pro Tips (4 Cols) */}
         <div className="lg:col-span-4 space-y-6">
-          {/* Orderworker Verified Security Card */}
+          {/* WorkerFIX Verified Security Card */}
           <div className="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 space-y-4">
             <div className="flex items-center gap-3">
               <div className="size-12 rounded-2xl bg-[#0F766E]/10 text-[#0F766E] flex items-center justify-center shrink-0">
@@ -420,7 +436,7 @@ export function CustomerOffersHubView({ initialJobs }: CustomerOffersHubViewProp
               </div>
               <div>
                 <h4 className="text-base font-bold text-[#123B5D]">
-                  {isUrdu ? "آرڈر ورکر تصدیق شدہ کوالٹی" : "Orderworker Verified Quality"}
+                  {isUrdu ? "WorkerFIX تصدیق شدہ کوالٹی" : "WorkerFIX Verified Quality"}
                 </h4>
                 <span className="text-xs font-semibold text-[#0F766E]">
                   {isUrdu ? "100% گارنٹی شدہ تحفظ" : "100% Guaranteed Protection"}
@@ -431,11 +447,11 @@ export function CustomerOffersHubView({ initialJobs }: CustomerOffersHubViewProp
             <p className="text-xs text-slate-600 leading-relaxed">
               {isUrdu ? (
                 <>
-                  آپ کی سروس <strong className="text-[#123B5D]">آرڈر ورکر ویریفائیڈ گارنٹی</strong> کے تحت محفوظ ہے۔ تمام کاریگر نادرا سی این آئی سی سے تصدیق شدہ ہیں اور موقع پر شفاف معائنہ فراہم کرتے ہیں۔
+                  آپ کی سروس <strong className="text-[#123B5D]">WorkerFIX ویریفائیڈ گارنٹی</strong> کے تحت محفوظ ہے۔ تمام کاریگر نادرا سی این آئی سی سے تصدیق شدہ ہیں اور موقع پر شفاف معائنہ فراہم کرتے ہیں۔
                 </>
               ) : (
                 <>
-                  Your service is protected by <strong className="text-[#123B5D]">Orderworker Verified Guarantee</strong>. Technicians are NADRA CNIC verified and provide transparent diagnosis directly on site.
+                  Your service is protected by <strong className="text-[#123B5D]">WorkerFIX Verified Guarantee</strong>. Technicians are NADRA CNIC verified and provide transparent diagnosis directly on site.
                 </>
               )}
             </p>

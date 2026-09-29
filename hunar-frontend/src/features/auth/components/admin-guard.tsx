@@ -3,16 +3,18 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "@/i18n/navigation";
 import { Loader2 } from "lucide-react";
+import { getAccessToken, getStoredUser } from "@/lib/api-client";
 
 export function AdminGuard({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const [authorized, setAuthorized] = useState<boolean>(false);
 
   useEffect(() => {
-    // Check admin authentication state (token or session)
-    const token = typeof window !== "undefined" ? localStorage.getItem("hunar_admin_token") : null;
-    
-    if (!token) {
+    // Check admin authentication state via the shared token storage
+    const token = getAccessToken();
+    const user = getStoredUser();
+
+    if (!token || user?.role !== "ADMIN") {
       router.push("/admin/sign-in");
     } else {
       setAuthorized(true);

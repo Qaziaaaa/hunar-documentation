@@ -20,8 +20,7 @@ export function WorkerInvoiceModal({ job, onClose }: WorkerInvoiceModalProps) {
   const visitCharge = job.visitCharge ?? 500;
   const repairCharge = job.repairCharge ?? 1500;
   const grossTotal = visitCharge + repairCharge;
-  const platformFee = job.platformCommission ?? Math.round(grossTotal * 0.1);
-  const netEarnings = job.workerNetEarnings ?? grossTotal - platformFee;
+  const netEarnings = grossTotal;
   const invoiceNumber = job.invoiceNumber || `INV-2026-${job.id.slice(-4)}`;
   const warrantyDays = job.warrantyDays || 30;
 
@@ -31,7 +30,7 @@ export function WorkerInvoiceModal({ job, onClose }: WorkerInvoiceModalProps) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-3 sm:p-4 overflow-y-auto">
-      <div className="bg-white rounded-2xl sm:rounded-3xl max-w-lg w-full p-4 sm:p-7 shadow-2xl space-y-4 sm:space-y-6 animate-in fade-in zoom-in-95 my-auto max-h-[92vh] overflow-y-auto">
+      <div className="bg-white rounded-2xl sm:rounded-3xl max-w-lg lg:max-w-2xl w-full p-4 sm:p-7 lg:p-8 shadow-2xl space-y-4 sm:space-y-6 animate-in fade-in zoom-in-95 my-auto max-h-[92vh] overflow-y-auto">
         {/* Header */}
         <div className="flex items-start justify-between border-b border-slate-100 pb-3 sm:pb-4 gap-2">
           <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
@@ -63,7 +62,7 @@ export function WorkerInvoiceModal({ job, onClose }: WorkerInvoiceModalProps) {
         </div>
 
         {/* Details Grid */}
-        <div className="grid grid-cols-2 gap-2.5 sm:gap-4 bg-slate-50 p-3 sm:p-4 rounded-xl sm:rounded-2xl border border-slate-200/80 text-[11px] sm:text-xs">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4 bg-slate-50 p-3 sm:p-4 lg:p-5 rounded-xl sm:rounded-2xl border border-slate-200/80 text-[11px] sm:text-xs">
           <div>
             <span className="text-slate-400 uppercase font-semibold text-[9.5px] sm:text-[10px] block">
               Customer
@@ -129,15 +128,8 @@ export function WorkerInvoiceModal({ job, onClose }: WorkerInvoiceModalProps) {
             )}
 
             <div className="p-2.5 sm:p-3.5 flex justify-between items-center bg-slate-50">
-              <span className="font-bold text-slate-700">Gross Value</span>
+              <span className="font-bold text-slate-700">Total Value</span>
               <span className="font-bold text-slate-900">{formatRs(grossTotal)}</span>
-            </div>
-
-            <div className="p-2.5 sm:p-3.5 flex justify-between items-center text-slate-600">
-              <div className="min-w-0 flex-1">
-                <span className="truncate block">Commission (10%)</span>
-              </div>
-              <span className="font-bold text-red-600 shrink-0">−{formatRs(platformFee)}</span>
             </div>
 
             <div className="p-3 sm:p-4 flex justify-between items-center bg-emerald-50/80 text-emerald-900">
@@ -157,7 +149,7 @@ export function WorkerInvoiceModal({ job, onClose }: WorkerInvoiceModalProps) {
           <ShieldCheck className="size-4 sm:size-5 text-[#0F8B8D] shrink-0" />
           <div className="text-slate-700 leading-relaxed">
             <strong className="text-[#0F8B8D] font-extrabold">{warrantyDays}-Day Guarantee: </strong>
-            Customer is covered under Hunar Pro protection warranty.
+            Customer is covered under WorkerFIX Pro protection warranty.
           </div>
         </div>
 

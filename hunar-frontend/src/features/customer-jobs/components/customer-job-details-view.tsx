@@ -95,7 +95,7 @@ export function CustomerJobDetailsView({ initialJob }: CustomerJobDetailsViewPro
 
             <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-600">
               <MapPin className="size-3 text-[#0F766E]" />
-              {job.area || (isUrdu ? "پشاور" : "Peshawar")}
+              {job.area || (isUrdu ? "آن لوکیشن" : "On Location")}
             </span>
 
             {job.status === "receiving_offers" ? (
@@ -359,22 +359,6 @@ export function CustomerJobDetailsView({ initialJob }: CustomerJobDetailsViewPro
                 </div>
               </div>
 
-              {/* Doorstep Security PIN Callout */}
-              <div className="p-4 rounded-2xl bg-[#123B5D] text-white flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <span className="text-xs font-bold text-slate-200">
-                    {isUrdu ? "آپ کا ڈور سٹیپ سیکیورٹی PIN:" : "Your Doorstep Security PIN:"}
-                  </span>
-                  <p className="text-[11px] text-slate-400">
-                    {isUrdu
-                      ? "دروازہ کھولنے سے پہلے کاریگر سے یہ کوڈ سنیں۔"
-                      : "Ask pro to recite this code before opening door."}
-                  </p>
-                </div>
-                <span className="font-mono text-xl font-black tracking-widest text-[#0F766E] bg-white px-3 py-1 rounded-xl">
-                  {job.securityPin || "6492"}
-                </span>
-              </div>
 
               {/* Completion & Review Direct Action */}
               <Link
@@ -442,8 +426,8 @@ export function CustomerJobDetailsView({ initialJob }: CustomerJobDetailsViewPro
               <div>
                 <h4 className="text-xs font-bold text-[#123B5D]">
                   {isUrdu
-                    ? "آرڈر ورکر 100% تصدیق شدہ کوالٹی کی ضمانت"
-                    : "Orderworker 100% Verified Quality Guarantee"}
+                    ? "WorkerFIX 100% تصدیق شدہ کوالٹی کی ضمانت"
+                    : "WorkerFIX 100% Verified Quality Guarantee"}
                 </h4>
                 <p className="text-[11px] text-slate-500">
                   {isUrdu

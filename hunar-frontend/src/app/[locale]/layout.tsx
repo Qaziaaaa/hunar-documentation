@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter, Noto_Nastaliq_Urdu } from "next/font/google";
+import { Inter } from "next/font/google";
 import { hasLocale, NextIntlClientProvider } from "next-intl";
 import { getMessages, getTranslations, setRequestLocale } from "next-intl/server";
 import { notFound } from "next/navigation";
@@ -10,13 +10,6 @@ import "../globals.css";
 const inter = Inter({
   variable: "--font-inter",
   subsets: ["latin"],
-  display: "swap",
-});
-
-const notoNastaliqUrdu = Noto_Nastaliq_Urdu({
-  variable: "--font-noto-nastaliq",
-  subsets: ["arabic"],
-  weight: ["400", "500", "600", "700"],
   display: "swap",
 });
 
@@ -32,16 +25,44 @@ export async function generateMetadata({
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: "Metadata" });
   return {
-    title: t("title"),
+    title: {
+      default: t("title"),
+      template: "%s | WorkerFIX",
+    },
     description: t("description"),
+    applicationName: "WorkerFIX",
     icons: {
       icon: [
-        { url: "/orderworker-icon.png", type: "image/png" },
-        { url: "/orderworker-icon.png", sizes: "32x32", type: "image/png" },
-        { url: "/orderworker-icon.png", sizes: "192x192", type: "image/png" },
+        { url: "/workerfix-helmet-clean.png?v=helmet", sizes: "any" },
+        { url: "/workerfix-helmet-clean.png?v=helmet", sizes: "32x32", type: "image/png" },
+        { url: "/workerfix-helmet-clean.png?v=helmet", sizes: "192x192", type: "image/png" },
+        { url: "/workerfix-helmet-clean.png?v=helmet", sizes: "512x512", type: "image/png" },
       ],
-      shortcut: "/orderworker-icon.png",
-      apple: "/orderworker-icon.png",
+      shortcut: "/workerfix-helmet-clean.png?v=helmet",
+      apple: [
+        { url: "/workerfix-helmet-clean.png?v=helmet", sizes: "180x180", type: "image/png" },
+      ],
+    },
+    openGraph: {
+      title: t("title"),
+      description: t("description"),
+      siteName: "WorkerFIX",
+      images: [
+        {
+          url: "/workerfix-helmet-clean.png",
+          width: 160,
+          height: 200,
+          alt: "WorkerFIX",
+        },
+      ],
+      locale: locale === "ur" ? "ur_PK" : "en_PK",
+      type: "website",
+    },
+    twitter: {
+      card: "summary",
+      title: t("title"),
+      description: t("description"),
+      images: ["/workerfix-helmet-clean.png"],
     },
   };
 }
@@ -66,18 +87,18 @@ export default async function LocaleLayout({
     <html
       lang={locale}
       dir={dir}
-      className={`${inter.variable} ${notoNastaliqUrdu.variable} h-full antialiased`}
+      className={`${inter.variable} h-full antialiased`}
     >
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
         <link
           rel="stylesheet"
-          href="https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu:wght@400;500;600;700&display=swap"
+          href="https://fonts.googleapis.com/css2?family=Noto+Sans+Arabic:wght@400;500;600;700;800&display=swap"
         />
-        <link rel="icon" href="/orderworker-icon.png" type="image/png" />
-        <link rel="shortcut icon" href="/orderworker-icon.png" type="image/png" />
-        <link rel="apple-touch-icon" href="/orderworker-icon.png" />
+        <link rel="icon" href="/workerfix-icon.png" type="image/png" />
+        <link rel="shortcut icon" href="/workerfix-icon.png" type="image/png" />
+        <link rel="apple-touch-icon" href="/workerfix-icon.png" />
       </head>
       <body className="min-h-screen w-full overflow-x-hidden flex flex-col">
         <NextIntlClientProvider messages={messages}>

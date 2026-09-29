@@ -8,13 +8,17 @@ import { VisitOffer } from "@/types/offer";
 import { formatRs } from "@/lib/design-tokens";
 import { workerStore } from "@/stores/worker-jobs-store";
 import { WorkerChatModal } from "./worker-chat-modal";
+import { WorkerArrivalOtpModal } from "./worker-arrival-otp-modal";
+import {
+  arrivalService,
+  SUCCESS_VERIFICATION_MESSAGE,
+  SUCCESS_VERIFICATION_MESSAGE_UR,
+} from "../services/arrival-verification-service";
 import {
   Phone,
   MessageCircle,
   Navigation as NavigationIcon,
   CheckCircle2,
-  Copy,
-  Check,
   X,
   AlertTriangle,
   Wallet,
@@ -22,7 +26,6 @@ import {
   PhoneCall,
   ShieldCheck,
   MapPin,
-  KeyRound,
   Clock,
 } from "lucide-react";
 import "leaflet/dist/leaflet.css";
@@ -63,7 +66,6 @@ export function WorkerVisitTrackingView({
   const mapInstanceRef = useRef<any>(null);
   const routeBoundsRef = useRef<any>(null);
 
-  const [copiedPin, setCopiedPin] = useState(false);
   const [showCallModal, setShowCallModal] = useState(false);
   const [showChatModal, setShowChatModal] = useState(false);
   const [showCancelModal, setShowCancelModal] = useState(false);
@@ -71,6 +73,9 @@ export function WorkerVisitTrackingView({
   const [cancelReason, setCancelReason] = useState("");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isArriving, setIsArriving] = useState(false);
+  const [showWorkerOtpModal, setShowWorkerOtpModal] = useState(false);
+  const [arrivedAtTime, setArrivedAtTime] = useState<number>(Date.now());
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [routePoints, setRoutePoints] = useState<[number, number][]>(
     PESHAWAR_ROAD_POINTS
   );
@@ -136,8 +141,25 @@ export function WorkerVisitTrackingView({
       const L = (await import("leaflet")).default;
       if (!isMounted || !mapContainerRef.current) return;
 
+      // Patch Leaflet DomUtil.getPosition to prevent '_leaflet_pos' TypeError when unmounting or accessing detached DOM elements
+      if (L && L.DomUtil && L.DomUtil.getPosition && !(L.DomUtil as any)._patchedPosition) {
+        const origGetPos = L.DomUtil.getPosition;
+        L.DomUtil.getPosition = function (el: any) {
+          if (!el) return new L.Point(0, 0);
+          try {
+            return origGetPos.call(L.DomUtil, el);
+          } catch {
+            return new L.Point(0, 0);
+          }
+        };
+        (L.DomUtil as any)._patchedPosition = true;
+      }
+
       if (mapInstanceRef.current) {
-        mapInstanceRef.current.remove();
+        try {
+          mapInstanceRef.current.off();
+          mapInstanceRef.current.remove();
+        } catch {}
         mapInstanceRef.current = null;
       }
 
@@ -239,26 +261,34 @@ export function WorkerVisitTrackingView({
       // Force recalculation of map tile dimensions after DOM settle
       setTimeout(() => {
         if (isMounted && mapInstanceRef.current) {
-          mapInstanceRef.current.invalidateSize();
+          try {
+            mapInstanceRef.current.invalidateSize();
+          } catch {}
           if (routeBoundsRef.current) {
-            mapInstanceRef.current.fitBounds(routeBoundsRef.current, {
-              padding: [50, 50],
-              maxZoom: 16,
-            });
+            try {
+              mapInstanceRef.current.fitBounds(routeBoundsRef.current, {
+                padding: [50, 50],
+                maxZoom: 16,
+              });
+            } catch {}
           }
         }
       }, 200);
 
       setTimeout(() => {
         if (isMounted && mapInstanceRef.current) {
-          mapInstanceRef.current.invalidateSize();
+          try {
+            mapInstanceRef.current.invalidateSize();
+          } catch {}
         }
       }, 500);
 
       if (mapContainerRef.current) {
         resizeObserver = new ResizeObserver(() => {
           if (mapInstanceRef.current) {
-            mapInstanceRef.current.invalidateSize();
+            try {
+              mapInstanceRef.current.invalidateSize();
+            } catch {}
           }
         });
         resizeObserver.observe(mapContainerRef.current);
@@ -273,36 +303,71 @@ export function WorkerVisitTrackingView({
         resizeObserver.disconnect();
       }
       if (mapInstanceRef.current) {
-        mapInstanceRef.current.remove();
+        try {
+          mapInstanceRef.current.off();
+          mapInstanceRef.current.remove();
+        } catch {}
         mapInstanceRef.current = null;
       }
     };
   }, [customerLat, customerLng, workerLat, workerLng, routePoints, customerFirstName]);
 
-  const handleCopyPin = () => {
-    navigator.clipboard.writeText(securityPin);
-    setCopiedPin(true);
-    setTimeout(() => setCopiedPin(false), 2000);
-  };
+
+  // Subscribe to real-time arrival OTP verification
+  useEffect(() => {
+    const unsubscribe = arrivalService.subscribe((session, eventType) => {
+      if (
+        session &&
+        (session.jobId === job.id || session.otp === securityPin) &&
+        (eventType === "OTP_VERIFIED" || session.status === "otp_verified")
+      ) {
+        setShowWorkerOtpModal(false);
+        setIsArriving(false);
+        const successMsg = isUrdu ? SUCCESS_VERIFICATION_MESSAGE_UR : SUCCESS_VERIFICATION_MESSAGE;
+        setSuccessMessage(successMsg);
+
+        // Update state to arrived and entering premises for inspection
+        workerStore.arriveAtSite(job.id);
+        workerStore.startInspection(job.id);
+
+        setTimeout(() => {
+          if (onArrived) {
+            onArrived();
+          }
+        }, 2200);
+      }
+    });
+
+    return () => unsubscribe();
+  }, [job.id, securityPin, isUrdu, onArrived]);
 
   // Handle "I'm here" / Reached Doorstep CTA
   const handleReachedDoorstep = () => {
     setErrorMessage(null);
-    setIsArriving(true);
 
-    const result = workerStore.arriveAtSite(job.id);
-    if (!result.success) {
+    // Verify 10% commission hold
+    const visitCharge = agreedVisitCharge;
+    const requiredHold = Math.round(visitCharge * 0.1);
+    const state = workerStore.getState();
+    if (state.walletBalance < requiredHold) {
       setErrorMessage(
-        result.error ||
-          `Insufficient wallet balance. Minimum ${formatRs(commissionHold)} commission hold required.`
+        `Insufficient wallet balance. Minimum ${formatRs(requiredHold)} commission hold required.`
       );
-      setIsArriving(false);
       return;
     }
 
-    if (onArrived) {
-      onArrived();
-    }
+    const now = Date.now();
+    setArrivedAtTime(now);
+
+    arrivalService.startArrivalSession({
+      jobId: job.id,
+      otp: securityPin,
+      workerName: "Ali Khan",
+      customerName: job.customer.name,
+      customerAddress: job.location.fullAddress || (job.location as any).address || job.location.area,
+    });
+
+    setShowWorkerOtpModal(true);
   };
 
   const handleCancelSubmit = (e: React.FormEvent) => {
@@ -313,11 +378,11 @@ export function WorkerVisitTrackingView({
   };
 
   return (
-    <div className="fixed inset-0 z-40 flex flex-col bg-white text-slate-900 font-sans antialiased select-none overflow-hidden w-full max-w-3xl sm:max-w-4xl mx-auto shadow-2xl">
+    <div className="fixed inset-0 z-40 flex flex-col lg:flex-row bg-slate-100 text-slate-900 font-sans antialiased select-none overflow-hidden w-full">
       {/* ======================================================== */}
-      {/* 1. TOP HEADER (Cancel visit on left, Headphone Support on right) */}
+      {/* 1. MOBILE TOP HEADER (Cancel visit on left, Headphone Support on right) */}
       {/* ======================================================== */}
-      <header className="absolute top-0 inset-x-0 z-30 flex items-center justify-between px-4 py-3 pointer-events-auto">
+      <header className="absolute top-0 inset-x-0 z-30 flex lg:hidden items-center justify-between px-4 py-3 pointer-events-auto">
         <button
           type="button"
           onClick={() => setShowCancelModal(true)}
@@ -331,21 +396,54 @@ export function WorkerVisitTrackingView({
           type="button"
           onClick={() => setShowSupportModal(true)}
           className="size-9 rounded-full bg-white/95 backdrop-blur-md border border-slate-200/90 shadow-xs flex items-center justify-center text-[#123B5D] hover:text-[#0F8B8D] hover:bg-white active:scale-95 transition-all cursor-pointer"
-          title={isUrdu ? "ہنر سپورٹ" : "Hunar 24/7 Support"}
+          title={isUrdu ? "WorkerFIX سپورٹ" : "WorkerFIX 24/7 Support"}
         >
           <Headphones className="size-4.5" />
         </button>
       </header>
 
       {/* ======================================================== */}
-      {/* 2. MAP AREA (UPPER SECTION) */}
+      {/* 2. MAP AREA (Full height on desktop, upper half on mobile) */}
       {/* ======================================================== */}
-      <div className="relative w-full flex-1 min-h-[300px] bg-slate-100 overflow-hidden isolate">
+      <div className="relative w-full lg:flex-1 h-full min-h-[300px] lg:min-h-0 bg-slate-100 overflow-hidden isolate flex flex-col">
+        {/* Desktop Top Floating Header Bar */}
+        <div className="hidden lg:flex absolute top-5 inset-x-6 z-30 items-center justify-between pointer-events-auto">
+          <button
+            type="button"
+            onClick={() => setShowCancelModal(true)}
+            className="text-xs font-bold text-slate-700 hover:text-red-600 bg-white/95 backdrop-blur-md px-4 py-2 rounded-full border border-slate-200/90 shadow-sm transition-all hover:bg-red-50 cursor-pointer flex items-center gap-1.5"
+          >
+            <span>{isUrdu ? "وزٹ منسوخ کریں" : "Cancel visit"}</span>
+          </button>
+
+          {/* Status Badge */}
+          <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-white/95 backdrop-blur-md border border-slate-200 shadow-sm text-xs font-extrabold text-[#123B5D]">
+            <span className="size-2 rounded-full bg-[#0F8B8D] animate-ping" />
+            <span>
+              {isUrdu ? "راستے میں · کسٹمر کی دہلیز روانگی" : "Live Navigation · En Route to Customer"}
+            </span>
+            <span className="text-slate-300">|</span>
+            <span className="text-[#0F8B8D]">
+              ~{job.etaMinutes || 12} mins ({job.location.distanceKm || 2.1} km)
+            </span>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setShowSupportModal(true)}
+            className="h-9 px-3.5 rounded-full bg-white/95 backdrop-blur-md border border-slate-200/90 shadow-sm flex items-center gap-2 text-xs font-bold text-[#123B5D] hover:text-[#0F8B8D] hover:bg-white active:scale-95 transition-all cursor-pointer"
+            title={isUrdu ? "WorkerFIX سپورٹ" : "WorkerFIX 24/7 Support"}
+          >
+            <Headphones className="size-4" />
+            <span>{isUrdu ? "مدد / سپورٹ" : "24/7 Support"}</span>
+          </button>
+        </div>
+
         {/* Leaflet Map Canvas */}
         <div ref={mapContainerRef} className="absolute inset-0 w-full h-full z-0" />
 
         {/* Top Right on Map: Recenter & Zoom Controls */}
-        <div className="absolute top-16 right-4 z-20 flex flex-col gap-1.5 pointer-events-auto">
+        <div className="absolute top-16 lg:top-20 right-4 z-20 flex flex-col gap-1.5 pointer-events-auto">
           <button
             type="button"
             onClick={() => {
@@ -353,7 +451,7 @@ export function WorkerVisitTrackingView({
                 mapInstanceRef.current.zoomIn();
               }
             }}
-            className="size-8 rounded-xl bg-white/95 backdrop-blur-md border border-slate-200/90 shadow-md flex items-center justify-center text-slate-800 font-black text-sm hover:bg-white active:scale-95 transition-all cursor-pointer"
+            className="size-8 sm:size-9 rounded-xl bg-white/95 backdrop-blur-md border border-slate-200/90 shadow-md flex items-center justify-center text-slate-800 font-black text-sm hover:bg-white active:scale-95 transition-all cursor-pointer"
             title="Zoom In"
           >
             +
@@ -365,7 +463,7 @@ export function WorkerVisitTrackingView({
                 mapInstanceRef.current.zoomOut();
               }
             }}
-            className="size-8 rounded-xl bg-white/95 backdrop-blur-md border border-slate-200/90 shadow-md flex items-center justify-center text-slate-800 font-black text-sm hover:bg-white active:scale-95 transition-all cursor-pointer"
+            className="size-8 sm:size-9 rounded-xl bg-white/95 backdrop-blur-md border border-slate-200/90 shadow-md flex items-center justify-center text-slate-800 font-black text-sm hover:bg-white active:scale-95 transition-all cursor-pointer"
             title="Zoom Out"
           >
             −
@@ -380,7 +478,7 @@ export function WorkerVisitTrackingView({
                 });
               }
             }}
-            className="size-8 rounded-xl bg-white/95 backdrop-blur-md border border-slate-200/90 shadow-md flex items-center justify-center text-[#123B5D] hover:text-[#0F8B8D] hover:bg-white active:scale-95 transition-all cursor-pointer"
+            className="size-8 sm:size-9 rounded-xl bg-white/95 backdrop-blur-md border border-slate-200/90 shadow-md flex items-center justify-center text-[#123B5D] hover:text-[#0F8B8D] hover:bg-white active:scale-95 transition-all cursor-pointer"
             title={isUrdu ? "راستہ دوبارہ مرکوز کریں" : "Recenter Route"}
           >
             <MapPin className="size-4 text-[#0F8B8D]" />
@@ -398,15 +496,15 @@ export function WorkerVisitTrackingView({
             className="flex items-center gap-2 px-4 py-2.5 rounded-full bg-[#123B5D] hover:bg-[#0E2E49] text-white text-xs font-extrabold shadow-lg transition-all active:scale-95 cursor-pointer"
           >
             <NavigationIcon className="size-4 fill-white rotate-45" />
-            <span>{isUrdu ? "نیویگیٹ کریں" : "Navigate"}</span>
+            <span>{isUrdu ? "گوگل میپس میں کھولیں" : "Navigate in Google Maps"}</span>
           </a>
         </div>
       </div>
 
       {/* ======================================================== */}
-      {/* 3. LOWER HALF — BOTTOM SHEET (Polished, Customer Address Only) */}
+      {/* 3A. MOBILE BOTTOM SHEET (Untouched for mobile < lg) */}
       {/* ======================================================== */}
-      <div className="relative w-full bg-white rounded-t-[28px] -mt-4 z-30 border-t border-slate-200/90 shadow-[0_-8px_30px_rgba(0,0,0,0.12)] p-4 sm:p-5 flex flex-col justify-between space-y-3.5">
+      <div className="relative w-full bg-white rounded-t-[28px] -mt-4 z-30 border-t border-slate-200/90 shadow-[0_-8px_30px_rgba(0,0,0,0.12)] p-4 sm:p-5 flex flex-col justify-between space-y-3.5 lg:hidden">
         {/* Drag Handle */}
         <div className="w-10 h-1 rounded-full bg-slate-300 mx-auto -mt-1 shrink-0" />
 
@@ -495,7 +593,7 @@ export function WorkerVisitTrackingView({
           </div>
         </div>
 
-        {/* PAYMENT / FEE & DOORSTEP PIN ROW */}
+        {/* PAYMENT / FEE ROW */}
         <div className="flex items-center justify-between pt-2 border-t border-slate-100 text-xs">
           <div className="flex items-center gap-2">
             <div className="size-6 rounded-full bg-teal-50 text-[#0F8B8D] border border-teal-200 flex items-center justify-center font-black text-[11px]">
@@ -505,23 +603,6 @@ export function WorkerVisitTrackingView({
               {formatRs(agreedVisitCharge)}{" "}
               <span className="text-slate-400 font-medium text-xs">· Agreed Visit Fee</span>
             </span>
-          </div>
-
-          {/* Doorstep Verification PIN */}
-          <div className="flex items-center gap-1.5 bg-amber-50 px-2.5 py-1 rounded-xl border border-amber-200 text-xs">
-            <KeyRound className="size-3.5 text-amber-800 shrink-0" />
-            <span className="text-amber-800 text-[10.5px] font-bold">PIN:</span>
-            <span className="font-mono font-black text-[#123B5D] text-xs tracking-wider">
-              {securityPin}
-            </span>
-            <button
-              type="button"
-              onClick={handleCopyPin}
-              className="p-1 rounded text-amber-800 hover:text-amber-950 transition-colors cursor-pointer"
-              title="Copy PIN"
-            >
-              {copiedPin ? <Check className="size-3.5 text-emerald-600" /> : <Copy className="size-3.5" />}
-            </button>
           </div>
         </div>
 
@@ -538,6 +619,165 @@ export function WorkerVisitTrackingView({
           </button>
         </div>
       </div>
+
+      {/* ======================================================== */}
+      {/* 3B. DESKTOP SIDEBAR CONTROL PANEL (Shown only on lg+) */}
+      {/* ======================================================== */}
+      <aside className="hidden lg:flex lg:w-[420px] xl:w-[460px] h-full bg-white border-l border-slate-200/90 flex-col justify-between p-6 z-30 shadow-xl overflow-y-auto">
+        <div className="space-y-6">
+          {/* Top Title Bar */}
+          <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+            <div>
+              <span className="text-[11px] font-bold text-[#0F8B8D] uppercase tracking-wider block">
+                {isUrdu ? "لائیو وزٹ کنٹرول" : "Live Visit Control"}
+              </span>
+              <h2 className="text-lg font-black text-[#123B5D]">
+                {job.title}
+              </h2>
+            </div>
+            <span className="px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 text-xs font-black border border-emerald-200 flex items-center gap-1.5">
+              <span className="size-2 rounded-full bg-emerald-500 animate-pulse" />
+              <span>ACTIVE</span>
+            </span>
+          </div>
+
+          {/* Customer Profile Card */}
+          <div className="bg-slate-50 rounded-2xl border border-slate-200/80 p-4 space-y-3.5">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="size-12 rounded-2xl bg-white border border-slate-200 flex items-center justify-center text-sm font-extrabold text-[#123B5D] overflow-hidden shadow-2xs shrink-0">
+                  {job.customer.avatarUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={job.customer.avatarUrl}
+                      alt={job.customer.name}
+                      className="size-full object-cover"
+                    />
+                  ) : (
+                    job.customer.name.slice(0, 2).toUpperCase()
+                  )}
+                </div>
+                <div className="min-w-0 leading-tight">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-sm font-black text-slate-900 truncate">
+                      {job.customer.name}
+                    </span>
+                    <ShieldCheck className="size-4 text-emerald-600 shrink-0" />
+                  </div>
+                  <p className="text-xs text-slate-500 font-medium mt-0.5">
+                    ⭐ {job.customer.rating} ({job.customer.totalReviews} reviews)
+                  </p>
+                </div>
+              </div>
+
+              {/* Direct Communication Quick Buttons */}
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setShowCallModal(true)}
+                  className="size-10 rounded-xl bg-emerald-50 text-emerald-700 hover:bg-emerald-600 hover:text-white border border-emerald-200 flex items-center justify-center transition-all cursor-pointer shadow-2xs"
+                  title="Call Customer"
+                >
+                  <Phone className="size-4 stroke-[2.2]" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowChatModal(true)}
+                  className="size-10 rounded-xl bg-slate-100 text-[#123B5D] hover:bg-[#123B5D] hover:text-white border border-slate-200 flex items-center justify-center transition-all cursor-pointer shadow-2xs"
+                  title="Chat with Customer"
+                >
+                  <MessageCircle className="size-4 stroke-[2.2]" />
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Destination & Route Card */}
+          <div className="bg-white rounded-2xl border border-slate-200 p-4 space-y-3 shadow-2xs">
+            <div className="flex items-start gap-2.5">
+              <div className="size-8 rounded-xl bg-teal-50 text-[#0F8B8D] border border-teal-200 flex items-center justify-center shrink-0 mt-0.5">
+                <MapPin className="size-4" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
+                  {isUrdu ? "کسٹمر کا پتہ" : "Destination Doorstep"}
+                </span>
+                <p className="text-sm font-extrabold text-slate-900 mt-0.5">
+                  {job.location.area}
+                </p>
+                <p className="text-xs text-slate-600 leading-relaxed mt-1">
+                  {job.location.fullAddress}
+                </p>
+                {job.location.landmark && (
+                  <p className="text-xs text-slate-500 font-medium mt-1">
+                    Landmark: {job.location.landmark}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            {/* Route ETA pill */}
+            <div className="bg-slate-50 rounded-xl p-3 flex items-center justify-between text-xs font-bold border border-slate-200/80">
+              <span className="text-slate-600 flex items-center gap-1.5">
+                <NavigationIcon className="size-3.5 rotate-45 text-[#0F8B8D]" />
+                <span>{job.location.distanceKm || 2.1} km distance</span>
+              </span>
+              <span className="text-[#0F8B8D] flex items-center gap-1">
+                <Clock className="size-3.5" />
+                <span>~{job.etaMinutes || 12} mins drive</span>
+              </span>
+            </div>
+          </div>
+
+          {/* Agreed Visit Fee & Security Hold Summary */}
+          <div className="bg-slate-50 rounded-2xl border border-slate-200/80 p-4 space-y-2.5 text-xs">
+            <div className="flex justify-between items-center text-slate-600">
+              <span>Agreed Visit Charge</span>
+              <span className="font-extrabold text-slate-900 text-sm">
+                {formatRs(agreedVisitCharge)}
+              </span>
+            </div>
+            <div className="flex justify-between items-center text-slate-600">
+              <span>10% Platform Hold</span>
+              <span className="font-bold text-slate-700">
+                {formatRs(commissionHold)}
+              </span>
+            </div>
+            <div className="border-t border-slate-200 pt-2 flex justify-between items-center text-slate-900 font-extrabold text-sm">
+              <span>Net Arrival Payout</span>
+              <span className="text-[#0F8B8D] font-mono text-base font-black">
+                {formatRs(agreedVisitCharge - commissionHold)}
+              </span>
+            </div>
+          </div>
+
+          {/* Error Message */}
+          {errorMessage && (
+            <div className="p-3 bg-red-50 border border-red-200 text-red-700 text-xs rounded-xl flex items-center gap-2">
+              <AlertTriangle className="size-4 shrink-0" />
+              <span>{errorMessage}</span>
+            </div>
+          )}
+        </div>
+
+        {/* Desktop Bottom Action Button */}
+        <div className="pt-4 border-t border-slate-100 space-y-2">
+          <button
+            type="button"
+            onClick={handleReachedDoorstep}
+            disabled={isArriving}
+            className="w-full py-4 rounded-2xl bg-gradient-to-r from-[#123B5D] to-[#0F8B8D] hover:opacity-95 active:scale-[0.99] text-white font-extrabold text-base shadow-lg shadow-[#0F8B8D]/25 transition-all flex items-center justify-center gap-2.5 cursor-pointer"
+          >
+            <CheckCircle2 className="size-5 text-teal-200" />
+            <span>{isUrdu ? "میں دہلیز پر پہنچ گیا ہوں" : "I'm here (Doorstep)"}</span>
+          </button>
+          <p className="text-[11px] text-center text-slate-400">
+            {isUrdu
+              ? "پہنچنے کے بعد کسٹمر 4 ہندسوں کا سیکیورٹی پن فراہم کرے گا۔"
+              : "Customer will provide the 4-digit security PIN on arrival."}
+          </p>
+        </div>
+      </aside>
 
       {/* ======================================================== */}
       {/* 4. MODALS (Chat, Call Direct, Cancel, Support) */}
@@ -647,7 +887,7 @@ export function WorkerVisitTrackingView({
         </div>
       )}
 
-      {/* 24/7 Hunar Support Modal */}
+      {/* 24/7 WorkerFIX Support Modal */}
       {showSupportModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4 animate-in fade-in">
           <div className="bg-white rounded-3xl max-w-xs w-full p-5 shadow-2xl space-y-4 animate-in zoom-in-95">
@@ -658,7 +898,7 @@ export function WorkerVisitTrackingView({
                 </div>
                 <div>
                   <h3 className="font-extrabold text-slate-900 text-base">
-                    {isUrdu ? "ہنر ہیلپ لائن" : "Hunar Support"}
+                    {isUrdu ? "WorkerFIX ہیلپ لائن" : "WorkerFIX Support"}
                   </h3>
                   <p className="text-[11px] text-emerald-600 font-bold flex items-center gap-1">
                     <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
@@ -688,11 +928,11 @@ export function WorkerVisitTrackingView({
 
             <div className="space-y-2">
               <a
-                href="tel:0800-48627"
+                href="tel:0800-WORKERFIX"
                 className="w-full py-3 px-4 rounded-xl bg-[#0F8B8D] hover:bg-[#0B7F74] text-white text-xs font-extrabold flex items-center justify-center gap-2 shadow-sm transition-all"
               >
                 <PhoneCall className="size-4" />
-                <span>{isUrdu ? "ہیلپ لائن پر کال کریں" : "Call Helpline (0800-HUNAR)"}</span>
+                <span>{isUrdu ? "ہیلپ لائن پر کال کریں" : "Call Helpline (0800-WORKERFIX)"}</span>
               </a>
 
               <a
@@ -716,6 +956,24 @@ export function WorkerVisitTrackingView({
           </div>
         </div>
       )}
+
+      {/* Success Toast Banner */}
+      {successMessage && (
+        <div className="fixed top-5 inset-x-4 z-50 max-w-md mx-auto bg-[#0F766E] text-white px-5 py-3.5 rounded-2xl shadow-xl flex items-center gap-3 animate-in slide-in-from-top-4 duration-300">
+          <CheckCircle2 className="size-6 text-emerald-300 shrink-0" />
+          <p className="text-xs sm:text-sm font-bold leading-snug">{successMessage}</p>
+        </div>
+      )}
+
+      {/* Worker Doorstep OTP Modal */}
+      <WorkerArrivalOtpModal
+        isOpen={showWorkerOtpModal}
+        otp={securityPin}
+        arrivedAt={arrivedAtTime}
+        customerName={job.customer.name}
+        onClose={() => setShowWorkerOtpModal(false)}
+        isUrdu={isUrdu}
+      />
     </div>
   );
 }

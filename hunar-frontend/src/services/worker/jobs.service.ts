@@ -1,6 +1,6 @@
 import { http } from "@/lib/api-client";
 import { isMockMode, simulateLatency } from "@/lib/data-source";
-import type { Job, JobStatus } from "@/types/job";
+import type { Job, JobStatus, JobUrgency } from "@/types/job";
 import { mockJobs } from "@/mocks/jobs.mock";
 
 const NEARBY_STATUSES: JobStatus[] = ["OPEN", "OFFERS_RECEIVED"];
@@ -23,20 +23,102 @@ export function isNearbyJob(status: JobStatus): boolean {
   return NEARBY_STATUSES.includes(status);
 }
 
+interface BackendJobRow {
+  id: string;
+  customerId?: string;
+  categoryId: string;
+  category?: { id: string; name: string } | null;
+  categoryName?: string;
+  title: string;
+  description?: string | null;
+  images?: string[];
+  latitude?: number;
+  longitude?: number;
+  address?: string | null;
+  city?: string | null;
+  area?: string | null;
+  status: string;
+  urgency?: string | null;
+  suggestedVisitCharge?: number | null;
+  lockedVisitCharge?: number | null;
+  preferredVisitTime?: string | null;
+  createdAt?: string;
+  postedTime?: string;
+  updatedAt?: string;
+  distanceKm?: number;
+  offerCount?: number;
+  customer?: { id: string; name?: string | null; phone?: string | null };
+}
+
+interface BackendPage<T> {
+  items: T[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
+function mapBackendJob(row: BackendJobRow): Job {
+  const createdAt = row.createdAt ?? row.postedTime ?? new Date().toISOString();
+  return {
+    id: row.id,
+    customerId: row.customerId ?? "",
+    customer: row.customer && {
+      id: row.customer.id,
+      name: row.customer.name ?? undefined,
+    },
+    categoryId: row.categoryId,
+    category:
+      row.category ??
+      (row.categoryName ? { id: row.categoryId, name: row.categoryName } : undefined),
+    title: row.title,
+    description: row.description ?? undefined,
+    images: row.images ?? [],
+    latitude: row.latitude ?? 0,
+    longitude: row.longitude ?? 0,
+    address: row.address ?? "",
+    city: row.city ?? "",
+    area: row.area ?? undefined,
+    status: row.status as JobStatus,
+    urgency: row.urgency as JobUrgency,
+    suggestedVisitCharge: row.suggestedVisitCharge ?? undefined,
+    lockedVisitCharge: row.lockedVisitCharge ?? undefined,
+    preferredVisitTime: row.preferredVisitTime ?? undefined,
+    createdAt,
+    updatedAt: row.updatedAt ?? createdAt,
+    distanceKm: row.distanceKm,
+    offerCount: row.offerCount,
+  };
+}
+
 export async function listWorkerJobs(): Promise<Job[]> {
   if (isMockMode()) {
     return simulateLatency([...mockJobs]);
   }
-  return http.get<Job[]>(`/jobs/my`);
+  const res = await http.get<BackendPage<BackendJobRow> | BackendJobRow[]>("/workers/me/jobs/active");
+  const items = Array.isArray(res) ? res : res.items;
+  return (items ?? []).map(mapBackendJob);
 }
 
-export async function listNearbyJobs(): Promise<Job[]> {
+export async function listNearbyJobs(location?: {
+  lat: number;
+  lng: number;
+  radiusKm?: number;
+}): Promise<Job[]> {
   if (isMockMode()) {
     return simulateLatency(
       mockJobs.filter((job) => isNearbyJob(job.status)),
     );
   }
-  return http.get<Job[]>(`/jobs/available`);
+  const resolved = location ?? { lat: 33.98, lng: 71.43, radiusKm: 25 };
+  const params = new URLSearchParams();
+  params.set("lat", String(resolved.lat));
+  params.set("lng", String(resolved.lng));
+  params.set("radiusKm", String(resolved.radiusKm ?? 25));
+  const res = await http.get<BackendPage<BackendJobRow> | BackendJobRow[]>(
+    `/jobs/available?${params.toString()}`,
+  );
+  const items = Array.isArray(res) ? res : res.items;
+  return (items ?? []).map(mapBackendJob);
 }
 
 export async function getWorkerJob(jobId: string): Promise<Job> {
@@ -45,7 +127,7 @@ export async function getWorkerJob(jobId: string): Promise<Job> {
     if (!job) throw new Error(`JOB_NOT_FOUND:${jobId}`);
     return simulateLatency({ ...job });
   }
-  return http.get<Job>(`/jobs/${jobId}`);
+  return mapBackendJob(await http.get<BackendJobRow>(`/jobs/${jobId}`));
 }
 
 export const queryKeys = {

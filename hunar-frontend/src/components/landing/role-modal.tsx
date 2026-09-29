@@ -69,7 +69,7 @@ function RoleModalContent({
               Choose Your Account Role
             </h2>
             <p className="text-slate-500 text-xs sm:text-sm mt-1.5">
-              Select how you want to use Orderworker to enter your designated
+              Select how you want to use WorkerFIX to enter your designated
               dashboard.
             </p>
           </div>
@@ -135,7 +135,7 @@ function RoleModalContent({
                   Worker Portal
                 </h3>
                 <p className="text-xs text-slate-500 mt-1 leading-relaxed">
-                  Browse nearby repair jobs in Peshawar, send instant visit
+                  Browse nearby repair jobs, send instant visit
                   offers, and withdraw earnings directly.
                 </p>
                 <ul className="space-y-1.5 text-xs text-slate-600 pt-3 mt-3 border-t border-slate-100 font-medium">

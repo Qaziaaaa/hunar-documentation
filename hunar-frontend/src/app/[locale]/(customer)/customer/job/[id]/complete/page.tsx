@@ -3,7 +3,7 @@ import { CustomerJobCompletionView } from "@/features/customer-jobs/components/c
 
 export async function generateMetadata() {
   return {
-    title: "Job Completion & Review — Orderworker",
+    title: "Job Completion & Review — WorkerFIX",
     description:
       "Inspect completed work photos, review technician field reports, confirm direct payment, and activate your 5-Day Craftsmanship Warranty.",
   };

@@ -26,7 +26,7 @@ export function RequestChangesView({ data }: { data: WorkerVerificationData }) {
       id: "cr_2",
       field: "primaryAddress",
       title: "Base Workshop Address",
-      adminNote: "Please provide a specific street/chowk location in Peshawar.",
+      adminNote: "Please provide a specific street/chowk location.",
       stepNumber: 4,
     },
   ];

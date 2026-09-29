@@ -125,7 +125,7 @@ export function WorkerProfileModal({
             </span>
             <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-semibold bg-white text-[#0F766E] shadow-2xs">
               <ShieldCheck className="size-3.5 text-[#0F766E]" />
-              {isUrdu ? `آرڈر ورکر سرٹیفائیڈ پرو (${worker.hunarBadgeId})` : `Orderworker Certified Pro (${worker.hunarBadgeId})`}
+              {isUrdu ? `WorkerFIX سرٹیفائیڈ پرو (${worker.hunarBadgeId})` : `WorkerFIX Certified Pro (${worker.hunarBadgeId})`}
             </span>
             <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-semibold bg-white text-[#123B5D] shadow-2xs">
               <ShieldCheck className="size-3.5 text-[#16A34A]" />

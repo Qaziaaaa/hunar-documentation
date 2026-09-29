@@ -226,10 +226,10 @@ export const valuePropPoints = [
 
 export const brands = [
   { label: "DEANS", className: "font-black tracking-tight" },
-  { label: "PC PESHAWAR", className: "font-extrabold tracking-tighter" },
+  { label: "PEARL CONTINENTAL", className: "font-extrabold tracking-tighter" },
   { label: "Shiraz", className: "font-bold tracking-widest" },
   { label: "SHIREEN MAHAL", className: "font-medium tracking-tight" },
-  { label: "BRT PESHAWAR", className: "font-bold tracking-wider" },
+  { label: "METRO TRANSIT", className: "font-bold tracking-wider" },
   { label: "TOWN CLUB", className: "font-extrabold tracking-tight" },
 ];
 

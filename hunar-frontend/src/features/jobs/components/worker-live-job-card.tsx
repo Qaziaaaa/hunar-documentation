@@ -17,8 +17,6 @@ import {
   AlertTriangle,
   ArrowRight,
   ExternalLink,
-  Copy,
-  Check,
   Wrench,
   Clock,
 } from "lucide-react";
@@ -36,7 +34,6 @@ export function WorkerLiveJobCard({
   const params = useParams();
   const locale = (params?.locale as string) || "en";
 
-  const [copiedPin, setCopiedPin] = useState(false);
   const [showCallModal, setShowCallModal] = useState(false);
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
@@ -47,19 +44,10 @@ export function WorkerLiveJobCard({
     job.visitCharge ??
     job.customerSuggestedPrice ??
     800;
-
   const commissionHold = Math.round(agreedVisitCharge * 0.1);
   const netEarnings = agreedVisitCharge - commissionHold;
-  const securityPin = job.securityPin || "7294";
-  const etaMinutes = job.etaMinutes || 12;
 
-  const handleCopyPin = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    navigator.clipboard.writeText(securityPin);
-    setCopiedPin(true);
-    setTimeout(() => setCopiedPin(false), 2000);
-  };
+  const etaMinutes = job.etaMinutes || 12;
 
   const getStatusDetails = () => {
     switch (job.status) {
@@ -279,27 +267,6 @@ export function WorkerLiveJobCard({
               </div>
             </div>
 
-            {/* Doorstep Verification PIN */}
-            <div className="flex items-center justify-between bg-slate-50 p-2 sm:p-2.5 rounded-xl border border-slate-200/80 gap-2">
-              <div className="text-[11px] sm:text-xs truncate">
-                <span className="text-slate-500 font-medium">Doorstep PIN: </span>
-                <span className="font-mono font-bold text-[#123B5D] tracking-widest text-xs sm:text-sm ms-1">
-                  {securityPin}
-                </span>
-              </div>
-              <button
-                type="button"
-                onClick={handleCopyPin}
-                className="p-1.5 rounded-lg text-slate-500 hover:text-slate-800 hover:bg-white transition-colors shrink-0"
-                title="Copy PIN"
-              >
-                {copiedPin ? (
-                  <Check className="size-3.5 sm:size-4 text-emerald-600" />
-                ) : (
-                  <Copy className="size-3.5 sm:size-4" />
-                )}
-              </button>
-            </div>
 
             {/* Quick Contact Buttons */}
             <div className="flex items-center gap-2 pt-0.5">

@@ -1,4 +1,5 @@
 import { http } from "@/lib/api-client";
+import { isMockMode } from "@/lib/data-source";
 import type { PostJobData } from "../types";
 
 export interface CreateJobPayload {
@@ -12,7 +13,7 @@ export interface CreateJobPayload {
   address: string;
   city: string;
   area?: string;
-  urgency?: "NORMAL" | "URGENT" | "EMERGENCY";
+  urgency?: "NORMAL" | "HIGH" | "EMERGENCY";
   suggestedVisitCharge?: number;
   preferredVisitTime?: string;
 }
@@ -45,6 +46,9 @@ const CATEGORY_ID_MAP: Record<string, string> = {
  * Upload a job photo to the backend S3/MinIO bucket.
  */
 export async function uploadJobPhoto(file: File): Promise<{ key: string; url: string }> {
+  if (isMockMode()) {
+    return { key: `local-job-photo-${Date.now()}`, url: URL.createObjectURL(file) };
+  }
   try {
     const formData = new FormData();
     formData.append("file", file);
@@ -78,17 +82,14 @@ export async function createJob(data: PostJobData): Promise<CreatedJobResponse> 
     address: data.address || "Peshawar, Khyber Pakhtunkhwa",
     city: data.city || "Peshawar",
     area: data.area || "Hayatabad",
-    urgency: data.scheduleType === "asap" ? "URGENT" : "NORMAL",
+    urgency: data.scheduleType === "asap" ? "EMERGENCY" : "NORMAL",
     suggestedVisitCharge: Number(data.suggestedVisitFee || 300),
     preferredVisitTime: data.preferredDate
       ? new Date(data.preferredDate).toISOString()
       : undefined,
   };
 
-  try {
-    return await http.post<CreatedJobResponse>("/jobs", payload);
-  } catch (error) {
-    console.warn("Backend /jobs endpoint returned error, creating resilient mock response:", error);
+  if (isMockMode()) {
     return {
       id: `JOB-${Date.now().toString().slice(-4)}`,
       customerId: "cust-current-user",
@@ -103,4 +104,6 @@ export async function createJob(data: PostJobData): Promise<CreatedJobResponse> 
       createdAt: new Date().toISOString(),
     };
   }
+
+  return http.post<CreatedJobResponse>("/jobs", payload);
 }

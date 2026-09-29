@@ -1,6 +1,6 @@
 import { Link } from "@/i18n/navigation";
 import { footerColumns } from "./data";
-import { OrderworkerLogo } from "@/components/shared/orderworker-logo";
+import { WorkerFixLogo } from "@/components/shared/workerfix-logo";
 
 const socialIcons = [
   {
@@ -32,7 +32,7 @@ export function PreFooter() {
           Fast & Guaranteed Service
         </span>
         <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-white mb-4">
-          Ready to get skilled work done in Peshawar?
+          Ready to get skilled work done?
         </h2>
         <p className="text-slate-300 text-sm sm:text-base max-w-2xl mx-auto mb-8 leading-relaxed">
           Post your requirements today to receive quotes in minutes, or
@@ -66,7 +66,7 @@ export function Footer() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col md:flex-row items-center justify-between pb-10 border-b border-white/10 gap-4">
           <Link href="/" className="hover:opacity-90 transition-opacity">
-            <OrderworkerLogo variant="light" size="sm" />
+            <WorkerFixLogo variant="light" size="sm" />
           </Link>
           <div className="flex flex-wrap items-center gap-6 text-xs text-slate-300 font-medium">
             <span className="text-slate-400">
@@ -147,7 +147,7 @@ export function Footer() {
           </div>
         </div>
         <div className="pt-8 mt-6 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-400 gap-4">
-          <p>© 2026 Orderworker Technologies Inc. All rights reserved.</p>
+          <p>© 2026 WorkerFIX Technologies Inc. All rights reserved.</p>
           <div className="flex items-center space-x-4">
             <span>PKR (₨)</span>
             <span className="w-1 h-1 bg-slate-500 rounded-full" />

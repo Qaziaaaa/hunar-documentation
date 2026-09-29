@@ -4,6 +4,7 @@ import { StorageConfig } from '../../../config/s3.config';
 import { StorageClient } from './storage.interface';
 import { S3Storage } from './s3.storage';
 import { MinioStorage } from './minio.storage';
+import { LocalStorage } from './local.storage';
 
 export const STORAGE = Symbol('STORAGE');
 
@@ -13,6 +14,9 @@ export function createStorage(config: StorageConfig): StorageClient {
   }
   if (config.driver === 'minio') {
     return new MinioStorage(config);
+  }
+  if (config.driver === 'local') {
+    return new LocalStorage(config);
   }
   throw new Error(`Unsupported storage driver: ${String(config.driver)}`);
 }

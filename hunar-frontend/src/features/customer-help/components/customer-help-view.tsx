@@ -10,15 +10,16 @@ import {
 } from "lucide-react";
 import {
   MOCK_ACTIVE_TICKET,
-  MOCK_CUSTOMER_JOBS,
   MOCK_FAQS,
   MOCK_HELPLINE_INFO,
 } from "../data/mock-help-data";
-import { SupportTicket } from "../types";
+import { CustomerJobReferenceOption, SupportTicket } from "../types";
 import { ActiveCaseCard } from "./active-case-card";
 import { FaqAccordion } from "./faq-accordion";
 import { HelplineCard } from "./helpline-card";
 import { SubmitTicketModal } from "./submit-ticket-modal";
+import { useQuery } from "@tanstack/react-query";
+import { getCustomerJobs } from "@/features/customer-jobs/api/customer-jobs-api";
 
 export function CustomerHelpView() {
   const locale = useLocale();
@@ -31,6 +32,25 @@ export function CustomerHelpView() {
   );
   const [isTicketModalOpen, setIsTicketModalOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  const { data: customerJobs = [] } = useQuery({
+    queryKey: ["customer", "jobs"],
+    queryFn: getCustomerJobs,
+    staleTime: 30_000,
+  });
+
+  const jobOptions: CustomerJobReferenceOption[] = customerJobs
+    .filter((job) => job.status !== "cancelled")
+    .map((job) => ({
+      id: job.id,
+      jobNumber: `#OW-${job.id.slice(0, 4).toUpperCase()}`,
+      title: job.title,
+      workerName: job.selectedOffer?.worker.name || "Not assigned yet",
+      category: job.subCategory,
+      date: job.createdAt ? new Date(job.createdAt).toLocaleDateString() : "Today",
+      status: job.status,
+      amount: job.selectedOffer?.visitFee,
+    }));
 
   const handleTicketCreated = (newTicket: SupportTicket) => {
     setActiveTicket(newTicket);
@@ -129,8 +149,8 @@ export function CustomerHelpView() {
                 <div>
                   <h3 className="text-sm font-bold text-[#123B5D]">
                     {isUrdu
-                      ? "آرڈر ورکر کسٹمر اطمینان کے 4 بنیادی اصول"
-                      : "Orderworker Customer Peace of Mind Checklist"}
+                      ? "WorkerFIX کسٹمر اطمینان کے 4 بنیادی اصول"
+                      : "WorkerFIX Customer Peace of Mind Checklist"}
                   </h3>
                   <p className="text-[11px] text-slate-500">
                     {isUrdu
@@ -199,8 +219,8 @@ export function CustomerHelpView() {
                     </span>
                     <span className="text-[11px] text-slate-500">
                       {isUrdu
-                        ? "5 دنوں کے اندر دوبارہ خرابی کی صورت میں آرڈر ورکر بلا معاوضہ کاریگر بھیجے گا۔"
-                        : "Any recurring fault within 5 days is resolved free of charge by Orderworker."}
+                        ? "5 دنوں کے اندر دوبارہ خرابی کی صورت میں WorkerFIX بلا معاوضہ کاریگر بھیجے گا۔"
+                        : "Any recurring fault within 5 days is resolved free of charge by WorkerFIX."}
                     </span>
                   </div>
                 </div>
@@ -239,7 +259,7 @@ export function CustomerHelpView() {
       <SubmitTicketModal
         isOpen={isTicketModalOpen}
         onClose={() => setIsTicketModalOpen(false)}
-        jobOptions={MOCK_CUSTOMER_JOBS}
+        jobOptions={jobOptions}
         onSubmitSuccess={handleTicketCreated}
       />
     </div>

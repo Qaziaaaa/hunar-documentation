@@ -36,6 +36,7 @@ export function CustomerSignupFlow() {
   const [expiresAt, setExpiresAt] = useState<number | null>(null);
   const [resendAt, setResendAt] = useState<number | null>(null);
   const [attemptsLeft, setAttemptsLeft] = useState<number | null>(null);
+  const [devOtp, setDevOtp] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
@@ -47,6 +48,7 @@ export function CustomerSignupFlow() {
       setExpiresAt(now + (response.expiresInMs ?? OTP_RULES.expiresInMs));
       setResendAt(now + (response.resendAfterMs ?? OTP_RULES.resendAfterMs));
       setAttemptsLeft(response.maxAttempts ?? OTP_RULES.maxAttempts);
+      setDevOtp(response.devOtp ?? null);
       setSubmitError(null);
     },
     [],
@@ -140,6 +142,7 @@ export function CustomerSignupFlow() {
         attemptsLeft={attemptsLeft}
         submitting={submitting}
         submitError={submitError}
+        devOtp={devOtp}
         onEdit={() => {
           setStep("phone");
           setSubmitError(null);
@@ -169,7 +172,7 @@ export function CustomerSignupFlow() {
           </svg>
         </div>
         <h2 className="text-xl font-bold text-slate-900">
-          {isUrdu ? "آرڈر ورکر میں خوش آمدید!" : "Welcome to Orderworker!"}
+          {isUrdu ? "WorkerFIX میں خوش آمدید!" : "Welcome to WorkerFIX!"}
         </h2>
         <p className="text-sm text-slate-500 mt-2 max-w-sm mx-auto">
           {isUrdu

@@ -248,6 +248,13 @@ export class AdminController {
     return this.adminService.updateSettings(dto, actor);
   }
 
+  // ----- KPI Stats -----
+
+  @Get('kpis')
+  getKpis() {
+    return this.adminService.getKpis();
+  }
+
   // ----- Reports -----
 
   @Get('reports/:type')

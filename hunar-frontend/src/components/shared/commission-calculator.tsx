@@ -23,7 +23,7 @@ export function CommissionCalculator() {
           <span className="flex size-8 items-center justify-center rounded-lg bg-teal/10 text-teal">
             <Calculator className="size-4.5" />
           </span>
-          HUNAR 10% Commission Calculator
+          WorkerFIX 10% Commission Calculator
         </CardTitle>
         <p className="text-xs text-muted-foreground mt-1">
           Calculate exact platform commission holds and net earnings for any visit.

@@ -3,7 +3,7 @@ import { AuthShell } from "@/features/auth/components/auth-shell";
 import { CustomerSignupFlow } from "@/features/auth/components/customer-signup-flow";
 
 export async function generateMetadata() {
-  return { title: "Customer Sign Up — Orderworker" };
+  return { title: "Customer Sign Up — WorkerFIX" };
 }
 
 export default async function CustomerSignupPage({

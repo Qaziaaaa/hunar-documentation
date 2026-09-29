@@ -60,7 +60,7 @@ export const MOCK_JOB_COMPLETION_MAP: Record<string, JobCompletionData> = {
       },
     ],
     technicianReport:
-      "Replaced damaged 63A main double-pole breaker with genuine Schneider modular unit. Re-crimped copper cable terminations and load-tested with full household ACs activated simultaneously for 15 minutes. Zero voltage drop or thermal warming detected. Standard 5-day Orderworker craftsmanship guarantee applies automatically.",
+      "Replaced damaged 63A main double-pole breaker with genuine Schneider modular unit. Re-crimped copper cable terminations and load-tested with full household ACs activated simultaneously for 15 minutes. Zero voltage drop or thermal warming detected. Standard 5-day WorkerFIX craftsmanship guarantee applies automatically.",
     technicalSpecsNote: "Voltage: 232V Steady • Max Load Tested: 38 Amps",
     warrantyDays: 5,
     billingItems: [

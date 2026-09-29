@@ -3,14 +3,17 @@ const API_URL =
 
 export const API_BASE_URL = API_URL;
 
-export const ACCESS_TOKEN_KEY = "orderworker.access_token";
-export const REFRESH_TOKEN_KEY = "orderworker.refresh_token";
-export const AUTH_USER_KEY = "orderworker.auth_user";
+export const ACCESS_TOKEN_KEY = "workerfix.access_token";
+export const REFRESH_TOKEN_KEY = "workerfix.refresh_token";
+export const AUTH_USER_KEY = "workerfix.auth_user";
 
 // Legacy keys for seamless migration
-const LEGACY_ACCESS_TOKEN_KEY = "hunar.access_token";
-const LEGACY_REFRESH_TOKEN_KEY = "hunar.refresh_token";
-const LEGACY_AUTH_USER_KEY = "hunar.auth_user";
+const LEGACY_ACCESS_TOKEN_KEY = "workerfix.access_token";
+const LEGACY_REFRESH_TOKEN_KEY = "workerfix.refresh_token";
+const LEGACY_AUTH_USER_KEY = "workerfix.auth_user";
+const OLD_LEGACY_ACCESS_TOKEN_KEY = "hunar.access_token";
+const OLD_LEGACY_REFRESH_TOKEN_KEY = "hunar.refresh_token";
+const OLD_LEGACY_AUTH_USER_KEY = "hunar.auth_user";
 
 export class ApiError extends Error {
   status: number;
@@ -34,17 +37,36 @@ export interface StoredUser {
 
 export function getAccessToken(): string | null {
   if (typeof window === "undefined") return null;
-  return window.localStorage.getItem(ACCESS_TOKEN_KEY) ?? window.localStorage.getItem(LEGACY_ACCESS_TOKEN_KEY);
+  return (
+    window.localStorage.getItem(ACCESS_TOKEN_KEY) ??
+    window.localStorage.getItem(LEGACY_ACCESS_TOKEN_KEY) ??
+    window.localStorage.getItem(OLD_LEGACY_ACCESS_TOKEN_KEY)
+  );
 }
 
 export function getRefreshToken(): string | null {
   if (typeof window === "undefined") return null;
-  return window.localStorage.getItem(REFRESH_TOKEN_KEY) ?? window.localStorage.getItem(LEGACY_REFRESH_TOKEN_KEY);
+  return (
+    window.localStorage.getItem(REFRESH_TOKEN_KEY) ??
+    window.localStorage.getItem(LEGACY_REFRESH_TOKEN_KEY) ??
+    window.localStorage.getItem(OLD_LEGACY_REFRESH_TOKEN_KEY)
+  );
+}
+
+// Emitted whenever the stored auth user is written/cleared (same-tab signal for useSyncExternalStore subscribers)
+export const AUTH_USER_CHANGED_EVENT = "workerfix.auth.changed";
+
+export function getStoredUserRaw(): string | null {
+  if (typeof window === "undefined") return null;
+  return (
+    window.localStorage.getItem(AUTH_USER_KEY) ??
+    window.localStorage.getItem(LEGACY_AUTH_USER_KEY) ??
+    window.localStorage.getItem(OLD_LEGACY_AUTH_USER_KEY)
+  );
 }
 
 export function getStoredUser(): StoredUser | null {
-  if (typeof window === "undefined") return null;
-  const raw = window.localStorage.getItem(AUTH_USER_KEY) ?? window.localStorage.getItem(LEGACY_AUTH_USER_KEY);
+  const raw = getStoredUserRaw();
   if (!raw) return null;
   try {
     return JSON.parse(raw) as StoredUser;
@@ -63,6 +85,7 @@ export function setTokens(
   window.localStorage.setItem(REFRESH_TOKEN_KEY, refreshToken);
   if (user) {
     window.localStorage.setItem(AUTH_USER_KEY, JSON.stringify(user));
+    window.dispatchEvent(new Event(AUTH_USER_CHANGED_EVENT));
   }
 }
 
@@ -71,6 +94,7 @@ export function clearTokens(): void {
   window.localStorage.removeItem(ACCESS_TOKEN_KEY);
   window.localStorage.removeItem(REFRESH_TOKEN_KEY);
   window.localStorage.removeItem(AUTH_USER_KEY);
+  window.dispatchEvent(new Event(AUTH_USER_CHANGED_EVENT));
 }
 
 // Track in-flight silent refresh promise to deduplicate concurrent 401s
@@ -84,33 +108,30 @@ async function executeSilentRefresh(): Promise<string | null> {
   }
 
   try {
-    // Attempt worker refresh endpoint first, fallback to generic auth refresh
-    let res = await fetch(`${API_URL}/auth/worker/refresh`, {
+    // Single refresh endpoint; the backend /auth/refresh is role-agnostic.
+    const res = await fetch(`${API_URL}/auth/refresh`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ refreshToken }),
     });
 
     if (!res.ok) {
-      res = await fetch(`${API_URL}/auth/refresh`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ refreshToken }),
-      });
-    }
-
-    if (!res.ok) {
       clearTokens();
       return null;
     }
 
-    const data = (await res.json()) as {
-      accessToken: string;
+    const envelope = (await res.json()) as {
+      success?: boolean;
+      data?: { accessToken: string; refreshToken?: string; user?: StoredUser };
+    };
+
+    const data = (envelope?.data ?? envelope ?? {}) as {
+      accessToken?: string;
       refreshToken?: string;
       user?: StoredUser;
     };
 
-    if (!data.accessToken) {
+    if (!data?.accessToken) {
       clearTokens();
       return null;
     }
@@ -153,8 +174,11 @@ export async function apiClient<T>(
   // Handle 401 Unauthorized via Silent Token Refresh (once per request)
   const isAuthEndpoint =
     path.includes("/auth/login") ||
-    path.includes("/auth/worker/login") ||
-    path.includes("/auth/worker/signup") ||
+    path.includes("/auth/customer/login") ||
+    path.includes("/auth/register") ||
+    path.includes("/auth/customer/signup/complete") ||
+    path.includes("/auth/otp/") ||
+    path.includes("/auth/customer/otp/") ||
     path.includes("/auth/refresh");
 
   if (res.status === 401 && !isRetry && !isAuthEndpoint && getRefreshToken()) {
@@ -186,7 +210,13 @@ export async function apiClient<T>(
     return undefined as T;
   }
 
-  return (await res.json()) as T;
+  const raw = (await res.json()) as T | { success: boolean; data?: T; meta?: unknown };
+  // The backend wraps every successful response in { success: true, data }.
+  // Unwrap it here once so all callers receive the payload directly.
+  if (raw && typeof raw === "object" && "success" in raw) {
+    return (raw as { data?: T }).data as T;
+  }
+  return raw as T;
 }
 
 export const http = {

@@ -105,8 +105,8 @@ export function SavedAddressesTab({
             </h2>
             <p className="text-xs text-slate-500 mt-1">
               {isUrdu
-                ? "پشاور میں وہ پتے منتخب یا تبدیل کریں جہاں تصدیق شدہ ماہرین بھیجے جائیں۔"
-                : "Select or manage addresses where verified technicians will be dispatched in Peshawar."}
+                ? "وہ پتے منتخب یا تبدیل کریں جہاں تصدیق شدہ ماہرین بھیجے جائیں۔"
+                : "Select or manage addresses where verified technicians will be dispatched."}
             </p>
           </div>
 
@@ -116,19 +116,34 @@ export function SavedAddressesTab({
             className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-[#0F766E] hover:bg-[#115E59] text-white font-bold text-xs shadow-2xs transition-all active:scale-[0.98] cursor-pointer shrink-0 self-start sm:self-auto"
           >
             <Plus className="size-4" />
-            <span>{isUrdu ? "+ نیا پتہ شامل کریں" : "+ Add New Address"}</span>
+            <span>{isUrdu ? "نیا پتہ شامل کریں" : "Add New Address"}</span>
           </button>
         </div>
 
         {/* Address Cards Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 pt-6">
-          {addresses.map((addr) => {
-            const Icon = getTagIcon(addr.tag);
-            return (
-              <div
-                key={addr.id}
-                className={`flex flex-col justify-between p-5 rounded-2xl bg-white border transition-all duration-200 hover:shadow-md ${
-                  addr.isDefault
+        {addresses.length === 0 ? (
+          <div className="py-12 text-center">
+            <div className="size-12 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center mx-auto mb-3">
+              <MapPin className="size-6" />
+            </div>
+            <h3 className="text-sm font-bold text-[#123B5D]">
+              {isUrdu ? "کوئی محفوظ پتہ نہیں ملا" : "No saved addresses yet"}
+            </h3>
+            <p className="text-xs text-slate-500 max-w-sm mx-auto mt-1">
+              {isUrdu
+                ? "جاب پوسٹ کرتے وقت یا یہاں نیا پتہ شامل کریں، تاکہ اگلی بار آپ کو دوبارہ پتہ نہ لکھنا پڑے۔"
+                : "Addresses saved when posting a job or added here will appear here for fast booking."}
+            </p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 pt-6">
+            {addresses.map((addr) => {
+              const Icon = getTagIcon(addr.tag);
+              return (
+                <div
+                  key={addr.id}
+                  className={`flex flex-col justify-between p-5 rounded-2xl bg-white border transition-all duration-200 hover:shadow-md ${
+                    addr.isDefault
                     ? "border-[#0F766E] ring-2 ring-[#0F766E]/10 shadow-sm"
                     : "border-slate-200 shadow-2xs hover:border-slate-300"
                 }`}
@@ -225,6 +240,7 @@ export function SavedAddressesTab({
             );
           })}
         </div>
+        )}
       </div>
 
       {/* Add / Edit Modal */}

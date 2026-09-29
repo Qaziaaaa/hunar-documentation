@@ -259,7 +259,7 @@ export function FaqAccordion({
                     {/* Feedback Footer */}
                     <div className="flex items-center justify-between pt-2 border-t border-slate-200/60 text-[11px] text-slate-500">
                       <span className="italic">
-                        {isUrdu ? "آرڈر ورکر تصدیق شدہ پالیسی" : "Orderworker Verified Policy"}
+                        {isUrdu ? "WorkerFIX تصدیق شدہ پالیسی" : "WorkerFIX Verified Policy"}
                       </span>
                       <div className="flex items-center gap-2">
                         {isHelpfulMarked ? (

@@ -258,3 +258,8 @@
 .leaflet-bottom {
   z-index: 800;
 }
+
+/* Noto Sans Arabic Font for Urdu (RTL) Mode */
+html[dir="rtl"] {
+  font-family: 'Noto Sans Arabic', var(--font-inter), system-ui, sans-serif;
+}

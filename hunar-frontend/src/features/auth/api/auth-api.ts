@@ -1,4 +1,5 @@
 import { clearTokens, http, type StoredUser } from "@/lib/api-client";
+import { isMockMode } from "@/lib/data-source";
 
 export const OTP_RULES = {
   expiresInMs: 5 * 60 * 1000,
@@ -12,6 +13,8 @@ export interface OtpRequestResponse {
   expiresInMs?: number;
   resendAfterMs?: number;
   maxAttempts?: number;
+  /** Provided by the API while no SMS gateway is connected (OTP_DEBUG). */
+  devOtp?: string;
 }
 
 export interface OtpVerifyResponse {
@@ -40,7 +43,7 @@ export type CustomerAuthResponse = AuthResponse;
 
 export async function requestWorkerOtp(phone: string): Promise<OtpRequestResponse> {
   try {
-    const res = await http.post<{ message?: string; expiresInSeconds?: number; cooldownSeconds?: number }>(
+    const res = await http.post<{ message?: string; expiresInSeconds?: number; cooldownSeconds?: number; devOtp?: string }>(
       "/auth/otp/send",
       { phone }
     );
@@ -50,6 +53,7 @@ export async function requestWorkerOtp(phone: string): Promise<OtpRequestRespons
       expiresInMs: (res?.expiresInSeconds ?? 300) * 1000,
       resendAfterMs: (res?.cooldownSeconds ?? 900) * 1000,
       maxAttempts: OTP_RULES.maxAttempts,
+      devOtp: res?.devOtp,
     };
   } catch (err) {
     console.warn("[requestWorkerOtp] Backend OTP endpoint fallback:", err);
@@ -117,20 +121,24 @@ export async function completeWorkerSignup(params: {
       return res;
     }
   } catch (err) {
-    console.warn("[completeWorkerSignup] Backend registration fallback:", err);
+    console.warn("[completeWorkerSignup] Backend register error:", err);
+    if (!isMockMode()) throw err;
   }
 
-  return {
-    accessToken: `mock-worker-jwt-${Date.now()}`,
-    refreshToken: `mock-worker-refresh-${Date.now()}`,
-    user: {
-      id: "worker-new-101",
-      phone: params.phone,
-      name: "Tariq Mehmood",
-      role: "WORKER",
-      isVerified: false,
-    },
-  };
+  if (isMockMode()) {
+    return {
+      accessToken: `mock-worker-jwt-${Date.now()}`,
+      refreshToken: `mock-worker-refresh-${Date.now()}`,
+      user: {
+        id: "worker-new-101",
+        phone: params.phone,
+        name: "Tariq Mehmood",
+        role: "WORKER",
+        isVerified: false,
+      },
+    };
+  }
+  throw new Error("Registration failed. Please try again.");
 }
 
 export async function workerLogin(
@@ -143,10 +151,11 @@ export async function workerLogin(
       return res;
     }
   } catch (err) {
-    console.warn("[workerLogin] Backend login fallback:", err);
+    console.warn("[workerLogin] Backend login error:", err);
+    if (!isMockMode()) throw err;
   }
 
-  if (password.length >= 6) {
+  if (isMockMode() && password.length >= 6) {
     return {
       accessToken: `mock-worker-jwt-${Date.now()}`,
       refreshToken: `mock-worker-refresh-${Date.now()}`,
@@ -174,8 +183,8 @@ export function refreshWorkerToken(refreshToken: string) {
 
 export async function requestCustomerOtp(phone: string): Promise<OtpRequestResponse> {
   try {
-    const res = await http.post<{ message?: string; expiresInSeconds?: number; cooldownSeconds?: number }>(
-      "/auth/otp/send",
+    const res = await http.post<{ message?: string; expiresInSeconds?: number; cooldownSeconds?: number; devOtp?: string }>(
+      "/auth/customer/otp/request",
       { phone }
     );
     return {
@@ -184,6 +193,7 @@ export async function requestCustomerOtp(phone: string): Promise<OtpRequestRespo
       expiresInMs: (res?.expiresInSeconds ?? 300) * 1000,
       resendAfterMs: (res?.cooldownSeconds ?? 900) * 1000,
       maxAttempts: OTP_RULES.maxAttempts,
+      devOtp: res?.devOtp,
     };
   } catch (err) {
     console.warn("[requestCustomerOtp] Backend OTP send fallback:", err);
@@ -212,7 +222,7 @@ export async function verifyCustomerOtp(
   const targetPhone = phone || (requestIdOrPhone.startsWith("03") || requestIdOrPhone.startsWith("+92") ? requestIdOrPhone : undefined);
   if (targetPhone) {
     try {
-      const res = await http.post<{ verificationToken: string }>("/auth/otp/verify", {
+      const res = await http.post<{ verificationToken: string }>("/auth/customer/otp/verify", {
         phone: targetPhone,
         otp: code,
       });
@@ -242,7 +252,7 @@ export async function completeCustomerSignup(params: {
   password: string;
 }): Promise<CustomerAuthResponse> {
   try {
-    const res = await http.post<any>("/auth/register", {
+    const res = await http.post<any>("/auth/customer/signup/complete", {
       phone: params.phone,
       password: params.password,
       verificationToken: params.verificationId,
@@ -251,19 +261,23 @@ export async function completeCustomerSignup(params: {
       return res;
     }
   } catch (err) {
-    console.warn("[completeCustomerSignup] Backend register fallback:", err);
+    console.warn("[completeCustomerSignup] Backend register error:", err);
+    if (!isMockMode()) throw err;
   }
 
-  return {
-    accessToken: `mock-access-token-cust-${Date.now()}`,
-    refreshToken: `mock-refresh-token-cust-${Date.now()}`,
-    user: {
-      id: "cust-user-101",
-      phone: params.phone,
-      name: "Abdullah Khan",
-      role: "CUSTOMER",
-    },
-  };
+  if (isMockMode()) {
+    return {
+      accessToken: `mock-access-token-cust-${Date.now()}`,
+      refreshToken: `mock-refresh-token-cust-${Date.now()}`,
+      user: {
+        id: "cust-user-101",
+        phone: params.phone,
+        name: "Abdullah Khan",
+        role: "CUSTOMER",
+      },
+    };
+  }
+  throw new Error("Registration failed. Please try again.");
 }
 
 export async function customerLogin(
@@ -271,7 +285,7 @@ export async function customerLogin(
   password: string,
 ): Promise<CustomerAuthResponse> {
   try {
-    const res = await http.post<any>("/auth/login", {
+    const res = await http.post<any>("/auth/customer/login", {
       phone,
       password,
     });
@@ -279,10 +293,11 @@ export async function customerLogin(
       return res;
     }
   } catch (err) {
-    console.warn("[customerLogin] Backend login fallback:", err);
+    console.warn("[customerLogin] Backend login error:", err);
+    if (!isMockMode()) throw err;
   }
 
-  if (password.length >= 6) {
+  if (isMockMode() && password.length >= 6) {
     return {
       accessToken: `mock-access-token-cust-${Date.now()}`,
       refreshToken: `mock-refresh-token-cust-${Date.now()}`,

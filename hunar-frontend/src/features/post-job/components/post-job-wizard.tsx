@@ -8,13 +8,14 @@ import { Link, useRouter } from "@/i18n/navigation";
 import { CATEGORY_OPTIONS, resolveCategoryOption } from "../data/categories";
 import type { PostJobData, PostJobStep, ServiceCategory } from "../types";
 import { createJob } from "../api/post-job-api";
+import { ApiError } from "@/lib/api-client";
 import { JobPostedSuccessModal } from "./job-posted-success-modal";
 import { Step1ServiceSelect } from "./step-1-service-select";
 import { Step2JobDetails } from "./step-2-job-details";
 import { Step3LocationSchedule } from "./step-3-location-schedule";
 import { Step4ReviewPost } from "./step-4-review-post";
 import { WizardProgressStepper } from "./wizard-progress-stepper";
-import { OrderworkerLogo } from "@/components/shared/orderworker-logo";
+import { WorkerFixLogo } from "@/components/shared/workerfix-logo";
 
 const INITIAL_FORM_DATA: PostJobData = {
   category: "",
@@ -65,6 +66,7 @@ export function PostJobWizard() {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [postedJobId, setPostedJobId] = useState<string | null>(null);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   // Sync if category search param changes dynamically
   useEffect(() => {
@@ -128,13 +130,20 @@ export function PostJobWizard() {
 
   const handleSubmitJob = async () => {
     setIsSubmitting(true);
+    setSubmitError(null);
     try {
       const res = await createJob(formData);
       setPostedJobId(res.id);
     } catch (err) {
       console.error("Failed to post job:", err);
-      const fallbackId = `JOB-${Date.now().toString().slice(-4)}`;
-      setPostedJobId(fallbackId);
+      const isAuthError = err instanceof ApiError && err.status === 401;
+      setSubmitError(
+        isAuthError
+          ? "Your session has expired. Please sign in again and retry."
+          : err instanceof Error && err.message
+            ? err.message
+            : "Could not post your job. Please check your connection and try again.",
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -149,7 +158,7 @@ export function PostJobWizard() {
           href="/customer/dashboard"
           className="flex items-center hover:opacity-90 transition-opacity"
         >
-          <OrderworkerLogo variant="dark" size="sm" />
+          <WorkerFixLogo variant="dark" size="sm" />
         </Link>
 
         <div className="flex items-center gap-3">
@@ -164,7 +173,7 @@ export function PostJobWizard() {
       </header>
 
       {/* Main Content Area */}
-      <main className="flex-grow w-full max-w-4xl mx-auto px-4 sm:px-6 py-4 flex flex-col">
+      <main className="flex-grow w-full max-w-4xl lg:max-w-5xl xl:max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-3 sm:py-4 lg:py-4 flex flex-col">
         {/* Modern Redesigned Step Progression Stepper */}
         <WizardProgressStepper
           currentStep={currentStep}
@@ -208,6 +217,7 @@ export function PostJobWizard() {
               onGoToStep={handleGoToStep}
               onSubmit={handleSubmit}
               isSubmitting={isSubmitting}
+              submitError={submitError}
             />
           )}
         </div>

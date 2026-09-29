@@ -7,7 +7,7 @@ import { GlobalExceptionFilter } from './common/filters/global-exception.filter'
 import { TransformInterceptor } from './common/interceptors/transform.interceptor';
 
 async function bootstrap(): Promise<void> {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, { bodyParser: false });
   const config = app.get(ConfigService);
   const logger = new Logger('Bootstrap');
 
@@ -16,6 +16,11 @@ async function bootstrap(): Promise<void> {
 
   app.setGlobalPrefix(apiPrefix);
   app.enableCors({ origin: true, credentials: true });
+
+  // Increase body size limits for file uploads (multipart)
+  const express = require('express');
+  app.use(express.json({ limit: '10mb' }));
+  app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
   app.useGlobalPipes(new AppValidationPipe());
   app.useGlobalFilters(new GlobalExceptionFilter());

@@ -21,7 +21,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { Link, usePathname, useRouter } from "@/i18n/navigation";
-import { OrderworkerLogo } from "@/components/shared/orderworker-logo";
+import { WorkerFixLogo } from "@/components/shared/workerfix-logo";
 
 interface NavItem {
   label: string;
@@ -137,7 +137,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
           <div className="flex items-center justify-between border-b border-slate-100 pb-6">
             <Link href="/admin/dashboard" className="flex flex-col gap-1">
               <div className="flex items-center gap-2">
-                <OrderworkerLogo variant="dark" size="sm" />
+                <WorkerFixLogo variant="dark" size="sm" />
                 <span className="rounded bg-teal/10 px-1.5 py-0.5 text-[9px] font-extrabold uppercase tracking-widest text-teal border border-teal/20">
                   ADMIN
                 </span>

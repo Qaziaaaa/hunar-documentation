@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 
-import { OrderworkerLogo } from "@/components/shared/orderworker-logo";
+import { WorkerFixLogo } from "@/components/shared/workerfix-logo";
 
 export function LeftShowcase() {
   const t = useTranslations("WorkerOnboarding.Showcase");
@@ -31,7 +31,7 @@ export function LeftShowcase() {
           {/* Header Branding and Escrow Badge */}
           <div className="mb-5 flex items-center justify-between gap-2">
             <div className="flex flex-col gap-0.5">
-              <OrderworkerLogo variant="dark" size="sm" />
+              <WorkerFixLogo variant="dark" size="sm" />
               <span className="block text-[10px] font-bold uppercase tracking-wider text-teal pl-0.5">
                 {t("badgeVerified")}
               </span>

@@ -107,7 +107,7 @@ const seeds: NotificationSeed[] = [
     id: "notif-8",
     type: "verification_result",
     title: "Profile verified",
-    message: "Your profile was verified by the HUNAR team.",
+    message: "Your profile was verified by the WorkerFIX team.",
     createdAt: isoDaysAgo(20, 10),
     read: true,
   },

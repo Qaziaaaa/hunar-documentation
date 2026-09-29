@@ -16,7 +16,7 @@ import {
 import { JobStatus, Urgency } from '@prisma/client';
 
 export class CreateJobDto {
-  @IsUUID()
+  @IsString()
   @IsNotEmpty()
   categoryId: string;
 
@@ -115,7 +115,7 @@ export class AvailableJobsQueryDto {
 
   /** Worker skill / category filter. */
   @IsOptional()
-  @IsUUID()
+  @IsString()
   categoryId?: string;
 
   @IsOptional()

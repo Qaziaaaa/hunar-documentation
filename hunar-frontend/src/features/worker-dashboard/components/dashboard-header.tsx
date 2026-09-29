@@ -58,36 +58,51 @@ export function DashboardHeader({
           )}
         </div>
 
-        {/* MID: Online / Offline Segmented Toggle */}
+        {/* MID: Online / Offline Segmented Pill Slider Toggle */}
         <div className="flex items-center justify-center">
           <div
-            className="flex items-center rounded-full border-2 border-slate-200 bg-slate-100/90 p-1 shadow-2xs select-none"
-            title={isOnline ? "Current Status: Online (Tap Offline to disconnect)" : "Current Status: Offline (Tap Online to connect)"}
+            className="relative inline-flex h-9 sm:h-10 w-36 sm:w-44 shrink-0 items-center rounded-full bg-slate-200/80 shadow-inner select-none cursor-pointer overflow-hidden"
+            title={
+              locale === "ur"
+                ? isOnline
+                  ? "موجودہ اسٹیٹس: آن لائن (آف لائن ہونے کے لیے کلک کریں)"
+                  : "موجودہ اسٹیٹس: آف لائن (آن لائن ہونے کے لیے کلک کریں)"
+                : isOnline
+                ? "Current Status: Online (Click to go offline)"
+                : "Current Status: Offline (Click to go online)"
+            }
           >
+            {/* Left / Start Half Target */}
             <button
               type="button"
               onClick={() => onToggleOnline(false)}
-              className={cn(
-                "flex items-center gap-1 rounded-full px-3.5 py-1 text-xs font-extrabold uppercase tracking-wide transition-all cursor-pointer active:scale-95",
-                !isOnline
-                  ? "bg-red-500 text-white shadow-xs"
-                  : "text-slate-500 hover:text-red-600"
-              )}
+              className="z-10 flex h-full flex-1 items-center justify-center text-xs font-bold text-slate-500 hover:text-slate-700 transition-colors cursor-pointer"
             >
-              Offline
+              {!isOnline ? null : locale === "ur" ? "آف لائن" : "Offline"}
             </button>
+
+            {/* Right / End Half Target */}
             <button
               type="button"
               onClick={() => onToggleOnline(true)}
+              className="z-10 flex h-full flex-1 items-center justify-center text-xs font-bold text-slate-500 hover:text-slate-700 transition-colors cursor-pointer"
+            >
+              {isOnline ? null : locale === "ur" ? "آن لائن" : "Online"}
+            </button>
+
+            {/* Sliding Active Pill */}
+            <div
               className={cn(
-                "flex items-center gap-1 rounded-full px-3.5 py-1 text-xs font-extrabold uppercase tracking-wide transition-all cursor-pointer active:scale-95",
+                "absolute top-0 bottom-0 start-0 z-20 w-1/2 rounded-full flex items-center justify-center text-xs sm:text-sm font-extrabold text-white shadow-md transition-all duration-300 ease-in-out pointer-events-none",
                 isOnline
-                  ? "bg-[#16A34A] text-white shadow-xs"
-                  : "text-slate-500 hover:text-[#16A34A]"
+                  ? "translate-x-full rtl:-translate-x-full bg-[#16A34A]"
+                  : "translate-x-0 bg-red-500"
               )}
             >
-              Online
-            </button>
+              {isOnline
+                ? locale === "ur" ? "آن لائن" : "Online"
+                : locale === "ur" ? "آف لائن" : "Offline"}
+            </div>
           </div>
         </div>
 

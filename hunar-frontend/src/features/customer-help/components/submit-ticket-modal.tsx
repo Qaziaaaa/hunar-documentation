@@ -172,7 +172,7 @@ export function SubmitTicketModal({
         workerName: matchedJob
           ? matchedJob.workerName
           : (isUrdu ? "سپورٹ ڈیسک" : "Support Desk"),
-        location: isUrdu ? "کسٹمر پراپرٹی، پشاور" : "Customer Property, Peshawar",
+        location: isUrdu ? "کسٹمر پراپرٹی" : "Customer Property",
         issueType,
         issueTitle:
           issueCategories.find((c) => c.id === issueType)?.label || (isUrdu ? "کسٹمر ٹکٹ" : "Customer Ticket"),
@@ -310,8 +310,8 @@ export function SubmitTicketModal({
                   </h3>
                   <p className="text-[11px] text-slate-500">
                     {isUrdu
-                      ? "آرڈر ورکر کسٹمر تحفظ اور نگہداشت پالیسی کے تحت محفوظ"
-                      : "Protected under Orderworker Customer Care Policy"}
+                      ? "WorkerFIX کسٹمر تحفظ اور نگہداشت پالیسی کے تحت محفوظ"
+                      : "Protected under WorkerFIX Customer Care Policy"}
                   </p>
                 </div>
               </div>

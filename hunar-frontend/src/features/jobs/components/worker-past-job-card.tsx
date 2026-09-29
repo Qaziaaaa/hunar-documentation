@@ -26,8 +26,7 @@ export function WorkerPastJobCard({ job }: WorkerPastJobCardProps) {
   const visitCharge = job.visitCharge ?? 500;
   const repairCharge = job.repairCharge ?? 1500;
   const grossTotal = visitCharge + repairCharge;
-  const platformFee = job.platformCommission ?? Math.round(grossTotal * 0.1);
-  const netEarnings = job.workerNetEarnings ?? grossTotal - platformFee;
+  const netEarnings = grossTotal;
   const warrantyDays = job.warrantyDays || 30;
   const invoiceNumber = job.invoiceNumber || `INV-2026-${job.id.slice(-4)}`;
 
@@ -41,7 +40,7 @@ export function WorkerPastJobCard({ job }: WorkerPastJobCardProps) {
     <>
       <div
         onClick={() => setShowDetails(true)}
-        className="bg-white rounded-2xl sm:rounded-3xl border border-slate-200/80 p-3.5 sm:p-5 shadow-[0_6px_16px_-4px_rgba(18,59,93,0.12)] hover:shadow-[0_10px_22px_-4px_rgba(18,59,93,0.18)] transition-all space-y-3.5 flex flex-col justify-between w-full cursor-pointer group"
+        className="bg-white rounded-2xl sm:rounded-3xl border border-slate-200/80 p-3.5 sm:p-5 shadow-[0_12px_16px_-6px_rgba(18,59,93,0.14)] hover:shadow-[0_16px_22px_-6px_rgba(18,59,93,0.20)] transition-all space-y-3.5 flex flex-col justify-between w-full cursor-pointer group"
       >
         <div className="space-y-3">
           {/* Top Status & Invoice Header */}
@@ -79,18 +78,17 @@ export function WorkerPastJobCard({ job }: WorkerPastJobCardProps) {
           <div className="bg-emerald-50/60 rounded-xl sm:rounded-2xl p-3 sm:p-3.5 border border-emerald-200/60 flex items-center justify-between gap-2">
             <div>
               <span className="text-[9px] sm:text-[10px] uppercase font-bold text-emerald-800 tracking-wider block">
-                Net Earned &amp; Settled
+                Total Earned &amp; Settled
               </span>
               <span className="text-base sm:text-xl font-black text-emerald-900">
                 {formatRs(netEarnings)}
               </span>
             </div>
 
-            <div className="text-right text-[10px] sm:text-[11px] text-emerald-700 space-y-0.5 shrink-0">
-              <div>Gross: {formatRs(grossTotal)}</div>
-              <div className="text-[9.5px] sm:text-[10px] text-slate-500">
-                Fee (10%): −{formatRs(platformFee)}
-              </div>
+            <div className="text-right text-[10px] sm:text-[11px] text-emerald-700 font-bold shrink-0">
+              <span className="px-2.5 py-1 rounded-full bg-emerald-100/80 text-emerald-800 text-[10px]">
+                Paid to Wallet
+              </span>
             </div>
           </div>
 
