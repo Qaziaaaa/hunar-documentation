@@ -12,7 +12,7 @@ export function TopUtilityBar() {
           <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-brand-accent/20 text-brand-accent">
             Verified Platform
           </span>
-          <span className="text-slate-200">Peshawar, Twin Cities&nbsp;</span>
+          <span className="text-slate-200">Across Pakistan&nbsp;</span>
         </div>
         <div className="flex items-center space-x-6 text-[11px] sm:text-xs text-slate-200">
           <span className="flex items-center gap-1 text-slate-300">

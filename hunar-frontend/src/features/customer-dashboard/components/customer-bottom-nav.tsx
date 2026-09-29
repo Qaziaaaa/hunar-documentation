@@ -34,7 +34,7 @@ export function CustomerBottomNav() {
   ];
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md border-t border-slate-200 px-6 py-2 lg:hidden flex items-center justify-around shadow-lg">
+    <nav className="fixed bottom-0 left-0 right-0 z-30 bg-white/95 backdrop-blur-md border-t border-slate-200 px-6 py-2 lg:hidden flex items-center justify-around shadow-lg">
       {navItems.map((item) => {
         const Icon = item.icon;
         return (

@@ -59,7 +59,7 @@ export function CustomerJobsListView({ initialJobs }: CustomerJobsListViewProps)
               {isUrdu ? "کسٹمر ہب" : "Customer Hub"}
             </span>
             <span className="text-xs text-slate-600 font-medium">
-              {isUrdu ? "• پشاور، خیبر پختونخوا" : "• Peshawar, Khyber Pakhtunkhwa"}
+              {isUrdu ? "• پاکستان" : "• Across Pakistan"}
             </span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#123B5D]">

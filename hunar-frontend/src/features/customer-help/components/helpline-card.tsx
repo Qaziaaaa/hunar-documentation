@@ -144,7 +144,7 @@ export function HelplineCard({ info, onOpenTicketModal }: HelplineCardProps) {
         <div className="flex items-center gap-1.5">
           <MapPin className="size-3.5 text-[#0F8B8D] shrink-0" />
           <span className="truncate">
-            {isUrdu ? "یونیورسٹی روڈ، پشاور کینٹ" : info.deskLocation}
+            {isUrdu ? "مرکزی کسٹمر سپورٹ ڈیسک" : info.deskLocation}
           </span>
         </div>
         <div className="flex items-center gap-1.5">
