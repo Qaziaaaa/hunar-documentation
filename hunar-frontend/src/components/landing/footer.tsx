@@ -32,7 +32,7 @@ export function PreFooter() {
           Fast & Guaranteed Service
         </span>
         <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-white mb-4">
-          Ready to get skilled work done in Peshawar?
+          Ready to get skilled work done?
         </h2>
         <p className="text-slate-300 text-sm sm:text-base max-w-2xl mx-auto mb-8 leading-relaxed">
           Post your requirements today to receive quotes in minutes, or

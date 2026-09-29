@@ -2,12 +2,6 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import {
-  Crosshair,
-  Layers,
-  Maximize2,
-  Minimize2,
-  Plus,
-  Minus,
   Navigation,
   Loader2,
 } from "lucide-react";
@@ -213,40 +207,48 @@ export function findClosestHotspot(lat: number, lng: number): PeshawarHotspot {
   return closest;
 }
 
-// Reverse Geocode helper with OpenStreetMap Nominatim
+// Helper to get matching area for a hotspot
+export function getHotspotArea(hotspot: PeshawarHotspot): string {
+  const id = hotspot.id.toLowerCase();
+  if (id.includes("univ-town")) return "University Town";
+  if (
+    id.includes("hayatabad-phase1") ||
+    id.includes("hayatabad-phase2") ||
+    id.includes("hayatabad-phase3")
+  ) {
+    return "Hayatabad Phase 1-3";
+  }
+  if (
+    id.includes("hayatabad-phase4") ||
+    id.includes("hayatabad-phase5") ||
+    id.includes("hayatabad-phase6") ||
+    id.includes("hayatabad-phase7")
+  ) {
+    return "Hayatabad Phase 4-7";
+  }
+  if (id.includes("saddar") || id.includes("cantt")) return "Saddar & Cantt";
+  if (id.includes("gulbahar") || id.includes("city")) return "Gulbahar & City Area";
+  if (id.includes("warsak")) return "Warsak Road Sector";
+  if (id.includes("ring-road") || id.includes("pishtakhara")) return "Ring Road Belt";
+  if (id.includes("dha")) return "DHA Phase 1";
+  if (id.includes("model-town") || id.includes("regi")) return "Model Town";
+
+  return hotspot.name || hotspot.areaKey.replace(/,\s*Peshawar/gi, "").trim();
+}
+
+// Reverse Geocode helper to fill ONLY the area based on coordinates
 export async function reverseGeocodePeshawar(lat: number, lng: number): Promise<{
   area: string;
   address: string;
   landmark: string;
 }> {
-  try {
-    const res = await fetch(
-      `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&addressdetails=1`,
-      { headers: { "Accept-Language": "en" } }
-    );
-    if (res.ok) {
-      const json = await res.json();
-      const addr = json.address || {};
-      const road = addr.road || addr.residential || addr.suburb || addr.neighbourhood || "Peshawar Street";
-      const suburb = addr.suburb || addr.neighbourhood || addr.city_district || "Peshawar";
-      const houseNumber = addr.house_number ? `House ${addr.house_number}, ` : "";
-      const closest = findClosestHotspot(lat, lng);
-
-      return {
-        area: closest.areaKey,
-        address: `${houseNumber}${road}, ${suburb}`.trim(),
-        landmark: closest.landmark || `Near ${road}`,
-      };
-    }
-  } catch (err) {
-    console.warn("Reverse geocoding fallback:", err);
-  }
-
   const closest = findClosestHotspot(lat, lng);
+  const matchedArea = getHotspotArea(closest);
+
   return {
-    area: closest.areaKey,
-    address: closest.addressPrefix,
-    landmark: closest.landmark,
+    area: matchedArea,
+    address: "",
+    landmark: "",
   };
 }
 
@@ -295,8 +297,7 @@ export function PeshawarMapPicker({
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const LRef = useRef<any>(null);
 
-  const [currentStyleKey, setCurrentStyleKey] = useState<"streets" | "dark" | "satellite">("streets");
-  const [isExpanded, setIsExpanded] = useState<boolean>(false);
+  const [currentStyleKey] = useState<"streets" | "dark" | "satellite">("streets");
   const [isLocalLocating, setIsLocalLocating] = useState<boolean>(false);
 
   // Active coordinates (default to University Town, Peshawar)
@@ -311,9 +312,8 @@ export function PeshawarMapPicker({
         latitude: lat,
         longitude: lng,
         area: geo.area,
-        landmark: geo.landmark,
-        city: "Peshawar",
-        address: geo.address,
+        landmark: "",
+        address: "",
       });
     },
     [onChange]
@@ -349,9 +349,8 @@ export function PeshawarMapPicker({
           latitude: lat,
           longitude: lng,
           area: geo.area,
-          landmark: geo.landmark,
-          address: geo.address,
-          city: "Peshawar",
+          landmark: "",
+          address: "",
         });
 
         setIsLocalLocating(false);
@@ -555,144 +554,29 @@ export function PeshawarMapPicker({
     }
   }, [data.latitude, data.longitude]);
 
-  // Zoom handlers
-  const handleZoomIn = () => {
-    if (mapInstanceRef.current) {
-      mapInstanceRef.current.zoomIn();
-    }
-  };
-
-  const handleZoomOut = () => {
-    if (mapInstanceRef.current) {
-      mapInstanceRef.current.zoomOut();
-    }
-  };
-
   const isDetecting = isLocating || isLocalLocating;
 
   return (
-    <div className="space-y-2.5">
-      {/* Map Canvas Container */}
-      <div
-        className={`w-full ${
-          isExpanded ? "h-80 sm:h-96" : "h-60 sm:h-72"
-        } rounded-2xl relative overflow-hidden transition-all duration-300 select-none shadow-xs border border-slate-200 bg-slate-100 z-0`}
-      >
-        {/* Top-Left Floating Info Badge (Syncs LIVE with data.area & landmark) */}
-        <div className="absolute top-3 left-3 z-[1000] flex flex-col gap-1 max-w-[75%] pointer-events-none">
-          <div className="bg-white/95 backdrop-blur-md px-3 py-1.5 rounded-xl shadow-xs border border-slate-200 flex items-center gap-2">
-            <span className="relative flex h-2.5 w-2.5 shrink-0">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
-            </span>
-            <div className="flex flex-col overflow-hidden">
-              <span className="text-[11px] font-bold text-[#123B5D] truncate">
-                📍 {data.area || "University Town, Peshawar"}
-              </span>
-              <span className="text-[9.5px] text-slate-500 truncate">
-                {data.landmark || "Near Islamia College Gate"}
-              </span>
-            </div>
-          </div>
-        </div>
+    <div className="w-full h-52 sm:h-56 lg:h-44 xl:h-48 rounded-2xl relative overflow-hidden transition-all duration-300 select-none shadow-xs border border-slate-200 bg-slate-100 z-0">
+      {/* Real Map Mount Container */}
+      <div ref={mapContainerRef} className="w-full h-full z-0" />
 
-        {/* Top-Right Live GPS Action Button */}
-        <div className="absolute top-3 right-3 z-[1000] flex items-center gap-1.5">
-          <button
-            type="button"
-            onClick={handleLiveGPSLocate}
-            disabled={isDetecting}
-            className="bg-[#0F766E] hover:bg-[#115E59] text-white px-2.5 py-1.5 rounded-xl text-[11px] font-bold shadow-md border border-white/30 flex items-center gap-1.5 transition-all active:scale-95 cursor-pointer disabled:opacity-75"
-            title="Detect my exact live GPS location"
-          >
-            {isDetecting ? (
-              <Loader2 className="size-3.5 animate-spin" />
-            ) : (
-              <Navigation className="size-3.5 fill-white" />
-            )}
-            <span>{isDetecting ? "Locating..." : "Locate Me"}</span>
-          </button>
-        </div>
-
-        {/* Real Map Mount Container */}
-        <div ref={mapContainerRef} className="w-full h-full z-0" />
-
-        {/* Floating Map Controls (Bottom-Right) */}
-        <div className="absolute bottom-3 right-3 z-[1000] flex items-center gap-1.5">
-          {/* Layer Style Switcher */}
-          <button
-            type="button"
-            onClick={() =>
-              setCurrentStyleKey((prev) =>
-                prev === "streets" ? "dark" : prev === "dark" ? "satellite" : "streets"
-              )
-            }
-            className="p-1.5 sm:p-2 rounded-xl bg-white/95 hover:bg-white text-slate-700 hover:text-[#0F766E] shadow-sm border border-slate-200 transition-all cursor-pointer flex items-center gap-1"
-            title="Toggle Map Style"
-          >
-            <Layers className="size-3.5 sm:size-4" />
-          </button>
-
-          {/* Zoom Controls */}
-          <div className="flex items-center bg-white/95 rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-            <button
-              type="button"
-              onClick={handleZoomIn}
-              className="p-1.5 sm:p-2 text-slate-700 hover:text-[#0F766E] hover:bg-slate-50 transition-colors cursor-pointer"
-              title="Zoom In"
-            >
-              <Plus className="size-3.5 sm:size-4" />
-            </button>
-            <div className="w-px h-4 bg-slate-200" />
-            <button
-              type="button"
-              onClick={handleZoomOut}
-              className="p-1.5 sm:p-2 text-slate-700 hover:text-[#0F766E] hover:bg-slate-50 transition-colors cursor-pointer"
-              title="Zoom Out"
-            >
-              <Minus className="size-3.5 sm:size-4" />
-            </button>
-          </div>
-
-          {/* Recenter Pin / GPS */}
-          <button
-            type="button"
-            onClick={handleLiveGPSLocate}
-            disabled={isDetecting}
-            className="p-1.5 sm:p-2 rounded-xl bg-white/95 hover:bg-white text-slate-700 hover:text-[#0F766E] shadow-sm border border-slate-200 transition-all cursor-pointer"
-            title="Center on My GPS Location"
-          >
-            <Crosshair
-              className={`size-3.5 sm:size-4 ${isDetecting ? "animate-spin text-[#0F766E]" : ""}`}
-            />
-          </button>
-
-          {/* Expand Height */}
-          <button
-            type="button"
-            onClick={() => {
-              setIsExpanded((prev) => !prev);
-              setTimeout(() => {
-                if (mapInstanceRef.current) mapInstanceRef.current.invalidateSize();
-              }, 320);
-            }}
-            className="p-1.5 sm:p-2 rounded-xl bg-white/95 hover:bg-white text-slate-700 hover:text-[#0F766E] shadow-sm border border-slate-200 transition-all cursor-pointer"
-            title={isExpanded ? "Contract Map View" : "Expand Map View"}
-          >
-            {isExpanded ? (
-              <Minimize2 className="size-3.5 sm:size-4" />
-            ) : (
-              <Maximize2 className="size-3.5 sm:size-4" />
-            )}
-          </button>
-        </div>
-
-        {/* Bottom-Left Coordinates Pill */}
-        <div className="absolute bottom-3 left-3 z-[1000] pointer-events-none hidden sm:flex items-center gap-2">
-          <div className="bg-white/90 backdrop-blur-md px-2.5 py-1 rounded-lg text-[9.5px] font-semibold text-slate-600 shadow-2xs border border-slate-200">
-            Coordinates: {currentLat.toFixed(4)}° N, {currentLng.toFixed(4)}° E
-          </div>
-        </div>
+      {/* Bottom-Left Locate / Current Location Button */}
+      <div className="absolute bottom-3 left-3 z-[1000] flex items-center gap-1.5">
+        <button
+          type="button"
+          onClick={handleLiveGPSLocate}
+          disabled={isDetecting}
+          className="bg-[#0F766E] hover:bg-[#115E59] text-white px-3 py-1.5 rounded-xl text-xs font-bold shadow-md border border-white/20 flex items-center gap-1.5 transition-all active:scale-95 cursor-pointer disabled:opacity-75"
+          title="Detect my exact live GPS location"
+        >
+          {isDetecting ? (
+            <Loader2 className="size-3.5 animate-spin" />
+          ) : (
+            <Navigation className="size-3.5 fill-white" />
+          )}
+          <span>{isDetecting ? "Locating..." : "Locate me"}</span>
+        </button>
       </div>
     </div>
   );

@@ -173,7 +173,7 @@ export function PostJobWizard() {
       </header>
 
       {/* Main Content Area */}
-      <main className="flex-grow w-full max-w-4xl mx-auto px-4 sm:px-6 py-4 flex flex-col">
+      <main className="flex-grow w-full max-w-4xl lg:max-w-5xl xl:max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-3 sm:py-4 lg:py-4 flex flex-col">
         {/* Modern Redesigned Step Progression Stepper */}
         <WizardProgressStepper
           currentStep={currentStep}

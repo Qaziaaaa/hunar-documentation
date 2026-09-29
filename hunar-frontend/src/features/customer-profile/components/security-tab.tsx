@@ -262,8 +262,8 @@ export function SecurityTab({ devices, onSaveFeedback }: SecurityTabProps) {
               </h3>
               <p className="text-xs text-slate-500">
                 {isUrdu
-                  ? "اس سے آپ کا اکاؤنٹ، رابطہ نمبرز اور پشاور کی تمام سروس ہسٹری ختم ہو جائے گی۔"
-                  : "This will delete your account, contact details, and all address history in Peshawar."}
+                  ? "اس سے آپ کا اکاؤنٹ، رابطہ نمبرز اور تمام سروس ہسٹری ختم ہو جائے گی۔"
+                  : "This will delete your account, contact details, and all address history."}
               </p>
             </div>
             <div className="pt-2 flex items-center justify-center gap-3">

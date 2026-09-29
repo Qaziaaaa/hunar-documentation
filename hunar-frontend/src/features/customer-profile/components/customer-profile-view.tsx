@@ -16,6 +16,11 @@ import { NotificationsTab } from "./notifications-tab";
 import { SecurityTab } from "./security-tab";
 import { MOCK_CUSTOMER_PROFILE } from "../data/mock-profile-data";
 import { getCustomerProfile, updateCustomerProfile } from "../api/customer-profile-api";
+import {
+  getSavedAddresses,
+  saveSavedAddresses,
+  deleteSavedAddress,
+} from "../services/saved-addresses-storage";
 import type {
   CustomerProfileData,
   NotificationPreferences,
@@ -27,9 +32,10 @@ export function CustomerProfileView() {
   const isUrdu = locale === "ur";
   const t = useTranslations("CustomerPortal.Profile");
 
-  const [profile, setProfile] = useState<CustomerProfileData>(
-    MOCK_CUSTOMER_PROFILE
-  );
+  const [profile, setProfile] = useState<CustomerProfileData>(() => ({
+    ...MOCK_CUSTOMER_PROFILE,
+    savedAddresses: getSavedAddresses(),
+  }));
   const [activeTab, setActiveTab] = useState<
     "personal" | "addresses" | "notifications" | "security"
   >("personal");
@@ -37,7 +43,12 @@ export function CustomerProfileView() {
 
   useEffect(() => {
     getCustomerProfile().then((data) => {
-      if (data) setProfile(data);
+      if (data) {
+        setProfile((prev) => ({
+          ...data,
+          savedAddresses: getSavedAddresses(),
+        }));
+      }
     });
   }, []);
 
@@ -74,6 +85,7 @@ export function CustomerProfileView() {
         }));
       }
 
+      saveSavedAddresses(updatedList);
       return {
         ...prev,
         savedAddresses: updatedList,
@@ -82,19 +94,24 @@ export function CustomerProfileView() {
   };
 
   const handleSetDefaultAddress = (id: string) => {
-    setProfile((prev) => ({
-      ...prev,
-      savedAddresses: prev.savedAddresses.map((a) => ({
+    setProfile((prev) => {
+      const updated = prev.savedAddresses.map((a) => ({
         ...a,
         isDefault: a.id === id,
-      })),
-    }));
+      }));
+      saveSavedAddresses(updated);
+      return {
+        ...prev,
+        savedAddresses: updated,
+      };
+    });
   };
 
   const handleDeleteAddress = (id: string) => {
+    const updated = deleteSavedAddress(id);
     setProfile((prev) => ({
       ...prev,
-      savedAddresses: prev.savedAddresses.filter((a) => a.id !== id),
+      savedAddresses: updated,
     }));
   };
 

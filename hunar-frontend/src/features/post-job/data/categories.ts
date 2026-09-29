@@ -288,23 +288,20 @@ export const POPULAR_SEARCH_TAGS = [
 ];
 
 export const PESHAWAR_AREAS = [
-  "University Town, Peshawar",
-  "Hayatabad Phase 1, Peshawar",
-  "Hayatabad Phase 2, Peshawar",
-  "Hayatabad Phase 3, Peshawar",
-  "Hayatabad Phase 4, Peshawar",
-  "Hayatabad Phase 5, Peshawar",
-  "Hayatabad Phase 6, Peshawar",
-  "Hayatabad Phase 7, Peshawar",
-  "Saddar & Peshawar Cantt",
-  "Gulbahar & City Area, Peshawar",
-  "Warsak Road, Peshawar",
-  "Ring Road & Pishtakhara, Peshawar",
-  "DHA Peshawar",
-  "Regi Model Town (RMT), Peshawar",
-  "Dalazak Road, Peshawar",
-  "Kohat Road & Scheme Chowk, Peshawar",
-  "Charsadda Road, Peshawar",
+  "Central District",
+  "University Town",
+  "Hayatabad Phase 1-3",
+  "Hayatabad Phase 4-7",
+  "Saddar & Cantt",
+  "Gulbahar & City Area",
+  "Warsak Road Sector",
+  "Ring Road Belt",
+  "DHA Phase 1",
+  "Model Town",
+  "Blue Area / Commercial Zone",
+  "F-6 / F-7 Sector",
+  "Gulberg / Canal Bank",
+  "Bahria Town Sector",
 ];
 
 export const SERVICE_AREAS = PESHAWAR_AREAS;

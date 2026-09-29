@@ -72,7 +72,7 @@ export function ActiveCaseCard({ ticket }: ActiveCaseCardProps) {
               </span>
             </span>
             <span className="text-[11px] font-semibold text-[#0F8B8D]">
-              {isUrdu ? "کسٹمر پراپرٹی، پشاور" : ticket.location}
+              {isUrdu ? "کسٹمر پراپرٹی" : ticket.location}
             </span>
           </div>
           <p className="text-xs text-slate-600 leading-relaxed italic">

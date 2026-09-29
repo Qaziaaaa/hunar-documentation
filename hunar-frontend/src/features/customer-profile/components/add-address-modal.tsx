@@ -13,18 +13,18 @@ import {
 } from "lucide-react";
 import type { SavedAddress } from "../types";
 
-const PESHAWAR_AREAS = [
+const POPULAR_AREAS = [
+  "Central District",
   "University Town",
-  "Hayatabad Phase 1",
-  "Hayatabad Phase 2",
-  "Hayatabad Phase 3",
-  "Hayatabad Phase 4",
-  "Hayatabad Phase 5",
-  "Hayatabad Phase 6",
-  "Hayatabad Phase 7",
+  "Sector F-7 / Blue Area",
+  "Sector G-11 / Markaz",
+  "Hayatabad Phase 1-3",
+  "Hayatabad Phase 4-7",
   "Saddar & Cantt",
-  "DHA Peshawar",
+  "DHA Phase 1",
   "Regi Model Town",
+  "Model Town",
+  "Gulberg",
   "Warsak Road",
   "Gulbahar & City",
   "Dalazak Road",
@@ -32,18 +32,18 @@ const PESHAWAR_AREAS = [
   "Kohat Road",
 ];
 
-const PESHAWAR_AREAS_URDU: Record<string, string> = {
+const POPULAR_AREAS_URDU: Record<string, string> = {
+  "Central District": "مرکزی ڈسٹرکٹ",
   "University Town": "یونیورسٹی ٹاؤن",
-  "Hayatabad Phase 1": "حیات آباد فیز 1",
-  "Hayatabad Phase 2": "حیات آباد فیز 2",
-  "Hayatabad Phase 3": "حیات آباد فیز 3",
-  "Hayatabad Phase 4": "حیات آباد فیز 4",
-  "Hayatabad Phase 5": "حیات آباد فیز 5",
-  "Hayatabad Phase 6": "حیات آباد فیز 6",
-  "Hayatabad Phase 7": "حیات آباد فیز 7",
+  "Sector F-7 / Blue Area": "سیکٹر ایف-7 / بلیو ایریا",
+  "Sector G-11 / Markaz": "سیکٹر جی-11 / مرکز",
+  "Hayatabad Phase 1-3": "حیات آباد فیز 1-3",
+  "Hayatabad Phase 4-7": "حیات آباد فیز 4-7",
   "Saddar & Cantt": "صدر اور کینٹ",
-  "DHA Peshawar": "ڈی ایچ اے پشاور",
+  "DHA Phase 1": "ڈی ایچ اے فیز 1",
   "Regi Model Town": "ریگی ماڈل ٹاؤن",
+  "Model Town": "ماڈل ٹاؤن",
+  "Gulberg": "گلبہار / گلبرگ",
   "Warsak Road": "ورسک روڈ",
   "Gulbahar & City": "گلبہار اور اندرون شہر",
   "Dalazak Road": "دلازاک روڈ",
@@ -74,8 +74,8 @@ export function AddAddressModal({
   const [fullAddress, setFullAddress] = useState(
     initialAddress?.fullAddress || ""
   );
-  const [area, setArea] = useState(initialAddress?.area || "University Town");
-  const [city] = useState("Peshawar");
+  const [area, setArea] = useState(initialAddress?.area || "Central District");
+  const [city, setCity] = useState(initialAddress?.city || "Islamabad");
   const [landmark, setLandmark] = useState(initialAddress?.landmark || "");
   const [isDefault, setIsDefault] = useState(
     initialAddress?.isDefault || false
@@ -93,10 +93,10 @@ export function AddAddressModal({
       tag,
       fullAddress: fullAddress.trim(),
       area,
-      city,
-      landmark: landmark.trim() || (isUrdu ? "پشاور قریبی نشانی" : "Peshawar landmark"),
-      latitude: initialAddress?.latitude || 34.0043,
-      longitude: initialAddress?.longitude || 71.5034,
+      city: city.trim() || "Islamabad",
+      landmark: landmark.trim() || (isUrdu ? "قریبی مشہور مقام" : "Nearby landmark"),
+      latitude: initialAddress?.latitude || 33.7215,
+      longitude: initialAddress?.longitude || 73.0577,
       isDefault,
     };
 
@@ -127,7 +127,7 @@ export function AddAddressModal({
                   : (isUrdu ? "نیا سروس ایڈریس شامل کریں" : "Add New Service Address")}
               </h3>
               <p className="text-xs text-slate-500">
-                {isUrdu ? "پشاور، خیبر پختونخوا" : "Peshawar, Khyber Pakhtunkhwa"}
+                {isUrdu ? "سروس لوکیشن کی تفصیلات" : "Service Location Details"}
               </p>
             </div>
           </div>
@@ -193,16 +193,16 @@ export function AddAddressModal({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="text-xs font-bold text-[#123B5D] block mb-1">
-                {isUrdu ? "پشاور کا سیکٹر / علاقہ" : "Peshawar Sector / Area"}
+                {isUrdu ? "علاقہ / سیکٹر" : "Sector / Area"}
               </label>
               <select
                 value={area}
                 onChange={(e) => setArea(e.target.value)}
                 className="w-full h-11 px-3 rounded-xl border border-slate-200 text-xs font-semibold text-[#123B5D] focus:border-[#0F766E] focus:outline-none focus:ring-2 focus:ring-[#0F766E]/20 transition-all shadow-2xs bg-white rtl:text-right"
               >
-                {PESHAWAR_AREAS.map((a) => (
+                {POPULAR_AREAS.map((a) => (
                   <option key={a} value={a}>
-                    {isUrdu ? (PESHAWAR_AREAS_URDU[a] || a) : a}
+                    {isUrdu ? (POPULAR_AREAS_URDU[a] || a) : a}
                   </option>
                 ))}
               </select>
@@ -214,9 +214,10 @@ export function AddAddressModal({
               </label>
               <input
                 type="text"
-                disabled
-                value={isUrdu ? "پشاور، خیبر پختونخوا" : "Peshawar, KP"}
-                className="w-full h-11 px-3.5 rounded-xl border border-slate-200 text-xs font-medium text-slate-400 bg-slate-50 cursor-not-allowed rtl:text-right"
+                value={city}
+                onChange={(e) => setCity(e.target.value)}
+                placeholder={isUrdu ? "مثلاً اسلام آباد، لاہور، پشاور..." : "e.g. Islamabad, Lahore..."}
+                className="w-full h-11 px-3.5 rounded-xl border border-slate-200 text-xs font-medium text-[#123B5D] bg-white focus:border-[#0F766E] focus:outline-none focus:ring-2 focus:ring-[#0F766E]/20 rtl:text-right"
               />
             </div>
           </div>

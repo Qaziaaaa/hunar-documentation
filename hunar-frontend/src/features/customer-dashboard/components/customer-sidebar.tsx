@@ -2,6 +2,7 @@
 
 import {
   Calendar,
+  ChevronRight,
   Globe,
   Grid,
   HelpCircle,
@@ -11,6 +12,7 @@ import {
   ShieldCheck,
   Tag,
   User,
+  X,
 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { Link, usePathname, useRouter } from "@/i18n/navigation";
@@ -73,13 +75,6 @@ export function CustomerSidebar({ isOpen, onClose }: CustomerSidebarProps) {
       isActive: pathname.includes("/customer/visits"),
     },
     {
-      label: t("profile"),
-      href: "/customer/profile",
-      icon: User,
-      badge: null,
-      isActive: pathname.includes("/customer/profile"),
-    },
-    {
       label: t("help"),
       href: "/customer/help",
       icon: HelpCircle,
@@ -90,25 +85,26 @@ export function CustomerSidebar({ isOpen, onClose }: CustomerSidebarProps) {
 
   return (
     <>
-      {/* Mobile Backdrop */}
-      {isOpen ? (
+      {/* Mobile Drawer Backdrop (z-40 behind sidebar z-50) */}
+      {isOpen && (
         <div
           onClick={onClose}
-          className="fixed inset-0 z-40 bg-black/50 backdrop-blur-xs lg:hidden transition-opacity"
+          className="fixed inset-0 z-40 bg-slate-900/60 backdrop-blur-xs lg:hidden transition-opacity"
         />
-      ) : null}
+      )}
 
+      {/* Full-Height Fixed Desktop Sidebar / Slide-over Mobile Drawer (z-50) */}
       <aside
-        className={`fixed start-0 top-0 h-screen w-[260px] bg-white border-e border-slate-200 z-50 flex flex-col justify-between overflow-y-auto transition-transform duration-300 ${
+        className={`fixed top-0 start-0 z-50 h-screen w-64 lg:w-[260px] shrink-0 flex flex-col justify-between border-e border-slate-200 bg-white transition-transform duration-300 overflow-y-auto ${
           isOpen
-            ? "translate-x-0"
-            : "-translate-x-full rtl:translate-x-full lg:translate-x-0 lg:rtl:translate-x-0 rtl:lg:translate-x-0"
+            ? "translate-x-0 shadow-2xl flex"
+            : "-translate-x-full rtl:translate-x-full lg:translate-x-0 lg:rtl:translate-x-0 lg:transform-none hidden lg:flex"
         }`}
         style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
       >
-        <div className="p-5">
+        <div className="p-4 sm:p-5">
           {/* Brand Logo & Mobile Close */}
-          <div className="flex items-center justify-between pb-5 border-b border-slate-200 mb-4">
+          <div className="flex items-center justify-between pb-4 border-b border-slate-100 mb-4">
             <Link
               href="/"
               className="flex flex-col gap-1 group cursor-pointer hover:opacity-90 transition-opacity"
@@ -120,16 +116,17 @@ export function CustomerSidebar({ isOpen, onClose }: CustomerSidebarProps) {
               </p>
             </Link>
 
-            {onClose ? (
+            {onClose && (
               <button
                 type="button"
                 onClick={onClose}
                 aria-label="Close Sidebar"
-                className="lg:hidden size-8 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 flex items-center justify-center transition-colors"
+                title="Close Sidebar"
+                className="lg:hidden size-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center transition-colors cursor-pointer"
               >
-                ✕
+                <X className="size-4" />
               </button>
-            ) : null}
+            )}
           </div>
 
 
@@ -199,26 +196,42 @@ export function CustomerSidebar({ isOpen, onClose }: CustomerSidebarProps) {
             </button>
           </div>
 
-          <div className="flex items-center justify-between pt-1">
-            <div className="flex items-center gap-2.5 min-w-0">
-              <div className="w-8 h-8 rounded-full bg-[#123B5D] flex items-center justify-center text-white font-bold text-xs shrink-0">
-                {customerInitial}
+          {/* Customer Profile Section at Bottom */}
+          <div className="flex items-center gap-2 pt-1">
+            <Link
+              href="/customer/profile"
+              onClick={onClose}
+              aria-label={locale === "ur" ? "کسٹمر پروفائل" : "Customer Profile"}
+              title={locale === "ur" ? "پروفائل دیکھیں" : "View Profile"}
+              className={`group flex-1 flex items-center justify-between gap-2.5 p-2 rounded-xl border transition-all cursor-pointer ${
+                pathname.includes("/customer/profile")
+                  ? "border-[#0F8B8D]/40 bg-[#0F8B8D]/10"
+                  : "border-slate-100 bg-slate-50/80 hover:bg-slate-100 hover:border-slate-200"
+              }`}
+            >
+              <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                <div className="w-8 h-8 rounded-full bg-[#123B5D] flex items-center justify-center text-white font-bold text-xs shrink-0">
+                  {customerInitial}
+                </div>
+                <div className="flex flex-col min-w-0 flex-1">
+                  <span className="text-xs font-semibold text-slate-900 truncate">
+                    {customerName}
+                  </span>
+                  <span className="text-[10px] font-medium text-slate-500 truncate">
+                    {locale === "ur" ? "کسٹمر پروفائل" : "Customer Profile"}
+                  </span>
+                </div>
               </div>
-              <div className="flex flex-col min-w-0">
-                <span className="text-xs font-semibold text-slate-900 truncate">
-                  {customerName}
-                </span>
-                <span className="text-[10px] font-medium text-slate-500 truncate">
-                  {locale === "ur" ? "پشاور" : "Peshawar"}
-                </span>
-              </div>
-            </div>
+              <ChevronRight className="size-4 text-slate-400 group-hover:text-[#0F8B8D] shrink-0 transition-colors" />
+            </Link>
+
             <button
               onClick={handleLogout}
-              className="text-slate-400 hover:text-red-600 transition-colors p-1"
-              title="Sign Out"
+              className="size-9 rounded-xl border border-slate-200 bg-slate-50/80 hover:bg-red-50 hover:border-red-200 text-slate-400 hover:text-red-600 transition-colors flex items-center justify-center shrink-0 cursor-pointer"
+              title={locale === "ur" ? "لاگ آؤٹ" : "Sign Out"}
+              aria-label={locale === "ur" ? "لاگ آؤٹ" : "Sign Out"}
             >
-              <LogOut className="size-4.5" />
+              <LogOut className="size-4" />
             </button>
           </div>
         </div>

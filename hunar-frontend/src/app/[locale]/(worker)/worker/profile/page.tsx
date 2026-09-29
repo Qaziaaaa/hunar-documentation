@@ -374,8 +374,8 @@ function ProfileContent() {
                 </div>
                 <p className="text-[11px] text-slate-500">
                   {isUrdu
-                    ? "پشاور میں آپ کی دوکان یا ورکشاپ کا مکمل پتہ۔"
-                    : "Your physical shop, store, or workshop base address in Peshawar."}
+                    ? "آپ کی دوکان یا ورکشاپ کا مکمل پتہ۔"
+                    : "Your physical shop, store, or workshop base address."}
                 </p>
 
                 {editing ? (
@@ -385,14 +385,14 @@ function ProfileContent() {
                       onChange={(e) =>
                         handleTextChange("workshopLocation", e.target.value)
                       }
-                      placeholder={isUrdu ? "مثلاً دوکان نمبر 14، پشاور کینٹ" : "e.g. Shop #14, Main Saddar Road, Peshawar Cantt"}
+                      placeholder={isUrdu ? "مثلاً دوکان نمبر 14، مین کمرشل مارکیٹ" : "e.g. Shop #14, Main Commercial Avenue"}
                       className="h-10 text-xs font-semibold bg-white border-teal/30"
                     />
                   </div>
                 ) : (
                   <p className="text-sm font-bold text-[#123B5D] pt-0.5">
                     {worker.workshopLocation ??
-                      "Shop #14, Main Saddar Road, Peshawar Cantt"}
+                      "Shop #14, Main Commercial Avenue"}
                   </p>
                 )}
               </div>
@@ -407,8 +407,8 @@ function ProfileContent() {
                 </div>
                 <p className="text-[11px] text-slate-500">
                   {isUrdu
-                    ? "پشاور کے وہ تمام علاقے منتخب کریں جہاں آپ سروس فراہم کرتے ہیں۔"
-                    : "Select all Peshawar sectors where you visit customers for doorstep service calls."}
+                    ? "وہ تمام علاقے منتخب کریں جہاں آپ سروس فراہم کرتے ہیں۔"
+                    : "Select all coverage sectors where you visit customers for doorstep service calls."}
                 </p>
 
                 {editing ? (

@@ -25,16 +25,44 @@ export async function generateMetadata({
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: "Metadata" });
   return {
-    title: t("title"),
+    title: {
+      default: t("title"),
+      template: "%s | WorkerFIX",
+    },
     description: t("description"),
+    applicationName: "WorkerFIX",
     icons: {
       icon: [
-        { url: "/workerfix-icon.png", type: "image/png" },
-        { url: "/workerfix-icon.png", sizes: "32x32", type: "image/png" },
-        { url: "/workerfix-icon.png", sizes: "192x192", type: "image/png" },
+        { url: "/workerfix-helmet-clean.png?v=helmet", sizes: "any" },
+        { url: "/workerfix-helmet-clean.png?v=helmet", sizes: "32x32", type: "image/png" },
+        { url: "/workerfix-helmet-clean.png?v=helmet", sizes: "192x192", type: "image/png" },
+        { url: "/workerfix-helmet-clean.png?v=helmet", sizes: "512x512", type: "image/png" },
       ],
-      shortcut: "/workerfix-icon.png",
-      apple: "/workerfix-icon.png",
+      shortcut: "/workerfix-helmet-clean.png?v=helmet",
+      apple: [
+        { url: "/workerfix-helmet-clean.png?v=helmet", sizes: "180x180", type: "image/png" },
+      ],
+    },
+    openGraph: {
+      title: t("title"),
+      description: t("description"),
+      siteName: "WorkerFIX",
+      images: [
+        {
+          url: "/workerfix-helmet-clean.png",
+          width: 160,
+          height: 200,
+          alt: "WorkerFIX",
+        },
+      ],
+      locale: locale === "ur" ? "ur_PK" : "en_PK",
+      type: "website",
+    },
+    twitter: {
+      card: "summary",
+      title: t("title"),
+      description: t("description"),
+      images: ["/workerfix-helmet-clean.png"],
     },
   };
 }
