@@ -364,7 +364,7 @@ export function WorkerVisitTrackingView({
       otp: securityPin,
       workerName: "Ali Khan",
       customerName: job.customer.name,
-      customerAddress: job.location.address || job.location.area,
+      customerAddress: job.location.fullAddress || (job.location as any).address || job.location.area,
     });
 
     setShowWorkerOtpModal(true);

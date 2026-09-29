@@ -135,7 +135,7 @@ function RoleModalContent({
                   Worker Portal
                 </h3>
                 <p className="text-xs text-slate-500 mt-1 leading-relaxed">
-                  Browse nearby repair jobs in Peshawar, send instant visit
+                  Browse nearby repair jobs, send instant visit
                   offers, and withdraw earnings directly.
                 </p>
                 <ul className="space-y-1.5 text-xs text-slate-600 pt-3 mt-3 border-t border-slate-100 font-medium">

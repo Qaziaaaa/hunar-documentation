@@ -21,7 +21,6 @@ export function CustomerDashboardView() {
           {isUrdu ? "آج آپ کو کس سروس کی ضرورت ہے؟" : "What service do you need today?"}
         </h1>
       </div>
-      </div>
 
       {/* Active Visit & Doorstep OTP PIN Banner */}
       <ActiveVisitBanner />

@@ -32,7 +32,7 @@ export function WizardProgressStepper({
   const progressPercent = Math.round((currentStep / 4) * 100);
 
   return (
-    <div className="w-full max-w-3xl mx-auto mb-6 px-1 sm:px-4">
+    <div className="w-full max-w-3xl lg:max-w-5xl xl:max-w-6xl mx-auto mb-3 lg:mb-4 px-1 sm:px-4">
       {/* Desktop & Tablet Breadcrumb Chevron Stepper */}
       <nav
         aria-label="Progress"

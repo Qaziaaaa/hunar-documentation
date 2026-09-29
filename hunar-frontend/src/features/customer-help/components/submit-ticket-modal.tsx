@@ -172,7 +172,7 @@ export function SubmitTicketModal({
         workerName: matchedJob
           ? matchedJob.workerName
           : (isUrdu ? "سپورٹ ڈیسک" : "Support Desk"),
-        location: isUrdu ? "کسٹمر پراپرٹی، پشاور" : "Customer Property, Peshawar",
+        location: isUrdu ? "کسٹمر پراپرٹی" : "Customer Property",
         issueType,
         issueTitle:
           issueCategories.find((c) => c.id === issueType)?.label || (isUrdu ? "کسٹمر ٹکٹ" : "Customer Ticket"),

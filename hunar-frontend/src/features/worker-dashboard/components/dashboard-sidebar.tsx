@@ -109,7 +109,7 @@ export function DashboardSidebar({
             <div className="flex flex-col gap-0.5">
               <WorkerFixLogo variant="dark" size="sm" />
               <p className="text-[11px] font-medium text-slate-500 pl-0.5">
-                Worker Portal · Peshawar
+                Worker Portal
               </p>
             </div>
 

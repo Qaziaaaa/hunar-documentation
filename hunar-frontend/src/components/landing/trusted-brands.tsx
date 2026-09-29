@@ -8,7 +8,7 @@ export function TrustedBrands() {
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <p className="text-center text-xs font-semibold uppercase tracking-widest text-slate-400 mb-8">
-          Trusted by leading businesses & residents across Peshawar & KPK
+          Trusted by leading businesses & residents nationwide
         </p>
         <div className="flex flex-wrap items-center justify-center gap-8 sm:gap-14 opacity-60 grayscale hover:grayscale-0 transition duration-300">
           {brands.map((brand) => (

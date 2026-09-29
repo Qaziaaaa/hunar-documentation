@@ -44,7 +44,7 @@ export function JobPostedSuccessModal({
               <>
                 ہم{" "}
                 <span className="font-bold text-slate-800">
-                  {data.area || "پشاور"}
+                  {data.area || "آپ کے علاقے"}
                 </span>{" "}
                 کے تصدیق شدہ کاریگروں کو الرٹ بھیج رہے ہیں۔ جلد ہی آپ کو آفرز موصول ہونا شروع ہو جائیں گی۔
               </>
@@ -52,7 +52,7 @@ export function JobPostedSuccessModal({
               <>
                 We are alerting verified technicians in{" "}
                 <span className="font-bold text-slate-800">
-                  {data.area || "Peshawar"}
+                  {data.area || "your area"}
                 </span>
                 . You will start receiving offers shortly.
               </>
@@ -76,7 +76,7 @@ export function JobPostedSuccessModal({
             <span>{isUrdu ? "مقام:" : "Location:"}</span>
             <span className="font-bold text-[#123B5D] truncate max-w-[200px] flex items-center gap-1">
               <MapPin className="size-3 text-[#0F8B8D] shrink-0" />
-              {data.area || (isUrdu ? "یونیورسٹی ٹاؤن، پشاور" : "University Town, Peshawar")}
+              {data.area || (isUrdu ? "منتخب شدہ علاقہ" : "Selected Area")}
             </span>
           </div>
         </div>

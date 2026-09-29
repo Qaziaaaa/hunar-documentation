@@ -123,7 +123,7 @@ export function StatsOverview({
         </div>
 
         <div className="mt-3 flex items-center gap-1 text-[11px] font-bold text-orange">
-          <span>{isUrdu ? "پشاور میں اعلی ترین ریٹنگ" : "Top Rated Pro in Peshawar"}</span>
+          <span>{isUrdu ? "اعلی ترین ریٹنگ کا حامل ماہر" : "Top Rated Verified Pro"}</span>
           <ArrowUpRight className="size-3 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5 rtl:group-hover:-translate-x-0.5" />
         </div>
       </div>

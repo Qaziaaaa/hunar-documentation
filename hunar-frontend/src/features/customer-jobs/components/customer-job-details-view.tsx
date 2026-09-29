@@ -95,7 +95,7 @@ export function CustomerJobDetailsView({ initialJob }: CustomerJobDetailsViewPro
 
             <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-600">
               <MapPin className="size-3 text-[#0F766E]" />
-              {job.area || (isUrdu ? "پشاور" : "Peshawar")}
+              {job.area || (isUrdu ? "آن لوکیشن" : "On Location")}
             </span>
 
             {job.status === "receiving_offers" ? (
