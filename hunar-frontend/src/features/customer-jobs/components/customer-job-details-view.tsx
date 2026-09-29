@@ -3,12 +3,15 @@
 import { useState } from "react";
 import {
   ArrowLeft,
+  ArrowRight,
   Calendar,
   CheckCircle2,
   Clock,
   Lock,
   MapPin,
+  MessageSquare,
   Pause,
+  Phone,
   Play,
   Radio,
   ShieldCheck,
@@ -359,18 +362,65 @@ export function CustomerJobDetailsView({ initialJob }: CustomerJobDetailsViewPro
                 </div>
               </div>
 
+              {/* Doorstep Security Code Callout */}
+              {job.securityPin && (
+                <div className="p-3 bg-white rounded-2xl border border-amber-200/80 flex items-center justify-between">
+                  <div>
+                    <span className="text-[11px] text-slate-400 block font-medium">
+                      {isUrdu ? "دہلیز داخلہ PIN" : "Doorstep Entry PIN"}
+                    </span>
+                    <span className="text-xs text-slate-600">
+                      {isUrdu ? "کاریگر کی آمد پر یہ PIN تصدیق کریں" : "Technician shares this code at door to verify identity"}
+                    </span>
+                  </div>
+                  <span className="font-mono text-base font-bold tracking-widest text-[#0F766E] bg-[#0F766E]/10 px-3 py-1 rounded-lg">
+                    {job.securityPin}
+                  </span>
+                </div>
+              )}
 
-              {/* Completion & Review Direct Action */}
-              <Link
-                href={`/customer/job/${job.id}/complete`}
-                className="w-full flex items-center justify-center gap-2 py-3 bg-[#0F766E] hover:bg-[#115E59] text-white text-xs font-bold rounded-xl shadow-xs transition-all"
-              >
-                <span>
-                  {isUrdu
-                    ? "مکمل شدہ کام کا جائزہ لیں اور ادائیگی منظور کریں ←"
-                    : "Inspect Completed Work & Authorize Payment →"}
-                </span>
-              </Link>
+              {/* Action Buttons for Active Job */}
+              {job.status === "completed" ? (
+                <Link
+                  href={`/customer/job/${job.id}/complete`}
+                  className="w-full flex items-center justify-center gap-2 py-3 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow-xs transition-all cursor-pointer"
+                >
+                  <span>{isUrdu ? "وارنٹی سرٹیفکیٹ اور رسید دیکھیں →" : "View Warranty Certificate & Invoice →"}</span>
+                </Link>
+              ) : (
+                <div className="space-y-2.5">
+                  <Link
+                    href={`/customer/job/${job.id}/tracking`}
+                    className="w-full flex items-center justify-center gap-2 py-3 bg-[#0F766E] hover:bg-[#115E59] text-white text-xs sm:text-sm font-bold rounded-xl shadow-xs transition-all cursor-pointer active:scale-98"
+                  >
+                    <Clock className="size-4" />
+                    <span>
+                      {isUrdu
+                        ? "لائیو آمد اور دہلیز PIN ٹریک کریں ←"
+                        : "Track Live Arrival & Doorstep PIN →"}
+                    </span>
+                  </Link>
+
+                  <div className="flex items-center gap-2.5">
+                    {job.selectedOffer.worker.phone && (
+                      <a
+                        href={`tel:${job.selectedOffer.worker.phone}`}
+                        className="flex-1 py-2.5 px-3 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-700 font-semibold text-xs border border-slate-200 flex items-center justify-center gap-1.5 transition-colors"
+                      >
+                        <Phone className="size-3.5 text-[#0F766E]" />
+                        <span>{isUrdu ? "کاریگر کو کال کریں" : "Call Pro"}</span>
+                      </a>
+                    )}
+                    <Link
+                      href="/customer/chat"
+                      className="flex-1 py-2.5 px-3 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-700 font-semibold text-xs border border-slate-200 flex items-center justify-center gap-1.5 transition-colors"
+                    >
+                      <MessageSquare className="size-3.5 text-[#0F766E]" />
+                      <span>{isUrdu ? "پیغام بھیجیں" : "Message"}</span>
+                    </Link>
+                  </div>
+                </div>
+              )}
             </div>
           ) : (
             <>

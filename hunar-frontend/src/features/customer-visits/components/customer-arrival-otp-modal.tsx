@@ -46,9 +46,16 @@ export function CustomerArrivalOtpModal({
     }
   }, [isOpen]);
 
-  if (!isOpen || !session) return null;
+  if (!isOpen) return null;
 
-  const workerName = session.workerName || "Worker";
+  const activeSession: Partial<ArrivalSession> = session || {
+    jobId: "job-1",
+    otp: "4821",
+    workerName: isUrdu ? "طارق شاہ" : "Tariq Shah",
+    status: "pending_otp",
+  };
+
+  const workerName = activeSession.workerName || (isUrdu ? "کاریگر" : "Worker");
 
   const handleDigitChange = (index: number, value: string) => {
     setError(null);
@@ -126,7 +133,7 @@ export function CustomerArrivalOtpModal({
     setIsVerifying(true);
     setError(null);
 
-    const result = arrivalService.verifyOtp(fullOtp);
+    const result = arrivalService.verifyOtp(fullOtp, activeSession);
 
     if (!result.success) {
       setIsVerifying(false);

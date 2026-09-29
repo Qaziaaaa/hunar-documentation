@@ -9,7 +9,7 @@ export async function generateMetadata() {
   };
 }
 
-export default async function CustomerJobCompletionPluralPage({
+export default async function CustomerJobCompletionAliasPage({
   params,
 }: {
   params: Promise<{ locale: string; id: string }>;
