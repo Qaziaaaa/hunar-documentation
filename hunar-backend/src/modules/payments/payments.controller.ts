@@ -49,6 +49,17 @@ export class PaymentsController {
     return this.wallet.getBalance(user.sub);
   }
 
+  /**
+   * Wallet screen header: current balance + lifetime top-up / deduction totals.
+   * Kept alongside `GET /wallet/balance` because the screen needs the aggregates
+   * too, and fanning out three requests for one header is wasteful.
+   */
+  @Get('wallet/summary')
+  @Roles(Role.WORKER)
+  summary(@CurrentUser() user: JwtPayload) {
+    return this.wallet.getWalletSummary(user.sub);
+  }
+
   @Get('wallet/ledger')
   @Roles(Role.WORKER)
   ledger(@CurrentUser() user: JwtPayload, @Query() query: WalletLedgerQueryDto) {
@@ -99,8 +110,9 @@ export class PaymentsController {
     @CurrentUser() user: JwtPayload,
     @Body() dto: JobActionDto & { commissionId?: string },
   ) {
-    const commissionId = dto.commissionId ?? dto.jobId;
-    return this.wallet.confirmCommission(dto.jobId, commissionId);
+    // commissionId is optional — the service resolves the commission from the
+    // (unique) jobId and only uses the id as a mismatch guard.
+    return this.wallet.confirmCommission(dto.jobId, dto.commissionId);
   }
 
   @Post('wallet/reverse-commission')
