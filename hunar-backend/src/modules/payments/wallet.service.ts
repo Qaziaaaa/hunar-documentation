@@ -90,7 +90,53 @@ export class WalletService {
     userId: string,
     query: { page?: number; limit?: number; type?: WalletLedgerType },
   ) {
-    return this.ledger.listForWorker(userId, query);
+    return this.ledger.listTransactionsForWorker(userId, query);
+  }
+
+  /**
+   * Single read model for the worker wallet screen header.
+   *
+   * `currentBalance` is the spendable balance only — the held commission is
+   * reported separately because it is already deducted from `balance` and must
+   * not be counted as spendable money. `totalDeductions` sums every debit
+   * (held/deducted commissions, withdrawals); `totalTopUps` sums wallet credits
+   * only, so job earnings never inflate a "you topped up Rs. X" figure.
+   */
+  async getWalletSummary(userId: string) {
+    const wallet = await this.getOrCreateWallet(userId);
+    const agg = (await this.prisma.walletLedger.groupBy({
+      by: ['type'],
+      where: { userId },
+      _sum: { amount: true },
+      _count: { _all: true },
+    })) as unknown as Array<{
+      type: WalletLedgerType;
+      _sum: { amount: number | null };
+      _count: { _all: number };
+    }>;
+
+    const sumBy = (type: WalletLedgerType): number => {
+      const row = agg.find((a) => a.type === type);
+      return row ? Number(row._sum.amount ?? 0) : 0;
+    };
+
+    const totalTopUps = sumBy(WalletLedgerType.TOPUP_CREDIT);
+    const totalDeductions = agg.reduce((acc, row) => {
+      const amount = Number(row._sum.amount ?? 0);
+      return amount < 0 ? acc + Math.abs(amount) : acc;
+    }, 0);
+    const totalTransactions = agg.reduce((acc, row) => acc + Number(row._count._all ?? 0), 0);
+
+    const balance = Number(wallet.balance);
+    const heldBalance = Number(wallet.heldBalance);
+    return {
+      currentBalance: balance,
+      heldBalance,
+      totalBalance: balance + heldBalance,
+      totalTopUps,
+      totalDeductions,
+      totalTransactions,
+    };
   }
 
   /**
@@ -380,10 +426,15 @@ export class WalletService {
    * Transfer a held commission to the platform wallet. Incoming payments are
    * confirmed via the Commission -> RECEIVED transition (payment screenshot
    * submitted). Idempotent per job.
+   *
+   * Resolved by `jobId` (unique on Commission) rather than by commission id,
+   * so a client that only knows the job it is working on can confirm without
+   * having to look the commission id up first. When `commissionId` is supplied
+   * it is treated as a guard against a mismatched job.
    */
-  async confirmCommission(jobId: string, commissionId: string) {
-    const commission = await this.prisma.commission.findUnique({ where: { id: commissionId } });
-    if (!commission || commission.jobId !== jobId) {
+  async confirmCommission(jobId: string, commissionId?: string) {
+    const commission = await this.prisma.commission.findUnique({ where: { jobId } });
+    if (!commission || (commissionId && commission.id !== commissionId)) {
       throw new NotFoundException('Commission not found');
     }
     if (commission.status !== 'RECEIVED') {
@@ -394,6 +445,7 @@ export class WalletService {
     }
     const workerId = commission.workerId;
     const amount = Number(commission.amount);
+    const resolvedCommissionId = commission.id;
 
     const key = `${WALLET_IDEMPOTENCY_PREFIX}confirm:${jobId}`;
     const claimed = await this.claimIdempotencyKey(key);
@@ -425,7 +477,7 @@ export class WalletService {
           amount: -amount,
           balanceAfter: Number(wallet.balance),
           referenceType: 'commission',
-          referenceId: commissionId,
+          referenceId: resolvedCommissionId,
           note: PLATFORM_COMMISSION_NOTICE,
           idempotencyKey: `confirm:${jobId}`,
         });
@@ -442,16 +494,21 @@ export class WalletService {
           },
         });
         await tx.commission.update({
-          where: { id: commissionId },
+          where: { id: resolvedCommissionId },
           data: { status: 'VERIFIED', verifiedAt: new Date() },
         });
         return { heldAfter: newHeld, amount };
       });
 
-      this.eventBus.emit('commission.deducted', { commissionId, jobId, workerId, amount });
+      this.eventBus.emit('commission.deducted', {
+        commissionId: resolvedCommissionId,
+        jobId,
+        workerId,
+        amount,
+      });
       this.realtime.emitToRoom(walletRoom(workerId), WALLET_EVENTS.commissionDeducted, {
         jobId,
-        commissionId,
+        commissionId: resolvedCommissionId,
         amount,
       });
       await this.emitBalance(workerId);

@@ -66,12 +66,15 @@ export class CustomerPaymentsQueryDto {
 }
 
 const TOPUP_STATUSES = ['PENDING', 'APPROVED', 'REJECTED'] as const;
+// Mirrors the Prisma `WalletLedgerType` enum — keep in sync, otherwise filtering
+// on a valid ledger type is rejected with a 400.
 const LEDGER_TYPES = [
   'COMMISSION_HELD',
   'COMMISSION_RELEASED',
   'COMMISSION_DEDUCTED',
   'TOPUP_CREDIT',
   'EARNINGS_CREDIT',
+  'WITHDRAWAL',
 ] as const;
 
 export class TopupDto {
