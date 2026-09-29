@@ -44,7 +44,6 @@ export function WorkerLiveJobCard({
     job.visitCharge ??
     job.customerSuggestedPrice ??
     800;
-
   const commissionHold = Math.round(agreedVisitCharge * 0.1);
   const netEarnings = agreedVisitCharge - commissionHold;
 
