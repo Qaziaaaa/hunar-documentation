@@ -70,22 +70,27 @@ export function Step2JobDetails({
   };
 
   return (
-    <div className="w-full max-w-3xl mx-auto space-y-4 animate-in fade-in-50 duration-300 pb-24">
-      {/* Container Card */}
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-2xs p-4 sm:p-6 space-y-5">
-        {/* Header */}
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl sm:text-3xl font-extrabold text-[#123B5D]">
-                {isUrdu ? "کام کی تفصیل بیان کریں" : "Describe the job"}
-              </h1>
-              <p className="text-xs sm:text-sm text-slate-600 font-medium mt-1">
-                {isUrdu ? "کاریگر کو اپنے مسئلے کے بارے میں بتائیں تاکہ وہ درست اندازہ لگا سکے" : "Tell the pro what needs fixing or installing for accurate estimates"}
-              </p>
-            </div>
-          </div>
+    <div className="w-full max-w-3xl lg:max-w-5xl xl:max-w-6xl mx-auto space-y-4 lg:space-y-5 animate-in fade-in-50 duration-300 pb-24">
+      {/* Header */}
+      <div>
+        <h1 className="text-2xl sm:text-3xl font-extrabold text-[#123B5D]">
+          {isUrdu ? "کام کی تفصیل بیان کریں" : "Describe the job"}
+        </h1>
+        <p className="text-xs sm:text-sm text-slate-600 font-medium mt-1">
+          {isUrdu ? "کاریگر کو اپنے مسئلے کے بارے میں بتائیں تاکہ وہ درست اندازہ لگا سکے" : "Tell the pro what needs fixing or installing for accurate estimates"}
+        </p>
+      </div>
 
+      {error && (
+        <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-bold">
+          {error}
+        </div>
+      )}
+
+      {/* Main Two-Column Desktop / Single-Column Mobile Layout */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-6 items-start">
+        {/* Left Column: Job Details */}
+        <div className="lg:col-span-7 bg-white rounded-2xl border border-slate-200 shadow-2xs p-4 sm:p-6 space-y-4">
           {/* Selected Category Header Banner */}
           {selectedCategory && (
             <div className="flex items-center p-3.5 rounded-xl bg-slate-50 border border-slate-200 shadow-2xs">
@@ -154,90 +159,89 @@ export function Step2JobDetails({
               </div>
             </div>
           )}
-        </div>
 
-        {error && (
-          <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-bold">
-            {error}
-          </div>
-        )}
-
-        {/* Inputs */}
-        <div className="space-y-4">
-          <div>
-            <label
-              htmlFor="job-title"
-              className="block text-sm sm:text-base font-extrabold text-[#123B5D] mb-1.5"
-            >
-              {isUrdu ? "کام کا عنوان" : "Job Title"} <span className="text-red-500">*</span>
-            </label>
-            <input
-              id="job-title"
-              type="text"
-              value={data.title}
-              onChange={(e) => {
-                setError(null);
-                onChange({ title: e.target.value });
-              }}
-              placeholder={
-                isUrdu
-                  ? "مثلاً: اے سی کولنگ نہیں کر رہا یا پائپ لیک"
-                  : "e.g. AC not cooling or leaking pipe"
-              }
-              className="w-full h-11 px-3.5 rounded-xl bg-slate-50/70 border border-slate-200 text-sm text-[#123B5D] font-medium placeholder:text-slate-400 focus:bg-white focus:border-[#0F8B8D] focus:ring-2 focus:ring-[#0F8B8D]/20 transition-all outline-none"
-            />
-          </div>
-
-          {/* Job Description */}
-          <div>
-            <div className="flex items-center justify-between mb-1.5">
+          {/* Inputs */}
+          <div className="space-y-4 pt-1">
+            <div>
               <label
-                htmlFor="job-description"
-                className="block text-sm sm:text-base font-extrabold text-[#123B5D]"
+                htmlFor="job-title"
+                className="block text-sm sm:text-base font-extrabold text-[#123B5D] mb-1.5"
               >
-                {isUrdu ? "تفصیلی وضاحت" : "Detailed Description"} <span className="text-red-500">*</span>
+                {isUrdu ? "کام کا عنوان" : "Job Title"} <span className="text-red-500">*</span>
               </label>
-              <span className="text-xs text-slate-600 font-bold">
-                {data.description.length} / 1000
-              </span>
+              <input
+                id="job-title"
+                type="text"
+                value={data.title}
+                onChange={(e) => {
+                  setError(null);
+                  onChange({ title: e.target.value });
+                }}
+                placeholder={
+                  isUrdu
+                    ? "مثلاً: اے سی کولنگ نہیں کر رہا یا پائپ لیک"
+                    : "e.g. AC not cooling or leaking pipe"
+                }
+                className="w-full h-11 px-3.5 rounded-xl bg-slate-50/70 border border-slate-200 text-sm text-[#123B5D] font-medium placeholder:text-slate-400 focus:bg-white focus:border-[#0F8B8D] focus:ring-2 focus:ring-[#0F8B8D]/20 transition-all outline-none"
+              />
             </div>
-            <textarea
-              id="job-description"
-              rows={4}
-              value={data.description}
-              onChange={(e) => {
-                setError(null);
-                onChange({ description: e.target.value });
-              }}
-              placeholder={
-                isUrdu
-                  ? "مسئلے اور مطلوبہ کام کی مختصر تفصیل بیان کریں..."
-                  : "Describe the issue, symptoms, or work required..."
-              }
-              className="w-full p-3.5 rounded-xl bg-slate-50/70 border border-slate-200 text-sm text-[#123B5D] font-medium placeholder:text-slate-400 focus:bg-white focus:border-[#0F8B8D] focus:ring-2 focus:ring-[#0F8B8D]/20 transition-all outline-none resize-none"
-            />
-            <div className="flex justify-between items-center text-[11px] text-slate-600 font-medium mt-1">
-              <span>{isUrdu ? "ماڈل یا فلور نمبر کی وضاحت کریں" : "Mention any specific brand, model, or floor number"}</span>
-              {data.description.length > 0 && data.description.length < 30 ? (
-                <span className="text-amber-700 font-bold">
-                  {isUrdu ? "مزید تفصیل شامل کرنے سے درست اندازہ ملتا ہے" : "Adding more details helps pros quote accurately"}
+
+            {/* Job Description */}
+            <div>
+              <div className="flex items-center justify-between mb-1.5">
+                <label
+                  htmlFor="job-description"
+                  className="block text-sm sm:text-base font-extrabold text-[#123B5D]"
+                >
+                  {isUrdu ? "تفصیلی وضاحت" : "Detailed Description"} <span className="text-red-500">*</span>
+                </label>
+                <span className="text-xs text-slate-600 font-bold">
+                  {data.description.length} / 1000
                 </span>
-              ) : null}
+              </div>
+              <textarea
+                id="job-description"
+                rows={4}
+                value={data.description}
+                onChange={(e) => {
+                  setError(null);
+                  onChange({ description: e.target.value });
+                }}
+                placeholder={
+                  isUrdu
+                    ? "مسئلے اور مطلوبہ کام کی مختصر تفصیل بیان کریں..."
+                    : "Describe the issue, symptoms, or work required..."
+                }
+                className="w-full p-3.5 rounded-xl bg-slate-50/70 border border-slate-200 text-sm text-[#123B5D] font-medium placeholder:text-slate-400 focus:bg-white focus:border-[#0F8B8D] focus:ring-2 focus:ring-[#0F8B8D]/20 transition-all outline-none resize-none"
+              />
+              <div className="flex justify-between items-center text-[11px] text-slate-600 font-medium mt-1">
+                <span>{isUrdu ? "ماڈل یا فلور نمبر کی وضاحت کریں" : "Mention any specific brand, model, or floor number"}</span>
+                {data.description.length > 0 && data.description.length < 30 ? (
+                  <span className="text-amber-700 font-bold">
+                    {isUrdu ? "مزید تفصیل شامل کرنے سے درست اندازہ ملتا ہے" : "Adding more details helps pros quote accurately"}
+                  </span>
+                ) : null}
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Media Section */}
-        <section className="space-y-3 pt-2">
+        {/* Right Column: Media Section */}
+        <div className="lg:col-span-5 bg-white rounded-2xl border border-slate-200 shadow-2xs p-4 sm:p-6 space-y-4">
           <div>
             <h2 className="text-base sm:text-lg font-extrabold text-[#123B5D]">
-              {isUrdu ? "تصاویر یا وائس نوٹ شامل کریں (اختیاری)" : "Add Media (Optional but recommended)"}
+              {isUrdu ? "تصاویر یا وائس نوٹ شامل کریں (اختیاری)" : "Add Media (Optional)"}
             </h2>
+            <p className="text-xs text-slate-500 font-medium mt-0.5">
+              {isUrdu
+                ? "تصویر یا آواز سے کاریگر کو مسئلہ بہتر سمجھ آتا ہے"
+                : "Photos or a voice note help pros diagnose accurately"}
+            </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-4">
-            {/* Image Upload Dropzone (Left column) */}
-            <div className="rounded-2xl bg-slate-50 border border-slate-200 p-3 sm:p-4 flex flex-col justify-between min-h-[140px] sm:min-h-[160px] group transition-all">
+          <div className="space-y-3.5">
+            {/* Image Upload Dropzone */}
+            <div className="rounded-2xl bg-slate-50 border border-slate-200 p-3 sm:p-4 flex flex-col justify-between min-h-[140px] group transition-all">
               <input
                 ref={fileInputRef}
                 type="file"
@@ -250,7 +254,7 @@ export function Step2JobDetails({
               {data.photos.length === 0 ? (
                 <div
                   onClick={() => fileInputRef.current?.click()}
-                  className="flex flex-col items-center justify-center text-center cursor-pointer py-2 sm:py-3 space-y-1.5"
+                  className="flex flex-col items-center justify-center text-center cursor-pointer py-3 space-y-1.5"
                 >
                   <div className="size-9 sm:size-10 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-[#0F8B8D] group-hover:bg-[#0F8B8D]/10 transition-colors shadow-2xs">
                     <Upload className="size-4 sm:size-5" />
@@ -274,7 +278,7 @@ export function Step2JobDetails({
                       <button
                         type="button"
                         onClick={() => fileInputRef.current?.click()}
-                        className="text-[11px] font-bold text-[#0F8B8D] hover:underline inline-flex items-center gap-0.5"
+                        className="text-[11px] font-bold text-[#0F8B8D] hover:underline inline-flex items-center gap-0.5 cursor-pointer"
                       >
                         <Plus className="size-3" />
                         <span>{isUrdu ? "مزید شامل کریں" : "Add more"}</span>
@@ -296,7 +300,7 @@ export function Step2JobDetails({
                         <button
                           type="button"
                           onClick={() => handleRemovePhoto(index)}
-                          className="absolute inset-0 bg-black/50 text-white flex items-center justify-center opacity-0 group-hover/img:opacity-100 transition-opacity"
+                          className="absolute inset-0 bg-black/50 text-white flex items-center justify-center opacity-0 group-hover/img:opacity-100 transition-opacity cursor-pointer"
                         >
                           <Trash2 className="size-3.5" />
                         </button>
@@ -307,8 +311,8 @@ export function Step2JobDetails({
               )}
             </div>
 
-            {/* Voice Note Recorder (Right column) */}
-            <div className="rounded-2xl bg-slate-50 border border-slate-200 p-3 sm:p-4 min-h-[140px] sm:min-h-[160px] flex flex-col justify-between">
+            {/* Voice Note Recorder */}
+            <div className="rounded-2xl bg-slate-50 border border-slate-200 p-3 sm:p-4 min-h-[140px] flex flex-col justify-between">
               <VoiceNoteRecorder
                 voiceNoteUrl={data.voiceNoteUrl}
                 duration={data.voiceNoteDuration}
@@ -327,13 +331,12 @@ export function Step2JobDetails({
               />
             </div>
           </div>
-        </section>
-
+        </div>
       </div>
 
       {/* Fixed Footer Navigation Bar */}
       <div className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200 py-3 sm:py-3.5 shadow-[0_-4px_20px_rgba(0,0,0,0.08)]">
-        <div className="w-full max-w-4xl mx-auto px-4 sm:px-6 flex items-center justify-between gap-3">
+        <div className="w-full max-w-4xl lg:max-w-5xl xl:max-w-6xl mx-auto px-4 sm:px-6 flex items-center justify-between gap-3">
           <button
             type="button"
             onClick={onBack}

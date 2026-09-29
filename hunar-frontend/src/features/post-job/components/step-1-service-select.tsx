@@ -91,7 +91,7 @@ export function Step1ServiceSelect({
       </div>
 
       {/* Search & Popular Searches */}
-      <div className="w-full max-w-3xl mx-auto space-y-2.5">
+      <div className="w-full max-w-3xl lg:max-w-5xl xl:max-w-6xl mx-auto space-y-2.5">
         <div className="relative flex items-center">
           <Search className="absolute left-3.5 rtl:left-auto rtl:right-3.5 size-4 text-slate-400 pointer-events-none" />
           <input
@@ -136,7 +136,7 @@ export function Step1ServiceSelect({
       </div>
 
       {/* 2-Column Responsive Category Grid */}
-      <div className="w-full max-w-3xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-2.5">
+      <div className="w-full max-w-3xl lg:max-w-5xl xl:max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2.5 lg:gap-3">
         {filteredCategories.map((category) => {
           const isSelected = data.category === category.id;
           const Icon = category.icon;
@@ -187,7 +187,7 @@ export function Step1ServiceSelect({
 
       {/* Subcategory Selector when Category is Selected */}
       {selectedCategory && (
-        <div className="w-full max-w-3xl mx-auto p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2.5 animate-in fade-in-50 duration-200">
+        <div className="w-full max-w-3xl lg:max-w-5xl xl:max-w-6xl mx-auto p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2.5 animate-in fade-in-50 duration-200">
           <div className="flex items-center justify-between flex-wrap gap-1">
             <span className="text-xs font-extrabold text-[#123B5D]">
               {isUrdu
@@ -222,7 +222,7 @@ export function Step1ServiceSelect({
 
       {/* Fixed Bottom Action Bar */}
       <div className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200 py-3 sm:py-3.5 shadow-[0_-4px_20px_rgba(0,0,0,0.08)]">
-        <div className="w-full max-w-4xl mx-auto px-4 sm:px-6 flex items-center justify-between gap-3">
+        <div className="w-full max-w-4xl lg:max-w-5xl xl:max-w-6xl mx-auto px-4 sm:px-6 flex items-center justify-between gap-3">
           <div className="text-xs text-slate-500 font-medium hidden sm:block">
             {data.category ? (
               <span className="text-[#0F8B8D] font-bold">
