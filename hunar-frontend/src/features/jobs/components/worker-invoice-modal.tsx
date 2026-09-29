@@ -30,7 +30,7 @@ export function WorkerInvoiceModal({ job, onClose }: WorkerInvoiceModalProps) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-3 sm:p-4 overflow-y-auto">
-      <div className="bg-white rounded-2xl sm:rounded-3xl max-w-lg w-full p-4 sm:p-7 shadow-2xl space-y-4 sm:space-y-6 animate-in fade-in zoom-in-95 my-auto max-h-[92vh] overflow-y-auto">
+      <div className="bg-white rounded-2xl sm:rounded-3xl max-w-lg lg:max-w-2xl w-full p-4 sm:p-7 lg:p-8 shadow-2xl space-y-4 sm:space-y-6 animate-in fade-in zoom-in-95 my-auto max-h-[92vh] overflow-y-auto">
         {/* Header */}
         <div className="flex items-start justify-between border-b border-slate-100 pb-3 sm:pb-4 gap-2">
           <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
@@ -62,7 +62,7 @@ export function WorkerInvoiceModal({ job, onClose }: WorkerInvoiceModalProps) {
         </div>
 
         {/* Details Grid */}
-        <div className="grid grid-cols-2 gap-2.5 sm:gap-4 bg-slate-50 p-3 sm:p-4 rounded-xl sm:rounded-2xl border border-slate-200/80 text-[11px] sm:text-xs">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4 bg-slate-50 p-3 sm:p-4 lg:p-5 rounded-xl sm:rounded-2xl border border-slate-200/80 text-[11px] sm:text-xs">
           <div>
             <span className="text-slate-400 uppercase font-semibold text-[9.5px] sm:text-[10px] block">
               Customer

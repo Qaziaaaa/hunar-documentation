@@ -170,7 +170,7 @@ export function ChatInputBar({
       {/* Quick Suggestion Chips */}
       {!isRecording && (
         <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
-          <div className="flex items-center gap-1 text-[11px] font-bold text-[#0F766E] shrink-0">
+          <div className="flex items-center gap-1 text-[11px] font-bold text-[#0F8B8D] shrink-0">
             <Sparkles className="size-3" />
             <span>{isUrdu ? "فوری جواب:" : "Quick Reply:"}</span>
           </div>
@@ -179,7 +179,7 @@ export function ChatInputBar({
               key={idx}
               type="button"
               onClick={() => handleSuggestionClick(s)}
-              className="px-2.5 py-1 rounded-full text-xs font-medium bg-slate-50 hover:bg-[#0F766E]/10 hover:text-[#0F766E] border border-slate-200 text-slate-700 transition-colors shrink-0 cursor-pointer"
+              className="px-2.5 py-1 rounded-full text-xs font-medium bg-slate-50 hover:bg-[#0F8B8D]/10 hover:text-[#0F8B8D] border border-slate-200 text-slate-700 transition-colors shrink-0 cursor-pointer"
             >
               {s}
             </button>
@@ -216,7 +216,7 @@ export function ChatInputBar({
             <button
               type="button"
               onClick={finishAndSendRecording}
-              className="h-9 px-4 rounded-xl bg-[#0F766E] hover:bg-[#115E59] text-white text-xs font-bold flex items-center gap-1.5 transition-all shadow-xs cursor-pointer active:scale-95"
+              className="h-9 px-4 rounded-xl bg-[#0F8B8D] hover:bg-[#123B5D] text-white text-xs font-bold flex items-center gap-1.5 transition-all shadow-xs cursor-pointer active:scale-95"
             >
               <Send className="size-3.5 rtl:rotate-180" />
               <span>{isUrdu ? "بھیجیں" : "Send Voice"}</span>
@@ -242,7 +242,7 @@ export function ChatInputBar({
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
-                className="size-10 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-500 hover:text-[#0F766E] flex items-center justify-center transition-colors cursor-pointer shrink-0"
+                className="size-10 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-500 hover:text-[#0F8B8D] flex items-center justify-center transition-colors cursor-pointer shrink-0"
                 title={isUrdu ? "تصویر منسلک کریں" : "Attach Image"}
               >
                 <ImageIcon className="size-4.5" />
@@ -262,7 +262,7 @@ export function ChatInputBar({
                   ? "پیغام لکھیں..."
                   : "Type a message..."
               }
-              className="w-full py-2.5 px-4 rounded-xl border border-slate-200 text-xs sm:text-sm text-[#123B5D] focus:outline-none focus:ring-2 focus:ring-[#0F766E]/20 bg-slate-50 focus:bg-white transition-all rtl:text-right"
+              className="w-full py-2.5 px-4 rounded-xl border border-slate-200 text-xs sm:text-sm text-[#123B5D] focus:outline-none focus:ring-2 focus:ring-[#0F8B8D]/20 bg-slate-50 focus:bg-white transition-all rtl:text-right"
             />
           </div>
 
@@ -271,7 +271,7 @@ export function ChatInputBar({
             type="button"
             onClick={startVoiceRecording}
             disabled={disabled}
-            className="size-10 rounded-xl bg-[#0F766E]/10 hover:bg-[#0F766E] text-[#0F766E] hover:text-white border border-[#0F766E]/20 flex items-center justify-center transition-all cursor-pointer shadow-2xs active:scale-95 shrink-0"
+            className="size-10 rounded-xl bg-[#0F8B8D]/10 hover:bg-[#0F8B8D] text-[#0F8B8D] hover:text-white border border-[#0F8B8D]/20 flex items-center justify-center transition-all cursor-pointer shadow-2xs active:scale-95 shrink-0"
             title={isUrdu ? "وائس میسج ریکارڈ کریں" : "Record Voice Note"}
           >
             <Mic className="size-4.5" />
@@ -281,7 +281,7 @@ export function ChatInputBar({
           <button
             type="submit"
             disabled={!text.trim() || disabled}
-            className="size-10 rounded-xl bg-[#0F766E] hover:bg-[#115E59] disabled:opacity-40 disabled:hover:bg-[#0F766E] text-white flex items-center justify-center transition-all cursor-pointer shadow-xs active:scale-95 shrink-0"
+            className="size-10 rounded-xl bg-[#0F8B8D] hover:bg-[#123B5D] disabled:opacity-40 disabled:hover:bg-[#0F8B8D] text-white flex items-center justify-center transition-all cursor-pointer shadow-xs active:scale-95 shrink-0"
             title={isUrdu ? "پیغام بھیجیں" : "Send Message"}
           >
             <Send className="size-4 rtl:rotate-180" />

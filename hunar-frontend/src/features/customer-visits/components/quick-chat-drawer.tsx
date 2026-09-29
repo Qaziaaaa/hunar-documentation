@@ -46,7 +46,7 @@ export function QuickChatDrawer({ visit, isOpen, onClose }: QuickChatDrawerProps
     },
     {
       id: "m-3",
-      sender: "technician",
+      sender: "customer",
       type: "voice",
       audioUrl: "https://actions.google.com/sounds/v1/speech/hello.ogg",
       durationSeconds: 14,
@@ -71,7 +71,7 @@ export function QuickChatDrawer({ visit, isOpen, onClose }: QuickChatDrawerProps
     },
     {
       id: "m-3",
-      sender: "technician",
+      sender: "customer",
       type: "voice",
       audioUrl: "https://actions.google.com/sounds/v1/speech/hello.ogg",
       durationSeconds: 14,
@@ -170,9 +170,9 @@ export function QuickChatDrawer({ visit, isOpen, onClose }: QuickChatDrawerProps
     <div className="fixed inset-0 z-[60] overflow-hidden bg-black/60 backdrop-blur-xs flex justify-end rtl:justify-start animate-in fade-in-50 duration-200">
       <div className="bg-white w-full max-w-md h-full shadow-2xl flex flex-col animate-in slide-in-from-right rtl:slide-in-from-left duration-300">
         {/* Header */}
-        <div className="p-3.5 sm:p-4 border-b border-slate-100 flex items-center justify-between bg-[#123B5D] text-white">
+        <div className="p-3.5 sm:p-4 border-b border-slate-200/90 flex items-center justify-between bg-white text-slate-900 shadow-2xs">
           <div className="flex items-center gap-3 min-w-0">
-            <div className="relative size-10 rounded-full overflow-hidden border-2 border-white shrink-0">
+            <div className="relative size-10 rounded-full overflow-hidden border border-slate-200 bg-slate-100 shrink-0">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={visit.technician.avatarUrl}
@@ -183,11 +183,13 @@ export function QuickChatDrawer({ visit, isOpen, onClose }: QuickChatDrawerProps
             </div>
             <div className="min-w-0">
               <div className="flex items-center gap-1.5">
-                <h4 className="text-sm font-bold truncate">{visit.technician.name}</h4>
-                <ShieldCheck className="size-3.5 text-teal-300 shrink-0" />
+                <h4 className="text-sm font-extrabold text-slate-900 truncate">{visit.technician.name}</h4>
+                <ShieldCheck className="size-3.5 text-emerald-600 shrink-0" />
               </div>
-              <p className="text-[10.5px] text-teal-200 truncate">
-                {visit.technician.businessName} • {isUrdu ? "آن لائن / لائیو" : "Online / Live"}
+              <p className="text-[10.5px] text-slate-500 truncate flex items-center gap-1">
+                <span>{visit.technician.businessName}</span>
+                <span className="text-slate-300">·</span>
+                <span className="text-emerald-700 font-semibold">{isUrdu ? "آن لائن" : "Online"}</span>
               </p>
             </div>
           </div>
@@ -195,7 +197,7 @@ export function QuickChatDrawer({ visit, isOpen, onClose }: QuickChatDrawerProps
           <div className="flex items-center gap-2 shrink-0">
             <a
               href={`tel:${visit.technician.phone}`}
-              className="size-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors text-white"
+              className="size-8 rounded-full bg-emerald-50 hover:bg-emerald-600 text-emerald-700 hover:text-white border border-emerald-200 flex items-center justify-center transition-colors cursor-pointer"
               title={isUrdu ? "کال کریں" : "Call"}
             >
               <Phone className="size-4" />
@@ -204,15 +206,25 @@ export function QuickChatDrawer({ visit, isOpen, onClose }: QuickChatDrawerProps
               type="button"
               onClick={onClose}
               aria-label="Close"
-              className="size-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors cursor-pointer text-white"
+              className="size-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center transition-colors cursor-pointer"
             >
-              <X className="size-4.5" />
+              <X className="size-4" />
             </button>
           </div>
         </div>
 
+        {/* Safety & Job Notice Banner */}
+        <div className="bg-teal-50/70 border-b border-teal-100 px-4 py-2 flex items-center justify-between text-xs text-slate-600">
+          <span className="font-bold text-[#0F8B8D] truncate">
+            {isUrdu ? (visit.jobTitleUr ?? visit.jobTitle) : visit.jobTitle}
+          </span>
+          <span className="text-[10.5px] text-slate-500 font-medium">
+            Order #{visit.jobId || visit.id}
+          </span>
+        </div>
+
         {/* Messages Feed */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-3.5 bg-slate-50">
+        <div className="flex-1 overflow-y-auto p-4 space-y-3.5 bg-slate-50/30">
           {messages.map((msg) => {
             const isCustomer = msg.sender === "customer";
             return (
@@ -229,6 +241,7 @@ export function QuickChatDrawer({ visit, isOpen, onClose }: QuickChatDrawerProps
                     audioUrl={msg.audioUrl}
                     durationSeconds={msg.durationSeconds}
                     isSender={isCustomer}
+                    variant="navy"
                   />
                 ) : msg.type === "image" && msg.imageUrl ? (
                   <div className="max-w-[75%] rounded-2xl overflow-hidden border border-slate-200 shadow-2xs">
@@ -243,29 +256,35 @@ export function QuickChatDrawer({ visit, isOpen, onClose }: QuickChatDrawerProps
                   <div
                     className={`max-w-[82%] px-3.5 py-2.5 rounded-2xl text-xs sm:text-sm leading-relaxed shadow-2xs ${
                       isCustomer
-                        ? "bg-[#0F766E] text-white rounded-br-xs rtl:rounded-br-2xl rtl:rounded-bl-xs"
-                        : "bg-white text-[#123B5D] border border-slate-200 rounded-bl-xs rtl:rounded-bl-2xl rtl:rounded-br-xs"
+                        ? "bg-[#123B5D] text-white rounded-br-xs rtl:rounded-br-2xl rtl:rounded-bl-xs"
+                        : "bg-white text-slate-900 border border-slate-200/90 rounded-bl-xs rtl:rounded-bl-2xl rtl:rounded-br-xs"
                     }`}
                   >
                     <p>{msg.text}</p>
                   </div>
                 )}
 
-                <span className="text-[10px] text-slate-400 mt-1 px-1 flex items-center gap-1">
+                <div
+                  className={`flex items-center gap-1 mt-1 justify-end text-[10px] ${
+                    isCustomer ? "text-slate-300" : "text-slate-400"
+                  }`}
+                >
                   <span>{msg.time}</span>
-                  {isCustomer && <CheckCheck className="size-3 text-[#0F766E]" />}
-                </span>
+                  {isCustomer && <CheckCheck className="size-3.5 text-teal-300" />}
+                </div>
               </div>
             );
           })}
         </div>
 
         {/* Rich Input Bar (Text Typing + Voice Recording) */}
-        <ChatInputBar
-          onSendMessage={handleSendTextMessage}
-          onSendVoiceNote={handleSendVoiceNote}
-          onSendImage={handleSendImage}
-        />
+        <div className="sticky bottom-0 bg-white border-t border-slate-200/90 shadow-lg">
+          <ChatInputBar
+            onSendMessage={handleSendTextMessage}
+            onSendVoiceNote={handleSendVoiceNote}
+            onSendImage={handleSendImage}
+          />
+        </div>
       </div>
     </div>
   );

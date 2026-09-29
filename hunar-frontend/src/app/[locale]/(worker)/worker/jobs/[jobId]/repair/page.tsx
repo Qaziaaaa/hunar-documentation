@@ -37,7 +37,7 @@ export default function RepairPage() {
   const price = repair.lockedAmount ?? repair.amount;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 max-w-6xl xl:max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
       <PageHeader title={t("repair.title")} description={t("repair.subtitle")} />
       <div className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
         <div className="space-y-6">
