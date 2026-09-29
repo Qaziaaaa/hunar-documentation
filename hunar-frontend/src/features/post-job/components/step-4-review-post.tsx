@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import {
+  AlertCircle,
   ArrowLeft,
   ArrowRight,
   Calendar,
@@ -25,6 +26,7 @@ interface Step4ReviewPostProps {
   onGoToStep: (step: PostJobStep) => void;
   onSubmit: () => void;
   isSubmitting?: boolean;
+  submitError?: string | null;
 }
 
 export function Step4ReviewPost({
@@ -33,6 +35,7 @@ export function Step4ReviewPost({
   onGoToStep,
   onSubmit,
   isSubmitting = false,
+  submitError = null,
 }: Step4ReviewPostProps) {
   const locale = useLocale();
   const isUrdu = locale === "ur";
@@ -285,6 +288,14 @@ export function Step4ReviewPost({
         </div>
         <CheckCircle2 className="size-5 text-green-600 shrink-0" />
       </div>
+
+      {/* Submit Error */}
+      {submitError && (
+        <div className="mt-3 flex items-start justify-center gap-1.5 rounded-xl bg-red-50 border border-red-200 px-3 py-2.5 text-center text-xs font-medium text-red-700">
+          <AlertCircle className="size-4 shrink-0 mt-0.5" />
+          <span>{submitError}</span>
+        </div>
+      )}
 
       {/* Fixed Bottom Actions Bar */}
       <div className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200 py-3 sm:py-3.5 shadow-[0_-4px_20px_rgba(0,0,0,0.08)]">

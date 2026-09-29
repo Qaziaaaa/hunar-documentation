@@ -105,22 +105,5 @@ export async function createJob(data: PostJobData): Promise<CreatedJobResponse> 
     };
   }
 
-  try {
-    return await http.post<CreatedJobResponse>("/jobs", payload);
-  } catch (error) {
-    console.warn("Backend /jobs endpoint returned error, creating resilient mock response:", error);
-    return {
-      id: `JOB-${Date.now().toString().slice(-4)}`,
-      customerId: "cust-current-user",
-      categoryId,
-      title: payload.title,
-      description: payload.description,
-      status: "OPEN",
-      address: payload.address,
-      city: payload.city,
-      area: payload.area,
-      suggestedVisitCharge: payload.suggestedVisitCharge,
-      createdAt: new Date().toISOString(),
-    };
-  }
+  return http.post<CreatedJobResponse>("/jobs", payload);
 }

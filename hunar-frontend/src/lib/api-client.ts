@@ -53,12 +53,20 @@ export function getRefreshToken(): string | null {
   );
 }
 
-export function getStoredUser(): StoredUser | null {
+// Emitted whenever the stored auth user is written/cleared (same-tab signal for useSyncExternalStore subscribers)
+export const AUTH_USER_CHANGED_EVENT = "workerfix.auth.changed";
+
+export function getStoredUserRaw(): string | null {
   if (typeof window === "undefined") return null;
-  const raw =
+  return (
     window.localStorage.getItem(AUTH_USER_KEY) ??
     window.localStorage.getItem(LEGACY_AUTH_USER_KEY) ??
-    window.localStorage.getItem(OLD_LEGACY_AUTH_USER_KEY);
+    window.localStorage.getItem(OLD_LEGACY_AUTH_USER_KEY)
+  );
+}
+
+export function getStoredUser(): StoredUser | null {
+  const raw = getStoredUserRaw();
   if (!raw) return null;
   try {
     return JSON.parse(raw) as StoredUser;
@@ -77,6 +85,7 @@ export function setTokens(
   window.localStorage.setItem(REFRESH_TOKEN_KEY, refreshToken);
   if (user) {
     window.localStorage.setItem(AUTH_USER_KEY, JSON.stringify(user));
+    window.dispatchEvent(new Event(AUTH_USER_CHANGED_EVENT));
   }
 }
 
@@ -85,6 +94,7 @@ export function clearTokens(): void {
   window.localStorage.removeItem(ACCESS_TOKEN_KEY);
   window.localStorage.removeItem(REFRESH_TOKEN_KEY);
   window.localStorage.removeItem(AUTH_USER_KEY);
+  window.dispatchEvent(new Event(AUTH_USER_CHANGED_EVENT));
 }
 
 // Track in-flight silent refresh promise to deduplicate concurrent 401s

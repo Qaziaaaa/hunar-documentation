@@ -10,10 +10,10 @@ export async function getCustomerJobs(): Promise<CustomerJob[]> {
   if (isMockMode()) {
     return MOCK_CUSTOMER_JOBS;
   }
-  const res = await http.get<{ items: any[]; meta?: unknown }>(
-    "/jobs/customer?limit=100"
-  );
-  const rows = res?.items ?? [];
+  const res = await http.get<unknown>("/jobs/customer?limit=100");
+  const rows: unknown[] = Array.isArray(res)
+    ? res
+    : (res as { items?: unknown[] })?.items ?? [];
   const jobs = rows.map(transformListRow);
 
   await Promise.allSettled(
@@ -23,6 +23,11 @@ export async function getCustomerJobs(): Promise<CustomerJob[]> {
         Object.assign(job, detail);
       } catch (err) {
         console.warn(`[getCustomerJobs] Detail fetch failed for ${job.id}:`, err);
+      }
+      try {
+        job.offers = await getJobOffers(job.id);
+      } catch (err) {
+        console.warn(`[getCustomerJobs] Offers fetch failed for ${job.id}:`, err);
       }
     })
   );
@@ -234,10 +239,10 @@ function transformBackendWorker(worker: any): WorkerProfile {
       worker.avatar ||
       "https://images.unsplash.com/photo-1540569014015-19a7be504e3a?w=150&auto=format&fit=crop&q=80",
     phone: worker.phone || worker.mobile || "",
-    rating: Number(worker.rating || 0),
-    totalReviews: Number(worker.totalReviews || worker.reviewCount || 0),
-    jobSuccessRate: Number(worker.jobSuccessRate || 0),
-    completedJobsCount: Number(worker.completedJobsCount || 0),
+    rating: Number(worker.rating ?? worker.avgRating ?? 0),
+    totalReviews: Number(worker.totalReviews ?? worker.reviewCount ?? worker.ratingCount ?? 0),
+    jobSuccessRate: Number(worker.jobSuccessRate ?? 0),
+    completedJobsCount: Number(worker.completedJobsCount ?? worker.completedJobs ?? 0),
     responseTime: worker.responseTime || "< 15m",
     tradeCategory: worker.tradeCategory || worker.category?.name || "Technician",
     serviceArea: worker.serviceArea || worker.area || "Peshawar",

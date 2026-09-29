@@ -25,9 +25,10 @@ export function isNearbyJob(status: JobStatus): boolean {
 
 interface BackendJobRow {
   id: string;
-  customerId: string;
+  customerId?: string;
   categoryId: string;
   category?: { id: string; name: string } | null;
+  categoryName?: string;
   title: string;
   description?: string | null;
   images?: string[];
@@ -41,8 +42,11 @@ interface BackendJobRow {
   suggestedVisitCharge?: number | null;
   lockedVisitCharge?: number | null;
   preferredVisitTime?: string | null;
-  createdAt: string;
+  createdAt?: string;
+  postedTime?: string;
   updatedAt?: string;
+  distanceKm?: number;
+  offerCount?: number;
   customer?: { id: string; name?: string | null; phone?: string | null };
 }
 
@@ -54,15 +58,18 @@ interface BackendPage<T> {
 }
 
 function mapBackendJob(row: BackendJobRow): Job {
+  const createdAt = row.createdAt ?? row.postedTime ?? new Date().toISOString();
   return {
     id: row.id,
-    customerId: row.customerId,
+    customerId: row.customerId ?? "",
     customer: row.customer && {
       id: row.customer.id,
       name: row.customer.name ?? undefined,
     },
     categoryId: row.categoryId,
-    category: row.category ?? undefined,
+    category:
+      row.category ??
+      (row.categoryName ? { id: row.categoryId, name: row.categoryName } : undefined),
     title: row.title,
     description: row.description ?? undefined,
     images: row.images ?? [],
@@ -76,8 +83,10 @@ function mapBackendJob(row: BackendJobRow): Job {
     suggestedVisitCharge: row.suggestedVisitCharge ?? undefined,
     lockedVisitCharge: row.lockedVisitCharge ?? undefined,
     preferredVisitTime: row.preferredVisitTime ?? undefined,
-    createdAt: row.createdAt,
-    updatedAt: row.updatedAt ?? row.createdAt,
+    createdAt,
+    updatedAt: row.updatedAt ?? createdAt,
+    distanceKm: row.distanceKm,
+    offerCount: row.offerCount,
   };
 }
 

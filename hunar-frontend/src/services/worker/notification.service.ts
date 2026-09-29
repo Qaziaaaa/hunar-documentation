@@ -12,6 +12,56 @@ type NotificationListener = (notification: AppNotification) => void;
 
 const mockNotificationListeners = new Set<NotificationListener>();
 
+// Backend NotificationType enum → frontend NotificationType
+const BACKEND_TYPE_MAP: Record<string, NotificationType> = {
+  JOB_MATCHED: "new_job",
+  OFFER_ACCEPTED: "offer_accepted",
+  OFFER_REJECTED: "offer_rejected",
+  COUNTER_OFFER: "counter_offer",
+  COUNTER_ACCEPTED: "counter_accepted",
+  VISIT_WINDOW_APPROACHING: "visit_approaching",
+  NEW_MESSAGE: "new_message",
+  COMMISSION_HELD: "commission_reminder",
+  COMMISSION_DEDUCTED: "commission_reminder",
+  COMMISSION_REVERSED: "commission_reminder",
+  INSUFFICIENT_BALANCE: "commission_reminder",
+  TOPUP_SUBMITTED: "commission_reminder",
+  TOPUP_APPROVED: "commission_verified",
+  TOPUP_REJECTED: "commission_reminder",
+  EARNINGS_RECORDED: "earnings_recorded",
+  REVIEW_RECEIVED: "new_review",
+  VERIFICATION_RESULT: "verification_result",
+};
+
+interface BackendNotificationRow {
+  id?: string;
+  type?: string;
+  title?: string;
+  message?: string;
+  body?: string;
+  createdAt?: string;
+  read?: boolean;
+  isRead?: boolean;
+  resourceId?: string;
+  resource_id?: string;
+  href?: string;
+}
+
+/** Normalize a backend notification row (or socket payload) to AppNotification. */
+export function normalizeBackendNotification(raw: unknown): AppNotification {
+  const n = (raw ?? {}) as BackendNotificationRow;
+  return {
+    id: n.id ?? `notif-${Date.now()}`,
+    type: BACKEND_TYPE_MAP[n.type ?? ""] ?? "new_job",
+    title: n.title ?? "Notification",
+    message: n.message ?? n.body ?? "",
+    createdAt: n.createdAt ?? new Date().toISOString(),
+    read: typeof n.read === "boolean" ? n.read : Boolean(n.isRead),
+    resourceId: n.resourceId ?? n.resource_id,
+    href: n.href,
+  };
+}
+
 export async function getNotifications(): Promise<AppNotification[]> {
   if (isMockMode()) {
     return simulateLatency(
@@ -20,7 +70,11 @@ export async function getNotifications(): Promise<AppNotification[]> {
       ),
     );
   }
-  return http.get<AppNotification[]>(`/notifications`);
+  const res = await http.get<unknown>(`/notifications`);
+  const rows: unknown[] = Array.isArray(res)
+    ? res
+    : (res as { items?: unknown[] })?.items ?? [];
+  return rows.map(normalizeBackendNotification);
 }
 
 export async function getUnreadCount(): Promise<number> {
@@ -86,7 +140,8 @@ export function subscribeToNotifications(
   }
   const socket = getSocket();
   if (!socket) return () => undefined;
-  const handle = (notification: AppNotification) => listener(notification);
+  const handle = (payload: unknown) =>
+    listener(normalizeBackendNotification(payload));
   socket.on("notification:new", handle);
   return () => {
     socket.off("notification:new", handle);

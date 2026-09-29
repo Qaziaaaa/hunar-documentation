@@ -8,6 +8,7 @@ import { Link, useRouter } from "@/i18n/navigation";
 import { CATEGORY_OPTIONS, resolveCategoryOption } from "../data/categories";
 import type { PostJobData, PostJobStep, ServiceCategory } from "../types";
 import { createJob } from "../api/post-job-api";
+import { ApiError } from "@/lib/api-client";
 import { JobPostedSuccessModal } from "./job-posted-success-modal";
 import { Step1ServiceSelect } from "./step-1-service-select";
 import { Step2JobDetails } from "./step-2-job-details";
@@ -65,6 +66,7 @@ export function PostJobWizard() {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [postedJobId, setPostedJobId] = useState<string | null>(null);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   // Sync if category search param changes dynamically
   useEffect(() => {
@@ -128,13 +130,20 @@ export function PostJobWizard() {
 
   const handleSubmitJob = async () => {
     setIsSubmitting(true);
+    setSubmitError(null);
     try {
       const res = await createJob(formData);
       setPostedJobId(res.id);
     } catch (err) {
       console.error("Failed to post job:", err);
-      const fallbackId = `JOB-${Date.now().toString().slice(-4)}`;
-      setPostedJobId(fallbackId);
+      const isAuthError = err instanceof ApiError && err.status === 401;
+      setSubmitError(
+        isAuthError
+          ? "Your session has expired. Please sign in again and retry."
+          : err instanceof Error && err.message
+            ? err.message
+            : "Could not post your job. Please check your connection and try again.",
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -208,6 +217,7 @@ export function PostJobWizard() {
               onGoToStep={handleGoToStep}
               onSubmit={handleSubmit}
               isSubmitting={isSubmitting}
+              submitError={submitError}
             />
           )}
         </div>

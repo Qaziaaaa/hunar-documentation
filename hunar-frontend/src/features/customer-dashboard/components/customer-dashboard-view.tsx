@@ -1,7 +1,7 @@
 "use client";
 
 import { useLocale } from "next-intl";
-import { getStoredUser } from "@/lib/api-client";
+import { useStoredUser } from "@/lib/use-stored-user";
 import { ActiveVisitBanner } from "./active-visit-banner";
 import { WorkerFixBrandBanner } from "./hunar-brand-banner";
 import { ServicesGrid } from "./services-grid";
@@ -9,7 +9,8 @@ import { ServicesGrid } from "./services-grid";
 export function CustomerDashboardView() {
   const locale = useLocale();
   const isUrdu = locale === "ur";
-  const storedUser = getStoredUser();
+  // Read the session without a hydration mismatch (SSR/first render → null, then live value)
+  const storedUser = useStoredUser();
   const customerName =
     storedUser?.name || storedUser?.phone || (isUrdu ? "کسٹمر" : "Customer");
 

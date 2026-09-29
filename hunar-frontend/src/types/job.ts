@@ -122,6 +122,8 @@ export interface Job {
   completedAt?: string;
   createdAt: string;
   updatedAt: string;
+  distanceKm?: number;
+  offerCount?: number;
 }
 
 export interface JobRequest {
