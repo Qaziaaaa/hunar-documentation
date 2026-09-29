@@ -52,8 +52,8 @@ export function NotificationsTab({
           </h2>
           <p className="text-xs text-slate-500 mt-1">
             {isUrdu
-              ? "پشاور میں کاریگر کی روانگی، آمد اور رسیدوں کے خودکار الرٹس کنفیگر کریں۔"
-              : "Configure multi-channel alerts for technician dispatch, arrival updates, and invoices in Peshawar."}
+              ? "کاریگر کی روانگی، آمد اور رسیدوں کے خودکار الرٹس کنفیگر کریں۔"
+              : "Configure multi-channel alerts for technician dispatch, arrival updates, and invoices."}
           </p>
         </div>
 
@@ -191,8 +191,8 @@ export function NotificationsTab({
               <div className="space-y-1">
                 <span className="text-xs sm:text-sm font-bold text-[#123B5D] block">
                   {isUrdu
-                    ? "موسمی دیکھ بھال کے مشورے اور پشاور سروس آفرز"
-                    : "Seasonal Maintenance Tips & Peshawar Service Offers"}
+                    ? "موسمی دیکھ بھال کے مشورے اور خصوصی سروس آفرز"
+                    : "Seasonal Maintenance Tips & Exclusive Service Offers"}
                 </span>
                 <p className="text-xs text-slate-500 leading-relaxed">
                   {isUrdu
