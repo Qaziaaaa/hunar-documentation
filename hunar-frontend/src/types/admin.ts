@@ -12,7 +12,7 @@ export type JobStatus =
 
 export type DisputeStatus = "OPEN" | "UNDER_REVIEW" | "RESOLVED" | "DISMISSED" | "ESCALATED";
 
-export type WithdrawalStatus = "PENDING" | "PROCESSED" | "FAILED";
+export type WithdrawalStatus = "PENDING" | "PROCESSED" | "FAILED" | "REJECTED";
 
 export interface AdminKpiStats {
   totalJobs: number;

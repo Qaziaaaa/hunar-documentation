@@ -17,6 +17,7 @@
     "@types/mapbox-gl": "^3.4.1",
     "class-variance-authority": "^0.7.1",
     "cn": "^0.3.0",
+    "html2canvas": "^1.4.1",
     "leaflet": "^1.9.4",
     "lucide-react": "^1.46.0",
     "mapbox-gl": "^3.31.0",

@@ -320,6 +320,30 @@ export const MOCK_PAYMENTS: PaymentTransaction[] = [
     status: "ESCROW_HELD",
     timestamp: "2026-03-19T10:25:00Z",
   },
+  {
+    id: "txn-903",
+    jobId: "job-802",
+    customerName: "Ayesha Khan",
+    workerName: "Mohammad Rashid",
+    amount: 2800,
+    commission: 280,
+    netPayout: 2520,
+    paymentMethod: "Bank Transfer (HBL)",
+    status: "SUCCESS",
+    timestamp: "2026-03-19T09:40:00Z",
+  },
+  {
+    id: "txn-904",
+    jobId: "job-804",
+    customerName: "Usman Ali",
+    workerName: "Bilal Ahmad",
+    amount: 1800,
+    commission: 180,
+    netPayout: 1620,
+    paymentMethod: "Debit Card (Visa)",
+    status: "REFUNDED",
+    timestamp: "2026-03-18T15:10:00Z",
+  },
 ];
 
 export const MOCK_WITHDRAWALS: WithdrawalRequest[] = [
@@ -357,6 +381,18 @@ export const MOCK_DISPUTES: DisputeReport[] = [
     evidenceUrls: ["https://images.unsplash.com/photo-1558002038-1055907df827?w=600&auto=format&fit=crop"],
     status: "OPEN",
     createdAt: "2026-03-18T16:30:00Z",
+  },
+  {
+    id: "disp-302",
+    jobId: "job-799",
+    reporterName: "Farhan Saeed",
+    reporterRole: "WORKER",
+    targetName: "Hamza Riaz",
+    issueCategory: "Payment Withheld",
+    description: "Customer refuses to release escrow payment after 100% completion of wall texture painting.",
+    evidenceUrls: ["https://images.unsplash.com/photo-1562259949-e8e7689d7828?w=600&auto=format&fit=crop"],
+    status: "UNDER_REVIEW",
+    createdAt: "2026-03-17T11:20:00Z",
   },
 ];
 

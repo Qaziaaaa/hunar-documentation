@@ -11,7 +11,7 @@ export function JobStatusDonutChart() {
   ];
 
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm flex flex-col justify-between">
+    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm flex flex-col justify-between">
       <div className="flex items-center gap-2.5 border-b border-slate-100 pb-4">
         <div className="flex size-9 items-center justify-center rounded-xl bg-navy/10 text-navy">
           <PieChart className="size-5" />
