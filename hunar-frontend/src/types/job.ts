@@ -92,6 +92,7 @@ export interface JobLocation {
   city: string;
   distanceKm: number;
   fullAddress: string;
+  landmark?: string;
   coordinates: {
     lat: number;
     lng: number;
@@ -122,6 +123,8 @@ export interface Job {
   completedAt?: string;
   createdAt: string;
   updatedAt: string;
+  distanceKm?: number;
+  offerCount?: number;
 }
 
 export interface JobRequest {

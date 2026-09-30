@@ -64,7 +64,7 @@ export default function NegotiationPage() {
   const canSubmitCounter = Number(counterAmount) > 0 && Number.isFinite(Number(counterAmount));
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 max-w-6xl xl:max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
       <PageHeader title={t("negotiation.title")} description={t("negotiation.subtitle")} />
       <div className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
         <div className="space-y-6">

@@ -87,7 +87,7 @@ export function WorkerJobDetailsModal({
       >
         {/* Modal Window */}
         <div
-          className="bg-white text-slate-900 w-full max-w-xl rounded-3xl border border-slate-200 shadow-2xl overflow-hidden flex flex-col max-h-[92vh] animate-in zoom-in-95 duration-200"
+          className="bg-white text-slate-900 w-full max-w-xl lg:max-w-4xl xl:max-w-5xl rounded-3xl border border-slate-200 shadow-2xl overflow-hidden flex flex-col max-h-[92vh] animate-in zoom-in-95 duration-200"
           onClick={(e) => e.stopPropagation()}
         >
           {/* ======================================================== */}
@@ -134,203 +134,216 @@ export function WorkerJobDetailsModal({
           {/* ======================================================== */}
           {/* 2. SCROLLABLE MODAL BODY */}
           {/* ======================================================== */}
-          <div className="p-4 sm:p-6 overflow-y-auto space-y-5 bg-white">
-            {/* Title & Timing Row */}
-            <div>
-              <h2 className="text-base sm:text-xl font-black text-slate-900 leading-snug tracking-tight">
-                {job.title}
-              </h2>
-              <div className="flex items-center gap-2 mt-2 flex-wrap text-xs text-slate-500">
-                <span className="inline-flex items-center gap-1 font-semibold">
-                  <Clock className="size-3.5 text-slate-400" />
-                  <span>Posted {job.postedAgo || "recently"}</span>
-                </span>
-                <span>•</span>
-                <span
-                  className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full font-bold text-[11px] ${
-                    isToday
-                      ? "bg-amber-50 text-amber-800 border border-amber-200"
-                      : "bg-slate-100 text-slate-700 border border-slate-200"
-                  }`}
-                >
-                  <Calendar className="size-3" />
-                  <span>{job.preferredVisitWindow.date} ({job.preferredVisitWindow.timeSlot})</span>
-                </span>
-              </div>
-            </div>
-
-            {/* Agreed Financial Summary Card */}
-            <div className="bg-white rounded-2xl p-4 border border-slate-200/90 shadow-2xs flex items-center justify-between gap-3">
-              <div>
-                <span className="text-[10px] uppercase font-bold text-slate-500 tracking-wider block">
-                  {isCompleted ? "Total Net Settlement" : "Agreed Doorstep Visit Fee"}
-                </span>
-                <div className="text-xl sm:text-2xl font-black text-[#123B5D] mt-0.5">
-                  {formatRs(isCompleted && job.workerNetEarnings ? job.workerNetEarnings : agreedVisitCharge)}
-                </div>
-              </div>
-
-              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#0F8B8D]/10 border border-[#0F8B8D]/20 shadow-2xs text-[11px] font-bold text-[#0F8B8D]">
-                <ShieldCheck className="size-4 text-[#0F8B8D]" />
-                <span>Guaranteed Payout</span>
-              </div>
-            </div>
-
-            {/* Customer Profile & Instant Contact */}
-            <div className="bg-white rounded-2xl border border-slate-200/90 p-3.5 sm:p-4 space-y-3">
-              <div className="flex items-center justify-between gap-3 flex-wrap">
-                <div className="flex items-center gap-3">
-                  <div className="size-11 sm:size-12 rounded-full bg-slate-100 border-2 border-slate-200 overflow-hidden flex items-center justify-center font-bold text-slate-700 text-sm">
-                    {job.customer.avatarUrl ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={job.customer.avatarUrl}
-                        alt={job.customer.name}
-                        className="size-full object-cover"
-                      />
-                    ) : (
-                      job.customer.name.slice(0, 2).toUpperCase()
-                    )}
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-1.5">
-                      <h4 className="font-extrabold text-slate-900 text-sm sm:text-base">
-                        {job.customer.name}
-                      </h4>
-                      {job.customer.isVerified && (
-                        <span className="size-4 rounded-full bg-[#0F8B8D] text-white flex items-center justify-center text-[10px] font-bold" title="Verified Customer">
-                          ✓
-                        </span>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-1 text-xs text-slate-500 mt-0.5">
-                      <Star className="size-3 text-[#F59E0B] fill-[#F59E0B]" />
-                      <span className="font-bold text-slate-700">{job.customer.rating}</span>
-                      <span>({job.customer.totalReviews} reviews)</span>
-                    </div>
+          <div className="p-4 sm:p-6 lg:p-7 overflow-y-auto bg-white">
+            <div className="space-y-5 lg:space-y-0 lg:grid lg:grid-cols-12 lg:gap-7">
+              {/* Left Column: Job Info, Problem Details, Voice Note, Attached Photos */}
+              <div className="lg:col-span-7 space-y-5">
+                {/* Title & Timing Row */}
+                <div>
+                  <h2 className="text-base sm:text-xl lg:text-2xl font-black text-slate-900 leading-snug tracking-tight">
+                    {job.title}
+                  </h2>
+                  <div className="flex items-center gap-2 mt-2 flex-wrap text-xs text-slate-500">
+                    <span className="inline-flex items-center gap-1 font-semibold">
+                      <Clock className="size-3.5 text-slate-400" />
+                      <span>Posted {job.postedAgo || "recently"}</span>
+                    </span>
+                    <span>•</span>
+                    <span
+                      className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full font-bold text-[11px] ${
+                        isToday
+                          ? "bg-amber-50 text-amber-800 border border-amber-200"
+                          : "bg-slate-100 text-slate-700 border border-slate-200"
+                      }`}
+                    >
+                      <Calendar className="size-3" />
+                      <span>{job.preferredVisitWindow.date} ({job.preferredVisitWindow.timeSlot})</span>
+                    </span>
                   </div>
                 </div>
 
-                {/* Quick Call & Message CTAs */}
-                <div className="flex items-center gap-2">
-                  <a
-                    href={`tel:${job.customer.phone || "03001234567"}`}
-                    className="size-9 sm:size-10 rounded-xl bg-emerald-50 hover:bg-emerald-600 text-emerald-700 hover:text-white border border-emerald-200 flex items-center justify-center transition-all shadow-2xs cursor-pointer"
-                    title="Call Customer"
-                  >
-                    <Phone className="size-4" />
-                  </a>
-                  <button
-                    type="button"
-                    onClick={() => setShowChatModal(true)}
-                    className="size-9 sm:size-10 rounded-xl bg-[#0F8B8D]/10 hover:bg-[#0F8B8D] text-[#0F8B8D] hover:text-white border border-[#0F8B8D]/20 flex items-center justify-center transition-all shadow-2xs cursor-pointer"
-                    title="Message Customer"
-                  >
-                    <MessageSquare className="size-4" />
-                  </button>
+                {/* Problem Description */}
+                <div className="space-y-1.5">
+                  <h4 className="text-xs font-extrabold uppercase tracking-wider text-slate-500">
+                    Problem Description
+                  </h4>
+                  <div className="bg-slate-50 rounded-2xl p-4 border border-slate-200/80 text-xs sm:text-sm text-slate-700 leading-relaxed font-normal">
+                    {job.description || job.problemSummary}
+                  </div>
                 </div>
-              </div>
-            </div>
 
-            {/* Customer Location & Address Details */}
-            <div className="bg-slate-50/80 rounded-2xl border border-slate-200/80 p-3.5 sm:p-4 space-y-1.5">
-              <div className="flex items-center justify-between text-xs text-slate-500 font-bold uppercase tracking-wider">
-                <span className="flex items-center gap-1.5 text-[#0F8B8D]">
-                  <MapPin className="size-3.5" />
-                  <span>Customer Address</span>
-                </span>
-                <span className="text-slate-600 font-extrabold normal-case">
-                  {job.location.distanceKm} km away
-                </span>
-              </div>
-              <p className="text-xs sm:text-sm font-extrabold text-slate-900 leading-snug">
-                {job.location.fullAddress}
-              </p>
-              <p className="text-xs text-slate-500 font-medium">
-                {job.location.area}, {job.location.city}
-              </p>
-            </div>
+                {/* Voice Note Attachment (if present) */}
+                {job.voiceNote && (
+                  <div className="space-y-1.5">
+                    <h4 className="text-xs font-extrabold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
+                      <Volume2 className="size-3.5 text-[#0F8B8D]" />
+                      <span>Customer Voice Note</span>
+                    </h4>
+                    <div className="bg-teal-50/50 rounded-2xl p-3.5 border border-teal-100/90 flex items-center gap-3">
+                      <button
+                        type="button"
+                        onClick={() => setIsPlayingAudio(!isPlayingAudio)}
+                        className="size-10 rounded-full bg-[#0F8B8D] hover:bg-[#123B5D] text-white flex items-center justify-center transition-colors shrink-0 shadow-2xs cursor-pointer"
+                      >
+                        {isPlayingAudio ? (
+                          <Pause className="size-4" />
+                        ) : (
+                          <Play className="size-4 ml-0.5" />
+                        )}
+                      </button>
 
-            {/* Problem Description */}
-            <div className="space-y-1.5">
-              <h4 className="text-xs font-extrabold uppercase tracking-wider text-slate-500">
-                Problem Description
-              </h4>
-              <div className="bg-slate-50 rounded-2xl p-4 border border-slate-200/80 text-xs sm:text-sm text-slate-700 leading-relaxed font-normal">
-                {job.description || job.problemSummary}
-              </div>
-            </div>
-
-            {/* Voice Note Attachment (if present) */}
-            {job.voiceNote && (
-              <div className="space-y-1.5">
-                <h4 className="text-xs font-extrabold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
-                  <Volume2 className="size-3.5 text-[#0F8B8D]" />
-                  <span>Customer Voice Note</span>
-                </h4>
-                <div className="bg-teal-50/50 rounded-2xl p-3.5 border border-teal-100/90 flex items-center gap-3">
-                  <button
-                    type="button"
-                    onClick={() => setIsPlayingAudio(!isPlayingAudio)}
-                    className="size-10 rounded-full bg-[#0F8B8D] hover:bg-[#123B5D] text-white flex items-center justify-center transition-colors shrink-0 shadow-2xs cursor-pointer"
-                  >
-                    {isPlayingAudio ? (
-                      <Pause className="size-4" />
-                    ) : (
-                      <Play className="size-4 ml-0.5" />
-                    )}
-                  </button>
-
-                  <div className="flex-1 space-y-1">
-                    <div className="flex items-center justify-between text-[11px] font-bold text-slate-600">
-                      <span>{isPlayingAudio ? "Playing Voice Note..." : "Tap to Listen"}</span>
-                      <span>0:{job.voiceNote.durationSeconds < 10 ? `0${job.voiceNote.durationSeconds}` : job.voiceNote.durationSeconds}</span>
+                      <div className="flex-1 space-y-1">
+                        <div className="flex items-center justify-between text-[11px] font-bold text-slate-600">
+                          <span>{isPlayingAudio ? "Playing Voice Note..." : "Tap to Listen"}</span>
+                          <span>0:{job.voiceNote.durationSeconds < 10 ? `0${job.voiceNote.durationSeconds}` : job.voiceNote.durationSeconds}</span>
+                        </div>
+                        {/* Visualizer bars */}
+                        <div className="flex items-center gap-1 h-5">
+                          {(job.voiceNote.waveform || [30, 60, 45, 90, 75, 40, 65, 80, 50, 70, 95, 40, 60, 30]).map((h, i) => (
+                            <div
+                              key={i}
+                              className={`flex-1 rounded-full transition-all duration-300 ${
+                                isPlayingAudio ? "bg-[#0F8B8D] animate-pulse" : "bg-teal-200"
+                              }`}
+                              style={{ height: `${Math.max(20, h)}%` }}
+                            />
+                          ))}
+                        </div>
+                      </div>
                     </div>
-                    {/* Visualizer bars */}
-                    <div className="flex items-center gap-1 h-5">
-                      {(job.voiceNote.waveform || [30, 60, 45, 90, 75, 40, 65, 80, 50, 70, 95, 40, 60, 30]).map((h, i) => (
+                  </div>
+                )}
+
+                {/* Attached Photos (if present) */}
+                {job.photos && job.photos.length > 0 && (
+                  <div className="space-y-1.5">
+                    <h4 className="text-xs font-extrabold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
+                      <ImageIcon className="size-3.5 text-[#0F8B8D]" />
+                      <span>Attached Photos ({job.photos.length})</span>
+                    </h4>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+                      {job.photos.map((photo, idx) => (
                         <div
-                          key={i}
-                          className={`flex-1 rounded-full transition-all duration-300 ${
-                            isPlayingAudio ? "bg-[#0F8B8D] animate-pulse" : "bg-teal-200"
-                          }`}
-                          style={{ height: `${Math.max(20, h)}%` }}
-                        />
+                          key={idx}
+                          onClick={() => setSelectedPhoto(photo)}
+                          className="relative rounded-2xl overflow-hidden border border-slate-200 aspect-video bg-slate-100 group cursor-pointer hover:border-[#0F8B8D] transition-colors"
+                        >
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={photo}
+                            alt={`Attachment ${idx + 1}`}
+                            className="size-full object-cover group-hover:scale-105 transition-transform duration-200"
+                          />
+                          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 flex items-center justify-center transition-colors">
+                            <ExternalLink className="size-4 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                          </div>
+                        </div>
                       ))}
                     </div>
                   </div>
-                </div>
+                )}
               </div>
-            )}
 
-            {/* Attached Photos (if present) */}
-            {job.photos && job.photos.length > 0 && (
-              <div className="space-y-1.5">
-                <h4 className="text-xs font-extrabold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
-                  <ImageIcon className="size-3.5 text-[#0F8B8D]" />
-                  <span>Attached Photos ({job.photos.length})</span>
-                </h4>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
-                  {job.photos.map((photo, idx) => (
-                    <div
-                      key={idx}
-                      onClick={() => setSelectedPhoto(photo)}
-                      className="relative rounded-2xl overflow-hidden border border-slate-200 aspect-video bg-slate-100 group cursor-pointer hover:border-[#0F8B8D] transition-colors"
-                    >
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={photo}
-                        alt={`Attachment ${idx + 1}`}
-                        className="size-full object-cover group-hover:scale-105 transition-transform duration-200"
-                      />
-                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 flex items-center justify-center transition-colors">
-                        <ExternalLink className="size-4 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+              {/* Right Column: Agreed Fee, Customer Profile, Address & Logistics */}
+              <div className="lg:col-span-5 space-y-4">
+                {/* Agreed Financial Summary Card */}
+                <div className="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/90 shadow-2xs space-y-2">
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <span className="text-[10px] uppercase font-bold text-slate-500 tracking-wider block">
+                        {isCompleted ? "Total Net Settlement" : "Agreed Doorstep Visit Fee"}
+                      </span>
+                      <div className="text-xl sm:text-2xl font-black text-[#123B5D] mt-0.5">
+                        {formatRs(isCompleted && job.workerNetEarnings ? job.workerNetEarnings : agreedVisitCharge)}
                       </div>
                     </div>
-                  ))}
+
+                    <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#0F8B8D]/10 border border-[#0F8B8D]/20 shadow-2xs text-[11px] font-bold text-[#0F8B8D]">
+                      <ShieldCheck className="size-4 text-[#0F8B8D]" />
+                      <span>Guaranteed</span>
+                    </div>
+                  </div>
+                  <p className="text-[11px] text-slate-500 font-medium leading-relaxed">
+                    Locked visit fee. Payout is credited upon doorstep arrival and verification.
+                  </p>
+                </div>
+
+                {/* Customer Profile & Instant Contact */}
+                <div className="bg-white rounded-2xl border border-slate-200/90 p-4 space-y-3">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-3">
+                      <div className="size-11 sm:size-12 rounded-full bg-slate-100 border-2 border-slate-200 overflow-hidden flex items-center justify-center font-bold text-slate-700 text-sm">
+                        {job.customer.avatarUrl ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            src={job.customer.avatarUrl}
+                            alt={job.customer.name}
+                            className="size-full object-cover"
+                          />
+                        ) : (
+                          job.customer.name.slice(0, 2).toUpperCase()
+                        )}
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-1.5">
+                          <h4 className="font-extrabold text-slate-900 text-sm sm:text-base">
+                            {job.customer.name}
+                          </h4>
+                          {job.customer.isVerified && (
+                            <span className="size-4 rounded-full bg-[#0F8B8D] text-white flex items-center justify-center text-[10px] font-bold" title="Verified Customer">
+                              ✓
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-1 text-xs text-slate-500 mt-0.5">
+                          <Star className="size-3 text-[#F59E0B] fill-[#F59E0B]" />
+                          <span className="font-bold text-slate-700">{job.customer.rating}</span>
+                          <span>({job.customer.totalReviews} reviews)</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Quick Call & Message CTAs */}
+                    <div className="flex items-center gap-2">
+                      <a
+                        href={`tel:${job.customer.phone || "03001234567"}`}
+                        className="size-9 sm:size-10 rounded-xl bg-emerald-50 hover:bg-emerald-600 text-emerald-700 hover:text-white border border-emerald-200 flex items-center justify-center transition-all shadow-2xs cursor-pointer"
+                        title="Call Customer"
+                      >
+                        <Phone className="size-4" />
+                      </a>
+                      <button
+                        type="button"
+                        onClick={() => setShowChatModal(true)}
+                        className="size-9 sm:size-10 rounded-xl bg-[#0F8B8D]/10 hover:bg-[#0F8B8D] text-[#0F8B8D] hover:text-white border border-[#0F8B8D]/20 flex items-center justify-center transition-all shadow-2xs cursor-pointer"
+                        title="Message Customer"
+                      >
+                        <MessageSquare className="size-4" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Customer Location & Address Details */}
+                <div className="bg-slate-50/80 rounded-2xl border border-slate-200/80 p-4 space-y-1.5">
+                  <div className="flex items-center justify-between text-xs text-slate-500 font-bold uppercase tracking-wider">
+                    <span className="flex items-center gap-1.5 text-[#0F8B8D]">
+                      <MapPin className="size-3.5" />
+                      <span>Customer Address</span>
+                    </span>
+                    <span className="text-slate-600 font-extrabold normal-case">
+                      {job.location.distanceKm} km away
+                    </span>
+                  </div>
+                  <p className="text-xs sm:text-sm font-extrabold text-slate-900 leading-snug">
+                    {job.location.fullAddress}
+                  </p>
+                  <p className="text-xs text-slate-500 font-medium">
+                    {job.location.area}, {job.location.city}
+                  </p>
                 </div>
               </div>
-            )}
+            </div>
           </div>
 
           {/* ======================================================== */}

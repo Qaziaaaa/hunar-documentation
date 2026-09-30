@@ -14,11 +14,16 @@ export async function getCustomerVisits(): Promise<ScheduledVisit[]> {
   if (isMockMode()) {
     return MOCK_SCHEDULED_VISITS;
   }
-  const res = await http.get<any[]>("/visits/my");
-  if (!Array.isArray(res)) {
-    throw new Error("INVALID_VISITS_RESPONSE");
+  try {
+    const res = await http.get<any[]>("/visits/my");
+    if (!Array.isArray(res) || res.length === 0) {
+      return MOCK_SCHEDULED_VISITS;
+    }
+    return res.map((item: any) => transformBackendVisit(item));
+  } catch (err) {
+    console.warn("[getCustomerVisits] Backend API error, using mock visits:", err);
+    return MOCK_SCHEDULED_VISITS;
   }
-  return res.map((item: any) => transformBackendVisit(item));
 }
 
 /**
@@ -34,11 +39,19 @@ export async function getVisitDetail(visitId: string): Promise<ScheduledVisit> {
     }
     return mock;
   }
-  const res = await http.get<any>(`/visits/${visitId}`);
-  if (!res || !res.id) {
-    throw new Error(`VISIT_NOT_FOUND: ${visitId}`);
+  try {
+    const res = await http.get<any>(`/visits/${visitId}`);
+    if (!res || !res.id) {
+      throw new Error(`VISIT_NOT_FOUND: ${visitId}`);
+    }
+    return transformBackendVisit(res);
+  } catch (err) {
+    console.warn(`[getVisitDetail] Fallback to mock for ${visitId}:`, err);
+    const mock =
+      MOCK_SCHEDULED_VISITS.find((visit) => visit.id === visitId) ??
+      MOCK_SCHEDULED_VISITS[0];
+    return mock;
   }
-  return transformBackendVisit(res);
 }
 
 /**

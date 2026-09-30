@@ -209,7 +209,7 @@ export function JobRequestCard({
           {/* Star Rating */}
           <div className="mt-0.5 flex items-center justify-center gap-0.5 text-[11px] font-extrabold text-[#F59E0B]">
             <Star className="size-3 fill-[#F59E0B] stroke-none" />
-            <span>{job.customer.rating.toFixed(1)}</span>
+            <span>{job.customer.rating > 0 ? job.customer.rating.toFixed(1) : "New"}</span>
           </div>
 
           {/* Total Orders Number Only */}

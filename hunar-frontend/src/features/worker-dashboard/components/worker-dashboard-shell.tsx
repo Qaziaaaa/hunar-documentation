@@ -3,7 +3,16 @@
 import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "@/i18n/navigation";
 import { Briefcase } from "lucide-react";
-import { http } from "@/lib/api-client";
+import { http, getAccessToken } from "@/lib/api-client";
+import { isMockMode } from "@/lib/data-source";
+import { connectSocket, disconnectSocket } from "@/lib/socket";
+import { timeAgo } from "@/lib/format";
+import {
+  getNotifications,
+  markAllNotificationsRead,
+  subscribeToNotifications,
+} from "@/services/worker/notification.service";
+import type { AppNotification } from "@/types/notification";
 import { DashboardHeader } from "./dashboard-header";
 import { DashboardSidebar } from "./dashboard-sidebar";
 import { JobRequestFeed } from "./job-request-feed";
@@ -11,10 +20,7 @@ import { MobileNavBar } from "./mobile-nav-bar";
 import { WorkerJobsHub } from "@/features/jobs/components/worker-jobs-hub";
 import { WorkerEarningsContent } from "@/app/[locale]/(worker)/worker/earnings/page";
 import { WalletContent } from "@/app/[locale]/(worker)/worker/wallet/page";
-import {
-  INITIAL_WORKER_PROFILE,
-  INITIAL_NOTIFICATIONS,
-} from "../mock-data";
+import { INITIAL_WORKER_PROFILE } from "../mock-data";
 import type {
   DashboardTab,
   WorkerDashboardProfile,
@@ -53,6 +59,32 @@ function loadInitialProfile(): WorkerDashboardProfile {
   return INITIAL_WORKER_PROFILE;
 }
 
+const NOTIF_TYPE_MAP: Record<AppNotification["type"], DashboardNotification["type"]> = {
+  new_job: "job",
+  visit_approaching: "job",
+  offer_accepted: "offer",
+  offer_rejected: "offer",
+  counter_offer: "offer",
+  counter_accepted: "offer",
+  commission_reminder: "commission",
+  commission_verified: "commission",
+  earnings_recorded: "commission",
+  new_review: "review",
+  new_message: "chat",
+  verification_result: "verification",
+};
+
+function mapAppNotification(n: AppNotification): DashboardNotification {
+  return {
+    id: n.id,
+    title: n.title,
+    message: n.message,
+    time: timeAgo(n.createdAt),
+    read: n.read,
+    type: NOTIF_TYPE_MAP[n.type] ?? "job",
+  };
+}
+
 export function WorkerDashboardShell({
   initialTab = "dashboard",
   children,
@@ -68,9 +100,7 @@ export function WorkerDashboardShell({
   );
   const [activeTab, setActiveTab] = useState<DashboardTab>(initialTab);
   const [searchQuery, setSearchQuery] = useState<string>("");
-  const [notifications, setNotifications] = useState<DashboardNotification[]>(
-    INITIAL_NOTIFICATIONS
-  );
+  const [notifications, setNotifications] = useState<DashboardNotification[]>([]);
 
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
@@ -119,6 +149,11 @@ export function WorkerDashboardShell({
         if (data?.user) {
           const wp = data.workerProfile;
           const areas = data.serviceAreas?.map((a: any) => a.label) || [];
+          const liveSkills =
+            wp?.skillCategories
+              ?.map((c: { name?: string }) => c.name)
+              .filter(Boolean) ??
+              (wp?.skills?.length ? wp.skills : []);
           setProfile((prev) => ({
             ...prev,
             id: data.user.id || prev.id,
@@ -126,7 +161,7 @@ export function WorkerDashboardShell({
             fullName: data.user.name || prev.fullName,
             phone: data.user.phone || prev.phone,
             avatarUrl: data.user.avatarUrl || prev.avatarUrl,
-            skills: wp?.skills?.length ? wp.skills : prev.skills,
+            skills: liveSkills.length ? liveSkills : prev.skills,
             serviceAreas: areas.length ? areas : prev.serviceAreas,
             bio: wp?.bio || prev.bio,
             experienceYears: Number(wp?.experienceYears) || prev.experienceYears,
@@ -139,6 +174,35 @@ export function WorkerDashboardShell({
       }
     }
     syncBackendProfile();
+  }, []);
+
+  // Open the realtime socket (job matched / offer events) when running against the API
+  useEffect(() => {
+    if (isMockMode() || !getAccessToken()) return;
+    connectSocket();
+    return () => disconnectSocket();
+  }, []);
+
+  // Load real notifications and keep them live over the socket
+  useEffect(() => {
+    let cancelled = false;
+    getNotifications()
+      .then((list) => {
+        if (!cancelled) setNotifications(list.map(mapAppNotification));
+      })
+      .catch((err) => {
+        console.warn("[WorkerDashboardShell] Loading notifications:", err);
+      });
+    const unsubscribe = subscribeToNotifications((notification) => {
+      setNotifications((prev) => [
+        mapAppNotification(notification as AppNotification),
+        ...prev.filter((n) => n.id !== (notification as AppNotification).id),
+      ]);
+    });
+    return () => {
+      cancelled = true;
+      unsubscribe();
+    };
   }, []);
 
   const handleToggleOnline = (targetStatus?: boolean) => {
@@ -167,6 +231,9 @@ export function WorkerDashboardShell({
 
   const handleMarkNotificationsRead = () => {
     setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+    markAllNotificationsRead().catch((err) => {
+      console.warn("[WorkerDashboardShell] Marking notifications read:", err);
+    });
   };
 
   const unreadNotificationsCount = notifications.filter((n) => !n.read).length;

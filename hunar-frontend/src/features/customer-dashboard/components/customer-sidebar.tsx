@@ -18,7 +18,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { Link, usePathname, useRouter } from "@/i18n/navigation";
 import { logoutCustomer } from "@/features/auth/api/auth-api";
 import { WorkerFixLogo } from "@/components/shared/workerfix-logo";
-import { getStoredUser } from "@/lib/api-client";
+import { useStoredUser } from "@/lib/use-stored-user";
 
 interface CustomerSidebarProps {
   isOpen?: boolean;
@@ -30,7 +30,8 @@ export function CustomerSidebar({ isOpen, onClose }: CustomerSidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
   const locale = useLocale();
-  const storedUser = getStoredUser();
+  // Read the session without a hydration mismatch (SSR/first render → null, then live value)
+  const storedUser = useStoredUser();
   const customerName = storedUser?.name || storedUser?.phone || "Customer";
   const customerInitial = customerName.charAt(0).toUpperCase() || "C";
 

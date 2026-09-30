@@ -14,6 +14,7 @@ import {
   SUCCESS_VERIFICATION_MESSAGE_UR,
   type ArrivalSession,
 } from "@/features/jobs/services/arrival-verification-service";
+import { CustomerRealtimeSync } from "@/features/customer-dashboard/components/customer-realtime-sync";
 
 export default function CustomerLayout({
   children,
@@ -65,6 +66,7 @@ export default function CustomerLayout({
   if (pathname.includes("/customer/post-job")) {
     return (
       <div className="min-h-screen bg-white text-slate-900 font-sans antialiased">
+        <CustomerRealtimeSync />
         {children}
       </div>
     );
@@ -74,6 +76,7 @@ export default function CustomerLayout({
 
   return (
     <div className={`min-h-screen ${isChat ? "h-[100dvh] overflow-hidden" : ""} bg-white text-slate-900 font-sans antialiased`}>
+      <CustomerRealtimeSync />
       {/* Desktop Sidebar & Mobile Drawer */}
       <CustomerSidebar
         isOpen={mobileMenuOpen}
