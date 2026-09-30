@@ -11,6 +11,7 @@ import {
   Search,
   ShieldCheck,
   Star,
+  Tag,
   User,
   Wrench,
 } from "lucide-react";
@@ -34,7 +35,7 @@ export function CustomerJobsListView({ initialJobs, jobs: jobsProp }: CustomerJo
 
   const resolvedInitialJobs = initialJobs ?? jobsProp ?? [];
   const [jobs, setJobs] = useState<CustomerJob[]>(resolvedInitialJobs);
-  const [selectedFilter, setSelectedFilter] = useState<string>("all");
+  const [selectedFilter, setSelectedFilter] = useState<"scheduled" | "offers" | "completed">("scheduled");
   const [searchQuery, setSearchQuery] = useState("");
 
   // Modals state
@@ -137,8 +138,7 @@ export function CustomerJobsListView({ initialJobs, jobs: jobsProp }: CustomerJo
 
   const filteredJobs = jobs.filter((job) => {
     const matchesFilter =
-      selectedFilter === "all" ||
-      (selectedFilter === "active" && job.status === "receiving_offers") ||
+      (selectedFilter === "offers" && job.status === "receiving_offers") ||
       (selectedFilter === "scheduled" && job.status === "visit_scheduled") ||
       (selectedFilter === "completed" && job.status === "completed");
 
@@ -166,94 +166,96 @@ export function CustomerJobsListView({ initialJobs, jobs: jobsProp }: CustomerJo
         </div>
       )}
 
-      {/* Main Header Section */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 pb-2 border-b border-[#E2E8F0]">
-        <div>
-          <div className="flex items-center gap-2 mb-1.5">
-            <span className="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-semibold bg-[#123B5D]/10 text-[#123B5D]">
-              {isUrdu ? "کسٹمر ہب" : "Customer Hub"}
-            </span>
-            <span className="text-xs text-slate-600 font-medium">
-              {isUrdu ? "• پاکستان" : "• Across Pakistan"}
-            </span>
-          </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#123B5D]">
-            {isUrdu ? "میری پوسٹ کردہ جابز" : "My Posted Jobs & Requests"}
-          </h1>
-        </div>
-
-        <Link
-          href="/customer/post-job"
-          className="h-11 px-5 bg-[#0F8B8D] hover:bg-[#0F8B8D]/90 text-white rounded-xl font-bold text-sm flex items-center justify-center gap-2 shadow-xs transition-all active:scale-[0.99] shrink-0 self-start md:self-end cursor-pointer"
-        >
-          <Plus className="size-4.5" />
-          <span>{isUrdu ? "+ نئی جاب پوسٹ کریں" : "Post a New Job"}</span>
-        </Link>
-      </div>
-
-      {/* Filter Tabs & Search Bar */}
-      <div className="bg-white rounded-2xl p-4 shadow-2xs border border-[#E2E8F0] flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
-        {/* Filter Tabs */}
-        <div className="flex items-center gap-2 overflow-x-auto pb-1 md:pb-0 scrollbar-none">
-          <button
-            type="button"
-            onClick={() => setSelectedFilter("all")}
-            className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold whitespace-nowrap transition-all cursor-pointer ${
-              selectedFilter === "all"
-                ? "bg-[#0F8B8D] text-white shadow-2xs"
-                : "bg-white text-slate-600 border border-[#E2E8F0] hover:text-[#123B5D] hover:border-[#0F8B8D]"
-            }`}
-          >
-            {isUrdu ? `تمام جابز (${jobs.length})` : `All Jobs (${jobs.length})`}
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setSelectedFilter("active")}
-            className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold whitespace-nowrap transition-all cursor-pointer flex items-center gap-1.5 ${
-              selectedFilter === "active"
-                ? "bg-[#0F8B8D] text-white shadow-2xs"
-                : "bg-white text-slate-600 border border-[#E2E8F0] hover:text-[#123B5D] hover:border-[#0F8B8D]"
-            }`}
-          >
-            <span className="size-2 rounded-full bg-emerald-400 animate-ping" />
-            <span>{isUrdu ? `موصولہ آفرز (${activeCount})` : `Receiving Offers (${activeCount})`}</span>
-          </button>
-
+      {/* 3 Proper Segmented Tabs Bar & Search */}
+      <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3.5">
+        {/* Proper Tabs Segmented Control */}
+        <div className="bg-slate-100/90 p-1.5 rounded-2xl flex items-center gap-1.5 border border-slate-200/80 shadow-2xs overflow-x-auto scrollbar-none">
+          {/* Tab 1: Scheduled Visits */}
           <button
             type="button"
             onClick={() => setSelectedFilter("scheduled")}
-            className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold whitespace-nowrap transition-all cursor-pointer ${
+            className={`px-4 py-2.5 rounded-xl text-xs sm:text-sm whitespace-nowrap transition-all cursor-pointer flex items-center gap-2 ${
               selectedFilter === "scheduled"
-                ? "bg-[#0F8B8D] text-white shadow-2xs"
-                : "bg-white text-slate-600 border border-[#E2E8F0] hover:text-[#123B5D] hover:border-[#0F8B8D]"
+                ? "bg-white text-[#123B5D] font-bold shadow-xs border border-slate-200/60"
+                : "text-slate-600 font-semibold hover:text-[#123B5D] hover:bg-white/50"
             }`}
           >
-            {isUrdu ? `شیڈول وزٹس (${scheduledCount})` : `Scheduled Visits (${scheduledCount})`}
+            <Clock className={`size-4 ${selectedFilter === "scheduled" ? "text-teal" : "text-slate-400"}`} />
+            <span>{isUrdu ? "شیڈول وزٹس" : "Scheduled Visits"}</span>
+            <span
+              className={`px-2 py-0.5 rounded-full text-[11px] font-extrabold ${
+                selectedFilter === "scheduled"
+                  ? "bg-teal text-white shadow-2xs"
+                  : "bg-slate-200 text-slate-700"
+              }`}
+            >
+              {scheduledCount}
+            </span>
           </button>
 
+          {/* Tab 2: Offers to Review */}
+          <button
+            type="button"
+            onClick={() => setSelectedFilter("offers")}
+            className={`px-4 py-2.5 rounded-xl text-xs sm:text-sm whitespace-nowrap transition-all cursor-pointer flex items-center gap-2 ${
+              selectedFilter === "offers"
+                ? "bg-white text-[#123B5D] font-bold shadow-xs border border-slate-200/60"
+                : "text-slate-600 font-semibold hover:text-[#123B5D] hover:bg-white/50"
+            }`}
+          >
+            <Tag className={`size-4 ${selectedFilter === "offers" ? "text-orange" : "text-slate-400"}`} />
+            <span>{isUrdu ? "موصولہ آفرز" : "Offers to Review"}</span>
+            {activeCount > 0 ? (
+              <span
+                className={`px-2 py-0.5 rounded-full text-[11px] font-extrabold flex items-center gap-1 ${
+                  selectedFilter === "offers"
+                    ? "bg-orange text-white shadow-2xs"
+                    : "bg-amber-100 text-amber-800"
+                }`}
+              >
+                <span className="size-1.5 rounded-full bg-white animate-ping" />
+                <span>{activeCount}</span>
+              </span>
+            ) : (
+              <span className="px-2 py-0.5 rounded-full text-[11px] font-extrabold bg-slate-200 text-slate-700">
+                0
+              </span>
+            )}
+          </button>
+
+          {/* Tab 3: Completed */}
           <button
             type="button"
             onClick={() => setSelectedFilter("completed")}
-            className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold whitespace-nowrap transition-all cursor-pointer ${
+            className={`px-4 py-2.5 rounded-xl text-xs sm:text-sm whitespace-nowrap transition-all cursor-pointer flex items-center gap-2 ${
               selectedFilter === "completed"
-                ? "bg-[#0F8B8D] text-white shadow-2xs"
-                : "bg-white text-slate-600 border border-[#E2E8F0] hover:text-[#123B5D] hover:border-[#0F8B8D]"
+                ? "bg-white text-[#123B5D] font-bold shadow-xs border border-slate-200/60"
+                : "text-slate-600 font-semibold hover:text-[#123B5D] hover:bg-white/50"
             }`}
           >
-            {isUrdu ? `مکمل شدہ (${completedCount})` : `Completed (${completedCount})`}
+            <CheckCircle2 className={`size-4 ${selectedFilter === "completed" ? "text-success" : "text-slate-400"}`} />
+            <span>{isUrdu ? "مکمل شدہ" : "Completed"}</span>
+            <span
+              className={`px-2 py-0.5 rounded-full text-[11px] font-extrabold ${
+                selectedFilter === "completed"
+                  ? "bg-success text-white shadow-2xs"
+                  : "bg-slate-200 text-slate-700"
+              }`}
+            >
+              {completedCount}
+            </span>
           </button>
         </div>
 
         {/* Search Box */}
         <div className="relative min-w-[240px]">
-          <Search className="size-4 absolute left-3.5 rtl:left-auto rtl:right-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+          <Search className="size-4 absolute left-3.5 rtl:left-auto rtl:right-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder={isUrdu ? "عنوان، ریفرنس نمبر یا علاقہ تلاش کریں..." : "Search by title, ref ID or area..."}
-            className="w-full pl-9 rtl:pl-3.5 rtl:pr-9 pr-3.5 py-2.5 rounded-xl text-xs bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#0F8B8D]/20 text-[#123B5D] font-medium border border-[#E2E8F0]"
+            placeholder={isUrdu ? "عنوان، ریفرنس یا علاقہ تلاش کریں..." : "Search title, ref ID or area..."}
+            className="w-full pl-9 rtl:pl-3.5 rtl:pr-9 pr-3.5 py-2.5 rounded-xl text-xs bg-white focus:outline-none focus:ring-2 focus:ring-[#0F8B8D]/20 text-[#123B5D] font-medium border border-slate-200 shadow-2xs"
           />
         </div>
       </div>
@@ -433,12 +435,12 @@ export function CustomerJobsListView({ initialJobs, jobs: jobsProp }: CustomerJo
                       {isUrdu ? "تفصیلات دیکھیں" : "View Details"}
                     </button>
 
-                    {/* Review Offer Button -> opens Offers Modal */}
+                    {/* Review Offer Button -> opens in-context Offers Modal */}
                     {job.status === "receiving_offers" && (
                       <button
                         type="button"
                         onClick={() => setSelectedJobForOffers(job)}
-                        className="h-9 px-4 rounded-xl font-semibold text-xs sm:text-sm text-white bg-[#0F766E] hover:bg-[#115E59] transition-colors shadow-sm flex items-center justify-center gap-1.5 cursor-pointer active:scale-98"
+                        className="h-9 px-4 rounded-xl font-semibold text-xs sm:text-sm text-white bg-teal hover:bg-teal/90 transition-colors shadow-sm flex items-center justify-center gap-1.5 cursor-pointer active:scale-98"
                       >
                         <span>
                           {isUrdu
@@ -456,17 +458,18 @@ export function CustomerJobsListView({ initialJobs, jobs: jobsProp }: CustomerJo
                     {job.status === "visit_scheduled" && (
                       <Link
                         href={`/customer/job/${job.id}/tracking`}
-                        className="h-9 px-4 rounded-xl font-semibold text-xs sm:text-sm text-white bg-[#0F766E] hover:bg-[#115E59] transition-colors shadow-sm flex items-center justify-center gap-1.5 cursor-pointer active:scale-98"
+                        className="h-9 px-4 rounded-xl font-semibold text-xs sm:text-sm text-white bg-teal hover:bg-teal/90 transition-colors shadow-sm flex items-center justify-center gap-1.5 cursor-pointer active:scale-98"
                       >
                         <Clock className="size-3.5" />
                         <span>{isUrdu ? "لائیو وزٹ ٹریک کریں" : "Track Live Visit"}</span>
+                        <ArrowRight className="size-3.5 rtl:rotate-180" />
                       </Link>
                     )}
 
                     {job.status === "completed" && (
                       <Link
                         href={`/customer/job/${job.id}/complete`}
-                        className="h-9 px-4 rounded-xl font-semibold text-xs sm:text-sm text-white bg-emerald-700 hover:bg-emerald-800 transition-colors shadow-sm flex items-center justify-center gap-1.5 cursor-pointer active:scale-98"
+                        className="h-9 px-4 rounded-xl font-semibold text-xs sm:text-sm text-white bg-success hover:bg-success/90 transition-colors shadow-sm flex items-center justify-center gap-1.5 cursor-pointer active:scale-98"
                       >
                         <CheckCircle2 className="size-3.5" />
                         <span>{isUrdu ? "وارنٹی و رسید دیکھیں" : "View Invoice & Warranty"}</span>

@@ -197,7 +197,7 @@ export function QuickChatDrawer({ visit, isOpen, onClose }: QuickChatDrawerProps
           <div className="flex items-center gap-2 shrink-0">
             <a
               href={`tel:${visit.technician.phone}`}
-              className="size-8 rounded-full bg-emerald-50 hover:bg-emerald-600 text-emerald-700 hover:text-white border border-emerald-200 flex items-center justify-center transition-colors cursor-pointer"
+              className="size-8 rounded-full bg-success/10 hover:bg-success text-success hover:text-white border border-success/20 flex items-center justify-center transition-colors cursor-pointer"
               title={isUrdu ? "کال کریں" : "Call"}
             >
               <Phone className="size-4" />

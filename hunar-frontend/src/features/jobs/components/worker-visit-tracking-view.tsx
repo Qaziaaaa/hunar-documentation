@@ -575,7 +575,7 @@ export function WorkerVisitTrackingView({
             <button
               type="button"
               onClick={() => setShowCallModal(true)}
-              className="size-10.5 rounded-full bg-emerald-500 hover:bg-emerald-600 text-white shadow-md shadow-emerald-500/20 flex items-center justify-center transition-all active:scale-90 cursor-pointer"
+              className="size-10.5 rounded-full bg-success hover:bg-success/90 text-white shadow-md shadow-success/20 flex items-center justify-center transition-all active:scale-90 cursor-pointer"
               title="Call Customer"
             >
               <Phone className="size-4.5 stroke-[2.2]" />
@@ -585,7 +585,7 @@ export function WorkerVisitTrackingView({
             <button
               type="button"
               onClick={() => setShowChatModal(true)}
-              className="size-10.5 rounded-full bg-[#123B5D] hover:bg-[#0E2E49] text-white shadow-md shadow-[#123B5D]/20 flex items-center justify-center transition-all active:scale-90 cursor-pointer"
+              className="size-10.5 rounded-full bg-teal hover:bg-teal/90 text-white shadow-md shadow-teal/20 flex items-center justify-center transition-all active:scale-90 cursor-pointer"
               title="Chat with Customer"
             >
               <MessageCircle className="size-4.5 stroke-[2.2]" />
@@ -675,7 +675,7 @@ export function WorkerVisitTrackingView({
                 <button
                   type="button"
                   onClick={() => setShowCallModal(true)}
-                  className="size-10 rounded-xl bg-emerald-50 text-emerald-700 hover:bg-emerald-600 hover:text-white border border-emerald-200 flex items-center justify-center transition-all cursor-pointer shadow-2xs"
+                  className="size-10 rounded-xl bg-success/10 text-success hover:bg-success hover:text-white border border-success/20 flex items-center justify-center transition-all cursor-pointer shadow-2xs"
                   title="Call Customer"
                 >
                   <Phone className="size-4 stroke-[2.2]" />
@@ -683,7 +683,7 @@ export function WorkerVisitTrackingView({
                 <button
                   type="button"
                   onClick={() => setShowChatModal(true)}
-                  className="size-10 rounded-xl bg-slate-100 text-[#123B5D] hover:bg-[#123B5D] hover:text-white border border-slate-200 flex items-center justify-center transition-all cursor-pointer shadow-2xs"
+                  className="size-10 rounded-xl bg-teal/10 text-teal hover:bg-teal hover:text-white border border-teal/20 flex items-center justify-center transition-all cursor-pointer shadow-2xs"
                   title="Chat with Customer"
                 >
                   <MessageCircle className="size-4 stroke-[2.2]" />

@@ -269,7 +269,7 @@ export function WorkerJourneyFullscreen({
             <button
               type="button"
               onClick={() => setShowCallModal(true)}
-              className="size-9 sm:size-10 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 hover:bg-emerald-600 hover:text-white hover:border-emerald-600 shadow-2xs flex items-center justify-center transition-all active:scale-90 cursor-pointer"
+              className="size-9 sm:size-10 rounded-full bg-success/10 border border-success/20 text-success hover:bg-success hover:text-white hover:border-success shadow-2xs flex items-center justify-center transition-all active:scale-90 cursor-pointer"
               title="Call Customer"
             >
               <Phone className="size-4 stroke-[2.2]" />
@@ -277,7 +277,7 @@ export function WorkerJourneyFullscreen({
             <button
               type="button"
               onClick={() => setShowChatModal(true)}
-              className="size-9 sm:size-10 rounded-full bg-slate-100 border border-slate-200 text-[#123B5D] hover:bg-[#123B5D] hover:text-white hover:border-[#123B5D] shadow-2xs flex items-center justify-center transition-all active:scale-90 cursor-pointer"
+              className="size-9 sm:size-10 rounded-full bg-teal/10 border border-teal/20 text-teal hover:bg-teal hover:text-white hover:border-teal shadow-2xs flex items-center justify-center transition-all active:scale-90 cursor-pointer"
               title="Message Customer"
             >
               <MessageCircle className="size-4 stroke-[2.2]" />

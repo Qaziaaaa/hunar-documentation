@@ -32,7 +32,13 @@ export function ActiveVisitBanner({ visit: propVisit }: ActiveVisitBannerProps =
     enabled: !propVisit,
   });
 
-  const liveVisit = propVisit ?? (visits ?? [])[0];
+  const activeVisits = (visits ?? []).filter(
+    (v) =>
+      v.status !== "completed" &&
+      v.status !== "cancelled" &&
+      v.status !== "paid"
+  );
+  const liveVisit = propVisit ?? activeVisits[0];
 
   const [isVerified, setIsVerified] = useState<boolean>(() => {
     const session = arrivalService.getSession();
@@ -83,19 +89,19 @@ export function ActiveVisitBanner({ visit: propVisit }: ActiveVisitBannerProps =
         {/* Pulsing Motorcycle / Van Icon */}
         <div className="relative size-11 sm:size-12 rounded-2xl bg-[#0F8B8D]/10 text-[#0F8B8D] flex items-center justify-center shrink-0 mt-0.5 group-hover:scale-105 transition-transform">
           <Navigation className="size-5 sm:size-6 stroke-[2.2]" />
-          <span className="absolute -top-1 -end-1 size-3 bg-[#16A34A] rounded-full ring-2 ring-white animate-ping" />
+          <span className="absolute -top-1 -end-1 size-3 bg-success rounded-full ring-2 ring-white animate-ping" />
         </div>
 
         <div className="space-y-1 min-w-0 flex-1 text-left rtl:text-right">
           <div className="flex items-center gap-2 flex-wrap">
             {isVerified ? (
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-300">
-                <Check className="size-3 text-emerald-600 stroke-[3]" />
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-success/10 text-success border border-success/20">
+                <Check className="size-3 text-success stroke-[3]" />
                 {isUrdu ? "کاریگر احاطے میں موجود ہے" : "Technician Inside Premises"}
               </span>
             ) : (
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-success/10 text-success border border-success/20">
+                <span className="size-1.5 rounded-full bg-success animate-pulse" />
                 {t("technicianOnTheWay")}
               </span>
             )}
@@ -123,7 +129,7 @@ export function ActiveVisitBanner({ visit: propVisit }: ActiveVisitBannerProps =
       {/* Bottom Section: Technician Info, Visit Charges & Contact Actions */}
       <div className="pt-3.5 mt-3 border-t border-slate-100 flex flex-col gap-3">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          {/* Left: Technician Details & Visit Charges */}
+          {/* Left: Technician Details, Charges & Doorstep PIN */}
           <div className="flex items-center gap-3 sm:gap-4 flex-wrap">
             {/* Technician Name */}
             <div className="flex items-center gap-2 min-w-0">
@@ -146,6 +152,21 @@ export function ActiveVisitBanner({ visit: propVisit }: ActiveVisitBannerProps =
                 {isUrdu ? `روپے ${visitCharges}` : `Rs. ${visitCharges}`}
               </span>
             </div>
+
+            {/* Doorstep Security PIN Callout if pending verification */}
+            {liveVisit.securityPin && !isVerified && (
+              <>
+                <span className="text-slate-300 text-xs hidden sm:inline">•</span>
+                <div className="flex items-center gap-1.5 shrink-0">
+                  <span className="text-xs text-slate-500 font-semibold">
+                    {isUrdu ? "آمد PIN:" : "Doorstep PIN:"}
+                  </span>
+                  <span className="inline-flex items-center font-mono font-bold text-xs sm:text-sm tracking-wider text-orange bg-orange/10 px-2 py-0.5 rounded-lg border border-orange/20">
+                    {liveVisit.securityPin}
+                  </span>
+                </div>
+              </>
+            )}
           </div>
 
           {/* Right: Contact Actions (Message & Call) */}
@@ -154,7 +175,7 @@ export function ActiveVisitBanner({ visit: propVisit }: ActiveVisitBannerProps =
             <Link
               role="button"
               aria-label={isUrdu ? "کاریگر کو پیغام بھیجیں" : "Message Worker"}
-              href="/customer/chat"
+              href={`/customer/chat?visitId=${liveVisit.id}&jobId=${liveVisit.jobId}`}
               onClick={(e) => e.stopPropagation()}
               className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#0F8B8D]/10 hover:bg-[#0F8B8D] text-[#0F8B8D] hover:text-white border border-[#0F8B8D]/25 text-xs sm:text-sm font-bold transition-all shadow-2xs active:scale-98 cursor-pointer"
             >
@@ -168,7 +189,7 @@ export function ActiveVisitBanner({ visit: propVisit }: ActiveVisitBannerProps =
               aria-label={isUrdu ? "کاریگر کو کال کریں" : "Call Worker"}
               href={`tel:${technicianPhone}`}
               onClick={(e) => e.stopPropagation()}
-              className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-bold transition-all shadow-2xs active:scale-98 cursor-pointer"
+              className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl bg-success hover:bg-success/90 text-white text-xs sm:text-sm font-bold transition-all shadow-2xs active:scale-98 cursor-pointer"
             >
               <Phone className="size-4 shrink-0" />
               <span>{isUrdu ? "کال کریں" : "Call"}</span>

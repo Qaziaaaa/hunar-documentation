@@ -239,7 +239,7 @@ export function WorkerChatModal({
                 <button
                   type="button"
                   onClick={onCallCustomer}
-                  className="w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-xs transition-all cursor-pointer"
+                  className="w-full py-2.5 rounded-xl bg-success hover:bg-success/90 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-xs transition-all cursor-pointer"
                 >
                   <Phone className="size-3.5" />
                   <span>{isUrdu ? "کسٹمر کو کال کریں" : "Call Customer"}</span>
@@ -337,7 +337,7 @@ export function WorkerChatModal({
                 <button
                   type="button"
                   onClick={onCallCustomer}
-                  className="size-9 rounded-full bg-emerald-50 text-emerald-700 hover:bg-emerald-600 hover:text-white border border-emerald-200 shadow-2xs flex items-center justify-center transition-all active:scale-90 cursor-pointer"
+                  className="size-9 rounded-full bg-success/10 text-success hover:bg-success hover:text-white border border-success/20 shadow-2xs flex items-center justify-center transition-all active:scale-90 cursor-pointer"
                   title="Call Customer"
                 >
                   <Phone className="size-4 stroke-[2.2]" />
