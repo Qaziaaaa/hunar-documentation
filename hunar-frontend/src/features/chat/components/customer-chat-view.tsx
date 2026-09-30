@@ -231,7 +231,10 @@ export function CustomerChatView() {
         {/* ======================================================== */}
         {/* DESKTOP LEFT SIDEBAR: TECHNICIAN & JOB DETAILS PANE */}
         {/* ======================================================== */}
-        <aside className="hidden lg:flex lg:w-[320px] xl:w-[360px] border-r border-slate-200 bg-slate-50/70 p-5 flex-col justify-between overflow-y-auto shrink-0">
+        <aside
+          className="hidden lg:flex lg:w-[320px] xl:w-[360px] border-r border-slate-200 bg-slate-50/70 p-5 flex-col justify-between overflow-y-auto shrink-0 scrollbar-none [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+          style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+        >
           <div className="space-y-5">
             {/* Top Label */}
             <div className="flex items-center justify-between border-b border-slate-200/80 pb-3">
@@ -397,7 +400,10 @@ export function CustomerChatView() {
           </div>
 
           {/* 2. MESSAGES FEED */}
-          <div className="flex-1 overflow-y-auto p-4 sm:p-5 lg:p-6 space-y-4 bg-slate-50/30">
+          <div
+            className="flex-1 overflow-y-auto p-4 sm:p-5 lg:p-6 space-y-4 bg-slate-50/30 scrollbar-none [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+            style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+          >
             {messages.map((msg) => {
               const isCustomer = msg.sender === "customer";
 

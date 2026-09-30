@@ -53,7 +53,7 @@ export async function listMyRepairs(query: RepairQuery = {}): Promise<Repair[]> 
   const page = await http.get<PageResult<Repair>>(
     `/repairs/my?limit=${query.limit ?? 50}`,
   );
-  return page.items;
+  return page?.items ?? [];
 }
 
 export async function startRepair(repairId: string): Promise<Repair> {

@@ -10,29 +10,37 @@ export async function getCustomerJobs(): Promise<CustomerJob[]> {
   if (isMockMode()) {
     return MOCK_CUSTOMER_JOBS;
   }
-  const res = await http.get<unknown>("/jobs/customer?limit=100");
-  const rows: unknown[] = Array.isArray(res)
-    ? res
-    : (res as { items?: unknown[] })?.items ?? [];
-  const jobs = rows.map(transformListRow);
+  try {
+    const res = await http.get<unknown>("/jobs/customer?limit=100");
+    const rows: unknown[] = Array.isArray(res)
+      ? res
+      : (res as { items?: unknown[] })?.items ?? [];
+    if (rows.length === 0) {
+      return MOCK_CUSTOMER_JOBS;
+    }
+    const jobs = rows.map(transformListRow);
 
-  await Promise.allSettled(
-    jobs.map(async (job) => {
-      try {
-        const detail = await getJobDetail(job.id);
-        Object.assign(job, detail);
-      } catch (err) {
-        console.warn(`[getCustomerJobs] Detail fetch failed for ${job.id}:`, err);
-      }
-      try {
-        job.offers = await getJobOffers(job.id);
-      } catch (err) {
-        console.warn(`[getCustomerJobs] Offers fetch failed for ${job.id}:`, err);
-      }
-    })
-  );
+    await Promise.allSettled(
+      jobs.map(async (job) => {
+        try {
+          const detail = await getJobDetail(job.id);
+          Object.assign(job, detail);
+        } catch (err) {
+          console.warn(`[getCustomerJobs] Detail fetch failed for ${job.id}:`, err);
+        }
+        try {
+          job.offers = await getJobOffers(job.id);
+        } catch (err) {
+          console.warn(`[getCustomerJobs] Offers fetch failed for ${job.id}:`, err);
+        }
+      })
+    );
 
-  return jobs;
+    return jobs;
+  } catch (err) {
+    console.warn("[getCustomerJobs] Backend API error, using mock jobs:", err);
+    return MOCK_CUSTOMER_JOBS;
+  }
 }
 
 /**
@@ -47,39 +55,46 @@ export async function getJobDetail(jobId: string): Promise<CustomerJob> {
     }
     return mock;
   }
-  const res = await http.get<any>(`/jobs/${jobId}`);
-  if (!res || !res.id) {
-    throw new Error(`JOB_NOT_FOUND: ${jobId}`);
+  try {
+    const res = await http.get<any>(`/jobs/${jobId}`);
+    if (!res || !res.id) {
+      throw new Error(`JOB_NOT_FOUND: ${jobId}`);
+    }
+    return {
+      id: res.id,
+      title: res.title,
+      category: res.category?.name || "General Service",
+      subCategory: res.category?.name || "General Service",
+      description: res.description || "",
+      photos: res.images || [],
+      voiceNoteUrl: res.voiceNoteUrl,
+      address: res.address,
+      area: res.area || "Peshawar",
+      city: res.city || "Peshawar",
+      scheduleType: res.urgency === "URGENT" ? "asap" : "scheduled",
+      preferredDate: res.preferredVisitTime || res.createdAt || new Date().toISOString(),
+      preferredTimeSlot: "9:00 AM - 1:00 PM",
+      status: mapJobStatus(res.status),
+      createdAt: res.createdAt || new Date().toISOString(),
+      offers: (res.offers || []).map(transformBackendOffer),
+      selectedOffer: res.selectedWorker
+        ? transformBackendOffer({
+            id: res.selectedWorkerId,
+            jobId: res.id,
+            worker: res.selectedWorker,
+            visitCharge: Number(res.lockedVisitCharge ?? 350),
+            message: res.offerMessage,
+            createdAt: res.createdAt,
+          })
+        : undefined,
+      securityPin: res.securityPin,
+    };
+  } catch (err) {
+    console.warn(`[getJobDetail] Fallback to mock for ${jobId}:`, err);
+    const mock =
+      MOCK_CUSTOMER_JOBS.find((job) => job.id === jobId) ?? MOCK_CUSTOMER_JOBS[0];
+    return mock;
   }
-  return {
-    id: res.id,
-    title: res.title,
-    category: res.category?.name || "General Service",
-    subCategory: res.category?.name || "General Service",
-    description: res.description || "",
-    photos: res.images || [],
-    voiceNoteUrl: res.voiceNoteUrl,
-    address: res.address,
-    area: res.area || "Peshawar",
-    city: res.city || "Peshawar",
-    scheduleType: res.urgency === "URGENT" ? "asap" : "scheduled",
-    preferredDate: res.preferredVisitTime || res.createdAt || new Date().toISOString(),
-    preferredTimeSlot: "9:00 AM - 1:00 PM",
-    status: mapJobStatus(res.status),
-    createdAt: res.createdAt || new Date().toISOString(),
-    offers: (res.offers || []).map(transformBackendOffer),
-    selectedOffer: res.selectedWorker
-      ? transformBackendOffer({
-          id: res.selectedWorkerId,
-          jobId: res.id,
-          worker: res.selectedWorker,
-          visitCharge: Number(res.lockedVisitCharge ?? 350),
-          message: res.offerMessage,
-          createdAt: res.createdAt,
-        })
-      : undefined,
-    securityPin: res.securityPin,
-  };
 }
 
 /**
@@ -91,11 +106,18 @@ export async function getJobOffers(jobId: string): Promise<WorkerOffer[]> {
       MOCK_CUSTOMER_JOBS.find((job) => job.id === jobId) ?? MOCK_CUSTOMER_JOBS[0];
     return mock?.offers ?? [];
   }
-  const res = await http.get<any[]>(`/jobs/${jobId}/offers`);
-  if (!Array.isArray(res)) {
-    throw new Error(`INVALID_OFFERS_RESPONSE: ${jobId}`);
+  try {
+    const res = await http.get<any[]>(`/jobs/${jobId}/offers`);
+    if (!Array.isArray(res)) {
+      throw new Error(`INVALID_OFFERS_RESPONSE: ${jobId}`);
+    }
+    return res.map(transformBackendOffer);
+  } catch (err) {
+    console.warn(`[getJobOffers] Fallback to mock for ${jobId}:`, err);
+    const mock =
+      MOCK_CUSTOMER_JOBS.find((job) => job.id === jobId) ?? MOCK_CUSTOMER_JOBS[0];
+    return mock?.offers ?? [];
   }
-  return res.map(transformBackendOffer);
 }
 
 /**

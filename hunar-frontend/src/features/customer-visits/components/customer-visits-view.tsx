@@ -22,11 +22,13 @@ import { useLocale } from "next-intl";
 import { PeshawarLiveTrackingMap } from "./peshawar-live-tracking-map";
 import { RescheduleModal } from "./reschedule-modal";
 import { QuickChatDrawer } from "./quick-chat-drawer";
+import { CustomerArrivalOtpModal } from "./customer-arrival-otp-modal";
 import type { ScheduledVisit } from "../types";
 import {
   arrivalService,
   SUCCESS_VERIFICATION_MESSAGE,
   SUCCESS_VERIFICATION_MESSAGE_UR,
+  type ArrivalSession,
 } from "@/features/jobs/services/arrival-verification-service";
 
 interface CustomerVisitsViewProps {
@@ -42,6 +44,11 @@ export function CustomerVisitsView({ initialVisits }: CustomerVisitsViewProps) {
   const [selectedVisitForChat, setSelectedVisitForChat] = useState<ScheduledVisit | null>(null);
   const [successToast, setSuccessToast] = useState<string | null>(null);
 
+  // In-premises progression and OTP modal states
+  const [arrivalSession, setArrivalSession] = useState<ArrivalSession | null>(() => arrivalService.getSession());
+  const [isOtpModalOpen, setIsOtpModalOpen] = useState(false);
+  const [inPremisesStep, setInPremisesStep] = useState<"diagnosing" | "quote_proposed" | "repair_in_progress" | "work_completed">("diagnosing");
+
   // Sync with arrival service state
   useEffect(() => {
     const session = arrivalService.getSession();
@@ -56,6 +63,7 @@ export function CustomerVisitsView({ initialVisits }: CustomerVisitsViewProps) {
     }
 
     const unsubscribe = arrivalService.subscribe((s, eventType) => {
+      setArrivalSession(s);
       if (s && (eventType === "OTP_VERIFIED" || s.status === "otp_verified")) {
         setVisits((prev) =>
           prev.map((v) =>
@@ -190,6 +198,32 @@ export function CustomerVisitsView({ initialVisits }: CustomerVisitsViewProps) {
                 <div className="h-2 w-full bg-gradient-to-r from-[#0F766E] via-[#14B8A6] to-[#16A34A]" />
 
                 <div className="p-5 sm:p-6 space-y-5">
+                  {/* Arrival Doorstep OTP Action Banner */}
+                  {!isVerifiedInside && (
+                    <div className="p-4 rounded-2xl bg-amber-50 border-2 border-amber-300 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-3 animate-in fade-in-50">
+                      <div className="flex items-center gap-2.5">
+                        <div className="size-9 rounded-xl bg-amber-500 text-white flex items-center justify-center shrink-0 shadow-2xs">
+                          <MapPin className="size-5 animate-bounce" />
+                        </div>
+                        <div>
+                          <h4 className="text-xs sm:text-sm font-bold text-amber-900">
+                            {isUrdu ? `${liveVisit.technician.name} آپ کی دہلیز پر پہنچ چکے ہیں!` : `${liveVisit.technician.name} has arrived at your doorstep!`}
+                          </h4>
+                          <p className="text-[11px] text-amber-800">
+                            {isUrdu ? "احاطے میں داخلے کی اجازت دینے کے لیے 4 ہندسوں کا دہلیز PIN درج کریں۔" : "Enter the 4-digit Doorstep PIN provided by technician to grant entry."}
+                          </p>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setIsOtpModalOpen(true)}
+                        className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs shadow-xs transition-all cursor-pointer shrink-0 active:scale-98"
+                      >
+                        {isUrdu ? "دہلیز PIN درج کریں" : "Enter Doorstep PIN"}
+                      </button>
+                    </div>
+                  )}
+
                   {/* Live Status Header */}
                   <div className="flex items-center gap-2.5">
                     <span className="relative flex size-3.5">
@@ -336,6 +370,178 @@ export function CustomerVisitsView({ initialVisits }: CustomerVisitsViewProps) {
                       />
                     </div>
                   </div>
+
+                  {/* IN-PREMISES DIAGNOSIS & WORK PROGRESSION CARD */}
+                  {isVerifiedInside && (
+                    <div className="p-4 sm:p-5 rounded-2xl bg-white border-2 border-[#0F766E]/30 shadow-sm space-y-4 animate-in fade-in-50">
+                      <div className="flex items-center justify-between flex-wrap gap-2">
+                        <div className="flex items-center gap-2">
+                          <div className="size-8 rounded-xl bg-[#0F766E]/10 text-[#0F766E] flex items-center justify-center">
+                            <Wrench className="size-4" />
+                          </div>
+                          <div>
+                            <h4 className="text-xs sm:text-sm font-bold text-[#123B5D]">
+                              {isUrdu ? "احاطے میں معائنہ اور کام کی پیش رفت" : "In-Premises Diagnosis & Work Progress"}
+                            </h4>
+                            <span className="text-[11px] text-slate-500">
+                              {isUrdu ? "کاریگر احاطے کے اندر کام کر رہا ہے" : "Technician is on-site inside premises"}
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="text-right rtl:text-left">
+                          <span className="text-[10px] text-slate-400 block font-medium">
+                            {isUrdu ? "طے شدہ وزٹ فیس" : "Agreed Visit Fee"}
+                          </span>
+                          <span className="text-sm font-extrabold text-[#0F766E]">
+                            Rs. {liveVisit.visitCharges ?? 300}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Stage 1: Diagnosing */}
+                      {inPremisesStep === "diagnosing" && (
+                        <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-200 space-y-2.5">
+                          <div className="flex items-center gap-2 text-xs font-semibold text-[#123B5D]">
+                            <span className="size-2 rounded-full bg-[#0F766E] animate-ping" />
+                            <span>{isUrdu ? "کاریگر مسئلے کا معائنہ کر رہا ہے..." : "Technician is diagnosing the issue..."}</span>
+                          </div>
+                          <p className="text-[11px] text-slate-500 leading-relaxed">
+                            {isUrdu
+                              ? "کاریگر مسئلے کی تشخیص کر کے آن سائٹ کوٹیشن پیش کرے گا۔ مرمت صرف آپ کی منظوری کے بعد شروع ہوگی۔"
+                              : "The technician will inspect the fault and provide an on-site estimate. Work only proceeds after your approval."}
+                          </p>
+                          <button
+                            type="button"
+                            onClick={() => setInPremisesStep("quote_proposed")}
+                            className="text-xs font-bold text-[#0F766E] hover:underline cursor-pointer"
+                          >
+                            {isUrdu ? "کاریگر کی کوٹیشن دیکھیں ←" : "View Technician Quote / Additional Work →"}
+                          </button>
+                        </div>
+                      )}
+
+                      {/* Stage 2: Quote / Additional Work Proposed */}
+                      {inPremisesStep === "quote_proposed" && (
+                        <div className="p-4 bg-teal-50/70 rounded-xl border border-teal-200/80 space-y-3">
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs font-bold text-[#123B5D]">
+                              {isUrdu ? "کاریگر کی تجویز کردہ مرمت و سامان" : "Proposed Repair & Materials"}
+                            </span>
+                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#0F766E] text-white">
+                              {isUrdu ? "آپ کی منظوری درکار ہے" : "Approval Required"}
+                            </span>
+                          </div>
+
+                          <div className="text-xs text-slate-700 bg-white p-3 rounded-lg border border-teal-100 space-y-1">
+                            <p className="font-semibold text-[#123B5D]">
+                              {isUrdu ? "تشخیص: " : "Diagnosis: "}
+                              <span className="font-normal">
+                                {isUrdu
+                                  ? "مین بریکر اوور ہیٹ ہو رہا ہے اور ٹرمینل لگز ڈی گریڈ ہو چکے ہیں۔"
+                                  : "Main breaker overheating under load. Terminal insulation degraded."}
+                              </span>
+                            </p>
+                            <p className="font-semibold text-[#123B5D]">
+                              {isUrdu ? "مرمت کا منصوبہ: " : "Proposed Fix: "}
+                              <span className="font-normal">
+                                {isUrdu
+                                  ? "63A شنائیڈر بریکر کی تبدیلی اور کیبل ٹرمینل کرمپنگ۔"
+                                  : "Install 63A Schneider modular breaker and re-crimp copper terminals."}
+                              </span>
+                            </p>
+                          </div>
+
+                          {/* Financial Separation */}
+                          <div className="space-y-1.5 text-xs">
+                            <div className="flex justify-between text-slate-600">
+                              <span>{isUrdu ? "وزٹ و معائنہ فیس:" : "Visit & Diagnostic Fee:"}</span>
+                              <span>Rs. {liveVisit.visitCharges ?? 300}</span>
+                            </div>
+                            <div className="flex justify-between text-slate-600">
+                              <span>{isUrdu ? "مرمت و کاریگری مزدوری:" : "Repair & Labor:"}</span>
+                              <span>Rs. 1,100</span>
+                            </div>
+                            <div className="flex justify-between text-slate-600">
+                              <span>{isUrdu ? "اصل پرزہ (Schneider 63A DP):" : "Parts (Schneider 63A DP):"}</span>
+                              <span>Rs. 800</span>
+                            </div>
+                            <div className="flex justify-between font-bold text-sm text-[#123B5D] pt-1.5 border-t border-teal-200">
+                              <span>{isUrdu ? "کل متوقع لاگت:" : "Updated Total:"}</span>
+                              <span className="text-[#0F766E]">Rs. 2,200</span>
+                            </div>
+                          </div>
+
+                          {/* Customer Approval Actions */}
+                          <div className="flex flex-col sm:flex-row items-center gap-2 pt-1">
+                            <button
+                              type="button"
+                              onClick={() => setInPremisesStep("repair_in_progress")}
+                              className="w-full sm:flex-1 py-2.5 px-4 rounded-xl bg-[#0F766E] hover:bg-[#115E59] text-white text-xs font-bold shadow-xs transition-all cursor-pointer"
+                            >
+                              {isUrdu ? "منظور کریں اور کام شروع کروائیں" : "Approve Quote & Start Work"}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setInPremisesStep("work_completed")}
+                              className="w-full sm:w-auto py-2.5 px-3 rounded-xl bg-white hover:bg-slate-100 text-slate-600 text-xs font-semibold border border-slate-200 cursor-pointer"
+                            >
+                              {isUrdu ? "صرف وزٹ فیس ادا کریں" : "Decline (Pay Visit Fee Only)"}
+                            </button>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Stage 3: Work in Progress */}
+                      {inPremisesStep === "repair_in_progress" && (
+                        <div className="p-3.5 bg-emerald-50/80 rounded-xl border border-emerald-200 text-xs space-y-2.5">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2 font-bold text-emerald-900">
+                              <span className="size-2 rounded-full bg-emerald-500 animate-ping" />
+                              <span>{isUrdu ? "کام جاری ہے — کاریگر مرمت مکمل کر رہا ہے" : "Work in Progress — Technician is performing the repair"}</span>
+                            </div>
+                            <span className="text-[11px] text-emerald-700 font-semibold">
+                              {isUrdu ? "منظور شدہ کوٹیشن: Rs. 2,200" : "Approved Quote: Rs. 2,200"}
+                            </span>
+                          </div>
+                          <p className="text-[11px] text-emerald-800/80">
+                            {isUrdu
+                              ? "کاریگر کام مکمل کرنے کے بعد آپ کو معائنہ کروائے گا اور حتمی بل پیش کرے گا۔"
+                              : "Once the technician completes the work, you will inspect the repair before final settlement."}
+                          </p>
+                          <button
+                            type="button"
+                            onClick={() => setInPremisesStep("work_completed")}
+                            className="px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-2xs transition-colors cursor-pointer"
+                          >
+                            {isUrdu ? "کام کی تکمیل کا معائنہ کریں ←" : "Mark Work Completed & Inspect →"}
+                          </button>
+                        </div>
+                      )}
+
+                      {/* Stage 4: Work Completed */}
+                      {inPremisesStep === "work_completed" && (
+                        <div className="p-4 bg-emerald-50 rounded-xl border border-emerald-300 space-y-3">
+                          <div className="flex items-center gap-2 text-xs font-bold text-emerald-900">
+                            <CheckCircle2 className="size-5 text-emerald-600 shrink-0" />
+                            <span>{isUrdu ? "کاریگر نے کام مکمل کر لیا ہے!" : "Work Completed by Technician!"}</span>
+                          </div>
+                          <p className="text-xs text-emerald-800">
+                            {isUrdu
+                              ? "مرمت کا معائنہ کریں، بل کی تفصیلات چیک کریں اور اطمینان کے بعد براہ راست ادائیگی کریں۔"
+                              : "Inspect the repair, review itemized billing, and confirm direct payment on your satisfaction."}
+                          </p>
+                          <Link
+                            href={`/customer/job/${liveVisit.jobId}/complete`}
+                            className="w-full flex items-center justify-center gap-2 py-3 bg-[#0F766E] hover:bg-[#115E59] text-white text-xs sm:text-sm font-bold rounded-xl shadow-xs transition-all cursor-pointer active:scale-98"
+                          >
+                            <span>{isUrdu ? "مکمل شدہ کام کا معائنہ اور ادائیگی کی تصدیق ←" : "Inspect Completed Work & Confirm Payment →"}</span>
+                            <ArrowRight className="size-4 rtl:rotate-180" />
+                          </Link>
+                        </div>
+                      )}
+                    </div>
+                  )}
 
                   {/* Action Buttons Bar */}
                   <div className="flex flex-wrap items-center gap-3 pt-1">
@@ -633,6 +839,19 @@ export function CustomerVisitsView({ initialVisits }: CustomerVisitsViewProps) {
           onClose={() => setSelectedVisitForChat(null)}
         />
       )}
+
+      {/* Doorstep Arrival OTP Modal */}
+      <CustomerArrivalOtpModal
+        isOpen={isOtpModalOpen}
+        session={arrivalSession}
+        onSuccess={(msg) => {
+          setIsOtpModalOpen(false);
+          setSuccessToast(msg);
+          setTimeout(() => setSuccessToast(null), 5000);
+        }}
+        onClose={() => setIsOtpModalOpen(false)}
+        isUrdu={isUrdu}
+      />
     </div>
   );
 }

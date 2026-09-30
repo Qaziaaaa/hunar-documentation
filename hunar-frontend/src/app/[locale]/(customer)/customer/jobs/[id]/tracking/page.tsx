@@ -7,7 +7,7 @@ import { getCustomerVisits } from "@/features/customer-visits/api/customer-visit
 import { LoadingState } from "@/components/shared/loading-state";
 import { ErrorState } from "@/components/shared/error-state";
 
-export default function JobTrackingPage() {
+export default function PluralJobTrackingPage() {
   const { id } = useParams<{ id: string }>();
 
   const { data: visits, isPending, isError, refetch } = useQuery({

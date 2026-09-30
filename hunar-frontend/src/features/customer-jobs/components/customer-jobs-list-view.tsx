@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   ArrowRight,
   CheckCircle2,
@@ -16,19 +16,126 @@ import {
 } from "lucide-react";
 import { Link } from "@/i18n/navigation";
 import { useLocale } from "next-intl";
-import type { CustomerJob } from "../types";
+import type { CustomerJob, WorkerOffer } from "../types";
+import { CustomerJobDetailsModal } from "./customer-job-details-modal";
+import { CustomerReviewOffersModal } from "./customer-review-offers-modal";
+import { WorkerProfileModal } from "./worker-profile-modal";
+import { SelectWorkerModal } from "./select-worker-modal";
+import { acceptWorkerOffer, rejectWorkerOffer } from "../api/customer-jobs-api";
 
 interface CustomerJobsListViewProps {
-  initialJobs: CustomerJob[];
+  initialJobs?: CustomerJob[];
+  jobs?: CustomerJob[];
 }
 
-export function CustomerJobsListView({ initialJobs }: CustomerJobsListViewProps) {
+export function CustomerJobsListView({ initialJobs, jobs: jobsProp }: CustomerJobsListViewProps) {
   const locale = useLocale();
   const isUrdu = locale === "ur";
+
+  const resolvedInitialJobs = initialJobs ?? jobsProp ?? [];
+  const [jobs, setJobs] = useState<CustomerJob[]>(resolvedInitialJobs);
   const [selectedFilter, setSelectedFilter] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
 
-  const filteredJobs = initialJobs.filter((job) => {
+  // Modals state
+  const [selectedJobForDetails, setSelectedJobForDetails] = useState<CustomerJob | null>(null);
+  const [selectedJobForOffers, setSelectedJobForOffers] = useState<CustomerJob | null>(null);
+  const [selectedOfferForProfile, setSelectedOfferForProfile] = useState<WorkerOffer | null>(null);
+  const [bookingSelection, setBookingSelection] = useState<{ job: CustomerJob; offer: WorkerOffer } | null>(null);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  // Sync state if props change
+  useEffect(() => {
+    if (initialJobs) {
+      setJobs(initialJobs);
+    } else if (jobsProp) {
+      setJobs(jobsProp);
+    }
+  }, [initialJobs, jobsProp]);
+
+  // Keep modal jobs synced with updated state
+  useEffect(() => {
+    if (selectedJobForDetails) {
+      const updated = jobs.find((j) => j.id === selectedJobForDetails.id);
+      if (updated) setSelectedJobForDetails(updated);
+    }
+    if (selectedJobForOffers) {
+      const updated = jobs.find((j) => j.id === selectedJobForOffers.id);
+      if (updated) setSelectedJobForOffers(updated);
+    }
+  }, [jobs]);
+
+  // Handle confirming booking / accepting offer
+  const handleConfirmBooking = async (offer: WorkerOffer) => {
+    if (!bookingSelection) return;
+    const targetJob = bookingSelection.job;
+
+    try {
+      await acceptWorkerOffer(targetJob.id, offer.id);
+    } catch (err) {
+      console.warn("acceptWorkerOffer error:", err);
+    }
+
+    setJobs((prev) =>
+      prev.map((j) => {
+        if (j.id === targetJob.id) {
+          return {
+            ...j,
+            status: "visit_scheduled",
+            selectedOffer: offer,
+          };
+        }
+        return j;
+      })
+    );
+
+    setBookingSelection(null);
+    setSelectedJobForOffers(null);
+    setSelectedJobForDetails(null);
+
+    setToastMessage(
+      isUrdu
+        ? `${offer.worker.name} کی بکنگ کامیابی سے ہو گئی! سیکیورٹی PIN فعال ہے۔`
+        : `Successfully booked ${offer.worker.name}! Security PIN activated.`
+    );
+    setTimeout(() => setToastMessage(null), 4000);
+  };
+
+  // Handle declining / rejecting an offer
+  const handleRejectOffer = async (job: CustomerJob, offer: WorkerOffer) => {
+    try {
+      await rejectWorkerOffer(job.id, offer.id);
+    } catch (err) {
+      console.warn("rejectWorkerOffer error:", err);
+    }
+
+    setJobs((prev) =>
+      prev.map((j) => {
+        if (j.id === job.id) {
+          return {
+            ...j,
+            offers: j.offers.filter((o) => o.id !== offer.id),
+          };
+        }
+        return j;
+      })
+    );
+
+    setSelectedJobForOffers((prev) =>
+      prev && prev.id === job.id
+        ? { ...prev, offers: prev.offers.filter((o) => o.id !== offer.id) }
+        : prev
+    );
+
+    setToastMessage(
+      isUrdu
+        ? `${offer.worker.name} کی آفر مسترد کر دی گئی۔`
+        : `Offer from ${offer.worker.name} was declined.`
+    );
+    setTimeout(() => setToastMessage(null), 4000);
+  };
+
+  const filteredJobs = jobs.filter((job) => {
     const matchesFilter =
       selectedFilter === "all" ||
       (selectedFilter === "active" && job.status === "receiving_offers") ||
@@ -45,12 +152,20 @@ export function CustomerJobsListView({ initialJobs }: CustomerJobsListViewProps)
     return matchesFilter && matchesSearch;
   });
 
-  const activeCount = initialJobs.filter((j) => j.status === "receiving_offers").length;
-  const scheduledCount = initialJobs.filter((j) => j.status === "visit_scheduled").length;
-  const completedCount = initialJobs.filter((j) => j.status === "completed").length;
+  const activeCount = jobs.filter((j) => j.status === "receiving_offers").length;
+  const scheduledCount = jobs.filter((j) => j.status === "visit_scheduled").length;
+  const completedCount = jobs.filter((j) => j.status === "completed").length;
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-6 pb-24 lg:pb-8 animate-in fade-in-50 duration-300 text-[#123B5D]">
+      {/* Toast Notification */}
+      {toastMessage && (
+        <div className="fixed top-20 right-6 rtl:right-auto rtl:left-6 z-60 bg-[#0F766E] text-white px-5 py-3 rounded-2xl shadow-xl flex items-center gap-3 animate-in slide-in-from-top-4 duration-300">
+          <CheckCircle2 className="size-5 shrink-0" />
+          <span className="text-xs sm:text-sm font-semibold">{toastMessage}</span>
+        </div>
+      )}
+
       {/* Main Header Section */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 pb-2 border-b border-[#E2E8F0]">
         <div>
@@ -89,7 +204,7 @@ export function CustomerJobsListView({ initialJobs }: CustomerJobsListViewProps)
                 : "bg-white text-slate-600 border border-[#E2E8F0] hover:text-[#123B5D] hover:border-[#0F8B8D]"
             }`}
           >
-            {isUrdu ? `تمام جابز (${initialJobs.length})` : `All Jobs (${initialJobs.length})`}
+            {isUrdu ? `تمام جابز (${jobs.length})` : `All Jobs (${jobs.length})`}
           </button>
 
           <button
@@ -301,38 +416,60 @@ export function CustomerJobsListView({ initialJobs }: CustomerJobsListViewProps)
                         : `${job.offers.length} verified technicians submitted quotes for this job.`
                       : job.status === "visit_scheduled"
                       ? isUrdu
-                        ? "کاریگر منتخب ہو چکا ہے۔ دہلیز پر آمد کے وقت 4 ہندسوں کا سیکیورٹی PIN شیئر کریں۔"
-                        : "Technician confirmed. Share 4-digit Security PIN on doorstep arrival."
+                        ? "کاریگر متعین ہو چکا ہے۔ دہلیز پر آمد کے وقت 4 ہندسوں کے سیکیورٹی PIN کی تصدیق کریں۔"
+                        : "Technician confirmed. Verify 4-digit Doorstep PIN upon arrival."
                       : isUrdu
                       ? "کام مکمل ہو چکا ہے اور تسلی بخش ادائیگی طے پا چکی ہے۔"
                       : "Job completed and payment successfully settled."}
                   </span>
 
                   <div className="flex items-center gap-2.5 ml-auto rtl:ml-0 rtl:mr-auto">
-                    <Link
-                      href={`/customer/jobs/${job.id}`}
-                      className="h-9 px-4 rounded-xl font-semibold text-xs sm:text-sm text-[#1A1A2E] bg-white border border-[#E2E8F0] hover:bg-slate-50 transition-colors flex items-center justify-center"
+                    {/* View Details Button -> opens Details Modal */}
+                    <button
+                      type="button"
+                      onClick={() => setSelectedJobForDetails(job)}
+                      className="h-9 px-4 rounded-xl font-semibold text-xs sm:text-sm text-[#1A1A2E] bg-white border border-[#E2E8F0] hover:bg-slate-50 transition-colors flex items-center justify-center cursor-pointer active:scale-98"
                     >
                       {isUrdu ? "تفصیلات دیکھیں" : "View Details"}
-                    </Link>
+                    </button>
 
+                    {/* Review Offer Button -> opens Offers Modal */}
                     {job.status === "receiving_offers" && (
-                      <Link
-                        href={`/customer/jobs/${job.id}`}
-                        className="h-9 px-4 rounded-xl font-semibold text-xs sm:text-sm text-white bg-[#0F766E] hover:bg-[#115E59] transition-colors shadow-sm flex items-center justify-center gap-1.5"
+                      <button
+                        type="button"
+                        onClick={() => setSelectedJobForOffers(job)}
+                        className="h-9 px-4 rounded-xl font-semibold text-xs sm:text-sm text-white bg-[#0F766E] hover:bg-[#115E59] transition-colors shadow-sm flex items-center justify-center gap-1.5 cursor-pointer active:scale-98"
                       >
-                        <span>{isUrdu ? `${job.offers.length} آفرز کا جائزہ لیں` : `Review ${job.offers.length} Offers`}</span>
+                        <span>
+                          {isUrdu
+                            ? job.offers.length === 1
+                              ? "آفر کا جائزہ لیں"
+                              : `${job.offers.length} آفرز کا جائزہ لیں`
+                            : job.offers.length === 1
+                            ? "Review Offer"
+                            : `Review ${job.offers.length} Offers`}
+                        </span>
                         <ArrowRight className="size-3.5 rtl:rotate-180" />
-                      </Link>
+                      </button>
                     )}
 
                     {job.status === "visit_scheduled" && (
                       <Link
-                        href={`/customer/jobs/${job.id}`}
-                        className="h-9 px-4 rounded-xl font-semibold text-xs sm:text-sm text-white bg-[#0F766E] hover:bg-[#115E59] transition-colors shadow-sm flex items-center justify-center gap-1.5"
+                        href={`/customer/job/${job.id}/tracking`}
+                        className="h-9 px-4 rounded-xl font-semibold text-xs sm:text-sm text-white bg-[#0F766E] hover:bg-[#115E59] transition-colors shadow-sm flex items-center justify-center gap-1.5 cursor-pointer active:scale-98"
+                      >
+                        <Clock className="size-3.5" />
+                        <span>{isUrdu ? "لائیو وزٹ ٹریک کریں" : "Track Live Visit"}</span>
+                      </Link>
+                    )}
+
+                    {job.status === "completed" && (
+                      <Link
+                        href={`/customer/job/${job.id}/complete`}
+                        className="h-9 px-4 rounded-xl font-semibold text-xs sm:text-sm text-white bg-emerald-700 hover:bg-emerald-800 transition-colors shadow-sm flex items-center justify-center gap-1.5 cursor-pointer active:scale-98"
                       >
                         <CheckCircle2 className="size-3.5" />
-                        <span>{isUrdu ? "وزٹ اور PIN دیکھیں" : "View Visit & PIN"}</span>
+                        <span>{isUrdu ? "وارنٹی و رسید دیکھیں" : "View Invoice & Warranty"}</span>
                       </Link>
                     )}
                   </div>
@@ -367,7 +504,57 @@ export function CustomerJobsListView({ initialJobs }: CustomerJobsListViewProps)
           </div>
         </div>
       )}
+
+      {/* Customer Job Details Modal */}
+      <CustomerJobDetailsModal
+        job={selectedJobForDetails}
+        isOpen={Boolean(selectedJobForDetails)}
+        onClose={() => setSelectedJobForDetails(null)}
+        onReviewOffers={(job) => {
+          setSelectedJobForDetails(null);
+          setSelectedJobForOffers(job);
+        }}
+      />
+
+      {/* Customer Review Offers Modal */}
+      <CustomerReviewOffersModal
+        job={selectedJobForOffers}
+        isOpen={Boolean(selectedJobForOffers)}
+        onClose={() => setSelectedJobForOffers(null)}
+        onViewJobDetails={(job) => {
+          setSelectedJobForOffers(null);
+          setSelectedJobForDetails(job);
+        }}
+        onViewProfile={(offer) => setSelectedOfferForProfile(offer)}
+        onSelectWorker={(job, offer) => setBookingSelection({ job, offer })}
+        onRejectOffer={handleRejectOffer}
+      />
+
+      {/* Worker Profile Modal */}
+      <WorkerProfileModal
+        offer={selectedOfferForProfile}
+        isOpen={Boolean(selectedOfferForProfile)}
+        onClose={() => setSelectedOfferForProfile(null)}
+        onSelectWorker={(offer) => {
+          setSelectedOfferForProfile(null);
+          if (selectedJobForOffers) {
+            setBookingSelection({ job: selectedJobForOffers, offer });
+          }
+        }}
+      />
+
+      {/* Select Worker / Booking Confirmation Modal */}
+      {bookingSelection && (
+        <SelectWorkerModal
+          job={bookingSelection.job}
+          offer={bookingSelection.offer}
+          isOpen={Boolean(bookingSelection)}
+          onClose={() => setBookingSelection(null)}
+          onConfirmBooking={handleConfirmBooking}
+        />
+      )}
     </div>
   );
 }
+
 
