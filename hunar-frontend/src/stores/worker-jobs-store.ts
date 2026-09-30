@@ -128,7 +128,8 @@ export const workerStore = {
   async backfillResourceIds() {
     try {
       const repairs = await listMyRepairs({ limit: 100 }).catch(() => []);
-      for (const r of repairs) {
+      const repairList = Array.isArray(repairs) ? repairs : [];
+      for (const r of repairList) {
         repairIdByJob.set(r.jobId, r.id);
         if (r.visitId) visitIdByJob.set(r.jobId, r.visitId);
       }

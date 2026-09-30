@@ -103,7 +103,10 @@ export function ChatScreen({ conversationId }: { conversationId?: string }) {
               <ErrorState title={t("empty.errorTitle")} onRetry={() => void messages.refetch()} />
             ) : (
               <>
-                <div className="min-h-0 flex-1 space-y-3 overflow-y-auto pr-1">
+                <div
+                  className="min-h-0 flex-1 space-y-3 overflow-y-auto pr-1 scrollbar-none [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+                  style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+                >
                   {messages.data.length === 0 ? (
                     <p className="py-12 text-center text-sm text-muted-foreground">
                       {t("chat.emptyMessages")}
