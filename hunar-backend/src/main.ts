@@ -19,6 +19,8 @@ async function bootstrap(): Promise<void> {
 
   // Increase body size limits for file uploads (multipart)
   const express = require('express');
+  const path = require('path');
+  app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
   app.use(express.json({ limit: '10mb' }));
   app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 

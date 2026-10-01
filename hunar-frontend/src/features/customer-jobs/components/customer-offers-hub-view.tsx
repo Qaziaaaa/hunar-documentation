@@ -28,7 +28,7 @@ export function CustomerOffersHubView({ initialJobs }: CustomerOffersHubViewProp
   const locale = useLocale();
   const isUrdu = locale === "ur";
   const [jobs, setJobs] = useState<CustomerJob[]>(initialJobs);
-  const [statusFilter, setStatusFilter] = useState<"all" | "pending" | "accepted">("all");
+  const [statusFilter, setStatusFilter] = useState<"all" | "pending" | "accepted">("pending");
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [sortBy, setSortBy] = useState<"lowest_fee" | "highest_rating" | "fastest_arrival">("lowest_fee");
@@ -400,23 +400,42 @@ export function CustomerOffersHubView({ initialJobs }: CustomerOffersHubViewProp
             ))
           ) : (
             <div className="bg-white rounded-3xl p-12 text-center space-y-4 shadow-sm border border-slate-100">
-              <div className="size-16 rounded-3xl bg-slate-50 text-slate-300 flex items-center justify-center mx-auto">
-                <Tag className="size-8" />
+              <div className="size-16 rounded-3xl bg-teal/10 text-teal flex items-center justify-center mx-auto">
+                <CheckCircle2 className="size-8" />
               </div>
-              <div className="space-y-1">
+              <div className="space-y-1.5">
                 <h3 className="text-base font-bold text-[#123B5D]">
-                  {isUrdu ? "کوئی آفر موجود نہیں ہے" : "No offers found"}
+                  {statusFilter === "pending"
+                    ? isUrdu
+                      ? "تمام زیر غور آفرز نمٹ چکی ہیں!"
+                      : "All Caught Up! No Pending Offers"
+                    : isUrdu
+                    ? "کوئی آفر موجود نہیں ہے"
+                    : "No offers found"}
                 </h3>
                 <p className="text-xs text-slate-500 max-w-sm mx-auto">
-                  {isUrdu
+                  {statusFilter === "pending"
+                    ? isUrdu
+                      ? "آپ کی تمام تصدیق شدہ جابز شیڈول ہو چکی ہیں۔ اپنے آنے والے وزٹس اور لائیو ٹریکنگ دیکھنے کے لیے وزٹس پر جائیں۔"
+                      : "All your active bookings are confirmed and scheduled. You can track technicians live and view appointments in Visits."
+                    : isUrdu
                     ? "آپ کے منتخب کردہ فلٹرز کے مطابق کوئی موصولہ آفر نہیں ملی۔"
                     : "You do not have any incoming technician offers matching the active filters."}
                 </p>
               </div>
-              <div className="pt-2">
+              <div className="pt-2 flex items-center justify-center gap-3 flex-wrap">
+                {statusFilter === "pending" && (
+                  <Link
+                    href="/customer/visits"
+                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#0F8B8D] hover:bg-[#0F8B8D]/90 text-white text-xs font-bold shadow-xs transition-all"
+                  >
+                    <span>{isUrdu ? "شیڈول وزٹس دیکھیں" : "View Scheduled Visits"}</span>
+                    <ArrowRight className="size-4 rtl:rotate-180" />
+                  </Link>
+                )}
                 <Link
                   href="/customer/post-job"
-                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#0F766E] hover:bg-[#115E59] text-white text-xs font-bold shadow-xs transition-all"
+                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-all"
                 >
                   <Plus className="size-4" />
                   <span>{isUrdu ? "نئی جاب پوسٹ کریں" : "Post a New Job"}</span>

@@ -77,7 +77,24 @@ export class ChatService {
   }
 
   async getConversationByJob(jobId: string, userId: string) {
-    const conversation = await this.prisma.conversation.findUnique({ where: { jobId } });
+    let conversation = await this.prisma.conversation.findUnique({ where: { jobId } });
+    if (!conversation) {
+      const job = await this.prisma.serviceRequest.findUnique({ where: { id: jobId } });
+      if (job && (job.customerId === userId || job.selectedWorkerId === userId)) {
+        const workerId = job.selectedWorkerId || (userId === job.customerId ? null : userId);
+        if (workerId) {
+          conversation = await this.prisma.conversation.upsert({
+            where: { jobId: job.id },
+            update: {},
+            create: {
+              jobId: job.id,
+              customerId: job.customerId,
+              workerId,
+            },
+          });
+        }
+      }
+    }
     if (!conversation) {
       throw new NotFoundException('CONVERSATION_NOT_FOUND');
     }
@@ -90,9 +107,9 @@ export class ChatService {
   }
 
   async getMessages(conversationId: string, userId: string, query: MessageListQueryDto = {}) {
-    await this.ensureParticipant(conversationId, userId);
+    const conversation = await this.ensureParticipant(conversationId, userId);
     const { page, limit, skip } = normalizePage(query);
-    const where = { conversationId };
+    const where = { conversationId: conversation.id };
     const [items, total] = await Promise.all([
       this.prisma.message.findMany({
         where,
@@ -120,11 +137,23 @@ export class ChatService {
       },
     });
 
-    // Real-time delivery to everyone joined to the conversation room (incl. sender).
-    this.realtime.emitToRoom(chatRoom(conversation.id), CHAT_EVENTS.message, {
+    const realtimePayload = {
       conversationId: conversation.id,
+      jobId: conversation.jobId,
       message,
-    });
+    };
+
+    // Real-time delivery to everyone joined to the conversation room (incl. sender).
+    this.realtime.emitToRoom(chatRoom(conversation.id), CHAT_EVENTS.message, realtimePayload);
+    this.realtime.emitToRoom(chatRoom(conversation.jobId), CHAT_EVENTS.message, realtimePayload);
+    this.realtime.emitToRoom(`job:${conversation.jobId}`, CHAT_EVENTS.message, realtimePayload);
+
+    // Direct delivery to user-specific socket rooms (always connected upon login)
+    this.realtime.emitToUsers(
+      [conversation.customerId, conversation.workerId],
+      CHAT_EVENTS.message,
+      realtimePayload,
+    );
 
     // Domain event for the notifications module ("new message" to the worker).
     this.eventBus.emit('chat.message', {
@@ -141,10 +170,33 @@ export class ChatService {
   }
 
   // Socket join guard — verifies the socket user belongs to the conversation.
-  async ensureParticipant(conversationId: string, userId: string) {
-    const conversation = await this.prisma.conversation.findUnique({
-      where: { id: conversationId },
+  async ensureParticipant(conversationOrJobId: string, userId: string) {
+    let conversation = await this.prisma.conversation.findFirst({
+      where: {
+        OR: [{ id: conversationOrJobId }, { jobId: conversationOrJobId }],
+      },
     });
+
+    if (!conversation) {
+      const job = await this.prisma.serviceRequest.findUnique({
+        where: { id: conversationOrJobId },
+      });
+      if (job && (job.customerId === userId || job.selectedWorkerId === userId)) {
+        const workerId = job.selectedWorkerId || (userId === job.customerId ? null : userId);
+        if (workerId) {
+          conversation = await this.prisma.conversation.upsert({
+            where: { jobId: job.id },
+            update: {},
+            create: {
+              jobId: job.id,
+              customerId: job.customerId,
+              workerId,
+            },
+          });
+        }
+      }
+    }
+
     if (!conversation) {
       throw new NotFoundException('CONVERSATION_NOT_FOUND');
     }

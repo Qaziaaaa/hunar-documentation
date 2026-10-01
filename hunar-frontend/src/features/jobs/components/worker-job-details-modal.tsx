@@ -307,7 +307,7 @@ export function WorkerJobDetailsModal({
                     <div className="flex items-center gap-2">
                       <a
                         href={`tel:${job.customer.phone || "03001234567"}`}
-                        className="size-9 sm:size-10 rounded-xl bg-emerald-50 hover:bg-emerald-600 text-emerald-700 hover:text-white border border-emerald-200 flex items-center justify-center transition-all shadow-2xs cursor-pointer"
+                        className="size-9 sm:size-10 rounded-xl bg-success/10 hover:bg-success text-success hover:text-white border border-success/20 flex items-center justify-center transition-all shadow-2xs cursor-pointer"
                         title="Call Customer"
                       >
                         <Phone className="size-4" />
@@ -315,7 +315,7 @@ export function WorkerJobDetailsModal({
                       <button
                         type="button"
                         onClick={() => setShowChatModal(true)}
-                        className="size-9 sm:size-10 rounded-xl bg-[#0F8B8D]/10 hover:bg-[#0F8B8D] text-[#0F8B8D] hover:text-white border border-[#0F8B8D]/20 flex items-center justify-center transition-all shadow-2xs cursor-pointer"
+                        className="size-9 sm:size-10 rounded-xl bg-teal/10 hover:bg-teal text-teal hover:text-white border border-teal/20 flex items-center justify-center transition-all shadow-2xs cursor-pointer"
                         title="Message Customer"
                       >
                         <MessageSquare className="size-4" />
