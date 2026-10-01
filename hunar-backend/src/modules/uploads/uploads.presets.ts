@@ -122,7 +122,8 @@ export function multerOptions(category: UploadCategory): MulterUploadOptions {
     storage: memoryStorage(),
     limits: { fileSize: preset.maxBytes, files: 1 },
     fileFilter: (_req, file, cb) => {
-      if (!preset.allowedMimeTypes.includes(file.mimetype)) {
+      const baseMime = (file.mimetype || '').split(';')[0].trim().toLowerCase();
+      if (!preset.allowedMimeTypes.includes(file.mimetype) && !preset.allowedMimeTypes.includes(baseMime)) {
         return cb(
           new HttpException(
             `UNSUPPORTED_FILE_TYPE: this endpoint accepts ${preset.allowedMimeTypes.join(', ')}`,
@@ -162,7 +163,8 @@ export function multerGenericOptions(): MulterUploadOptions {
 }
 
 export function extensionFromMime(mimeType: string): string {
-  switch (mimeType) {
+  const base = (mimeType || '').split(';')[0].trim().toLowerCase();
+  switch (base) {
     case 'image/jpeg':
       return 'jpg';
     case 'image/png':

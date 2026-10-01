@@ -20,20 +20,29 @@ import { Link, useRouter } from "@/i18n/navigation";
 import { useSearchParams } from "next/navigation";
 import { ChatInputBar } from "./chat-input-bar";
 import { VoiceMessageBubble } from "./voice-message-bubble";
-import { sendChatMessage, uploadChatImage } from "../api/chat-api";
+import { sendChatMessage, uploadChatImage, getMessagesByJob, parseVoiceNote, encodeVoiceNote, uploadVoiceNote, storeVoiceInCache, blobToBase64 } from "../api/chat-api";
+import { joinConversationRoom, subscribeToMessages } from "@/services/worker/chat.service";
+import { isMockMode } from "@/lib/data-source";
+import { getStoredUser } from "@/lib/api-client";
 import { getCustomerVisits } from "@/features/customer-visits/api/customer-visits-api";
 import { useQuery } from "@tanstack/react-query";
 import type { ScheduledVisit } from "@/features/customer-visits/types";
 
 interface ChatMessage {
   id: string;
+  messageId?: string;
+  senderId?: string;
+  receiverId?: string;
+  jobId?: string;
   sender: "customer" | "technician";
-  type?: "text" | "voice" | "image";
+  type: "text" | "voice" | "image";
+  messageType?: "text" | "voice" | "image";
   text?: string;
   audioUrl?: string;
   durationSeconds?: number;
   imageUrl?: string;
   time: string;
+  createdAt?: string;
 }
 
 export function CustomerChatView() {
@@ -137,7 +146,6 @@ export function CustomerChatView() {
             id: "m-3",
             sender: "customer",
             type: "voice",
-            audioUrl: "https://actions.google.com/sounds/v1/speech/hello.ogg",
             durationSeconds: 12,
             time: "10:35 AM",
           },
@@ -168,7 +176,6 @@ export function CustomerChatView() {
             id: "m-3",
             sender: "customer",
             type: "voice",
-            audioUrl: "https://actions.google.com/sounds/v1/speech/hello.ogg",
             durationSeconds: 12,
             time: "10:35 AM",
           },
@@ -244,12 +251,129 @@ export function CustomerChatView() {
     }
   }, [messages, selectedVisitId]);
 
+  // Load real messages for current visit if available from backend
+  useEffect(() => {
+    if (!currentVisit?.jobId) return;
+    let isCancelled = false;
+
+    // Immediately join the job room so real-time socket events flow immediately
+    joinConversationRoom(currentVisit.jobId);
+
+    getMessagesByJob(currentVisit.jobId)
+      .then((backendMsgs) => {
+        if (isCancelled || !backendMsgs || backendMsgs.length === 0) return;
+        const currentUserId = getStoredUser()?.id;
+        const formatted: ChatMessage[] = backendMsgs.map((m) => {
+          const isFromMe = currentUserId ? m.senderId === currentUserId : m.senderRole === "CUSTOMER";
+          const voice = parseVoiceNote(m.text || m.content);
+          const msgType: "text" | "voice" | "image" = voice ? "voice" : m.imageUrl ? "image" : "text";
+          return {
+            id: m.id,
+            messageId: m.id,
+            senderId: m.senderId,
+            receiverId: m.receiverId || voice?.receiverId,
+            jobId: m.jobId || voice?.jobId || currentVisit.jobId,
+            sender: isFromMe ? "customer" : "technician",
+            type: msgType,
+            messageType: msgType,
+            text: voice ? undefined : (m.text || m.content),
+            audioUrl: voice?.audioUrl,
+            durationSeconds: voice?.durationSeconds,
+            imageUrl: m.imageUrl,
+            time: new Date(m.createdAt).toLocaleTimeString([], {
+              hour: "2-digit",
+              minute: "2-digit",
+            }),
+            createdAt: m.createdAt,
+          };
+        });
+        setMessagesByVisit((prev) => ({
+          ...prev,
+          [currentVisit.id]: formatted,
+        }));
+        if (backendMsgs[0]?.conversationId) {
+          joinConversationRoom(backendMsgs[0].conversationId);
+        }
+      })
+      .catch(() => {});
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [currentVisit?.id, currentVisit?.jobId]);
+
+  // Real-time incoming message listener for active conversation
+  useEffect(() => {
+    if (!currentVisit) return;
+    const unsubscribe = subscribeToMessages((msg) => {
+      const currentUserId = getStoredUser()?.id;
+      const isFromMe = currentUserId ? msg.senderId === currentUserId : msg.senderRole === "customer";
+
+      setMessagesByVisit((prev) => {
+        const existing = prev[currentVisit.id] || [];
+        if (existing.some((m) => m.id === msg.id)) return prev;
+
+        const voice = parseVoiceNote(msg.text || (msg as any).content);
+        const msgType: "text" | "voice" | "image" = voice ? "voice" : msg.imageUrl ? "image" : "text";
+
+        // If from me, reconcile temporary message
+        if (isFromMe) {
+          const tempIdx = existing.findIndex(
+            (m) =>
+              m.id.startsWith("msg-") &&
+              (m.text === msg.text || (m.type === "voice" && voice))
+          );
+          if (tempIdx !== -1) {
+            const copy = [...existing];
+            copy[tempIdx] = {
+              ...copy[tempIdx],
+              id: msg.id,
+              messageId: msg.id,
+              audioUrl: voice?.audioUrl || copy[tempIdx].audioUrl,
+            };
+            return { ...prev, [currentVisit.id]: copy };
+          }
+          return prev;
+        }
+
+        // It is from the technician!
+        const newMsg: ChatMessage = {
+          id: msg.id,
+          messageId: msg.id,
+          senderId: msg.senderId,
+          receiverId: msg.receiverId || voice?.receiverId,
+          jobId: msg.jobId || voice?.jobId || currentVisit.jobId,
+          sender: "technician",
+          type: msgType,
+          messageType: msgType,
+          text: voice ? undefined : msg.text,
+          audioUrl: voice?.audioUrl,
+          durationSeconds: voice?.durationSeconds,
+          imageUrl: msg.imageUrl,
+          time: new Date(msg.createdAt).toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit",
+          }),
+          createdAt: msg.createdAt,
+        };
+        return {
+          ...prev,
+          [currentVisit.id]: [...existing, newMsg],
+        };
+      });
+    });
+    return () => {
+      unsubscribe();
+    };
+  }, [currentVisit?.id]);
+
   const handleSendMessage = (text: string) => {
     if (!currentVisit) return;
     const visitId = currentVisit.id;
+    const tempId = `msg-${Date.now()}`;
 
     const newMsg: ChatMessage = {
-      id: `msg-${Date.now()}`,
+      id: tempId,
       sender: "customer",
       type: "text",
       text,
@@ -264,52 +388,114 @@ export function CustomerChatView() {
       [visitId]: [...(prev[visitId] || []), newMsg],
     }));
 
-    sendChatMessage(currentVisit.jobId || "job-1", text).catch(() => {});
-
-    // Simulated reply from technician
-    setTimeout(() => {
-      const replyMsg: ChatMessage = {
-        id: `msg-${Date.now() + 1}`,
-        sender: "technician",
-        type: "text",
-        text: isUrdu ? "شکریہ! موصول ہو گیا۔" : "Thank you, received!",
-        time: new Date().toLocaleTimeString([], {
-          hour: "2-digit",
-          minute: "2-digit",
-        }),
-      };
-      setMessagesByVisit((prev) => ({
-        ...prev,
-        [visitId]: [...(prev[visitId] || []), replyMsg],
-      }));
-    }, 1500);
+    sendChatMessage(currentVisit.jobId || "job-1", text, { isJobId: true })
+      .then((sent) => {
+        setMessagesByVisit((prev) => {
+          const existing = prev[visitId] || [];
+          return {
+            ...prev,
+            [visitId]: existing.map((m) => (m.id === tempId ? { ...m, id: sent.id } : m)),
+          };
+        });
+        if (sent.conversationId) {
+          joinConversationRoom(sent.conversationId);
+        }
+      })
+      .catch((err) => {
+        console.warn("sendChatMessage fallback:", err);
+        if (isMockMode()) {
+          // Simulated reply from technician only on mock mode
+          setTimeout(() => {
+            const replyMsg: ChatMessage = {
+              id: `msg-${Date.now() + 1}`,
+              sender: "technician",
+              type: "text",
+              text: isUrdu ? "شکریہ! موصول ہو گیا۔" : "Thank you, received!",
+              time: new Date().toLocaleTimeString([], {
+                hour: "2-digit",
+                minute: "2-digit",
+              }),
+            };
+            setMessagesByVisit((prev) => ({
+              ...prev,
+              [visitId]: [...(prev[visitId] || []), replyMsg],
+            }));
+          }, 1500);
+        }
+      });
   };
 
-  const handleSendVoiceNote = (audioUrl: string, durationSeconds: number) => {
+  const handleSendVoiceNote = async (audioUrl: string, durationSeconds: number) => {
     if (!currentVisit) return;
     const visitId = currentVisit.id;
+    const tempId = `msg-${Date.now()}`;
+    const currentUserId = getStoredUser()?.id;
+    const workerId = currentVisit.technician?.id;
 
-    const newMsg: ChatMessage = {
-      id: `msg-${Date.now()}`,
+    const optimisticMsg: ChatMessage = {
+      id: tempId,
+      messageId: tempId,
+      senderId: currentUserId,
+      receiverId: workerId,
+      jobId: currentVisit.jobId,
       sender: "customer",
       type: "voice",
+      messageType: "voice",
       audioUrl,
       durationSeconds,
       time: new Date().toLocaleTimeString([], {
         hour: "2-digit",
         minute: "2-digit",
       }),
+      createdAt: new Date().toISOString(),
     };
 
     setMessagesByVisit((prev) => ({
       ...prev,
-      [visitId]: [...(prev[visitId] || []), newMsg],
+      [visitId]: [...(prev[visitId] || []), optimisticMsg],
     }));
 
-    sendChatMessage(
-      currentVisit.jobId || "job-1",
-      `[Voice Note: ${durationSeconds}s]`
-    ).catch(() => {});
+    try {
+      let serverAudioUrl = audioUrl;
+      if (audioUrl.startsWith("blob:") || audioUrl.startsWith("data:")) {
+        const blob = await fetch(audioUrl).then((r) => r.blob());
+        const uploaded = await uploadVoiceNote(blob);
+        if (uploaded?.url) {
+          serverAudioUrl = uploaded.url;
+        }
+      }
+
+      const payloadText = encodeVoiceNote(serverAudioUrl, durationSeconds, {
+        jobId: currentVisit.jobId,
+        senderId: currentUserId,
+        receiverId: workerId,
+      });
+
+      const sent = await sendChatMessage(currentVisit.jobId || "job-1", payloadText, { isJobId: true });
+
+      setMessagesByVisit((prev) => {
+        const existing = prev[visitId] || [];
+        return {
+          ...prev,
+          [visitId]: existing.map((m) =>
+            m.id === tempId
+              ? {
+                  ...m,
+                  id: sent.id,
+                  messageId: sent.id,
+                  audioUrl: serverAudioUrl,
+                }
+              : m
+          ),
+        };
+      });
+
+      if (sent.conversationId) {
+        joinConversationRoom(sent.conversationId);
+      }
+    } catch (err) {
+      console.error("Failed to upload/send customer voice note:", err);
+    }
   };
 
   const handleSendImage = async (file: File) => {
@@ -334,7 +520,13 @@ export function CustomerChatView() {
     }));
 
     try {
-      await uploadChatImage(file);
+      const uploadRes = await uploadChatImage(file);
+      if (uploadRes?.key) {
+        await sendChatMessage(currentVisit.jobId || "job-1", "", {
+          isJobId: true,
+          imageKey: uploadRes.key,
+        });
+      }
     } catch {}
   };
 

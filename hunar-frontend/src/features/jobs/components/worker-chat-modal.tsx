@@ -14,7 +14,9 @@ import {
 import { JobRequest } from "@/types/job";
 import { ChatInputBar } from "@/features/chat/components/chat-input-bar";
 import { VoiceMessageBubble } from "@/features/chat/components/voice-message-bubble";
-import { sendChatMessage } from "@/features/chat/api/chat-api";
+import { sendChatMessage, getMessagesByJob, uploadChatImage, parseVoiceNote, encodeVoiceNote, uploadVoiceNote, storeVoiceInCache, blobToBase64 } from "@/features/chat/api/chat-api";
+import { joinConversationRoom, subscribeToMessages } from "@/services/worker/chat.service";
+import { getStoredUser } from "@/lib/api-client";
 
 interface WorkerChatModalProps {
   job: JobRequest;
@@ -25,12 +27,18 @@ interface WorkerChatModalProps {
 
 interface ChatMessage {
   id: string;
+  messageId?: string;
   sender: "worker" | "customer";
+  senderId?: string;
+  receiverId?: string;
+  jobId?: string;
+  messageType?: "text" | "voice" | "image";
   type?: "text" | "voice" | "image";
   text?: string;
   audioUrl?: string;
   durationSeconds?: number;
   imageUrl?: string;
+  createdAt?: string;
   time: string;
 }
 
@@ -123,12 +131,130 @@ export function WorkerChatModal({
     }
   }, [isOpen, messages]);
 
+  // Load real messages for job when modal opens
+  useEffect(() => {
+    if (!isOpen || !job?.id) return;
+    let isCancelled = false;
+
+    // Immediately join the job room so real-time socket events flow immediately
+    joinConversationRoom(job.id);
+
+    getMessagesByJob(job.id)
+      .then((backendMsgs) => {
+        if (isCancelled || !backendMsgs || backendMsgs.length === 0) return;
+        const currentUserId = getStoredUser()?.id;
+        const formatted: ChatMessage[] = backendMsgs.map((m) => {
+          const isFromMe = currentUserId ? m.senderId === currentUserId : m.senderRole === "WORKER";
+          const voice = parseVoiceNote(m.text || m.content);
+          const msgType: "text" | "voice" | "image" = voice ? "voice" : m.imageUrl ? "image" : "text";
+          return {
+            id: m.id,
+            messageId: m.id,
+            sender: isFromMe ? "worker" : "customer",
+            senderId: m.senderId,
+            receiverId: m.receiverId,
+            jobId: m.jobId || job.id,
+            messageType: msgType,
+            type: msgType,
+            text: voice ? undefined : (m.text || m.content),
+            audioUrl: voice?.audioUrl,
+            durationSeconds: voice?.durationSeconds,
+            imageUrl: m.imageUrl,
+            createdAt: m.createdAt,
+            time: new Date(m.createdAt).toLocaleTimeString([], {
+              hour: "2-digit",
+              minute: "2-digit",
+            }),
+          };
+        });
+        setMessages(formatted);
+        if (backendMsgs[0]?.conversationId) {
+          joinConversationRoom(backendMsgs[0].conversationId);
+        }
+      })
+      .catch(() => {});
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [isOpen, job?.id]);
+
+  // Real-time socket listener for incoming messages
+  useEffect(() => {
+    if (!isOpen || !job?.id) return;
+    const unsubscribe = subscribeToMessages((msg) => {
+      const currentUserId = getStoredUser()?.id;
+      const isFromMe = currentUserId ? msg.senderId === currentUserId : msg.senderRole === "worker";
+
+      setMessages((prev) => {
+        if (prev.some((m) => m.id === msg.id || (m.messageId && m.messageId === msg.id))) return prev;
+
+        const voice = parseVoiceNote(msg.text || (msg as any).content);
+        const msgType: "text" | "voice" | "image" = voice ? "voice" : msg.imageUrl ? "image" : "text";
+
+        // If from me, it's already shown optimistically. Reconcile temporary message if present.
+        if (isFromMe) {
+          const tempIndex = prev.findIndex(
+            (m) => m.id.startsWith("wm-") && (m.text === msg.text || (m.type === "voice" && voice))
+          );
+          if (tempIndex !== -1) {
+            const copy = [...prev];
+            copy[tempIndex] = {
+              ...copy[tempIndex],
+              id: msg.id,
+              messageId: msg.id,
+              senderId: msg.senderId || copy[tempIndex].senderId,
+              receiverId: msg.receiverId || copy[tempIndex].receiverId,
+              audioUrl: voice?.audioUrl || copy[tempIndex].audioUrl,
+              durationSeconds: voice?.durationSeconds || copy[tempIndex].durationSeconds,
+              messageType: msgType,
+            };
+            return copy;
+          }
+          return prev;
+        }
+
+        // It is from the customer!
+        const newMsg: ChatMessage = {
+          id: msg.id,
+          messageId: msg.id,
+          sender: "customer",
+          senderId: msg.senderId,
+          receiverId: msg.receiverId,
+          jobId: msg.jobId || job.id,
+          messageType: msgType,
+          type: msgType,
+          text: voice ? undefined : msg.text,
+          audioUrl: voice?.audioUrl,
+          durationSeconds: voice?.durationSeconds,
+          imageUrl: msg.imageUrl,
+          createdAt: msg.createdAt,
+          time: new Date(msg.createdAt).toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit",
+          }),
+        };
+        return [...prev, newMsg];
+      });
+    });
+    return () => {
+      unsubscribe();
+    };
+  }, [isOpen, job?.id]);
+
   if (!isOpen) return null;
 
   const handleSendTextMessage = (messageText: string) => {
+    const currentUserId = getStoredUser()?.id;
+    const tempId = `wm-${Date.now()}`;
     const newMsg: ChatMessage = {
-      id: `wm-${Date.now()}`,
+      id: tempId,
+      messageId: tempId,
       sender: "worker",
+      senderId: currentUserId,
+      receiverId: (job as any).customerId,
+      jobId: job.id,
+      messageType: "text",
       type: "text",
       text: messageText,
       time: isUrdu ? "ابھی" : "Just now",
@@ -136,22 +262,88 @@ export function WorkerChatModal({
 
     setMessages((prev) => [...prev, newMsg]);
 
-    sendChatMessage(job.id, messageText).catch((err) => {
-      console.warn("sendChatMessage error fallback:", err);
-    });
+    sendChatMessage(job.id, messageText, { isJobId: true })
+      .then((sent) => {
+        setMessages((prev) =>
+          prev.map((m) => (m.id === tempId ? { ...m, id: sent.id, messageId: sent.id } : m))
+        );
+        if (sent.conversationId) {
+          joinConversationRoom(sent.conversationId);
+        }
+      })
+      .catch((err) => {
+        console.warn("sendChatMessage error fallback:", err);
+      });
   };
 
-  const handleSendVoiceNote = (audioUrl: string, durationSeconds: number) => {
+  const handleSendVoiceNote = async (audioUrl: string, durationSeconds: number) => {
+    const currentUserId = getStoredUser()?.id;
+    const receiverId = (job as any).customerId;
+    const tempId = `wm-${Date.now()}`;
+    const voiceId = `vn_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+
+    // Upload recorded audio file to server storage to get persistent URL
+    let remoteAudioUrl = "";
+    if (audioUrl.startsWith("blob:") || audioUrl.startsWith("data:")) {
+      try {
+        const blob = await fetch(audioUrl).then((r) => r.blob());
+        const uploaded = await uploadVoiceNote(blob);
+        if (uploaded?.url) {
+          remoteAudioUrl = uploaded.url;
+        }
+      } catch (err) {
+        console.warn("Failed to upload audio to backend, using local audio:", err);
+      }
+    } else {
+      remoteAudioUrl = audioUrl;
+    }
+
+    const effectiveAudioUrl = remoteAudioUrl || audioUrl;
+
     const newMsg: ChatMessage = {
-      id: `wm-${Date.now()}`,
+      id: tempId,
+      messageId: tempId,
       sender: "worker",
+      senderId: currentUserId,
+      receiverId: receiverId,
+      jobId: job.id,
+      messageType: "voice",
       type: "voice",
-      audioUrl,
+      audioUrl: effectiveAudioUrl,
       durationSeconds,
       time: isUrdu ? "ابھی" : "Just now",
     };
 
     setMessages((prev) => [...prev, newMsg]);
+
+    const payloadText = encodeVoiceNote(effectiveAudioUrl, durationSeconds, {
+      voiceId,
+      jobId: job.id,
+      senderId: currentUserId,
+      receiverId: receiverId,
+    });
+
+    sendChatMessage(job.id, payloadText, { isJobId: true })
+      .then((sent) => {
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.id === tempId
+              ? {
+                  ...m,
+                  id: sent.id,
+                  messageId: sent.id,
+                  audioUrl: effectiveAudioUrl,
+                }
+              : m
+          )
+        );
+        if (sent.conversationId) {
+          joinConversationRoom(sent.conversationId);
+        }
+      })
+      .catch((err) => {
+        console.warn("sendChatMessage voice fallback:", err);
+      });
   };
 
   const handleSendImage = (file: File) => {
@@ -165,6 +357,14 @@ export function WorkerChatModal({
     };
 
     setMessages((prev) => [...prev, newMsg]);
+
+    uploadChatImage(file)
+      .then((res) => {
+        if (res?.key) {
+          sendChatMessage(job.id, "", { isJobId: true, imageKey: res.key });
+        }
+      })
+      .catch(() => {});
   };
 
   const workerQuickSuggestions = isUrdu

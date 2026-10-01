@@ -1,4 +1,4 @@
-import { http } from "@/lib/api-client";
+import { http, getStoredUserRaw, getStoredUser } from "@/lib/api-client";
 import { connectSocket, getSocket } from "@/lib/socket";
 import { CHAT_EVENT } from "@/lib/socket-events";
 import { isMockMode, simulateLatency } from "@/lib/data-source";
@@ -7,6 +7,7 @@ import type {
   ChatMessage,
   Conversation,
   SendMessageInput,
+  MessageSenderRole,
 } from "@/types/chat";
 import {
   mockConversations,
@@ -19,11 +20,39 @@ type ConversationListener = (conversation: Conversation) => void;
 const mockMessageListeners = new Set<MessageListener>();
 const mockConversationListeners = new Set<ConversationListener>();
 
+function getCurrentUserId(): string | undefined {
+  try {
+    const raw = getStoredUserRaw();
+    if (!raw) return undefined;
+    return JSON.parse(raw)?.id;
+  } catch {
+    return undefined;
+  }
+}
+
 export async function getConversations(): Promise<Conversation[]> {
   if (isMockMode()) {
     return simulateLatency([...mockConversations]);
   }
-  return http.get<Conversation[]>(`/conversations/my`);
+  try {
+    const res = await http.get<any[]>("/chat/conversations");
+    const rawList: any[] = Array.isArray(res) ? res : (res as any)?.items ?? [];
+    return rawList.map((item) => ({
+      id: item.id,
+      jobId: item.jobId,
+      jobTitle: item.job?.title || "Job Order",
+      customerId: item.customerId,
+      customerName: item.customer?.name || "Customer",
+      customerAvatar: item.customer?.avatarUrl ?? undefined,
+      lastMessage: item.lastMessage ?? undefined,
+      lastMessageAt: item.lastMessageAt ?? item.updatedAt ?? undefined,
+      unreadCount: 0,
+      active: item.isActive ?? true,
+    }));
+  } catch (err) {
+    console.warn("[getConversations] Backend offline, using mock conversations:", err);
+    return simulateLatency([...mockConversations]);
+  }
 }
 
 export async function getMessages(
@@ -33,7 +62,44 @@ export async function getMessages(
     const messages = mockMessages[conversationId] ?? [];
     return simulateLatency([...messages]);
   }
-  return http.get<ChatMessage[]>(`/conversations/${conversationId}/messages`);
+  try {
+    // Try by conversationId first
+    let res: any;
+    try {
+      res = await http.get<any>(`/chat/${conversationId}/messages`);
+    } catch {
+      // Fallback: try resolving by jobId in case conversationId was a jobId
+      res = await http.get<any>(`/chat/${conversationId}`);
+    }
+
+    const rawList: any[] = Array.isArray(res) ? res : (res?.items ?? []);
+    const user = getStoredUser();
+    const currentUserId = user?.id;
+    const isWorker = user?.role === "WORKER";
+
+    return rawList
+      .map((item: any) => {
+        const isFromMe = Boolean(item.senderId && currentUserId && item.senderId === currentUserId);
+        const senderRole: MessageSenderRole = isFromMe
+          ? (isWorker ? "worker" : "customer")
+          : (isWorker ? "customer" : "worker");
+        return {
+          id: item.id || `msg-${Date.now()}`,
+          conversationId: item.conversationId || conversationId,
+          senderId: item.senderId,
+          senderRole,
+          text: item.text ?? item.content ?? undefined,
+          imageUrl: item.imageUrl ?? undefined,
+          status: "sent" as const,
+          createdAt: item.createdAt || new Date().toISOString(),
+        };
+      })
+      .reverse(); // Backend returns desc (newest first), reverse to asc
+  } catch (err) {
+    console.warn(`[getMessages] Backend offline for ${conversationId}, using mock messages:`, err);
+    const messages = mockMessages[conversationId] ?? [];
+    return simulateLatency([...messages]);
+  }
 }
 
 export async function sendMessage(
@@ -68,12 +134,48 @@ export async function sendMessage(
     }
     return message;
   }
-  const persisted = await http.post<ChatMessage>(
-    `/conversations/${input.conversationId}/messages`,
-    { text: input.text, imageUrl: input.imageUrl },
-  );
-  emitSocketMessage(persisted);
-  return persisted;
+
+  const currentUserId = getCurrentUserId();
+
+  try {
+    const raw = await http.post<any>(
+      `/chat/${input.conversationId}/messages`,
+      { text: input.text },
+    );
+    const persisted: ChatMessage = {
+      id: raw.id || `msg-${Date.now()}`,
+      conversationId: raw.conversationId || input.conversationId,
+      senderId: raw.senderId || currentUserId || "worker",
+      senderRole: "worker",
+      text: raw.text ?? input.text,
+      imageUrl: raw.imageUrl ?? input.imageUrl,
+      status: "sent",
+      createdAt: raw.createdAt || new Date().toISOString(),
+    };
+    return persisted;
+  } catch (err) {
+    // If conversationId was actually a jobId, try /chat/send
+    try {
+      const raw = await http.post<any>("/chat/send", {
+        jobId: input.conversationId,
+        text: input.text,
+      });
+      const persisted: ChatMessage = {
+        id: raw.id || `msg-${Date.now()}`,
+        conversationId: raw.conversationId || input.conversationId,
+        senderId: raw.senderId || currentUserId || "worker",
+        senderRole: "worker",
+        text: raw.text ?? input.text,
+        imageUrl: raw.imageUrl ?? input.imageUrl,
+        status: "sent",
+        createdAt: raw.createdAt || new Date().toISOString(),
+      };
+      return persisted;
+    } catch {
+      console.warn("[sendMessage] Failed to send via backend:", err);
+      throw err;
+    }
+  }
 }
 
 export async function markConversationRead(
@@ -89,7 +191,7 @@ export async function markConversationRead(
     }
     return;
   }
-  await http.put(`/conversations/${conversationId}/read`);
+  // Backend does not maintain per-message unread flag mutations via REST; no-op gracefully
 }
 
 export function subscribeToMessages(listener: MessageListener): () => void {
@@ -99,12 +201,43 @@ export function subscribeToMessages(listener: MessageListener): () => void {
       mockMessageListeners.delete(listener);
     };
   }
-  const socket = getSocket();
+  const socket = connectSocket();
   if (!socket) return () => undefined;
-  const handle = (message: ChatMessage) => listener(message);
+
+  const handle = (payload: any) => {
+    const raw = payload?.message ?? payload;
+    if (!raw || (!raw.text && !raw.content)) return;
+
+    const user = getStoredUser();
+    const currentUserId = user?.id;
+    const isWorker = user?.role === "WORKER";
+
+    const isFromMe = Boolean(raw.senderId && currentUserId && raw.senderId === currentUserId);
+    const senderRole: MessageSenderRole = isFromMe
+      ? (isWorker ? "worker" : "customer")
+      : (isWorker ? "customer" : "worker");
+
+    const msg: ChatMessage = {
+      id: raw.id || `msg-${Date.now()}`,
+      messageId: raw.id,
+      conversationId: raw.conversationId || payload?.conversationId,
+      jobId: payload?.jobId || raw.jobId,
+      senderId: raw.senderId || "unknown",
+      senderRole,
+      text: raw.text ?? raw.content,
+      content: raw.text ?? raw.content,
+      imageUrl: raw.imageUrl,
+      status: "sent",
+      createdAt: raw.createdAt || new Date().toISOString(),
+    };
+    listener(msg);
+  };
+
   socket.on(CHAT_EVENT.receive, handle);
+  socket.on("message", handle);
   return () => {
     socket.off(CHAT_EVENT.receive, handle);
+    socket.off("message", handle);
   };
 }
 
@@ -117,7 +250,7 @@ export function subscribeToConversations(
       mockConversationListeners.delete(listener);
     };
   }
-  const socket = getSocket();
+  const socket = connectSocket();
   if (!socket) return () => undefined;
   const handle = (conversation: Conversation) => listener(conversation);
   socket.on("conversation:updated", handle);
@@ -127,15 +260,21 @@ export function subscribeToConversations(
 }
 
 export function joinConversationRoom(conversationId: string): void {
-  const socket = getSocket();
+  const socket = connectSocket();
   if (!socket) return;
-  socket.emit(CHAT_EVENT.join, { conversationId });
+  socket.emit(CHAT_EVENT.join, {
+    conversationId,
+    jobId: conversationId,
+  });
 }
 
 export function leaveConversationRoom(conversationId: string): void {
   const socket = getSocket();
   if (!socket) return;
-  socket.emit(CHAT_EVENT.leave, { conversationId });
+  socket.emit(CHAT_EVENT.leave, {
+    conversationId,
+    jobId: conversationId,
+  });
 }
 
 export function convertFileToAttachment(
@@ -155,12 +294,6 @@ export const queryKeys = {
   messages: (conversationId: string) =>
     ["worker", "chat", "messages", conversationId] as const,
 };
-
-function emitSocketMessage(message: ChatMessage): void {
-  const socket = connectSocket();
-  if (!socket) return;
-  socket.emit(CHAT_EVENT.send, message);
-}
 
 function notifyMockConversationListeners(conversation: Conversation): void {
   for (const listener of mockConversationListeners) {

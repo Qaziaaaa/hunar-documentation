@@ -15,6 +15,8 @@ import { getConversations, getMessages, joinConversationRoom, leaveConversationR
 import { uploadImage, validateImage } from "@/services/worker/upload.service";
 import type { ChatMessage } from "@/types/chat";
 import { formatDateTime } from "@/lib/format";
+import { VoiceMessageBubble } from "@/features/chat/components/voice-message-bubble";
+import { parseVoiceNote } from "@/features/chat/api/chat-api";
 
 export function ChatScreen({ conversationId }: { conversationId?: string }) {
   const t = useTranslations("Worker");
@@ -196,5 +198,36 @@ export function ChatScreen({ conversationId }: { conversationId?: string }) {
 
 function MessageBubble({ message }: { message: ChatMessage }) {
   const own = message.senderRole === "worker";
-  return <div className={`flex ${own ? "justify-end" : "justify-start"}`}><div className={`max-w-[85%] rounded-xl px-3 py-2 ${own ? "bg-teal text-white" : "bg-muted text-foreground"}`}>{message.imageUrl ? <img src={message.imageUrl} alt="" className="mb-2 max-h-48 rounded-lg object-cover" /> : null}{message.text ? <p className="text-sm">{message.text}</p> : null}<span className={`mt-1 flex items-center justify-end gap-1 text-[0.65rem] ${own ? "text-white/75" : "text-muted-foreground"}`}><time>{formatDateTime(message.createdAt)}</time>{own ? message.status === "read" ? <CheckCheck className="size-3" aria-label={message.status} /> : <Check className="size-3" aria-label={message.status} /> : null}</span></div></div>;
+  const voice = parseVoiceNote(message.text || (message as any).content);
+
+  if (voice) {
+    return (
+      <div className={`flex ${own ? "justify-end" : "justify-start"}`}>
+        <div className="max-w-[85%]">
+          <VoiceMessageBubble
+            audioUrl={voice.audioUrl}
+            durationSeconds={voice.durationSeconds}
+            isSender={own}
+            variant="teal"
+          />
+          <span className={`mt-1 flex items-center justify-end gap-1 text-[0.65rem] ${own ? "text-slate-500" : "text-muted-foreground"}`}>
+            <time>{formatDateTime(message.createdAt)}</time>
+          </span>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className={`flex ${own ? "justify-end" : "justify-start"}`}>
+      <div className={`max-w-[85%] rounded-xl px-3 py-2 ${own ? "bg-teal text-white" : "bg-muted text-foreground"}`}>
+        {message.imageUrl ? <img src={message.imageUrl} alt="" className="mb-2 max-h-48 rounded-lg object-cover" /> : null}
+        {message.text ? <p className="text-sm">{message.text}</p> : null}
+        <span className={`mt-1 flex items-center justify-end gap-1 text-[0.65rem] ${own ? "text-white/75" : "text-muted-foreground"}`}>
+          <time>{formatDateTime(message.createdAt)}</time>
+          {own ? message.status === "read" ? <CheckCheck className="size-3" aria-label={message.status} /> : <Check className="size-3" aria-label={message.status} /> : null}
+        </span>
+      </div>
+    </div>
+  );
 }
