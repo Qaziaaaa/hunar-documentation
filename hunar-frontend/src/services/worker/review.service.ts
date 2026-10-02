@@ -11,21 +11,52 @@ export async function getRatingSummary(
   if (isMockMode()) {
     return simulateLatency({ ...mockRatingSummary });
   }
-  const page = await http.get<PageResult<Review>>(
+  if (!workerId) {
+    return {
+      average: 0,
+      totalReviews: 0,
+      breakdown: { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 },
+    };
+  }
+  const res = await http.get<any>(
     `/reviews/worker/${workerId}?limit=100`,
   );
-  const reviews = page.items;
-  const totalReviews = reviews.length;
-  const totalRating = reviews.reduce((sum, r) => sum + r.rating, 0);
+  const rawReviews: any[] = Array.isArray(res?.reviews)
+    ? res.reviews
+    : Array.isArray(res?.items)
+    ? res.items
+    : Array.isArray(res)
+    ? res
+    : [];
+
+  const totalReviews =
+    typeof res?.totalReviews === "number"
+      ? res.totalReviews
+      : typeof res?.pagination?.total === "number"
+      ? res.pagination.total
+      : rawReviews.length;
+
+  const totalRating = rawReviews.reduce(
+    (sum, r) => sum + (Number(r.rating) || 0),
+    0,
+  );
   const breakdown = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 } as WorkerRatingSummary["breakdown"];
-  for (const r of reviews) {
-    if (r.rating >= 1 && r.rating <= 5) {
-      breakdown[r.rating as 1 | 2 | 3 | 4 | 5] += 1;
+  for (const r of rawReviews) {
+    const val = Math.round(Number(r.rating) || 0);
+    if (val >= 1 && val <= 5) {
+      breakdown[val as 1 | 2 | 3 | 4 | 5] += 1;
     }
   }
+
+  const avg =
+    totalReviews > 0
+      ? typeof res?.avgRating === "number"
+        ? Math.round(res.avgRating * 10) / 10
+        : Math.round((totalRating / totalReviews) * 10) / 10
+      : 0;
+
   return {
-    average:
-      totalReviews > 0 ? Math.round((totalRating / totalReviews) * 10) / 10 : 0,
+    average: avg,
     totalReviews,
     breakdown,
   };
@@ -50,9 +81,52 @@ export async function getWorkerReviews(
       },
     };
   }
-  return http.get<PageResult<Review>>(
+  if (!workerId) {
+    return {
+      items: [],
+      meta: { page: 1, limit, total: 0, totalPages: 0 },
+    };
+  }
+  const res = await http.get<any>(
     `/reviews/worker/${workerId}?page=${page}&limit=${limit}`,
   );
+  const rawReviews: any[] = Array.isArray(res?.reviews)
+    ? res.reviews
+    : Array.isArray(res?.items)
+    ? res.items
+    : Array.isArray(res)
+    ? res
+    : [];
+
+  const total =
+    typeof res?.totalReviews === "number"
+      ? res.totalReviews
+      : typeof res?.pagination?.total === "number"
+      ? res.pagination.total
+      : typeof res?.meta?.total === "number"
+      ? res.meta.total
+      : rawReviews.length;
+
+  const items: Review[] = rawReviews.map((r: any) => ({
+    id: r.id || `rev-${Math.random()}`,
+    jobId: r.jobId || "",
+    job: r.job,
+    reviewerId: r.reviewerId || r.reviewer?.id || "",
+    reviewerName: r.reviewerName || r.reviewer?.name || "Customer",
+    rating: Number(r.rating) || 5,
+    comment: r.comment || undefined,
+    createdAt: r.createdAt ? new Date(r.createdAt).toISOString() : new Date().toISOString(),
+  }));
+
+  return {
+    items,
+    meta: {
+      page: Number(res?.pagination?.page ?? res?.meta?.page ?? page),
+      limit: Number(res?.pagination?.limit ?? res?.meta?.limit ?? limit),
+      total,
+      totalPages: Math.ceil(total / limit) || 1,
+    },
+  };
 }
 
 export const queryKeys = {
