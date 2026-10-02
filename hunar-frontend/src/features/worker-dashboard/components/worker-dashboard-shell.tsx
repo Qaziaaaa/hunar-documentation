@@ -20,6 +20,7 @@ import { MobileNavBar } from "./mobile-nav-bar";
 import { WorkerJobsHub } from "@/features/jobs/components/worker-jobs-hub";
 import { WorkerEarningsContent } from "@/app/[locale]/(worker)/worker/earnings/page";
 import { WalletContent } from "@/app/[locale]/(worker)/worker/wallet/page";
+import { getWorkerEarnings } from "@/services/worker/earnings.service";
 import { INITIAL_WORKER_PROFILE } from "../mock-data";
 import type {
   DashboardTab,
@@ -144,7 +145,10 @@ export function WorkerDashboardShell({
   useEffect(() => {
     async function syncBackendProfile() {
       try {
-        const raw = await http.get<any>("/users/worker/me");
+        const [raw, earningsData] = await Promise.all([
+          http.get<any>("/users/worker/me").catch(() => null),
+          getWorkerEarnings().catch(() => null),
+        ]);
         const data = raw?.data ?? raw;
         if (data?.user) {
           const wp = data.workerProfile;
@@ -167,6 +171,18 @@ export function WorkerDashboardShell({
             experienceYears: Number(wp?.experienceYears) || prev.experienceYears,
             isOnline: wp?.isAvailable ?? prev.isOnline,
             isVerified: wp?.verificationStatus === "APPROVED",
+            totalEarnings: earningsData?.grossEarnings ?? prev.totalEarnings,
+            completedJobsCount: earningsData?.completedJobsCount ?? prev.completedJobsCount,
+            totalCommissionPaid: earningsData?.commissionsPaid ?? prev.totalCommissionPaid,
+            walletBalance: earningsData?.balance ?? prev.walletBalance,
+          }));
+        } else if (earningsData) {
+          setProfile((prev) => ({
+            ...prev,
+            totalEarnings: earningsData.grossEarnings ?? prev.totalEarnings,
+            completedJobsCount: earningsData.completedJobsCount ?? prev.completedJobsCount,
+            totalCommissionPaid: earningsData.commissionsPaid ?? prev.totalCommissionPaid,
+            walletBalance: earningsData.balance ?? prev.walletBalance,
           }));
         }
       } catch (err) {

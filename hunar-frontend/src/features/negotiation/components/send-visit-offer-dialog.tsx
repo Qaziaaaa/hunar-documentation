@@ -139,19 +139,11 @@ export function SendVisitOfferDialog({
             </div>
           </div>
 
-          {/* 3-Line Clean Breakdown */}
+          {/* Visit Charge Summary */}
           <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-1.5 text-xs">
-            <div className="flex justify-between text-slate-600">
+            <div className="flex justify-between font-bold text-slate-900">
               <span>Visit Charge:</span>
-              <span className="font-semibold text-slate-900">{formatRs(visitCharge)}</span>
-            </div>
-            <div className="flex justify-between text-slate-500">
-              <span>Platform Fee (10%):</span>
-              <span>- {formatRs(platformCommission)}</span>
-            </div>
-            <div className="pt-1.5 border-t border-slate-200 flex justify-between font-bold text-slate-900">
-              <span>You Receive:</span>
-              <span className="text-[#0F8B8D]">{formatRs(workerNet)}</span>
+              <span className="text-[#0F8B8D]">{formatRs(visitCharge)}</span>
             </div>
           </div>
 

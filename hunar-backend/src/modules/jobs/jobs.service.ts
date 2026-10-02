@@ -374,6 +374,52 @@ export class JobsService {
     return toPageResult(items, total, page, limit);
   }
 
+  /** Completed and terminal history jobs for the assigned worker. */
+  async getHistoryJobs(workerId: string, query: CustomerJobsQueryDto = {}) {
+    const { page, limit, skip } = normalizePage(query);
+    const where: Prisma.ServiceRequestWhereInput = {
+      selectedWorkerId: workerId,
+      status: { in: ['COMPLETED', 'PAID', 'REVIEWED', 'CANCELLED'] },
+    };
+    const [rows, total] = await this.prisma.$transaction([
+      this.prisma.serviceRequest.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy: { updatedAt: 'desc' },
+        include: {
+          category: { select: { id: true, name: true, nameUrdu: true } },
+          customer: { select: { id: true, name: true, phone: true } },
+          _count: { select: { offers: true } },
+        },
+      }),
+      this.prisma.serviceRequest.count({ where }),
+    ]);
+    const items = rows.map((j) => ({
+      id: j.id,
+      title: j.title,
+      description: j.description,
+      status: j.status,
+      categoryId: j.categoryId,
+      categoryName: j.category?.name ?? 'General',
+      categoryUrdu: j.category?.nameUrdu ?? undefined,
+      address: j.address,
+      city: j.city,
+      area: j.area,
+      suggestedVisitCharge:
+        j.suggestedVisitCharge != null ? Number(j.suggestedVisitCharge) : null,
+      lockedVisitCharge: j.lockedVisitCharge != null ? Number(j.lockedVisitCharge) : null,
+      preferredVisitTime: j.preferredVisitTime,
+      images: j.images,
+      voiceNoteUrl: j.voiceNoteUrl,
+      customer: j.customer,
+      offerCount: j._count.offers,
+      createdAt: j.createdAt,
+      completedAt: j.completedAt,
+    }));
+    return toPageResult(items, total, page, limit);
+  }
+
   async getJobDetail(jobId: string, user: JwtPayload, lat?: number, lng?: number) {
     const job = await this.prisma.serviceRequest.findUnique({
       where: { id: jobId },
@@ -506,6 +552,48 @@ export class JobsService {
     throw new ForbiddenException('Only the job owner or the assigned worker can cancel a job');
   }
 
+  /** Complete a job, finishing any active repairs and advancing status to COMPLETED. */
+  async completeJob(jobId: string, user: JwtPayload): Promise<{ newStatus: JobStatus; message: string }> {
+    const job = await this.prisma.serviceRequest.findUnique({ where: { id: jobId } });
+    if (!job) {
+      throw new NotFoundException('Job not found');
+    }
+    if (job.selectedWorkerId !== user.sub && user.role !== Role.ADMIN) {
+      throw new ForbiddenException('Only the assigned worker or admin can complete this job');
+    }
+
+    // Complete active approved repairs for this job.
+    // If a repair was not accepted by the customer (e.g. PROPOSED or COUNTERED),
+    // it was not approved, so mark it REJECTED and do not emit repair.completed.
+    const activeRepair = await this.prisma.repair.findFirst({
+      where: { jobId, status: { in: ['PROPOSED', 'COUNTERED', 'ACCEPTED'] } },
+      orderBy: { createdAt: 'desc' },
+    });
+    if (activeRepair) {
+      if (activeRepair.status === 'ACCEPTED') {
+        await this.prisma.repair.update({
+          where: { id: activeRepair.id },
+          data: {
+            startedAt: activeRepair.startedAt ?? new Date(),
+            completedAt: new Date(),
+          },
+        });
+        this.eventBus.emit('repair.completed', { repairId: activeRepair.id, jobId });
+      } else {
+        // Customer never approved the repair quote; mark it REJECTED
+        await this.prisma.repair.update({
+          where: { id: activeRepair.id },
+          data: {
+            status: 'REJECTED',
+          },
+        });
+      }
+    }
+
+    const result = await this.transitionJobState(jobId, JobStatus.COMPLETED);
+    return { ...result, message: 'Job completed successfully' };
+  }
+
   /** Validate + apply a state transition, emitting events. Reused by Offers/Visits/Repair modules. */
   async transitionJobState(jobId: string, to: JobStatus): Promise<{ newStatus: JobStatus }> {
     const job = await this.prisma.serviceRequest.findUnique({ where: { id: jobId } });
@@ -536,3 +624,4 @@ export class JobsService {
     return { newStatus: updated.status };
   }
 }
+

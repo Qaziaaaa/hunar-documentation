@@ -42,9 +42,25 @@ export class RepairService {
   }
 
   private async loadRepair(id: string) {
-    const repair = await this.prisma.repair.findUnique({
-      where: { id },
-      include: { visit: true, job: true, revisions: true },
+    const repair = await this.prisma.repair.findFirst({
+      where: { OR: [{ id }, { jobId: id }] },
+      orderBy: { createdAt: 'desc' },
+      include: {
+        visit: true,
+        job: {
+          select: {
+            id: true,
+            customerId: true,
+            title: true,
+            address: true,
+            status: true,
+            lockedVisitCharge: true,
+            suggestedVisitCharge: true,
+          },
+        },
+        worker: { select: { id: true, name: true, phone: true, avatarUrl: true } },
+        revisions: true,
+      },
     });
     if (!repair) {
       throw new NotFoundException('Repair not found');
@@ -70,6 +86,11 @@ export class RepairService {
       );
     }
 
+    const worker = await this.prisma.user.findUnique({
+      where: { id: user.sub },
+      select: { id: true, name: true, phone: true, avatarUrl: true },
+    });
+
     const repair = await this.prisma.repair.create({
       data: {
         visitId,
@@ -85,15 +106,39 @@ export class RepairService {
     });
     await this.jobsService.transitionJobState(visit.jobId, 'REPAIR_NEGOTIATING');
 
+    const visitCharge = Number(job.lockedVisitCharge ?? job.suggestedVisitCharge ?? 0);
+    const repairAmount = Number(dto.amount);
+    const quotePayload = {
+      repairId: repair.id,
+      jobId: visit.jobId,
+      visitId: visit.id,
+      workerId: user.sub,
+      workerName: worker?.name || 'Technician',
+      workerPhone: worker?.phone,
+      workerAvatar: worker?.avatarUrl,
+      jobTitle: job.title,
+      jobAddress: job.address,
+      description: dto.description,
+      amount: repairAmount,
+      visitCharge,
+      totalAmount: visitCharge + repairAmount,
+      itemsBreakdown: dto.itemsBreakdown,
+      status: 'PROPOSED',
+      createdAt: repair.createdAt,
+    };
+
     this.eventBus.emit('repair.proposed', {
       repairId: repair.id,
       jobId: visit.jobId,
       amount: dto.amount,
     });
+    this.realtime.emitToRoom(userRoom(job.customerId), 'repair:proposed', quotePayload);
+    this.realtime.emitToRoom(userRoom(job.customerId), 'repair.proposed', quotePayload);
     this.realtime.emitToRoom(userRoom(job.customerId), JOB_EVENTS.jobStatusChanged, {
       jobId: visit.jobId,
       oldStatus: 'INSPECTION_DONE',
       newStatus: 'REPAIR_NEGOTIATING',
+      repairQuote: quotePayload,
     });
     return repair;
   }
@@ -130,10 +175,22 @@ export class RepairService {
     if (user.role === Role.WORKER && repair.workerId !== user.sub) {
       throw new ForbiddenException('You are not the worker for this repair');
     }
+    const visitCharge = Number(
+      repair.job.lockedVisitCharge ?? repair.job.suggestedVisitCharge ?? 0,
+    );
+    const isApproved = repair.status === 'ACCEPTED';
+    const payableRepairAmount = isApproved
+      ? Number(repair.lockedAmount ?? repair.amount ?? 0)
+      : 0;
+    const totalAmount = visitCharge + payableRepairAmount;
+
     return {
       ...repair,
       amount: Number(repair.amount),
       lockedAmount: repair.lockedAmount ? Number(repair.lockedAmount) : null,
+      visitCharge,
+      payableRepairAmount,
+      totalAmount,
     };
   }
 
@@ -193,6 +250,65 @@ export class RepairService {
     return updated;
   }
 
+  async getPendingRepairForCustomer(user: JwtPayload) {
+    const repair = await this.prisma.repair.findFirst({
+      where: {
+        job: { customerId: user.sub },
+        status: { in: ['PROPOSED', 'COUNTERED'] },
+      },
+      orderBy: { createdAt: 'desc' },
+      include: {
+        visit: true,
+        job: {
+          select: {
+            id: true,
+            title: true,
+            address: true,
+            status: true,
+            lockedVisitCharge: true,
+            suggestedVisitCharge: true,
+          },
+        },
+        worker: {
+          select: {
+            id: true,
+            name: true,
+            phone: true,
+            avatarUrl: true,
+          },
+        },
+      },
+    });
+
+    if (!repair) {
+      return null;
+    }
+
+    const visitCharge = Number(
+      repair.job.lockedVisitCharge ?? repair.job.suggestedVisitCharge ?? 0,
+    );
+    const repairAmount = Number(repair.amount);
+
+    return {
+      repairId: repair.id,
+      jobId: repair.jobId,
+      visitId: repair.visitId,
+      workerId: repair.workerId,
+      workerName: repair.worker?.name || 'Technician',
+      workerPhone: repair.worker?.phone,
+      workerAvatar: repair.worker?.avatarUrl,
+      jobTitle: repair.job.title,
+      jobAddress: repair.job.address,
+      description: repair.description,
+      amount: repairAmount,
+      visitCharge,
+      totalAmount: visitCharge + repairAmount,
+      itemsBreakdown: repair.itemsBreakdown,
+      status: repair.status,
+      createdAt: repair.createdAt,
+    };
+  }
+
   async acceptRepair(id: string, user: JwtPayload, dto: RepairAcceptDto) {
     const repair = await this.loadRepair(id);
     if (user.role !== Role.CUSTOMER && user.role !== Role.ADMIN) {
@@ -200,13 +316,13 @@ export class RepairService {
     }
     this.assertCustomerAccess(repair.job, user);
     if (!['PROPOSED', 'COUNTERED'].includes(repair.status)) {
-      throw new BadRequestException('REPAIR_INVALID_STATE');
+      throw new BadRequestException('REPAIR_INVALID_STATE: repair is not in a pending state');
     }
     if (repair.revisions.some((r) => r.status === 'PENDING_APPROVAL')) {
       throw new BadRequestException('A scope-change revision is pending approval');
     }
-    const lockedAmount = dto.amount ?? Number(repair.amount);
-    if (dto.amount != null && lockedAmount !== Number(repair.amount)) {
+    const lockedAmount = dto?.amount != null ? dto.amount : Number(repair.amount);
+    if (dto?.amount != null && lockedAmount !== Number(repair.amount)) {
       throw new BadRequestException(
         'REPAIR_PRICE_MISMATCH: approved amount must match the quoted amount',
       );
@@ -214,7 +330,7 @@ export class RepairService {
 
     const updated = await this.prisma.$transaction(async (tx) => {
       const r = await tx.repair.update({
-        where: { id },
+        where: { id: repair.id },
         data: { status: 'ACCEPTED', lockedAmount, lockedAt: new Date() },
       });
       await tx.serviceRequest.update({
@@ -224,12 +340,30 @@ export class RepairService {
       return r;
     });
 
-    this.eventBus.emit('repair.approved', { repairId: id, jobId: repair.jobId, lockedAmount });
+    const visitCharge = Number(
+      repair.job.lockedVisitCharge ?? repair.job.suggestedVisitCharge ?? 0,
+    );
+    const approvedPayload = {
+      repairId: repair.id,
+      jobId: repair.jobId,
+      workerId: repair.workerId,
+      customerId: user.sub,
+      status: 'ACCEPTED',
+      lockedAmount,
+      totalAmount: visitCharge + lockedAmount,
+    };
+
+    this.eventBus.emit('repair.approved', { repairId: repair.id, jobId: repair.jobId, lockedAmount });
+    this.realtime.emitToRoom(userRoom(repair.workerId), 'repair:approved', approvedPayload);
+    this.realtime.emitToRoom(userRoom(repair.workerId), 'repair.approved', approvedPayload);
     this.realtime.emitToRoom(userRoom(repair.workerId), JOB_EVENTS.jobStatusChanged, {
       jobId: repair.jobId,
       oldStatus: 'REPAIR_NEGOTIATING',
       newStatus: 'REPAIR_APPROVED',
+      repair: approvedPayload,
     });
+    this.realtime.emitToRoom(userRoom(repair.job.customerId), 'repair:approved', approvedPayload);
+    this.realtime.emitToRoom(userRoom(repair.job.customerId), 'repair.approved', approvedPayload);
     return updated;
   }
 
@@ -240,9 +374,49 @@ export class RepairService {
       throw new ForbiddenException('Only the customer can reject a repair quote');
     }
     if (!['PROPOSED', 'COUNTERED'].includes(repair.status)) {
-      throw new BadRequestException('REPAIR_INVALID_STATE');
+      throw new BadRequestException('REPAIR_INVALID_STATE: repair is not in a pending state');
     }
-    return this.prisma.repair.update({ where: { id }, data: { status: 'REJECTED' } });
+    const updated = await this.prisma.repair.update({
+      where: { id: repair.id },
+      data: { status: 'REJECTED' },
+    });
+
+    const visitCharge = Number(
+      repair.job.lockedVisitCharge ?? repair.job.suggestedVisitCharge ?? 0,
+    );
+    const rejectedPayload = {
+      repairId: repair.id,
+      jobId: repair.jobId,
+      workerId: repair.workerId,
+      customerId: user.sub,
+      status: 'REJECTED',
+      repairCharge: 0,
+      payableAmount: visitCharge,
+    };
+
+    this.eventBus.emit('repair.rejected', { repairId: repair.id, jobId: repair.jobId });
+    this.realtime.emitToRoom(userRoom(repair.workerId), 'repair:rejected', rejectedPayload);
+    this.realtime.emitToRoom(userRoom(repair.workerId), 'repair.rejected', rejectedPayload);
+    this.realtime.emitToRoom(userRoom(repair.workerId), JOB_EVENTS.jobStatusChanged, {
+      jobId: repair.jobId,
+      oldStatus: 'REPAIR_NEGOTIATING',
+      newStatus: 'REPAIR_DECLINED',
+      repair: rejectedPayload,
+    });
+    this.realtime.emitToRoom(userRoom(repair.job.customerId), 'repair:rejected', rejectedPayload);
+    this.realtime.emitToRoom(userRoom(repair.job.customerId), 'repair.rejected', rejectedPayload);
+    return updated;
+  }
+
+  async rejectRepairForJob(jobId: string, user: JwtPayload) {
+    const repair = await this.prisma.repair.findFirst({
+      where: { jobId, status: { in: ['PROPOSED', 'COUNTERED'] } },
+      orderBy: { createdAt: 'desc' },
+    });
+    if (!repair) {
+      throw new NotFoundException('Repair not found: no pending estimate for this job');
+    }
+    return this.rejectRepair(repair.id, user);
   }
 
   /**
@@ -292,22 +466,27 @@ export class RepairService {
     if (repair.workerId !== user.sub) {
       throw new ForbiddenException('Only the assigned worker can complete the repair');
     }
-    if (repair.status !== 'ACCEPTED' || !repair.startedAt) {
+    if (repair.status !== 'ACCEPTED') {
       throw new BadRequestException(
-        'REPAIR_INVALID_STATE: repair must be started before completing',
+        'REPAIR_INVALID_STATE: repair must be approved before completing',
       );
     }
     if (repair.revisions.some((r) => r.status === 'PENDING_APPROVAL')) {
       throw new BadRequestException('A scope-change revision is still pending approval');
     }
 
+    const startedAt = repair.startedAt ?? new Date();
+
     // The wallet module owns the commission lifecycle: it was HELD when the worker
     // arrived (Task 7), so repair completion only finishes the job. No duplicate
     // Commission row is created here (Commission.jobId is unique).
     const updated = await this.prisma.$transaction(async (tx) => {
       const r = await tx.repair.update({
-        where: { id },
-        data: { completedAt: new Date() },
+        where: { id: repair.id },
+        data: {
+          startedAt,
+          completedAt: new Date(),
+        },
       });
       await tx.serviceRequest.update({
         where: { id: repair.jobId },
@@ -316,7 +495,17 @@ export class RepairService {
       return r;
     });
     this.eventBus.emit('repair.completed', { repairId: id, jobId: repair.jobId });
+    this.eventBus.emit('job.statusChanged', {
+      jobId: repair.jobId,
+      oldStatus: 'IN_PROGRESS',
+      newStatus: 'COMPLETED',
+    });
     this.realtime.emitToRoom(userRoom(repair.job.customerId), JOB_EVENTS.jobStatusChanged, {
+      jobId: repair.jobId,
+      oldStatus: 'IN_PROGRESS',
+      newStatus: 'COMPLETED',
+    });
+    this.realtime.emitToRoom(userRoom(repair.workerId), JOB_EVENTS.jobStatusChanged, {
       jobId: repair.jobId,
       oldStatus: 'IN_PROGRESS',
       newStatus: 'COMPLETED',

@@ -55,12 +55,16 @@ export function WorkerJobDetailsModal({
 
   if (!isOpen) return null;
 
+  const isCompleted = job.status === "completed";
+
   const agreedVisitCharge =
-    offer?.agreedVisitCharge ??
-    offer?.visitCharge ??
-    job.visitCharge ??
-    job.customerSuggestedPrice ??
-    600;
+    (isCompleted && job.visitCharge !== undefined)
+      ? job.visitCharge
+      : (offer?.agreedVisitCharge ??
+         offer?.visitCharge ??
+         job.visitCharge ??
+         job.customerSuggestedPrice ??
+         300);
 
   const handleStartDispatch = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -75,8 +79,6 @@ export function WorkerJobDetailsModal({
 
   const isToday =
     job.preferredVisitWindow.date.toLowerCase().includes("today");
-
-  const isCompleted = job.status === "completed";
 
   return (
     <>
@@ -254,7 +256,7 @@ export function WorkerJobDetailsModal({
                         {isCompleted ? "Total Net Settlement" : "Agreed Doorstep Visit Fee"}
                       </span>
                       <div className="text-xl sm:text-2xl font-black text-[#123B5D] mt-0.5">
-                        {formatRs(isCompleted && job.workerNetEarnings ? job.workerNetEarnings : agreedVisitCharge)}
+                        {formatRs(isCompleted ? (job.workerNetEarnings ?? (agreedVisitCharge - Math.round(agreedVisitCharge * 0.1))) : agreedVisitCharge)}
                       </div>
                     </div>
 

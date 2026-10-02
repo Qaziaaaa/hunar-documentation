@@ -6,6 +6,7 @@ import { useParams } from "next/navigation";
 import { JobRequest } from "@/types/job";
 import { VisitOffer } from "@/types/offer";
 import { formatRs } from "@/lib/design-tokens";
+import { connectSocket } from "@/lib/socket";
 import { workerStore } from "@/stores/worker-jobs-store";
 import { WorkerChatModal } from "./worker-chat-modal";
 import { WorkerArrivalOtpModal } from "./worker-arrival-otp-modal";
@@ -96,7 +97,7 @@ export function WorkerVisitTrackingView({
     800;
 
   const commissionHold = Math.round(agreedVisitCharge * 0.1);
-  const securityPin = job.securityPin || "7294";
+  const [currentSecurityPin, setCurrentSecurityPin] = useState<string>(job.securityPin || "");
   const customerFirstName = job.customer.name.split(" ")[0];
 
   // Dynamic OSRM Road Route Fetching with Fallback
@@ -313,12 +314,32 @@ export function WorkerVisitTrackingView({
   }, [customerLat, customerLng, workerLat, workerLng, routePoints, customerFirstName]);
 
 
+  // Real-time socket listener for customer OTP verification across devices/browsers
+  useEffect(() => {
+    const socket = connectSocket();
+    if (!socket) return;
+
+    const handleOtpVerified = (payload: any) => {
+      if (payload && (payload.jobId === job.id || payload.visitId)) {
+        arrivalService.verifyOtpSuccess({ jobId: job.id, ...payload });
+      }
+    };
+
+    socket.on("visit:otp:verified", handleOtpVerified);
+    socket.on("visit.otp.verified", handleOtpVerified);
+
+    return () => {
+      socket.off("visit:otp:verified", handleOtpVerified);
+      socket.off("visit.otp.verified", handleOtpVerified);
+    };
+  }, [job.id]);
+
   // Subscribe to real-time arrival OTP verification
   useEffect(() => {
     const unsubscribe = arrivalService.subscribe((session, eventType) => {
       if (
         session &&
-        (session.jobId === job.id || session.otp === securityPin) &&
+        (session.jobId === job.id || session.otp === currentSecurityPin) &&
         (eventType === "OTP_VERIFIED" || session.status === "otp_verified")
       ) {
         setShowWorkerOtpModal(false);
@@ -339,10 +360,10 @@ export function WorkerVisitTrackingView({
     });
 
     return () => unsubscribe();
-  }, [job.id, securityPin, isUrdu, onArrived]);
+  }, [job.id, currentSecurityPin, isUrdu, onArrived]);
 
   // Handle "I'm here" / Reached Doorstep CTA
-  const handleReachedDoorstep = () => {
+  const handleReachedDoorstep = async () => {
     setErrorMessage(null);
 
     // Verify 10% commission hold
@@ -351,23 +372,40 @@ export function WorkerVisitTrackingView({
     const state = workerStore.getState();
     if (state.walletBalance < requiredHold) {
       setErrorMessage(
-        `Insufficient wallet balance. Minimum ${formatRs(requiredHold)} commission hold required.`
+        `Insufficient wallet balance. Minimum ${formatRs(requiredHold)} required.`
       );
       return;
     }
 
-    const now = Date.now();
-    setArrivedAtTime(now);
+    try {
+      setIsArriving(true);
+      const res = await workerStore.arriveAtDoorstep(job.id);
+      if (!res.success || !res.otp) {
+        setErrorMessage(res.error || "Failed to notify arrival");
+        setIsArriving(false);
+        return;
+      }
 
-    arrivalService.startArrivalSession({
-      jobId: job.id,
-      otp: securityPin,
-      workerName: "Ali Khan",
-      customerName: job.customer.name,
-      customerAddress: job.location.fullAddress || (job.location as any).address || job.location.area,
-    });
+      const realOtp = res.otp;
+      setCurrentSecurityPin(realOtp);
+      const now = res.arrivedAt || Date.now();
+      setArrivedAtTime(now);
 
-    setShowWorkerOtpModal(true);
+      arrivalService.startArrivalSession({
+        jobId: job.id,
+        visitId: res.visitId,
+        otp: realOtp,
+        workerName: "Ali Khan",
+        customerName: job.customer.name,
+        customerAddress: job.location.fullAddress || (job.location as any).address || job.location.area,
+      });
+
+      setShowWorkerOtpModal(true);
+      setIsArriving(false);
+    } catch (err: any) {
+      setErrorMessage(err?.message || "Failed to notify arrival");
+      setIsArriving(false);
+    }
   };
 
   const handleCancelSubmit = (e: React.FormEvent) => {
@@ -729,24 +767,12 @@ export function WorkerVisitTrackingView({
             </div>
           </div>
 
-          {/* Agreed Visit Fee & Security Hold Summary */}
+          {/* Agreed Visit Fee Summary */}
           <div className="bg-slate-50 rounded-2xl border border-slate-200/80 p-4 space-y-2.5 text-xs">
             <div className="flex justify-between items-center text-slate-600">
               <span>Agreed Visit Charge</span>
               <span className="font-extrabold text-slate-900 text-sm">
                 {formatRs(agreedVisitCharge)}
-              </span>
-            </div>
-            <div className="flex justify-between items-center text-slate-600">
-              <span>10% Platform Hold</span>
-              <span className="font-bold text-slate-700">
-                {formatRs(commissionHold)}
-              </span>
-            </div>
-            <div className="border-t border-slate-200 pt-2 flex justify-between items-center text-slate-900 font-extrabold text-sm">
-              <span>Net Arrival Payout</span>
-              <span className="text-[#0F8B8D] font-mono text-base font-black">
-                {formatRs(agreedVisitCharge - commissionHold)}
               </span>
             </div>
           </div>
@@ -968,7 +994,7 @@ export function WorkerVisitTrackingView({
       {/* Worker Doorstep OTP Modal */}
       <WorkerArrivalOtpModal
         isOpen={showWorkerOtpModal}
-        otp={securityPin}
+        otp={currentSecurityPin}
         arrivedAt={arrivedAtTime}
         customerName={job.customer.name}
         onClose={() => setShowWorkerOtpModal(false)}

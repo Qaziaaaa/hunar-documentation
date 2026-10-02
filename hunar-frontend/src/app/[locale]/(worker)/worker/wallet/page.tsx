@@ -34,6 +34,25 @@ export function WalletContent() {
     queryFn: getWalletTransactions,
   });
 
+  useEffect(() => {
+    const socket = getSocket();
+    if (!socket) return;
+    const handleUpdate = () => {
+      void summary.refetch();
+      void transactions.refetch();
+    };
+    socket.on("wallet:balanceUpdated", handleUpdate);
+    socket.on("wallet:earnings:recorded", handleUpdate);
+    socket.on("wallet:commission:held", handleUpdate);
+    socket.on("wallet:commission:deducted", handleUpdate);
+    return () => {
+      socket.off("wallet:balanceUpdated", handleUpdate);
+      socket.off("wallet:earnings:recorded", handleUpdate);
+      socket.off("wallet:commission:held", handleUpdate);
+      socket.off("wallet:commission:deducted", handleUpdate);
+    };
+  }, [summary, transactions]);
+
   if (!summary.data || !transactions.data) {
     return <LoadingState label="Loading wallet details..." />;
   }
@@ -53,7 +72,7 @@ export function WalletContent() {
 
   const walletSummaryData = summary.data;
   const transactionsData = transactions.data;
-  const currentBalance = walletBalance ?? walletSummaryData.currentBalance;
+  const currentBalance = walletSummaryData?.currentBalance ?? walletBalance ?? 0;
 
   return (
     <div className="space-y-6">

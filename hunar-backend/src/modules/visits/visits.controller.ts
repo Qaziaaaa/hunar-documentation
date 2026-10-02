@@ -4,7 +4,13 @@ import { VisitsService } from './visits.service';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { JwtPayload } from '../../common/types/jwt-payload.interface';
-import { InspectionDto, StartVisitDto, TrackLocationDto, VisitQueryDto } from './visits.validation';
+import {
+  InspectionDto,
+  StartVisitDto,
+  TrackLocationDto,
+  VerifyArrivalOtpDto,
+  VisitQueryDto,
+} from './visits.validation';
 
 @Controller()
 export class VisitsController {
@@ -40,6 +46,24 @@ export class VisitsController {
   @Roles(Role.WORKER)
   arrived(@CurrentUser() user: JwtPayload, @Param('id', ParseUUIDPipe) id: string) {
     return this.visitsService.workerArrived(id, user);
+  }
+
+  @Put('visits/:id/verify-arrival-otp')
+  verifyArrivalOtp(
+    @CurrentUser() user: JwtPayload,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: VerifyArrivalOtpDto,
+  ) {
+    return this.visitsService.verifyArrivalOtp(id, user, dto.otp);
+  }
+
+  @Put('jobs/:jobId/verify-arrival-otp')
+  verifyJobArrivalOtp(
+    @CurrentUser() user: JwtPayload,
+    @Param('jobId', ParseUUIDPipe) jobId: string,
+    @Body() dto: VerifyArrivalOtpDto,
+  ) {
+    return this.visitsService.verifyArrivalOtp(jobId, user, dto.otp);
   }
 
   @Put('visits/:id/inspection')

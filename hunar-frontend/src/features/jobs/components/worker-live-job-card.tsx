@@ -173,9 +173,6 @@ export function WorkerLiveJobCard({
             <div className="text-base sm:text-xl font-black text-[#123B5D]">
               {formatRs(agreedVisitCharge)}
             </div>
-            <div className="text-[10px] text-emerald-600 font-semibold hidden sm:block">
-              Net: {formatRs(netEarnings)} <span className="text-slate-400">(−{formatRs(commissionHold)})</span>
-            </div>
           </div>
         </div>
 

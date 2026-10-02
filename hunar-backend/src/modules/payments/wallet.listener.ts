@@ -49,6 +49,13 @@ export class WalletListener {
     await this.safe('record earnings', () => this.wallet.recordEarningsForJob(payload.jobId));
   }
 
+  @OnEvent('repair.completed')
+  async handleRepairCompleted(payload: { repairId: string; jobId: string }) {
+    await this.safe('record earnings on repair completion', () =>
+      this.wallet.recordEarningsForJob(payload.jobId),
+    );
+  }
+
   private async safe(name: string, fn: () => Promise<unknown>): Promise<void> {
     try {
       await fn();
