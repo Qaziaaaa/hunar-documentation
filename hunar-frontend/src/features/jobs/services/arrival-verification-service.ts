@@ -1,5 +1,8 @@
 "use client";
 
+import { http, getAccessToken } from "@/lib/api-client";
+import { isMockMode } from "@/lib/data-source";
+
 export interface ArrivalSession {
   jobId: string;
   visitId?: string;
@@ -82,20 +85,20 @@ class ArrivalVerificationService {
     return session;
   }
 
-  verifyOtp(
+  async verifyOtp(
     enteredOtp: string,
     fallbackSession?: Partial<ArrivalSession>
-  ): { success: boolean; error?: string; session?: ArrivalSession } {
+  ): Promise<{ success: boolean; error?: string; session?: ArrivalSession }> {
     let session = this.getSession();
     if (!session) {
       // Use fallback session or default active session to prevent blocking user
       session = {
         jobId: fallbackSession?.jobId || "job-1",
-        visitId: fallbackSession?.visitId || "VST-98214",
-        otp: fallbackSession?.otp || "4821",
+        visitId: fallbackSession?.visitId,
+        otp: fallbackSession?.otp || "",
         arrivedAt: Date.now(),
         status: "pending_otp",
-        workerName: fallbackSession?.workerName || "Tariq Shah",
+        workerName: fallbackSession?.workerName || "Worker",
         workerAvatar: fallbackSession?.workerAvatar,
         workerPhone: fallbackSession?.workerPhone,
         customerAddress: fallbackSession?.customerAddress,
@@ -103,21 +106,37 @@ class ArrivalVerificationService {
     }
 
     const cleanInput = enteredOtp.replace(/\D/g, "").trim();
-    const cleanExpected = session.otp.replace(/\D/g, "").trim();
-
-    if (!cleanInput) {
+    if (!cleanInput || cleanInput.length < 4) {
       return {
         success: false,
         error: "Please enter the 4-digit OTP provided by the worker.",
       };
     }
 
-    // Allow expected OTP or standard 4821 test PIN
-    if (cleanInput !== cleanExpected && cleanInput !== "4821") {
-      return {
-        success: false,
-        error: "Incorrect OTP. Please check the code provided by the worker and try again.",
-      };
+    // Call backend API if user is authenticated and not in mock mode
+    if (!isMockMode() && getAccessToken()) {
+      try {
+        const idToVerify = session.visitId || session.jobId;
+        await http.put(`/visits/${idToVerify}/verify-arrival-otp`, {
+          otp: cleanInput,
+        });
+      } catch (err: any) {
+        const backendError =
+          err?.response?.data?.message ||
+          "Incorrect OTP. Please check the code provided by the worker and try again.";
+        return {
+          success: false,
+          error: backendError,
+        };
+      }
+    } else {
+      const cleanExpected = session.otp ? session.otp.replace(/\D/g, "").trim() : "";
+      if (cleanExpected && cleanInput !== cleanExpected) {
+        return {
+          success: false,
+          error: "Incorrect OTP. Please check the code provided by the worker and try again.",
+        };
+      }
     }
 
     const updatedSession: ArrivalSession = {
@@ -139,6 +158,25 @@ class ArrivalVerificationService {
       success: true,
       session: updatedSession,
     };
+  }
+
+  verifyOtpSuccess(sessionData?: Partial<ArrivalSession>): void {
+    let session = this.getSession();
+    const updatedSession: ArrivalSession = {
+      ...(session || ({} as any)),
+      ...sessionData,
+      status: "otp_verified",
+    };
+
+    if (typeof window !== "undefined") {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedSession));
+      } catch (err) {
+        console.warn("Error updating arrival session:", err);
+      }
+
+      this.broadcast("OTP_VERIFIED", updatedSession);
+    }
   }
 
   reportCustomerNotEntering(): void {

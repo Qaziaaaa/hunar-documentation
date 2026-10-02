@@ -21,6 +21,7 @@ import {
   Zap,
 } from "lucide-react";
 import { Link, useRouter } from "@/i18n/navigation";
+import { useSearchParams } from "next/navigation";
 import { useLocale } from "next-intl";
 import { useQuery } from "@tanstack/react-query";
 import { LoadingState } from "@/components/shared/loading-state";
@@ -37,6 +38,8 @@ export function CustomerJobCompletionView({
   initialJobId,
 }: CustomerJobCompletionViewProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const isRepairDeclinedParam = searchParams?.get("repairDeclined") === "true";
   const locale = useLocale();
   const isUrdu = locale === "ur";
 
@@ -46,8 +49,8 @@ export function CustomerJobCompletionView({
     isError,
     refetch,
   } = useQuery({
-    queryKey: ["customer", "repair-invoice", initialJobId],
-    queryFn: () => getJobRepairInvoice(initialJobId ?? ""),
+    queryKey: ["customer", "repair-invoice", initialJobId, isRepairDeclinedParam],
+    queryFn: () => getJobRepairInvoice(initialJobId ?? "", isRepairDeclinedParam),
     enabled: !!initialJobId,
     staleTime: 30_000,
   });
@@ -109,7 +112,9 @@ export function CustomerJobCompletionView({
   const handleApproveAndPay = async () => {
     setIsProcessing(true);
     try {
-      await acceptRepairEstimate(initialJobId!, "cash");
+      if (!isRepairDeclinedParam) {
+        await acceptRepairEstimate(initialJobId!, "cash");
+      }
       await submitJobReview(initialJobId!, {
         rating,
         comment: reviewNote,

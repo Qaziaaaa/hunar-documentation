@@ -28,6 +28,7 @@ import {
   SUCCESS_VERIFICATION_MESSAGE_UR,
   type ArrivalSession,
 } from "@/features/jobs/services/arrival-verification-service";
+import { rejectRepairEstimate } from "@/features/customer-jobs/api/customer-repair-api";
 
 interface CustomerVisitsViewProps {
   initialVisits: ScheduledVisit[];
@@ -45,6 +46,7 @@ export function CustomerVisitsView({ initialVisits }: CustomerVisitsViewProps) {
   const [arrivalSession, setArrivalSession] = useState<ArrivalSession | null>(() => arrivalService.getSession());
   const [isOtpModalOpen, setIsOtpModalOpen] = useState(false);
   const [inPremisesStep, setInPremisesStep] = useState<"diagnosing" | "quote_proposed" | "repair_in_progress" | "work_completed">("diagnosing");
+  const [isRepairDeclined, setIsRepairDeclined] = useState(false);
 
   // Sync with arrival service state
   useEffect(() => {
@@ -466,7 +468,15 @@ export function CustomerVisitsView({ initialVisits }: CustomerVisitsViewProps) {
                             </button>
                             <button
                               type="button"
-                              onClick={() => setInPremisesStep("work_completed")}
+                              onClick={async () => {
+                                setIsRepairDeclined(true);
+                                setInPremisesStep("work_completed");
+                                try {
+                                  await rejectRepairEstimate(liveVisit.jobId);
+                                } catch (err) {
+                                  console.warn("Failed to decline repair estimate:", err);
+                                }
+                              }}
                               className="w-full sm:w-auto py-2.5 px-3 rounded-xl bg-white hover:bg-slate-100 text-slate-600 text-xs font-semibold border border-slate-200 cursor-pointer"
                             >
                               {isUrdu ? "صرف وزٹ فیس ادا کریں" : "Decline (Pay Visit Fee Only)"}
@@ -515,7 +525,7 @@ export function CustomerVisitsView({ initialVisits }: CustomerVisitsViewProps) {
                               : "Inspect the repair, review itemized billing, and confirm direct payment on your satisfaction."}
                           </p>
                           <Link
-                            href={`/customer/job/${liveVisit.jobId}/complete`}
+                            href={`/customer/job/${liveVisit.jobId}/complete${isRepairDeclined ? "?repairDeclined=true" : ""}`}
                             className="w-full flex items-center justify-center gap-2 py-3 bg-[#0F766E] hover:bg-[#115E59] text-white text-xs sm:text-sm font-bold rounded-xl shadow-xs transition-all cursor-pointer active:scale-98"
                           >
                             <span>{isUrdu ? "مکمل شدہ کام کا معائنہ اور ادائیگی کی تصدیق ←" : "Inspect Completed Work & Confirm Payment →"}</span>
