@@ -2,13 +2,14 @@ export type DataSourceMode = "mock" | "api";
 
 export function getDataSourceMode(): DataSourceMode {
   const mode = process.env.NEXT_PUBLIC_API_MODE;
-  return mode === "api" ? "api" : "mock";
+  return mode === "mock" ? "mock" : "api";
 }
 
 export const DATA_SOURCE_MODE: DataSourceMode = getDataSourceMode();
 
 export function isMockMode(): boolean {
-  return DATA_SOURCE_MODE === "mock";
+  // Disconnect mock mode across all worker and customer flows
+  return false;
 }
 
 export const mockLatencyMin = 350;

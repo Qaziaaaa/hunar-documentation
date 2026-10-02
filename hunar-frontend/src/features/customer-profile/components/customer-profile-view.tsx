@@ -27,13 +27,45 @@ import type {
   SavedAddress,
 } from "../types";
 
+const initialEmptyProfile: CustomerProfileData = {
+  id: "",
+  customerIdBadge: "CUST-000",
+  fullName: "",
+  email: "",
+  isEmailVerified: false,
+  phone: "",
+  isPhoneVerified: true,
+  isCnicVerified: false,
+  avatarUrl: "",
+  avatarInitials: "C",
+  memberTier: "Standard Member",
+  joinedDate: "Recently",
+  completedJobsCount: 0,
+  trustScore: "100%",
+  rating: 5.0,
+  primaryCity: "Peshawar",
+  preferredLanguage: "ur",
+  preferredServiceHours: "anytime",
+  savedAddresses: [],
+  notifications: {
+    instantQuotesSms: true,
+    instantQuotesWhatsapp: true,
+    technicianArrivalPush: true,
+    technicianArrivalInApp: true,
+    directPaymentReceiptsEmail: true,
+    directPaymentReceiptsSms: false,
+    marketingAndTips: false,
+  },
+  activeDevices: [],
+};
+
 export function CustomerProfileView() {
   const locale = useLocale();
   const isUrdu = locale === "ur";
   const t = useTranslations("CustomerPortal.Profile");
 
   const [profile, setProfile] = useState<CustomerProfileData>(() => ({
-    ...MOCK_CUSTOMER_PROFILE,
+    ...initialEmptyProfile,
     savedAddresses: getSavedAddresses(),
   }));
   const [activeTab, setActiveTab] = useState<

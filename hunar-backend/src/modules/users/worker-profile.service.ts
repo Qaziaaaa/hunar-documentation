@@ -195,10 +195,26 @@ export class WorkerProfileService {
       this.toCompletionInput(user, profile, documents, serviceAreas.length),
     );
 
+    const [completedJobs, ratingAgg] = await Promise.all([
+      this.prisma.serviceRequest.count({
+        where: { selectedWorkerId: userId, status: 'COMPLETED' },
+      }),
+      this.prisma.review.aggregate({
+        where: { revieweeId: userId, isVisible: true },
+        _avg: { rating: true },
+        _count: { rating: true },
+      }),
+    ]);
+
     return {
+      id: user.id,
+      completedJobs,
+      rating: Number((ratingAgg._avg.rating ?? 5.0).toFixed(1)),
+      reviewsCount: ratingAgg._count.rating ?? 0,
       user: {
         id: user.id,
         phone: user.phone,
+        email: (user as any).email ?? null,
         name: user.name,
         avatarUrl: user.avatarUrl,
         role: user.role,
@@ -216,6 +232,9 @@ export class WorkerProfileService {
             verifiedAt: profile.verifiedAt,
             rejectionReason: profile.rejectionReason,
             adminNote: profile.adminNote,
+            completedJobs,
+            rating: Number((ratingAgg._avg.rating ?? 5.0).toFixed(1)),
+            reviewsCount: ratingAgg._count.rating ?? 0,
           }
         : null,
       serviceAreas: serviceAreas.map((area) => ({

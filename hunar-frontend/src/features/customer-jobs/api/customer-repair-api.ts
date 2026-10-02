@@ -1,6 +1,4 @@
 import { http } from "@/lib/api-client";
-import { isMockMode } from "@/lib/data-source";
-import { MOCK_JOB_COMPLETION_MAP } from "../data/mock-completion-data";
 import type { JobCompletionData } from "../types";
 
 export interface ReviewSubmissionPayload {
@@ -18,28 +16,6 @@ const FALLBACK_IMAGE =
  * Fetch repair inspection, parts estimate, and final invoice breakdown
  */
 export async function getJobRepairInvoice(jobId: string, repairDeclined?: boolean): Promise<JobCompletionData> {
-  if (isMockMode()) {
-    const keys = Object.keys(MOCK_JOB_COMPLETION_MAP);
-    const mockData = (
-      MOCK_JOB_COMPLETION_MAP[jobId] ??
-      MOCK_JOB_COMPLETION_MAP[keys[0] as keyof typeof MOCK_JOB_COMPLETION_MAP]
-    );
-    if (repairDeclined) {
-      return {
-        ...mockData,
-        billingItems: [
-          {
-            id: "b-visit",
-            title: "Standard Visit & Diagnostic Fee",
-            description: "Initial diagnostic inspection (Repair Declined)",
-            amount: 300,
-          },
-        ],
-        totalAmount: 300,
-      };
-    }
-    return mockData;
-  }
   const res = await http.get<any>(`/repairs/${jobId}`);
   if (!res || (!res.id && !res.jobId)) {
     throw new Error(`REPAIR_NOT_FOUND: ${jobId}`);
@@ -147,9 +123,6 @@ export async function acceptRepairEstimate(
   repairId: string,
   paymentMethod: string = "cash"
 ): Promise<{ success: boolean }> {
-  if (isMockMode()) {
-    return { success: true };
-  }
   const res = await http.put<{ id?: string }>(`/repairs/${repairId}/accept`, { paymentMethod });
   return { success: true, ...(res ? { id: res.id } : {}) };
 }
@@ -158,9 +131,6 @@ export async function acceptRepairEstimate(
  * Customer rejects repair estimate
  */
 export async function rejectRepairEstimate(repairIdOrJobId: string): Promise<{ success: boolean }> {
-  if (isMockMode()) {
-    return { success: true };
-  }
   try {
     await http.put(`/repairs/${repairIdOrJobId}/reject`);
   } catch {
@@ -177,9 +147,6 @@ export async function counterRepairEstimate(
   counterAmount: number,
   notes?: string
 ): Promise<{ success: boolean }> {
-  if (isMockMode()) {
-    return { success: true };
-  }
   await http.put(`/repairs/${repairId}/counter`, {
     counterAmount,
     notes,
@@ -194,9 +161,6 @@ export async function submitJobReview(
   jobId: string,
   payload: ReviewSubmissionPayload
 ): Promise<{ success: boolean; reviewId?: string }> {
-  if (isMockMode()) {
-    return { success: true, reviewId: `rev-${Date.now().toString().slice(-6)}` };
-  }
   const res = await http.post<{ id?: string }>(`/jobs/${jobId}/review`, {
     rating: payload.rating,
     comment: payload.comment,

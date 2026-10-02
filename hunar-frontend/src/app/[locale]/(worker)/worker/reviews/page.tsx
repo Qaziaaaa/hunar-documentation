@@ -14,7 +14,7 @@ import { getWorkerProfile, queryKeys as profileKeys } from "@/services/worker/pr
 export default function ReviewsPage() {
   const t = useTranslations("Worker");
   const profile = useQuery({ queryKey: profileKeys.profile(), queryFn: getWorkerProfile });
-  const workerId = profile.data?.id ?? "worker-demo-1";
+  const workerId = profile.data?.id ?? "";
   const rating = useQuery({ queryKey: queryKeys.rating(workerId), queryFn: () => getRatingSummary(workerId), enabled: Boolean(workerId) });
   const reviews = useQuery({ queryKey: queryKeys.reviews(workerId, 1), queryFn: () => getWorkerReviews(workerId), enabled: Boolean(workerId) });
   if (profile.isPending || rating.isPending || reviews.isPending) return <LoadingState label={t("common.loading")} />;
