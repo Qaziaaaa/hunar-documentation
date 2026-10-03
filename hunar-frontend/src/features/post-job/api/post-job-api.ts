@@ -66,10 +66,26 @@ export async function uploadJobPhoto(file: File): Promise<{ key: string; url: st
  * Post a new job request to POST /jobs
  */
 export async function createJob(data: PostJobData): Promise<CreatedJobResponse> {
-  const categoryId =
-    CATEGORY_ID_MAP[data.category] ||
-    CATEGORY_ID_MAP.plumbing ||
-    "seed-category-1";
+  let categoryId = data.category || "seed-category-1";
+  try {
+    const res = await http.get<any>("/admin/categories");
+    const categories = Array.isArray(res) ? res : res?.data ?? [];
+    if (categories.length > 0) {
+      const match = categories.find(
+        (c: any) =>
+          c.id === data.category ||
+          c.name.toLowerCase().includes((data.category || "").toLowerCase()) ||
+          (data.category || "").toLowerCase().includes(c.name.toLowerCase())
+      );
+      if (match) {
+        categoryId = match.id;
+      } else {
+        categoryId = categories[0].id;
+      }
+    }
+  } catch {
+    categoryId = CATEGORY_ID_MAP[data.category] || data.category || "seed-category-1";
+  }
 
   const payload: CreateJobPayload = {
     categoryId,
