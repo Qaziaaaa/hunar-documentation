@@ -110,35 +110,27 @@ export class JobsService {
   ) {}
 
   private async syncLocation(jobId: string, longitude: number, latitude: number): Promise<void> {
-    try {
-      await this.prisma.$executeRaw`
-        UPDATE "ServiceRequest"
-        SET location = ST_SetSRID(ST_MakePoint(${longitude}, ${latitude}), 4326)
-        WHERE id = ${jobId}
-      `;
-    } catch {
-      // PostGIS location column is optional; latitude & longitude float columns are primary
-    }
+    await this.prisma.$executeRaw`
+      UPDATE "ServiceRequest"
+      SET location = ST_SetSRID(ST_MakePoint(${longitude}, ${latitude}), 4326)
+      WHERE id = ${jobId}
+    `;
   }
 
   async createJob(customerId: string, dto: CreateJobDto) {
-    let category = await this.prisma.serviceCategory.findFirst({
-      where: {
-        OR: [
-          { id: dto.categoryId },
-          { name: { contains: dto.categoryId, mode: 'insensitive' } },
-          { nameUrdu: { contains: dto.categoryId, mode: 'insensitive' } },
-        ],
-        isActive: true,
-      },
-    });
-
-    if (!category) {
-      category = await this.prisma.serviceCategory.findFirst({
+    const category =
+      (await this.prisma.serviceCategory.findFirst({
+        where: {
+          OR: [
+            { id: dto.categoryId },
+            { name: { equals: dto.categoryId, mode: 'insensitive' } },
+          ],
+          isActive: true,
+        },
+      })) ??
+      (await this.prisma.serviceCategory.findFirst({
         where: { isActive: true },
-        orderBy: { sortOrder: 'asc' },
-      });
-    }
+      }));
 
     if (!category) {
       throw new BadRequestException('CATEGORY_NOT_FOUND: invalid or inactive category');
@@ -302,94 +294,42 @@ export class JobsService {
 
     const where = Prisma.join(conditions, ' AND ');
 
-    let rows: JobCardRow[] = [];
-    let total = 0;
+    const rows = await this.prisma.$queryRaw<JobCardRow[]>(Prisma.sql`
+      SELECT
+        sr.id,
+        sr.title,
+        sr.description,
+        sr."categoryId",
+        c.name AS "categoryName",
+        sr."latitude",
+        sr."longitude",
+        sr."address",
+        sr."city",
+        sr."area",
+        sr."status",
+        sr."suggestedVisitCharge",
+        sr."preferredVisitTime",
+        sr."createdAt",
+        sr."images",
+        sr."voiceNoteUrl",
+        (SELECT COUNT(*) FROM "JobOffer" o WHERE o."jobId" = sr.id) AS "offerCount",
+        ST_Distance(
+          ST_SetSRID(ST_MakePoint(sr."longitude", sr."latitude"), 4326)::geography,
+          ST_SetSRID(ST_MakePoint(${query.lng}, ${query.lat}), 4326)::geography
+        ) / 1000.0 AS "distanceKm"
+      FROM "ServiceRequest" sr
+      JOIN "ServiceCategory" c ON c.id = sr."categoryId"
+      WHERE ${where}
+      ORDER BY "distanceKm" ASC, sr."createdAt" DESC
+      LIMIT ${limit} OFFSET ${skip}
+    `);
 
-    try {
-      rows = await this.prisma.$queryRaw<JobCardRow[]>(Prisma.sql`
-        SELECT
-          sr.id,
-          sr.title,
-          sr.description,
-          sr."categoryId",
-          c.name AS "categoryName",
-          sr."latitude",
-          sr."longitude",
-          sr."address",
-          sr."city",
-          sr."area",
-          sr."status",
-          sr."suggestedVisitCharge",
-          sr."preferredVisitTime",
-          sr."createdAt",
-          sr."images",
-          sr."voiceNoteUrl",
-          (SELECT COUNT(*) FROM "JobOffer" o WHERE o."jobId" = sr.id) AS "offerCount",
-          ST_Distance(
-            ST_SetSRID(ST_MakePoint(sr."longitude", sr."latitude"), 4326)::geography,
-            ST_SetSRID(ST_MakePoint(${query.lng}, ${query.lat}), 4326)::geography
-          ) / 1000.0 AS "distanceKm"
-        FROM "ServiceRequest" sr
-        JOIN "ServiceCategory" c ON c.id = sr."categoryId"
-        WHERE ${where}
-        ORDER BY "distanceKm" ASC, sr."createdAt" DESC
-        LIMIT ${limit} OFFSET ${skip}
-      `);
-
-      const countRows = await this.prisma.$queryRaw<{ total: bigint }[]>(Prisma.sql`
-        SELECT COUNT(*)::bigint AS total
-        FROM "ServiceRequest" sr
-        WHERE ${where}
-      `);
-      total = Number(countRows[0]?.total ?? 0);
-    } catch {
-      // Raw PostGIS query failed or location extension unavailable
-    }
-
-    if (rows.length === 0) {
-      const prismaWhere: Prisma.ServiceRequestWhereInput = {
-        status: { in: ['OPEN', 'OFFERS_RECEIVED'] },
-        ...(query.categoryId ? { categoryId: query.categoryId } : {}),
-        ...(query.city ? { city: query.city } : {}),
-        ...(query.area ? { area: query.area } : {}),
-      };
-
-      const [prismaJobs, count] = await Promise.all([
-        this.prisma.serviceRequest.findMany({
-          where: prismaWhere,
-          skip,
-          take: limit,
-          orderBy: { createdAt: 'desc' },
-          include: {
-            category: { select: { id: true, name: true } },
-            _count: { select: { offers: true } },
-          },
-        }),
-        this.prisma.serviceRequest.count({ where: prismaWhere }),
-      ]);
-
-      total = count;
-      rows = prismaJobs.map((j) => ({
-        id: j.id,
-        title: j.title,
-        description: j.description,
-        categoryId: j.categoryId,
-        categoryName: j.category.name,
-        latitude: j.latitude,
-        longitude: j.longitude,
-        address: j.address,
-        city: j.city,
-        area: j.area,
-        status: j.status,
-        suggestedVisitCharge: j.suggestedVisitCharge != null ? Number(j.suggestedVisitCharge) : null,
-        preferredVisitTime: j.preferredVisitTime,
-        createdAt: j.createdAt,
-        images: j.images,
-        voiceNoteUrl: j.voiceNoteUrl,
-        offerCount: j._count.offers,
-        distanceKm: null,
-      }));
-    }
+    const countRows = await this.prisma.$queryRaw<{ total: bigint }[]>(Prisma.sql`
+      SELECT COUNT(*)::bigint AS total
+      FROM "ServiceRequest" sr
+      WHERE ${where}
+    `);
+    const total = Number(countRows[0]?.total ?? 0);
 
     return toPageResult(rows.map(mapJobCard), total, page, limit);
   }

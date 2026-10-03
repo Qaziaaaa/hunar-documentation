@@ -94,9 +94,11 @@ export async function listWorkerJobs(): Promise<Job[]> {
   if (isMockMode()) {
     return simulateLatency([...mockJobs]);
   }
-  const res = await http.get<BackendPage<BackendJobRow> | BackendJobRow[]>("/workers/me/jobs/active");
-  const items = Array.isArray(res) ? res : res.items;
-  return (items ?? []).map(mapBackendJob);
+  const res = await http.get<any>("/workers/me/jobs/active");
+  const items: BackendJobRow[] = Array.isArray(res)
+    ? res
+    : (res as any)?.data ?? (res as any)?.items ?? [];
+  return items.map(mapBackendJob);
 }
 
 export async function listNearbyJobs(location?: {
@@ -114,11 +116,13 @@ export async function listNearbyJobs(location?: {
   params.set("lat", String(resolved.lat));
   params.set("lng", String(resolved.lng));
   params.set("radiusKm", String(resolved.radiusKm ?? 25));
-  const res = await http.get<BackendPage<BackendJobRow> | BackendJobRow[]>(
+  const res = await http.get<any>(
     `/jobs/available?${params.toString()}`,
   );
-  const items = Array.isArray(res) ? res : res.items;
-  return (items ?? []).map(mapBackendJob);
+  const items: BackendJobRow[] = Array.isArray(res)
+    ? res
+    : (res as any)?.data ?? (res as any)?.items ?? [];
+  return items.map(mapBackendJob);
 }
 
 export async function getWorkerJob(jobId: string): Promise<Job> {

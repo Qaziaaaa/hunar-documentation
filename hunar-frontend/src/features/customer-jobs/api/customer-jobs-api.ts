@@ -14,10 +14,9 @@ export async function getCustomerJobs(): Promise<CustomerJob[]> {
     const res = await http.get<unknown>("/jobs/customer?limit=100");
     const rows: unknown[] = Array.isArray(res)
       ? res
-      : (res as { items?: unknown[] })?.items ?? [];
-    if (rows.length === 0) {
-      return MOCK_CUSTOMER_JOBS;
-    }
+      : (res as { data?: unknown[]; items?: unknown[] })?.data ??
+        (res as { items?: unknown[] })?.items ??
+        [];
     const jobs = rows.map(transformListRow);
 
     await Promise.allSettled(
