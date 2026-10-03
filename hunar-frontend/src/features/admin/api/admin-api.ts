@@ -20,7 +20,7 @@ import type {
 interface BackendCategoryRow {
   id: string;
   name: string;
-  nameUrdu: string;
+  nameUrdu?: string;
   isActive: boolean;
   sortOrder: number;
   createdAt: string;
@@ -35,11 +35,13 @@ interface BackendJobRow {
   urgency: string;
   city: string;
   area: string | null;
+  address?: string;
   suggestedVisitCharge: string | null;
   lockedVisitCharge: string | null;
-  category: { id: string; name: string; nameUrdu: string };
+  category: { id: string; name: string; nameUrdu?: string };
   customer: { id: string; name: string | null; phone: string };
-  worker: { id: string; name: string | null; phone: string } | null;
+  selectedWorker?: { id: string; name: string | null; phone: string } | null;
+  worker?: { id: string; name: string | null; phone: string } | null;
   cancelReason: string | null;
   cancelledAt: string | null;
   completedAt: string | null;
@@ -71,7 +73,7 @@ interface BackendVerificationRow {
   adminNote: string | null;
   submittedAt: string | null;
   verifiedAt: string | null;
-  skills: { id: string; name: string; nameUrdu: string }[];
+  skills: { id?: string; name: string; nameUrdu?: string }[] | string[];
   experienceYears: number | null;
   bio: string | null;
   documents: { id: string; type: string; url: string }[];
@@ -91,11 +93,13 @@ interface BackendTransactionRow {
 
 interface BackendWithdrawalRow {
   id: string;
+  workerId?: string;
   worker: { id: string; name: string | null; phone: string };
   amount: string;
   bankName?: string | null;
   accountNumber?: string | null;
   status: string;
+  requestedAt?: string;
   createdAt: string;
 }
 
@@ -103,17 +107,22 @@ interface BackendDisputeRow {
   id: string;
   jobId: string;
   reporter: { id: string; name: string | null; phone: string };
-  reporterRole: string;
-  target: { id: string; name: string | null; phone: string };
-  reason: string;
+  reporterRole?: string;
+  target?: { id: string; name: string | null; phone: string };
+  respondent?: { id: string; name: string | null; phone: string };
+  reason?: string;
+  description?: string;
   status: string;
-  resolutionNotes: string | null;
+  resolutionNotes?: string | null;
+  resolution?: string | null;
   createdAt: string;
   updatedAt: string;
 }
 
-function pageResult<T>(res: { data: T[]; meta: PageMeta }): PageResult<T> {
-  return { items: res.data ?? [], meta: res.meta };
+function pageResult<T>(res: { data: T[]; meta?: PageMeta }): PageResult<T> {
+  const items = Array.isArray(res) ? res : res?.data ?? [];
+  const meta = (res as any)?.meta ?? { page: 1, limit: items.length, total: items.length, totalPages: 1 };
+  return { items, meta };
 }
 
 const jobStatusMap: Record<string, LiveJobItem["status"]> = {
@@ -127,17 +136,19 @@ const jobStatusMap: Record<string, LiveJobItem["status"]> = {
   IN_PROGRESS: "IN_PROGRESS",
   COMPLETED: "COMPLETED",
   PAID: "COMPLETED",
+  REVIEWED: "COMPLETED",
   CANCELLED: "CANCELLED",
   DISPUTED: "DISPUTED",
 };
 
 function toLiveJobItem(j: BackendJobRow): LiveJobItem {
+  const workerObj = j.selectedWorker ?? j.worker;
   return {
     id: j.id,
     title: j.title,
-    category: j.category?.name ?? "Uncategorized",
+    category: j.category?.name ?? "General",
     customerName: j.customer?.name ?? j.customer?.phone ?? "—",
-    workerName: j.worker?.name ?? j.worker?.phone,
+    workerName: workerObj?.name ?? workerObj?.phone,
     amount: Number(j.lockedVisitCharge ?? j.suggestedVisitCharge ?? 0),
     status: jobStatusMap[j.status] ?? "OPEN",
     city: j.city,
@@ -145,36 +156,40 @@ function toLiveJobItem(j: BackendJobRow): LiveJobItem {
   };
 }
 
-function toJobDetailItem(j: BackendJobRow): JobDetailItem {
+function toJobDetailItem(raw: any): JobDetailItem {
+  const j = raw.job ?? raw;
+  const live = toLiveJobItem(j);
+  const timeline: Array<{ at: string; type: string; detail: string }> = raw.timeline ?? [];
+  
+  const auditTrail = timeline.length > 0
+    ? timeline.map((t) => ({
+        step: t.type.replace(/_/g, " "),
+        actor: "Timeline Event",
+        action: t.detail,
+        timestamp: new Date(t.at).toLocaleString(),
+      }))
+    : [
+        {
+          step: "Posted",
+          actor: j.customer?.name ?? j.customer?.phone ?? "Customer",
+          action: `Job "${j.title}" created`,
+          timestamp: new Date(j.createdAt).toLocaleString(),
+        },
+      ];
+
   return {
-    ...toLiveJobItem(j),
+    ...live,
     description: j.description ?? "",
-    address: [j.area, j.city].filter(Boolean).join(", ") || "—",
+    address: j.address || [j.area, j.city].filter(Boolean).join(", ") || "—",
     visitCharge: Number(j.lockedVisitCharge ?? j.suggestedVisitCharge ?? 0),
     estimatedTotal: Number(j.lockedVisitCharge ?? j.suggestedVisitCharge ?? 0),
-    auditTrail: [
-      {
-        step: "Posted",
-        actor: j.customer?.name ?? j.customer?.phone ?? "Customer",
-        action: `Job "${j.title}" was created`,
-        timestamp: j.createdAt,
-      },
-      ...(j.worker
-        ? [
-            {
-              step: "Assigned",
-              actor: j.worker.name ?? j.worker.phone,
-              action: `Worker assigned at Rs. ${j.lockedVisitCharge ?? j.suggestedVisitCharge ?? 0}`,
-              timestamp: j.completedAt ?? j.createdAt,
-            },
-          ]
-        : []),
-    ],
+    auditTrail,
     cancelReason: j.cancelReason ?? undefined,
   };
 }
 
 const verificationStatusMap: Record<string, VerificationStatus> = {
+  NOT_SUBMITTED: "PENDING",
   PENDING: "PENDING",
   APPROVED: "VERIFIED",
   REJECTED: "REJECTED",
@@ -194,14 +209,14 @@ function toWorkerUser(w: BackendUserRow): WorkerUser {
     phone: w.phone,
     email: `${w.phone}@hunar.local`,
     avatarUrl: w.avatarUrl ?? undefined,
-    skills: w.skills,
+    skills: w.skills ?? [],
     verificationStatus: verificationStatusMap[w.verificationStatus ?? ""] ?? "PENDING",
     rating: 0,
     totalEarnings: 0,
     walletBalance: 0,
     isOnline: w.isAvailable,
     joinDate: w.createdAt,
-    status: userStatusMap[w.isActive ? "ACTIVE" : "SUSPENDED"] ?? "ACTIVE",
+    status: w.isActive ? "ACTIVE" : "SUSPENDED",
     experienceYears: w.experienceYears ?? 0,
     serviceCity: "Peshawar",
   };
@@ -215,23 +230,27 @@ function toCustomerUser(c: BackendUserRow): CustomerUser {
     email: `${c.phone}@hunar.local`,
     avatarUrl: c.avatarUrl ?? undefined,
     joinDate: c.createdAt,
-    jobsPosted: c.jobsCount,
+    jobsPosted: c.jobsCount ?? 0,
     totalSpent: 0,
     ratingGiven: 0,
-    status: userStatusMap[c.isActive ? "ACTIVE" : "SUSPENDED"] ?? "ACTIVE",
+    status: c.isActive ? "ACTIVE" : "SUSPENDED",
   };
 }
 
 function toVerificationRequest(v: BackendVerificationRow): VerificationRequest {
-  const cnicFront = v.documents?.find((d: { type: string }) => d.type === "CNIC_FRONT");
-  const cnicBack = v.documents?.find((d: { type: string }) => d.type === "CNIC_BACK");
+  const cnicFront = v.documents?.find((d) => d.type === "CNIC_FRONT");
+  const cnicBack = v.documents?.find((d) => d.type === "CNIC_BACK");
+  const skillsList = Array.isArray(v.skills)
+    ? v.skills.map((s) => (typeof s === "string" ? s : s.name))
+    : [];
+
   return {
     id: v.userId,
     workerId: v.userId,
     workerName: v.name ?? v.phone,
     workerPhone: v.phone,
     workerAvatar: v.avatarUrl ?? undefined,
-    skills: (v.skills ?? []).map((s) => s.name),
+    skills: skillsList,
     experienceYears: v.experienceYears ?? 0,
     serviceCity: "Peshawar",
     cnicNumber: "••••••••••••",
@@ -244,31 +263,34 @@ function toVerificationRequest(v: BackendVerificationRow): VerificationRequest {
 }
 
 function toWithdrawalRequest(w: BackendWithdrawalRow): WithdrawalRequest {
+  const workerObj = w.worker ?? { id: w.workerId, name: "Worker", phone: "" };
   return {
     id: w.id,
-    workerId: w.worker.id,
-    workerName: w.worker.name ?? w.worker.phone,
+    workerId: workerObj.id,
+    workerName: workerObj.name ?? workerObj.phone ?? "Worker",
     amount: Number(w.amount),
-    bankName: w.bankName ?? "HBL",
+    bankName: w.bankName ?? "JazzCash / EasyPaisa / Bank",
     accountNumber: w.accountNumber ?? "••••••••",
-    requestedAt: w.createdAt,
+    requestedAt: w.requestedAt ?? w.createdAt,
     status: (w.status as WithdrawalRequest["status"]) ?? "PENDING",
   };
 }
 
 function toDisputeReport(d: BackendDisputeRow): DisputeReport {
+  const reporterObj = d.reporter ?? { name: "Reporter", phone: "" };
+  const targetObj = d.respondent ?? d.target ?? { name: "Respondent", phone: "" };
   return {
     id: d.id,
     jobId: d.jobId,
-    reporterName: d.reporter?.name ?? d.reporter?.phone ?? "—",
-    reporterRole: (d.reporterRole.toLowerCase() as DisputeReport["reporterRole"]) ?? "CUSTOMER",
-    targetName: d.target?.name ?? d.target?.phone ?? "—",
+    reporterName: reporterObj.name ?? reporterObj.phone ?? "—",
+    reporterRole: ((d.reporterRole ?? "CUSTOMER").toLowerCase() as DisputeReport["reporterRole"]) ?? "CUSTOMER",
+    targetName: targetObj.name ?? targetObj.phone ?? "—",
     issueCategory: "General",
-    description: d.reason,
+    description: d.description ?? d.reason ?? "No details provided",
     evidenceUrls: [],
     status: (d.status as DisputeReport["status"]) ?? "OPEN",
     createdAt: d.createdAt,
-    resolutionNotes: d.resolutionNotes ?? undefined,
+    resolutionNotes: d.resolutionNotes ?? d.resolution ?? undefined,
   };
 }
 
@@ -304,15 +326,13 @@ export const adminApi = {
     const res = await http.get<{ data: BackendJobRow[]; meta: PageMeta }>(
       `/admin/jobs?${params.toString()}`,
     );
-    return pageResult<LiveJobItem>({
-      data: (res.data ?? []).map(toLiveJobItem),
-      meta: res.meta,
-    });
+    const items = (res?.data ?? (Array.isArray(res) ? res : [])).map(toLiveJobItem);
+    return { items, meta: res?.meta ?? { page: 1, limit: items.length, total: items.length, totalPages: 1 } };
   },
 
   async getJobDetail(jobId: string): Promise<JobDetailItem> {
-    const row = await http.get<BackendJobRow>(`/admin/jobs/${jobId}`);
-    return toJobDetailItem(row);
+    const raw = await http.get<any>(`/admin/jobs/${jobId}`);
+    return toJobDetailItem(raw);
   },
 
   async cancelJob(jobId: string, reason: string) {
@@ -327,10 +347,8 @@ export const adminApi = {
     const res = await http.get<{ data: BackendUserRow[]; meta: PageMeta }>(
       `/admin/workers?${params.toString()}`,
     );
-    return pageResult<WorkerUser>({
-      data: (res.data ?? []).map(toWorkerUser),
-      meta: res.meta,
-    });
+    const items = (res?.data ?? (Array.isArray(res) ? res : [])).map(toWorkerUser);
+    return { items, meta: res?.meta ?? { page: 1, limit: items.length, total: items.length, totalPages: 1 } };
   },
 
   async listCustomers(query: PaginationQuery = {}): Promise<PageResult<CustomerUser>> {
@@ -341,31 +359,30 @@ export const adminApi = {
     const res = await http.get<{ data: BackendUserRow[]; meta: PageMeta }>(
       `/admin/customers?${params.toString()}`,
     );
-    return pageResult<CustomerUser>({
-      data: (res.data ?? []).map(toCustomerUser),
-      meta: res.meta,
-    });
+    const items = (res?.data ?? (Array.isArray(res) ? res : [])).map(toCustomerUser);
+    return { items, meta: res?.meta ?? { page: 1, limit: items.length, total: items.length, totalPages: 1 } };
   },
 
-  async suspendWorker(workerId: string) {
-    return http.put(`/admin/workers/${workerId}/status`, { isActive: false });
+  async suspendWorker(workerId: string, reason?: string) {
+    return http.put(`/admin/workers/${workerId}/suspend`, { reason: reason || "Suspended by admin" });
   },
 
   async reactivateWorker(workerId: string) {
-    return http.put(`/admin/workers/${workerId}/status`, { isActive: true });
+    return http.put(`/admin/workers/${workerId}/reactivate`);
   },
 
   async suspendCustomer(customerId: string, reason?: string) {
-    return http.put(`/admin/customers/${customerId}/status`, { isActive: false, reason });
+    return http.put(`/admin/customers/${customerId}/suspend`, { reason: reason || "Suspended by admin" });
   },
 
   async reactivateCustomer(customerId: string) {
-    return http.put(`/admin/customers/${customerId}/status`, { isActive: true });
+    return http.put(`/admin/customers/${customerId}/reactivate`);
   },
 
   async listVerifications(status: string | null = null): Promise<VerificationRequest[]> {
     const suffix = status ? (status === "PENDING" ? "pending" : `?status=${status}`) : "";
-    const rows = await http.get<BackendVerificationRow[]>(`/admin/verifications/${suffix}`.replace(/\/\?/, "?"));
+    const res = await http.get<any>(`/admin/verifications/${suffix}`.replace(/\/\?/, "?"));
+    const rows: BackendVerificationRow[] = Array.isArray(res) ? res : (res?.data ?? []);
     return rows.map(toVerificationRequest);
   },
 
@@ -382,7 +399,8 @@ export const adminApi = {
     const res = await http.get<{ data: BackendTransactionRow[]; meta: PageMeta }>(
       "/admin/transactions?limit=100",
     );
-    return (res.data ?? []).map((t) => ({
+    const rows = res?.data ?? (Array.isArray(res) ? res : []);
+    return rows.map((t) => ({
       id: t.id,
       jobId: t.referenceId,
       customerName: "—",
@@ -400,18 +418,52 @@ export const adminApi = {
     const res = await http.get<{ data: BackendWithdrawalRow[]; meta: PageMeta }>(
       "/admin/withdrawals?limit=100",
     );
-    return (res.data ?? []).map(toWithdrawalRequest);
+    const rows = res?.data ?? (Array.isArray(res) ? res : []);
+    return rows.map(toWithdrawalRequest);
   },
 
-  async processWithdrawal(id: string, decision: string) {
-    return http.put(`/admin/withdrawals/${id}/process`, { decision });
+  async processWithdrawal(id: string, action: "approve" | "reject", note?: string) {
+    return http.put(`/admin/withdrawals/${id}/process`, { action, note });
+  },
+
+  async listVisits(query: PaginationQuery = {}): Promise<PageResult<any>> {
+    const params = new URLSearchParams({
+      page: String(query.page ?? 1),
+      limit: String(query.limit ?? 50),
+    });
+    const res = await http.get<{ data: any[]; meta: PageMeta }>(
+      `/admin/visits?${params.toString()}`,
+    );
+    const items = res?.data ?? (Array.isArray(res) ? res : []);
+    return { items, meta: res?.meta ?? { page: 1, limit: items.length, total: items.length, totalPages: 1 } };
+  },
+
+  async getVisitDetail(id: string) {
+    return http.get<any>(`/admin/visits/${id}`);
+  },
+
+  async listReviews(query: PaginationQuery = {}): Promise<PageResult<any>> {
+    const params = new URLSearchParams({
+      page: String(query.page ?? 1),
+      limit: String(query.limit ?? 50),
+    });
+    const res = await http.get<{ data: any[]; meta: PageMeta }>(
+      `/admin/reviews?${params.toString()}`,
+    );
+    const items = res?.data ?? (Array.isArray(res) ? res : []);
+    return { items, meta: res?.meta ?? { page: 1, limit: items.length, total: items.length, totalPages: 1 } };
+  },
+
+  async toggleReviewVisibility(reviewId: string, isVisible?: boolean) {
+    return http.put(`/admin/reviews/${reviewId}/visibility`, { isVisible });
   },
 
   async listDisputes(): Promise<DisputeReport[]> {
     const res = await http.get<{ data: BackendDisputeRow[]; meta: PageMeta }>(
       "/admin/disputes?limit=100",
     );
-    return (res.data ?? []).map(toDisputeReport);
+    const rows = res?.data ?? (Array.isArray(res) ? res : []);
+    return rows.map(toDisputeReport);
   },
 
   async getDisputeDetail(disputeId: string): Promise<DisputeReport> {
@@ -419,12 +471,13 @@ export const adminApi = {
     return toDisputeReport(row);
   },
 
-  async resolveDispute(disputeId: string, decision: string, notes?: string) {
-    return http.put(`/admin/disputes/${disputeId}/resolve`, { decision, notes });
+  async resolveDispute(disputeId: string, action: string, resolution?: string) {
+    return http.put(`/admin/disputes/${disputeId}/resolve`, { action, resolution });
   },
 
   async listCategories(): Promise<ServiceCategory[]> {
-    const rows = await http.get<BackendCategoryRow[]>("/admin/categories");
+    const res = await http.get<any>("/admin/categories");
+    const rows: BackendCategoryRow[] = Array.isArray(res) ? res : (res?.data ?? []);
     return rows.map(toServiceCategory);
   },
 
@@ -434,7 +487,7 @@ export const adminApi = {
   },
 
   async toggleCategory(id: string, active: boolean) {
-    return http.put(`/admin/categories/${id}`, { name: undefined, isActive: active });
+    return http.put(`/admin/categories/${id}/deactivate`);
   },
 
   async updateCategory(id: string, name: string) {
@@ -442,10 +495,10 @@ export const adminApi = {
   },
 
   async getSettings(): Promise<PlatformSettings> {
-    const s = await http.get<{ commission_rate: string }>("/admin/settings");
+    const s = await http.get<Record<string, string>>("/admin/settings");
     return {
-      commissionRate: Number(s.commission_rate ?? "0.10"),
-      defaultSearchRadiusKm: 10,
+      commissionRate: Number(s.commissionRate ?? "0.10"),
+      defaultSearchRadiusKm: Number(s.serviceRadiusKm ?? 10),
       maxActiveOffersPerWorker: 1,
       requireManualVerification: true,
       maintenanceMode: false,
@@ -454,59 +507,62 @@ export const adminApi = {
 
   async saveSettings(s: PlatformSettings) {
     return http.put("/admin/settings", {
-      commission_rate: String(s.commissionRate),
+      commissionRate: s.commissionRate,
+      serviceRadiusKm: String(s.defaultSearchRadiusKm),
     });
   },
 
   async listAuditLogs(): Promise<AuditLogEntry[]> {
-    const res = await http.get<{ data: AuditLogEntry[]; meta: PageMeta }>(
+    const res = await http.get<{ data: any[]; meta: PageMeta }>(
       "/admin/audit?limit=100",
     );
-    return (res.data ?? []).map((log) => ({
+    const rows = res?.data ?? (Array.isArray(res) ? res : []);
+    return rows.map((log) => ({
       id: log.id,
-      adminName: log.adminName ?? "System",
-      actionType: log.actionType ?? log.details ?? "ACTION",
-      targetResource: log.targetResource ?? "—",
-      details: log.details ?? "",
-      timestamp: log.timestamp,
+      adminName: log.actorRole ?? "ADMIN",
+      actionType: log.action ?? "ACTION",
+      targetResource: log.targetType ? `${log.targetType}:${log.targetId}` : "—",
+      details: log.reason ?? JSON.stringify(log.metadata ?? {}),
+      timestamp: log.createdAt,
     }));
   },
 };
-import {
-  MOCK_ADMIN_KPIS,
-  MOCK_AUDIT_LOGS,
-  MOCK_DISPUTES,
-  MOCK_LIVE_JOBS,
-  MOCK_PAYMENTS,
-  MOCK_SETTINGS,
-  MOCK_VERIFICATIONS,
-  MOCK_WITHDRAWALS,
-  MOCK_WORKERS,
-} from "@/mocks/admin.mock";
 
+// Exported async helpers used by Server Components & Hooks
 export async function fetchAdminKpis(): Promise<AdminKpiStats> {
   try {
-    const data = await apiClient<AdminKpiStats>("/admin/kpis");
-    if (data) return data;
+    return await adminApi.getKpis();
   } catch {
-    // Backend API unavailable; fallback to mock data
+    return {
+      totalJobs: 0,
+      openJobs: 0,
+      activeJobs: 0,
+      completedJobs: 0,
+      cancelledJobs: 0,
+      totalCustomers: 0,
+      newCustomersThisWeek: 0,
+      totalWorkers: 0,
+      verifiedWorkers: 0,
+      pendingWorkers: 0,
+      suspendedWorkers: 0,
+      totalRevenue: 0,
+      totalPaymentsProcessed: 0,
+      activeNowCount: 0,
+    };
   }
-  return MOCK_ADMIN_KPIS;
 }
 
 export async function fetchPendingVerifications(): Promise<VerificationRequest[]> {
   try {
-    const data = await apiClient<VerificationRequest[]>("/admin/verifications/pending");
-    if (Array.isArray(data)) return data;
+    return await adminApi.listVerifications("PENDING");
   } catch {
-    // Fallback
+    return [];
   }
-  return MOCK_VERIFICATIONS;
 }
 
 export async function approveWorkerVerification(userId: string): Promise<boolean> {
   try {
-    await apiClient(`/admin/verifications/${userId}/approve`, { method: "PUT" });
+    await adminApi.decideVerification(userId, "APPROVED");
     return true;
   } catch {
     return false;
@@ -515,10 +571,7 @@ export async function approveWorkerVerification(userId: string): Promise<boolean
 
 export async function rejectWorkerVerification(userId: string, reason: string): Promise<boolean> {
   try {
-    await apiClient(`/admin/verifications/${userId}/reject`, {
-      method: "PUT",
-      body: JSON.stringify({ reason }),
-    });
+    await adminApi.decideVerification(userId, "REJECTED", reason);
     return true;
   } catch {
     return false;
@@ -527,22 +580,18 @@ export async function rejectWorkerVerification(userId: string, reason: string): 
 
 export async function fetchRecentTransactions(): Promise<PaymentTransaction[]> {
   try {
-    const data = await apiClient<PaymentTransaction[]>("/admin/transactions");
-    if (Array.isArray(data)) return data;
+    return await adminApi.listTransactions();
   } catch {
-    // Fallback
+    return [];
   }
-  return MOCK_PAYMENTS;
 }
 
 export async function fetchWithdrawalRequests(): Promise<WithdrawalRequest[]> {
   try {
-    const data = await apiClient<WithdrawalRequest[]>("/admin/withdrawals");
-    if (Array.isArray(data)) return data;
+    return await adminApi.listWithdrawals();
   } catch {
-    // Fallback
+    return [];
   }
-  return MOCK_WITHDRAWALS;
 }
 
 export async function processWithdrawalRequest(
@@ -551,10 +600,7 @@ export async function processWithdrawalRequest(
   note?: string,
 ): Promise<boolean> {
   try {
-    await apiClient(`/admin/withdrawals/${id}/process`, {
-      method: "PUT",
-      body: JSON.stringify({ action, note }),
-    });
+    await adminApi.processWithdrawal(id, action, note);
     return true;
   } catch {
     return false;
@@ -563,24 +609,19 @@ export async function processWithdrawalRequest(
 
 export async function fetchDisputesQueue(): Promise<DisputeReport[]> {
   try {
-    const data = await apiClient<DisputeReport[]>("/admin/disputes");
-    if (Array.isArray(data)) return data;
+    return await adminApi.listDisputes();
   } catch {
-    // Fallback
+    return [];
   }
-  return MOCK_DISPUTES;
 }
 
 export async function resolveDispute(
   id: string,
-  action: "refund_customer" | "release_worker" | "split" | "dismiss",
+  action: "resolve" | "dismiss" | "escalate",
   resolutionNotes?: string,
 ): Promise<boolean> {
   try {
-    await apiClient(`/admin/disputes/${id}/resolve`, {
-      method: "PUT",
-      body: JSON.stringify({ action, resolutionNotes }),
-    });
+    await adminApi.resolveDispute(id, action, resolutionNotes);
     return true;
   } catch {
     return false;
@@ -589,42 +630,40 @@ export async function resolveDispute(
 
 export async function fetchLiveJobsStream(): Promise<LiveJobItem[]> {
   try {
-    const data = await apiClient<LiveJobItem[]>("/admin/jobs");
-    if (Array.isArray(data)) return data;
+    const res = await adminApi.listJobs({ limit: 50 });
+    return res.items;
   } catch {
-    // Fallback
+    return [];
   }
-  return MOCK_LIVE_JOBS;
 }
 
 export async function fetchAuditLogsFeed(): Promise<AuditLogEntry[]> {
   try {
-    const data = await apiClient<AuditLogEntry[]>("/admin/audit");
-    if (Array.isArray(data)) return data;
+    return await adminApi.listAuditLogs();
   } catch {
-    // Fallback
+    return [];
   }
-  return MOCK_AUDIT_LOGS;
 }
 
 export async function fetchPlatformSettings(): Promise<PlatformSettings> {
   try {
-    const data = await apiClient<PlatformSettings>("/admin/settings");
-    if (data) return data;
+    return await adminApi.getSettings();
   } catch {
-    // Fallback
+    return {
+      commissionRate: 0.1,
+      defaultSearchRadiusKm: 10,
+      maxActiveOffersPerWorker: 1,
+      requireManualVerification: true,
+      maintenanceMode: false,
+    };
   }
-  return MOCK_SETTINGS;
 }
 
 export async function updatePlatformSettings(
   settings: Partial<PlatformSettings>,
 ): Promise<boolean> {
   try {
-    await apiClient("/admin/settings", {
-      method: "PUT",
-      body: JSON.stringify(settings),
-    });
+    await adminApi.saveSettings(settings as PlatformSettings);
     return true;
   } catch {
     return false;
@@ -633,20 +672,18 @@ export async function updatePlatformSettings(
 
 export async function fetchTopWorkers(): Promise<WorkerUser[]> {
   try {
-    const data = await apiClient<WorkerUser[]>("/admin/workers");
-    if (Array.isArray(data)) return data;
+    const res = await adminApi.listWorkers({ limit: 50 });
+    return res.items;
   } catch {
-    // Fallback
+    return [];
   }
-  return MOCK_WORKERS;
 }
 
 export async function fetchCustomers(): Promise<CustomerUser[]> {
   try {
-    const data = await apiClient<CustomerUser[]>("/admin/customers");
-    if (Array.isArray(data)) return data;
+    const res = await adminApi.listCustomers({ limit: 50 });
+    return res.items;
   } catch {
-    // Fallback
+    return [];
   }
-  return [];
 }

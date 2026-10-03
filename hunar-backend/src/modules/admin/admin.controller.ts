@@ -24,6 +24,8 @@ import {
   AdminAuditListQueryDto,
   AdminNotificationListQueryDto,
   AdminMarkNotificationsReadDto,
+  AdminVisitListQueryDto,
+  AdminReviewListQueryDto,
   ForceCancelJobDto,
   SuspendUserDto,
 } from './admin.validation';
@@ -292,4 +294,33 @@ export class AdminController {
   ) {
     return this.adminService.markNotificationsRead(dto, actor);
   }
+
+  // ----- Visits -----
+
+  @Get('visits')
+  listVisits(@Query() query: AdminVisitListQueryDto) {
+    return this.adminService.listVisits(query);
+  }
+
+  @Get('visits/:id')
+  getVisitDetail(@Param('id', ParseUUIDPipe) id: string) {
+    return this.adminService.getVisitDetail(id);
+  }
+
+  // ----- Reviews -----
+
+  @Get('reviews')
+  listReviews(@Query() query: AdminReviewListQueryDto) {
+    return this.adminService.listReviews(query);
+  }
+
+  @Put('reviews/:id/visibility')
+  toggleReviewVisibility(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body('isVisible') isVisible?: boolean,
+    @CurrentUser() actor?: JwtPayload,
+  ) {
+    return this.adminService.toggleReviewVisibility(id, isVisible, actor);
+  }
 }
+

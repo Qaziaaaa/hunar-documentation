@@ -46,6 +46,8 @@ import {
   AdminNotificationListQueryDto,
   AdminMarkNotificationsReadDto,
   AdminKpiStatsDto,
+  AdminVisitListQueryDto,
+  AdminReviewListQueryDto,
 } from './admin.validation';
 
 // Job states that mean the customer has paid for the (locked) visit charge.
@@ -2349,4 +2351,251 @@ export class AdminService {
 
     return events.sort((a, b) => a.at.getTime() - b.at.getTime());
   }
+
+  // Admin Visits Monitoring (Section 6)
+  async listVisits(query: AdminVisitListQueryDto) {
+    const { page, limit, skip } = normalizePage(query);
+
+    const where: Prisma.VisitWhereInput = {
+      ...(query.status ? { status: query.status } : {}),
+      ...(query.from || query.to
+        ? {
+            scheduledDate: {
+              ...(query.from ? { gte: new Date(query.from) } : {}),
+              ...(query.to ? { lte: new Date(query.to) } : {}),
+            },
+          }
+        : {}),
+      ...(query.search
+        ? {
+            OR: [
+              { job: { is: { title: { contains: query.search, mode: 'insensitive' } } } },
+              { worker: { is: { name: { contains: query.search, mode: 'insensitive' } } } },
+              { worker: { is: { phone: { contains: query.search } } } },
+              { job: { is: { customer: { is: { name: { contains: query.search, mode: 'insensitive' } } } } } },
+            ],
+          }
+        : {}),
+    };
+
+    const [rows, total] = await Promise.all([
+      this.prisma.visit.findMany({
+        where,
+        orderBy: { scheduledDate: 'desc' },
+        skip,
+        take: limit,
+        select: {
+          id: true,
+          jobId: true,
+          workerId: true,
+          offerId: true,
+          scheduledDate: true,
+          actualDate: true,
+          status: true,
+          diagnosis: true,
+          repairPlan: true,
+          repairEstimate: true,
+          estimatedRepairTimeMin: true,
+          inspectionSubmittedAt: true,
+          createdAt: true,
+          updatedAt: true,
+          job: {
+            select: {
+              id: true,
+              title: true,
+              address: true,
+              city: true,
+              area: true,
+              status: true,
+              lockedVisitCharge: true,
+              suggestedVisitCharge: true,
+              customer: { select: { id: true, name: true, phone: true } },
+            },
+          },
+          worker: { select: { id: true, name: true, phone: true } },
+          repairs: {
+            select: {
+              id: true,
+              description: true,
+              amount: true,
+              status: true,
+            },
+          },
+        },
+      }),
+      this.prisma.visit.count({ where }),
+    ]);
+
+    const items = rows.map((v) => ({
+      id: v.id,
+      jobId: v.jobId,
+      jobTitle: v.job.title,
+      scheduledDate: v.scheduledDate,
+      actualDate: v.actualDate,
+      status: v.status,
+      diagnosis: v.diagnosis,
+      repairPlan: v.repairPlan,
+      repairEstimate: v.repairEstimate ? Number(v.repairEstimate) : null,
+      visitCharge: Number(v.job.lockedVisitCharge ?? v.job.suggestedVisitCharge ?? 0),
+      customer: v.job.customer,
+      worker: v.worker,
+      repairs: v.repairs,
+      createdAt: v.createdAt,
+    }));
+
+    return toPageResult(items, total, page, limit);
+  }
+
+  async getVisitDetail(id: string) {
+    const visit = await this.prisma.visit.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        jobId: true,
+        workerId: true,
+        offerId: true,
+        scheduledDate: true,
+        actualDate: true,
+        status: true,
+        diagnosis: true,
+        repairPlan: true,
+        repairEstimate: true,
+        inspectionPhotos: true,
+        estimatedRepairTimeMin: true,
+        inspectionSubmittedAt: true,
+        createdAt: true,
+        updatedAt: true,
+        job: {
+          select: {
+            id: true,
+            title: true,
+            description: true,
+            address: true,
+            city: true,
+            area: true,
+            status: true,
+            lockedVisitCharge: true,
+            suggestedVisitCharge: true,
+            customer: { select: { id: true, name: true, phone: true, email: true } },
+          },
+        },
+        worker: { select: { id: true, name: true, phone: true, email: true } },
+        repairs: {
+          select: {
+            id: true,
+            description: true,
+            amount: true,
+            status: true,
+            itemsBreakdown: true,
+          },
+        },
+      },
+    });
+
+    if (!visit) {
+      throw new NotFoundException('Visit not found');
+    }
+
+    return {
+      ...visit,
+      repairEstimate: visit.repairEstimate ? Number(visit.repairEstimate) : null,
+      visitCharge: Number(visit.job.lockedVisitCharge ?? visit.job.suggestedVisitCharge ?? 0),
+    };
+  }
+
+  // Admin Reviews Moderation (Section 8)
+  async listReviews(query: AdminReviewListQueryDto) {
+    const { page, limit, skip } = normalizePage(query);
+
+    const where: Prisma.ReviewWhereInput = {
+      ...(query.rating ? { rating: query.rating } : {}),
+      ...(query.isVisible !== undefined ? { isVisible: query.isVisible === 'true' } : {}),
+      ...(query.from || query.to
+        ? {
+            createdAt: {
+              ...(query.from ? { gte: new Date(query.from) } : {}),
+              ...(query.to ? { lte: new Date(query.to) } : {}),
+            },
+          }
+        : {}),
+      ...(query.search
+        ? {
+            OR: [
+              { comment: { contains: query.search, mode: 'insensitive' } },
+              { reviewer: { is: { name: { contains: query.search, mode: 'insensitive' } } } },
+              { reviewee: { is: { name: { contains: query.search, mode: 'insensitive' } } } },
+              { job: { is: { title: { contains: query.search, mode: 'insensitive' } } } },
+            ],
+          }
+        : {}),
+    };
+
+    const [rows, total] = await Promise.all([
+      this.prisma.review.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limit,
+        select: {
+          id: true,
+          jobId: true,
+          reviewerId: true,
+          revieweeId: true,
+          rating: true,
+          comment: true,
+          isVisible: true,
+          createdAt: true,
+          job: { select: { id: true, title: true } },
+          reviewer: { select: { id: true, name: true, phone: true, role: true } },
+          reviewee: { select: { id: true, name: true, phone: true, role: true } },
+        },
+      }),
+      this.prisma.review.count({ where }),
+    ]);
+
+    const items = rows.map((r) => ({
+      id: r.id,
+      jobId: r.jobId,
+      jobTitle: r.job.title,
+      rating: r.rating,
+      comment: r.comment,
+      isVisible: r.isVisible,
+      reviewer: r.reviewer,
+      reviewee: r.reviewee,
+      createdAt: r.createdAt,
+    }));
+
+    return toPageResult(items, total, page, limit);
+  }
+
+  async toggleReviewVisibility(id: string, isVisible?: boolean, actor?: JwtPayload) {
+    const review = await this.prisma.review.findUnique({
+      where: { id },
+      select: { id: true, isVisible: true },
+    });
+    if (!review) {
+      throw new NotFoundException('Review not found');
+    }
+
+    const nextState = isVisible !== undefined ? isVisible : !review.isVisible;
+    const updated = await this.prisma.review.update({
+      where: { id },
+      data: { isVisible: nextState },
+      select: { id: true, isVisible: true },
+    });
+
+    if (actor) {
+      await this.audit.record({
+        actorId: actor.sub,
+        actorRole: actor.role,
+        action: nextState ? 'REVIEW_RESTORED' : 'REVIEW_HIDDEN',
+        targetType: 'REVIEW',
+        targetId: id,
+        reason: null,
+      });
+    }
+
+    return updated;
+  }
 }
+

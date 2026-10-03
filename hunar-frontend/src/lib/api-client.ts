@@ -211,9 +211,11 @@ export async function apiClient<T>(
   }
 
   const raw = (await res.json()) as T | { success: boolean; data?: T; meta?: unknown };
-  // The backend wraps every successful response in { success: true, data }.
-  // Unwrap it here once so all callers receive the payload directly.
+  // The backend wraps every successful response in { success: true, data, meta? }.
   if (raw && typeof raw === "object" && "success" in raw) {
+    if ("meta" in raw && (raw as { meta?: unknown }).meta) {
+      return { data: (raw as { data?: T }).data, meta: (raw as { meta?: unknown }).meta } as unknown as T;
+    }
     return (raw as { data?: T }).data as T;
   }
   return raw as T;

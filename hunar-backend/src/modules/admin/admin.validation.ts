@@ -19,6 +19,7 @@ import {
   DisputeStatus,
   DisputeType,
   JobStatus,
+  VisitStatus,
   WalletLedgerType,
   WorkerVerificationStatus,
   WithdrawalStatus,
@@ -585,3 +586,75 @@ export class AdminKpiStatsDto {
   @IsInt()
   activeNowCount: number;
 }
+
+export class AdminVisitListQueryDto {
+  @IsOptional()
+  @IsString()
+  @MaxLength(200)
+  search?: string;
+
+  @IsOptional()
+  @IsEnum(VisitStatus)
+  status?: VisitStatus;
+
+  @IsOptional()
+  @IsDateString()
+  from?: string;
+
+  @IsOptional()
+  @IsDateString()
+  to?: string;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  page?: number;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(100)
+  limit?: number;
+}
+
+export class AdminReviewListQueryDto {
+  @IsOptional()
+  @IsString()
+  @MaxLength(200)
+  search?: string;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(5)
+  rating?: number;
+
+  @IsOptional()
+  @IsIn(['true', 'false'])
+  isVisible?: string;
+
+  @IsOptional()
+  @IsDateString()
+  from?: string;
+
+  @IsOptional()
+  @IsDateString()
+  to?: string;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  page?: number;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(100)
+  limit?: number;
+}
+

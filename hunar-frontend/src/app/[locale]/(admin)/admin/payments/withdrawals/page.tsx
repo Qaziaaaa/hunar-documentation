@@ -22,7 +22,7 @@ export default function WithdrawalsPage() {
   }, []);
 
   const handleApproveWithdrawal = (id: string) => {
-    void adminApi.processWithdrawal(id, "APPROVE").catch(() => undefined);
+    void adminApi.processWithdrawal(id, "approve").catch(() => undefined);
     setItems((prev) =>
       prev.map((item) =>
         item.id === id ? { ...item, status: "PROCESSED" } : item
