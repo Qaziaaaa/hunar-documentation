@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import {
   LayoutDashboard,
   Briefcase,
@@ -8,13 +9,17 @@ import {
   User,
   ChevronRight,
   X,
+  LogOut,
+  Loader2,
 } from "lucide-react";
 import type { DashboardTab, WorkerDashboardProfile } from "../types";
 import { WorkerFixLogo } from "@/components/shared/workerfix-logo";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { RatingStars } from "@/components/shared/rating-stars";
-
 import { useLocale } from "next-intl";
+import { useRouter } from "@/i18n/navigation";
+import { logoutWorker } from "@/features/auth/api/auth-api";
+import { useStoredUser } from "@/lib/use-stored-user";
 
 export function DashboardSidebar({
   activeTab,
@@ -23,6 +28,8 @@ export function DashboardSidebar({
   unreadNotificationsCount = 0,
   isOpen,
   onClose,
+  onLogout,
+  isLoadingProfile = false,
 }: {
   activeTab: DashboardTab;
   onSelectTab: (tab: DashboardTab) => void;
@@ -30,9 +37,14 @@ export function DashboardSidebar({
   unreadNotificationsCount?: number;
   isOpen?: boolean;
   onClose?: () => void;
+  onLogout?: () => void;
+  isLoadingProfile?: boolean;
 }) {
   const locale = useLocale();
   const isUrdu = locale === "ur";
+  const router = useRouter();
+  const storedUser = useStoredUser();
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   const navSections: Array<{
     heading: string;
@@ -82,8 +94,35 @@ export function DashboardSidebar({
     }
   };
 
-  const ratingValue = profile.rating ?? 4.8;
-  const completedCount = profile.completedJobsCount ?? 14;
+  const handleLogout = async () => {
+    setIsLoggingOut(true);
+    try {
+      if (onLogout) {
+        onLogout();
+      } else {
+        await logoutWorker();
+        router.push("/worker/sign-in");
+      }
+    } finally {
+      if (onClose) onClose();
+      setIsLoggingOut(false);
+    }
+  };
+
+  const displayName =
+    profile.fullName ||
+    storedUser?.name ||
+    storedUser?.phone ||
+    (isUrdu ? "ورکر پروفائل" : "Worker Profile");
+  const avatarLetter = (displayName ? displayName[0] : "W").toUpperCase();
+  const ratingValue =
+    typeof profile.rating === "number" && !isNaN(profile.rating)
+      ? profile.rating
+      : 5.0;
+  const completedCount =
+    typeof profile.completedJobsCount === "number" && !isNaN(profile.completedJobsCount)
+      ? profile.completedJobsCount
+      : 0;
 
   return (
     <>
@@ -183,46 +222,76 @@ export function DashboardSidebar({
           </nav>
         </div>
 
-        {/* Worker Profile Section at Very Bottom */}
-        <div className="border-t border-slate-100 pt-3">
-          <button
-            type="button"
-            onClick={() => handleItemClick("profile")}
-            className={`group w-full text-start flex items-center justify-between gap-2.5 rounded-xl border p-2.5 transition-all cursor-pointer ${
-              activeTab === "profile"
-                ? "border-[#0F8B8D]/30 bg-[#0F8B8D]/10"
-                : "border-slate-100 bg-slate-50/80 hover:bg-slate-100 hover:border-slate-200"
-            }`}
-          >
-            <div className="flex items-center gap-2.5 min-w-0 flex-1">
-              <Avatar className="size-9 border border-[#0F8B8D]/20 shrink-0">
-                {profile.avatarUrl ? (
-                  <AvatarImage src={profile.avatarUrl} alt={profile.fullName} />
-                ) : null}
-                <AvatarFallback className="bg-[#0F8B8D]/10 font-bold text-[#0F8B8D] text-xs">
-                  {profile.fullName ? profile.fullName[0].toUpperCase() : "W"}
-                </AvatarFallback>
-              </Avatar>
-
-              <div className="min-w-0 flex-1 space-y-0.5">
-                <p className="text-xs font-bold text-[#123B5D] truncate leading-tight">
-                  {profile.fullName || (isUrdu ? "ورکر پروفائل" : "Worker Profile")}
-                </p>
-
-                <div className="flex items-center gap-1">
-                  <RatingStars rating={ratingValue} size="size-3" />
-                  <span className="text-[10px] font-bold text-[#123B5D]">
-                    {ratingValue.toFixed(1)}
-                  </span>
-                </div>
-
-                <p className="text-[10px] font-medium text-slate-500">
-                  {isUrdu ? `${completedCount} مکمل شدہ آرڈرز` : `${completedCount} Completed Orders`}
-                </p>
+        {/* Worker Profile Section at Very Bottom with Logout */}
+        <div className="border-t border-slate-100 pt-3 flex items-center gap-2">
+          {isLoadingProfile && !profile.fullName && !storedUser?.name ? (
+            <div
+              className="flex-1 min-w-0 flex items-center gap-2.5 rounded-xl border border-slate-100 bg-slate-50/70 p-2.5 animate-pulse"
+              aria-label={isUrdu ? "پروفائل لوڈ ہو رہی ہے..." : "Loading profile..."}
+            >
+              <div className="size-9 rounded-full bg-slate-200 shrink-0" />
+              <div className="min-w-0 flex-1 space-y-1.5 py-0.5">
+                <div className="h-3 w-24 bg-slate-200 rounded" />
+                <div className="h-2 w-16 bg-slate-200 rounded" />
               </div>
             </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => handleItemClick("profile")}
+              className={`group min-w-0 flex-1 text-start flex items-center justify-between gap-2.5 rounded-xl border p-2.5 transition-all cursor-pointer ${
+                activeTab === "profile"
+                  ? "border-[#0F8B8D]/30 bg-[#0F8B8D]/10"
+                  : "border-slate-100 bg-slate-50/80 hover:bg-slate-100 hover:border-slate-200"
+              }`}
+            >
+              <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                <Avatar className="size-9 border border-[#0F8B8D]/20 shrink-0">
+                  {profile.avatarUrl ? (
+                    <AvatarImage src={profile.avatarUrl} alt={displayName} />
+                  ) : null}
+                  <AvatarFallback suppressHydrationWarning className="bg-[#0F8B8D]/10 font-bold text-[#0F8B8D] text-xs">
+                    {avatarLetter}
+                  </AvatarFallback>
+                </Avatar>
 
-            <ChevronRight className="size-4 text-slate-400 group-hover:text-[#0F8B8D] shrink-0 transition-colors" />
+                <div className="min-w-0 flex-1 space-y-0.5">
+                  <p suppressHydrationWarning className="text-xs font-bold text-[#123B5D] truncate leading-tight">
+                    {displayName}
+                  </p>
+
+                  <div className="flex items-center gap-1">
+                    <RatingStars rating={ratingValue} size="size-3" />
+                    <span suppressHydrationWarning className="text-[10px] font-bold text-[#123B5D]">
+                      {ratingValue.toFixed(1)}
+                    </span>
+                  </div>
+
+                  <p suppressHydrationWarning className="text-[10px] font-medium text-slate-500 truncate">
+                    {isUrdu
+                      ? `${completedCount} مکمل شدہ آرڈرز`
+                      : `${completedCount} Completed Orders`}
+                  </p>
+                </div>
+              </div>
+
+              <ChevronRight className="size-4 text-slate-400 group-hover:text-[#0F8B8D] shrink-0 transition-colors" />
+            </button>
+          )}
+
+          <button
+            type="button"
+            onClick={handleLogout}
+            disabled={isLoggingOut}
+            className="size-10 rounded-xl border border-slate-200 bg-slate-50/80 hover:bg-red-50 hover:border-red-200 text-slate-400 hover:text-red-600 transition-colors flex items-center justify-center shrink-0 cursor-pointer disabled:opacity-50"
+            title={isUrdu ? "لاگ آؤٹ" : "Sign Out"}
+            aria-label={isUrdu ? "لاگ آؤٹ" : "Sign Out"}
+          >
+            {isLoggingOut ? (
+              <Loader2 className="size-4 animate-spin text-red-600" />
+            ) : (
+              <LogOut className="size-4" />
+            )}
           </button>
         </div>
       </aside>
