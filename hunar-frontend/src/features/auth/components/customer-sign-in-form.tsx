@@ -130,12 +130,20 @@ export function CustomerSignInForm() {
         </div>
 
         <div className="space-y-1.5">
-          <label
-            htmlFor="cust-signin-password"
-            className="ml-1 block text-xs font-semibold text-navy"
-          >
-            {t("passwordLabel")}
-          </label>
+          <div className="flex items-center justify-between">
+            <label
+              htmlFor="cust-signin-password"
+              className="ml-1 block text-xs font-semibold text-navy"
+            >
+              {t("passwordLabel")}
+            </label>
+            <Link
+              href="/customer/forgot-password"
+              className="text-xs font-semibold text-teal hover:underline"
+            >
+              Forgot password?
+            </Link>
+          </div>
           <div className="relative">
             <Lock className="absolute left-4 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
             <Input
@@ -178,7 +186,7 @@ export function CustomerSignInForm() {
         {/* Test credentials hint for development */}
         {isMockMode() && (
           <div className="flex items-start gap-1.5 rounded-xl bg-teal-100 px-3 py-2 text-xs font-medium text-teal-800">
-            <span className="mt-0.5 size-3.5 shrink-0">🧪</span>
+            <span className="mt-0.5 size-3.5 shrink-0">ðŸ§ª</span>
             <span>
               <strong>Test login: </strong>any phone + password (6+ chars)
             </span>
@@ -207,26 +215,15 @@ export function CustomerSignInForm() {
             </>
           )}
         </Button>
-        <div className="mt-3 flex flex-col items-center gap-1.5 text-center text-sm text-muted-foreground">
-          <p>
-            {t("noAccount")}{" "}
-            <Link
-              href="/customer/sign-up"
-              className="font-semibold text-teal hover:underline"
-            >
-              {t("createOne")}
-            </Link>
-          </p>
-          <p className="text-xs">
-            Are you a skilled technician?{" "}
-            <Link
-              href="/worker/sign-in"
-              className="font-medium text-navy hover:underline"
-            >
-              Worker Sign In →
-            </Link>
-          </p>
-        </div>
+        <p className="mt-3 text-center text-sm text-muted-foreground">
+          {t("noAccount")}{" "}
+          <Link
+            href="/customer/sign-up"
+            className="font-semibold text-teal hover:underline"
+          >
+            {t("createOne")}
+          </Link>
+        </p>
       </div>
     </form>
   );
