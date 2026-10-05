@@ -1,4 +1,4 @@
-export type StorageDriver = 's3' | 'minio' | 'local';
+export type StorageDriver = 's3' | 'minio' | 'local' | 'cloudinary';
 
 export interface StorageConfig {
   driver: StorageDriver;
@@ -11,6 +11,9 @@ export interface StorageConfig {
   useSSL?: boolean;
   publicBaseUrl?: string;
   localPath?: string;
+  cloudName?: string;
+  apiKey?: string;
+  apiSecret?: string;
 }
 
 export default () => {
@@ -33,6 +36,9 @@ export default () => {
     useSSL: (process.env.MINIO_USE_SSL ?? 'false') === 'true',
     publicBaseUrl: process.env.STORAGE_PUBLIC_BASE_URL || undefined,
     localPath: process.env.STORAGE_LOCAL_PATH ?? './uploads',
+    cloudName: process.env.CLOUDINARY_CLOUD_NAME,
+    apiKey: process.env.CLOUDINARY_API_KEY,
+    apiSecret: process.env.CLOUDINARY_API_SECRET,
   };
 
   return { storage: storageConfig };

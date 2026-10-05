@@ -835,7 +835,9 @@
       "email": "ای میل (اختیاری)",
       "emailPlaceholder": "مثلاً tariq@pro.pk",
       "continueBtn": "ہنر کے انتخاب پر جائیں",
-      "photoSizeError": "تصویر کا سائز 10MB سے کم ہونا چاہیے"
+      "photoSizeError": "تصویر کا سائز 10MB سے کم ہونا چاہیے",
+      "photoUploading": "تصویر اپ لوڈ ہو رہی ہے...",
+      "photoUploadError": "تصویر اپ لوڈ نہیں ہو سکی۔ دوبارہ کوشش کریں۔"
     },
     "Step2": {
       "badge": "ہنر و خدمات",
