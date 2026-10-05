@@ -107,15 +107,7 @@ export class JobsService {
     private readonly prisma: PrismaService,
     private readonly eventBus: EventBusService,
     private readonly realtime: RealtimeService,
-  ) {}
-
-  private async syncLocation(jobId: string, longitude: number, latitude: number): Promise<void> {
-    await this.prisma.$executeRaw`
-      UPDATE "ServiceRequest"
-      SET location = ST_SetSRID(ST_MakePoint(${longitude}, ${latitude}), 4326)
-      WHERE id = ${jobId}
-    `;
-  }
+  ) { }
 
   async createJob(customerId: string, dto: CreateJobDto) {
     const category = await this.prisma.serviceCategory.findFirst({
@@ -144,8 +136,6 @@ export class JobsService {
         status: 'OPEN',
       },
     });
-
-    await this.syncLocation(job.id, dto.longitude, dto.latitude);
 
     this.eventBus.emit('job.created', {
       jobId: job.id,
@@ -239,20 +229,46 @@ export class JobsService {
       );
     }
     if (query.lat == null || query.lng == null) {
-      throw new BadRequestException('lat and lng are required for PostGIS proximity matching');
+      throw new BadRequestException('lat and lng are required for proximity filtering');
     }
 
     const radiusMeters = (query.radiusKm ?? 10) * 1000;
+    const workerRadiusKm = Number(profile.serviceRadiusKm ?? 10);
+    const skipWorkerRelevanceFilters = process.env.ALLOW_WORKER_JOB_TEST_MODE === 'true';
     const { page, limit, skip } = normalizePage(query);
+
+    const halfRadiusDeg = radiusMeters / 111000.0;
+    const latOffset = halfRadiusDeg;
+    const lngOffset = halfRadiusDeg / Math.max(Math.cos(query.lat * Math.PI / 180.0), 0.01);
 
     const conditions: Prisma.Sql[] = [Prisma.sql`sr."status" IN ('OPEN', 'OFFERS_RECEIVED')`];
     conditions.push(Prisma.sql`
-      ST_DWithin(
-        ST_SetSRID(ST_MakePoint(sr."longitude", sr."latitude"), 4326)::geography,
-        ST_SetSRID(ST_MakePoint(${query.lng}, ${query.lat}), 4326)::geography,
-        ${radiusMeters}
-      )
+      sr."latitude" BETWEEN ${query.lat - latOffset} AND ${query.lat + latOffset}
+      AND sr."longitude" BETWEEN ${query.lng - lngOffset} AND ${query.lng + lngOffset}
     `);
+    if (!skipWorkerRelevanceFilters) {
+      if (profile.skills.length > 0) {
+        conditions.push(Prisma.sql`sr."categoryId" = ANY (${profile.skills})`);
+      } else {
+        conditions.push(Prisma.sql`FALSE`);
+      }
+      conditions.push(Prisma.sql`
+        EXISTS (
+          SELECT 1
+          FROM "ServiceArea" sa
+          WHERE sa."userId" = ${worker.sub}
+            AND (
+              3956 * 2 * ASIN(
+                SQRT(
+                  POWER(SIN((sa."latitude" - ${query.lat}) * PI() / 180.0 / 2), 2) +
+                  COS(sa."latitude" * PI() / 180.0) * COS(${query.lat} * PI() / 180.0) *
+                  POWER(SIN((sa."longitude" - ${query.lng}) * PI() / 180.0 / 2), 2)
+                )
+              )
+            ) <= ${workerRadiusKm}
+        )
+      `);
+    }
     if (query.categoryId) {
       conditions.push(Prisma.sql`sr."categoryId" = ${query.categoryId}`);
     }
@@ -302,16 +318,21 @@ export class JobsService {
         sr."images",
         sr."voiceNoteUrl",
         (SELECT COUNT(*) FROM "JobOffer" o WHERE o."jobId" = sr.id) AS "offerCount",
-        ST_Distance(
-          ST_SetSRID(ST_MakePoint(sr."longitude", sr."latitude"), 4326)::geography,
-          ST_SetSRID(ST_MakePoint(${query.lng}, ${query.lat}), 4326)::geography
-        ) / 1000.0 AS "distanceKm"
-      FROM "ServiceRequest" sr
-      JOIN "ServiceCategory" c ON c.id = sr."categoryId"
-      WHERE ${where}
-      ORDER BY "distanceKm" ASC, sr."createdAt" DESC
-      LIMIT ${limit} OFFSET ${skip}
-    `);
+        (
+      3956 * 2 * ASIN(
+        SQRT(
+          POWER(SIN((sr."latitude" - ${query.lat}) * PI() / 180.0 / 2), 2) +
+          COS(sr."latitude" * PI() / 180.0) * COS(${query.lat} * PI() / 180.0) *
+          POWER(SIN((sr."longitude" - ${query.lng}) * PI() / 180.0 / 2), 2)
+        )
+      )
+    ) AS "distanceKm"
+  FROM "ServiceRequest" sr
+  JOIN "ServiceCategory" c ON c.id = sr."categoryId"
+  WHERE ${where}
+  ORDER BY sr."createdAt" DESC
+  LIMIT ${limit} OFFSET ${skip}
+`);
 
     const countRows = await this.prisma.$queryRaw<{ total: bigint }[]>(Prisma.sql`
       SELECT COUNT(*)::bigint AS total
@@ -390,9 +411,12 @@ export class JobsService {
     let distanceKm: number | null = null;
     if (lat != null && lng != null) {
       const distance = await this.prisma.$queryRaw<{ m: number }[]>`
-        SELECT ST_Distance(
-          ST_SetSRID(ST_MakePoint(${job.longitude}, ${job.latitude}), 4326)::geography,
-          ST_SetSRID(ST_MakePoint(${lng}, ${lat}), 4326)::geography
+        SELECT 3956 * 2 * ASIN(
+          SQRT(
+            POWER(SIN((${job.latitude} - ${lat}) * PI() / 180.0 / 2), 2) +
+            COS(${job.latitude} * PI() / 180.0) * COS(${lat} * PI() / 180.0) *
+            POWER(SIN((${job.longitude} - ${lng}) * PI() / 180.0 / 2), 2)
+          )
         ) AS m
       `;
       distanceKm = distance[0] ? Number(distance[0].m) / 1000 : null;
@@ -402,9 +426,9 @@ export class JobsService {
     if (user.role === Role.WORKER) {
       myOffer = job.offers.find((o) => o.workerId === user.sub)
         ? {
-            id: job.offers.find((o) => o.workerId === user.sub)!.id,
-            status: job.offers.find((o) => o.workerId === user.sub)!.status,
-          }
+          id: job.offers.find((o) => o.workerId === user.sub)!.id,
+          status: job.offers.find((o) => o.workerId === user.sub)!.status,
+        }
         : null;
     }
 

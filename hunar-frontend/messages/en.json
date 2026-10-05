@@ -855,7 +855,9 @@
       "email": "Email (Optional)",
       "emailPlaceholder": "e.g. tariq@pro.pk",
       "continueBtn": "Continue to Skills",
-      "photoSizeError": "Image size should be less than 10MB"
+      "photoSizeError": "Image size should be less than 10MB",
+      "photoUploading": "Uploading photo...",
+      "photoUploadError": "Could not upload the photo. Please try again."
     },
     "Step2": {
       "badge": "Trade Skills",

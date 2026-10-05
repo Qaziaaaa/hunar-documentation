@@ -100,12 +100,9 @@ export class WorkerProfileService {
           longitude: area.longitude,
         },
       });
-      await this.prisma.$executeRaw`
-        UPDATE "ServiceArea"
-        SET location = ST_SetSRID(ST_MakePoint(${area.longitude}, ${area.latitude}), 4326)
-        WHERE id = ${created.id}
-      `;
-    }
+      }
+    // Location update skipped — ServiceArea.table has no `location` column and PostGIS is not configured.
+    // This prevents 500 errors during job creation and other operations.
 
     return this.listServiceAreas(userId);
   }

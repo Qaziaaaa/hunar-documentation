@@ -48,6 +48,7 @@ export function useWorkerWizard() {
         setFormData((prev) => ({
           ...prev,
           ...parsed,
+          profilePhoto: parsed.profilePhoto?.startsWith("data:") ? "" : parsed.profilePhoto,
           phone: storedUser?.phone || parsed.phone || prev.phone,
           fullName: parsed.fullName || storedUser?.name || prev.fullName,
         }));

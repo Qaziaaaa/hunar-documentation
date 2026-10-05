@@ -85,27 +85,17 @@ export async function uploadWorkerDocument(
   try {
     const raw = await http.upload<any>(endpoint, formData);
     const res = raw?.data ?? raw;
-    if (res?.url) {
+    if (typeof res?.url === "string" && res.url.length <= 500) {
       return {
         url: res.url,
         filename: file.name,
       };
     }
+    throw new Error("Upload response did not contain a valid profile photo URL.");
   } catch (err) {
-    console.warn(`[uploadWorkerDocument] Backend upload failed for ${type}, using local preview fallback:`, err);
+    console.warn(`[uploadWorkerDocument] Backend upload failed for ${type}:`, err);
+    throw err;
   }
-
-  // Fallback: convert file to local Data URL for seamless client preview if offline
-  return new Promise((resolve) => {
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      resolve({
-        url: e.target?.result as string,
-        filename: file.name,
-      });
-    };
-    reader.readAsDataURL(file);
-  });
 }
 
 /**

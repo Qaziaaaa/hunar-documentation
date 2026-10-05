@@ -14,6 +14,7 @@ import {
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { uploadWorkerDocument } from "../api/onboarding-api";
 import type { WorkerProfileFormData } from "../types";
 
 const CITIES = ["Peshawar", "Mardan", "Charsadda", "Nowshera", "Swabi"] as const;
@@ -33,26 +34,34 @@ export function Step1PersonalDetails({
   const tCities = useTranslations("WorkerOnboarding.Cities");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [photoMessage, setPhotoMessage] = useState<string | null>(null);
+  const [isPhotoUploading, setIsPhotoUploading] = useState(false);
 
-  const handlePhotoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePhotoSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     if (file.size > 10 * 1024 * 1024) {
       setPhotoMessage(t("photoSizeError"));
+      e.target.value = "";
       return;
     }
 
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const result = event.target?.result as string;
+    setIsPhotoUploading(true);
+    setPhotoMessage(null);
+    try {
+      const result = await uploadWorkerDocument(file, "avatar");
       updateFormData({
-        profilePhoto: result,
+        profilePhoto: result.url,
         profilePhotoName: file.name,
       });
-      setPhotoMessage(null);
-    };
-    reader.readAsDataURL(file);
+    } catch (error) {
+      setPhotoMessage(error instanceof Error ? error.message : t("photoUploadError"));
+    } finally {
+      setIsPhotoUploading(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+    }
   };
 
   const removePhoto = () => {
@@ -89,6 +98,7 @@ export function Step1PersonalDetails({
               ref={fileInputRef}
               accept="image/*"
               className="hidden"
+              disabled={isPhotoUploading}
               onChange={handlePhotoSelect}
             />
 
@@ -96,6 +106,7 @@ export function Step1PersonalDetails({
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
+              disabled={isPhotoUploading}
               className="group relative size-20 sm:size-22 shrink-0 rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-teal focus-visible:ring-offset-2"
               title={formData.profilePhoto ? t("portraitLabel") : t("portraitLabel")}
             >
@@ -120,9 +131,8 @@ export function Step1PersonalDetails({
 
               {/* + Icon Badge or Checkmark */}
               <div
-                className={`absolute -bottom-0.5 -end-0.5 flex size-6 sm:size-7 items-center justify-center rounded-full border-2 border-white text-white shadow-xs transition-transform group-hover:scale-110 ${
-                  formData.profilePhoto ? "bg-teal" : "bg-teal"
-                }`}
+                className={`absolute -bottom-0.5 -end-0.5 flex size-6 sm:size-7 items-center justify-center rounded-full border-2 border-white text-white shadow-xs transition-transform group-hover:scale-110 ${formData.profilePhoto ? "bg-teal" : "bg-teal"
+                  }`}
               >
                 {formData.profilePhoto ? (
                   <Camera className="size-3.5 sm:size-4" />
@@ -139,11 +149,10 @@ export function Step1PersonalDetails({
                   {t("portraitLabel")} <span className="text-error">*</span>
                 </span>
                 <span
-                  className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${
-                    formData.profilePhoto
+                  className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${formData.profilePhoto
                       ? "border border-success/30 bg-success/10 text-success"
                       : "border border-teal/20 bg-teal/10 text-teal"
-                  }`}
+                    }`}
                 >
                   {formData.profilePhoto ? t("attached") : t("required")}
                 </span>
@@ -152,6 +161,12 @@ export function Step1PersonalDetails({
               <p className="text-xs text-muted-foreground leading-relaxed">
                 {t("portraitHint")}
               </p>
+
+              {isPhotoUploading && (
+                <p className="text-xs font-medium text-teal" aria-live="polite">
+                  {t("photoUploading")}
+                </p>
+              )}
 
               {formData.profilePhoto && (
                 <div className="pt-1">
@@ -275,6 +290,7 @@ export function Step1PersonalDetails({
           type="button"
           size="lg"
           onClick={onNext}
+          disabled={isPhotoUploading}
           className="h-12 sm:h-13 w-full rounded-full bg-teal text-base font-bold text-white shadow-md shadow-teal/20 hover:bg-teal/90 transition-all"
         >
           <span>{t("continueBtn")}</span>
