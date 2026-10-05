@@ -9,8 +9,7 @@ export const MOCK_JOB_REQUESTS: JobRequest[] = [
     description:
       "Our main distribution board breaker keeps tripping whenever the AC and water pump turn on together. There is also a burning smell near the UPS inverter connection in the corridor.",
     distance: "1.8 km",
-    locationArea: "Hayatabad, Peshawar",
-    fullAddress: "House 42-B, Sector D-1, Phase 3, Hayatabad, Peshawar",
+    locationArea: "Hayatabad Phase 3",
     uploadedTime: "12 min ago",
     postedTimestamp: Date.now() - 12 * 60 * 1000,
     suggestedVisitCharge: 500,
@@ -41,8 +40,7 @@ export const MOCK_JOB_REQUESTS: JobRequest[] = [
     description:
       "Water is seeping through the master bathroom tile grout and creating moisture patches on the adjoining bedroom wall. Need urgent inspection with pressure test gauge.",
     distance: "2.4 km",
-    locationArea: "University Town, Peshawar",
-    fullAddress: "Lane 7, Circular Road, University Town, Peshawar",
+    locationArea: "University Town",
     uploadedTime: "25 min ago",
     postedTimestamp: Date.now() - 25 * 60 * 1000,
     suggestedVisitCharge: 600,
@@ -73,8 +71,7 @@ export const MOCK_JOB_REQUESTS: JobRequest[] = [
     description:
       "The indoor blower is running but outdoor unit compressor stops after 5 minutes with E3 error code. Needs outdoor coil inspection, manifold gauge test, and gas pressure check.",
     distance: "3.1 km",
-    locationArea: "Saddar, Peshawar",
-    fullAddress: "Flat 402, Al-Jannat Plaza, Saddar Road, Peshawar Cantt",
+    locationArea: "Saddar",
     uploadedTime: "40 min ago",
     postedTimestamp: Date.now() - 40 * 60 * 1000,
     suggestedVisitCharge: 500,
@@ -105,8 +102,7 @@ export const MOCK_JOB_REQUESTS: JobRequest[] = [
     description:
       "Solar inverter is tripping on over-voltage fault during peak daylight hours. Need net-metering line balance check, DC breaker test, and tubular battery terminal cleaning.",
     distance: "4.5 km",
-    locationArea: "Ring Road, Peshawar",
-    fullAddress: "Near Achini Chowk, Ring Road, Peshawar",
+    locationArea: "Ring Road",
     uploadedTime: "1 hour ago",
     postedTimestamp: Date.now() - 60 * 60 * 1000,
     suggestedVisitCharge: 800,
@@ -137,8 +133,7 @@ export const MOCK_JOB_REQUESTS: JobRequest[] = [
     description:
       "Two overhead hydraulic lift cabinets fell off their alignment and the soft-close drawer channel under sink is stuck due to rusted ball bearings.",
     distance: "2.9 km",
-    locationArea: "Gulbahar, Peshawar",
-    fullAddress: "Street 2, Gulbahar No. 4, Peshawar",
+    locationArea: "Gulbahar No. 4",
     uploadedTime: "2 hours ago",
     postedTimestamp: Date.now() - 120 * 60 * 1000,
     suggestedVisitCharge: 400,

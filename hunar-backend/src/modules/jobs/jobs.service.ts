@@ -1,3 +1,4 @@
+
 import {
   BadRequestException,
   ForbiddenException,
@@ -17,6 +18,7 @@ import {
 import { JwtPayload } from '../../common/types/jwt-payload.interface';
 import { normalizePage, toPageResult } from '../../common/helpers/pagination.util';
 import { getWorkerProfileCompletion } from '../../common/helpers/worker-profile.util';
+import { sanitizeToAreaOrSector } from '../../common/helpers/location.util';
 import { RealtimeService } from '../realtime/realtime.service';
 import { JOB_EVENTS, userRoom } from './jobs.events';
 
@@ -63,15 +65,20 @@ export interface JobCard {
 
 function mapJobCard(row: JobCardRow): JobCard {
   const images = Array.isArray(row.images) ? row.images : [];
+  const areaSector = sanitizeToAreaOrSector({
+    area: row.area,
+    address: row.address,
+    city: row.city,
+  });
   return {
     id: row.id,
     title: row.title,
     description: row.description,
     categoryId: row.categoryId,
     categoryName: row.categoryName,
-    address: row.address,
+    address: areaSector,
     city: row.city,
-    area: row.area,
+    area: areaSector,
     status: row.status,
     suggestedVisitCharge:
       row.suggestedVisitCharge != null ? Number(row.suggestedVisitCharge) : null,
@@ -186,6 +193,8 @@ export class JobsService {
       address: j.address,
       city: j.city,
       area: j.area,
+      latitude: j.latitude,
+      longitude: j.longitude,
       suggestedVisitCharge: j.suggestedVisitCharge != null ? Number(j.suggestedVisitCharge) : null,
       preferredVisitTime: j.preferredVisitTime,
       offerCount: j._count.offers,
@@ -360,6 +369,8 @@ export class JobsService {
       address: j.address,
       city: j.city,
       area: j.area,
+      latitude: j.latitude,
+      longitude: j.longitude,
       suggestedVisitCharge:
         j.suggestedVisitCharge != null ? Number(j.suggestedVisitCharge) : null,
       lockedVisitCharge: j.lockedVisitCharge != null ? Number(j.lockedVisitCharge) : null,
@@ -406,6 +417,8 @@ export class JobsService {
       address: j.address,
       city: j.city,
       area: j.area,
+      latitude: j.latitude,
+      longitude: j.longitude,
       suggestedVisitCharge:
         j.suggestedVisitCharge != null ? Number(j.suggestedVisitCharge) : null,
       lockedVisitCharge: j.lockedVisitCharge != null ? Number(j.lockedVisitCharge) : null,
@@ -455,6 +468,37 @@ export class JobsService {
     }
 
     const { offers, ...rest } = job;
+
+    const isAssignedWorker = user.role === Role.WORKER && job.selectedWorkerId === user.sub;
+    const isOwnerCustomer = user.role === Role.CUSTOMER && job.customerId === user.sub;
+    const isAdmin = user.role === Role.ADMIN;
+    const canSeeFullAddress = isAssignedWorker || isOwnerCustomer || isAdmin;
+
+    if (!canSeeFullAddress) {
+      const areaSector = sanitizeToAreaOrSector({
+        area: job.area,
+        address: job.address,
+        city: job.city,
+      });
+      return {
+        ...rest,
+        address: areaSector,
+        area: areaSector,
+        latitude: 0,
+        longitude: 0,
+        customer: job.customer
+          ? {
+              id: job.customer.id,
+              name: job.customer.name,
+              phone: null,
+            }
+          : job.customer,
+        distanceKm,
+        offerCount: offers.length,
+        myOffer,
+      };
+    }
+
     return {
       ...rest,
       distanceKm,

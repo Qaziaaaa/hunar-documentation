@@ -231,10 +231,10 @@ export function JobRequestModal({
                 </div>
                 <div className="min-w-0">
                   <span className="text-xs font-extrabold uppercase tracking-wider text-slate-600 block mb-0.5">
-                    {isUrdu ? "مقام" : "Location"} ({job.distance})
+                    {isUrdu ? "علاقہ / سیکٹر" : "Area / Sector"} ({job.distance})
                   </span>
                   <p className="font-extrabold text-navy text-sm sm:text-base leading-snug">
-                    {job.fullAddress || job.locationArea}
+                    {job.locationArea}
                   </p>
                 </div>
               </div>
