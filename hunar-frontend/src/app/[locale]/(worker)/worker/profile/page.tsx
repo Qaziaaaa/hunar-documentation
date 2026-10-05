@@ -38,7 +38,7 @@ import { RatingSummary } from "@/components/shared/rating-summary";
 import { ReviewCard } from "@/components/shared/review-card";
 import { VerifiedBadge } from "@/components/shared/verified-badge";
 import { WorkerDashboardShell } from "@/features/worker-dashboard";
-import { formatRs } from "@/lib/money";
+import { formatRs, sanitizePriceInput } from "@/lib/money";
 import { http } from "@/lib/api-client";
 import {
   getWorkerProfile,
@@ -714,10 +714,11 @@ function ProfileContent() {
                         id="prof-exp"
                         type="number"
                         min="0"
-                        value={form.yearsExperience ?? 0}
-                        onChange={(e) =>
-                          handleTextChange("yearsExperience", Number(e.target.value))
-                        }
+                        value={form.yearsExperience ?? ""}
+                        onChange={(e) => {
+                          const cleaned = sanitizePriceInput(e.target.value);
+                          handleTextChange("yearsExperience", cleaned === "" ? "" : Number(cleaned));
+                        }}
                         className="h-10 text-sm"
                       />
                     </div>

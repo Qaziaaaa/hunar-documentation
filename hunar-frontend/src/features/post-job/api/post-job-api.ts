@@ -77,9 +77,12 @@ export async function createJob(data: PostJobData): Promise<CreatedJobResponse> 
     description: data.description,
     images: data.photos,
     voiceNoteUrl: data.voiceNoteUrl,
-    latitude: 34.0151, // Default Peshawar coordinates
-    longitude: 71.5249,
-    address: data.address || "Peshawar, Khyber Pakhtunkhwa",
+    latitude: typeof data.latitude === "number" && !isNaN(data.latitude) ? data.latitude : 34.0151,
+    longitude: typeof data.longitude === "number" && !isNaN(data.longitude) ? data.longitude : 71.5249,
+    address:
+      data.landmark && data.landmark.trim()
+        ? `${data.address || "Peshawar"} (Near: ${data.landmark.trim()})`
+        : data.address || "Peshawar, Khyber Pakhtunkhwa",
     city: data.city || "Peshawar",
     area: data.area || "Hayatabad",
     urgency: data.scheduleType === "asap" ? "EMERGENCY" : "NORMAL",

@@ -42,6 +42,12 @@ export function CustomerVisitsView({ initialVisits }: CustomerVisitsViewProps) {
   const [selectedVisitForChat, setSelectedVisitForChat] = useState<ScheduledVisit | null>(null);
   const [successToast, setSuccessToast] = useState<string | null>(null);
 
+  useEffect(() => {
+    if (initialVisits && initialVisits.length > 0) {
+      setVisits(initialVisits);
+    }
+  }, [initialVisits]);
+
   // In-premises progression and OTP modal states
   const [arrivalSession, setArrivalSession] = useState<ArrivalSession | null>(() => arrivalService.getSession());
   const [isOtpModalOpen, setIsOtpModalOpen] = useState(false);
