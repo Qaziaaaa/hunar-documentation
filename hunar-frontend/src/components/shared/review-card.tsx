@@ -13,12 +13,15 @@ export function ReviewCard({
   jobLabel: string;
   noCommentLabel: string;
 }) {
-  const initials = review.reviewerName
-    .split(" ")
-    .map((part) => part[0])
-    .join("")
-    .slice(0, 2)
-    .toUpperCase();
+  const displayName = review.reviewerName || (review as any)?.reviewer?.name || "Customer";
+  const initials =
+    displayName
+      .split(" ")
+      .filter(Boolean)
+      .map((part: string) => part[0])
+      .join("")
+      .slice(0, 2)
+      .toUpperCase() || "C";
 
   return (
     <Card className="shadow-sm">
@@ -32,7 +35,7 @@ export function ReviewCard({
             </Avatar>
             <div className="min-w-0">
               <p className="truncate text-sm font-semibold text-navy">
-                {review.reviewerName}
+                {displayName}
               </p>
               <p className="text-xs text-muted-foreground">
                 {review.job?.title

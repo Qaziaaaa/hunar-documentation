@@ -1,3 +1,4 @@
+
 import {
   BadRequestException,
   ForbiddenException,
@@ -17,6 +18,7 @@ import {
 import { JwtPayload } from '../../common/types/jwt-payload.interface';
 import { normalizePage, toPageResult } from '../../common/helpers/pagination.util';
 import { getWorkerProfileCompletion } from '../../common/helpers/worker-profile.util';
+import { sanitizeToAreaOrSector } from '../../common/helpers/location.util';
 import { RealtimeService } from '../realtime/realtime.service';
 import { JOB_EVENTS, userRoom } from './jobs.events';
 
@@ -63,15 +65,20 @@ export interface JobCard {
 
 function mapJobCard(row: JobCardRow): JobCard {
   const images = Array.isArray(row.images) ? row.images : [];
+  const areaSector = sanitizeToAreaOrSector({
+    area: row.area,
+    address: row.address,
+    city: row.city,
+  });
   return {
     id: row.id,
     title: row.title,
     description: row.description,
     categoryId: row.categoryId,
     categoryName: row.categoryName,
-    address: row.address,
+    address: areaSector,
     city: row.city,
-    area: row.area,
+    area: areaSector,
     status: row.status,
     suggestedVisitCharge:
       row.suggestedVisitCharge != null ? Number(row.suggestedVisitCharge) : null,
@@ -176,6 +183,8 @@ export class JobsService {
       address: j.address,
       city: j.city,
       area: j.area,
+      latitude: j.latitude,
+      longitude: j.longitude,
       suggestedVisitCharge: j.suggestedVisitCharge != null ? Number(j.suggestedVisitCharge) : null,
       preferredVisitTime: j.preferredVisitTime,
       offerCount: j._count.offers,
@@ -381,6 +390,8 @@ export class JobsService {
       address: j.address,
       city: j.city,
       area: j.area,
+      latitude: j.latitude,
+      longitude: j.longitude,
       suggestedVisitCharge:
         j.suggestedVisitCharge != null ? Number(j.suggestedVisitCharge) : null,
       lockedVisitCharge: j.lockedVisitCharge != null ? Number(j.lockedVisitCharge) : null,
@@ -391,6 +402,54 @@ export class JobsService {
       customer: j.customer,
       offerCount: j._count.offers,
       createdAt: j.createdAt,
+    }));
+    return toPageResult(items, total, page, limit);
+  }
+
+  /** Completed and terminal history jobs for the assigned worker. */
+  async getHistoryJobs(workerId: string, query: CustomerJobsQueryDto = {}) {
+    const { page, limit, skip } = normalizePage(query);
+    const where: Prisma.ServiceRequestWhereInput = {
+      selectedWorkerId: workerId,
+      status: { in: ['COMPLETED', 'PAID', 'REVIEWED', 'CANCELLED'] },
+    };
+    const [rows, total] = await this.prisma.$transaction([
+      this.prisma.serviceRequest.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy: { updatedAt: 'desc' },
+        include: {
+          category: { select: { id: true, name: true, nameUrdu: true } },
+          customer: { select: { id: true, name: true, phone: true } },
+          _count: { select: { offers: true } },
+        },
+      }),
+      this.prisma.serviceRequest.count({ where }),
+    ]);
+    const items = rows.map((j) => ({
+      id: j.id,
+      title: j.title,
+      description: j.description,
+      status: j.status,
+      categoryId: j.categoryId,
+      categoryName: j.category?.name ?? 'General',
+      categoryUrdu: j.category?.nameUrdu ?? undefined,
+      address: j.address,
+      city: j.city,
+      area: j.area,
+      latitude: j.latitude,
+      longitude: j.longitude,
+      suggestedVisitCharge:
+        j.suggestedVisitCharge != null ? Number(j.suggestedVisitCharge) : null,
+      lockedVisitCharge: j.lockedVisitCharge != null ? Number(j.lockedVisitCharge) : null,
+      preferredVisitTime: j.preferredVisitTime,
+      images: j.images,
+      voiceNoteUrl: j.voiceNoteUrl,
+      customer: j.customer,
+      offerCount: j._count.offers,
+      createdAt: j.createdAt,
+      completedAt: j.completedAt,
     }));
     return toPageResult(items, total, page, limit);
   }
@@ -433,6 +492,37 @@ export class JobsService {
     }
 
     const { offers, ...rest } = job;
+
+    const isAssignedWorker = user.role === Role.WORKER && job.selectedWorkerId === user.sub;
+    const isOwnerCustomer = user.role === Role.CUSTOMER && job.customerId === user.sub;
+    const isAdmin = user.role === Role.ADMIN;
+    const canSeeFullAddress = isAssignedWorker || isOwnerCustomer || isAdmin;
+
+    if (!canSeeFullAddress) {
+      const areaSector = sanitizeToAreaOrSector({
+        area: job.area,
+        address: job.address,
+        city: job.city,
+      });
+      return {
+        ...rest,
+        address: areaSector,
+        area: areaSector,
+        latitude: 0,
+        longitude: 0,
+        customer: job.customer
+          ? {
+              id: job.customer.id,
+              name: job.customer.name,
+              phone: null,
+            }
+          : job.customer,
+        distanceKm,
+        offerCount: offers.length,
+        myOffer,
+      };
+    }
+
     return {
       ...rest,
       distanceKm,
@@ -530,6 +620,48 @@ export class JobsService {
     throw new ForbiddenException('Only the job owner or the assigned worker can cancel a job');
   }
 
+  /** Complete a job, finishing any active repairs and advancing status to COMPLETED. */
+  async completeJob(jobId: string, user: JwtPayload): Promise<{ newStatus: JobStatus; message: string }> {
+    const job = await this.prisma.serviceRequest.findUnique({ where: { id: jobId } });
+    if (!job) {
+      throw new NotFoundException('Job not found');
+    }
+    if (job.selectedWorkerId !== user.sub && user.role !== Role.ADMIN) {
+      throw new ForbiddenException('Only the assigned worker or admin can complete this job');
+    }
+
+    // Complete active approved repairs for this job.
+    // If a repair was not accepted by the customer (e.g. PROPOSED or COUNTERED),
+    // it was not approved, so mark it REJECTED and do not emit repair.completed.
+    const activeRepair = await this.prisma.repair.findFirst({
+      where: { jobId, status: { in: ['PROPOSED', 'COUNTERED', 'ACCEPTED'] } },
+      orderBy: { createdAt: 'desc' },
+    });
+    if (activeRepair) {
+      if (activeRepair.status === 'ACCEPTED') {
+        await this.prisma.repair.update({
+          where: { id: activeRepair.id },
+          data: {
+            startedAt: activeRepair.startedAt ?? new Date(),
+            completedAt: new Date(),
+          },
+        });
+        this.eventBus.emit('repair.completed', { repairId: activeRepair.id, jobId });
+      } else {
+        // Customer never approved the repair quote; mark it REJECTED
+        await this.prisma.repair.update({
+          where: { id: activeRepair.id },
+          data: {
+            status: 'REJECTED',
+          },
+        });
+      }
+    }
+
+    const result = await this.transitionJobState(jobId, JobStatus.COMPLETED);
+    return { ...result, message: 'Job completed successfully' };
+  }
+
   /** Validate + apply a state transition, emitting events. Reused by Offers/Visits/Repair modules. */
   async transitionJobState(jobId: string, to: JobStatus): Promise<{ newStatus: JobStatus }> {
     const job = await this.prisma.serviceRequest.findUnique({ where: { id: jobId } });
@@ -560,3 +692,4 @@ export class JobsService {
     return { newStatus: updated.status };
   }
 }
+

@@ -5,7 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { WalletLedgerType } from '@prisma/client';
+import { JobStatus, WalletLedgerType } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { RedisService } from '../../common/redis/redis.service';
 import { EventBusService } from '../../common/event-bus/event-bus.service';
@@ -117,16 +117,67 @@ export class WalletService {
     const commissionsReversed = Math.abs(sumBy(WalletLedgerType.COMMISSION_RELEASED));
     const topupsCredited = sumBy(WalletLedgerType.TOPUP_CREDIT);
 
+    // Retrieve completed jobs for this worker to generate statement breakdown
+    const completedJobs = await this.prisma.serviceRequest.findMany({
+      where: {
+        selectedWorkerId: userId,
+        status: { in: [JobStatus.COMPLETED, JobStatus.PAID, JobStatus.REVIEWED] },
+      },
+      include: {
+        category: { select: { id: true, name: true, nameUrdu: true } },
+        repairs: {
+          where: { status: 'ACCEPTED' },
+          select: { lockedAmount: true, amount: true },
+        },
+      },
+      orderBy: [{ completedAt: 'desc' }, { createdAt: 'desc' }],
+    });
+
+    const completedJobsGross = completedJobs.reduce((sum, j) => {
+      const visitFee = Number(j.lockedVisitCharge ?? j.suggestedVisitCharge ?? 0);
+      const repairFee = j.repairs?.[0]
+        ? Number(j.repairs[0].lockedAmount ?? j.repairs[0].amount ?? 0)
+        : 0;
+      return sum + visitFee + repairFee;
+    }, 0);
+    const effectiveGross = grossEarnings > 0 ? grossEarnings : completedJobsGross;
+    const effectiveNet = effectiveGross - commissionsPaid;
+
+    const records = completedJobs.map((j) => {
+      const visitFee = Number(j.lockedVisitCharge ?? j.suggestedVisitCharge ?? 0);
+      const repairFee = j.repairs?.[0]
+        ? Number(j.repairs[0].lockedAmount ?? j.repairs[0].amount ?? 0)
+        : 0;
+      const gross = visitFee + repairFee;
+      const commission = this.commissionFor(gross);
+      const net = Math.round((gross - commission) * 100) / 100;
+      return {
+        id: j.id,
+        jobId: `JOB-${j.id.slice(0, 8).toUpperCase()}`,
+        jobTitle: j.title,
+        category: j.category?.name ?? 'General Service',
+        categoryUrdu: j.category?.nameUrdu ?? undefined,
+        amount: gross,
+        grossAmount: gross,
+        commission,
+        netAmount: net,
+        date: (j.completedAt ?? j.updatedAt ?? j.createdAt).toISOString(),
+        status: j.status,
+      };
+    });
+
     return {
-      grossEarnings,
+      grossEarnings: effectiveGross,
       commissionsPaid,
       commissionsHeld,
       commissionsReversed,
-      netEarnings: grossEarnings - commissionsPaid,
+      netEarnings: effectiveNet,
       topupsCredited,
       balance: Number(wallet.balance),
       heldBalance: Number(wallet.heldBalance),
       totalBalance: Number(wallet.balance) + Number(wallet.heldBalance),
+      completedJobsCount: completedJobs.length,
+      records,
     };
   }
 
@@ -539,22 +590,41 @@ export class WalletService {
   }
 
   /**
-   * Credit a worker's earnings when a job completes. Gross = locked visit charge;
-   * commission was already held separately. Idempotent per job.
+   * Credit a worker's earnings when a job completes:
+   * Gross = locked visit charge + approved repair charge (only if ACCEPTED).
+   * Commission is deducted using the existing commission configuration.
+   * Net worker earning is credited to the wallet balance.
+   * Both Job Payment and Platform Commission transactions are recorded in the ledger.
+   * Idempotent per job.
    */
   async recordEarningsForJob(jobId: string) {
     const job = await this.prisma.serviceRequest.findUnique({
       where: { id: jobId },
-      select: { lockedVisitCharge: true, selectedWorkerId: true },
+      select: {
+        lockedVisitCharge: true,
+        suggestedVisitCharge: true,
+        selectedWorkerId: true,
+        repairs: {
+          where: { status: 'ACCEPTED' },
+          select: { lockedAmount: true, amount: true },
+        },
+      },
     });
     if (!job || !job.selectedWorkerId) return { credited: false, reason: 'NO_WORKER' };
-    const amount = Number(job.lockedVisitCharge ?? 0);
-    if (amount <= 0) return { credited: false, reason: 'NO_CHARGE' };
+    const visitFee = Number(job.lockedVisitCharge ?? job.suggestedVisitCharge ?? 0);
+    const repairFee = job.repairs?.[0]
+      ? Number(job.repairs[0].lockedAmount ?? job.repairs[0].amount ?? 0)
+      : 0;
+    const grossAmount = visitFee + repairFee;
+    if (grossAmount <= 0) return { credited: false, reason: 'NO_CHARGE' };
     const workerId = job.selectedWorkerId;
 
     const key = `${WALLET_IDEMPOTENCY_PREFIX}earnings:${jobId}`;
     const claimed = await this.claimIdempotencyKey(key);
-    if (!claimed) return { credited: true, alreadyCredited: true, amount };
+    if (!claimed) return { credited: true, alreadyCredited: true, amount: grossAmount };
+
+    const commissionAmount = this.commissionFor(grossAmount);
+    const netAmount = Math.round((grossAmount - commissionAmount) * 100) / 100;
 
     try {
       const result = await this.prisma.$transaction(async (tx) => {
@@ -563,31 +633,109 @@ export class WalletService {
           update: {},
           create: { userId: workerId },
         });
-        const newBalance = Math.round((Number(wallet.balance) + amount) * 100) / 100;
+
+        // Release any held commission for this job from heldBalance so there is no double hold
+        const existingCommission = await tx.commission.findUnique({ where: { jobId } });
+        let heldToRelease = 0;
+        if (existingCommission && existingCommission.status === 'PENDING') {
+          heldToRelease = Number(existingCommission.amount);
+        }
+        const currentHeld = Number(wallet.heldBalance);
+        const newHeld = Math.max(0, Math.round((currentHeld - heldToRelease) * 100) / 100);
+
+        const baseBalance = Math.round((Number(wallet.balance) + heldToRelease) * 100) / 100;
+        const balanceAfterGross = Math.round((baseBalance + grossAmount) * 100) / 100;
+        const balanceAfterCommission = Math.round((balanceAfterGross - commissionAmount) * 100) / 100;
+
         await tx.workerWallet.update({
           where: { userId: workerId },
-          data: { balance: newBalance },
+          data: { balance: balanceAfterCommission, heldBalance: newHeld },
         });
+
+        // 1. Ledger entry for Job Payment / Worker Gross Earning
         await this.ledger.insert(tx, {
           userId: workerId,
           type: WalletLedgerType.EARNINGS_CREDIT,
-          amount,
-          balanceAfter: newBalance,
+          amount: grossAmount,
+          balanceAfter: balanceAfterGross,
           referenceType: 'job',
           referenceId: jobId,
-          note: 'Earnings credited on job completion',
+          note: `Job payment: Rs. ${grossAmount}`,
           idempotencyKey: `earnings:${jobId}`,
         });
-        return { balanceAfter: newBalance, amount };
+
+        // 2. Ledger entry for Platform Commission deduction
+        if (commissionAmount > 0) {
+          await this.ledger.insert(tx, {
+            userId: workerId,
+            type: WalletLedgerType.COMMISSION_DEDUCTED,
+            amount: -commissionAmount,
+            balanceAfter: balanceAfterCommission,
+            referenceType: 'commission',
+            referenceId: existingCommission?.id ?? jobId,
+            note: `Platform commission deduction (${Math.round(this.commissionRate * 100)}%): -Rs. ${commissionAmount}`,
+            idempotencyKey: `commission:${jobId}`,
+          });
+
+          // Credit platform wallet
+          await tx.platformWallet.upsert({
+            where: { id: PLATFORM_WALLET_ID },
+            update: {
+              balance: { increment: commissionAmount },
+              totalCommissions: { increment: commissionAmount },
+            },
+            create: {
+              id: PLATFORM_WALLET_ID,
+              balance: commissionAmount,
+              totalCommissions: commissionAmount,
+            },
+          });
+        }
+
+        // 3. Mark commission VERIFIED
+        await tx.commission.upsert({
+          where: { jobId },
+          update: {
+            amount: commissionAmount,
+            visitCharge: visitFee,
+            status: 'VERIFIED',
+            verifiedAt: new Date(),
+          },
+          create: {
+            jobId,
+            workerId,
+            visitCharge: visitFee,
+            commissionRate: this.commissionRate,
+            amount: commissionAmount,
+            status: 'VERIFIED',
+            verifiedAt: new Date(),
+          },
+        });
+
+        return {
+          grossAmount,
+          commissionAmount,
+          netAmount,
+          balanceAfter: balanceAfterCommission,
+          heldAfter: newHeld,
+        };
       });
 
-      this.eventBus.emit('earnings.recorded', { jobId, workerId, amount });
+      this.eventBus.emit('earnings.recorded', {
+        jobId,
+        workerId,
+        amount: netAmount,
+        grossAmount,
+        commission: commissionAmount,
+      });
       this.realtime.emitToRoom(walletRoom(workerId), WALLET_EVENTS.earningsRecorded, {
         jobId,
-        amount,
+        amount: netAmount,
+        grossAmount,
+        commission: commissionAmount,
       });
       await this.emitBalance(workerId);
-      return { credited: true, amount, ...result };
+      return { credited: true, amount: netAmount, ...result };
     } catch (error) {
       await this.redis.del(key);
       throw error;

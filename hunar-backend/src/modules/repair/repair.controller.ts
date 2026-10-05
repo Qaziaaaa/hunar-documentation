@@ -21,6 +21,12 @@ export class RepairController {
     return this.repairService.getMyRepairs(user, query);
   }
 
+  @Get('repairs/pending')
+  @Roles(Role.CUSTOMER)
+  getPendingRepair(@CurrentUser() user: JwtPayload) {
+    return this.repairService.getPendingRepairForCustomer(user);
+  }
+
   @Get('repairs/:id')
   getRepair(@CurrentUser() user: JwtPayload, @Param('id', ParseUUIDPipe) id: string) {
     return this.repairService.getRepairDetail(id, user);
@@ -70,6 +76,12 @@ export class RepairController {
   @Roles(Role.CUSTOMER)
   reject(@CurrentUser() user: JwtPayload, @Param('id', ParseUUIDPipe) id: string) {
     return this.repairService.rejectRepair(id, user);
+  }
+
+  @Put('jobs/:jobId/repair/reject')
+  @Roles(Role.CUSTOMER)
+  rejectForJob(@CurrentUser() user: JwtPayload, @Param('jobId', ParseUUIDPipe) jobId: string) {
+    return this.repairService.rejectRepairForJob(jobId, user);
   }
 
   @Put('repairs/:id/start')

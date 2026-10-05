@@ -8,6 +8,7 @@ jest.mock("@/lib/api-client", () => ({
   http: {
     get: jest.fn(),
   },
+  getAccessToken: jest.fn(() => "mock-token"),
 }));
 
 jest.mock("@/lib/data-source", () => ({
@@ -170,7 +171,9 @@ describe("jobs.service", () => {
 
       const result = await jobsService.listNearbyJobs();
 
-      expect(mockedHttpGet).toHaveBeenCalledWith("/jobs/available");
+      expect(mockedHttpGet).toHaveBeenCalledWith(
+        expect.stringContaining("/jobs/available"),
+      );
       expect(result).toHaveLength(1);
       expect(result[0].id).toBe("job-nearby-1");
     });

@@ -11,18 +11,15 @@ const FALLBACK_IMAGE =
  * Fetch all customer visits / bookings
  */
 export async function getCustomerVisits(): Promise<ScheduledVisit[]> {
-  if (isMockMode()) {
-    return MOCK_SCHEDULED_VISITS;
-  }
   try {
     const res = await http.get<any[]>("/visits/my");
     if (!Array.isArray(res) || res.length === 0) {
-      return MOCK_SCHEDULED_VISITS;
+      return [];
     }
     return res.map((item: any) => transformBackendVisit(item));
   } catch (err) {
-    console.warn("[getCustomerVisits] Backend API error, using mock visits:", err);
-    return MOCK_SCHEDULED_VISITS;
+    console.warn("[getCustomerVisits] Backend API error:", err);
+    return [];
   }
 }
 
@@ -30,28 +27,11 @@ export async function getCustomerVisits(): Promise<ScheduledVisit[]> {
  * Get visit details by visit ID
  */
 export async function getVisitDetail(visitId: string): Promise<ScheduledVisit> {
-  if (isMockMode()) {
-    const mock =
-      MOCK_SCHEDULED_VISITS.find((visit) => visit.id === visitId) ??
-      MOCK_SCHEDULED_VISITS[0];
-    if (!mock) {
-      throw new Error(`VISIT_NOT_FOUND: ${visitId}`);
-    }
-    return mock;
+  const res = await http.get<any>(`/visits/${visitId}`);
+  if (!res || !res.id) {
+    throw new Error(`VISIT_NOT_FOUND: ${visitId}`);
   }
-  try {
-    const res = await http.get<any>(`/visits/${visitId}`);
-    if (!res || !res.id) {
-      throw new Error(`VISIT_NOT_FOUND: ${visitId}`);
-    }
-    return transformBackendVisit(res);
-  } catch (err) {
-    console.warn(`[getVisitDetail] Fallback to mock for ${visitId}:`, err);
-    const mock =
-      MOCK_SCHEDULED_VISITS.find((visit) => visit.id === visitId) ??
-      MOCK_SCHEDULED_VISITS[0];
-    return mock;
-  }
+  return transformBackendVisit(res);
 }
 
 /**
@@ -91,7 +71,7 @@ function transformBackendVisit(v: any): ScheduledVisit {
     securityPin: v.securityPin || v.pin,
     visitCharges: Number(v.offer?.visitCharge || v.visitCharge || v.lockedVisitCharge || 0),
     escrowAmount: Number(v.offer?.visitCharge || v.visitCharge || v.lockedVisitCharge || 0),
-    customerAddress: job.address || "Peshawar",
+    customerAddress: job.address || v.customerAddress || "Peshawar",
     customerArea: job.area || "Peshawar",
     customerAreaUr: "پشاور",
     customerLat: Number(job.latitude || v.customerLat || 33.9944),

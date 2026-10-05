@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { JobFeedFilters } from "@/types/job";
+import { sanitizePriceInput } from "@/lib/money";
 import {
   SlidersHorizontal,
   RotateCcw,
@@ -137,11 +138,12 @@ export function JobFiltersBar({
                 type="number"
                 placeholder="Min"
                 value={filters.minPrice ?? ""}
-                onChange={(e) =>
+                onChange={(e) => {
+                  const cleaned = sanitizePriceInput(e.target.value);
                   onChange({
-                    minPrice: e.target.value ? Number(e.target.value) : undefined,
-                  })
-                }
+                    minPrice: cleaned === "" ? undefined : Number(cleaned),
+                  });
+                }}
                 className="w-full px-2 py-1.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#0F8B8D]/20 focus:border-[#0F8B8D]"
               />
               <span className="text-slate-400">-</span>
@@ -149,11 +151,12 @@ export function JobFiltersBar({
                 type="number"
                 placeholder="Max"
                 value={filters.maxPrice ?? ""}
-                onChange={(e) =>
+                onChange={(e) => {
+                  const cleaned = sanitizePriceInput(e.target.value);
                   onChange({
-                    maxPrice: e.target.value ? Number(e.target.value) : undefined,
-                  })
-                }
+                    maxPrice: cleaned === "" ? undefined : Number(cleaned),
+                  });
+                }}
                 className="w-full px-2 py-1.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#0F8B8D]/20 focus:border-[#0F8B8D]"
               />
             </div>

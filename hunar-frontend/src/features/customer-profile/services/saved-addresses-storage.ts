@@ -7,7 +7,7 @@ const STORAGE_KEY = "hunar_customer_saved_addresses";
 
 export function getSavedAddresses(): SavedAddress[] {
   if (typeof window === "undefined") {
-    return MOCK_CUSTOMER_PROFILE.savedAddresses || [];
+    return [];
   }
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY);
@@ -20,7 +20,7 @@ export function getSavedAddresses(): SavedAddress[] {
   } catch (err) {
     console.warn("[SavedAddressesStorage] Error reading addresses:", err);
   }
-  return MOCK_CUSTOMER_PROFILE.savedAddresses || [];
+  return [];
 }
 
 export function saveSavedAddresses(addresses: SavedAddress[]): void {

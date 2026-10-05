@@ -22,9 +22,65 @@ export class UpdateMyProfileDto {
 
   @IsOptional()
   @IsString()
-  @IsNotEmpty()
+  @MaxLength(100)
+  email?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(30)
+  phone?: string;
+
+  @IsOptional()
+  @IsString()
   @MaxLength(500)
   avatarUrl?: string;
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  skills?: string[];
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(0)
+  @Max(50)
+  experienceYears?: number;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(0)
+  @Max(50)
+  yearsExperience?: number;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(1000)
+  bio?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(500)
+  workshopLocation?: string;
+
+  @IsOptional()
+  @IsArray()
+  serviceAreas?: Array<string | { label: string; address: string; latitude?: number; longitude?: number }>;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  defaultVisitCharge?: number;
+
+  @IsOptional()
+  privacy?: {
+    profileVisible?: boolean;
+  };
+
+  @IsOptional()
+  @IsBoolean()
+  profileVisible?: boolean;
 }
 
 // Step 1 (basic information), Step 2 (skills/categories) and Step 3 (experience & bio)

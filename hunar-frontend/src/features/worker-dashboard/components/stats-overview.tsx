@@ -87,7 +87,7 @@ export function StatsOverview({
 
         <div className="mt-3 flex items-center gap-1 text-[11px] font-bold text-teal">
           <TrendingUp className="size-3 text-success" />
-          <span>{isUrdu ? "کمیشن تفصیلات (10%)" : "Commission details (10%)"}</span>
+          <span>{isUrdu ? "آمدنی کا جائزہ" : "View earnings breakdown"}</span>
           <ArrowUpRight className="size-3 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5 rtl:group-hover:-translate-x-0.5" />
         </div>
       </div>

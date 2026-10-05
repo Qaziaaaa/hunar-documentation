@@ -67,7 +67,6 @@ export interface JobRequest {
   description: string;
   distance: string;
   locationArea: string;
-  fullAddress?: string;
   uploadedTime: string;
   postedTimestamp?: number;
   suggestedVisitCharge?: number;

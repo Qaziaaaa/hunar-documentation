@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { JobRequest } from "@/types/job";
 import { VisitOffer } from "@/types/offer";
 import { formatRs } from "@/lib/design-tokens";
+import { sanitizePriceInput, parsePriceOrZero } from "@/lib/money";
 import { workerStore, useWorkerJobs } from "@/stores/worker-jobs-store";
 import {
   Navigation,
@@ -28,8 +29,10 @@ export function VisitActionFlow({ job, offer }: VisitActionFlowProps) {
   // Form states for Submit Inspection (Task 8d)
   const [diagnosis, setDiagnosis] = useState("");
   const [repairPlan, setRepairPlan] = useState("");
-  const [repairPriceEstimate, setRepairPriceEstimate] = useState<number>(1500);
+  const [repairPriceEstimate, setRepairPriceEstimate] = useState<number | string>(1500);
   const [estimatedRepairTime, setEstimatedRepairTime] = useState("1.5 hours");
+
+  const numRepairEstimate = parsePriceOrZero(repairPriceEstimate);
   const [inspectionPhotos, setInspectionPhotos] = useState<string[]>([
     "https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=800&q=80",
   ]);
@@ -99,7 +102,7 @@ export function VisitActionFlow({ job, offer }: VisitActionFlowProps) {
       setFormError("Repair plan is required.");
       return;
     }
-    if (!repairPriceEstimate || repairPriceEstimate <= 0) {
+    if (!repairPriceEstimate || numRepairEstimate <= 0) {
       setFormError("Valid repair price is required.");
       return;
     }
@@ -116,7 +119,7 @@ export function VisitActionFlow({ job, offer }: VisitActionFlowProps) {
     const res = workerStore.submitInspection(job.id, {
       diagnosis: diagnosis.trim(),
       repairPlan: repairPlan.trim(),
-      repairPriceEstimate,
+      repairPriceEstimate: numRepairEstimate,
       photos: inspectionPhotos,
       estimatedRepairTime: estimatedRepairTime.trim(),
     });
@@ -279,7 +282,7 @@ export function VisitActionFlow({ job, offer }: VisitActionFlowProps) {
                   step="50"
                   required
                   value={repairPriceEstimate}
-                  onChange={(e) => setRepairPriceEstimate(Number(e.target.value))}
+                  onChange={(e) => setRepairPriceEstimate(sanitizePriceInput(e.target.value))}
                   className="w-full pl-9 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 font-bold text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#0F8B8D]/20 focus:border-[#0F8B8D]"
                 />
               </div>
@@ -371,7 +374,7 @@ export function VisitActionFlow({ job, offer }: VisitActionFlowProps) {
           </div>
           <div className="flex justify-between pt-1 font-semibold">
             <span>Repair Estimate:</span>
-            <span className="text-slate-900 font-bold">{formatRs(repairPriceEstimate)}</span>
+            <span className="text-slate-900 font-bold">{formatRs(numRepairEstimate)}</span>
           </div>
           <p className="text-[11px] text-slate-500">
             Waiting for customer approval to begin repair work.

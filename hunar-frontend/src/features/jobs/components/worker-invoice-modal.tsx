@@ -17,10 +17,11 @@ interface WorkerInvoiceModalProps {
 }
 
 export function WorkerInvoiceModal({ job, onClose }: WorkerInvoiceModalProps) {
-  const visitCharge = job.visitCharge ?? 500;
-  const repairCharge = job.repairCharge ?? 1500;
+  const visitCharge = job.visitCharge ?? 300;
+  const repairCharge = job.repairCharge ?? 0;
   const grossTotal = visitCharge + repairCharge;
-  const netEarnings = grossTotal;
+  const platformCommission = job.platformCommission ?? Math.round(grossTotal * 0.1);
+  const netEarnings = job.workerNetEarnings ?? (grossTotal - platformCommission);
   const invoiceNumber = job.invoiceNumber || `INV-2026-${job.id.slice(-4)}`;
   const warrantyDays = job.warrantyDays || 30;
 
@@ -127,18 +128,13 @@ export function WorkerInvoiceModal({ job, onClose }: WorkerInvoiceModalProps) {
               </div>
             )}
 
-            <div className="p-2.5 sm:p-3.5 flex justify-between items-center bg-slate-50">
-              <span className="font-bold text-slate-700">Total Value</span>
-              <span className="font-bold text-slate-900">{formatRs(grossTotal)}</span>
-            </div>
-
             <div className="p-3 sm:p-4 flex justify-between items-center bg-emerald-50/80 text-emerald-900">
               <div className="flex items-center gap-1.5 sm:gap-2">
                 <CheckCircle2 className="size-4 text-emerald-600 shrink-0" />
-                <span className="font-black text-xs sm:text-sm">Net Wallet Credit</span>
+                <span className="font-black text-xs sm:text-sm">Total Earning</span>
               </div>
               <span className="font-black text-base sm:text-lg text-emerald-800">
-                {formatRs(netEarnings)}
+                {formatRs(grossTotal)}
               </span>
             </div>
           </div>

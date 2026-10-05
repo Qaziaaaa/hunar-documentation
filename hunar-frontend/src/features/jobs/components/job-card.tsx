@@ -157,7 +157,7 @@ export function JobCard({ job, workerOffer }: JobCardProps) {
       <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
         <span className="inline-flex items-center gap-1 text-xs font-semibold text-[#0F8B8D]">
           <ShieldCheck className="w-3.5 h-3.5" />
-          <span>10% Commission Escrow</span>
+          <span>Secure Escrow Protection</span>
         </span>
 
         <Link

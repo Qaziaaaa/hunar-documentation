@@ -6,6 +6,7 @@ import { useParams } from "next/navigation";
 import { JobRequest } from "@/types/job";
 import { VisitOffer } from "@/types/offer";
 import { formatRs } from "@/lib/design-tokens";
+import { sanitizePriceInput, parsePriceOrZero } from "@/lib/money";
 import { workerStore, useWorkerJobs } from "@/stores/worker-jobs-store";
 import { WorkerVisitTrackingView } from "./worker-visit-tracking-view";
 import { WorkerChatModal } from "./worker-chat-modal";
@@ -46,7 +47,8 @@ export function WorkerJourneyFullscreen({
   const params = useParams();
   const locale = (params?.locale as string) || "en";
   const isUrdu = locale === "ur";
-  const { walletBalance } = useWorkerJobs();
+  const { jobs, walletBalance } = useWorkerJobs();
+  const activeJob = jobs.find((j) => j.id === job.id) || job;
 
   const [showCallModal, setShowCallModal] = useState(false);
   const [showChatModal, setShowChatModal] = useState(false);
@@ -65,19 +67,23 @@ export function WorkerJourneyFullscreen({
   const [diagnosis, setDiagnosis] = useState(
     "Faulty main breaker overheating under peak load. Terminal lug insulation degraded."
   );
-  const [repairPrice, setRepairPrice] = useState<number>(1500);
+  const [repairPrice, setRepairPrice] = useState<number | string>(activeJob.repairCharge ?? 1500);
   const [photos, setPhotos] = useState<string[]>([
     "https://images.unsplash.com/photo-1621905251189-08b45d6a269e?auto=format&fit=crop&w=800&q=80",
   ]);
   const fileInputRef = React.useRef<HTMLInputElement | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const numRepairPrice = parsePriceOrZero(repairPrice);
+
   const agreedVisitCharge =
-    offer?.agreedVisitCharge ??
-    offer?.visitCharge ??
-    job.visitCharge ??
-    job.customerSuggestedPrice ??
-    800;
+    (activeJob.status === "completed" && activeJob.visitCharge !== undefined)
+      ? activeJob.visitCharge
+      : (offer?.agreedVisitCharge ??
+         offer?.visitCharge ??
+         activeJob.visitCharge ??
+         activeJob.customerSuggestedPrice ??
+         300);
 
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -104,7 +110,7 @@ export function WorkerJourneyFullscreen({
   const handleSubmitInspection = (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg(null);
-    if (!diagnosis.trim() || !repairPrice) {
+    if (!diagnosis.trim() || !repairPrice || numRepairPrice <= 0) {
       setErrorMsg("Please fill in diagnosis and price estimate.");
       return;
     }
@@ -117,7 +123,7 @@ export function WorkerJourneyFullscreen({
     workerStore.submitInspection(job.id, {
       diagnosis: diagnosis.trim(),
       repairPlan: "Standard on-site repair and parts replacement",
-      repairPriceEstimate: repairPrice,
+      repairPriceEstimate: numRepairPrice,
       estimatedRepairTime: "Standard",
       photos: photos,
     });
@@ -131,7 +137,7 @@ export function WorkerJourneyFullscreen({
 
   // 3. Handle Complete Job (Full repair)
   const handleCompleteRepairJob = () => {
-    workerStore.completeJob(job.id, repairPrice);
+    workerStore.completeJob(job.id, numRepairPrice);
     setShowSettlementModal(true);
   };
 
@@ -161,26 +167,28 @@ export function WorkerJourneyFullscreen({
   };
 
   // Determine current active workflow stage (Streamlined 3-Step Flow)
-  const isEnRoute = job.status === "accepted" || job.status === "visit_in_progress";
-  const isInspecting = job.status === "visit_completed" || job.status === "inspecting";
+  const isEnRoute = activeJob.status === "accepted" || activeJob.status === "visit_in_progress";
+  const isInspecting = activeJob.status === "visit_completed" || activeJob.status === "inspecting";
   const isDecisionOrExecution =
-    job.status === "inspection_submitted" ||
-    job.status === "repair_negotiating" ||
-    job.status === "repair_approved" ||
-    job.status === "repair_in_progress" ||
-    job.status === "repair_declined" ||
-    job.status === "completed";
+    activeJob.status === "inspection_submitted" ||
+    activeJob.status === "repair_negotiating" ||
+    activeJob.status === "repair_approved" ||
+    activeJob.status === "repair_in_progress" ||
+    activeJob.status === "repair_declined" ||
+    activeJob.status === "completed";
 
   const isAwaitingDecision =
-    job.status === "inspection_submitted" || job.status === "repair_negotiating";
-  const isApproved = job.status === "repair_approved";
-  const isInRepair = job.status === "repair_in_progress";
-  const isDeclined = job.status === "repair_declined";
-  const isCompleted = job.status === "completed";
+    activeJob.status === "inspection_submitted" || activeJob.status === "repair_negotiating";
+  const isApproved = activeJob.status === "repair_approved";
+  const isInRepair = activeJob.status === "repair_in_progress";
+  const isCompleted = activeJob.status === "completed";
+  const isDeclined =
+    activeJob.status === "repair_declined" ||
+    (isCompleted && (activeJob.repairCharge === 0 || activeJob.repairCharge === undefined));
 
   // When En Route or starting visit to customer doorstep, render the dedicated Visit Tracking Screen (Step 1)
   if (isEnRoute) {
-    return <WorkerVisitTrackingView job={job} offer={offer} />;
+    return <WorkerVisitTrackingView job={activeJob} offer={offer} />;
   }
 
   // Get current step number and label for 3-Step Journey
@@ -197,9 +205,18 @@ export function WorkerJourneyFullscreen({
   const stepInfo = getStepInfo();
 
   // Financial calculations
-  const finalRepairAmount = isDeclined ? 0 : repairPrice;
+  const finalRepairAmount = isCompleted
+    ? (activeJob.repairCharge ?? 0)
+    : (isDeclined ? 0 : (activeJob.repairCharge ?? numRepairPrice));
   const grossJobValue = agreedVisitCharge + finalRepairAmount;
-  const netEarnings = grossJobValue;
+  const platformCommission =
+    isCompleted && activeJob.platformCommission !== undefined
+      ? activeJob.platformCommission
+      : Math.round(grossJobValue * 0.1);
+  const netEarnings =
+    isCompleted && activeJob.workerNetEarnings !== undefined
+      ? activeJob.workerNetEarnings
+      : grossJobValue - platformCommission;
 
   return (
     <div className="min-h-screen bg-slate-50/60 lg:bg-slate-100/70 text-slate-900 font-sans antialiased select-none flex flex-col w-full">
@@ -329,8 +346,8 @@ export function WorkerJourneyFullscreen({
                         <span className="font-mono">{formatRs(finalRepairAmount)}</span>
                       </div>
                       <div className="border-t border-emerald-200 pt-3 flex justify-between items-center text-emerald-950 font-black text-sm sm:text-base">
-                        <span>{isUrdu ? "والٹ میں منتقل شدہ رقم:" : "Net Credited to Wallet:"}</span>
-                        <span className="text-lg sm:text-xl text-emerald-800 font-mono">+{formatRs(netEarnings)}</span>
+                        <span>{isUrdu ? "کل آمدنی:" : "Total Earning:"}</span>
+                        <span className="text-lg sm:text-xl text-emerald-800 font-mono">+{formatRs(grossJobValue)}</span>
                       </div>
                     </div>
                   </div>
@@ -441,7 +458,7 @@ export function WorkerJourneyFullscreen({
                         <input
                           type="number"
                           value={repairPrice}
-                          onChange={(e) => setRepairPrice(Number(e.target.value))}
+                          onChange={(e) => setRepairPrice(sanitizePriceInput(e.target.value))}
                           className="w-full pl-11 pr-4 py-3 rounded-xl bg-slate-50 border border-slate-200 text-sm font-black text-[#123B5D] focus:bg-white focus:ring-2 focus:ring-[#0F8B8D] focus:outline-none transition-all placeholder:text-slate-400"
                           placeholder="1500"
                           required
@@ -553,12 +570,12 @@ export function WorkerJourneyFullscreen({
                     </div>
                     <div className="flex justify-between items-center text-slate-600">
                       <span>{isUrdu ? "مرمت لاگت:" : "Proposed Repair Estimate:"}</span>
-                      <span className="font-bold text-slate-800">{formatRs(repairPrice)}</span>
+                      <span className="font-bold text-slate-800">{formatRs(numRepairPrice)}</span>
                     </div>
                     <div className="border-t border-slate-200 pt-3 flex justify-between items-center text-sm sm:text-base font-black text-[#123B5D]">
                       <span>{isUrdu ? "کل کسٹمر انوائس:" : "Total Job Value:"}</span>
                       <span className="text-base sm:text-lg text-[#0F8B8D]">
-                        {formatRs(agreedVisitCharge + repairPrice)}
+                        {formatRs(agreedVisitCharge + numRepairPrice)}
                       </span>
                     </div>
                   </div>
@@ -669,29 +686,26 @@ export function WorkerJourneyFullscreen({
                       </div>
                     )}
 
-                    {/* Interactive Simulation Controls (For quick testing/demoing) */}
+                    {/* Waiting on Customer Approval State */}
                     {isAwaitingDecision && (
-                      <div className="pt-3 border-t border-slate-100 space-y-2.5">
-                        <span className="text-[11px] text-slate-400 font-bold uppercase tracking-wider block">
-                          Customer Response Simulator (Demo)
-                        </span>
-                        <div className="flex gap-2.5">
-                          <button
-                            type="button"
-                            onClick={() => workerStore.approveRepair(job.id)}
-                            className="flex-1 py-2.5 px-3.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-700 font-bold text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer"
-                          >
-                            <Check className="size-4" />
-                            <span>Customer Accepts Quote</span>
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => workerStore.declineRepair(job.id)}
-                            className="flex-1 py-2.5 px-3.5 rounded-xl bg-red-50 hover:bg-red-100 border border-red-200 text-red-700 font-bold text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer"
-                          >
-                            <X className="size-4" />
-                            <span>Customer Declines Quote</span>
-                          </button>
+                      <div className="pt-3 border-t border-slate-100">
+                        <div className="p-4 sm:p-5 rounded-2xl bg-amber-50/80 border border-amber-200/90 flex items-start gap-3.5 shadow-2xs">
+                          <Clock className="size-5 text-amber-600 shrink-0 mt-0.5 animate-spin" />
+                          <div className="space-y-1 text-xs">
+                            <div className="flex items-center gap-2">
+                              <h4 className="font-extrabold text-amber-950 text-sm">
+                                {isUrdu ? "کسٹمر کی منظوری کا انتظار ہے" : "Awaiting Customer Approval"}
+                              </h4>
+                              <span className="px-2 py-0.5 rounded-full bg-amber-200/70 text-amber-900 text-[10px] font-black uppercase tracking-wider">
+                                {isUrdu ? "زیر التواء" : "PENDING"}
+                              </span>
+                            </div>
+                            <p className="text-amber-900/90 leading-relaxed font-medium">
+                              {isUrdu
+                                ? "مرمت کی کوٹیشن کسٹمر کے موبائل / اسکرین پر فوری بھیج دی گئی ہے۔ کسٹمر کے باقاعدہ فیصلے (منظور یا مسترد) کے بعد ہی اگلا مرحلہ شروع ہو گا۔"
+                                : "The repair quote has been dispatched in real-time to the customer's portal. The customer alone must choose to Accept or Decline before work can begin."}
+                            </p>
+                          </div>
                         </div>
                       </div>
                     )}
@@ -716,11 +730,11 @@ export function WorkerJourneyFullscreen({
                           isDeclined ? "line-through text-slate-400" : "text-slate-900"
                         }`}
                       >
-                        {formatRs(repairPrice)} {isDeclined && "(Declined)"}
+                        {formatRs(numRepairPrice)} {isDeclined && "(Declined)"}
                       </span>
                     </div>
                     <div className="border-t border-slate-200 pt-3 flex justify-between items-center text-sm sm:text-base font-black text-[#123B5D]">
-                      <span>Total Due</span>
+                      <span>Total Earning</span>
                       <span className="text-base sm:text-lg text-[#0F8B8D]">
                         {formatRs(grossJobValue)}
                       </span>
@@ -748,7 +762,7 @@ export function WorkerJourneyFullscreen({
                       className="w-full py-4 rounded-2xl bg-slate-200 text-slate-400 font-extrabold text-sm sm:text-base transition-all flex items-center justify-center gap-2 cursor-not-allowed"
                     >
                       <Clock className="size-4 animate-spin" />
-                      <span>Waiting for Customer Approval...</span>
+                      <span>{isUrdu ? "کسٹمر کی منظوری کا انتظار..." : "Waiting for Customer Approval..."}</span>
                     </button>
                   ) : isDeclined ? (
                     <button

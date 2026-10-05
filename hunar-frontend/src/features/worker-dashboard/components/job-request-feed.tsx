@@ -4,7 +4,6 @@ import { useState, useMemo, useEffect, useCallback } from "react";
 import { JobRequestCard } from "./job-request-card";
 import { JobRequestModal } from "./job-request-modal";
 import { RadarSearchView } from "./radar-search-view";
-import { MOCK_JOB_REQUESTS } from "../mock-job-requests";
 import type { JobRequest, JobRequestCategory } from "../types";
 
 import { useLocale } from "next-intl";
@@ -13,6 +12,7 @@ import { ApiError } from "@/lib/api-client";
 import { listNearbyJobs } from "@/services/worker/jobs.service";
 import { subscribeToNotifications } from "@/services/worker/notification.service";
 import { timeAgo, formatDate, formatTime } from "@/lib/format";
+import { formatAreaOrSector } from "@/lib/location";
 import type { Job } from "@/types/job";
 
 const CATEGORY_LABELS: Record<string, JobRequestCategory> = {
@@ -36,14 +36,11 @@ function toFeedJobRequest(job: Job): JobRequest {
     typeof job.distanceKm === "number" && job.distanceKm > 0
       ? `${job.distanceKm.toFixed(1)} km`
       : "Nearby";
-  const area = job.area ?? "";
-  const city = job.city ?? "";
-  const locationArea =
-    (area && city && area.toLowerCase().includes(city.toLowerCase())
-      ? area
-      : [area, city].filter(Boolean).join(", ")) ||
-    job.address ||
-    "Location pending";
+  const locationArea = formatAreaOrSector({
+    area: job.area,
+    address: job.address,
+    city: job.city,
+  });
   const isUrgent = job.urgency === "EMERGENCY" || job.urgency === "HIGH";
 
   return {
@@ -53,7 +50,6 @@ function toFeedJobRequest(job: Job): JobRequest {
     description: job.description ?? "",
     distance,
     locationArea,
-    fullAddress: job.address || undefined,
     uploadedTime: timeAgo(job.createdAt),
     postedTimestamp: Date.parse(job.createdAt) || undefined,
     suggestedVisitCharge: job.suggestedVisitCharge ?? undefined,
@@ -117,8 +113,8 @@ export function JobRequestFeed({
   }, []);
 
   useEffect(() => {
-    if (!isApiMode) return;
     refreshLiveJobs();
+    if (!isApiMode) return;
     const intervalId = window.setInterval(refreshLiveJobs, 15000);
     const onFocus = () => refreshLiveJobs();
     window.addEventListener("focus", onFocus);
@@ -134,8 +130,8 @@ export function JobRequestFeed({
   }, [isApiMode, refreshLiveJobs]);
 
   const sourceJobs = useMemo(() => {
-    return isApiMode ? liveJobs.map(toFeedJobRequest) : MOCK_JOB_REQUESTS;
-  }, [isApiMode, liveJobs]);
+    return liveJobs.map(toFeedJobRequest);
+  }, [liveJobs]);
 
   const filteredJobs = useMemo(() => {
     return sourceJobs.filter((job) => {

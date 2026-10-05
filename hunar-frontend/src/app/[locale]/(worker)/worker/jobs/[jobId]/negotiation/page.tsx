@@ -20,7 +20,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { formatDateTime } from "@/lib/format";
-import { formatRs } from "@/lib/money";
+import { formatRs, sanitizePriceInput } from "@/lib/money";
 import { negotiationStatusTone } from "@/lib/status-meta";
 import { getNegotiationContext, acceptCounterOffer, rejectCounterOffer, requestScopeChange, sendCounterOffer, submitEstimate, queryKeys } from "@/services/worker/negotiation.service";
 import { getWorkerJob, queryKeys as jobKeys } from "@/services/worker/jobs.service";
@@ -105,7 +105,7 @@ export default function NegotiationPage() {
               <CardHeader><CardTitle>{t("negotiation.estimateTitle")}</CardTitle></CardHeader>
               <CardContent className="space-y-4">
                 <p className="text-sm text-muted-foreground">{t("negotiation.estimateDescription")}</p>
-                <div className="grid gap-2"><Label htmlFor="estimate-amount">{t("negotiation.estimatePrice")}</Label><Input id="estimate-amount" type="number" min="1" value={estimateAmount} onChange={(event) => setEstimateAmount(event.target.value)} /></div>
+                <div className="grid gap-2"><Label htmlFor="estimate-amount">{t("negotiation.estimatePrice")}</Label><Input id="estimate-amount" type="number" min="1" value={estimateAmount} onChange={(event) => setEstimateAmount(sanitizePriceInput(event.target.value))} /></div>
                 <div className="grid gap-2"><Label htmlFor="estimate-description">{t("negotiation.estimateDescriptionLabel")}</Label><Textarea id="estimate-description" placeholder={t("negotiation.estimateDescriptionPlaceholder")} value={estimateDescription} onChange={(event) => setEstimateDescription(event.target.value)} /></div>
                 <Button className="bg-teal hover:bg-teal/85" disabled={!estimateAmount || !estimateDescription.trim() || estimate.isPending} onClick={() => estimate.mutate()}>{estimate.isPending ? t("common.submitting") : t("negotiation.submitEstimate")}</Button>
               </CardContent>
@@ -152,7 +152,7 @@ export default function NegotiationPage() {
         <Card className="fixed inset-x-4 bottom-4 z-40 mx-auto max-w-lg border-teal shadow-xl sm:inset-x-auto sm:right-6">
           <CardHeader><CardTitle>{t("negotiation.counterTitle")}</CardTitle></CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid gap-2"><Label htmlFor="counter-amount">{t("negotiation.counterAmount")}</Label><Input id="counter-amount" type="number" min="1" value={counterAmount} onChange={(event) => setCounterAmount(event.target.value)} /></div>
+            <div className="grid gap-2"><Label htmlFor="counter-amount">{t("negotiation.counterAmount")}</Label><Input id="counter-amount" type="number" min="1" value={counterAmount} onChange={(event) => setCounterAmount(sanitizePriceInput(event.target.value))} /></div>
             <div className="grid gap-2"><Label htmlFor="counter-note">{t("negotiation.counterNote")}</Label><Textarea id="counter-note" placeholder={t("negotiation.counterNotePlaceholder")} value={counterNote} onChange={(event) => setCounterNote(event.target.value)} /></div>
             <div className="flex justify-end gap-2"><Button variant="outline" onClick={() => setCounterOpen(false)}>{t("common.cancel")}</Button><Button className="bg-teal hover:bg-teal/85" disabled={!canSubmitCounter || counter.isPending} onClick={() => counter.mutate()}>{counter.isPending ? <Loader2 className="size-4 animate-spin" aria-hidden="true" /> : null}{counter.isPending ? t("common.submitting") : t("negotiation.counter")}</Button></div>
           </CardContent>

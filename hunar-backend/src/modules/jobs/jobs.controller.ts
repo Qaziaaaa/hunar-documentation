@@ -51,6 +51,15 @@ export class JobsController {
   ) {
     return this.jobsService.cancelJob(id, user, dto);
   }
+
+  @Put(':id/complete')
+  @Roles(Role.WORKER, Role.ADMIN)
+  complete(
+    @CurrentUser() user: JwtPayload,
+    @Param('id', ParseUUIDPipe) id: string,
+  ) {
+    return this.jobsService.completeJob(id, user);
+  }
 }
 
 /** Task 23 — the assigned worker's active jobs (non-terminal states). */
@@ -62,5 +71,11 @@ export class WorkerJobsController {
   @Roles(Role.WORKER)
   getActive(@CurrentUser() user: JwtPayload, @Query() query: CustomerJobsQueryDto) {
     return this.jobsService.getActiveJobs(user.sub, query);
+  }
+
+  @Get('history')
+  @Roles(Role.WORKER)
+  getHistory(@CurrentUser() user: JwtPayload, @Query() query: CustomerJobsQueryDto) {
+    return this.jobsService.getHistoryJobs(user.sub, query);
   }
 }
