@@ -7,6 +7,7 @@ import { JobRequest } from "@/types/job";
 import { VisitOffer } from "@/types/offer";
 import { formatRs } from "@/lib/design-tokens";
 import { connectSocket } from "@/lib/socket";
+import { http } from "@/lib/api-client";
 import { workerStore } from "@/stores/worker-jobs-store";
 import { WorkerChatModal } from "./worker-chat-modal";
 import { WorkerArrivalOtpModal } from "./worker-arrival-otp-modal";
@@ -53,6 +54,20 @@ const PESHAWAR_ROAD_POINTS: [number, number][] = [
   [34.015, 71.535],
 ];
 
+function calculateHaversineKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  const R = 6371; // km
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLon = ((lon2 - lon1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+}
+
 export function WorkerVisitTrackingView({
   job,
   offer,
@@ -66,6 +81,10 @@ export function WorkerVisitTrackingView({
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<any>(null);
   const routeBoundsRef = useRef<any>(null);
+  const workerMarkerRef = useRef<any>(null);
+  const destMarkerRef = useRef<any>(null);
+  const routeCasingRef = useRef<any>(null);
+  const routeNavRef = useRef<any>(null);
 
   const [showCallModal, setShowCallModal] = useState(false);
   const [showChatModal, setShowChatModal] = useState(false);
@@ -81,13 +100,65 @@ export function WorkerVisitTrackingView({
     PESHAWAR_ROAD_POINTS
   );
 
-  // Customer / Job coordinates
+  // Customer / Job exact coordinates from job location
   const customerLat = job.location.coordinates?.lat || 34.015;
   const customerLng = job.location.coordinates?.lng || 71.535;
 
-  // Worker live starting coordinates
-  const workerLat = 34.004869;
-  const workerLng = 71.511284;
+  // Worker live coordinates (defaults to Peshawar, continuously updated by device GPS)
+  const [workerLat, setWorkerLat] = useState<number>(34.004869);
+  const [workerLng, setWorkerLng] = useState<number>(71.511284);
+  const [isGpsActive, setIsGpsActive] = useState<boolean>(false);
+
+  // Real-time GPS Tracker for Worker
+  useEffect(() => {
+    if (typeof window === "undefined" || !("geolocation" in navigator)) return;
+
+    let lastSent = 0;
+    const sendLocationUpdate = async (lat: number, lng: number, acc?: number) => {
+      setWorkerLat(lat);
+      setWorkerLng(lng);
+      setIsGpsActive(true);
+
+      if (workerMarkerRef.current) {
+        workerMarkerRef.current.setLatLng([lat, lng]);
+      }
+
+      // Throttled transmission to backend every 4 seconds
+      const now = Date.now();
+      if (now - lastSent > 4000 && job?.id) {
+        lastSent = now;
+        try {
+          await http.post(`/location/track?jobId=${job.id}`, {
+            latitude: lat,
+            longitude: lng,
+            accuracy: acc ?? 10,
+          });
+        } catch (err) {
+          console.warn("[Worker GPS] Failed sending location update:", err);
+        }
+      }
+    };
+
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        sendLocationUpdate(pos.coords.latitude, pos.coords.longitude, pos.coords.accuracy);
+      },
+      (err) => console.warn("[Worker GPS] Initial position error:", err),
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+    );
+
+    const watchId = navigator.geolocation.watchPosition(
+      (pos) => {
+        sendLocationUpdate(pos.coords.latitude, pos.coords.longitude, pos.coords.accuracy);
+      },
+      (err) => console.warn("[Worker GPS] Watch error:", err),
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 3000 }
+    );
+
+    return () => {
+      navigator.geolocation.clearWatch(watchId);
+    };
+  }, [job?.id]);
 
   const agreedVisitCharge =
     offer?.agreedVisitCharge ??
@@ -100,28 +171,53 @@ export function WorkerVisitTrackingView({
   const [currentSecurityPin, setCurrentSecurityPin] = useState<string>(job.securityPin || "");
   const customerFirstName = job.customer.name.split(" ")[0];
 
-  // Dynamic OSRM Road Route Fetching with Fallback
+  // Live distance and ETA states computed dynamically from worker & customer coordinates
+  const [liveDistanceKm, setLiveDistanceKm] = useState<number | null>(null);
+  const [liveEtaMinutes, setLiveEtaMinutes] = useState<number | null>(null);
+
+  // Dynamic OSRM Road Route Fetching with Fallback & Real Distance/ETA Extraction
   useEffect(() => {
     let isCancelled = false;
 
     async function fetchRoadRoute() {
+      // Calculate direct Haversine distance in km as baseline
+      const directKm = calculateHaversineKm(workerLat, workerLng, customerLat, customerLng);
+
       try {
         const res = await fetch(
           `https://router.project-osrm.org/route/v1/driving/${workerLng},${workerLat};${customerLng},${customerLat}?overview=full&geometries=geojson`
         );
         const data = await res.json();
-        if (!isCancelled && data?.routes?.[0]?.geometry?.coordinates) {
-          const pts = data.routes[0].geometry.coordinates.map(
-            ([lng, lat]: [number, number]) => [lat, lng] as [number, number]
-          );
-          if (pts.length > 1) {
-            setRoutePoints(pts);
+        if (!isCancelled && data?.routes?.[0]) {
+          const route = data.routes[0];
+          if (route.geometry?.coordinates) {
+            const pts = route.geometry.coordinates.map(
+              ([lng, lat]: [number, number]) => [lat, lng] as [number, number]
+            );
+            if (pts.length > 1) {
+              setRoutePoints(pts);
+            }
+          }
+          if (typeof route.distance === "number") {
+            const km = Number((route.distance / 1000).toFixed(1));
+            setLiveDistanceKm(km);
+            const mins = km <= 0.05 ? 0 : Math.max(1, Math.round(route.duration / 60));
+            setLiveEtaMinutes(mins);
+            return;
           }
         }
       } catch {
         if (!isCancelled) {
           setRoutePoints(PESHAWAR_ROAD_POINTS);
         }
+      }
+
+      // Fallback: Haversine distance
+      if (!isCancelled) {
+        const km = Number(directKm.toFixed(1));
+        setLiveDistanceKm(km);
+        const mins = km <= 0.05 ? 0 : Math.max(1, Math.round((km / 25) * 60));
+        setLiveEtaMinutes(mins);
       }
     }
 
@@ -131,24 +227,61 @@ export function WorkerVisitTrackingView({
     };
   }, [customerLat, customerLng, workerLat, workerLng]);
 
-  // Initialize Map with HUNAR Palette
+  // Derived user-facing distance and arrival status
+  const displayDistanceKm =
+    liveDistanceKm !== null
+      ? liveDistanceKm
+      : typeof job.location.distanceKm === "number"
+      ? job.location.distanceKm
+      : 0;
+
+  const displayEtaMinutes =
+    liveEtaMinutes !== null
+      ? liveEtaMinutes
+      : typeof job.etaMinutes === "number"
+      ? job.etaMinutes
+      : 0;
+
+  const isAtDoorstep = displayDistanceKm <= 0.05;
+
+  const distanceText = isAtDoorstep
+    ? isUrdu
+      ? "دہلیز پر موجود (0 km)"
+      : "At Doorstep (0 km)"
+    : `${displayDistanceKm} km`;
+
+  const etaText = isAtDoorstep
+    ? isUrdu
+      ? "پہنچ چکے ہیں"
+      : "Arrived"
+    : displayEtaMinutes <= 1
+    ? isUrdu
+      ? "~1 منٹ"
+      : "~1 min away"
+    : isUrdu
+    ? `~${displayEtaMinutes} منٹ`
+    : `~${displayEtaMinutes} mins away`;
+
+  // Initialize Map with HUNAR Palette (Mounts once)
   useEffect(() => {
     if (typeof window === "undefined" || !mapContainerRef.current) return;
 
     let isMounted = true;
     let resizeObserver: ResizeObserver | null = null;
+    let timer1: any = null;
+    let timer2: any = null;
 
     async function initMap() {
       const L = (await import("leaflet")).default;
       if (!isMounted || !mapContainerRef.current) return;
 
-      // Patch Leaflet DomUtil.getPosition to prevent '_leaflet_pos' TypeError when unmounting or accessing detached DOM elements
+      // 1. Monkeypatch Leaflet DomUtil.getPosition to prevent '_leaflet_pos' TypeError when unmounting or accessing detached DOM elements
       if (L && L.DomUtil && L.DomUtil.getPosition && !(L.DomUtil as any)._patchedPosition) {
         const origGetPos = L.DomUtil.getPosition;
         L.DomUtil.getPosition = function (el: any) {
           if (!el) return new L.Point(0, 0);
           try {
-            return origGetPos.call(L.DomUtil, el);
+            return origGetPos.call(L.DomUtil, el) || new L.Point(0, 0);
           } catch {
             return new L.Point(0, 0);
           }
@@ -156,8 +289,23 @@ export function WorkerVisitTrackingView({
         (L.DomUtil as any)._patchedPosition = true;
       }
 
+      // 2. Monkeypatch Leaflet Map.prototype._getMapPanePos to prevent '_leaflet_pos' error when _mapPane is detached
+      if (L && L.Map && L.Map.prototype && !(L.Map.prototype as any)._patchedPanePos) {
+        const origPanePos = (L.Map.prototype as any)._getMapPanePos;
+        (L.Map.prototype as any)._getMapPanePos = function (this: any) {
+          if (!this?._mapPane) return new L.Point(0, 0);
+          try {
+            return origPanePos.call(this) || new L.Point(0, 0);
+          } catch {
+            return new L.Point(0, 0);
+          }
+        };
+        (L.Map.prototype as any)._patchedPanePos = true;
+      }
+
       if (mapInstanceRef.current) {
         try {
+          mapInstanceRef.current.stop();
           mapInstanceRef.current.off();
           mapInstanceRef.current.remove();
         } catch {}
@@ -184,33 +332,40 @@ export function WorkerVisitTrackingView({
       }).addTo(map);
 
       // HUNAR Brand Teal & Navy Route Path
-      if (routePoints && routePoints.length > 1) {
-        // High contrast navy casing
-        L.polyline(routePoints, {
-          color: "#123B5D",
-          weight: 7,
-          opacity: 0.85,
-          lineCap: "round",
-          lineJoin: "round",
-        }).addTo(map);
+      const initialPoints =
+        routePoints && routePoints.length > 1
+          ? routePoints
+          : ([[workerLat, workerLng], [customerLat, customerLng]] as [number, number][]);
 
-        // Vibrant brand teal navigation line
-        const navLine = L.polyline(routePoints, {
-          color: "#0F8B8D",
-          weight: 4.5,
-          opacity: 1,
-          lineCap: "round",
-          lineJoin: "round",
-        }).addTo(map);
+      // High contrast navy casing
+      const casing = L.polyline(initialPoints, {
+        color: "#123B5D",
+        weight: 7,
+        opacity: 0.85,
+        lineCap: "round",
+        lineJoin: "round",
+      }).addTo(map);
+      routeCasingRef.current = casing;
 
-        const bounds = navLine.getBounds();
-        if (bounds.isValid()) {
-          routeBoundsRef.current = bounds;
+      // Vibrant brand teal navigation line
+      const navLine = L.polyline(initialPoints, {
+        color: "#0F8B8D",
+        weight: 4.5,
+        opacity: 1,
+        lineCap: "round",
+        lineJoin: "round",
+      }).addTo(map);
+      routeNavRef.current = navLine;
+
+      const bounds = navLine.getBounds();
+      if (bounds.isValid()) {
+        routeBoundsRef.current = bounds;
+        try {
           map.fitBounds(bounds, {
             padding: [50, 50],
             maxZoom: 16,
           });
-        }
+        } catch {}
       }
 
       // 1. Live Technician / Worker Marker (White circle with Navy/Teal badge, worker icon & live pulsating radar ring)
@@ -235,7 +390,7 @@ export function WorkerVisitTrackingView({
         iconAnchor: [22, 22],
       });
 
-      L.marker([workerLat, workerLng], { icon: workerIcon }).addTo(map);
+      workerMarkerRef.current = L.marker([workerLat, workerLng], { icon: workerIcon }).addTo(map);
 
       // 2. Destination Doorstep Pin Marker
       const destIcon = L.divIcon({
@@ -257,10 +412,10 @@ export function WorkerVisitTrackingView({
         iconAnchor: [19, 36],
       });
 
-      L.marker([customerLat, customerLng], { icon: destIcon }).addTo(map);
+      destMarkerRef.current = L.marker([customerLat, customerLng], { icon: destIcon }).addTo(map);
 
       // Force recalculation of map tile dimensions after DOM settle
-      setTimeout(() => {
+      timer1 = setTimeout(() => {
         if (isMounted && mapInstanceRef.current) {
           try {
             mapInstanceRef.current.invalidateSize();
@@ -276,7 +431,7 @@ export function WorkerVisitTrackingView({
         }
       }, 200);
 
-      setTimeout(() => {
+      timer2 = setTimeout(() => {
         if (isMounted && mapInstanceRef.current) {
           try {
             mapInstanceRef.current.invalidateSize();
@@ -300,18 +455,57 @@ export function WorkerVisitTrackingView({
 
     return () => {
       isMounted = false;
+      if (timer1) clearTimeout(timer1);
+      if (timer2) clearTimeout(timer2);
       if (resizeObserver) {
         resizeObserver.disconnect();
       }
       if (mapInstanceRef.current) {
         try {
+          mapInstanceRef.current.stop();
           mapInstanceRef.current.off();
           mapInstanceRef.current.remove();
         } catch {}
         mapInstanceRef.current = null;
       }
+      workerMarkerRef.current = null;
+      destMarkerRef.current = null;
+      routeCasingRef.current = null;
+      routeNavRef.current = null;
     };
-  }, [customerLat, customerLng, workerLat, workerLng, routePoints, customerFirstName]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Dynamically update route polylines when route changes
+  useEffect(() => {
+    if (!mapInstanceRef.current || !routePoints || routePoints.length < 2) return;
+    if (routeCasingRef.current) {
+      routeCasingRef.current.setLatLngs(routePoints);
+    }
+    if (routeNavRef.current) {
+      routeNavRef.current.setLatLngs(routePoints);
+      try {
+        const bounds = routeNavRef.current.getBounds();
+        if (bounds.isValid()) {
+          routeBoundsRef.current = bounds;
+        }
+      } catch {}
+    }
+  }, [routePoints]);
+
+  // Dynamically update worker marker position when GPS coordinates update
+  useEffect(() => {
+    if (workerMarkerRef.current) {
+      workerMarkerRef.current.setLatLng([workerLat, workerLng]);
+    }
+  }, [workerLat, workerLng]);
+
+  // Dynamically update customer marker position if customer coordinates change
+  useEffect(() => {
+    if (destMarkerRef.current) {
+      destMarkerRef.current.setLatLng([customerLat, customerLng]);
+    }
+  }, [customerLat, customerLng]);
 
 
   // Real-time socket listener for customer OTP verification across devices/browsers
@@ -462,7 +656,9 @@ export function WorkerVisitTrackingView({
             </span>
             <span className="text-slate-300">|</span>
             <span className="text-[#0F8B8D]">
-              ~{job.etaMinutes || 12} mins ({job.location.distanceKm || 2.1} km)
+              {isAtDoorstep
+                ? (isUrdu ? "دہلیز پر موجود (0 km)" : "At Doorstep (0 km)")
+                : `${etaText} (${distanceText})`}
             </span>
           </div>
 
@@ -526,9 +722,7 @@ export function WorkerVisitTrackingView({
         {/* Bottom Left on Map: "▲ Navigate" Button */}
         <div className="absolute bottom-6 left-4 z-20 pointer-events-auto">
           <a
-            href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-              job.location.fullAddress
-            )}`}
+            href={`https://www.google.com/maps/dir/?api=1&origin=${workerLat},${workerLng}&destination=${customerLat},${customerLng}`}
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-2 px-4 py-2.5 rounded-full bg-[#123B5D] hover:bg-[#0E2E49] text-white text-xs font-extrabold shadow-lg transition-all active:scale-95 cursor-pointer"
@@ -598,11 +792,11 @@ export function WorkerVisitTrackingView({
             <div className="flex items-center gap-2 pt-0.5 text-[10.5px] text-slate-500 font-bold pl-8">
               <span className="inline-flex items-center gap-1 text-[#0F8B8D]">
                 <NavigationIcon className="size-3 rotate-45 fill-current" />
-                {job.location.distanceKm || 2.1} km
+                {distanceText}
               </span>
               <span>·</span>
               <span className="text-slate-600">
-                ~{job.etaMinutes || 12} mins away
+                {etaText}
               </span>
             </div>
           </div>
@@ -758,11 +952,11 @@ export function WorkerVisitTrackingView({
             <div className="bg-slate-50 rounded-xl p-3 flex items-center justify-between text-xs font-bold border border-slate-200/80">
               <span className="text-slate-600 flex items-center gap-1.5">
                 <NavigationIcon className="size-3.5 rotate-45 text-[#0F8B8D]" />
-                <span>{job.location.distanceKm || 2.1} km distance</span>
+                <span>{distanceText}</span>
               </span>
               <span className="text-[#0F8B8D] flex items-center gap-1">
                 <Clock className="size-3.5" />
-                <span>~{job.etaMinutes || 12} mins drive</span>
+                <span>{etaText}</span>
               </span>
             </div>
           </div>

@@ -71,7 +71,7 @@ function transformBackendVisit(v: any): ScheduledVisit {
     securityPin: v.securityPin || v.pin,
     visitCharges: Number(v.offer?.visitCharge || v.visitCharge || v.lockedVisitCharge || 0),
     escrowAmount: Number(v.offer?.visitCharge || v.visitCharge || v.lockedVisitCharge || 0),
-    customerAddress: job.address || "Peshawar",
+    customerAddress: job.address || v.customerAddress || "Peshawar",
     customerArea: job.area || "Peshawar",
     customerAreaUr: "پشاور",
     customerLat: Number(job.latitude || v.customerLat || 33.9944),

@@ -67,12 +67,24 @@ export class VisitsService {
 
   async getVisit(visitId: string, user: JwtPayload) {
     const visit = await this.assertVisitAccess(visitId, user);
-    const repairs = await this.prisma.repair.findMany({
-      where: { visitId },
-      include: { revisions: { orderBy: { createdAt: 'desc' } } },
-    });
+    const [repairs, latestLoc] = await Promise.all([
+      this.prisma.repair.findMany({
+        where: { visitId },
+        include: { revisions: { orderBy: { createdAt: 'desc' } } },
+      }),
+      this.prisma.locationTracking.findFirst({
+        where: { jobId: visit.jobId },
+        orderBy: { recordedAt: 'desc' },
+        select: { latitude: true, longitude: true },
+      }),
+    ]);
     return {
       ...visit,
+      customerLat: visit.job?.latitude,
+      customerLng: visit.job?.longitude,
+      customerAddress: visit.job?.address,
+      currentLat: latestLoc?.latitude ?? null,
+      currentLng: latestLoc?.longitude ?? null,
       repairEstimate: visit.repairEstimate ? Number(visit.repairEstimate) : null,
       offerCharge: Number(visit.offer.visitCharge),
       repairs: repairs.map((r) => ({
@@ -108,15 +120,45 @@ export class VisitsService {
               title: true,
               area: true,
               city: true,
+              address: true,
+              latitude: true,
+              longitude: true,
               status: true,
               lockedVisitCharge: true,
+            },
+          },
+          worker: {
+            select: {
+              id: true,
+              name: true,
+              phone: true,
+              avatarUrl: true,
             },
           },
         },
       }),
       this.prisma.visit.count({ where: whereWithStatus }),
     ]);
-    return toPageResult(visits, total, page, limit);
+
+    const items = await Promise.all(
+      visits.map(async (v) => {
+        const latestLoc = await this.prisma.locationTracking.findFirst({
+          where: { jobId: v.jobId },
+          orderBy: { recordedAt: 'desc' },
+          select: { latitude: true, longitude: true },
+        });
+        return {
+          ...v,
+          customerLat: v.job?.latitude,
+          customerLng: v.job?.longitude,
+          customerAddress: v.job?.address,
+          currentLat: latestLoc?.latitude ?? null,
+          currentLng: latestLoc?.longitude ?? null,
+        };
+      }),
+    );
+
+    return toPageResult(items, total, page, limit);
   }
 
   async rescheduleVisit(visitId: string, user: JwtPayload, scheduledTime: Date) {
