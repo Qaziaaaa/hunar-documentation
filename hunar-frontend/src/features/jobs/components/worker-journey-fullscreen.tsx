@@ -6,6 +6,7 @@ import { useParams } from "next/navigation";
 import { JobRequest } from "@/types/job";
 import { VisitOffer } from "@/types/offer";
 import { formatRs } from "@/lib/design-tokens";
+import { sanitizePriceInput, parsePriceOrZero } from "@/lib/money";
 import { workerStore, useWorkerJobs } from "@/stores/worker-jobs-store";
 import { WorkerVisitTrackingView } from "./worker-visit-tracking-view";
 import { WorkerChatModal } from "./worker-chat-modal";
@@ -66,12 +67,14 @@ export function WorkerJourneyFullscreen({
   const [diagnosis, setDiagnosis] = useState(
     "Faulty main breaker overheating under peak load. Terminal lug insulation degraded."
   );
-  const [repairPrice, setRepairPrice] = useState<number>(activeJob.repairCharge ?? 1500);
+  const [repairPrice, setRepairPrice] = useState<number | string>(activeJob.repairCharge ?? 1500);
   const [photos, setPhotos] = useState<string[]>([
     "https://images.unsplash.com/photo-1621905251189-08b45d6a269e?auto=format&fit=crop&w=800&q=80",
   ]);
   const fileInputRef = React.useRef<HTMLInputElement | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const numRepairPrice = parsePriceOrZero(repairPrice);
 
   const agreedVisitCharge =
     (activeJob.status === "completed" && activeJob.visitCharge !== undefined)
@@ -107,7 +110,7 @@ export function WorkerJourneyFullscreen({
   const handleSubmitInspection = (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg(null);
-    if (!diagnosis.trim() || !repairPrice) {
+    if (!diagnosis.trim() || !repairPrice || numRepairPrice <= 0) {
       setErrorMsg("Please fill in diagnosis and price estimate.");
       return;
     }
@@ -120,7 +123,7 @@ export function WorkerJourneyFullscreen({
     workerStore.submitInspection(job.id, {
       diagnosis: diagnosis.trim(),
       repairPlan: "Standard on-site repair and parts replacement",
-      repairPriceEstimate: repairPrice,
+      repairPriceEstimate: numRepairPrice,
       estimatedRepairTime: "Standard",
       photos: photos,
     });
@@ -134,7 +137,7 @@ export function WorkerJourneyFullscreen({
 
   // 3. Handle Complete Job (Full repair)
   const handleCompleteRepairJob = () => {
-    workerStore.completeJob(job.id, repairPrice);
+    workerStore.completeJob(job.id, numRepairPrice);
     setShowSettlementModal(true);
   };
 
@@ -204,7 +207,7 @@ export function WorkerJourneyFullscreen({
   // Financial calculations
   const finalRepairAmount = isCompleted
     ? (activeJob.repairCharge ?? 0)
-    : (isDeclined ? 0 : (activeJob.repairCharge ?? repairPrice));
+    : (isDeclined ? 0 : (activeJob.repairCharge ?? numRepairPrice));
   const grossJobValue = agreedVisitCharge + finalRepairAmount;
   const platformCommission =
     isCompleted && activeJob.platformCommission !== undefined
@@ -455,7 +458,7 @@ export function WorkerJourneyFullscreen({
                         <input
                           type="number"
                           value={repairPrice}
-                          onChange={(e) => setRepairPrice(Number(e.target.value))}
+                          onChange={(e) => setRepairPrice(sanitizePriceInput(e.target.value))}
                           className="w-full pl-11 pr-4 py-3 rounded-xl bg-slate-50 border border-slate-200 text-sm font-black text-[#123B5D] focus:bg-white focus:ring-2 focus:ring-[#0F8B8D] focus:outline-none transition-all placeholder:text-slate-400"
                           placeholder="1500"
                           required
@@ -567,12 +570,12 @@ export function WorkerJourneyFullscreen({
                     </div>
                     <div className="flex justify-between items-center text-slate-600">
                       <span>{isUrdu ? "مرمت لاگت:" : "Proposed Repair Estimate:"}</span>
-                      <span className="font-bold text-slate-800">{formatRs(repairPrice)}</span>
+                      <span className="font-bold text-slate-800">{formatRs(numRepairPrice)}</span>
                     </div>
                     <div className="border-t border-slate-200 pt-3 flex justify-between items-center text-sm sm:text-base font-black text-[#123B5D]">
                       <span>{isUrdu ? "کل کسٹمر انوائس:" : "Total Job Value:"}</span>
                       <span className="text-base sm:text-lg text-[#0F8B8D]">
-                        {formatRs(agreedVisitCharge + repairPrice)}
+                        {formatRs(agreedVisitCharge + numRepairPrice)}
                       </span>
                     </div>
                   </div>
@@ -727,7 +730,7 @@ export function WorkerJourneyFullscreen({
                           isDeclined ? "line-through text-slate-400" : "text-slate-900"
                         }`}
                       >
-                        {formatRs(repairPrice)} {isDeclined && "(Declined)"}
+                        {formatRs(numRepairPrice)} {isDeclined && "(Declined)"}
                       </span>
                     </div>
                     <div className="border-t border-slate-200 pt-3 flex justify-between items-center text-sm sm:text-base font-black text-[#123B5D]">
