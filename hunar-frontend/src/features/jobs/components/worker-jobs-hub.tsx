@@ -5,7 +5,9 @@ import { useParams } from "next/navigation";
 import { useWorkerJobs } from "@/stores/worker-jobs-store";
 import { WorkerUpcomingVisitCard } from "./worker-upcoming-visit-card";
 import { WorkerPastJobCard } from "./worker-past-job-card";
+import { JobRequestFeed } from "@/features/worker-dashboard/components/job-request-feed";
 import {
+  Briefcase,
   Calendar,
   CheckCircle2,
   Clock,
@@ -17,8 +19,8 @@ export function WorkerJobsHub() {
   const isUrdu = locale === "ur";
   const { jobs, offers } = useWorkerJobs();
 
-  // Tab State: "upcoming" | "past"
-  const [activeTab, setActiveTab] = useState<"upcoming" | "past">("upcoming");
+  // Tab State: "available" | "upcoming" | "past"
+  const [activeTab, setActiveTab] = useState<"available" | "upcoming" | "past">("available");
 
   // 1. Upcoming Scheduled Visits (all accepted visits or active visits ready to dispatch)
   const upcomingVisits = jobs.filter(
@@ -30,10 +32,24 @@ export function WorkerJobsHub() {
 
   return (
     <div className="space-y-6 max-w-5xl mx-auto pb-10 w-full overflow-x-hidden animate-in fade-in">
-      {/* Tabs Below Header: Upcoming Jobs vs Past Jobs */}
+      {/* Tabs Below Header: Available Jobs vs Upcoming Jobs vs Past Jobs */}
       <div className="flex items-center justify-between gap-3 flex-wrap pt-1">
         <div className="inline-flex p-1 bg-slate-100 rounded-2xl border border-slate-200/80 w-full sm:w-auto shadow-2xs">
-          {/* Tab 1: Upcoming Jobs */}
+          {/* Tab 1: Available Jobs */}
+          <button
+            type="button"
+            onClick={() => setActiveTab("available")}
+            className={`flex-1 sm:flex-initial py-2.5 px-5 sm:px-6 rounded-xl text-xs sm:text-sm font-extrabold flex items-center justify-center gap-2 transition-all cursor-pointer ${
+              activeTab === "available"
+                ? "bg-[#123B5D] text-white shadow-sm"
+                : "text-slate-600 hover:text-slate-900 hover:bg-white/60"
+            }`}
+          >
+            <Briefcase className="size-4" />
+            <span>{isUrdu ? "دستیاب جابز" : "Available Jobs"}</span>
+          </button>
+
+          {/* Tab 2: Upcoming Jobs */}
           <button
             type="button"
             onClick={() => setActiveTab("upcoming")}
@@ -56,7 +72,7 @@ export function WorkerJobsHub() {
             </span>
           </button>
 
-          {/* Tab 2: Past Jobs */}
+          {/* Tab 3: Past Jobs */}
           <button
             type="button"
             onClick={() => setActiveTab("past")}
@@ -79,19 +95,15 @@ export function WorkerJobsHub() {
             </span>
           </button>
         </div>
-
-        <span className="text-xs text-slate-500 font-medium hidden sm:block">
-          {activeTab === "upcoming"
-            ? isUrdu
-              ? `${upcomingVisits.length} شیڈول شدہ وزٹس`
-              : `${upcomingVisits.length} scheduled visit${upcomingVisits.length === 1 ? "" : "s"}`
-            : isUrdu
-              ? `${pastJobs.length} مکمل شدہ جابز`
-              : `${pastJobs.length} settled & completed job${pastJobs.length === 1 ? "" : "s"}`}
-        </span>
       </div>
 
-      {/* TAB CONTENT 1: UPCOMING JOBS */}
+      {/* TAB CONTENT 1: AVAILABLE JOBS FEED */}
+      {activeTab === "available" && (
+        <section className="space-y-4 animate-in fade-in" aria-label="Available Customer Jobs">
+          <JobRequestFeed />
+        </section>
+      )}
+      {/* TAB CONTENT 2: UPCOMING JOBS */}
       {activeTab === "upcoming" && (
         <section className="space-y-4 animate-in fade-in" aria-label="Upcoming Scheduled Visits">
           {upcomingVisits.length > 0 ? (

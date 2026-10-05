@@ -2,25 +2,28 @@ import { http, getAccessToken } from "@/lib/api-client";
 import { isMockMode, simulateLatency } from "@/lib/data-source";
 import type { Job, JobStatus, JobUrgency } from "@/types/job";
 import { mockJobs } from "@/mocks/jobs.mock";
+import { getLocallyCreatedJobs } from "@/features/post-job/api/post-job-api";
 
-const NEARBY_STATUSES: JobStatus[] = ["OPEN", "OFFERS_RECEIVED"];
-const HISTORY_STATUSES: JobStatus[] = [
+const NEARBY_STATUSES = ["OPEN", "OFFERS_RECEIVED", "RECEIVING_OFFERS"];
+const HISTORY_STATUSES = [
   "COMPLETED",
   "PAID",
   "REVIEWED",
   "CANCELLED",
 ];
 
-export function isActiveJob(status: JobStatus): boolean {
-  return !HISTORY_STATUSES.includes(status) && status !== "DISPUTED";
+export function isActiveJob(status: JobStatus | string): boolean {
+  const upper = String(status).toUpperCase();
+  return !HISTORY_STATUSES.includes(upper) && upper !== "DISPUTED";
 }
 
-export function isHistoryJob(status: JobStatus): boolean {
-  return HISTORY_STATUSES.includes(status);
+export function isHistoryJob(status: JobStatus | string): boolean {
+  return HISTORY_STATUSES.includes(String(status).toUpperCase());
 }
 
-export function isNearbyJob(status: JobStatus): boolean {
-  return NEARBY_STATUSES.includes(status);
+export function isNearbyJob(status: JobStatus | string): boolean {
+  const upper = String(status).toUpperCase();
+  return NEARBY_STATUSES.includes(upper);
 }
 
 interface BackendJobRow {
@@ -127,39 +130,62 @@ export async function listWorkerHistoryJobs(): Promise<Job[]> {
     throw err;
   }
 }
-}
 
 export async function listNearbyJobs(location?: {
   lat: number;
   lng: number;
   radiusKm?: number;
 }): Promise<Job[]> {
+  let list: Job[] = [];
   if (isMockMode()) {
-    return simulateLatency(
-      mockJobs.filter((job) => isNearbyJob(job.status)),
-    );
+    list = mockJobs.filter((job) => isNearbyJob(job.status));
+  } else {
+    try {
+      const resolved = location ?? { lat: 33.98, lng: 71.43, radiusKm: 25 };
+      const params = new URLSearchParams();
+      params.set("lat", String(resolved.lat));
+      params.set("lng", String(resolved.lng));
+      params.set("radiusKm", String(resolved.radiusKm ?? 25));
+      const res = await http.get<BackendPage<BackendJobRow> | BackendJobRow[]>(
+        `/jobs/available?${params.toString()}`,
+      );
+      const items = Array.isArray(res) ? res : res.items;
+      list = (items ?? []).map(mapBackendJob);
+    } catch (e) {
+      console.warn("Failed to fetch nearby jobs from backend", e);
+      list = mockJobs.filter((job) => isNearbyJob(job.status));
+    }
   }
-  const resolved = location ?? { lat: 33.98, lng: 71.43, radiusKm: 25 };
-  const params = new URLSearchParams();
-  params.set("lat", String(resolved.lat));
-  params.set("lng", String(resolved.lng));
-  params.set("radiusKm", String(resolved.radiusKm ?? 25));
-  const res = await http.get<any>(
-    `/jobs/available?${params.toString()}`,
-  );
-  const items: BackendJobRow[] = Array.isArray(res)
-    ? res
-    : (res as any)?.data ?? (res as any)?.items ?? [];
-  return items.map(mapBackendJob);
+
+  const localJobs = getLocallyCreatedJobs();
+  const existingIds = new Set(list.map((j) => j.id));
+  for (const lj of localJobs) {
+    if (!existingIds.has(lj.id) && isNearbyJob(lj.status)) {
+      list.unshift(lj);
+    }
+  }
+
+  return isMockMode() ? simulateLatency(list) : list;
 }
 
 export async function getWorkerJob(jobId: string): Promise<Job> {
+  const localJobs = getLocallyCreatedJobs();
+  const local = localJobs.find((j) => j.id === jobId);
+  if (local) return isMockMode() ? simulateLatency({ ...local }) : { ...local };
+
   if (isMockMode()) {
     const job = mockJobs.find((j) => j.id === jobId);
     if (!job) throw new Error(`JOB_NOT_FOUND:${jobId}`);
     return simulateLatency({ ...job });
   }
-  return mapBackendJob(await http.get<BackendJobRow>(`/jobs/${jobId}`));
+
+  try {
+    return mapBackendJob(await http.get<BackendJobRow>(`/jobs/${jobId}`));
+  } catch (e) {
+    const fallback = mockJobs.find((j) => j.id === jobId);
+    if (fallback) return fallback;
+    throw e;
+  }
 }
 
 export const queryKeys = {

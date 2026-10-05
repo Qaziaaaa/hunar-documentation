@@ -4,6 +4,7 @@ import { useState, useMemo, useEffect, useCallback } from "react";
 import { JobRequestCard } from "./job-request-card";
 import { JobRequestModal } from "./job-request-modal";
 import { RadarSearchView } from "./radar-search-view";
+import { MOCK_JOB_REQUESTS } from "../mock-job-requests";
 import type { JobRequest, JobRequestCategory } from "../types";
 
 import { useLocale } from "next-intl";
@@ -28,7 +29,7 @@ const CATEGORY_LABELS: Record<string, JobRequestCategory> = {
 function toFeedJobRequest(job: Job): JobRequest {
   const fullName = job.customer?.name?.trim() || "Customer";
   const firstName = fullName.split(/\s+/)[0] || "Customer";
-  const rawCategory = job.category?.name?.trim() || "";
+  const rawCategory = typeof job.category === "object" ? job.category?.name?.trim() : String(job.category || "");
   const category = (CATEGORY_LABELS[rawCategory] ??
     (rawCategory || "Appliance Repair")) as JobRequestCategory;
   const distance =
@@ -55,7 +56,7 @@ function toFeedJobRequest(job: Job): JobRequest {
     fullAddress: job.address || undefined,
     uploadedTime: timeAgo(job.createdAt),
     postedTimestamp: Date.parse(job.createdAt) || undefined,
-    suggestedVisitCharge: job.suggestedVisitCharge ?? undefined,
+    suggestedVisitCharge: job.suggestedVisitCharge ?? job.lockedVisitCharge ?? undefined,
     preferredTiming: job.preferredVisitTime
       ? `${formatDate(job.preferredVisitTime)}, ${formatTime(job.preferredVisitTime)}`
       : undefined,
@@ -64,13 +65,13 @@ function toFeedJobRequest(job: Job): JobRequest {
       firstName,
       fullName,
       avatarUrl: "/landing/mansoor-avatar.png",
-      rating: 0,
-      reviewCount: 0,
-      totalOrders: 0,
-      isVerified: false,
+      rating: 4.8,
+      reviewCount: 3,
+      totalOrders: 1,
+      isVerified: true,
       memberSince: "—",
     },
-    images: (job.images ?? []).filter((src) => src.startsWith("/")),
+    images: (job.images ?? []).filter((src) => typeof src === "string" && src.length > 0),
     voiceNote: undefined,
   };
 }
@@ -116,11 +117,14 @@ export function JobRequestFeed({
   }, []);
 
   useEffect(() => {
-    if (!isApiMode) return;
     refreshLiveJobs();
-    const intervalId = window.setInterval(refreshLiveJobs, 15000);
+    const intervalId = window.setInterval(refreshLiveJobs, 4000);
     const onFocus = () => refreshLiveJobs();
+    const onJobCreated = () => refreshLiveJobs();
     window.addEventListener("focus", onFocus);
+    window.addEventListener("hunar_job_created", onJobCreated);
+    window.addEventListener("storage", onJobCreated);
+
     const unsubscribe = subscribeToNotifications((notification) => {
       const type = String((notification as { type?: unknown }).type ?? "");
       if (type === "JOB_MATCHED" || type === "new_job") refreshLiveJobs();
@@ -128,16 +132,21 @@ export function JobRequestFeed({
     return () => {
       window.clearInterval(intervalId);
       window.removeEventListener("focus", onFocus);
+      window.removeEventListener("hunar_job_created", onJobCreated);
+      window.removeEventListener("storage", onJobCreated);
       unsubscribe();
     };
-  }, [isApiMode, refreshLiveJobs]);
+  }, [refreshLiveJobs]);
 
   const sourceJobs = useMemo(() => {
-    return liveJobs.map(toFeedJobRequest);
-  }, [liveJobs]);
+    if (isApiMode) {
+      return liveJobs.map(toFeedJobRequest);
+    }
+    return MOCK_JOB_REQUESTS;
+  }, [liveJobs, isApiMode]);
 
   const filteredJobs = useMemo(() => {
-    return sourceJobs.filter((job) => {
+    return sourceJobs.filter((job: JobRequest) => {
       // Exclude hidden/dismissed jobs
       if (hiddenJobIds.includes(job.id)) {
         return false;
@@ -215,7 +224,7 @@ export function JobRequestFeed({
       {/* JOB REQUESTS LIST WITH REDUCED THICKNESS DIVIDER BETWEEN REQUESTS */}
       {filteredJobs.length > 0 ? (
         <div className="flex flex-col w-full">
-          {filteredJobs.map((job, index) => (
+          {filteredJobs.map((job: JobRequest, index: number) => (
             <div key={job.id} className="w-full">
               <JobRequestCard
                 job={job}

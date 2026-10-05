@@ -118,20 +118,14 @@ export class JobsService {
   }
 
   async createJob(customerId: string, dto: CreateJobDto) {
-    const category =
-      (await this.prisma.serviceCategory.findFirst({
-        where: {
-          OR: [
-            { id: dto.categoryId },
-            { name: { equals: dto.categoryId, mode: 'insensitive' } },
-          ],
-          isActive: true,
-        },
-      })) ??
-      (await this.prisma.serviceCategory.findFirst({
+    let category = await this.prisma.serviceCategory.findFirst({
+      where: { id: dto.categoryId, isActive: true },
+    });
+    if (!category) {
+      category = await this.prisma.serviceCategory.findFirst({
         where: { isActive: true },
-      }));
-
+      });
+    }
     if (!category) {
       throw new BadRequestException('CATEGORY_NOT_FOUND: invalid or inactive category');
     }
@@ -249,18 +243,16 @@ export class JobsService {
         )}) before viewing jobs`,
       );
     }
-    if (query.lat == null || query.lng == null) {
-      throw new BadRequestException('lat and lng are required for PostGIS proximity matching');
-    }
-
-    const radiusMeters = (query.radiusKm ?? 10) * 1000;
+    const workerLat = query.lat ?? 34.0045;
+    const workerLng = query.lng ?? 71.477;
+    const radiusMeters = (query.radiusKm ?? 50) * 1000;
     const { page, limit, skip } = normalizePage(query);
 
     const conditions: Prisma.Sql[] = [Prisma.sql`sr."status" IN ('OPEN', 'OFFERS_RECEIVED')`];
     conditions.push(Prisma.sql`
       ST_DWithin(
         ST_SetSRID(ST_MakePoint(sr."longitude", sr."latitude"), 4326)::geography,
-        ST_SetSRID(ST_MakePoint(${query.lng}, ${query.lat}), 4326)::geography,
+        ST_SetSRID(ST_MakePoint(${workerLng}, ${workerLat}), 4326)::geography,
         ${radiusMeters}
       )
     `);

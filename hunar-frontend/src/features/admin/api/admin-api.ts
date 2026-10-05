@@ -16,6 +16,8 @@ import type {
   WorkerUser,
   WithdrawalRequest,
 } from "@/types/admin";
+import { getLocallyCreatedJobs } from "@/features/post-job/api/post-job-api";
+import { MOCK_WORKERS, MOCK_CUSTOMERS } from "@/mocks/admin.mock";
 
 interface BackendCategoryRow {
   id: string;
@@ -205,17 +207,17 @@ const userStatusMap: Record<string, UserStatus> = {
 function toWorkerUser(w: BackendUserRow): WorkerUser {
   return {
     id: w.id,
-    name: w.name ?? "Unnamed Worker",
-    phone: w.phone,
-    email: `${w.phone}@hunar.local`,
+    name: w.name || w.phone || "Worker",
+    phone: w.phone || "",
+    email: `${w.phone || w.id}@hunar.local`,
     avatarUrl: w.avatarUrl ?? undefined,
-    skills: w.skills ?? [],
+    skills: w.skills && w.skills.length > 0 ? w.skills : [],
     verificationStatus: verificationStatusMap[w.verificationStatus ?? ""] ?? "PENDING",
     rating: 0,
     totalEarnings: 0,
     walletBalance: 0,
-    isOnline: w.isAvailable,
-    joinDate: w.createdAt,
+    isOnline: w.isAvailable ?? false,
+    joinDate: w.createdAt ? new Date(w.createdAt).toISOString().split("T")[0] : "",
     status: w.isActive ? "ACTIVE" : "SUSPENDED",
     experienceYears: w.experienceYears ?? 0,
     serviceCity: "Peshawar",
@@ -225,12 +227,12 @@ function toWorkerUser(w: BackendUserRow): WorkerUser {
 function toCustomerUser(c: BackendUserRow): CustomerUser {
   return {
     id: c.id,
-    name: c.name ?? "Unnamed Customer",
-    phone: c.phone,
-    email: `${c.phone}@hunar.local`,
+    name: c.name || c.phone || "Customer",
+    phone: c.phone || "",
+    email: `${c.phone || c.id}@hunar.local`,
     avatarUrl: c.avatarUrl ?? undefined,
-    joinDate: c.createdAt,
-    jobsPosted: c.jobsCount ?? 0,
+    joinDate: c.createdAt ? new Date(c.createdAt).toISOString().split("T")[0] : "",
+    jobsPosted: c.jobsCount || 0,
     totalSpent: 0,
     ratingGiven: 0,
     status: c.isActive ? "ACTIVE" : "SUSPENDED",
@@ -315,24 +317,85 @@ export const adminApi = {
   },
 
   async getKpis(): Promise<AdminKpiStats> {
-    return http.get<AdminKpiStats>("/admin/kpis");
+    try {
+      return await http.get<AdminKpiStats>("/admin/kpis");
+    } catch {
+      return {
+        totalJobs: 0,
+        openJobs: 0,
+        activeJobs: 0,
+        completedJobs: 0,
+        cancelledJobs: 0,
+        totalCustomers: 0,
+        newCustomersThisWeek: 0,
+        totalWorkers: 0,
+        verifiedWorkers: 0,
+        pendingWorkers: 0,
+        suspendedWorkers: 0,
+        totalRevenue: 0,
+        totalPaymentsProcessed: 0,
+        activeNowCount: 0,
+      };
+    }
   },
 
   async listJobs(query: PaginationQuery = {}): Promise<PageResult<LiveJobItem>> {
-    const params = new URLSearchParams({
-      page: String(query.page ?? 1),
-      limit: String(query.limit ?? 50),
-    });
-    const res = await http.get<{ data: BackendJobRow[]; meta: PageMeta }>(
-      `/admin/jobs?${params.toString()}`,
-    );
-    const items = (res?.data ?? (Array.isArray(res) ? res : [])).map(toLiveJobItem);
-    return { items, meta: res?.meta ?? { page: 1, limit: items.length, total: items.length, totalPages: 1 } };
+    let items: LiveJobItem[] = [];
+    let meta: PageMeta = { page: 1, limit: 50, total: 0, totalPages: 1 };
+    try {
+      const params = new URLSearchParams({
+        page: String(query.page ?? 1),
+        limit: String(query.limit ?? 50),
+      });
+      const res = await http.get<{ data: BackendJobRow[]; meta: PageMeta }>(
+        `/admin/jobs?${params.toString()}`,
+      );
+      items = (res?.data ?? (Array.isArray(res) ? res : [])).map(toLiveJobItem);
+      if (res?.meta) meta = res.meta;
+    } catch (e) {
+      console.warn("Failed to fetch admin jobs", e);
+    }
+    meta.total = items.length;
+    return { items, meta };
   },
 
   async getJobDetail(jobId: string): Promise<JobDetailItem> {
-    const raw = await http.get<any>(`/admin/jobs/${jobId}`);
-    return toJobDetailItem(raw);
+    try {
+      const raw = await http.get<any>(`/admin/jobs/${jobId}`);
+      return toJobDetailItem(raw);
+    } catch (e) {
+      const localJobs = getLocallyCreatedJobs();
+      const local = localJobs.find((j) => j.id === jobId);
+      if (local) {
+        const live: LiveJobItem = {
+          id: local.id,
+          title: local.title,
+          category: typeof local.category === "object" ? local.category?.name ?? "General" : "General",
+          customerName: local.customer?.name ?? "Customer",
+          workerName: undefined,
+          amount: local.lockedVisitCharge ?? local.suggestedVisitCharge ?? 300,
+          status: "OPEN",
+          city: local.city || "Peshawar",
+          createdAt: local.createdAt,
+        };
+        return {
+          ...live,
+          description: local.description ?? "",
+          address: local.address || [local.area, local.city].filter(Boolean).join(", ") || "Peshawar",
+          visitCharge: local.lockedVisitCharge ?? local.suggestedVisitCharge ?? 300,
+          estimatedTotal: local.lockedVisitCharge ?? local.suggestedVisitCharge ?? 300,
+          auditTrail: [
+            {
+              step: "Posted",
+              actor: local.customer?.name ?? "Customer",
+              action: `Job "${local.title}" created`,
+              timestamp: new Date(local.createdAt).toLocaleString(),
+            },
+          ],
+        };
+      }
+      throw e;
+    }
   },
 
   async cancelJob(jobId: string, reason: string) {
@@ -340,27 +403,45 @@ export const adminApi = {
   },
 
   async listWorkers(query: PaginationQuery = {}): Promise<PageResult<WorkerUser>> {
-    const params = new URLSearchParams({
-      page: String(query.page ?? 1),
-      limit: String(query.limit ?? 100),
-    });
-    const res = await http.get<{ data: BackendUserRow[]; meta: PageMeta }>(
-      `/admin/workers?${params.toString()}`,
-    );
-    const items = (res?.data ?? (Array.isArray(res) ? res : [])).map(toWorkerUser);
-    return { items, meta: res?.meta ?? { page: 1, limit: items.length, total: items.length, totalPages: 1 } };
+    let items: WorkerUser[] = [];
+    let meta: PageMeta = { page: 1, limit: 100, total: 0, totalPages: 1 };
+    try {
+      const params = new URLSearchParams({
+        page: String(query.page ?? 1),
+        limit: String(query.limit ?? 100),
+      });
+      const res = await http.get<{ data: BackendUserRow[]; meta: PageMeta }>(
+        `/admin/workers?${params.toString()}`,
+      );
+      items = (res?.data ?? (Array.isArray(res) ? res : [])).map(toWorkerUser);
+      if (res?.meta) meta = res.meta;
+    } catch (e) {
+      console.warn("Failed to fetch workers from API", e);
+    }
+
+    meta.total = items.length;
+    return { items, meta };
   },
 
   async listCustomers(query: PaginationQuery = {}): Promise<PageResult<CustomerUser>> {
-    const params = new URLSearchParams({
-      page: String(query.page ?? 1),
-      limit: String(query.limit ?? 100),
-    });
-    const res = await http.get<{ data: BackendUserRow[]; meta: PageMeta }>(
-      `/admin/customers?${params.toString()}`,
-    );
-    const items = (res?.data ?? (Array.isArray(res) ? res : [])).map(toCustomerUser);
-    return { items, meta: res?.meta ?? { page: 1, limit: items.length, total: items.length, totalPages: 1 } };
+    let items: CustomerUser[] = [];
+    let meta: PageMeta = { page: 1, limit: 100, total: 0, totalPages: 1 };
+    try {
+      const params = new URLSearchParams({
+        page: String(query.page ?? 1),
+        limit: String(query.limit ?? 100),
+      });
+      const res = await http.get<{ data: BackendUserRow[]; meta: PageMeta }>(
+        `/admin/customers?${params.toString()}`,
+      );
+      items = (res?.data ?? (Array.isArray(res) ? res : [])).map(toCustomerUser);
+      if (res?.meta) meta = res.meta;
+    } catch (e) {
+      console.warn("Failed to fetch customers from API", e);
+    }
+
+    meta.total = items.length;
+    return { items, meta };
   },
 
   async suspendWorker(workerId: string, reason?: string) {
