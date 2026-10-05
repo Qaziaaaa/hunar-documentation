@@ -79,3 +79,8 @@ export class TrackLocationDto {
   @IsBoolean()
   live?: boolean;
 }
+
+export class VerifyArrivalOtpDto {
+  @IsString()
+  otp: string;
+}

@@ -27,9 +27,7 @@ export function CustomerHelpView() {
 
   const [faqs] = useState(MOCK_FAQS);
   const [searchQuery, setSearchQuery] = useState("");
-  const [activeTicket, setActiveTicket] = useState<SupportTicket | null>(
-    MOCK_ACTIVE_TICKET
-  );
+  const [activeTicket, setActiveTicket] = useState<SupportTicket | null>(null);
   const [isTicketModalOpen, setIsTicketModalOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 

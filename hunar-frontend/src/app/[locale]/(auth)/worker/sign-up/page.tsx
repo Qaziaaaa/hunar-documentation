@@ -21,7 +21,7 @@ export default async function WorkerSignUpPage({
   setRequestLocale(locale);
 
   return (
-    <AuthShell>
+    <AuthShell role="worker">
       <WorkerSignupFlow />
     </AuthShell>
   );

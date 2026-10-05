@@ -7,9 +7,6 @@ import type { CustomerJob, JobStatus, WorkerOffer, WorkerProfile } from "../type
  * Fetch all jobs for the logged-in customer, enriched with offers & selected worker.
  */
 export async function getCustomerJobs(): Promise<CustomerJob[]> {
-  if (isMockMode()) {
-    return MOCK_CUSTOMER_JOBS;
-  }
   try {
     const res = await http.get<unknown>("/jobs/customer?limit=100");
     const rows: unknown[] = Array.isArray(res)
@@ -17,6 +14,9 @@ export async function getCustomerJobs(): Promise<CustomerJob[]> {
       : (res as { data?: unknown[]; items?: unknown[] })?.data ??
         (res as { items?: unknown[] })?.items ??
         [];
+    if (rows.length === 0) {
+      return [];
+    }
     const jobs = rows.map(transformListRow);
 
     await Promise.allSettled(
@@ -37,8 +37,8 @@ export async function getCustomerJobs(): Promise<CustomerJob[]> {
 
     return jobs;
   } catch (err) {
-    console.warn("[getCustomerJobs] Backend API error, using mock jobs:", err);
-    return MOCK_CUSTOMER_JOBS;
+    console.warn("[getCustomerJobs] Backend API error:", err);
+    return [];
   }
 }
 
@@ -46,76 +46,54 @@ export async function getCustomerJobs(): Promise<CustomerJob[]> {
  * Fetch detailed job information (including status, worker, location, and offers)
  */
 export async function getJobDetail(jobId: string): Promise<CustomerJob> {
-  if (isMockMode()) {
-    const mock =
-      MOCK_CUSTOMER_JOBS.find((job) => job.id === jobId) ?? MOCK_CUSTOMER_JOBS[0];
-    if (!mock) {
-      throw new Error(`JOB_NOT_FOUND: ${jobId}`);
-    }
-    return mock;
+  const res = await http.get<any>(`/jobs/${jobId}`);
+  if (!res || !res.id) {
+    throw new Error(`JOB_NOT_FOUND: ${jobId}`);
   }
-  try {
-    const res = await http.get<any>(`/jobs/${jobId}`);
-    if (!res || !res.id) {
-      throw new Error(`JOB_NOT_FOUND: ${jobId}`);
-    }
-    return {
-      id: res.id,
-      title: res.title,
-      category: res.category?.name || "General Service",
-      subCategory: res.category?.name || "General Service",
-      description: res.description || "",
-      photos: res.images || [],
-      voiceNoteUrl: res.voiceNoteUrl,
-      address: res.address,
-      area: res.area || "Peshawar",
-      city: res.city || "Peshawar",
-      scheduleType: res.urgency === "URGENT" ? "asap" : "scheduled",
-      preferredDate: res.preferredVisitTime || res.createdAt || new Date().toISOString(),
-      preferredTimeSlot: "9:00 AM - 1:00 PM",
-      status: mapJobStatus(res.status),
-      createdAt: res.createdAt || new Date().toISOString(),
-      offers: (res.offers || []).map(transformBackendOffer),
-      selectedOffer: res.selectedWorker
-        ? transformBackendOffer({
-            id: res.selectedWorkerId,
-            jobId: res.id,
-            worker: res.selectedWorker,
-            visitCharge: Number(res.lockedVisitCharge ?? 350),
-            message: res.offerMessage,
-            createdAt: res.createdAt,
-          })
-        : undefined,
-      securityPin: res.securityPin,
-    };
-  } catch (err) {
-    console.warn(`[getJobDetail] Fallback to mock for ${jobId}:`, err);
-    const mock =
-      MOCK_CUSTOMER_JOBS.find((job) => job.id === jobId) ?? MOCK_CUSTOMER_JOBS[0];
-    return mock;
-  }
+  return {
+    id: res.id,
+    title: res.title,
+    category: res.category?.name || "General Service",
+    subCategory: res.category?.name || "General Service",
+    description: res.description || "",
+    photos: res.images || [],
+    voiceNoteUrl: res.voiceNoteUrl,
+    address: res.address,
+    area: res.area || "Peshawar",
+    city: res.city || "Peshawar",
+    scheduleType: res.urgency === "URGENT" ? "asap" : "scheduled",
+    preferredDate: res.preferredVisitTime || res.createdAt || new Date().toISOString(),
+    preferredTimeSlot: "9:00 AM - 1:00 PM",
+    status: mapJobStatus(res.status),
+    createdAt: res.createdAt || new Date().toISOString(),
+    offers: (res.offers || []).map(transformBackendOffer),
+    selectedOffer: res.selectedWorker
+      ? transformBackendOffer({
+          id: res.selectedWorkerId,
+          jobId: res.id,
+          worker: res.selectedWorker,
+          visitCharge: Number(res.lockedVisitCharge ?? 350),
+          message: res.offerMessage,
+          createdAt: res.createdAt,
+        })
+      : undefined,
+    securityPin: res.securityPin,
+  };
 }
 
 /**
  * Fetch all bids/offers for a specific job
  */
 export async function getJobOffers(jobId: string): Promise<WorkerOffer[]> {
-  if (isMockMode()) {
-    const mock =
-      MOCK_CUSTOMER_JOBS.find((job) => job.id === jobId) ?? MOCK_CUSTOMER_JOBS[0];
-    return mock?.offers ?? [];
-  }
   try {
     const res = await http.get<any[]>(`/jobs/${jobId}/offers`);
     if (!Array.isArray(res)) {
-      throw new Error(`INVALID_OFFERS_RESPONSE: ${jobId}`);
+      return [];
     }
     return res.map(transformBackendOffer);
   } catch (err) {
-    console.warn(`[getJobOffers] Fallback to mock for ${jobId}:`, err);
-    const mock =
-      MOCK_CUSTOMER_JOBS.find((job) => job.id === jobId) ?? MOCK_CUSTOMER_JOBS[0];
-    return mock?.offers ?? [];
+    console.warn(`[getJobOffers] Failed for ${jobId}:`, err);
+    return [];
   }
 }
 
@@ -126,9 +104,6 @@ export async function acceptWorkerOffer(
   jobId: string,
   offerId: string
 ): Promise<{ success: boolean; visitId?: string }> {
-  if (isMockMode()) {
-    return { success: true, visitId: "VST-98214" };
-  }
   const res = await http.put<{ id?: string; visit?: { id: string } }>(
     `/jobs/${jobId}/offers/${offerId}/accept`,
     { scheduledTime: new Date().toISOString() }
@@ -143,9 +118,6 @@ export async function rejectWorkerOffer(
   jobId: string,
   offerId: string
 ): Promise<{ success: boolean }> {
-  if (isMockMode()) {
-    return { success: true };
-  }
   await http.put(`/jobs/${jobId}/offers/${offerId}/reject`);
   return { success: true };
 }
@@ -159,9 +131,6 @@ export async function counterWorkerOffer(
   counterPrice: number,
   message?: string
 ): Promise<{ success: boolean }> {
-  if (isMockMode()) {
-    return { success: true };
-  }
   await http.put(`/jobs/${jobId}/offers/${offerId}/counter`, {
     counterPrice,
     message,
@@ -176,9 +145,6 @@ export async function cancelCustomerJob(
   jobId: string,
   reason?: string
 ): Promise<{ success: boolean }> {
-  if (isMockMode()) {
-    return { success: true };
-  }
   await http.put(`/jobs/${jobId}/cancel`, { reason });
   return { success: true };
 }
@@ -189,9 +155,6 @@ export async function cancelCustomerJob(
 export async function getWorkerPublicProfile(
   workerId: string
 ): Promise<WorkerProfile | null> {
-  if (isMockMode()) {
-    return MOCK_WORKER_PROFILES[workerId] ?? MOCK_WORKER_PROFILES["worker-1"] ?? null;
-  }
   const res = await http.get<any>(`/users/worker/${workerId}`);
   return res ? transformBackendWorker(res) : null;
 }

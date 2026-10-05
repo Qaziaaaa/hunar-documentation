@@ -23,10 +23,11 @@ export function WorkerPastJobCard({ job }: WorkerPastJobCardProps) {
   const [showInvoice, setShowInvoice] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
 
-  const visitCharge = job.visitCharge ?? 500;
-  const repairCharge = job.repairCharge ?? 1500;
+  const visitCharge = job.visitCharge ?? 300;
+  const repairCharge = job.repairCharge ?? 0;
   const grossTotal = visitCharge + repairCharge;
-  const netEarnings = grossTotal;
+  const platformCommission = job.platformCommission ?? Math.round(grossTotal * 0.1);
+  const netEarnings = job.workerNetEarnings ?? (grossTotal - platformCommission);
   const warrantyDays = job.warrantyDays || 30;
   const invoiceNumber = job.invoiceNumber || `INV-2026-${job.id.slice(-4)}`;
 
@@ -81,7 +82,7 @@ export function WorkerPastJobCard({ job }: WorkerPastJobCardProps) {
                 Total Earned &amp; Settled
               </span>
               <span className="text-base sm:text-xl font-black text-emerald-900">
-                {formatRs(netEarnings)}
+                {formatRs(grossTotal)}
               </span>
             </div>
 

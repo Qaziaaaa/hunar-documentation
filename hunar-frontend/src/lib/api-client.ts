@@ -94,6 +94,17 @@ export function clearTokens(): void {
   window.localStorage.removeItem(ACCESS_TOKEN_KEY);
   window.localStorage.removeItem(REFRESH_TOKEN_KEY);
   window.localStorage.removeItem(AUTH_USER_KEY);
+  window.localStorage.removeItem("workerfix.worker_profile_cache");
+  window.localStorage.removeItem("hunar_worker_onboarding");
+  window.localStorage.removeItem("hunar_worker_online");
+  try {
+    for (let i = window.localStorage.length - 1; i >= 0; i--) {
+      const key = window.localStorage.key(i);
+      if (key && (key.startsWith("workerfix.worker_profile_") || key.startsWith("workerfix.profile_"))) {
+        window.localStorage.removeItem(key);
+      }
+    }
+  } catch {}
   window.dispatchEvent(new Event(AUTH_USER_CHANGED_EVENT));
 }
 

@@ -50,7 +50,7 @@ export function CustomerArrivalOtpModal({
 
   const activeSession: Partial<ArrivalSession> = session || {
     jobId: "job-1",
-    otp: "4821",
+    otp: "",
     workerName: isUrdu ? "طارق شاہ" : "Tariq Shah",
     status: "pending_otp",
   };
@@ -79,7 +79,7 @@ export function CustomerArrivalOtpModal({
       const full = next.join("");
       if (full.length === 4) {
         setTimeout(() => {
-          verifyFullOtp(full);
+          void verifyFullOtp(full);
         }, 150);
       }
     }
@@ -96,7 +96,7 @@ export function CustomerArrivalOtpModal({
       inputRefs.current[index + 1]?.focus();
     }
     if (e.key === "Enter") {
-      verifyFullOtp(digits.join(""));
+      void verifyFullOtp(digits.join(""));
     }
   };
 
@@ -115,12 +115,12 @@ export function CustomerArrivalOtpModal({
 
     if (pasted.length === 4) {
       setTimeout(() => {
-        verifyFullOtp(pasted);
+        void verifyFullOtp(pasted);
       }, 150);
     }
   };
 
-  const verifyFullOtp = (fullOtp: string) => {
+  const verifyFullOtp = async (fullOtp: string) => {
     if (fullOtp.length < 4) {
       setError(
         isUrdu
@@ -133,26 +133,34 @@ export function CustomerArrivalOtpModal({
     setIsVerifying(true);
     setError(null);
 
-    const result = arrivalService.verifyOtp(fullOtp, activeSession);
+    try {
+      const result = await arrivalService.verifyOtp(fullOtp, activeSession);
 
-    if (!result.success) {
+      if (!result.success) {
+        setIsVerifying(false);
+        setError(
+          result.error ||
+            (isUrdu
+              ? "درج کردہ OTP غلط ہے۔ براہ کرم کاریگر سے تصدیق کر کے دوبارہ کوشش کریں۔"
+              : "Incorrect OTP. Please check the code provided by the worker and try again.")
+        );
+        return;
+      }
+
+      setIsVerifying(false);
+      const successMsg = isUrdu ? SUCCESS_VERIFICATION_MESSAGE_UR : SUCCESS_VERIFICATION_MESSAGE;
+      onSuccess(successMsg);
+    } catch (err: any) {
       setIsVerifying(false);
       setError(
-        result.error ||
-          (isUrdu
-            ? "درج کردہ OTP غلط ہے۔ براہ کرم کاریگر سے تصدیق کر کے دوبارہ کوشش کریں۔"
-            : "Incorrect OTP. Please check the code provided by the worker and try again.")
+        err?.message ||
+          (isUrdu ? "OTP کی تصدیق ناکام ہو گئی۔" : "Failed to verify OTP. Please try again.")
       );
-      return;
     }
-
-    setIsVerifying(false);
-    const successMsg = isUrdu ? SUCCESS_VERIFICATION_MESSAGE_UR : SUCCESS_VERIFICATION_MESSAGE;
-    onSuccess(successMsg);
   };
 
   const handleConfirm = () => {
-    verifyFullOtp(digits.join(""));
+    void verifyFullOtp(digits.join(""));
   };
 
   return (

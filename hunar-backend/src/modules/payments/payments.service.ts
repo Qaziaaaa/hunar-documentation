@@ -110,13 +110,27 @@ export class PaymentsService {
 
     const visitCharge = Number(job.lockedVisitCharge ?? job.suggestedVisitCharge ?? 0);
 
+    // Look for an accepted repair quote. If repair is not accepted or rejected, repair cost is 0.
+    const acceptedRepair = await this.prisma.repair.findFirst({
+      where: { jobId: job.id, status: 'ACCEPTED' },
+      orderBy: { createdAt: 'desc' },
+      select: { lockedAmount: true, amount: true },
+    });
+    const approvedRepairCost = acceptedRepair
+      ? Number(acceptedRepair.lockedAmount ?? acceptedRepair.amount ?? 0)
+      : 0;
+    const finalJobAmount = visitCharge + approvedRepairCost;
+    const paymentAmount = dto.amount != null
+      ? (approvedRepairCost > 0 ? dto.amount : visitCharge)
+      : finalJobAmount;
+
     const payment = await this.prisma.payment.create({
       data: {
         jobId: job.id,
         customerId,
         workerId: job.selectedWorkerId!,
         visitCharge,
-        amount: dto.amount ?? visitCharge,
+        amount: paymentAmount,
         method,
         status: PaymentStatus.INITIATED,
         ...(gateway ? { gateway } : {}),

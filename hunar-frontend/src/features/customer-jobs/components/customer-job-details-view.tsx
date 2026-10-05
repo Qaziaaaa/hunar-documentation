@@ -407,15 +407,15 @@ export function CustomerJobDetailsView({ initialJob }: CustomerJobDetailsViewPro
                         href={`tel:${job.selectedOffer.worker.phone}`}
                         className="flex-1 py-2.5 px-3 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-700 font-semibold text-xs border border-slate-200 flex items-center justify-center gap-1.5 transition-colors"
                       >
-                        <Phone className="size-3.5 text-[#0F766E]" />
+                        <Phone className="size-3.5 text-success" />
                         <span>{isUrdu ? "کاریگر کو کال کریں" : "Call Pro"}</span>
                       </a>
                     )}
                     <Link
-                      href="/customer/chat"
+                      href={`/customer/chat?jobId=${job.id}`}
                       className="flex-1 py-2.5 px-3 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-700 font-semibold text-xs border border-slate-200 flex items-center justify-center gap-1.5 transition-colors"
                     >
-                      <MessageSquare className="size-3.5 text-[#0F766E]" />
+                      <MessageSquare className="size-3.5 text-teal" />
                       <span>{isUrdu ? "پیغام بھیجیں" : "Message"}</span>
                     </Link>
                   </div>

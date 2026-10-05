@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, ParseUUIDPipe, Post, Put } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, ParseUUIDPipe, Patch, Post, Put } from '@nestjs/common';
 import { Role } from '@prisma/client';
 import { UsersService } from './users.service';
 import { WorkerProfileService } from './worker-profile.service';
@@ -26,8 +26,39 @@ export class UsersController {
   }
 
   @Put('me')
-  updateMe(@CurrentUser() user: JwtPayload, @Body() dto: UpdateMyProfileDto) {
+  updateMePut(@CurrentUser() user: JwtPayload, @Body() dto: UpdateMyProfileDto) {
     return this.usersService.updateMe(user.sub, dto);
+  }
+
+  @Patch('me')
+  updateMePatch(@CurrentUser() user: JwtPayload, @Body() dto: UpdateMyProfileDto) {
+    return this.usersService.updateMe(user.sub, dto);
+  }
+
+  @Get('me/privacy')
+  getPrivacy(@CurrentUser() user: JwtPayload) {
+    return this.usersService.getPrivacy(user.sub);
+  }
+
+  @Put('me/privacy')
+  updatePrivacyPut(
+    @CurrentUser() user: JwtPayload,
+    @Body() dto: { profileVisible?: boolean; showVisitCharge?: boolean },
+  ) {
+    return this.usersService.updatePrivacy(user.sub, dto);
+  }
+
+  @Patch('me/privacy')
+  updatePrivacyPatch(
+    @CurrentUser() user: JwtPayload,
+    @Body() dto: { profileVisible?: boolean; showVisitCharge?: boolean },
+  ) {
+    return this.usersService.updatePrivacy(user.sub, dto);
+  }
+
+  @Delete('me')
+  deleteMe(@CurrentUser() user: JwtPayload) {
+    return this.usersService.deleteMe(user.sub);
   }
 
   // ----- Worker onboarding (6-step wizard) -----
@@ -42,7 +73,13 @@ export class UsersController {
   // Phone is pre-filled from signup and is intentionally not part of this payload.
   @Put('worker/me')
   @Roles(Role.WORKER)
-  updateWorkerProfile(@CurrentUser() user: JwtPayload, @Body() dto: UpdateWorkerProfileDto) {
+  updateWorkerProfilePut(@CurrentUser() user: JwtPayload, @Body() dto: UpdateWorkerProfileDto) {
+    return this.workerProfileService.updateWorkerProfile(user.sub, dto);
+  }
+
+  @Patch('worker/me')
+  @Roles(Role.WORKER)
+  updateWorkerProfilePatch(@CurrentUser() user: JwtPayload, @Body() dto: UpdateWorkerProfileDto) {
     return this.workerProfileService.updateWorkerProfile(user.sub, dto);
   }
 

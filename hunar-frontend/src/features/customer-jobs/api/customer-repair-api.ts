@@ -1,6 +1,4 @@
 import { http } from "@/lib/api-client";
-import { isMockMode } from "@/lib/data-source";
-import { MOCK_JOB_COMPLETION_MAP } from "../data/mock-completion-data";
 import type { JobCompletionData } from "../types";
 
 export interface ReviewSubmissionPayload {
@@ -17,19 +15,17 @@ const FALLBACK_IMAGE =
 /**
  * Fetch repair inspection, parts estimate, and final invoice breakdown
  */
-export async function getJobRepairInvoice(jobId: string): Promise<JobCompletionData> {
-  if (isMockMode()) {
-    const keys = Object.keys(MOCK_JOB_COMPLETION_MAP);
-    return (
-      MOCK_JOB_COMPLETION_MAP[jobId] ??
-      MOCK_JOB_COMPLETION_MAP[keys[0] as keyof typeof MOCK_JOB_COMPLETION_MAP]
-    );
-  }
+export async function getJobRepairInvoice(jobId: string, repairDeclined?: boolean): Promise<JobCompletionData> {
   const res = await http.get<any>(`/repairs/${jobId}`);
   if (!res || (!res.id && !res.jobId)) {
     throw new Error(`REPAIR_NOT_FOUND: ${jobId}`);
   }
   const worker = res.worker || res.job?.worker || {};
+  const isDeclined = repairDeclined || res.status === "REJECTED" || res.status === "DECLINED";
+  const visitCharge = Number(res.visitCharge ?? res.job?.visitCharges ?? 300);
+  const payableRepair = isDeclined ? 0 : Number(res.payableRepairAmount ?? res.laborCost ?? 0);
+  const partsCharge = isDeclined ? 0 : Number(res.partsCost ?? 0);
+
   return {
     jobId: res.jobId || jobId,
     jobNumber: `#OW-${(res.jobNumber || res.id || jobId).slice(0, 6).toUpperCase()}`,
@@ -75,18 +71,48 @@ export async function getJobRepairInvoice(jobId: string): Promise<JobCompletionD
       imageUrl: typeof img === "string" ? img : img?.url || FALLBACK_IMAGE,
     })),
     technicianReport: res.diagnosis || res.repairPlan || "Service completed as diagnosed.",
-    technicalSpecsNote: "Inspected & Verified",
-    warrantyDays: 5,
-    billingItems: [
-      {
-        id: "b-labor",
-        title: "Technician Craftsmanship & Labor",
-        description: "On-site diagnostic inspection and technical labor",
-        amount: Number(res.laborCost || 0),
-      },
-      ...(res.partsCost ? [{ id: "b-parts", title: "Replacement Hardware & Parts", description: "Installed genuine replacement parts", amount: Number(res.partsCost) }] : []),
-    ],
-    totalAmount: Number(res.totalAmount || res.repairEstimate || 0),
+    technicalSpecsNote: isDeclined ? "Repair Declined by Customer" : "Inspected & Verified",
+    warrantyDays: isDeclined ? 0 : 5,
+    billingItems: isDeclined
+      ? [
+          {
+            id: "b-visit",
+            title: "Standard Visit & Diagnostic Fee",
+            description: "Initial diagnostic inspection (Repair Declined)",
+            amount: visitCharge,
+          },
+        ]
+      : [
+          {
+            id: "b-visit",
+            title: "Standard Visit & Diagnostic Fee",
+            description: "Initial diagnostic inspection",
+            amount: visitCharge,
+          },
+          ...(payableRepair > 0
+            ? [
+                {
+                  id: "b-labor",
+                  title: "Technician Craftsmanship & Labor",
+                  description: "Approved technical repair labor",
+                  amount: payableRepair,
+                },
+              ]
+            : []),
+          ...(partsCharge > 0
+            ? [
+                {
+                  id: "b-parts",
+                  title: "Replacement Hardware & Parts",
+                  description: "Installed genuine replacement parts",
+                  amount: partsCharge,
+                },
+              ]
+            : []),
+        ],
+    totalAmount: isDeclined
+      ? visitCharge
+      : Number(res.totalAmount ?? (visitCharge + payableRepair + partsCharge)),
   };
 }
 
@@ -97,9 +123,6 @@ export async function acceptRepairEstimate(
   repairId: string,
   paymentMethod: string = "cash"
 ): Promise<{ success: boolean }> {
-  if (isMockMode()) {
-    return { success: true };
-  }
   const res = await http.put<{ id?: string }>(`/repairs/${repairId}/accept`, { paymentMethod });
   return { success: true, ...(res ? { id: res.id } : {}) };
 }
@@ -107,11 +130,12 @@ export async function acceptRepairEstimate(
 /**
  * Customer rejects repair estimate
  */
-export async function rejectRepairEstimate(repairId: string): Promise<{ success: boolean }> {
-  if (isMockMode()) {
-    return { success: true };
+export async function rejectRepairEstimate(repairIdOrJobId: string): Promise<{ success: boolean }> {
+  try {
+    await http.put(`/repairs/${repairIdOrJobId}/reject`);
+  } catch {
+    await http.put(`/jobs/${repairIdOrJobId}/repair/reject`);
   }
-  await http.put(`/repairs/${repairId}/reject`);
   return { success: true };
 }
 
@@ -123,9 +147,6 @@ export async function counterRepairEstimate(
   counterAmount: number,
   notes?: string
 ): Promise<{ success: boolean }> {
-  if (isMockMode()) {
-    return { success: true };
-  }
   await http.put(`/repairs/${repairId}/counter`, {
     counterAmount,
     notes,
@@ -140,9 +161,6 @@ export async function submitJobReview(
   jobId: string,
   payload: ReviewSubmissionPayload
 ): Promise<{ success: boolean; reviewId?: string }> {
-  if (isMockMode()) {
-    return { success: true, reviewId: `rev-${Date.now().toString().slice(-6)}` };
-  }
   const res = await http.post<{ id?: string }>(`/jobs/${jobId}/review`, {
     rating: payload.rating,
     comment: payload.comment,

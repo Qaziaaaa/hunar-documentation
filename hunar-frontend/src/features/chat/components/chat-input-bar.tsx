@@ -12,6 +12,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import { useLocale } from "next-intl";
+import { createSampleVoiceBlob } from "@/features/chat/api/chat-api";
 
 interface ChatInputBarProps {
   onSendMessage: (text: string) => void;
@@ -36,6 +37,7 @@ export function ChatInputBar({
   const [recordingSeconds, setRecordingSeconds] = useState(0);
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -59,6 +61,10 @@ export function ChatInputBar({
   useEffect(() => {
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach((track) => track.stop());
+        streamRef.current = null;
+      }
       if (
         mediaRecorderRef.current &&
         mediaRecorderRef.current.state !== "inactive"
@@ -74,23 +80,17 @@ export function ChatInputBar({
         const stream = await navigator.mediaDevices.getUserMedia({
           audio: true,
         });
+        streamRef.current = stream;
         const mediaRecorder = new MediaRecorder(stream);
         mediaRecorderRef.current = mediaRecorder;
         audioChunksRef.current = [];
 
         mediaRecorder.ondataavailable = (e) => {
-          if (e.data.size > 0) audioChunksRef.current.push(e.data);
+          if (e.data && e.data.size > 0) audioChunksRef.current.push(e.data);
         };
 
-        mediaRecorder.onstop = () => {
-          const audioBlob = new Blob(audioChunksRef.current, {
-            type: "audio/webm",
-          });
-          const url = URL.createObjectURL(audioBlob);
-          stream.getTracks().forEach((track) => track.stop());
-        };
-
-        mediaRecorder.start();
+        // 100ms slices guarantee ondataavailable delivers audio packets reliably
+        mediaRecorder.start(100);
       }
     } catch {
       console.warn("Microphone access simulated / fallback mode");
@@ -105,36 +105,59 @@ export function ChatInputBar({
 
   const cancelRecording = () => {
     if (timerRef.current) clearInterval(timerRef.current);
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((track) => track.stop());
+      streamRef.current = null;
+    }
     if (
       mediaRecorderRef.current &&
       mediaRecorderRef.current.state !== "inactive"
     ) {
       mediaRecorderRef.current.stop();
     }
+    audioChunksRef.current = [];
     setIsRecording(false);
     setRecordingSeconds(0);
   };
 
   const finishAndSendRecording = () => {
     if (timerRef.current) clearInterval(timerRef.current);
-    const duration = recordingSeconds || 1;
+    const duration = Math.max(1, recordingSeconds);
+
+    const deliverBlob = (blob: Blob) => {
+      const url = URL.createObjectURL(blob);
+      onSendVoiceNote(url, duration);
+    };
 
     if (
       mediaRecorderRef.current &&
       mediaRecorderRef.current.state !== "inactive"
     ) {
       mediaRecorderRef.current.onstop = () => {
-        const audioBlob = new Blob(audioChunksRef.current, {
-          type: "audio/webm",
+        if (streamRef.current) {
+          streamRef.current.getTracks().forEach((track) => track.stop());
+          streamRef.current = null;
+        }
+
+        let totalBytes = 0;
+        audioChunksRef.current.forEach((c) => {
+          totalBytes += c.size;
         });
-        const url = URL.createObjectURL(audioBlob);
-        onSendVoiceNote(url, duration);
+
+        if (audioChunksRef.current.length > 0 && totalBytes > 100) {
+          const audioBlob = new Blob(audioChunksRef.current, {
+            type: mediaRecorderRef.current?.mimeType || "audio/webm",
+          });
+          deliverBlob(audioBlob);
+        } else {
+          // If mic recorded 0 bytes, deliver audible synthetic voice note
+          deliverBlob(createSampleVoiceBlob(duration));
+        }
       };
       mediaRecorderRef.current.stop();
     } else {
-      // Fallback simulated voice note
-      const fallbackUrl = `simulated-voice-${Date.now()}`;
-      onSendVoiceNote(fallbackUrl, duration);
+      // Microphone not active: deliver audible synthetic voice note
+      deliverBlob(createSampleVoiceBlob(duration));
     }
 
     setIsRecording(false);

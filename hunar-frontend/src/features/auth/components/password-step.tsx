@@ -24,10 +24,12 @@ export function PasswordStep({
   onSubmit,
   submitting,
   submitError,
+  role = "worker",
 }: {
   onSubmit: (values: PasswordFormValues) => void;
   submitting: boolean;
   submitError: string | null;
+  role?: "customer" | "worker";
 }) {
   const t = useTranslations("Auth");
   const [showPassword, setShowPassword] = useState(false);
@@ -188,7 +190,9 @@ export function PasswordStep({
           )}
         </Button>
         <p className="mt-3 text-center text-[11px] text-muted-foreground">
-          {t("roleNote")}
+          {role === "customer"
+            ? "Your account will be created with the CUSTOMER role."
+            : t("roleNote")}
         </p>
       </div>
     </form>

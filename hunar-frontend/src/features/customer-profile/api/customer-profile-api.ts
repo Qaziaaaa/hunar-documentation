@@ -1,32 +1,70 @@
 import { http } from "@/lib/api-client";
-import { isMockMode } from "@/lib/data-source";
-import { MOCK_CUSTOMER_PROFILE } from "../data/mock-profile-data";
 import type { CustomerProfileData } from "../types";
 
-/**
- * Fetch authenticated customer profile
- */
+const defaultCustomerProfile: CustomerProfileData = {
+  id: "",
+  customerIdBadge: "CUST-000",
+  fullName: "",
+  email: "",
+  isEmailVerified: false,
+  phone: "",
+  isPhoneVerified: true,
+  isCnicVerified: false,
+  avatarUrl: "",
+  avatarInitials: "C",
+  memberTier: "Standard Member",
+  joinedDate: "Recently",
+  completedJobsCount: 0,
+  trustScore: "100%",
+  rating: 5.0,
+  primaryCity: "Peshawar",
+  preferredLanguage: "ur",
+  preferredServiceHours: "anytime",
+  savedAddresses: [],
+  notifications: {
+    instantQuotesSms: true,
+    instantQuotesWhatsapp: true,
+    technicianArrivalPush: true,
+    technicianArrivalInApp: true,
+    directPaymentReceiptsEmail: true,
+    directPaymentReceiptsSms: false,
+    marketingAndTips: false,
+  },
+  activeDevices: [],
+};
+
 export async function getCustomerProfile(): Promise<CustomerProfileData> {
-  if (isMockMode()) {
-    return MOCK_CUSTOMER_PROFILE;
-  }
   try {
     const res = await http.get<any>("/users/me");
-    if (res && res.id) {
+    const u = res?.user ?? res;
+    if (u && u.id) {
+      const name = u.name || "";
+      const initials = name
+        ? name
+            .split(" ")
+            .map((p: string) => p[0])
+            .join("")
+            .slice(0, 2)
+            .toUpperCase()
+        : "C";
+
       return {
-        ...MOCK_CUSTOMER_PROFILE,
-        id: res.id,
-        fullName: res.name || MOCK_CUSTOMER_PROFILE.fullName,
-        email: res.email || MOCK_CUSTOMER_PROFILE.email,
-        phone: res.phone || MOCK_CUSTOMER_PROFILE.phone,
-        avatarUrl: res.avatarUrl || MOCK_CUSTOMER_PROFILE.avatarUrl,
-        primaryCity: res.city || "Peshawar",
+        ...defaultCustomerProfile,
+        id: u.id,
+        fullName: name,
+        email: u.email || "",
+        phone: u.phone || "",
+        avatarUrl: u.avatarUrl || "",
+        avatarInitials: initials,
+        primaryCity: u.city || "Peshawar",
+        isEmailVerified: !!u.email,
+        isPhoneVerified: true,
       };
     }
   } catch (err) {
-    console.warn("[getCustomerProfile] Backend offline, using initial mock profile:", err);
+    console.warn("[getCustomerProfile] Backend fetch failed:", err);
   }
-  return MOCK_CUSTOMER_PROFILE;
+  return defaultCustomerProfile;
 }
 
 /**
@@ -35,27 +73,38 @@ export async function getCustomerProfile(): Promise<CustomerProfileData> {
 export async function updateCustomerProfile(
   data: Partial<CustomerProfileData>
 ): Promise<CustomerProfileData> {
-  if (isMockMode()) {
-    return { ...MOCK_CUSTOMER_PROFILE, ...data };
-  }
   try {
     const res = await http.put<any>("/users/me", {
       name: data.fullName,
       email: data.email,
-      city: data.primaryCity,
       avatarUrl: data.avatarUrl,
     });
-    if (res) {
-      return {
-        ...MOCK_CUSTOMER_PROFILE,
-        ...data,
-        id: res.id || MOCK_CUSTOMER_PROFILE.id,
-      };
-    }
+    const u = res?.user ?? res;
+    const name = u?.name || data.fullName || "";
+    const initials = name
+      ? name
+          .split(" ")
+          .map((p: string) => p[0])
+          .join("")
+          .slice(0, 2)
+          .toUpperCase()
+      : "C";
+
+    return {
+      ...defaultCustomerProfile,
+      ...data,
+      id: u?.id || data.id || "",
+      fullName: name,
+      email: u?.email || data.email || "",
+      phone: u?.phone || data.phone || "",
+      avatarUrl: u?.avatarUrl || data.avatarUrl || "",
+      avatarInitials: initials,
+      primaryCity: u?.city || data.primaryCity || "Peshawar",
+    };
   } catch (err) {
-    console.warn("[updateCustomerProfile] Backend offline, saving changes locally:", err);
+    console.warn("[updateCustomerProfile] Backend update failed:", err);
+    throw err;
   }
-  return { ...MOCK_CUSTOMER_PROFILE, ...data };
 }
 
 /**
@@ -64,9 +113,6 @@ export async function updateCustomerProfile(
 export async function uploadCustomerAvatar(
   file: File
 ): Promise<{ key: string; url: string }> {
-  if (isMockMode()) {
-    return { key: `avatar-${Date.now()}`, url: URL.createObjectURL(file) };
-  }
   try {
     const formData = new FormData();
     formData.append("file", file);
@@ -75,10 +121,7 @@ export async function uploadCustomerAvatar(
       formData
     );
   } catch (err) {
-    console.warn("[uploadCustomerAvatar] Backend offline, using local preview URL:", err);
-    return {
-      key: `avatar-${Date.now()}`,
-      url: URL.createObjectURL(file),
-    };
+    console.warn("[uploadCustomerAvatar] Backend upload failed:", err);
+    throw err;
   }
 }

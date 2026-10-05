@@ -15,22 +15,24 @@ export class ChatGateway {
   @UseGuards(WsJwtGuard)
   async handleJoin(
     client: Socket,
-    payload: { conversationId?: string },
+    payload: { conversationId?: string; jobId?: string },
   ): Promise<{ joined: boolean; conversationId: string }> {
     const userId = (client.data.user as JwtPayload).sub;
-    const conversationId = payload?.conversationId;
-    if (!conversationId) {
+    const targetId = payload?.conversationId || payload?.jobId;
+    if (!targetId) {
       throw new WsException('CONVERSATION_ID_REQUIRED');
     }
     try {
-      await this.chatService.ensureParticipant(conversationId, userId);
+      const conversation = await this.chatService.ensureParticipant(targetId, userId);
+      await client.join(chatRoom(conversation.id));
+      await client.join(chatRoom(conversation.jobId));
+      await client.join(`job:${conversation.jobId}`);
+      return { joined: true, conversationId: conversation.id };
     } catch (error) {
       throw new WsException(
         error instanceof Error ? error.message : 'CONVERSATION_ACCESS_FORBIDDEN',
       );
     }
-    await client.join(chatRoom(conversationId));
-    return { joined: true, conversationId };
   }
 
   @SubscribeMessage(CHAT_EVENTS.message)

@@ -4,7 +4,6 @@ import { useState, useMemo, useEffect, useCallback } from "react";
 import { JobRequestCard } from "./job-request-card";
 import { JobRequestModal } from "./job-request-modal";
 import { RadarSearchView } from "./radar-search-view";
-import { MOCK_JOB_REQUESTS } from "../mock-job-requests";
 import type { JobRequest, JobRequestCategory } from "../types";
 
 import { useLocale } from "next-intl";
@@ -134,8 +133,8 @@ export function JobRequestFeed({
   }, [isApiMode, refreshLiveJobs]);
 
   const sourceJobs = useMemo(() => {
-    return isApiMode ? liveJobs.map(toFeedJobRequest) : MOCK_JOB_REQUESTS;
-  }, [isApiMode, liveJobs]);
+    return liveJobs.map(toFeedJobRequest);
+  }, [liveJobs]);
 
   const filteredJobs = useMemo(() => {
     return sourceJobs.filter((job) => {

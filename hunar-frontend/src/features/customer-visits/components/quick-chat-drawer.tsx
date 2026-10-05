@@ -1,9 +1,12 @@
 "use client";
 
 import { useLocale } from "next-intl";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Check, CheckCheck, User, X, Phone, ShieldCheck } from "lucide-react";
-import { sendChatMessage, uploadChatImage } from "@/features/chat/api/chat-api";
+import { sendChatMessage, uploadChatImage, getMessagesByJob, parseVoiceNote, encodeVoiceNote, uploadVoiceNote } from "@/features/chat/api/chat-api";
+import { joinConversationRoom, subscribeToMessages } from "@/services/worker/chat.service";
+import { isMockMode } from "@/lib/data-source";
+import { getStoredUser } from "@/lib/api-client";
 import { ChatInputBar } from "@/features/chat/components/chat-input-bar";
 import { VoiceMessageBubble } from "@/features/chat/components/voice-message-bubble";
 import type { ScheduledVisit } from "../types";
@@ -16,13 +19,19 @@ interface QuickChatDrawerProps {
 
 interface ChatMessage {
   id: string;
+  messageId?: string;
+  senderId?: string;
+  receiverId?: string;
+  jobId?: string;
   sender: "customer" | "technician";
   type?: "text" | "voice" | "image";
+  messageType?: "text" | "voice" | "image";
   text?: string;
   audioUrl?: string;
   durationSeconds?: number;
   imageUrl?: string;
   time: string;
+  createdAt?: string;
 }
 
 export function QuickChatDrawer({ visit, isOpen, onClose }: QuickChatDrawerProps) {
@@ -83,68 +92,210 @@ export function QuickChatDrawer({ visit, isOpen, onClose }: QuickChatDrawerProps
     isUrdu ? defaultMessagesUrdu : defaultMessagesEn
   );
 
+  // Load real messages for visit when drawer opens
+  useEffect(() => {
+    if (!isOpen || !visit?.jobId) return;
+    let isCancelled = false;
+
+    // Immediately join the job room so real-time socket events flow immediately
+    joinConversationRoom(visit.jobId);
+
+    getMessagesByJob(visit.jobId)
+      .then((backendMsgs) => {
+        if (isCancelled || !backendMsgs || backendMsgs.length === 0) return;
+        const currentUserId = getStoredUser()?.id;
+        const formatted: ChatMessage[] = backendMsgs.map((m) => {
+          const isFromMe = currentUserId ? m.senderId === currentUserId : m.senderRole === "CUSTOMER";
+          const voice = parseVoiceNote(m.text || m.content);
+          const msgType: "text" | "voice" | "image" = voice ? "voice" : m.imageUrl ? "image" : "text";
+          return {
+            id: m.id,
+            messageId: m.id,
+            senderId: m.senderId,
+            receiverId: m.receiverId || voice?.receiverId,
+            jobId: m.jobId || voice?.jobId || visit.jobId,
+            sender: isFromMe ? "customer" : "technician",
+            type: msgType,
+            messageType: msgType,
+            text: voice ? undefined : (m.text || m.content),
+            audioUrl: voice?.audioUrl,
+            durationSeconds: voice?.durationSeconds,
+            imageUrl: m.imageUrl,
+            time: new Date(m.createdAt).toLocaleTimeString([], {
+              hour: "2-digit",
+              minute: "2-digit",
+            }),
+            createdAt: m.createdAt,
+          };
+        });
+        setMessages(formatted);
+        if (backendMsgs[0]?.conversationId) {
+          joinConversationRoom(backendMsgs[0].conversationId);
+        }
+      })
+      .catch(() => {});
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [isOpen, visit?.jobId]);
+
+  // Real-time socket listener for incoming messages
+  useEffect(() => {
+    if (!isOpen || !visit?.jobId) return;
+    const unsubscribe = subscribeToMessages((msg) => {
+      const currentUserId = getStoredUser()?.id;
+      const isFromMe = currentUserId ? msg.senderId === currentUserId : msg.senderRole === "customer";
+      const voice = parseVoiceNote(msg.text || (msg as any).content);
+      const msgType: "text" | "voice" | "image" = voice ? "voice" : msg.imageUrl ? "image" : "text";
+
+      setMessages((prev) => {
+        if (prev.some((m) => m.id === msg.id)) return prev;
+
+        // If from me, reconcile temporary message
+        if (isFromMe) {
+          const tempIdx = prev.findIndex(
+            (m) =>
+              m.id.startsWith("m-") &&
+              (m.text === msg.text || (m.type === "voice" && voice))
+          );
+          if (tempIdx !== -1) {
+            const copy = [...prev];
+            copy[tempIdx] = {
+              ...copy[tempIdx],
+              id: msg.id,
+              messageId: msg.id,
+              audioUrl: voice?.audioUrl || copy[tempIdx].audioUrl,
+            };
+            return copy;
+          }
+          return prev;
+        }
+
+        // It is from the technician!
+        const newMsg: ChatMessage = {
+          id: msg.id,
+          messageId: msg.id,
+          senderId: msg.senderId,
+          receiverId: msg.receiverId || voice?.receiverId,
+          jobId: msg.jobId || voice?.jobId || visit.jobId,
+          sender: "technician",
+          type: msgType,
+          messageType: msgType,
+          text: voice ? undefined : msg.text,
+          audioUrl: voice?.audioUrl,
+          durationSeconds: voice?.durationSeconds,
+          imageUrl: msg.imageUrl,
+          time: new Date(msg.createdAt).toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit",
+          }),
+          createdAt: msg.createdAt,
+        };
+        return [...prev, newMsg];
+      });
+    });
+    return () => {
+      unsubscribe();
+    };
+  }, [isOpen, visit?.jobId]);
+
   if (!isOpen || !visit) return null;
 
   const handleSendTextMessage = (messageText: string) => {
+    const tempId = `m-${Date.now()}`;
+    const currentUserId = getStoredUser()?.id;
+    const workerId = visit.technician.id;
+
     const newMsg: ChatMessage = {
-      id: `m-${Date.now()}`,
+      id: tempId,
+      messageId: tempId,
+      senderId: currentUserId,
+      receiverId: workerId,
+      jobId: visit.jobId,
       sender: "customer",
       type: "text",
+      messageType: "text",
       text: messageText,
       time: isUrdu ? "ابھی" : "Just now",
+      createdAt: new Date().toISOString(),
     };
 
     setMessages((prev) => [...prev, newMsg]);
 
-    sendChatMessage(visit.jobId, messageText).catch((err) => {
-      console.warn("sendChatMessage fallback:", err);
-    });
-
-    // Simulated technician response
-    setTimeout(() => {
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: `m-${Date.now() + 1}`,
-          sender: "technician",
-          type: "text",
-          text: isUrdu ? "موصول ہو گیا! میں پہنچ رہا ہوں۔" : "Received! Almost there.",
-          time: isUrdu ? "ابھی" : "Just now",
-        },
-      ]);
-    }, 1500);
+    sendChatMessage(visit.jobId, messageText, { isJobId: true })
+      .then((sent) => {
+        setMessages((prev) =>
+          prev.map((m) => (m.id === tempId ? { ...m, id: sent.id, messageId: sent.id } : m))
+        );
+        if (sent.conversationId) {
+          joinConversationRoom(sent.conversationId);
+        }
+      })
+      .catch((err) => {
+        console.warn("sendChatMessage fallback:", err);
+      });
   };
 
-  const handleSendVoiceNote = (audioUrl: string, durationSeconds: number) => {
-    const newMsg: ChatMessage = {
-      id: `m-${Date.now()}`,
+  const handleSendVoiceNote = async (audioUrl: string, durationSeconds: number) => {
+    const tempId = `m-${Date.now()}`;
+    const currentUserId = getStoredUser()?.id;
+    const workerId = visit.technician.id;
+
+    const optimisticMsg: ChatMessage = {
+      id: tempId,
+      messageId: tempId,
+      senderId: currentUserId,
+      receiverId: workerId,
+      jobId: visit.jobId,
       sender: "customer",
       type: "voice",
+      messageType: "voice",
       audioUrl,
       durationSeconds,
       time: isUrdu ? "ابھی" : "Just now",
+      createdAt: new Date().toISOString(),
     };
 
-    setMessages((prev) => [...prev, newMsg]);
+    setMessages((prev) => [...prev, optimisticMsg]);
 
-    sendChatMessage(visit.jobId, `[Voice Note: ${durationSeconds}s]`).catch((err) => {
-      console.warn("sendChatMessage voice fallback:", err);
-    });
+    try {
+      let serverAudioUrl = audioUrl;
+      if (audioUrl.startsWith("blob:") || audioUrl.startsWith("data:")) {
+        const blob = await fetch(audioUrl).then((r) => r.blob());
+        const uploaded = await uploadVoiceNote(blob);
+        if (uploaded?.url) {
+          serverAudioUrl = uploaded.url;
+        }
+      }
 
-    // Simulated technician voice reply
-    setTimeout(() => {
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: `m-${Date.now() + 1}`,
-          sender: "technician",
-          type: "voice",
-          audioUrl: "https://actions.google.com/sounds/v1/speech/hello.ogg",
-          durationSeconds: 8,
-          time: isUrdu ? "ابھی" : "Just now",
-        },
-      ]);
-    }, 2000);
+      const payloadText = encodeVoiceNote(serverAudioUrl, durationSeconds, {
+        jobId: visit.jobId,
+        senderId: currentUserId,
+        receiverId: workerId,
+      });
+
+      const sent = await sendChatMessage(visit.jobId, payloadText, { isJobId: true });
+
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.id === tempId
+            ? {
+                ...m,
+                id: sent.id,
+                messageId: sent.id,
+                audioUrl: serverAudioUrl,
+              }
+            : m
+        )
+      );
+
+      if (sent.conversationId) {
+        joinConversationRoom(sent.conversationId);
+      }
+    } catch (err) {
+      console.error("Failed to upload/send customer voice note:", err);
+    }
   };
 
   const handleSendImage = async (file: File) => {
@@ -159,11 +310,13 @@ export function QuickChatDrawer({ visit, isOpen, onClose }: QuickChatDrawerProps
 
     setMessages((prev) => [...prev, newMsg]);
 
-    try {
-      await uploadChatImage(file);
-    } catch (err) {
-      console.warn("uploadChatImage fallback:", err);
-    }
+    uploadChatImage(file)
+      .then((res) => {
+        if (res?.key) {
+          sendChatMessage(visit.jobId, "", { isJobId: true, imageKey: res.key });
+        }
+      })
+      .catch(() => {});
   };
 
   return (
@@ -197,7 +350,7 @@ export function QuickChatDrawer({ visit, isOpen, onClose }: QuickChatDrawerProps
           <div className="flex items-center gap-2 shrink-0">
             <a
               href={`tel:${visit.technician.phone}`}
-              className="size-8 rounded-full bg-emerald-50 hover:bg-emerald-600 text-emerald-700 hover:text-white border border-emerald-200 flex items-center justify-center transition-colors cursor-pointer"
+              className="size-8 rounded-full bg-success/10 hover:bg-success text-success hover:text-white border border-success/20 flex items-center justify-center transition-colors cursor-pointer"
               title={isUrdu ? "کال کریں" : "Call"}
             >
               <Phone className="size-4" />

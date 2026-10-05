@@ -1,5 +1,7 @@
+import { Suspense } from "react";
 import { setRequestLocale } from "next-intl/server";
 import { CustomerChatView } from "@/features/chat/components/customer-chat-view";
+import { LoadingState } from "@/components/shared/loading-state";
 
 export async function generateMetadata() {
   return {
@@ -16,5 +18,10 @@ export default async function CustomerChatPage({
   const { locale } = await params;
   setRequestLocale(locale);
 
-  return <CustomerChatView />;
+  return (
+    <Suspense fallback={<LoadingState label="Loading messages..." />}>
+      <CustomerChatView />
+    </Suspense>
+  );
 }
+

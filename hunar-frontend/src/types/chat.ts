@@ -4,11 +4,18 @@ export type MessageStatus = "sending" | "sent" | "delivered" | "read" | "failed"
 
 export interface ChatMessage {
   id: string;
+  messageId?: string;
   conversationId: string;
   senderId: string;
+  receiverId?: string;
+  jobId?: string;
   senderRole: MessageSenderRole;
   text?: string;
+  content?: string;
   imageUrl?: string;
+  audioUrl?: string;
+  durationSeconds?: number;
+  messageType?: "text" | "voice" | "image";
   status: MessageStatus;
   createdAt: string;
 }

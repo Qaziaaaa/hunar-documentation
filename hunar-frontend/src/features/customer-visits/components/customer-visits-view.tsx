@@ -6,7 +6,6 @@ import {
   Check,
   CheckCircle2,
   Clock,
-  History,
   MapPin,
   MessageSquare,
   Navigation,
@@ -14,7 +13,6 @@ import {
   RotateCcw,
   ShieldCheck,
   Star,
-  Timer,
   Wrench,
 } from "lucide-react";
 import { Link } from "@/i18n/navigation";
@@ -30,6 +28,7 @@ import {
   SUCCESS_VERIFICATION_MESSAGE_UR,
   type ArrivalSession,
 } from "@/features/jobs/services/arrival-verification-service";
+import { rejectRepairEstimate } from "@/features/customer-jobs/api/customer-repair-api";
 
 interface CustomerVisitsViewProps {
   initialVisits: ScheduledVisit[];
@@ -39,7 +38,6 @@ export function CustomerVisitsView({ initialVisits }: CustomerVisitsViewProps) {
   const locale = useLocale();
   const isUrdu = locale === "ur";
   const [visits, setVisits] = useState<ScheduledVisit[]>(initialVisits);
-  const [activeTab, setActiveTab] = useState<"upcoming" | "past">("upcoming");
   const [selectedVisitForReschedule, setSelectedVisitForReschedule] = useState<ScheduledVisit | null>(null);
   const [selectedVisitForChat, setSelectedVisitForChat] = useState<ScheduledVisit | null>(null);
   const [successToast, setSuccessToast] = useState<string | null>(null);
@@ -48,6 +46,7 @@ export function CustomerVisitsView({ initialVisits }: CustomerVisitsViewProps) {
   const [arrivalSession, setArrivalSession] = useState<ArrivalSession | null>(() => arrivalService.getSession());
   const [isOtpModalOpen, setIsOtpModalOpen] = useState(false);
   const [inPremisesStep, setInPremisesStep] = useState<"diagnosing" | "quote_proposed" | "repair_in_progress" | "work_completed">("diagnosing");
+  const [isRepairDeclined, setIsRepairDeclined] = useState(false);
 
   // Sync with arrival service state
   useEffect(() => {
@@ -78,8 +77,14 @@ export function CustomerVisitsView({ initialVisits }: CustomerVisitsViewProps) {
     return () => unsubscribe();
   }, []);
 
+  const [selectedVisitId, setSelectedVisitId] = useState<string | null>(null);
+
   // Live en-route or in-premises visit
   const liveVisit = useMemo(() => {
+    if (selectedVisitId) {
+      const found = visits.find((v) => v.id === selectedVisitId);
+      if (found) return found;
+    }
     return (
       visits.find(
         (v) =>
@@ -89,7 +94,7 @@ export function CustomerVisitsView({ initialVisits }: CustomerVisitsViewProps) {
           v.status === "inspection_in_progress"
       ) || visits[0]
     );
-  }, [visits]);
+  }, [visits, selectedVisitId]);
 
   const isVerifiedInside =
     liveVisit.status === "inspection_in_progress" || liveVisit.status === "arrived";
@@ -101,13 +106,11 @@ export function CustomerVisitsView({ initialVisits }: CustomerVisitsViewProps) {
         v.status === "dispatched" ||
         v.status === "en_route" ||
         v.status === "arrived" ||
-        v.status === "inspection_in_progress"
+        v.status === "inspection_in_progress" ||
+        v.status === "scheduled" ||
+        v.status === "started" ||
+        v.status === "in_progress"
     );
-  }, [visits]);
-
-  // Past completed visits
-  const pastVisits = useMemo(() => {
-    return visits.filter((v) => v.status === "completed" || v.status === "cancelled");
   }, [visits]);
 
 
@@ -146,49 +149,31 @@ export function CustomerVisitsView({ initialVisits }: CustomerVisitsViewProps) {
         </div>
       )}
 
-      {/* Page Header & Live Hub Status Banner */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 pb-4 border-b border-[#E2E8F0]">
+      {/* Page Header & Back Navigation */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-[#E2E8F0]">
         <div className="space-y-1">
+          <div className="flex items-center gap-2">
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-teal/10 text-teal border border-teal/20">
+              <span className="size-1.5 rounded-full bg-teal animate-ping" />
+              <span>{isUrdu ? `${upcomingVisits.length} فعال شیڈول وزٹس` : `${upcomingVisits.length} Active Scheduled Visits`}</span>
+            </span>
+          </div>
           <h1 className="text-2xl sm:text-3xl font-extrabold text-[#123B5D] tracking-tight">
             {isUrdu ? "شیڈول وزٹس اور لائیو ٹریکر" : "Scheduled Visits & Arrival Tracker"}
           </h1>
         </div>
 
-        {/* Interactive Tab Switcher (Upcoming & Live vs Past Visits) */}
-        <div className="inline-flex p-1 rounded-2xl bg-slate-100 border border-slate-200 select-none self-start md:self-auto shrink-0 shadow-2xs">
-          <button
-            type="button"
-            onClick={() => setActiveTab("upcoming")}
-            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
-              activeTab === "upcoming"
-                ? "bg-[#0F766E] text-white shadow-xs"
-                : "text-slate-600 hover:text-[#123B5D]"
-            }`}
-          >
-            <Timer className="size-4" />
-            <span>{isUrdu ? `آنے والے اور لائیو (${upcomingVisits.length})` : `Upcoming & Live (${upcomingVisits.length})`}</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setActiveTab("past")}
-            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
-              activeTab === "past"
-                ? "bg-[#0F766E] text-white shadow-xs"
-                : "text-slate-600 hover:text-[#123B5D]"
-            }`}
-          >
-            <History className="size-4" />
-            <span>{isUrdu ? `سابقہ وزٹس (${pastVisits.length})` : `Past Visits (${pastVisits.length})`}</span>
-          </button>
-        </div>
+        <Link
+          href="/customer/jobs"
+          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold bg-white border border-slate-200 text-slate-700 hover:text-[#123B5D] hover:border-slate-300 shadow-2xs transition-all active:scale-[0.99] cursor-pointer self-start sm:self-auto"
+        >
+          <ArrowRight className="size-4 rtl:rotate-0 rotate-180" />
+          <span>{isUrdu ? "میری بکنگز پر واپس جائیں" : "Back to My Bookings"}</span>
+        </Link>
       </div>
 
-      {/* =================================================================== */}
-      {/* TAB 1: UPCOMING & LIVE ARRIVAL TRACKER                              */}
-      {/* =================================================================== */}
-      {activeTab === "upcoming" && (
-        <div className="space-y-6">
+      {/* LIVE ARRIVAL TRACKER & SCHEDULED VISITS */}
+      <div className="space-y-6">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
             {/* LEFT COLUMN: LIVE TRACKER HERO + TOMORROW'S APPOINTMENT (7 Cols) */}
             <div className="lg:col-span-7 space-y-6">
@@ -483,7 +468,15 @@ export function CustomerVisitsView({ initialVisits }: CustomerVisitsViewProps) {
                             </button>
                             <button
                               type="button"
-                              onClick={() => setInPremisesStep("work_completed")}
+                              onClick={async () => {
+                                setIsRepairDeclined(true);
+                                setInPremisesStep("work_completed");
+                                try {
+                                  await rejectRepairEstimate(liveVisit.jobId);
+                                } catch (err) {
+                                  console.warn("Failed to decline repair estimate:", err);
+                                }
+                              }}
                               className="w-full sm:w-auto py-2.5 px-3 rounded-xl bg-white hover:bg-slate-100 text-slate-600 text-xs font-semibold border border-slate-200 cursor-pointer"
                             >
                               {isUrdu ? "صرف وزٹ فیس ادا کریں" : "Decline (Pay Visit Fee Only)"}
@@ -532,7 +525,7 @@ export function CustomerVisitsView({ initialVisits }: CustomerVisitsViewProps) {
                               : "Inspect the repair, review itemized billing, and confirm direct payment on your satisfaction."}
                           </p>
                           <Link
-                            href={`/customer/job/${liveVisit.jobId}/complete`}
+                            href={`/customer/job/${liveVisit.jobId}/complete${isRepairDeclined ? "?repairDeclined=true" : ""}`}
                             className="w-full flex items-center justify-center gap-2 py-3 bg-[#0F766E] hover:bg-[#115E59] text-white text-xs sm:text-sm font-bold rounded-xl shadow-xs transition-all cursor-pointer active:scale-98"
                           >
                             <span>{isUrdu ? "مکمل شدہ کام کا معائنہ اور ادائیگی کی تصدیق ←" : "Inspect Completed Work & Confirm Payment →"}</span>
@@ -547,7 +540,7 @@ export function CustomerVisitsView({ initialVisits }: CustomerVisitsViewProps) {
                   <div className="flex flex-wrap items-center gap-3 pt-1">
                     <a
                       href={`tel:${liveVisit.technician.phone}`}
-                      className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-[#0F766E] hover:bg-[#115E59] text-white text-xs sm:text-sm font-bold shadow-xs transition-all active:scale-[0.98] cursor-pointer"
+                      className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-success hover:bg-success/90 text-white text-xs sm:text-sm font-bold shadow-xs transition-all active:scale-[0.98] cursor-pointer"
                     >
                       <Phone className="size-4" />
                       <span>{isUrdu ? "کال کریں" : "Call"}</span>
@@ -556,7 +549,7 @@ export function CustomerVisitsView({ initialVisits }: CustomerVisitsViewProps) {
                     <button
                       type="button"
                       onClick={() => setSelectedVisitForChat(liveVisit)}
-                      className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-white border border-[#123B5D] hover:bg-slate-50 text-[#123B5D] text-xs sm:text-sm font-bold transition-all active:scale-[0.98] cursor-pointer"
+                      className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-white border border-teal hover:bg-teal/5 text-teal text-xs sm:text-sm font-bold transition-all active:scale-[0.98] cursor-pointer"
                     >
                       <MessageSquare className="size-4" />
                       <span>{isUrdu ? "پیغام" : "Message"}</span>
@@ -574,70 +567,89 @@ export function CustomerVisitsView({ initialVisits }: CustomerVisitsViewProps) {
                 </div>
               </div>
 
-              {/* TOMORROW'S SCHEDULED VISIT CARD */}
-              {visits.length > 1 && (
-                <div className="bg-white rounded-3xl border border-[#E2E8F0] p-5 sm:p-6 shadow-sm space-y-4">
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <div className="flex items-center gap-2">
-                      <span className="px-3 py-1 rounded-xl text-xs font-bold uppercase tracking-wider bg-slate-100 text-[#123B5D] border border-[#E2E8F0]">
-                        {isUrdu ? "کل" : "Tomorrow"}
-                      </span>
-                      <span className="text-xs sm:text-sm font-bold text-[#123B5D]">
-                        {visits[1].scheduledDate} • {visits[1].scheduledTimeSlot}
-                      </span>
-                    </div>
-                    <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold bg-[#16A34A]/10 text-[#16A34A] border border-[#16A34A]/20">
-                      <CheckCircle2 className="size-3.5" />
-                      {isUrdu ? "کنفرم شدہ سلاٹ" : "Confirmed Slot"}
+              {/* ALL OTHER SCHEDULED VISITS (MULTI-BOOKING SUPPORT) */}
+              {upcomingVisits.filter((v) => v.id !== liveVisit.id).length > 0 && (
+                <div className="space-y-4 pt-2">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-xs sm:text-sm font-bold text-[#123B5D] uppercase tracking-wider">
+                      {isUrdu ? "دیگر شیڈول شدہ وزٹس" : "Other Scheduled Appointments"}
+                    </h3>
+                    <span className="text-[11px] text-slate-500">
+                      {isUrdu ? "ٹریکر تبدیل کرنے کے لیے منتخب کریں" : "Select to switch live tracker"}
                     </span>
                   </div>
 
-                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 rounded-2xl bg-white border border-[#E2E8F0]">
-                    <div className="flex items-start gap-3.5">
-                      <div className="size-12 rounded-2xl bg-[#0F766E]/10 text-[#0F766E] flex items-center justify-center shrink-0">
-                        <Wrench className="size-6 stroke-[2.2]" />
+                  {upcomingVisits
+                    .filter((v) => v.id !== liveVisit.id)
+                    .map((otherVisit) => (
+                      <div
+                        key={otherVisit.id}
+                        className="bg-white rounded-3xl border border-[#E2E8F0] p-5 sm:p-6 shadow-sm space-y-4 hover:border-teal transition-all"
+                      >
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                          <div className="flex items-center gap-2">
+                            <span className="px-3 py-1 rounded-xl text-xs font-bold uppercase tracking-wider bg-slate-100 text-[#123B5D] border border-[#E2E8F0]">
+                              {otherVisit.scheduledDate}
+                            </span>
+                            <span className="text-xs sm:text-sm font-bold text-[#123B5D]">
+                              {otherVisit.scheduledTimeSlot}
+                            </span>
+                          </div>
+                          <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold bg-success/10 text-success border border-success/20">
+                            <CheckCircle2 className="size-3.5" />
+                            {isUrdu ? "کنفرم شدہ سلاٹ" : "Confirmed Slot"}
+                          </span>
+                        </div>
+
+                        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 rounded-2xl bg-slate-50/70 border border-[#E2E8F0]">
+                          <div className="flex items-start gap-3.5">
+                            <div className="size-12 rounded-2xl bg-teal/10 text-teal flex items-center justify-center shrink-0">
+                              <Wrench className="size-6 stroke-[2.2]" />
+                            </div>
+                            <div className="space-y-0.5">
+                              <h4 className="text-sm font-bold text-[#123B5D]">
+                                {isUrdu ? (otherVisit.jobTitleUr ?? otherVisit.jobTitle) : otherVisit.jobTitle}
+                              </h4>
+                              <p className="text-xs text-[#64748B]">
+                                {isUrdu ? "متعین کردہ: " : "Assigned: "}
+                                <strong className="text-[#123B5D]">
+                                  {isUrdu ? (otherVisit.technician.nameUr ?? otherVisit.technician.name) : otherVisit.technician.name}
+                                </strong> ({isUrdu ? (otherVisit.technician.businessNameUr ?? otherVisit.technician.businessName) : otherVisit.technician.businessName})
+                              </p>
+                              <p className="text-xs text-[#64748B] flex items-center gap-1 pt-0.5">
+                                <MapPin className="size-3.5 text-teal" />
+                                {isUrdu ? (otherVisit.customerAreaUr ?? otherVisit.customerAddress) : otherVisit.customerAddress}
+                              </p>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center sm:flex-col items-start sm:items-end rtl:sm:items-start gap-1 shrink-0">
+                            <span className="inline-flex items-center font-bold text-xs sm:text-sm text-teal bg-teal/10 px-2.5 py-1 rounded-lg border border-teal/20">
+                              {isUrdu ? `وزٹ چارجز: ${otherVisit.visitCharges ?? 300} روپے` : `Visit Charges: Rs. ${otherVisit.visitCharges ?? 300}`}
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
+                          <button
+                            type="button"
+                            onClick={() => setSelectedVisitId(otherVisit.id)}
+                            className="px-4 py-2 rounded-xl bg-teal hover:bg-teal/90 text-white text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 cursor-pointer active:scale-98"
+                          >
+                            <Navigation className="size-3.5" />
+                            <span>{isUrdu ? "اس ٹیکنیشن کو ٹریک کریں" : "Track this Technician on Map"}</span>
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => setSelectedVisitForReschedule(otherVisit)}
+                            className="px-3.5 py-2 rounded-xl bg-white border border-[#E2E8F0] hover:bg-slate-50 text-xs font-bold text-[#123B5D] transition-colors cursor-pointer"
+                          >
+                            {isUrdu ? "وقت تبدیل کریں" : "Change Time Slot"}
+                          </button>
+                        </div>
                       </div>
-                      <div className="space-y-0.5">
-                        <h4 className="text-sm font-bold text-[#123B5D]">
-                          {isUrdu ? (visits[1].jobTitleUr ?? visits[1].jobTitle) : visits[1].jobTitle}
-                        </h4>
-                        <p className="text-xs text-[#64748B]">
-                          {isUrdu ? "متعین کردہ: " : "Assigned: "}
-                          <strong className="text-[#123B5D]">
-                            {isUrdu ? (visits[1].technician.nameUr ?? visits[1].technician.name) : visits[1].technician.name}
-                          </strong> ({isUrdu ? (visits[1].technician.businessNameUr ?? visits[1].technician.businessName) : visits[1].technician.businessName})
-                        </p>
-                        <p className="text-xs text-[#64748B] flex items-center gap-1 pt-0.5">
-                          <MapPin className="size-3.5 text-[#0F766E]" />
-                          {isUrdu ? (visits[1].customerAreaUr ?? visits[1].customerAddress) : visits[1].customerAddress}
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center sm:flex-col items-start sm:items-end rtl:sm:items-start gap-1 shrink-0">
-                      <span className="inline-flex items-center font-bold text-xs sm:text-sm text-[#0F766E] bg-[#0F766E]/10 px-2.5 py-1 rounded-lg border border-[#0F766E]/20">
-                        {isUrdu ? `وزٹ چارجز: ${visits[1].visitCharges ?? 300} روپے` : `Visit Charges: Rs. ${visits[1].visitCharges ?? 300}`}
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
-                    <button
-                      type="button"
-                      onClick={() => setSelectedVisitForReschedule(visits[1])}
-                      className="px-3.5 py-2 rounded-xl bg-white border border-[#E2E8F0] hover:bg-slate-50 text-xs font-bold text-[#123B5D] transition-colors cursor-pointer"
-                    >
-                      {isUrdu ? "وقت تبدیل کریں" : "Change Time Slot"}
-                    </button>
-
-                    <Link
-                      href={`/customer/jobs/${visits[1].jobId}`}
-                      className="inline-flex items-center gap-1 text-xs font-bold text-[#0F766E] hover:underline"
-                    >
-                      <span>{isUrdu ? "بکنگ کی تفصیلات دیکھیں" : "View Booking Details"}</span>
-                      <ArrowRight className="size-3.5 rtl:rotate-180" />
-                    </Link>
-                  </div>
+                    ))}
                 </div>
               )}
             </div>
@@ -747,79 +759,6 @@ export function CustomerVisitsView({ initialVisits }: CustomerVisitsViewProps) {
             </div>
           </div>
         </div>
-      )}
-
-      {/* =================================================================== */}
-      {/* TAB 2: PAST VISITS HISTORY                                         */}
-      {/* =================================================================== */}
-      {activeTab === "past" && (
-        <div className="space-y-4">
-          <div className="bg-white rounded-3xl p-5 sm:p-6 shadow-sm border border-[#E2E8F0]">
-            <h3 className="text-base font-bold text-[#123B5D] mb-1">
-              {isUrdu ? "مکمل شدہ وزٹس اور تصدیق شدہ بل" : "Completed Visits & Verified Invoices"}
-            </h3>
-            <p className="text-xs text-[#64748B] mb-4">
-              {isUrdu
-                ? "تمام سابقہ سروسز معائنہ ریکارڈز، وارنٹی اور رسیدوں کے ساتھ۔"
-                : "All previous home maintenance services with inspection records, warranties, and receipts."}
-            </p>
-
-            <div className="space-y-3.5">
-              {pastVisits.map((visit) => (
-                <div
-                  key={visit.id}
-                  className="p-4 sm:p-5 rounded-2xl bg-white border border-[#E2E8F0] flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:shadow-xs transition-all"
-                >
-                  <div className="flex items-start gap-3.5">
-                    <div className="size-11 rounded-2xl bg-[#16A34A]/10 text-[#16A34A] flex items-center justify-center shrink-0 font-bold">
-                      <CheckCircle2 className="size-6" />
-                    </div>
-                    <div className="space-y-0.5">
-                      <h4 className="text-sm font-bold text-[#123B5D]">
-                        {isUrdu ? (visit.jobTitleUr ?? visit.jobTitle) : visit.jobTitle}
-                      </h4>
-                      <p className="text-xs text-[#64748B]">
-                        {isUrdu
-                          ? `${visit.scheduledDate === "Yesterday" ? "کل" : visit.scheduledDate} • ${visit.technician.nameUr ?? visit.technician.name} (${visit.technician.businessNameUr ?? visit.technician.businessName})`
-                          : `${visit.scheduledDate} • ${visit.technician.name} (${visit.technician.businessName})`}
-                      </p>
-                      <div className="flex items-center gap-2 text-xs pt-1 flex-wrap">
-                        <span className="inline-flex items-center gap-0.5 text-[#F59E0B] font-bold">
-                          <Star className="size-3.5 fill-[#F59E0B]" />
-                          {visit.technician.rating.toFixed(1)} {isUrdu ? "ریٹنگ" : "Rated"}
-                        </span>
-                        <span>•</span>
-                        <span className="text-[#16A34A] font-semibold">
-                          {isUrdu ? `${visit.warrantyDays} دن کی وارنٹی فعال ہے` : `${visit.warrantyDays}-Day Warranty Active`}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="flex sm:flex-col items-start sm:items-end rtl:sm:items-start justify-between sm:justify-center gap-1.5 shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-200">
-                    <span className="text-xs text-[#64748B]">
-                      {isUrdu ? "رسید " : "Invoice "}
-                      <strong className="text-[#123B5D]">#{visit.id}</strong>
-                    </span>
-                    <span className="text-sm font-extrabold text-[#0F766E]">
-                      {isUrdu
-                        ? `Rs. ${visit.escrowAmount.toLocaleString()} ادا شدہ`
-                        : `Rs. ${visit.escrowAmount.toLocaleString()} Paid`}
-                    </span>
-                    <Link
-                      href={`/customer/jobs/${visit.jobId}`}
-                      className="inline-flex items-center gap-1 text-xs font-bold text-[#0F766E] hover:underline"
-                    >
-                      <span>{isUrdu ? "رسید دیکھیں" : "View Receipt"}</span>
-                      <ArrowRight className="size-3 rtl:rotate-180" />
-                    </Link>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Reschedule Modal */}
       {selectedVisitForReschedule && (

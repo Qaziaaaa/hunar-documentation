@@ -1,4 +1,4 @@
-import { http } from "@/lib/api-client";
+import { http, getAccessToken } from "@/lib/api-client";
 import { isMockMode, simulateLatency } from "@/lib/data-source";
 import type { Job, JobStatus, JobUrgency } from "@/types/job";
 import { mockJobs } from "@/mocks/jobs.mock";
@@ -94,11 +94,39 @@ export async function listWorkerJobs(): Promise<Job[]> {
   if (isMockMode()) {
     return simulateLatency([...mockJobs]);
   }
-  const res = await http.get<any>("/workers/me/jobs/active");
-  const items: BackendJobRow[] = Array.isArray(res)
-    ? res
-    : (res as any)?.data ?? (res as any)?.items ?? [];
-  return items.map(mapBackendJob);
+  if (!getAccessToken()) {
+    return [];
+  }
+  try {
+    const res = await http.get<any>("/workers/me/jobs/active");
+    const items: BackendJobRow[] = Array.isArray(res)
+      ? res
+      : (res as any)?.data ?? (res as any)?.items ?? [];
+    return items.map(mapBackendJob);
+  } catch (err: any) {
+    if (err?.status === 401) return [];
+    throw err;
+  }
+}
+
+export async function listWorkerHistoryJobs(): Promise<Job[]> {
+  if (isMockMode()) {
+    return simulateLatency(mockJobs.filter((job) => isHistoryJob(job.status)));
+  }
+  if (!getAccessToken()) {
+    return [];
+  }
+  try {
+    const res = await http.get<any>("/workers/me/jobs/history");
+    const items: BackendJobRow[] = Array.isArray(res)
+      ? res
+      : (res as any)?.data ?? (res as any)?.items ?? [];
+    return items.map(mapBackendJob);
+  } catch (err: any) {
+    if (err?.status === 401) return [];
+    throw err;
+  }
+}
 }
 
 export async function listNearbyJobs(location?: {

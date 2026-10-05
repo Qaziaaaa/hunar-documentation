@@ -8,6 +8,11 @@ import { CustomerBottomNav } from "@/features/customer-dashboard/components/cust
 import { CustomerHeader } from "@/features/customer-dashboard/components/customer-header";
 import { CustomerSidebar } from "@/features/customer-dashboard/components/customer-sidebar";
 import { CustomerArrivalOtpModal } from "@/features/customer-visits/components/customer-arrival-otp-modal";
+import { CustomerRepairQuoteModal } from "@/features/customer-jobs/components/customer-repair-quote-modal";
+import {
+  customerQuoteService,
+  type PendingRepairQuote,
+} from "@/features/customer-jobs/services/customer-quote-service";
 import {
   arrivalService,
   SUCCESS_VERIFICATION_MESSAGE,
@@ -30,6 +35,10 @@ export default function CustomerLayout({
   const [isArrivalOtpOpen, setIsArrivalOtpOpen] = useState(false);
   const [successToast, setSuccessToast] = useState<string | null>(null);
 
+  // Mandatory Repair Quote Modal state
+  const [activeQuote, setActiveQuote] = useState<PendingRepairQuote | null>(null);
+  const [isQuoteModalOpen, setIsQuoteModalOpen] = useState(false);
+
   useEffect(() => {
     // Check if an arrival session is currently pending on mount
     const current = arrivalService.getSession();
@@ -38,7 +47,7 @@ export default function CustomerLayout({
       setIsArrivalOtpOpen(true);
     }
 
-    const unsubscribe = arrivalService.subscribe((session, eventType) => {
+    const unsubscribeArrival = arrivalService.subscribe((session, eventType) => {
       if (eventType === "ARRIVAL_STARTED" && session && session.status === "pending_otp") {
         setArrivalSession(session);
         setIsArrivalOtpOpen(true);
@@ -53,11 +62,44 @@ export default function CustomerLayout({
       }
     });
 
-    return () => unsubscribe();
+    // Check if a repair quote is currently pending on mount
+    const currentQuote = customerQuoteService.getActiveQuote();
+    if (currentQuote && (currentQuote.status === "PROPOSED" || currentQuote.status === "COUNTERED")) {
+      setActiveQuote(currentQuote);
+      setIsQuoteModalOpen(true);
+    }
+    void customerQuoteService.checkBackendPendingQuote().then((q) => {
+      if (q && (q.status === "PROPOSED" || q.status === "COUNTERED")) {
+        setActiveQuote(q);
+        setIsQuoteModalOpen(true);
+      }
+    });
+
+    const unsubscribeQuote = customerQuoteService.subscribe((quote, eventType) => {
+      if (eventType === "PROPOSED" && quote) {
+        setActiveQuote(quote);
+        setIsQuoteModalOpen(true);
+      } else if (eventType === "DECIDED" || eventType === "CLEARED") {
+        setIsQuoteModalOpen(false);
+        setActiveQuote(null);
+      }
+    });
+
+    return () => {
+      unsubscribeArrival();
+      unsubscribeQuote();
+    };
   }, [isUrdu]);
 
   const handleOtpVerified = (msg: string) => {
     setIsArrivalOtpOpen(false);
+    setSuccessToast(msg);
+    setTimeout(() => setSuccessToast(null), 6000);
+  };
+
+  const handleQuoteDecision = (decision: "ACCEPTED" | "REJECTED", msg: string) => {
+    setIsQuoteModalOpen(false);
+    setActiveQuote(null);
     setSuccessToast(msg);
     setTimeout(() => setSuccessToast(null), 6000);
   };
@@ -113,6 +155,14 @@ export default function CustomerLayout({
         session={arrivalSession}
         onSuccess={handleOtpVerified}
         onClose={() => setIsArrivalOtpOpen(false)}
+        isUrdu={isUrdu}
+      />
+
+      {/* Mandatory Customer Repair Quote Approval Modal */}
+      <CustomerRepairQuoteModal
+        isOpen={isQuoteModalOpen}
+        quote={activeQuote}
+        onDecision={handleQuoteDecision}
         isUrdu={isUrdu}
       />
     </div>

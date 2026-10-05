@@ -15,7 +15,7 @@ export default async function CustomerLoginPage({
   setRequestLocale(locale);
 
   return (
-    <AuthShell>
+    <AuthShell role="customer">
       <CustomerSignInForm />
     </AuthShell>
   );

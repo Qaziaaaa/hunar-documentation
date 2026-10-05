@@ -158,6 +158,7 @@ export function CustomerSignupFlow() {
       <PasswordStep
         submitting={submitting}
         submitError={submitError}
+        role="customer"
         onSubmit={handlePasswordSubmit}
       />
     );
@@ -194,6 +195,7 @@ export function CustomerSignupFlow() {
     <PhoneStep
       submitting={submitting}
       submitError={submitError}
+      role="customer"
       onSubmit={handlePhoneSubmit}
     />
   );
