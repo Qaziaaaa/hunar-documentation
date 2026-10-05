@@ -3,10 +3,11 @@
 import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "@/i18n/navigation";
 import { Briefcase } from "lucide-react";
-import { http, getAccessToken } from "@/lib/api-client";
+import { http, getAccessToken, getStoredUser, clearTokens } from "@/lib/api-client";
 import { isMockMode } from "@/lib/data-source";
 import { connectSocket, disconnectSocket } from "@/lib/socket";
 import { timeAgo } from "@/lib/format";
+import { logoutWorker } from "@/features/auth/api/auth-api";
 import {
   getNotifications,
   markAllNotificationsRead,
@@ -28,36 +29,114 @@ import type {
   DashboardNotification,
 } from "../types";
 
-function loadInitialProfile(): WorkerDashboardProfile {
-  if (typeof window === "undefined") return INITIAL_WORKER_PROFILE;
-  try {
-    const saved = window.localStorage.getItem("hunar_worker_onboarding");
-    const savedOnline = window.localStorage.getItem("hunar_worker_online");
-    const isOnline = savedOnline !== null ? savedOnline === "true" : INITIAL_WORKER_PROFILE.isOnline;
+export function getWorkerProfileCacheKey(userId?: string): string {
+  return userId ? `workerfix.worker_profile_${userId}` : "workerfix.worker_profile_cache";
+}
 
-    if (saved) {
-      const parsed = JSON.parse(saved);
-      if (parsed.fullName) {
-        return {
-          ...INITIAL_WORKER_PROFILE,
-          fullName: parsed.fullName || INITIAL_WORKER_PROFILE.fullName,
-          phone: parsed.phone || INITIAL_WORKER_PROFILE.phone,
-          skills: parsed.skills?.length ? parsed.skills : INITIAL_WORKER_PROFILE.skills,
-          serviceAreas: parsed.serviceAreas?.length ? parsed.serviceAreas : INITIAL_WORKER_PROFILE.serviceAreas,
-          bio: parsed.bio || INITIAL_WORKER_PROFILE.bio,
-          experienceYears: Number(parsed.experienceYears) || INITIAL_WORKER_PROFILE.experienceYears,
-          isOnline,
-        };
+export const WORKER_PROFILE_CACHE_KEY = "workerfix.worker_profile_cache";
+
+const EMPTY_WORKER_PROFILE: WorkerDashboardProfile = {
+  id: "",
+  workerId: "",
+  fullName: "",
+  phone: "",
+  isVerified: false,
+  isOnline: true,
+  rating: 5.0,
+  reviewCount: 0,
+  activeJobsCount: 0,
+  completedJobsCount: 0,
+  totalEarnings: 0,
+  totalCommissionPaid: 0,
+  pendingCommission: 0,
+  walletBalance: 0,
+  experienceYears: 0,
+  bio: "",
+  skills: [],
+  serviceAreas: [],
+  city: "Peshawar",
+};
+
+function loadInitialProfile(): { profile: WorkerDashboardProfile; isLoaded: boolean } {
+  if (typeof window === "undefined") {
+    return {
+      profile: isMockMode() && !getAccessToken() ? INITIAL_WORKER_PROFILE : EMPTY_WORKER_PROFILE,
+      isLoaded: false,
+    };
+  }
+  try {
+    const storedUser = getStoredUser();
+    const targetUserId = storedUser?.id;
+
+    // 1. Try to load user-scoped cached live profile
+    if (targetUserId) {
+      const userCached = window.localStorage.getItem(getWorkerProfileCacheKey(targetUserId));
+      if (userCached) {
+        const parsed = JSON.parse(userCached);
+        if (parsed && (parsed.fullName || parsed.id)) {
+          return { profile: parsed, isLoaded: true };
+        }
       }
     }
-    return {
-      ...INITIAL_WORKER_PROFILE,
-      isOnline,
-    };
+
+    // 2. Check if legacy / global cache matches targetUserId
+    const legacyCached = window.localStorage.getItem(WORKER_PROFILE_CACHE_KEY);
+    if (legacyCached) {
+      const parsed = JSON.parse(legacyCached);
+      if (parsed && (!targetUserId || parsed.id === targetUserId) && parsed.fullName) {
+        return { profile: parsed, isLoaded: true };
+      }
+    }
+
+    const savedOnboarding = window.localStorage.getItem("hunar_worker_onboarding");
+    const savedOnline = window.localStorage.getItem("hunar_worker_online");
+    const isOnline = savedOnline !== null ? savedOnline === "true" : true;
+
+    let parsedOnboarding: any = {};
+    if (savedOnboarding) {
+      try {
+        parsedOnboarding = JSON.parse(savedOnboarding);
+      } catch {}
+    }
+
+    if (storedUser) {
+      const hasName = Boolean(storedUser.name || parsedOnboarding.fullName);
+      return {
+        profile: {
+          ...EMPTY_WORKER_PROFILE,
+          id: storedUser.id,
+          workerId: `WRK-${storedUser.id.slice(0, 8).toUpperCase()}`,
+          fullName: storedUser.name || parsedOnboarding.fullName || "",
+          phone: storedUser.phone || parsedOnboarding.phone || "",
+          isVerified: storedUser.isVerified ?? false,
+          skills: parsedOnboarding.skills || [],
+          serviceAreas: parsedOnboarding.serviceAreas || [],
+          bio: parsedOnboarding.bio || "",
+          experienceYears: Number(parsedOnboarding.experienceYears) || 0,
+          isOnline,
+        },
+        // If we don't have a verified name or stats yet, consider it still needing live sync
+        isLoaded: hasName,
+      };
+    }
+
+    if (isMockMode() && !getAccessToken()) {
+      return {
+        profile: {
+          ...INITIAL_WORKER_PROFILE,
+          isOnline,
+        },
+        isLoaded: true,
+      };
+    }
   } catch {
     // ignore
   }
-  return INITIAL_WORKER_PROFILE;
+
+  return {
+    profile: EMPTY_WORKER_PROFILE,
+    isLoaded: false,
+  };
 }
 
 const NOTIF_TYPE_MAP: Record<AppNotification["type"], DashboardNotification["type"]> = {
@@ -96,9 +175,8 @@ export function WorkerDashboardShell({
   const router = useRouter();
   const pathname = usePathname();
 
-  const [profile, setProfile] = useState<WorkerDashboardProfile>(
-    INITIAL_WORKER_PROFILE
-  );
+  const [profile, setProfile] = useState<WorkerDashboardProfile>(EMPTY_WORKER_PROFILE);
+  const [isLoadingProfile, setIsLoadingProfile] = useState<boolean>(true);
   const [activeTab, setActiveTab] = useState<DashboardTab>(initialTab);
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [notifications, setNotifications] = useState<DashboardNotification[]>([]);
@@ -107,7 +185,9 @@ export function WorkerDashboardShell({
 
   // Sync profile & online status from client localStorage on mount to prevent hydration mismatch
   useEffect(() => {
-    setProfile(loadInitialProfile());
+    const initial = loadInitialProfile();
+    setProfile(initial.profile);
+    setIsLoadingProfile(!initial.isLoaded);
   }, []);
 
   // Synchronize activeTab with URL pathname
@@ -158,39 +238,93 @@ export function WorkerDashboardShell({
               ?.map((c: { name?: string }) => c.name)
               .filter(Boolean) ??
               (wp?.skills?.length ? wp.skills : []);
-          setProfile((prev) => ({
-            ...prev,
-            id: data.user.id || prev.id,
-            workerId: data.user.id ? `WRK-${data.user.id.slice(0, 8).toUpperCase()}` : prev.workerId,
-            fullName: data.user.name || prev.fullName,
-            phone: data.user.phone || prev.phone,
-            avatarUrl: data.user.avatarUrl || prev.avatarUrl,
-            skills: liveSkills.length ? liveSkills : prev.skills,
-            serviceAreas: areas.length ? areas : prev.serviceAreas,
-            bio: wp?.bio || prev.bio,
-            experienceYears: Number(wp?.experienceYears) || prev.experienceYears,
-            isOnline: wp?.isAvailable ?? prev.isOnline,
-            isVerified: wp?.verificationStatus === "APPROVED",
-            totalEarnings: earningsData?.grossEarnings ?? prev.totalEarnings,
-            completedJobsCount: earningsData?.completedJobsCount ?? prev.completedJobsCount,
-            totalCommissionPaid: earningsData?.commissionsPaid ?? prev.totalCommissionPaid,
-            walletBalance: earningsData?.balance ?? prev.walletBalance,
-          }));
+
+          const liveRating =
+            typeof data.rating === "number"
+              ? data.rating
+              : typeof wp?.rating === "number"
+              ? wp.rating
+              : undefined;
+
+          const liveCompletedJobs =
+            typeof data.completedJobs === "number"
+              ? data.completedJobs
+              : earningsData?.completedJobsCount;
+
+          setProfile((prev) => {
+            const nextProfile: WorkerDashboardProfile = {
+              ...prev,
+              id: data.user.id || prev.id,
+              workerId: data.user.id ? `WRK-${data.user.id.slice(0, 8).toUpperCase()}` : prev.workerId,
+              fullName: data.user.name || prev.fullName,
+              phone: data.user.phone || prev.phone,
+              avatarUrl: data.user.avatarUrl || prev.avatarUrl,
+              skills: liveSkills.length ? liveSkills : prev.skills,
+              serviceAreas: areas.length ? areas : prev.serviceAreas,
+              bio: wp?.bio || prev.bio,
+              experienceYears: Number(wp?.experienceYears) || prev.experienceYears,
+              isOnline: wp?.isAvailable ?? prev.isOnline,
+              isVerified: wp?.verificationStatus === "APPROVED",
+              rating: liveRating !== undefined ? liveRating : (prev.rating ?? 5.0),
+              reviewCount: typeof data.reviewsCount === "number" ? data.reviewsCount : prev.reviewCount,
+              totalEarnings: earningsData?.grossEarnings ?? prev.totalEarnings,
+              completedJobsCount: liveCompletedJobs !== undefined ? liveCompletedJobs : prev.completedJobsCount,
+              totalCommissionPaid: earningsData?.commissionsPaid ?? prev.totalCommissionPaid,
+              walletBalance: earningsData?.balance ?? prev.walletBalance,
+            };
+
+            try {
+              if (data.user.id) {
+                window.localStorage.setItem(getWorkerProfileCacheKey(data.user.id), JSON.stringify(nextProfile));
+              }
+              window.localStorage.setItem(WORKER_PROFILE_CACHE_KEY, JSON.stringify(nextProfile));
+            } catch {}
+
+            return nextProfile;
+          });
         } else if (earningsData) {
-          setProfile((prev) => ({
-            ...prev,
-            totalEarnings: earningsData.grossEarnings ?? prev.totalEarnings,
-            completedJobsCount: earningsData.completedJobsCount ?? prev.completedJobsCount,
-            totalCommissionPaid: earningsData.commissionsPaid ?? prev.totalCommissionPaid,
-            walletBalance: earningsData.balance ?? prev.walletBalance,
-          }));
+          setProfile((prev) => {
+            const nextProfile: WorkerDashboardProfile = {
+              ...prev,
+              totalEarnings: earningsData.grossEarnings ?? prev.totalEarnings,
+              completedJobsCount: earningsData.completedJobsCount ?? prev.completedJobsCount,
+              totalCommissionPaid: earningsData.commissionsPaid ?? prev.totalCommissionPaid,
+              walletBalance: earningsData.balance ?? prev.walletBalance,
+            };
+
+            try {
+              if (prev.id) {
+                window.localStorage.setItem(getWorkerProfileCacheKey(prev.id), JSON.stringify(nextProfile));
+              }
+              window.localStorage.setItem(WORKER_PROFILE_CACHE_KEY, JSON.stringify(nextProfile));
+            } catch {}
+
+            return nextProfile;
+          });
         }
       } catch (err) {
         console.warn("[WorkerDashboardShell] Syncing live profile:", err);
+      } finally {
+        setIsLoadingProfile(false);
       }
     }
     syncBackendProfile();
   }, []);
+
+  const handleLogout = async () => {
+    try {
+      await logoutWorker();
+    } finally {
+      clearTokens();
+      try {
+        if (profile.id) {
+          window.localStorage.removeItem(getWorkerProfileCacheKey(profile.id));
+        }
+        window.localStorage.removeItem(WORKER_PROFILE_CACHE_KEY);
+      } catch {}
+      router.push("/worker/sign-in");
+    }
+  };
 
   // Open the realtime socket (job matched / offer events) when running against the API
   useEffect(() => {
@@ -308,6 +442,8 @@ export function WorkerDashboardShell({
         unreadNotificationsCount={unreadNotificationsCount}
         isOpen={isMobileSidebarOpen}
         onClose={() => setIsMobileSidebarOpen(false)}
+        onLogout={handleLogout}
+        isLoadingProfile={isLoadingProfile}
       />
 
       {/* Main Container offset by lg:ps-64 on desktop */}

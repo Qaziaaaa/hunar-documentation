@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -127,12 +127,20 @@ export function SignInForm() {
         </div>
 
         <div className="space-y-1.5">
-          <label
-            htmlFor="signin-password"
-            className="ml-1 block text-xs font-semibold text-navy"
-          >
-            {t("passwordLabel")}
-          </label>
+          <div className="flex items-center justify-between">
+            <label
+              htmlFor="signin-password"
+              className="ml-1 block text-xs font-semibold text-navy"
+            >
+              {t("passwordLabel")}
+            </label>
+            <Link
+              href="/worker/forgot-password"
+              className="text-xs font-semibold text-teal hover:underline"
+            >
+              Forgot password?
+            </Link>
+          </div>
           <div className="relative">
             <Lock className="absolute left-4 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
             <Input
