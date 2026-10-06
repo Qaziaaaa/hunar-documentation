@@ -27,7 +27,7 @@ export default function CustomersPage() {
 
   useEffect(() => {
     adminApi
-      .listCustomers({ limit: 100 })
+      .listCustomers({ limit: 50 })
       .then((res) => setCustomers(res.items))
       .catch(() => setCustomers([]))
       .finally(() => setLoading(false));
@@ -215,7 +215,12 @@ export default function CustomersPage() {
                       <div className="flex items-center justify-end gap-2">
                         <button
                           type="button"
-                          onClick={() => setSelectedCustomer(customer)}
+                          onClick={() => {
+                            setSelectedCustomer(customer);
+                            void adminApi.getCustomerDetail(customer.id).then((full) => {
+                              setSelectedCustomer((prev) => (prev ? { ...prev, ...full } : full));
+                            }).catch(() => undefined);
+                          }}
                           className="flex size-8 items-center justify-center rounded-lg border border-slate-200 text-slate-600 transition hover:bg-slate-100"
                           title="View Profile Details"
                         >

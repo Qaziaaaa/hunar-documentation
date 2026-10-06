@@ -19,7 +19,7 @@ import {
 } from "lucide-react";
 
 export default function VisitsPage() {
-  const visitsRes = useAdminResource(() => adminApi.listVisits({ limit: 100 }));
+  const visitsRes = useAdminResource(() => adminApi.listVisits({ limit: 50 }));
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
   const [selectedVisit, setSelectedVisit] = useState<any | null>(null);

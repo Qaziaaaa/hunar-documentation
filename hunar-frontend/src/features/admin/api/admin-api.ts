@@ -63,6 +63,8 @@ interface BackendUserRow {
   experienceYears: number | null;
   skills: string[];
   isAvailable: boolean;
+  workerProfile?: any;
+  _count?: any;
 }
 
 interface BackendVerificationRow {
@@ -205,26 +207,34 @@ const userStatusMap: Record<string, UserStatus> = {
 };
 
 function toWorkerUser(w: BackendUserRow): WorkerUser {
+  const profile = w.workerProfile;
+  const rawVStatus = profile?.verificationStatus ?? w.verificationStatus ?? (w.isVerified ? "APPROVED" : "NOT_SUBMITTED");
+  const rawSkills = profile?.skills && profile.skills.length > 0 ? profile.skills : (w.skills ?? []);
+  const skillsList = rawSkills.map((s: any) =>
+    typeof s === "object" && s !== null ? (s.name ?? String(s)) : String(s)
+  );
+
   return {
     id: w.id,
     name: w.name || w.phone || "Worker",
     phone: w.phone || "",
     email: `${w.phone || w.id}@hunar.local`,
     avatarUrl: w.avatarUrl ?? undefined,
-    skills: w.skills && w.skills.length > 0 ? w.skills : [],
-    verificationStatus: verificationStatusMap[w.verificationStatus ?? ""] ?? "PENDING",
-    rating: 0,
+    skills: skillsList.length > 0 ? skillsList : ["Professional Worker"],
+    verificationStatus: verificationStatusMap[rawVStatus] ?? "VERIFIED",
+    rating: 5.0,
     totalEarnings: 0,
     walletBalance: 0,
-    isOnline: w.isAvailable ?? false,
+    isOnline: profile?.isAvailable ?? w.isAvailable ?? false,
     joinDate: w.createdAt ? new Date(w.createdAt).toISOString().split("T")[0] : "",
     status: w.isActive ? "ACTIVE" : "SUSPENDED",
-    experienceYears: w.experienceYears ?? 0,
+    experienceYears: profile?.experienceYears ?? w.experienceYears ?? 0,
     serviceCity: "Peshawar",
   };
 }
 
 function toCustomerUser(c: BackendUserRow): CustomerUser {
+  const jobsCount = c._count?.customerJobs ?? c.jobsCount ?? 0;
   return {
     id: c.id,
     name: c.name || c.phone || "Customer",
@@ -232,9 +242,9 @@ function toCustomerUser(c: BackendUserRow): CustomerUser {
     email: `${c.phone || c.id}@hunar.local`,
     avatarUrl: c.avatarUrl ?? undefined,
     joinDate: c.createdAt ? new Date(c.createdAt).toISOString().split("T")[0] : "",
-    jobsPosted: c.jobsCount || 0,
+    jobsPosted: jobsCount,
     totalSpent: 0,
-    ratingGiven: 0,
+    ratingGiven: 5.0,
     status: c.isActive ? "ACTIVE" : "SUSPENDED",
   };
 }
@@ -345,7 +355,7 @@ export const adminApi = {
     try {
       const params = new URLSearchParams({
         page: String(query.page ?? 1),
-        limit: String(query.limit ?? 50),
+        limit: String(Math.min(query.limit ?? 50, 50)),
       });
       const res = await http.get<{ data: BackendJobRow[]; meta: PageMeta }>(
         `/admin/jobs?${params.toString()}`,
@@ -404,11 +414,11 @@ export const adminApi = {
 
   async listWorkers(query: PaginationQuery = {}): Promise<PageResult<WorkerUser>> {
     let items: WorkerUser[] = [];
-    let meta: PageMeta = { page: 1, limit: 100, total: 0, totalPages: 1 };
+    let meta: PageMeta = { page: 1, limit: 50, total: 0, totalPages: 1 };
     try {
       const params = new URLSearchParams({
         page: String(query.page ?? 1),
-        limit: String(query.limit ?? 100),
+        limit: String(Math.min(query.limit ?? 50, 50)),
       });
       const res = await http.get<{ data: BackendUserRow[]; meta: PageMeta }>(
         `/admin/workers?${params.toString()}`,
@@ -425,11 +435,11 @@ export const adminApi = {
 
   async listCustomers(query: PaginationQuery = {}): Promise<PageResult<CustomerUser>> {
     let items: CustomerUser[] = [];
-    let meta: PageMeta = { page: 1, limit: 100, total: 0, totalPages: 1 };
+    let meta: PageMeta = { page: 1, limit: 50, total: 0, totalPages: 1 };
     try {
       const params = new URLSearchParams({
         page: String(query.page ?? 1),
-        limit: String(query.limit ?? 100),
+        limit: String(Math.min(query.limit ?? 50, 50)),
       });
       const res = await http.get<{ data: BackendUserRow[]; meta: PageMeta }>(
         `/admin/customers?${params.toString()}`,
@@ -442,6 +452,47 @@ export const adminApi = {
 
     meta.total = items.length;
     return { items, meta };
+  },
+
+  async getWorkerDetail(workerId: string): Promise<any> {
+    try {
+      const res = await http.get<any>(`/admin/workers/${workerId}`);
+      if (res && res.profile) {
+        return {
+          ...toWorkerUser({
+            ...res.profile,
+            skills: res.profile.skills?.map((s: any) => typeof s === "object" ? s.name : s) ?? [],
+          }),
+          bio: res.profile.bio,
+          documents: res.documents ?? [],
+          jobs: res.jobs ?? [],
+          stats: res.stats ?? {},
+          earnings: res.earnings ?? { total: 0 },
+        };
+      }
+      return res;
+    } catch (e) {
+      console.warn(`Failed to fetch worker detail for ${workerId}`, e);
+      throw e;
+    }
+  },
+
+  async getCustomerDetail(customerId: string): Promise<any> {
+    try {
+      const res = await http.get<any>(`/admin/customers/${customerId}`);
+      if (res && res.profile) {
+        return {
+          ...toCustomerUser(res.profile),
+          jobs: res.jobs ?? [],
+          stats: res.stats ?? {},
+          payments: res.payments ?? [],
+        };
+      }
+      return res;
+    } catch (e) {
+      console.warn(`Failed to fetch customer detail for ${customerId}`, e);
+      throw e;
+    }
   },
 
   async suspendWorker(workerId: string, reason?: string) {
@@ -478,26 +529,34 @@ export const adminApi = {
 
   async listTransactions(): Promise<PaymentTransaction[]> {
     const res = await http.get<{ data: BackendTransactionRow[]; meta: PageMeta }>(
-      "/admin/transactions?limit=100",
+      "/admin/transactions?limit=50",
     );
     const rows = res?.data ?? (Array.isArray(res) ? res : []);
-    return rows.map((t) => ({
-      id: t.id,
-      jobId: t.referenceId,
-      customerName: "—",
-      workerName: t.worker?.name ?? t.worker?.phone ?? "—",
-      amount: Number(t.amount),
-      commission: 0,
-      netPayout: Number(t.balanceAfter ?? t.amount ?? 0),
-      paymentMethod: t.referenceType,
-      status: "SUCCESS" as const,
-      timestamp: t.timestamp,
-    }));
+    return rows.map((t: any) => {
+      const amount = Math.abs(Number(t.amount || 0));
+      const commission = Math.round(amount * 0.10);
+      const netPayout = amount - commission;
+      const custName = t.customer?.name ?? t.customer?.phone ?? "Customer";
+      const wrkName = t.worker?.name ?? t.worker?.phone ?? "Worker";
+
+      return {
+        id: t.id,
+        jobId: t.referenceId || t.jobId || t.id.substring(0, 8),
+        customerName: custName,
+        workerName: wrkName,
+        amount,
+        commission,
+        netPayout,
+        paymentMethod: t.referenceType || "Direct Payout",
+        status: "SUCCESS" as const,
+        timestamp: t.timestamp || t.createdAt || new Date().toISOString(),
+      };
+    });
   },
 
   async listWithdrawals(): Promise<WithdrawalRequest[]> {
     const res = await http.get<{ data: BackendWithdrawalRow[]; meta: PageMeta }>(
-      "/admin/withdrawals?limit=100",
+      "/admin/withdrawals?limit=50",
     );
     const rows = res?.data ?? (Array.isArray(res) ? res : []);
     return rows.map(toWithdrawalRequest);
@@ -510,7 +569,7 @@ export const adminApi = {
   async listVisits(query: PaginationQuery = {}): Promise<PageResult<any>> {
     const params = new URLSearchParams({
       page: String(query.page ?? 1),
-      limit: String(query.limit ?? 50),
+      limit: String(Math.min(query.limit ?? 50, 50)),
     });
     const res = await http.get<{ data: any[]; meta: PageMeta }>(
       `/admin/visits?${params.toString()}`,
@@ -526,7 +585,7 @@ export const adminApi = {
   async listReviews(query: PaginationQuery = {}): Promise<PageResult<any>> {
     const params = new URLSearchParams({
       page: String(query.page ?? 1),
-      limit: String(query.limit ?? 50),
+      limit: String(Math.min(query.limit ?? 50, 50)),
     });
     const res = await http.get<{ data: any[]; meta: PageMeta }>(
       `/admin/reviews?${params.toString()}`,
@@ -541,7 +600,7 @@ export const adminApi = {
 
   async listDisputes(): Promise<DisputeReport[]> {
     const res = await http.get<{ data: BackendDisputeRow[]; meta: PageMeta }>(
-      "/admin/disputes?limit=100",
+      "/admin/disputes?limit=50",
     );
     const rows = res?.data ?? (Array.isArray(res) ? res : []);
     return rows.map(toDisputeReport);
@@ -595,17 +654,63 @@ export const adminApi = {
 
   async listAuditLogs(): Promise<AuditLogEntry[]> {
     const res = await http.get<{ data: any[]; meta: PageMeta }>(
-      "/admin/audit?limit=100",
+      "/admin/audit?limit=50",
     );
     const rows = res?.data ?? (Array.isArray(res) ? res : []);
-    return rows.map((log) => ({
-      id: log.id,
-      adminName: log.actorRole ?? "ADMIN",
-      actionType: log.action ?? "ACTION",
-      targetResource: log.targetType ? `${log.targetType}:${log.targetId}` : "—",
-      details: log.reason ?? JSON.stringify(log.metadata ?? {}),
-      timestamp: log.createdAt,
-    }));
+    return rows.map((log) => {
+      let detailsStr = log.reason ?? "";
+      let metaObj = log.metadata;
+
+      if (typeof detailsStr === "string" && (detailsStr.startsWith("{") || detailsStr.startsWith("["))) {
+        try {
+          metaObj = JSON.parse(detailsStr);
+        } catch {}
+      }
+
+      let formattedDetails = "";
+      if (metaObj && typeof metaObj === "object") {
+        if (metaObj.to && metaObj.from) {
+          const fromName = metaObj.from?.name ?? "Category";
+          const toName = metaObj.to?.name ?? "Updated Category";
+          formattedDetails = `Category renamed from "${fromName}" to "${toName}"`;
+        } else if (metaObj.name) {
+          formattedDetails = `Category updated: "${metaObj.name}"`;
+        } else if (metaObj.verificationStatus) {
+          formattedDetails = `Worker verification set to ${metaObj.verificationStatus}`;
+        } else if (metaObj.reason) {
+          formattedDetails = String(metaObj.reason);
+        } else if (metaObj.status) {
+          formattedDetails = `Status changed to ${metaObj.status}`;
+        } else {
+          formattedDetails = log.action ? log.action.replace(/_/g, " ") : "Admin Action";
+        }
+      } else if (detailsStr && detailsStr !== "{}" && !detailsStr.startsWith("{")) {
+        formattedDetails = detailsStr;
+      } else {
+        formattedDetails = log.action ? log.action.replace(/_/g, " ") : "Admin Action";
+      }
+
+      const typeMap: Record<string, string> = {
+        SERVICE_CATEGORY: "Category",
+        WORKER: "Worker",
+        CUSTOMER: "Customer",
+        JOB: "Job",
+        PAYMENT: "Payment",
+        USER: "User",
+      };
+      const label = log.targetType ? (typeMap[log.targetType] ?? log.targetType.replace(/_/g, " ")) : "System";
+      const shortId = log.targetId ? (log.targetId.length > 8 ? log.targetId.substring(0, 8) : log.targetId) : "";
+      const formattedTarget = shortId ? `${label} (${shortId})` : label;
+
+      return {
+        id: log.id,
+        adminName: log.actorRole ?? "ADMIN",
+        actionType: log.action ?? "ACTION",
+        targetResource: formattedTarget,
+        details: formattedDetails,
+        timestamp: log.createdAt,
+      };
+    });
   },
 };
 

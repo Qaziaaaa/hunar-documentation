@@ -17,7 +17,7 @@ import {
 } from "lucide-react";
 
 export default function ReviewsPage() {
-  const reviewsRes = useAdminResource(() => adminApi.listReviews({ limit: 100 }));
+  const reviewsRes = useAdminResource(() => adminApi.listReviews({ limit: 50 }));
   const [search, setSearch] = useState("");
   const [ratingFilter, setRatingFilter] = useState<string>("ALL");
   const [reviewsList, setReviewsList] = useState<any[]>([]);

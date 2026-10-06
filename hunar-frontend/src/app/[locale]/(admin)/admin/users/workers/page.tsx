@@ -30,7 +30,7 @@ export default function WorkersPage() {
 
   useEffect(() => {
     adminApi
-      .listWorkers({ limit: 100 })
+      .listWorkers({ limit: 50 })
       .then((res) => setWorkers(res.items))
       .catch(() => setWorkers([]))
       .finally(() => setLoading(false));
@@ -238,7 +238,12 @@ export default function WorkersPage() {
                       <div className="flex items-center justify-end gap-2">
                         <button
                           type="button"
-                          onClick={() => setSelectedWorker(worker)}
+                          onClick={() => {
+                            setSelectedWorker(worker);
+                            void adminApi.getWorkerDetail(worker.id).then((full) => {
+                              setSelectedWorker((prev) => (prev ? { ...prev, ...full } : full));
+                            }).catch(() => undefined);
+                          }}
                           className="flex size-8 items-center justify-center rounded-lg border border-slate-200 text-slate-600 transition hover:bg-slate-100"
                           title="View Full Profile"
                         >

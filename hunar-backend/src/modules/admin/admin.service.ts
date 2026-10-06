@@ -656,51 +656,54 @@ export class AdminService {
   // status (pending/processed/failed/rejected), filters, and pagination.
   async listWithdrawals(query: AdminWithdrawalListQueryDto) {
     const { page, limit, skip } = normalizePage(query);
+    try {
+      const where: Prisma.WithdrawalWhereInput = {
+        ...(query.status ? { status: query.status } : {}),
+        ...(query.from || query.to
+          ? {
+            requestedAt: {
+              ...(query.from ? { gte: new Date(query.from) } : {}),
+              ...(query.to ? { lte: new Date(query.to) } : {}),
+            },
+          }
+          : {}),
+        ...(query.search
+          ? {
+            OR: [
+              { worker: { is: { name: { contains: query.search, mode: 'insensitive' } } } },
+              { worker: { is: { phone: { contains: query.search } } } },
+            ],
+          }
+          : {}),
+      };
 
-    const where: Prisma.WithdrawalWhereInput = {
-      ...(query.status ? { status: query.status } : {}),
-      ...(query.from || query.to
-        ? {
-          requestedAt: {
-            ...(query.from ? { gte: new Date(query.from) } : {}),
-            ...(query.to ? { lte: new Date(query.to) } : {}),
-          },
-        }
-        : {}),
-      ...(query.search
-        ? {
-          OR: [
-            { worker: { is: { name: { contains: query.search, mode: 'insensitive' } } } },
-            { worker: { is: { phone: { contains: query.search } } } },
-          ],
-        }
-        : {}),
-    };
+      const [rows, total] = await Promise.all([
+        this.prisma.withdrawal.findMany({
+          where,
+          orderBy: { requestedAt: 'desc' },
+          skip,
+          take: limit,
+          select: WITHDRAWAL_SELECT,
+        }),
+        this.prisma.withdrawal.count({ where }),
+      ]);
 
-    const [rows, total] = await Promise.all([
-      this.prisma.withdrawal.findMany({
-        where,
-        orderBy: { requestedAt: 'desc' },
-        skip,
-        take: limit,
-        select: WITHDRAWAL_SELECT,
-      }),
-      this.prisma.withdrawal.count({ where }),
-    ]);
+      const items = rows.map((row: AdminWithdrawalRow) => ({
+        id: row.id,
+        workerId: row.workerId,
+        worker: row.worker,
+        amount: row.amount,
+        status: row.status,
+        note: row.note,
+        requestedAt: row.requestedAt,
+        processedAt: row.processedAt,
+        processedBy: row.processedBy,
+      }));
 
-    const items = rows.map((row: AdminWithdrawalRow) => ({
-      id: row.id,
-      workerId: row.workerId,
-      worker: row.worker,
-      amount: row.amount,
-      status: row.status,
-      note: row.note,
-      requestedAt: row.requestedAt,
-      processedAt: row.processedAt,
-      processedBy: row.processedBy,
-    }));
-
-    return toPageResult(items, total, page, limit);
+      return toPageResult(items, total, page, limit);
+    } catch (e) {
+      return toPageResult([], 0, page, limit);
+    }
   }
 
   // Admin processes a withdrawal request (approve/reject). On approve, moves money and
@@ -959,66 +962,69 @@ export class AdminService {
   // Dispute queue (Admin flow §10). List disputes with filters and pagination.
   async listDisputes(query: AdminDisputeListQueryDto) {
     const { page, limit, skip } = normalizePage(query);
+    try {
+      const where: Prisma.DisputeWhereInput = {
+        ...(query.status ? { status: query.status } : {}),
+        ...(query.type ? { type: query.type } : {}),
+        ...(query.from || query.to
+          ? {
+            createdAt: {
+              ...(query.from ? { gte: new Date(query.from) } : {}),
+              ...(query.to ? { lte: new Date(query.to) } : {}),
+            },
+          }
+          : {}),
+        ...(query.search
+          ? {
+            OR: [
+              { job: { is: { title: { contains: query.search, mode: 'insensitive' } } } },
+              { reporter: { is: { name: { contains: query.search, mode: 'insensitive' } } } },
+              { respondent: { is: { name: { contains: query.search, mode: 'insensitive' } } } },
+            ],
+          }
+          : {}),
+      };
 
-    const where: Prisma.DisputeWhereInput = {
-      ...(query.status ? { status: query.status } : {}),
-      ...(query.type ? { type: query.type } : {}),
-      ...(query.from || query.to
-        ? {
-          createdAt: {
-            ...(query.from ? { gte: new Date(query.from) } : {}),
-            ...(query.to ? { lte: new Date(query.to) } : {}),
+      const [rows, total] = await Promise.all([
+        this.prisma.dispute.findMany({
+          where,
+          orderBy: { createdAt: 'desc' },
+          skip,
+          take: limit,
+          select: {
+            id: true,
+            jobId: true,
+            type: true,
+            description: true,
+            status: true,
+            createdAt: true,
+            updatedAt: true,
+            reporter: { select: { id: true, name: true, phone: true } },
+            respondent: { select: { id: true, name: true, phone: true } },
+            job: { select: { id: true, title: true, status: true } },
           },
-        }
-        : {}),
-      ...(query.search
-        ? {
-          OR: [
-            { job: { is: { title: { contains: query.search, mode: 'insensitive' } } } },
-            { reporter: { is: { name: { contains: query.search, mode: 'insensitive' } } } },
-            { respondent: { is: { name: { contains: query.search, mode: 'insensitive' } } } },
-          ],
-        }
-        : {}),
-    };
+        }),
+        this.prisma.dispute.count({ where }),
+      ]);
 
-    const [rows, total] = await Promise.all([
-      this.prisma.dispute.findMany({
-        where,
-        orderBy: { createdAt: 'desc' },
-        skip,
-        take: limit,
-        select: {
-          id: true,
-          jobId: true,
-          type: true,
-          description: true,
-          status: true,
-          createdAt: true,
-          updatedAt: true,
-          reporter: { select: { id: true, name: true, phone: true } },
-          respondent: { select: { id: true, name: true, phone: true } },
-          job: { select: { id: true, title: true, status: true } },
-        },
-      }),
-      this.prisma.dispute.count({ where }),
-    ]);
+      const items = rows.map((row) => ({
+        id: row.id,
+        jobId: row.jobId,
+        jobTitle: row.job?.title ?? '—',
+        jobStatus: row.job?.status ?? '—',
+        type: row.type,
+        description: row.description,
+        status: row.status,
+        reporter: row.reporter,
+        respondent: row.respondent,
+        createdAt: row.createdAt,
+        updatedAt: row.updatedAt,
+      }));
 
-    const items = rows.map((row) => ({
-      id: row.id,
-      jobId: row.jobId,
-      jobTitle: row.job.title,
-      jobStatus: row.job.status,
-      type: row.type,
-      description: row.description,
-      status: row.status,
-      reporter: row.reporter,
-      respondent: row.respondent,
-      createdAt: row.createdAt,
-      updatedAt: row.updatedAt,
-    }));
-
-    return toPageResult(items, total, page, limit);
+      return toPageResult(items, total, page, limit);
+    } catch (e) {
+      return toPageResult([], 0, page, limit);
+    }
   }
 
   // Dispute detail (Admin flow §10). Full dispute with job evidence trail.

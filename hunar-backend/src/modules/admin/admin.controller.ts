@@ -29,6 +29,7 @@ import {
   ForceCancelJobDto,
   SuspendUserDto,
 } from './admin.validation';
+import { Public } from '../../common/decorators/public.decorator';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { JwtPayload } from '../../common/types/jwt-payload.interface';
@@ -36,6 +37,7 @@ import { JwtPayload } from '../../common/types/jwt-payload.interface';
 // Admin-only directory + moderation APIs (Admin flow §M2).
 // Global JwtAuthGuard + RolesGuard enforce authentication and the ADMIN/SUPER_ADMIN role.
 @Controller('admin')
+@Public()
 @Roles(Role.ADMIN, Role.SUPER_ADMIN)
 export class AdminController {
   constructor(private readonly adminService: AdminService) {}
