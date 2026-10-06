@@ -1,5 +1,6 @@
 "use client";
 
+import { useQuery } from "@tanstack/react-query";
 import {
   Calendar,
   ChevronRight,
@@ -19,6 +20,7 @@ import { Link, usePathname, useRouter } from "@/i18n/navigation";
 import { logoutCustomer } from "@/features/auth/api/auth-api";
 import { WorkerFixLogo } from "@/components/shared/workerfix-logo";
 import { useStoredUser } from "@/lib/use-stored-user";
+import { getCustomerJobs } from "@/features/customer-jobs/api/customer-jobs-api";
 
 interface CustomerSidebarProps {
   isOpen?: boolean;
@@ -30,10 +32,19 @@ export function CustomerSidebar({ isOpen, onClose }: CustomerSidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
   const locale = useLocale();
-  // Read the session without a hydration mismatch (SSR/first render → null, then live value)
   const storedUser = useStoredUser();
   const customerName = storedUser?.name || storedUser?.phone || "Customer";
   const customerInitial = customerName.charAt(0).toUpperCase() || "C";
+
+  const { data: jobs = [] } = useQuery({
+    queryKey: ["customer", "jobs", "sidebar"],
+    queryFn: getCustomerJobs,
+    staleTime: 60_000,
+  });
+
+  const activeBookingsCount = jobs.filter(
+    (j) => j.status === "receiving_offers" || j.status === "visit_scheduled"
+  ).length;
 
   const handleLogout = async () => {
     await logoutCustomer();
@@ -57,7 +68,9 @@ export function CustomerSidebar({ isOpen, onClose }: CustomerSidebarProps) {
       label: locale === "ur" ? "میری بکنگز" : "My Bookings",
       href: "/customer/jobs",
       icon: Package,
-      badge: { text: "3 Active", bg: "bg-teal/10 text-teal font-bold" },
+      badge: activeBookingsCount > 0
+        ? { text: locale === "ur" ? `${activeBookingsCount} فعال` : `${activeBookingsCount} Active`, bg: "bg-teal/10 text-teal font-bold" }
+        : null,
       isActive: pathname.includes("/customer/jobs"),
     },
     {
