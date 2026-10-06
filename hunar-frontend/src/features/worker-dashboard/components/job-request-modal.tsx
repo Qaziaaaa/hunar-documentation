@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import Image from "next/image";
 import {
   X,
@@ -68,6 +68,13 @@ export function JobRequestModal({
   }, [job]);
 
   const visitCharge = job?.suggestedVisitCharge ?? 300;
+
+  const validImages = useMemo(() => {
+    if (!job?.images || !Array.isArray(job.images)) return [];
+    return job.images.filter(
+      (src) => typeof src === "string" && src.trim().length > 0 && !src.startsWith("blob:")
+    );
+  }, [job?.images]);
 
   const handleSendOffer = async () => {
     if (!job || isSending || isSent) return;
@@ -165,14 +172,20 @@ export function JobRequestModal({
           <div className="rounded-2xl bg-slate-50/70 p-4">
             <div className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-3.5 min-w-0">
-                <div className="relative size-14 shrink-0 overflow-hidden rounded-full border border-teal/20 bg-white shadow-xs">
-                  <Image
-                    src={job.customer.avatarUrl}
-                    alt={job.customer.firstName}
-                    fill
-                    className="object-cover"
-                    sizes="56px"
-                  />
+                <div className="relative size-14 shrink-0 overflow-hidden rounded-full border border-teal/20 bg-slate-100 flex items-center justify-center shadow-xs">
+                  {job.customer.avatarUrl ? (
+                    <Image
+                      src={job.customer.avatarUrl}
+                      alt={job.customer.firstName || "Customer"}
+                      fill
+                      className="object-cover"
+                      sizes="56px"
+                    />
+                  ) : (
+                    <span className="text-base font-extrabold text-slate-600 uppercase">
+                      {job.customer.firstName ? job.customer.firstName.charAt(0) : "C"}
+                    </span>
+                  )}
                 </div>
                 <div className="min-w-0 leading-tight">
                   <div className="flex items-center gap-1.5">
@@ -266,16 +279,16 @@ export function JobRequestModal({
           </div>
 
           {/* SECTION 4: Attached Media (Images + Voice Note) */}
-          {(job.images?.length > 0 || job.voiceNote) && (
+          {(validImages.length > 0 || job.voiceNote) && (
             <div className="space-y-2.5 pt-2">
               <h4 className="text-sm sm:text-base font-extrabold text-navy">
                 {isUrdu ? "منسلک تصویر اور وائس نوٹ" : "Attached Media & Voice Note"}
               </h4>
 
               {/* Photos Gallery */}
-              {job.images && job.images.length > 0 && (
+              {validImages.length > 0 && (
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
-                  {job.images.map((imgUrl, idx) => (
+                  {validImages.map((imgUrl, idx) => (
                     <div
                       key={idx}
                       onClick={() => setSelectedImagePreview(imgUrl)}

@@ -3,6 +3,7 @@
 import { useMemo, useState, useEffect } from "react";
 import {
   ArrowRight,
+  Calendar,
   Check,
   CheckCircle2,
   Clock,
@@ -43,7 +44,7 @@ export function CustomerVisitsView({ initialVisits }: CustomerVisitsViewProps) {
   const [successToast, setSuccessToast] = useState<string | null>(null);
 
   useEffect(() => {
-    if (initialVisits && initialVisits.length > 0) {
+    if (initialVisits) {
       setVisits(initialVisits);
     }
   }, [initialVisits]);
@@ -98,12 +99,13 @@ export function CustomerVisitsView({ initialVisits }: CustomerVisitsViewProps) {
           v.status === "dispatched" ||
           v.status === "arrived" ||
           v.status === "inspection_in_progress"
-      ) || visits[0]
+      ) || visits[0] || null
     );
   }, [visits, selectedVisitId]);
 
   const isVerifiedInside =
-    liveVisit.status === "inspection_in_progress" || liveVisit.status === "arrived";
+    Boolean(liveVisit) &&
+    (liveVisit?.status === "inspection_in_progress" || liveVisit?.status === "arrived");
 
   // Upcoming scheduled visits
   const upcomingVisits = useMemo(() => {
@@ -180,6 +182,30 @@ export function CustomerVisitsView({ initialVisits }: CustomerVisitsViewProps) {
 
       {/* LIVE ARRIVAL TRACKER & SCHEDULED VISITS */}
       <div className="space-y-6">
+        {visits.length === 0 || !liveVisit ? (
+          <div className="bg-white rounded-3xl border border-slate-200 p-8 sm:p-12 text-center max-w-lg mx-auto shadow-sm space-y-4">
+            <div className="size-16 rounded-2xl bg-[#0F766E]/10 text-[#0F766E] flex items-center justify-center mx-auto">
+              <Calendar className="size-8" />
+            </div>
+            <h3 className="text-lg sm:text-xl font-bold text-[#123B5D]">
+              {isUrdu ? "کوئی شیڈول شدہ وزٹ نہیں ہے" : "No Scheduled Visits"}
+            </h3>
+            <p className="text-sm text-[#64748B] max-w-sm mx-auto">
+              {isUrdu
+                ? "آپ کے پاس اس وقت کوئی فعال وزٹ شیڈول نہیں ہے۔ نیا سروس آرڈر بک کرنے کے لیے جاب پوسٹ کریں۔"
+                : "You have no active visits scheduled at this time. Post a job to book a verified professional technician."}
+            </p>
+            <div className="pt-2">
+              <Link
+                href="/customer/post-job"
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#0F766E] hover:bg-[#0d655e] text-white font-bold text-sm shadow-sm transition-all cursor-pointer"
+              >
+                <span>{isUrdu ? "نیا کام پوسٹ کریں" : "Post a Job"}</span>
+                <ArrowRight className="size-4 rtl:rotate-180" />
+              </Link>
+            </div>
+          </div>
+        ) : (
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
             {/* LEFT COLUMN: LIVE TRACKER HERO + TOMORROW'S APPOINTMENT (7 Cols) */}
             <div className="lg:col-span-7 space-y-6">
@@ -256,7 +282,7 @@ export function CustomerVisitsView({ initialVisits }: CustomerVisitsViewProps) {
                         </span>
                         <span>•</span>
                         <span className="inline-flex items-center gap-1 font-bold text-[#0F766E]">
-                          {isUrdu ? `وزٹ چارجز: ${liveVisit.visitCharges ?? 300} روپے` : `Visit Charges: Rs. ${liveVisit.visitCharges ?? 300}`}
+                          {isUrdu ? `وزٹ چارجز: ${liveVisit.visitCharges ?? 0} روپے` : `Visit Charges: Rs. ${liveVisit.visitCharges ?? 0}`}
                         </span>
                       </div>
 
@@ -277,13 +303,19 @@ export function CustomerVisitsView({ initialVisits }: CustomerVisitsViewProps) {
                   <div className="p-4 rounded-2xl bg-white border border-[#E2E8F0] shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div className="flex items-center gap-3.5">
                       <div className="relative shrink-0">
-                        <div className="size-14 rounded-2xl overflow-hidden border-2 border-white shadow-sm ring-2 ring-[#0F766E]/30">
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img
-                            src={liveVisit.technician.avatarUrl}
-                            alt={liveVisit.technician.name}
-                            className="w-full h-full object-cover"
-                          />
+                        <div className="size-14 rounded-2xl overflow-hidden border-2 border-white shadow-sm ring-2 ring-[#0F766E]/30 bg-slate-100 flex items-center justify-center font-bold text-slate-700">
+                          {liveVisit.technician.avatarUrl ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img
+                              src={liveVisit.technician.avatarUrl}
+                              alt={liveVisit.technician.name}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <span className="text-base font-bold text-[#0F766E]">
+                              {liveVisit.technician.name ? liveVisit.technician.name.slice(0, 2).toUpperCase() : "TC"}
+                            </span>
+                          )}
                         </div>
                         <span
                           className="absolute bottom-0 right-0 rtl:right-auto rtl:left-0 size-3.5 bg-[#16A34A] border-2 border-white rounded-full"
@@ -764,7 +796,8 @@ export function CustomerVisitsView({ initialVisits }: CustomerVisitsViewProps) {
               </div>
             </div>
           </div>
-        </div>
+        )}
+      </div>
 
       {/* Reschedule Modal */}
       {selectedVisitForReschedule && (

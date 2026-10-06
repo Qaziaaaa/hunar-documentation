@@ -1,11 +1,8 @@
 import { http } from "@/lib/api-client";
-import { isMockMode, simulateLatency } from "@/lib/data-source";
 import type {
   UpdateWorkerProfileInput,
   WorkerProfile,
 } from "@/types/worker";
-import { mockWorkerProfile } from "@/mocks/profile.mock";
-import { MOCK_WORKER_ID } from "@/mocks/jobs.mock";
 
 const emptyWorkerProfile: WorkerProfile = {
   id: "",
@@ -14,7 +11,7 @@ const emptyWorkerProfile: WorkerProfile = {
   email: "",
   avatarUrl: "",
   isVerified: false,
-  rating: 5.0,
+  rating: 0,
   reviewsCount: 0,
   completedJobs: 0,
   skills: [],
@@ -23,12 +20,10 @@ const emptyWorkerProfile: WorkerProfile = {
   bio: "",
   workshopLocation: "",
   serviceAreas: [],
-  defaultVisitCharge: 300,
+  defaultVisitCharge: 0,
   documents: [],
   profileVisible: true,
 };
-
-let mockProfile: WorkerProfile = { ...mockWorkerProfile };
 
 export function mapBackendWorkerProfile(raw: any): WorkerProfile {
   if (!raw) return emptyWorkerProfile;
@@ -44,7 +39,7 @@ export function mapBackendWorkerProfile(raw: any): WorkerProfile {
   ) {
     return {
       ...raw,
-      rating: typeof raw.rating === "number" ? raw.rating : 5.0,
+      rating: typeof raw.rating === "number" ? raw.rating : 0,
       reviewsCount: typeof raw.reviewsCount === "number" ? raw.reviewsCount : 0,
       completedJobs: typeof raw.completedJobs === "number" ? raw.completedJobs : 0,
       serviceAreas: Array.isArray(raw.serviceAreas)
@@ -115,7 +110,7 @@ export function mapBackendWorkerProfile(raw: any): WorkerProfile {
         ? raw.rating.average
         : typeof wp?.rating === "number"
         ? wp.rating
-        : 5.0,
+        : 0,
     reviewsCount:
       typeof raw.reviewsCount === "number"
         ? raw.reviewsCount
@@ -144,7 +139,7 @@ export function mapBackendWorkerProfile(raw: any): WorkerProfile {
       coverageAreas.length > 0
         ? coverageAreas
         : allServiceAreaStrings,
-    defaultVisitCharge: raw.defaultVisitCharge ?? 300,
+    defaultVisitCharge: typeof raw.defaultVisitCharge === "number" ? raw.defaultVisitCharge : 0,
     documents: docs,
     profileVisible:
       wp?.isAvailable ??
@@ -153,9 +148,6 @@ export function mapBackendWorkerProfile(raw: any): WorkerProfile {
 }
 
 export async function getWorkerProfile(): Promise<WorkerProfile> {
-  if (isMockMode()) {
-    return simulateLatency({ ...mockProfile });
-  }
   const raw = await http.get<WorkerProfile>(`/users/me`);
   return mapBackendWorkerProfile(raw);
 }
@@ -163,11 +155,6 @@ export async function getWorkerProfile(): Promise<WorkerProfile> {
 export async function updateWorkerProfile(
   input: UpdateWorkerProfileInput,
 ): Promise<WorkerProfile> {
-  if (isMockMode()) {
-    await simulateLatency(undefined, 500, 1000);
-    mockProfile = { ...mockProfile, ...input };
-    return { ...mockProfile };
-  }
   const raw = await http.patch<WorkerProfile>(`/users/me`, input);
   return mapBackendWorkerProfile(raw);
 }
@@ -175,11 +162,6 @@ export async function updateWorkerProfile(
 export async function updateProfileAvatar(
   avatarUrl: string,
 ): Promise<WorkerProfile> {
-  if (isMockMode()) {
-    await simulateLatency(undefined, 400, 900);
-    mockProfile = { ...mockProfile, avatarUrl };
-    return { ...mockProfile };
-  }
   const raw = await http.patch<WorkerProfile>(`/users/me`, { avatarUrl });
   return mapBackendWorkerProfile(raw);
 }
@@ -187,11 +169,6 @@ export async function updateProfileAvatar(
 export async function updateProfileVisibility(
   profileVisible: boolean,
 ): Promise<WorkerProfile> {
-  if (isMockMode()) {
-    await simulateLatency(undefined, 300, 700);
-    mockProfile = { ...mockProfile, profileVisible };
-    return { ...mockProfile };
-  }
   const raw = await http.patch<WorkerProfile>(`/users/me`, {
     privacy: { profileVisible },
   });
@@ -199,6 +176,6 @@ export async function updateProfileVisibility(
 }
 
 export const queryKeys = {
-  profile: (workerId: string = MOCK_WORKER_ID) =>
+  profile: (workerId: string = "me") =>
     ["worker", "profile", workerId] as const,
 };

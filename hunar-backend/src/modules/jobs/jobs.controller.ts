@@ -36,7 +36,7 @@ export class JobsController {
   @Get(':id')
   getDetail(
     @CurrentUser() user: JwtPayload,
-    @Param('id', ParseUUIDPipe) id: string,
+    @Param('id') id: string,
     @Query('lat') lat?: number,
     @Query('lng') lng?: number,
   ) {
@@ -46,7 +46,7 @@ export class JobsController {
   @Put(':id/cancel')
   cancel(
     @CurrentUser() user: JwtPayload,
-    @Param('id', ParseUUIDPipe) id: string,
+    @Param('id') id: string,
     @Body() dto: CancelJobDto,
   ) {
     return this.jobsService.cancelJob(id, user, dto);
@@ -56,7 +56,7 @@ export class JobsController {
   @Roles(Role.WORKER, Role.ADMIN)
   complete(
     @CurrentUser() user: JwtPayload,
-    @Param('id', ParseUUIDPipe) id: string,
+    @Param('id') id: string,
   ) {
     return this.jobsService.completeJob(id, user);
   }

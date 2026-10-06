@@ -8,6 +8,8 @@ const SOCKET_URL =
 
 let socket: Socket | null = null;
 let lastToken: string | null | undefined = undefined;
+let connectionCount = 0;
+let disconnectTimeout: ReturnType<typeof setTimeout> | null = null;
 
 export function getSocket(): Socket | null {
   if (typeof window === "undefined") return null;
@@ -32,6 +34,12 @@ export function getSocket(): Socket | null {
 }
 
 export function connectSocket(): Socket | null {
+  if (disconnectTimeout) {
+    clearTimeout(disconnectTimeout);
+    disconnectTimeout = null;
+  }
+  connectionCount++;
+
   const s = getSocket();
   if (!s) return null;
 
@@ -51,7 +59,31 @@ export function connectSocket(): Socket | null {
   return s;
 }
 
-export function disconnectSocket(): void {
-  socket?.disconnect();
-  socket = null;
+export function disconnectSocket(force = false): void {
+  connectionCount = Math.max(0, connectionCount - 1);
+
+  if (disconnectTimeout) {
+    clearTimeout(disconnectTimeout);
+    disconnectTimeout = null;
+  }
+
+  if (force) {
+    connectionCount = 0;
+    if (socket?.connected) {
+      socket.disconnect();
+    }
+    socket = null;
+    return;
+  }
+
+  if (connectionCount === 0) {
+    disconnectTimeout = setTimeout(() => {
+      if (connectionCount === 0 && socket) {
+        if (socket.connected) {
+          socket.disconnect();
+        }
+        socket = null;
+      }
+    }, 1200);
+  }
 }

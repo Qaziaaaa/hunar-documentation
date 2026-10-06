@@ -14,7 +14,6 @@ import { PersonalProfileTab } from "./personal-profile-tab";
 import { SavedAddressesTab } from "./saved-addresses-tab";
 import { NotificationsTab } from "./notifications-tab";
 import { SecurityTab } from "./security-tab";
-import { MOCK_CUSTOMER_PROFILE } from "../data/mock-profile-data";
 import { getCustomerProfile, updateCustomerProfile } from "../api/customer-profile-api";
 import {
   getSavedAddresses,
@@ -64,16 +63,19 @@ export function CustomerProfileView() {
   const isUrdu = locale === "ur";
   const t = useTranslations("CustomerPortal.Profile");
 
-  const [profile, setProfile] = useState<CustomerProfileData>(() => ({
-    ...initialEmptyProfile,
-    savedAddresses: getSavedAddresses(),
-  }));
+  const [profile, setProfile] = useState<CustomerProfileData>(initialEmptyProfile);
   const [activeTab, setActiveTab] = useState<
     "personal" | "addresses" | "notifications" | "security"
   >("personal");
   const [successToast, setSuccessToast] = useState<string | null>(null);
 
   useEffect(() => {
+    // Sync client-side saved addresses after hydration
+    setProfile((prev) => ({
+      ...prev,
+      savedAddresses: getSavedAddresses(),
+    }));
+
     getCustomerProfile().then((data) => {
       if (data) {
         setProfile((prev) => ({

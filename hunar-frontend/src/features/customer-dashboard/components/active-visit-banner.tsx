@@ -68,9 +68,9 @@ export function ActiveVisitBanner({ visit: propVisit }: ActiveVisitBannerProps =
       ? technician.nameUr
       : technician?.name || legacyWorker.workerName || (isUrdu ? "ٹیکنیشن" : "Technician");
 
-  const technicianPhone = technician?.phone || legacyWorker.workerPhone || "03001234567";
+  const technicianPhone = technician?.phone || legacyWorker.workerPhone || "";
 
-  const visitCharges = liveVisit.visitCharges ?? 300;
+  const visitCharges = liveVisit.visitCharges ?? 0;
 
   const area = isUrdu
     ? liveVisit.customerAreaUr ?? liveVisit.customerArea ?? legacyWorker.address
@@ -105,14 +105,18 @@ export function ActiveVisitBanner({ visit: propVisit }: ActiveVisitBannerProps =
                 {t("technicianOnTheWay")}
               </span>
             )}
-            <span className="text-slate-300 text-xs">•</span>
-            <span className="text-xs font-bold text-[#0F8B8D]">
-              {isVerified
-                ? isUrdu
-                  ? "OTP تصدیق شدہ • معائنہ جاری ہے"
-                  : "OTP Verified • Diagnosis in progress"
-                : `${t("arrivingIn")} ~${liveVisit.etaMinutes ?? 12} ${isUrdu ? "منٹ" : "mins"} (${liveVisit.remainingDistanceKm ?? 2.4} ${isUrdu ? "کلومیٹر دور" : "km away"})`}
-            </span>
+            {(isVerified || liveVisit.etaMinutes || liveVisit.remainingDistanceKm) && (
+              <>
+                <span className="text-slate-300 text-xs">•</span>
+                <span className="text-xs font-bold text-[#0F8B8D]">
+                  {isVerified
+                    ? isUrdu
+                      ? "OTP تصدیق شدہ • معائنہ جاری ہے"
+                      : "OTP Verified • Diagnosis in progress"
+                    : `${t("arrivingIn")}${liveVisit.etaMinutes ? ` ~${liveVisit.etaMinutes} ${isUrdu ? "منٹ" : "mins"}` : ""}${liveVisit.remainingDistanceKm ? ` (${liveVisit.remainingDistanceKm} ${isUrdu ? "کلومیٹر دور" : "km away"})` : ""}`}
+                </span>
+              </>
+            )}
           </div>
 
           <h3 className="text-sm sm:text-base font-extrabold text-[#123B5D] truncate group-hover:text-[#0F8B8D] transition-colors">
@@ -184,16 +188,18 @@ export function ActiveVisitBanner({ visit: propVisit }: ActiveVisitBannerProps =
             </Link>
 
             {/* Call Button */}
-            <a
-              role="button"
-              aria-label={isUrdu ? "کاریگر کو کال کریں" : "Call Worker"}
-              href={`tel:${technicianPhone}`}
-              onClick={(e) => e.stopPropagation()}
-              className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl bg-success hover:bg-success/90 text-white text-xs sm:text-sm font-bold transition-all shadow-2xs active:scale-98 cursor-pointer"
-            >
-              <Phone className="size-4 shrink-0" />
-              <span>{isUrdu ? "کال کریں" : "Call"}</span>
-            </a>
+            {technicianPhone && (
+              <a
+                role="button"
+                aria-label={isUrdu ? "کاریگر کو کال کریں" : "Call Worker"}
+                href={`tel:${technicianPhone}`}
+                onClick={(e) => e.stopPropagation()}
+                className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl bg-success hover:bg-success/90 text-white text-xs sm:text-sm font-bold transition-all shadow-2xs active:scale-98 cursor-pointer"
+              >
+                <Phone className="size-4 shrink-0" />
+                <span>{isUrdu ? "کال کریں" : "Call"}</span>
+              </a>
+            )}
           </div>
         </div>
       </div>

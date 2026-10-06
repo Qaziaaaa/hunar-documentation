@@ -60,14 +60,16 @@ function toFeedJobRequest(job: Job): JobRequest {
     customer: {
       firstName,
       fullName,
-      avatarUrl: "/landing/mansoor-avatar.png",
-      rating: 0,
-      reviewCount: 0,
-      totalOrders: 0,
-      isVerified: false,
-      memberSince: "—",
+      avatarUrl: (job as any).customer?.avatarUrl || (job as any).customer?.user?.avatarUrl || "",
+      rating: (job as any).customer?.rating ?? 0,
+      reviewCount: (job as any).customer?.reviewsCount ?? 0,
+      totalOrders: (job as any).customer?.totalOrders ?? 0,
+      isVerified: Boolean((job as any).customer?.isVerified),
+      memberSince: (job as any).customer?.memberSince || "—",
     },
-    images: (job.images ?? []).filter((src) => src.startsWith("/")),
+    images: (job.images ?? []).filter(
+      (src) => typeof src === "string" && src.trim().length > 0 && !src.startsWith("blob:")
+    ),
     voiceNote: undefined,
   };
 }

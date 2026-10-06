@@ -1,43 +1,36 @@
 import { http } from "@/lib/api-client";
-import { isMockMode } from "@/lib/data-source";
-import { MOCK_CUSTOMER_JOBS, MOCK_WORKER_PROFILES } from "../data/mock-customer-jobs";
 import type { CustomerJob, JobStatus, WorkerOffer, WorkerProfile } from "../types";
 
 /**
  * Fetch all jobs for the logged-in customer, enriched with offers & selected worker.
  */
 export async function getCustomerJobs(): Promise<CustomerJob[]> {
-  try {
-    const res = await http.get<unknown>("/jobs/customer?limit=100");
-    const rows: unknown[] = Array.isArray(res)
-      ? res
-      : (res as { items?: unknown[] })?.items ?? [];
-    if (rows.length === 0) {
-      return [];
-    }
-    const jobs = rows.map(transformListRow);
-
-    await Promise.allSettled(
-      jobs.map(async (job) => {
-        try {
-          const detail = await getJobDetail(job.id);
-          Object.assign(job, detail);
-        } catch (err) {
-          console.warn(`[getCustomerJobs] Detail fetch failed for ${job.id}:`, err);
-        }
-        try {
-          job.offers = await getJobOffers(job.id);
-        } catch (err) {
-          console.warn(`[getCustomerJobs] Offers fetch failed for ${job.id}:`, err);
-        }
-      })
-    );
-
-    return jobs;
-  } catch (err) {
-    console.warn("[getCustomerJobs] Backend API error:", err);
+  const res = await http.get<unknown>("/jobs/customer?limit=100");
+  const rows: unknown[] = Array.isArray(res)
+    ? res
+    : (res as { items?: unknown[] })?.items ?? [];
+  if (rows.length === 0) {
     return [];
   }
+  const jobs = rows.map(transformListRow);
+
+  await Promise.allSettled(
+    jobs.map(async (job) => {
+      try {
+        const detail = await getJobDetail(job.id);
+        Object.assign(job, detail);
+      } catch (err) {
+        console.warn(`[getCustomerJobs] Detail fetch failed for ${job.id}:`, err);
+      }
+      try {
+        job.offers = await getJobOffers(job.id);
+      } catch (err) {
+        console.warn(`[getCustomerJobs] Offers fetch failed for ${job.id}:`, err);
+      }
+    })
+  );
+
+  return jobs;
 }
 
 /**
@@ -61,7 +54,7 @@ export async function getJobDetail(jobId: string): Promise<CustomerJob> {
     city: res.city || "Peshawar",
     scheduleType: res.urgency === "URGENT" ? "asap" : "scheduled",
     preferredDate: res.preferredVisitTime || res.createdAt || new Date().toISOString(),
-    preferredTimeSlot: "9:00 AM - 1:00 PM",
+    preferredTimeSlot: res.preferredTimeSlot || res.timeSlot || "",
     status: mapJobStatus(res.status),
     createdAt: res.createdAt || new Date().toISOString(),
     offers: (res.offers || []).map(transformBackendOffer),
@@ -70,7 +63,7 @@ export async function getJobDetail(jobId: string): Promise<CustomerJob> {
           id: res.selectedWorkerId,
           jobId: res.id,
           worker: res.selectedWorker,
-          visitCharge: Number(res.lockedVisitCharge ?? 350),
+          visitCharge: Number(res.lockedVisitCharge ?? 0),
           message: res.offerMessage,
           createdAt: res.createdAt,
         })
@@ -216,24 +209,21 @@ function transformBackendWorker(worker: any): WorkerProfile {
     id: worker.id || "worker-unknown",
     name: worker.name || worker.fullName || "Worker",
     businessName: worker.businessName,
-    avatarUrl:
-      worker.avatarUrl ||
-      worker.avatar ||
-      "https://images.unsplash.com/photo-1540569014015-19a7be504e3a?w=150&auto=format&fit=crop&q=80",
+    avatarUrl: worker.avatarUrl || worker.avatar || "",
     phone: worker.phone || worker.mobile || "",
     rating: Number(worker.rating ?? worker.avgRating ?? 0),
     totalReviews: Number(worker.totalReviews ?? worker.reviewCount ?? worker.ratingCount ?? 0),
     jobSuccessRate: Number(worker.jobSuccessRate ?? 0),
     completedJobsCount: Number(worker.completedJobsCount ?? worker.completedJobs ?? 0),
-    responseTime: worker.responseTime || "< 15m",
+    responseTime: worker.responseTime || "",
     tradeCategory: worker.tradeCategory || worker.category?.name || "Technician",
-    serviceArea: worker.serviceArea || worker.area || "Peshawar",
+    serviceArea: worker.serviceArea || worker.area || "",
     experienceYears: Number(worker.experienceYears || worker.yearsOfExperience || 0),
     bio: worker.bio || worker.about || "",
     isCnicVerified: !!worker.isCnicVerified,
     isNadraCleared: !!worker.isNadraCleared,
     isPoliceCleared: !!worker.isPoliceCleared,
-    hunarBadgeId: "#OW-" + (worker.hunarBadgeNumber || worker.userNumber || "0000"),
+    hunarBadgeId: worker.hunarBadgeNumber ? `#OW-${worker.hunarBadgeNumber}` : "",
     expertiseTags: worker.skills || worker.expertiseTags || [],
     workProjects: [],
     reviews: [],
@@ -253,7 +243,7 @@ function transformBackendOffer(offer: any): WorkerOffer {
     jobId: offer.jobId,
     worker: transformBackendWorker(offer.worker || {}),
     visitFee: Number(offer.visitCharge || offer.counterPrice || 0),
-    estimatedArrival: "Today",
+    estimatedArrival: offer.estimatedArrival || "",
     distanceKm: Number(offer.distanceKm || 0),
     createdAt: offer.createdAt || new Date().toISOString(),
     note: offer.message,

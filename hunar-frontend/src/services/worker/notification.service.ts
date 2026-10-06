@@ -1,16 +1,9 @@
 import { http } from "@/lib/api-client";
 import { getSocket } from "@/lib/socket";
-import { isMockMode, simulateLatency } from "@/lib/data-source";
 import type { AppNotification, NotificationType } from "@/types/notification";
 import type { NotificationPreferences } from "@/types/settings";
-import {
-  mockNotificationPreferences,
-  mockNotifications,
-} from "@/mocks/notifications.mock";
 
 type NotificationListener = (notification: AppNotification) => void;
-
-const mockNotificationListeners = new Set<NotificationListener>();
 
 // Backend NotificationType enum → frontend NotificationType
 const BACKEND_TYPE_MAP: Record<string, NotificationType> = {
@@ -63,13 +56,6 @@ export function normalizeBackendNotification(raw: unknown): AppNotification {
 }
 
 export async function getNotifications(): Promise<AppNotification[]> {
-  if (isMockMode()) {
-    return simulateLatency(
-      [...mockNotifications].sort((a, b) =>
-        b.createdAt.localeCompare(a.createdAt),
-      ),
-    );
-  }
   const res = await http.get<unknown>(`/notifications`);
   const rows: unknown[] = Array.isArray(res)
     ? res
@@ -78,51 +64,26 @@ export async function getNotifications(): Promise<AppNotification[]> {
 }
 
 export async function getUnreadCount(): Promise<number> {
-  if (isMockMode()) {
-    const count = mockNotifications.filter((n) => !n.read).length;
-    return simulateLatency(count, 150, 300);
-  }
   return http.get<number>(`/notifications/unread-count`);
 }
 
 export async function markNotificationRead(
   notificationId: string,
 ): Promise<void> {
-  if (isMockMode()) {
-    await simulateLatency(undefined, 150, 300);
-    const target = mockNotifications.find((n) => n.id === notificationId);
-    if (target) target.read = true;
-    return;
-  }
   await http.put(`/notifications/${notificationId}/read`);
 }
 
 export async function markAllNotificationsRead(): Promise<void> {
-  if (isMockMode()) {
-    await simulateLatency(undefined, 150, 400);
-    for (const n of mockNotifications) n.read = true;
-    return;
-  }
   await http.put(`/notifications/read-all`);
 }
 
 export async function getNotificationPreferences(): Promise<NotificationPreferences> {
-  if (isMockMode()) {
-    return simulateLatency({
-      enabled: { ...mockNotificationPreferences.enabled },
-    });
-  }
   return http.get<NotificationPreferences>(`/notifications/preferences`);
 }
 
 export async function updateNotificationPreferences(
   input: NotificationPreferences,
 ): Promise<NotificationPreferences> {
-  if (isMockMode()) {
-    await simulateLatency(undefined, 300, 700);
-    mockNotificationPreferences.enabled = { ...input.enabled };
-    return { enabled: { ...input.enabled } };
-  }
   return http.put<NotificationPreferences>(
     `/notifications/preferences`,
     input,
@@ -132,12 +93,6 @@ export async function updateNotificationPreferences(
 export function subscribeToNotifications(
   listener: NotificationListener,
 ): () => void {
-  if (isMockMode()) {
-    mockNotificationListeners.add(listener);
-    return () => {
-      mockNotificationListeners.delete(listener);
-    };
-  }
   const socket = getSocket();
   if (!socket) return () => undefined;
   const handle = (payload: unknown) =>
@@ -146,14 +101,6 @@ export function subscribeToNotifications(
   return () => {
     socket.off("notification:new", handle);
   };
-}
-
-export function notifyMockListeners(
-  notification: AppNotification,
-): void {
-  for (const listener of mockNotificationListeners) {
-    listener(notification);
-  }
 }
 
 export const NOTIFICATION_TYPES: NotificationType[] = [

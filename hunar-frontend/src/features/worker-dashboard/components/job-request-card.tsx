@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useMemo } from "react";
 import Image from "next/image";
 import {
   MapPin,
@@ -42,6 +42,13 @@ export function JobRequestCard({
   const isUrdu = locale === "ur";
   const Icon = CATEGORY_ICONS[job.category] || Wrench;
   const isUrgent = job.status === "URGENT";
+
+  const validImages = useMemo(() => {
+    if (!job.images || !Array.isArray(job.images)) return [];
+    return job.images.filter(
+      (src) => typeof src === "string" && src.trim().length > 0 && !src.startsWith("blob:")
+    );
+  }, [job.images]);
 
   const [offsetX, setOffsetX] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
@@ -191,14 +198,20 @@ export function JobRequestCard({
         {/* LEFT SIDE — Customer Profile */}
         <div className="flex w-18 sm:w-20 shrink-0 flex-col items-center border-r border-slate-100/80 pr-2 sm:pr-2.5 text-center pointer-events-none">
           {/* Customer Profile Image */}
-          <div className="relative mb-1 size-11 sm:size-12 overflow-hidden rounded-full border border-slate-200 bg-slate-100 group-hover:border-teal transition-colors">
-            <Image
-              src={job.customer.avatarUrl}
-              alt={job.customer.firstName}
-              fill
-              className="object-cover"
-              sizes="48px"
-            />
+          <div className="relative mb-1 size-11 sm:size-12 overflow-hidden rounded-full border border-slate-200 bg-slate-100 flex items-center justify-center group-hover:border-teal transition-colors">
+            {job.customer.avatarUrl ? (
+              <Image
+                src={job.customer.avatarUrl}
+                alt={job.customer.firstName || "Customer"}
+                fill
+                className="object-cover"
+                sizes="48px"
+              />
+            ) : (
+              <span className="text-xs font-bold text-slate-600 uppercase">
+                {job.customer.firstName ? job.customer.firstName.charAt(0) : "C"}
+              </span>
+            )}
           </div>
 
           {/* First Name Only */}
@@ -253,10 +266,10 @@ export function JobRequestCard({
           </div>
 
           {/* Bottom Row: Media Row (2 Image Thumbnails) — Mobile Only */}
-          {job.images && job.images.length > 0 && (
+          {validImages.length > 0 && (
             <div className="mt-2 flex sm:hidden flex-wrap items-center gap-2 pt-1.5 border-t border-slate-100/80">
               <div className="flex items-center gap-1.5 shrink-0">
-                {job.images.slice(0, 2).map((imgUrl, idx) => (
+                {validImages.slice(0, 2).map((imgUrl, idx) => (
                   <div
                     key={idx}
                     className="relative size-10 sm:size-11 overflow-hidden rounded-lg border border-slate-100 bg-slate-100 hover:opacity-90 transition-opacity"
@@ -276,12 +289,12 @@ export function JobRequestCard({
         </div>
 
         {/* RIGHT-MOST SECTION (DESKTOP ONLY) — 40% Width 2-Image Grid Area */}
-        {job.images && job.images.length > 0 && (
+        {validImages.length > 0 && (
           <div className="hidden sm:flex sm:w-[36%] md:w-[40%] shrink-0 items-center justify-end pointer-events-none pl-2 sm:pl-3">
-            {job.images.length === 1 ? (
+            {validImages.length === 1 ? (
               <div className="relative w-full h-24 sm:h-26 md:h-28 overflow-hidden rounded-lg border border-slate-200/80 bg-slate-100 shadow-2xs group-hover:border-teal/40 transition-colors">
                 <Image
-                  src={job.images[0]}
+                  src={validImages[0]}
                   alt={job.category || "Job photo"}
                   fill
                   className="object-cover group-hover:scale-105 transition-transform duration-300"
@@ -290,7 +303,7 @@ export function JobRequestCard({
               </div>
             ) : (
               <div className="grid grid-cols-2 gap-2 w-full h-24 sm:h-26 md:h-28">
-                {job.images.slice(0, 2).map((imgUrl, idx) => (
+                {validImages.slice(0, 2).map((imgUrl, idx) => (
                   <div
                     key={idx}
                     className="relative h-full w-full overflow-hidden rounded-lg border border-slate-200/80 bg-slate-100 shadow-2xs group-hover:border-teal/40 transition-colors"
@@ -302,9 +315,9 @@ export function JobRequestCard({
                       className="object-cover group-hover:scale-105 transition-transform duration-300"
                       sizes="(min-width: 640px) 15vw, 120px"
                     />
-                    {idx === 1 && job.images.length > 2 && (
+                    {idx === 1 && validImages.length > 2 && (
                       <span className="absolute bottom-1 right-1 rounded-md bg-black/65 px-1.5 py-0.5 text-[9.5px] font-extrabold text-white backdrop-blur-xs">
-                        +{job.images.length - 2}
+                        +{validImages.length - 2}
                       </span>
                     )}
                   </div>

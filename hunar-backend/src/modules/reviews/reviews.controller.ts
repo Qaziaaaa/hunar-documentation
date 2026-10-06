@@ -14,7 +14,7 @@ export class ReviewsController {
   @Roles(Role.CUSTOMER)
   create(
     @CurrentUser() user: JwtPayload,
-    @Param('jobId', ParseUUIDPipe) jobId: string,
+    @Param('jobId') jobId: string,
     @Body() dto: CreateReviewDto,
   ) {
     return this.reviewsService.createReview(jobId, user.sub, dto);
@@ -28,7 +28,7 @@ export class ReviewsController {
   }
 
   @Get('jobs/:jobId/reviews')
-  getJobReviews(@Param('jobId', ParseUUIDPipe) jobId: string, @Query() query: ReviewQueryDto) {
+  getJobReviews(@Param('jobId') jobId: string, @Query() query: ReviewQueryDto) {
     return this.reviewsService.getJobReviews(jobId, query);
   }
 

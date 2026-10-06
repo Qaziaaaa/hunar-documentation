@@ -1,4 +1,3 @@
-import { isMockMode, simulateLatency } from "@/lib/data-source";
 import { ApiError, API_BASE_URL, getAccessToken } from "@/lib/api-client";
 
 export const IMAGE_MIME_TYPES = [
@@ -21,12 +20,6 @@ export function validateImage(file: File): string | null {
 }
 
 export async function uploadImage(file: File): Promise<{ url: string }> {
-  if (isMockMode()) {
-    await simulateLatency(undefined, 700, 1500);
-    return {
-      url: URL.createObjectURL(file),
-    };
-  }
   const formData = new FormData();
   formData.append("file", file);
   const headers = new Headers();

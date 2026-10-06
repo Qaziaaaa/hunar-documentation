@@ -1,6 +1,5 @@
 "use client";
 
-import { MOCK_CUSTOMER_PROFILE } from "../data/mock-profile-data";
 import type { SavedAddress } from "../types";
 
 const STORAGE_KEY = "hunar_customer_saved_addresses";

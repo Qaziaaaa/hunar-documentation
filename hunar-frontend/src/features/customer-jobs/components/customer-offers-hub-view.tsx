@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import {
   ArrowRight,
   CheckCircle2,
@@ -28,6 +28,13 @@ export function CustomerOffersHubView({ initialJobs }: CustomerOffersHubViewProp
   const locale = useLocale();
   const isUrdu = locale === "ur";
   const [jobs, setJobs] = useState<CustomerJob[]>(initialJobs);
+
+  useEffect(() => {
+    if (initialJobs) {
+      setJobs(initialJobs);
+    }
+  }, [initialJobs]);
+
   const [statusFilter, setStatusFilter] = useState<"all" | "pending" | "accepted">("pending");
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState<string>("");
@@ -45,7 +52,7 @@ export function CustomerOffersHubView({ initialJobs }: CustomerOffersHubViewProp
 
   const activeOffersCount = allOffers.length;
   const lowestFee = useMemo(() => {
-    if (allOffers.length === 0) return 300;
+    if (allOffers.length === 0) return 0;
     return Math.min(...allOffers.map((o) => o.visitFee));
   }, [allOffers]);
 

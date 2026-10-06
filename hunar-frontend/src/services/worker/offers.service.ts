@@ -1,7 +1,5 @@
 import { http } from "@/lib/api-client";
-import { isMockMode, simulateLatency } from "@/lib/data-source";
 import type { VisitOffer } from "@/types/offer";
-import { mockOffers } from "@/mocks/jobs.mock";
 
 interface BackendOfferRow {
   id: string;
@@ -58,9 +56,6 @@ function mapBackendOffer(w: BackendOfferRow): VisitOffer {
 }
 
 export async function listMyOffers(): Promise<VisitOffer[]> {
-  if (isMockMode()) {
-    return simulateLatency([...mockOffers]);
-  }
   const res = await http.get<{ data: BackendOfferRow[] }>("/offers/my?limit=100");
   return (res.data ?? []).map(mapBackendOffer);
 }

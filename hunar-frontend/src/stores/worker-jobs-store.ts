@@ -21,7 +21,6 @@ import { cancelWorkerJob } from "@/services/worker/cancellation.service";
 import { getWalletSummary } from "@/services/worker/earnings.service";
 import { getWorkerProfile } from "@/services/worker/profile.service";
 import { http } from "@/lib/api-client";
-import { isMockMode } from "@/lib/data-source";
 import type { Job } from "@/types/job";
 
 export interface WorkerState {
@@ -406,7 +405,7 @@ export const workerStore = {
   // Task 8a: Start Visit -> visit_in_progress
   startVisit(jobId: string) {
     const visitId = visitIdByJob.get(jobId);
-    if (visitId && !isMockMode()) {
+    if (visitId) {
       http.put(`/visits/${visitId}/start`).catch((err) => {
         console.error("[workerStore] start visit failed:", err);
       });
@@ -435,19 +434,6 @@ export const workerStore = {
       return {
         success: false,
         error: `Insufficient wallet balance. Minimum Rs. ${requiredHold} commission hold required.`,
-      };
-    }
-
-    if (isMockMode()) {
-      const mockOtp = Math.floor(1000 + Math.random() * 9000).toString();
-      patch({
-        walletHold: globalState.walletHold + requiredHold,
-      });
-      return {
-        success: true,
-        otp: mockOtp,
-        visitId: "mock-visit-id",
-        arrivedAt: Date.now(),
       };
     }
 
@@ -550,48 +536,46 @@ export const workerStore = {
       ),
     });
 
-    if (!isMockMode()) {
-      const getOrFetchVisitId = async () => {
-        const vId = visitIdByJob.get(jobId);
-        if (vId) return vId;
-        const detail = await http.get<{ id: string; visits?: { id: string }[] }>(`/jobs/${jobId}`).catch(() => null);
-        const fetchedId = detail?.visits?.[0]?.id;
-        if (fetchedId) {
-          visitIdByJob.set(jobId, fetchedId);
+    const getOrFetchVisitId = async () => {
+      const vId = visitIdByJob.get(jobId);
+      if (vId) return vId;
+      const detail = await http.get<{ id: string; visits?: { id: string }[] }>(`/jobs/${jobId}`).catch(() => null);
+      const fetchedId = detail?.visits?.[0]?.id;
+      if (fetchedId) {
+        visitIdByJob.set(jobId, fetchedId);
+      }
+      return fetchedId;
+    };
+
+    getOrFetchVisitId().then(async (vId) => {
+      if (!vId) return;
+      try {
+        await http.put(`/visits/${vId}/inspection`, {
+          diagnosis: report.diagnosis,
+          repairPlan: report.repairPlan,
+          repairEstimate: report.repairPriceEstimate,
+          inspectionPhotos: report.photos,
+          estimatedRepairTimeMin: 60,
+        });
+
+        const repair = await http.post(`/visits/${vId}/estimate`, {
+          description: report.diagnosis,
+          amount: report.repairPriceEstimate,
+          itemsBreakdown: { plan: report.repairPlan },
+        }).catch((err) => {
+          console.warn("[workerStore] create repair estimate:", err);
+          return null;
+        });
+
+        const r = repair as { id?: string; jobId?: string } | null;
+        if (r?.id && r?.jobId) {
+          repairIdByJob.set(r.jobId, r.id);
+          visitIdByJob.set(r.jobId, vId);
         }
-        return fetchedId;
-      };
-
-      getOrFetchVisitId().then(async (vId) => {
-        if (!vId) return;
-        try {
-          await http.put(`/visits/${vId}/inspection`, {
-            diagnosis: report.diagnosis,
-            repairPlan: report.repairPlan,
-            repairEstimate: report.repairPriceEstimate,
-            inspectionPhotos: report.photos,
-            estimatedRepairTimeMin: 60,
-          });
-
-          const repair = await http.post(`/visits/${vId}/estimate`, {
-            description: report.diagnosis,
-            amount: report.repairPriceEstimate,
-            itemsBreakdown: { plan: report.repairPlan },
-          }).catch((err) => {
-            console.warn("[workerStore] create repair estimate:", err);
-            return null;
-          });
-
-          const r = repair as { id?: string; jobId?: string } | null;
-          if (r?.id && r?.jobId) {
-            repairIdByJob.set(r.jobId, r.id);
-            visitIdByJob.set(r.jobId, vId);
-          }
-        } catch (err) {
-          console.error("[workerStore] submit inspection failed:", err);
-        }
-      });
-    }
+      } catch (err) {
+        console.error("[workerStore] submit inspection failed:", err);
+      }
+    });
 
     return { success: true };
   },
@@ -604,11 +588,9 @@ export const workerStore = {
       ),
     });
 
-    if (!isMockMode()) {
-      cancelWorkerJob({ jobId, reason: "other", note: reason, stage: "before_visit" }).catch((err) => {
-        console.error("[workerStore] cancel job failed:", err);
-      });
-    }
+    cancelWorkerJob({ jobId, reason: "other", note: reason, stage: "before_visit" }).catch((err) => {
+      console.error("[workerStore] cancel job failed:", err);
+    });
   },
 
   // Simulation: Another worker assigned (Real-time Socket.IO trigger)
@@ -690,7 +672,7 @@ export const workerStore = {
 
   startRepair(jobId: string) {
     const repairId = repairIdByJob.get(jobId);
-    if (repairId && !isMockMode()) {
+    if (repairId) {
       startRepairApi(repairId).catch((err) => {
         console.error("[workerStore] start repair failed:", err);
       });
@@ -726,43 +708,36 @@ export const workerStore = {
               completedAt: new Date().toISOString(),
               invoiceNumber: `INV-2026-${jobId.slice(-4).toUpperCase()}`,
               warrantyDays: isDeclined ? 0 : 30,
-              customerReview: {
-                rating: 5.0,
-                comment: "Excellent service! The technician was very punctual and solved the issue quickly.",
-                date: "Just now",
-              },
             }
           : j
       ),
     });
 
-    if (!isMockMode()) {
-      // 1. Call backend API to mark job COMPLETED and credit earnings
-      http.put(`/jobs/${jobId}/complete`).then(() => {
-        // Refresh wallet summary to get real backend balance
-        void getWalletSummary().then((summary) => {
-          if (summary) {
-            patch({
-              walletBalance: summary.currentBalance,
-              walletHold: summary.totalDeductions,
-            });
-          }
-        });
-      }).catch((err) => {
-        console.error("[workerStore] complete job failed:", err);
-      });
-
-      // 2. Complete active repair if repair was registered and accepted
-      const repairId = repairIdByJob.get(jobId);
-      if (repairId && finalRepairCharge > 0) {
-        startRepairApi(repairId)
-          .catch(() => {})
-          .finally(() => {
-            completeRepairApi(repairId).catch((err) => {
-              console.error("[workerStore] complete repair failed:", err);
-            });
+    // 1. Call backend API to mark job COMPLETED and credit earnings
+    http.put(`/jobs/${jobId}/complete`).then(() => {
+      // Refresh wallet summary to get real backend balance
+      void getWalletSummary().then((summary) => {
+        if (summary) {
+          patch({
+            walletBalance: summary.currentBalance,
+            walletHold: summary.totalDeductions,
           });
-      }
+        }
+      });
+    }).catch((err) => {
+      console.error("[workerStore] complete job failed:", err);
+    });
+
+    // 2. Complete active repair if repair was registered and accepted
+    const repairId = repairIdByJob.get(jobId);
+    if (repairId && finalRepairCharge > 0) {
+      startRepairApi(repairId)
+        .catch(() => {})
+        .finally(() => {
+          completeRepairApi(repairId).catch((err) => {
+            console.error("[workerStore] complete repair failed:", err);
+          });
+        });
     }
   },
 

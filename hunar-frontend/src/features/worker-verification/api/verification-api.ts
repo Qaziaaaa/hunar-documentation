@@ -21,34 +21,17 @@ function mapBackendStatusToOutcome(status?: string): VerificationOutcome {
 
 const DEFAULT_VERIFICATION_DATA: WorkerVerificationData = {
   status: "pending",
-  workerId: "wrk_pesh_9921",
-  fullName: "Tariq Mehmood",
-  phone: "3001234567",
-  skills: ["Electrician", "Solar Technician"],
+  workerId: "",
+  fullName: "",
+  phone: "",
+  skills: [],
   city: "Peshawar",
-  serviceAreas: ["Hayatabad", "University Town", "Saddar"],
+  serviceAreas: [],
   submittedAt: new Date().toISOString(),
-  rejectionReason:
-    "Identity document verification failed: The uploaded photo of your Smart CNIC front is blurry and glare covers the 13-digit identification number. Please provide a clear, well-lit photo.",
-  adminNotes:
-    "Please update your base workshop location and upload a higher-resolution photo of your CNIC Back so the family registration code is readable.",
-  changeRequests: [
-    {
-      id: "cr_1",
-      field: "cnicBack",
-      title: "CNIC Back Photo",
-      adminNote: "Please re-upload with all 4 corners visible and no flash glare.",
-      stepNumber: 5,
-    },
-    {
-      id: "cr_2",
-      field: "primaryAddress",
-      title: "Workshop Location",
-      adminNote: "Please provide a specific street/chowk address in Peshawar.",
-      stepNumber: 4,
-    },
-  ],
-  tradeCertificateName: "NAVTTC_Electrician_Cert_2024.pdf",
+  rejectionReason: undefined,
+  adminNotes: undefined,
+  changeRequests: [],
+  tradeCertificateName: undefined,
 };
 
 export async function getVerificationStatus(): Promise<WorkerVerificationData> {
@@ -63,14 +46,14 @@ export async function getVerificationStatus(): Promise<WorkerVerificationData> {
 
       const parsed: WorkerVerificationData = {
         status,
-        workerId: data.user.id ? `WRK-${data.user.id.slice(0, 8).toUpperCase()}` : "wrk_pesh_9921",
-        fullName: data.user.name || "Worker Pro",
-        phone: data.user.phone ? data.user.phone.replace(/^(\+92|0)/, "") : "3001234567",
-        skills: profile?.skills?.length ? profile.skills : ["General Handyman"],
+        workerId: data.user.id ? `WRK-${data.user.id.slice(0, 8).toUpperCase()}` : "",
+        fullName: data.user.name || "",
+        phone: data.user.phone ? data.user.phone.replace(/^(\+92|0)/, "") : "",
+        skills: profile?.skills?.length ? profile.skills : [],
         city: "Peshawar",
         serviceAreas: data.serviceAreas?.length
-          ? data.serviceAreas.map((a: any) => a.label)
-          : ["Peshawar"],
+          ? data.serviceAreas.map((a: any) => (typeof a === "string" ? a : a.label || a.address || "")).filter(Boolean)
+          : [],
         submittedAt: profile?.submittedAt || new Date().toISOString(),
         reviewedAt: profile?.verifiedAt || undefined,
         rejectionReason: profile?.rejectionReason || undefined,

@@ -56,21 +56,14 @@ export function WorkerJourneyFullscreen({
   const [showSupportModal, setShowSupportModal] = useState(false);
   const [showSettlementModal, setShowSettlementModal] = useState(false);
   const [customerRating, setCustomerRating] = useState(5);
-  const [selectedReviewTags, setSelectedReviewTags] = useState<string[]>([
-    "Polite & Cooperative",
-    "Fast Payment",
-  ]);
+  const [selectedReviewTags, setSelectedReviewTags] = useState<string[]>([]);
   const [cancelReason, setCancelReason] = useState("");
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   // Form fields for inspection
-  const [diagnosis, setDiagnosis] = useState(
-    "Faulty main breaker overheating under peak load. Terminal lug insulation degraded."
-  );
-  const [repairPrice, setRepairPrice] = useState<number | string>(activeJob.repairCharge ?? 1500);
-  const [photos, setPhotos] = useState<string[]>([
-    "https://images.unsplash.com/photo-1621905251189-08b45d6a269e?auto=format&fit=crop&w=800&q=80",
-  ]);
+  const [diagnosis, setDiagnosis] = useState("");
+  const [repairPrice, setRepairPrice] = useState<number | string>(activeJob.repairCharge ?? "");
+  const [photos, setPhotos] = useState<string[]>([]);
   const fileInputRef = React.useRef<HTMLInputElement | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
