@@ -42,27 +42,9 @@ export function Step3LocationSchedule({
   const locale = useLocale();
   const isUrdu = locale === "ur";
 
-  const [savedAddresses, setSavedAddresses] = useState<SavedAddress[]>(() => {
-    if (typeof window !== "undefined") {
-      return getSavedAddresses();
-    }
-    return [];
-  });
+  const [savedAddresses, setSavedAddresses] = useState<SavedAddress[]>([]);
   const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
-  const [showCustomLocation, setShowCustomLocation] = useState<boolean>(() => {
-    if (typeof window !== "undefined") {
-      const list = getSavedAddresses();
-      if (list.length === 0) return true;
-      if (!data.address?.trim()) return false;
-      const matched = list.some(
-        (a) =>
-          a.fullAddress.toLowerCase().trim() === data.address.toLowerCase().trim() &&
-          (!data.area?.trim() || a.area.toLowerCase().trim() === data.area.toLowerCase().trim())
-      );
-      return !matched;
-    }
-    return false;
-  });
+  const [showCustomLocation, setShowCustomLocation] = useState<boolean>(false);
 
   const [specificTimeInput, setSpecificTimeInput] = useState("10:00");
   const [error, setError] = useState<string | null>(null);

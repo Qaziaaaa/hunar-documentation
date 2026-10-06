@@ -22,7 +22,6 @@ import { ChatInputBar } from "./chat-input-bar";
 import { VoiceMessageBubble } from "./voice-message-bubble";
 import { sendChatMessage, uploadChatImage, getMessagesByJob, parseVoiceNote, encodeVoiceNote, uploadVoiceNote, storeVoiceInCache, blobToBase64 } from "../api/chat-api";
 import { joinConversationRoom, subscribeToMessages } from "@/services/worker/chat.service";
-import { isMockMode } from "@/lib/data-source";
 import { getStoredUser } from "@/lib/api-client";
 import { getCustomerVisits } from "@/features/customer-visits/api/customer-visits-api";
 import { useQuery } from "@tanstack/react-query";
@@ -402,26 +401,7 @@ export function CustomerChatView() {
         }
       })
       .catch((err) => {
-        console.warn("sendChatMessage fallback:", err);
-        if (isMockMode()) {
-          // Simulated reply from technician only on mock mode
-          setTimeout(() => {
-            const replyMsg: ChatMessage = {
-              id: `msg-${Date.now() + 1}`,
-              sender: "technician",
-              type: "text",
-              text: isUrdu ? "شکریہ! موصول ہو گیا۔" : "Thank you, received!",
-              time: new Date().toLocaleTimeString([], {
-                hour: "2-digit",
-                minute: "2-digit",
-              }),
-            };
-            setMessagesByVisit((prev) => ({
-              ...prev,
-              [visitId]: [...(prev[visitId] || []), replyMsg],
-            }));
-          }, 1500);
-        }
+        console.warn("sendChatMessage failed:", err);
       });
   };
 
@@ -826,15 +806,17 @@ export function CustomerChatView() {
               </div>
 
               {/* Direct Call Button */}
-              <div className="flex items-center gap-2 shrink-0">
-                <a
-                  href={`tel:${currentVisit.technician.phone || "03001234567"}`}
-                  className="size-9 rounded-full bg-success/10 text-success hover:bg-success hover:text-white border border-success/20 shadow-2xs flex items-center justify-center transition-all active:scale-90 cursor-pointer"
-                  title={isUrdu ? "کال کریں" : "Call Technician"}
-                >
-                  <Phone className="size-4 stroke-[2.2]" />
-                </a>
-              </div>
+              {currentVisit.technician.phone && (
+                <div className="flex items-center gap-2 shrink-0">
+                  <a
+                    href={`tel:${currentVisit.technician.phone}`}
+                    className="size-9 rounded-full bg-success/10 text-success hover:bg-success hover:text-white border border-success/20 shadow-2xs flex items-center justify-center transition-all active:scale-90 cursor-pointer"
+                    title={isUrdu ? "کال کریں" : "Call Technician"}
+                  >
+                    <Phone className="size-4 stroke-[2.2]" />
+                  </a>
+                </div>
+              )}
             </header>
 
             {/* Scheduled Visit Details Bar */}

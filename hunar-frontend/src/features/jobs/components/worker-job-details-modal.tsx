@@ -307,13 +307,15 @@ export function WorkerJobDetailsModal({
 
                     {/* Quick Call & Message CTAs */}
                     <div className="flex items-center gap-2">
-                      <a
-                        href={`tel:${job.customer.phone || "03001234567"}`}
-                        className="size-9 sm:size-10 rounded-xl bg-success/10 hover:bg-success text-success hover:text-white border border-success/20 flex items-center justify-center transition-all shadow-2xs cursor-pointer"
-                        title="Call Customer"
-                      >
-                        <Phone className="size-4" />
-                      </a>
+                      {job.customer.phone && (
+                        <a
+                          href={`tel:${job.customer.phone}`}
+                          className="size-9 sm:size-10 rounded-xl bg-success/10 hover:bg-success text-success hover:text-white border border-success/20 flex items-center justify-center transition-all shadow-2xs cursor-pointer"
+                          title="Call Customer"
+                        >
+                          <Phone className="size-4" />
+                        </a>
+                      )}
                       <button
                         type="button"
                         onClick={() => setShowChatModal(true)}
@@ -411,7 +413,9 @@ export function WorkerJobDetailsModal({
           isOpen={showChatModal}
           onClose={() => setShowChatModal(false)}
           onCallCustomer={() => {
-            window.open(`tel:${job.customer.phone || "03001234567"}`);
+            if (job.customer.phone) {
+              window.open(`tel:${job.customer.phone}`);
+            }
           }}
         />
       )}

@@ -1,7 +1,5 @@
 import { http, getAccessToken } from "@/lib/api-client";
-import { isMockMode, simulateLatency } from "@/lib/data-source";
 import type { Job, JobStatus, JobUrgency } from "@/types/job";
-import { mockJobs } from "@/mocks/jobs.mock";
 
 const NEARBY_STATUSES: JobStatus[] = ["OPEN", "OFFERS_RECEIVED"];
 const HISTORY_STATUSES: JobStatus[] = [
@@ -91,9 +89,6 @@ function mapBackendJob(row: BackendJobRow): Job {
 }
 
 export async function listWorkerJobs(): Promise<Job[]> {
-  if (isMockMode()) {
-    return simulateLatency([...mockJobs]);
-  }
   if (!getAccessToken()) {
     return [];
   }
@@ -108,9 +103,6 @@ export async function listWorkerJobs(): Promise<Job[]> {
 }
 
 export async function listWorkerHistoryJobs(): Promise<Job[]> {
-  if (isMockMode()) {
-    return simulateLatency(mockJobs.filter((job) => isHistoryJob(job.status)));
-  }
   if (!getAccessToken()) {
     return [];
   }
@@ -129,11 +121,6 @@ export async function listNearbyJobs(location?: {
   lng: number;
   radiusKm?: number;
 }): Promise<Job[]> {
-  if (isMockMode()) {
-    return simulateLatency(
-      mockJobs.filter((job) => isNearbyJob(job.status)),
-    );
-  }
   const resolved = location ?? { lat: 33.98, lng: 71.43, radiusKm: 25 };
   const params = new URLSearchParams();
   params.set("lat", String(resolved.lat));
@@ -147,11 +134,6 @@ export async function listNearbyJobs(location?: {
 }
 
 export async function getWorkerJob(jobId: string): Promise<Job> {
-  if (isMockMode()) {
-    const job = mockJobs.find((j) => j.id === jobId);
-    if (!job) throw new Error(`JOB_NOT_FOUND:${jobId}`);
-    return simulateLatency({ ...job });
-  }
   return mapBackendJob(await http.get<BackendJobRow>(`/jobs/${jobId}`));
 }
 

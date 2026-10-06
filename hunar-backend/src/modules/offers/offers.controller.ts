@@ -68,14 +68,14 @@ export class OffersController {
   @Roles(Role.WORKER)
   create(
     @CurrentUser() user: JwtPayload,
-    @Param('jobId', ParseUUIDPipe) jobId: string,
+    @Param('jobId') jobId: string,
     @Body() dto: CreateOfferDto,
   ) {
     return this.offersService.createOffer(user.sub, jobId, dto);
   }
 
   @Get('jobs/:jobId/offers')
-  getJobOffers(@CurrentUser() user: JwtPayload, @Param('jobId', ParseUUIDPipe) jobId: string) {
+  getJobOffers(@CurrentUser() user: JwtPayload, @Param('jobId') jobId: string) {
     return this.offersService.getJobOffers(jobId, user);
   }
 
@@ -89,7 +89,7 @@ export class OffersController {
   @Roles(Role.CUSTOMER)
   accept(
     @CurrentUser() user: JwtPayload,
-    @Param('jobId', ParseUUIDPipe) jobId: string,
+    @Param('jobId') jobId: string,
     @Param('offerId', ParseUUIDPipe) offerId: string,
     @Body() dto: RespondOfferDto,
   ) {
@@ -100,7 +100,7 @@ export class OffersController {
   @Roles(Role.CUSTOMER)
   reject(
     @CurrentUser() user: JwtPayload,
-    @Param('jobId', ParseUUIDPipe) jobId: string,
+    @Param('jobId') jobId: string,
     @Param('offerId', ParseUUIDPipe) offerId: string,
   ) {
     return this.offersService.rejectOffer(jobId, offerId, user);
@@ -109,7 +109,7 @@ export class OffersController {
   @Put('jobs/:jobId/offers/:offerId/counter')
   counter(
     @CurrentUser() user: JwtPayload,
-    @Param('jobId', ParseUUIDPipe) jobId: string,
+    @Param('jobId') jobId: string,
     @Param('offerId', ParseUUIDPipe) offerId: string,
     @Body() dto: CounterOfferDto,
   ) {

@@ -29,13 +29,11 @@ export function VisitActionFlow({ job, offer }: VisitActionFlowProps) {
   // Form states for Submit Inspection (Task 8d)
   const [diagnosis, setDiagnosis] = useState("");
   const [repairPlan, setRepairPlan] = useState("");
-  const [repairPriceEstimate, setRepairPriceEstimate] = useState<number | string>(1500);
-  const [estimatedRepairTime, setEstimatedRepairTime] = useState("1.5 hours");
+  const [repairPriceEstimate, setRepairPriceEstimate] = useState<number | string>("");
+  const [estimatedRepairTime, setEstimatedRepairTime] = useState("");
 
   const numRepairEstimate = parsePriceOrZero(repairPriceEstimate);
-  const [inspectionPhotos, setInspectionPhotos] = useState<string[]>([
-    "https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=800&q=80",
-  ]);
+  const [inspectionPhotos, setInspectionPhotos] = useState<string[]>([]);
   const fileInputRef = React.useRef<HTMLInputElement | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);

@@ -50,8 +50,8 @@ export async function getConversations(): Promise<Conversation[]> {
       active: item.isActive ?? true,
     }));
   } catch (err) {
-    console.warn("[getConversations] Backend offline, using mock conversations:", err);
-    return simulateLatency([...mockConversations]);
+    console.error("[getConversations] Failed to load conversations:", err);
+    throw err;
   }
 }
 
@@ -96,9 +96,8 @@ export async function getMessages(
       })
       .reverse(); // Backend returns desc (newest first), reverse to asc
   } catch (err) {
-    console.warn(`[getMessages] Backend offline for ${conversationId}, using mock messages:`, err);
-    const messages = mockMessages[conversationId] ?? [];
-    return simulateLatency([...messages]);
+    console.error(`[getMessages] Failed to load messages for ${conversationId}:`, err);
+    throw err;
   }
 }
 

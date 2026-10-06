@@ -60,7 +60,7 @@ export class VisitsController {
   @Put('jobs/:jobId/verify-arrival-otp')
   verifyJobArrivalOtp(
     @CurrentUser() user: JwtPayload,
-    @Param('jobId', ParseUUIDPipe) jobId: string,
+    @Param('jobId') jobId: string,
     @Body() dto: VerifyArrivalOtpDto,
   ) {
     return this.visitsService.verifyArrivalOtp(jobId, user, dto.otp);
@@ -78,7 +78,7 @@ export class VisitsController {
 
   /** Task 22 — job-level inspection report (customer views, worker can re-read). */
   @Get('jobs/:jobId/inspection')
-  jobInspection(@CurrentUser() user: JwtPayload, @Param('jobId', ParseUUIDPipe) jobId: string) {
+  jobInspection(@CurrentUser() user: JwtPayload, @Param('jobId') jobId: string) {
     return this.visitsService.getJobInspection(jobId, user);
   }
 
@@ -101,7 +101,7 @@ export class VisitsController {
   @Get('location/track/:jobId')
   history(
     @CurrentUser() user: JwtPayload,
-    @Param('jobId', ParseUUIDPipe) jobId: string,
+    @Param('jobId') jobId: string,
     @Query('limit') limit?: number,
   ) {
     return this.visitsService.getLocationHistory(jobId, user, Number(limit) || 100);

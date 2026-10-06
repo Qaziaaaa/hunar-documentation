@@ -34,37 +34,34 @@ const defaultCustomerProfile: CustomerProfileData = {
 };
 
 export async function getCustomerProfile(): Promise<CustomerProfileData> {
-  try {
-    const res = await http.get<any>("/users/me");
-    const u = res?.user ?? res;
-    if (u && u.id) {
-      const name = u.name || "";
-      const initials = name
-        ? name
-            .split(" ")
-            .map((p: string) => p[0])
-            .join("")
-            .slice(0, 2)
-            .toUpperCase()
-        : "C";
-
-      return {
-        ...defaultCustomerProfile,
-        id: u.id,
-        fullName: name,
-        email: u.email || "",
-        phone: u.phone || "",
-        avatarUrl: u.avatarUrl || "",
-        avatarInitials: initials,
-        primaryCity: u.city || "Peshawar",
-        isEmailVerified: !!u.email,
-        isPhoneVerified: true,
-      };
-    }
-  } catch (err) {
-    console.warn("[getCustomerProfile] Backend fetch failed:", err);
+  const res = await http.get<any>("/users/me");
+  const u = res?.user ?? res;
+  if (!u || !u.id) {
+    throw new Error("UNAUTHORIZED");
   }
-  return defaultCustomerProfile;
+  const name = u.name || "";
+  const initials = name
+    ? name
+        .split(" ")
+        .map((p: string) => p[0])
+        .join("")
+        .slice(0, 2)
+        .toUpperCase()
+    : "C";
+
+  return {
+    ...defaultCustomerProfile,
+    id: u.id,
+    customerIdBadge: `CUST-${u.id.slice(0, 6).toUpperCase()}`,
+    fullName: name,
+    email: u.email || "",
+    phone: u.phone || "",
+    avatarUrl: u.avatarUrl || "",
+    avatarInitials: initials,
+    primaryCity: u.city || "Peshawar",
+    isEmailVerified: Boolean(u.isEmailVerified || u.emailVerified),
+    isPhoneVerified: Boolean(u.isPhoneVerified || u.phoneVerified || u.isVerified),
+  };
 }
 
 /**

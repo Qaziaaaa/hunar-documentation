@@ -236,83 +236,99 @@ export function WorkerProfileModal({
                 <MessageSquare className="size-3.5 text-[#F59E0B]" />
                 {isUrdu ? "کسٹمر ریٹنگز اور آراء" : "Customer Ratings & Feedback"}
               </h4>
-              <span className="text-xs font-bold text-[#0F766E]">
-                {isUrdu ? `99% مثبت (${worker.totalReviews} ریویوز)` : `99% Positive (${worker.totalReviews} reviews)`}
-              </span>
+              {worker.totalReviews > 0 ? (
+                <span className="text-xs font-bold text-[#0F766E]">
+                  {isUrdu
+                    ? `${worker.totalReviews} جائزے`
+                    : `${worker.totalReviews} reviews`}
+                </span>
+              ) : null}
             </div>
 
-            {/* Rating Bars */}
-            <div className="p-3.5 rounded-2xl bg-slate-50 space-y-1.5">
-              <div className="flex items-center gap-2 text-xs">
-                <span className="w-6 font-medium text-[#123B5D]">5 ★</span>
-                <div className="flex-1 h-2 bg-slate-200 rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-[#F59E0B] rounded-full"
-                    style={{ width: `${worker.ratingBreakdown.fiveStar}%` }}
-                  />
-                </div>
-                <span className="w-8 text-right rtl:text-left text-slate-500 font-medium">
-                  {worker.ratingBreakdown.fiveStar}%
-                </span>
+            {worker.totalReviews === 0 ? (
+              <div className="p-4 rounded-2xl bg-slate-50 text-center text-xs text-slate-400">
+                {isUrdu
+                  ? "ابھی تک کوئی کسٹمر جائزہ موجود نہیں ہے۔"
+                  : "No customer reviews yet."}
               </div>
-
-              <div className="flex items-center gap-2 text-xs">
-                <span className="w-6 font-medium text-[#123B5D]">4 ★</span>
-                <div className="flex-1 h-2 bg-slate-200 rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-[#F59E0B] rounded-full"
-                    style={{ width: `${worker.ratingBreakdown.fourStar}%` }}
-                  />
-                </div>
-                <span className="w-8 text-right rtl:text-left text-slate-500 font-medium">
-                  {worker.ratingBreakdown.fourStar}%
-                </span>
-              </div>
-
-              <div className="flex items-center gap-2 text-xs">
-                <span className="w-6 font-medium text-[#123B5D]">3 ★</span>
-                <div className="flex-1 h-2 bg-slate-200 rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-[#F59E0B] rounded-full"
-                    style={{ width: `${worker.ratingBreakdown.threeStar}%` }}
-                  />
-                </div>
-                <span className="w-8 text-right rtl:text-left text-slate-500 font-medium">
-                  {worker.ratingBreakdown.threeStar}%
-                </span>
-              </div>
-            </div>
-
-            {/* Recent Reviews List */}
-            <div className="space-y-2.5">
-              {worker.reviews.map((rev) => (
-                <div
-                  key={rev.id}
-                  className="p-3 bg-white rounded-xl shadow-2xs space-y-1 border border-slate-100"
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs font-bold text-[#123B5D]">
-                        {rev.customerName}
-                      </span>
-                      <span className="text-[10px] text-slate-400">
-                        • {rev.customerArea}
-                      </span>
+            ) : (
+              <>
+                {/* Rating Bars */}
+                <div className="p-3.5 rounded-2xl bg-slate-50 space-y-1.5">
+                  <div className="flex items-center gap-2 text-xs">
+                    <span className="w-6 font-medium text-[#123B5D]">5 ★</span>
+                    <div className="flex-1 h-2 bg-slate-200 rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-[#F59E0B] rounded-full"
+                        style={{ width: `${worker.ratingBreakdown.fiveStar}%` }}
+                      />
                     </div>
-                    <div className="flex items-center text-[#F59E0B] text-xs font-bold">
-                      <Star className="size-3 fill-[#F59E0B] mr-0.5 rtl:mr-0 rtl:ml-0.5" />
-                      {rev.rating}
-                    </div>
+                    <span className="w-8 text-right rtl:text-left text-slate-500 font-medium">
+                      {worker.ratingBreakdown.fiveStar}%
+                    </span>
                   </div>
-                  <p className="text-xs text-slate-600 leading-relaxed">
-                    {rev.comment}
-                  </p>
-                  <span className="text-[10px] text-slate-400 block pt-0.5">
-                    {rev.date}
-                  </span>
+
+                  <div className="flex items-center gap-2 text-xs">
+                    <span className="w-6 font-medium text-[#123B5D]">4 ★</span>
+                    <div className="flex-1 h-2 bg-slate-200 rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-[#F59E0B] rounded-full"
+                        style={{ width: `${worker.ratingBreakdown.fourStar}%` }}
+                      />
+                    </div>
+                    <span className="w-8 text-right rtl:text-left text-slate-500 font-medium">
+                      {worker.ratingBreakdown.fourStar}%
+                    </span>
+                  </div>
+
+                  <div className="flex items-center gap-2 text-xs">
+                    <span className="w-6 font-medium text-[#123B5D]">3 ★</span>
+                    <div className="flex-1 h-2 bg-slate-200 rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-[#F59E0B] rounded-full"
+                        style={{ width: `${worker.ratingBreakdown.threeStar}%` }}
+                      />
+                    </div>
+                    <span className="w-8 text-right rtl:text-left text-slate-500 font-medium">
+                      {worker.ratingBreakdown.threeStar}%
+                    </span>
+                  </div>
                 </div>
-              ))}
-            </div>
+
+                {/* Recent Reviews List */}
+                {worker.reviews.length > 0 && (
+                  <div className="space-y-2.5">
+                    {worker.reviews.map((rev) => (
+                      <div
+                        key={rev.id}
+                        className="p-3 bg-white rounded-xl shadow-2xs space-y-1 border border-slate-100"
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs font-bold text-[#123B5D]">
+                              {rev.customerName}
+                            </span>
+                            <span className="text-[10px] text-slate-400">
+                              • {rev.customerArea}
+                            </span>
+                          </div>
+                          <div className="flex items-center text-[#F59E0B] text-xs font-bold">
+                            <Star className="size-3 fill-[#F59E0B] mr-0.5 rtl:mr-0 rtl:ml-0.5" />
+                            {rev.rating}
+                          </div>
+                        </div>
+                        <p className="text-xs text-slate-600 leading-relaxed">
+                          {rev.comment}
+                        </p>
+                        <span className="text-[10px] text-slate-400 block pt-0.5">
+                          {rev.date}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </>
+            )}
           </div>
         </div>
 

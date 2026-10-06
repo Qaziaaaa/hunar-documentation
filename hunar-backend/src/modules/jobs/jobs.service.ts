@@ -422,6 +422,11 @@ export class JobsService {
         include: {
           category: { select: { id: true, name: true, nameUrdu: true } },
           customer: { select: { id: true, name: true, phone: true } },
+          reviews: {
+            where: { isVisible: true },
+            select: { rating: true, comment: true, createdAt: true },
+            take: 1,
+          },
           _count: { select: { offers: true } },
         },
       }),
@@ -447,6 +452,13 @@ export class JobsService {
       images: j.images,
       voiceNoteUrl: j.voiceNoteUrl,
       customer: j.customer,
+      customerReview: j.reviews?.[0]
+        ? {
+            rating: j.reviews[0].rating,
+            comment: j.reviews[0].comment ?? '',
+            date: j.reviews[0].createdAt,
+          }
+        : null,
       offerCount: j._count.offers,
       createdAt: j.createdAt,
       completedAt: j.completedAt,

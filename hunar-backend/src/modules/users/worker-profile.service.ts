@@ -203,10 +203,13 @@ export class WorkerProfileService {
       }),
     ]);
 
+    const avgRating =
+      ratingAgg._avg.rating !== null ? Number(ratingAgg._avg.rating.toFixed(1)) : 0;
+
     return {
       id: user.id,
       completedJobs,
-      rating: Number((ratingAgg._avg.rating ?? 5.0).toFixed(1)),
+      rating: avgRating,
       reviewsCount: ratingAgg._count.rating ?? 0,
       user: {
         id: user.id,
@@ -230,7 +233,7 @@ export class WorkerProfileService {
             rejectionReason: profile.rejectionReason,
             adminNote: profile.adminNote,
             completedJobs,
-            rating: Number((ratingAgg._avg.rating ?? 5.0).toFixed(1)),
+            rating: avgRating,
             reviewsCount: ratingAgg._count.rating ?? 0,
           }
         : null,
@@ -291,8 +294,8 @@ export class WorkerProfileService {
         longitude: area.longitude,
       })),
       rating: {
-        average: ratingAgg._avg.rating,
-        count: ratingAgg._count.rating,
+        average: ratingAgg._avg.rating !== null ? Number(ratingAgg._avg.rating.toFixed(1)) : 0,
+        count: ratingAgg._count.rating ?? 0,
       },
       completedJobs,
     };

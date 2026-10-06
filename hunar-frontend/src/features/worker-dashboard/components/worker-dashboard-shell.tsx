@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "@/i18n/navigation";
 import { Briefcase } from "lucide-react";
 import { http, getAccessToken, getStoredUser, clearTokens } from "@/lib/api-client";
-import { isMockMode } from "@/lib/data-source";
 import { connectSocket, disconnectSocket } from "@/lib/socket";
 import { timeAgo } from "@/lib/format";
 import { logoutWorker } from "@/features/auth/api/auth-api";
@@ -22,7 +21,6 @@ import { WorkerJobsHub } from "@/features/jobs/components/worker-jobs-hub";
 import { WorkerEarningsContent } from "@/app/[locale]/(worker)/worker/earnings/page";
 import { WalletContent } from "@/app/[locale]/(worker)/worker/wallet/page";
 import { getWorkerEarnings } from "@/services/worker/earnings.service";
-import { INITIAL_WORKER_PROFILE } from "../mock-data";
 import type {
   DashboardTab,
   WorkerDashboardProfile,
@@ -42,7 +40,7 @@ const EMPTY_WORKER_PROFILE: WorkerDashboardProfile = {
   phone: "",
   isVerified: false,
   isOnline: true,
-  rating: 5.0,
+  rating: 0,
   reviewCount: 0,
   activeJobsCount: 0,
   completedJobsCount: 0,
@@ -60,7 +58,7 @@ const EMPTY_WORKER_PROFILE: WorkerDashboardProfile = {
 function loadInitialProfile(): { profile: WorkerDashboardProfile; isLoaded: boolean } {
   if (typeof window === "undefined") {
     return {
-      profile: isMockMode() && !getAccessToken() ? INITIAL_WORKER_PROFILE : EMPTY_WORKER_PROFILE,
+      profile: EMPTY_WORKER_PROFILE,
       isLoaded: false,
     };
   }
@@ -117,16 +115,6 @@ function loadInitialProfile(): { profile: WorkerDashboardProfile; isLoaded: bool
         },
         // If we don't have a verified name or stats yet, consider it still needing live sync
         isLoaded: hasName,
-      };
-    }
-
-    if (isMockMode() && !getAccessToken()) {
-      return {
-        profile: {
-          ...INITIAL_WORKER_PROFILE,
-          isOnline,
-        },
-        isLoaded: true,
       };
     }
   } catch {
@@ -265,7 +253,7 @@ export function WorkerDashboardShell({
               experienceYears: Number(wp?.experienceYears) || prev.experienceYears,
               isOnline: wp?.isAvailable ?? prev.isOnline,
               isVerified: wp?.verificationStatus === "APPROVED",
-              rating: liveRating !== undefined ? liveRating : (prev.rating ?? 5.0),
+              rating: liveRating !== undefined ? liveRating : (prev.rating ?? 0),
               reviewCount: typeof data.reviewsCount === "number" ? data.reviewsCount : prev.reviewCount,
               totalEarnings: earningsData?.grossEarnings ?? prev.totalEarnings,
               completedJobsCount: liveCompletedJobs !== undefined ? liveCompletedJobs : prev.completedJobsCount,
@@ -322,13 +310,14 @@ export function WorkerDashboardShell({
         }
         window.localStorage.removeItem(WORKER_PROFILE_CACHE_KEY);
       } catch {}
+      disconnectSocket(true);
       router.push("/worker/sign-in");
     }
   };
 
   // Open the realtime socket (job matched / offer events) when running against the API
   useEffect(() => {
-    if (isMockMode() || !getAccessToken()) return;
+    if (!getAccessToken()) return;
     connectSocket();
     return () => disconnectSocket();
   }, []);

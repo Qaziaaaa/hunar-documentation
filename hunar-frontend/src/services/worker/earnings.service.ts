@@ -1,10 +1,5 @@
 import { http, getAccessToken } from "@/lib/api-client";
-import { isMockMode, simulateLatency } from "@/lib/data-source";
 import type { WalletSummary, WalletTransaction } from "@/types/finance";
-import {
-  mockWalletSummary,
-  mockWalletTransactions,
-} from "@/mocks/earnings.mock";
 
 interface BackendWalletSnapshot {
   userId: string;
@@ -61,9 +56,6 @@ function mapLedgerEntry(entry: BackendLedgerEntry): WalletTransaction {
 }
 
 export async function getWalletSummary(): Promise<WalletSummary> {
-  if (isMockMode()) {
-    return { ...mockWalletSummary };
-  }
   if (!getAccessToken()) {
     return {
       currentBalance: 0,
@@ -95,9 +87,6 @@ export async function getWalletSummary(): Promise<WalletSummary> {
 }
 
 export async function getWalletTransactions(): Promise<WalletTransaction[]> {
-  if (isMockMode()) {
-    return [...mockWalletTransactions];
-  }
   if (!getAccessToken()) {
     return [];
   }
@@ -142,21 +131,6 @@ export interface WorkerEarningsData {
 }
 
 export async function getWorkerEarnings(): Promise<WorkerEarningsData> {
-  if (isMockMode()) {
-    return {
-      grossEarnings: 24500,
-      commissionsPaid: 2450,
-      commissionsHeld: 0,
-      commissionsReversed: 0,
-      netEarnings: 22050,
-      topupsCredited: 0,
-      balance: 1550,
-      heldBalance: 0,
-      totalBalance: 1550,
-      completedJobsCount: 0,
-      records: [],
-    };
-  }
   if (!getAccessToken()) {
     return {
       grossEarnings: 0,
