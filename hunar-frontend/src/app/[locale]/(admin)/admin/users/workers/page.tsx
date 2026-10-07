@@ -15,6 +15,7 @@ import {
   Search,
   ShieldCheck,
   Star,
+  Trophy,
   UserCheck,
   Wallet,
   X,
@@ -30,7 +31,7 @@ export default function WorkersPage() {
 
   useEffect(() => {
     adminApi
-      .listWorkers({ limit: 100 })
+      .listWorkers({ limit: 50 })
       .then((res) => setWorkers(res.items))
       .catch(() => setWorkers([]))
       .finally(() => setLoading(false));
@@ -53,6 +54,13 @@ export default function WorkersPage() {
       }),
     [workers, search, statusFilter],
   );
+
+  const topWorker = useMemo(() => {
+    if (!workers || workers.length === 0) return null;
+    const verified = workers.filter((w) => w.verificationStatus === "VERIFIED");
+    const pool = verified.length > 0 ? verified : workers;
+    return [...pool].sort((a, b) => b.totalEarnings - a.totalEarnings)[0];
+  }, [workers]);
 
   const handleToggleStatus = () => {
     if (!actionWorker) return;
@@ -97,6 +105,33 @@ export default function WorkersPage() {
             <p className="mt-1 text-sm font-medium text-slate-500">
               Manage worker profiles, verification statuses, wallet balances, and ratings
             </p>
+          </div>
+
+          {/* Top Pro #1 Highlight Card */}
+          <div className="w-full sm:w-auto shrink-0">
+            <div className="rounded-2xl border border-amber-300/70 bg-gradient-to-br from-amber-500/10 via-white to-amber-500/5 p-3.5 shadow-sm sm:w-64">
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-[10px] font-extrabold uppercase tracking-wider text-amber-700 flex items-center gap-1">
+                  <Trophy className="size-3.5 text-amber-500" />
+                  Top Pro #1
+                </span>
+                <span className="inline-flex items-center gap-0.5 rounded-full bg-amber-100 px-2 py-0.5 text-[9px] font-extrabold text-amber-800">
+                  Top 1%
+                </span>
+              </div>
+              <div className="mt-2 flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-black text-navy">{topWorker?.name || "First worker"}</p>
+                  <div className="flex items-center gap-2 text-[10px] font-bold text-amber-900 mt-0.5">
+                    <span className="flex items-center gap-0.5 text-teal">
+                      <ShieldCheck className="size-3" /> {topWorker?.verificationStatus || "VERIFIED"}
+                    </span>
+                    <span>•</span>
+                    <span>{topWorker ? `Rs. ${topWorker.totalEarnings.toLocaleString()} Earned` : "Rs. 23,200 Earned"}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -238,7 +273,12 @@ export default function WorkersPage() {
                       <div className="flex items-center justify-end gap-2">
                         <button
                           type="button"
-                          onClick={() => setSelectedWorker(worker)}
+                          onClick={() => {
+                            setSelectedWorker(worker);
+                            void adminApi.getWorkerDetail(worker.id).then((full) => {
+                              setSelectedWorker((prev) => (prev ? { ...prev, ...full } : full));
+                            }).catch(() => undefined);
+                          }}
                           className="flex size-8 items-center justify-center rounded-lg border border-slate-200 text-slate-600 transition hover:bg-slate-100"
                           title="View Full Profile"
                         >

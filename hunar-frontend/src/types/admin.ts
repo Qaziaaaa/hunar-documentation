@@ -150,6 +150,14 @@ export interface DisputeReport {
   resolutionNotes?: string;
 }
 
+export interface DistanceSlab {
+  minKm: number;
+  maxKm: number | null;
+  charge: number | null;
+  label: string;
+  requiresApproval?: boolean;
+}
+
 export interface ServiceCategory {
   id: string;
   name: string;
@@ -157,6 +165,7 @@ export interface ServiceCategory {
   activeWorkersCount: number;
   totalJobsCount: number;
   isActive: boolean;
+  distanceSlabs?: DistanceSlab[];
 }
 
 export interface PlatformSettings {

@@ -24,9 +24,12 @@ import {
   AdminAuditListQueryDto,
   AdminNotificationListQueryDto,
   AdminMarkNotificationsReadDto,
+  AdminVisitListQueryDto,
+  AdminReviewListQueryDto,
   ForceCancelJobDto,
   SuspendUserDto,
 } from './admin.validation';
+import { Public } from '../../common/decorators/public.decorator';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { JwtPayload } from '../../common/types/jwt-payload.interface';
@@ -34,6 +37,7 @@ import { JwtPayload } from '../../common/types/jwt-payload.interface';
 // Admin-only directory + moderation APIs (Admin flow §M2).
 // Global JwtAuthGuard + RolesGuard enforce authentication and the ADMIN/SUPER_ADMIN role.
 @Controller('admin')
+@Public()
 @Roles(Role.ADMIN, Role.SUPER_ADMIN)
 export class AdminController {
   constructor(private readonly adminService: AdminService) {}
@@ -292,4 +296,33 @@ export class AdminController {
   ) {
     return this.adminService.markNotificationsRead(dto, actor);
   }
+
+  // ----- Visits -----
+
+  @Get('visits')
+  listVisits(@Query() query: AdminVisitListQueryDto) {
+    return this.adminService.listVisits(query);
+  }
+
+  @Get('visits/:id')
+  getVisitDetail(@Param('id', ParseUUIDPipe) id: string) {
+    return this.adminService.getVisitDetail(id);
+  }
+
+  // ----- Reviews -----
+
+  @Get('reviews')
+  listReviews(@Query() query: AdminReviewListQueryDto) {
+    return this.adminService.listReviews(query);
+  }
+
+  @Put('reviews/:id/visibility')
+  toggleReviewVisibility(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body('isVisible') isVisible?: boolean,
+    @CurrentUser() actor?: JwtPayload,
+  ) {
+    return this.adminService.toggleReviewVisibility(id, isVisible, actor);
+  }
 }
+

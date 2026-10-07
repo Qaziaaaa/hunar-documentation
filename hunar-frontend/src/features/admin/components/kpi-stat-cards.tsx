@@ -18,7 +18,7 @@ import type { AdminKpiStats } from "@/types/admin";
 
 export function KpiStatCards({ stats }: { stats: AdminKpiStats }) {
   return (
-    <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6">
+    <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
       {/* 1. Total Jobs Card */}
       <Link
         href="/admin/jobs"
@@ -106,34 +106,7 @@ export function KpiStatCards({ stats }: { stats: AdminKpiStats }) {
         </div>
       </Link>
 
-      {/* 4. Top Verified Pro Highlight Card */}
-      <Link
-        href="/admin/users/workers"
-        className="group block rounded-xl border border-amber-300/60 bg-gradient-to-br from-amber-500/10 via-white to-amber-500/5 p-2.5 shadow-2xs transition-all duration-200 hover:-translate-y-0.5 hover:border-amber-400 hover:shadow-xs cursor-pointer"
-      >
-        <div className="flex items-center justify-between">
-          <span className="text-[8px] font-extrabold uppercase tracking-wider text-amber-700">
-            Top Pro #1
-          </span>
-          <div className="flex size-6 items-center justify-center rounded-md bg-amber-500 text-white shadow-2xs transition-transform duration-200 group-hover:scale-105">
-            <Trophy className="size-3" />
-          </div>
-        </div>
-        <div className="mt-1 flex items-baseline justify-between">
-          <p className="text-xs font-black text-navy truncate">M. Rashid</p>
-          <span className="inline-flex items-center gap-0.5 rounded-full bg-amber-100 px-1 py-0.5 text-[8px] font-extrabold text-amber-800">
-            Top 1%
-          </span>
-        </div>
-        <div className="mt-1 flex items-center justify-between border-t border-amber-200/50 pt-1 text-[8px] font-bold text-amber-900">
-          <span className="flex items-center gap-0.5 text-teal">
-            <ShieldCheck className="size-2" /> Verified
-          </span>
-          <span>145k Earned</span>
-        </div>
-      </Link>
-
-      {/* 5. Total Revenue Card */}
+      {/* 4. Total Revenue Card */}
       <Link
         href="/admin/payments"
         className="group block rounded-xl border border-slate-200/80 bg-white p-2.5 shadow-2xs transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-xs cursor-pointer"
