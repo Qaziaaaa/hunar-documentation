@@ -381,12 +381,26 @@ export function PeshawarMapPicker({
           L.DomUtil.getPosition = function (el: any) {
             if (!el) return new L.Point(0, 0);
             try {
-              return origGetPos.call(L.DomUtil, el);
+              return origGetPos.call(L.DomUtil, el) || new L.Point(0, 0);
             } catch {
               return new L.Point(0, 0);
             }
           };
           (L.DomUtil as any)._patchedPosition = true;
+        }
+
+        // Patch Leaflet Map.prototype._getMapPanePos to prevent '_leaflet_pos' error when _mapPane is detached
+        if (L && L.Map && L.Map.prototype && !(L.Map.prototype as any)._patchedPanePos) {
+          const origPanePos = (L.Map.prototype as any)._getMapPanePos;
+          (L.Map.prototype as any)._getMapPanePos = function (this: any) {
+            if (!this?._mapPane) return new L.Point(0, 0);
+            try {
+              return origPanePos.call(this) || new L.Point(0, 0);
+            } catch {
+              return new L.Point(0, 0);
+            }
+          };
+          (L.Map.prototype as any)._patchedPanePos = true;
         }
 
         if (isCancelled || !mapContainerRef.current) return;
@@ -512,6 +526,7 @@ export function PeshawarMapPicker({
       isCancelled = true;
       if (mapInstanceRef.current) {
         try {
+          mapInstanceRef.current.stop();
           mapInstanceRef.current.off();
           mapInstanceRef.current.remove();
         } catch {}

@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { formatRs } from "@/lib/design-tokens";
+import { sanitizePriceInput, parsePriceOrZero } from "@/lib/money";
 import { workerStore } from "@/stores/worker-jobs-store";
 import { Send, X, AlertTriangle } from "lucide-react";
 
@@ -22,7 +23,7 @@ export function SendVisitOfferDialog({
   onClose,
   onSuccess,
 }: SendVisitOfferDialogProps) {
-  const [visitCharge, setVisitCharge] = useState<number>(
+  const [visitCharge, setVisitCharge] = useState<number | string>(
     customerSuggestedPrice ?? 500
   );
   const [message, setMessage] = useState<string>("");
@@ -31,9 +32,11 @@ export function SendVisitOfferDialog({
 
   if (!isOpen) return null;
 
+  const numVisitCharge = parsePriceOrZero(visitCharge);
+
   // 10% platform commission calculation
-  const platformCommission = Math.round(visitCharge * 0.1);
-  const workerNet = visitCharge - platformCommission;
+  const platformCommission = Math.round(numVisitCharge * 0.1);
+  const workerNet = numVisitCharge - platformCommission;
 
   const presets = [300, 500, 800, 1000, 1500];
 
@@ -41,7 +44,7 @@ export function SendVisitOfferDialog({
     e.preventDefault();
     setError(null);
 
-    if (visitCharge <= 0) {
+    if (!visitCharge || numVisitCharge <= 0) {
       setError("Please enter a valid visit charge.");
       return;
     }
@@ -49,7 +52,7 @@ export function SendVisitOfferDialog({
     setSubmitting(true);
     const result = workerStore.sendVisitOffer(
       jobId,
-      visitCharge,
+      numVisitCharge,
       message.trim() ? message.trim() : undefined
     );
 
@@ -113,8 +116,8 @@ export function SendVisitOfferDialog({
                 type="number"
                 min="50"
                 step="50"
-                value={visitCharge || ""}
-                onChange={(e) => setVisitCharge(Number(e.target.value))}
+                value={visitCharge}
+                onChange={(e) => setVisitCharge(sanitizePriceInput(e.target.value))}
                 className="w-full pl-11 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-2xl text-slate-900 font-extrabold text-lg focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#0F8B8D]/20 focus:border-[#0F8B8D]"
                 required
               />
@@ -128,7 +131,7 @@ export function SendVisitOfferDialog({
                   type="button"
                   onClick={() => setVisitCharge(amt)}
                   className={`px-2.5 py-1 rounded-lg text-xs font-semibold border transition-all shrink-0 ${
-                    visitCharge === amt
+                    visitCharge === amt || numVisitCharge === amt
                       ? "bg-[#0F8B8D] text-white border-[#0F8B8D]"
                       : "bg-slate-100 border-slate-200 text-slate-600 hover:bg-slate-200"
                   }`}
@@ -143,7 +146,7 @@ export function SendVisitOfferDialog({
           <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-1.5 text-xs">
             <div className="flex justify-between font-bold text-slate-900">
               <span>Visit Charge:</span>
-              <span className="text-[#0F8B8D]">{formatRs(visitCharge)}</span>
+              <span className="text-[#0F8B8D]">{formatRs(numVisitCharge)}</span>
             </div>
           </div>
 
@@ -173,7 +176,7 @@ export function SendVisitOfferDialog({
 
             <button
               type="submit"
-              disabled={submitting || visitCharge <= 0}
+              disabled={submitting || !visitCharge || numVisitCharge <= 0}
               className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl bg-[#0F8B8D] hover:bg-[#0B7F74] disabled:opacity-50 text-white text-xs font-bold shadow-xs transition-all"
             >
               <Send className="w-3.5 h-3.5" />

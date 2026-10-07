@@ -1,6 +1,6 @@
 import { http, getAccessToken } from "@/lib/api-client";
-import { isMockMode, simulateLatency } from "@/lib/data-source";
 import type { Job, JobStatus, JobUrgency } from "@/types/job";
+import { isMockMode, simulateLatency } from "@/lib/data-source";
 import { mockJobs } from "@/mocks/jobs.mock";
 import { getLocallyCreatedJobs } from "@/features/post-job/api/post-job-api";
 
@@ -94,9 +94,6 @@ function mapBackendJob(row: BackendJobRow): Job {
 }
 
 export async function listWorkerJobs(): Promise<Job[]> {
-  if (isMockMode()) {
-    return simulateLatency([...mockJobs]);
-  }
   if (!getAccessToken()) {
     return [];
   }
@@ -113,9 +110,6 @@ export async function listWorkerJobs(): Promise<Job[]> {
 }
 
 export async function listWorkerHistoryJobs(): Promise<Job[]> {
-  if (isMockMode()) {
-    return simulateLatency(mockJobs.filter((job) => isHistoryJob(job.status)));
-  }
   if (!getAccessToken()) {
     return [];
   }

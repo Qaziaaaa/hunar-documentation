@@ -5,16 +5,19 @@ import { Calculator, CheckCircle2, Info, ShieldAlert } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { formatRsExact } from "@/lib/money";
+import { formatRsExact, sanitizePriceInput, parsePriceOrZero } from "@/lib/money";
 
 export function CommissionCalculator() {
-  const [visitCharge, setVisitCharge] = useState<number>(500);
-  const [repairCharge, setRepairCharge] = useState<number>(1500);
+  const [visitCharge, setVisitCharge] = useState<number | string>(500);
+  const [repairCharge, setRepairCharge] = useState<number | string>(1500);
 
-  const commission = Math.round(visitCharge * 0.1);
-  const workerNetVisit = visitCharge - commission;
-  const totalCustomerPay = visitCharge + repairCharge;
-  const totalWorkerTakeHome = workerNetVisit + repairCharge;
+  const numVisit = parsePriceOrZero(visitCharge);
+  const numRepair = parsePriceOrZero(repairCharge);
+
+  const commission = Math.round(numVisit * 0.1);
+  const workerNetVisit = numVisit - commission;
+  const totalCustomerPay = numVisit + numRepair;
+  const totalWorkerTakeHome = workerNetVisit + numRepair;
 
   return (
     <Card className="border-teal/20 shadow-sm overflow-hidden bg-card">
@@ -42,7 +45,7 @@ export function CommissionCalculator() {
               min={100}
               step={50}
               value={visitCharge}
-              onChange={(e) => setVisitCharge(Math.max(0, Number(e.target.value)))}
+              onChange={(e) => setVisitCharge(sanitizePriceInput(e.target.value))}
               className="h-10 text-sm font-semibold text-navy border-teal/30 focus-visible:ring-teal"
             />
             <p className="text-[11px] text-teal font-medium">
@@ -59,7 +62,7 @@ export function CommissionCalculator() {
               min={0}
               step={100}
               value={repairCharge}
-              onChange={(e) => setRepairCharge(Math.max(0, Number(e.target.value)))}
+              onChange={(e) => setRepairCharge(sanitizePriceInput(e.target.value))}
               className="h-10 text-sm font-semibold text-navy"
             />
             <p className="text-[11px] text-muted-foreground">
@@ -82,7 +85,7 @@ export function CommissionCalculator() {
 
             <div className="flex justify-between items-center py-1 border-b border-slate-200">
               <span className="text-slate-600 flex items-center gap-1.5">
-                HUNAR Commission (10% of {formatRsExact(visitCharge)}):
+                HUNAR Commission (10% of {formatRsExact(numVisit)}):
               </span>
               <span className="font-bold text-orange-600">
                 - {formatRsExact(commission)}

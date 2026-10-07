@@ -17,6 +17,7 @@ import {
   User,
 } from "lucide-react";
 import { useLocale } from "next-intl";
+import { formatJobDate, formatPostedAt } from "@/lib/format";
 import type { CustomerJob } from "../types";
 
 interface CustomerJobDetailsModalProps {
@@ -148,7 +149,7 @@ export function CustomerJobDetailsModal({
                 {job.title}
               </h2>
               <p className="text-xs text-slate-500 font-medium">
-                {isUrdu ? `درخواست شائع کی گئی: ${job.createdAt}` : `Posted: ${job.createdAt}`}
+                {isUrdu ? `درخواست شائع کی گئی: ${formatPostedAt(job.createdAt)}` : `Posted: ${formatPostedAt(job.createdAt)}`}
               </p>
             </div>
 
@@ -260,7 +261,7 @@ export function CustomerJobDetailsModal({
                   <span>{isUrdu ? "پسندیدہ وقت و شیڈول" : "Preferred Schedule"}</span>
                 </div>
                 <p className="text-xs text-slate-700 font-medium">
-                  {job.preferredDate || (isUrdu ? "آج" : "Today")}
+                  {formatJobDate(job.preferredDate) || (isUrdu ? "آج" : "Today")}
                 </p>
                 <div className="flex items-center gap-1 text-[11px] text-slate-500">
                   <Clock className="size-3 text-slate-400" />

@@ -9,6 +9,7 @@ import { CATEGORY_OPTIONS, resolveCategoryOption } from "../data/categories";
 import type { PostJobData, PostJobStep, ServiceCategory } from "../types";
 import { createJob } from "../api/post-job-api";
 import { ApiError } from "@/lib/api-client";
+import { toLocalDateString } from "@/lib/format";
 import { JobPostedSuccessModal } from "./job-posted-success-modal";
 import { Step1ServiceSelect } from "./step-1-service-select";
 import { Step2JobDetails } from "./step-2-job-details";
@@ -32,7 +33,7 @@ const INITIAL_FORM_DATA: PostJobData = {
   latitude: 34.0043,
   longitude: 71.5034,
   scheduleType: "asap",
-  preferredDate: new Date().toISOString().split("T")[0],
+  preferredDate: toLocalDateString(),
   preferredTimeSlot: "8:00 AM - 12:00 PM",
   suggestedVisitFee: 300,
 };

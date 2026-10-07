@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import {
+  AlertTriangle,
   ArrowRight,
   CheckCircle2,
   Clock,
@@ -17,6 +19,7 @@ import {
 } from "lucide-react";
 import { Link } from "@/i18n/navigation";
 import { useLocale } from "next-intl";
+import { formatJobDate, formatPostedAt } from "@/lib/format";
 import type { CustomerJob, WorkerOffer } from "../types";
 import { CustomerJobDetailsModal } from "./customer-job-details-modal";
 import { CustomerReviewOffersModal } from "./customer-review-offers-modal";
@@ -44,6 +47,14 @@ export function CustomerJobsListView({ initialJobs, jobs: jobsProp }: CustomerJo
   const [selectedOfferForProfile, setSelectedOfferForProfile] = useState<WorkerOffer | null>(null);
   const [bookingSelection, setBookingSelection] = useState<{ job: CustomerJob; offer: WorkerOffer } | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [toastTone, setToastTone] = useState<"success" | "error">("success");
+  const queryClient = useQueryClient();
+
+  const showToast = (message: string, tone: "success" | "error" = "success") => {
+    setToastMessage(message);
+    setToastTone(tone);
+    setTimeout(() => setToastMessage(null), 4000);
+  };
 
   // Sync state if props change
   useEffect(() => {
@@ -75,6 +86,13 @@ export function CustomerJobsListView({ initialJobs, jobs: jobsProp }: CustomerJo
       await acceptWorkerOffer(targetJob.id, offer.id);
     } catch (err) {
       console.warn("acceptWorkerOffer error:", err);
+      showToast(
+        isUrdu
+          ? "بکنگ نہیں ہو سکی، براہِ کرم دوبارہ کوشش کریں۔"
+          : "Booking failed — the visit was not scheduled. Please try again.",
+        "error"
+      );
+      return;
     }
 
     setJobs((prev) =>
@@ -94,12 +112,13 @@ export function CustomerJobsListView({ initialJobs, jobs: jobsProp }: CustomerJo
     setSelectedJobForOffers(null);
     setSelectedJobForDetails(null);
 
-    setToastMessage(
+    void queryClient.invalidateQueries({ queryKey: ["customer"] });
+
+    showToast(
       isUrdu
         ? `${offer.worker.name} کی بکنگ کامیابی سے ہو گئی! سیکیورٹی PIN فعال ہے۔`
         : `Successfully booked ${offer.worker.name}! Security PIN activated.`
     );
-    setTimeout(() => setToastMessage(null), 4000);
   };
 
   // Handle declining / rejecting an offer
@@ -128,12 +147,11 @@ export function CustomerJobsListView({ initialJobs, jobs: jobsProp }: CustomerJo
         : prev
     );
 
-    setToastMessage(
+    showToast(
       isUrdu
         ? `${offer.worker.name} کی آفر مسترد کر دی گئی۔`
         : `Offer from ${offer.worker.name} was declined.`
     );
-    setTimeout(() => setToastMessage(null), 4000);
   };
 
   const filteredJobs = jobs.filter((job) => {
@@ -160,8 +178,16 @@ export function CustomerJobsListView({ initialJobs, jobs: jobsProp }: CustomerJo
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-6 pb-24 lg:pb-8 animate-in fade-in-50 duration-300 text-[#123B5D]">
       {/* Toast Notification */}
       {toastMessage && (
-        <div className="fixed top-20 right-6 rtl:right-auto rtl:left-6 z-60 bg-[#0F766E] text-white px-5 py-3 rounded-2xl shadow-xl flex items-center gap-3 animate-in slide-in-from-top-4 duration-300">
-          <CheckCircle2 className="size-5 shrink-0" />
+        <div
+          className={`fixed top-20 right-6 rtl:right-auto rtl:left-6 z-60 text-white px-5 py-3 rounded-2xl shadow-xl flex items-center gap-3 animate-in slide-in-from-top-4 duration-300 ${
+            toastTone === "error" ? "bg-rose-600" : "bg-[#0F766E]"
+          }`}
+        >
+          {toastTone === "error" ? (
+            <AlertTriangle className="size-5 shrink-0" />
+          ) : (
+            <CheckCircle2 className="size-5 shrink-0" />
+          )}
           <span className="text-xs sm:text-sm font-semibold">{toastMessage}</span>
         </div>
       )}
@@ -303,7 +329,7 @@ export function CustomerJobsListView({ initialJobs, jobs: jobsProp }: CustomerJo
                       )}
 
                       <span className="text-xs text-[#64748B]">
-                        {isUrdu ? `پوسٹ کی گئی: ${job.createdAt}` : `Posted ${job.createdAt}`}
+                        {isUrdu ? `پوسٹ کی گئی: ${formatPostedAt(job.createdAt)}` : `Posted ${formatPostedAt(job.createdAt)}`}
                       </span>
                     </div>
 
@@ -403,7 +429,7 @@ export function CustomerJobsListView({ initialJobs, jobs: jobsProp }: CustomerJo
                     <div className="flex items-center gap-1.5">
                       <Clock className="size-3.5 text-slate-400 shrink-0" />
                       <span>
-                        {job.preferredDate || (isUrdu ? "آج" : "Today")} • {job.preferredTimeSlot || (isUrdu ? "صبح (8:00 AM - 12:00 PM)" : "Morning (8:00 AM - 12:00 PM)")}
+                        {formatJobDate(job.preferredDate) || (isUrdu ? "آج" : "Today")} • {job.preferredTimeSlot || (isUrdu ? "صبح (8:00 AM - 12:00 PM)" : "Morning (8:00 AM - 12:00 PM)")}
                       </span>
                     </div>
                   </div>

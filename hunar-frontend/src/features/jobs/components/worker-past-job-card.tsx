@@ -23,19 +23,15 @@ export function WorkerPastJobCard({ job }: WorkerPastJobCardProps) {
   const [showInvoice, setShowInvoice] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
 
-  const visitCharge = job.visitCharge ?? 300;
+  const visitCharge = job.visitCharge ?? 0;
   const repairCharge = job.repairCharge ?? 0;
   const grossTotal = visitCharge + repairCharge;
   const platformCommission = job.platformCommission ?? Math.round(grossTotal * 0.1);
   const netEarnings = job.workerNetEarnings ?? (grossTotal - platformCommission);
-  const warrantyDays = job.warrantyDays || 30;
-  const invoiceNumber = job.invoiceNumber || `INV-2026-${job.id.slice(-4)}`;
+  const warrantyDays = job.warrantyDays;
+  const invoiceNumber = job.invoiceNumber || `INV-${job.id.slice(-6).toUpperCase()}`;
 
-  const review = job.customerReview || {
-    rating: 5,
-    comment: "Excellent service and high professionalism! Solved the problem quickly.",
-    date: "Completed recently",
-  };
+  const review = job.customerReview;
 
   return (
     <>
@@ -94,7 +90,7 @@ export function WorkerPastJobCard({ job }: WorkerPastJobCardProps) {
           </div>
 
           {/* Customer Review Snippet */}
-          {review && (
+          {review && review.rating ? (
             <div className="bg-slate-50 rounded-xl sm:rounded-2xl p-3 sm:p-3.5 border border-slate-100 space-y-1">
               <div className="flex items-center justify-between gap-1">
                 <div className="flex items-center gap-0.5">
@@ -114,17 +110,21 @@ export function WorkerPastJobCard({ job }: WorkerPastJobCardProps) {
                 </div>
                 <span className="text-[10px] text-slate-400 truncate max-w-[120px] sm:max-w-none">{job.customer.name}</span>
               </div>
-              <p className="text-[11px] sm:text-xs text-slate-600 italic line-clamp-2">
-                &quot;{review.comment}&quot;
-              </p>
+              {review.comment ? (
+                <p className="text-[11px] sm:text-xs text-slate-600 italic line-clamp-2">
+                  &quot;{review.comment}&quot;
+                </p>
+              ) : null}
             </div>
-          )}
+          ) : null}
 
           {/* Warranty Badge */}
-          <div className="flex items-center gap-1.5 text-[10.5px] sm:text-[11px] font-semibold text-teal-700">
-            <ShieldCheck className="size-3.5 text-[#0F8B8D] shrink-0" />
-            <span>{warrantyDays}-Day Customer Guarantee Active</span>
-          </div>
+          {warrantyDays ? (
+            <div className="flex items-center gap-1.5 text-[10.5px] sm:text-[11px] font-semibold text-teal-700">
+              <ShieldCheck className="size-3.5 text-[#0F8B8D] shrink-0" />
+              <span>{warrantyDays}-Day Customer Guarantee Active</span>
+            </div>
+          ) : null}
         </div>
 
         {/* Footer Actions */}

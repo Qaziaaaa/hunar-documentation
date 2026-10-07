@@ -2,6 +2,7 @@
 
 import { useLocale } from "next-intl";
 import { useState } from "react";
+import { formatJobDate } from "@/lib/format";
 import {
   CheckCircle2,
   Plus,
@@ -45,7 +46,7 @@ export function CustomerHelpView() {
       title: job.title,
       workerName: job.selectedOffer?.worker.name || "Not assigned yet",
       category: job.subCategory,
-      date: job.createdAt ? new Date(job.createdAt).toLocaleDateString() : "Today",
+      date: formatJobDate(job.createdAt) || "Today",
       status: job.status,
       amount: job.selectedOffer?.visitFee,
     }));

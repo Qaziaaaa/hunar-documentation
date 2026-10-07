@@ -16,6 +16,7 @@ import {
   X,
 } from "lucide-react";
 import { useLocale } from "next-intl";
+import { formatJobDate } from "@/lib/format";
 import type { CustomerJob, WorkerOffer } from "../types";
 
 interface CustomerReviewOffersModalProps {
@@ -130,7 +131,7 @@ export function CustomerReviewOffersModal({
                   <span>•</span>
                   <span className="flex items-center gap-1">
                     <Calendar className="size-3 text-slate-400" />
-                    <span>{job.preferredDate || (isUrdu ? "آج" : "Today")}</span>
+                    <span>{formatJobDate(job.preferredDate) || (isUrdu ? "آج" : "Today")}</span>
                   </span>
                 </div>
                 <h4 className="text-sm font-bold text-[#1A1A2E] truncate">

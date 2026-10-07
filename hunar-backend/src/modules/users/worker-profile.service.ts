@@ -100,12 +100,9 @@ export class WorkerProfileService {
           longitude: area.longitude,
         },
       });
-      await this.prisma.$executeRaw`
-        UPDATE "ServiceArea"
-        SET location = ST_SetSRID(ST_MakePoint(${area.longitude}, ${area.latitude}), 4326)
-        WHERE id = ${created.id}
-      `;
-    }
+      }
+    // Location update skipped — ServiceArea.table has no `location` column and PostGIS is not configured.
+    // This prevents 500 errors during job creation and other operations.
 
     return this.listServiceAreas(userId);
   }
@@ -206,10 +203,13 @@ export class WorkerProfileService {
       }),
     ]);
 
+    const avgRating =
+      ratingAgg._avg.rating !== null ? Number(ratingAgg._avg.rating.toFixed(1)) : 0;
+
     return {
       id: user.id,
       completedJobs,
-      rating: Number((ratingAgg._avg.rating ?? 5.0).toFixed(1)),
+      rating: avgRating,
       reviewsCount: ratingAgg._count.rating ?? 0,
       user: {
         id: user.id,
@@ -233,7 +233,7 @@ export class WorkerProfileService {
             rejectionReason: profile.rejectionReason,
             adminNote: profile.adminNote,
             completedJobs,
-            rating: Number((ratingAgg._avg.rating ?? 5.0).toFixed(1)),
+            rating: avgRating,
             reviewsCount: ratingAgg._count.rating ?? 0,
           }
         : null,
@@ -294,8 +294,8 @@ export class WorkerProfileService {
         longitude: area.longitude,
       })),
       rating: {
-        average: ratingAgg._avg.rating,
-        count: ratingAgg._count.rating,
+        average: ratingAgg._avg.rating !== null ? Number(ratingAgg._avg.rating.toFixed(1)) : 0,
+        count: ratingAgg._count.rating ?? 0,
       },
       completedJobs,
     };

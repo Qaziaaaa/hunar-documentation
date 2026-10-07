@@ -1,7 +1,5 @@
 import type { WorkerSession } from "@/types/worker";
 import { getAccessToken, clearTokens } from "@/lib/api-client";
-import { isMockMode } from "@/lib/data-source";
-import { MOCK_WORKER_ID } from "@/mocks/jobs.mock";
 
 export function getWorkerSession(): WorkerSession {
   if (typeof window === "undefined") {
@@ -16,9 +14,9 @@ export function getWorkerSession(): WorkerSession {
     };
   }
   return {
-    workerId: isMockMode() ? MOCK_WORKER_ID : "",
-    isAuthenticated: true,
-    isDemoMode: isMockMode(),
+    workerId: "",
+    isAuthenticated: false,
+    isDemoMode: false,
   };
 }
 

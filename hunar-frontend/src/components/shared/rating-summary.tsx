@@ -16,6 +16,22 @@ export function RatingSummary({
   const { average, totalReviews, breakdown } = summary;
   const maxCount = Math.max(1, ...Object.values(breakdown));
 
+  if (totalReviews === 0) {
+    return (
+      <Card className="shadow-xs border-border">
+        <CardContent className="p-5 text-center space-y-1.5">
+          <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">{title}</p>
+          <div className="flex justify-center items-center gap-1 py-1">
+            <RatingStars rating={0} />
+          </div>
+          <p className="text-xs text-slate-400">
+            0 {reviewLabel}
+          </p>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <Card className="shadow-sm">
       <CardContent className="grid gap-6 sm:grid-cols-[auto_1fr]">

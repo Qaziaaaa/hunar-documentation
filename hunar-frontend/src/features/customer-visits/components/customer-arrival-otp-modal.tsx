@@ -48,14 +48,9 @@ export function CustomerArrivalOtpModal({
 
   if (!isOpen) return null;
 
-  const activeSession: Partial<ArrivalSession> = session || {
-    jobId: "job-1",
-    otp: "",
-    workerName: isUrdu ? "طارق شاہ" : "Tariq Shah",
-    status: "pending_otp",
-  };
+  const activeSession: Partial<ArrivalSession> = session || {};
 
-  const workerName = activeSession.workerName || (isUrdu ? "کاریگر" : "Worker");
+  const workerName = activeSession.workerName || (isUrdu ? "کاریگر" : "Technician");
 
   const handleDigitChange = (index: number, value: string) => {
     setError(null);

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { AdminShell } from "@/features/admin/components/admin-shell";
 import { adminApi } from "@/features/admin/api/admin-api";
 import type { PlatformSettings } from "@/types/admin";
+import { sanitizePriceInput } from "@/lib/money";
 import { Check, Settings, ShieldCheck } from "lucide-react";
 
 export default function SettingsPage() {
@@ -20,8 +21,13 @@ export default function SettingsPage() {
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
     if (!settings) return;
+    const sanitizedSettings: PlatformSettings = {
+      ...settings,
+      commissionRate: Number(settings.commissionRate) || 0,
+      defaultSearchRadiusKm: Number(settings.defaultSearchRadiusKm) || 0,
+    };
     setSaved(true);
-    void adminApi.saveSettings(settings).catch(() => undefined);
+    void adminApi.saveSettings(sanitizedSettings).catch(() => undefined);
     setTimeout(() => setSaved(false), 2000);
   };
 
@@ -65,8 +71,11 @@ export default function SettingsPage() {
                 </label>
                 <input
                   type="number"
-                  value={settings.commissionRate}
-                  onChange={(e) => setSettings({ ...settings, commissionRate: Number(e.target.value) })}
+                  value={settings.commissionRate ?? ""}
+                  onChange={(e) => {
+                    const cleaned = sanitizePriceInput(e.target.value);
+                    setSettings({ ...settings, commissionRate: cleaned === "" ? ("" as any) : Number(cleaned) });
+                  }}
                   className="h-11 w-full rounded-xl border border-slate-200 px-3 text-xs font-bold text-navy outline-none focus:border-teal"
                 />
               </div>
@@ -77,8 +86,11 @@ export default function SettingsPage() {
                 </label>
                 <input
                   type="number"
-                  value={settings.defaultSearchRadiusKm}
-                  onChange={(e) => setSettings({ ...settings, defaultSearchRadiusKm: Number(e.target.value) })}
+                  value={settings.defaultSearchRadiusKm ?? ""}
+                  onChange={(e) => {
+                    const cleaned = sanitizePriceInput(e.target.value);
+                    setSettings({ ...settings, defaultSearchRadiusKm: cleaned === "" ? ("" as any) : Number(cleaned) });
+                  }}
                   className="h-11 w-full rounded-xl border border-slate-200 px-3 text-xs font-bold text-navy outline-none focus:border-teal"
                 />
               </div>

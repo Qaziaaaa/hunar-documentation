@@ -22,7 +22,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { HUNAR_CONFIG } from "@/lib/config";
-import { formatRsExact } from "@/lib/money";
+import { formatRsExact, sanitizePriceInput, parsePriceOrZero } from "@/lib/money";
 
 interface WalletTopUpModalProps {
   open: boolean;
@@ -38,7 +38,8 @@ export function WalletTopUpModal({
   const whatsappNumber = HUNAR_CONFIG.whatsappNumber ?? "+92 314 0837519";
   const cleanNumber = whatsappNumber.replace(/[^\d]/g, "");
 
-  const [amount, setAmount] = useState<number>(500);
+  const [amount, setAmount] = useState<number | string>(500);
+  const numAmount = parsePriceOrZero(amount);
   const [copied, setCopied] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
@@ -67,7 +68,8 @@ export function WalletTopUpModal({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!amount || amount < 50) {
+    const numAmount = parsePriceOrZero(amount);
+    if (!amount || numAmount < 50) {
       setError("Please enter a valid top-up amount (minimum Rs. 50)");
       return;
     }
@@ -77,7 +79,7 @@ export function WalletTopUpModal({
 
     try {
       if (onSubmitScreenshot && selectedFile) {
-        await onSubmitScreenshot(amount, selectedFile);
+        await onSubmitScreenshot(numAmount, selectedFile);
       } else {
         // Simulate successful submission
         await new Promise((resolve) => setTimeout(resolve, 800));
@@ -123,7 +125,7 @@ export function WalletTopUpModal({
             </h3>
             <p className="text-sm text-muted-foreground">
               HUNAR admin will verify your payment and credit{" "}
-              <strong className="text-navy">{formatRsExact(amount)}</strong> to
+              <strong className="text-navy">{formatRsExact(numAmount)}</strong> to
               your wallet shortly.
             </p>
           </div>
@@ -183,7 +185,7 @@ export function WalletTopUpModal({
                     type="button"
                     onClick={() => setAmount(val)}
                     className={`py-2 px-1 text-xs font-semibold rounded-lg border transition-all ${
-                      amount === val
+                      amount === val || Number(amount) === val
                         ? "border-teal bg-teal text-white shadow-xs"
                         : "border-border bg-card text-navy hover:bg-muted"
                     }`}
@@ -199,7 +201,7 @@ export function WalletTopUpModal({
                   min={50}
                   step={50}
                   value={amount}
-                  onChange={(e) => setAmount(Number(e.target.value))}
+                  onChange={(e) => setAmount(sanitizePriceInput(e.target.value))}
                   placeholder="Enter custom amount"
                   className="h-10 text-sm font-semibold text-navy border-border"
                 />

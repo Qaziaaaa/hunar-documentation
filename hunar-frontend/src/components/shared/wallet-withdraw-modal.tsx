@@ -13,7 +13,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
-import { formatRsExact } from "@/lib/money";
+import { formatRsExact, sanitizePriceInput, parsePriceOrZero } from "@/lib/money";
 
 interface WalletWithdrawModalProps {
   open: boolean;
@@ -28,7 +28,7 @@ export function WalletWithdrawModal({
   walletBalance,
   onWithdraw,
 }: WalletWithdrawModalProps) {
-  const [amount, setAmount] = useState<number>(500);
+  const [amount, setAmount] = useState<number | string>(500);
   const [method, setMethod] = useState<string>("easypaisa");
   const [accountNumber, setAccountNumber] = useState<string>("");
   const [accountTitle, setAccountTitle] = useState<string>("");
@@ -36,14 +36,16 @@ export function WalletWithdrawModal({
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const numAmount = parsePriceOrZero(amount);
+
   const handleWithdraw = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (amount < 100) {
+    if (!amount || numAmount < 100) {
       setError("Minimum withdrawal amount is Rs. 100");
       return;
     }
 
-    if (amount > walletBalance) {
+    if (numAmount > walletBalance) {
       setError(`Cannot withdraw more than available balance (${formatRsExact(walletBalance)})`);
       return;
     }
@@ -58,7 +60,7 @@ export function WalletWithdrawModal({
 
     try {
       if (onWithdraw) {
-        await onWithdraw(amount, `${method.toUpperCase()}: ${accountNumber} (${accountTitle})`);
+        await onWithdraw(numAmount, `${method.toUpperCase()}: ${accountNumber} (${accountTitle})`);
       } else {
         await new Promise((resolve) => setTimeout(resolve, 800));
       }
@@ -102,7 +104,7 @@ export function WalletWithdrawModal({
             </div>
             <h3 className="text-lg font-semibold text-navy">Payout Processed!</h3>
             <p className="text-sm text-muted-foreground">
-              <strong className="text-navy">{formatRsExact(amount)}</strong> has been requested for automated transfer to {accountNumber}.
+              <strong className="text-navy">{formatRsExact(numAmount)}</strong> has been requested for automated transfer to {accountNumber}.
             </p>
           </div>
         ) : (
@@ -119,7 +121,7 @@ export function WalletWithdrawModal({
                 min={100}
                 max={walletBalance}
                 value={amount}
-                onChange={(e) => setAmount(Number(e.target.value))}
+                onChange={(e) => setAmount(sanitizePriceInput(e.target.value))}
                 placeholder="Amount in PKR"
                 className="h-10 text-sm font-semibold text-navy"
               />

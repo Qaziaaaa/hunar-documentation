@@ -1,26 +1,24 @@
 import { http } from "@/lib/api-client";
-import { isMockMode } from "@/lib/data-source";
+import { toLocalDateString } from "@/lib/format";
 import { VisitStatus } from "@/features/customer-visits/types";
-import { MOCK_SCHEDULED_VISITS } from "../data/mock-customer-visits";
 import type { ScheduledVisit } from "../types";
 
-const FALLBACK_IMAGE =
-  "https://images.unsplash.com/photo-1540569014015-19a7be504e3a?w=150&auto=format&fit=crop&q=80";
+const FALLBACK_IMAGE = "";
 
 /**
  * Fetch all customer visits / bookings
  */
 export async function getCustomerVisits(): Promise<ScheduledVisit[]> {
-  try {
-    const res = await http.get<any[]>("/visits/my");
-    if (!Array.isArray(res) || res.length === 0) {
-      return [];
-    }
-    return res.map((item: any) => transformBackendVisit(item));
-  } catch (err) {
-    console.warn("[getCustomerVisits] Backend API error:", err);
-    return [];
+  const res = await http.get<any>("/visits/my");
+  const rows = Array.isArray(res)
+    ? res
+    : res && Array.isArray((res as { items?: unknown[] }).items)
+      ? (res as { items: unknown[] }).items
+      : null;
+  if (!rows) {
+    throw new Error("INVALID_VISITS_RESPONSE");
   }
+  return rows.map((item: any) => transformBackendVisit(item));
 }
 
 /**
@@ -58,33 +56,33 @@ function transformBackendVisit(v: any): ScheduledVisit {
     id: v.id,
     jobId: v.jobId || `job-${v.id}`,
     jobTitle: job.title || "Home Repair & Inspection",
-    jobTitleUr: "گھریلو مرمت اور معائنہ",
-    category: job.category?.name || "General Service",
-    subCategory: "Emergency Repair",
-    subCategoryUr: "ہنگامی مرمت",
+    jobTitleUr: job.titleUr || "گھریلو مرمت اور معائنہ",
+    category: job.category?.name || job.category || "General Service",
+    subCategory: job.subCategory?.name || job.subCategory || "",
+    subCategoryUr: job.subCategoryUr || "",
     status: mapVisitStatus(v.status),
     scheduledDate:
-      v.scheduledDate || v.scheduledAt || new Date().toISOString().split("T")[0],
-    scheduledTimeSlot: "11:30 AM - 12:30 PM",
+      v.scheduledDate || v.scheduledAt || toLocalDateString(),
+    scheduledTimeSlot: v.scheduledTimeSlot || v.timeSlot || "",
     etaMinutes: Number(v.etaMinutes || v.estimatedArrivalMinutes || 0),
     remainingDistanceKm: Number(v.remainingDistanceKm || 0),
     securityPin: v.securityPin || v.pin,
     visitCharges: Number(v.offer?.visitCharge || v.visitCharge || v.lockedVisitCharge || 0),
     escrowAmount: Number(v.offer?.visitCharge || v.visitCharge || v.lockedVisitCharge || 0),
-    customerAddress: job.address || "Peshawar",
-    customerArea: job.area || "Peshawar",
-    customerAreaUr: "پشاور",
-    customerLat: Number(job.latitude || v.customerLat || 33.9944),
-    customerLng: Number(job.longitude || v.customerLng || 71.4999),
-    originLat: Number(v.originLat || 34.0045),
-    originLng: Number(v.originLng || 71.477),
+    customerAddress: job.address || v.customerAddress || "",
+    customerArea: job.area || v.customerArea || "",
+    customerAreaUr: job.areaUr || v.customerAreaUr || "",
+    customerLat: Number(job.latitude || v.customerLat || 0),
+    customerLng: Number(job.longitude || v.customerLng || 0),
+    originLat: Number(v.originLat || 0),
+    originLng: Number(v.originLng || 0),
     technician: {
       id: v.workerId || worker.id || "worker-unknown",
       name: worker.name || "Technician",
       nameUr: worker.name || "ٹیکنیشن",
       businessName: worker.businessName,
       businessNameUr: worker.businessName,
-      avatarUrl: worker.avatarUrl || worker.avatar || FALLBACK_IMAGE,
+      avatarUrl: worker.avatarUrl || worker.avatar || "",
       phone: worker.phone || "",
       rating: Number(worker.rating || 0),
       totalReviews: Number(worker.totalReviews || 0),

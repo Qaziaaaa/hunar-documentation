@@ -28,6 +28,7 @@ import { LoadingState } from "@/components/shared/loading-state";
 import { ErrorState } from "@/components/shared/error-state";
 import { JobEvidencePhoto } from "@/features/customer-jobs/types";
 import { getJobRepairInvoice, acceptRepairEstimate, submitJobReview } from "../api/customer-repair-api";
+import { formatDateTime } from "@/lib/format";
 import type { JobCompletionData } from "../types";
 
 interface CustomerJobCompletionViewProps {
@@ -58,24 +59,8 @@ export function CustomerJobCompletionView({
   // Interactive Form States
   const [rating, setRating] = useState<number>(5);
   const [hoverRating, setHoverRating] = useState<number | null>(null);
-  const [selectedTags, setSelectedTags] = useState<string[]>([
-    isUrdu ? "وقت کی پابندی" : "Punctual",
-    isUrdu ? "صاف ستھرا کام" : "Clean Work",
-    isUrdu ? "مناسب قیمت" : "Fair Pricing",
-    isUrdu ? "خوش اخلاق اور پیشہ ور" : "Polite & Professional",
-  ]);
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [reviewNote, setReviewNote] = useState<string>("");
-
-  useEffect(() => {
-    if (completionData && reviewNote === "") {
-      setReviewNote(
-        isUrdu
-          ? `${completionData.worker.name} نے بہت زبردست کام کیا۔ وقت پر پہنچے، مسئلہ واضح سمجھایا اور صفائی سے کام کیا۔ میں پوری طرح مطمئن ہوں!`
-          : `${completionData.worker.name} did an exceptional job. Arrived right on time, explained the issue clearly, and completed the repair cleanly. Highly recommended!`
-      );
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [completionData, isUrdu]);
 
   // Modals & States
   const [showConfirmModal, setShowConfirmModal] = useState<boolean>(false);
@@ -293,7 +278,7 @@ export function CustomerJobCompletionView({
                 </div>
                 <div className="px-3 py-1.5 bg-slate-50 rounded-xl border border-slate-200 text-xs text-slate-700 shrink-0 font-semibold self-start flex items-center gap-1.5">
                   <Clock className="size-3.5 text-slate-400" />
-                  <span>{completionData.completedAt}</span>
+                  <span>{formatDateTime(completionData.completedAt)}</span>
                 </div>
               </div>
             </section>

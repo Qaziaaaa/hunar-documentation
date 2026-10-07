@@ -53,7 +53,7 @@ export function WalletContent() {
     };
   }, [summary, transactions]);
 
-  if (!summary.data || !transactions.data) {
+  if (summary.isLoading || transactions.isLoading) {
     return <LoadingState label="Loading wallet details..." />;
   }
 
@@ -68,6 +68,10 @@ export function WalletContent() {
         }}
       />
     );
+  }
+
+  if (!summary.data || !transactions.data) {
+    return <LoadingState label="Loading wallet details..." />;
   }
 
   const walletSummaryData = summary.data;

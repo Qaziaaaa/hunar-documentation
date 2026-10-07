@@ -1,9 +1,12 @@
 "use client";
 
-import { useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { cn } from "cn";
 
 const OTP_LENGTH = 6;
+
+const toSlots = (val: string) =>
+  Array.from({ length: OTP_LENGTH }, (_, i) => val[i] ?? "");
 
 export function OtpInput({
   value,
@@ -17,26 +20,44 @@ export function OtpInput({
   invalid?: boolean;
 }) {
   const refs = useRef<Array<HTMLInputElement | null>>([]);
-  const digits = Array.from({ length: OTP_LENGTH }, (_, i) => value[i] ?? "");
+  const [slots, setSlots] = useState<string[]>(() => toSlots(value));
+  const lastEmittedRef = useRef(value);
 
-  const commit = (next: string[]) => {
-    onChange(next.join("").slice(0, OTP_LENGTH));
+  useEffect(() => {
+    if (value !== lastEmittedRef.current) {
+      lastEmittedRef.current = value;
+      setSlots(toSlots(value));
+    }
+  }, [value]);
+
+  const emit = (next: string[]) => {
+    const collapsed = next.join("").slice(0, OTP_LENGTH);
+    lastEmittedRef.current = collapsed;
+    setSlots(next);
+    onChange(collapsed);
   };
 
   const handleChange = (index: number, raw: string) => {
     const clean = raw.replace(/\D/g, "");
-    if (!clean) return;
+    if (!clean) {
+      if (raw === "") {
+        const next = [...slots];
+        next[index] = "";
+        emit(next);
+      }
+      return;
+    }
 
     if (clean.length > 1) {
       const pasted = clean.slice(0, OTP_LENGTH);
-      onChange(pasted);
+      emit(toSlots(pasted));
       refs.current[Math.min(pasted.length, OTP_LENGTH - 1)]?.focus();
       return;
     }
 
-    const next = value.split("");
+    const next = [...slots];
     next[index] = clean;
-    commit(next);
+    emit(next);
     if (index < OTP_LENGTH - 1) refs.current[index + 1]?.focus();
   };
 
@@ -47,7 +68,7 @@ export function OtpInput({
       .slice(0, OTP_LENGTH);
     if (!pasted) return;
     event.preventDefault();
-    onChange(pasted);
+    emit(toSlots(pasted));
     refs.current[Math.min(pasted.length, OTP_LENGTH - 1)]?.focus();
   };
 
@@ -56,12 +77,14 @@ export function OtpInput({
     event: React.KeyboardEvent<HTMLInputElement>,
   ) => {
     if (event.key === "Backspace") {
-      if (digits[index]) return;
-      if (index > 0) {
-        event.preventDefault();
-        const next = value.split("");
+      event.preventDefault();
+      const next = [...slots];
+      if (next[index]) {
+        next[index] = "";
+        emit(next);
+      } else if (index > 0) {
         next[index - 1] = "";
-        commit(next);
+        emit(next);
         refs.current[index - 1]?.focus();
       }
       return;
@@ -76,7 +99,7 @@ export function OtpInput({
 
   return (
     <div className="flex items-center justify-between gap-2" dir="ltr">
-      {digits.map((digit, index) => (
+      {slots.map((digit, index) => (
         <input
           key={index}
           ref={(el) => {

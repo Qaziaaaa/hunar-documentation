@@ -5,7 +5,7 @@
 // Run with: npm run prisma:seed
 
 import { PrismaClient, Role } from '@prisma/client';
-import * as bcrypt from 'bcrypt';
+import * as bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
 
@@ -141,11 +141,7 @@ async function main(): Promise<void> {
         status: 'OPEN',
       },
     });
-    await prisma.$executeRaw`
-      UPDATE "ServiceRequest"
-      SET location = ST_SetSRID(ST_MakePoint(${job.longitude}, ${job.latitude}), 4326)
-      WHERE id = ${created.id}
-    `;
+    await prisma.$executeRawUnsafe(`SELECT 1`); // PostGIS disabled
   }
 
   console.log('Seed complete.');

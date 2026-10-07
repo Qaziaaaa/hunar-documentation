@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { VisitOffer } from "@/types/offer";
 import { formatRs } from "@/lib/design-tokens";
+import { sanitizePriceInput, parsePriceOrZero } from "@/lib/money";
 import { workerStore } from "@/stores/worker-jobs-store";
 import { Check, Send, AlertCircle, Lock } from "lucide-react";
 
@@ -18,7 +19,7 @@ export function CounterOfferPanel({
   onAccepted,
 }: CounterOfferPanelProps) {
   const [showCounterInput, setShowCounterInput] = useState(false);
-  const [newCounterAmount, setNewCounterAmount] = useState<number>(
+  const [newCounterAmount, setNewCounterAmount] = useState<number | string>(
     offer.customerCounterAmount ? offer.customerCounterAmount + 100 : offer.visitCharge
   );
   const [counterNote, setCounterNote] = useState("");
@@ -37,14 +38,15 @@ export function CounterOfferPanel({
     e.preventDefault();
     setError(null);
 
-    if (newCounterAmount <= 0) {
+    const numCounterAmount = parsePriceOrZero(newCounterAmount);
+    if (!newCounterAmount || numCounterAmount <= 0) {
       setError("Please enter a valid counter amount.");
       return;
     }
 
     const result = workerStore.sendWorkerCounter(
       jobId,
-      newCounterAmount,
+      numCounterAmount,
       counterNote.trim() ? counterNote.trim() : undefined
     );
 
@@ -147,7 +149,7 @@ export function CounterOfferPanel({
               min="50"
               step="50"
               value={newCounterAmount}
-              onChange={(e) => setNewCounterAmount(Number(e.target.value))}
+              onChange={(e) => setNewCounterAmount(sanitizePriceInput(e.target.value))}
               className="w-full pl-8 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 font-bold text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-purple-300"
               required
             />

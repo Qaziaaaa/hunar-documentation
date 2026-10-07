@@ -1,16 +1,10 @@
 import { http } from "@/lib/api-client";
-import { isMockMode, simulateLatency } from "@/lib/data-source";
 import type { PageResult } from "@/types/pagination";
 import type { Review, WorkerRatingSummary } from "@/types/review";
-import { mockRatingSummary, mockReviews } from "@/mocks/reviews.mock";
-import { MOCK_WORKER_ID } from "@/mocks/jobs.mock";
 
 export async function getRatingSummary(
-  workerId: string = MOCK_WORKER_ID,
+  workerId: string = "",
 ): Promise<WorkerRatingSummary> {
-  if (isMockMode()) {
-    return simulateLatency({ ...mockRatingSummary });
-  }
   if (!workerId) {
     return {
       average: 0,
@@ -63,24 +57,10 @@ export async function getRatingSummary(
 }
 
 export async function getWorkerReviews(
-  workerId: string = MOCK_WORKER_ID,
+  workerId: string = "",
   page = 1,
   limit = 20,
 ): Promise<PageResult<Review>> {
-  if (isMockMode()) {
-    await simulateLatency(undefined, 300, 700);
-    const total = mockReviews.length;
-    const start = (page - 1) * limit;
-    return {
-      items: mockReviews.slice(start, start + limit),
-      meta: {
-        page,
-        limit,
-        total,
-        totalPages: Math.ceil(total / limit),
-      },
-    };
-  }
   if (!workerId) {
     return {
       items: [],
@@ -113,7 +93,7 @@ export async function getWorkerReviews(
     job: r.job,
     reviewerId: r.reviewerId || r.reviewer?.id || "",
     reviewerName: r.reviewerName || r.reviewer?.name || "Customer",
-    rating: Number(r.rating) || 5,
+    rating: Number(r.rating) || 0,
     comment: r.comment || undefined,
     createdAt: r.createdAt ? new Date(r.createdAt).toISOString() : new Date().toISOString(),
   }));

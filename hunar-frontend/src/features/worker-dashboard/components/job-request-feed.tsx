@@ -12,7 +12,8 @@ import { isMockMode } from "@/lib/data-source";
 import { ApiError } from "@/lib/api-client";
 import { listNearbyJobs } from "@/services/worker/jobs.service";
 import { subscribeToNotifications } from "@/services/worker/notification.service";
-import { timeAgo, formatDate, formatTime } from "@/lib/format";
+import { timeAgo, formatDate, formatTime, formatDateSlot, isDateOnlyTimestamp } from "@/lib/format";
+import { formatAreaOrSector } from "@/lib/location";
 import type { Job } from "@/types/job";
 
 const CATEGORY_LABELS: Record<string, JobRequestCategory> = {
@@ -21,6 +22,10 @@ const CATEGORY_LABELS: Record<string, JobRequestCategory> = {
   "AC & Refrigeration": "AC Technician",
   Carpentry: "Carpenter",
   Painting: "Painter",
+  Cleaning: "Home Cleaner",
+  Masonry: "Mason / Mistri",
+  "Pest Control": "Pest Control",
+  "General Handyman": "Handyman",
   Mechanics: "Mechanic",
   "Solar Energy": "Solar Technician",
   "Appliance Repair": "Appliance Repair",
@@ -36,14 +41,11 @@ function toFeedJobRequest(job: Job): JobRequest {
     typeof job.distanceKm === "number" && job.distanceKm > 0
       ? `${job.distanceKm.toFixed(1)} km`
       : "Nearby";
-  const area = job.area ?? "";
-  const city = job.city ?? "";
-  const locationArea =
-    (area && city && area.toLowerCase().includes(city.toLowerCase())
-      ? area
-      : [area, city].filter(Boolean).join(", ")) ||
-    job.address ||
-    "Location pending";
+  const locationArea = formatAreaOrSector({
+    area: job.area,
+    address: job.address,
+    city: job.city,
+  });
   const isUrgent = job.urgency === "EMERGENCY" || job.urgency === "HIGH";
 
   return {
@@ -53,25 +55,28 @@ function toFeedJobRequest(job: Job): JobRequest {
     description: job.description ?? "",
     distance,
     locationArea,
-    fullAddress: job.address || undefined,
     uploadedTime: timeAgo(job.createdAt),
     postedTimestamp: Date.parse(job.createdAt) || undefined,
     suggestedVisitCharge: job.suggestedVisitCharge ?? job.lockedVisitCharge ?? undefined,
     preferredTiming: job.preferredVisitTime
-      ? `${formatDate(job.preferredVisitTime)}, ${formatTime(job.preferredVisitTime)}`
+      ? isDateOnlyTimestamp(job.preferredVisitTime)
+        ? formatDateSlot(job.preferredVisitTime, "Morning (8:00 AM - 12:00 PM)")
+        : `${formatDate(job.preferredVisitTime)}, ${formatTime(job.preferredVisitTime)}`
       : undefined,
     status: isUrgent ? "URGENT" : "OPEN",
     customer: {
       firstName,
       fullName,
-      avatarUrl: "/landing/mansoor-avatar.png",
-      rating: 4.8,
-      reviewCount: 3,
-      totalOrders: 1,
-      isVerified: true,
-      memberSince: "—",
+      avatarUrl: (job as any).customer?.avatarUrl || (job as any).customer?.user?.avatarUrl || "/landing/mansoor-avatar.png",
+      rating: (job as any).customer?.rating ?? 4.8,
+      reviewCount: (job as any).customer?.reviewsCount ?? 3,
+      totalOrders: (job as any).customer?.totalOrders ?? 1,
+      isVerified: Boolean((job as any).customer?.isVerified ?? true),
+      memberSince: (job as any).customer?.memberSince || "—",
     },
-    images: (job.images ?? []).filter((src) => typeof src === "string" && src.length > 0),
+    images: (job.images ?? []).filter(
+      (src) => typeof src === "string" && src.trim().length > 0 && !src.startsWith("blob:")
+    ),
     voiceNote: undefined,
   };
 }
@@ -118,7 +123,7 @@ export function JobRequestFeed({
 
   useEffect(() => {
     refreshLiveJobs();
-    const intervalId = window.setInterval(refreshLiveJobs, 4000);
+    const intervalId = window.setInterval(refreshLiveJobs, 8000);
     const onFocus = () => refreshLiveJobs();
     const onJobCreated = () => refreshLiveJobs();
     window.addEventListener("focus", onFocus);

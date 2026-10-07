@@ -9,8 +9,7 @@ export interface ReviewSubmissionPayload {
   behaviorRating?: number;
 }
 
-const FALLBACK_IMAGE =
-  "https://images.unsplash.com/photo-1540569014015-19a7be504e3a?w=150&auto=format&fit=crop&q=80";
+const FALLBACK_IMAGE = "";
 
 /**
  * Fetch repair inspection, parts estimate, and final invoice breakdown
@@ -22,7 +21,7 @@ export async function getJobRepairInvoice(jobId: string, repairDeclined?: boolea
   }
   const worker = res.worker || res.job?.worker || {};
   const isDeclined = repairDeclined || res.status === "REJECTED" || res.status === "DECLINED";
-  const visitCharge = Number(res.visitCharge ?? res.job?.visitCharges ?? 300);
+  const visitCharge = Number(res.visitCharge ?? res.job?.visitCharges ?? 0);
   const payableRepair = isDeclined ? 0 : Number(res.payableRepairAmount ?? res.laborCost ?? 0);
   const partsCharge = isDeclined ? 0 : Number(res.partsCost ?? 0);
 
@@ -40,15 +39,15 @@ export async function getJobRepairInvoice(jobId: string, repairDeclined?: boolea
       businessName: worker.businessName,
       jobSuccessRate: Number(worker.jobSuccessRate || 0),
       completedJobsCount: Number(worker.completedJobsCount || 0),
-      responseTime: "< 15m",
+      responseTime: worker.responseTime || "",
       tradeCategory: worker.tradeCategory || worker.category?.name || "Technician",
-      serviceArea: worker.serviceArea || "Peshawar",
+      serviceArea: worker.serviceArea || "",
       experienceYears: Number(worker.experienceYears || 0),
       bio: worker.bio || "",
       isCnicVerified: !!worker.isCnicVerified,
       isNadraCleared: !!worker.isNadraCleared,
       isPoliceCleared: !!worker.isPoliceCleared,
-      hunarBadgeId: "#OW-0000",
+      hunarBadgeId: worker.hunarBadgeNumber ? `#OW-${worker.hunarBadgeNumber}` : "",
       expertiseTags: worker.skills || [],
       workProjects: [],
       reviews: [],

@@ -53,11 +53,14 @@ export type JobRequestCategory =
   | "AC Technician"
   | "Carpenter"
   | "Painter"
+  | "Home Cleaner"
+  | "Mason / Mistri"
+  | "Pest Control"
+  | "Handyman"
   | "Solar Technician"
   | "Appliance Repair"
-  | "Mason"
-  | "Welder"
-  | "Mechanic";
+  | "Mechanic"
+  | "Welder";
 
 export interface JobRequest {
   id: string;
@@ -67,7 +70,6 @@ export interface JobRequest {
   description: string;
   distance: string;
   locationArea: string;
-  fullAddress?: string;
   uploadedTime: string;
   postedTimestamp?: number;
   suggestedVisitCharge?: number;

@@ -31,10 +31,10 @@ function makeService(mode: 'active' | 'empty') {
   const rows =
     mode === 'active'
       ? [
-          makeJob('j1', 'VISIT_IN_PROGRESS', 'w1'),
-          makeJob('j2', 'REPAIR_NEGOTIATING', 'w1'),
-          makeJob('j3', 'COMPLETED', 'w1'),
-        ]
+        makeJob('j1', 'VISIT_IN_PROGRESS', 'w1'),
+        makeJob('j2', 'REPAIR_NEGOTIATING', 'w1'),
+        makeJob('j3', 'COMPLETED', 'w1'),
+      ]
       : [];
   const prisma = {
     serviceRequest: {
@@ -69,5 +69,227 @@ describe('JobsService — getActiveJobs (Task 23)', () => {
     const result = await service.getActiveJobs('w9', { page: 1, limit: 10 });
     expect(result.items).toHaveLength(0);
     expect(result.meta.total).toBe(0);
+  });
+});
+
+describe('JobsService — getAvailableJobs (worker relevance)', () => {
+  it('filters nearby jobs by the worker skill set and service-area radius', async () => {
+    const prisma = {
+      user: {
+        findUnique: jest.fn().mockResolvedValue({
+          id: 'w1',
+          name: 'Worker One',
+          isVerified: true,
+          avatarUrl: 'https://cdn.example.com/avatar.png',
+        }),
+      },
+      workerProfile: {
+        findUnique: jest.fn().mockResolvedValue({
+          skills: ['cat-electric'],
+          verificationStatus: 'APPROVED',
+          serviceRadiusKm: 15,
+          experienceYears: 3,
+          bio: 'Keeps it neat',
+        }),
+      },
+      serviceArea: {
+        count: jest.fn().mockResolvedValue(1),
+      },
+      verificationDocument: {
+        findMany: jest.fn().mockResolvedValue([
+          { type: 'CNIC_FRONT', url: 'front.png' },
+          { type: 'CNIC_BACK', url: 'back.png' },
+        ]),
+      },
+      $queryRaw: jest.fn(async (sql) => {
+        const rendered = Array.isArray(sql?.strings) ? sql.strings.join('') : String(sql);
+        expect(rendered).toContain('"categoryId" = ANY');
+        expect(rendered).toContain('"ServiceArea"');
+        expect(rendered).toContain('sa."userId"');
+        return [{
+          id: 'job-1',
+          title: 'Fan not working',
+          description: 'Need a fix',
+          categoryId: 'cat-electric',
+          categoryName: 'Electrician',
+          latitude: 33.98,
+          longitude: 71.43,
+          address: 'Hayatabad',
+          city: 'Peshawar',
+          area: 'Phase 4',
+          status: 'OPEN',
+          suggestedVisitCharge: 1200,
+          preferredVisitTime: null,
+          createdAt: new Date('2026-10-01T12:00:00Z'),
+          images: [],
+          voiceNoteUrl: null,
+          offerCount: 0,
+          distanceKm: 2.4,
+        }];
+      }),
+    } as any;
+
+    const service = new JobsService(prisma, { emit: jest.fn() } as any, { emitToRoom: jest.fn() } as any);
+
+    const result = await service.getAvailableJobs(
+      { sub: 'w1', role: 'WORKER' } as any,
+      { lat: 33.98, lng: 71.43, radiusKm: 25, page: 1, limit: 10 },
+    );
+
+    expect(result.items).toHaveLength(1);
+    expect(result.items[0].categoryId).toBe('cat-electric');
+    expect(result.items[0].distanceKm).toBe(2.4);
+  });
+
+  it('allows a temporary test override to bypass the worker relevance filters', async () => {
+    const previous = process.env.ALLOW_WORKER_JOB_TEST_MODE;
+    process.env.ALLOW_WORKER_JOB_TEST_MODE = 'true';
+
+    try {
+      const prisma = {
+        user: {
+          findUnique: jest.fn().mockResolvedValue({
+            id: 'w1',
+            name: 'Worker One',
+            isVerified: true,
+            avatarUrl: 'https://cdn.example.com/avatar.png',
+          }),
+        },
+        workerProfile: {
+          findUnique: jest.fn().mockResolvedValue({
+            skills: ['cat-electric'],
+            verificationStatus: 'APPROVED',
+            serviceRadiusKm: 15,
+            experienceYears: 3,
+            bio: 'Keeps it neat',
+          }),
+        },
+        serviceArea: {
+          count: jest.fn().mockResolvedValue(1),
+        },
+        verificationDocument: {
+          findMany: jest.fn().mockResolvedValue([
+            { type: 'CNIC_FRONT', url: 'front.png' },
+            { type: 'CNIC_BACK', url: 'back.png' },
+          ]),
+        },
+        $queryRaw: jest.fn(async (sql) => {
+          const rendered = Array.isArray(sql?.strings) ? sql.strings.join('') : String(sql);
+          expect(rendered).not.toContain('"categoryId" = ANY');
+          expect(rendered).not.toContain('"ServiceArea"');
+          return [{
+            id: 'job-2',
+            title: 'Temporary test job',
+            description: 'Visible during test override',
+            categoryId: 'cat-plumbing',
+            categoryName: 'Plumbing',
+            latitude: 33.98,
+            longitude: 71.43,
+            address: 'Hayatabad',
+            city: 'Peshawar',
+            area: 'Phase 4',
+            status: 'OPEN',
+            suggestedVisitCharge: 1000,
+            preferredVisitTime: null,
+            createdAt: new Date('2026-10-01T12:00:00Z'),
+            images: [],
+            voiceNoteUrl: null,
+            offerCount: 0,
+            distanceKm: 2.4,
+          }];
+        }),
+      } as any;
+
+      const service = new JobsService(prisma, { emit: jest.fn() } as any, { emitToRoom: jest.fn() } as any);
+      const result = await service.getAvailableJobs(
+        { sub: 'w1', role: 'WORKER' } as any,
+        { lat: 33.98, lng: 71.43, radiusKm: 25, page: 1, limit: 10 },
+      );
+
+      expect(result.items).toHaveLength(1);
+      expect(result.items[0].id).toBe('job-2');
+    } finally {
+      if (previous === undefined) {
+        delete process.env.ALLOW_WORKER_JOB_TEST_MODE;
+      } else {
+        process.env.ALLOW_WORKER_JOB_TEST_MODE = previous;
+      }
+    }
+  });
+});
+
+describe('JobsService — getJobDetail location privacy', () => {
+  const fullAddress = 'House 123, Street 5, Hayatabad Phase 3, Near XYZ Market, Peshawar';
+
+  function makeDetailService(jobOverrides: Record<string, unknown> = {}) {
+    const job = {
+      id: 'job-101',
+      customerId: 'c1',
+      selectedWorkerId: null,
+      title: 'Wiring fault',
+      description: 'Living room socket issue',
+      status: 'OPEN',
+      categoryId: 'cat1',
+      category: { id: 'cat1', name: 'Electrical' },
+      address: fullAddress,
+      city: 'Peshawar',
+      area: 'Hayatabad Phase 3',
+      latitude: 34.015,
+      longitude: 71.53,
+      suggestedVisitCharge: 500,
+      lockedVisitCharge: null,
+      preferredVisitTime: null,
+      images: [],
+      voiceNoteUrl: null,
+      customer: { id: 'c1', name: 'Ahmad Khan', phone: '+923001234567' },
+      offers: [],
+      ...jobOverrides,
+    };
+    const prisma = {
+      serviceRequest: {
+        findUnique: jest.fn(async () => job),
+      },
+    } as unknown as PrismaService;
+    const eventBus = { emit: jest.fn() } as unknown as EventBusService;
+    const realtime = { emitToRoom: jest.fn() } as unknown as RealtimeService;
+    return new JobsService(prisma, eventBus, realtime);
+  }
+
+  it('masks address to Area/Sector and hides phone/GPS for worker before acceptance', async () => {
+    const service = makeDetailService({ selectedWorkerId: null });
+    const workerUser = { sub: 'w-unassigned', phone: '+923000000001', role: 'WORKER' as any };
+
+    const result = await service.getJobDetail('job-101', workerUser);
+
+    expect(result.address).toBe('Hayatabad Phase 3');
+    expect(result.area).toBe('Hayatabad Phase 3');
+    expect(result.address).not.toContain('House');
+    expect(result.address).not.toContain('Street');
+    expect(result.address).not.toContain('Near XYZ');
+    expect(result.customer?.phone).toBeNull();
+    expect(result.latitude).toBe(0);
+    expect(result.longitude).toBe(0);
+  });
+
+  it('reveals full detailed address, phone, and GPS after worker is accepted/assigned', async () => {
+    const service = makeDetailService({ selectedWorkerId: 'w-assigned' });
+    const assignedWorkerUser = { sub: 'w-assigned', phone: '+923000000002', role: 'WORKER' as any };
+
+    const result = await service.getJobDetail('job-101', assignedWorkerUser);
+
+    expect(result.address).toBe(fullAddress);
+    expect(result.customer?.phone).toBe('+923001234567');
+    expect(result.latitude).toBe(34.015);
+    expect(result.longitude).toBe(71.53);
+  });
+
+  it('reveals full detailed address to customer owner', async () => {
+    const service = makeDetailService({ customerId: 'c1' });
+    const customerUser = { sub: 'c1', phone: '+923001234567', role: 'CUSTOMER' as any };
+
+    const result = await service.getJobDetail('job-101', customerUser);
+
+    expect(result.address).toBe(fullAddress);
+    expect(result.customer?.phone).toBe('+923001234567');
   });
 });

@@ -66,7 +66,7 @@ export class RepairController {
   @Roles(Role.CUSTOMER)
   approveForJob(
     @CurrentUser() user: JwtPayload,
-    @Param('jobId', ParseUUIDPipe) jobId: string,
+    @Param('jobId') jobId: string,
     @Body() dto: RepairAcceptDto,
   ) {
     return this.repairService.approveRepairForJob(jobId, user, dto);
@@ -80,7 +80,7 @@ export class RepairController {
 
   @Put('jobs/:jobId/repair/reject')
   @Roles(Role.CUSTOMER)
-  rejectForJob(@CurrentUser() user: JwtPayload, @Param('jobId', ParseUUIDPipe) jobId: string) {
+  rejectForJob(@CurrentUser() user: JwtPayload, @Param('jobId') jobId: string) {
     return this.repairService.rejectRepairForJob(jobId, user);
   }
 

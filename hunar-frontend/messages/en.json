@@ -663,22 +663,30 @@
     "invoices": "Invoices & Receipts",
     "escrowProtected": "WorkerFIX Quality Guarantee"
   },
-  "CustomerPortal": {
-    "Nav": {
-      "dashboard": "Dashboard",
-      "myJobs": "My Jobs",
-      "offers": "Offers",
-      "visits": "Visits",
-      "chat": "Messages",
-      "profile": "Profile",
-      "help": "Help Center",
-      "postJob": "+ Post a Job",
-      "signOut": "Sign Out",
-      "language": "Language",
-      "verifiedBadge": "WorkerFIX Verified",
-      "verifiedDesc": "100% NADRA CNIC Verified Pros & doorstep satisfaction guarantee.",
-      "qualityGuarantee": "Quality Guarantee"
-    },
+"CustomerPortal": {
+      "Nav": {
+        "dashboard": "Dashboard",
+        "myJobs": "My Jobs",
+        "offers": "Offers",
+        "visits": "Visits",
+        "chat": "Messages",
+        "profile": "Profile",
+        "help": "Help Center",
+        "postJob": "+ Post a Job",
+        "signOut": "Sign Out",
+        "language": "Language",
+        "verifiedBadge": "WorkerFIX Verified",
+        "verifiedDesc": "100% NADRA CNIC Verified Pros & doorstep satisfaction guarantee.",
+        "qualityGuarantee": "Quality Guarantee"
+      },
+      "Header": {
+        "notifications": "Notifications",
+        "new": "New",
+        "markAllRead": "Mark all as read",
+        "loading": "Loading...",
+        "noNotifications": "No notifications yet",
+        "viewAll": "View All Activity & Offers →"
+      },
     "Dashboard": {
       "greeting": "Welcome back, Ahmed",
       "heroTitle": "Hire Verified Tradespeople for Home Repairs",
@@ -855,7 +863,9 @@
       "email": "Email (Optional)",
       "emailPlaceholder": "e.g. tariq@pro.pk",
       "continueBtn": "Continue to Skills",
-      "photoSizeError": "Image size should be less than 10MB"
+      "photoSizeError": "Image size should be less than 10MB",
+      "photoUploading": "Uploading photo...",
+      "photoUploadError": "Could not upload the photo. Please try again."
     },
     "Step2": {
       "badge": "Trade Skills",

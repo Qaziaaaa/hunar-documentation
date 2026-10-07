@@ -34,18 +34,27 @@ export interface CreatedJobResponse {
 
 const CATEGORY_ID_MAP: Record<string, string> = {
   plumbing: "seed-category-1",
+  plumber: "seed-category-1",
   electrical: "seed-category-2",
   electrician: "seed-category-2",
   "ac-repair": "seed-category-3",
   ac: "seed-category-3",
+  "ac-technician": "seed-category-3",
   carpentry: "seed-category-4",
   carpenter: "seed-category-4",
   painting: "seed-category-5",
   painter: "seed-category-5",
   appliance: "seed-category-5",
   cleaning: "seed-category-6",
+  cleaner: "seed-category-6",
   masonry: "seed-category-7",
+  "mason-mistry": "seed-category-7",
   "pest-control": "seed-category-8",
+  "solar-technician": "seed-category-9",
+  welder: "seed-category-9",
+  "cctv-security": "seed-category-9",
+  gardener: "seed-category-9",
+  movers: "seed-category-9",
   general: "seed-category-9",
 };
 
@@ -98,9 +107,9 @@ export async function uploadJobPhoto(file: File): Promise<{ key: string; url: st
  */
 export async function createJob(data: PostJobData): Promise<CreatedJobResponse> {
   const categoryId =
-    (data.category && (data.category.startsWith("seed-category-") || data.category.length > 20))
+    data.category && (data.category.startsWith("seed-category-") || data.category.length > 20)
       ? data.category
-      : CATEGORY_ID_MAP[data.category?.toLowerCase()] || "seed-category-1";
+      : CATEGORY_ID_MAP[data.category?.toLowerCase()] || CATEGORY_ID_MAP.plumbing || "seed-category-1";
 
   const payload: CreateJobPayload = {
     categoryId,
@@ -108,9 +117,12 @@ export async function createJob(data: PostJobData): Promise<CreatedJobResponse> 
     description: data.description,
     images: data.photos,
     voiceNoteUrl: data.voiceNoteUrl,
-    latitude: data.latitude || 34.0151, // Default Peshawar coordinates
-    longitude: data.longitude || 71.5249,
-    address: data.address || "Peshawar, Khyber Pakhtunkhwa",
+    latitude: typeof data.latitude === "number" && !isNaN(data.latitude) ? data.latitude : 34.0151,
+    longitude: typeof data.longitude === "number" && !isNaN(data.longitude) ? data.longitude : 71.5249,
+    address:
+      data.landmark && data.landmark.trim()
+        ? `${data.address || "Peshawar"} (Near: ${data.landmark.trim()})`
+        : data.address || "Peshawar, Khyber Pakhtunkhwa",
     city: data.city || "Peshawar",
     area: data.area || "Hayatabad",
     urgency: data.scheduleType === "asap" ? "EMERGENCY" : "NORMAL",
