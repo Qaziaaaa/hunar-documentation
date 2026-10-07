@@ -15,6 +15,7 @@ import {
   XCircle,
 } from "lucide-react";
 import { Link } from "@/i18n/navigation";
+import { timeAgo } from "@/lib/format";
 import type { LiveJobItem, VerificationRequest, WorkerUser } from "@/types/admin";
 import {
   approveWorkerVerification,
@@ -147,7 +148,7 @@ export function DashboardRightPanel({
                 {/* Row 1: time + status badge */}
                 <div className="flex items-center justify-between gap-1">
                   <span className="text-[9px] font-medium text-slate-400">
-                    {job.createdAt}
+                    {timeAgo(job.createdAt)}
                   </span>
                   <span
                     className={`inline-flex rounded-full px-2 py-0.5 text-[8px] font-extrabold text-white ${

@@ -53,11 +53,14 @@ export type JobRequestCategory =
   | "AC Technician"
   | "Carpenter"
   | "Painter"
+  | "Home Cleaner"
+  | "Mason / Mistri"
+  | "Pest Control"
+  | "Handyman"
   | "Solar Technician"
   | "Appliance Repair"
-  | "Mason"
-  | "Welder"
-  | "Mechanic";
+  | "Mechanic"
+  | "Welder";
 
 export interface JobRequest {
   id: string;

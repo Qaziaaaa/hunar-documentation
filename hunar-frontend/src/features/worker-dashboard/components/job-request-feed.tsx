@@ -11,7 +11,7 @@ import { isMockMode } from "@/lib/data-source";
 import { ApiError } from "@/lib/api-client";
 import { listNearbyJobs } from "@/services/worker/jobs.service";
 import { subscribeToNotifications } from "@/services/worker/notification.service";
-import { timeAgo, formatDate, formatTime } from "@/lib/format";
+import { timeAgo, formatDate, formatTime, formatDateSlot, isDateOnlyTimestamp } from "@/lib/format";
 import { formatAreaOrSector } from "@/lib/location";
 import type { Job } from "@/types/job";
 
@@ -21,6 +21,10 @@ const CATEGORY_LABELS: Record<string, JobRequestCategory> = {
   "AC & Refrigeration": "AC Technician",
   Carpentry: "Carpenter",
   Painting: "Painter",
+  Cleaning: "Home Cleaner",
+  Masonry: "Mason / Mistri",
+  "Pest Control": "Pest Control",
+  "General Handyman": "Handyman",
   Mechanics: "Mechanic",
   "Solar Energy": "Solar Technician",
   "Appliance Repair": "Appliance Repair",
@@ -54,7 +58,9 @@ function toFeedJobRequest(job: Job): JobRequest {
     postedTimestamp: Date.parse(job.createdAt) || undefined,
     suggestedVisitCharge: job.suggestedVisitCharge ?? undefined,
     preferredTiming: job.preferredVisitTime
-      ? `${formatDate(job.preferredVisitTime)}, ${formatTime(job.preferredVisitTime)}`
+      ? isDateOnlyTimestamp(job.preferredVisitTime)
+        ? formatDateSlot(job.preferredVisitTime, "Morning (8:00 AM - 12:00 PM)")
+        : `${formatDate(job.preferredVisitTime)}, ${formatTime(job.preferredVisitTime)}`
       : undefined,
     status: isUrgent ? "URGENT" : "OPEN",
     customer: {

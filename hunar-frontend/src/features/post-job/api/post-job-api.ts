@@ -34,12 +34,19 @@ export interface CreatedJobResponse {
 
 // Map frontend category slugs to backend category identifiers / seed UUIDs
 const CATEGORY_ID_MAP: Record<string, string> = {
-  plumbing: "seed-category-1",
+  plumber: "seed-category-1",
   electrician: "seed-category-2",
-  "ac-repair": "seed-category-3",
+  "ac-technician": "seed-category-3",
   carpenter: "seed-category-4",
-  appliance: "seed-category-5",
-  painter: "seed-category-6",
+  painter: "seed-category-5",
+  cleaner: "seed-category-6",
+  "mason-mistry": "seed-category-7",
+  "pest-control": "seed-category-8",
+  "solar-technician": "seed-category-9",
+  welder: "seed-category-9",
+  "cctv-security": "seed-category-9",
+  gardener: "seed-category-9",
+  movers: "seed-category-9",
 };
 
 /**
@@ -68,7 +75,7 @@ export async function uploadJobPhoto(file: File): Promise<{ key: string; url: st
 export async function createJob(data: PostJobData): Promise<CreatedJobResponse> {
   const categoryId =
     CATEGORY_ID_MAP[data.category] ||
-    CATEGORY_ID_MAP.plumbing ||
+    CATEGORY_ID_MAP.plumber ||
     "seed-category-1";
 
   const payload: CreateJobPayload = {

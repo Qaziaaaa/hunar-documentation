@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { AdminShell } from "@/features/admin/components/admin-shell";
 import { Link } from "@/i18n/navigation";
+import { formatDate } from "@/lib/format";
 import { adminApi } from "@/features/admin/api/admin-api";
 import type { DisputeReport } from "@/types/admin";
 import { AlertTriangle, Eye, ShieldAlert } from "lucide-react";
@@ -63,7 +64,7 @@ export default function DisputesPage() {
                   </td>
                   <td className="py-4 px-4 font-semibold text-slate-700">{d.targetName}</td>
                   <td className="py-4 px-4 font-bold text-orange">{d.issueCategory}</td>
-                  <td className="py-4 px-4 text-slate-500">{new Date(d.createdAt).toLocaleDateString()}</td>
+                  <td className="py-4 px-4 text-slate-500">{formatDate(d.createdAt)}</td>
                   <td className="py-4 px-4">
                     <span className="rounded-full bg-orange/10 px-2.5 py-0.5 text-[10px] font-extrabold text-orange">
                       {d.status}

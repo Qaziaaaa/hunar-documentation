@@ -8,6 +8,7 @@ import type {
   CustomerSummary,
 } from "@/types/job";
 import type { VisitOffer } from "@/types/offer";
+import { formatJobDate, isDateOnlyTimestamp, parseDisplayDate, toLocalDateString } from "@/lib/format";
 
 const DISPLAY_STATUS: Record<string, JobRequest["status"]> = {
   OPEN: "open",
@@ -74,23 +75,30 @@ function visitWindow(preferred?: string | null, created?: string): {
   date: string;
   timeSlot: string;
 } {
-  if (preferred) {
-    const d = new Date(preferred);
-    if (!Number.isNaN(d.getTime())) {
-      return {
-        date: d.toLocaleDateString("en-GB", { weekday: "short", day: "2-digit", month: "short" }),
-        timeSlot: d.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" }),
-      };
-    }
+  const preferredDate = parseDisplayDate(preferred);
+  const createdDate = parseDisplayDate(created);
+  const now = new Date();
+
+  if (preferredDate) {
+    const isToday =
+      preferredDate.getFullYear() === now.getFullYear() &&
+      preferredDate.getMonth() === now.getMonth() &&
+      preferredDate.getDate() === now.getDate();
+    const label = formatJobDate(preferred);
+    return {
+      date: isToday ? `Today, ${label}` : label,
+      timeSlot: isDateOnlyTimestamp(preferred)
+        ? "Morning (8:00 AM - 12:00 PM)"
+        : preferredDate.toLocaleTimeString("en-GB", {
+            hour: "2-digit",
+            minute: "2-digit",
+          }),
+    };
   }
-  const base = created ? new Date(created) : new Date();
-  const todayLabel = new Date().toLocaleDateString("en-GB", {
-    weekday: "short",
-    day: "2-digit",
-    month: "short",
-  });
+
+  const base = createdDate ?? now;
   return {
-    date: `Today, ${todayLabel}`,
+    date: `Today, ${formatJobDate(toLocalDateString(now))}`,
     timeSlot: base.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" }),
   };
 }

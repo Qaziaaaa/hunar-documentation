@@ -36,6 +36,10 @@ const CATEGORY_ICONS: Record<string, React.ComponentType<{ className?: string }>
   Carpenter: Hammer,
   Painter: Paintbrush,
   Welder: Flame,
+  "Home Cleaner": Sparkles,
+  "Mason / Mistri": Hammer,
+  "Pest Control": Flame,
+  Handyman: Wrench,
 };
 
 import { useLocale } from "next-intl";

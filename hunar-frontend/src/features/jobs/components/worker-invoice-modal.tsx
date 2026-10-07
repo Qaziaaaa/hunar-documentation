@@ -3,6 +3,7 @@
 import React from "react";
 import { JobRequest } from "@/types/job";
 import { formatRs } from "@/lib/design-tokens";
+import { formatDate } from "@/lib/format";
 import {
   FileText,
   CheckCircle2,
@@ -93,11 +94,7 @@ export function WorkerInvoiceModal({ job, onClose }: WorkerInvoiceModalProps) {
             </span>
             <p className="font-bold text-slate-900 mt-0.5 truncate">
               {job.completedAt
-                ? new Date(job.completedAt).toLocaleDateString("en-PK", {
-                    day: "numeric",
-                    month: "short",
-                    year: "numeric",
-                  })
+                ? formatDate(job.completedAt)
                 : "24 Oct 2026"}
             </p>
           </div>

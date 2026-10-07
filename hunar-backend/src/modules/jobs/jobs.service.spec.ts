@@ -215,6 +215,9 @@ describe('JobsService — getAvailableJobs (worker relevance)', () => {
         process.env.ALLOW_WORKER_JOB_TEST_MODE = previous;
       }
     }
+  });
+});
+
 describe('JobsService — getJobDetail location privacy', () => {
   const fullAddress = 'House 123, Street 5, Hayatabad Phase 3, Near XYZ Market, Peshawar';
 

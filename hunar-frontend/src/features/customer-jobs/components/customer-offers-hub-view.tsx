@@ -1,7 +1,9 @@
 "use client";
 
 import { useMemo, useState, useEffect } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import {
+  AlertTriangle,
   ArrowRight,
   CheckCircle2,
   Lightbulb,
@@ -14,6 +16,7 @@ import {
 } from "lucide-react";
 import { Link } from "@/i18n/navigation";
 import { useLocale } from "next-intl";
+import { formatPostedAt } from "@/lib/format";
 import { WorkerOfferCard } from "./worker-offer-card";
 import { WorkerProfileModal } from "./worker-profile-modal";
 import { SelectWorkerModal } from "./select-worker-modal";
@@ -44,6 +47,14 @@ export function CustomerOffersHubView({ initialJobs }: CustomerOffersHubViewProp
   const [selectedOfferForProfile, setSelectedOfferForProfile] = useState<WorkerOffer | null>(null);
   const [selectedOfferForBooking, setSelectedOfferForBooking] = useState<{ job: CustomerJob; offer: WorkerOffer } | null>(null);
   const [successToast, setSuccessToast] = useState<string | null>(null);
+  const [toastTone, setToastTone] = useState<"success" | "error">("success");
+  const queryClient = useQueryClient();
+
+  const showToast = (message: string, tone: "success" | "error" = "success") => {
+    setSuccessToast(message);
+    setToastTone(tone);
+    setTimeout(() => setSuccessToast(null), 5000);
+  };
 
   // Compute total offers & stats
   const allOffers = useMemo(() => {
@@ -62,6 +73,13 @@ export function CustomerOffersHubView({ initialJobs }: CustomerOffersHubViewProp
       await acceptWorkerOffer(offer.jobId, offer.id);
     } catch (err) {
       console.warn("acceptWorkerOffer error:", err);
+      showToast(
+        isUrdu
+          ? "بکنگ نہیں ہو سکی، براہِ کرم دوبارہ کوشش کریں۔"
+          : "Booking failed — the visit was not scheduled. Please try again.",
+        "error"
+      );
+      return;
     }
     setJobs((prevJobs) =>
       prevJobs.map((job) => {
@@ -76,12 +94,12 @@ export function CustomerOffersHubView({ initialJobs }: CustomerOffersHubViewProp
       })
     );
     setSelectedOfferForBooking(null);
-    setSuccessToast(
+    void queryClient.invalidateQueries({ queryKey: ["customer"] });
+    showToast(
       isUrdu
         ? `${offer.worker.name} کی بکنگ کامیابی سے ہو گئی! سیکیورٹی PIN فعال ہے۔`
         : `Successfully booked ${offer.worker.name}! Security PIN activated.`
     );
-    setTimeout(() => setSuccessToast(null), 5000);
   };
 
   // Filter jobs and their offers
@@ -148,8 +166,16 @@ export function CustomerOffersHubView({ initialJobs }: CustomerOffersHubViewProp
     <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-6 pb-16 animate-in fade-in-50 duration-300 text-[#123B5D]">
       {/* Toast Notification */}
       {successToast && (
-        <div className="fixed top-20 right-6 rtl:right-auto rtl:left-6 z-50 bg-[#0F766E] text-white px-5 py-3 rounded-2xl shadow-lg flex items-center gap-3 animate-in slide-in-from-top-4 duration-300">
-          <CheckCircle2 className="size-5 shrink-0" />
+        <div
+          className={`fixed top-20 right-6 rtl:right-auto rtl:left-6 z-50 text-white px-5 py-3 rounded-2xl shadow-lg flex items-center gap-3 animate-in slide-in-from-top-4 duration-300 ${
+            toastTone === "error" ? "bg-rose-600" : "bg-[#0F766E]"
+          }`}
+        >
+          {toastTone === "error" ? (
+            <AlertTriangle className="size-5 shrink-0" />
+          ) : (
+            <CheckCircle2 className="size-5 shrink-0" />
+          )}
           <span className="text-xs sm:text-sm font-semibold">{successToast}</span>
         </div>
       )}
@@ -344,7 +370,7 @@ export function CustomerOffersHubView({ initialJobs }: CustomerOffersHubViewProp
                         </span>
                       )}
                       <span className="text-xs text-slate-400">
-                        • {isUrdu ? `پوسٹ کی گئی: ${job.createdAt}` : `Posted ${job.createdAt}`}
+                        • {isUrdu ? `پوسٹ کی گئی: ${formatPostedAt(job.createdAt)}` : `Posted ${formatPostedAt(job.createdAt)}`}
                       </span>
                       <span className="text-xs font-mono font-bold text-slate-400">
                         {job.id}

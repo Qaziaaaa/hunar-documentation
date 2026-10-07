@@ -17,6 +17,7 @@ import {
   Volume2,
 } from "lucide-react";
 import { useLocale } from "next-intl";
+import { formatJobDate } from "@/lib/format";
 import { CATEGORY_OPTIONS } from "../data/categories";
 import type { PostJobData, PostJobStep } from "../types";
 
@@ -250,7 +251,7 @@ export function Step4ReviewPost({
                 <div className="flex flex-wrap gap-1.5">
                   <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-slate-50 border border-slate-200/60 rounded-lg text-xs font-bold text-[#123B5D]">
                     <Calendar className="size-3 text-[#0F8B8D]" />
-                    {data.preferredDate || (isUrdu ? "آج" : "Today")}
+                    {formatJobDate(data.preferredDate) || (isUrdu ? "آج" : "Today")}
                   </span>
                   <span className="inline-flex items-center px-2.5 py-1 bg-slate-50 border border-slate-200/60 rounded-lg text-xs font-bold text-[#123B5D]">
                     {data.scheduleType === "asap"

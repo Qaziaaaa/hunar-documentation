@@ -6,6 +6,7 @@ import { useParams } from "next/navigation";
 import { JobRequest } from "@/types/job";
 import { VisitOffer } from "@/types/offer";
 import { formatRs } from "@/lib/design-tokens";
+import { formatPostedAt } from "@/lib/format";
 import {
   MapPin,
   Clock,
@@ -103,7 +104,7 @@ export function JobCard({ job, workerOffer }: JobCardProps) {
           </div>
 
           <span className="text-xs text-slate-500 font-medium">
-            {job.postedAt || "Recently posted"}
+            {formatPostedAt(job.postedAt) || "Recently posted"}
           </span>
         </div>
 
