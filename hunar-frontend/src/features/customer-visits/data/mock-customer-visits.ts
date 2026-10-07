@@ -3,7 +3,7 @@ import type { ScheduledVisit } from "../types";
 export const MOCK_SCHEDULED_VISITS: ScheduledVisit[] = [
   {
     id: "VST-98214",
-    jobId: "JOB-4821",
+    jobId: "AW3-90W",
     jobTitle: "Master Bedroom Split AC Repair & Water Leakage Fix",
     jobTitleUr: "ماسٹر بیڈ روم اسپلٹ اے سی مرمت و گیس لیکیج درستگی",
     category: "ac-technician",
@@ -58,7 +58,7 @@ export const MOCK_SCHEDULED_VISITS: ScheduledVisit[] = [
   },
   {
     id: "VST-98102",
-    jobId: "JOB-3904",
+    jobId: "BK7-21M",
     jobTitle: "Kitchen Water Filter Pipe Joint Leak & Drain Flush",
     jobTitleUr: "کچن واٹر فلٹر پائپ جوائنٹ لیکیج اور ڈرین صفائی",
     category: "plumber",
@@ -111,7 +111,7 @@ export const MOCK_SCHEDULED_VISITS: ScheduledVisit[] = [
   },
   {
     id: "VST-90821",
-    jobId: "JOB-2190",
+    jobId: "ZT4-83Q",
     jobTitle: "Main 3-Phase DB Breaker Tripping & Load Balancing",
     jobTitleUr: "مین تھری فیز ڈی بی بریکر ٹرپنگ اور لوڈ بیلنسنگ",
     category: "electrician",

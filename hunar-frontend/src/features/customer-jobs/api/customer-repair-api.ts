@@ -27,7 +27,7 @@ export async function getJobRepairInvoice(jobId: string, repairDeclined?: boolea
 
   return {
     jobId: res.jobId || jobId,
-    jobNumber: `#OW-${(res.jobNumber || res.id || jobId).slice(0, 6).toUpperCase()}`,
+    jobNumber: `#${res.jobNumber || res.id || jobId}`,
     serviceTitle: res.job?.title || "Repair and Restoration",
     worker: {
       id: worker.id || "worker-unknown",

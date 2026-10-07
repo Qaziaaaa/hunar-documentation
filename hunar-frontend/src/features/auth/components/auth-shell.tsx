@@ -1,6 +1,6 @@
 "use client";
 
-import { Activity, ArrowLeft, ArrowRight, Lock, LockKeyhole, ShieldCheck, Users } from "lucide-react";
+import { Activity, ArrowLeft, Lock, LockKeyhole, ShieldCheck, Users } from "lucide-react";
 import { AuthTopBar } from "./auth-top-bar";
 import { AuthTrustFooter } from "./auth-trust-footer";
 import { CustomerAuthShowcase } from "./customer-auth-showcase";
@@ -152,14 +152,6 @@ export function AuthShell({
             >
               <ArrowLeft className="size-3.5 rtl:rotate-180" />
               <span>Back to Home</span>
-            </Link>
-
-            <Link
-              href={isCustomer ? "/worker/sign-in" : "/customer/sign-in"}
-              className="inline-flex items-center gap-1 text-xs font-semibold text-teal hover:underline"
-            >
-              <span>{isCustomer ? "Worker Portal" : "Customer Portal"}</span>
-              <ArrowRight className="size-3 rtl:rotate-180" />
             </Link>
           </div>
 

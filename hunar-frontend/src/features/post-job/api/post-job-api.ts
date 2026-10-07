@@ -1,5 +1,6 @@
 import { http } from "@/lib/api-client";
 import { isMockMode } from "@/lib/data-source";
+import { generateMockOrderCode } from "@/lib/order-code";
 import type { PostJobData } from "../types";
 
 export interface CreateJobPayload {
@@ -101,7 +102,7 @@ export async function createJob(data: PostJobData): Promise<CreatedJobResponse> 
 
   if (isMockMode()) {
     return {
-      id: `JOB-${Date.now().toString().slice(-4)}`,
+      id: generateMockOrderCode(),
       customerId: "cust-current-user",
       categoryId,
       title: payload.title,

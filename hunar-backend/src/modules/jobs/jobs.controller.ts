@@ -1,4 +1,5 @@
-import { Body, Controller, Get, Param, ParseUUIDPipe, Post, Put, Query } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Put, Query } from '@nestjs/common';
+import { ParseOrderCodePipe } from '../../common/helpers/order-code.util';
 import { JobsService } from './jobs.service';
 import {
   AvailableJobsQueryDto,
@@ -36,7 +37,7 @@ export class JobsController {
   @Get(':id')
   getDetail(
     @CurrentUser() user: JwtPayload,
-    @Param('id') id: string,
+    @Param('id', ParseOrderCodePipe) id: string,
     @Query('lat') lat?: number,
     @Query('lng') lng?: number,
   ) {
@@ -46,7 +47,7 @@ export class JobsController {
   @Put(':id/cancel')
   cancel(
     @CurrentUser() user: JwtPayload,
-    @Param('id') id: string,
+    @Param('id', ParseOrderCodePipe) id: string,
     @Body() dto: CancelJobDto,
   ) {
     return this.jobsService.cancelJob(id, user, dto);
@@ -56,7 +57,7 @@ export class JobsController {
   @Roles(Role.WORKER, Role.ADMIN)
   complete(
     @CurrentUser() user: JwtPayload,
-    @Param('id') id: string,
+    @Param('id', ParseOrderCodePipe) id: string,
   ) {
     return this.jobsService.completeJob(id, user);
   }

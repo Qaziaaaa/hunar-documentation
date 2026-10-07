@@ -313,21 +313,8 @@ export class WalletService {
       if (existingCredit) {
         return;
       }
-      await this.prisma.$transaction(async (tx) => {
-        const wallet = await this.getOrCreateWalletWith(tx, workerId);
-        const balanceAfter = roundMoney(this.toNumber(wallet.balance) + amount);
-        await tx.workerWallet.update({
-          where: { userId: wallet.userId },
-          data: { balance: new Prisma.Decimal(balanceAfter) },
-        });
-        await this.addLedgerEntry(tx, wallet.userId, 'EARNINGS_CREDIT', amount, balanceAfter, {
-          referenceType: 'job',
-          referenceId: jobId,
-          idempotencyKey: `${WALLET_IDEM_EARNINGS_CREDIT}${jobId}`,
-        });
-        await this.enforceOfflineRule(tx, workerId, balanceAfter);
-      });
-      await this.markIdempotent(`${WALLET_IDEM_EARNINGS_CREDIT}${jobId}`);
+      // Job earnings do NOT top up or increase the worker wallet balance.
+      // Wallet balance increases exclusively via admin top-up.
       this.eventBus.emit('earnings.recorded', { jobId, workerId, amount });
 
       // The platform sends the completion OTP to the customer (Section 12.3).

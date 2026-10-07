@@ -122,11 +122,12 @@ async function main(): Promise<void> {
     if (!customer) {
       continue;
     }
+    const seedJobCode = job.area === 'Hayatabad' ? 'HT1-01P' : 'UT2-02P';
     const created = await prisma.serviceRequest.upsert({
-      where: { id: `seed-job-${job.area.replace(/\s+/g, '').toLowerCase()}` },
+      where: { id: seedJobCode },
       update: {},
       create: {
-        id: `seed-job-${job.area.replace(/\s+/g, '').toLowerCase()}`,
+        id: seedJobCode,
         customerId: customer.id,
         categoryId: categories[job.category],
         title: job.title,

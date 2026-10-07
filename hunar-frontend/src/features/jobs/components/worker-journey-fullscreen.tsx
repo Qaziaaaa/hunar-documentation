@@ -130,7 +130,8 @@ export function WorkerJourneyFullscreen({
 
   // 3. Handle Complete Job (Full repair)
   const handleCompleteRepairJob = () => {
-    workerStore.completeJob(job.id, numRepairPrice);
+    const charge = activeJob.repairCharge ?? (numRepairPrice > 0 ? numRepairPrice : 1500);
+    workerStore.completeJob(job.id, charge);
     setShowSettlementModal(true);
   };
 
@@ -205,7 +206,7 @@ export function WorkerJourneyFullscreen({
   const platformCommission =
     isCompleted && activeJob.platformCommission !== undefined
       ? activeJob.platformCommission
-      : Math.round(grossJobValue * 0.1);
+      : Math.round(agreedVisitCharge * 0.1);
   const netEarnings =
     isCompleted && activeJob.workerNetEarnings !== undefined
       ? activeJob.workerNetEarnings
@@ -324,7 +325,9 @@ export function WorkerJourneyFullscreen({
                         {isUrdu ? "جاب کامیابی سے مکمل ہو گئی! 🎉" : "Job Completed & Settled! 🎉"}
                       </h3>
                       <p className="text-xs sm:text-sm text-slate-500 mt-1">
-                        Payment settled and net earnings credited to your worker wallet.
+                        {isUrdu
+                          ? "ادائیگی کسٹمر سے وصول کر لی گئی۔ پلیٹ فارم فیس کاریگر والیٹ سے وضع کر لی گئی۔"
+                          : "Payment collected directly from customer. Platform fee (10% of visit fee) deducted from wallet."}
                       </p>
                     </div>
 
@@ -341,6 +344,10 @@ export function WorkerJourneyFullscreen({
                       <div className="border-t border-emerald-200 pt-3 flex justify-between items-center text-emerald-950 font-black text-sm sm:text-base">
                         <span>{isUrdu ? "کل آمدنی:" : "Total Earning:"}</span>
                         <span className="text-lg sm:text-xl text-emerald-800 font-mono">+{formatRs(grossJobValue)}</span>
+                      </div>
+                      <div className="border-t border-emerald-200/60 pt-2 flex justify-between items-center text-emerald-900 text-xs font-semibold">
+                        <span>{isUrdu ? "والیٹ سے وضع شدہ فیس (10% وزٹ فیس):" : "Wallet Deduction (10% Visit Fee):"}</span>
+                        <span className="text-orange-700 font-mono">-{formatRs(platformCommission)}</span>
                       </div>
                     </div>
                   </div>
@@ -648,33 +655,23 @@ export function WorkerJourneyFullscreen({
                       </span>
                     </div>
 
-                    {/* In-Repair Execution checklist */}
+                    {/* In-Repair Execution Status Notice */}
                     {(isApproved || isInRepair) && (
-                      <div className="space-y-3 pt-1">
-                        <h4 className="text-xs font-black text-slate-800 uppercase tracking-wider">
-                          Repair Progress & Safety Checks
-                        </h4>
-                        <div className="space-y-2.5 text-xs sm:text-sm">
-                          <div className="flex items-center gap-2.5 p-3 rounded-xl bg-slate-50 border border-slate-200/80 text-slate-700">
-                            <CheckCircle2 className="size-4.5 text-emerald-600 shrink-0" />
-                            <span className="font-semibold">Distribution panel safely de-energized</span>
-                          </div>
-                          <div className="flex items-center gap-2.5 p-3 rounded-xl bg-slate-50 border border-slate-200/80 text-slate-700">
-                            <CheckCircle2
-                              className={`size-4.5 shrink-0 ${
-                                isInRepair ? "text-emerald-600" : "text-slate-300"
-                              }`}
-                            />
-                            <span className="font-semibold">Breaker replacement &amp; terminal torque</span>
-                          </div>
-                          <div className="flex items-center gap-2.5 p-3 rounded-xl bg-slate-50 border border-slate-200/80 text-slate-700">
-                            <CheckCircle2
-                              className={`size-4.5 shrink-0 ${
-                                isInRepair ? "text-emerald-600" : "text-slate-300"
-                              }`}
-                            />
-                            <span className="font-semibold">Circuit load test &amp; safety inspection</span>
-                          </div>
+                      <div className="p-4 rounded-2xl bg-emerald-50/80 border border-emerald-200/90 flex items-start gap-3">
+                        <CheckCircle2 className="size-5 text-emerald-600 shrink-0 mt-0.5" />
+                        <div className="space-y-1 text-xs">
+                          <h4 className="font-extrabold text-emerald-950 text-sm">
+                            {isUrdu ? "کسٹمر نے مرمت منظور کر لی ہے" : "Customer Approved the Repair"}
+                          </h4>
+                          <p className="text-emerald-900/90 leading-relaxed font-medium">
+                            {isInRepair
+                              ? isUrdu
+                                ? "مرمت کا کام جاری ہے۔ کام مکمل کرنے کے بعد نیچے دیے گئے بٹن پر کلک کریں۔"
+                                : "Repair work is in progress. Once completed, proceed with job completion below."
+                              : isUrdu
+                              ? "آپ منظور شدہ کوٹیشن کے مطابق مرمت کا کام شروع کر سکتے ہیں۔"
+                              : "The customer has accepted the quotation. You may now start the repair work."}
+                          </p>
                         </div>
                       </div>
                     )}

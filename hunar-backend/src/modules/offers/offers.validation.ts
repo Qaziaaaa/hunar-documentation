@@ -1,5 +1,6 @@
 import { Type } from 'class-transformer';
 import { IsIn, IsInt, IsNumber, IsOptional, IsString, Max, Min } from 'class-validator';
+import { IsOrderCode } from '../../common/helpers/order-code.util';
 
 export class CreateOfferDto {
   /** Worker's proposed visit charge (Rs). Price is locked on acceptance. */
@@ -53,5 +54,6 @@ export class OfferListQueryDto {
 
   @IsOptional()
   @IsString()
+  @IsOrderCode()
   jobId?: string;
 }

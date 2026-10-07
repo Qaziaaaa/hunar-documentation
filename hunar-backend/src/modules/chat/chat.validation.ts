@@ -1,5 +1,6 @@
 import { Type } from 'class-transformer';
-import { IsInt, IsOptional, IsString, Max, MaxLength, Min } from 'class-validator';
+import { IsInt, IsNotEmpty, IsOptional, IsString, Max, MaxLength, Min } from 'class-validator';
+import { IsOrderCode } from '../../common/helpers/order-code.util';
 
 export class SendMessageDto {
   @IsOptional()
@@ -12,6 +13,13 @@ export class SendMessageDto {
   @IsString()
   @MaxLength(500)
   imageKey?: string;
+}
+
+export class SendMessageByJobDto extends SendMessageDto {
+  @IsNotEmpty()
+  @IsString()
+  @IsOrderCode()
+  jobId: string;
 }
 
 export class MessageListQueryDto {

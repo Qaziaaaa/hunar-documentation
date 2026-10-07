@@ -2,6 +2,7 @@ import { Body, Controller, Get, Param, ParseUUIDPipe, Post, Put, Query, Res } fr
 import type { Response } from 'express';
 import { Role } from '@prisma/client';
 import { AdminService } from './admin.service';
+import { ParseOrderCodePipe } from '../../common/helpers/order-code.util';
 import {
   AdminCommissionListQueryDto,
   AdminJobListQueryDto,
@@ -98,13 +99,13 @@ export class AdminController {
   }
 
   @Get('jobs/:id')
-  getJob(@Param('id', ParseUUIDPipe) id: string) {
+  getJob(@Param('id', ParseOrderCodePipe) id: string) {
     return this.adminService.getJobDetail(id);
   }
 
   @Put('jobs/:id/cancel')
   forceCancelJob(
-    @Param('id', ParseUUIDPipe) id: string,
+    @Param('id', ParseOrderCodePipe) id: string,
     @Body() dto: ForceCancelJobDto,
     @CurrentUser() actor: JwtPayload,
   ) {

@@ -228,7 +228,7 @@ export const MOCK_WORKER_PROFILES: Record<string, WorkerProfile> = {
 
 export const MOCK_CUSTOMER_JOBS: CustomerJob[] = [
   {
-    id: "JOB-4821",
+    id: "AW3-90W",
     title: "Split AC indoor unit leaking water and not cooling",
     category: "ac-technician",
     subCategory: "Water Dripping from Indoor Unit",
@@ -254,7 +254,7 @@ export const MOCK_CUSTOMER_JOBS: CustomerJob[] = [
     securityPin: "6492",
     selectedOffer: {
       id: "off-1",
-      jobId: "JOB-4821",
+      jobId: "AW3-90W",
       worker: MOCK_WORKER_PROFILES["worker-1"],
       visitFee: 500,
       estimatedArrival: "Within 10 mins (En Route)",
@@ -265,7 +265,7 @@ export const MOCK_CUSTOMER_JOBS: CustomerJob[] = [
     offers: [],
   },
   {
-    id: "JOB-3904",
+    id: "BK7-21M",
     title: "Kitchen sink drain blockage and mixer tap leak",
     category: "plumber",
     subCategory: "Drainage Blockage Unclogging",
@@ -288,7 +288,7 @@ export const MOCK_CUSTOMER_JOBS: CustomerJob[] = [
     securityPin: "8120",
     selectedOffer: {
       id: "off-4",
-      jobId: "JOB-3904",
+      jobId: "BK7-21M",
       worker: MOCK_WORKER_PROFILES["worker-2"],
       visitFee: 450,
       estimatedArrival: "Tomorrow, 10:00 AM",
@@ -298,7 +298,7 @@ export const MOCK_CUSTOMER_JOBS: CustomerJob[] = [
     offers: [],
   },
   {
-    id: "JOB-2190",
+    id: "ZT4-83Q",
     title: "Main distribution board tripping on heavy load",
     category: "electrician",
     subCategory: "Short Circuit Diagnostics",
@@ -321,7 +321,7 @@ export const MOCK_CUSTOMER_JOBS: CustomerJob[] = [
     securityPin: "4419",
     selectedOffer: {
       id: "off-5",
-      jobId: "JOB-2190",
+      jobId: "ZT4-83Q",
       worker: MOCK_WORKER_PROFILES["worker-3"],
       visitFee: 500,
       estimatedArrival: "Completed",
@@ -331,7 +331,7 @@ export const MOCK_CUSTOMER_JOBS: CustomerJob[] = [
     offers: [],
   },
   {
-    id: "JOB-5517",
+    id: "HD9-05X",
     title: "Ceiling fan installation with new wiring point",
     category: "electrician",
     subCategory: "Fixture Installation",
@@ -355,7 +355,7 @@ export const MOCK_CUSTOMER_JOBS: CustomerJob[] = [
     offers: [
       {
         id: "off-6",
-        jobId: "JOB-5517",
+        jobId: "HD9-05X",
         worker: MOCK_WORKER_PROFILES["worker-1"],
         visitFee: 500,
         estimatedArrival: "Tomorrow, 4:30 PM",
@@ -365,7 +365,7 @@ export const MOCK_CUSTOMER_JOBS: CustomerJob[] = [
       },
       {
         id: "off-7",
-        jobId: "JOB-5517",
+        jobId: "HD9-05X",
         worker: MOCK_WORKER_PROFILES["worker-2"],
         visitFee: 400,
         estimatedArrival: "Tomorrow, 5:00 PM",
@@ -375,7 +375,7 @@ export const MOCK_CUSTOMER_JOBS: CustomerJob[] = [
       },
       {
         id: "off-8",
-        jobId: "JOB-5517",
+        jobId: "HD9-05X",
         worker: MOCK_WORKER_PROFILES["worker-3"],
         visitFee: 550,
         estimatedArrival: "Tomorrow, 4:00 PM",

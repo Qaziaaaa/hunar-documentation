@@ -29,7 +29,7 @@ export function WorkerPastJobCard({ job }: WorkerPastJobCardProps) {
   const platformCommission = job.platformCommission ?? Math.round(grossTotal * 0.1);
   const netEarnings = job.workerNetEarnings ?? (grossTotal - platformCommission);
   const warrantyDays = job.warrantyDays;
-  const invoiceNumber = job.invoiceNumber || `INV-${job.id.slice(-6).toUpperCase()}`;
+  const invoiceNumber = job.invoiceNumber || `INV-${job.id}`;
 
   const review = job.customerReview;
 

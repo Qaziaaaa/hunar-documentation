@@ -20,6 +20,7 @@ import {
   VISIT_ARRIVAL_OTP_TTL_SECONDS,
 } from '../../common/redis/redis.constants';
 import { JOB_EVENTS, jobRoom, LOCATION_EVENTS, userRoom } from '../jobs/jobs.events';
+import { isOrderCode } from '../../common/helpers/order-code.util';
 import { InspectionDto, TrackLocationDto, VisitQueryDto } from './visits.validation';
 
 @Injectable()
@@ -169,7 +170,13 @@ export class VisitsService {
   }
 
   async rescheduleVisit(visitId: string, user: JwtPayload, scheduledTime: Date) {
-    const visit = await this.prisma.visit.findUnique({ where: { id: visitId } });
+    let visit = await this.prisma.visit.findUnique({ where: { id: visitId } });
+    if (!visit) {
+      visit = await this.prisma.visit.findFirst({
+        where: { jobId: visitId },
+        orderBy: { createdAt: 'desc' },
+      });
+    }
     if (!visit) {
       throw new NotFoundException('Visit not found');
     }
@@ -184,7 +191,7 @@ export class VisitsService {
 
     const updated = await this.prisma.$transaction(async (tx) => {
       const v = await tx.visit.update({
-        where: { id: visitId },
+        where: { id: visit.id },
         data: { scheduledDate: scheduledTime },
       });
       // Job booking state: WORKER_ASSIGNED → VISIT_SCHEDULED.
@@ -217,7 +224,7 @@ export class VisitsService {
 
     const updated = await this.prisma.$transaction(async (tx) => {
       const v = await tx.visit.update({
-        where: { id: visitId },
+        where: { id: visit.id },
         data: { status: 'IN_PROGRESS', actualDate: new Date() },
       });
       await tx.serviceRequest.update({
@@ -401,13 +408,11 @@ export class VisitsService {
     if (user.role !== Role.WORKER) {
       throw new ForbiddenException('Only the assigned worker can submit the inspection');
     }
-    if (visit.inspectionSubmittedAt) {
-      throw new BadRequestException('INSPECTION_ALREADY_SUBMITTED');
-    }
+
 
     const updated = await this.prisma.$transaction(async (tx) => {
       const v = await tx.visit.update({
-        where: { id: visitId },
+        where: { id: visit.id },
         data: {
           diagnosis: dto.diagnosis,
           repairPlan: dto.repairPlan,
@@ -489,10 +494,7 @@ export class VisitsService {
   }
 
   async trackLocation(user: JwtPayload, jobId: string | undefined, dto: TrackLocationDto) {
-    const cleanJobId =
-      jobId && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(jobId)
-        ? jobId
-        : undefined;
+    const cleanJobId = jobId && isOrderCode(jobId) ? jobId : undefined;
     const record = await this.prisma.locationTracking.create({
       data: {
         userId: user.sub,

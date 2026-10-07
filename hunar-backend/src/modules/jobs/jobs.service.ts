@@ -21,6 +21,7 @@ import { getWorkerProfileCompletion } from '../../common/helpers/worker-profile.
 import { sanitizeToAreaOrSector } from '../../common/helpers/location.util';
 import { RealtimeService } from '../realtime/realtime.service';
 import { JOB_EVENTS, userRoom } from './jobs.events';
+import { generateUniqueOrderCode } from '../../common/helpers/order-code.util';
 
 export interface JobCardRow {
   id: string;
@@ -124,8 +125,11 @@ export class JobsService {
       throw new BadRequestException('CATEGORY_NOT_FOUND: invalid or inactive category');
     }
 
+    const orderCode = await generateUniqueOrderCode(this.prisma);
+
     const job = await this.prisma.serviceRequest.create({
       data: {
+        id: orderCode,
         customerId,
         categoryId: dto.categoryId,
         title: dto.title,
