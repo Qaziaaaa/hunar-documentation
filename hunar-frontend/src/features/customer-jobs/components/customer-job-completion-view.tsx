@@ -28,6 +28,7 @@ import { LoadingState } from "@/components/shared/loading-state";
 import { ErrorState } from "@/components/shared/error-state";
 import { JobEvidencePhoto } from "@/features/customer-jobs/types";
 import { getJobRepairInvoice, acceptRepairEstimate, submitJobReview } from "../api/customer-repair-api";
+import { formatDateTime } from "@/lib/format";
 import type { JobCompletionData } from "../types";
 
 interface CustomerJobCompletionViewProps {
@@ -277,7 +278,7 @@ export function CustomerJobCompletionView({
                 </div>
                 <div className="px-3 py-1.5 bg-slate-50 rounded-xl border border-slate-200 text-xs text-slate-700 shrink-0 font-semibold self-start flex items-center gap-1.5">
                   <Clock className="size-3.5 text-slate-400" />
-                  <span>{completionData.completedAt}</span>
+                  <span>{formatDateTime(completionData.completedAt)}</span>
                 </div>
               </div>
             </section>

@@ -12,6 +12,7 @@ import {
   X,
 } from "lucide-react";
 import { Link } from "@/i18n/navigation";
+import { timeAgo } from "@/lib/format";
 import type { LiveJobItem } from "@/types/admin";
 
 interface CancelModalState {
@@ -163,7 +164,7 @@ export function LiveJobsStream({ jobs: initialJobs }: { jobs: LiveJobItem[] }) {
                   </span>
                 </td>
                 <td className="py-2 px-2 font-semibold text-slate-400 text-xs">
-                  {job.createdAt}
+                  {timeAgo(job.createdAt)}
                 </td>
                 <td className="py-2 px-2 text-right">
                   <div className="flex items-center justify-end gap-1.5">

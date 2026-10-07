@@ -1,15 +1,17 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import Image from "next/image";
 import {
   ArrowRight,
   ChevronDown,
   ChevronUp,
   Grid,
+  SearchX,
 } from "lucide-react";
 import { Link } from "@/i18n/navigation";
 import { useLocale } from "next-intl";
+import { useCustomerSearch } from "./customer-search-context";
 
 export interface ServiceItem {
   id: string;
@@ -117,9 +119,27 @@ export const ALL_SERVICES: ServiceItem[] = [
 export function ServicesGrid() {
   const [showAll, setShowAll] = useState(false);
   const locale = useLocale();
+  const { searchQuery } = useCustomerSearch();
 
-  // Default sliced count: 12 items (3 rows of 4 on desktop, 4 rows of 3 on mobile)
-  const displayedServices = showAll ? ALL_SERVICES : ALL_SERVICES.slice(0, 12);
+  const normalizedQuery = searchQuery.trim().toLowerCase();
+
+  // Live-filter services: case-insensitive, partial match on title (EN/UR), subCategory, and id
+  const displayedServices = useMemo(() => {
+    if (!normalizedQuery) {
+      return showAll ? ALL_SERVICES : ALL_SERVICES.slice(0, 12);
+    }
+    return ALL_SERVICES.filter((service) => {
+      const matchesTitle = service.title.toLowerCase().includes(normalizedQuery);
+      const matchesTitleUr = service.titleUr.includes(searchQuery.trim());
+      const matchesSubCategory = service.subCategory
+        ?.toLowerCase()
+        .includes(normalizedQuery);
+      const matchesId = service.id.toLowerCase().includes(normalizedQuery);
+      return matchesTitle || matchesTitleUr || matchesSubCategory || matchesId;
+    });
+  }, [normalizedQuery, searchQuery, showAll]);
+
+  const isSearching = normalizedQuery.length > 0;
 
   return (
     <section className="flex flex-col gap-3 w-full">
@@ -187,6 +207,21 @@ export function ServicesGrid() {
           );
         })}
       </div>
+
+      {/* Empty search results state */}
+      {isSearching && displayedServices.length === 0 && (
+        <div className="flex flex-col items-center justify-center py-10 gap-2 text-center animate-in fade-in duration-200">
+          <SearchX className="size-8 text-slate-300" />
+          <p className="text-sm font-bold text-slate-500">
+            {locale === "ur" ? "کوئی نتیجہ نہیں ملا" : "No results found"}
+          </p>
+          <p className="text-xs text-slate-400 font-medium">
+            {locale === "ur"
+              ? "کوئی اور لفظ آزمائیں"
+              : "Try a different search term"}
+          </p>
+        </div>
+      )}
     </section>
   );
 }

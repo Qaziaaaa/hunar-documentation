@@ -160,7 +160,9 @@ function mapJobStatus(status?: string): JobStatus {
     case "OFFERS_RECEIVED":
       return "receiving_offers";
     case "WORKER_ASSIGNED":
-      return "worker_selected";
+      // Backend auto-creates a SCHEDULED visit row when the offer is accepted,
+      // so from the customer's perspective the visit is already scheduled.
+      return "visit_scheduled";
     case "VISIT_SCHEDULED":
       return "visit_scheduled";
     case "VISIT_IN_PROGRESS":

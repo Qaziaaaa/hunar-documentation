@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { Link } from "@/i18n/navigation";
 import { useLocale } from "next-intl";
+import { formatJobDate } from "@/lib/format";
 import { PeshawarLiveTrackingMap } from "./peshawar-live-tracking-map";
 import { RescheduleModal } from "./reschedule-modal";
 import { QuickChatDrawer } from "./quick-chat-drawer";
@@ -627,7 +628,7 @@ export function CustomerVisitsView({ initialVisits }: CustomerVisitsViewProps) {
                         <div className="flex flex-wrap items-center justify-between gap-2">
                           <div className="flex items-center gap-2">
                             <span className="px-3 py-1 rounded-xl text-xs font-bold uppercase tracking-wider bg-slate-100 text-[#123B5D] border border-[#E2E8F0]">
-                              {otherVisit.scheduledDate}
+                              {formatJobDate(otherVisit.scheduledDate)}
                             </span>
                             <span className="text-xs sm:text-sm font-bold text-[#123B5D]">
                               {otherVisit.scheduledTimeSlot}

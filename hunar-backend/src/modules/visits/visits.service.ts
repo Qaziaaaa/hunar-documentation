@@ -125,6 +125,7 @@ export class VisitsService {
               longitude: true,
               status: true,
               lockedVisitCharge: true,
+              category: { select: { name: true } },
             },
           },
           worker: {
@@ -133,6 +134,12 @@ export class VisitsService {
               name: true,
               phone: true,
               avatarUrl: true,
+            },
+          },
+          offer: {
+            select: {
+              visitCharge: true,
+              status: true,
             },
           },
         },

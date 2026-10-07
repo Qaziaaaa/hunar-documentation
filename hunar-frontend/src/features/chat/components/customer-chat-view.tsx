@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect, useMemo } from "react";
 import { useLocale } from "next-intl";
+import { formatJobDate } from "@/lib/format";
 import {
   ArrowLeft,
   CheckCheck,
@@ -679,7 +680,7 @@ export function CustomerChatView() {
                               ? isUrdu
                                 ? "کل"
                                 : "Tomorrow"
-                              : visit.scheduledDate}{" "}
+                              : formatJobDate(visit.scheduledDate)}{" "}
                             • {visit.scheduledTimeSlot}
                           </span>
                         </span>
@@ -829,7 +830,7 @@ export function CustomerChatView() {
               <span className="text-[11px] text-[#123B5D] font-bold shrink-0 hidden sm:inline-flex items-center gap-1 bg-white px-2 py-0.5 rounded-md border border-teal-200">
                 <Calendar className="size-3 text-[#0F8B8D]" />
                 <span>
-                  {currentVisit.scheduledDate} • {currentVisit.scheduledTimeSlot}
+                  {formatJobDate(currentVisit.scheduledDate)} • {currentVisit.scheduledTimeSlot}
                 </span>
               </span>
             </div>

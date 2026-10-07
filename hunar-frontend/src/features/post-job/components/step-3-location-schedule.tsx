@@ -25,6 +25,7 @@ import {
 } from "@/features/customer-profile/services/saved-addresses-storage";
 import type { SavedAddress } from "@/features/customer-profile/types";
 import { useLocale } from "next-intl";
+import { toLocalDateString } from "@/lib/format";
 
 interface Step3LocationScheduleProps {
   data: PostJobData;
@@ -187,7 +188,7 @@ export function Step3LocationSchedule({
     const d = new Date();
     d.setDate(today.getDate() + i);
     return {
-      dateString: d.toISOString().split("T")[0],
+      dateString: toLocalDateString(d),
       dayName: d.toLocaleDateString(isUrdu ? "ur-PK" : "en-US", { weekday: "short" }),
       dayNumber: d.getDate(),
       monthName: d.toLocaleDateString(isUrdu ? "ur-PK" : "en-US", { month: "short" }),
@@ -198,10 +199,10 @@ export function Step3LocationSchedule({
 
   const formattedSelectedDate = (() => {
     if (!data.preferredDate) return isUrdu ? "آج" : "Today";
-    const todayStr = new Date().toISOString().split("T")[0];
+    const todayStr = toLocalDateString();
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
-    const tomorrowStr = tomorrow.toISOString().split("T")[0];
+    const tomorrowStr = toLocalDateString(tomorrow);
 
     if (data.preferredDate === todayStr) {
       return isUrdu ? "آج" : "Today";

@@ -1,4 +1,5 @@
 import { http } from "@/lib/api-client";
+import { toLocalDateString } from "@/lib/format";
 import { VisitStatus } from "@/features/customer-visits/types";
 import type { ScheduledVisit } from "../types";
 
@@ -8,11 +9,16 @@ const FALLBACK_IMAGE = "";
  * Fetch all customer visits / bookings
  */
 export async function getCustomerVisits(): Promise<ScheduledVisit[]> {
-  const res = await http.get<any[]>("/visits/my");
-  if (!Array.isArray(res)) {
-    return [];
+  const res = await http.get<any>("/visits/my");
+  const rows = Array.isArray(res)
+    ? res
+    : res && Array.isArray((res as { items?: unknown[] }).items)
+      ? (res as { items: unknown[] }).items
+      : null;
+  if (!rows) {
+    throw new Error("INVALID_VISITS_RESPONSE");
   }
-  return res.map((item: any) => transformBackendVisit(item));
+  return rows.map((item: any) => transformBackendVisit(item));
 }
 
 /**
@@ -56,7 +62,7 @@ function transformBackendVisit(v: any): ScheduledVisit {
     subCategoryUr: job.subCategoryUr || "",
     status: mapVisitStatus(v.status),
     scheduledDate:
-      v.scheduledDate || v.scheduledAt || new Date().toISOString().split("T")[0],
+      v.scheduledDate || v.scheduledAt || toLocalDateString(),
     scheduledTimeSlot: v.scheduledTimeSlot || v.timeSlot || "",
     etaMinutes: Number(v.etaMinutes || v.estimatedArrivalMinutes || 0),
     remainingDistanceKm: Number(v.remainingDistanceKm || 0),

@@ -2,28 +2,26 @@
 
 import { useState, useRef, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Bell, Check, Clock, Menu, Search, ShieldCheck, X } from "lucide-react";
+import { Bell, Clock, Menu, Search, ShieldCheck, X } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
-import { Link, useRouter } from "@/i18n/navigation";
+import { Link } from "@/i18n/navigation";
 import { getCustomerNotifications, markAllCustomerNotificationsRead } from "@/features/customer-jobs/services/customer-notification-service";
-import type { AppNotification } from "@/types/notification";
+import { useCustomerSearch } from "./customer-search-context";
 
 interface CustomerHeaderProps {
   onOpenSidebar: () => void;
 }
 
 export function CustomerHeader({ onOpenSidebar }: CustomerHeaderProps) {
-  const router = useRouter();
   const locale = useLocale();
   const isUrdu = locale === "ur";
   const t = useTranslations("CustomerPortal.Header");
   const queryClient = useQueryClient();
-  const [searchOpen, setSearchOpen] = useState(false);
-  const [query, setQuery] = useState("");
+  const { searchQuery, setSearchQuery } = useCustomerSearch();
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  const { data: notifications = [], isLoading, refetch } = useQuery({
+  const { data: notifications = [], isLoading } = useQuery({
     queryKey: ["customer", "notifications"],
     queryFn: getCustomerNotifications,
     staleTime: 30_000,
@@ -48,13 +46,6 @@ export function CustomerHeader({ onOpenSidebar }: CustomerHeaderProps) {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
-
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (query.trim()) {
-      router.push(`/customer/post-job?search=${encodeURIComponent(query.trim())}`);
-    }
-  };
 
   const placeholderText = isUrdu ? "سروس تلاش کریں..." : "Search services...";
 
@@ -89,49 +80,28 @@ export function CustomerHeader({ onOpenSidebar }: CustomerHeaderProps) {
 
       {/* End Corner: Search & Notifications */}
       <div className="flex items-center gap-2.5 ms-auto">
-        {/* Desktop / Expanded Search Form */}
-        <form
-          onSubmit={handleSearch}
-          className={`relative transition-all duration-200 ${
-            searchOpen
-              ? "flex items-center w-48 sm:w-72"
-              : "hidden sm:flex items-center w-56 sm:w-64"
-          }`}
-        >
-          <Search className="absolute start-3 top-1/2 -translate-y-1/2 size-4 text-slate-400" />
+        {/* Single Live Search Bar */}
+        <div className="relative flex items-center w-40 sm:w-56 lg:w-72">
+          <Search className="absolute start-3 top-1/2 -translate-y-1/2 size-4 text-slate-400 pointer-events-none" />
           <input
             type="search"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
             placeholder={placeholderText}
-            className="w-full h-10 ps-9 pe-8 text-xs font-medium rounded-xl border border-slate-200 bg-white/90 focus:bg-white focus:border-[#0F8B8D] focus:outline-none transition-all placeholder:text-slate-400 shadow-2xs"
+            aria-label={placeholderText}
+            className="w-full h-10 ps-9 pe-9 text-xs font-medium rounded-xl border border-slate-200 bg-white/90 focus:bg-white focus:border-[#0F8B8D] focus:outline-none transition-all placeholder:text-slate-400 shadow-2xs"
           />
-          {searchOpen ? (
+          {searchQuery ? (
             <button
               type="button"
-              onClick={() => {
-                setSearchOpen(false);
-                setQuery("");
-              }}
-              className="absolute end-2.5 top-1/2 -translate-y-1/2 size-5 rounded-full text-slate-400 hover:text-slate-700 flex items-center justify-center sm:hidden cursor-pointer"
+              onClick={() => setSearchQuery("")}
+              aria-label={isUrdu ? "تلاش صاف کریں" : "Clear search"}
+              className="absolute end-2.5 top-1/2 -translate-y-1/2 size-5 rounded-full text-slate-400 hover:text-slate-700 flex items-center justify-center cursor-pointer"
             >
               <X className="size-3.5" />
             </button>
           ) : null}
-        </form>
-
-        {/* Mobile Search Toggle Icon Button */}
-        {!searchOpen ? (
-          <button
-            type="button"
-            onClick={() => setSearchOpen(true)}
-            aria-label="Search Services"
-            className="sm:hidden size-10 rounded-xl text-slate-700 hover:text-[#0F8B8D] hover:bg-slate-100/80 active:scale-95 transition-all flex items-center justify-center cursor-pointer"
-            title="Search Services"
-          >
-            <Search className="size-5 stroke-[2.2]" />
-          </button>
-        ) : null}
+        </div>
 
         {/* Interactive Notification Bell Dropdown */}
         <div className="relative" ref={dropdownRef}>

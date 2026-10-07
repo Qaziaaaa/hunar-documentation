@@ -20,6 +20,7 @@ import {
   type ArrivalSession,
 } from "@/features/jobs/services/arrival-verification-service";
 import { CustomerRealtimeSync } from "@/features/customer-dashboard/components/customer-realtime-sync";
+import { CustomerSearchProvider } from "@/features/customer-dashboard/components/customer-search-context";
 
 export default function CustomerLayout({
   children,
@@ -117,54 +118,56 @@ export default function CustomerLayout({
   const isChat = pathname.includes("/customer/chat");
 
   return (
-    <div className={`min-h-screen ${isChat ? "h-[100dvh] overflow-hidden" : ""} bg-white text-slate-900 font-sans antialiased`}>
-      <CustomerRealtimeSync />
-      {/* Desktop Sidebar & Mobile Drawer */}
-      <CustomerSidebar
-        isOpen={mobileMenuOpen}
-        onClose={() => setMobileMenuOpen(false)}
-      />
+    <CustomerSearchProvider>
+      <div className={`min-h-screen ${isChat ? "h-[100dvh] overflow-hidden" : ""} bg-white text-slate-900 font-sans antialiased`}>
+        <CustomerRealtimeSync />
+        {/* Desktop Sidebar & Mobile Drawer */}
+        <CustomerSidebar
+          isOpen={mobileMenuOpen}
+          onClose={() => setMobileMenuOpen(false)}
+        />
 
-      {/* Main Content Area - uses logical padding-inline-start (ps) for auto LTR / RTL mirroring */}
-      <div className={`w-full lg:ps-[260px] ${isChat ? "h-[100dvh] overflow-hidden pb-0" : "min-h-screen pb-16 lg:pb-0"} flex flex-col bg-white`}>
-        {/* Minimal Header with Sidebar Toggle (Hidden on mobile chat for full WhatsApp view) */}
-        <div className={isChat ? "hidden lg:block shrink-0" : "shrink-0"}>
-          <CustomerHeader onOpenSidebar={() => setMobileMenuOpen((prev) => !prev)} />
+        {/* Main Content Area - uses logical padding-inline-start (ps) for auto LTR / RTL mirroring */}
+        <div className={`w-full lg:ps-[260px] ${isChat ? "h-[100dvh] overflow-hidden pb-0" : "min-h-screen pb-16 lg:pb-0"} flex flex-col bg-white`}>
+          {/* Minimal Header with Sidebar Toggle (Hidden on mobile chat for full WhatsApp view) */}
+          <div className={isChat ? "hidden lg:block shrink-0" : "shrink-0"}>
+            <CustomerHeader onOpenSidebar={() => setMobileMenuOpen((prev) => !prev)} />
+          </div>
+
+          {/* Page Content */}
+          <main className={`w-full flex-1 bg-white ${isChat ? "overflow-hidden flex flex-col min-h-0" : ""}`}>
+            {children}
+          </main>
         </div>
 
-        {/* Page Content */}
-        <main className={`w-full flex-1 bg-white ${isChat ? "overflow-hidden flex flex-col min-h-0" : ""}`}>
-          {children}
-        </main>
+        {/* Mobile Bottom Navigation Bar (Home | Jobs | + Post | Messages | Me) */}
+        <CustomerBottomNav />
+
+        {/* Premises Entry Success Toast Notification */}
+        {successToast && (
+          <div className="fixed top-5 inset-x-4 z-50 max-w-lg mx-auto bg-[#0F766E] text-white px-5 py-3.5 rounded-2xl shadow-2xl flex items-center gap-3 animate-in slide-in-from-top-4 duration-300 border border-teal-400/40">
+            <CheckCircle2 className="size-6 text-emerald-300 shrink-0" />
+            <p className="text-xs sm:text-sm font-extrabold leading-snug">{successToast}</p>
+          </div>
+        )}
+
+        {/* Customer Doorstep Arrival OTP Modal */}
+        <CustomerArrivalOtpModal
+          isOpen={isArrivalOtpOpen}
+          session={arrivalSession}
+          onSuccess={handleOtpVerified}
+          onClose={() => setIsArrivalOtpOpen(false)}
+          isUrdu={isUrdu}
+        />
+
+        {/* Mandatory Customer Repair Quote Approval Modal */}
+        <CustomerRepairQuoteModal
+          isOpen={isQuoteModalOpen}
+          quote={activeQuote}
+          onDecision={handleQuoteDecision}
+          isUrdu={isUrdu}
+        />
       </div>
-
-      {/* Mobile Bottom Navigation Bar (Home | Jobs | + Post | Messages | Me) */}
-      <CustomerBottomNav />
-
-      {/* Premises Entry Success Toast Notification */}
-      {successToast && (
-        <div className="fixed top-5 inset-x-4 z-50 max-w-lg mx-auto bg-[#0F766E] text-white px-5 py-3.5 rounded-2xl shadow-2xl flex items-center gap-3 animate-in slide-in-from-top-4 duration-300 border border-teal-400/40">
-          <CheckCircle2 className="size-6 text-emerald-300 shrink-0" />
-          <p className="text-xs sm:text-sm font-extrabold leading-snug">{successToast}</p>
-        </div>
-      )}
-
-      {/* Customer Doorstep Arrival OTP Modal */}
-      <CustomerArrivalOtpModal
-        isOpen={isArrivalOtpOpen}
-        session={arrivalSession}
-        onSuccess={handleOtpVerified}
-        onClose={() => setIsArrivalOtpOpen(false)}
-        isUrdu={isUrdu}
-      />
-
-      {/* Mandatory Customer Repair Quote Approval Modal */}
-      <CustomerRepairQuoteModal
-        isOpen={isQuoteModalOpen}
-        quote={activeQuote}
-        onDecision={handleQuoteDecision}
-        isUrdu={isUrdu}
-      />
-    </div>
+    </CustomerSearchProvider>
   );
 }

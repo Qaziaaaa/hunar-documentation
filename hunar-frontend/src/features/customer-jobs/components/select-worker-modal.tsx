@@ -9,6 +9,7 @@ import {
   X,
 } from "lucide-react";
 import { useLocale } from "next-intl";
+import { formatJobDate } from "@/lib/format";
 import type { CustomerJob, WorkerOffer } from "../types";
 
 interface SelectWorkerModalProps {
@@ -124,7 +125,7 @@ export function SelectWorkerModal({
                   {isUrdu ? "پسندیدہ وقت: " : "Preferred Timing: "}
                 </span>
                 <span>
-                  {job.preferredDate || (isUrdu ? "آج" : "Today")} • {job.preferredTimeSlot || (isUrdu ? "صبح کا وقت" : "Morning")}
+                  {formatJobDate(job.preferredDate) || (isUrdu ? "آج" : "Today")} • {job.preferredTimeSlot || (isUrdu ? "صبح کا وقت" : "Morning")}
                 </span>
               </div>
             </div>

@@ -1,7 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import {
+  AlertTriangle,
   ArrowLeft,
   ArrowRight,
   Calendar,
@@ -20,6 +22,7 @@ import {
 } from "lucide-react";
 import { Link } from "@/i18n/navigation";
 import { useLocale } from "next-intl";
+import { formatDateTime, formatJobDate } from "@/lib/format";
 import { WorkerOfferCard } from "./worker-offer-card";
 import { WorkerProfileModal } from "./worker-profile-modal";
 import { SelectWorkerModal } from "./select-worker-modal";
@@ -38,6 +41,15 @@ export function CustomerJobDetailsView({ initialJob }: CustomerJobDetailsViewPro
   const [selectedOfferForBooking, setSelectedOfferForBooking] = useState<WorkerOffer | null>(null);
   const [isPlayingAudio, setIsPlayingAudio] = useState(false);
   const [previewPhoto, setPreviewPhoto] = useState<string | null>(null);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [toastTone, setToastTone] = useState<"success" | "error">("success");
+  const queryClient = useQueryClient();
+
+  const showToast = (message: string, tone: "success" | "error" = "success") => {
+    setToastMessage(message);
+    setToastTone(tone);
+    setTimeout(() => setToastMessage(null), 4000);
+  };
 
   // Audio Playback Handler
   const handleToggleAudio = () => {
@@ -61,6 +73,13 @@ export function CustomerJobDetailsView({ initialJob }: CustomerJobDetailsViewPro
       await acceptWorkerOffer(job.id, offer.id);
     } catch (err) {
       console.warn("acceptWorkerOffer error:", err);
+      showToast(
+        isUrdu
+          ? "بکنگ نہیں ہو سکی، براہِ کرم دوبارہ کوشش کریں۔"
+          : "Booking failed — the visit was not scheduled. Please try again.",
+        "error"
+      );
+      return;
     }
     setJob((prev) => ({
       ...prev,
@@ -68,10 +87,31 @@ export function CustomerJobDetailsView({ initialJob }: CustomerJobDetailsViewPro
       selectedOffer: offer,
     }));
     setSelectedOfferForBooking(null);
+    void queryClient.invalidateQueries({ queryKey: ["customer"] });
+    showToast(
+      isUrdu
+        ? `${offer.worker.name} کی بکنگ کامیابی سے ہو گئی! سیکیورٹی PIN فعال ہے۔`
+        : `Successfully booked ${offer.worker.name}! Security PIN activated.`
+    );
   };
 
   return (
     <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-6 pb-16 animate-in fade-in-50 duration-300 text-[#123B5D]">
+      {/* Toast Notification */}
+      {toastMessage && (
+        <div
+          className={`fixed top-20 right-6 rtl:right-auto rtl:left-6 z-60 text-white px-5 py-3 rounded-2xl shadow-xl flex items-center gap-3 animate-in slide-in-from-top-4 duration-300 ${
+            toastTone === "error" ? "bg-rose-600" : "bg-[#0F766E]"
+          }`}
+        >
+          {toastTone === "error" ? (
+            <AlertTriangle className="size-5 shrink-0" />
+          ) : (
+            <CheckCircle2 className="size-5 shrink-0" />
+          )}
+          <span className="text-xs sm:text-sm font-semibold">{toastMessage}</span>
+        </div>
+      )}
       {/* Top Breadcrumb / Back Bar */}
       <div className="flex items-center justify-between">
         <Link
@@ -126,7 +166,7 @@ export function CustomerJobDetailsView({ initialJob }: CustomerJobDetailsViewPro
             {isUrdu ? "پوسٹ کرنے کی تاریخ" : "Posted On"}
           </span>
           <span className="text-xs sm:text-sm font-bold text-[#123B5D]">
-            {job.createdAt}
+            {formatDateTime(job.createdAt)}
           </span>
         </div>
       </div>
@@ -148,7 +188,7 @@ export function CustomerJobDetailsView({ initialJob }: CustomerJobDetailsViewPro
                 <p className="text-xs font-bold text-[#123B5D]">
                   {isUrdu ? "جاب شائع کی گئی" : "Job Published"}
                 </p>
-                <p className="text-[11px] text-slate-400">{job.createdAt}</p>
+                <p className="text-[11px] text-slate-400">{formatDateTime(job.createdAt)}</p>
               </div>
 
               {/* Step 2: Receiving Offers */}
@@ -299,7 +339,7 @@ export function CustomerJobDetailsView({ initialJob }: CustomerJobDetailsViewPro
                 <Clock className="size-4 text-[#0F766E] shrink-0" />
                 <p className="text-slate-600">
                   <span className="font-bold text-[#123B5D]">
-                    {job.preferredDate || (isUrdu ? "آج" : "Today")}
+                    {formatJobDate(job.preferredDate) || (isUrdu ? "آج" : "Today")}
                   </span>{" "}
                   • {job.preferredTimeSlot || (isUrdu ? "فوری / ابھی" : "Immediate / ASAP")}
                 </p>
