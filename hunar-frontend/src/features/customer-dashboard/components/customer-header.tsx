@@ -4,15 +4,19 @@ import { useState, useRef, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Bell, Clock, Menu, Search, ShieldCheck, X } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
-import { Link } from "@/i18n/navigation";
+import { Link, usePathname } from "@/i18n/navigation";
 import { getCustomerNotifications, markAllCustomerNotificationsRead } from "@/features/customer-jobs/services/customer-notification-service";
 import { useCustomerSearch } from "./customer-search-context";
 
 interface CustomerHeaderProps {
   onOpenSidebar: () => void;
+  showSearch?: boolean;
 }
 
-export function CustomerHeader({ onOpenSidebar }: CustomerHeaderProps) {
+export function CustomerHeader({ onOpenSidebar, showSearch }: CustomerHeaderProps) {
+  const pathname = usePathname();
+  const isDashboard = pathname === "/customer" || pathname.startsWith("/customer/dashboard");
+  const isHome = showSearch !== undefined ? showSearch : isDashboard;
   const locale = useLocale();
   const isUrdu = locale === "ur";
   const t = useTranslations("CustomerPortal.Header");
@@ -47,6 +51,13 @@ export function CustomerHeader({ onOpenSidebar }: CustomerHeaderProps) {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  // Clear search query when navigating away from dashboard/home
+  useEffect(() => {
+    if (!isHome && searchQuery) {
+      setSearchQuery("");
+    }
+  }, [isHome, searchQuery, setSearchQuery]);
+
   const placeholderText = isUrdu ? "سروس تلاش کریں..." : "Search services...";
 
   const formatTimeAgo = (dateString: string) => {
@@ -80,28 +91,30 @@ export function CustomerHeader({ onOpenSidebar }: CustomerHeaderProps) {
 
       {/* End Corner: Search & Notifications */}
       <div className="flex items-center gap-2.5 ms-auto">
-        {/* Single Live Search Bar */}
-        <div className="relative flex items-center w-40 sm:w-56 lg:w-72">
-          <Search className="absolute start-3 top-1/2 -translate-y-1/2 size-4 text-slate-400 pointer-events-none" />
-          <input
-            type="search"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder={placeholderText}
-            aria-label={placeholderText}
-            className="w-full h-10 ps-9 pe-9 text-xs font-medium rounded-xl border border-slate-200 bg-white/90 focus:bg-white focus:border-[#0F8B8D] focus:outline-none transition-all placeholder:text-slate-400 shadow-2xs"
-          />
-          {searchQuery ? (
-            <button
-              type="button"
-              onClick={() => setSearchQuery("")}
-              aria-label={isUrdu ? "تلاش صاف کریں" : "Clear search"}
-              className="absolute end-2.5 top-1/2 -translate-y-1/2 size-5 rounded-full text-slate-400 hover:text-slate-700 flex items-center justify-center cursor-pointer"
-            >
-              <X className="size-3.5" />
-            </button>
-          ) : null}
-        </div>
+        {/* Single Live Search Bar (Rendered only on Dashboard / Home) */}
+        {isHome && (
+          <div className="relative flex items-center w-40 sm:w-56 lg:w-72">
+            <Search className="absolute start-3 top-1/2 -translate-y-1/2 size-4 text-slate-400 pointer-events-none" />
+            <input
+              type="search"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder={placeholderText}
+              aria-label={placeholderText}
+              className="w-full h-10 ps-9 pe-9 text-xs font-medium rounded-xl border border-slate-200 bg-white/90 focus:bg-white focus:border-[#0F8B8D] focus:outline-none transition-all placeholder:text-slate-400 shadow-2xs"
+            />
+            {searchQuery ? (
+              <button
+                type="button"
+                onClick={() => setSearchQuery("")}
+                aria-label={isUrdu ? "تلاش صاف کریں" : "Clear search"}
+                className="absolute end-2.5 top-1/2 -translate-y-1/2 size-5 rounded-full text-slate-400 hover:text-slate-700 flex items-center justify-center cursor-pointer"
+              >
+                <X className="size-3.5" />
+              </button>
+            ) : null}
+          </div>
+        )}
 
         {/* Interactive Notification Bell Dropdown */}
         <div className="relative" ref={dropdownRef}>
