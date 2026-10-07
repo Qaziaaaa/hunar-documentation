@@ -414,6 +414,9 @@ export class AdminUpdateCategoryDto {
   @IsInt()
   @Min(0)
   sortOrder?: number;
+
+  @IsOptional()
+  distanceSlabs?: any;
 }
 
 // Platform settings (Admin flow §12). Admin views and updates platform settings.

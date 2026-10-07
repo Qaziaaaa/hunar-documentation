@@ -5,6 +5,7 @@ import type {
   AuditLogEntry,
   CustomerUser,
   DisputeReport,
+  DistanceSlab,
   JobDetailItem,
   LiveJobItem,
   PaymentTransaction,
@@ -214,6 +215,9 @@ function toWorkerUser(w: BackendUserRow): WorkerUser {
     typeof s === "object" && s !== null ? (s.name ?? String(s)) : String(s)
   );
 
+  const earningsVal = (w as any).totalEarnings ?? profile?.totalEarnings ?? 0;
+  const walletVal = (w as any).walletBalance ?? profile?.walletBalance ?? (w as any).wallet?.balance ?? 0;
+
   return {
     id: w.id,
     name: w.name || w.phone || "Worker",
@@ -223,8 +227,8 @@ function toWorkerUser(w: BackendUserRow): WorkerUser {
     skills: skillsList.length > 0 ? skillsList : ["Professional Worker"],
     verificationStatus: verificationStatusMap[rawVStatus] ?? "VERIFIED",
     rating: 5.0,
-    totalEarnings: 0,
-    walletBalance: 0,
+    totalEarnings: Number(earningsVal),
+    walletBalance: Number(walletVal),
     isOnline: profile?.isAvailable ?? w.isAvailable ?? false,
     joinDate: w.createdAt ? new Date(w.createdAt).toISOString().split("T")[0] : "",
     status: w.isActive ? "ACTIVE" : "SUSPENDED",
@@ -306,7 +310,16 @@ function toDisputeReport(d: BackendDisputeRow): DisputeReport {
   };
 }
 
-function toServiceCategory(c: BackendCategoryRow): ServiceCategory {
+const DEFAULT_DISTANCE_SLABS: DistanceSlab[] = [
+  { minKm: 0, maxKm: 2, charge: 100, label: "0–2 KM" },
+  { minKm: 2, maxKm: 5, charge: 200, label: "2–5 KM" },
+  { minKm: 5, maxKm: 8, charge: 300, label: "5–8 KM" },
+  { minKm: 8, maxKm: 12, charge: 400, label: "8–12 KM" },
+  { minKm: 12, maxKm: 15, charge: 500, label: "12–15 KM" },
+  { minKm: 15, maxKm: null, charge: null, requiresApproval: true, label: "15+ KM" },
+];
+
+function toServiceCategory(c: any): ServiceCategory {
   return {
     id: c.id,
     name: c.name,
@@ -314,6 +327,7 @@ function toServiceCategory(c: BackendCategoryRow): ServiceCategory {
     activeWorkersCount: 0,
     totalJobsCount: 0,
     isActive: c.isActive,
+    distanceSlabs: (c.distanceSlabs && Array.isArray(c.distanceSlabs) && c.distanceSlabs.length > 0) ? c.distanceSlabs : DEFAULT_DISTANCE_SLABS,
   };
 }
 
@@ -632,6 +646,11 @@ export const adminApi = {
 
   async updateCategory(id: string, name: string) {
     return http.put(`/admin/categories/${id}`, { name });
+  },
+
+  async updateCategoryDistanceSlabs(id: string, distanceSlabs: any[]): Promise<ServiceCategory> {
+    const updated = await http.put<any>(`/admin/categories/${id}`, { distanceSlabs });
+    return toServiceCategory(updated);
   },
 
   async getSettings(): Promise<PlatformSettings> {

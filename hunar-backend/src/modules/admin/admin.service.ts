@@ -53,6 +53,15 @@ import {
 // Job states that mean the customer has paid for the (locked) visit charge.
 const PAID_JOB_STATUSES: JobStatus[] = [JobStatus.COMPLETED, JobStatus.PAID, JobStatus.REVIEWED];
 
+const DEFAULT_DISTANCE_SLABS = [
+  { minKm: 0, maxKm: 2, charge: 100, label: '0–2 KM' },
+  { minKm: 2, maxKm: 5, charge: 200, label: '2–5 KM' },
+  { minKm: 5, maxKm: 8, charge: 300, label: '5–8 KM' },
+  { minKm: 8, maxKm: 12, charge: 400, label: '8–12 KM' },
+  { minKm: 12, maxKm: 15, charge: 500, label: '12–15 KM' },
+  { minKm: 15, maxKm: null, charge: null, requiresApproval: true, label: '15+ KM' },
+];
+
 const LIST_USER_SELECT = {
   id: true,
   phone: true,
@@ -61,6 +70,8 @@ const LIST_USER_SELECT = {
   isActive: true,
   isVerified: true,
   createdAt: true,
+  wallet: { select: { balance: true } },
+  commissions: { select: { amount: true, visitCharge: true } },
   workerProfile: {
     select: {
       verificationStatus: true,
@@ -1209,13 +1220,19 @@ export class AdminService {
           nameUrdu: true,
           isActive: true,
           sortOrder: true,
+          distanceSlabs: true,
           createdAt: true,
         },
       }),
       this.prisma.serviceCategory.count({ where }),
     ]);
 
-    return toPageResult(rows, total, page, limit);
+    const items = rows.map((r) => ({
+      ...r,
+      distanceSlabs: r.distanceSlabs ?? DEFAULT_DISTANCE_SLABS,
+    }));
+
+    return toPageResult(items, total, page, limit);
   }
 
   // Create a new category.
@@ -1268,7 +1285,7 @@ export class AdminService {
   async updateCategory(id: string, dto: AdminUpdateCategoryDto, actor: JwtPayload) {
     const existing = await this.prisma.serviceCategory.findUnique({
       where: { id },
-      select: { id: true, name: true, nameUrdu: true, isActive: true, sortOrder: true },
+      select: { id: true, name: true, nameUrdu: true, isActive: true, sortOrder: true, distanceSlabs: true },
     });
     if (!existing) {
       throw new NotFoundException('Category not found');
@@ -1280,8 +1297,9 @@ export class AdminService {
         ...(dto.name !== undefined ? { name: dto.name } : {}),
         ...(dto.nameUrdu !== undefined ? { nameUrdu: dto.nameUrdu } : {}),
         ...(dto.sortOrder !== undefined ? { sortOrder: dto.sortOrder } : {}),
+        ...(dto.distanceSlabs !== undefined ? { distanceSlabs: dto.distanceSlabs } : {}),
       },
-      select: { id: true, name: true, nameUrdu: true, isActive: true, sortOrder: true },
+      select: { id: true, name: true, nameUrdu: true, isActive: true, sortOrder: true, distanceSlabs: true },
     });
 
     await this.audit.record({
@@ -2138,20 +2156,28 @@ export class AdminService {
       this.prisma.user.count({ where }),
     ]);
 
-    const items = users.map((user: AdminUserRow) => ({
-      id: user.id,
-      phone: user.phone,
-      name: user.name,
-      avatarUrl: user.avatarUrl,
-      isActive: user.isActive,
-      isVerified: user.isVerified,
-      createdAt: user.createdAt,
-      jobsCount: role === Role.WORKER ? user._count.offers : user._count.customerJobs,
-      verificationStatus: user.workerProfile?.verificationStatus ?? null,
-      experienceYears: user.workerProfile?.experienceYears ?? null,
-      skills: user.workerProfile?.skills ?? [],
-      isAvailable: user.workerProfile?.isAvailable ?? false,
-    }));
+    const items = users.map((user: AdminUserRow) => {
+      const comms = (user as any).commissions || [];
+      const totalEarned = comms.reduce((acc: number, c: any) => acc + Number(c.visitCharge || 0), 0);
+      const balance = (user as any).wallet?.balance ? Number((user as any).wallet.balance) : 0;
+
+      return {
+        id: user.id,
+        phone: user.phone,
+        name: user.name,
+        avatarUrl: user.avatarUrl,
+        isActive: user.isActive,
+        isVerified: user.isVerified,
+        createdAt: user.createdAt,
+        jobsCount: role === Role.WORKER ? user._count.offers : user._count.customerJobs,
+        verificationStatus: user.workerProfile?.verificationStatus ?? null,
+        experienceYears: user.workerProfile?.experienceYears ?? null,
+        skills: user.workerProfile?.skills ?? [],
+        isAvailable: user.workerProfile?.isAvailable ?? false,
+        walletBalance: balance,
+        totalEarnings: totalEarned,
+      };
+    });
 
     return toPageResult(items, total, page, limit);
   }
