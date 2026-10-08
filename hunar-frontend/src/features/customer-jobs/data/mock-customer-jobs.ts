@@ -238,8 +238,6 @@ export const MOCK_CUSTOMER_JOBS: CustomerJob[] = [
       "https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=600&q=80",
       "https://images.unsplash.com/photo-1621905251189-08b45d6a269e?auto=format&fit=crop&w=600&q=80",
     ],
-    voiceNoteUrl: "/mock-voice-note.mp3",
-    voiceNoteDuration: 18,
     address: "House 45, Street 12, Block C, University Town",
     area: "University Town, Peshawar",
     city: "Peshawar",

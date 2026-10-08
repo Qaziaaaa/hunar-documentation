@@ -28,4 +28,10 @@ describe("ActiveVisitBanner", () => {
     render(<ActiveVisitBanner visit={null} />);
     expect(screen.queryByText(/active visit/i)).not.toBeInTheDocument();
   });
+
+  it("does not render navigation arrows when only one job exists", () => {
+    render(<ActiveVisitBanner visit={mockVisit} />);
+    expect(screen.queryByRole("button", { name: /previous active job/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /next active job/i })).not.toBeInTheDocument();
+  });
 });

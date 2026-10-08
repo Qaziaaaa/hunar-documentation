@@ -229,17 +229,17 @@ export function CustomerJobsListView({ initialJobs, jobs: jobsProp }: CustomerJo
                 : "text-slate-600 font-semibold hover:text-[#123B5D] hover:bg-white/50"
             }`}
           >
-            <Tag className={`size-4 ${selectedFilter === "offers" ? "text-orange" : "text-slate-400"}`} />
+            <Tag className={`size-4 ${selectedFilter === "offers" ? "text-teal" : "text-slate-400"}`} />
             <span>{isUrdu ? "موصولہ آفرز" : "Offers to Review"}</span>
             {activeCount > 0 ? (
               <span
                 className={`px-2 py-0.5 rounded-full text-[11px] font-extrabold flex items-center gap-1 ${
                   selectedFilter === "offers"
-                    ? "bg-orange text-white shadow-2xs"
-                    : "bg-amber-100 text-amber-800"
+                    ? "bg-teal text-white shadow-2xs"
+                    : "bg-teal/10 text-teal"
                 }`}
               >
-                <span className="size-1.5 rounded-full bg-white animate-ping" />
+                <span className={`size-1.5 rounded-full ${selectedFilter === "offers" ? "bg-white" : "bg-teal"} animate-ping`} />
                 <span>{activeCount}</span>
               </span>
             ) : (
@@ -259,12 +259,12 @@ export function CustomerJobsListView({ initialJobs, jobs: jobsProp }: CustomerJo
                 : "text-slate-600 font-semibold hover:text-[#123B5D] hover:bg-white/50"
             }`}
           >
-            <CheckCircle2 className={`size-4 ${selectedFilter === "completed" ? "text-success" : "text-slate-400"}`} />
+            <CheckCircle2 className={`size-4 ${selectedFilter === "completed" ? "text-teal" : "text-slate-400"}`} />
             <span>{isUrdu ? "مکمل شدہ" : "Completed"}</span>
             <span
               className={`px-2 py-0.5 rounded-full text-[11px] font-extrabold ${
                 selectedFilter === "completed"
-                  ? "bg-success text-white shadow-2xs"
+                  ? "bg-teal text-white shadow-2xs"
                   : "bg-slate-200 text-slate-700"
               }`}
             >
