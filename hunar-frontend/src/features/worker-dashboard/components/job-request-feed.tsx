@@ -75,9 +75,15 @@ function toFeedJobRequest(job: Job): JobRequest {
       memberSince: (job as any).customer?.memberSince || "—",
     },
     images: (job.images ?? []).filter(
-      (src) => typeof src === "string" && src.trim().length > 0 && !src.startsWith("blob:")
+      (src) => typeof src === "string" && src.trim().length > 0
     ),
-    voiceNote: undefined,
+    voiceNote:
+      job.voiceNoteUrl && job.voiceNoteUrl.trim() !== "" && !job.voiceNoteUrl.startsWith("blob:")
+        ? {
+            audioUrl: job.voiceNoteUrl.trim(),
+            waveformPattern: [35, 60, 45, 80, 95, 65, 40, 75, 90, 85, 50, 70, 40, 60, 30],
+          }
+        : undefined,
   };
 }
 
@@ -108,9 +114,20 @@ export function JobRequestFeed({
       })
       .catch((err: unknown) => {
         if (err instanceof ApiError && err.status === 403) {
-          setFeedError(
-            "Your session is signed in with the wrong account type. Sign in as a worker to see job requests.",
-          );
+          const msg = err.message || "";
+          if (msg.includes("WORKER_NOT_VERIFIED") || msg.includes("verify your profile")) {
+            setFeedError("Your worker profile is pending verification. Jobs will appear once approved.");
+          } else if (msg.includes("WORKER_PROFILE_INCOMPLETE") || msg.includes("complete your profile")) {
+            setFeedError(msg);
+          } else if (msg.includes("Only workers")) {
+            setFeedError(
+              "Your session is signed in with the wrong account type. Sign in as a worker to see job requests.",
+            );
+          } else {
+            setFeedError(
+              msg || "Access forbidden. Please ensure you are logged in with an approved worker account.",
+            );
+          }
         } else if (err instanceof ApiError && err.status === 401) {
           setFeedError("Your session expired. Please sign in again.");
         } else {
