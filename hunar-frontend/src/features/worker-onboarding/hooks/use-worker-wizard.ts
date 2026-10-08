@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import { getStoredUser } from "@/lib/api-client";
 import type { WizardStep, WorkerProfileFormData } from "../types";
 import { fetchWorkerOnboardingProfile, submitWorkerProfile } from "../api/onboarding-api";
+import { AVAILABLE_SKILLS } from "../components/step2-skills";
 
 const STORAGE_KEY = "hunar.worker_onboarding_draft";
 
@@ -41,17 +42,35 @@ export function useWorkerWizard() {
   useEffect(() => {
     const storedUser = getStoredUser();
     const savedDraft = typeof window !== "undefined" ? window.localStorage.getItem(STORAGE_KEY) : null;
+    const validSkillIds = new Set(AVAILABLE_SKILLS.map((s) => s.id));
 
     if (savedDraft) {
       try {
         const parsed = JSON.parse(savedDraft);
-        setFormData((prev) => ({
-          ...prev,
+        // If draft had 10 (all skills selected by default) or non-matching IDs, reset to 0 ([])
+        let sanitizedSkills: string[] = [];
+        if (Array.isArray(parsed.skills)) {
+          const filtered = parsed.skills.filter((s: string) => validSkillIds.has(s));
+          if (filtered.length > 0 && filtered.length < AVAILABLE_SKILLS.length) {
+            sanitizedSkills = filtered;
+          }
+        }
+
+        const nextData = {
+          ...cleanDefaultFormData,
           ...parsed,
+          skills: sanitizedSkills,
           profilePhoto: parsed.profilePhoto?.startsWith("data:") ? "" : parsed.profilePhoto,
-          phone: storedUser?.phone || parsed.phone || prev.phone,
-          fullName: parsed.fullName || storedUser?.name || prev.fullName,
-        }));
+          phone: storedUser?.phone || parsed.phone || cleanDefaultFormData.phone,
+          fullName: parsed.fullName || storedUser?.name || cleanDefaultFormData.fullName,
+        };
+
+        setFormData(nextData);
+
+        // Update localStorage if skills had the default 10 bug
+        if (Array.isArray(parsed.skills) && parsed.skills.length >= AVAILABLE_SKILLS.length && typeof window !== "undefined") {
+          window.localStorage.setItem(STORAGE_KEY, JSON.stringify(nextData));
+        }
       } catch {
         // use defaults
       }
@@ -60,6 +79,7 @@ export function useWorkerWizard() {
         ...prev,
         phone: storedUser.phone,
         fullName: storedUser.name || prev.fullName,
+        skills: [],
       }));
     }
 
@@ -72,12 +92,26 @@ export function useWorkerWizard() {
         const certDoc = serverData.documents?.find((d) => d.type === "CERTIFICATE");
         const areaLabels = serverData.serviceAreas?.map((a) => a.label) || [];
 
+        // Validate server skills against AVAILABLE_SKILLS; ignore if all 10 or seed-categories
+        let serverSkills: string[] = [];
+        if (Array.isArray(serverData.workerProfile?.skills)) {
+          const filtered = serverData.workerProfile.skills.filter((s: string) => validSkillIds.has(s));
+          if (filtered.length > 0 && filtered.length < AVAILABLE_SKILLS.length) {
+            serverSkills = filtered;
+          }
+        }
+
+        // Skills must strictly be 0 selected unless worker previously chose an explicit subset
+        const activeSkills = prev.skills && prev.skills.length > 0 && prev.skills.length < AVAILABLE_SKILLS.length
+          ? prev.skills
+          : serverSkills;
+
         return {
           ...prev,
           fullName: serverData.user?.name || prev.fullName,
           phone: serverData.user?.phone || prev.phone,
           profilePhoto: serverData.user?.avatarUrl || prev.profilePhoto,
-          skills: serverData.workerProfile?.skills?.length ? serverData.workerProfile.skills : prev.skills,
+          skills: activeSkills,
           experienceYears: serverData.workerProfile?.experienceYears ? String(serverData.workerProfile.experienceYears) : prev.experienceYears,
           bio: serverData.workerProfile?.bio || prev.bio,
           serviceAreas: areaLabels.length ? areaLabels : prev.serviceAreas,

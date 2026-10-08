@@ -116,6 +116,7 @@ export function Step1PersonalDetails({
                     src={formData.profilePhoto}
                     alt={formData.fullName || "Worker Avatar"}
                     fill
+                    unoptimized
                     className="object-cover object-top"
                     sizes="88px"
                   />

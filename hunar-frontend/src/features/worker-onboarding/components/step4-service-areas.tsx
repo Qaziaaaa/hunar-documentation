@@ -110,7 +110,7 @@ export function Step4ServiceAreas({
                   }`}
                 >
                   {isSelected && <Check className="size-3.5" />}
-                  <span>{tAreas(area)}</span>
+                  <span>{tAreas.has(area) ? tAreas(area) : area}</span>
                 </button>
               );
             })}

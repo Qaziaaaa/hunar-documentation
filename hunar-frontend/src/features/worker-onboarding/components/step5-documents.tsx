@@ -147,6 +147,7 @@ export function Step5Documents({
                     src={formData.cnicFront}
                     alt="CNIC Front"
                     fill
+                    unoptimized
                     className="object-cover"
                   />
                 </div>
@@ -216,6 +217,7 @@ export function Step5Documents({
                     src={formData.cnicBack}
                     alt="CNIC Back"
                     fill
+                    unoptimized
                     className="object-cover"
                   />
                 </div>
