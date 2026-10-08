@@ -80,9 +80,17 @@ export class ChatService {
     let conversation = await this.prisma.conversation.findUnique({ where: { jobId } });
     if (!conversation) {
       const job = await this.prisma.serviceRequest.findUnique({ where: { id: jobId } });
-      if (job && (job.customerId === userId || job.selectedWorkerId === userId)) {
-        const workerId = job.selectedWorkerId || (userId === job.customerId ? null : userId);
-        if (workerId) {
+      if (job) {
+        let workerId = job.selectedWorkerId || (userId === job.customerId ? null : userId);
+        if (!workerId) {
+          const acceptedOffer = await this.prisma.jobOffer.findFirst({
+            where: { jobId: job.id, status: 'ACCEPTED' },
+          });
+          if (acceptedOffer) {
+            workerId = acceptedOffer.workerId;
+          }
+        }
+        if (workerId && (job.customerId === userId || workerId === userId)) {
           conversation = await this.prisma.conversation.upsert({
             where: { jobId: job.id },
             update: {},
@@ -119,16 +127,24 @@ export class ChatService {
       }),
       this.prisma.message.count({ where }),
     ]);
-    return toPageResult(items, total, page, limit);
+    const itemsWithJob = items.map((item) => ({
+      ...item,
+      jobId: conversation.jobId,
+    }));
+    return toPageResult(itemsWithJob, total, page, limit);
   }
 
   async sendMessage(conversationId: string, userId: string, dto: SendMessageDto) {
     const conversation = await this.getConversationWithActiveJob(conversationId, userId);
     const { text, imageUrl } = this.resolveContent(dto);
 
-    const message = await this.prisma.message.create({
+    const created = await this.prisma.message.create({
       data: { conversationId, senderId: userId, text, imageUrl },
     });
+    const message = {
+      ...created,
+      jobId: conversation.jobId,
+    };
     await this.prisma.conversation.update({
       where: { id: conversation.id },
       data: {
@@ -143,10 +159,11 @@ export class ChatService {
       message,
     };
 
-    // Real-time delivery to everyone joined to the conversation room (incl. sender).
+    // Real-time delivery to everyone joined to the conversation room and job room (incl. sender).
     this.realtime.emitToRoom(chatRoom(conversation.id), CHAT_EVENTS.message, realtimePayload);
     this.realtime.emitToRoom(chatRoom(conversation.jobId), CHAT_EVENTS.message, realtimePayload);
     this.realtime.emitToRoom(`job:${conversation.jobId}`, CHAT_EVENTS.message, realtimePayload);
+    this.realtime.emitToRoom(`chat:${conversation.jobId}`, CHAT_EVENTS.message, realtimePayload);
 
     // Direct delivery to user-specific socket rooms (always connected upon login)
     this.realtime.emitToUsers(
@@ -181,9 +198,17 @@ export class ChatService {
       const job = await this.prisma.serviceRequest.findUnique({
         where: { id: conversationOrJobId },
       });
-      if (job && (job.customerId === userId || job.selectedWorkerId === userId)) {
-        const workerId = job.selectedWorkerId || (userId === job.customerId ? null : userId);
-        if (workerId) {
+      if (job) {
+        let workerId = job.selectedWorkerId || (userId === job.customerId ? null : userId);
+        if (!workerId) {
+          const acceptedOffer = await this.prisma.jobOffer.findFirst({
+            where: { jobId: job.id, status: 'ACCEPTED' },
+          });
+          if (acceptedOffer) {
+            workerId = acceptedOffer.workerId;
+          }
+        }
+        if (workerId && (job.customerId === userId || workerId === userId)) {
           conversation = await this.prisma.conversation.upsert({
             where: { jobId: job.id },
             update: {},
@@ -221,12 +246,12 @@ export class ChatService {
         'CONVERSATION_ACCESS_FORBIDDEN: you are not part of this conversation',
       );
     }
-    if (!conversation.job.selectedWorkerId) {
+    if (!conversation.job?.selectedWorkerId && !conversation.workerId) {
       throw new BadRequestException(
         'CHAT_JOB_NOT_ACCEPTED: chat is only available after a worker is accepted',
       );
     }
-    if (JOB_STATUS_BLOCKED_FOR_CHAT.has(conversation.job.status)) {
+    if (conversation.job && JOB_STATUS_BLOCKED_FOR_CHAT.has(conversation.job.status)) {
       throw new BadRequestException(
         'CHAT_JOB_CLOSED: the job is no longer active, messages are disabled',
       );

@@ -5,7 +5,6 @@ import { Roles } from '../../common/decorators/roles.decorator';
 import { JwtPayload } from '../../common/types/jwt-payload.interface';
 import { ChatService } from './chat.service';
 import { MessageListQueryDto, SendMessageByJobDto, SendMessageDto } from './chat.validation';
-import { ParseOrderCodePipe } from '../../common/helpers/order-code.util';
 
 @Controller('chat')
 export class ChatController {
@@ -22,10 +21,10 @@ export class ChatController {
   @Roles(Role.WORKER, Role.CUSTOMER)
   getMessagesByJob(
     @CurrentUser() user: JwtPayload,
-    @Param('jobId', ParseOrderCodePipe) jobId: string,
+    @Param('jobId') jobId: string,
     @Query() query: MessageListQueryDto,
   ) {
-    return this.chatService.getMessagesByJob(jobId, user.sub, query);
+    return this.chatService.getMessagesByJob(jobId?.trim(), user.sub, query);
   }
 
   /** Task 26 — POST /chat/send (documented customer contract). */

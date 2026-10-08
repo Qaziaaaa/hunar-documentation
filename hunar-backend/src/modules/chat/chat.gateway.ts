@@ -16,7 +16,7 @@ export class ChatGateway {
   async handleJoin(
     client: Socket,
     payload: { conversationId?: string; jobId?: string },
-  ): Promise<{ joined: boolean; conversationId: string }> {
+  ): Promise<{ joined: boolean; conversationId: string; jobId: string }> {
     const userId = (client.data.user as JwtPayload).sub;
     const targetId = payload?.conversationId || payload?.jobId;
     if (!targetId) {
@@ -27,7 +27,8 @@ export class ChatGateway {
       await client.join(chatRoom(conversation.id));
       await client.join(chatRoom(conversation.jobId));
       await client.join(`job:${conversation.jobId}`);
-      return { joined: true, conversationId: conversation.id };
+      await client.join(`chat:${conversation.jobId}`);
+      return { joined: true, conversationId: conversation.id, jobId: conversation.jobId };
     } catch (error) {
       throw new WsException(
         error instanceof Error ? error.message : 'CONVERSATION_ACCESS_FORBIDDEN',
@@ -39,22 +40,23 @@ export class ChatGateway {
   @UseGuards(WsJwtGuard)
   async handleSendMessage(
     client: Socket,
-    payload: { conversationId?: string; text?: string; imageKey?: string },
-  ): Promise<{ conversationId: string; message: unknown }> {
+    payload: { conversationId?: string; jobId?: string; text?: string; imageKey?: string },
+  ): Promise<{ conversationId: string; jobId: string; message: unknown }> {
     const userId = (client.data.user as JwtPayload).sub;
-    const conversationId = payload?.conversationId;
-    if (!conversationId) {
+    const targetId = payload?.conversationId || payload?.jobId;
+    if (!targetId) {
       throw new WsException('CONVERSATION_ID_REQUIRED');
     }
     const dto = new SendMessageDto();
     dto.text = payload?.text;
     dto.imageKey = payload?.imageKey;
     try {
-      // Authorize, then join so this socket also receives the real-time delivery.
-      await this.chatService.ensureParticipant(conversationId, userId);
-      await client.join(chatRoom(conversationId));
-      const message = await this.chatService.sendMessage(conversationId, userId, dto);
-      return { conversationId, message };
+      // Authorize, then join both rooms so this socket also receives real-time delivery.
+      const conversation = await this.chatService.ensureParticipant(targetId, userId);
+      await client.join(chatRoom(conversation.id));
+      await client.join(`chat:${conversation.jobId}`);
+      const message = await this.chatService.sendMessage(conversation.id, userId, dto);
+      return { conversationId: conversation.id, jobId: conversation.jobId, message };
     } catch (error) {
       throw new WsException(error instanceof Error ? error.message : 'MESSAGE_SEND_FAILED');
     }
