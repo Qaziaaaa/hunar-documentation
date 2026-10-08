@@ -9,7 +9,7 @@ import type { LiveJobItem } from "@/types/admin";
 import { Briefcase, Eye, Filter, Search } from "lucide-react";
 
 export default function JobsPage() {
-  const jobsRes = useAdminResource(() => adminApi.listJobs({ limit: 100 }));
+  const jobsRes = useAdminResource(() => adminApi.listJobs({ limit: 50 }));
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
 
@@ -19,10 +19,11 @@ export default function JobsPage() {
     () =>
       jobs.filter((j) => {
         const matchesSearch =
-          j.title.toLowerCase().includes(search.toLowerCase()) ||
-          j.customerName.toLowerCase().includes(search.toLowerCase()) ||
-          (j.workerName && j.workerName.toLowerCase().includes(search.toLowerCase())) ||
-          j.category.toLowerCase().includes(search.toLowerCase());
+          !search ||
+          (j.title ?? "").toLowerCase().includes(search.toLowerCase()) ||
+          (j.customerName ?? "").toLowerCase().includes(search.toLowerCase()) ||
+          (j.workerName ?? "").toLowerCase().includes(search.toLowerCase()) ||
+          (j.category ?? "").toLowerCase().includes(search.toLowerCase());
 
         const matchesStatus = statusFilter === "ALL" ? true : j.status === statusFilter;
         return matchesSearch && matchesStatus;

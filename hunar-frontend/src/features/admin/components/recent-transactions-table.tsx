@@ -34,8 +34,10 @@ export function RecentTransactionsTable({ transactions }: { transactions: Paymen
     }
   };
 
+  const recent = transactions.slice(0, 5);
+
   return (
-    <div className="h-full rounded-xl border border-slate-200 bg-white p-2.5 shadow-2xs flex flex-col">
+    <div className="rounded-xl border border-slate-200 bg-white p-2.5 shadow-2xs flex flex-col">
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-2">
         <div className="flex items-center gap-2">
           <div className="flex size-6 items-center justify-center rounded-md bg-teal/10 text-teal">
@@ -52,7 +54,7 @@ export function RecentTransactionsTable({ transactions }: { transactions: Paymen
           href="/admin/payments"
           className="flex items-center gap-1 text-[10px] font-bold text-teal transition hover:underline"
         >
-          <span>Financial Ledger</span>
+          <span>View All (Financial Ledger)</span>
           <ArrowUpRight className="size-3" />
         </Link>
       </div>
@@ -71,7 +73,7 @@ export function RecentTransactionsTable({ transactions }: { transactions: Paymen
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 font-medium">
-            {transactions.map((txn) => {
+            {recent.map((txn) => {
               const badge = getStatusBadge(txn.status);
               return (
                 <tr key={txn.id} className="transition hover:bg-slate-50/80">

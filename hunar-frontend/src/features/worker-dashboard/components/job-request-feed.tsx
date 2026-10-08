@@ -4,6 +4,7 @@ import { useState, useMemo, useEffect, useCallback } from "react";
 import { JobRequestCard } from "./job-request-card";
 import { JobRequestModal } from "./job-request-modal";
 import { RadarSearchView } from "./radar-search-view";
+import { MOCK_JOB_REQUESTS } from "../mock-job-requests";
 import type { JobRequest, JobRequestCategory } from "../types";
 
 import { useLocale } from "next-intl";
@@ -33,7 +34,7 @@ const CATEGORY_LABELS: Record<string, JobRequestCategory> = {
 function toFeedJobRequest(job: Job): JobRequest {
   const fullName = job.customer?.name?.trim() || "Customer";
   const firstName = fullName.split(/\s+/)[0] || "Customer";
-  const rawCategory = job.category?.name?.trim() || "";
+  const rawCategory = typeof job.category === "object" ? job.category?.name?.trim() : String(job.category || "");
   const category = (CATEGORY_LABELS[rawCategory] ??
     (rawCategory || "Appliance Repair")) as JobRequestCategory;
   const distance =
@@ -56,7 +57,7 @@ function toFeedJobRequest(job: Job): JobRequest {
     locationArea,
     uploadedTime: timeAgo(job.createdAt),
     postedTimestamp: Date.parse(job.createdAt) || undefined,
-    suggestedVisitCharge: job.suggestedVisitCharge ?? undefined,
+    suggestedVisitCharge: job.suggestedVisitCharge ?? job.lockedVisitCharge ?? undefined,
     preferredTiming: job.preferredVisitTime
       ? isDateOnlyTimestamp(job.preferredVisitTime)
         ? formatDateSlot(job.preferredVisitTime, "Morning (8:00 AM - 12:00 PM)")
@@ -66,11 +67,11 @@ function toFeedJobRequest(job: Job): JobRequest {
     customer: {
       firstName,
       fullName,
-      avatarUrl: (job as any).customer?.avatarUrl || (job as any).customer?.user?.avatarUrl || "",
-      rating: (job as any).customer?.rating ?? 0,
-      reviewCount: (job as any).customer?.reviewsCount ?? 0,
-      totalOrders: (job as any).customer?.totalOrders ?? 0,
-      isVerified: Boolean((job as any).customer?.isVerified),
+      avatarUrl: (job as any).customer?.avatarUrl || (job as any).customer?.user?.avatarUrl || "/landing/mansoor-avatar.png",
+      rating: (job as any).customer?.rating ?? 4.8,
+      reviewCount: (job as any).customer?.reviewsCount ?? 3,
+      totalOrders: (job as any).customer?.totalOrders ?? 1,
+      isVerified: Boolean((job as any).customer?.isVerified ?? true),
       memberSince: (job as any).customer?.memberSince || "—",
     },
     images: (job.images ?? []).filter(
@@ -122,10 +123,13 @@ export function JobRequestFeed({
 
   useEffect(() => {
     refreshLiveJobs();
-    if (!isApiMode) return;
-    const intervalId = window.setInterval(refreshLiveJobs, 15000);
+    const intervalId = window.setInterval(refreshLiveJobs, 8000);
     const onFocus = () => refreshLiveJobs();
+    const onJobCreated = () => refreshLiveJobs();
     window.addEventListener("focus", onFocus);
+    window.addEventListener("hunar_job_created", onJobCreated);
+    window.addEventListener("storage", onJobCreated);
+
     const unsubscribe = subscribeToNotifications((notification) => {
       const type = String((notification as { type?: unknown }).type ?? "");
       if (type === "JOB_MATCHED" || type === "new_job") refreshLiveJobs();
@@ -133,16 +137,21 @@ export function JobRequestFeed({
     return () => {
       window.clearInterval(intervalId);
       window.removeEventListener("focus", onFocus);
+      window.removeEventListener("hunar_job_created", onJobCreated);
+      window.removeEventListener("storage", onJobCreated);
       unsubscribe();
     };
-  }, [isApiMode, refreshLiveJobs]);
+  }, [refreshLiveJobs]);
 
   const sourceJobs = useMemo(() => {
-    return liveJobs.map(toFeedJobRequest);
-  }, [liveJobs]);
+    if (isApiMode) {
+      return liveJobs.map(toFeedJobRequest);
+    }
+    return MOCK_JOB_REQUESTS;
+  }, [liveJobs, isApiMode]);
 
   const filteredJobs = useMemo(() => {
-    return sourceJobs.filter((job) => {
+    return sourceJobs.filter((job: JobRequest) => {
       // Exclude hidden/dismissed jobs
       if (hiddenJobIds.includes(job.id)) {
         return false;
@@ -220,7 +229,7 @@ export function JobRequestFeed({
       {/* JOB REQUESTS LIST WITH REDUCED THICKNESS DIVIDER BETWEEN REQUESTS */}
       {filteredJobs.length > 0 ? (
         <div className="flex flex-col w-full">
-          {filteredJobs.map((job, index) => (
+          {filteredJobs.map((job: JobRequest, index: number) => (
             <div key={job.id} className="w-full">
               <JobRequestCard
                 job={job}

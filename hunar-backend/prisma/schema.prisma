@@ -231,12 +231,13 @@ model VerificationDocument {
 }
 
 model ServiceCategory {
-  id        String   @id @default(uuid())
-  name      String
-  nameUrdu  String?
-  isActive  Boolean  @default(true)
-  sortOrder Int      @default(0)
-  createdAt DateTime @default(now())
+  id            String   @id @default(uuid())
+  name          String
+  nameUrdu      String?
+  isActive      Boolean  @default(true)
+  sortOrder     Int      @default(0)
+  distanceSlabs Json?
+  createdAt     DateTime @default(now())
 
   jobs ServiceRequest[]
 

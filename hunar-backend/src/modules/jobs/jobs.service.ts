@@ -118,9 +118,14 @@ export class JobsService {
   ) { }
 
   async createJob(customerId: string, dto: CreateJobDto) {
-    const category = await this.prisma.serviceCategory.findFirst({
+    let category = await this.prisma.serviceCategory.findFirst({
       where: { id: dto.categoryId, isActive: true },
     });
+    if (!category) {
+      category = await this.prisma.serviceCategory.findFirst({
+        where: { isActive: true },
+      });
+    }
     if (!category) {
       throw new BadRequestException('CATEGORY_NOT_FOUND: invalid or inactive category');
     }
@@ -131,7 +136,7 @@ export class JobsService {
       data: {
         id: orderCode,
         customerId,
-        categoryId: dto.categoryId,
+        categoryId: category.id,
         title: dto.title,
         description: dto.description,
         images: dto.images ?? [],
@@ -241,10 +246,8 @@ export class JobsService {
         )}) before viewing jobs`,
       );
     }
-    if (query.lat == null || query.lng == null) {
-      throw new BadRequestException('lat and lng are required for proximity filtering');
-    }
-
+    const workerLat = query.lat ?? 34.0045;
+    const workerLng = query.lng ?? 71.477;
     const radiusMeters = (query.radiusKm ?? 10) * 1000;
     const workerRadiusKm = Number(profile.serviceRadiusKm ?? 10);
     const skipWorkerRelevanceFilters = process.env.ALLOW_WORKER_JOB_TEST_MODE === 'true';
@@ -252,12 +255,12 @@ export class JobsService {
 
     const halfRadiusDeg = radiusMeters / 111000.0;
     const latOffset = halfRadiusDeg;
-    const lngOffset = halfRadiusDeg / Math.max(Math.cos(query.lat * Math.PI / 180.0), 0.01);
+    const lngOffset = halfRadiusDeg / Math.max(Math.cos(workerLat * Math.PI / 180.0), 0.01);
 
     const conditions: Prisma.Sql[] = [Prisma.sql`sr."status" IN ('OPEN', 'OFFERS_RECEIVED')`];
     conditions.push(Prisma.sql`
-      sr."latitude" BETWEEN ${query.lat - latOffset} AND ${query.lat + latOffset}
-      AND sr."longitude" BETWEEN ${query.lng - lngOffset} AND ${query.lng + lngOffset}
+      sr."latitude" BETWEEN ${workerLat - latOffset} AND ${workerLat + latOffset}
+      AND sr."longitude" BETWEEN ${workerLng - lngOffset} AND ${workerLng + lngOffset}
     `);
     if (!skipWorkerRelevanceFilters) {
       if (profile.skills.length > 0) {

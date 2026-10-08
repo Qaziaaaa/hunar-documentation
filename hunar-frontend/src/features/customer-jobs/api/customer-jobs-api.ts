@@ -1,36 +1,72 @@
 import { http } from "@/lib/api-client";
+import { isMockMode } from "@/lib/data-source";
+import { MOCK_CUSTOMER_JOBS } from "../data/mock-customer-jobs";
 import type { CustomerJob, JobStatus, WorkerOffer, WorkerProfile } from "../types";
+import { getLocallyCreatedJobs } from "@/features/post-job/api/post-job-api";
+
+function transformLocalJob(j: any): CustomerJob {
+  return {
+    id: j.id,
+    title: j.title,
+    category: j.categoryName || j.category || "General Service",
+    subCategory: j.categoryName || j.category || "General Service",
+    description: j.description || "",
+    photos: j.images || [],
+    voiceNoteUrl: j.voiceNoteUrl,
+    address: j.address || "Peshawar",
+    area: j.area || "Peshawar",
+    city: j.city || "Peshawar",
+    scheduleType: "asap",
+    preferredDate: j.createdAt || new Date().toISOString(),
+    preferredTimeSlot: "9:00 AM - 1:00 PM",
+    status: "receiving_offers",
+    createdAt: j.createdAt || new Date().toISOString(),
+    offers: [],
+  };
+}
 
 /**
  * Fetch all jobs for the logged-in customer, enriched with offers & selected worker.
  */
 export async function getCustomerJobs(): Promise<CustomerJob[]> {
-  const res = await http.get<unknown>("/jobs/customer?limit=100");
-  const rows: unknown[] = Array.isArray(res)
-    ? res
-    : (res as { items?: unknown[] })?.items ?? [];
-  if (rows.length === 0) {
-    return [];
+  const localJobs = getLocallyCreatedJobs().map(transformLocalJob);
+
+  if (isMockMode()) {
+    const combined = [...localJobs, ...MOCK_CUSTOMER_JOBS];
+    return Array.from(new Map(combined.map((j) => [j.id, j])).values());
   }
-  const jobs = rows.map(transformListRow);
+  try {
+    const res = await http.get<unknown>("/jobs/customer?limit=100");
+    const rows: unknown[] = Array.isArray(res)
+      ? res
+      : (res as { data?: unknown[]; items?: unknown[] })?.data ??
+        (res as { items?: unknown[] })?.items ??
+        [];
 
-  await Promise.allSettled(
-    jobs.map(async (job) => {
-      try {
-        const detail = await getJobDetail(job.id);
-        Object.assign(job, detail);
-      } catch (err) {
-        console.warn(`[getCustomerJobs] Detail fetch failed for ${job.id}:`, err);
-      }
-      try {
-        job.offers = await getJobOffers(job.id);
-      } catch (err) {
-        console.warn(`[getCustomerJobs] Offers fetch failed for ${job.id}:`, err);
-      }
-    })
-  );
+    const backendJobs = rows.map(transformListRow);
 
-  return jobs;
+    await Promise.allSettled(
+      backendJobs.map(async (job) => {
+        try {
+          const detail = await getJobDetail(job.id);
+          Object.assign(job, detail);
+        } catch (err) {
+          console.warn(`[getCustomerJobs] Detail fetch failed for ${job.id}:`, err);
+        }
+        try {
+          job.offers = await getJobOffers(job.id);
+        } catch (err) {
+          console.warn(`[getCustomerJobs] Offers fetch failed for ${job.id}:`, err);
+        }
+      })
+    );
+
+    const combined = [...localJobs, ...backendJobs];
+    return Array.from(new Map(combined.map((j) => [j.id, j])).values());
+  } catch (err) {
+    console.warn("[getCustomerJobs] Backend API error:", err);
+    return localJobs;
+  }
 }
 
 /**

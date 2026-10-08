@@ -3,14 +3,33 @@
 import { useEffect, useState } from "react";
 import { AdminShell } from "@/features/admin/components/admin-shell";
 import { adminApi } from "@/features/admin/api/admin-api";
-import type { ServiceCategory } from "@/types/admin";
-import { FolderTree, Plus, Power, Wrench } from "lucide-react";
+import type { DistanceSlab, ServiceCategory } from "@/types/admin";
+import {
+  AlertCircle,
+  CheckCircle2,
+  Edit3,
+  FolderTree,
+  Info,
+  Plus,
+  Power,
+  Save,
+  Truck,
+  Wrench,
+  X,
+} from "lucide-react";
 
 export default function CategoriesPage() {
   const [categories, setCategories] = useState<ServiceCategory[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
   const [newCatName, setNewCatName] = useState("");
+
+  // Distance Charges Modal State
+  const [selectedCategory, setSelectedCategory] = useState<ServiceCategory | null>(null);
+  const [editingSlabs, setEditingSlabs] = useState<DistanceSlab[]>([]);
+  const [isEditingSlabs, setIsEditingSlabs] = useState(false);
+  const [savingSlabs, setSavingSlabs] = useState(false);
+  const [toastMessage, setToastMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
   useEffect(() => {
     adminApi
@@ -31,11 +50,41 @@ export default function CategoriesPage() {
 
   const handleAddCategory = () => {
     if (!newCatName) return;
-    void adminApi.createCategory(newCatName).then((created) => {
-      setCategories((prev) => [...prev, created]);
-    }).catch(() => undefined);
+    void adminApi
+      .createCategory(newCatName)
+      .then((created) => {
+        setCategories((prev) => [...prev, created]);
+      })
+      .catch(() => undefined);
     setNewCatName("");
     setShowAddModal(false);
+  };
+
+  const handleOpenDistanceModal = (category: ServiceCategory) => {
+    setSelectedCategory(category);
+    setEditingSlabs(category.distanceSlabs ? [...category.distanceSlabs] : []);
+    setIsEditingSlabs(false);
+    setToastMessage(null);
+  };
+
+  const handleSaveDistanceSlabs = async () => {
+    if (!selectedCategory) return;
+    setSavingSlabs(true);
+    setToastMessage(null);
+
+    try {
+      const updated = await adminApi.updateCategoryDistanceSlabs(selectedCategory.id, editingSlabs);
+      setCategories((prev) =>
+        prev.map((c) => (c.id === selectedCategory.id ? { ...c, distanceSlabs: updated.distanceSlabs } : c))
+      );
+      setSelectedCategory((prev) => (prev ? { ...prev, distanceSlabs: updated.distanceSlabs } : null));
+      setIsEditingSlabs(false);
+      setToastMessage({ type: "success", text: "Delivery pricing updated successfully." });
+    } catch {
+      setToastMessage({ type: "error", text: "Unable to update delivery pricing. Please try again." });
+    } finally {
+      setSavingSlabs(false);
+    }
   };
 
   return (
@@ -52,14 +101,14 @@ export default function CategoriesPage() {
               Service Categories Management
             </h1>
             <p className="mt-1 text-sm font-medium text-slate-500">
-              Add new service trades, edit details, or toggle category availability
+              Add new service trades, configure distance delivery charges, or toggle category availability
             </p>
           </div>
 
           <button
             type="button"
             onClick={() => setShowAddModal(true)}
-            className="inline-flex items-center gap-2 rounded-xl bg-navy px-4 py-2.5 text-xs font-bold text-white shadow-md hover:bg-navy/90"
+            className="inline-flex items-center gap-2 rounded-xl bg-navy px-4 py-2.5 text-xs font-bold text-white shadow-md transition hover:bg-navy/90"
           >
             <Plus className="size-4 text-teal-300" /> Add New Category
           </button>
@@ -68,40 +117,221 @@ export default function CategoriesPage() {
         {loading ? (
           <p className="text-sm font-medium text-slate-500">Loading categories...</p>
         ) : (
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {categories.map((cat) => (
-            <div
-              key={cat.id}
-              className="flex items-center justify-between rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"
-            >
-              <div className="flex items-center gap-3">
-                <div className="flex size-11 items-center justify-center rounded-xl bg-navy text-white">
-                  <Wrench className="size-5 text-teal-300" />
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {categories.map((cat) => (
+              <div
+                key={cat.id}
+                onClick={() => handleOpenDistanceModal(cat)}
+                className="group flex items-center justify-between rounded-2xl border border-slate-200 bg-white p-5 shadow-xs transition-all duration-200 hover:-translate-y-0.5 hover:border-teal/40 hover:shadow-md cursor-pointer"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="flex size-11 items-center justify-center rounded-xl bg-navy text-white transition-transform duration-200 group-hover:scale-105">
+                    <Wrench className="size-5 text-teal-300" />
+                  </div>
+                  <div>
+                    <h3 className="font-extrabold text-navy text-sm">{cat.name}</h3>
+                    <p className="text-xs text-slate-500">
+                      {cat.activeWorkersCount} Workers • {cat.totalJobsCount} Jobs
+                    </p>
+                    <span className="mt-1 inline-flex items-center gap-1 rounded-md bg-teal/10 px-1.5 py-0.5 text-[10px] font-extrabold text-teal">
+                      <Truck className="size-3" /> Delivery Charges Configured
+                    </span>
+                  </div>
                 </div>
+
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleToggleCategory(cat.id);
+                  }}
+                  className={`flex size-9 items-center justify-center rounded-xl transition ${
+                    cat.isActive
+                      ? "bg-green-100 text-green-700 hover:bg-green-200"
+                      : "bg-slate-100 text-slate-400 hover:bg-slate-200"
+                  }`}
+                  title={cat.isActive ? "Deactivate" : "Activate"}
+                >
+                  <Power className="size-4" />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Delivery / Distance Charges Modal */}
+        {selectedCategory ? (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-navy/60 p-4 backdrop-blur-sm">
+            <div className="w-full max-w-lg rounded-3xl border border-slate-200 bg-white p-6 shadow-2xl space-y-4">
+              {/* Modal Header */}
+              <div className="flex items-start justify-between border-b border-slate-100 pb-3">
                 <div>
-                  <h3 className="font-extrabold text-navy text-sm">{cat.name}</h3>
-                  <p className="text-xs text-slate-500">
-                    {cat.activeWorkersCount} Workers • {cat.totalJobsCount} Jobs
+                  <div className="flex items-center gap-2">
+                    <span className="inline-flex items-center gap-1 rounded-full border border-teal/20 bg-teal/10 px-2.5 py-0.5 text-[10px] font-bold text-teal uppercase tracking-wider">
+                      <Truck className="size-3" /> Distance Pricing
+                    </span>
+                    <span className="rounded-md bg-navy/10 px-2 py-0.5 text-[10px] font-extrabold text-navy">
+                      {selectedCategory.name}
+                    </span>
+                  </div>
+                  <h3 className="mt-1 text-xl font-black text-navy">Delivery / Distance Charges</h3>
+                  <p className="text-xs font-medium text-slate-500">
+                    Configure travel charges based on distance.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedCategory(null);
+                    setIsEditingSlabs(false);
+                    setToastMessage(null);
+                  }}
+                  className="rounded-lg p-1 text-slate-400 hover:bg-slate-100"
+                >
+                  <X className="size-5" />
+                </button>
+              </div>
+
+              {/* Toast Notification Message inside popup */}
+              {toastMessage ? (
+                <div
+                  className={`flex items-center gap-2 rounded-xl p-3 text-xs font-bold ${
+                    toastMessage.type === "success"
+                      ? "bg-emerald-50 text-emerald-800 border border-emerald-200"
+                      : "bg-rose-50 text-rose-800 border border-rose-200"
+                  }`}
+                >
+                  {toastMessage.type === "success" ? (
+                    <CheckCircle2 className="size-4 shrink-0 text-emerald-600" />
+                  ) : (
+                    <AlertCircle className="size-4 shrink-0 text-rose-600" />
+                  )}
+                  <span>{toastMessage.text}</span>
+                </div>
+              ) : null}
+
+              {/* Info Box */}
+              <div className="flex items-start gap-2.5 rounded-2xl border border-amber-200/80 bg-amber-50/70 p-3.5 text-xs text-amber-900">
+                <Info className="size-4 shrink-0 text-amber-600 mt-0.5" />
+                <div className="space-y-1 text-[11px] leading-relaxed">
+                  <p className="font-bold text-amber-950">Delivery Charge Information</p>
+                  <p>
+                    Delivery/Travel charges are calculated according to the distance between the customer and the assigned worker.
+                  </p>
+                  <p className="font-semibold text-amber-900">
+                    • Note: Delivery charges are calculated based on the distance between customer and worker. Labor and material charges are calculated separately.
                   </p>
                 </div>
               </div>
 
-              <button
-                type="button"
-                onClick={() => handleToggleCategory(cat.id)}
-                className={`flex size-9 items-center justify-center rounded-xl transition ${
-                  cat.isActive
-                    ? "bg-green-100 text-green-700 hover:bg-green-200"
-                    : "bg-slate-100 text-slate-400 hover:bg-slate-200"
-                }`}
-                title={cat.isActive ? "Deactivate" : "Activate"}
-              >
-                <Power className="size-4" />
-              </button>
+              {/* Pricing Slabs Table / Cards */}
+              <div className="rounded-2xl border border-slate-200 bg-slate-50/50 p-3.5">
+                <div className="flex items-center justify-between border-b border-slate-200/60 pb-2 mb-2">
+                  <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-500">
+                    Distance Range
+                  </span>
+                  <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-500">
+                    Applicable Delivery Charge
+                  </span>
+                </div>
+
+                <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
+                  {editingSlabs.map((slab, idx) => (
+                    <div
+                      key={idx}
+                      className="flex items-center justify-between rounded-xl border border-slate-200/80 bg-white px-3.5 py-2.5 text-xs font-semibold shadow-2xs"
+                    >
+                      <div className="flex items-center gap-2">
+                        <span className="flex size-6 items-center justify-center rounded-md bg-navy/5 font-extrabold text-[10px] text-navy">
+                          #{idx + 1}
+                        </span>
+                        <span className="font-bold text-navy">
+                          {slab.label || (slab.maxKm ? `${slab.minKm}–${slab.maxKm} KM` : `${slab.minKm}+ KM`)}
+                        </span>
+                      </div>
+
+                      {isEditingSlabs ? (
+                        slab.requiresApproval || slab.maxKm === null ? (
+                          <span className="rounded-md bg-amber-100 px-2 py-1 text-[10px] font-extrabold text-amber-800">
+                            Admin / Worker Approval
+                          </span>
+                        ) : (
+                          <div className="flex items-center gap-1">
+                            <span className="font-bold text-slate-400">Rs.</span>
+                            <input
+                              type="number"
+                              value={slab.charge ?? ""}
+                              onChange={(e) => {
+                                const val = e.target.value === "" ? null : Number(e.target.value);
+                                setEditingSlabs((prev) =>
+                                  prev.map((s, i) => (i === idx ? { ...s, charge: val } : s))
+                                );
+                              }}
+                              className="h-8 w-24 rounded-lg border border-slate-200 px-2 text-xs font-bold outline-none focus:border-teal"
+                            />
+                          </div>
+                        )
+                      ) : (
+                        <span className="font-extrabold text-teal">
+                          {slab.charge !== null && slab.charge !== undefined
+                            ? `Rs.${slab.charge}`
+                            : "Admin / Worker Approval"}
+                        </span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Modal Footer Actions */}
+              <div className="flex items-center justify-between border-t border-slate-100 pt-3">
+                {!isEditingSlabs ? (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedCategory(null);
+                        setToastMessage(null);
+                      }}
+                      className="rounded-xl border border-slate-200 px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-100"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setIsEditingSlabs(true)}
+                      className="inline-flex items-center gap-1.5 rounded-xl bg-teal px-5 py-2 text-xs font-bold text-white shadow-md transition hover:bg-teal-600"
+                    >
+                      <Edit3 className="size-3.5" /> Edit
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsEditingSlabs(false);
+                        setEditingSlabs(selectedCategory.distanceSlabs || []);
+                      }}
+                      className="rounded-xl border border-slate-200 px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-100"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleSaveDistanceSlabs}
+                      disabled={savingSlabs}
+                      className="inline-flex items-center gap-1.5 rounded-xl bg-navy px-5 py-2 text-xs font-bold text-white shadow-md transition hover:bg-navy/90 disabled:opacity-50"
+                    >
+                      <Save className="size-3.5 text-teal-300" />
+                      {savingSlabs ? "Saving..." : "Save Changes"}
+                    </button>
+                  </>
+                )}
+              </div>
             </div>
-          ))}
-        </div>
-        )}
+          </div>
+        ) : null}
 
         {/* Add Modal */}
         {showAddModal ? (
@@ -116,10 +346,18 @@ export default function CategoriesPage() {
                 className="mt-4 h-11 w-full rounded-xl border border-slate-200 px-3 text-xs outline-none focus:border-teal"
               />
               <div className="mt-6 flex justify-end gap-3">
-                <button type="button" onClick={() => setShowAddModal(false)} className="rounded-xl border border-slate-200 px-4 py-2 text-xs font-bold text-slate-600">
+                <button
+                  type="button"
+                  onClick={() => setShowAddModal(false)}
+                  className="rounded-xl border border-slate-200 px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-100"
+                >
                   Cancel
                 </button>
-                <button type="button" onClick={handleAddCategory} className="rounded-xl bg-navy px-5 py-2 text-xs font-bold text-white shadow-md">
+                <button
+                  type="button"
+                  onClick={handleAddCategory}
+                  className="rounded-xl bg-navy px-5 py-2 text-xs font-bold text-white shadow-md hover:bg-navy/90"
+                >
                   Add Category
                 </button>
               </div>
