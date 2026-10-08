@@ -125,108 +125,10 @@ export function CustomerChatView() {
   }, [activeVisits, searchQuery]);
 
   // Messages state grouped by visit ID
-  const [messagesByVisit, setMessagesByVisit] = useState<Record<string, ChatMessage[]>>({
-    "VST-98214": isUrdu
-      ? [
-          {
-            id: "m-1",
-            sender: "technician",
-            type: "text",
-            text: "السلام علیکم! میں تشخیصی آلات لے کر یونیورسٹی روڈ سے آپ کی طرف روانہ ہو چکا ہوں۔",
-            time: "10:30 AM",
-          },
-          {
-            id: "m-2",
-            sender: "customer",
-            type: "text",
-            text: "وعلیکم السلام۔ براہ کرم مکان نمبر 45 پہنچ کر مین گیٹ پر کال کریں۔",
-            time: "10:32 AM",
-          },
-          {
-            id: "m-3",
-            sender: "customer",
-            type: "voice",
-            durationSeconds: 12,
-            time: "10:35 AM",
-          },
-          {
-            id: "m-4",
-            sender: "technician",
-            type: "text",
-            text: "جی ضرور، اسلامیہ کالج گیٹ کراس کر لیا ہے۔ تقریباً 10 منٹ میں پہنچ جاؤں گا۔",
-            time: "10:36 AM",
-          },
-        ]
-      : [
-          {
-            id: "m-1",
-            sender: "technician",
-            type: "text",
-            text: "Assalam o Alaikum! I am on my way via University Road with the diagnostic equipment.",
-            time: "10:30 AM",
-          },
-          {
-            id: "m-2",
-            sender: "customer",
-            type: "text",
-            text: "Walaikum Assalam. Please call on gate when you reach House 45.",
-            time: "10:32 AM",
-          },
-          {
-            id: "m-3",
-            sender: "customer",
-            type: "voice",
-            durationSeconds: 12,
-            time: "10:35 AM",
-          },
-          {
-            id: "m-4",
-            sender: "technician",
-            type: "text",
-            text: "Sure, passing Islamia College gate now. Will be there in ~10 mins.",
-            time: "10:36 AM",
-          },
-        ],
-    "VST-98102": isUrdu
-      ? [
-          {
-            id: "m-r1",
-            sender: "technician",
-            type: "text",
-            text: "السلام علیکم! کل صبح 10 بجے کے لیے وزٹ طے ہو گیا ہے۔ میں پی پی آر سی سامان ساتھ لاؤں گا۔",
-            time: "Yesterday",
-          },
-          {
-            id: "m-r2",
-            sender: "customer",
-            type: "text",
-            text: "وعلیکم السلام۔ بالکل ٹھیک، کل ملاقات ہو گی۔",
-            time: "Yesterday",
-          },
-        ]
-      : [
-          {
-            id: "m-r1",
-            sender: "technician",
-            type: "text",
-            text: "Assalam o Alaikum! Your plumbing visit is confirmed for tomorrow at 10:00 AM. I will bring the PPRC fittings.",
-            time: "Yesterday",
-          },
-          {
-            id: "m-r2",
-            sender: "customer",
-            type: "text",
-            text: "Walaikum Assalam. Sounds good, see you tomorrow.",
-            time: "Yesterday",
-          },
-        ],
-  });
+  const [messagesByVisit, setMessagesByVisit] = useState<Record<string, ChatMessage[]>>({});
 
   // Unread badge counts per visit
-  const [unreadCounts, setUnreadCounts] = useState<Record<string, number>>({
-    "VST-98214": 1,
-    "VST-98102": 0,
-  });
+  const [unreadCounts, setUnreadCounts] = useState<Record<string, number>>({});
 
   // When a technician chat is opened, clear their unread count
   useEffect(() => {
@@ -261,7 +163,14 @@ export function CustomerChatView() {
 
     getMessagesByJob(currentVisit.jobId)
       .then((backendMsgs) => {
-        if (isCancelled || !backendMsgs || backendMsgs.length === 0) return;
+        if (isCancelled) return;
+        if (!backendMsgs || backendMsgs.length === 0) {
+          setMessagesByVisit((prev) => ({
+            ...prev,
+            [currentVisit.id]: [],
+          }));
+          return;
+        }
         const currentUserId = getStoredUser()?.id;
         const formatted: ChatMessage[] = backendMsgs.map((m) => {
           const isFromMe = currentUserId ? m.senderId === currentUserId : m.senderRole === "CUSTOMER";
@@ -295,7 +204,14 @@ export function CustomerChatView() {
           joinConversationRoom(backendMsgs[0].conversationId);
         }
       })
-      .catch(() => {});
+      .catch(() => {
+        if (!isCancelled) {
+          setMessagesByVisit((prev) => ({
+            ...prev,
+            [currentVisit.id]: prev[currentVisit.id] || [],
+          }));
+        }
+      });
 
     return () => {
       isCancelled = true;
@@ -306,6 +222,9 @@ export function CustomerChatView() {
   useEffect(() => {
     if (!currentVisit) return;
     const unsubscribe = subscribeToMessages((msg) => {
+      // STRICT JOB ISOLATION: ignore messages not belonging to this job
+      if (msg.jobId && currentVisit.jobId && msg.jobId !== currentVisit.jobId) return;
+
       const currentUserId = getStoredUser()?.id;
       const isFromMe = currentUserId ? msg.senderId === currentUserId : msg.senderRole === "customer";
 
@@ -840,7 +759,22 @@ export function CustomerChatView() {
               className="flex-1 overflow-y-auto p-4 sm:p-5 lg:p-6 space-y-4 bg-slate-50/30 scrollbar-none [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
               style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
             >
-              {messages.map((msg) => {
+              {messages.length === 0 ? (
+                <div className="flex flex-col items-center justify-center h-full min-h-[240px] text-center p-6 space-y-2">
+                  <div className="size-12 rounded-2xl bg-teal-50 border border-teal-200 text-[#0F8B8D] flex items-center justify-center">
+                    <ShieldCheck className="size-6 text-[#0F8B8D]" />
+                  </div>
+                  <h4 className="text-sm font-bold text-slate-800">
+                    {isUrdu ? "کوئی پرانا پیغام نہیں ہے" : "No messages yet"}
+                  </h4>
+                  <p className="text-xs text-slate-500 max-w-xs">
+                    {isUrdu
+                      ? "کاریگر سے رابطہ شروع کرنے کے لیے نیچے پیغام یا وائس نوٹ بھیجیں۔"
+                      : "Send a message or voice note below to start communicating with your technician."}
+                  </p>
+                </div>
+              ) : (
+                messages.map((msg) => {
                 const isCustomer = msg.sender === "customer";
 
                 if (msg.type === "voice") {
@@ -910,8 +844,9 @@ export function CustomerChatView() {
                     </div>
                   </div>
                 );
-              })}
-              <div ref={messagesEndRef} />
+              })
+            )}
+            <div ref={messagesEndRef} />
             </div>
 
             {/* 3. CHAT INPUT BAR WITH PRESETS */}

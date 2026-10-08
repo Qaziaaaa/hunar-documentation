@@ -38,71 +38,27 @@ export function QuickChatDrawer({ visit, isOpen, onClose }: QuickChatDrawerProps
   const locale = useLocale();
   const isUrdu = locale === "ur";
 
-  const defaultMessagesUrdu: ChatMessage[] = [
-    {
-      id: "m-1",
-      sender: "technician",
-      type: "text",
-      text: "السلام علیکم! میں تشخیصی آلات لے کر یونیورسٹی روڈ سے آپ کی طرف روانہ ہو چکا ہوں۔",
-      time: "10 منٹ پہلے",
-    },
-    {
-      id: "m-2",
-      sender: "customer",
-      type: "text",
-      text: "وعلیکم السلام۔ براہ کرم مکان نمبر 45 پہنچ کر مین گیٹ پر کال کریں۔",
-      time: "8 منٹ پہلے",
-    },
-    {
-      id: "m-3",
-      sender: "customer",
-      type: "voice",
-      audioUrl: "https://actions.google.com/sounds/v1/speech/hello.ogg",
-      durationSeconds: 14,
-      time: "2 منٹ پہلے",
-    },
-  ];
-
-  const defaultMessagesEn: ChatMessage[] = [
-    {
-      id: "m-1",
-      sender: "technician",
-      type: "text",
-      text: "Assalam o Alaikum! I am on my way via University Road with diagnostic tools.",
-      time: "10 mins ago",
-    },
-    {
-      id: "m-2",
-      sender: "customer",
-      type: "text",
-      text: "Walaikum Assalam. Please call on gate when you reach House 45.",
-      time: "8 mins ago",
-    },
-    {
-      id: "m-3",
-      sender: "customer",
-      type: "voice",
-      audioUrl: "https://actions.google.com/sounds/v1/speech/hello.ogg",
-      durationSeconds: 14,
-      time: "2 mins ago",
-    },
-  ];
-
-  const [messages, setMessages] = useState<ChatMessage[]>(
-    isUrdu ? defaultMessagesUrdu : defaultMessagesEn
-  );
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
 
   // Load real messages for visit when drawer opens
   useEffect(() => {
-    if (!isOpen || !visit?.jobId) return;
+    if (!isOpen || !visit?.jobId) {
+      setMessages([]);
+      return;
+    }
     let isCancelled = false;
+    setMessages([]);
 
     // Immediately join the job room so real-time socket events flow immediately
     joinConversationRoom(visit.jobId);
 
     getMessagesByJob(visit.jobId)
       .then((backendMsgs) => {
-        if (isCancelled || !backendMsgs || backendMsgs.length === 0) return;
+        if (isCancelled) return;
+        if (!backendMsgs || backendMsgs.length === 0) {
+          setMessages([]);
+          return;
+        }
         const currentUserId = getStoredUser()?.id;
         const formatted: ChatMessage[] = backendMsgs.map((m) => {
           const isFromMe = currentUserId ? m.senderId === currentUserId : m.senderRole === "CUSTOMER";
@@ -133,7 +89,9 @@ export function QuickChatDrawer({ visit, isOpen, onClose }: QuickChatDrawerProps
           joinConversationRoom(backendMsgs[0].conversationId);
         }
       })
-      .catch(() => {});
+      .catch(() => {
+        if (!isCancelled) setMessages([]);
+      });
 
     return () => {
       isCancelled = true;
@@ -144,6 +102,9 @@ export function QuickChatDrawer({ visit, isOpen, onClose }: QuickChatDrawerProps
   useEffect(() => {
     if (!isOpen || !visit?.jobId) return;
     const unsubscribe = subscribeToMessages((msg) => {
+      // STRICT JOB ISOLATION: ignore messages not belonging to this job
+      if (msg.jobId && msg.jobId !== visit.jobId) return;
+
       const currentUserId = getStoredUser()?.id;
       const isFromMe = currentUserId ? msg.senderId === currentUserId : msg.senderRole === "customer";
       const voice = parseVoiceNote(msg.text || (msg as any).content);
@@ -378,56 +339,72 @@ export function QuickChatDrawer({ visit, isOpen, onClose }: QuickChatDrawerProps
 
         {/* Messages Feed */}
         <div className="flex-1 overflow-y-auto p-4 space-y-3.5 bg-slate-50/30">
-          {messages.map((msg) => {
-            const isCustomer = msg.sender === "customer";
-            return (
-              <div
-                key={msg.id}
-                className={`flex flex-col ${
-                  isCustomer
-                    ? "items-end rtl:items-start"
-                    : "items-start rtl:items-end"
-                }`}
-              >
-                {msg.type === "voice" ? (
-                  <VoiceMessageBubble
-                    audioUrl={msg.audioUrl}
-                    durationSeconds={msg.durationSeconds}
-                    isSender={isCustomer}
-                    variant="navy"
-                  />
-                ) : msg.type === "image" && msg.imageUrl ? (
-                  <div className="max-w-[75%] rounded-2xl overflow-hidden border border-slate-200 shadow-2xs">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={msg.imageUrl}
-                      alt="Attachment"
-                      className="w-full h-auto object-cover max-h-60"
-                    />
-                  </div>
-                ) : (
-                  <div
-                    className={`max-w-[82%] px-3.5 py-2.5 rounded-2xl text-xs sm:text-sm leading-relaxed shadow-2xs ${
-                      isCustomer
-                        ? "bg-[#123B5D] text-white rounded-br-xs rtl:rounded-br-2xl rtl:rounded-bl-xs"
-                        : "bg-white text-slate-900 border border-slate-200/90 rounded-bl-xs rtl:rounded-bl-2xl rtl:rounded-br-xs"
-                    }`}
-                  >
-                    <p>{msg.text}</p>
-                  </div>
-                )}
-
+          {messages.length === 0 ? (
+            <div className="flex flex-col items-center justify-center h-full min-h-[220px] text-center p-6 space-y-2">
+              <div className="size-12 rounded-2xl bg-teal-50 border border-teal-200 text-[#0F8B8D] flex items-center justify-center">
+                <ShieldCheck className="size-6 text-[#0F8B8D]" />
+              </div>
+              <h4 className="text-sm font-bold text-slate-800">
+                {isUrdu ? "کوئی پرانا پیغام نہیں ہے" : "No messages yet"}
+              </h4>
+              <p className="text-xs text-slate-500 max-w-xs">
+                {isUrdu
+                  ? "کاریگر سے رابطہ شروع کرنے کے لیے نیچے پیغام یا وائس نوٹ بھیجیں۔"
+                  : "Send a message or voice note below to coordinate with your technician."}
+              </p>
+            </div>
+          ) : (
+            messages.map((msg) => {
+              const isCustomer = msg.sender === "customer";
+              return (
                 <div
-                  className={`flex items-center gap-1 mt-1 justify-end text-[10px] ${
-                    isCustomer ? "text-slate-300" : "text-slate-400"
+                  key={msg.id}
+                  className={`flex flex-col ${
+                    isCustomer
+                      ? "items-end rtl:items-start"
+                      : "items-start rtl:items-end"
                   }`}
                 >
-                  <span>{msg.time}</span>
-                  {isCustomer && <CheckCheck className="size-3.5 text-teal-300" />}
+                  {msg.type === "voice" ? (
+                    <VoiceMessageBubble
+                      audioUrl={msg.audioUrl}
+                      durationSeconds={msg.durationSeconds}
+                      isSender={isCustomer}
+                      variant="navy"
+                    />
+                  ) : msg.type === "image" && msg.imageUrl ? (
+                    <div className="max-w-[75%] rounded-2xl overflow-hidden border border-slate-200 shadow-2xs">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={msg.imageUrl}
+                        alt="Attachment"
+                        className="w-full h-auto object-cover max-h-60"
+                      />
+                    </div>
+                  ) : (
+                    <div
+                      className={`max-w-[82%] px-3.5 py-2.5 rounded-2xl text-xs sm:text-sm leading-relaxed shadow-2xs ${
+                        isCustomer
+                          ? "bg-[#123B5D] text-white rounded-br-xs rtl:rounded-br-2xl rtl:rounded-bl-xs"
+                          : "bg-white text-slate-900 border border-slate-200/90 rounded-bl-xs rtl:rounded-bl-2xl rtl:rounded-br-xs"
+                      }`}
+                    >
+                      <p>{msg.text}</p>
+                    </div>
+                  )}
+
+                  <div
+                    className={`flex items-center gap-1 mt-1 justify-end text-[10px] ${
+                      isCustomer ? "text-slate-300" : "text-slate-400"
+                    }`}
+                  >
+                    <span>{msg.time}</span>
+                    {isCustomer && <CheckCheck className="size-3.5 text-teal-300" />}
+                  </div>
                 </div>
-              </div>
-            );
-          })}
+              );
+            })
+          )}
         </div>
 
         {/* Rich Input Bar (Text Typing + Voice Recording) */}
