@@ -41,8 +41,8 @@ export interface CustomerBrief {
 }
 
 export interface VoiceNote {
-  durationFormatted: string;
-  durationSeconds: number;
+  durationFormatted?: string;
+  durationSeconds?: number;
   waveformPattern?: number[];
   audioUrl?: string;
 }

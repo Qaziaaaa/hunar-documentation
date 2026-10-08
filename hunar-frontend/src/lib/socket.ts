@@ -11,6 +11,8 @@ let lastToken: string | null | undefined = undefined;
 let connectionCount = 0;
 let disconnectTimeout: ReturnType<typeof setTimeout> | null = null;
 
+let lastErrorLogged = 0;
+
 export function getSocket(): Socket | null {
   if (typeof window === "undefined") return null;
   if (!socket) {
@@ -20,6 +22,9 @@ export function getSocket(): Socket | null {
       autoConnect: false,
       transports: ["websocket", "polling"],
       auth: { token },
+      reconnectionAttempts: 5,
+      reconnectionDelay: 3000,
+      timeout: 8000,
     });
 
     socket.on("connect", () => {
@@ -27,7 +32,11 @@ export function getSocket(): Socket | null {
     });
 
     socket.on("connect_error", (err) => {
-      console.warn("[Socket.io] Connection error:", err.message);
+      const now = Date.now();
+      if (now - lastErrorLogged > 10000) {
+        lastErrorLogged = now;
+        console.warn("[Socket.io] Connection notice:", err.message);
+      }
     });
   }
   return socket;
@@ -38,12 +47,16 @@ export function connectSocket(): Socket | null {
     clearTimeout(disconnectTimeout);
     disconnectTimeout = null;
   }
-  connectionCount++;
 
+  const currentToken = getAccessToken();
+  if (!currentToken) {
+    return null;
+  }
+
+  connectionCount++;
   const s = getSocket();
   if (!s) return null;
 
-  const currentToken = getAccessToken();
   if (currentToken !== lastToken) {
     lastToken = currentToken;
     s.auth = { token: currentToken };

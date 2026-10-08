@@ -23,7 +23,7 @@ export function WorkerInvoiceModal({ job, onClose }: WorkerInvoiceModalProps) {
   const grossTotal = visitCharge + repairCharge;
   const platformCommission = job.platformCommission ?? Math.round(grossTotal * 0.1);
   const netEarnings = job.workerNetEarnings ?? (grossTotal - platformCommission);
-  const invoiceNumber = job.invoiceNumber || `INV-2026-${job.id.slice(-4)}`;
+  const invoiceNumber = job.invoiceNumber || `INV-${job.id}`;
   const warrantyDays = job.warrantyDays || 30;
 
   const handlePrint = () => {

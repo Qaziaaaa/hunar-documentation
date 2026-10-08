@@ -50,7 +50,7 @@ function mapLedgerEntry(entry: BackendLedgerEntry): WalletTransaction {
     displayDate: formattedDate,
     displayTime: formattedTime,
     jobId: entry.referenceId ?? undefined,
-    description: entry.description ?? entry.note ?? (isDeduction ? "Platform Commission" : "Job Earnings Credit"),
+    description: entry.description ?? entry.note ?? (isDeduction ? "Platform Commission" : "Admin Wallet Top-Up"),
     resultingBalance: Number(entry.balanceAfter),
   };
 }
@@ -69,7 +69,7 @@ export async function getWalletSummary(): Promise<WalletSummary> {
     const earnings = await http.get<WorkerEarningsData>("/workers/me/earnings").catch(() => null);
     return {
       currentBalance: Number(snapshot.balance),
-      totalTopUps: earnings ? Number(earnings.topupsCredited) : Number(snapshot.balance),
+      totalTopUps: earnings ? Number(earnings.topupsCredited ?? 0) : 0,
       totalDeductions: earnings ? Number(earnings.commissionsPaid + earnings.commissionsHeld) : Number(snapshot.heldBalance),
       totalTransactions: earnings ? earnings.records.length : 0,
     };

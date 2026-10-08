@@ -42,7 +42,7 @@ export function CustomerHelpView() {
     .filter((job) => job.status !== "cancelled")
     .map((job) => ({
       id: job.id,
-      jobNumber: `#OW-${job.id.slice(0, 4).toUpperCase()}`,
+      jobNumber: `#${job.id}`,
       title: job.title,
       workerName: job.selectedOffer?.worker.name || "Not assigned yet",
       category: job.subCategory,

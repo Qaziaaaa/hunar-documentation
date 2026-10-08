@@ -209,9 +209,24 @@ export function WorkerDashboardShell({
     }
   };
 
+  // Enforce worker role and token authentication on worker routes
+  useEffect(() => {
+    const token = getAccessToken();
+    const user = getStoredUser();
+    if (!token) {
+      router.push("/worker/sign-in");
+      return;
+    }
+    if (user && user.role !== "WORKER") {
+      router.push("/worker/sign-in");
+      return;
+    }
+  }, [router]);
+
   // Sync profile & online status from live backend on mount
   useEffect(() => {
     async function syncBackendProfile() {
+      if (!getAccessToken()) return;
       try {
         const [raw, earningsData] = await Promise.all([
           http.get<any>("/users/worker/me").catch(() => null),
@@ -324,6 +339,7 @@ export function WorkerDashboardShell({
 
   // Load real notifications and keep them live over the socket
   useEffect(() => {
+    if (!getAccessToken()) return;
     let cancelled = false;
     getNotifications()
       .then((list) => {

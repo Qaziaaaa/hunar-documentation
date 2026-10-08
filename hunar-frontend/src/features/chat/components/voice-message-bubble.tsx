@@ -16,6 +16,8 @@ export function VoiceMessageBubble({
   isSender = true,
   variant = "navy",
 }: VoiceMessageBubbleProps) {
+  if (!audioUrl) return null;
+
   const [isPlaying, setIsPlaying] = useState(false);
   const [progress, setProgress] = useState(0);
   const [speed, setSpeed] = useState<1 | 1.5 | 2>(1);

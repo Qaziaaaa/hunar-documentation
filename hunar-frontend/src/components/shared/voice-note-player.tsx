@@ -16,29 +16,60 @@ export function VoiceNotePlayer({
 }: VoiceNotePlayerProps) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
+  const [actualDuration, setActualDuration] = useState<number>(durationSeconds || 0);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio) return;
 
+    const handleLoadedMetadata = () => {
+      if (!isNaN(audio.duration) && isFinite(audio.duration) && audio.duration > 0) {
+        setActualDuration(audio.duration);
+      } else if (audio.duration === Infinity) {
+        const onSeeked = () => {
+          audio.removeEventListener("seeked", onSeeked);
+          if (!isNaN(audio.duration) && isFinite(audio.duration) && audio.duration > 0) {
+            setActualDuration(audio.duration);
+          }
+          audio.currentTime = 0;
+        };
+        audio.addEventListener("seeked", onSeeked, { once: true });
+        audio.currentTime = 1e101;
+      }
+    };
+
     const handleTimeUpdate = () => {
       setCurrentTime(audio.currentTime);
+      if (!isNaN(audio.duration) && isFinite(audio.duration) && audio.duration > 0) {
+        if (actualDuration !== audio.duration) {
+          setActualDuration(audio.duration);
+        }
+      } else if (audio.currentTime > 0) {
+        setActualDuration((prev) => Math.max(prev, audio.currentTime));
+      }
     };
 
     const handleEnded = () => {
       setIsPlaying(false);
       setCurrentTime(0);
+      if (audio.currentTime > 0) {
+        setActualDuration(audio.currentTime);
+      }
     };
 
+    audio.addEventListener("loadedmetadata", handleLoadedMetadata);
     audio.addEventListener("timeupdate", handleTimeUpdate);
     audio.addEventListener("ended", handleEnded);
 
     return () => {
+      audio.removeEventListener("loadedmetadata", handleLoadedMetadata);
       audio.removeEventListener("timeupdate", handleTimeUpdate);
       audio.removeEventListener("ended", handleEnded);
     };
-  }, []);
+  }, [actualDuration]);
+
+  const effectiveDuration = Math.round(actualDuration > 0 ? actualDuration : (durationSeconds || 0));
 
   const togglePlay = () => {
     const audio = audioRef.current;
@@ -55,7 +86,7 @@ export function VoiceNotePlayer({
           setIsPlaying(true);
           const interval = setInterval(() => {
             setCurrentTime((prev) => {
-              if (prev >= durationSeconds) {
+              if (prev >= effectiveDuration) {
                 clearInterval(interval);
                 setIsPlaying(false);
                 return 0;
@@ -67,7 +98,7 @@ export function VoiceNotePlayer({
     }
   };
 
-  const progressPercent = durationSeconds > 0 ? (currentTime / durationSeconds) * 100 : 0;
+  const progressPercent = effectiveDuration > 0 ? (currentTime / effectiveDuration) * 100 : 0;
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -118,7 +149,7 @@ export function VoiceNotePlayer({
             <span>Voice Note</span>
           </span>
           <span>
-            {formatTime(currentTime)} / {formatTime(durationSeconds)}
+            {formatTime(currentTime)} / {formatTime(effectiveDuration)}
           </span>
         </div>
       </div>

@@ -69,7 +69,13 @@ export class RepairService {
   }
 
   async createEstimate(visitId: string, user: JwtPayload, dto: RepairEstimateDto) {
-    const visit = await this.prisma.visit.findUnique({ where: { id: visitId } });
+    let visit = await this.prisma.visit.findUnique({ where: { id: visitId } });
+    if (!visit) {
+      visit = await this.prisma.visit.findFirst({
+        where: { jobId: visitId },
+        orderBy: { createdAt: 'desc' },
+      });
+    }
     if (!visit) {
       throw new NotFoundException('Visit not found');
     }
@@ -80,7 +86,7 @@ export class RepairService {
       throw new BadRequestException('Inspection must be submitted before a repair estimate');
     }
     const job = await this.prisma.serviceRequest.findUniqueOrThrow({ where: { id: visit.jobId } });
-    if (job.status !== 'INSPECTION_DONE') {
+    if (!['INSPECTION_DONE', 'REPAIR_NEGOTIATING', 'VISIT_COMPLETED', 'VISIT_IN_PROGRESS'].includes(job.status)) {
       throw new BadRequestException(
         'JOB_INVALID_STATE: estimate requires inspection to be complete',
       );
@@ -91,20 +97,43 @@ export class RepairService {
       select: { id: true, name: true, phone: true, avatarUrl: true },
     });
 
-    const repair = await this.prisma.repair.create({
-      data: {
-        visitId,
-        jobId: visit.jobId,
-        workerId: user.sub,
-        description: dto.description,
-        amount: dto.amount,
-        itemsBreakdown: dto.itemsBreakdown ? (dto.itemsBreakdown as object) : undefined,
-        status: 'PROPOSED',
-        negotiationRound: 0,
-        negotiationHistory: [],
-      },
+    const existingRepair = await this.prisma.repair.findFirst({
+      where: { jobId: visit.jobId },
+      orderBy: { createdAt: 'desc' },
     });
-    await this.jobsService.transitionJobState(visit.jobId, 'REPAIR_NEGOTIATING');
+
+    let repair;
+    if (existingRepair) {
+      repair = await this.prisma.repair.update({
+        where: { id: existingRepair.id },
+        data: {
+          description: dto.description,
+          amount: dto.amount,
+          itemsBreakdown: dto.itemsBreakdown ? (dto.itemsBreakdown as object) : undefined,
+          status: 'PROPOSED',
+          lockedAmount: null,
+          lockedAt: null,
+        },
+      });
+    } else {
+      repair = await this.prisma.repair.create({
+        data: {
+          visitId,
+          jobId: visit.jobId,
+          workerId: user.sub,
+          description: dto.description,
+          amount: dto.amount,
+          itemsBreakdown: dto.itemsBreakdown ? (dto.itemsBreakdown as object) : undefined,
+          status: 'PROPOSED',
+          negotiationRound: 0,
+          negotiationHistory: [],
+        },
+      });
+    }
+
+    if (job.status !== 'REPAIR_NEGOTIATING') {
+      await this.jobsService.transitionJobState(visit.jobId, 'REPAIR_NEGOTIATING');
+    }
 
     const visitCharge = Number(job.lockedVisitCharge ?? job.suggestedVisitCharge ?? 0);
     const repairAmount = Number(dto.amount);

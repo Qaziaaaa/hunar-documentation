@@ -35,6 +35,7 @@ interface BackendJobRow {
   title: string;
   description?: string | null;
   images?: string[];
+  voiceNoteUrl?: string | null;
   latitude?: number;
   longitude?: number;
   address?: string | null;
@@ -76,6 +77,7 @@ function mapBackendJob(row: BackendJobRow): Job {
     title: row.title,
     description: row.description ?? undefined,
     images: row.images ?? [],
+    voiceNoteUrl: row.voiceNoteUrl ?? undefined,
     latitude: row.latitude ?? 0,
     longitude: row.longitude ?? 0,
     address: row.address ?? "",
@@ -130,25 +132,23 @@ export async function listNearbyJobs(location?: {
   lng: number;
   radiusKm?: number;
 }): Promise<Job[]> {
+  if (!getAccessToken()) {
+    return [];
+  }
   let list: Job[] = [];
   if (isMockMode()) {
     list = mockJobs.filter((job) => isNearbyJob(job.status));
   } else {
-    try {
-      const resolved = location ?? { lat: 33.98, lng: 71.43, radiusKm: 25 };
-      const params = new URLSearchParams();
-      params.set("lat", String(resolved.lat));
-      params.set("lng", String(resolved.lng));
-      params.set("radiusKm", String(resolved.radiusKm ?? 25));
-      const res = await http.get<BackendPage<BackendJobRow> | BackendJobRow[]>(
-        `/jobs/available?${params.toString()}`,
-      );
-      const items = Array.isArray(res) ? res : res.items;
-      list = (items ?? []).map(mapBackendJob);
-    } catch (e) {
-      console.warn("Failed to fetch nearby jobs from backend", e);
-      list = mockJobs.filter((job) => isNearbyJob(job.status));
-    }
+    const resolved = location ?? { lat: 33.98, lng: 71.43, radiusKm: 25 };
+    const params = new URLSearchParams();
+    params.set("lat", String(resolved.lat));
+    params.set("lng", String(resolved.lng));
+    params.set("radiusKm", String(resolved.radiusKm ?? 25));
+    const res = await http.get<BackendPage<BackendJobRow> | BackendJobRow[]>(
+      `/jobs/available?${params.toString()}`,
+    );
+    const items = Array.isArray(res) ? res : res.items;
+    list = (items ?? []).map(mapBackendJob);
   }
 
   const localJobs = getLocallyCreatedJobs();

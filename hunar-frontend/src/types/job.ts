@@ -108,6 +108,7 @@ export interface Job {
   title: string;
   description?: string;
   images: string[];
+  voiceNoteUrl?: string | null;
   latitude: number;
   longitude: number;
   address: string;

@@ -51,73 +51,7 @@ export function WorkerChatModal({
   const locale = useLocale();
   const isUrdu = locale === "ur";
 
-  const defaultMessagesUrdu: ChatMessage[] = [
-    {
-      id: "wm-1",
-      sender: "worker",
-      type: "text",
-      text: "السلام علیکم! میں تشخیصی آلات اور ٹول کٹ لے کر آپ کی طرف روانہ ہو چکا ہوں۔",
-      time: "10:30 AM",
-    },
-    {
-      id: "wm-2",
-      sender: "customer",
-      type: "text",
-      text: "وعلیکم السلام۔ براہ کرم فلیٹ 402 پہنچ کر مین گیٹ پر کال کریں۔",
-      time: "10:32 AM",
-    },
-    {
-      id: "wm-3",
-      sender: "worker",
-      type: "voice",
-      audioUrl: "https://actions.google.com/sounds/v1/speech/hello.ogg",
-      durationSeconds: 12,
-      time: "10:35 AM",
-    },
-    {
-      id: "wm-4",
-      sender: "customer",
-      type: "text",
-      text: "جی گیٹ کھلا ہے، آپ سیدھا چوتھی منزل پر آ جائیں۔",
-      time: "10:36 AM",
-    },
-  ];
-
-  const defaultMessagesEn: ChatMessage[] = [
-    {
-      id: "wm-1",
-      sender: "worker",
-      type: "text",
-      text: "Assalam o Alaikum! I am on my way to your location with the diagnostic equipment.",
-      time: "10:30 AM",
-    },
-    {
-      id: "wm-2",
-      sender: "customer",
-      type: "text",
-      text: "Walaikum Assalam. Please ring at Flat 402 when you reach the building.",
-      time: "10:32 AM",
-    },
-    {
-      id: "wm-3",
-      sender: "worker",
-      type: "voice",
-      audioUrl: "https://actions.google.com/sounds/v1/speech/hello.ogg",
-      durationSeconds: 12,
-      time: "10:35 AM",
-    },
-    {
-      id: "wm-4",
-      sender: "customer",
-      type: "text",
-      text: "Main gate is open. You can come straight up to 4th floor.",
-      time: "10:36 AM",
-    },
-  ];
-
-  const [messages, setMessages] = useState<ChatMessage[]>(
-    isUrdu ? defaultMessagesUrdu : defaultMessagesEn
-  );
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
 
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
@@ -133,15 +67,23 @@ export function WorkerChatModal({
 
   // Load real messages for job when modal opens
   useEffect(() => {
-    if (!isOpen || !job?.id) return;
+    if (!isOpen || !job?.id) {
+      setMessages([]);
+      return;
+    }
     let isCancelled = false;
+    setMessages([]);
 
     // Immediately join the job room so real-time socket events flow immediately
     joinConversationRoom(job.id);
 
     getMessagesByJob(job.id)
       .then((backendMsgs) => {
-        if (isCancelled || !backendMsgs || backendMsgs.length === 0) return;
+        if (isCancelled) return;
+        if (!backendMsgs || backendMsgs.length === 0) {
+          setMessages([]);
+          return;
+        }
         const currentUserId = getStoredUser()?.id;
         const formatted: ChatMessage[] = backendMsgs.map((m) => {
           const isFromMe = currentUserId ? m.senderId === currentUserId : m.senderRole === "WORKER";
@@ -172,7 +114,9 @@ export function WorkerChatModal({
           joinConversationRoom(backendMsgs[0].conversationId);
         }
       })
-      .catch(() => {});
+      .catch(() => {
+        if (!isCancelled) setMessages([]);
+      });
 
     return () => {
       isCancelled = true;
@@ -183,6 +127,9 @@ export function WorkerChatModal({
   useEffect(() => {
     if (!isOpen || !job?.id) return;
     const unsubscribe = subscribeToMessages((msg) => {
+      // STRICT JOB ISOLATION: ignore messages from any other job
+      if (msg.jobId && msg.jobId !== job.id) return;
+
       const currentUserId = getStoredUser()?.id;
       const isFromMe = currentUserId ? msg.senderId === currentUserId : msg.senderRole === "worker";
 
@@ -567,7 +514,22 @@ export function WorkerChatModal({
 
           {/* 2. MESSAGES FEED */}
           <div className="flex-1 overflow-y-auto p-4 sm:p-5 lg:p-6 space-y-4 bg-slate-50/30">
-            {messages.map((msg) => {
+            {messages.length === 0 ? (
+              <div className="flex flex-col items-center justify-center h-full min-h-[220px] text-center p-6 space-y-2">
+                <div className="size-12 rounded-2xl bg-teal-50 border border-teal-200 text-[#0F8B8D] flex items-center justify-center">
+                  <Sparkles className="size-6 text-[#0F8B8D]" />
+                </div>
+                <h4 className="text-sm font-bold text-slate-800">
+                  {isUrdu ? "کوئی پرانا پیغام نہیں ہے" : "No messages yet"}
+                </h4>
+                <p className="text-xs text-slate-500 max-w-xs">
+                  {isUrdu
+                    ? "کسٹمر سے رابطہ شروع کرنے کے لیے نیچے پیغام یا وائس نوٹ بھیجیں۔"
+                    : "Send a message or voice note below to start coordinating with the customer."}
+                </p>
+              </div>
+            ) : (
+              messages.map((msg) => {
               const isMe = msg.sender === "worker";
 
               if (msg.type === "voice") {
@@ -634,8 +596,9 @@ export function WorkerChatModal({
                   </div>
                 </div>
               );
-            })}
-            <div ref={messagesEndRef} />
+            })
+          )}
+          <div ref={messagesEndRef} />
           </div>
 
           {/* 3. CHAT INPUT BAR WITH PRESETS */}

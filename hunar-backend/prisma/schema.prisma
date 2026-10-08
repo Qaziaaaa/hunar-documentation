@@ -245,7 +245,7 @@ model ServiceCategory {
 }
 
 model ServiceRequest {
-  id                   String                                @id @default(uuid())
+  id                   String                                @id
   customerId           String
   customer             User                                  @relation("CustomerJobs", fields: [customerId], references: [id])
   categoryId           String

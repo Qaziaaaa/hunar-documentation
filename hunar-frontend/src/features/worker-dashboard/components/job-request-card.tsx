@@ -14,6 +14,7 @@ import {
   Flame,
   Sparkles,
   EyeOff,
+  Volume2,
 } from "lucide-react";
 import type { JobRequest } from "../types";
 
@@ -46,9 +47,16 @@ export function JobRequestCard({
   const validImages = useMemo(() => {
     if (!job.images || !Array.isArray(job.images)) return [];
     return job.images.filter(
-      (src) => typeof src === "string" && src.trim().length > 0 && !src.startsWith("blob:")
+      (src) => typeof src === "string" && src.trim().length > 0
     );
   }, [job.images]);
+
+  const hasVoiceNote = Boolean(
+    (job.voiceNote?.audioUrl && !job.voiceNote.audioUrl.startsWith("blob:")) ||
+    (typeof (job as any).voiceNoteUrl === "string" &&
+      (job as any).voiceNoteUrl.trim() !== "" &&
+      !(job as any).voiceNoteUrl.startsWith("blob:"))
+  );
 
   const [offsetX, setOffsetX] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
@@ -259,10 +267,20 @@ export function JobRequestCard({
               </div>
             </div>
 
-            {/* Job Description */}
-            <p className="line-clamp-2 sm:line-clamp-3 text-xs sm:text-[13px] font-normal leading-relaxed text-slate-800">
-              {job.description}
-            </p>
+            {/* Job Title */}
+            <h3 className="line-clamp-2 text-[13px] sm:text-sm font-bold leading-snug text-[#123B5D]">
+              {job.title}
+            </h3>
+
+            {/* Voice Note & Media Badges */}
+            {hasVoiceNote && (
+              <div className="mt-1.5 flex items-center gap-1.5">
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-teal/10 text-teal text-[10.5px] font-bold border border-teal/20">
+                  <Volume2 className="size-3" />
+                  <span>{isUrdu ? "وائس نوٹ منسلک ہے" : "Voice Note Attached"}</span>
+                </span>
+              </div>
+            )}
           </div>
 
           {/* Bottom Row: Media Row (2 Image Thumbnails) — Mobile Only */}
@@ -274,12 +292,12 @@ export function JobRequestCard({
                     key={idx}
                     className="relative size-10 sm:size-11 overflow-hidden rounded-lg border border-slate-100 bg-slate-100 hover:opacity-90 transition-opacity"
                   >
-                    <Image
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
                       src={imgUrl}
                       alt={`Job preview ${idx + 1}`}
-                      fill
-                      className="object-cover"
-                      sizes="44px"
+                      className="size-full object-cover"
+                      loading="lazy"
                     />
                   </div>
                 ))}
@@ -293,12 +311,12 @@ export function JobRequestCard({
           <div className="hidden sm:flex sm:w-[36%] md:w-[40%] shrink-0 items-center justify-end pointer-events-none pl-2 sm:pl-3">
             {validImages.length === 1 ? (
               <div className="relative w-full h-24 sm:h-26 md:h-28 overflow-hidden rounded-lg border border-slate-200/80 bg-slate-100 shadow-2xs group-hover:border-teal/40 transition-colors">
-                <Image
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
                   src={validImages[0]}
                   alt={job.category || "Job photo"}
-                  fill
-                  className="object-cover group-hover:scale-105 transition-transform duration-300"
-                  sizes="(min-width: 640px) 30vw, 200px"
+                  className="size-full object-cover group-hover:scale-105 transition-transform duration-300"
+                  loading="lazy"
                 />
               </div>
             ) : (
@@ -308,12 +326,12 @@ export function JobRequestCard({
                     key={idx}
                     className="relative h-full w-full overflow-hidden rounded-lg border border-slate-200/80 bg-slate-100 shadow-2xs group-hover:border-teal/40 transition-colors"
                   >
-                    <Image
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
                       src={imgUrl}
                       alt={`Job photo ${idx + 1}`}
-                      fill
-                      className="object-cover group-hover:scale-105 transition-transform duration-300"
-                      sizes="(min-width: 640px) 15vw, 120px"
+                      className="size-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      loading="lazy"
                     />
                     {idx === 1 && validImages.length > 2 && (
                       <span className="absolute bottom-1 right-1 rounded-md bg-black/65 px-1.5 py-0.5 text-[9.5px] font-extrabold text-white backdrop-blur-xs">

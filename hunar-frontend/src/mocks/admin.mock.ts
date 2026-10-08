@@ -205,7 +205,7 @@ export const MOCK_VERIFICATIONS: VerificationRequest[] = [
 
 export const MOCK_LIVE_JOBS: LiveJobItem[] = [
   {
-    id: "job-801",
+    id: "AW3-90W",
     title: "1.5 Ton Inverter AC Complete Master Servicing",
     category: "HVAC & AC Repair",
     customerName: "Tariq Mahmood",
@@ -216,7 +216,7 @@ export const MOCK_LIVE_JOBS: LiveJobItem[] = [
     createdAt: "10 mins ago",
   },
   {
-    id: "job-802",
+    id: "BK7-21M",
     title: "Main DB Box Circuit Breaker Tripping Repair",
     category: "Electrical Work",
     customerName: "Ayesha Khan",
@@ -227,7 +227,7 @@ export const MOCK_LIVE_JOBS: LiveJobItem[] = [
     createdAt: "25 mins ago",
   },
   {
-    id: "job-803",
+    id: "ZT4-83Q",
     title: "Underground Water Tank Leakage Sealing",
     category: "Plumbing",
     customerName: "Zahra Bilal",
@@ -238,7 +238,7 @@ export const MOCK_LIVE_JOBS: LiveJobItem[] = [
     createdAt: "1 hour ago",
   },
   {
-    id: "job-804",
+    id: "HD9-05X",
     title: "Custom Wooden Door Lock Installation",
     category: "Carpentry",
     customerName: "Usman Ali",
@@ -252,7 +252,7 @@ export const MOCK_LIVE_JOBS: LiveJobItem[] = [
 
 export const MOCK_JOB_DETAILS: JobDetailItem[] = [
   {
-    id: "job-801",
+    id: "AW3-90W",
     title: "1.5 Ton Inverter AC Complete Master Servicing",
     category: "HVAC & AC Repair",
     customerName: "Tariq Mahmood",
@@ -273,7 +273,7 @@ export const MOCK_JOB_DETAILS: JobDetailItem[] = [
     ],
   },
   {
-    id: "job-804",
+    id: "HD9-05X",
     title: "Custom Wooden Door Lock Installation",
     category: "Carpentry",
     customerName: "Usman Ali",
@@ -298,7 +298,7 @@ export const MOCK_JOB_DETAILS: JobDetailItem[] = [
 export const MOCK_PAYMENTS: PaymentTransaction[] = [
   {
     id: "txn-901",
-    jobId: "job-803",
+    jobId: "ZT4-83Q",
     customerName: "Zahra Bilal",
     workerName: "Kamran Hassan",
     amount: 8500,
@@ -310,7 +310,7 @@ export const MOCK_PAYMENTS: PaymentTransaction[] = [
   },
   {
     id: "txn-902",
-    jobId: "job-801",
+    jobId: "AW3-90W",
     customerName: "Tariq Mahmood",
     workerName: "Mohammad Rashid",
     amount: 3500,
@@ -322,7 +322,7 @@ export const MOCK_PAYMENTS: PaymentTransaction[] = [
   },
   {
     id: "txn-903",
-    jobId: "job-802",
+    jobId: "BK7-21M",
     customerName: "Ayesha Khan",
     workerName: "Mohammad Rashid",
     amount: 2800,
@@ -334,7 +334,7 @@ export const MOCK_PAYMENTS: PaymentTransaction[] = [
   },
   {
     id: "txn-904",
-    jobId: "job-804",
+    jobId: "HD9-05X",
     customerName: "Usman Ali",
     workerName: "Bilal Ahmad",
     amount: 1800,

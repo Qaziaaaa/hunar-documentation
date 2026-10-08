@@ -12,6 +12,7 @@ import {
   Min,
 } from 'class-validator';
 import { PaymentMethod } from '@prisma/client';
+import { IsOrderCode } from '../../common/helpers/order-code.util';
 
 export class TopUpDto {
   @Type(() => Number)
@@ -53,12 +54,12 @@ export class WalletQueryDto {
 }
 
 export class HoldCommissionDto {
-  @IsUUID()
+  @IsOrderCode()
   jobId: string;
 }
 
 export class ConfirmCommissionDto {
-  @IsUUID()
+  @IsOrderCode()
   jobId: string;
 
   @Matches(/^\d{6}$/)
@@ -66,7 +67,7 @@ export class ConfirmCommissionDto {
 }
 
 export class ReverseCommissionDto {
-  @IsUUID()
+  @IsOrderCode()
   jobId: string;
 }
 

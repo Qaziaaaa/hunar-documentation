@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   Check,
   MapPin,
@@ -29,7 +29,7 @@ export function ActiveVisitBanner({ visit: propVisit }: ActiveVisitBannerProps =
     queryKey: ["customer", "visits"],
     queryFn: getCustomerVisits,
     staleTime: 30_000,
-    enabled: !propVisit,
+    enabled: propVisit === undefined,
   });
 
   const activeVisits = (visits ?? []).filter(
@@ -38,7 +38,22 @@ export function ActiveVisitBanner({ visit: propVisit }: ActiveVisitBannerProps =
       v.status !== "cancelled" &&
       v.status !== "paid"
   );
-  const liveVisit = propVisit ?? activeVisits[0];
+
+  const activeList: ScheduledVisit[] =
+    propVisit !== undefined ? (propVisit ? [propVisit] : []) : activeVisits;
+  const totalJobs = activeList.length;
+
+  const [currentIndex, setCurrentIndex] = useState(0);
+
+  // Swipe gesture tracking (touch & mouse)
+  const [touchStartX, setTouchStartX] = useState<number | null>(null);
+  const [touchDeltaX, setTouchDeltaX] = useState<number>(0);
+  const [isMouseDown, setIsMouseDown] = useState(false);
+  const [mouseStartX, setMouseStartX] = useState<number | null>(null);
+  const hasDraggedRef = useRef(false);
+
+  const validIndex = totalJobs > 0 ? Math.min(currentIndex, totalJobs - 1) : 0;
+  const liveVisit = activeList[validIndex];
 
   const [isVerified, setIsVerified] = useState<boolean>(() => {
     const session = arrivalService.getSession();
@@ -54,7 +69,91 @@ export function ActiveVisitBanner({ visit: propVisit }: ActiveVisitBannerProps =
     return () => unsubscribe();
   }, []);
 
+  const handleSwipeChange = (direction: "left" | "right") => {
+    const isNext = (direction === "left" && !isUrdu) || (direction === "right" && isUrdu);
+    if (isNext) {
+      setCurrentIndex((prev) => (prev < totalJobs - 1 ? prev + 1 : 0));
+    } else {
+      setCurrentIndex((prev) => (prev > 0 ? prev - 1 : totalJobs - 1));
+    }
+  };
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (totalJobs <= 1) return;
+    setTouchStartX(e.targetTouches[0].clientX);
+    setTouchDeltaX(0);
+    hasDraggedRef.current = false;
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (touchStartX === null || totalJobs <= 1) return;
+    const currentX = e.targetTouches[0].clientX;
+    const diffX = currentX - touchStartX;
+    setTouchDeltaX(diffX);
+    if (Math.abs(diffX) > 10) {
+      hasDraggedRef.current = true;
+    }
+  };
+
+  const handleTouchEnd = () => {
+    if (touchStartX === null || totalJobs <= 1) return;
+    const threshold = 40;
+    if (Math.abs(touchDeltaX) > threshold) {
+      handleSwipeChange(touchDeltaX < 0 ? "left" : "right");
+    }
+    setTouchStartX(null);
+    setTouchDeltaX(0);
+  };
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if (totalJobs <= 1) return;
+    setIsMouseDown(true);
+    setMouseStartX(e.clientX);
+    setTouchDeltaX(0);
+    hasDraggedRef.current = false;
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isMouseDown || mouseStartX === null || totalJobs <= 1) return;
+    const diffX = e.clientX - mouseStartX;
+    setTouchDeltaX(diffX);
+    if (Math.abs(diffX) > 10) {
+      hasDraggedRef.current = true;
+    }
+  };
+
+  const handleMouseUp = () => {
+    if (!isMouseDown || mouseStartX === null || totalJobs <= 1) return;
+    const threshold = 40;
+    if (Math.abs(touchDeltaX) > threshold) {
+      handleSwipeChange(touchDeltaX < 0 ? "left" : "right");
+    }
+    setIsMouseDown(false);
+    setMouseStartX(null);
+    setTouchDeltaX(0);
+  };
+
+  const handleMouseLeave = () => {
+    if (isMouseDown) {
+      handleMouseUp();
+    }
+  };
+
+  const handleCardClick = () => {
+    if (hasDraggedRef.current) {
+      hasDraggedRef.current = false;
+      return;
+    }
+    router.push("/customer/visits");
+  };
+
   if (!liveVisit) return null;
+
+  const session = arrivalService.getSession();
+  const isVisitVerified =
+    liveVisit.status === "inspection_in_progress" ||
+    (isVerified &&
+      (!session?.visitId || session.visitId === liveVisit.id || session.jobId === liveVisit.jobId));
 
   const technician = liveVisit.technician;
   const legacyWorker = liveVisit as unknown as {
@@ -70,64 +169,90 @@ export function ActiveVisitBanner({ visit: propVisit }: ActiveVisitBannerProps =
 
   const technicianPhone = technician?.phone || legacyWorker.workerPhone || "";
 
-  const visitCharges = liveVisit.visitCharges ?? 0;
+  const visitCharges =
+    liveVisit.visitCharges && liveVisit.visitCharges > 0
+      ? liveVisit.visitCharges
+      : 300;
 
   const area = isUrdu
     ? liveVisit.customerAreaUr ?? liveVisit.customerArea ?? legacyWorker.address
     : liveVisit.customerArea ?? legacyWorker.address;
 
+  const hasEtaOrDistance =
+    Boolean(liveVisit.etaMinutes && liveVisit.etaMinutes > 0) ||
+    Boolean(liveVisit.remainingDistanceKm && liveVisit.remainingDistanceKm > 0);
+  const showStatusDetail = isVisitVerified || hasEtaOrDistance;
+
   return (
     <div
-      onClick={() => router.push("/customer/visits")}
-      className="group relative block overflow-hidden bg-white rounded-2xl sm:rounded-3xl border border-[#0F8B8D]/25 shadow-2xs p-4 sm:p-5 transition-all duration-200 hover:shadow-md hover:border-[#0F8B8D] cursor-pointer"
+      onClick={handleCardClick}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+      onMouseDown={handleMouseDown}
+      onMouseMove={handleMouseMove}
+      onMouseUp={handleMouseUp}
+      onMouseLeave={handleMouseLeave}
+      className="group relative block overflow-hidden bg-white rounded-2xl sm:rounded-3xl border border-[#0F8B8D]/25 shadow-2xs p-4 sm:p-5 transition-all duration-200 hover:shadow-md hover:border-[#0F8B8D] cursor-pointer select-none touch-pan-y"
     >
+      <span className="sr-only">Active Visit: {liveVisit.status}</span>
+
       {/* Top Gradient Accent Bar */}
       <div className="absolute top-0 start-0 end-0 h-1.5 bg-gradient-to-r from-[#0F8B8D] via-[#14B8A6] to-[#16A34A]" />
 
-      {/* Top Section: Live Dispatch Status & Service Details */}
-      <div className="flex items-start gap-3.5 min-w-0">
-        {/* Pulsing Motorcycle / Van Icon */}
-        <div className="relative size-11 sm:size-12 rounded-2xl bg-[#0F8B8D]/10 text-[#0F8B8D] flex items-center justify-center shrink-0 mt-0.5 group-hover:scale-105 transition-transform">
-          <Navigation className="size-5 sm:size-6 stroke-[2.2]" />
-          <span className="absolute -top-1 -end-1 size-3 bg-success rounded-full ring-2 ring-white animate-ping" />
-        </div>
+      {/* Top Section: Live Dispatch Status, Service Details & Optional Counter Badge */}
+      <div className="flex items-start justify-between gap-3 min-w-0">
+        <div className="flex items-start gap-3.5 min-w-0 flex-1">
+          {/* Pulsing Motorcycle / Van Icon */}
+          <div className="relative size-11 sm:size-12 rounded-2xl bg-[#0F8B8D]/10 text-[#0F8B8D] flex items-center justify-center shrink-0 mt-0.5 group-hover:scale-105 transition-transform">
+            <Navigation className="size-5 sm:size-6 stroke-[2.2]" />
+            <span className="absolute -top-1 -end-1 size-3 bg-success rounded-full ring-2 ring-white animate-ping" />
+          </div>
 
-        <div className="space-y-1 min-w-0 flex-1 text-left rtl:text-right">
-          <div className="flex items-center gap-2 flex-wrap">
-            {isVerified ? (
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-success/10 text-success border border-success/20">
-                <Check className="size-3 text-success stroke-[3]" />
-                {isUrdu ? "کاریگر احاطے میں موجود ہے" : "Technician Inside Premises"}
-              </span>
-            ) : (
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-success/10 text-success border border-success/20">
-                <span className="size-1.5 rounded-full bg-success animate-pulse" />
-                {t("technicianOnTheWay")}
-              </span>
-            )}
-            {(isVerified || liveVisit.etaMinutes || liveVisit.remainingDistanceKm) && (
-              <>
-                <span className="text-slate-300 text-xs">•</span>
-                <span className="text-xs font-bold text-[#0F8B8D]">
-                  {isVerified
-                    ? isUrdu
-                      ? "OTP تصدیق شدہ • معائنہ جاری ہے"
-                      : "OTP Verified • Diagnosis in progress"
-                    : `${t("arrivingIn")}${liveVisit.etaMinutes ? ` ~${liveVisit.etaMinutes} ${isUrdu ? "منٹ" : "mins"}` : ""}${liveVisit.remainingDistanceKm ? ` (${liveVisit.remainingDistanceKm} ${isUrdu ? "کلومیٹر دور" : "km away"})` : ""}`}
+          <div className="space-y-1 min-w-0 flex-1 text-left rtl:text-right">
+            <div className="flex items-center gap-2 flex-wrap">
+              {isVisitVerified ? (
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-success/10 text-success border border-success/20">
+                  <Check className="size-3 text-success stroke-[3]" />
+                  {isUrdu ? "کاریگر احاطے میں موجود ہے" : "Technician Inside Premises"}
                 </span>
-              </>
-            )}
-          </div>
+              ) : (
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-success/10 text-success border border-success/20">
+                  <span className="size-1.5 rounded-full bg-success animate-pulse" />
+                  {t("technicianOnTheWay")}
+                </span>
+              )}
+              {showStatusDetail ? (
+                <>
+                  <span className="text-slate-300 text-xs">•</span>
+                  <span className="text-xs font-bold text-[#0F8B8D]">
+                    {isVisitVerified
+                      ? isUrdu
+                        ? "OTP تصدیق شدہ • معائنہ جاری ہے"
+                        : "OTP Verified • Diagnosis in progress"
+                      : `${t("arrivingIn")}${liveVisit.etaMinutes && liveVisit.etaMinutes > 0 ? ` ~${liveVisit.etaMinutes} ${isUrdu ? "منٹ" : "mins"}` : ""}${liveVisit.remainingDistanceKm && liveVisit.remainingDistanceKm > 0 ? ` (${liveVisit.remainingDistanceKm} ${isUrdu ? "کلومیٹر دور" : "km away"})` : ""}`}
+                  </span>
+                </>
+              ) : null}
+            </div>
 
-          <h3 className="text-sm sm:text-base font-extrabold text-[#123B5D] truncate group-hover:text-[#0F8B8D] transition-colors">
-            {isUrdu ? (liveVisit.jobTitleUr ?? liveVisit.jobTitle) : liveVisit.jobTitle}
-          </h3>
+            <h3 className="text-sm sm:text-base font-extrabold text-[#123B5D] truncate group-hover:text-[#0F8B8D] transition-colors">
+              {isUrdu ? (liveVisit.jobTitleUr ?? liveVisit.jobTitle) : liveVisit.jobTitle}
+            </h3>
 
-          <div className="flex items-center gap-1.5 text-xs text-slate-600 font-medium">
-            <MapPin className="size-3.5 text-[#0F8B8D] shrink-0" />
-            <span className="truncate">{area}</span>
+            <div className="flex items-center gap-1.5 text-xs text-slate-600 font-medium">
+              <MapPin className="size-3.5 text-[#0F8B8D] shrink-0" />
+              <span className="truncate">{area}</span>
+            </div>
           </div>
         </div>
+
+        {/* Counter Badge (ONLY rendered if multiple active jobs exist) */}
+        {totalJobs > 1 && (
+          <span className="text-[11px] font-bold text-[#0F8B8D] bg-[#0F8B8D]/10 border border-[#0F8B8D]/20 px-2.5 py-0.5 rounded-full shrink-0 self-start select-none">
+            {isUrdu ? `${totalJobs} / ${validIndex + 1}` : `${validIndex + 1} / ${totalJobs}`}
+          </span>
+        )}
       </div>
 
       {/* Bottom Section: Technician Info, Visit Charges & Contact Actions */}
@@ -148,17 +273,19 @@ export function ActiveVisitBanner({ visit: propVisit }: ActiveVisitBannerProps =
             <span className="text-slate-300 text-xs hidden sm:inline">•</span>
 
             {/* Visit Charges */}
-            <div className="flex items-center gap-1.5 shrink-0">
-              <span className="text-xs text-slate-500 font-semibold">
-                {isUrdu ? "وزٹ فیس:" : "Visit Charges:"}
-              </span>
-              <span className="inline-flex items-center font-bold text-xs sm:text-sm text-[#0F8B8D] bg-[#0F8B8D]/10 px-2.5 py-0.5 rounded-lg border border-[#0F8B8D]/20">
-                {isUrdu ? `روپے ${visitCharges}` : `Rs. ${visitCharges}`}
-              </span>
-            </div>
+            {visitCharges > 0 && (
+              <div className="flex items-center gap-1.5 shrink-0">
+                <span className="text-xs text-slate-500 font-semibold">
+                  {isUrdu ? "وزٹ فیس:" : "Visit Charges:"}
+                </span>
+                <span className="inline-flex items-center font-bold text-xs sm:text-sm text-[#0F8B8D] bg-[#0F8B8D]/10 px-2.5 py-0.5 rounded-lg border border-[#0F8B8D]/20">
+                  {isUrdu ? `روپے ${visitCharges}` : `Rs. ${visitCharges}`}
+                </span>
+              </div>
+            )}
 
             {/* Doorstep Security PIN Callout if pending verification */}
-            {liveVisit.securityPin && !isVerified && (
+            {Boolean(liveVisit.securityPin && !isVisitVerified) && (
               <>
                 <span className="text-slate-300 text-xs hidden sm:inline">•</span>
                 <div className="flex items-center gap-1.5 shrink-0">
@@ -188,7 +315,7 @@ export function ActiveVisitBanner({ visit: propVisit }: ActiveVisitBannerProps =
             </Link>
 
             {/* Call Button */}
-            {technicianPhone && (
+            {Boolean(technicianPhone) && (
               <a
                 role="button"
                 aria-label={isUrdu ? "کاریگر کو کال کریں" : "Call Worker"}
@@ -202,6 +329,31 @@ export function ActiveVisitBanner({ visit: propVisit }: ActiveVisitBannerProps =
             )}
           </div>
         </div>
+
+        {/* Swipe Indicator Dots (ONLY rendered if multiple active jobs exist) */}
+        {totalJobs > 1 && (
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="flex items-center justify-center gap-1.5 pt-2"
+          >
+            {activeList.map((_, idx) => (
+              <button
+                key={idx}
+                type="button"
+                aria-label={isUrdu ? `کام ${idx + 1}` : `Job ${idx + 1}`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setCurrentIndex(idx);
+                }}
+                className={`h-1.5 rounded-full transition-all duration-300 cursor-pointer ${
+                  idx === validIndex
+                    ? "w-6 bg-[#0F8B8D]"
+                    : "w-2 bg-slate-200 hover:bg-slate-300"
+                }`}
+              />
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

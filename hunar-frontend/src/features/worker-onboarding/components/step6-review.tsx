@@ -38,35 +38,19 @@ export function Step6Review({
   const tRadii = useTranslations("WorkerOnboarding.Radii");
 
   const getTranslatedSkill = (skillId: string) => {
-    try {
-      return tSkills(skillId);
-    } catch {
-      return skillId;
-    }
+    return tSkills.has(skillId) ? tSkills(skillId) : skillId;
   };
 
   const getTranslatedCity = (city: string) => {
-    try {
-      return tCities(city);
-    } catch {
-      return city;
-    }
+    return tCities.has(city) ? tCities(city) : city;
   };
 
   const getTranslatedArea = (area: string) => {
-    try {
-      return tAreas(area);
-    } catch {
-      return area;
-    }
+    return tAreas.has(area) ? tAreas(area) : area;
   };
 
   const getTranslatedRadius = (radius: string) => {
-    try {
-      return tRadii(radius);
-    } catch {
-      return radius;
-    }
+    return tRadii.has(radius) ? tRadii(radius) : radius;
   };
 
   return (
@@ -113,6 +97,7 @@ export function Step6Review({
                     src={formData.profilePhoto}
                     alt={formData.fullName || "Worker Avatar"}
                     fill
+                    unoptimized
                     className="object-cover object-top"
                   />
                 </div>

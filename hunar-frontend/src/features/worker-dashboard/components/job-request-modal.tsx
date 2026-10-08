@@ -20,6 +20,7 @@ import {
   Send,
   CheckCircle2,
   Loader2,
+  Volume2,
 } from "lucide-react";
 import { VoicePlayer } from "./voice-player";
 import { Button } from "@/components/ui/button";
@@ -76,9 +77,23 @@ export function JobRequestModal({
   const validImages = useMemo(() => {
     if (!job?.images || !Array.isArray(job.images)) return [];
     return job.images.filter(
-      (src) => typeof src === "string" && src.trim().length > 0 && !src.startsWith("blob:")
+      (src) => typeof src === "string" && src.trim().length > 0
     );
   }, [job?.images]);
+
+  const voiceNoteData = useMemo(() => {
+    if (job?.voiceNote?.audioUrl && !job.voiceNote.audioUrl.startsWith("blob:")) {
+      return job.voiceNote;
+    }
+    const url = (job as any)?.voiceNoteUrl;
+    if (url && typeof url === "string" && url.trim().length > 0 && !url.startsWith("blob:")) {
+      return {
+        audioUrl: url.trim(),
+        waveformPattern: [35, 60, 45, 80, 95, 65, 40, 75, 90, 85, 50, 70, 40, 60, 30],
+      };
+    }
+    return undefined;
+  }, [job]);
 
   const handleSendOffer = async () => {
     if (!job || isSending || isSent) return;
@@ -283,11 +298,27 @@ export function JobRequestModal({
           </div>
 
           {/* SECTION 4: Attached Media (Images + Voice Note) */}
-          {(validImages.length > 0 || job.voiceNote) && (
-            <div className="space-y-2.5 pt-2">
-              <h4 className="text-sm sm:text-base font-extrabold text-navy">
-                {isUrdu ? "منسلک تصویر اور وائس نوٹ" : "Attached Media & Voice Note"}
-              </h4>
+          {(validImages.length > 0 || voiceNoteData) && (
+            <div className="space-y-3 pt-2">
+              <div className="flex items-center justify-between">
+                <h4 className="text-sm sm:text-base font-extrabold text-navy">
+                  {isUrdu ? "منسلک تصویر اور وائس نوٹ" : "Attached Media & Voice Note"}
+                </h4>
+                <div className="flex items-center gap-2 text-xs font-semibold text-slate-500">
+                  {validImages.length > 0 && (
+                    <span>
+                      {validImages.length} {validImages.length === 1 ? (isUrdu ? "تصویر" : "Photo") : (isUrdu ? "تصاویر" : "Photos")}
+                    </span>
+                  )}
+                  {validImages.length > 0 && voiceNoteData && <span>•</span>}
+                  {voiceNoteData && (
+                    <span className="text-teal font-bold flex items-center gap-1">
+                      <Volume2 className="size-3.5" />
+                      <span>{isUrdu ? "وائس نوٹ" : "Voice Note"}</span>
+                    </span>
+                  )}
+                </div>
+              </div>
 
               {/* Photos Gallery */}
               {validImages.length > 0 && (
@@ -296,14 +327,14 @@ export function JobRequestModal({
                     <div
                       key={idx}
                       onClick={() => setSelectedImagePreview(imgUrl)}
-                      className="group relative h-28 sm:h-32 cursor-pointer overflow-hidden rounded-xl bg-slate-100 hover:opacity-95 transition-opacity"
+                      className="group relative h-28 sm:h-32 cursor-pointer overflow-hidden rounded-xl bg-slate-100 hover:opacity-95 transition-opacity border border-slate-200/80"
                     >
-                      <Image
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
                         src={imgUrl}
                         alt={`Attachment ${idx + 1}`}
-                        fill
-                        className="object-cover group-hover:scale-105 transition-transform duration-200"
-                        sizes="(max-width: 640px) 50vw, 200px"
+                        className="size-full object-cover group-hover:scale-105 transition-transform duration-200"
+                        loading="lazy"
                       />
                       <div className="absolute inset-0 flex items-center justify-center bg-navy/30 opacity-0 group-hover:opacity-100 transition-opacity">
                         <Maximize2 className="size-5 text-white" />
@@ -313,9 +344,9 @@ export function JobRequestModal({
                 </div>
               )}
 
-              {/* Voice Message Player (Full variant) */}
-              {job.voiceNote && (
-                <VoicePlayer voiceNote={job.voiceNote} variant="full" />
+              {/* Voice Message Player (Full variant with real audio playback) */}
+              {voiceNoteData && (
+                <VoicePlayer voiceNote={voiceNoteData} variant="full" />
               )}
             </div>
           )}
@@ -393,12 +424,12 @@ export function JobRequestModal({
             >
               <X className="size-6" />
             </button>
-            <div className="relative max-h-[85vh] max-w-[90vw] aspect-4/3 w-[600px] overflow-hidden rounded-2xl">
-              <Image
+            <div className="relative max-h-[85vh] max-w-[90vw] flex items-center justify-center overflow-hidden rounded-2xl">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
                 src={selectedImagePreview}
                 alt="Enlarged attachment"
-                fill
-                className="object-contain"
+                className="max-h-[85vh] max-w-[90vw] object-contain rounded-2xl shadow-2xl"
               />
             </div>
           </div>

@@ -442,6 +442,7 @@ export class AdminService {
       ...(query.search
         ? {
           OR: [
+            { id: { contains: query.search.trim(), mode: 'insensitive' } },
             { title: { contains: query.search, mode: 'insensitive' } },
             { customer: { is: { name: { contains: query.search, mode: 'insensitive' } } } },
             { customer: { is: { phone: { contains: query.search } } } },

@@ -26,7 +26,7 @@ interface SkillItemConfig {
   icon: React.ComponentType<{ className?: string }>;
 }
 
-const AVAILABLE_SKILLS: SkillItemConfig[] = [
+export const AVAILABLE_SKILLS: SkillItemConfig[] = [
   {
     id: "Electrician",
     nameKey: "Electrician",
@@ -105,16 +105,21 @@ export function Step2Skills({
   const t = useTranslations("WorkerOnboarding.Step2");
   const tSkills = useTranslations("WorkerOnboarding.Skills");
 
+  const validSelectedSkills = (formData.skills || []).filter((s) =>
+    AVAILABLE_SKILLS.some((item) => item.id === s)
+  );
+  const selectedCount = validSelectedSkills.length;
+
   const toggleSkill = (skillId: string) => {
-    const current = formData.skills || [];
+    const current = (formData.skills || []).filter((s) =>
+      AVAILABLE_SKILLS.some((item) => item.id === s)
+    );
     if (current.includes(skillId)) {
       updateFormData({ skills: current.filter((s) => s !== skillId) });
     } else {
       updateFormData({ skills: [...current, skillId] });
     }
   };
-
-  const selectedCount = formData.skills?.length || 0;
 
   return (
     <div className="flex flex-col justify-between flex-1 space-y-5 sm:space-y-6">

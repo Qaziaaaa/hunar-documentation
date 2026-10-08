@@ -296,6 +296,7 @@ describe('AdminService.listJobs (Task 24)', () => {
     expect(where.createdAt.gte).toEqual(new Date('2026-09-01'));
     expect(where.createdAt.lte).toEqual(new Date('2026-09-30'));
     expect(where.OR).toEqual([
+      { id: { contains: 'ali', mode: 'insensitive' } },
       { title: { contains: 'ali', mode: 'insensitive' } },
       { customer: { is: { name: { contains: 'ali', mode: 'insensitive' } } } },
       { customer: { is: { phone: { contains: 'ali' } } } },

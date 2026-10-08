@@ -27,6 +27,8 @@ describe('WalletService', () => {
     },
     walletLedger: {
       create: jest.fn(),
+      upsert: jest.fn().mockImplementation((args: any) => Promise.resolve(args.create || args.update)),
+      findUnique: jest.fn(),
       findMany: jest.fn(),
       groupBy: jest.fn(),
       count: jest.fn(),
@@ -174,13 +176,13 @@ describe('WalletService', () => {
       });
       prisma.workerWallet.upsert.mockResolvedValue({
         userId: 'worker_1',
-        balance: BigInt(0),
+        balance: BigInt(1000),
         heldBalance: BigInt(0),
       });
       prisma.commission.findUnique.mockResolvedValue(null);
       prisma.workerWallet.update.mockResolvedValue({
         userId: 'worker_1',
-        balance: BigInt(270),
+        balance: BigInt(970),
         heldBalance: BigInt(0),
       });
       prisma.platformWallet.upsert.mockResolvedValue({});
@@ -189,38 +191,29 @@ describe('WalletService', () => {
       const result = await service.recordEarningsForJob('job_denied');
 
       expect(result.credited).toBe(true);
-      expect(result.amount).toBe(270); // Net worker amount
       expect((result as any).grossAmount).toBe(300); // Only visit fee
-      expect((result as any).commissionAmount).toBe(30); // 10% platform commission
+      expect((result as any).repairAmount).toBe(0); // 0 repair earnings
+      expect((result as any).commissionAmount).toBe(30); // 10% platform commission on visit fee only
+      expect(result.amount).toBe(300); // Worker earnings = Rs. 300
 
-      // Verify worker wallet updated with net amount (270)
+      // Verify worker wallet only deducted by 10% of visit fee (1000 - 30 = 970), NOT topped up!
       expect(prisma.workerWallet.update).toHaveBeenCalledWith(
         expect.objectContaining({
           where: { userId: 'worker_1' },
           data: expect.objectContaining({
-            balance: 270,
+            balance: 970,
           }),
         }),
       );
 
-      // Verify two distinct ledger entries: Gross Credit (+300) and Commission Deduction (-30)
-      expect(prisma.walletLedger.create).toHaveBeenCalledWith(
+      // Verify commission deduction entry (-30) and NO earnings credit in wallet ledger
+      expect(prisma.walletLedger.upsert).toHaveBeenCalledWith(
         expect.objectContaining({
-          data: expect.objectContaining({
-            userId: 'worker_1',
-            type: 'EARNINGS_CREDIT',
-            amount: 300,
-            referenceType: 'job',
-            referenceId: 'job_denied',
-          }),
-        }),
-      );
-      expect(prisma.walletLedger.create).toHaveBeenCalledWith(
-        expect.objectContaining({
-          data: expect.objectContaining({
+          create: expect.objectContaining({
             userId: 'worker_1',
             type: 'COMMISSION_DEDUCTED',
             amount: -30,
+            balanceAfter: 970,
             referenceType: 'commission',
           }),
         }),
@@ -236,13 +229,13 @@ describe('WalletService', () => {
       });
       prisma.workerWallet.upsert.mockResolvedValue({
         userId: 'worker_1',
-        balance: BigInt(0),
+        balance: BigInt(1000),
         heldBalance: BigInt(0),
       });
       prisma.commission.findUnique.mockResolvedValue(null);
       prisma.workerWallet.update.mockResolvedValue({
         userId: 'worker_1',
-        balance: BigInt(1620),
+        balance: BigInt(970),
         heldBalance: BigInt(0),
       });
       prisma.platformWallet.upsert.mockResolvedValue({});
@@ -251,38 +244,29 @@ describe('WalletService', () => {
       const result = await service.recordEarningsForJob('job_accepted');
 
       expect(result.credited).toBe(true);
-      expect(result.amount).toBe(1620); // Net worker amount (1800 - 180)
       expect((result as any).grossAmount).toBe(1800); // Visit fee (300) + Approved repair (1500)
-      expect((result as any).commissionAmount).toBe(180); // 10% platform commission on 1800
+      expect((result as any).repairAmount).toBe(1500);
+      expect((result as any).commissionAmount).toBe(30); // 10% platform commission on visit fee ONLY (not on 1800)
+      expect(result.amount).toBe(1800); // Worker earnings = Rs. 1800
 
-      // Verify worker wallet updated with net amount (1620)
+      // Verify worker wallet only deducted by 10% of visit fee (970), NOT increased by 1800!
       expect(prisma.workerWallet.update).toHaveBeenCalledWith(
         expect.objectContaining({
           where: { userId: 'worker_1' },
           data: expect.objectContaining({
-            balance: 1620,
+            balance: 970,
           }),
         }),
       );
 
-      // Verify two distinct ledger entries: Gross Credit (+1800) and Commission Deduction (-180)
-      expect(prisma.walletLedger.create).toHaveBeenCalledWith(
+      // Verify commission deduction (-30) and NO earnings credit in wallet ledger
+      expect(prisma.walletLedger.upsert).toHaveBeenCalledWith(
         expect.objectContaining({
-          data: expect.objectContaining({
-            userId: 'worker_1',
-            type: 'EARNINGS_CREDIT',
-            amount: 1800,
-            referenceType: 'job',
-            referenceId: 'job_accepted',
-          }),
-        }),
-      );
-      expect(prisma.walletLedger.create).toHaveBeenCalledWith(
-        expect.objectContaining({
-          data: expect.objectContaining({
+          create: expect.objectContaining({
             userId: 'worker_1',
             type: 'COMMISSION_DEDUCTED',
-            amount: -180,
+            amount: -30,
+            balanceAfter: 970,
             referenceType: 'commission',
           }),
         }),
@@ -294,13 +278,12 @@ describe('WalletService', () => {
     it('returns complete gross earning (e.g. 1500) for a 1500 job in record amount while maintaining commission and net details', async () => {
       prisma.workerWallet.findUnique.mockResolvedValue({
         userId: 'worker_1',
-        balance: BigInt(1350),
+        balance: BigInt(970),
         heldBalance: BigInt(0),
       });
 
       prisma.walletLedger.groupBy.mockResolvedValue([
-        { type: 'EARNINGS_CREDIT', _sum: { amount: 1500 } },
-        { type: 'COMMISSION_DEDUCTED', _sum: { amount: -150 } },
+        { type: 'COMMISSION_DEDUCTED', _sum: { amount: -30 } },
       ]);
 
       prisma.serviceRequest.findMany.mockResolvedValue([
@@ -318,14 +301,15 @@ describe('WalletService', () => {
       const summary = await service.getEarningsSummary('worker_1');
 
       expect(summary.grossEarnings).toBe(1500);
-      expect(summary.commissionsPaid).toBe(150);
-      expect(summary.netEarnings).toBe(1350);
+      expect(summary.commissionsPaid).toBe(30); // 10% of visit fee 300
+      expect(summary.netEarnings).toBe(1470);
       expect(summary.records).toHaveLength(1);
       // The complete earning must be 1500
       expect(summary.records[0].amount).toBe(1500);
       expect(summary.records[0].grossAmount).toBe(1500);
-      expect(summary.records[0].commission).toBe(150);
-      expect(summary.records[0].netAmount).toBe(1350);
+      expect(summary.records[0].repairAmount).toBe(1200);
+      expect(summary.records[0].commission).toBe(30);
+      expect(summary.records[0].netAmount).toBe(1470);
     });
   });
 });

@@ -4,7 +4,7 @@ import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { JwtPayload } from '../../common/types/jwt-payload.interface';
 import { ChatService } from './chat.service';
-import { MessageListQueryDto, SendMessageDto } from './chat.validation';
+import { MessageListQueryDto, SendMessageByJobDto, SendMessageDto } from './chat.validation';
 
 @Controller('chat')
 export class ChatController {
@@ -21,16 +21,16 @@ export class ChatController {
   @Roles(Role.WORKER, Role.CUSTOMER)
   getMessagesByJob(
     @CurrentUser() user: JwtPayload,
-    @Param('jobId', ParseUUIDPipe) jobId: string,
+    @Param('jobId') jobId: string,
     @Query() query: MessageListQueryDto,
   ) {
-    return this.chatService.getMessagesByJob(jobId, user.sub, query);
+    return this.chatService.getMessagesByJob(jobId?.trim(), user.sub, query);
   }
 
   /** Task 26 — POST /chat/send (documented customer contract). */
   @Post('send')
   @Roles(Role.WORKER, Role.CUSTOMER)
-  sendByJob(@CurrentUser() user: JwtPayload, @Body() dto: SendMessageDto & { jobId: string }) {
+  sendByJob(@CurrentUser() user: JwtPayload, @Body() dto: SendMessageByJobDto) {
     return this.chatService.sendMessageByJob(dto.jobId, user.sub, dto);
   }
 

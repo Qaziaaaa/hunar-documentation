@@ -142,7 +142,7 @@ export function ServicesGrid() {
   const isSearching = normalizedQuery.length > 0;
 
   return (
-    <section className="flex flex-col gap-3 w-full">
+    <section className="flex flex-col gap-3 w-full flex-1 min-h-[320px] sm:min-h-[440px]">
       {/* Top Header with "Show All Services" Button on the Right */}
       <div className="flex items-center justify-between">
         <span className="text-xs sm:text-sm font-bold text-[#123B5D]">
@@ -172,7 +172,7 @@ export function ServicesGrid() {
       </div>
 
       {/* 3 in 1 line on Mobile, 4 in 1 line on Desktop */}
-      <div className="grid grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4 w-full">
+      <div className="grid grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4 w-full content-start">
         {displayedServices.map((service, index) => {
           const displayTitle = locale === "ur" ? service.titleUr : service.title;
           const serviceHref =
@@ -210,7 +210,7 @@ export function ServicesGrid() {
 
       {/* Empty search results state */}
       {isSearching && displayedServices.length === 0 && (
-        <div className="flex flex-col items-center justify-center py-10 gap-2 text-center animate-in fade-in duration-200">
+        <div className="flex flex-col items-center justify-center flex-1 py-16 gap-2 text-center animate-in fade-in duration-200">
           <SearchX className="size-8 text-slate-300" />
           <p className="text-sm font-bold text-slate-500">
             {locale === "ur" ? "کوئی نتیجہ نہیں ملا" : "No results found"}

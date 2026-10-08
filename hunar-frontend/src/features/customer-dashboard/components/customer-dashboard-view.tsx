@@ -10,7 +10,7 @@ export function CustomerDashboardView() {
   const isUrdu = locale === "ur";
 
   return (
-    <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-0 pb-4 sm:pb-6 flex flex-col gap-4 sm:gap-6 flex-1">
+    <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-0 pb-4 sm:pb-6 flex flex-col gap-4 sm:gap-6 flex-1 min-h-[calc(100dvh-180px)] lg:min-h-[calc(100vh-140px)]">
       {/* Top Greeting Header */}
       <div className="flex flex-col">
         <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-[#123B5D]">
@@ -24,8 +24,10 @@ export function CustomerDashboardView() {
       {/* Small Service Cards (3 in 1 line, max 3 lines with Show All button) */}
       <ServicesGrid />
 
-      {/* WorkerFIX Branding Banner below service grid */}
-      <WorkerFixBrandBanner />
+      {/* WorkerFIX Branding Banner below service grid - hidden on mobile view */}
+      <div className="mt-auto pt-2 sm:pt-4 hidden sm:block">
+        <WorkerFixBrandBanner />
+      </div>
     </div>
   );
 }

@@ -12,7 +12,6 @@ import {
   Sparkles,
 } from "lucide-react";
 import { useLocale } from "next-intl";
-import { createSampleVoiceBlob } from "@/features/chat/api/chat-api";
 
 interface ChatInputBarProps {
   onSendMessage: (text: string) => void;
@@ -150,14 +149,12 @@ export function ChatInputBar({
           });
           deliverBlob(audioBlob);
         } else {
-          // If mic recorded 0 bytes, deliver audible synthetic voice note
-          deliverBlob(createSampleVoiceBlob(duration));
+          console.warn("[ChatInputBar] Recording too short or empty; no audio delivered.");
         }
       };
       mediaRecorderRef.current.stop();
     } else {
-      // Microphone not active: deliver audible synthetic voice note
-      deliverBlob(createSampleVoiceBlob(duration));
+      console.warn("[ChatInputBar] MediaRecorder was inactive; no audio recorded.");
     }
 
     setIsRecording(false);

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { useRouter } from "@/i18n/navigation";
 import { useParams } from "next/navigation";
 import { JobRequest } from "@/types/job";
@@ -8,6 +8,7 @@ import { VisitOffer } from "@/types/offer";
 import { formatRs } from "@/lib/design-tokens";
 import { workerStore } from "@/stores/worker-jobs-store";
 import { WorkerChatModal } from "./worker-chat-modal";
+import { VoicePlayer } from "@/features/worker-dashboard/components/voice-player";
 import {
   X,
   MapPin,
@@ -48,10 +49,25 @@ export function WorkerJobDetailsModal({
   const locale = (params?.locale as string) || "en";
   const isUrdu = locale === "ur";
 
-  const [isPlayingAudio, setIsPlayingAudio] = useState(false);
   const [selectedPhoto, setSelectedPhoto] = useState<string | null>(null);
   const [showChatModal, setShowChatModal] = useState(false);
   const [isStarting, setIsStarting] = useState(false);
+
+  const jobPhotos =
+    job.photos && job.photos.length > 0
+      ? job.photos
+      : Array.isArray((job as any).images)
+      ? (job as any).images
+      : [];
+
+  const voiceNoteData =
+    job.voiceNote ||
+    ((job as any).voiceNoteUrl
+      ? {
+          url: (job as any).voiceNoteUrl,
+          waveform: [30, 60, 45, 90, 75, 40, 65, 80, 50, 70, 95, 40, 60, 30],
+        }
+      : undefined);
 
   if (!isOpen) return null;
 
@@ -175,56 +191,27 @@ export function WorkerJobDetailsModal({
                 </div>
 
                 {/* Voice Note Attachment (if present) */}
-                {job.voiceNote && (
+                {voiceNoteData?.url && (
                   <div className="space-y-1.5">
-                    <h4 className="text-xs font-extrabold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
-                      <Volume2 className="size-3.5 text-[#0F8B8D]" />
-                      <span>Customer Voice Note</span>
-                    </h4>
-                    <div className="bg-teal-50/50 rounded-2xl p-3.5 border border-teal-100/90 flex items-center gap-3">
-                      <button
-                        type="button"
-                        onClick={() => setIsPlayingAudio(!isPlayingAudio)}
-                        className="size-10 rounded-full bg-[#0F8B8D] hover:bg-[#123B5D] text-white flex items-center justify-center transition-colors shrink-0 shadow-2xs cursor-pointer"
-                      >
-                        {isPlayingAudio ? (
-                          <Pause className="size-4" />
-                        ) : (
-                          <Play className="size-4 ml-0.5" />
-                        )}
-                      </button>
-
-                      <div className="flex-1 space-y-1">
-                        <div className="flex items-center justify-between text-[11px] font-bold text-slate-600">
-                          <span>{isPlayingAudio ? "Playing Voice Note..." : "Tap to Listen"}</span>
-                          <span>0:{job.voiceNote.durationSeconds < 10 ? `0${job.voiceNote.durationSeconds}` : job.voiceNote.durationSeconds}</span>
-                        </div>
-                        {/* Visualizer bars */}
-                        <div className="flex items-center gap-1 h-5">
-                          {(job.voiceNote.waveform || [30, 60, 45, 90, 75, 40, 65, 80, 50, 70, 95, 40, 60, 30]).map((h, i) => (
-                            <div
-                              key={i}
-                              className={`flex-1 rounded-full transition-all duration-300 ${
-                                isPlayingAudio ? "bg-[#0F8B8D] animate-pulse" : "bg-teal-200"
-                              }`}
-                              style={{ height: `${Math.max(20, h)}%` }}
-                            />
-                          ))}
-                        </div>
-                      </div>
-                    </div>
+                    <VoicePlayer
+                      voiceNote={{
+                        audioUrl: voiceNoteData.url,
+                        waveformPattern: voiceNoteData.waveform,
+                      }}
+                      variant="full"
+                    />
                   </div>
                 )}
 
                 {/* Attached Photos (if present) */}
-                {job.photos && job.photos.length > 0 && (
+                {jobPhotos && jobPhotos.length > 0 && (
                   <div className="space-y-1.5">
                     <h4 className="text-xs font-extrabold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
                       <ImageIcon className="size-3.5 text-[#0F8B8D]" />
-                      <span>Attached Photos ({job.photos.length})</span>
+                      <span>Attached Photos ({jobPhotos.length})</span>
                     </h4>
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
-                      {job.photos.map((photo, idx) => (
+                      {jobPhotos.map((photo: string, idx: number) => (
                         <div
                           key={idx}
                           onClick={() => setSelectedPhoto(photo)}
@@ -235,6 +222,7 @@ export function WorkerJobDetailsModal({
                             src={photo}
                             alt={`Attachment ${idx + 1}`}
                             className="size-full object-cover group-hover:scale-105 transition-transform duration-200"
+                            loading="lazy"
                           />
                           <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 flex items-center justify-center transition-colors">
                             <ExternalLink className="size-4 text-white opacity-0 group-hover:opacity-100 transition-opacity" />

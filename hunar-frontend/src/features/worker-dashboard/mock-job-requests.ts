@@ -26,11 +26,6 @@ export const MOCK_JOB_REQUESTS: JobRequest[] = [
       memberSince: "Nov 2024",
     },
     images: ["/landing/db-panel-wiring.png", "/landing/electrician-db-technician.png"],
-    voiceNote: {
-      durationFormatted: "0:38",
-      durationSeconds: 38,
-      waveformPattern: [35, 60, 45, 80, 95, 65, 40, 75, 90, 85, 50, 70, 40, 60, 30],
-    },
   },
   {
     id: "job-pesh-102",
@@ -57,11 +52,6 @@ export const MOCK_JOB_REQUESTS: JobRequest[] = [
       memberSince: "Jan 2025",
     },
     images: ["/landing/plumbing-leakage-alt.png", "/landing/water-tank-disinfection.png"],
-    voiceNote: {
-      durationFormatted: "0:45",
-      durationSeconds: 45,
-      waveformPattern: [25, 45, 70, 85, 60, 40, 65, 80, 100, 75, 55, 35, 65, 50, 30],
-    },
   },
   {
     id: "job-pesh-103",
@@ -88,11 +78,6 @@ export const MOCK_JOB_REQUESTS: JobRequest[] = [
       memberSince: "Sep 2024",
     },
     images: ["/landing/ac-deep-wash-alt.png", "/landing/solar-inverter.png"],
-    voiceNote: {
-      durationFormatted: "0:29",
-      durationSeconds: 29,
-      waveformPattern: [40, 70, 50, 90, 80, 60, 45, 85, 95, 60, 40, 55, 35, 25, 20],
-    },
   },
   {
     id: "job-pesh-104",
@@ -119,11 +104,6 @@ export const MOCK_JOB_REQUESTS: JobRequest[] = [
       memberSince: "Feb 2025",
     },
     images: ["/landing/solar-inverter.png", "/landing/db-panel-wiring.png"],
-    voiceNote: {
-      durationFormatted: "0:52",
-      durationSeconds: 52,
-      waveformPattern: [30, 50, 75, 90, 85, 65, 45, 80, 100, 90, 70, 50, 40, 60, 35],
-    },
   },
   {
     id: "job-pesh-105",
@@ -150,10 +130,5 @@ export const MOCK_JOB_REQUESTS: JobRequest[] = [
       memberSince: "Dec 2024",
     },
     images: ["/landing/kitchen-cabinetry-alt.png", "/landing/house-painting-alt.png"],
-    voiceNote: {
-      durationFormatted: "0:34",
-      durationSeconds: 34,
-      waveformPattern: [20, 40, 60, 85, 70, 55, 40, 65, 80, 60, 45, 35, 30, 25, 20],
-    },
   },
 ];
