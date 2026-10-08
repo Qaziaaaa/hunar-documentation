@@ -361,10 +361,37 @@ export class WorkerProfileService {
       return;
     }
     const unique = this.dedupe(skills);
-    const activeCount = await this.prisma.serviceCategory.count({
-      where: { id: { in: unique }, isActive: true },
+    const validSkills = new Set([
+      'Electrician',
+      'Plumber',
+      'AC Technician',
+      'Carpenter',
+      'Painter',
+      'Mechanic',
+      'Solar Technician',
+      'Mason',
+      'Welder',
+      'Appliance Repair',
+      'Plumbing',
+      'Electrical',
+      'AC & Refrigeration',
+      'Carpentry',
+      'Painting',
+      'Cleaning',
+      'Masonry',
+      'Pest Control',
+      'General Handyman',
+    ]);
+    const categories = await this.prisma.serviceCategory.findMany({
+      where: { isActive: true },
+      select: { id: true, name: true },
     });
-    if (activeCount !== unique.length) {
+    for (const cat of categories) {
+      validSkills.add(cat.id);
+      validSkills.add(cat.name);
+    }
+    const allValid = unique.every((s) => validSkills.has(s));
+    if (!allValid) {
       throw new BadRequestException(
         'SKILLS_INVALID: one or more selected skills are not valid or are disabled by admin',
       );
