@@ -212,6 +212,7 @@ export class JobsService {
     if (!user) {
       throw new NotFoundException('User not found');
     }
+    const skipWorkerRelevanceFilters = process.env.ALLOW_WORKER_JOB_TEST_MODE === 'true';
     const [profile, serviceAreaCount, cnicDocuments] = await Promise.all([
       this.prisma.workerProfile.findUnique({ where: { userId: worker.sub } }),
       this.prisma.serviceArea.count({ where: { userId: worker.sub } }),
@@ -220,37 +221,38 @@ export class JobsService {
         select: { type: true, url: true },
       }),
     ]);
-    if (
-      !user.isVerified ||
-      !profile ||
-      profile.verificationStatus !== WorkerVerificationStatus.APPROVED
-    ) {
-      throw new ForbiddenException('WORKER_NOT_VERIFIED: verify your profile before viewing jobs');
-    }
-    const cnicFront = cnicDocuments.find((d) => d.type === 'CNIC_FRONT');
-    const cnicBack = cnicDocuments.find((d) => d.type === 'CNIC_BACK');
-    const completion = getWorkerProfileCompletion({
-      name: user.name,
-      avatarUrl: user.avatarUrl,
-      skills: profile.skills,
-      experienceYears: profile.experienceYears,
-      bio: profile.bio,
-      serviceAreaCount,
-      cnicFrontUrl: cnicFront?.url ?? null,
-      cnicBackUrl: cnicBack?.url ?? null,
-    });
-    if (!completion.complete) {
-      throw new ForbiddenException(
-        `WORKER_PROFILE_INCOMPLETE: complete your profile (missing ${completion.missingSteps.join(
-          ', ',
-        )}) before viewing jobs`,
-      );
+    if (!skipWorkerRelevanceFilters) {
+      if (
+        !user.isVerified ||
+        !profile ||
+        profile.verificationStatus !== WorkerVerificationStatus.APPROVED
+      ) {
+        throw new ForbiddenException('WORKER_NOT_VERIFIED: verify your profile before viewing jobs');
+      }
+      const cnicFront = cnicDocuments.find((d) => d.type === 'CNIC_FRONT');
+      const cnicBack = cnicDocuments.find((d) => d.type === 'CNIC_BACK');
+      const completion = getWorkerProfileCompletion({
+        name: user.name,
+        avatarUrl: user.avatarUrl,
+        skills: profile.skills,
+        experienceYears: profile.experienceYears,
+        bio: profile.bio,
+        serviceAreaCount,
+        cnicFrontUrl: cnicFront?.url ?? null,
+        cnicBackUrl: cnicBack?.url ?? null,
+      });
+      if (!completion.complete) {
+        throw new ForbiddenException(
+          `WORKER_PROFILE_INCOMPLETE: complete your profile (missing ${completion.missingSteps.join(
+            ', ',
+          )}) before viewing jobs`,
+        );
+      }
     }
     const workerLat = query.lat ?? 34.0045;
     const workerLng = query.lng ?? 71.477;
     const radiusMeters = (query.radiusKm ?? 10) * 1000;
-    const workerRadiusKm = Number(profile.serviceRadiusKm ?? 10);
-    const skipWorkerRelevanceFilters = process.env.ALLOW_WORKER_JOB_TEST_MODE === 'true';
+    const workerRadiusKm = Number(profile?.serviceRadiusKm ?? 10);
     const { page, limit, skip } = normalizePage(query);
 
     const halfRadiusDeg = radiusMeters / 111000.0;
@@ -263,7 +265,7 @@ export class JobsService {
       AND sr."longitude" BETWEEN ${workerLng - lngOffset} AND ${workerLng + lngOffset}
     `);
     if (!skipWorkerRelevanceFilters) {
-      if (profile.skills.length > 0) {
+      if (profile && profile.skills.length > 0) {
         conditions.push(Prisma.sql`sr."categoryId" = ANY (${profile.skills})`);
       } else {
         conditions.push(Prisma.sql`FALSE`);

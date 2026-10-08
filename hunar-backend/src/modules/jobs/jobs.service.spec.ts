@@ -73,6 +73,18 @@ describe('JobsService — getActiveJobs (Task 23)', () => {
 });
 
 describe('JobsService — getAvailableJobs (worker relevance)', () => {
+  const envSnapshot = process.env.ALLOW_WORKER_JOB_TEST_MODE;
+  beforeEach(() => {
+    delete process.env.ALLOW_WORKER_JOB_TEST_MODE;
+  });
+  afterAll(() => {
+    if (envSnapshot !== undefined) {
+      process.env.ALLOW_WORKER_JOB_TEST_MODE = envSnapshot;
+    } else {
+      delete process.env.ALLOW_WORKER_JOB_TEST_MODE;
+    }
+  });
+
   it('filters nearby jobs by the worker skill set and service-area radius', async () => {
     const prisma = {
       user: {
