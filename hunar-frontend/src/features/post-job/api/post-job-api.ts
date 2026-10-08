@@ -104,6 +104,91 @@ export async function uploadJobPhoto(file: File): Promise<{ key: string; url: st
 }
 
 /**
+ * Resolves a blob audio URL into a persistent backend URL (via /uploads/voice-note) or Base64 data URI.
+ */
+async function resolveAudioForSubmission(url?: string): Promise<string | undefined> {
+  if (!url || !url.startsWith("blob:")) return url;
+  try {
+    const res = await fetch(url);
+    const blob = await res.blob();
+
+    if (!isMockMode()) {
+      try {
+        const formData = new FormData();
+        const file = new File([blob], `job-voice-${Date.now()}.webm`, {
+          type: blob.type || "audio/webm",
+        });
+        formData.append("file", file);
+        const uploadRes = await http.upload<{ key: string; url: string }>("/uploads/voice-note", formData);
+        if (uploadRes?.url) {
+          return uploadRes.url;
+        }
+      } catch (uploadErr) {
+        console.warn("Direct upload to /uploads/voice-note failed, using base64 fallback:", uploadErr);
+      }
+    }
+
+    return await new Promise<string | undefined>((resolve) => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const result = reader.result as string;
+        if (result && result.startsWith("data:")) {
+          resolve(result);
+        } else {
+          resolve(undefined);
+        }
+      };
+      reader.onerror = () => resolve(undefined);
+      reader.readAsDataURL(blob);
+    });
+  } catch (err) {
+    console.warn("Could not resolve blob audio URL:", err);
+    return undefined;
+  }
+}
+
+/**
+ * Resolves blob image URLs into upload URLs or Base64 data URIs.
+ */
+async function resolveImagesForSubmission(urls: string[]): Promise<string[]> {
+  const resolved: string[] = [];
+  for (const url of urls) {
+    if (url.startsWith("blob:")) {
+      try {
+        const res = await fetch(url);
+        const blob = await res.blob();
+        if (!isMockMode()) {
+          try {
+            const formData = new FormData();
+            const file = new File([blob], `job-photo-${Date.now()}.jpg`, {
+              type: blob.type || "image/jpeg",
+            });
+            formData.append("file", file);
+            const uploadRes = await http.upload<{ key: string; url: string }>("/uploads/job-photo", formData);
+            if (uploadRes?.url) {
+              resolved.push(uploadRes.url);
+              continue;
+            }
+          } catch {}
+        }
+        const dataUrl = await new Promise<string>((resolve) => {
+          const reader = new FileReader();
+          reader.onloadend = () => resolve(reader.result as string);
+          reader.onerror = () => resolve(url);
+          reader.readAsDataURL(blob);
+        });
+        resolved.push(dataUrl);
+      } catch {
+        resolved.push(url);
+      }
+    } else {
+      resolved.push(url);
+    }
+  }
+  return resolved;
+}
+
+/**
  * Post a new job request to POST /jobs
  */
 export async function createJob(data: PostJobData): Promise<CreatedJobResponse> {
@@ -112,12 +197,15 @@ export async function createJob(data: PostJobData): Promise<CreatedJobResponse> 
       ? data.category
       : CATEGORY_ID_MAP[data.category?.toLowerCase()] || CATEGORY_ID_MAP.plumbing || "seed-category-1";
 
+  const resolvedVoiceNoteUrl = await resolveAudioForSubmission(data.voiceNoteUrl);
+  const resolvedImages = await resolveImagesForSubmission(data.photos || []);
+
   const payload: CreateJobPayload = {
     categoryId,
     title: data.title || "Home Repair Request",
     description: data.description,
-    images: data.photos,
-    voiceNoteUrl: data.voiceNoteUrl,
+    images: resolvedImages,
+    voiceNoteUrl: resolvedVoiceNoteUrl,
     latitude: typeof data.latitude === "number" && !isNaN(data.latitude) ? data.latitude : 34.0151,
     longitude: typeof data.longitude === "number" && !isNaN(data.longitude) ? data.longitude : 71.5249,
     address:

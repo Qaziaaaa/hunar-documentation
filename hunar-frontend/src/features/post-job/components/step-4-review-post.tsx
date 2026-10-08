@@ -11,8 +11,6 @@ import {
   Edit2,
   Layers,
   MapPin,
-  Pause,
-  Play,
   ShieldCheck,
   Volume2,
 } from "lucide-react";
@@ -20,6 +18,7 @@ import { useLocale } from "next-intl";
 import { formatJobDate } from "@/lib/format";
 import { CATEGORY_OPTIONS } from "../data/categories";
 import type { PostJobData, PostJobStep } from "../types";
+import { VoiceNoteBubblePlayer } from "./voice-note-recorder";
 
 interface Step4ReviewPostProps {
   data: PostJobData;
@@ -40,27 +39,10 @@ export function Step4ReviewPost({
 }: Step4ReviewPostProps) {
   const locale = useLocale();
   const isUrdu = locale === "ur";
-  const [isPlayingAudio, setIsPlayingAudio] = useState(false);
-
   const selectedCategory = CATEGORY_OPTIONS.find(
     (c) => c.id === data.category
   );
   const Icon = selectedCategory?.icon || Layers;
-
-  const handleToggleAudio = () => {
-    if (!data.voiceNoteUrl) return;
-    const audio = document.getElementById("review-audio-player") as HTMLAudioElement | null;
-    if (!audio) return;
-
-    if (isPlayingAudio) {
-      audio.pause();
-      setIsPlayingAudio(false);
-    } else {
-      audio.play().catch(() => {});
-      setIsPlayingAudio(true);
-      audio.onended = () => setIsPlayingAudio(false);
-    }
-  };
 
   return (
     <div className="w-full max-w-3xl lg:max-w-5xl xl:max-w-6xl mx-auto space-y-4 lg:space-y-5 animate-in fade-in-50 duration-300 pb-24">
@@ -165,40 +147,13 @@ export function Step4ReviewPost({
 
             {/* Voice Note Preview if recorded */}
             {data.voiceNoteUrl ? (
-              <div className="p-2.5 bg-slate-50 border border-slate-200/70 rounded-xl flex items-center gap-2 mt-2">
-                <audio
-                  id="review-audio-player"
-                  src={data.voiceNoteUrl}
-                  className="hidden"
+              <div className="mt-2">
+                <VoiceNoteBubblePlayer
+                  audioUrl={data.voiceNoteUrl}
+                  durationSeconds={data.voiceNoteDuration || 15}
+                  onReRecord={() => onGoToStep(2)}
+                  readOnly={false}
                 />
-                <button
-                  type="button"
-                  onClick={handleToggleAudio}
-                  className="size-8 rounded-full bg-[#0F8B8D] text-white flex items-center justify-center shrink-0 shadow-xs hover:bg-[#0D7A7C] cursor-pointer"
-                >
-                  {isPlayingAudio ? (
-                    <Pause className="size-4" />
-                  ) : (
-                    <Play className="size-4 ml-0.5 rtl:ml-0 rtl:mr-0.5" />
-                  )}
-                </button>
-                <div className="flex-1">
-                  <div className="flex items-center justify-between text-[11px] font-bold text-[#123B5D] mb-1">
-                    <span>{isUrdu ? "وائس نوٹ کی تفصیل" : "Voice Description"}</span>
-                    <span className="text-slate-600 font-semibold">
-                      {data.voiceNoteDuration
-                        ? `${Math.floor(data.voiceNoteDuration / 60)}:${(data.voiceNoteDuration % 60).toString().padStart(2, "0")}`
-                        : "0:15"}
-                    </span>
-                  </div>
-                  <div className="h-1.5 bg-slate-200 rounded-full overflow-hidden">
-                    <div
-                      className={`h-full bg-[#0F8B8D] rounded-full transition-all ${
-                        isPlayingAudio ? "w-3/4" : "w-1/3"
-                      }`}
-                    />
-                  </div>
-                </div>
               </div>
             ) : (
               <span className="text-[11px] text-slate-500 font-medium mt-2 block">
