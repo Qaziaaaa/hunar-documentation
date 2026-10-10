@@ -215,11 +215,28 @@ export class VisitsService {
 
   async startVisit(visitId: string, user: JwtPayload) {
     const visit = await this.assertVisitAccess(visitId, user);
-    if (visit.status !== 'SCHEDULED') {
-      throw new BadRequestException('VISIT_INVALID_STATE: visit must be scheduled before starting');
-    }
     if (user.role !== Role.WORKER) {
       throw new ForbiddenException('Only the assigned worker can start the visit');
+    }
+
+    // Idempotent start: if already in progress, safely return current visit
+    if (visit.status === 'IN_PROGRESS') {
+      if (visit.job.status === 'WORKER_ASSIGNED' || visit.job.status === 'VISIT_SCHEDULED') {
+        await this.prisma.serviceRequest.update({
+          where: { id: visit.jobId },
+          data: { status: 'VISIT_IN_PROGRESS' },
+        });
+      }
+      return visit;
+    }
+    if (visit.status === 'COMPLETED') {
+      throw new BadRequestException('VISIT_INVALID_STATE: visit has already been completed');
+    }
+    if (visit.status === 'CANCELLED' || visit.status === 'NO_SHOW') {
+      throw new BadRequestException(`VISIT_INVALID_STATE: visit is ${visit.status.toLowerCase()}`);
+    }
+    if (visit.status !== 'SCHEDULED') {
+      throw new BadRequestException('VISIT_INVALID_STATE: visit must be scheduled before starting');
     }
 
     const updated = await this.prisma.$transaction(async (tx) => {
@@ -235,7 +252,7 @@ export class VisitsService {
     });
 
     this.eventBus.emit('visit.started', {
-      visitId,
+      visitId: visit.id,
       jobId: visit.jobId,
       workerId: visit.workerId,
       customerId: visit.job.customerId,

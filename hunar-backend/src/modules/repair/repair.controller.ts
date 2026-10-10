@@ -43,6 +43,16 @@ export class RepairController {
     return this.repairService.createEstimate(visitId, user, dto);
   }
 
+  @Post('jobs/:jobId/estimate')
+  @Roles(Role.WORKER)
+  estimateByJob(
+    @CurrentUser() user: JwtPayload,
+    @Param('jobId', ParseOrderCodePipe) jobId: string,
+    @Body() dto: RepairEstimateDto,
+  ) {
+    return this.repairService.createEstimate(jobId, user, dto);
+  }
+
   @Put('repairs/:id/counter')
   counter(
     @CurrentUser() user: JwtPayload,
