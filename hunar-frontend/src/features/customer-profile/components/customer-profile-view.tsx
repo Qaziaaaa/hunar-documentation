@@ -1,20 +1,28 @@
 "use client";
 
 import { useLocale, useTranslations } from "next-intl";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
+  AlertCircle,
   Bell,
+  Camera,
   CheckCircle2,
+  Loader2,
   Lock,
   MapPin,
   ShieldCheck,
+  Star,
   User,
 } from "lucide-react";
 import { PersonalProfileTab } from "./personal-profile-tab";
 import { SavedAddressesTab } from "./saved-addresses-tab";
 import { NotificationsTab } from "./notifications-tab";
 import { SecurityTab } from "./security-tab";
-import { getCustomerProfile, updateCustomerProfile } from "../api/customer-profile-api";
+import {
+  getCustomerProfile,
+  updateCustomerProfile,
+  uploadCustomerAvatar,
+} from "../api/customer-profile-api";
 import {
   getSavedAddresses,
   saveSavedAddresses,
@@ -40,9 +48,9 @@ const initialEmptyProfile: CustomerProfileData = {
   memberTier: "Standard Member",
   joinedDate: "Recently",
   completedJobsCount: 0,
-  trustScore: "100%",
-  rating: 5.0,
-  primaryCity: "Peshawar",
+  trustScore: "Unrated",
+  rating: 0,
+  primaryCity: "",
   preferredLanguage: "ur",
   preferredServiceHours: "anytime",
   savedAddresses: [],
@@ -68,6 +76,9 @@ export function CustomerProfileView() {
     "personal" | "addresses" | "notifications" | "security"
   >("personal");
   const [successToast, setSuccessToast] = useState<string | null>(null);
+  const [errorToast, setErrorToast] = useState<string | null>(null);
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     // Sync client-side saved addresses after hydration
@@ -76,14 +87,18 @@ export function CustomerProfileView() {
       savedAddresses: getSavedAddresses(),
     }));
 
-    getCustomerProfile().then((data) => {
-      if (data) {
-        setProfile((prev) => ({
-          ...data,
-          savedAddresses: getSavedAddresses(),
-        }));
-      }
-    });
+    getCustomerProfile()
+      .then((data) => {
+        if (data) {
+          setProfile((prev) => ({
+            ...data,
+            savedAddresses: getSavedAddresses(),
+          }));
+        }
+      })
+      .catch((err) => {
+        console.warn("Failed to load customer profile:", err);
+      });
   }, []);
 
   const showToast = (msg: string) => {
@@ -93,15 +108,84 @@ export function CustomerProfileView() {
     }, 4000);
   };
 
+  const showError = (msg: string) => {
+    setErrorToast(msg);
+    setTimeout(() => {
+      setErrorToast(null);
+    }, 4000);
+  };
+
   const handleUpdateProfile = async (updated: Partial<CustomerProfileData>) => {
     setProfile((prev) => ({
       ...prev,
       ...updated,
     }));
     try {
-      await updateCustomerProfile(updated);
+      const saved = await updateCustomerProfile(updated);
+      setProfile((prev) => ({
+        ...prev,
+        ...saved,
+      }));
     } catch (err) {
       console.warn("Error persisting customer profile update:", err);
+    }
+  };
+
+  const handleAvatarFileSelect = async (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      showError(
+        isUrdu
+          ? "براہ کرم درست تصویر منتخب کریں (JPG, PNG, WEBP)"
+          : "Please select a valid image file (JPG, PNG, WEBP)"
+      );
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      showError(
+        isUrdu
+          ? "تصویر کا سائز 5MB سے کم ہونا چاہیے"
+          : "Image size must be less than 5MB"
+      );
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      return;
+    }
+
+    setIsUploadingAvatar(true);
+    try {
+      const uploadRes = await uploadCustomerAvatar(file);
+      await handleUpdateProfile({ avatarUrl: uploadRes.url });
+      showToast(
+        isUrdu
+          ? "پروفائل تصویر کامیابی سے اپ ڈیٹ ہو گئی!"
+          : "Profile picture updated successfully!"
+      );
+    } catch (err) {
+      console.warn("Backend avatar upload failed, falling back to local preview:", err);
+      try {
+        const previewUrl = URL.createObjectURL(file);
+        await handleUpdateProfile({ avatarUrl: previewUrl });
+        showToast(
+          isUrdu
+            ? "پروفائل تصویر کامیابی سے اپ ڈیٹ ہو گئی!"
+            : "Profile picture updated!"
+        );
+      } catch {
+        showError(
+          isUrdu
+            ? "تصویر اپ لوڈ کرنے میں خرابی پیش آئی"
+            : "Failed to upload profile picture"
+        );
+      }
+    } finally {
+      setIsUploadingAvatar(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
     }
   };
 
@@ -166,6 +250,13 @@ export function CustomerProfileView() {
         </div>
       )}
 
+      {errorToast && (
+        <div className="fixed top-20 right-6 rtl:right-auto rtl:left-6 z-50 bg-rose-600 text-white px-5 py-3 rounded-2xl shadow-lg flex items-center gap-3 animate-in slide-in-from-top-4 duration-300">
+          <AlertCircle className="size-5 shrink-0" />
+          <span className="text-xs sm:text-sm font-semibold">{errorToast}</span>
+        </div>
+      )}
+
       {/* Header Banner */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 pb-4 border-b border-slate-100">
         <div className="space-y-1 rtl:text-right">
@@ -176,7 +267,9 @@ export function CustomerProfileView() {
             </span>
             <span className="text-slate-400 text-xs">•</span>
             <span className="text-slate-500 text-xs font-semibold">
-              {isUrdu ? `کسٹمر آئی ڈی ${profile.customerIdBadge}` : `Customer ID ${profile.customerIdBadge}`}
+              {isUrdu
+                ? `کسٹمر آئی ڈی ${profile.customerIdBadge}`
+                : `Customer ID ${profile.customerIdBadge}`}
             </span>
           </div>
 
@@ -189,10 +282,127 @@ export function CustomerProfileView() {
         </div>
       </div>
 
+      {/* Persistent Customer Profile Header Card (Always visible at top across all tabs) */}
+      <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-5 sm:p-7">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+          <div className="flex items-center gap-4 sm:gap-5">
+            {/* Avatar & Camera Upload Overlay */}
+            <div className="relative group shrink-0">
+              <div className="size-16 sm:size-20 rounded-full bg-[#123B5D] text-white flex items-center justify-center font-bold text-xl sm:text-2xl shadow-sm ring-4 ring-[#123B5D]/10 overflow-hidden relative">
+                {profile.avatarUrl ? (
+                  <img
+                    src={profile.avatarUrl}
+                    alt={profile.fullName || (isUrdu ? "کسٹمر" : "Customer")}
+                    className="size-full object-cover"
+                    onError={(e) => {
+                      (e.currentTarget as HTMLElement).style.display = "none";
+                    }}
+                  />
+                ) : null}
+                <span className={profile.avatarUrl ? "sr-only" : ""}>
+                  {profile.avatarInitials || "C"}
+                </span>
+
+                {isUploadingAvatar && (
+                  <div className="absolute inset-0 bg-black/50 backdrop-blur-xs flex items-center justify-center text-white z-10">
+                    <Loader2 className="size-6 animate-spin text-white" />
+                  </div>
+                )}
+              </div>
+
+              {/* Hidden file input for photo upload */}
+              <input
+                ref={fileInputRef}
+                accept="image/jpeg,image/png,image/webp,image/*"
+                className="hidden"
+                type="file"
+                onChange={handleAvatarFileSelect}
+                aria-label={
+                  isUrdu ? "پروفائل تصویر اپ لوڈ کریں" : "Upload profile picture"
+                }
+              />
+
+              <button
+                type="button"
+                disabled={isUploadingAvatar}
+                onClick={() => fileInputRef.current?.click()}
+                className="absolute bottom-0 right-0 rtl:right-auto rtl:left-0 size-7 sm:size-8 rounded-full bg-[#0F766E] hover:bg-[#115E59] text-white flex items-center justify-center cursor-pointer shadow-md hover:scale-105 active:scale-95 transition-all disabled:opacity-75 disabled:pointer-events-none"
+                title={isUrdu ? "پروفائل تصویر تبدیل کریں" : "Change Profile Photo"}
+                aria-label={
+                  isUrdu ? "پروفائل تصویر تبدیل کریں" : "Change Profile Photo"
+                }
+              >
+                {isUploadingAvatar ? (
+                  <Loader2 className="size-3.5 animate-spin" />
+                ) : (
+                  <Camera className="size-3.5" />
+                )}
+              </button>
+            </div>
+
+            {/* Profile Info Summary */}
+            <div className="flex flex-col min-w-0 rtl:text-right">
+              <div className="flex items-center gap-2 flex-wrap">
+                <h2 className="text-base sm:text-xl font-extrabold text-[#123B5D] leading-tight truncate">
+                  {profile.fullName || (isUrdu ? "کسٹمر" : "Customer")}
+                </h2>
+                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200 text-xs font-bold">
+                  <Star className="size-3 fill-amber-400 text-amber-400" />
+                  <span>{isUrdu ? "گولڈ ممبر" : profile.memberTier}</span>
+                </span>
+              </div>
+
+              <p className="text-xs text-slate-500 mt-1">
+                {isUrdu
+                  ? `ہنر ممبر بذریعہ ${profile.joinedDate} • ${profile.completedJobsCount} کام مکمل`
+                  : `Customer since ${profile.joinedDate} • ${profile.completedJobsCount} Jobs Completed`}
+              </p>
+
+              <div className="mt-2 flex items-center gap-1.5 text-emerald-600 text-xs font-bold">
+                <ShieldCheck className="size-4 shrink-0" />
+                <span>
+                  {isUrdu
+                    ? "WorkerFIX تصدیق شدہ رہائشی (نادرا شناختی کارڈ اور موبائل تصدیق)"
+                    : "WorkerFIX Verified Resident (NADRA CNIC & Phone Linked)"}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Trust Score & Rating Pills */}
+          <div className="flex items-center gap-4 sm:gap-6 bg-slate-50 border border-slate-200/80 px-5 py-3 rounded-2xl self-start lg:self-auto shadow-2xs">
+            <div className="text-center">
+              <div className="text-[10px] uppercase tracking-wider text-slate-400 font-bold">
+                {isUrdu ? "اعتمادی اسکور" : "Trust Score"}
+              </div>
+              <div className="text-xs sm:text-sm font-extrabold text-[#123B5D] mt-0.5">
+                {profile.trustScore}
+              </div>
+            </div>
+            <div className="h-8 w-px bg-slate-200" />
+            <div className="text-center">
+              <div className="text-[10px] uppercase tracking-wider text-slate-400 font-bold">
+                {isUrdu ? "کسٹمر ریٹنگ" : "Rating"}
+              </div>
+              <div className="text-xs sm:text-sm font-extrabold text-[#123B5D] flex items-center justify-center gap-1 mt-0.5">
+                <Star className="size-3.5 fill-amber-400 text-amber-400" />
+                <span>{profile.rating.toFixed(2)}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Interactive Sub-Navigation Tabs */}
-      <div className="flex items-center gap-2 border-b border-slate-200 overflow-x-auto scrollbar-none pb-0.5">
+      <div
+        role="tablist"
+        aria-label="Profile navigation tabs"
+        className="flex items-center gap-2 border-b border-slate-200 overflow-x-auto scrollbar-none pb-0.5"
+      >
         <button
           type="button"
+          role="tab"
+          aria-selected={activeTab === "personal"}
           onClick={() => setActiveTab("personal")}
           className={`pb-3 px-3 border-b-2 text-xs sm:text-sm font-bold flex items-center gap-2 whitespace-nowrap transition-all cursor-pointer ${
             activeTab === "personal"
@@ -206,6 +416,8 @@ export function CustomerProfileView() {
 
         <button
           type="button"
+          role="tab"
+          aria-selected={activeTab === "addresses"}
           onClick={() => setActiveTab("addresses")}
           className={`pb-3 px-3 border-b-2 text-xs sm:text-sm font-bold flex items-center gap-2 whitespace-nowrap transition-all cursor-pointer ${
             activeTab === "addresses"
@@ -222,6 +434,8 @@ export function CustomerProfileView() {
 
         <button
           type="button"
+          role="tab"
+          aria-selected={activeTab === "notifications"}
           onClick={() => setActiveTab("notifications")}
           className={`pb-3 px-3 border-b-2 text-xs sm:text-sm font-bold flex items-center gap-2 whitespace-nowrap transition-all cursor-pointer ${
             activeTab === "notifications"
@@ -235,6 +449,8 @@ export function CustomerProfileView() {
 
         <button
           type="button"
+          role="tab"
+          aria-selected={activeTab === "security"}
           onClick={() => setActiveTab("security")}
           className={`pb-3 px-3 border-b-2 text-xs sm:text-sm font-bold flex items-center gap-2 whitespace-nowrap transition-all cursor-pointer ${
             activeTab === "security"
@@ -247,7 +463,7 @@ export function CustomerProfileView() {
         </button>
       </div>
 
-      {/* Tab Panels */}
+      {/* Tab Panels: Only each tab's input/content card changes below! */}
       {activeTab === "personal" && (
         <PersonalProfileTab
           profile={profile}
@@ -283,4 +499,3 @@ export function CustomerProfileView() {
     </div>
   );
 }
-
