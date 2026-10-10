@@ -31,6 +31,7 @@ export interface StoredUser {
   id: string;
   phone: string;
   name?: string;
+  avatarUrl?: string;
   role: "WORKER" | "CUSTOMER" | "ADMIN";
   isVerified?: boolean;
 }
@@ -225,7 +226,12 @@ export async function apiClient<T>(
   // The backend wraps every successful response in { success: true, data, meta? }.
   if (raw && typeof raw === "object" && "success" in raw) {
     if ("meta" in raw && (raw as { meta?: unknown }).meta) {
-      return { data: (raw as { data?: T }).data, meta: (raw as { meta?: unknown }).meta } as unknown as T;
+      const envelope = raw as { data?: T; meta?: unknown };
+      return {
+        data: envelope.data,
+        items: envelope.data,
+        meta: envelope.meta,
+      } as unknown as T;
     }
     return (raw as { data?: T }).data as T;
   }
