@@ -9,8 +9,8 @@ import {
   Shield,
   UserCheck,
 } from "lucide-react";
+import { http } from "@/lib/api-client";
 import {
-  MOCK_ACTIVE_TICKET,
   MOCK_FAQS,
   MOCK_HELPLINE_INFO,
 } from "../data/mock-help-data";
@@ -37,6 +37,69 @@ export function CustomerHelpView() {
     queryFn: getCustomerJobs,
     staleTime: 30_000,
   });
+
+  const { data: myDisputes = [] } = useQuery<any[]>({
+    queryKey: ["customer", "disputes"],
+    queryFn: async () => {
+      try {
+        return await http.get<any[]>("/disputes/my");
+      } catch {
+        return [];
+      }
+    },
+    staleTime: 30_000,
+  });
+
+  const displayedTicket: SupportTicket | null =
+    activeTicket ||
+    (myDisputes.length > 0 &&
+    myDisputes[0].status !== "RESOLVED" &&
+    myDisputes[0].status !== "DISMISSED"
+      ? {
+          id: myDisputes[0].id,
+          caseNumber: `CASE-${myDisputes[0].id.slice(0, 8).toUpperCase()}`,
+          jobReference: `#${myDisputes[0].job?.id || myDisputes[0].jobId}`,
+          serviceTitle:
+            myDisputes[0].job?.title ||
+            (isUrdu ? "مرمت کی درخواست" : "Service Request"),
+          workerName: isUrdu ? "سپورٹ نگران" : "Case Supervisor",
+          location: isUrdu ? "کسٹمر پراپرٹی" : "Customer Property",
+          issueType: (myDisputes[0].type?.toLowerCase() as any) || "other",
+          issueTitle:
+            myDisputes[0].type || (isUrdu ? "کسٹمر کیس" : "Customer Case"),
+          priority: "normal",
+          description: myDisputes[0].description,
+          resolutionPreference: "rework",
+          status:
+            myDisputes[0].status === "OPEN" ? "submitted" : "in_investigation",
+          statusLabel: myDisputes[0].status,
+          createdAt: formatJobDate(myDisputes[0].createdAt) || "Recently",
+          lastUpdate:
+            formatJobDate(myDisputes[0].updatedAt || myDisputes[0].createdAt) ||
+            "Recently",
+          estimatedResolutionTime: isUrdu ? "20 منٹ کے اندر" : "Within 20 mins",
+          timeline: [
+            {
+              title: "Claim Submitted to Database",
+              timestamp:
+                formatJobDate(myDisputes[0].createdAt) || "Just now",
+              status: "completed",
+              iconName: "check",
+            },
+            {
+              title: "Operations Desk Review",
+              timestamp:
+                myDisputes[0].status === "OPEN" ? "Under Review" : "In Progress",
+              status: myDisputes[0].status === "OPEN" ? "current" : "completed",
+              iconName: "pending",
+            },
+          ],
+          attachments: Array.isArray(myDisputes[0].evidence)
+            ? myDisputes[0].evidence
+            : [],
+          notesCount: 1,
+        }
+      : null);
 
   const jobOptions: CustomerJobReferenceOption[] = customerJobs
     .filter((job) => job.status !== "cancelled")
@@ -112,7 +175,7 @@ export function CustomerHelpView() {
         </div>
 
         {/* Active Support Case / Dispute Tracker (if any active) */}
-        {activeTicket && (
+        {displayedTicket && (
           <div className="flex flex-col gap-2">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
@@ -125,7 +188,7 @@ export function CustomerHelpView() {
                 {isUrdu ? "آپریشنز مصالحتی ڈیسک" : "Operations Mediation Desk"}
               </span>
             </div>
-            <ActiveCaseCard ticket={activeTicket} />
+            <ActiveCaseCard ticket={displayedTicket} />
           </div>
         )}
 
@@ -182,12 +245,12 @@ export function CustomerHelpView() {
                   </span>
                   <div>
                     <span className="font-bold text-[#123B5D] block">
-                      {isUrdu ? "300 روپے وزٹ فیس + کوٹیشن" : "Rs. 300 Visit Fee + Quote"}
+                      {isUrdu ? "طے شدہ وزٹ فیس + کوٹیشن" : "Agreed Visit Fee + Quote"}
                     </span>
                     <span className="text-[11px] text-slate-500">
                       {isUrdu
-                        ? "300 روپے معائنہ فیس طے شدہ ہے، پھر کام شروع ہونے سے قبل مکمل کوٹیشن منظور کریں۔"
-                        : "Pay Rs. 300 inspection baseline, then approve fixed quote before repair begins."}
+                        ? "طے شدہ معائنہ فیس ادا کریں، پھر کام شروع ہونے سے قبل مکمل کوٹیشن منظور کریں۔"
+                        : "Pay the agreed inspection fee, then approve the fixed quote before repair begins."}
                     </span>
                   </div>
                 </div>
