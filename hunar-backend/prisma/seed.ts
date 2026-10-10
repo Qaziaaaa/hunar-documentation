@@ -42,16 +42,17 @@ const SAMPLE_JOBS = [
   },
 ];
 
-async function upsertCategory(name: string, nameUrdu: string, sortOrder: number): Promise<string> {
+async function upsertCategory(name: string, nameUrdu: string, sortOrder: number, defaultVisitCharge: number = 800): Promise<string> {
   const cat = await prisma.serviceCategory.upsert({
     where: { id: `seed-category-${sortOrder}` },
-    update: { name, nameUrdu, isActive: true },
+    update: { name, nameUrdu, isActive: true, defaultVisitCharge },
     create: {
       id: `seed-category-${sortOrder}`,
       name,
       nameUrdu,
       isActive: true,
       sortOrder,
+      defaultVisitCharge,
     },
   });
   return cat.id;
@@ -67,19 +68,20 @@ async function main(): Promise<void> {
 
   console.log('Seeding service categories...');
   const categories: Record<string, string> = {};
-  categories.Plumbing = await upsertCategory('Plumbing', 'پلمبرنگ', 1);
-  categories.Electrical = await upsertCategory('Electrical', 'الیکٹریکل', 2);
+  categories.Plumbing = await upsertCategory('Plumbing', 'پلمبرنگ', 1, 500);
+  categories.Electrical = await upsertCategory('Electrical', 'الیکٹریکل', 2, 500);
   categories['AC & Refrigeration'] = await upsertCategory(
     'AC & Refrigeration',
     'ایئر کنڈیشن اور ریفریجریشن',
     3,
+    500,
   );
-  categories.Carpentry = await upsertCategory('Carpentry', 'لکڑ کا کام', 4);
-  categories.Painting = await upsertCategory('Painting', 'پینٹنگ', 5);
-  categories.Cleaning = await upsertCategory('Cleaning', 'صفائی', 6);
-  categories.Masonry = await upsertCategory('Masonry', 'دھاتی', 7);
-  categories['Pest Control'] = await upsertCategory('Pest Control', 'کیڑے مار دوا', 8);
-  categories['General Handyman'] = await upsertCategory('General Handyman', 'عمومی مہارت', 9);
+  categories.Carpentry = await upsertCategory('Carpentry', 'لکڑ کا کام', 4, 500);
+  categories.Painting = await upsertCategory('Painting', 'پینٹنگ', 5, 500);
+  categories.Cleaning = await upsertCategory('Cleaning', 'صفائی', 6, 500);
+  categories.Masonry = await upsertCategory('Masonry', 'دھاتی', 7, 500);
+  categories['Pest Control'] = await upsertCategory('Pest Control', 'کیڑے مار دوا', 8, 500);
+  categories['General Handyman'] = await upsertCategory('General Handyman', 'عمومی مہارت', 9, 500);
 
   console.log('Seeding test users...');
   const hash = (pw: string): string => bcrypt.hashSync(pw, 10);
