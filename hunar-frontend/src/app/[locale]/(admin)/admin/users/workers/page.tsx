@@ -127,7 +127,7 @@ export default function WorkersPage() {
                       <ShieldCheck className="size-3" /> {topWorker?.verificationStatus || "VERIFIED"}
                     </span>
                     <span>•</span>
-                    <span>{topWorker ? `Rs. ${topWorker.totalEarnings.toLocaleString()} Earned` : "Rs. 23,200 Earned"}</span>
+                    <span>{topWorker ? `Rs. ${Number(topWorker.totalEarnings ?? 0).toLocaleString()} Earned` : "Rs. 0 Earned"}</span>
                   </div>
                 </div>
               </div>
