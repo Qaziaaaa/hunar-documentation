@@ -11,12 +11,41 @@ import { createJob } from "../api/post-job-api";
 import { ApiError } from "@/lib/api-client";
 import { toLocalDateString } from "@/lib/format";
 import { JobPostedSuccessModal } from "./job-posted-success-modal";
-import { Step1ServiceSelect } from "./step-1-service-select";
 import { Step2JobDetails } from "./step-2-job-details";
 import { Step3LocationSchedule } from "./step-3-location-schedule";
 import { Step4ReviewPost } from "./step-4-review-post";
 import { WizardProgressStepper } from "./wizard-progress-stepper";
 import { WorkerFixLogo } from "@/components/shared/workerfix-logo";
+
+const DRAFT_STORAGE_KEY = "workerfix_customer_post_job_draft";
+
+function getStoredDraft(): Partial<PostJobData> | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = sessionStorage.getItem(DRAFT_STORAGE_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
+function persistDraft(data: PostJobData) {
+  if (typeof window === "undefined") return;
+  try {
+    sessionStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(data));
+  } catch {
+    // ignore
+  }
+}
+
+function clearDraft() {
+  if (typeof window === "undefined") return;
+  try {
+    sessionStorage.removeItem(DRAFT_STORAGE_KEY);
+  } catch {
+    // ignore
+  }
+}
 
 const INITIAL_FORM_DATA: PostJobData = {
   category: "",
@@ -26,16 +55,16 @@ const INITIAL_FORM_DATA: PostJobData = {
   photos: [],
   voiceNoteUrl: undefined,
   voiceNoteDuration: undefined,
-  address: "House 45, Street 12, Block C, University Town",
-  area: "University Town, Peshawar",
+  address: "",
+  area: "",
   city: "Peshawar",
-  landmark: "Near Islamia College Gate",
-  latitude: 34.0043,
-  longitude: 71.5034,
+  landmark: "",
+  latitude: undefined,
+  longitude: undefined,
   scheduleType: "asap",
   preferredDate: toLocalDateString(),
   preferredTimeSlot: "8:00 AM - 12:00 PM",
-  suggestedVisitFee: 300,
+  suggestedVisitFee: 800,
 };
 
 export function PostJobWizard() {
@@ -49,25 +78,45 @@ export function PostJobWizard() {
 
   const initialCategoryMatch = resolveCategoryOption(categoryParam || searchParam);
 
-  const [currentStep, setCurrentStep] = useState<PostJobStep>(
-    initialCategoryMatch ? 2 : 1
-  );
+  const [currentStep, setCurrentStep] = useState<PostJobStep>(2);
   const [formData, setFormData] = useState<PostJobData>(() => {
+    const saved = getStoredDraft();
     if (initialCategoryMatch) {
       return {
         ...INITIAL_FORM_DATA,
+        ...(saved || {}),
         category: initialCategoryMatch.id,
-        subCategory: subCategoryParam || initialCategoryMatch.subCategories[0] || "",
-        title: subCategoryParam || initialCategoryMatch.defaultTitle || "",
-        description: initialCategoryMatch.defaultDescription || "",
-        suggestedVisitFee: initialCategoryMatch.suggestedFee || 300,
+        subCategory:
+          subCategoryParam ||
+          (saved?.category === initialCategoryMatch.id && saved?.subCategory
+            ? saved.subCategory
+            : initialCategoryMatch.subCategories[0] || ""),
+        title:
+          subCategoryParam ||
+          (saved?.title ? saved.title : initialCategoryMatch.defaultTitle || ""),
+        description:
+          saved?.description || initialCategoryMatch.defaultDescription || "",
+        suggestedVisitFee:
+          saved?.suggestedVisitFee || initialCategoryMatch.suggestedFee || 0,
       };
     }
-    return INITIAL_FORM_DATA;
+    return saved ? { ...INITIAL_FORM_DATA, ...saved } : INITIAL_FORM_DATA;
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [postedJobId, setPostedJobId] = useState<string | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
+
+  // If accessed directly without selecting a category, redirect to Step 1 on the dashboard
+  useEffect(() => {
+    if (!initialCategoryMatch) {
+      router.replace("/customer/dashboard");
+    }
+  }, [initialCategoryMatch, router]);
+
+  // Persist form draft in sessionStorage so navigating to dashboard and back preserves user input
+  useEffect(() => {
+    persistDraft(formData);
+  }, [formData]);
 
   // Sync if category search param changes dynamically
   useEffect(() => {
@@ -81,7 +130,7 @@ export function PostJobWizard() {
           subCategory: subCategoryParam || match.subCategories[0] || "",
           title: subCategoryParam || prev.title || match.defaultTitle || "",
           description: prev.description || match.defaultDescription || "",
-          suggestedVisitFee: match.suggestedFee || 300,
+          suggestedVisitFee: match.suggestedFee || 0,
         }));
         setCurrentStep(2);
       }
@@ -113,16 +162,22 @@ export function PostJobWizard() {
   const handleNextStep = handleNext;
 
   const handleBack = () => {
-    if (currentStep > 1) {
+    if (currentStep > 2) {
       setCurrentStep((prev) => (prev - 1) as PostJobStep);
       window.scrollTo({ top: 0, behavior: "smooth" });
     } else {
+      // Step 1 is the Customer Dashboard service selection
       router.push("/customer/dashboard");
     }
   };
   const handlePrevStep = handleBack;
 
   const handleGoToStep = (step: PostJobStep) => {
+    if (step === 1) {
+      // Navigate to Step 1 (Customer Dashboard service selection)
+      router.push("/customer/dashboard");
+      return;
+    }
     if (step <= currentStep) {
       setCurrentStep(step);
       window.scrollTo({ top: 0, behavior: "smooth" });
@@ -133,7 +188,9 @@ export function PostJobWizard() {
     setIsSubmitting(true);
     setSubmitError(null);
     try {
+      // Submits job with unified visit timing
       const res = await createJob(formData);
+      clearDraft();
       setPostedJobId(res.id);
     } catch (err) {
       console.error("Failed to post job:", err);
@@ -184,15 +241,6 @@ export function PostJobWizard() {
 
         {/* Step View Component */}
         <div className="flex-1">
-          {currentStep === 1 && (
-            <Step1ServiceSelect
-              data={formData}
-              onChange={updateFormData}
-              onNext={handleNextStep}
-              initialSearch={searchParam || ""}
-            />
-          )}
-
           {currentStep === 2 && (
             <Step2JobDetails
               data={formData}

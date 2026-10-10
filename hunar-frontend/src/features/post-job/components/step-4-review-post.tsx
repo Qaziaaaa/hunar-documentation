@@ -150,7 +150,7 @@ export function Step4ReviewPost({
               <div className="mt-2">
                 <VoiceNoteBubblePlayer
                   audioUrl={data.voiceNoteUrl}
-                  durationSeconds={data.voiceNoteDuration || 15}
+                  durationSeconds={data.voiceNoteDuration || 0}
                   onReRecord={() => onGoToStep(2)}
                   readOnly={false}
                 />
@@ -241,7 +241,7 @@ export function Step4ReviewPost({
                 </h4>
                 <p className="text-[11px] text-slate-600 font-medium">
                   {isUrdu
-                    ? "تمام کاریگر نادرا سی این آئی سی سے تصدیق شدہ ہیں، ڈور سٹیپ او ٹی پی پن اور فکسڈ 300 روپے وزٹ چارجز کے ساتھ۔"
+                    ? "تمام کاریگر نادرا سی این آئی سی سے تصدیق شدہ ہیں، ڈور سٹیپ او ٹی پی پن اور شفاف تصدیق شدہ وزٹ فیس کے ساتھ۔"
                     : "All technicians are NADRA CNIC verified with doorstep OTP PIN confirmation and transparent pricing."}
                 </p>
               </div>
