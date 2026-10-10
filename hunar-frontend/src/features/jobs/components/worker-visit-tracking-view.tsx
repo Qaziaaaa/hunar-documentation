@@ -8,6 +8,7 @@ import { VisitOffer } from "@/types/offer";
 import { formatRs } from "@/lib/design-tokens";
 import { connectSocket } from "@/lib/socket";
 import { http } from "@/lib/api-client";
+import { getWorkerProfile } from "@/services/worker/profile.service";
 import { workerStore } from "@/stores/worker-jobs-store";
 import { WorkerChatModal } from "./worker-chat-modal";
 import { WorkerArrivalOtpModal } from "./worker-arrival-otp-modal";
@@ -101,13 +102,24 @@ export function WorkerVisitTrackingView({
   );
 
   // Customer / Job exact coordinates from job location
-  const customerLat = job.location.coordinates?.lat || 34.015;
-  const customerLng = job.location.coordinates?.lng || 71.535;
+  const customerLat = job.location.coordinates?.lat || 0;
+  const customerLng = job.location.coordinates?.lng || 0;
 
-  // Worker live coordinates (defaults to Peshawar, continuously updated by device GPS)
-  const [workerLat, setWorkerLat] = useState<number>(34.004869);
-  const [workerLng, setWorkerLng] = useState<number>(71.511284);
+  // Worker live coordinates (continuously updated by device GPS)
+  const [workerLat, setWorkerLat] = useState<number>(() => customerLat || 0);
+  const [workerLng, setWorkerLng] = useState<number>(() => customerLng || 0);
   const [isGpsActive, setIsGpsActive] = useState<boolean>(false);
+  const [workerProfileName, setWorkerProfileName] = useState<string>("Technician");
+
+  useEffect(() => {
+    getWorkerProfile()
+      .then((p) => {
+        if (p?.name || (p as any)?.fullName) {
+          setWorkerProfileName(p.name || (p as any).fullName);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   // Real-time GPS Tracker for Worker
   useEffect(() => {
@@ -165,7 +177,8 @@ export function WorkerVisitTrackingView({
     offer?.visitCharge ??
     job.visitCharge ??
     job.customerSuggestedPrice ??
-    800;
+    (job as any).suggestedVisitCharge ??
+    0;
 
   const commissionHold = Math.round(agreedVisitCharge * 0.1);
   const [currentSecurityPin, setCurrentSecurityPin] = useState<string>(job.securityPin || "");
@@ -541,15 +554,16 @@ export function WorkerVisitTrackingView({
         const successMsg = isUrdu ? SUCCESS_VERIFICATION_MESSAGE_UR : SUCCESS_VERIFICATION_MESSAGE;
         setSuccessMessage(successMsg);
 
-        // Update state to arrived and entering premises for inspection
-        workerStore.arriveAtSite(job.id);
-        workerStore.startInspection(job.id);
-
-        setTimeout(() => {
+        // Allow worker to see success confirmation before transitioning to inspection
+        const timer = setTimeout(() => {
+          workerStore.arriveAtSite(job.id);
+          workerStore.startInspection(job.id);
           if (onArrived) {
             onArrived();
           }
-        }, 2200);
+        }, 1500);
+
+        return () => clearTimeout(timer);
       }
     });
 
@@ -589,7 +603,7 @@ export function WorkerVisitTrackingView({
         jobId: job.id,
         visitId: res.visitId,
         otp: realOtp,
-        workerName: "Ali Khan",
+        workerName: workerProfileName || "Technician",
         customerName: job.customer.name,
         customerAddress: job.location.fullAddress || (job.location as any).address || job.location.area,
       });
@@ -658,7 +672,9 @@ export function WorkerVisitTrackingView({
             <span className="text-[#0F8B8D]">
               {isAtDoorstep
                 ? (isUrdu ? "دہلیز پر موجود (0 km)" : "At Doorstep (0 km)")
-                : `${etaText} (${distanceText})`}
+                : isGpsActive
+                ? `${etaText} (${distanceText})`
+                : (isUrdu ? "GPS سگنل کا انتظار..." : "Awaiting GPS Signal...")}
             </span>
           </div>
 

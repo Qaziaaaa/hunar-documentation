@@ -24,7 +24,7 @@ export function SendVisitOfferDialog({
   onSuccess,
 }: SendVisitOfferDialogProps) {
   const [visitCharge, setVisitCharge] = useState<number | string>(
-    customerSuggestedPrice ?? 500
+    customerSuggestedPrice ?? ""
   );
   const [message, setMessage] = useState<string>("");
   const [error, setError] = useState<string | null>(null);

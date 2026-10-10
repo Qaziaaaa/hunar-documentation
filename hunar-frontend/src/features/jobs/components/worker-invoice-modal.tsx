@@ -18,13 +18,13 @@ interface WorkerInvoiceModalProps {
 }
 
 export function WorkerInvoiceModal({ job, onClose }: WorkerInvoiceModalProps) {
-  const visitCharge = job.visitCharge ?? 300;
+  const visitCharge = job.visitCharge ?? (job as any).lockedVisitCharge ?? 0;
   const repairCharge = job.repairCharge ?? 0;
   const grossTotal = visitCharge + repairCharge;
   const platformCommission = job.platformCommission ?? Math.round(grossTotal * 0.1);
   const netEarnings = job.workerNetEarnings ?? (grossTotal - platformCommission);
   const invoiceNumber = job.invoiceNumber || `INV-${job.id}`;
-  const warrantyDays = job.warrantyDays || 30;
+  const warrantyDays = job.warrantyDays ?? 5;
 
   const handlePrint = () => {
     window.print();
@@ -95,7 +95,9 @@ export function WorkerInvoiceModal({ job, onClose }: WorkerInvoiceModalProps) {
             <p className="font-bold text-slate-900 mt-0.5 truncate">
               {job.completedAt
                 ? formatDate(job.completedAt)
-                : "24 Oct 2026"}
+                : (job as any).scheduledDate
+                ? formatDate((job as any).scheduledDate)
+                : "—"}
             </p>
           </div>
         </div>

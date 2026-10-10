@@ -65,7 +65,7 @@ class ArrivalVerificationService {
       otp: params.otp.trim(),
       arrivedAt: Date.now(),
       status: "pending_otp",
-      workerName: params.workerName || "Ali Khan",
+      workerName: params.workerName || "Technician",
       workerAvatar: params.workerAvatar,
       workerPhone: params.workerPhone,
       customerName: params.customerName || "Customer",
@@ -117,9 +117,19 @@ class ArrivalVerificationService {
     if (!isMockMode() && getAccessToken()) {
       try {
         const idToVerify = session.visitId || session.jobId;
-        await http.put(`/visits/${idToVerify}/verify-arrival-otp`, {
-          otp: cleanInput,
-        });
+        try {
+          await http.put(`/visits/${idToVerify}/verify-arrival-otp`, {
+            otp: cleanInput,
+          });
+        } catch (firstErr: any) {
+          if (session.jobId && session.jobId !== idToVerify) {
+            await http.put(`/jobs/${session.jobId}/verify-arrival-otp`, {
+              otp: cleanInput,
+            });
+          } else {
+            throw firstErr;
+          }
+        }
       } catch (err: any) {
         const backendError =
           err?.response?.data?.message ||

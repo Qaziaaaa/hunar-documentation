@@ -34,8 +34,11 @@ export function ActiveJobPreVisit({ job, offer }: ActiveJobPreVisitProps) {
   const agreedVisitCharge =
     offer?.agreedVisitCharge ??
     offer?.visitCharge ??
+    job.visitCharge ??
     job.customerSuggestedPrice ??
-    800;
+    (job as any).lockedVisitCharge ??
+    (job as any).suggestedVisitCharge ??
+    0;
 
   const getTimelineStepIndex = (status: JobRequest["status"]) => {
     switch (status) {

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "@/i18n/navigation";
 import { useParams } from "next/navigation";
 import { JobRequest } from "@/types/job";
@@ -67,7 +67,13 @@ export function WorkerJourneyFullscreen({
   const fileInputRef = React.useRef<HTMLInputElement | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const numRepairPrice = parsePriceOrZero(repairPrice);
+  useEffect(() => {
+    if (activeJob.repairCharge != null && activeJob.repairCharge > 0 && (!repairPrice || Number(repairPrice) === 0)) {
+      setRepairPrice(activeJob.repairCharge);
+    }
+  }, [activeJob.repairCharge]);
+
+  const numRepairPrice = parsePriceOrZero(repairPrice) || (activeJob.repairCharge ? Number(activeJob.repairCharge) : 0);
 
   const agreedVisitCharge =
     (activeJob.status === "completed" && activeJob.visitCharge !== undefined)
@@ -76,7 +82,8 @@ export function WorkerJourneyFullscreen({
          offer?.visitCharge ??
          activeJob.visitCharge ??
          activeJob.customerSuggestedPrice ??
-         300);
+         (activeJob as any).suggestedVisitCharge ??
+         0);
 
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;

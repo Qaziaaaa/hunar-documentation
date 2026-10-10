@@ -57,6 +57,7 @@ export function VisitActionFlow({ job, offer }: VisitActionFlowProps) {
 
   // Wallet top-up warning
   const [walletAlert, setWalletAlert] = useState<string | null>(null);
+  const [isArriving, setIsArriving] = useState(false);
 
   const agreedPrice =
     offer?.agreedVisitCharge ??
@@ -70,15 +71,21 @@ export function VisitActionFlow({ job, offer }: VisitActionFlowProps) {
     workerStore.startVisit(job.id);
   };
 
-  // 8b. Handle I've Arrived with Wallet Commission Hold Check
-  const handleArrive = () => {
-    const res = workerStore.arriveAtSite(job.id);
-    if (!res.success) {
-      setWalletAlert(
-        res.error ?? `Insufficient wallet balance. Minimum ${formatRs(requiredHold)} required.`
-      );
-    } else {
-      setWalletAlert(null);
+  // 8b. Handle I've Arrived with Wallet Commission Hold Check & Real Backend Dispatch
+  const handleArrive = async () => {
+    setIsArriving(true);
+    setWalletAlert(null);
+    try {
+      const res = await workerStore.arriveAtDoorstep(job.id);
+      if (!res.success) {
+        setWalletAlert(
+          res.error ?? `Insufficient wallet balance. Minimum ${formatRs(requiredHold)} required.`
+        );
+      }
+    } catch (err: any) {
+      setWalletAlert(err?.message || "Failed to notify arrival");
+    } finally {
+      setIsArriving(false);
     }
   };
 
@@ -197,10 +204,11 @@ export function VisitActionFlow({ job, offer }: VisitActionFlowProps) {
           <button
             type="button"
             onClick={handleArrive}
-            className="w-full py-3 px-5 rounded-2xl bg-[#123B5D] hover:bg-[#1a4a75] text-white font-bold text-xs sm:text-sm shadow-sm flex items-center justify-center gap-2 transition-all"
+            disabled={isArriving}
+            className="w-full py-3 px-5 rounded-2xl bg-[#123B5D] hover:bg-[#1a4a75] disabled:opacity-60 text-white font-bold text-xs sm:text-sm shadow-sm flex items-center justify-center gap-2 transition-all cursor-pointer disabled:cursor-not-allowed"
           >
             <MapPin className="w-4 h-4 text-emerald-400" />
-            <span>I&apos;ve Arrived</span>
+            <span>{isArriving ? "Marking Arrival..." : "I've Arrived"}</span>
           </button>
         </div>
       )}
@@ -372,7 +380,9 @@ export function VisitActionFlow({ job, offer }: VisitActionFlowProps) {
           </div>
           <div className="flex justify-between pt-1 font-semibold">
             <span>Repair Estimate:</span>
-            <span className="text-slate-900 font-bold">{formatRs(numRepairEstimate)}</span>
+            <span className="text-slate-900 font-bold">
+              {formatRs(job.repairCharge && job.repairCharge > 0 ? job.repairCharge : numRepairEstimate)}
+            </span>
           </div>
           <p className="text-[11px] text-slate-500">
             Waiting for customer approval to begin repair work.
