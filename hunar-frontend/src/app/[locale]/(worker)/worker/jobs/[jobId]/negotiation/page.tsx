@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -24,6 +24,8 @@ import { formatRs, sanitizePriceInput } from "@/lib/money";
 import { negotiationStatusTone } from "@/lib/status-meta";
 import { getNegotiationContext, acceptCounterOffer, rejectCounterOffer, requestScopeChange, sendCounterOffer, submitEstimate, queryKeys } from "@/services/worker/negotiation.service";
 import { getWorkerJob, queryKeys as jobKeys } from "@/services/worker/jobs.service";
+import { subscribeToNotifications } from "@/services/worker/notification.service";
+import { getSocket } from "@/lib/socket";
 import { ToneBadge } from "@/components/shared/tone-badge";
 
 export default function NegotiationPage() {
@@ -41,6 +43,44 @@ export default function NegotiationPage() {
   const [estimateDescription, setEstimateDescription] = useState("");
 
   const refresh = () => queryClient.invalidateQueries({ queryKey: queryKeys.negotiation(jobId) });
+
+  useEffect(() => {
+    const unsubscribe = subscribeToNotifications((notification) => {
+      const type = String(notification.type || "");
+      if (
+        type === "counter_offer" ||
+        type === "counter_accepted" ||
+        type === "offer_accepted" ||
+        type === "offer_rejected"
+      ) {
+        void refresh();
+      }
+    });
+
+    const socket = getSocket();
+    const handleSocketUpdate = (payload?: { jobId?: string; repairId?: string }) => {
+      if (!payload?.jobId || payload.jobId === jobId) {
+        void refresh();
+      }
+    };
+
+    if (socket) {
+      socket.on("negotiation:updated", handleSocketUpdate);
+      socket.on("negotiation_updated", handleSocketUpdate);
+      socket.on("repair:updated", handleSocketUpdate);
+      socket.on("offer:counter", handleSocketUpdate);
+    }
+
+    return () => {
+      unsubscribe();
+      if (socket) {
+        socket.off("negotiation:updated", handleSocketUpdate);
+        socket.off("negotiation_updated", handleSocketUpdate);
+        socket.off("repair:updated", handleSocketUpdate);
+        socket.off("offer:counter", handleSocketUpdate);
+      }
+    };
+  }, [jobId]);
   const accept = useMutation({ mutationFn: () => acceptCounterOffer(context.data!.repair.id, context.data!.repair.amount), onSuccess: refresh });
   const reject = useMutation({ mutationFn: () => rejectCounterOffer(context.data!.repair.id), onSuccess: refresh });
   const counter = useMutation({
