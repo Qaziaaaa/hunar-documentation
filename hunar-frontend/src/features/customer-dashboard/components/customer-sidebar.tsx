@@ -216,8 +216,16 @@ export function CustomerSidebar({ isOpen, onClose }: CustomerSidebarProps) {
               }`}
             >
               <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                <div className="w-8 h-8 rounded-full bg-[#123B5D] flex items-center justify-center text-white font-bold text-xs shrink-0">
-                  {customerInitial}
+                <div className="w-8 h-8 rounded-full bg-[#123B5D] flex items-center justify-center text-white font-bold text-xs shrink-0 overflow-hidden">
+                  {storedUser?.avatarUrl ? (
+                    <img
+                      src={storedUser.avatarUrl}
+                      alt={customerName}
+                      className="size-full object-cover"
+                    />
+                  ) : (
+                    customerInitial
+                  )}
                 </div>
                 <div className="flex flex-col min-w-0 flex-1">
                   <span className="text-xs font-semibold text-slate-900 truncate">

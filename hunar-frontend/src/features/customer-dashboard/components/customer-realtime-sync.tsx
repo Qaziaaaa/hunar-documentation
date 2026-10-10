@@ -66,8 +66,8 @@ export function CustomerRealtimeSync() {
           jobAddress: data.jobAddress,
           description: data.description || "Repair as inspected on site",
           amount: Number(data.amount || 0),
-          visitCharge: Number(data.visitCharge || 300),
-          totalAmount: Number(data.totalAmount || (Number(data.visitCharge || 300) + Number(data.amount || 0))),
+          visitCharge: Number(data.visitCharge || 0),
+          totalAmount: Number(data.totalAmount || (Number(data.visitCharge || 0) + Number(data.amount || 0))),
           status: "PROPOSED",
           createdAt: data.createdAt,
         });
