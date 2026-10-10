@@ -1,4 +1,4 @@
-import { http, getStoredUser } from "@/lib/api-client";
+import { http, getStoredUser, API_BASE_URL } from "@/lib/api-client";
 import { isMockMode } from "@/lib/data-source";
 
 export interface ChatMessage {
@@ -249,6 +249,34 @@ export function getVoiceFromCache(voiceId: string): string | null {
 }
 
 /**
+ * Resolve backend origin without /api/v1 suffix
+ */
+export function getBackendOrigin(): string {
+  if (typeof process !== "undefined" && process.env.NEXT_PUBLIC_BACKEND_URL) {
+    return process.env.NEXT_PUBLIC_BACKEND_URL.replace(/\/+$/, "");
+  }
+  return API_BASE_URL.replace(/\/api(\/v\d+)?\/?$/, "");
+}
+
+/**
+ * Resolve relative or static audio URL to an accessible absolute URL
+ */
+export function resolveAudioUrl(url?: string | null): string {
+  if (!url) return "";
+  if (
+    url.startsWith("http://") ||
+    url.startsWith("https://") ||
+    url.startsWith("blob:") ||
+    url.startsWith("data:")
+  ) {
+    return url;
+  }
+  const origin = getBackendOrigin();
+  const cleanPath = url.startsWith("/") ? url : `/${url}`;
+  return `${origin}${cleanPath}`;
+}
+
+/**
  * Upload a voice note audio attachment in chat
  */
 export async function uploadVoiceNote(
@@ -270,8 +298,8 @@ export async function uploadVoiceNote(
       formData
     );
     let resolvedUrl = result.url;
-    if (resolvedUrl && resolvedUrl.startsWith("/uploads/")) {
-      resolvedUrl = `http://localhost:4000${resolvedUrl}`;
+    if (resolvedUrl) {
+      resolvedUrl = resolveAudioUrl(resolvedUrl);
     }
     return {
       key: result.key,
@@ -352,8 +380,8 @@ export function parseVoiceNote(
         let audioUrl = parsed.audioUrl || "";
 
         // If audioUrl is relative, e.g. /uploads/..., resolve to full backend URL
-        if (audioUrl && audioUrl.startsWith("/uploads/")) {
-          audioUrl = `http://localhost:4000${audioUrl}`;
+        if (audioUrl) {
+          audioUrl = resolveAudioUrl(audioUrl);
         }
 
         // If voiceId is provided and no audioUrl, check cache
@@ -383,8 +411,8 @@ export function parseVoiceNote(
     const parts = trimmed.split(":");
     const duration = Math.max(1, Math.round(Number(parts[parts.length - 1]) || 1));
     let audioUrl = parts.slice(1, parts.length - 1).join(":");
-    if (audioUrl && audioUrl.startsWith("/uploads/")) {
-      audioUrl = `http://localhost:4000${audioUrl}`;
+    if (audioUrl) {
+      audioUrl = resolveAudioUrl(audioUrl);
     }
     return {
       audioUrl,
