@@ -396,6 +396,12 @@ export class AdminCreateCategoryDto {
   @IsInt()
   @Min(0)
   sortOrder?: number;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  @Min(0)
+  defaultVisitCharge?: number;
 }
 
 export class AdminUpdateCategoryDto {
@@ -417,6 +423,12 @@ export class AdminUpdateCategoryDto {
 
   @IsOptional()
   distanceSlabs?: any;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  @Min(0)
+  defaultVisitCharge?: number;
 }
 
 // Platform settings (Admin flow §12). Admin views and updates platform settings.

@@ -1221,6 +1221,7 @@ export class AdminService {
           nameUrdu: true,
           isActive: true,
           sortOrder: true,
+          defaultVisitCharge: true,
           distanceSlabs: true,
           createdAt: true,
         },
@@ -1230,6 +1231,7 @@ export class AdminService {
 
     const items = rows.map((r) => ({
       ...r,
+      defaultVisitCharge: r.defaultVisitCharge != null ? Number(r.defaultVisitCharge) : null,
       distanceSlabs: r.distanceSlabs ?? DEFAULT_DISTANCE_SLABS,
     }));
 
@@ -1243,6 +1245,7 @@ export class AdminService {
         name: dto.name,
         nameUrdu: dto.nameUrdu,
         sortOrder: dto.sortOrder ?? 0,
+        defaultVisitCharge: dto.defaultVisitCharge != null ? dto.defaultVisitCharge : null,
       },
       select: {
         id: true,
@@ -1250,6 +1253,7 @@ export class AdminService {
         nameUrdu: true,
         isActive: true,
         sortOrder: true,
+        defaultVisitCharge: true,
         createdAt: true,
       },
     });
@@ -1286,7 +1290,7 @@ export class AdminService {
   async updateCategory(id: string, dto: AdminUpdateCategoryDto, actor: JwtPayload) {
     const existing = await this.prisma.serviceCategory.findUnique({
       where: { id },
-      select: { id: true, name: true, nameUrdu: true, isActive: true, sortOrder: true, distanceSlabs: true },
+      select: { id: true, name: true, nameUrdu: true, isActive: true, sortOrder: true, defaultVisitCharge: true, distanceSlabs: true },
     });
     if (!existing) {
       throw new NotFoundException('Category not found');
@@ -1298,9 +1302,10 @@ export class AdminService {
         ...(dto.name !== undefined ? { name: dto.name } : {}),
         ...(dto.nameUrdu !== undefined ? { nameUrdu: dto.nameUrdu } : {}),
         ...(dto.sortOrder !== undefined ? { sortOrder: dto.sortOrder } : {}),
+        ...(dto.defaultVisitCharge !== undefined ? { defaultVisitCharge: dto.defaultVisitCharge } : {}),
         ...(dto.distanceSlabs !== undefined ? { distanceSlabs: dto.distanceSlabs } : {}),
       },
-      select: { id: true, name: true, nameUrdu: true, isActive: true, sortOrder: true, distanceSlabs: true },
+      select: { id: true, name: true, nameUrdu: true, isActive: true, sortOrder: true, defaultVisitCharge: true, distanceSlabs: true },
     });
 
     await this.audit.record({
