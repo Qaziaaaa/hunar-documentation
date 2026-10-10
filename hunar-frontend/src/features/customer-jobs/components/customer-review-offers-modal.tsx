@@ -202,7 +202,7 @@ export function CustomerReviewOffersModal({
                     {isUrdu ? "طے شدہ وزٹ فیس" : "Agreed Visit Fee"}
                   </span>
                   <span className="text-lg font-extrabold text-[#0F766E]">
-                    Rs. {job.selectedOffer.visitFee.toLocaleString()}
+                    Rs. {(job.selectedOffer.visitFee || (job as any).suggestedVisitCharge || 0).toLocaleString()}
                   </span>
                 </div>
               </div>
@@ -308,7 +308,7 @@ export function CustomerReviewOffersModal({
                             {isUrdu ? "وزٹ و معائنہ فیس" : "Visit & Diagnostic Fee"}
                           </span>
                           <span className="text-base sm:text-xl font-extrabold text-[#0F766E]">
-                            Rs. {offer.visitFee.toLocaleString()}
+                            Rs. {(offer.visitFee || (job as any).suggestedVisitCharge || 0).toLocaleString()}
                           </span>
                         </div>
 

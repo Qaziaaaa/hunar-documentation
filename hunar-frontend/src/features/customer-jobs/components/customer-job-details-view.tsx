@@ -303,7 +303,7 @@ export function CustomerJobDetailsView({ initialJob }: CustomerJobDetailsViewPro
                       {isUrdu ? "وائس نوٹ" : "Voice Note"}
                     </span>
                     <span className="text-slate-400 text-[11px]">
-                      0:{job.voiceNoteDuration || 15}
+                      {job.voiceNoteDuration ? `0:${String(job.voiceNoteDuration).padStart(2, "0")}` : "--:--"}
                     </span>
                   </div>
                   <div className="h-1.5 bg-slate-200 rounded-full overflow-hidden">
@@ -341,7 +341,7 @@ export function CustomerJobDetailsView({ initialJob }: CustomerJobDetailsViewPro
                   <span className="font-bold text-[#123B5D]">
                     {formatJobDate(job.preferredDate) || (isUrdu ? "آج" : "Today")}
                   </span>{" "}
-                  • {job.preferredTimeSlot || (isUrdu ? "فوری / ابھی" : "Immediate / ASAP")}
+                  • {job.preferredTimeSlot || (job.scheduleType === "asap" ? (isUrdu ? "فوری / ابھی" : "Immediate / ASAP") : (isUrdu ? "مناسب وقت" : "Flexible Timing"))}
                 </p>
               </div>
             </div>

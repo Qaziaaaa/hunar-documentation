@@ -1,72 +1,37 @@
 import { http } from "@/lib/api-client";
-import { isMockMode } from "@/lib/data-source";
-import { MOCK_CUSTOMER_JOBS } from "../data/mock-customer-jobs";
+import { extractTimeSlotFromVisitTime } from "@/lib/format";
 import type { CustomerJob, JobStatus, WorkerOffer, WorkerProfile } from "../types";
-import { getLocallyCreatedJobs } from "@/features/post-job/api/post-job-api";
-
-function transformLocalJob(j: any): CustomerJob {
-  return {
-    id: j.id,
-    title: j.title,
-    category: j.categoryName || j.category || "General Service",
-    subCategory: j.categoryName || j.category || "General Service",
-    description: j.description || "",
-    photos: j.images || [],
-    voiceNoteUrl: j.voiceNoteUrl,
-    address: j.address || "Peshawar",
-    area: j.area || "Peshawar",
-    city: j.city || "Peshawar",
-    scheduleType: "asap",
-    preferredDate: j.createdAt || new Date().toISOString(),
-    preferredTimeSlot: "9:00 AM - 1:00 PM",
-    status: "receiving_offers",
-    createdAt: j.createdAt || new Date().toISOString(),
-    offers: [],
-  };
-}
 
 /**
  * Fetch all jobs for the logged-in customer, enriched with offers & selected worker.
  */
 export async function getCustomerJobs(): Promise<CustomerJob[]> {
-  const localJobs = getLocallyCreatedJobs().map(transformLocalJob);
+  const res = await http.get<unknown>("/jobs/customer?limit=100");
+  const rows: unknown[] = Array.isArray(res)
+    ? res
+    : (res as { data?: unknown[]; items?: unknown[] })?.data ??
+      (res as { items?: unknown[] })?.items ??
+      [];
 
-  if (isMockMode()) {
-    const combined = [...localJobs, ...MOCK_CUSTOMER_JOBS];
-    return Array.from(new Map(combined.map((j) => [j.id, j])).values());
-  }
-  try {
-    const res = await http.get<unknown>("/jobs/customer?limit=100");
-    const rows: unknown[] = Array.isArray(res)
-      ? res
-      : (res as { data?: unknown[]; items?: unknown[] })?.data ??
-        (res as { items?: unknown[] })?.items ??
-        [];
+  const backendJobs = rows.map(transformListRow);
 
-    const backendJobs = rows.map(transformListRow);
+  await Promise.allSettled(
+    backendJobs.map(async (job) => {
+      try {
+        const detail = await getJobDetail(job.id);
+        Object.assign(job, detail);
+      } catch (err) {
+        console.warn(`[getCustomerJobs] Detail fetch failed for ${job.id}:`, err);
+      }
+      try {
+        job.offers = await getJobOffers(job.id);
+      } catch (err) {
+        console.warn(`[getCustomerJobs] Offers fetch failed for ${job.id}:`, err);
+      }
+    })
+  );
 
-    await Promise.allSettled(
-      backendJobs.map(async (job) => {
-        try {
-          const detail = await getJobDetail(job.id);
-          Object.assign(job, detail);
-        } catch (err) {
-          console.warn(`[getCustomerJobs] Detail fetch failed for ${job.id}:`, err);
-        }
-        try {
-          job.offers = await getJobOffers(job.id);
-        } catch (err) {
-          console.warn(`[getCustomerJobs] Offers fetch failed for ${job.id}:`, err);
-        }
-      })
-    );
-
-    const combined = [...localJobs, ...backendJobs];
-    return Array.from(new Map(combined.map((j) => [j.id, j])).values());
-  } catch (err) {
-    console.warn("[getCustomerJobs] Backend API error:", err);
-    return localJobs;
-  }
+  return backendJobs;
 }
 
 /**
@@ -77,6 +42,7 @@ export async function getJobDetail(jobId: string): Promise<CustomerJob> {
   if (!res || !res.id) {
     throw new Error(`JOB_NOT_FOUND: ${jobId}`);
   }
+  const isAsap = res.urgency === "EMERGENCY" || res.urgency === "URGENT" || res.urgency === "HIGH";
   return {
     id: res.id,
     title: res.title,
@@ -86,11 +52,14 @@ export async function getJobDetail(jobId: string): Promise<CustomerJob> {
     photos: res.images || [],
     voiceNoteUrl: res.voiceNoteUrl,
     address: res.address,
-    area: res.area || "Peshawar",
-    city: res.city || "Peshawar",
-    scheduleType: res.urgency === "URGENT" ? "asap" : "scheduled",
+    area: res.area || "",
+    city: res.city || "",
+    scheduleType: isAsap ? "asap" : "scheduled",
     preferredDate: res.preferredVisitTime || res.createdAt || new Date().toISOString(),
-    preferredTimeSlot: res.preferredTimeSlot || res.timeSlot || "",
+    preferredTimeSlot:
+      res.preferredTimeSlot ||
+      res.timeSlot ||
+      (isAsap ? "⚡ Immediate (Within 30–60 mins)" : extractTimeSlotFromVisitTime(res.preferredVisitTime)),
     status: mapJobStatus(res.status),
     createdAt: res.createdAt || new Date().toISOString(),
     offers: (res.offers || []).map(transformBackendOffer),
@@ -105,6 +74,7 @@ export async function getJobDetail(jobId: string): Promise<CustomerJob> {
         })
       : undefined,
     securityPin: res.securityPin,
+    suggestedVisitCharge: res.suggestedVisitCharge != null ? Number(res.suggestedVisitCharge) : undefined,
   };
 }
 
@@ -222,6 +192,7 @@ function mapJobStatus(status?: string): JobStatus {
 }
 
 function transformListRow(row: any): CustomerJob {
+  const isAsap = row.urgency === "EMERGENCY" || row.urgency === "URGENT" || row.urgency === "HIGH";
   return {
     id: row.id,
     title: row.title,
@@ -231,14 +202,18 @@ function transformListRow(row: any): CustomerJob {
     photos: row.images || [],
     voiceNoteUrl: row.voiceNoteUrl,
     address: row.address,
-    area: row.area || "Peshawar",
-    city: row.city || "Peshawar",
-    scheduleType: "scheduled",
+    area: row.area || "",
+    city: row.city || "",
+    scheduleType: isAsap ? "asap" : "scheduled",
     preferredDate: row.preferredVisitTime || row.createdAt || new Date().toISOString(),
-    preferredTimeSlot: "9:00 AM - 1:00 PM",
+    preferredTimeSlot:
+      row.preferredTimeSlot ||
+      row.timeSlot ||
+      (isAsap ? "⚡ Immediate (Within 30–60 mins)" : extractTimeSlotFromVisitTime(row.preferredVisitTime)),
     status: mapJobStatus(row.status),
     createdAt: row.createdAt || new Date().toISOString(),
     offers: [],
+    suggestedVisitCharge: row.suggestedVisitCharge != null ? Number(row.suggestedVisitCharge) : undefined,
   };
 }
 

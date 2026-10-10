@@ -60,7 +60,7 @@ export async function getJobRepairInvoice(jobId: string, repairDeclined?: boolea
       },
     },
     completedAt: res.completedAt || res.updatedAt || new Date().toLocaleString(),
-    address: res.job?.address || "Peshawar",
+    address: res.job?.address || "",
     evidencePhotos: (res.inspectionPhotos || []).map((img: string | { url?: string }, idx: number) => ({
       id: `ev-${idx}`,
       type: idx % 2 === 0 ? "before" : "after",
@@ -168,4 +168,25 @@ export async function submitJobReview(
     behaviorRating: payload.behaviorRating,
   });
   return { success: true, reviewId: res?.id };
+}
+
+export interface ProcessPaymentPayload {
+  jobId: string;
+  method: "COD" | "WALLET" | "CARD" | "MOBILE_WALLET";
+  amount?: number;
+  gateway?: "STRIPE" | "JAZZCASH" | "EASYPAISA";
+  note?: string;
+}
+
+/**
+ * Process/record a payment for a completed job via POST /payments
+ */
+export async function processJobPayment(
+  payload: ProcessPaymentPayload
+): Promise<{ success: boolean; paymentId?: string; status?: string }> {
+  const res = await http.post<{ paymentId?: string; status?: string; idempotent?: boolean }>(
+    "/payments",
+    payload
+  );
+  return { success: true, paymentId: res?.paymentId, status: res?.status };
 }

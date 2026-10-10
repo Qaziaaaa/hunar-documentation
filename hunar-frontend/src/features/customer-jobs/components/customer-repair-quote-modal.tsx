@@ -105,7 +105,7 @@ export function CustomerRepairQuoteModal({
     }
   };
 
-  const visitFee = quote.visitCharge || 300;
+  const visitFee = quote.visitCharge || 0;
   const repairAmount = quote.amount || 0;
   const totalPayable = visitFee + repairAmount;
 
