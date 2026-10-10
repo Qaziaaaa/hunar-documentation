@@ -25,7 +25,7 @@ const DEFAULT_VERIFICATION_DATA: WorkerVerificationData = {
   fullName: "",
   phone: "",
   skills: [],
-  city: "Peshawar",
+  city: "",
   serviceAreas: [],
   submittedAt: new Date().toISOString(),
   rejectionReason: undefined,
@@ -50,7 +50,7 @@ export async function getVerificationStatus(): Promise<WorkerVerificationData> {
         fullName: data.user.name || "",
         phone: data.user.phone ? data.user.phone.replace(/^(\+92|0)/, "") : "",
         skills: profile?.skills?.length ? profile.skills : [],
-        city: "Peshawar",
+        city: (data.user as any)?.city || (profile as any)?.city || "",
         serviceAreas: data.serviceAreas?.length
           ? data.serviceAreas.map((a: any) => (typeof a === "string" ? a : a.label || a.address || "")).filter(Boolean)
           : [],

@@ -27,6 +27,7 @@ import { Button } from "@/components/ui/button";
 import { submitWorkerOffer } from "@/services/worker/offers.service";
 import { isMockMode } from "@/lib/data-source";
 import { ApiError } from "@/lib/api-client";
+import { formatPreferredTiming } from "@/lib/format";
 import type { JobRequest } from "../types";
 
 const CATEGORY_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -72,7 +73,13 @@ export function JobRequestModal({
     }
   }, [job]);
 
-  const visitCharge = job?.suggestedVisitCharge ?? 300;
+  const isUrgent =
+    job?.status === "URGENT" ||
+    (job as any)?.urgency === "EMERGENCY" ||
+    (job as any)?.urgency === "HIGH" ||
+    Boolean(job?.preferredTiming && /immediate|asap|جلد از جلد|30.?60/i.test(job.preferredTiming));
+
+  const visitCharge = job?.suggestedVisitCharge ?? 0;
 
   const validImages = useMemo(() => {
     if (!job?.images || !Array.isArray(job.images)) return [];
@@ -191,20 +198,26 @@ export function JobRequestModal({
           <div className="rounded-2xl bg-slate-50/70 p-4">
             <div className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-3.5 min-w-0">
-                <div className="relative size-14 shrink-0 overflow-hidden rounded-full border border-teal/20 bg-slate-100 flex items-center justify-center shadow-xs">
+                <div className="relative size-14 shrink-0 overflow-hidden rounded-full border border-[#123B5D]/20 bg-[#123B5D]/10 text-[#123B5D] flex items-center justify-center shadow-xs select-none">
                   {job.customer.avatarUrl ? (
-                    <Image
+                    <img
                       src={job.customer.avatarUrl}
                       alt={job.customer.firstName || "Customer"}
-                      fill
-                      className="object-cover"
-                      sizes="56px"
+                      className="size-full object-cover rounded-full"
+                      onError={(e) => {
+                        (e.currentTarget as HTMLElement).style.display = "none";
+                        const fallback = e.currentTarget.parentElement?.querySelector("span");
+                        if (fallback) fallback.classList.remove("sr-only");
+                      }}
                     />
-                  ) : (
-                    <span className="text-base font-extrabold text-slate-600 uppercase">
-                      {job.customer.firstName ? job.customer.firstName.charAt(0) : "C"}
-                    </span>
-                  )}
+                  ) : null}
+                  <span
+                    className={`text-xl font-black text-[#123B5D] uppercase ${
+                      job.customer.avatarUrl ? "sr-only" : ""
+                    }`}
+                  >
+                    {(job.customer.firstName || job.customer.fullName || "C").trim().charAt(0).toUpperCase()}
+                  </span>
                 </div>
                 <div className="min-w-0 leading-tight">
                   <div className="flex items-center gap-1.5">
@@ -218,18 +231,26 @@ export function JobRequestModal({
                     )}
                   </div>
                   <div className="mt-1 flex flex-wrap items-center gap-2 text-xs font-semibold text-slate-600">
-                    <span className="flex items-center gap-1 text-[#F59E0B] font-bold">
-                      <Star className="size-3.5 fill-[#F59E0B] stroke-none" />
-                      {job.customer.rating.toFixed(1)}
-                      <span className="text-slate-400 font-normal">
-                        ({job.customer.reviewCount || 15})
+                    {job.customer.rating > 0 ? (
+                      <span className="flex items-center gap-1 text-[#F59E0B] font-bold">
+                        <Star className="size-3.5 fill-[#F59E0B] stroke-none" />
+                        {job.customer.rating.toFixed(1)}
+                        <span className="text-slate-400 font-normal">
+                          ({job.customer.reviewCount ?? 0} reviews)
+                        </span>
                       </span>
-                    </span>
-                    <span className="text-slate-300">·</span>
-                    <span className="text-navy font-bold">
-                      {job.customer.totalOrders} Orders Completed
-                    </span>
-                    {job.customer.memberSince && (
+                    ) : (
+                      <span className="text-slate-400 font-medium">New Customer</span>
+                    )}
+                    {job.customer.totalOrders > 0 && (
+                      <>
+                        {job.customer.rating > 0 && <span className="text-slate-300">·</span>}
+                        <span className="text-navy font-bold">
+                          {job.customer.totalOrders} Orders Completed
+                        </span>
+                      </>
+                    )}
+                    {job.customer.memberSince && job.customer.memberSince !== "—" && (
                       <>
                         <span className="text-slate-300 hidden sm:inline">·</span>
                         <span className="text-slate-400 text-[11px] hidden sm:inline">
@@ -272,15 +293,29 @@ export function JobRequestModal({
               </div>
 
               <div className="flex items-start gap-3">
-                <div className="flex size-9 items-center justify-center rounded-xl bg-orange/15 text-orange shrink-0 mt-0.5 shadow-2xs">
-                  <Calendar className="size-4.5" />
+                <div
+                  className={`flex size-9 items-center justify-center rounded-xl shrink-0 mt-0.5 shadow-2xs ${
+                    isUrgent
+                      ? "bg-amber-100 text-amber-700 border border-amber-200"
+                      : "bg-orange/15 text-orange"
+                  }`}
+                >
+                  {isUrgent ? (
+                    <Zap className="size-4.5 fill-current text-amber-600" />
+                  ) : (
+                    <Calendar className="size-4.5" />
+                  )}
                 </div>
                 <div className="min-w-0">
                   <span className="text-xs font-extrabold uppercase tracking-wider text-slate-600 block mb-0.5">
                     {isUrdu ? "ترجیحی وقت" : "Preferred Visit Window"}
                   </span>
-                  <p className="font-extrabold text-navy text-sm sm:text-base leading-snug">
-                    {job.preferredTiming || (isUrdu ? "کسی بھی وقت" : "Flexible Timing")}
+                  <p
+                    className={`font-extrabold text-sm sm:text-base leading-snug ${
+                      isUrgent ? "text-amber-800" : "text-navy"
+                    }`}
+                  >
+                    {formatPreferredTiming(job.preferredTiming, isUrdu, isUrgent)}
                   </p>
                 </div>
               </div>
@@ -350,6 +385,7 @@ export function JobRequestModal({
               )}
             </div>
           )}
+
 
         </div>
 
