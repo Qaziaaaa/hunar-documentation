@@ -8,7 +8,13 @@ import type {
   CustomerSummary,
 } from "@/types/job";
 import type { VisitOffer } from "@/types/offer";
-import { formatJobDate, isDateOnlyTimestamp, parseDisplayDate, toLocalDateString } from "@/lib/format";
+import {
+  extractTimeSlotFromVisitTime,
+  formatJobDate,
+  isDateOnlyTimestamp,
+  parseDisplayDate,
+  toLocalDateString,
+} from "@/lib/format";
 
 const DISPLAY_STATUS: Record<string, JobRequest["status"]> = {
   OPEN: "open",
@@ -71,10 +77,17 @@ function timeAgo(iso: string): string {
   return `${days} day${days === 1 ? "" : "s"} ago`;
 }
 
-function visitWindow(preferred?: string | null, created?: string): {
+function visitWindow(preferred?: string | null, created?: string, isUrgent?: boolean): {
   date: string;
   timeSlot: string;
 } {
+  if (isUrgent) {
+    return {
+      date: "Today",
+      timeSlot: "⚡ Immediate (Within 30–60 mins)",
+    };
+  }
+
   const preferredDate = parseDisplayDate(preferred);
   const createdDate = parseDisplayDate(created);
   const now = new Date();
@@ -85,14 +98,10 @@ function visitWindow(preferred?: string | null, created?: string): {
       preferredDate.getMonth() === now.getMonth() &&
       preferredDate.getDate() === now.getDate();
     const label = formatJobDate(preferred);
+    const extractedSlot = extractTimeSlotFromVisitTime(preferred);
     return {
       date: isToday ? `Today, ${label}` : label,
-      timeSlot: isDateOnlyTimestamp(preferred)
-        ? "Morning (8:00 AM - 12:00 PM)"
-        : preferredDate.toLocaleTimeString("en-GB", {
-            hour: "2-digit",
-            minute: "2-digit",
-          }),
+      timeSlot: extractedSlot || "Flexible Timing",
     };
   }
 
@@ -134,6 +143,10 @@ export function mapJobToRequest(
   extras: BackendJobExtras = {},
 ): JobRequest {
   const preferred = job.preferredVisitTime ?? undefined;
+  const isUrgent =
+    job.urgency === "EMERGENCY" ||
+    job.urgency === "HIGH" ||
+    (job as any).urgency === "URGENT";
   return {
     id: job.id,
     title: job.title,
@@ -153,12 +166,16 @@ export function mapJobToRequest(
     },
     postedAt: job.createdAt,
     postedAgo: timeAgo(job.createdAt),
-    preferredVisitWindow: visitWindow(preferred, job.createdAt),
+    preferredVisitWindow: visitWindow(preferred, job.createdAt, isUrgent),
     customerSuggestedPrice: job.suggestedVisitCharge ?? job.lockedVisitCharge ?? undefined,
     photos: job.images ?? [],
     customer: customerFrom(job),
     totalOffers: 0,
     status: toDisplayStatus(job.status),
     visitCharge: job.lockedVisitCharge ?? job.suggestedVisitCharge ?? undefined,
+    repairCharge:
+      (job as any).repairCharge ??
+      (job as any).repairEstimate ??
+      undefined,
   };
 }

@@ -57,49 +57,27 @@ function mapLedgerEntry(entry: BackendLedgerEntry): WalletTransaction {
 
 export async function getWalletSummary(): Promise<WalletSummary> {
   if (!getAccessToken()) {
-    return {
-      currentBalance: 0,
-      totalTopUps: 0,
-      totalDeductions: 0,
-      totalTransactions: 0,
-    };
+    throw new Error("Authentication required to view wallet summary");
   }
-  try {
-    const snapshot = await http.get<BackendWalletSnapshot>("/wallet/balance");
-    const earnings = await http.get<WorkerEarningsData>("/workers/me/earnings").catch(() => null);
-    return {
-      currentBalance: Number(snapshot.balance),
-      totalTopUps: earnings ? Number(earnings.topupsCredited ?? 0) : 0,
-      totalDeductions: earnings ? Number(earnings.commissionsPaid + earnings.commissionsHeld) : Number(snapshot.heldBalance),
-      totalTransactions: earnings ? earnings.records.length : 0,
-    };
-  } catch (err: any) {
-    if (err?.status === 401) {
-      return {
-        currentBalance: 0,
-        totalTopUps: 0,
-        totalDeductions: 0,
-        totalTransactions: 0,
-      };
-    }
-    throw err;
-  }
+  const snapshot = await http.get<BackendWalletSnapshot>("/wallet/balance");
+  const earnings = await http.get<WorkerEarningsData>("/workers/me/earnings").catch(() => null);
+  return {
+    currentBalance: Number(snapshot.balance),
+    totalTopUps: earnings ? Number(earnings.topupsCredited ?? 0) : 0,
+    totalDeductions: earnings ? Number(earnings.commissionsPaid + earnings.commissionsHeld) : Number(snapshot.heldBalance),
+    totalTransactions: earnings ? earnings.records.length : 0,
+  };
 }
 
 export async function getWalletTransactions(): Promise<WalletTransaction[]> {
   if (!getAccessToken()) {
-    return [];
+    throw new Error("Authentication required to view wallet transactions");
   }
-  try {
-    const res = await http.get<BackendPage<BackendLedgerEntry> | BackendLedgerEntry[]>("/wallet/ledger");
-    const items = Array.isArray(res) ? res : res.items;
-    return (items ?? []).map(mapLedgerEntry);
-  } catch (err: any) {
-    if (err?.status === 401) {
-      return [];
-    }
-    throw err;
-  }
+  const res = await http.get<BackendPage<BackendLedgerEntry> | BackendLedgerEntry[]>("/wallet/ledger");
+  const items = Array.isArray(res)
+    ? res
+    : (res as any)?.items ?? (res as any)?.data ?? [];
+  return (items ?? []).map(mapLedgerEntry);
 }
 
 export interface WorkerEarningRecordDto {
@@ -132,40 +110,9 @@ export interface WorkerEarningsData {
 
 export async function getWorkerEarnings(): Promise<WorkerEarningsData> {
   if (!getAccessToken()) {
-    return {
-      grossEarnings: 0,
-      commissionsPaid: 0,
-      commissionsHeld: 0,
-      commissionsReversed: 0,
-      netEarnings: 0,
-      topupsCredited: 0,
-      balance: 0,
-      heldBalance: 0,
-      totalBalance: 0,
-      completedJobsCount: 0,
-      records: [],
-    };
+    throw new Error("Authentication required to view worker earnings");
   }
-  try {
-    return await http.get<WorkerEarningsData>("/workers/me/earnings");
-  } catch (err: any) {
-    if (err?.status === 401) {
-      return {
-        grossEarnings: 0,
-        commissionsPaid: 0,
-        commissionsHeld: 0,
-        commissionsReversed: 0,
-        netEarnings: 0,
-        topupsCredited: 0,
-        balance: 0,
-        heldBalance: 0,
-        totalBalance: 0,
-        completedJobsCount: 0,
-        records: [],
-      };
-    }
-    throw err;
-  }
+  return await http.get<WorkerEarningsData>("/workers/me/earnings");
 }
 
 export const queryKeys = {

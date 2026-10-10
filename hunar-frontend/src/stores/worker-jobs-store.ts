@@ -73,6 +73,23 @@ function initWorkerSocketListeners() {
             : j
         ),
       });
+    } else if (newStatus === "VISIT_COMPLETED") {
+      patch({
+        jobs: globalState.jobs.map((j) =>
+          j.id === jobId
+            ? {
+                ...j,
+                status:
+                  j.status === "inspecting" ||
+                  j.status === "inspection_submitted" ||
+                  j.status.startsWith("repair_") ||
+                  j.status === "completed"
+                    ? j.status
+                    : ("inspecting" as const),
+              }
+            : j
+        ),
+      });
     }
   };
 
@@ -128,7 +145,7 @@ function initWorkerSocketListeners() {
 const defaultFilters: JobFeedFilters = {
   category: "all",
   maxDistanceKm: 15,
-  area: "Peshawar",
+  area: "all",
   sortBy: "fresh_first",
   onlyWithoutOffers: false,
   hideFarJobs: false,
@@ -143,7 +160,7 @@ let globalState: WorkerState = {
   walletBalance: 0,
   walletHold: 0,
   workerSkills: [],
-  workerArea: "Peshawar Urban Sector",
+  workerArea: "",
   hydrated: false,
 };
 
@@ -185,13 +202,18 @@ export const workerStore = {
       for (const job of [...nearby, ...active, ...history]) {
         if (seen.has(job.id)) continue;
         seen.add(job.id);
+        if ((job as any).nextVisit?.id) {
+          visitIdByJob.set(job.id, (job as any).nextVisit.id);
+        }
         jobs.push(mapJobToRequest(job));
       }
 
       const offersMap: Record<string, VisitOffer> = {};
       for (const offer of offers) {
         offersMap[offer.jobId] = offer;
-        if (offer.jobId) visitIdByJob.set(offer.jobId, "");
+        if (offer.jobId && !visitIdByJob.get(offer.jobId)) {
+          visitIdByJob.set(offer.jobId, (offer as any).visitId || "");
+        }
       }
 
       const workerSkills = profile?.skills ?? [];
@@ -415,6 +437,10 @@ export const workerStore = {
 
   // Task 8a: Start Visit -> visit_in_progress
   startVisit(jobId: string) {
+    const current = globalState.jobs.find((j) => j.id === jobId);
+    if (current && current.status === "visit_in_progress") {
+      return;
+    }
     const visitId = visitIdByJob.get(jobId);
     const url = visitId ? `/visits/${visitId}/start` : `/jobs/${jobId}/start`;
     http.put(url).catch((err) => {
@@ -436,8 +462,13 @@ export const workerStore = {
     error?: string;
   }> {
     const job = globalState.jobs.find((j) => j.id === jobId);
-    const offer = globalState.offers[jobId];
-    const visitCharge = offer?.agreedVisitCharge ?? offer?.visitCharge ?? job?.customerSuggestedPrice ?? 500;
+    const visitCharge =
+      (job as any)?.agreedVisitCharge ??
+      job?.visitCharge ??
+      (job as any)?.lockedVisitCharge ??
+      job?.customerSuggestedPrice ??
+      (job as any)?.suggestedVisitCharge ??
+      0;
     const requiredHold = Math.round(visitCharge * 0.1);
 
     if (globalState.walletBalance < requiredHold) {
@@ -473,18 +504,40 @@ export const workerStore = {
         }>(fallbackUrl);
       }
 
-      if (res?.otp) {
-        if (res.visitId) {
-          visitIdByJob.set(jobId, res.visitId);
+      const otp = (res as any)?.otp || (res as any)?.data?.otp;
+      const visitIdRet = (res as any)?.visitId || (res as any)?.data?.visitId;
+      const arrivedAtRet = (res as any)?.arrivedAt || (res as any)?.data?.arrivedAt || Date.now();
+      const isSuccess = (res as any)?.success ?? Boolean(otp);
+
+      if (otp || isSuccess) {
+        if (visitIdRet) {
+          visitIdByJob.set(jobId, visitIdRet);
         }
         patch({
           walletHold: globalState.walletHold + requiredHold,
+          jobs: globalState.jobs.map((j) =>
+            j.id === jobId
+              ? {
+                  ...j,
+                  status:
+                    j.status === "visit_completed" ||
+                    j.status === "inspecting" ||
+                    j.status === "inspection_submitted" ||
+                    j.status.startsWith("repair_") ||
+                    j.status === "completed"
+                      ? j.status
+                      : ("visit_in_progress" as const),
+                  arrivedAt: arrivedAtRet,
+                  activeArrivalOtp: otp,
+                }
+              : j
+          ),
         });
         return {
           success: true,
-          otp: res.otp,
-          visitId: res.visitId,
-          arrivedAt: res.arrivedAt,
+          otp,
+          visitId: visitIdRet,
+          arrivedAt: arrivedAtRet,
         };
       }
       return { success: false, error: "No OTP received from backend" };
@@ -497,23 +550,29 @@ export const workerStore = {
   // Task 8b: I've Arrived -> visit_completed
   arriveAtSite(jobId: string): { success: boolean; error?: string; requiredHold?: number } {
     const job = globalState.jobs.find((j) => j.id === jobId);
-    const offer = globalState.offers[jobId];
-    const visitCharge = offer?.agreedVisitCharge ?? offer?.visitCharge ?? job?.customerSuggestedPrice ?? 500;
+    const visitCharge =
+      (job as any)?.agreedVisitCharge ??
+      job?.visitCharge ??
+      (job as any)?.lockedVisitCharge ??
+      job?.customerSuggestedPrice ??
+      (job as any)?.suggestedVisitCharge ??
+      0;
     const requiredHold = Math.round(visitCharge * 0.1); // 10% platform commission
 
-    // Check wallet balance
-    if (globalState.walletBalance < requiredHold) {
-      return {
-        success: false,
-        error: "Insufficient wallet balance. Please top up before arriving.",
-        requiredHold,
-      };
-    }
-
     patch({
-      walletHold: globalState.walletHold + requiredHold,
       jobs: globalState.jobs.map((j) =>
-        j.id === jobId ? { ...j, status: "visit_completed" as const } : j
+        j.id === jobId
+          ? {
+              ...j,
+              status:
+                j.status === "inspecting" ||
+                j.status === "inspection_submitted" ||
+                j.status.startsWith("repair_") ||
+                j.status === "completed"
+                  ? j.status
+                  : ("visit_completed" as const),
+            }
+          : j
       ),
     });
     return { success: true, requiredHold };
@@ -732,7 +791,7 @@ export const workerStore = {
   completeJob(jobId: string, repairCharge: number = 1500) {
     const job = globalState.jobs.find((j) => j.id === jobId);
     const offer = globalState.offers[jobId];
-    const visitFee = offer?.agreedVisitCharge ?? offer?.visitCharge ?? job?.visitCharge ?? 300;
+    const visitFee = offer?.agreedVisitCharge ?? offer?.visitCharge ?? job?.visitCharge ?? (job as any)?.suggestedVisitCharge ?? 0;
     const isDeclined = job?.status === "repair_declined" || repairCharge === 0;
     const finalRepairCharge = isDeclined ? 0 : repairCharge;
     const gross = visitFee + finalRepairCharge;
@@ -751,7 +810,7 @@ export const workerStore = {
               workerNetEarnings: net,
               completedAt: new Date().toISOString(),
               invoiceNumber: `INV-${jobId}`,
-              warrantyDays: isDeclined ? 0 : 30,
+              warrantyDays: isDeclined ? 0 : (j.warrantyDays ?? 5),
             }
           : j
       ),

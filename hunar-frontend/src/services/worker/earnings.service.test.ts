@@ -8,6 +8,7 @@ jest.mock("@/lib/api-client", () => ({
   http: {
     get: jest.fn(),
   },
+  getAccessToken: jest.fn(() => "test-token"),
 }));
 
 jest.mock("@/lib/data-source", () => ({
