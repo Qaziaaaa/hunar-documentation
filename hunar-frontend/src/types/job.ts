@@ -68,6 +68,10 @@ export interface JobCustomer {
   id: string;
   name?: string;
   avatarUrl?: string;
+  rating?: number;
+  reviewCount?: number;
+  totalOrders?: number;
+  isVerified?: boolean;
 }
 
 export interface CustomerSummary {
@@ -126,6 +130,8 @@ export interface Job {
   updatedAt: string;
   distanceKm?: number;
   offerCount?: number;
+  repairEstimate?: number;
+  repairCharge?: number;
 }
 
 export interface JobRequest {

@@ -87,6 +87,7 @@ export interface CustomerJob {
   offers: WorkerOffer[];
   selectedOffer?: WorkerOffer;
   securityPin?: string; // 4-digit doorstep code, e.g. "6492"
+  suggestedVisitCharge?: number;
 }
 
 export interface JobEvidencePhoto {
