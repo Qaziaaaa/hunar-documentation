@@ -123,6 +123,9 @@ export function useWorkerWizard() {
           certificateName: certDoc?.fileName || prev.certificateName,
         };
       });
+    }).catch((err) => {
+      // Sync is best-effort: local draft stays authoritative if the server is unreachable
+      console.warn("[useWorkerWizard] server profile sync skipped:", err);
     });
   }, []);
 

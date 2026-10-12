@@ -1,4 +1,5 @@
 import { http, getStoredUser, API_BASE_URL } from "@/lib/api-client";
+import { unwrapRows } from "@/lib/unwrap-rows";
 import { isMockMode } from "@/lib/data-source";
 
 export interface ChatMessage {
@@ -77,14 +78,8 @@ export function normalizeChatMessage(raw: any): ChatMessage {
  * List all active conversations for the authenticated user
  */
 export async function listConversations(): Promise<ChatConversation[]> {
-  try {
-    const res = await http.get<ChatConversation[]>("/chat/conversations");
-    const rawList = Array.isArray(res) ? res : (res as any)?.items ?? [];
-    return rawList;
-  } catch (err) {
-    console.warn("[listConversations] Backend offline, using local conversations:", err);
-    return [];
-  }
+  const res = await http.get<ChatConversation[]>("/chat/conversations");
+  return unwrapRows<ChatConversation>(res);
 }
 
 /**
@@ -93,15 +88,10 @@ export async function listConversations(): Promise<ChatConversation[]> {
 export async function getConversationMessages(
   conversationId: string
 ): Promise<ChatMessage[]> {
-  try {
-    const res = await http.get<any>(`/chat/${conversationId}/messages`);
-    const rawList: any[] = Array.isArray(res) ? res : (res?.items ?? []);
-    // Backend orders desc by default, reverse to chronological ascending order
-    return rawList.map(normalizeChatMessage).reverse();
-  } catch (err) {
-    console.warn(`[getConversationMessages] Backend offline for ${conversationId}:`, err);
-    return [];
-  }
+  const res = await http.get<any>(`/chat/${conversationId}/messages`);
+  const rawList: any[] = unwrapRows(res);
+  // Backend orders desc by default, reverse to chronological ascending order
+  return rawList.map(normalizeChatMessage).reverse();
 }
 
 /**
@@ -110,14 +100,9 @@ export async function getConversationMessages(
 export async function getMessagesByJob(
   jobId: string
 ): Promise<ChatMessage[]> {
-  try {
-    const res = await http.get<any>(`/chat/${jobId}`);
-    const rawList: any[] = Array.isArray(res) ? res : (res?.items ?? []);
-    return rawList.map(normalizeChatMessage).reverse();
-  } catch (err) {
-    console.warn(`[getMessagesByJob] Backend error for job ${jobId}:`, err);
-    return [];
-  }
+  const res = await http.get<any>(`/chat/${jobId}`);
+  const rawList: any[] = unwrapRows(res);
+  return rawList.map(normalizeChatMessage).reverse();
 }
 
 /**

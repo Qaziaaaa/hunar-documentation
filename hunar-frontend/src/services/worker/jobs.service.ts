@@ -1,5 +1,8 @@
 import { http, getAccessToken } from "@/lib/api-client";
+import { unwrapRows } from "@/lib/unwrap-rows";
 import type { Job, JobStatus, JobUrgency } from "@/types/job";
+import { isMockMode, simulateLatency } from "@/lib/data-source";
+import { mockJobs } from "@/mocks/jobs.mock";
 
 const NEARBY_STATUSES = ["OPEN", "OFFERS_RECEIVED", "RECEIVING_OFFERS"];
 const HISTORY_STATUSES = [
@@ -116,9 +119,7 @@ export async function listWorkerJobs(): Promise<Job[]> {
   }
   try {
     const res = await http.get<any>("/workers/me/jobs/active");
-    const items: BackendJobRow[] = Array.isArray(res)
-      ? res
-      : (res as any)?.data ?? (res as any)?.items ?? [];
+    const items: BackendJobRow[] = unwrapRows(res);
     return items.map(mapBackendJob);
   } catch (err: any) {
     if (err?.status === 401) return [];
@@ -132,9 +133,7 @@ export async function listWorkerHistoryJobs(): Promise<Job[]> {
   }
   try {
     const res = await http.get<any>("/workers/me/jobs/history");
-    const items: BackendJobRow[] = Array.isArray(res)
-      ? res
-      : (res as any)?.data ?? (res as any)?.items ?? [];
+    const items: BackendJobRow[] = unwrapRows(res);
     return items.map(mapBackendJob);
   } catch (err: any) {
     if (err?.status === 401) return [];
@@ -150,22 +149,39 @@ export async function listNearbyJobs(location?: {
   if (!getAccessToken()) {
     return [];
   }
-  const resolved = location ?? { lat: 33.98, lng: 71.43, radiusKm: 25 };
-  const params = new URLSearchParams();
-  params.set("lat", String(resolved.lat));
-  params.set("lng", String(resolved.lng));
-  params.set("radiusKm", String(resolved.radiusKm ?? 25));
-  const res = await http.get<BackendPage<BackendJobRow> | BackendJobRow[]>(
-    `/jobs/available?${params.toString()}`,
-  );
-  const items: BackendJobRow[] = Array.isArray(res)
-    ? res
-    : (res as any)?.items ?? (res as any)?.data ?? [];
-  return (items ?? []).map(mapBackendJob);
+  let list: Job[] = [];
+  if (isMockMode()) {
+    list = mockJobs.filter((job) => isNearbyJob(job.status));
+  } else {
+    const resolved = location ?? { lat: 33.98, lng: 71.43, radiusKm: 25 };
+    const params = new URLSearchParams();
+    params.set("lat", String(resolved.lat));
+    params.set("lng", String(resolved.lng));
+    params.set("radiusKm", String(resolved.radiusKm ?? 25));
+    const res = await http.get<BackendPage<BackendJobRow> | BackendJobRow[]>(
+      `/jobs/available?${params.toString()}`,
+    );
+    const items: BackendJobRow[] = unwrapRows(res);
+    list = (items ?? []).map(mapBackendJob);
+  }
+
+  return isMockMode() ? simulateLatency(list) : list;
 }
 
 export async function getWorkerJob(jobId: string): Promise<Job> {
-  return mapBackendJob(await http.get<BackendJobRow>(`/jobs/${jobId}`));
+  if (isMockMode()) {
+    const job = mockJobs.find((j) => j.id === jobId);
+    if (!job) throw new Error(`JOB_NOT_FOUND:${jobId}`);
+    return simulateLatency({ ...job });
+  }
+
+  try {
+    return mapBackendJob(await http.get<BackendJobRow>(`/jobs/${jobId}`));
+  } catch (e) {
+    const fallback = mockJobs.find((j) => j.id === jobId);
+    if (fallback) return fallback;
+    throw e;
+  }
 }
 
 export const queryKeys = {

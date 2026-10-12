@@ -10,11 +10,14 @@ const FALLBACK_IMAGE = "";
  */
 export async function getCustomerVisits(): Promise<ScheduledVisit[]> {
   const res = await http.get<any>("/visits/my");
+  // Paginated responses arrive as { data, meta }; a bare array otherwise.
   const rows = Array.isArray(res)
     ? res
-    : res && Array.isArray((res as { items?: unknown[] }).items)
-      ? (res as { items: unknown[] }).items
-      : null;
+    : Array.isArray(res?.data)
+      ? res.data
+      : Array.isArray(res?.items)
+        ? res.items
+        : null;
   if (!rows) {
     throw new Error("INVALID_VISITS_RESPONSE");
   }

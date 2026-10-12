@@ -136,7 +136,6 @@ export function getLocallyCreatedJobs(): any[] {
   // Server is authoritative source of truth
   return [];
 }
-
 /**
  * Upload a job photo to the backend S3/MinIO bucket.
  */
@@ -286,6 +285,25 @@ export async function createJob(data: PostJobData): Promise<CreatedJobResponse> 
         : buildPreferredVisitTime(data.preferredDate, data.preferredTimeSlot),
   };
 
-  const created = await http.post<CreatedJobResponse>("/jobs", payload);
-  return created;
+  if (isMockMode()) {
+    return {
+      id: generateMockOrderCode(),
+      customerId: "cust-current-user",
+      categoryId,
+      title: payload.title,
+      description: payload.description,
+      status: "OPEN",
+      address: payload.address,
+      city: payload.city,
+      area: payload.area,
+      suggestedVisitCharge: payload.suggestedVisitCharge,
+      createdAt: new Date().toISOString(),
+    };
+  }
+
+  // B9: no more silent local fallback. A failed POST previously produced a
+  // phantom job with a 4-digit id (never on the backend, permanently merged
+  // into every list) while the wizard celebrated success. Errors now
+  // propagate; the wizard already surfaces them.
+  return http.post<CreatedJobResponse>("/jobs", payload);
 }

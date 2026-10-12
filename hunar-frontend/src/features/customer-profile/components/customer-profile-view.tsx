@@ -71,7 +71,12 @@ export function CustomerProfileView() {
   const isUrdu = locale === "ur";
   const t = useTranslations("CustomerPortal.Profile");
 
-  const [profile, setProfile] = useState<CustomerProfileData>(initialEmptyProfile);
+  const [profile, setProfile] = useState<CustomerProfileData>(() => ({
+    ...initialEmptyProfile,
+    // Hydrate saved addresses at init (window-guarded; addresses live on a
+    // non-default tab so SSR/first-paint output is unaffected).
+    savedAddresses: getSavedAddresses(),
+  }));
   const [activeTab, setActiveTab] = useState<
     "personal" | "addresses" | "notifications" | "security"
   >("personal");
@@ -97,7 +102,7 @@ export function CustomerProfileView() {
         }
       })
       .catch((err) => {
-        console.warn("Failed to load customer profile:", err);
+        console.warn("[CustomerProfileView] profile fetch failed:", err);
       });
   }, []);
 

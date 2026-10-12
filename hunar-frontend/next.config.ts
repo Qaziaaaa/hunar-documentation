@@ -3,6 +3,17 @@ import createNextIntlPlugin from "next-intl/plugin";
 
 const withNextIntl = createNextIntlPlugin();
 
+function apiOrigin(): URL {
+  const fallback = "http://localhost:4000";
+  try {
+    return new URL(process.env.NEXT_PUBLIC_API_URL ?? fallback);
+  } catch {
+    return new URL(fallback);
+  }
+}
+
+const origin = apiOrigin();
+
 const nextConfig: NextConfig = {
   images: {
     localPatterns: [
@@ -11,18 +22,6 @@ const nextConfig: NextConfig = {
       },
     ],
     remotePatterns: [
-      {
-        protocol: "http",
-        hostname: "localhost",
-        port: "4000",
-        pathname: "/**",
-      },
-      {
-        protocol: "http",
-        hostname: "127.0.0.1",
-        port: "4000",
-        pathname: "/**",
-      },
       {
         protocol: "http",
         hostname: "localhost",
@@ -38,7 +37,14 @@ const nextConfig: NextConfig = {
         hostname: "images.unsplash.com",
         pathname: "/**",
       },
+      {
+        protocol: origin.protocol.replace(":", "") as "http" | "https",
+        hostname: origin.hostname,
+        port: origin.port,
+        pathname: "/uploads/**",
+      },
     ],
+    dangerouslyAllowLocalIP: true,
   },
   async rewrites() {
     return [

@@ -19,6 +19,7 @@ import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Link, useRouter } from "@/i18n/navigation";
+import { useSearchParams } from "next/navigation";
 import { setTokens } from "@/lib/api-client";
 import { customerLogin } from "../api/auth-api";
 import { getErrorMessage } from "../lib/error";
@@ -42,9 +43,13 @@ export function CustomerSignInForm() {
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
 
+  const searchParams = useSearchParams();
+  const redirect = searchParams.get("redirect") || "/customer/dashboard";
+
   const {
     register,
     handleSubmit,
+    setValue,
     formState: { errors },
   } = useForm<SignInValues>({
     resolver: zodResolver(signInSchema),
@@ -61,7 +66,7 @@ export function CustomerSignInForm() {
     try {
       const response = await customerLogin(normalized, values.password);
       setTokens(response.accessToken, response.refreshToken, response.user);
-      router.push("/customer/dashboard");
+      router.push(redirect);
     } catch (error) {
       setSubmitError(getErrorMessage(error));
     } finally {
@@ -186,12 +191,26 @@ export function CustomerSignInForm() {
         {/* Test credentials hint for development */}
         {isMockMode() && (
           <div className="flex items-start gap-1.5 rounded-xl bg-teal-100 px-3 py-2 text-xs font-medium text-teal-800">
-            <span className="mt-0.5 size-3.5 shrink-0">ðŸ§ª</span>
+            <span className="mt-0.5 size-3.5 shrink-0">🧪</span>
             <span>
               <strong>Test login: </strong>any phone + password (6+ chars)
             </span>
           </div>
         )}
+
+        {/* Quick test credentials button */}
+        <button
+          type="button"
+          onClick={() => {
+            setValue("phone", "03120000002", { shouldValidate: true });
+            setValue("password", "customer123", { shouldValidate: true });
+          }}
+          className="w-full text-left flex items-center justify-between rounded-xl bg-teal/5 hover:bg-teal/10 border border-teal/20 px-3.5 py-2 text-xs font-semibold text-teal transition cursor-pointer"
+        >
+          <span>🧪 Test Customer: <strong>03120000002</strong> / <strong>customer123</strong></span>
+          <span className="text-[11px] underline">Use</span>
+        </button>
+
 
         <div className="flex items-center gap-1.5 rounded-xl bg-slate-50 px-3 py-2 text-[11px] text-muted-foreground">
           <ShieldCheck className="size-3.5 text-teal shrink-0" />

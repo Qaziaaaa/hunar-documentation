@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { useLocale } from "next-intl";
 import { formatJobDate } from "@/lib/format";
+import { Link } from "@/i18n/navigation";
 import { CATEGORY_OPTIONS } from "../data/categories";
 import type { PostJobData, PostJobStep } from "../types";
 import { VoiceNoteBubblePlayer } from "./voice-note-recorder";
@@ -253,9 +254,23 @@ export function Step4ReviewPost({
 
       {/* Submit Error */}
       {submitError && (
-        <div className="mt-3 flex items-start justify-center gap-1.5 rounded-xl bg-red-50 border border-red-200 px-3 py-2.5 text-center text-xs font-medium text-red-700">
-          <AlertCircle className="size-4 shrink-0 mt-0.5" />
-          <span>{submitError}</span>
+        <div className="mt-3 flex flex-col items-center justify-center gap-2 rounded-xl bg-red-50 border border-red-200 p-3.5 text-center text-xs font-medium text-red-700">
+          <div className="flex items-center gap-1.5">
+            <AlertCircle className="size-4 shrink-0 text-red-600" />
+            <span>{submitError}</span>
+          </div>
+          {(submitError.toLowerCase().includes("sign in") ||
+            submitError.toLowerCase().includes("customer") ||
+            submitError.toLowerCase().includes("لاگ ان") ||
+            submitError.toLowerCase().includes("کسٹمر")) && (
+            <Link
+              href="/customer/sign-in?redirect=/customer/post-job"
+              className="inline-flex items-center gap-1 font-bold text-teal hover:underline text-xs bg-white px-3 py-1.5 rounded-lg border border-teal/20 shadow-xs transition"
+            >
+              <span>{isUrdu ? "کسٹمر اکاؤنٹ میں لاگ ان کریں" : "Sign In as Customer"}</span>
+              <ArrowRight className="size-3.5 rtl:rotate-180" />
+            </Link>
+          )}
         </div>
       )}
 

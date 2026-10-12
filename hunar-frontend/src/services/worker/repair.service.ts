@@ -1,4 +1,5 @@
 import { http } from "@/lib/api-client";
+import { unwrapRows } from "@/lib/unwrap-rows";
 import type { PageResult } from "@/types/pagination";
 import type { Repair } from "@/types/repair";
 import type { Job, Visit } from "@/types/job";
@@ -19,9 +20,11 @@ export async function loadRepairContext(
   jobId: string,
 ): Promise<RepairContext> {
   const job = await http.get<Job>(`/jobs/${jobId}`);
-  const page = await http.get<PageResult<Repair>>(`/repairs/my?limit=100`);
+  const page = await http.get<PageResult<Repair> | { data: Repair[] }>(
+    `/repairs/my?limit=100`,
+  );
   const repair =
-    page.items.find((r) => r.jobId === jobId) ??
+    unwrapRows<Repair>(page).find((r) => r.jobId === jobId) ??
     errorRepairNotFound(jobId);
   let visit: Visit | undefined;
   try {
@@ -33,10 +36,10 @@ export async function loadRepairContext(
 }
 
 export async function listMyRepairs(query: RepairQuery = {}): Promise<Repair[]> {
-  const page = await http.get<PageResult<Repair>>(
+  const page = await http.get<PageResult<Repair> | { data: Repair[] }>(
     `/repairs/my?limit=${query.limit ?? 50}`,
   );
-  return page?.items ?? [];
+  return unwrapRows<Repair>(page);
 }
 
 export async function startRepair(repairId: string): Promise<Repair> {
