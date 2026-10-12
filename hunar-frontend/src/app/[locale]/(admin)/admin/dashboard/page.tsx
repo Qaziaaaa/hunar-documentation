@@ -20,7 +20,7 @@ import { Link } from "@/i18n/navigation";
 import { FileCheck2, ShieldCheck, Users } from "lucide-react";
 
 export const metadata = {
-  title: "Admin Dashboard — HUNAR Operations",
+  title: "Admin Dashboard — WorkerFIX Operations",
   description: "Live marketplace overview, analytics, financial ledger, infrastructure health, and worker verification management",
 };
 

@@ -17,7 +17,6 @@ import { OTP_RULES } from "../api/auth-api";
 import { OtpInput } from "./otp-input";
 import { formatCountdown, useCountdown } from "../hooks/use-countdown";
 import { otpFormSchema, type OtpFormValues } from "../schemas/signup";
-import { isMockMode } from "@/lib/data-source";
 
 export function OtpStep({
   phone,
@@ -106,17 +105,8 @@ export function OtpStep({
             </p>
           ) : null}
 
-          {/* Test OTP hint for development */}
-          {isMockMode() && (
-            <div className="mt-3 p-3 rounded-xl bg-teal-100 text-teal-800 text-xs font-mono text-center animate-pulse">
-              <span className="font-semibold">Test OTP: </span>
-              <span className="bg-teal-200 px-2 py-0.5 rounded">123456</span>
-              <span className="ml-2 text-[10px]">(any 6 digits works in mock mode)</span>
-            </div>
-          )}
-
           {/* Live OTP from the API (no SMS gateway connected yet) */}
-          {!isMockMode() && devOtp ? (
+          {devOtp ? (
             <div className="mt-3 p-3 rounded-xl bg-teal-100 text-teal-800 text-xs font-mono text-center">
               <span className="font-semibold">Your OTP: </span>
               <span className="bg-teal-200 px-2 py-0.5 rounded">{devOtp}</span>

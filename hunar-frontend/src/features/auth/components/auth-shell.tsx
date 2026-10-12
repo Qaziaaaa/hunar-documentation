@@ -53,10 +53,10 @@ export function AuthShell({
             <div className="relative z-10">
               <div className="flex items-center gap-3">
                 <div className="flex size-11 items-center justify-center rounded-xl bg-teal text-xl font-black text-white shadow-lg shadow-teal/25">
-                  H
+                  W
                 </div>
                 <div>
-                  <p className="text-xl font-extrabold tracking-tight">HUNAR</p>
+                  <p className="text-xl font-extrabold tracking-tight">WorkerFIX</p>
                   <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-teal-300">
                     Operations &amp; Admin Portal
                   </p>

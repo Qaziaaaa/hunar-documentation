@@ -18,7 +18,6 @@ import type {
   WithdrawalRequest,
 } from "@/types/admin";
 import { getLocallyCreatedJobs } from "@/features/post-job/api/post-job-api";
-import { MOCK_WORKERS, MOCK_CUSTOMERS } from "@/mocks/admin.mock";
 
 interface BackendCategoryRow {
   id: string;
