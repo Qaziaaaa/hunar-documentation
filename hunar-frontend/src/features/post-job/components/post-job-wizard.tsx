@@ -93,9 +93,9 @@ export function PostJobWizard() {
             : initialCategoryMatch.subCategories[0] || ""),
         title:
           subCategoryParam ||
-          (saved?.title ? saved.title : initialCategoryMatch.defaultTitle || ""),
+          (saved?.title ? saved.title : ""),
         description:
-          saved?.description || initialCategoryMatch.defaultDescription || "",
+          saved?.description || "",
         suggestedVisitFee:
           saved?.suggestedVisitFee || initialCategoryMatch.suggestedFee || 0,
       };
@@ -128,8 +128,8 @@ export function PostJobWizard() {
           ...prev,
           category: match.id,
           subCategory: subCategoryParam || match.subCategories[0] || "",
-          title: subCategoryParam || prev.title || match.defaultTitle || "",
-          description: prev.description || match.defaultDescription || "",
+          title: subCategoryParam || prev.title || "",
+          description: prev.description || "",
           suggestedVisitFee: match.suggestedFee || 0,
         }));
         setCurrentStep(2);

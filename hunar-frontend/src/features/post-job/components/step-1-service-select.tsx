@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ArrowRight, Check, Search, Sparkles } from "lucide-react";
 import { useLocale } from "next-intl";
 import {
@@ -9,6 +9,7 @@ import {
   POPULAR_SEARCH_TAGS,
 } from "../data/categories";
 import type { PostJobData, ServiceCategory } from "../types";
+import { fetchServiceCategories, BackendCategory } from "../api/post-job-api";
 
 interface Step1ServiceSelectProps {
   data: PostJobData;
@@ -26,21 +27,54 @@ export function Step1ServiceSelect({
   const locale = useLocale();
   const isUrdu = locale === "ur";
   const [searchQuery, setSearchQuery] = useState(initialSearch);
+  const [backendCategories, setBackendCategories] = useState<BackendCategory[]>([]);
+
+  useEffect(() => {
+    let mounted = true;
+    fetchServiceCategories().then((cats) => {
+      if (mounted && cats.length > 0) {
+        setBackendCategories(cats);
+      }
+    });
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  // Merge live database visit fees into category options
+  const resolvedCategoryOptions = useMemo(() => {
+    if (!backendCategories.length) return CATEGORY_OPTIONS;
+    return CATEGORY_OPTIONS.map((cat) => {
+      const live = backendCategories.find(
+        (b) =>
+          b.id.toLowerCase() === cat.id.toLowerCase() ||
+          b.name.toLowerCase().includes(cat.id.toLowerCase()) ||
+          cat.name.toLowerCase().includes(b.name.toLowerCase())
+      );
+      if (live && live.defaultVisitCharge != null && live.defaultVisitCharge > 0) {
+        return {
+          ...cat,
+          suggestedFee: live.defaultVisitCharge,
+        };
+      }
+      return cat;
+    });
+  }, [backendCategories]);
 
   // Filtered categories based on search
   const filteredCategories = useMemo(() => {
-    if (!searchQuery.trim()) return CATEGORY_OPTIONS;
+    if (!searchQuery.trim()) return resolvedCategoryOptions;
     const q = searchQuery.toLowerCase();
-    return CATEGORY_OPTIONS.filter(
+    return resolvedCategoryOptions.filter(
       (cat) =>
         cat.name.toLowerCase().includes(q) ||
         (isUrdu && cat.urduName.includes(q)) ||
         cat.subtitle.toLowerCase().includes(q) ||
         cat.subCategories.some((sub) => sub.toLowerCase().includes(q))
     );
-  }, [searchQuery, isUrdu]);
+  }, [searchQuery, isUrdu, resolvedCategoryOptions]);
 
-  const selectedCategory = CATEGORY_OPTIONS.find(
+  const selectedCategory = resolvedCategoryOptions.find(
     (c) => c.id === data.category
   );
 
@@ -51,9 +85,8 @@ export function Step1ServiceSelect({
       subCategory: isNew
         ? cat.subCategories[0] || ""
         : data.subCategory || cat.subCategories[0] || "",
-      title: isNew && !data.title ? cat.defaultTitle || "" : data.title,
-      description:
-        isNew && !data.description ? cat.defaultDescription || "" : data.description,
+      title: data.title || "",
+      description: data.description || "",
       suggestedVisitFee:
         isNew || !data.suggestedVisitFee
           ? cat.suggestedFee
@@ -62,15 +95,15 @@ export function Step1ServiceSelect({
   };
 
   const handleQuickTagClick = (tag: typeof POPULAR_SEARCH_TAGS[0]) => {
-    const targetCategory = CATEGORY_OPTIONS.find(
+    const targetCategory = resolvedCategoryOptions.find(
       (c) => c.id === tag.category
     );
     if (targetCategory) {
       onChange({
         category: tag.category as ServiceCategory,
         subCategory: tag.subCategory,
-        title: targetCategory.defaultTitle || tag.subCategory,
-        description: targetCategory.defaultDescription || "",
+        title: data.title ? data.title : tag.subCategory,
+        description: data.description || "",
         suggestedVisitFee: targetCategory.suggestedFee,
       });
     }

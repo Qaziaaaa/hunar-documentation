@@ -88,7 +88,7 @@ export function Step3LocationSchedule({
         onChange({
           address: defaultAddr.fullAddress,
           area: defaultAddr.area,
-          city: defaultAddr.city || "Pakistan",
+          city: defaultAddr.city || "Peshawar",
           landmark: defaultAddr.landmark || "",
           latitude: defaultAddr.latitude,
           longitude: defaultAddr.longitude,
@@ -111,7 +111,7 @@ export function Step3LocationSchedule({
     onChange({
       address: addr.fullAddress,
       area: addr.area,
-      city: addr.city || "Pakistan",
+      city: addr.city || "Peshawar",
       landmark: addr.landmark,
       latitude: addr.latitude,
       longitude: addr.longitude,
@@ -240,7 +240,7 @@ export function Step3LocationSchedule({
             longitude: lng,
             area: getHotspotArea(closest),
             landmark: "",
-            city: "Pakistan",
+            city: "Peshawar",
             address: "",
           });
           setSelectedAddressId(null);
@@ -250,9 +250,9 @@ export function Step3LocationSchedule({
             area: "Central District",
             address: "",
             landmark: "",
-            city: "Pakistan",
-            latitude: 33.7215,
-            longitude: 73.0577,
+            city: "Peshawar",
+            latitude: 34.0151,
+            longitude: 71.5249,
           });
           setSelectedAddressId(null);
         },
@@ -274,10 +274,10 @@ export function Step3LocationSchedule({
         area: selectedArea,
         latitude: match.lat,
         longitude: match.lng,
-        city: "Pakistan",
+        city: "Peshawar",
       });
     } else {
-      onChange({ area: selectedArea, city: "Pakistan" });
+      onChange({ area: selectedArea, city: "Peshawar" });
     }
     setSelectedAddressId(null);
   };
@@ -344,7 +344,7 @@ export function Step3LocationSchedule({
         tag: isFirst ? "home" : "other",
         fullAddress: data.address.trim(),
         area: data.area.trim(),
-        city: data.city || "Pakistan",
+        city: data.city || "Peshawar",
         landmark: data.landmark?.trim() || "",
         latitude: typeof data.latitude === "number" ? data.latitude : 34.0151,
         longitude: typeof data.longitude === "number" ? data.longitude : 71.5249,

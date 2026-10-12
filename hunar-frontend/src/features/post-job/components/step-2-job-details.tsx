@@ -143,7 +143,7 @@ export function Step2JobDetails({
                       onClick={() =>
                         onChange({
                           subCategory: sub,
-                          title: sub,
+                          title: !data.title || data.title.trim() === "" ? sub : data.title,
                         })
                       }
                       className={`px-3 py-1 rounded-lg text-xs font-bold whitespace-nowrap shrink-0 transition-all cursor-pointer ${
