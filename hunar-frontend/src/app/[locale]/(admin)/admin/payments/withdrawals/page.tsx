@@ -12,27 +12,61 @@ export default function WithdrawalsPage() {
   const [loading, setLoading] = useState(true);
   const [showFreezeModal, setShowFreezeModal] = useState(false);
   const [freezeWorkerName, setFreezeWorkerName] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
     adminApi
       .listWithdrawals()
       .then(setItems)
-      .catch(() => setItems([]))
-      .finally(() => setLoading(false));
-  }, []);
-
-  const handleApproveWithdrawal = (id: string) => {
-    void adminApi.processWithdrawal(id, "approve").catch(() => undefined);
-    setItems((prev) =>
-      prev.map((item) =>
-        item.id === id ? { ...item, status: "PROCESSED" } : item
+      .catch((err) =>
+        setError(err instanceof Error ? err.message : "Failed to load withdrawals"),
       )
-    );
+      .finally(() => setLoading(false));
+  }, [reloadKey]);
+
+  const handleApproveWithdrawal = async (id: string) => {
+    setActionError(null);
+    try {
+      await adminApi.processWithdrawal(id, "approve");
+      setItems((prev) =>
+        prev.map((item) =>
+          item.id === id ? { ...item, status: "PROCESSED" } : item
+        )
+      );
+    } catch (err) {
+      setActionError(
+        err instanceof Error ? err.message : "Failed to process withdrawal",
+      );
+    }
   };
 
   return (
     <AdminShell>
       <div className="space-y-6">
+        {error && (
+          <div className="flex items-center justify-between gap-3 rounded-2xl border border-red-200 bg-red-50 p-4">
+            <span className="flex items-center gap-2 text-sm font-bold text-red-700">
+              <AlertCircle className="size-4 shrink-0" /> {error}
+            </span>
+            <button
+              type="button"
+              onClick={() => {
+                setError(null);
+                setReloadKey((k) => k + 1);
+              }}
+              className="rounded-xl bg-red-600 px-3 py-1.5 text-xs font-bold text-white transition hover:bg-red-700"
+            >
+              Retry
+            </button>
+          </div>
+        )}
+        {actionError && (
+          <div className="rounded-2xl border border-red-200 bg-red-50 p-4 text-sm font-bold text-red-700">
+            Action failed: {actionError}
+          </div>
+        )}
         <Link href="/admin/payments" className="inline-flex items-center gap-2 text-xs font-bold text-slate-500 hover:text-navy">
           <ArrowLeft className="size-4" /> Back to Payments
         </Link>

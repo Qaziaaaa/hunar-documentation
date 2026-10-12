@@ -9,33 +9,67 @@ import { Check, Settings, ShieldCheck } from "lucide-react";
 
 export default function SettingsPage() {
   const [settings, setSettings] = useState<PlatformSettings | null>(null);
-  const [saved, setSaved] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
+  const [saving, setSaving] = useState(false);
+  const [saveState, setSaveState] = useState<"idle" | "saved" | "error">("idle");
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   useEffect(() => {
     adminApi
       .getSettings()
       .then(setSettings)
-      .catch(() => setSettings(null));
-  }, []);
+      .catch((err) =>
+        setLoadError(err instanceof Error ? err.message : "Failed to load settings"),
+      );
+  }, [reloadKey]);
 
-  const handleSave = (e: React.FormEvent) => {
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!settings) return;
+    if (!settings || saving) return;
     const sanitizedSettings: PlatformSettings = {
       ...settings,
       commissionRate: Number(settings.commissionRate) || 0,
       defaultSearchRadiusKm: Number(settings.defaultSearchRadiusKm) || 0,
     };
-    setSaved(true);
-    void adminApi.saveSettings(sanitizedSettings).catch(() => undefined);
-    setTimeout(() => setSaved(false), 2000);
+    setSaving(true);
+    setSaveState("idle");
+    setSaveError(null);
+    try {
+      await adminApi.saveSettings(sanitizedSettings);
+      setSaveState("saved");
+      setTimeout(() => setSaveState((s) => (s === "saved" ? "idle" : s)), 2000);
+    } catch (err) {
+      setSaveState("error");
+      setSaveError(err instanceof Error ? err.message : "Failed to save settings");
+    } finally {
+      setSaving(false);
+    }
   };
 
   if (!settings) {
     return (
       <AdminShell>
         <div className="mx-auto max-w-3xl space-y-6">
-          <p className="text-sm font-medium text-slate-500">Loading platform settings...</p>
+          {loadError ? (
+            <div className="flex items-center justify-between gap-3 rounded-2xl border border-red-200 bg-red-50 p-4">
+              <span className="text-sm font-bold text-red-700">
+                Settings failed to load: {loadError}
+              </span>
+              <button
+                type="button"
+                onClick={() => {
+                  setLoadError(null);
+                  setReloadKey((k) => k + 1);
+                }}
+                className="rounded-xl bg-red-600 px-3 py-1.5 text-xs font-bold text-white transition hover:bg-red-700"
+              >
+                Retry
+              </button>
+            </div>
+          ) : (
+            <p className="text-sm font-medium text-slate-500">Loading platform settings...</p>
+          )}
         </div>
       </AdminShell>
     );
@@ -116,17 +150,22 @@ export default function SettingsPage() {
           </div>
 
           <div className="flex items-center justify-between border-t border-slate-100 pt-6">
-            {saved ? (
+            {saveState === "saved" ? (
               <span className="flex items-center gap-1.5 text-xs font-bold text-green-600">
                 <Check className="size-4" /> Platform Settings Saved!
+              </span>
+            ) : saveState === "error" ? (
+              <span className="text-xs font-bold text-red-600">
+                Save failed: {saveError}
               </span>
             ) : <span />}
 
             <button
               type="submit"
-              className="rounded-xl bg-navy px-6 py-2.5 text-xs font-bold text-white shadow-md hover:bg-navy/90"
+              disabled={saving}
+              className="rounded-xl bg-navy px-6 py-2.5 text-xs font-bold text-white shadow-md hover:bg-navy/90 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              Save Configuration
+              {saving ? "Saving..." : "Save Configuration"}
             </button>
           </div>
         </form>

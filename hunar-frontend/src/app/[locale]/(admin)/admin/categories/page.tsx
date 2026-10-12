@@ -30,34 +30,48 @@ export default function CategoriesPage() {
   const [isEditingSlabs, setIsEditingSlabs] = useState(false);
   const [savingSlabs, setSavingSlabs] = useState(false);
   const [toastMessage, setToastMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [pageError, setPageError] = useState<string | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
     adminApi
       .listCategories()
       .then(setCategories)
-      .catch(() => setCategories([]))
+      .catch((err) =>
+        setPageError(err instanceof Error ? err.message : "Failed to load categories"),
+      )
       .finally(() => setLoading(false));
-  }, []);
+  }, [reloadKey]);
 
-  const handleToggleCategory = (id: string) => {
+  const handleToggleCategory = async (id: string) => {
     const target = categories.find((c) => c.id === id);
     if (!target) return;
-    void adminApi.toggleCategory(id, !target.isActive).catch(() => undefined);
-    setCategories((prev) =>
-      prev.map((c) => (c.id === id ? { ...c, isActive: !c.isActive } : c))
-    );
+    setPageError(null);
+    try {
+      await adminApi.toggleCategory(id, !target.isActive);
+      setCategories((prev) =>
+        prev.map((c) => (c.id === id ? { ...c, isActive: !c.isActive } : c))
+      );
+    } catch (err) {
+      setPageError(
+        err instanceof Error ? err.message : "Failed to update category",
+      );
+    }
   };
 
-  const handleAddCategory = () => {
+  const handleAddCategory = async () => {
     if (!newCatName) return;
-    void adminApi
-      .createCategory(newCatName)
-      .then((created) => {
-        setCategories((prev) => [...prev, created]);
-      })
-      .catch(() => undefined);
-    setNewCatName("");
-    setShowAddModal(false);
+    setPageError(null);
+    try {
+      const created = await adminApi.createCategory(newCatName);
+      setCategories((prev) => [...prev, created]);
+      setNewCatName("");
+      setShowAddModal(false);
+    } catch (err) {
+      setPageError(
+        err instanceof Error ? err.message : "Failed to create category",
+      );
+    }
   };
 
   const handleOpenDistanceModal = (category: ServiceCategory) => {
@@ -90,6 +104,23 @@ export default function CategoriesPage() {
   return (
     <AdminShell>
       <div className="space-y-6">
+        {pageError && (
+          <div className="flex items-center justify-between gap-3 rounded-2xl border border-red-200 bg-red-50 p-4">
+            <span className="flex items-center gap-2 text-sm font-bold text-red-700">
+              <AlertCircle className="size-4 shrink-0" /> {pageError}
+            </span>
+            <button
+              type="button"
+              onClick={() => {
+                setPageError(null);
+                setReloadKey((k) => k + 1);
+              }}
+              className="rounded-xl bg-red-600 px-3 py-1.5 text-xs font-bold text-white transition hover:bg-red-700"
+            >
+              Retry
+            </button>
+          </div>
+        )}
         <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
           <div>
             <div className="flex items-center gap-2">

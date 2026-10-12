@@ -21,6 +21,7 @@ export default function ReviewsPage() {
   const [search, setSearch] = useState("");
   const [ratingFilter, setRatingFilter] = useState<string>("ALL");
   const [reviewsList, setReviewsList] = useState<any[]>([]);
+  const [actionError, setActionError] = useState<string | null>(null);
 
   const rawReviews = reviewsRes.data?.items ?? [];
   const reviews = reviewsList.length > 0 ? reviewsList : rawReviews;
@@ -42,19 +43,29 @@ export default function ReviewsPage() {
     [reviews, search, ratingFilter],
   );
 
-  const handleToggleVisibility = (reviewId: string, currentVisible: boolean) => {
+  const handleToggleVisibility = async (reviewId: string, currentVisible: boolean) => {
     const nextState = !currentVisible;
-    void adminApi.toggleReviewVisibility(reviewId, nextState).catch(() => undefined);
-
-    const updated = reviews.map((r) =>
-      r.id === reviewId ? { ...r, isVisible: nextState } : r,
-    );
-    setReviewsList(updated);
+    setActionError(null);
+    try {
+      await adminApi.toggleReviewVisibility(reviewId, nextState);
+      setReviewsList(
+        reviews.map((r) => (r.id === reviewId ? { ...r, isVisible: nextState } : r)),
+      );
+    } catch (err) {
+      setActionError(
+        err instanceof Error ? err.message : "Failed to update review visibility",
+      );
+    }
   };
 
   return (
     <AdminShell>
       <div className="space-y-6">
+        {actionError && (
+          <div className="rounded-2xl border border-red-200 bg-red-50 p-4 text-sm font-bold text-red-700">
+            Action failed: {actionError}
+          </div>
+        )}
         <div>
           <div className="flex items-center gap-2">
             <span className="inline-flex items-center gap-1.5 rounded-full border border-teal/20 bg-teal/10 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-teal">

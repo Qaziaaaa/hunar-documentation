@@ -24,6 +24,9 @@ import {
 export default function WorkersPage() {
   const [workers, setWorkers] = useState<WorkerUser[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<"ALL" | "VERIFIED" | "PENDING" | "SUSPENDED">("ALL");
   const [selectedWorker, setSelectedWorker] = useState<WorkerUser | null>(null);
@@ -33,9 +36,11 @@ export default function WorkersPage() {
     adminApi
       .listWorkers({ limit: 50 })
       .then((res) => setWorkers(res.items))
-      .catch(() => setWorkers([]))
+      .catch((err) =>
+        setError(err instanceof Error ? err.message : "Failed to load workers"),
+      )
       .finally(() => setLoading(false));
-  }, []);
+  }, [reloadKey]);
 
   const filtered = useMemo(
     () =>
@@ -62,34 +67,65 @@ export default function WorkersPage() {
     return [...pool].sort((a, b) => b.totalEarnings - a.totalEarnings)[0];
   }, [workers]);
 
-  const handleToggleStatus = () => {
+  const handleToggleStatus = async () => {
     if (!actionWorker) return;
+    setActionError(null);
 
     const suspending = actionWorker.status === "ACTIVE";
-    void (suspending
-      ? adminApi.suspendWorker(actionWorker.id)
-      : adminApi.reactivateWorker(actionWorker.id)
-    ).catch(() => undefined);
-
-    setWorkers((prev) =>
-      prev.map((w) => {
-        if (w.id === actionWorker.id) {
-          const newStatus = w.status === "ACTIVE" ? "SUSPENDED" : "ACTIVE";
-          return {
-            ...w,
-            status: newStatus,
-          };
-        }
-        return w;
-      })
-    );
-
-    setActionWorker(null);
+    try {
+      if (suspending) {
+        await adminApi.suspendWorker(actionWorker.id);
+      } else {
+        await adminApi.reactivateWorker(actionWorker.id);
+      }
+      setWorkers((prev) =>
+        prev.map((w) => {
+          if (w.id === actionWorker.id) {
+            const newStatus = w.status === "ACTIVE" ? "SUSPENDED" : "ACTIVE";
+            return {
+              ...w,
+              status: newStatus,
+            };
+          }
+          return w;
+        })
+      );
+      setActionWorker(null);
+    } catch (err) {
+      setActionError(
+        err instanceof Error ? err.message : "Failed to update worker status",
+      );
+      setActionWorker(null);
+    }
   };
 
   return (
     <AdminShell>
       <div className="space-y-6">
+        {error && (
+          <div className="flex items-center justify-between gap-3 rounded-2xl border border-red-200 bg-red-50 p-4">
+            <div className="flex items-center gap-2">
+              <AlertCircle className="size-4 shrink-0 text-red-500" />
+              <span className="text-sm font-bold text-red-700">Workers failed to load</span>
+              <span className="text-xs font-medium text-red-600">{error}</span>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                setError(null);
+                setReloadKey((k) => k + 1);
+              }}
+              className="rounded-xl bg-red-600 px-3 py-1.5 text-xs font-bold text-white transition hover:bg-red-700"
+            >
+              Retry
+            </button>
+          </div>
+        )}
+        {actionError && (
+          <div className="rounded-2xl border border-red-200 bg-red-50 p-4 text-sm font-bold text-red-700">
+            Action failed: {actionError}
+          </div>
+        )}
         {/* Header */}
         <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
           <div>

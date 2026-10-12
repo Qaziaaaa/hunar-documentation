@@ -5,12 +5,14 @@ import { AdminShell } from "@/features/admin/components/admin-shell";
 import { Link } from "@/i18n/navigation";
 import { adminApi } from "@/features/admin/api/admin-api";
 import type { PaymentTransaction } from "@/types/admin";
-import { Coins, CreditCard, DollarSign, Lock } from "lucide-react";
+import { AlertCircle, Coins, CreditCard, DollarSign, Lock } from "lucide-react";
 
 export default function PaymentsPage() {
   const [payments, setPayments] = useState<PaymentTransaction[]>([]);
   const [kpis, setKpis] = useState<{ totalRevenue: number; totalPaymentsProcessed: number } | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
     Promise.all([adminApi.listTransactions(), adminApi.getKpis()])
@@ -18,13 +20,34 @@ export default function PaymentsPage() {
         setPayments(txns);
         setKpis({ totalRevenue: kpiData.totalRevenue, totalPaymentsProcessed: kpiData.totalPaymentsProcessed });
       })
-      .catch(() => undefined)
+      .catch((err: unknown) =>
+        setError(err instanceof Error ? err.message : "Failed to load payments data"),
+      )
       .finally(() => setLoading(false));
-  }, []);
+  }, [reloadKey]);
 
   return (
     <AdminShell>
       <div className="space-y-6">
+        {error && (
+          <div className="flex items-center justify-between gap-3 rounded-2xl border border-red-200 bg-red-50 p-4">
+            <div className="flex items-center gap-2">
+              <AlertCircle className="size-4 shrink-0 text-red-500" />
+              <span className="text-sm font-bold text-red-700">Payments data failed to load</span>
+              <span className="text-xs font-medium text-red-600">{error}</span>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                setError(null);
+                setReloadKey((k) => k + 1);
+              }}
+              className="rounded-xl bg-red-600 px-3 py-1.5 text-xs font-bold text-white transition hover:bg-red-700"
+            >
+              Retry
+            </button>
+          </div>
+        )}
         <div>
           <div className="flex items-center gap-2">
             <span className="inline-flex items-center gap-1.5 rounded-full border border-teal/20 bg-teal/10 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-teal">
