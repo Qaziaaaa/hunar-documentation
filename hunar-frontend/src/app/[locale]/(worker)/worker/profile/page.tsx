@@ -218,23 +218,41 @@ function ProfileContent() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Show immediate local preview
+    const previousAvatarUrl = form.avatarUrl ?? "";
+
+    // Ephemeral local preview only; never persisted if the upload fails.
     const previewUrl = URL.createObjectURL(file);
     handleTextChange("avatarUrl", previewUrl);
 
     try {
       setUploadingAvatar(true);
+      setSaveError(null);
       const formData = new FormData();
       formData.append("file", file);
       const raw = await http.upload<any>("/uploads/profile-photo", formData);
       const res = raw?.data ?? raw;
       if (res?.url) {
         handleTextChange("avatarUrl", res.url);
+      } else {
+        handleTextChange("avatarUrl", previousAvatarUrl);
+        setSaveError(
+          isUrdu
+            ? "تصویر اپ لوڈ کرنے میں خرابی پیش آئی۔"
+            : "Failed to upload avatar. Please try again."
+        );
       }
     } catch (err) {
-      console.warn("Avatar upload failed, retaining preview fallback:", err);
+      console.warn("Avatar upload failed:", err);
+      handleTextChange("avatarUrl", previousAvatarUrl);
+      setSaveError(
+        isUrdu
+          ? "تصویر اپ لوڈ کرنے میں خرابی پیش آئی۔"
+          : "Failed to upload avatar. Please try again."
+      );
     } finally {
       setUploadingAvatar(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      URL.revokeObjectURL(previewUrl);
     }
   };
 

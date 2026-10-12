@@ -59,13 +59,15 @@ export async function getWalletSummary(): Promise<WalletSummary> {
   if (!getAccessToken()) {
     throw new Error("Authentication required to view wallet summary");
   }
-  const snapshot = await http.get<BackendWalletSnapshot>("/wallet/balance");
-  const earnings = await http.get<WorkerEarningsData>("/workers/me/earnings").catch(() => null);
+  const [snapshot, earnings] = await Promise.all([
+    http.get<BackendWalletSnapshot>("/wallet/balance"),
+    http.get<WorkerEarningsData>("/workers/me/earnings"),
+  ]);
   return {
     currentBalance: Number(snapshot.balance),
-    totalTopUps: earnings ? Number(earnings.topupsCredited ?? 0) : 0,
-    totalDeductions: earnings ? Number(earnings.commissionsPaid + earnings.commissionsHeld) : Number(snapshot.heldBalance),
-    totalTransactions: earnings ? earnings.records.length : 0,
+    totalTopUps: Number(earnings.topupsCredited ?? 0),
+    totalDeductions: Number(earnings.commissionsPaid + earnings.commissionsHeld),
+    totalTransactions: earnings.records?.length ?? 0,
   };
 }
 

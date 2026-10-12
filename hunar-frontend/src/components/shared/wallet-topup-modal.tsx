@@ -107,10 +107,10 @@ export function WalletTopUpModal({
             <span className="flex size-9 items-center justify-center rounded-full bg-teal/10 text-teal">
               <Landmark className="size-5" />
             </span>
-            Top Up HUNAR Wallet
+            Top Up WorkerFIX Wallet
           </DialogTitle>
           <DialogDescription className="text-xs text-muted-foreground">
-            Send money to HUNAR via EasyPaisa, JazzCash, or Bank Transfer, then
+            Send money to WorkerFIX via EasyPaisa, JazzCash, or Bank Transfer, then
             upload the screenshot proof below.
           </DialogDescription>
         </DialogHeader>
@@ -124,7 +124,7 @@ export function WalletTopUpModal({
               Top-Up Submitted!
             </h3>
             <p className="text-sm text-muted-foreground">
-              HUNAR admin will verify your payment and credit{" "}
+              WorkerFIX admin will verify your payment and credit{" "}
               <strong className="text-navy">{formatRsExact(numAmount)}</strong> to
               your wallet shortly.
             </p>
@@ -135,7 +135,7 @@ export function WalletTopUpModal({
             <div className="rounded-xl border border-teal/20 bg-teal/5 p-4 space-y-3">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-semibold uppercase text-teal">
-                  HUNAR Official Account
+                  WorkerFIX Official Account
                 </span>
                 <span className="text-[11px] font-medium text-navy bg-white px-2 py-0.5 rounded border border-teal/15">
                   EasyPaisa / JazzCash / Bank
@@ -148,7 +148,7 @@ export function WalletTopUpModal({
                   <p className="text-base font-bold text-navy">
                     {whatsappNumber}
                   </p>
-                  <p className="text-xs text-slate-500 font-medium">HUNAR Services Platform</p>
+                  <p className="text-xs text-slate-500 font-medium">WorkerFIX Services Platform</p>
                 </div>
 
                 <Button
@@ -251,7 +251,7 @@ export function WalletTopUpModal({
                 <span>Prefer to send proof on WhatsApp directly?</span>
               </div>
               <a
-                href={`https://wa.me/${cleanNumber}?text=Assalam-o-Alaikum%20HUNAR,%20I%20have%20sent%20Rs.%20${amount}%20for%20wallet%20topup.`}
+                href={`https://wa.me/${cleanNumber}?text=Assalam-o-Alaikum%20WorkerFIX,%20I%20have%20sent%20Rs.%20${amount}%20for%20wallet%20topup.`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-1 rounded bg-emerald-600 px-2.5 py-1.5 font-medium text-white hover:bg-emerald-700 shrink-0"

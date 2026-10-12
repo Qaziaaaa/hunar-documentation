@@ -14,7 +14,6 @@ import {
   queryKeys as notificationKeys,
 } from "@/services/worker/notification.service";
 import { connectSocket, disconnectSocket } from "@/lib/socket";
-import { isMockMode } from "@/lib/data-source";
 import { cn } from "@/lib/utils";
 import { WorkerFixLogo } from "@/components/shared/workerfix-logo";
 
@@ -39,9 +38,7 @@ export function WorkerShell({ children }: { children: React.ReactNode }) {
   });
 
   useEffect(() => {
-    if (!isMockMode()) {
-      connectSocket();
-    }
+    connectSocket();
     return () => {
       disconnectSocket();
     };

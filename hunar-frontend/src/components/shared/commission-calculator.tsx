@@ -85,7 +85,7 @@ export function CommissionCalculator() {
 
             <div className="flex justify-between items-center py-1 border-b border-slate-200">
               <span className="text-slate-600 flex items-center gap-1.5">
-                HUNAR Commission (10% of {formatRsExact(numVisit)}):
+                WorkerFIX Commission (10% of {formatRsExact(numVisit)}):
               </span>
               <span className="font-bold text-orange-600">
                 - {formatRsExact(commission)}
@@ -114,7 +114,7 @@ export function CommissionCalculator() {
               "I've Arrived"
             </div>
             <p className="text-slate-600 leading-snug">
-              {formatRsExact(commission)} is <strong>held</strong> from your HUNAR wallet when you arrive at doorstep.
+              {formatRsExact(commission)} is <strong>held</strong> from your WorkerFIX wallet when you arrive at doorstep.
             </p>
           </div>
 
