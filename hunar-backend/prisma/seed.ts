@@ -86,17 +86,94 @@ async function main(): Promise<void> {
   console.log('Seeding test users...');
   const hash = (pw: string): string => bcrypt.hashSync(pw, 10);
 
-  await prisma.user.upsert({
+  const workerUser = await prisma.user.upsert({
     where: { phone: PHONE.worker },
-    update: {},
+    update: {
+      avatarUrl:
+        'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=200&q=80',
+      isVerified: true,
+    },
     create: {
       phone: PHONE.worker,
       passwordHash: hash('worker123'),
-      name: 'Test Worker',
+      name: 'Faizan Ahmed',
+      avatarUrl:
+        'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=200&q=80',
       role: Role.WORKER,
       isVerified: true,
     },
   });
+
+  await prisma.workerProfile.upsert({
+    where: { userId: workerUser.id },
+    update: {
+      verificationStatus: 'APPROVED',
+      skills: Object.values(categories),
+      experienceYears: 5,
+      bio: 'Certified Professional Technician with 5+ years of experience across Peshawar.',
+      isAvailable: true,
+      serviceRadiusKm: 25,
+      submittedAt: new Date(),
+      verifiedAt: new Date(),
+    },
+    create: {
+      userId: workerUser.id,
+      verificationStatus: 'APPROVED',
+      skills: Object.values(categories),
+      experienceYears: 5,
+      bio: 'Certified Professional Technician with 5+ years of experience across Peshawar.',
+      isAvailable: true,
+      serviceRadiusKm: 25,
+      submittedAt: new Date(),
+      verifiedAt: new Date(),
+    },
+  });
+
+  const workerArea = await prisma.serviceArea.upsert({
+    where: { id: `seed-area-${workerUser.id}` },
+    update: {},
+    create: {
+      id: `seed-area-${workerUser.id}`,
+      userId: workerUser.id,
+      label: 'University Town',
+      address: 'University Road, Peshawar, KP',
+      latitude: 34.0045,
+      longitude: 71.477,
+    },
+  });
+  await prisma.$executeRaw`
+    UPDATE "ServiceArea"
+    SET location = ST_SetSRID(ST_MakePoint(71.4770, 34.0045), 4326)
+    WHERE id = ${workerArea.id}
+  `;
+
+  await prisma.verificationDocument.upsert({
+    where: { userId_type: { userId: workerUser.id, type: 'CNIC_FRONT' } },
+    update: {
+      url: 'https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=400&q=80',
+    },
+    create: {
+      userId: workerUser.id,
+      type: 'CNIC_FRONT',
+      url: 'https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=400&q=80',
+      fileName: 'cnic_front.jpg',
+      mimeType: 'image/jpeg',
+    },
+  });
+  await prisma.verificationDocument.upsert({
+    where: { userId_type: { userId: workerUser.id, type: 'CNIC_BACK' } },
+    update: {
+      url: 'https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=400&q=80',
+    },
+    create: {
+      userId: workerUser.id,
+      type: 'CNIC_BACK',
+      url: 'https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=400&q=80',
+      fileName: 'cnic_back.jpg',
+      mimeType: 'image/jpeg',
+    },
+  });
+
   await prisma.user.upsert({
     where: { phone: PHONE.customer },
     update: {},

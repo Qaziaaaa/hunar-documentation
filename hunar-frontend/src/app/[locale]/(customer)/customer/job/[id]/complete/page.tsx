@@ -1,5 +1,7 @@
+import { Suspense } from "react";
 import { setRequestLocale } from "next-intl/server";
 import { CustomerJobCompletionView } from "@/features/customer-jobs/components/customer-job-completion-view";
+import { LoadingState } from "@/components/shared/loading-state";
 
 export async function generateMetadata() {
   return {
@@ -17,5 +19,9 @@ export default async function CustomerJobCompletionPage({
   const { locale, id } = await params;
   setRequestLocale(locale);
 
-  return <CustomerJobCompletionView initialJobId={id} />;
+  return (
+    <Suspense fallback={<LoadingState label="Loading job..." />}>
+      <CustomerJobCompletionView initialJobId={id} />
+    </Suspense>
+  );
 }

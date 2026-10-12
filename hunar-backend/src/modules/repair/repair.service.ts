@@ -174,7 +174,8 @@ export class RepairService {
   }
 
   async getMyRepairs(user: JwtPayload, query: RepairQueryDto) {
-    const { page, limit, skip } = normalizePage(query);
+    // B5: frontend requests ?limit=100; default maxLimit=50 clipped the page.
+    const { page, limit, skip } = normalizePage(query, 100);
     const where =
       user.role === Role.WORKER ? { workerId: user.sub } : { job: { customerId: user.sub } };
     const whereWithStatus = query.status
@@ -209,9 +210,7 @@ export class RepairService {
       repair.job.lockedVisitCharge ?? repair.job.suggestedVisitCharge ?? 0,
     );
     const isApproved = repair.status === 'ACCEPTED';
-    const payableRepairAmount = isApproved
-      ? Number(repair.lockedAmount ?? repair.amount ?? 0)
-      : 0;
+    const payableRepairAmount = isApproved ? Number(repair.lockedAmount ?? repair.amount ?? 0) : 0;
     const totalAmount = visitCharge + payableRepairAmount;
 
     return {
@@ -383,7 +382,11 @@ export class RepairService {
       totalAmount: visitCharge + lockedAmount,
     };
 
-    this.eventBus.emit('repair.approved', { repairId: repair.id, jobId: repair.jobId, lockedAmount });
+    this.eventBus.emit('repair.approved', {
+      repairId: repair.id,
+      jobId: repair.jobId,
+      lockedAmount,
+    });
     this.realtime.emitToRoom(userRoom(repair.workerId), 'repair:approved', approvedPayload);
     this.realtime.emitToRoom(userRoom(repair.workerId), 'repair.approved', approvedPayload);
     this.realtime.emitToRoom(userRoom(repair.workerId), JOB_EVENTS.jobStatusChanged, {

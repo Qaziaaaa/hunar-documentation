@@ -123,7 +123,10 @@ export function multerOptions(category: UploadCategory): MulterUploadOptions {
     limits: { fileSize: preset.maxBytes, files: 1 },
     fileFilter: (_req, file, cb) => {
       const baseMime = (file.mimetype || '').split(';')[0].trim().toLowerCase();
-      if (!preset.allowedMimeTypes.includes(file.mimetype) && !preset.allowedMimeTypes.includes(baseMime)) {
+      if (
+        !preset.allowedMimeTypes.includes(file.mimetype) &&
+        !preset.allowedMimeTypes.includes(baseMime)
+      ) {
         return cb(
           new HttpException(
             `UNSUPPORTED_FILE_TYPE: this endpoint accepts ${preset.allowedMimeTypes.join(', ')}`,

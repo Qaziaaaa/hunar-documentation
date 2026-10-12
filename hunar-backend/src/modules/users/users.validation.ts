@@ -66,7 +66,9 @@ export class UpdateMyProfileDto {
 
   @IsOptional()
   @IsArray()
-  serviceAreas?: Array<string | { label: string; address: string; latitude?: number; longitude?: number }>;
+  serviceAreas?: Array<
+    string | { label: string; address: string; latitude?: number; longitude?: number }
+  >;
 
   @IsOptional()
   @Type(() => Number)

@@ -120,9 +120,8 @@ export class PaymentsService {
       ? Number(acceptedRepair.lockedAmount ?? acceptedRepair.amount ?? 0)
       : 0;
     const finalJobAmount = visitCharge + approvedRepairCost;
-    const paymentAmount = dto.amount != null
-      ? (approvedRepairCost > 0 ? dto.amount : visitCharge)
-      : finalJobAmount;
+    const paymentAmount =
+      dto.amount != null ? (approvedRepairCost > 0 ? dto.amount : visitCharge) : finalJobAmount;
 
     const payment = await this.prisma.payment.create({
       data: {
