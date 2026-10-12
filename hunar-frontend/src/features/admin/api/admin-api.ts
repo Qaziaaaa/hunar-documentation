@@ -397,7 +397,7 @@ export const adminApi = {
           category: typeof local.category === "object" ? local.category?.name ?? "General" : "General",
           customerName: local.customer?.name ?? "Customer",
           workerName: undefined,
-          amount: local.lockedVisitCharge ?? local.suggestedVisitCharge ?? 300,
+          amount: local.lockedVisitCharge ?? local.suggestedVisitCharge ?? 0,
           status: "OPEN",
           city: local.city || "Peshawar",
           createdAt: local.createdAt,
@@ -406,8 +406,8 @@ export const adminApi = {
           ...live,
           description: local.description ?? "",
           address: local.address || [local.area, local.city].filter(Boolean).join(", ") || "Peshawar",
-          visitCharge: local.lockedVisitCharge ?? local.suggestedVisitCharge ?? 300,
-          estimatedTotal: local.lockedVisitCharge ?? local.suggestedVisitCharge ?? 300,
+          visitCharge: local.lockedVisitCharge ?? local.suggestedVisitCharge ?? 0,
+          estimatedTotal: local.lockedVisitCharge ?? local.suggestedVisitCharge ?? 0,
           auditTrail: [
             {
               step: "Posted",

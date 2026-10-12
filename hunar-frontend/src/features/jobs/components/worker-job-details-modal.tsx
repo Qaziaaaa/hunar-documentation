@@ -82,12 +82,16 @@ export function WorkerJobDetailsModal({
          job.customerSuggestedPrice ??
          300);
 
+  const isEnRoute = job.status === "visit_in_progress";
+
   const handleStartDispatch = (e: React.MouseEvent) => {
     e.preventDefault();
     setIsStarting(true);
-    workerStore.startVisit(job.id);
-    if (onStartVisit) {
-      onStartVisit(job.id);
+    if (!isEnRoute) {
+      workerStore.startVisit(job.id);
+      if (onStartVisit) {
+        onStartVisit(job.id);
+      }
     }
     onClose();
     router.push(`/worker/jobs/${job.id}`);
@@ -358,7 +362,7 @@ export function WorkerJobDetailsModal({
                 className="py-2.5 sm:py-3 px-5 sm:px-6 rounded-xl bg-[#0F8B8D] hover:bg-[#123B5D] text-white text-xs sm:text-sm font-extrabold shadow-md shadow-[#0F8B8D]/20 transition-all flex items-center gap-2 cursor-pointer active:scale-98"
               >
                 <Navigation className="size-4 shrink-0" />
-                <span>Start Visit &amp; En Route</span>
+                <span>{isEnRoute ? "View Live Tracking" : "Start Visit & En Route"}</span>
               </button>
             ) : (
               <div className="inline-flex items-center gap-1 text-xs font-bold text-emerald-700 bg-emerald-50 px-3 py-1.5 rounded-xl border border-emerald-200">

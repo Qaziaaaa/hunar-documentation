@@ -107,6 +107,7 @@ export class RepairService {
       repair = await this.prisma.repair.update({
         where: { id: existingRepair.id },
         data: {
+          visitId: visit.id,
           description: dto.description,
           amount: dto.amount,
           itemsBreakdown: dto.itemsBreakdown ? (dto.itemsBreakdown as object) : undefined,
@@ -118,7 +119,7 @@ export class RepairService {
     } else {
       repair = await this.prisma.repair.create({
         data: {
-          visitId,
+          visitId: visit.id,
           jobId: visit.jobId,
           workerId: user.sub,
           description: dto.description,

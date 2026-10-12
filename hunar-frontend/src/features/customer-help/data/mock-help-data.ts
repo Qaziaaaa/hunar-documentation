@@ -10,9 +10,9 @@ export const MOCK_FAQS: FaqItem[] = [
   {
     id: "faq-price-1",
     category: "pricing",
-    question: "How does the Rs. 300 doorstep visit fee work?",
+    question: "How does the doorstep visit fee work?",
     answer:
-      "Every booking includes a standard Rs. 300 doorstep visit & diagnostic charge. Once the verified technician arrives and inspects the site, they provide an exact quote based on necessary labor and spare parts. If you proceed with the repair, the quotation is transparently finalized before work begins.",
+      "Every booking includes an agreed doorstep visit & diagnostic charge based on category baseline. Once the verified technician arrives and inspects the site, they provide an exact quote based on necessary labor and spare parts. If you proceed with the repair, the quotation is transparently finalized before work begins.",
     badge: "Transparent Rates",
     isPopular: true,
   },

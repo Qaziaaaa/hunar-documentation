@@ -15,6 +15,7 @@ import {
   X,
   ArrowRight,
   User,
+  Zap,
 } from "lucide-react";
 import { useLocale } from "next-intl";
 import { formatJobDate, formatPostedAt } from "@/lib/format";
@@ -222,7 +223,7 @@ export function CustomerJobDetailsModal({
                         <span>{isUrdu ? "وائس میسج چلائیں" : "Listen to Voice Note"}</span>
                       </span>
                       <span className="text-slate-400 text-[11px] font-mono">
-                        0:{job.voiceNoteDuration || 15}
+                        {job.voiceNoteDuration ? `0:${String(job.voiceNoteDuration).padStart(2, "0")}` : "--:--"}
                       </span>
                     </div>
                     <div className="h-1.5 bg-slate-200 rounded-full overflow-hidden">
@@ -261,11 +262,24 @@ export function CustomerJobDetailsModal({
                   <span>{isUrdu ? "پسندیدہ وقت و شیڈول" : "Preferred Schedule"}</span>
                 </div>
                 <p className="text-xs text-slate-700 font-medium">
-                  {formatJobDate(job.preferredDate) || (isUrdu ? "آج" : "Today")}
+                  {job.scheduleType === "asap"
+                    ? (isUrdu ? "آج (فوری طور پر)" : "Today (Immediate)")
+                    : (formatJobDate(job.preferredDate) || (isUrdu ? "آج" : "Today"))}
                 </p>
                 <div className="flex items-center gap-1 text-[11px] text-slate-500">
-                  <Clock className="size-3 text-slate-400" />
-                  <span>{job.preferredTimeSlot || (isUrdu ? "صبح (8:00 AM - 12:00 PM)" : "Morning (8:00 AM - 12:00 PM)")}</span>
+                  {job.scheduleType === "asap" ? (
+                    <>
+                      <Zap className="size-3 text-amber-600 fill-current shrink-0" />
+                      <span className="font-bold text-amber-700">
+                        {isUrdu ? "⚡ فوری آمد (30 تا 60 منٹ)" : "⚡ Immediate (Within 30–60 mins)"}
+                      </span>
+                    </>
+                  ) : (
+                    <>
+                      <Clock className="size-3 text-slate-400" />
+                      <span>{job.preferredTimeSlot || (isUrdu ? "مناسب وقت" : "Flexible Timing")}</span>
+                    </>
+                  )}
                   <span className="text-slate-300">•</span>
                   <span className="capitalize">{job.scheduleType === "asap" ? (isUrdu ? "فوری" : "Immediate (ASAP)") : (isUrdu ? "شیڈولڈ" : "Scheduled")}</span>
                 </div>

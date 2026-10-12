@@ -205,21 +205,27 @@ export function JobRequestCard({
       >
         {/* LEFT SIDE — Customer Profile */}
         <div className="flex w-18 sm:w-20 shrink-0 flex-col items-center border-r border-slate-100/80 pr-2 sm:pr-2.5 text-center pointer-events-none">
-          {/* Customer Profile Image */}
-          <div className="relative mb-1 size-11 sm:size-12 overflow-hidden rounded-full border border-slate-200 bg-slate-100 flex items-center justify-center group-hover:border-teal transition-colors">
+          {/* Customer Profile Image or First Letter Initial */}
+          <div className="relative mb-1 size-11 sm:size-12 overflow-hidden rounded-full border border-[#123B5D]/20 bg-[#123B5D]/10 text-[#123B5D] flex items-center justify-center group-hover:border-[#0F8B8D] transition-colors shadow-2xs select-none">
             {job.customer.avatarUrl ? (
-              <Image
+              <img
                 src={job.customer.avatarUrl}
                 alt={job.customer.firstName || "Customer"}
-                fill
-                className="object-cover"
-                sizes="48px"
+                className="size-full object-cover rounded-full"
+                onError={(e) => {
+                  (e.currentTarget as HTMLElement).style.display = "none";
+                  const fallback = e.currentTarget.parentElement?.querySelector("span");
+                  if (fallback) fallback.classList.remove("sr-only");
+                }}
               />
-            ) : (
-              <span className="text-xs font-bold text-slate-600 uppercase">
-                {job.customer.firstName ? job.customer.firstName.charAt(0) : "C"}
-              </span>
-            )}
+            ) : null}
+            <span
+              className={`text-sm sm:text-base font-black text-[#123B5D] uppercase ${
+                job.customer.avatarUrl ? "sr-only" : ""
+              }`}
+            >
+              {(job.customer.firstName || job.customer.fullName || "C").trim().charAt(0).toUpperCase()}
+            </span>
           </div>
 
           {/* First Name Only */}
@@ -227,16 +233,37 @@ export function JobRequestCard({
             {job.customer.firstName}
           </p>
 
-          {/* Star Rating */}
-          <div className="mt-0.5 flex items-center justify-center gap-0.5 text-[11px] font-extrabold text-[#F59E0B]">
-            <Star className="size-3 fill-[#F59E0B] stroke-none" />
-            <span>{job.customer.rating > 0 ? job.customer.rating.toFixed(1) : "New"}</span>
-          </div>
+          {/* Star Rating & Customer Review Count */}
+          {job.customer.rating > 0 ? (
+            <div
+              className="mt-1 flex items-center justify-center gap-1 text-[11px] font-extrabold text-[#F59E0B]"
+              title={`${job.customer.rating.toFixed(1)} rating from ${job.customer.reviewCount ?? 0} customer reviews`}
+            >
+              <Star className="size-3 fill-[#F59E0B] stroke-none shrink-0" />
+              <span>{job.customer.rating.toFixed(1)}</span>
+              <span className="text-[10px] font-semibold text-slate-400">
+                ({job.customer.reviewCount ?? 0})
+              </span>
+            </div>
+          ) : (
+            <div className="mt-1 text-[10px] font-medium text-slate-400">
+              New Customer
+            </div>
+          )}
 
-          {/* Total Orders Number Only */}
-          <p className="mt-0.5 text-[10px] font-semibold text-slate-500" title={`${job.customer.totalOrders} total completed orders`}>
-            {job.customer.totalOrders}
-          </p>
+          {/* Total Orders / Verification */}
+          {job.customer.totalOrders > 0 ? (
+            <p
+              className="mt-0.5 text-[9.5px] font-bold text-slate-500 truncate"
+              title={`${job.customer.totalOrders} total completed orders`}
+            >
+              {job.customer.totalOrders} orders
+            </p>
+          ) : (
+            <span className="mt-0.5 inline-block text-[9px] font-bold text-emerald-600 bg-emerald-50 px-1.5 py-0.2 rounded-full border border-emerald-100">
+              Verified
+            </span>
+          )}
 
           {/* Uploaded Time */}
           <span className="mt-0.5 block text-[9.5px] font-medium text-slate-400">
@@ -260,6 +287,12 @@ export function JobRequestCard({
               </div>
 
               <div className="flex items-center gap-1 shrink-0">
+                {isUrgent && (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/15 px-2 py-0.5 text-[10.5px] font-extrabold text-amber-700 border border-amber-500/30">
+                    <Zap className="size-3 fill-current text-amber-600" />
+                    <span>{isUrdu ? "فوری (30–60 منٹ)" : "⚡ Immediate (30–60m)"}</span>
+                  </span>
+                )}
                 <span className="inline-flex items-center gap-1 rounded-full bg-slate-100/80 px-2 py-0.5 text-[10.5px] font-bold text-[#123B5D]">
                   <Icon className="size-3 text-[#0F8B8D]" />
                   {job.category}

@@ -5,7 +5,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { JobStatus, Prisma, Role, WorkerVerificationStatus } from '@prisma/client';
+import { JobStatus, Prisma, Role, Urgency, WorkerVerificationStatus } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { EventBusService } from '../../common/event-bus/event-bus.service';
 import { JobStateMachine } from './jobs.state-machine';
@@ -29,12 +29,19 @@ export interface JobCardRow {
   description: string | null;
   categoryId: string;
   categoryName: string;
+  customerId: string;
+  customerName: string | null;
+  customerAvatarUrl: string | null;
+  customerRating?: number | null;
+  customerReviewCount?: number | null;
+  customerTotalOrders?: number | null;
   latitude: number;
   longitude: number;
   address: string;
   city: string;
   area: string | null;
   status: JobStatus;
+  urgency: Urgency;
   suggestedVisitCharge: string | number | null;
   preferredVisitTime: Date | null;
   createdAt: Date;
@@ -50,10 +57,20 @@ export interface JobCard {
   description: string | null;
   categoryId: string;
   categoryName: string;
+  customerId: string;
+  customer?: {
+    id: string;
+    name: string | null;
+    avatarUrl: string | null;
+    rating?: number;
+    reviewCount?: number;
+    totalOrders?: number;
+  };
   address: string;
   city: string;
   area: string | null;
   status: JobStatus;
+  urgency: Urgency;
   suggestedVisitCharge: number | null;
   preferredVisitTime: Date | null;
   postedTime: string;
@@ -77,10 +94,20 @@ function mapJobCard(row: JobCardRow): JobCard {
     description: row.description,
     categoryId: row.categoryId,
     categoryName: row.categoryName,
+    customerId: row.customerId,
+    customer: {
+      id: row.customerId,
+      name: row.customerName,
+      avatarUrl: row.customerAvatarUrl,
+      rating: row.customerRating != null ? Number(row.customerRating) : null,
+      reviewCount: row.customerReviewCount != null ? Number(row.customerReviewCount) : 0,
+      totalOrders: row.customerTotalOrders != null ? Number(row.customerTotalOrders) : 0,
+    },
     address: areaSector,
     city: row.city,
     area: areaSector,
     status: row.status,
+    urgency: row.urgency,
     suggestedVisitCharge:
       row.suggestedVisitCharge != null ? Number(row.suggestedVisitCharge) : null,
     preferredVisitTime: row.preferredVisitTime,
@@ -130,6 +157,19 @@ export class JobsService {
       throw new BadRequestException('CATEGORY_NOT_FOUND: invalid or inactive category');
     }
 
+    const visitCharge =
+      dto.suggestedVisitCharge != null
+        ? dto.suggestedVisitCharge
+        : category.defaultVisitCharge != null
+          ? Number(category.defaultVisitCharge)
+          : null;
+
+    if (visitCharge == null) {
+      throw new BadRequestException(
+        `Visiting fee is not configured for category "${category.name}". Please contact support.`,
+      );
+    }
+
     const orderCode = await generateUniqueOrderCode(this.prisma);
 
     const job = await this.prisma.serviceRequest.create({
@@ -147,7 +187,7 @@ export class JobsService {
         city: dto.city,
         area: dto.area,
         urgency: dto.urgency ?? 'NORMAL',
-        suggestedVisitCharge: dto.suggestedVisitCharge,
+        suggestedVisitCharge: visitCharge,
         preferredVisitTime: dto.preferredVisitTime ? new Date(dto.preferredVisitTime) : null,
         status: 'OPEN',
       },
@@ -324,12 +364,27 @@ export class JobsService {
         sr.description,
         sr."categoryId",
         c.name AS "categoryName",
+        sr."customerId",
+        u.name AS "customerName",
+        u."avatarUrl" AS "customerAvatarUrl",
+        (
+          SELECT ROUND(AVG(r.rating)::numeric, 1)::float FROM "Review" r WHERE r."revieweeId" = sr."customerId"
+        ) AS "customerRating",
+        COALESCE(
+          (SELECT COUNT(*)::int FROM "Review" r WHERE r."revieweeId" = sr."customerId"),
+          0
+        ) AS "customerReviewCount",
+        COALESCE(
+          (SELECT COUNT(*)::int FROM "ServiceRequest" s_total WHERE s_total."customerId" = sr."customerId"),
+          0
+        ) AS "customerTotalOrders",
         sr."latitude",
         sr."longitude",
         sr."address",
         sr."city",
         sr."area",
         sr."status",
+        sr."urgency",
         sr."suggestedVisitCharge",
         sr."preferredVisitTime",
         sr."createdAt",
@@ -347,6 +402,7 @@ export class JobsService {
     ) AS "distanceKm"
   FROM "ServiceRequest" sr
   JOIN "ServiceCategory" c ON c.id = sr."categoryId"
+  JOIN "User" u ON u.id = sr."customerId"
   WHERE ${where}
   ORDER BY sr."createdAt" DESC
   LIMIT ${limit} OFFSET ${skip}
@@ -382,36 +438,54 @@ export class JobsService {
             where: { workerId },
             orderBy: { scheduledDate: 'asc' },
             take: 1,
-            select: { id: true, status: true, scheduledDate: true },
+            select: { id: true, status: true, scheduledDate: true, repairEstimate: true },
+          },
+          repairs: {
+            orderBy: { createdAt: 'desc' },
+            take: 1,
+            select: { id: true, amount: true, lockedAmount: true, status: true },
           },
           _count: { select: { offers: true } },
         },
       }),
       this.prisma.serviceRequest.count({ where }),
     ]);
-    const items = rows.map((j) => ({
-      id: j.id,
-      title: j.title,
-      description: j.description,
-      status: j.status,
-      categoryId: j.categoryId,
-      categoryName: j.category.name,
-      address: j.address,
-      city: j.city,
-      area: j.area,
-      latitude: j.latitude,
-      longitude: j.longitude,
-      suggestedVisitCharge:
-        j.suggestedVisitCharge != null ? Number(j.suggestedVisitCharge) : null,
-      lockedVisitCharge: j.lockedVisitCharge != null ? Number(j.lockedVisitCharge) : null,
-      preferredVisitTime: j.preferredVisitTime,
-      images: j.images,
-      voiceNoteUrl: j.voiceNoteUrl,
-      nextVisit: j.visits[0] ?? null,
-      customer: j.customer,
-      offerCount: j._count.offers,
-      createdAt: j.createdAt,
-    }));
+    const items = rows.map((j) => {
+      const repairCost =
+        j.repairs?.[0]?.lockedAmount != null
+          ? Number(j.repairs[0].lockedAmount)
+          : j.repairs?.[0]?.amount != null
+          ? Number(j.repairs[0].amount)
+          : j.visits?.[0]?.repairEstimate != null
+          ? Number(j.visits[0].repairEstimate)
+          : null;
+
+      return {
+        id: j.id,
+        title: j.title,
+        description: j.description,
+        status: j.status,
+        categoryId: j.categoryId,
+        categoryName: j.category?.name,
+        address: j.address,
+        city: j.city,
+        area: j.area,
+        latitude: j.latitude,
+        longitude: j.longitude,
+        suggestedVisitCharge:
+          j.suggestedVisitCharge != null ? Number(j.suggestedVisitCharge) : null,
+        lockedVisitCharge: j.lockedVisitCharge != null ? Number(j.lockedVisitCharge) : null,
+        preferredVisitTime: j.preferredVisitTime,
+        images: j.images,
+        voiceNoteUrl: j.voiceNoteUrl,
+        nextVisit: j.visits?.[0] ?? null,
+        repairEstimate: repairCost,
+        repairCharge: repairCost,
+        customer: j.customer,
+        offerCount: j._count?.offers ?? 0,
+        createdAt: j.createdAt,
+      };
+    });
     return toPageResult(items, total, page, limit);
   }
 
@@ -446,6 +520,7 @@ export class JobsService {
       title: j.title,
       description: j.description,
       status: j.status,
+      urgency: j.urgency,
       categoryId: j.categoryId,
       categoryName: j.category?.name ?? 'General',
       categoryUrdu: j.category?.nameUrdu ?? undefined,
@@ -482,6 +557,24 @@ export class JobsService {
         category: true,
         customer: { select: { id: true, name: true, phone: true } },
         offers: { select: { id: true, workerId: true, status: true, visitCharge: true } },
+        visits: {
+          orderBy: { createdAt: 'desc' },
+          select: {
+            id: true,
+            status: true,
+            scheduledDate: true,
+            repairEstimate: true,
+            diagnosis: true,
+            inspectionPhotos: true,
+            estimatedRepairTimeMin: true,
+            inspectionSubmittedAt: true,
+          },
+        },
+        repairs: {
+          orderBy: { createdAt: 'desc' },
+          take: 1,
+          select: { id: true, amount: true, lockedAmount: true, status: true },
+        },
       },
     });
     if (!job) {
@@ -512,6 +605,15 @@ export class JobsService {
         : null;
     }
 
+    const resolvedRepairCharge =
+      job.repairs?.[0]?.lockedAmount != null
+        ? Number(job.repairs[0].lockedAmount)
+        : job.repairs?.[0]?.amount != null
+        ? Number(job.repairs[0].amount)
+        : job.visits?.[0]?.repairEstimate != null
+        ? Number(job.visits[0].repairEstimate)
+        : null;
+
     const { offers, ...rest } = job;
 
     const isAssignedWorker = user.role === Role.WORKER && job.selectedWorkerId === user.sub;
@@ -527,6 +629,8 @@ export class JobsService {
       });
       return {
         ...rest,
+        repairCharge: resolvedRepairCharge,
+        repairEstimate: resolvedRepairCharge,
         address: areaSector,
         area: areaSector,
         latitude: 0,
@@ -546,6 +650,8 @@ export class JobsService {
 
     return {
       ...rest,
+      repairCharge: resolvedRepairCharge,
+      repairEstimate: resolvedRepairCharge,
       distanceKm,
       offerCount: offers.length,
       myOffer,
@@ -712,5 +818,71 @@ export class JobsService {
     }
     return { newStatus: updated.status };
   }
+
+  async getCategories() {
+    const list = await this.prisma.serviceCategory.findMany({
+      where: { isActive: true },
+      orderBy: { sortOrder: 'asc' },
+    });
+    return list.map((c) => {
+      const fee = c.defaultVisitCharge != null ? Number(c.defaultVisitCharge) : null;
+      return {
+        ...c,
+        defaultVisitCharge: fee,
+        suggestedFee: fee,
+      };
+    });
+  }
+
+  async createDispute(userId: string, dto: { jobId: string; type?: string; description: string; evidence?: any }) {
+    const job = await this.prisma.serviceRequest.findUnique({ where: { id: dto.jobId } });
+    if (!job) {
+      throw new NotFoundException('Job not found');
+    }
+    if (job.customerId !== userId && job.selectedWorkerId !== userId) {
+      throw new BadRequestException('You are not an authorized participant in this job');
+    }
+    const respondentId = job.customerId === userId ? (job.selectedWorkerId || userId) : job.customerId;
+    const validTypes = ['PAYMENT', 'SERVICE_QUALITY', 'NO_SHOW', 'PRICE_CHANGE', 'OTHER'];
+    const disputeType = validTypes.includes(dto.type?.toUpperCase() ?? '') ? (dto.type?.toUpperCase() as any) : 'OTHER';
+
+    const dispute = await this.prisma.dispute.create({
+      data: {
+        jobId: job.id,
+        reporterId: userId,
+        respondentId,
+        type: disputeType,
+        description: dto.description,
+        evidence: dto.evidence ?? null,
+        status: 'OPEN',
+      },
+    });
+
+    this.eventBus.emit('dispute.created', {
+      disputeId: dispute.id,
+      jobId: job.id,
+      reporterId: userId,
+    });
+
+    return {
+      success: true,
+      id: dispute.id,
+      caseNumber: `CASE-${dispute.id.slice(0, 8).toUpperCase()}`,
+      dispute,
+    };
+  }
+
+  async getMyDisputes(userId: string) {
+    return this.prisma.dispute.findMany({
+      where: {
+        OR: [{ reporterId: userId }, { respondentId: userId }],
+      },
+      include: {
+        job: { select: { id: true, title: true, status: true } },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
 }
+
 

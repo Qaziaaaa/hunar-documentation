@@ -67,27 +67,64 @@ export async function getUnreadCount(): Promise<number> {
   return http.get<number>(`/notifications/unread-count`);
 }
 
+const DEFAULT_PREFERENCES: NotificationPreferences = {
+  enabled: {
+    system: true,
+    new_job: true,
+    offer_accepted: true,
+    offer_rejected: true,
+    counter_offer: true,
+    counter_accepted: true,
+    visit_approaching: true,
+    new_message: true,
+    commission_reminder: true,
+    commission_verified: true,
+    earnings_recorded: true,
+    new_review: true,
+    verification_result: true,
+  },
+};
+
 export async function markNotificationRead(
   notificationId: string,
 ): Promise<void> {
-  await http.put(`/notifications/${notificationId}/read`);
+  await http.patch(`/notifications/${notificationId}/read`);
 }
 
 export async function markAllNotificationsRead(): Promise<void> {
-  await http.put(`/notifications/read-all`);
+  await http.put(`/notifications/read`);
 }
 
 export async function getNotificationPreferences(): Promise<NotificationPreferences> {
-  return http.get<NotificationPreferences>(`/notifications/preferences`);
+  try {
+    return await http.get<NotificationPreferences>(`/notifications/preferences`);
+  } catch {
+    if (typeof window !== "undefined") {
+      const saved = window.localStorage.getItem("workerfix.notification_preferences");
+      if (saved) {
+        try {
+          return JSON.parse(saved);
+        } catch {}
+      }
+    }
+    return DEFAULT_PREFERENCES;
+  }
 }
 
 export async function updateNotificationPreferences(
   input: NotificationPreferences,
 ): Promise<NotificationPreferences> {
-  return http.put<NotificationPreferences>(
-    `/notifications/preferences`,
-    input,
-  );
+  try {
+    return await http.put<NotificationPreferences>(
+      `/notifications/preferences`,
+      input,
+    );
+  } catch {
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem("workerfix.notification_preferences", JSON.stringify(input));
+    }
+    return input;
+  }
 }
 
 export function subscribeToNotifications(

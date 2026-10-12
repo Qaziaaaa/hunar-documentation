@@ -144,6 +144,7 @@ export interface HunarDomainEvents {
   'topup.approved': { topUpId: string; workerId: string; amount: number };
   'topup.rejected': { topUpId: string; workerId: string; amount: number; reason?: string };
   'earnings.recorded': { jobId: string; workerId: string; amount: number; grossAmount?: number; commission?: number };
+  'dispute.created': { disputeId: string; jobId: string; reporterId: string };
 }
 
 export type HunarEventName = keyof HunarDomainEvents;

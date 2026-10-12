@@ -16,6 +16,7 @@ import {
   Tag,
   User,
   Wrench,
+  Zap,
 } from "lucide-react";
 import { Link } from "@/i18n/navigation";
 import { useLocale } from "next-intl";
@@ -346,30 +347,50 @@ export function CustomerJobsListView({ initialJobs, jobs: jobsProp }: CustomerJo
                   </div>
 
                   {/* Pricing / Budget Detail Callout */}
-                  <div className="flex items-center sm:flex-col sm:items-end rtl:sm:items-start justify-between bg-white sm:bg-transparent p-3 sm:p-0 rounded-xl border sm:border-0 border-[#E2E8F0] shrink-0">
-                    <span className="text-xs text-[#64748B]">
-                      {job.status === "completed"
-                        ? isUrdu ? "کل ادائیگی" : "Total Paid"
-                        : isUrdu ? "وزٹ چارجز" : "Visit Charges"}
-                    </span>
-                    <div className="flex items-center gap-1 text-lg sm:text-xl font-bold text-[#1A1A2E]">
-                      <ShieldCheck className="size-5 text-[#0F766E]" />
-                      <span>
-                        {job.status === "visit_scheduled" && job.selectedOffer
-                          ? `Rs. ${job.selectedOffer.visitFee.toLocaleString()}`
-                          : job.status === "completed" && job.selectedOffer
-                          ? `Rs. ${job.selectedOffer.visitFee.toLocaleString()}`
-                          : job.offers && job.offers.length > 0
-                          ? `Rs. ${job.offers[0].visitFee.toLocaleString()}`
-                          : "Rs. 300"}
+                  {job.status === "completed" && job.selectedOffer ? (
+                    <div className="flex items-center sm:flex-col sm:items-end rtl:sm:items-start justify-between bg-white sm:bg-transparent p-3 sm:p-0 rounded-xl border sm:border-0 border-[#E2E8F0] shrink-0">
+                      <span className="text-xs text-[#64748B]">
+                        {isUrdu ? "کل ادائیگی" : "Total Paid"}
                       </span>
-                    </div>
-                    {job.status === "completed" && (
+                      <div className="flex items-center gap-1 text-lg sm:text-xl font-bold text-[#1A1A2E]">
+                        <ShieldCheck className="size-5 text-[#0F766E]" />
+                        <span>Rs. {job.selectedOffer.visitFee.toLocaleString()}</span>
+                      </div>
                       <span className="text-[11px] text-[#0F766E] font-semibold">
                         {isUrdu ? "تصدیق شدہ کام" : "Verified Handover"}
                       </span>
-                    )}
-                  </div>
+                    </div>
+                  ) : job.status === "visit_scheduled" && job.selectedOffer ? (
+                    <div className="flex items-center sm:flex-col sm:items-end rtl:sm:items-start justify-between bg-white sm:bg-transparent p-3 sm:p-0 rounded-xl border sm:border-0 border-[#E2E8F0] shrink-0">
+                      <span className="text-xs text-[#64748B]">
+                        {isUrdu ? "طے شدہ وزٹ فیس" : "Agreed Visit Fee"}
+                      </span>
+                      <div className="flex items-center gap-1 text-lg sm:text-xl font-bold text-[#1A1A2E]">
+                        <ShieldCheck className="size-5 text-[#0F766E]" />
+                        <span>Rs. {job.selectedOffer.visitFee.toLocaleString()}</span>
+                      </div>
+                    </div>
+                  ) : job.offers && job.offers.length > 0 ? (
+                    <div className="flex items-center sm:flex-col sm:items-end rtl:sm:items-start justify-between bg-white sm:bg-transparent p-3 sm:p-0 rounded-xl border sm:border-0 border-[#E2E8F0] shrink-0">
+                      <span className="text-xs text-[#64748B]">
+                        {isUrdu ? "موصولہ آفر فیس" : "Quoted Offer"}
+                      </span>
+                      <div className="flex items-center gap-1 text-lg sm:text-xl font-bold text-[#1A1A2E]">
+                        <ShieldCheck className="size-5 text-[#0F766E]" />
+                        <span>Rs. {job.offers[0].visitFee.toLocaleString()}</span>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex items-center sm:flex-col sm:items-end rtl:sm:items-start justify-between bg-white sm:bg-transparent p-3 sm:p-0 rounded-xl border sm:border-0 border-[#E2E8F0] shrink-0">
+                      <span className="text-xs text-[#64748B]">
+                        {isUrdu ? "وزٹ چارجز" : "Visit Charges"}
+                      </span>
+                      <div className="flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-slate-500">
+                        <Clock className="size-4 text-amber-500" />
+                        <span>{isUrdu ? "آفرز کا انتظار ہے" : "Awaiting Offers"}</span>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* Pro Info & Location Block */}
@@ -427,10 +448,21 @@ export function CustomerJobsListView({ initialJobs, jobs: jobsProp }: CustomerJo
                       <span className="truncate">{job.address || job.area}</span>
                     </div>
                     <div className="flex items-center gap-1.5">
-                      <Clock className="size-3.5 text-slate-400 shrink-0" />
-                      <span>
-                        {formatJobDate(job.preferredDate) || (isUrdu ? "آج" : "Today")} • {job.preferredTimeSlot || (isUrdu ? "صبح (8:00 AM - 12:00 PM)" : "Morning (8:00 AM - 12:00 PM)")}
-                      </span>
+                      {job.scheduleType === "asap" ? (
+                        <>
+                          <Zap className="size-3.5 text-amber-600 fill-current shrink-0" />
+                          <span className="font-bold text-amber-700">
+                            {isUrdu ? "⚡ فوری آمد (30 تا 60 منٹ)" : "⚡ Immediate (Within 30–60 mins)"}
+                          </span>
+                        </>
+                      ) : (
+                        <>
+                          <Clock className="size-3.5 text-slate-400 shrink-0" />
+                          <span>
+                            {formatJobDate(job.preferredDate) || (isUrdu ? "آج" : "Today")} • {job.preferredTimeSlot || (isUrdu ? "مناسب وقت" : "Flexible Timing")}
+                          </span>
+                        </>
+                      )}
                     </div>
                   </div>
                 </div>

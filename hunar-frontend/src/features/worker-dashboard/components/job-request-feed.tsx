@@ -4,7 +4,6 @@ import { useState, useMemo, useEffect, useCallback } from "react";
 import { JobRequestCard } from "./job-request-card";
 import { JobRequestModal } from "./job-request-modal";
 import { RadarSearchView } from "./radar-search-view";
-import { MOCK_JOB_REQUESTS } from "../mock-job-requests";
 import type { JobRequest, JobRequestCategory } from "../types";
 
 import { useLocale } from "next-intl";
@@ -12,7 +11,7 @@ import { isMockMode } from "@/lib/data-source";
 import { ApiError } from "@/lib/api-client";
 import { listNearbyJobs } from "@/services/worker/jobs.service";
 import { subscribeToNotifications } from "@/services/worker/notification.service";
-import { timeAgo, formatDate, formatTime, formatDateSlot, isDateOnlyTimestamp } from "@/lib/format";
+import { timeAgo, formatDate, formatTime, formatDateSlot, isDateOnlyTimestamp, formatPreferredTiming } from "@/lib/format";
 import { formatAreaOrSector } from "@/lib/location";
 import type { Job } from "@/types/job";
 
@@ -32,8 +31,11 @@ const CATEGORY_LABELS: Record<string, JobRequestCategory> = {
 };
 
 function toFeedJobRequest(job: Job): JobRequest {
-  const fullName = job.customer?.name?.trim() || "Customer";
-  const firstName = fullName.split(/\s+/)[0] || "Customer";
+  const rawFullName = job.customer?.name?.trim() || "";
+  // Strip '(Customer)' or '(Worker)' suffixes from seed/test accounts, e.g. "Abdullah (Customer)" -> "Abdullah"
+  const cleanName = rawFullName.replace(/\s*\((Customer|Worker)\)/gi, "").trim();
+  const fullName = cleanName || "Customer";
+  const firstName = fullName.split(/\s+/)[0] || fullName;
   const rawCategory = typeof job.category === "object" ? job.category?.name?.trim() : String(job.category || "");
   const category = (CATEGORY_LABELS[rawCategory] ??
     (rawCategory || "Appliance Repair")) as JobRequestCategory;
@@ -48,6 +50,29 @@ function toFeedJobRequest(job: Job): JobRequest {
   });
   const isUrgent = job.urgency === "EMERGENCY" || job.urgency === "HIGH";
 
+  const rawAvatar =
+    (job as any).customer?.avatarUrl ||
+    (job as any).customer?.user?.avatarUrl ||
+    job.customer?.avatarUrl;
+  // Only use avatarUrl if the customer has genuinely uploaded a photo
+  const avatarUrl =
+    rawAvatar && typeof rawAvatar === "string" && rawAvatar.trim() !== "" && !rawAvatar.startsWith("/landing/")
+      ? rawAvatar.trim()
+      : "";
+
+  const rawRating = (job as any).customer?.rating ?? job.customer?.rating;
+  const rawReviews =
+    (job as any).customer?.reviewCount ??
+    (job as any).customer?.reviewsCount ??
+    job.customer?.reviewCount;
+  const rawOrders = (job as any).customer?.totalOrders ?? job.customer?.totalOrders;
+
+  const rating = rawRating && Number(rawRating) > 0 ? Number(rawRating) : 0;
+  const reviewCount =
+    rawReviews && Number(rawReviews) > 0 ? Number(rawReviews) : 0;
+  const totalOrders =
+    rawOrders && Number(rawOrders) > 0 ? Number(rawOrders) : 0;
+
   return {
     id: job.id,
     category,
@@ -58,21 +83,17 @@ function toFeedJobRequest(job: Job): JobRequest {
     uploadedTime: timeAgo(job.createdAt),
     postedTimestamp: Date.parse(job.createdAt) || undefined,
     suggestedVisitCharge: job.suggestedVisitCharge ?? job.lockedVisitCharge ?? undefined,
-    preferredTiming: job.preferredVisitTime
-      ? isDateOnlyTimestamp(job.preferredVisitTime)
-        ? formatDateSlot(job.preferredVisitTime, "Morning (8:00 AM - 12:00 PM)")
-        : `${formatDate(job.preferredVisitTime)}, ${formatTime(job.preferredVisitTime)}`
-      : undefined,
+    preferredTiming: formatPreferredTiming(job.preferredVisitTime, false, isUrgent),
     status: isUrgent ? "URGENT" : "OPEN",
     customer: {
       firstName,
       fullName,
-      avatarUrl: (job as any).customer?.avatarUrl || (job as any).customer?.user?.avatarUrl || "/landing/mansoor-avatar.png",
-      rating: (job as any).customer?.rating ?? 4.8,
-      reviewCount: (job as any).customer?.reviewsCount ?? 3,
-      totalOrders: (job as any).customer?.totalOrders ?? 1,
-      isVerified: Boolean((job as any).customer?.isVerified ?? true),
-      memberSince: (job as any).customer?.memberSince || "—",
+      avatarUrl,
+      rating,
+      reviewCount,
+      totalOrders,
+      isVerified: Boolean((job as any).customer?.isVerified ?? false),
+      memberSince: (job as any).customer?.memberSince || "Member",
     },
     images: (job.images ?? []).filter(
       (src) => typeof src === "string" && src.trim().length > 0
@@ -89,7 +110,7 @@ function toFeedJobRequest(job: Job): JobRequest {
 
 export function JobRequestFeed({
   searchQuery = "",
-  city = "Peshawar",
+  city = "",
   isOnline = true,
 }: {
   searchQuery?: string;
@@ -105,9 +126,13 @@ export function JobRequestFeed({
   const isApiMode = !isMockMode();
   const [liveJobs, setLiveJobs] = useState<Job[]>([]);
   const [feedError, setFeedError] = useState<string | null>(null);
+  const [geoCoords, setGeoCoords] = useState<{ lat: number; lng: number } | null>(null);
+  const [geoStatus, setGeoStatus] = useState<"requesting" | "granted" | "denied" | "unavailable" | "idle">("idle");
 
-  const refreshLiveJobs = useCallback(() => {
-    listNearbyJobs()
+  const refreshLiveJobs = useCallback((coordsOverride?: { lat: number; lng: number } | null) => {
+    const coords = coordsOverride !== undefined ? coordsOverride : geoCoords;
+    const locationArg = coords ? { lat: coords.lat, lng: coords.lng, radiusKm: 25 } : undefined;
+    listNearbyJobs(locationArg)
       .then((jobs) => {
         setLiveJobs(jobs);
         setFeedError(null);
@@ -136,11 +161,41 @@ export function JobRequestFeed({
           );
         }
       });
-  }, []);
+  }, [geoCoords]);
+
+  const requestGps = useCallback(() => {
+    if (typeof window === "undefined" || !("geolocation" in navigator)) {
+      setGeoStatus("unavailable");
+      refreshLiveJobs(null);
+      return;
+    }
+
+    setGeoStatus("requesting");
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const coords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+        setGeoCoords(coords);
+        setGeoStatus("granted");
+        refreshLiveJobs(coords);
+      },
+      (err) => {
+        if (err.code === 1) {
+          setGeoStatus("denied");
+        } else {
+          setGeoStatus("unavailable");
+        }
+        refreshLiveJobs(null);
+      },
+      { enableHighAccuracy: true, timeout: 8000, maximumAge: 60000 },
+    );
+  }, [refreshLiveJobs]);
 
   useEffect(() => {
-    refreshLiveJobs();
-    const intervalId = window.setInterval(refreshLiveJobs, 8000);
+    requestGps();
+  }, [requestGps]);
+
+  useEffect(() => {
+    const intervalId = window.setInterval(() => refreshLiveJobs(), 8000);
     const onFocus = () => refreshLiveJobs();
     const onJobCreated = () => refreshLiveJobs();
     window.addEventListener("focus", onFocus);
@@ -161,11 +216,8 @@ export function JobRequestFeed({
   }, [refreshLiveJobs]);
 
   const sourceJobs = useMemo(() => {
-    if (isApiMode) {
-      return liveJobs.map(toFeedJobRequest);
-    }
-    return MOCK_JOB_REQUESTS;
-  }, [liveJobs, isApiMode]);
+    return liveJobs.map(toFeedJobRequest);
+  }, [liveJobs]);
 
   const filteredJobs = useMemo(() => {
     return sourceJobs.filter((job: JobRequest) => {
@@ -264,7 +316,12 @@ export function JobRequestFeed({
         </div>
       ) : (
         <div className="w-full flex flex-col items-center justify-center animate-in fade-in duration-300">
-          <RadarSearchView city={city} />
+          <RadarSearchView
+            city={city}
+            geoStatus={geoStatus}
+            geoCoords={geoCoords}
+            onRequestGps={requestGps}
+          />
         </div>
       )}
 

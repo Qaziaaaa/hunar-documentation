@@ -30,7 +30,11 @@ import {
   SUCCESS_VERIFICATION_MESSAGE_UR,
   type ArrivalSession,
 } from "@/features/jobs/services/arrival-verification-service";
-import { rejectRepairEstimate } from "@/features/customer-jobs/api/customer-repair-api";
+import { rejectRepairEstimate, acceptRepairEstimate } from "@/features/customer-jobs/api/customer-repair-api";
+import {
+  customerQuoteService,
+  type PendingRepairQuote,
+} from "@/features/customer-jobs/services/customer-quote-service";
 
 interface CustomerVisitsViewProps {
   initialVisits: ScheduledVisit[];
@@ -104,9 +108,38 @@ export function CustomerVisitsView({ initialVisits }: CustomerVisitsViewProps) {
     );
   }, [visits, selectedVisitId]);
 
+  const [activeQuote, setActiveQuote] = useState<PendingRepairQuote | null>(() => customerQuoteService.getActiveQuote());
+
+  useEffect(() => {
+    customerQuoteService.checkBackendPendingQuote().then((q) => {
+      if (q) {
+        setActiveQuote(q);
+        setInPremisesStep("quote_proposed");
+      }
+    });
+
+    const unsubscribe = customerQuoteService.subscribe((q, event) => {
+      if (event === "PROPOSED") {
+        setActiveQuote(q);
+        setInPremisesStep("quote_proposed");
+      } else if (event === "DECIDED" || event === "CLEARED") {
+        setActiveQuote(null);
+      }
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  const isAtDoorstep =
+    Boolean(liveVisit) &&
+    (liveVisit?.status === "arrived" || arrivalSession?.status === "pending_otp");
+
   const isVerifiedInside =
     Boolean(liveVisit) &&
-    (liveVisit?.status === "inspection_in_progress" || liveVisit?.status === "arrived");
+    (liveVisit?.status === "inspection_in_progress" ||
+      liveVisit?.status === "started" ||
+      liveVisit?.status === "in_progress" ||
+      arrivalSession?.status === "otp_verified");
 
   // Upcoming scheduled visits
   const upcomingVisits = useMemo(() => {
@@ -217,7 +250,7 @@ export function CustomerVisitsView({ initialVisits }: CustomerVisitsViewProps) {
 
                 <div className="p-5 sm:p-6 space-y-5">
                   {/* Arrival Doorstep OTP Action Banner */}
-                  {!isVerifiedInside && (
+                  {isAtDoorstep && !isVerifiedInside && (
                     <div className="p-4 rounded-2xl bg-amber-50 border-2 border-amber-300 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-3 animate-in fade-in-50">
                       <div className="flex items-center gap-2.5">
                         <div className="size-9 rounded-xl bg-amber-500 text-white flex items-center justify-center shrink-0 shadow-2xs">
@@ -418,7 +451,7 @@ export function CustomerVisitsView({ initialVisits }: CustomerVisitsViewProps) {
                             {isUrdu ? "طے شدہ وزٹ فیس" : "Agreed Visit Fee"}
                           </span>
                           <span className="text-sm font-extrabold text-[#0F766E]">
-                            Rs. {liveVisit.visitCharges ?? 300}
+                            Rs. {liveVisit.visitCharges ? liveVisit.visitCharges.toLocaleString() : "—"}
                           </span>
                         </div>
                       </div>
@@ -459,19 +492,12 @@ export function CustomerVisitsView({ initialVisits }: CustomerVisitsViewProps) {
 
                           <div className="text-xs text-slate-700 bg-white p-3 rounded-lg border border-teal-100 space-y-1">
                             <p className="font-semibold text-[#123B5D]">
-                              {isUrdu ? "تشخیص: " : "Diagnosis: "}
+                              {isUrdu ? "تشخیص و منصوبہ: " : "Diagnosis & Plan: "}
                               <span className="font-normal">
-                                {isUrdu
-                                  ? "مین بریکر اوور ہیٹ ہو رہا ہے اور ٹرمینل لگز ڈی گریڈ ہو چکے ہیں۔"
-                                  : "Main breaker overheating under load. Terminal insulation degraded."}
-                              </span>
-                            </p>
-                            <p className="font-semibold text-[#123B5D]">
-                              {isUrdu ? "مرمت کا منصوبہ: " : "Proposed Fix: "}
-                              <span className="font-normal">
-                                {isUrdu
-                                  ? "63A شنائیڈر بریکر کی تبدیلی اور کیبل ٹرمینل کرمپنگ۔"
-                                  : "Install 63A Schneider modular breaker and re-crimp copper terminals."}
+                                {activeQuote?.description ||
+                                  (isUrdu
+                                    ? "کاریگر کی جانب سے آن سائٹ معائنہ مکمل کر لیا گیا ہے۔"
+                                    : "On-site diagnostic inspection completed by technician.")}
                               </span>
                             </p>
                           </div>
@@ -480,19 +506,23 @@ export function CustomerVisitsView({ initialVisits }: CustomerVisitsViewProps) {
                           <div className="space-y-1.5 text-xs">
                             <div className="flex justify-between text-slate-600">
                               <span>{isUrdu ? "وزٹ و معائنہ فیس:" : "Visit & Diagnostic Fee:"}</span>
-                              <span>Rs. {liveVisit.visitCharges ?? 300}</span>
+                              <span>Rs. {activeQuote?.visitCharge ?? liveVisit.visitCharges ?? 0}</span>
                             </div>
-                            <div className="flex justify-between text-slate-600">
-                              <span>{isUrdu ? "مرمت و کاریگری مزدوری:" : "Repair & Labor:"}</span>
-                              <span>Rs. 1,100</span>
-                            </div>
-                            <div className="flex justify-between text-slate-600">
-                              <span>{isUrdu ? "اصل پرزہ (Schneider 63A DP):" : "Parts (Schneider 63A DP):"}</span>
-                              <span>Rs. 800</span>
-                            </div>
+                            {activeQuote && activeQuote.amount > 0 && (
+                              <div className="flex justify-between text-slate-600">
+                                <span>{isUrdu ? "مرمت و کاریگری مزدوری / پرزہ جات:" : "Repair & Labor / Parts:"}</span>
+                                <span>Rs. {activeQuote.amount}</span>
+                              </div>
+                            )}
                             <div className="flex justify-between font-bold text-sm text-[#123B5D] pt-1.5 border-t border-teal-200">
                               <span>{isUrdu ? "کل متوقع لاگت:" : "Updated Total:"}</span>
-                              <span className="text-[#0F766E]">Rs. 2,200</span>
+                              <span className="text-[#0F766E]">
+                                Rs.{" "}
+                                {activeQuote
+                                  ? activeQuote.totalAmount ||
+                                    (activeQuote.visitCharge ?? liveVisit.visitCharges ?? 0) + activeQuote.amount
+                                  : liveVisit.visitCharges ?? 0}
+                              </span>
                             </div>
                           </div>
 
@@ -500,7 +530,16 @@ export function CustomerVisitsView({ initialVisits }: CustomerVisitsViewProps) {
                           <div className="flex flex-col sm:flex-row items-center gap-2 pt-1">
                             <button
                               type="button"
-                              onClick={() => setInPremisesStep("repair_in_progress")}
+                              onClick={async () => {
+                                if (activeQuote?.repairId) {
+                                  try {
+                                    await acceptRepairEstimate(activeQuote.repairId);
+                                  } catch (err) {
+                                    console.warn("Failed to accept repair estimate:", err);
+                                  }
+                                }
+                                setInPremisesStep("repair_in_progress");
+                              }}
                               className="w-full sm:flex-1 py-2.5 px-4 rounded-xl bg-[#0F766E] hover:bg-[#115E59] text-white text-xs font-bold shadow-xs transition-all cursor-pointer"
                             >
                               {isUrdu ? "منظور کریں اور کام شروع کروائیں" : "Approve Quote & Start Work"}
@@ -511,7 +550,11 @@ export function CustomerVisitsView({ initialVisits }: CustomerVisitsViewProps) {
                                 setIsRepairDeclined(true);
                                 setInPremisesStep("work_completed");
                                 try {
-                                  await rejectRepairEstimate(liveVisit.jobId);
+                                  if (activeQuote?.repairId) {
+                                    await rejectRepairEstimate(activeQuote.repairId);
+                                  } else {
+                                    await rejectRepairEstimate(liveVisit.jobId);
+                                  }
                                 } catch (err) {
                                   console.warn("Failed to decline repair estimate:", err);
                                 }
@@ -533,7 +576,13 @@ export function CustomerVisitsView({ initialVisits }: CustomerVisitsViewProps) {
                               <span>{isUrdu ? "کام جاری ہے — کاریگر مرمت مکمل کر رہا ہے" : "Work in Progress — Technician is performing the repair"}</span>
                             </div>
                             <span className="text-[11px] text-emerald-700 font-semibold">
-                              {isUrdu ? "منظور شدہ کوٹیشن: Rs. 2,200" : "Approved Quote: Rs. 2,200"}
+                              {activeQuote?.amount || (liveVisit as any)?.repairEstimate
+                                ? isUrdu
+                                  ? `منظور شدہ کوٹیشن: Rs. ${(activeQuote?.amount ?? (liveVisit as any).repairEstimate).toLocaleString()}`
+                                  : `Approved Quote: Rs. ${(activeQuote?.amount ?? (liveVisit as any).repairEstimate).toLocaleString()}`
+                                : isUrdu
+                                ? "منظور شدہ کوٹیشن"
+                                : "Approved Quote"}
                             </span>
                           </div>
                           <p className="text-[11px] text-emerald-800/80">
@@ -664,7 +713,13 @@ export function CustomerVisitsView({ initialVisits }: CustomerVisitsViewProps) {
 
                           <div className="flex items-center sm:flex-col items-start sm:items-end rtl:sm:items-start gap-1 shrink-0">
                             <span className="inline-flex items-center font-bold text-xs sm:text-sm text-teal bg-teal/10 px-2.5 py-1 rounded-lg border border-teal/20">
-                              {isUrdu ? `وزٹ چارجز: ${otherVisit.visitCharges ?? 300} روپے` : `Visit Charges: Rs. ${otherVisit.visitCharges ?? 300}`}
+                              {otherVisit.visitCharges
+                                ? isUrdu
+                                  ? `وزٹ چارجز: ${otherVisit.visitCharges} روپے`
+                                  : `Visit Charges: Rs. ${otherVisit.visitCharges}`
+                                : isUrdu
+                                ? "وزٹ فیس زیر التواء"
+                                : "Visit Fee: Pending"}
                             </span>
                           </div>
                         </div>

@@ -148,7 +148,9 @@ export function JobCard({ job, workerOffer }: JobCardProps) {
               Suggested Visit
             </span>
             <span className="font-extrabold text-[#123B5D] text-sm">
-              {formatRs(job.customerSuggestedPrice || 300)}
+              {job.customerSuggestedPrice || (job as any).suggestedVisitCharge
+                ? formatRs(job.customerSuggestedPrice || (job as any).suggestedVisitCharge || 0)
+                : "Not specified"}
             </span>
           </div>
         </div>

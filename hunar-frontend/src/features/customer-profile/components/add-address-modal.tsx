@@ -93,10 +93,10 @@ export function AddAddressModal({
       tag,
       fullAddress: fullAddress.trim(),
       area,
-      city: city.trim() || "Islamabad",
-      landmark: landmark.trim() || (isUrdu ? "قریبی مشہور مقام" : "Nearby landmark"),
-      latitude: initialAddress?.latitude || 33.7215,
-      longitude: initialAddress?.longitude || 73.0577,
+      city: city.trim(),
+      landmark: landmark.trim(),
+      latitude: initialAddress?.latitude ?? 0,
+      longitude: initialAddress?.longitude ?? 0,
       isDefault,
     };
 

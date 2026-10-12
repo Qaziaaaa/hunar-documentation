@@ -27,7 +27,7 @@ import { useQuery } from "@tanstack/react-query";
 import { LoadingState } from "@/components/shared/loading-state";
 import { ErrorState } from "@/components/shared/error-state";
 import { JobEvidencePhoto } from "@/features/customer-jobs/types";
-import { getJobRepairInvoice, acceptRepairEstimate, submitJobReview } from "../api/customer-repair-api";
+import { getJobRepairInvoice, acceptRepairEstimate, submitJobReview, processJobPayment } from "../api/customer-repair-api";
 import { formatDateTime } from "@/lib/format";
 import type { JobCompletionData } from "../types";
 
@@ -66,6 +66,7 @@ export function CustomerJobCompletionView({
   const [showConfirmModal, setShowConfirmModal] = useState<boolean>(false);
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
   const [isCompletedSuccess, setIsCompletedSuccess] = useState<boolean>(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [activePhotoModal, setActivePhotoModal] = useState<JobEvidencePhoto | null>(
     null
   );
@@ -96,10 +97,24 @@ export function CustomerJobCompletionView({
 
   const handleApproveAndPay = async () => {
     setIsProcessing(true);
+    setErrorMessage(null);
     try {
       if (!isRepairDeclinedParam) {
         await acceptRepairEstimate(initialJobId!, "cash");
       }
+
+      // Record real payment transaction via POST /payments
+      if (initialJobId) {
+        await processJobPayment({
+          jobId: initialJobId,
+          method: "COD",
+          amount: completionData?.totalAmount,
+          note: `Settled by customer upon job completion. Rating: ${rating}/5`,
+        }).catch((payErr) => {
+          console.warn("Payment initiation note:", payErr);
+        });
+      }
+
       await submitJobReview(initialJobId!, {
         rating,
         comment: reviewNote,
@@ -107,12 +122,14 @@ export function CustomerJobCompletionView({
         qualityRating: rating,
         behaviorRating: rating,
       });
-    } catch (err) {
-      console.warn("Completion review submission fallback:", err);
-    } finally {
-      setIsProcessing(false);
+
       setShowConfirmModal(false);
       setIsCompletedSuccess(true);
+    } catch (err: any) {
+      console.warn("Completion review submission fallback:", err);
+      setErrorMessage(err?.message || "Failed to finalize completion. Please try again.");
+    } finally {
+      setIsProcessing(false);
     }
   };
 
@@ -640,6 +657,11 @@ export function CustomerJobCompletionView({
                 ? `کیا آپ Rs. ${completionData.totalAmount.toLocaleString()} کی ادائیگی کی تصدیق کرتے ہیں؟`
                 : `Confirm Payment of Rs. ${completionData.totalAmount.toLocaleString()}?`}
             </h4>
+            {errorMessage && (
+              <div className="w-full my-2 p-2.5 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-medium text-center">
+                {errorMessage}
+              </div>
+            )}
             <p className="text-xs text-slate-500 mt-2 mb-6 leading-relaxed">
               {isUrdu
                 ? `یہ ${completionData.worker.name} کے ساتھ جاب ${completionData.jobNumber} کو حتمی شکل دے گا، آپ کا ${rating} اسٹار ریویو جمع کرے گا اور 5 روزہ وارنٹی سرٹیفکیٹ کو فعال کرے گا۔`

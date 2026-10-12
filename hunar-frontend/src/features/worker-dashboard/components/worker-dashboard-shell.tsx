@@ -21,6 +21,7 @@ import { WorkerJobsHub } from "@/features/jobs/components/worker-jobs-hub";
 import { WorkerEarningsContent } from "@/app/[locale]/(worker)/worker/earnings/page";
 import { WalletContent } from "@/app/[locale]/(worker)/worker/wallet/page";
 import { getWorkerEarnings } from "@/services/worker/earnings.service";
+import { listWorkerJobs } from "@/services/worker/jobs.service";
 import type {
   DashboardTab,
   WorkerDashboardProfile,
@@ -52,7 +53,7 @@ const EMPTY_WORKER_PROFILE: WorkerDashboardProfile = {
   bio: "",
   skills: [],
   serviceAreas: [],
-  city: "Peshawar",
+  city: "",
 };
 
 function loadInitialProfile(): { profile: WorkerDashboardProfile; isLoaded: boolean } {
@@ -228,11 +229,14 @@ export function WorkerDashboardShell({
     async function syncBackendProfile() {
       if (!getAccessToken()) return;
       try {
-        const [raw, earningsData] = await Promise.all([
+        const [raw, earningsData, myActiveJobs] = await Promise.all([
           http.get<any>("/users/worker/me").catch(() => null),
           getWorkerEarnings().catch(() => null),
+          listWorkerJobs().catch(() => []),
         ]);
         const data = raw?.data ?? raw;
+        const liveActiveJobs = Array.isArray(myActiveJobs) ? myActiveJobs.length : undefined;
+
         if (data?.user) {
           const wp = data.workerProfile;
           const areas = data.serviceAreas?.map((a: any) => a.label) || [];
@@ -270,6 +274,7 @@ export function WorkerDashboardShell({
               isVerified: wp?.verificationStatus === "APPROVED",
               rating: liveRating !== undefined ? liveRating : (prev.rating ?? 0),
               reviewCount: typeof data.reviewsCount === "number" ? data.reviewsCount : prev.reviewCount,
+              activeJobsCount: liveActiveJobs !== undefined ? liveActiveJobs : prev.activeJobsCount,
               totalEarnings: earningsData?.grossEarnings ?? prev.totalEarnings,
               completedJobsCount: liveCompletedJobs !== undefined ? liveCompletedJobs : prev.completedJobsCount,
               totalCommissionPaid: earningsData?.commissionsPaid ?? prev.totalCommissionPaid,
@@ -285,14 +290,15 @@ export function WorkerDashboardShell({
 
             return nextProfile;
           });
-        } else if (earningsData) {
+        } else if (earningsData || liveActiveJobs !== undefined) {
           setProfile((prev) => {
             const nextProfile: WorkerDashboardProfile = {
               ...prev,
-              totalEarnings: earningsData.grossEarnings ?? prev.totalEarnings,
-              completedJobsCount: earningsData.completedJobsCount ?? prev.completedJobsCount,
-              totalCommissionPaid: earningsData.commissionsPaid ?? prev.totalCommissionPaid,
-              walletBalance: earningsData.balance ?? prev.walletBalance,
+              activeJobsCount: liveActiveJobs !== undefined ? liveActiveJobs : prev.activeJobsCount,
+              totalEarnings: earningsData?.grossEarnings ?? prev.totalEarnings,
+              completedJobsCount: earningsData?.completedJobsCount ?? prev.completedJobsCount,
+              totalCommissionPaid: earningsData?.commissionsPaid ?? prev.totalCommissionPaid,
+              walletBalance: earningsData?.balance ?? prev.walletBalance,
             };
 
             try {

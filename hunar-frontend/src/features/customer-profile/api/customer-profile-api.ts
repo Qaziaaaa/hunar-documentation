@@ -1,4 +1,4 @@
-import { http } from "@/lib/api-client";
+import { http, getStoredUser, setTokens, getAccessToken, getRefreshToken } from "@/lib/api-client";
 import type { CustomerProfileData } from "../types";
 
 const defaultCustomerProfile: CustomerProfileData = {
@@ -15,9 +15,9 @@ const defaultCustomerProfile: CustomerProfileData = {
   memberTier: "Standard Member",
   joinedDate: "Recently",
   completedJobsCount: 0,
-  trustScore: "100%",
-  rating: 5.0,
-  primaryCity: "Peshawar",
+  trustScore: "Unrated",
+  rating: 0,
+  primaryCity: "",
   preferredLanguage: "ur",
   preferredServiceHours: "anytime",
   savedAddresses: [],
@@ -58,7 +58,7 @@ export async function getCustomerProfile(): Promise<CustomerProfileData> {
     phone: u.phone || "",
     avatarUrl: u.avatarUrl || "",
     avatarInitials: initials,
-    primaryCity: u.city || "Peshawar",
+    primaryCity: u.city || "",
     isEmailVerified: Boolean(u.isEmailVerified || u.emailVerified),
     isPhoneVerified: Boolean(u.isPhoneVerified || u.phoneVerified || u.isVerified),
   };
@@ -86,6 +86,16 @@ export async function updateCustomerProfile(
           .slice(0, 2)
           .toUpperCase()
       : "C";
+
+    const nextAvatar = u?.avatarUrl || data.avatarUrl;
+    const stored = getStoredUser();
+    if (stored) {
+      setTokens(getAccessToken() || "", getRefreshToken() || "", {
+        ...stored,
+        name: name || stored.name,
+        avatarUrl: nextAvatar !== undefined ? (nextAvatar || undefined) : stored.avatarUrl,
+      });
+    }
 
     return {
       ...defaultCustomerProfile,

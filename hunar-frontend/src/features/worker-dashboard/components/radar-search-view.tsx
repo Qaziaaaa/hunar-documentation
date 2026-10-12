@@ -1,12 +1,15 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Navigation } from "lucide-react";
+import { Navigation, MapPin, AlertCircle, RefreshCw } from "lucide-react";
 
 interface RadarSearchViewProps {
   city?: string;
   workerName?: string;
   onViewFeed?: () => void;
+  geoStatus?: "requesting" | "granted" | "denied" | "unavailable" | "idle";
+  geoCoords?: { lat: number; lng: number } | null;
+  onRequestGps?: () => void;
 }
 
 const NEARBY_SIGNALS = [
@@ -19,6 +22,9 @@ const NEARBY_SIGNALS = [
 export function RadarSearchView({
   city = "Peshawar",
   onViewFeed,
+  geoStatus = "idle",
+  geoCoords,
+  onRequestGps,
 }: RadarSearchViewProps) {
   const [activeSignalIndex, setActiveSignalIndex] = useState(0);
 
@@ -35,15 +41,59 @@ export function RadarSearchView({
       data-purpose="radar-searching-screen"
     >
       {/* STATUS BADGE */}
-      <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-teal/20 bg-teal/5 px-4 py-1.5 shadow-2xs">
+      <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-teal/20 bg-teal/5 px-4 py-1.5 shadow-2xs">
         <span className="relative flex size-2.5">
-          <span className="absolute inline-flex size-full animate-ping rounded-full bg-teal opacity-75" />
-          <span className="relative inline-flex size-2.5 rounded-full bg-teal" />
+          <span
+            className={`absolute inline-flex size-full animate-ping rounded-full opacity-75 ${
+              geoStatus === "denied" || geoStatus === "unavailable"
+                ? "bg-amber-500"
+                : geoStatus === "requesting"
+                ? "bg-sky-500"
+                : "bg-teal"
+            }`}
+          />
+          <span
+            className={`relative inline-flex size-2.5 rounded-full ${
+              geoStatus === "denied" || geoStatus === "unavailable"
+                ? "bg-amber-500"
+                : geoStatus === "requesting"
+                ? "bg-sky-500"
+                : "bg-teal"
+            }`}
+          />
         </span>
         <span className="text-xs font-extrabold uppercase tracking-wider text-navy">
-          Live Radar Active · 5 km Radius
+          {geoStatus === "granted" && geoCoords
+            ? `Live GPS Active · ${geoCoords.lat.toFixed(2)}, ${geoCoords.lng.toFixed(2)} · 25 km`
+            : geoStatus === "requesting"
+            ? "Detecting GPS Location..."
+            : geoStatus === "denied" || geoStatus === "unavailable"
+            ? `Default Area (${city}) · GPS Disabled`
+            : `Live Radar Active · ${city}`}
         </span>
       </div>
+
+      {/* GPS PERMISSION WARNING / RETRY NOTICE */}
+      {(geoStatus === "denied" || geoStatus === "unavailable") && (
+        <div className="mb-6 inline-flex max-w-md items-center gap-2 rounded-xl border border-amber-200 bg-amber-50/90 px-3.5 py-2 text-xs text-amber-900 shadow-xs">
+          <AlertCircle className="size-4 shrink-0 text-amber-600" />
+          <span className="text-left flex-1">
+            {geoStatus === "denied"
+              ? `Location permission denied. Showing nearby requests in ${city}.`
+              : `Unable to detect GPS position. Showing nearby requests in ${city}.`}
+          </span>
+          {onRequestGps && (
+            <button
+              type="button"
+              onClick={onRequestGps}
+              className="inline-flex shrink-0 items-center gap-1 rounded-md bg-amber-200/70 px-2 py-1 font-bold text-amber-900 transition-colors hover:bg-amber-300/80 cursor-pointer text-[11px]"
+            >
+              <RefreshCw className="size-3" />
+              Enable GPS
+            </button>
+          )}
+        </div>
+      )}
 
       {/* RADAR CONTAINER */}
       <div className="relative flex size-72 sm:size-96 items-center justify-center">

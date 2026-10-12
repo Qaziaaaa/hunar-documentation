@@ -409,7 +409,9 @@ export function WorkerChatModal({
               <div className="flex items-center justify-between text-slate-600">
                 <span>{isUrdu ? "طے شدہ وزٹ فیس:" : "Agreed Visit Fee:"}</span>
                 <span className="font-black font-mono text-[#0F8B8D] text-xs">
-                  Rs {job.visitCharge || job.customerSuggestedPrice || 600}
+                  {job.visitCharge || job.customerSuggestedPrice
+                    ? `Rs ${job.visitCharge || job.customerSuggestedPrice}`
+                    : "Not specified"}
                 </span>
               </div>
             </div>

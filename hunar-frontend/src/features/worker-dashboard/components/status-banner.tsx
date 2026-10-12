@@ -17,8 +17,8 @@ import { useLocale } from "next-intl";
 export function StatusBanner({
   isOnline,
   onToggleOnline,
-  city = "Peshawar",
-  serviceAreas = ["Hayatabad", "University Town", "Saddar"],
+  city = "",
+  serviceAreas = [],
 }: {
   isOnline: boolean;
   onToggleOnline: () => void;
@@ -100,9 +100,19 @@ export function StatusBanner({
                 {isOnline ? (
                   <span className="flex items-center gap-1">
                     <MapPin className="size-3 text-teal shrink-0" />
-                    {isUrdu
-                      ? `${city} میں کسٹمر جاب کی درخواستیں موصول ہو رہی ہیں۔`
-                      : `Receiving customer job requests across ${city} (${serviceAreas.slice(0, 3).join(", ")}).`}
+                    {serviceAreas.length > 0 ? (
+                      isUrdu
+                        ? `${city ? `${city} میں ` : ""}کسٹمر جاب کی درخواستیں موصول ہو رہی ہیں (${serviceAreas.slice(0, 3).join("، ")})۔`
+                        : `Receiving customer job requests${city ? ` across ${city}` : ""} (${serviceAreas.slice(0, 3).join(", ")}).`
+                    ) : city ? (
+                      isUrdu
+                        ? `${city} میں کسٹمر جاب کی درخواستیں موصول ہو رہی ہیں۔`
+                        : `Receiving customer job requests across ${city}.`
+                    ) : (
+                      isUrdu
+                        ? "کسٹمر جاب کی درخواستیں موصول ہو رہی ہیں۔"
+                        : "Receiving nearby customer job requests."
+                    )}
                   </span>
                 ) : isUrdu ? (
                   "آپ کسٹمر کی تلاش سے چھپے ہوئے ہیں۔ نئی جابز حاصل کرنے کے لیے آن لائن ہوں۔"

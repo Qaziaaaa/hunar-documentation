@@ -9,6 +9,7 @@ import {
 } from './jobs.validation';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Roles } from '../../common/decorators/roles.decorator';
+import { Public } from '../../common/decorators/public.decorator';
 import { JwtPayload } from '../../common/types/jwt-payload.interface';
 import { Role } from '@prisma/client';
 
@@ -80,3 +81,34 @@ export class WorkerJobsController {
     return this.jobsService.getHistoryJobs(user.sub, query);
   }
 }
+
+/** Public service categories directory */
+@Controller('categories')
+export class CategoriesController {
+  constructor(private readonly jobsService: JobsService) {}
+
+  @Public()
+  @Get()
+  getCategories() {
+    return this.jobsService.getCategories();
+  }
+}
+
+/** Customer and Worker disputes & support tickets */
+@Controller('disputes')
+export class DisputesController {
+  constructor(private readonly jobsService: JobsService) {}
+
+  @Post()
+  @Roles(Role.CUSTOMER, Role.WORKER)
+  create(@CurrentUser() user: JwtPayload, @Body() dto: any) {
+    return this.jobsService.createDispute(user.sub, dto);
+  }
+
+  @Get('my')
+  @Roles(Role.CUSTOMER, Role.WORKER)
+  getMyDisputes(@CurrentUser() user: JwtPayload) {
+    return this.jobsService.getMyDisputes(user.sub);
+  }
+}
+
