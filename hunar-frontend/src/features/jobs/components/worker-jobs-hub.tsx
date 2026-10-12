@@ -2,9 +2,11 @@
 
 import React, { useState } from "react";
 import { useParams } from "next/navigation";
-import { useWorkerJobs } from "@/stores/worker-jobs-store";
+import { useWorkerJobs, workerStore } from "@/stores/worker-jobs-store";
 import { WorkerUpcomingVisitCard } from "./worker-upcoming-visit-card";
 import { WorkerPastJobCard } from "./worker-past-job-card";
+import { ErrorState } from "@/components/shared/error-state";
+import { LoadingState } from "@/components/shared/loading-state";
 import {
   Calendar,
   CheckCircle2,
@@ -14,7 +16,7 @@ export function WorkerJobsHub() {
   const params = useParams();
   const locale = (params?.locale as string) || "en";
   const isUrdu = locale === "ur";
-  const { jobs, offers } = useWorkerJobs();
+  const { jobs, offers, status, error } = useWorkerJobs();
 
   // Tab State: "upcoming" | "past"
   const [activeTab, setActiveTab] = useState<"upcoming" | "past">("upcoming");
@@ -26,6 +28,25 @@ export function WorkerJobsHub() {
 
   // 2. Past Completed Jobs
   const pastJobs = jobs.filter((j) => j.status === "completed");
+  const INITIAL_PAST_LIMIT = 6;
+  const [pastLimit, setPastLimit] = useState(INITIAL_PAST_LIMIT);
+  const visiblePastJobs = pastJobs.slice(0, pastLimit);
+
+  if (status === "loading" && jobs.length === 0) {
+    return <LoadingState label="Loading your jobs..." />;
+  }
+
+  if (status === "error") {
+    return (
+      <ErrorState
+        title="Unable to load your jobs"
+        description={
+          error ?? "Please check your network connection and try again."
+        }
+        onRetry={() => void workerStore.hydrate({ force: true })}
+      />
+    );
+  }
 
   return (
     <div className="space-y-6 max-w-5xl mx-auto pb-10 w-full overflow-x-hidden animate-in fade-in">
@@ -112,10 +133,25 @@ export function WorkerJobsHub() {
       {activeTab === "past" && (
         <section className="space-y-4 animate-in fade-in" aria-label="Past Completed Jobs">
           {pastJobs.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 sm:gap-4">
-              {pastJobs.map((job) => (
-                <WorkerPastJobCard key={job.id} job={job} />
-              ))}
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 sm:gap-4">
+                {visiblePastJobs.map((job) => (
+                  <WorkerPastJobCard key={job.id} job={job} />
+                ))}
+              </div>
+              {pastJobs.length > pastLimit && (
+                <div className="flex justify-center pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setPastLimit((prev) => prev + INITIAL_PAST_LIMIT)}
+                    className="py-2.5 px-6 rounded-xl bg-white border border-slate-200 text-[#123B5D] hover:bg-slate-50 text-xs sm:text-sm font-bold shadow-2xs transition-all cursor-pointer hover:border-[#0F8B8D]"
+                  >
+                    {isUrdu
+                      ? `مزید مکمل شدہ جابز دیکھیں (${pastJobs.length - pastLimit} باقی)`
+                      : `Load More Completed Jobs (${pastJobs.length - pastLimit} remaining)`}
+                  </button>
+                </div>
+              )}
             </div>
           ) : (
             <div className="bg-white rounded-3xl border border-slate-200/80 p-10 text-center space-y-2">

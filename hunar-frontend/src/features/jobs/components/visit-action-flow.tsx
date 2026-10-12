@@ -62,8 +62,9 @@ export function VisitActionFlow({ job, offer }: VisitActionFlowProps) {
   const agreedPrice =
     offer?.agreedVisitCharge ??
     offer?.visitCharge ??
+    job.visitCharge ??
     job.customerSuggestedPrice ??
-    500;
+    0;
   const requiredHold = Math.round(agreedPrice * 0.1);
 
   // 8a. Handle Start Visit
@@ -334,6 +335,8 @@ export function VisitActionFlow({ job, offer }: VisitActionFlowProps) {
                   <img
                     src={url}
                     alt={`Photo ${i + 1}`}
+                    loading="lazy"
+                    decoding="async"
                     className="w-full h-full object-cover"
                   />
                   <button

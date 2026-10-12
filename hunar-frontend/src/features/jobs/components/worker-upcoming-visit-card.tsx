@@ -6,7 +6,12 @@ import { JobRequest } from "@/types/job";
 import { VisitOffer } from "@/types/offer";
 import { formatRs } from "@/lib/design-tokens";
 import { workerStore } from "@/stores/worker-jobs-store";
-import { WorkerJobDetailsModal } from "./worker-job-details-modal";
+import dynamic from "next/dynamic";
+
+const WorkerJobDetailsModal = dynamic(
+  () => import("./worker-job-details-modal").then((mod) => mod.WorkerJobDetailsModal),
+  { ssr: false }
+);
 import {
   Calendar,
   Clock,
@@ -120,9 +125,15 @@ export function WorkerUpcomingVisitCard({
                   <img
                     src={job.customer.avatarUrl}
                     alt={job.customer.name}
+                    loading="lazy"
+                    decoding="async"
                     className="size-full object-cover"
+                    onError={(e) => {
+                      (e.currentTarget as HTMLElement).style.display = "none";
+                    }}
                   />
-                ) : (
+                ) : null}
+                {(!job.customer.avatarUrl) && (
                   job.customer.name.slice(0, 2).toUpperCase()
                 )}
               </div>

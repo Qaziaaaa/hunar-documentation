@@ -1,7 +1,6 @@
 "use client";
 
 import { http, getAccessToken } from "@/lib/api-client";
-import { isMockMode } from "@/lib/data-source";
 
 export interface ArrivalSession {
   jobId: string;
@@ -61,7 +60,7 @@ class ArrivalVerificationService {
   }): ArrivalSession {
     const session: ArrivalSession = {
       jobId: params.jobId,
-      visitId: params.visitId || "VST-98214",
+      visitId: params.visitId,
       otp: params.otp.trim(),
       arrivedAt: Date.now(),
       status: "pending_otp",
@@ -93,7 +92,7 @@ class ArrivalVerificationService {
     if (!session) {
       // Use fallback session or default active session to prevent blocking user
       session = {
-        jobId: fallbackSession?.jobId || "job-1",
+        jobId: fallbackSession?.jobId || "",
         visitId: fallbackSession?.visitId,
         otp: fallbackSession?.otp || "",
         arrivedAt: Date.now(),
@@ -113,10 +112,16 @@ class ArrivalVerificationService {
       };
     }
 
-    // Call backend API if user is authenticated and not in mock mode
-    if (!isMockMode() && getAccessToken()) {
+    // Call backend API if user is authenticated
+    if (getAccessToken()) {
       try {
         const idToVerify = session.visitId || session.jobId;
+        if (!idToVerify) {
+          return {
+            success: false,
+            error: "No active visit or job found to verify arrival.",
+          };
+        }
         try {
           await http.put(`/visits/${idToVerify}/verify-arrival-otp`, {
             otp: cleanInput,
