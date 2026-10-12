@@ -221,7 +221,15 @@ function MessageBubble({ message }: { message: ChatMessage }) {
   return (
     <div className={`flex ${own ? "justify-end" : "justify-start"}`}>
       <div className={`max-w-[85%] rounded-xl px-3 py-2 ${own ? "bg-teal text-white" : "bg-muted text-foreground"}`}>
-        {message.imageUrl ? <img src={message.imageUrl} alt="" className="mb-2 max-h-48 rounded-lg object-cover" /> : null}
+        {message.imageUrl ? (
+          <img
+            src={message.imageUrl}
+            alt=""
+            loading="lazy"
+            decoding="async"
+            className="mb-2 max-h-48 rounded-lg object-cover"
+          />
+        ) : null}
         {message.text ? <p className="text-sm">{message.text}</p> : null}
         <span className={`mt-1 flex items-center justify-end gap-1 text-[0.65rem] ${own ? "text-white/75" : "text-muted-foreground"}`}>
           <time>{formatDateTime(message.createdAt)}</time>

@@ -1,5 +1,4 @@
 import { http, getStoredUser, API_BASE_URL } from "@/lib/api-client";
-import { isMockMode } from "@/lib/data-source";
 
 export interface ChatMessage {
   id: string;
@@ -77,47 +76,36 @@ export function normalizeChatMessage(raw: any): ChatMessage {
  * List all active conversations for the authenticated user
  */
 export async function listConversations(): Promise<ChatConversation[]> {
-  try {
-    const res = await http.get<ChatConversation[]>("/chat/conversations");
-    const rawList = Array.isArray(res) ? res : (res as any)?.items ?? [];
-    return rawList;
-  } catch (err) {
-    console.warn("[listConversations] Backend offline, using local conversations:", err);
-    return [];
-  }
+  const res = await http.get<ChatConversation[]>("/chat/conversations");
+  const rawList = Array.isArray(res) ? res : (res as any)?.items ?? [];
+  return rawList;
 }
 
 /**
- * Get messages inside a conversation by conversationId
+ * Get messages inside a conversation by conversationId with pagination
  */
 export async function getConversationMessages(
-  conversationId: string
+  conversationId: string,
+  page: number = 1,
+  limit: number = 30
 ): Promise<ChatMessage[]> {
-  try {
-    const res = await http.get<any>(`/chat/${conversationId}/messages`);
-    const rawList: any[] = Array.isArray(res) ? res : (res?.items ?? []);
-    // Backend orders desc by default, reverse to chronological ascending order
-    return rawList.map(normalizeChatMessage).reverse();
-  } catch (err) {
-    console.warn(`[getConversationMessages] Backend offline for ${conversationId}:`, err);
-    return [];
-  }
+  const res = await http.get<any>(`/chat/${conversationId}/messages?page=${page}&limit=${limit}`);
+  const rawList: any[] = Array.isArray(res) ? res : (res?.items ?? []);
+  // Backend orders desc by default, reverse to chronological ascending order
+  return rawList.map(normalizeChatMessage).reverse();
 }
 
 /**
- * Get messages for a job directly by jobId
+ * Get messages for a job directly by jobId with pagination
  */
 export async function getMessagesByJob(
-  jobId: string
+  jobId: string,
+  page: number = 1,
+  limit: number = 30
 ): Promise<ChatMessage[]> {
-  try {
-    const res = await http.get<any>(`/chat/${jobId}`);
-    const rawList: any[] = Array.isArray(res) ? res : (res?.items ?? []);
-    return rawList.map(normalizeChatMessage).reverse();
-  } catch (err) {
-    console.warn(`[getMessagesByJob] Backend error for job ${jobId}:`, err);
-    return [];
-  }
+  const res = await http.get<any>(`/chat/${jobId}?page=${page}&limit=${limit}`);
+  const rawList: any[] = Array.isArray(res) ? res : (res?.items ?? []);
+  return rawList.map(normalizeChatMessage).reverse();
 }
 
 /**
@@ -129,17 +117,6 @@ export async function sendChatMessage(
   options?: { isJobId?: boolean; imageKey?: string }
 ): Promise<ChatMessage> {
   const text = content?.trim() || "";
-  if (isMockMode()) {
-    return {
-      id: `msg-${Date.now()}`,
-      conversationId: targetId,
-      senderId: "current-user",
-      senderRole: "CUSTOMER",
-      content: text,
-      text: text,
-      createdAt: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-    };
-  }
 
   // If designated as a jobId, send via POST /chat/send
   if (options?.isJobId) {
@@ -176,16 +153,8 @@ export async function sendChatMessage(
         // Fall through
       }
     }
-    console.warn("[sendChatMessage] Backend offline or request failed, creating optimistic message:", err);
-    return {
-      id: `msg-${Date.now()}`,
-      conversationId: targetId,
-      senderId: "current-user",
-      senderRole: "CUSTOMER",
-      content: text,
-      text: text,
-      createdAt: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-    };
+    console.error("[sendChatMessage] Backend request failed:", err);
+    throw err;
   }
 }
 
@@ -195,23 +164,12 @@ export async function sendChatMessage(
 export async function uploadChatImage(
   file: File
 ): Promise<{ key: string; url: string }> {
-  if (isMockMode()) {
-    return { key: `chat-img-${Date.now()}`, url: URL.createObjectURL(file) };
-  }
-  try {
-    const formData = new FormData();
-    formData.append("file", file);
-    return await http.upload<{ key: string; url: string }>(
-      "/uploads/chat-image",
-      formData
-    );
-  } catch (err) {
-    console.warn("[uploadChatImage] Backend offline, using local preview URL:", err);
-    return {
-      key: `chat-img-${Date.now()}`,
-      url: URL.createObjectURL(file),
-    };
-  }
+  const formData = new FormData();
+  formData.append("file", file);
+  return await http.upload<{ key: string; url: string }>(
+    "/uploads/chat-image",
+    formData
+  );
 }
 
 /**
