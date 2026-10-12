@@ -5,7 +5,6 @@ import { useState, useEffect } from "react";
 import { Check, CheckCheck, User, X, Phone, ShieldCheck } from "lucide-react";
 import { sendChatMessage, uploadChatImage, getMessagesByJob, parseVoiceNote, encodeVoiceNote, uploadVoiceNote } from "@/features/chat/api/chat-api";
 import { joinConversationRoom, subscribeToMessages } from "@/services/worker/chat.service";
-import { isMockMode } from "@/lib/data-source";
 import { getStoredUser } from "@/lib/api-client";
 import { ChatInputBar } from "@/features/chat/components/chat-input-bar";
 import { VoiceMessageBubble } from "@/features/chat/components/voice-message-bubble";
