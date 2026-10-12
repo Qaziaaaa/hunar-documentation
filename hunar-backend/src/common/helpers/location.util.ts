@@ -76,10 +76,7 @@ export function extractAreaFromAddress(address: string, city?: string | null): s
     }
 
     // Check if it's just the city name
-    if (
-      (cityLower && partLower === cityLower) ||
-      COMMON_CITIES.includes(partLower)
-    ) {
+    if ((cityLower && partLower === cityLower) || COMMON_CITIES.includes(partLower)) {
       continue;
     }
 

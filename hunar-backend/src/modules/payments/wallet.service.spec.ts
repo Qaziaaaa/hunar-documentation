@@ -15,6 +15,8 @@ describe('WalletService', () => {
   const prisma = {
     workerWallet: {
       findUnique: jest.fn(),
+      findUniqueOrThrow: jest.fn(),
+      create: jest.fn(),
       upsert: jest.fn(),
       update: jest.fn(),
     },
@@ -48,6 +50,11 @@ describe('WalletService', () => {
     platformWallet: {
       upsert: jest.fn(),
       update: jest.fn(),
+    },
+    platformSetting: {
+      // B2: wallet reads PlatformSetting['commissionRate'] (legacy 'commission_rate'
+      // accepted) before falling back to config env. Empty table -> env path.
+      findMany: jest.fn().mockResolvedValue([]),
     },
     $transaction: jest.fn(async (arg: any) => {
       if (typeof arg === 'function') {
@@ -142,6 +149,11 @@ describe('WalletService', () => {
         balance: BigInt(250),
         heldBalance: BigInt(0),
       });
+      prisma.workerWallet.findUnique.mockResolvedValue({
+        userId: 'worker_1',
+        balance: BigInt(250),
+        heldBalance: BigInt(0),
+      });
 
       const dto: TopupDecideDto = { action: 'APPROVED', reason: 'screenshot verified' };
       await expect(service.decideTopup('topup_1', 'admin_1', dto)).resolves.toMatchObject({
@@ -155,6 +167,11 @@ describe('WalletService', () => {
   describe('getBalance / snapshot', () => {
     it('derives snapshot totals from the wallet row', async () => {
       prisma.workerWallet.upsert.mockResolvedValue({
+        userId: 'worker_1',
+        balance: BigInt(1750),
+        heldBalance: BigInt(250),
+      });
+      prisma.workerWallet.findUnique.mockResolvedValue({
         userId: 'worker_1',
         balance: BigInt(1750),
         heldBalance: BigInt(250),
@@ -177,6 +194,11 @@ describe('WalletService', () => {
       prisma.workerWallet.upsert.mockResolvedValue({
         userId: 'worker_1',
         balance: BigInt(1000),
+        heldBalance: BigInt(0),
+      });
+      prisma.workerWallet.findUnique.mockResolvedValue({
+        userId: 'worker_1',
+        balance: BigInt(0),
         heldBalance: BigInt(0),
       });
       prisma.commission.findUnique.mockResolvedValue(null);
@@ -230,6 +252,11 @@ describe('WalletService', () => {
       prisma.workerWallet.upsert.mockResolvedValue({
         userId: 'worker_1',
         balance: BigInt(1000),
+        heldBalance: BigInt(0),
+      });
+      prisma.workerWallet.findUnique.mockResolvedValue({
+        userId: 'worker_1',
+        balance: BigInt(0),
         heldBalance: BigInt(0),
       });
       prisma.commission.findUnique.mockResolvedValue(null);
@@ -313,4 +340,3 @@ describe('WalletService', () => {
     });
   });
 });
-

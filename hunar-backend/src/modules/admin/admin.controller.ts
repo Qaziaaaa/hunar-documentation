@@ -326,4 +326,3 @@ export class AdminController {
     return this.adminService.toggleReviewVisibility(id, isVisible, actor);
   }
 }
-

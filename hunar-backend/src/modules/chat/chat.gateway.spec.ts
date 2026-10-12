@@ -14,7 +14,14 @@ function makeSocket(sub: string) {
 
 describe('ChatGateway', () => {
   it('joins the conversation room for a participant', async () => {
-    const chatService = { ensureParticipant: jest.fn(async () => ({})) } as unknown as ChatService;
+    const chatService = {
+      ensureParticipant: jest.fn(async () => ({
+        id: 'conv1',
+        jobId: 'job1',
+        customerId: 'c1',
+        workerId: 'w1',
+      })),
+    } as unknown as ChatService;
     const gateway = new ChatGateway(chatService);
     const client = makeSocket('w1');
 
@@ -22,7 +29,7 @@ describe('ChatGateway', () => {
 
     expect(chatService.ensureParticipant).toHaveBeenCalledWith('conv1', 'w1');
     expect(client.join).toHaveBeenCalledWith('conversation:conv1');
-    expect(result).toEqual({ joined: true, conversationId: 'conv1' });
+    expect(result).toEqual({ joined: true, conversationId: 'conv1', jobId: 'job1' });
   });
 
   it('requires a conversationId', async () => {
@@ -54,7 +61,12 @@ describe('ChatGateway', () => {
 
   it('joins the room before broadcasting a message so the sender receives it', async () => {
     const chatService = {
-      ensureParticipant: jest.fn(async () => ({})),
+      ensureParticipant: jest.fn(async () => ({
+        id: 'conv1',
+        jobId: 'job1',
+        customerId: 'c1',
+        workerId: 'w1',
+      })),
       sendMessage: jest.fn(async (c: string, u: string, dto: unknown) => ({
         id: 'msg-9',
         conversationId: c,
@@ -78,6 +90,7 @@ describe('ChatGateway', () => {
     });
     expect(result).toEqual({
       conversationId: 'conv1',
+      jobId: 'job1',
       message: expect.objectContaining({ id: 'msg-9' }),
     });
   });
