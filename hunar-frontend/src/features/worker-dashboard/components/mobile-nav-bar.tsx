@@ -11,11 +11,11 @@ import { useLocale } from "next-intl";
 export function MobileNavBar({
   activeTab,
   onSelectTab,
-  activeJobsCount,
+  upcomingJobsCount,
 }: {
   activeTab: DashboardTab;
   onSelectTab: (tab: DashboardTab) => void;
-  activeJobsCount: number;
+  upcomingJobsCount: number;
   unreadMessagesCount?: number;
 }) {
   const locale = useLocale();
@@ -28,7 +28,7 @@ export function MobileNavBar({
     badge?: number;
   }[] = [
     { id: "dashboard", label: isUrdu ? "ہوم" : "Home", icon: LayoutDashboard },
-    { id: "jobs", label: isUrdu ? "جابز" : "Jobs", icon: Briefcase, badge: activeJobsCount },
+    { id: "jobs", label: isUrdu ? "جابز" : "Jobs", icon: Briefcase, badge: upcomingJobsCount },
   ];
 
   return (
