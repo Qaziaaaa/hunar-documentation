@@ -18,6 +18,12 @@ export function WorkerOfferCard({
   const locale = useLocale();
   const isUrdu = locale === "ur";
   const { worker } = offer;
+  const avatarSrc =
+    worker.avatarUrl && worker.avatarUrl.trim() !== ""
+      ? worker.avatarUrl
+      : "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=200&q=80";
+  const ratingDisplay = Number(worker.rating ?? 5.0).toFixed(1);
+  const feeDisplay = Number(offer.visitFee ?? 0).toLocaleString();
 
   return (
     <div className="bg-white rounded-2xl shadow-sm p-4 sm:p-5 transition-all duration-200 hover:shadow-md space-y-4">
@@ -25,12 +31,16 @@ export function WorkerOfferCard({
       <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
         <div className="flex items-start gap-3.5">
           {/* Avatar with Verified Badge */}
-          <div className="relative size-14 sm:size-16 rounded-2xl overflow-hidden shrink-0 shadow-2xs">
+          <div className="relative size-14 sm:size-16 rounded-2xl overflow-hidden shrink-0 shadow-2xs bg-slate-100 flex items-center justify-center">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src={worker.avatarUrl}
+              src={avatarSrc}
               alt={worker.name}
               className="w-full h-full object-cover"
+              onError={(e) => {
+                (e.target as HTMLImageElement).src =
+                  "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=200&q=80";
+              }}
             />
             {worker.isCnicVerified && (
               <span
@@ -64,11 +74,11 @@ export function WorkerOfferCard({
             <div className="flex items-center gap-2 pt-0.5 text-xs">
               <span className="flex items-center text-[#F59E0B] font-bold">
                 <Star className="size-3.5 fill-[#F59E0B] mr-0.5 rtl:mr-0 rtl:ml-0.5" />
-                {worker.rating.toFixed(1)}
+                {ratingDisplay}
               </span>
               <span className="text-slate-400">•</span>
               <span className="text-slate-500 font-medium">
-                {isUrdu ? `(${worker.completedJobsCount} مکمل کام)` : `(${worker.completedJobsCount} jobs completed)`}
+                {isUrdu ? `(${worker.completedJobsCount ?? 0} مکمل کام)` : `(${worker.completedJobsCount ?? 0} jobs completed)`}
               </span>
             </div>
           </div>
@@ -81,7 +91,7 @@ export function WorkerOfferCard({
               {isUrdu ? "وزٹ و معائنہ فیس" : "Visit & Diagnostic Fee"}
             </span>
             <span className="text-base sm:text-xl font-extrabold text-[#0F766E]">
-              Rs. {offer.visitFee.toLocaleString()}
+              Rs. {feeDisplay}
             </span>
           </div>
 

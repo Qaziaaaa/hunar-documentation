@@ -31,10 +31,10 @@ function makeService(mode: 'active' | 'empty') {
   const rows =
     mode === 'active'
       ? [
-        makeJob('j1', 'VISIT_IN_PROGRESS', 'w1'),
-        makeJob('j2', 'REPAIR_NEGOTIATING', 'w1'),
-        makeJob('j3', 'COMPLETED', 'w1'),
-      ]
+          makeJob('j1', 'VISIT_IN_PROGRESS', 'w1'),
+          makeJob('j2', 'REPAIR_NEGOTIATING', 'w1'),
+          makeJob('j3', 'COMPLETED', 'w1'),
+        ]
       : [];
   const prisma = {
     serviceRequest: {
@@ -115,38 +115,48 @@ describe('JobsService — getAvailableJobs (worker relevance)', () => {
       },
       $queryRaw: jest.fn(async (sql) => {
         const rendered = Array.isArray(sql?.strings) ? sql.strings.join('') : String(sql);
-        expect(rendered).toContain('"categoryId" = ANY');
+        expect(rendered).toContain('sr."categoryId" IN (');
+        expect(rendered).toContain('c."name" = ANY');
         expect(rendered).toContain('"ServiceArea"');
         expect(rendered).toContain('sa."userId"');
-        return [{
-          id: 'job-1',
-          title: 'Fan not working',
-          description: 'Need a fix',
-          categoryId: 'cat-electric',
-          categoryName: 'Electrician',
-          latitude: 33.98,
-          longitude: 71.43,
-          address: 'Hayatabad',
-          city: 'Peshawar',
-          area: 'Phase 4',
-          status: 'OPEN',
-          suggestedVisitCharge: 1200,
-          preferredVisitTime: null,
-          createdAt: new Date('2026-10-01T12:00:00Z'),
-          images: [],
-          voiceNoteUrl: null,
-          offerCount: 0,
-          distanceKm: 2.4,
-        }];
+        return [
+          {
+            id: 'job-1',
+            title: 'Fan not working',
+            description: 'Need a fix',
+            categoryId: 'cat-electric',
+            categoryName: 'Electrician',
+            latitude: 33.98,
+            longitude: 71.43,
+            address: 'Hayatabad',
+            city: 'Peshawar',
+            area: 'Phase 4',
+            status: 'OPEN',
+            suggestedVisitCharge: 1200,
+            preferredVisitTime: null,
+            createdAt: new Date('2026-10-01T12:00:00Z'),
+            images: [],
+            voiceNoteUrl: null,
+            offerCount: 0,
+            distanceKm: 2.4,
+          },
+        ];
       }),
     } as any;
 
-    const service = new JobsService(prisma, { emit: jest.fn() } as any, { emitToRoom: jest.fn() } as any);
-
-    const result = await service.getAvailableJobs(
-      { sub: 'w1', role: 'WORKER' } as any,
-      { lat: 33.98, lng: 71.43, radiusKm: 25, page: 1, limit: 10 },
+    const service = new JobsService(
+      prisma,
+      { emit: jest.fn() } as any,
+      { emitToRoom: jest.fn() } as any,
     );
+
+    const result = await service.getAvailableJobs({ sub: 'w1', role: 'WORKER' } as any, {
+      lat: 33.98,
+      lng: 71.43,
+      radiusKm: 25,
+      page: 1,
+      limit: 10,
+    });
 
     expect(result.items).toHaveLength(1);
     expect(result.items[0].categoryId).toBe('cat-electric');
@@ -187,36 +197,45 @@ describe('JobsService — getAvailableJobs (worker relevance)', () => {
         },
         $queryRaw: jest.fn(async (sql) => {
           const rendered = Array.isArray(sql?.strings) ? sql.strings.join('') : String(sql);
-          expect(rendered).not.toContain('"categoryId" = ANY');
+          expect(rendered).not.toContain('sr."categoryId" IN (');
           expect(rendered).not.toContain('"ServiceArea"');
-          return [{
-            id: 'job-2',
-            title: 'Temporary test job',
-            description: 'Visible during test override',
-            categoryId: 'cat-plumbing',
-            categoryName: 'Plumbing',
-            latitude: 33.98,
-            longitude: 71.43,
-            address: 'Hayatabad',
-            city: 'Peshawar',
-            area: 'Phase 4',
-            status: 'OPEN',
-            suggestedVisitCharge: 1000,
-            preferredVisitTime: null,
-            createdAt: new Date('2026-10-01T12:00:00Z'),
-            images: [],
-            voiceNoteUrl: null,
-            offerCount: 0,
-            distanceKm: 2.4,
-          }];
+          return [
+            {
+              id: 'job-2',
+              title: 'Temporary test job',
+              description: 'Visible during test override',
+              categoryId: 'cat-plumbing',
+              categoryName: 'Plumbing',
+              latitude: 33.98,
+              longitude: 71.43,
+              address: 'Hayatabad',
+              city: 'Peshawar',
+              area: 'Phase 4',
+              status: 'OPEN',
+              suggestedVisitCharge: 1000,
+              preferredVisitTime: null,
+              createdAt: new Date('2026-10-01T12:00:00Z'),
+              images: [],
+              voiceNoteUrl: null,
+              offerCount: 0,
+              distanceKm: 2.4,
+            },
+          ];
         }),
       } as any;
 
-      const service = new JobsService(prisma, { emit: jest.fn() } as any, { emitToRoom: jest.fn() } as any);
-      const result = await service.getAvailableJobs(
-        { sub: 'w1', role: 'WORKER' } as any,
-        { lat: 33.98, lng: 71.43, radiusKm: 25, page: 1, limit: 10 },
+      const service = new JobsService(
+        prisma,
+        { emit: jest.fn() } as any,
+        { emitToRoom: jest.fn() } as any,
       );
+      const result = await service.getAvailableJobs({ sub: 'w1', role: 'WORKER' } as any, {
+        lat: 33.98,
+        lng: 71.43,
+        radiusKm: 25,
+        page: 1,
+        limit: 10,
+      });
 
       expect(result.items).toHaveLength(1);
       expect(result.items[0].id).toBe('job-2');
@@ -260,6 +279,19 @@ describe('JobsService — getJobDetail location privacy', () => {
     const prisma = {
       serviceRequest: {
         findUnique: jest.fn(async () => job),
+      },
+      // getJobDetail batches these three relation loads in one Promise.all
+      // (perf sprint) instead of resolving them via include on the parent.
+      serviceCategory: {
+        findUnique: jest.fn(async () => job.category ?? { id: 'cat1', name: 'Electrical' }),
+      },
+      user: {
+        findUnique: jest.fn(
+          async () => job.customer ?? { id: 'c1', name: 'Ahmad Khan', phone: '+923001234567' },
+        ),
+      },
+      jobOffer: {
+        findMany: jest.fn(async () => job.offers ?? []),
       },
     } as unknown as PrismaService;
     const eventBus = { emit: jest.fn() } as unknown as EventBusService;

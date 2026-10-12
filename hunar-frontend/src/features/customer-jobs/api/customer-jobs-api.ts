@@ -1,37 +1,16 @@
 import { http } from "@/lib/api-client";
 import { extractTimeSlotFromVisitTime } from "@/lib/format";
+import { unwrapRows } from "@/lib/unwrap-rows";
 import type { CustomerJob, JobStatus, WorkerOffer, WorkerProfile } from "../types";
 
 /**
  * Fetch all jobs for the logged-in customer, enriched with offers & selected worker.
+ * The backend returns description, urgency and per-job offers in this single
+ * response — the old per-job detail/offers fan-out (1 + 2N requests) is gone.
  */
 export async function getCustomerJobs(): Promise<CustomerJob[]> {
   const res = await http.get<unknown>("/jobs/customer?limit=100");
-  const rows: unknown[] = Array.isArray(res)
-    ? res
-    : (res as { data?: unknown[]; items?: unknown[] })?.data ??
-      (res as { items?: unknown[] })?.items ??
-      [];
-
-  const backendJobs = rows.map(transformListRow);
-
-  await Promise.allSettled(
-    backendJobs.map(async (job) => {
-      try {
-        const detail = await getJobDetail(job.id);
-        Object.assign(job, detail);
-      } catch (err) {
-        console.warn(`[getCustomerJobs] Detail fetch failed for ${job.id}:`, err);
-      }
-      try {
-        job.offers = await getJobOffers(job.id);
-      } catch (err) {
-        console.warn(`[getCustomerJobs] Offers fetch failed for ${job.id}:`, err);
-      }
-    })
-  );
-
-  return backendJobs;
+  return unwrapRows(res).map(transformListRow);
 }
 
 /**
@@ -82,16 +61,11 @@ export async function getJobDetail(jobId: string): Promise<CustomerJob> {
  * Fetch all bids/offers for a specific job
  */
 export async function getJobOffers(jobId: string): Promise<WorkerOffer[]> {
-  try {
-    const res = await http.get<any[]>(`/jobs/${jobId}/offers`);
-    if (!Array.isArray(res)) {
-      return [];
-    }
-    return res.map(transformBackendOffer);
-  } catch (err) {
-    console.warn(`[getJobOffers] Failed for ${jobId}:`, err);
+  const res = await http.get<any[]>(`/jobs/${jobId}/offers`);
+  if (!Array.isArray(res)) {
     return [];
   }
+  return res.map(transformBackendOffer);
 }
 
 /**
@@ -198,13 +172,13 @@ function transformListRow(row: any): CustomerJob {
     title: row.title,
     category: row.categoryName || "General Service",
     subCategory: row.categoryName || "General Service",
-    description: "",
+    description: row.description || "",
     photos: row.images || [],
     voiceNoteUrl: row.voiceNoteUrl,
     address: row.address,
-    area: row.area || "",
-    city: row.city || "",
-    scheduleType: isAsap ? "asap" : "scheduled",
+    area: row.area || "Peshawar",
+    city: row.city || "Peshawar",
+    scheduleType: isAsap ? "asap" : (row.urgency === "URGENT" ? "asap" : "scheduled"),
     preferredDate: row.preferredVisitTime || row.createdAt || new Date().toISOString(),
     preferredTimeSlot:
       row.preferredTimeSlot ||
@@ -212,7 +186,7 @@ function transformListRow(row: any): CustomerJob {
       (isAsap ? "⚡ Immediate (Within 30–60 mins)" : extractTimeSlotFromVisitTime(row.preferredVisitTime)),
     status: mapJobStatus(row.status),
     createdAt: row.createdAt || new Date().toISOString(),
-    offers: [],
+    offers: Array.isArray(row.offers) ? row.offers.map(transformBackendOffer) : [],
     suggestedVisitCharge: row.suggestedVisitCharge != null ? Number(row.suggestedVisitCharge) : undefined,
   };
 }

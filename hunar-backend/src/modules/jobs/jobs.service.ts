@@ -20,8 +20,9 @@ import { normalizePage, toPageResult } from '../../common/helpers/pagination.uti
 import { getWorkerProfileCompletion } from '../../common/helpers/worker-profile.util';
 import { sanitizeToAreaOrSector } from '../../common/helpers/location.util';
 import { RealtimeService } from '../realtime/realtime.service';
-import { JOB_EVENTS, userRoom } from './jobs.events';
+import { JOB_EVENTS, userRoom, WORKERS_ROOM } from './jobs.events';
 import { generateUniqueOrderCode } from '../../common/helpers/order-code.util';
+import { RedisService } from '../../common/redis/redis.service';
 
 export interface JobCardRow {
   id: string;
@@ -142,6 +143,7 @@ export class JobsService {
     private readonly prisma: PrismaService,
     private readonly eventBus: EventBusService,
     private readonly realtime: RealtimeService,
+    private readonly redis?: RedisService,
   ) { }
 
   async createJob(customerId: string, dto: CreateJobDto) {
@@ -201,11 +203,52 @@ export class JobsService {
       longitude: job.longitude,
     });
 
+    // Invalidate cached customer jobs & available jobs
+    if (this.redis) {
+      await this.redis.delPattern(`perf:jobs:customer:${customerId}:*`);
+      await this.redis.delPattern('perf:jobs:available:*');
+    }
+
+    // Instant broadcast to all connected workers in the workers room
+    this.realtime.emitToRoom(WORKERS_ROOM, JOB_EVENTS.jobNew, {
+      jobId: job.id,
+      job: {
+        id: job.id,
+        title: job.title,
+        description: job.description,
+        categoryId: category.id,
+        categoryName: category.name,
+        address: job.address,
+        area: job.area,
+        city: job.city,
+        latitude: job.latitude,
+        longitude: job.longitude,
+        status: job.status,
+        urgency: job.urgency,
+        suggestedVisitCharge: job.suggestedVisitCharge,
+        preferredVisitTime: job.preferredVisitTime,
+        images: job.images,
+        voiceNoteUrl: job.voiceNoteUrl,
+        createdAt: job.createdAt,
+        offerCount: 0,
+      },
+    });
+
     return job;
   }
 
   async getCustomerJobs(customerId: string, query: CustomerJobsQueryDto) {
     const { page, limit, skip } = normalizePage(query);
+    const cacheKey = `perf:jobs:customer:${customerId}:${page}:${limit}:${query.status ?? 'all'}`;
+    if (this.redis) {
+      const cached = await this.redis.get(cacheKey);
+      if (cached) {
+        try {
+          return JSON.parse(cached);
+        } catch {}
+      }
+    }
+
     const where: Prisma.ServiceRequestWhereInput = {
       customerId,
       ...(query.status ? { status: query.status } : {}),
@@ -219,6 +262,19 @@ export class JobsService {
         include: {
           category: { select: { id: true, name: true } },
           _count: { select: { offers: true } },
+          offers: {
+            orderBy: { visitCharge: 'asc' },
+            include: {
+              worker: {
+                select: {
+                  id: true,
+                  name: true,
+                  avatarUrl: true,
+                  phone: true,
+                },
+              },
+            },
+          },
         },
       }),
       this.prisma.serviceRequest.count({ where }),
@@ -226,9 +282,10 @@ export class JobsService {
     const items = rows.map((j) => ({
       id: j.id,
       title: j.title,
+      description: j.description,
       status: j.status,
       categoryId: j.categoryId,
-      categoryName: j.category.name,
+      categoryName: j.category?.name ?? null,
       address: j.address,
       city: j.city,
       area: j.area,
@@ -240,8 +297,31 @@ export class JobsService {
       images: j.images,
       voiceNoteUrl: j.voiceNoteUrl,
       createdAt: j.createdAt,
+      offers: (j.offers || []).map((o) => ({
+        id: o.id,
+        jobId: o.jobId,
+        workerId: o.workerId,
+        worker: o.worker
+          ? {
+              id: o.worker.id,
+              name: o.worker.name,
+              avatarUrl: o.worker.avatarUrl,
+              phone: o.worker.phone,
+            }
+          : null,
+        visitCharge: Number(o.visitCharge),
+        message: o.message,
+        status: o.status,
+        negotiationRound: o.negotiationRound,
+        lockedAt: o.lockedAt,
+        createdAt: o.createdAt,
+      })),
     }));
-    return toPageResult(items, total, page, limit);
+    const result = toPageResult(items, total, page, limit);
+    if (this.redis) {
+      await this.redis.set(cacheKey, JSON.stringify(result), 30);
+    }
+    return result;
   }
 
   async getAvailableJobs(worker: JwtPayload, query: AvailableJobsQueryDto) {
@@ -294,6 +374,15 @@ export class JobsService {
     const radiusMeters = (query.radiusKm ?? 10) * 1000;
     const workerRadiusKm = Number(profile?.serviceRadiusKm ?? 10);
     const { page, limit, skip } = normalizePage(query);
+
+    // Read-through cache \u2014 15s TTL; WS push handles instant new-job delivery.
+    const availCacheKey = `perf:jobs:available:${worker.sub}:${page}:${limit}:${workerLat}:${workerLng}:${radiusMeters}:${query.categoryId ?? ''}:${query.area ?? ''}:${query.city ?? ''}:${query.minCharge ?? ''}:${query.maxCharge ?? ''}:${query.postedWithinMin ?? ''}:${query.hasNoOffers ?? ''}`;
+    if (this.redis) {
+      const cached = await this.redis.get(availCacheKey);
+      if (cached) {
+        try { return JSON.parse(cached); } catch {}
+      }
+    }
 
     const halfRadiusDeg = radiusMeters / 111000.0;
     const latOffset = halfRadiusDeg;
@@ -415,7 +504,12 @@ export class JobsService {
     `);
     const total = Number(countRows[0]?.total ?? 0);
 
-    return toPageResult(rows.map(mapJobCard), total, page, limit);
+    const result = toPageResult(rows.map(mapJobCard), total, page, limit);
+    if (this.redis) {
+      // Cache for 15s — workers' feed; stale is acceptable, WS push covers new jobs instantly.
+      await this.redis.set(availCacheKey, JSON.stringify(result), 15);
+    }
+    return result;
   }
 
   /** Tasks 23 — active jobs for the assigned worker (all non-terminal states). */
@@ -551,12 +645,21 @@ export class JobsService {
   }
 
   async getJobDetail(jobId: string, user: JwtPayload, lat?: number, lng?: number) {
+    const cacheKey = `perf:job:detail:${jobId}:${user.role}:${user.sub}`;
+    if (lat == null && lng == null && this.redis) {
+      const cached = await this.redis.get(cacheKey);
+      if (cached) {
+        try {
+          return JSON.parse(cached);
+        } catch {}
+      }
+    }
+
     const job = await this.prisma.serviceRequest.findUnique({
       where: { id: jobId },
       include: {
         category: true,
         customer: { select: { id: true, name: true, phone: true } },
-        offers: { select: { id: true, workerId: true, status: true, visitCharge: true } },
         visits: {
           orderBy: { createdAt: 'desc' },
           select: {
@@ -575,6 +678,41 @@ export class JobsService {
           take: 1,
           select: { id: true, amount: true, lockedAmount: true, status: true },
         },
+        selectedWorker: {
+          select: {
+            id: true,
+            name: true,
+            avatarUrl: true,
+            phone: true,
+            workerProfile: {
+              select: {
+                skills: true,
+                experienceYears: true,
+                bio: true,
+              },
+            },
+          },
+        },
+        offers: {
+          orderBy: { visitCharge: 'asc' },
+          include: {
+            worker: {
+              select: {
+                id: true,
+                name: true,
+                avatarUrl: true,
+                phone: true,
+                workerProfile: {
+                  select: {
+                    skills: true,
+                    experienceYears: true,
+                    bio: true,
+                  },
+                },
+              },
+            },
+          },
+        },
       },
     });
     if (!job) {
@@ -583,26 +721,18 @@ export class JobsService {
 
     let distanceKm: number | null = null;
     if (lat != null && lng != null) {
-      const distance = await this.prisma.$queryRaw<{ m: number }[]>`
-        SELECT 3956 * 2 * ASIN(
-          SQRT(
-            POWER(SIN((${job.latitude} - ${lat}) * PI() / 180.0 / 2), 2) +
-            COS(${job.latitude} * PI() / 180.0) * COS(${lat} * PI() / 180.0) *
-            POWER(SIN((${job.longitude} - ${lng}) * PI() / 180.0 / 2), 2)
-          )
-        ) AS m
-      `;
-      distanceKm = distance[0] ? Number(distance[0].m) / 1000 : null;
-    }
-
-    let myOffer = null;
-    if (user.role === Role.WORKER) {
-      myOffer = job.offers.find((o) => o.workerId === user.sub)
-        ? {
-          id: job.offers.find((o) => o.workerId === user.sub)!.id,
-          status: job.offers.find((o) => o.workerId === user.sub)!.status,
-        }
-        : null;
+      if (job.latitude == null || job.longitude == null) {
+        distanceKm = 0;
+      } else {
+        const toRad = (deg: number) => (deg * Math.PI) / 180.0;
+        const sinHalfLat = Math.sin((toRad(job.latitude) - toRad(lat)) / 2);
+        const sinHalfLng = Math.sin((toRad(job.longitude) - toRad(lng)) / 2);
+        const h =
+          sinHalfLat * sinHalfLat +
+          Math.cos(toRad(job.latitude)) * Math.cos(toRad(lat)) * sinHalfLng * sinHalfLng;
+        const m = 3956 * 2 * Math.asin(Math.min(1, Math.sqrt(Math.max(0, h))));
+        distanceKm = m / 1000;
+      }
     }
 
     const resolvedRepairCharge =
@@ -614,48 +744,144 @@ export class JobsService {
         ? Number(job.visits[0].repairEstimate)
         : null;
 
-    const { offers, ...rest } = job;
-
+    const workerIds = [...new Set(job.offers.map((o) => o.workerId))];
     const isAssignedWorker = user.role === Role.WORKER && job.selectedWorkerId === user.sub;
     const isOwnerCustomer = user.role === Role.CUSTOMER && job.customerId === user.sub;
     const isAdmin = user.role === Role.ADMIN;
     const canSeeFullAddress = isAssignedWorker || isOwnerCustomer || isAdmin;
 
-    if (!canSeeFullAddress) {
-      const areaSector = sanitizeToAreaOrSector({
-        area: job.area,
-        address: job.address,
-        city: job.city,
-      });
-      return {
-        ...rest,
-        repairCharge: resolvedRepairCharge,
-        repairEstimate: resolvedRepairCharge,
-        address: areaSector,
-        area: areaSector,
-        latitude: 0,
-        longitude: 0,
-        customer: job.customer
-          ? {
-              id: job.customer.id,
-              name: job.customer.name,
-              phone: null,
-            }
-          : job.customer,
-        distanceKm,
-        offerCount: offers.length,
-        myOffer,
-      };
+    if (isOwnerCustomer) {
+      // Fire-and-forget, non-blocking background update
+      this.prisma
+        .$executeRaw(
+          Prisma.sql`UPDATE "JobOffer" SET status = 'VIEWING' WHERE status = 'PENDING' AND "jobId" = ${jobId}`,
+        )
+        .catch(() => 0);
     }
 
-    return {
-      ...rest,
-      repairCharge: resolvedRepairCharge,
-      repairEstimate: resolvedRepairCharge,
-      distanceKm,
-      offerCount: offers.length,
-      myOffer,
-    };
+    const [ratingRows, completedRows] = await Promise.all([
+      workerIds.length > 0
+        ? this.prisma.review.groupBy({
+            by: ['revieweeId'],
+            where: { revieweeId: { in: workerIds }, isVisible: true },
+            _avg: { rating: true },
+            _count: { _all: true },
+          })
+        : Promise.resolve([]),
+      workerIds.length > 0
+        ? this.prisma.serviceRequest.groupBy({
+            by: ['selectedWorkerId'],
+            where: {
+              selectedWorkerId: { in: workerIds },
+              status: { in: ['COMPLETED', 'PAID', 'REVIEWED'] },
+            },
+            _count: { _all: true },
+          })
+        : Promise.resolve([]),
+    ]);
+
+    const ratingMap = new Map(
+      (
+        ratingRows as Array<{
+          revieweeId: string;
+          _avg: { rating: number | null };
+          _count: { _all: number };
+        }>
+      ).map((r) => [r.revieweeId, r]),
+    );
+    const completedMap = new Map(
+      (completedRows as Array<{ selectedWorkerId: string | null; _count: { _all: number } }>).map(
+        (c) => [c.selectedWorkerId!, c],
+      ),
+    );
+
+    const mappedOffers = job.offers.map((o) => {
+      const w = o.worker;
+      const r = ratingMap.get(o.workerId);
+      const c = completedMap.get(o.workerId);
+      return {
+        id: o.id,
+        jobId: o.jobId,
+        workerId: o.workerId,
+        worker: w
+          ? {
+              id: w.id,
+              name: w.name,
+              avatarUrl: w.avatarUrl,
+              phone: canSeeFullAddress ? w.phone : null,
+              avgRating: r?._avg.rating ?? null,
+              ratingCount: r?._count._all ?? 0,
+              completedJobs: c?._count._all ?? 0,
+              skills: w.workerProfile?.skills ?? [],
+              experienceYears: w.workerProfile?.experienceYears ?? 0,
+              bio: w.workerProfile?.bio ?? '',
+            }
+          : null,
+        visitCharge: Number(o.visitCharge),
+        message: o.message,
+        status: o.status,
+        negotiationRound: o.negotiationRound,
+        lockedAt: o.lockedAt,
+        createdAt: o.createdAt,
+      };
+    });
+
+    let myOffer = null;
+    if (user.role === Role.WORKER) {
+      const mine = job.offers.find((o) => o.workerId === user.sub);
+      myOffer = mine ? { id: mine.id, status: mine.status } : null;
+    }
+
+    const { offers: _, ...rest } = job;
+    const visibleOffers =
+      isOwnerCustomer || isAdmin
+        ? mappedOffers
+        : mappedOffers.filter((o) => o.workerId === user.sub);
+
+    const finalResult = !canSeeFullAddress
+      ? {
+          ...rest,
+          repairCharge: resolvedRepairCharge,
+          repairEstimate: resolvedRepairCharge,
+          address: sanitizeToAreaOrSector({
+            area: job.area,
+            address: job.address,
+            city: job.city,
+          }),
+          area: sanitizeToAreaOrSector({
+            area: job.area,
+            address: job.address,
+            city: job.city,
+          }),
+          latitude: 0,
+          longitude: 0,
+          customer: job.customer
+            ? {
+                id: job.customer.id,
+                name: job.customer.name,
+                phone: null,
+              }
+            : job.customer,
+          distanceKm,
+          offerCount: job.offers.length,
+          myOffer,
+          offers: visibleOffers,
+        }
+      : {
+          ...rest,
+          repairCharge: resolvedRepairCharge,
+          repairEstimate: resolvedRepairCharge,
+          distanceKm,
+          offerCount: job.offers.length,
+          myOffer,
+          offers: visibleOffers,
+        };
+
+    if (lat == null && lng == null && this.redis) {
+      await this.redis.set(cacheKey, JSON.stringify(finalResult), 30);
+    }
+
+    return finalResult;
   }
 
   async cancelJob(jobId: string, user: JwtPayload, dto: CancelJobDto) {
@@ -805,6 +1031,11 @@ export class JobsService {
       oldStatus: job.status,
       newStatus: updated.status,
     });
+    if (this.redis) {
+      await this.redis.delPattern(`perf:jobs:customer:${job.customerId}:*`);
+      await this.redis.delPattern(`perf:job:detail:${jobId}:*`);
+      await this.redis.delPattern('perf:jobs:available:*');
+    }
     const recipients = [job.customerId];
     if (job.selectedWorkerId) {
       recipients.push(job.selectedWorkerId);
