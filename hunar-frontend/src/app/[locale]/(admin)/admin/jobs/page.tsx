@@ -6,7 +6,7 @@ import { adminApi } from "@/features/admin/api/admin-api";
 import { useAdminResource } from "@/features/admin/hooks/use-admin-resource";
 import { Link } from "@/i18n/navigation";
 import type { LiveJobItem } from "@/types/admin";
-import { Briefcase, Eye, Filter, Search } from "lucide-react";
+import { AlertCircle, Briefcase, Eye, Filter, Search } from "lucide-react";
 
 export default function JobsPage() {
   const jobsRes = useAdminResource(() => adminApi.listJobs({ limit: 50 }));
@@ -34,6 +34,22 @@ export default function JobsPage() {
   return (
     <AdminShell>
       <div className="space-y-6">
+        {jobsRes.error && (
+          <div className="flex items-center justify-between gap-3 rounded-2xl border border-red-200 bg-red-50 p-4">
+            <div className="flex items-center gap-2">
+              <AlertCircle className="size-4 shrink-0 text-red-500" />
+              <span className="text-sm font-bold text-red-700">Jobs failed to load</span>
+              <span className="text-xs font-medium text-red-600">{jobsRes.error}</span>
+            </div>
+            <button
+              type="button"
+              onClick={() => void jobsRes.reload()}
+              className="rounded-xl bg-red-600 px-3 py-1.5 text-xs font-bold text-white transition hover:bg-red-700"
+            >
+              Retry
+            </button>
+          </div>
+        )}
         <div>
           <div className="flex items-center gap-2">
             <span className="inline-flex items-center gap-1.5 rounded-full border border-teal/20 bg-teal/10 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-teal">

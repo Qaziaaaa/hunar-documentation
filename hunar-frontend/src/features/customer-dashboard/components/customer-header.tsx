@@ -5,7 +5,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Bell, Clock, Menu, Search, ShieldCheck, X } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { Link, usePathname } from "@/i18n/navigation";
-import { getCustomerNotifications, markAllCustomerNotificationsRead } from "@/features/customer-jobs/services/customer-notification-service";
+import { getCustomerNotifications, markAllCustomerNotificationsRead, subscribeToCustomerNotifications } from "@/features/customer-jobs/services/customer-notification-service";
 import { useCustomerSearch } from "./customer-search-context";
 
 interface CustomerHeaderProps {
@@ -50,6 +50,13 @@ export function CustomerHeader({ onOpenSidebar, showSearch }: CustomerHeaderProp
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  // Refresh the bell when the backend pushes a notification over the socket
+  useEffect(() => {
+    return subscribeToCustomerNotifications(() => {
+      void queryClient.invalidateQueries({ queryKey: ["customer", "notifications"] });
+    });
+  }, [queryClient]);
 
   // Clear search query when navigating away from dashboard/home
   useEffect(() => {

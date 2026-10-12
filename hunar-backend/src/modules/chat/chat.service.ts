@@ -47,15 +47,41 @@ export class ChatService {
   }
 
   async listConversations(userId: string) {
-    return this.prisma.conversation.findMany({
+    const rows = await this.prisma.conversation.findMany({
       where: { OR: [{ customerId: userId }, { workerId: userId }] },
-      include: {
-        job: { select: { id: true, title: true, status: true } },
-        customer: { select: { id: true, name: true, avatarUrl: true } },
-        worker: { select: { id: true, name: true, avatarUrl: true } },
-      },
       orderBy: { lastMessageAt: 'desc' },
     });
+    if (rows.length === 0) return [];
+
+    // The three `include`s used to run serially after the parent query (4 DB
+    // round trips); batch the relation reads into one parallel wave.
+    const jobIds = [...new Set(rows.map((r) => r.jobId))];
+    const customerIds = [...new Set(rows.map((r) => r.customerId))];
+    const workerIds = [...new Set(rows.map((r) => r.workerId))];
+    const [jobs, customers, workers] = await Promise.all([
+      this.prisma.serviceRequest.findMany({
+        where: { id: { in: jobIds } },
+        select: { id: true, title: true, status: true },
+      }),
+      this.prisma.user.findMany({
+        where: { id: { in: customerIds } },
+        select: { id: true, name: true, avatarUrl: true },
+      }),
+      this.prisma.user.findMany({
+        where: { id: { in: workerIds } },
+        select: { id: true, name: true, avatarUrl: true },
+      }),
+    ]);
+    const jobMap = new Map(jobs.map((j) => [j.id, j]));
+    const customerMap = new Map(customers.map((c) => [c.id, c]));
+    const workerMap = new Map(workers.map((w) => [w.id, w]));
+
+    return rows.map((r) => ({
+      ...r,
+      job: jobMap.get(r.jobId) ?? null,
+      customer: customerMap.get(r.customerId) ?? null,
+      worker: workerMap.get(r.workerId) ?? null,
+    }));
   }
 
   /**

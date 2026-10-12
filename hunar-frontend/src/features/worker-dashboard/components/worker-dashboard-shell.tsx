@@ -181,6 +181,13 @@ const NOTIF_TYPE_MAP: Record<AppNotification["type"], DashboardNotification["typ
   new_review: "review",
   new_message: "chat",
   verification_result: "verification",
+  new_offer: "offer",
+  visit_scheduled: "job",
+  inspection_submitted: "job",
+  repair_estimate_ready: "offer",
+  repair_approved: "offer",
+  payment_confirmed: "commission",
+  job_completed: "job",
 };
 
 function mapAppNotification(n: AppNotification): DashboardNotification {

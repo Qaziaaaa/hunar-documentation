@@ -45,7 +45,13 @@ export interface HunarDomainEvents {
 
   'visit.started': { visitId: string; jobId: string; workerId: string; customerId: string };
   'visit.arrived': { visitId: string; jobId: string; workerId: string; customerId: string };
-  'visit.otp.verified': { visitId: string; jobId: string; workerId: string; customerId: string; status: string };
+  'visit.otp.verified': {
+    visitId: string;
+    jobId: string;
+    workerId: string;
+    customerId: string;
+    status: string;
+  };
   'visit.inspectionSubmitted': { visitId: string; jobId: string; repairEstimate: number };
 
   'repair.proposed': { repairId: string; jobId: string; amount: number };
@@ -143,7 +149,13 @@ export interface HunarDomainEvents {
   'topup.submitted': { topUpId: string; workerId: string; amount: number };
   'topup.approved': { topUpId: string; workerId: string; amount: number };
   'topup.rejected': { topUpId: string; workerId: string; amount: number; reason?: string };
-  'earnings.recorded': { jobId: string; workerId: string; amount: number; grossAmount?: number; commission?: number };
+  'earnings.recorded': {
+    jobId: string;
+    workerId: string;
+    amount: number;
+    grossAmount?: number;
+    commission?: number;
+  };
   'dispute.created': { disputeId: string; jobId: string; reporterId: string };
 }
 

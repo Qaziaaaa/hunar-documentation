@@ -106,7 +106,8 @@ export class ReviewsService {
   }
 
   async getWorkerReviews(workerId: string, query: ReviewQueryDto) {
-    const { page, limit, skip } = normalizePage(query);
+    // B5: frontend requests ?limit=100; default maxLimit=50 clipped the page.
+    const { page, limit, skip } = normalizePage(query, 100);
     const where = { revieweeId: workerId, isVisible: true };
 
     const [reviews, total, agg] = await this.prisma.$transaction([

@@ -301,7 +301,7 @@ describe('WorkerProfileService', () => {
   });
 
   describe('Step 4: saveServiceAreas', () => {
-    it('stores provided coordinates and syncs PostGIS geometry', async () => {
+    it('stores provided coordinates without a raw PostGIS sync (no location column)', async () => {
       const db = makeDb();
       const raw = jest.fn(() => Promise.resolve(1)) as any;
       db.$executeRaw = raw;
@@ -315,11 +315,9 @@ describe('WorkerProfileService', () => {
       expect(result).toHaveLength(1);
       expect(result[0].latitude).toBe(34.0);
       expect(result[0].longitude).toBe(71.5);
-      expect(raw).toHaveBeenCalled();
-      const [strings, ...values] = raw.mock.calls[0] as [TemplateStringsArray, ...number[]];
-      expect(strings.raw.join(' ')).toContain('ST_SetSRID');
-      expect(values).toContain(71.5);
-      expect(values).toContain(34);
+      // saveServiceAreas deliberately skips the PostGIS geometry update: the
+      // ServiceArea table has no `location` column, so raw ST_ updates would 500.
+      expect(raw).not.toHaveBeenCalled();
     });
 
     it('geocodes an address via Mapbox when coordinates are not supplied', async () => {

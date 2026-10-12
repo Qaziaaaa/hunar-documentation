@@ -91,8 +91,15 @@ function makeFakes(db: Db, emitted: Array<{ userIds: string[]; event: string; da
           (p) =>
             (!where?.verificationStatus || p.verificationStatus === where.verificationStatus) &&
             (where?.isAvailable === undefined || p.isAvailable === where.isAvailable) &&
-            (!where?.skills?.has || (p.skills ?? []).includes(where.skills.has)),
+            (!where?.skills?.has || (p.skills ?? []).includes(where.skills.has)) &&
+            (!where?.skills?.hasSome ||
+              (where.skills.hasSome as string[]).some((k) => (p.skills ?? []).includes(k))),
         );
+      },
+    },
+    serviceCategory: {
+      async findUnique({ where }: { where?: any }) {
+        return { name: where?.id };
       },
     },
     serviceArea: {

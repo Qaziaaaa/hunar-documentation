@@ -672,4 +672,3 @@ export class AdminReviewListQueryDto {
   @Max(100)
   limit?: number;
 }
-

@@ -1,0 +1,668 @@
+{
+  "label": "final",
+  "timestamp": "2026-10-07T09:42:22.420Z",
+  "gitCommit": "9e9c422",
+  "base": "http://localhost:3001",
+  "runs": 10,
+  "warmup": 2,
+  "results": [
+    {
+      "path": "/en",
+      "role": "public",
+      "ok": true,
+      "successCount": 10,
+      "ttfb": {
+        "min": 16.4,
+        "max": 26.7,
+        "mean": 19.8,
+        "p50": 18.2,
+        "p95": 26.7,
+        "p99": 26.7
+      },
+      "bytes": {
+        "min": 257716,
+        "max": 257716,
+        "mean": 257716,
+        "p50": 257716,
+        "p95": 257716,
+        "p99": 257716
+      },
+      "samples": [
+        {
+          "status": 200,
+          "totalMs": 25.937087000000005,
+          "bytes": 257716,
+          "serverMs": null,
+          "contentType": "text/html; charset=utf-8"
+        },
+        {
+          "status": 200,
+          "totalMs": 18.196492000000006,
+          "bytes": 257716,
+          "serverMs": null,
+          "contentType": "text/html; charset=utf-8"
+        },
+        {
+          "status": 200,
+          "totalMs": 18.298733999999996,
+          "bytes": 257716,
+          "serverMs": null,
+          "contentType": "text/html; charset=utf-8"
+        },
+        {
+          "status": 200,
+          "totalMs": 17.802794000000006,
+          "bytes": 257716,
+          "serverMs": null,
+          "contentType": "text/html; charset=utf-8"
+        },
+        {
+          "status": 200,
+          "totalMs": 21.976650000000006,
+          "bytes": 257716,
+          "serverMs": null,
+          "contentType": "text/html; charset=utf-8"
+        },
+        {
+          "status": 200,
+          "totalMs": 16.3819,
+          "bytes": 257716,
+          "serverMs": null,
+          "contentType": "text/html; charset=utf-8"
+        },
+        {
+          "status": 200,
+          "totalMs": 17.099023999999986,
+          "bytes": 257716,
+          "serverMs": null,
+          "contentType": "text/html; charset=utf-8"
+        },
+        {
+          "status": 200,
+          "totalMs": 26.738741000000033,
+          "bytes": 257716,
+          "serverMs": null,
+          "contentType": "text/html; charset=utf-8"
+        },
+        {
+          "status": 200,
+          "totalMs": 17.06052199999999,
+          "bytes": 257716,
+          "serverMs": null,
+          "contentType": "text/html; charset=utf-8"
+        },
+        {
+          "status": 200,
+          "totalMs": 18.853755000000035,
+          "bytes": 257716,
+          "serverMs": null,
+          "contentType": "text/html; charset=utf-8"
+        }
+      ]
+    },
+    {
+      "path": "/en/customer/login",
+      "role": "public",
+      "ok": true,
+      "successCount": 10,
+      "ttfb": {
+        "min": 4.9,
+        "max": 6.2,
+        "mean": 5.4,
+        "p50": 5.1,
+        "p95": 6.2,
+        "p99": 6.2
+      },
+      "bytes": {
+        "min": 77150,
+        "max": 77150,
+        "mean": 77150,
+        "p50": 77150,
+        "p95": 77150,
+        "p99": 77150
+      },
+      "samples": [
+        {
+          "status": 200,
+          "totalMs": 5.890565999999978,
+          "bytes": 77150,
+          "serverMs": null,
+          "contentType": "text/html; charset=utf-8"
+        },
+        {
+          "status": 200,
+          "totalMs": 5.832737000000009,
+          "bytes": 77150,
+          "serverMs": null,
+          "contentType": "text/html; charset=utf-8"
+        },
+        {
+          "status": 200,
+          "totalMs": 6.241302999999959,
+          "bytes": 77150,
+          "serverMs": null,
+          "contentType": "text/html; charset=utf-8"
+        },
+        {
+          "status": 200,
+          "totalMs": 5.4984099999999785,
+          "bytes": 77150,
+          "serverMs": null,
+          "contentType": "text/html; charset=utf-8"
+        },
+        {
+          "status": 200,
+          "totalMs": 5.021886999999992,
+          "bytes": 77150,
+          "serverMs": null,
+          "contentType": "text/html; charset=utf-8"
+        },
+        {
+          "status": 200,
+          "totalMs": 5.133507000000009,
+          "bytes": 77150,
+          "serverMs": null,
+          "contentType": "text/html; charset=utf-8"
+        },
+        {
+          "status": 200,
+          "totalMs": 5.109931999999958,
+          "bytes": 77150,
+          "serverMs": null,
+          "contentType": "text/html; charset=utf-8"
+        },
+        {
+          "status": 200,
+          "totalMs": 5.5411209999999755,
+          "bytes": 77150,
+          "serverMs": null,
+          "contentType": "text/html; charset=utf-8"
+        },
+        {
+          "status": 200,
+          "totalMs": 4.880340999999987,
+          "bytes": 77150,
+          "serverMs": null,
+          "contentType": "text/html; charset=utf-8"
+        },
+        {
+          "status": 200,
+          "totalMs": 5.04458900000003,
+          "bytes": 77150,
+          "serverMs": null,
+          "contentType": "text/html; charset=utf-8"
+        }
+      ]
+    },
+    {
+      "path": "/en/customer/dashboard",
+      "role": "customer (client-auth)",
+      "ok": true,
+      "successCount": 10,
+      "ttfb": {
+        "min": 5.6,
+        "max": 6.9,
+        "mean": 6,
+        "p50": 5.8,
+        "p95": 6.9,
+        "p99": 6.9
+      },
+      "bytes": {
+        "min": 112552,
+        "max": 112552,
+        "mean": 112552,
+        "p50": 112552,
+        "p95": 112552,
+        "p99": 112552
+      },
+      "samples": [
+        {
+          "status": 200,
+          "totalMs": 5.749079999999992,
+          "bytes": 112552,
+          "serverMs": null,
+          "contentType": "text/html; charset=utf-8"
+        },
+        {
+          "status": 200,
+          "totalMs": 6.900068999999974,
+          "bytes": 112552,
+          "serverMs": null,
+          "contentType": "text/html; charset=utf-8"
+        },
+        {
+          "status": 200,
+          "totalMs": 6.4677279999999655,
+          "bytes": 112552,
+          "serverMs": null,
+          "contentType": "text/html; charset=utf-8"
+        },
+        {
+          "status": 200,
+          "totalMs": 5.8266459999999825,
+          "bytes": 112552,
+          "serverMs": null,
+          "contentType": "text/html; charset=utf-8"
+        },
+        {
+          "status": 200,
+          "totalMs": 5.62695100000002,
+          "bytes": 112552,
+          "serverMs": null,
+          "contentType": "text/html; charset=utf-8"
+        },
+        {
+          "status": 200,
+          "totalMs": 5.827988000000005,
+          "bytes": 112552,
+          "serverMs": null,
+          "contentType": "text/html; charset=utf-8"
+        },
+        {
+          "status": 200,
+          "totalMs": 5.639324999999985,
+          "bytes": 112552,
+          "serverMs": null,
+          "contentType": "text/html; charset=utf-8"
+        },
+        {
+          "status": 200,
+          "totalMs": 5.822940000000017,
+          "bytes": 112552,
+          "serverMs": null,
+          "contentType": "text/html; charset=utf-8"
+        },
+        {
+          "status": 200,
+          "totalMs": 5.991906000000029,
+          "bytes": 112552,
+          "serverMs": null,
+          "contentType": "text/html; charset=utf-8"
+        },
+        {
+          "status": 200,
+          "totalMs": 5.939919000000032,
+          "bytes": 112552,
+          "serverMs": null,
+          "contentType": "text/html; charset=utf-8"
+        }
+      ]
+    },
+    {
+      "path": "/en/customer/jobs",
+      "role": "customer (client-auth)",
+      "ok": true,
+      "successCount": 10,
+      "ttfb": {
+        "min": 4.7,
+        "max": 5.7,
+        "mean": 5.2,
+        "p50": 5.2,
+        "p95": 5.7,
+        "p99": 5.7
+      },
+      "bytes": {
+        "min": 79747,
+        "max": 79747,
+        "mean": 79747,
+        "p50": 79747,
+        "p95": 79747,
+        "p99": 79747
+      },
+      "samples": [
+        {
+          "status": 200,
+          "totalMs": 4.692008000000044,
+          "bytes": 79747,
+          "serverMs": null,
+          "contentType": "text/html; charset=utf-8"
+        },
+        {
+          "status": 200,
+          "totalMs": 5.016707999999994,
+          "bytes": 79747,
+          "serverMs": null,
+          "contentType": "text/html; charset=utf-8"
+        },
+        {
+          "status": 200,
+          "totalMs": 5.021165999999994,
+          "bytes": 79747,
+          "serverMs": null,
+          "contentType": "text/html; charset=utf-8"
+        },
+        {
+          "status": 200,
+          "totalMs": 5.401959999999974,
+          "bytes": 79747,
+          "serverMs": null,
+          "contentType": "text/html; charset=utf-8"
+        },
+        {
+          "status": 200,
+          "totalMs": 5.279290000000003,
+          "bytes": 79747,
+          "serverMs": null,
+          "contentType": "text/html; charset=utf-8"
+        },
+        {
+          "status": 200,
+          "totalMs": 5.657348000000013,
+          "bytes": 79747,
+          "serverMs": null,
+          "contentType": "text/html; charset=utf-8"
+        },
+        {
+          "status": 200,
+          "totalMs": 5.2548530000000255,
+          "bytes": 79747,
+          "serverMs": null,
+          "contentType": "text/html; charset=utf-8"
+        },
+        {
+          "status": 200,
+          "totalMs": 5.225750000000005,
+          "bytes": 79747,
+          "serverMs": null,
+          "contentType": "text/html; charset=utf-8"
+        },
+        {
+          "status": 200,
+          "totalMs": 5.303916000000015,
+          "bytes": 79747,
+          "serverMs": null,
+          "contentType": "text/html; charset=utf-8"
+        },
+        {
+          "status": 200,
+          "totalMs": 5.09880099999998,
+          "bytes": 79747,
+          "serverMs": null,
+          "contentType": "text/html; charset=utf-8"
+        }
+      ]
+    },
+    {
+      "path": "/en/worker/dashboard",
+      "role": "worker (client-auth)",
+      "ok": true,
+      "successCount": 10,
+      "ttfb": {
+        "min": 4.3,
+        "max": 5.6,
+        "mean": 5.1,
+        "p50": 5.1,
+        "p95": 5.6,
+        "p99": 5.6
+      },
+      "bytes": {
+        "min": 81615,
+        "max": 81615,
+        "mean": 81615,
+        "p50": 81615,
+        "p95": 81615,
+        "p99": 81615
+      },
+      "samples": [
+        {
+          "status": 200,
+          "totalMs": 5.13402700000006,
+          "bytes": 81615,
+          "serverMs": null,
+          "contentType": "text/html; charset=utf-8"
+        },
+        {
+          "status": 200,
+          "totalMs": 4.9859500000000025,
+          "bytes": 81615,
+          "serverMs": null,
+          "contentType": "text/html; charset=utf-8"
+        },
+        {
+          "status": 200,
+          "totalMs": 5.011206999999899,
+          "bytes": 81615,
+          "serverMs": null,
+          "contentType": "text/html; charset=utf-8"
+        },
+        {
+          "status": 200,
+          "totalMs": 5.251768000000084,
+          "bytes": 81615,
+          "serverMs": null,
+          "contentType": "text/html; charset=utf-8"
+        },
+        {
+          "status": 200,
+          "totalMs": 5.603959000000032,
+          "bytes": 81615,
+          "serverMs": null,
+          "contentType": "text/html; charset=utf-8"
+        },
+        {
+          "status": 200,
+          "totalMs": 4.9923820000000205,
+          "bytes": 81615,
+          "serverMs": null,
+          "contentType": "text/html; charset=utf-8"
+        },
+        {
+          "status": 200,
+          "totalMs": 5.387351999999964,
+          "bytes": 81615,
+          "serverMs": null,
+          "contentType": "text/html; charset=utf-8"
+        },
+        {
+          "status": 200,
+          "totalMs": 4.330009999999902,
+          "bytes": 81615,
+          "serverMs": null,
+          "contentType": "text/html; charset=utf-8"
+        },
+        {
+          "status": 200,
+          "totalMs": 5.17728800000009,
+          "bytes": 81615,
+          "serverMs": null,
+          "contentType": "text/html; charset=utf-8"
+        },
+        {
+          "status": 200,
+          "totalMs": 5.0781429999999546,
+          "bytes": 81615,
+          "serverMs": null,
+          "contentType": "text/html; charset=utf-8"
+        }
+      ]
+    },
+    {
+      "path": "/en/worker/jobs",
+      "role": "worker (client-auth)",
+      "ok": true,
+      "successCount": 10,
+      "ttfb": {
+        "min": 4.9,
+        "max": 5.6,
+        "mean": 5.1,
+        "p50": 5,
+        "p95": 5.6,
+        "p99": 5.6
+      },
+      "bytes": {
+        "min": 80341,
+        "max": 80341,
+        "mean": 80341,
+        "p50": 80341,
+        "p95": 80341,
+        "p99": 80341
+      },
+      "samples": [
+        {
+          "status": 200,
+          "totalMs": 4.973496000000068,
+          "bytes": 80341,
+          "serverMs": null,
+          "contentType": "text/html; charset=utf-8"
+        },
+        {
+          "status": 200,
+          "totalMs": 5.4493680000000495,
+          "bytes": 80341,
+          "serverMs": null,
+          "contentType": "text/html; charset=utf-8"
+        },
+        {
+          "status": 200,
+          "totalMs": 5.603136999999947,
+          "bytes": 80341,
+          "serverMs": null,
+          "contentType": "text/html; charset=utf-8"
+        },
+        {
+          "status": 200,
+          "totalMs": 5.23715100000004,
+          "bytes": 80341,
+          "serverMs": null,
+          "contentType": "text/html; charset=utf-8"
+        },
+        {
+          "status": 200,
+          "totalMs": 4.931909000000019,
+          "bytes": 80341,
+          "serverMs": null,
+          "contentType": "text/html; charset=utf-8"
+        },
+        {
+          "status": 200,
+          "totalMs": 4.946935999999937,
+          "bytes": 80341,
+          "serverMs": null,
+          "contentType": "text/html; charset=utf-8"
+        },
+        {
+          "status": 200,
+          "totalMs": 4.938580999999999,
+          "bytes": 80341,
+          "serverMs": null,
+          "contentType": "text/html; charset=utf-8"
+        },
+        {
+          "status": 200,
+          "totalMs": 5.015675000000101,
+          "bytes": 80341,
+          "serverMs": null,
+          "contentType": "text/html; charset=utf-8"
+        },
+        {
+          "status": 200,
+          "totalMs": 4.936606999999981,
+          "bytes": 80341,
+          "serverMs": null,
+          "contentType": "text/html; charset=utf-8"
+        },
+        {
+          "status": 200,
+          "totalMs": 5.135139000000095,
+          "bytes": 80341,
+          "serverMs": null,
+          "contentType": "text/html; charset=utf-8"
+        }
+      ]
+    },
+    {
+      "path": "/en/admin/dashboard",
+      "role": "admin (client-auth since perf-sprint chunk 7)",
+      "ok": true,
+      "successCount": 10,
+      "ttfb": {
+        "min": 4.2,
+        "max": 5.8,
+        "mean": 5.1,
+        "p50": 5,
+        "p95": 5.8,
+        "p99": 5.8
+      },
+      "bytes": {
+        "min": 83273,
+        "max": 83273,
+        "mean": 83273,
+        "p50": 83273,
+        "p95": 83273,
+        "p99": 83273
+      },
+      "samples": [
+        {
+          "status": 200,
+          "totalMs": 4.984105999999997,
+          "bytes": 83273,
+          "serverMs": null,
+          "contentType": "text/html; charset=utf-8"
+        },
+        {
+          "status": 200,
+          "totalMs": 5.0341900000000805,
+          "bytes": 83273,
+          "serverMs": null,
+          "contentType": "text/html; charset=utf-8"
+        },
+        {
+          "status": 200,
+          "totalMs": 5.0761289999999235,
+          "bytes": 83273,
+          "serverMs": null,
+          "contentType": "text/html; charset=utf-8"
+        },
+        {
+          "status": 200,
+          "totalMs": 4.998973999999976,
+          "bytes": 83273,
+          "serverMs": null,
+          "contentType": "text/html; charset=utf-8"
+        },
+        {
+          "status": 200,
+          "totalMs": 4.900678999999968,
+          "bytes": 83273,
+          "serverMs": null,
+          "contentType": "text/html; charset=utf-8"
+        },
+        {
+          "status": 200,
+          "totalMs": 4.19241199999999,
+          "bytes": 83273,
+          "serverMs": null,
+          "contentType": "text/html; charset=utf-8"
+        },
+        {
+          "status": 200,
+          "totalMs": 5.764319,
+          "bytes": 83273,
+          "serverMs": null,
+          "contentType": "text/html; charset=utf-8"
+        },
+        {
+          "status": 200,
+          "totalMs": 5.44850699999995,
+          "bytes": 83273,
+          "serverMs": null,
+          "contentType": "text/html; charset=utf-8"
+        },
+        {
+          "status": 200,
+          "totalMs": 5.466611000000057,
+          "bytes": 83273,
+          "serverMs": null,
+          "contentType": "text/html; charset=utf-8"
+        },
+        {
+          "status": 200,
+          "totalMs": 4.879901000000018,
+          "bytes": 83273,
+          "serverMs": null,
+          "contentType": "text/html; charset=utf-8"
+        }
+      ]
+    }
+  ]
+}

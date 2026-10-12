@@ -8,7 +8,7 @@ import { Link, useRouter } from "@/i18n/navigation";
 import { CATEGORY_OPTIONS, resolveCategoryOption } from "../data/categories";
 import type { PostJobData, PostJobStep, ServiceCategory } from "../types";
 import { createJob } from "../api/post-job-api";
-import { ApiError } from "@/lib/api-client";
+import { ApiError, getAccessToken, getStoredUser } from "@/lib/api-client";
 import { toLocalDateString } from "@/lib/format";
 import { JobPostedSuccessModal } from "./job-posted-success-modal";
 import { Step2JobDetails } from "./step-2-job-details";
@@ -185,23 +185,63 @@ export function PostJobWizard() {
   };
 
   const handleSubmitJob = async () => {
+    const customerToken = getAccessToken("CUSTOMER");
+    const storedUser = getStoredUser();
+
+    if (!customerToken) {
+      if (typeof window !== "undefined") {
+        try {
+          sessionStorage.setItem("workerfix_draft_job", JSON.stringify(formData));
+        } catch {}
+      }
+      if (storedUser?.role === "WORKER") {
+        setSubmitError(
+          locale === "ur"
+            ? "آپ اس وقت کاریگر (ورکر) اکاؤنٹ میں لاگ ان ہیں۔ کسٹمر کی حیثیت سے جاب پوسٹ کرنے کے لیے براہ کرم کسٹمر اکاؤنٹ میں لاگ ان کریں۔"
+            : "You are currently signed in as a Worker. Please sign in with a Customer account to post jobs."
+        );
+      } else {
+        setSubmitError(
+          locale === "ur"
+            ? "جاب پوسٹ کرنے کے لیے براہ کرم کسٹمر اکاؤنٹ میں لاگ ان کریں۔"
+            : "Please sign in with a Customer account to publish this job."
+        );
+      }
+      return;
+    }
+
     setIsSubmitting(true);
     setSubmitError(null);
     try {
       // Submits job with unified visit timing
       const res = await createJob(formData);
       clearDraft();
+      if (typeof window !== "undefined") {
+        try {
+          sessionStorage.removeItem("workerfix_draft_job");
+        } catch {}
+      }
       setPostedJobId(res.id);
     } catch (err) {
       console.error("Failed to post job:", err);
-      const isAuthError = err instanceof ApiError && err.status === 401;
-      setSubmitError(
-        isAuthError
-          ? "Your session has expired. Please sign in again and retry."
-          : err instanceof Error && err.message
+      const isAuthError = err instanceof ApiError && (err.status === 401 || err.status === 403);
+      if (isAuthError) {
+        setSubmitError(
+          storedUser?.role === "WORKER"
+            ? (locale === "ur"
+                ? "ورکر اکاؤنٹ سے جاب پوسٹ نہیں ہو سکتی۔ براہ کرم کسٹمر اکاؤنٹ میں لاگ ان کریں۔"
+                : "Worker accounts cannot post jobs. Please sign in with a Customer account.")
+            : (locale === "ur"
+                ? "آپ کا کسٹمر سیشن ختم ہو چکا ہے۔ براہ کرم دوبارہ لاگ ان کریں۔"
+                : "Your customer session expired. Please sign in again.")
+        );
+      } else {
+        setSubmitError(
+          err instanceof Error && err.message
             ? err.message
             : "Could not post your job. Please check your connection and try again.",
-      );
+        );
+      }
     } finally {
       setIsSubmitting(false);
     }

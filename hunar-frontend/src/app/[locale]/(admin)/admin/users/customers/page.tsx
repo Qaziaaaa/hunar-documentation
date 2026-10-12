@@ -19,6 +19,9 @@ import {
 export default function CustomersPage() {
   const [customers, setCustomers] = useState<CustomerUser[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<"ALL" | "ACTIVE" | "SUSPENDED">("ALL");
   const [selectedCustomer, setSelectedCustomer] = useState<CustomerUser | null>(null);
@@ -29,9 +32,11 @@ export default function CustomersPage() {
     adminApi
       .listCustomers({ limit: 50 })
       .then((res) => setCustomers(res.items))
-      .catch(() => setCustomers([]))
+      .catch((err) =>
+        setError(err instanceof Error ? err.message : "Failed to load customers"),
+      )
       .finally(() => setLoading(false));
-  }, []);
+  }, [reloadKey]);
 
   const filtered = useMemo(
     () =>
@@ -47,39 +52,71 @@ export default function CustomersPage() {
     [customers, search, statusFilter],
   );
 
-  const handleToggleStatus = () => {
+  const handleToggleStatus = async () => {
     if (!actionCustomer) return;
+    setActionError(null);
 
     const suspending = actionCustomer.status === "ACTIVE";
-    void (suspending
-      ? adminApi.suspendCustomer(actionCustomer.id, suspendReason)
-      : adminApi.reactivateCustomer(actionCustomer.id)
-    ).catch(() => undefined);
-
-    setCustomers((prev) =>
-      prev.map((c) => {
-        if (c.id === actionCustomer.id) {
-          const newStatus = c.status === "ACTIVE" ? "SUSPENDED" : "ACTIVE";
-          return {
-            ...c,
-            status: newStatus,
-            internalNotes:
-              newStatus === "SUSPENDED"
-                ? `Suspended by admin: ${suspendReason || "No reason given"}`
-                : c.internalNotes,
-          };
-        }
-        return c;
-      })
-    );
-
-    setActionCustomer(null);
-    setSuspendReason("");
+    try {
+      if (suspending) {
+        await adminApi.suspendCustomer(actionCustomer.id, suspendReason);
+      } else {
+        await adminApi.reactivateCustomer(actionCustomer.id);
+      }
+      setCustomers((prev) =>
+        prev.map((c) => {
+          if (c.id === actionCustomer.id) {
+            const newStatus = c.status === "ACTIVE" ? "SUSPENDED" : "ACTIVE";
+            return {
+              ...c,
+              status: newStatus,
+              internalNotes:
+                newStatus === "SUSPENDED"
+                  ? `Suspended by admin: ${suspendReason || "No reason given"}`
+                  : c.internalNotes,
+            };
+          }
+          return c;
+        })
+      );
+      setActionCustomer(null);
+      setSuspendReason("");
+    } catch (err) {
+      setActionError(
+        err instanceof Error ? err.message : "Failed to update customer status",
+      );
+      setActionCustomer(null);
+      setSuspendReason("");
+    }
   };
 
   return (
     <AdminShell>
       <div className="space-y-6">
+        {error && (
+          <div className="flex items-center justify-between gap-3 rounded-2xl border border-red-200 bg-red-50 p-4">
+            <div className="flex items-center gap-2">
+              <AlertCircle className="size-4 shrink-0 text-red-500" />
+              <span className="text-sm font-bold text-red-700">Customers failed to load</span>
+              <span className="text-xs font-medium text-red-600">{error}</span>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                setError(null);
+                setReloadKey((k) => k + 1);
+              }}
+              className="rounded-xl bg-red-600 px-3 py-1.5 text-xs font-bold text-white transition hover:bg-red-700"
+            >
+              Retry
+            </button>
+          </div>
+        )}
+        {actionError && (
+          <div className="rounded-2xl border border-red-200 bg-red-50 p-4 text-sm font-bold text-red-700">
+            Action failed: {actionError}
+          </div>
+        )}
         {/* Header */}
         <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
           <div>

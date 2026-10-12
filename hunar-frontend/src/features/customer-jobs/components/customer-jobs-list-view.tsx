@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   AlertTriangle,
@@ -50,11 +51,30 @@ interface CustomerJobsListViewProps {
 export function CustomerJobsListView({ initialJobs, jobs: jobsProp }: CustomerJobsListViewProps) {
   const locale = useLocale();
   const isUrdu = locale === "ur";
+  const searchParams = useSearchParams();
+  const tabParam = searchParams.get("tab");
 
   const resolvedInitialJobs = initialJobs ?? jobsProp ?? [];
   const [jobs, setJobs] = useState<CustomerJob[]>(resolvedInitialJobs);
-  const [selectedFilter, setSelectedFilter] = useState<"scheduled" | "offers" | "completed">("scheduled");
+
+  const determineInitialFilter = (): "scheduled" | "offers" | "completed" => {
+    if (tabParam === "offers") return "offers";
+    if (tabParam === "completed") return "completed";
+    if (tabParam === "scheduled") return "scheduled";
+    const hasActiveOffers = resolvedInitialJobs.some((j) => j.status === "receiving_offers");
+    const hasScheduled = resolvedInitialJobs.some((j) => j.status === "visit_scheduled");
+    if (hasActiveOffers && !hasScheduled) return "offers";
+    return "scheduled";
+  };
+
+  const [selectedFilter, setSelectedFilter] = useState<"scheduled" | "offers" | "completed">(determineInitialFilter);
   const [searchQuery, setSearchQuery] = useState("");
+
+  useEffect(() => {
+    if (tabParam === "offers" || tabParam === "scheduled" || tabParam === "completed") {
+      setSelectedFilter(tabParam);
+    }
+  }, [tabParam]);
 
   // Incremental pagination state
   const [currentPage, setCurrentPage] = useState(1);
@@ -104,12 +124,18 @@ export function CustomerJobsListView({ initialJobs, jobs: jobsProp }: CustomerJo
 
   // Sync state if props change
   useEffect(() => {
-    if (initialJobs) {
-      setJobs(initialJobs);
-    } else if (jobsProp) {
-      setJobs(jobsProp);
+    const list = initialJobs ?? jobsProp;
+    if (list) {
+      setJobs(list);
+      if (!tabParam) {
+        const hasActiveOffers = list.some((j) => j.status === "receiving_offers");
+        const hasScheduled = list.some((j) => j.status === "visit_scheduled");
+        if (hasActiveOffers && !hasScheduled) {
+          setSelectedFilter("offers");
+        }
+      }
     }
-  }, [initialJobs, jobsProp]);
+  }, [initialJobs, jobsProp, tabParam]);
 
   // Keep modal jobs synced with updated state
   useEffect(() => {
@@ -364,6 +390,36 @@ export function CustomerJobsListView({ initialJobs, jobs: jobsProp }: CustomerJo
           />
         </div>
       </div>
+
+      {/* Banner if there are offers waiting while on Scheduled tab */}
+      {selectedFilter === "scheduled" && activeCount > 0 && (
+        <div
+          onClick={() => setSelectedFilter("offers")}
+          className="bg-teal/10 hover:bg-teal/15 border border-teal/20 rounded-2xl p-4 flex items-center justify-between gap-3 cursor-pointer transition-all duration-200"
+        >
+          <div className="flex items-center gap-3">
+            <div className="size-9 rounded-xl bg-teal text-white flex items-center justify-center shrink-0 font-bold text-sm">
+              <Tag className="size-5" />
+            </div>
+            <div>
+              <h4 className="text-sm font-bold text-[#123B5D]">
+                {isUrdu
+                  ? `آپ کے پاس ${activeCount} کام کے لیے نئی آفرز موصول ہوئی ہیں!`
+                  : `You have new offers received on ${activeCount} job${activeCount > 1 ? "s" : ""}!`}
+              </h4>
+              <p className="text-xs text-slate-500">
+                {isUrdu
+                  ? "کاریگروں کے ریٹس دیکھنے اور منتخب کرنے کے لیے یہاں کلک کریں۔"
+                  : "Click here to review technician quotes and confirm your booking."}
+              </p>
+            </div>
+          </div>
+          <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-teal text-white font-bold text-xs shrink-0 shadow-xs">
+            <span>{isUrdu ? "آفرز دیکھیں" : "View Offers"}</span>
+            <ArrowRight className="size-3.5 rtl:rotate-180" />
+          </div>
+        </div>
+      )}
 
       {/* Work Orders List */}
       {filteredJobs.length > 0 ? (

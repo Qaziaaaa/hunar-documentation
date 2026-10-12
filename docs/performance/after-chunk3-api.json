@@ -1,0 +1,1828 @@
+{
+  "label": "after-chunk3",
+  "timestamp": "2026-10-07T08:09:58.766Z",
+  "gitCommit": "9e9c422",
+  "base": "http://localhost:4000/api/v1",
+  "runs": 15,
+  "warmup": 3,
+  "results": [
+    {
+      "name": "GET /health",
+      "path": "/health",
+      "method": "GET",
+      "auth": null,
+      "ok": true,
+      "successCount": 15,
+      "errorCount": 0,
+      "client": {
+        "min": 305,
+        "max": 410.4,
+        "mean": 314,
+        "p50": 307.2,
+        "p95": 410.4,
+        "p99": 410.4
+      },
+      "server": {
+        "min": 302.4,
+        "max": 407.9,
+        "mean": 311.4,
+        "p50": 304.4,
+        "p95": 407.9,
+        "p99": 407.9
+      },
+      "samples": [
+        {
+          "status": 200,
+          "clientMs": 305.60243699999955,
+          "serverMs": 303.6,
+          "id": "210798bb-a529-4235-9ae5-45c1e8599dc9"
+        },
+        {
+          "status": 200,
+          "clientMs": 307.6025669999999,
+          "serverMs": 303.9,
+          "id": "ce188a81-34b2-4705-bcd9-b42017aa9558"
+        },
+        {
+          "status": 200,
+          "clientMs": 307.379449,
+          "serverMs": 304,
+          "id": "685d3ffd-a45c-4389-819d-34596c6d9027"
+        },
+        {
+          "status": 200,
+          "clientMs": 308.6646689999998,
+          "serverMs": 305.8,
+          "id": "0fb0dd6c-8be8-4faf-b8c3-c0fd985c3a87"
+        },
+        {
+          "status": 200,
+          "clientMs": 304.9879150000006,
+          "serverMs": 302.4,
+          "id": "c8f1ad05-282e-4eab-9b43-8d9d6840027f"
+        },
+        {
+          "status": 200,
+          "clientMs": 307.5993920000001,
+          "serverMs": 304.8,
+          "id": "52c53f78-71d5-45c0-b2ec-8b6c0fa638ce"
+        },
+        {
+          "status": 200,
+          "clientMs": 306.3938210000015,
+          "serverMs": 304.8,
+          "id": "64c16dba-519a-4fd1-a7e2-890108a4bb1a"
+        },
+        {
+          "status": 200,
+          "clientMs": 307.24259299999903,
+          "serverMs": 304.4,
+          "id": "6e99dd29-60d0-4048-be42-df729b6f09e3"
+        },
+        {
+          "status": 200,
+          "clientMs": 306.9762529999989,
+          "serverMs": 304.4,
+          "id": "32ada88f-a630-492a-baa8-3e4c822eb432"
+        },
+        {
+          "status": 200,
+          "clientMs": 410.39840000000004,
+          "serverMs": 407.9,
+          "id": "d62f1244-af6d-4af4-abf2-97db7bce046b"
+        },
+        {
+          "status": 200,
+          "clientMs": 306.80097399999977,
+          "serverMs": 304.2,
+          "id": "1b0b014d-554a-44f7-a933-3a31c1684f7d"
+        },
+        {
+          "status": 200,
+          "clientMs": 306.7255529999984,
+          "serverMs": 305.3,
+          "id": "73a284a5-e70f-4065-a046-aceb442282ce"
+        },
+        {
+          "status": 200,
+          "clientMs": 308.9868229999993,
+          "serverMs": 306.6,
+          "id": "4a9908b2-47f7-4854-b4cd-51c2fba77878"
+        },
+        {
+          "status": 200,
+          "clientMs": 305.68806700000096,
+          "serverMs": 303.1,
+          "id": "f76994f7-fe73-4760-9914-a8deef9a4c14"
+        },
+        {
+          "status": 200,
+          "clientMs": 308.44129000000066,
+          "serverMs": 305.8,
+          "id": "ce73f790-a95a-425d-a3d2-496aa243c296"
+        }
+      ],
+      "db": {
+        "queries": {
+          "min": 1,
+          "max": 1,
+          "mean": 1,
+          "p50": 1,
+          "p95": 1,
+          "p99": 1
+        },
+        "ms": {
+          "min": 301.8,
+          "max": 407.4,
+          "mean": 310.9,
+          "p50": 304,
+          "p95": 407.4,
+          "p99": 407.4
+        },
+        "logServer": {
+          "min": 302.7,
+          "max": 408.1,
+          "mean": 311.7,
+          "p50": 304.7,
+          "p95": 408.1,
+          "p99": 408.1
+        },
+        "joinedCount": 15
+      }
+    },
+    {
+      "name": "POST /auth/login (worker)",
+      "path": "/auth/login",
+      "method": "POST",
+      "auth": null,
+      "ok": true,
+      "successCount": 4,
+      "errorCount": 0,
+      "client": {
+        "min": 405.4,
+        "max": 472.3,
+        "mean": 425.1,
+        "p50": 409.8,
+        "p95": 472.3,
+        "p99": 472.3
+      },
+      "server": {
+        "min": 402.8,
+        "max": 469.1,
+        "mean": 422.3,
+        "p50": 407,
+        "p95": 469.1,
+        "p99": 469.1
+      },
+      "samples": [
+        {
+          "status": 200,
+          "clientMs": 472.25279000000046,
+          "serverMs": 469.1,
+          "id": "ad39a8d8-0b73-412a-8b6c-0a8a9b7cc847"
+        },
+        {
+          "status": 200,
+          "clientMs": 409.8407850000003,
+          "serverMs": 407,
+          "id": "56655478-53ae-45aa-b0bc-ea8b690fc7df"
+        },
+        {
+          "status": 200,
+          "clientMs": 405.3654630000001,
+          "serverMs": 402.8,
+          "id": "ab5cb64f-3cca-4b0d-a973-2501074f312b"
+        },
+        {
+          "status": 200,
+          "clientMs": 412.9399969999995,
+          "serverMs": 410.3,
+          "id": "d984ff23-1e69-48da-ab26-fbd1207e168d"
+        }
+      ],
+      "db": {
+        "queries": {
+          "min": 1,
+          "max": 1,
+          "mean": 1,
+          "p50": 1,
+          "p95": 1,
+          "p99": 1
+        },
+        "ms": {
+          "min": 341.2,
+          "max": 403.7,
+          "mean": 358.3,
+          "p50": 342.5,
+          "p95": 403.7,
+          "p99": 403.7
+        },
+        "logServer": {
+          "min": 403,
+          "max": 469.3,
+          "mean": 422.5,
+          "p50": 407.1,
+          "p95": 469.3,
+          "p99": 469.3
+        },
+        "joinedCount": 4
+      }
+    },
+    {
+      "name": "POST /auth/customer/login",
+      "path": "/auth/customer/login",
+      "method": "POST",
+      "auth": null,
+      "ok": true,
+      "successCount": 4,
+      "errorCount": 0,
+      "client": {
+        "min": 409.5,
+        "max": 409.6,
+        "mean": 409.5,
+        "p50": 409.5,
+        "p95": 409.6,
+        "p99": 409.6
+      },
+      "server": {
+        "min": 406.2,
+        "max": 406.9,
+        "mean": 406.7,
+        "p50": 406.8,
+        "p95": 406.9,
+        "p99": 406.9
+      },
+      "samples": [
+        {
+          "status": 200,
+          "clientMs": 409.5267050000002,
+          "serverMs": 406.2,
+          "id": "5fb8bbcc-9478-4020-942f-5624f6700fd1"
+        },
+        {
+          "status": 200,
+          "clientMs": 409.5620920000001,
+          "serverMs": 406.9,
+          "id": "174410d3-0f53-4835-b689-60737820b13c"
+        },
+        {
+          "status": 200,
+          "clientMs": 409.5171679999985,
+          "serverMs": 406.8,
+          "id": "b4ab5a7f-6dc6-4628-b889-0922ffb8b1e7"
+        },
+        {
+          "status": 200,
+          "clientMs": 409.55087099999946,
+          "serverMs": 406.9,
+          "id": "d5936383-716e-43ab-a5a6-3f32693b180c"
+        }
+      ],
+      "db": {
+        "queries": {
+          "min": 1,
+          "max": 1,
+          "mean": 1,
+          "p50": 1,
+          "p95": 1,
+          "p99": 1
+        },
+        "ms": {
+          "min": 341.7,
+          "max": 343.3,
+          "mean": 342.5,
+          "p50": 342.5,
+          "p95": 343.3,
+          "p99": 343.3
+        },
+        "logServer": {
+          "min": 406.4,
+          "max": 407,
+          "mean": 406.9,
+          "p50": 407,
+          "p95": 407,
+          "p99": 407
+        },
+        "joinedCount": 4
+      }
+    },
+    {
+      "name": "POST /auth/admin/login",
+      "path": "/auth/admin/login",
+      "method": "POST",
+      "auth": null,
+      "ok": true,
+      "successCount": 4,
+      "errorCount": 0,
+      "client": {
+        "min": 408.3,
+        "max": 616.4,
+        "mean": 461,
+        "p50": 409.3,
+        "p95": 616.4,
+        "p99": 616.4
+      },
+      "server": {
+        "min": 405.8,
+        "max": 613.8,
+        "mean": 458.3,
+        "p50": 406.3,
+        "p95": 613.8,
+        "p99": 613.8
+      },
+      "samples": [
+        {
+          "status": 200,
+          "clientMs": 409.34556599999996,
+          "serverMs": 406.3,
+          "id": "4f9daa32-3b64-4451-855c-425ecca5dcb2"
+        },
+        {
+          "status": 200,
+          "clientMs": 410.00194700000065,
+          "serverMs": 407.4,
+          "id": "cda65ff8-2a6a-4de5-a84e-16724ca6b46c"
+        },
+        {
+          "status": 200,
+          "clientMs": 408.27817499999946,
+          "serverMs": 405.8,
+          "id": "2b5863e5-9f84-418d-bb91-fe8418c0d2cc"
+        },
+        {
+          "status": 200,
+          "clientMs": 616.4068279999992,
+          "serverMs": 613.8,
+          "id": "4d5269d3-c488-423b-bea9-78857577ac5c"
+        }
+      ],
+      "db": {
+        "queries": {
+          "min": 1,
+          "max": 1,
+          "mean": 1,
+          "p50": 1,
+          "p95": 1,
+          "p99": 1
+        },
+        "ms": {
+          "min": 342.1,
+          "max": 549.6,
+          "mean": 394.2,
+          "p50": 342.1,
+          "p95": 549.6,
+          "p99": 549.6
+        },
+        "logServer": {
+          "min": 405.9,
+          "max": 614,
+          "mean": 458.5,
+          "p50": 406.5,
+          "p95": 614,
+          "p99": 614
+        },
+        "joinedCount": 4
+      }
+    },
+    {
+      "name": "GET /jobs/customer?limit=50",
+      "path": "/jobs/customer?limit=50",
+      "method": "GET",
+      "auth": "customer",
+      "ok": true,
+      "successCount": 15,
+      "errorCount": 0,
+      "client": {
+        "min": 890.9,
+        "max": 3225.5,
+        "mean": 1471.2,
+        "p50": 1233.6,
+        "p95": 3225.5,
+        "p99": 3225.5
+      },
+      "server": {
+        "min": 887.8,
+        "max": 3222.6,
+        "mean": 1468.1,
+        "p50": 1230.6,
+        "p95": 3222.6,
+        "p99": 3222.6
+      },
+      "samples": [
+        {
+          "status": 200,
+          "clientMs": 890.9049180000002,
+          "serverMs": 887.8,
+          "id": "3015b98a-5f7c-48ff-a927-f5fd78e1ff76"
+        },
+        {
+          "status": 200,
+          "clientMs": 2181.1554799999976,
+          "serverMs": 2177.7,
+          "id": "626c5bf8-278e-4f84-bb32-c5acbbd1ee27"
+        },
+        {
+          "status": 200,
+          "clientMs": 1331.4250619999984,
+          "serverMs": 1328.3,
+          "id": "852bf4ad-f61e-4681-9972-72504230d30e"
+        },
+        {
+          "status": 200,
+          "clientMs": 1228.8125440000003,
+          "serverMs": 1225.7,
+          "id": "4840ca16-64bc-40fa-8b31-ade8f8385175"
+        },
+        {
+          "status": 200,
+          "clientMs": 1229.2035759999999,
+          "serverMs": 1225.8,
+          "id": "76476078-e74b-4c7c-a247-e83b2b80ec78"
+        },
+        {
+          "status": 200,
+          "clientMs": 1535.7682779999996,
+          "serverMs": 1532.6,
+          "id": "edf3ef72-74de-4aaf-a295-ac55f7b2ab6e"
+        },
+        {
+          "status": 200,
+          "clientMs": 1228.6461320000017,
+          "serverMs": 1225.8,
+          "id": "0801d21b-bc28-493a-bef0-ba27dc0cdec9"
+        },
+        {
+          "status": 200,
+          "clientMs": 1197.0204669999985,
+          "serverMs": 1193.4,
+          "id": "cb0d305a-a33b-46a7-b748-e8b9dc827621"
+        },
+        {
+          "status": 200,
+          "clientMs": 1567.942551,
+          "serverMs": 1565,
+          "id": "9dc069b3-3d8e-4257-9e2c-6ef3b7630b84"
+        },
+        {
+          "status": 200,
+          "clientMs": 1233.5908539999946,
+          "serverMs": 1230.6,
+          "id": "d7f1d3fc-14f5-4bf2-833d-50af2ade9bdd"
+        },
+        {
+          "status": 200,
+          "clientMs": 1531.3567059999987,
+          "serverMs": 1528.4,
+          "id": "74049265-bc85-4ede-b6c5-fd52ec08b1fd"
+        },
+        {
+          "status": 200,
+          "clientMs": 1536.195409,
+          "serverMs": 1533.2,
+          "id": "caa61728-105a-4d54-af3c-ddfd20ce4875"
+        },
+        {
+          "status": 200,
+          "clientMs": 1228.067446000001,
+          "serverMs": 1225.2,
+          "id": "c1aa3f08-5a18-4de0-b021-e4f35fcad21b"
+        },
+        {
+          "status": 200,
+          "clientMs": 922.2881879999986,
+          "serverMs": 919.3,
+          "id": "ef020102-bf2d-4ec0-86c7-ef960c5d7fd6"
+        },
+        {
+          "status": 200,
+          "clientMs": 3225.533301000003,
+          "serverMs": 3222.6,
+          "id": "3b49d620-4462-4964-8b91-cec3b7f950b2"
+        }
+      ],
+      "db": {
+        "queries": {
+          "min": 8,
+          "max": 8,
+          "mean": 8,
+          "p50": 8,
+          "p95": 8,
+          "p99": 8
+        },
+        "ms": {
+          "min": 2346.5,
+          "max": 4632.6,
+          "mean": 3062.9,
+          "p50": 2781.7,
+          "p95": 4632.6,
+          "p99": 4632.6
+        },
+        "logServer": {
+          "min": 888,
+          "max": 3222.8,
+          "mean": 1468.3,
+          "p50": 1230.8,
+          "p95": 3222.8,
+          "p99": 3222.8
+        },
+        "joinedCount": 15
+      }
+    },
+    {
+      "name": "GET /jobs/available",
+      "path": "/jobs/available?lat=33.6844&lng=73.0479&radiusKm=10",
+      "method": "GET",
+      "auth": "worker",
+      "ok": true,
+      "successCount": 15,
+      "errorCount": 0,
+      "client": {
+        "min": 1060.7,
+        "max": 3175.2,
+        "mean": 1597.5,
+        "p50": 1433.5,
+        "p95": 3175.2,
+        "p99": 3175.2
+      },
+      "server": {
+        "min": 1057.7,
+        "max": 3172.3,
+        "mean": 1594.7,
+        "p50": 1430.2,
+        "p95": 3172.3,
+        "p99": 3172.3
+      },
+      "samples": [
+        {
+          "status": 200,
+          "clientMs": 3175.237906999995,
+          "serverMs": 3172.3,
+          "id": "0d3264ce-6e36-42cd-a376-362e042a354d"
+        },
+        {
+          "status": 200,
+          "clientMs": 1842.7080130000031,
+          "serverMs": 1840.1,
+          "id": "80ca7ea9-0945-40cc-9878-a67c06415c0e"
+        },
+        {
+          "status": 200,
+          "clientMs": 1433.4911569999967,
+          "serverMs": 1430.2,
+          "id": "a7d6825a-2b1e-4c6f-b0ad-149be0b48d14"
+        },
+        {
+          "status": 200,
+          "clientMs": 1228.4230129999996,
+          "serverMs": 1225.7,
+          "id": "ae245b74-edd2-4cf1-a086-6d7e6e2846c8"
+        },
+        {
+          "status": 200,
+          "clientMs": 1536.1909300000043,
+          "serverMs": 1533.6,
+          "id": "8b05734c-dc92-4030-be16-d6be618203a8"
+        },
+        {
+          "status": 200,
+          "clientMs": 1229.2272819999998,
+          "serverMs": 1226.5,
+          "id": "4df7ed0c-66cf-473a-9288-945396f03515"
+        },
+        {
+          "status": 200,
+          "clientMs": 1143.0448210000031,
+          "serverMs": 1140.1,
+          "id": "ccbebc90-2a9e-430a-b929-6081e4e87db3"
+        },
+        {
+          "status": 200,
+          "clientMs": 1519.4837310000003,
+          "serverMs": 1515.9,
+          "id": "ff1ee527-4ede-42f3-8dc9-c67ec2b98778"
+        },
+        {
+          "status": 200,
+          "clientMs": 1536.3512109999865,
+          "serverMs": 1533.8,
+          "id": "b61838b5-491b-4310-a39e-bf75207d9171"
+        },
+        {
+          "status": 200,
+          "clientMs": 1228.26881400001,
+          "serverMs": 1225.4,
+          "id": "608fad4b-6939-4da6-ba59-79f949f43b41"
+        },
+        {
+          "status": 200,
+          "clientMs": 1845.725351000001,
+          "serverMs": 1843.9,
+          "id": "54683c0d-285e-4320-ae96-000d51715c53"
+        },
+        {
+          "status": 200,
+          "clientMs": 2725.9375269999873,
+          "serverMs": 2723,
+          "id": "a7f812b8-4468-4cc2-a008-86c15dc0d409"
+        },
+        {
+          "status": 200,
+          "clientMs": 1060.712201000002,
+          "serverMs": 1057.7,
+          "id": "2e53868a-f0d0-4b12-87be-434c73436f17"
+        },
+        {
+          "status": 200,
+          "clientMs": 1228.981700000004,
+          "serverMs": 1226.1,
+          "id": "3b758235-0c7f-4ae6-8f5c-ba8ce5f1874a"
+        },
+        {
+          "status": 200,
+          "clientMs": 1228.394208999991,
+          "serverMs": 1225.5,
+          "id": "9933ad9b-686e-46df-8a33-db836c31f990"
+        }
+      ],
+      "db": {
+        "queries": {
+          "min": 6,
+          "max": 6,
+          "mean": 6,
+          "p50": 6,
+          "p95": 6,
+          "p99": 6
+        },
+        "ms": {
+          "min": 1555,
+          "max": 4604.8,
+          "mean": 2295.8,
+          "p50": 1961.2,
+          "p95": 4604.8,
+          "p99": 4604.8
+        },
+        "logServer": {
+          "min": 1057.9,
+          "max": 3172.6,
+          "mean": 1594.9,
+          "p50": 1430.5,
+          "p95": 3172.6,
+          "p99": 3172.6
+        },
+        "joinedCount": 15
+      }
+    },
+    {
+      "name": "GET /jobs/:id",
+      "path": "/jobs/02f21800-bab0-4a2f-accc-a401f2d46920",
+      "method": "GET",
+      "auth": "customer",
+      "ok": true,
+      "successCount": 15,
+      "errorCount": 0,
+      "client": {
+        "min": 1433.7,
+        "max": 1945.8,
+        "mean": 1563.6,
+        "p50": 1536.1,
+        "p95": 1945.8,
+        "p99": 1945.8
+      },
+      "server": {
+        "min": 1431,
+        "max": 1943.6,
+        "mean": 1560.8,
+        "p50": 1533,
+        "p95": 1943.6,
+        "p99": 1943.6
+      },
+      "samples": [
+        {
+          "status": 200,
+          "clientMs": 1536.160103000002,
+          "serverMs": 1533.5,
+          "id": "9080ee09-0e8c-4bfa-9c18-19e163cdd5fe"
+        },
+        {
+          "status": 200,
+          "clientMs": 1843.2320550000004,
+          "serverMs": 1840.3,
+          "id": "e9cea0ec-e1e5-4b70-a5d7-9b889c0c3bc5"
+        },
+        {
+          "status": 200,
+          "clientMs": 1535.3631290000048,
+          "serverMs": 1532.7,
+          "id": "040c1dd6-64cd-4607-af5a-00cb905a910d"
+        },
+        {
+          "status": 200,
+          "clientMs": 1433.686754999988,
+          "serverMs": 1431,
+          "id": "ff98a105-8cd5-4da6-b24e-5ab724ae095e"
+        },
+        {
+          "status": 200,
+          "clientMs": 1433.7270200000057,
+          "serverMs": 1432.2,
+          "id": "104ff4ac-61d6-4b6f-bdad-6db27bd3aaa3"
+        },
+        {
+          "status": 200,
+          "clientMs": 1536.292060000007,
+          "serverMs": 1533.4,
+          "id": "4a2e0f1a-63fb-44da-99c8-4d5e4c10fc23"
+        },
+        {
+          "status": 200,
+          "clientMs": 1536.2126810000045,
+          "serverMs": 1532.7,
+          "id": "3c32c878-4655-4706-9ca9-6cca165b43ff"
+        },
+        {
+          "status": 200,
+          "clientMs": 1535.4024630000058,
+          "serverMs": 1532.6,
+          "id": "d6f2dc51-335e-49ee-a2f0-840d810729c2"
+        },
+        {
+          "status": 200,
+          "clientMs": 1536.2309660000028,
+          "serverMs": 1533.2,
+          "id": "7b90ebae-fad4-4f3e-9978-3a74be373588"
+        },
+        {
+          "status": 200,
+          "clientMs": 1536.1172820000065,
+          "serverMs": 1533.3,
+          "id": "bc667e89-fdc1-48b5-ad5e-995806b7f644"
+        },
+        {
+          "status": 200,
+          "clientMs": 1535.702403999996,
+          "serverMs": 1533,
+          "id": "93e70a2a-0bfd-4f22-b125-bd8f5bc148ef"
+        },
+        {
+          "status": 200,
+          "clientMs": 1945.8381630000076,
+          "serverMs": 1943.6,
+          "id": "5a044992-7bae-4e7a-b4e6-d555159d0950"
+        },
+        {
+          "status": 200,
+          "clientMs": 1536.1454249999952,
+          "serverMs": 1533,
+          "id": "72515001-1071-4760-b6ab-1b4a54da3795"
+        },
+        {
+          "status": 200,
+          "clientMs": 1536.2822319999977,
+          "serverMs": 1533.2,
+          "id": "6616cd73-0761-49cd-9d5d-d0c56636c985"
+        },
+        {
+          "status": 200,
+          "clientMs": 1437.619068999993,
+          "serverMs": 1434.7,
+          "id": "a2e03e87-dd2e-4b8e-999e-70ae1f545983"
+        }
+      ],
+      "db": {
+        "queries": {
+          "min": 2,
+          "max": 2,
+          "mean": 2,
+          "p50": 2,
+          "p95": 2,
+          "p99": 2
+        },
+        "ms": {
+          "min": 1430.4,
+          "max": 1942.8,
+          "mean": 1560.1,
+          "p50": 1532.4,
+          "p95": 1942.8,
+          "p99": 1942.8
+        },
+        "logServer": {
+          "min": 1431.3,
+          "max": 1943.9,
+          "mean": 1561.1,
+          "p50": 1533.3,
+          "p95": 1943.9,
+          "p99": 1943.9
+        },
+        "joinedCount": 15
+      }
+    },
+    {
+      "name": "GET /offers/my",
+      "path": "/offers/my",
+      "method": "GET",
+      "auth": "worker",
+      "ok": true,
+      "successCount": 15,
+      "errorCount": 0,
+      "client": {
+        "min": 1740.8,
+        "max": 2150.4,
+        "mean": 1870.6,
+        "p50": 1843.2,
+        "p95": 2150.4,
+        "p99": 2150.4
+      },
+      "server": {
+        "min": 1738,
+        "max": 2147.6,
+        "mean": 1867.7,
+        "p50": 1840.4,
+        "p95": 2147.6,
+        "p99": 2147.6
+      },
+      "samples": [
+        {
+          "status": 200,
+          "clientMs": 1843.0635089999996,
+          "serverMs": 1840.3,
+          "id": "3190f417-c493-476e-b182-77a0dfcfe2f3"
+        },
+        {
+          "status": 200,
+          "clientMs": 1740.8319340000016,
+          "serverMs": 1738,
+          "id": "90596c77-25a4-471c-be28-488e39d52641"
+        },
+        {
+          "status": 200,
+          "clientMs": 2103.586221999998,
+          "serverMs": 2100.7,
+          "id": "bf5e02ab-8079-4153-8b85-c782ba17f068"
+        },
+        {
+          "status": 200,
+          "clientMs": 1890.207613999999,
+          "serverMs": 1886.9,
+          "id": "f32bcebc-3b3a-45ad-9b00-332879e406c7"
+        },
+        {
+          "status": 200,
+          "clientMs": 1843.2111160000059,
+          "serverMs": 1840.4,
+          "id": "197a3c92-21f8-44de-8943-56fb34f8a377"
+        },
+        {
+          "status": 200,
+          "clientMs": 1844.0601279999973,
+          "serverMs": 1841.5,
+          "id": "a2e9cbd0-6aa9-42a8-85bd-0074162222e9"
+        },
+        {
+          "status": 200,
+          "clientMs": 1847.1355859999894,
+          "serverMs": 1844.4,
+          "id": "47e0f1fa-e9e1-4914-9e1d-3bb8a4940ffe"
+        },
+        {
+          "status": 200,
+          "clientMs": 1838.5152799999923,
+          "serverMs": 1835.7,
+          "id": "76c64ac4-2cf6-47cb-8a5c-b378400e85e2"
+        },
+        {
+          "status": 200,
+          "clientMs": 1843.728396000006,
+          "serverMs": 1840.8,
+          "id": "a61ca821-f58e-4d03-9296-d5ea01f7be4c"
+        },
+        {
+          "status": 200,
+          "clientMs": 1842.8997819999931,
+          "serverMs": 1840.2,
+          "id": "b048a511-1609-4315-94b5-db859c10ef18"
+        },
+        {
+          "status": 200,
+          "clientMs": 1842.8648159999866,
+          "serverMs": 1840.1,
+          "id": "3a05804f-42d8-47d2-9bd3-2bd8e4f45ab4"
+        },
+        {
+          "status": 200,
+          "clientMs": 2150.3920730000245,
+          "serverMs": 2147.6,
+          "id": "55415a70-7cfa-432a-9267-30b6fdc96cce"
+        },
+        {
+          "status": 200,
+          "clientMs": 1740.9023760000127,
+          "serverMs": 1738.2,
+          "id": "d8c0ca81-7c4c-477c-836d-176a9d9c342e"
+        },
+        {
+          "status": 200,
+          "clientMs": 1845.5353139999788,
+          "serverMs": 1842.5,
+          "id": "1342c2f4-4726-4ff4-b91a-265723bfdc29"
+        },
+        {
+          "status": 200,
+          "clientMs": 1841.3622890000115,
+          "serverMs": 1838.2,
+          "id": "557bf26d-28a5-440a-bc70-2f0977eb4a49"
+        }
+      ],
+      "db": {
+        "queries": {
+          "min": 2,
+          "max": 2,
+          "mean": 2,
+          "p50": 2,
+          "p95": 2,
+          "p99": 2
+        },
+        "ms": {
+          "min": 3474.4,
+          "max": 4294.1,
+          "mean": 3734.1,
+          "p50": 3679.6,
+          "p95": 4294.1,
+          "p99": 4294.1
+        },
+        "logServer": {
+          "min": 1738.2,
+          "max": 2147.8,
+          "mean": 1868,
+          "p50": 1840.7,
+          "p95": 2147.8,
+          "p99": 2147.8
+        },
+        "joinedCount": 15
+      }
+    },
+    {
+      "name": "GET /wallet/balance",
+      "path": "/wallet/balance",
+      "method": "GET",
+      "auth": "worker",
+      "ok": true,
+      "successCount": 15,
+      "errorCount": 0,
+      "client": {
+        "min": 1433.8,
+        "max": 1844,
+        "mean": 1570.2,
+        "p50": 1536.3,
+        "p95": 1844,
+        "p99": 1844
+      },
+      "server": {
+        "min": 1431,
+        "max": 1841.3,
+        "mean": 1567.6,
+        "p50": 1533.5,
+        "p95": 1841.3,
+        "p99": 1841.3
+      },
+      "samples": [
+        {
+          "status": 200,
+          "clientMs": 1535.8161779999791,
+          "serverMs": 1533.1,
+          "id": "cc051254-f304-400c-88ab-7b43e8a1ff6e"
+        },
+        {
+          "status": 200,
+          "clientMs": 1536.314612999995,
+          "serverMs": 1533.6,
+          "id": "e388357e-2ea2-436b-a80a-6d425c4b60d7"
+        },
+        {
+          "status": 200,
+          "clientMs": 1844.0310529999842,
+          "serverMs": 1841.2,
+          "id": "355a3896-29cf-42bd-8908-d9bbb388e8fe"
+        },
+        {
+          "status": 200,
+          "clientMs": 1535.0023919999949,
+          "serverMs": 1532.2,
+          "id": "4d305523-27d3-42a5-b9d0-eca44b230f76"
+        },
+        {
+          "status": 200,
+          "clientMs": 1536.4455480000179,
+          "serverMs": 1533.9,
+          "id": "d7e45c56-7c58-42ce-81eb-87f44b333241"
+        },
+        {
+          "status": 200,
+          "clientMs": 1535.6138689999934,
+          "serverMs": 1532.6,
+          "id": "c84d65d5-f4c0-4fa5-a852-774e815489ca"
+        },
+        {
+          "status": 200,
+          "clientMs": 1536.6970600000059,
+          "serverMs": 1534.2,
+          "id": "6beae88e-ecae-416b-80fb-487288ca2fc2"
+        },
+        {
+          "status": 200,
+          "clientMs": 1536.3291089999839,
+          "serverMs": 1533.6,
+          "id": "08b7ac33-491d-455f-8127-7cf5b20c0c1c"
+        },
+        {
+          "status": 200,
+          "clientMs": 1535.3355469999951,
+          "serverMs": 1532.6,
+          "id": "6fb835f8-7878-469a-996d-4accbdf20e6c"
+        },
+        {
+          "status": 200,
+          "clientMs": 1535.5758080000232,
+          "serverMs": 1533,
+          "id": "e6bd0620-2adf-478c-a0dc-014bac229153"
+        },
+        {
+          "status": 200,
+          "clientMs": 1433.7509640000062,
+          "serverMs": 1431,
+          "id": "c1bd3346-90b7-4ead-81c2-4a8982638c39"
+        },
+        {
+          "status": 200,
+          "clientMs": 1536.3174779999827,
+          "serverMs": 1533.5,
+          "id": "e8a31f09-278b-4fad-98d8-e98ebb35ede3"
+        },
+        {
+          "status": 200,
+          "clientMs": 1842.8767090000038,
+          "serverMs": 1841.3,
+          "id": "e93c0536-0127-45d0-8d27-5034a74283c2"
+        },
+        {
+          "status": 200,
+          "clientMs": 1536.024888999993,
+          "serverMs": 1533.4,
+          "id": "07a23df9-c905-4cf5-a788-9dbd5f1ae155"
+        },
+        {
+          "status": 200,
+          "clientMs": 1537.2125959999976,
+          "serverMs": 1535.5,
+          "id": "f396f872-7652-4ce9-b9f9-1ecc05adf61c"
+        }
+      ],
+      "db": {
+        "queries": {
+          "min": 1,
+          "max": 1,
+          "mean": 1,
+          "p50": 1,
+          "p95": 1,
+          "p99": 1
+        },
+        "ms": {
+          "min": 1430.6,
+          "max": 1841,
+          "mean": 1567.2,
+          "p50": 1533,
+          "p95": 1841,
+          "p99": 1841
+        },
+        "logServer": {
+          "min": 1431.3,
+          "max": 1841.5,
+          "mean": 1567.9,
+          "p50": 1533.8,
+          "p95": 1841.5,
+          "p99": 1841.5
+        },
+        "joinedCount": 15
+      }
+    },
+    {
+      "name": "GET /earnings/summary",
+      "path": "/earnings/summary",
+      "method": "GET",
+      "auth": "worker",
+      "ok": true,
+      "successCount": 15,
+      "errorCount": 0,
+      "client": {
+        "min": 304,
+        "max": 309.9,
+        "mean": 307.3,
+        "p50": 307.3,
+        "p95": 309.9,
+        "p99": 309.9
+      },
+      "server": {
+        "min": 301.2,
+        "max": 307,
+        "mean": 304.5,
+        "p50": 304.4,
+        "p95": 307,
+        "p99": 307
+      },
+      "samples": [
+        {
+          "status": 200,
+          "clientMs": 309.91354100001627,
+          "serverMs": 307,
+          "id": "d0ead50f-92d1-4c43-b478-bd308ed645eb"
+        },
+        {
+          "status": 200,
+          "clientMs": 304.0397660000017,
+          "serverMs": 301.2,
+          "id": "143088d0-814e-4f19-a12a-0c6e0ff7be92"
+        },
+        {
+          "status": 200,
+          "clientMs": 307.64163099997677,
+          "serverMs": 304.9,
+          "id": "92c97498-6b78-40b8-b277-bd3124a590df"
+        },
+        {
+          "status": 200,
+          "clientMs": 307.2919450000045,
+          "serverMs": 304.6,
+          "id": "107e6d40-132e-4b7d-ad66-69d74ad01c4f"
+        },
+        {
+          "status": 200,
+          "clientMs": 307.0519950000162,
+          "serverMs": 304.4,
+          "id": "fd149902-97c9-4da0-8aba-bb35db46713f"
+        },
+        {
+          "status": 200,
+          "clientMs": 307.3506749999942,
+          "serverMs": 304.7,
+          "id": "6132badc-dd8f-4c7b-8f27-8754efb83ba5"
+        },
+        {
+          "status": 200,
+          "clientMs": 306.9381310000026,
+          "serverMs": 304.2,
+          "id": "a77aeb9a-2754-41ca-9955-5cedd769ec36"
+        },
+        {
+          "status": 200,
+          "clientMs": 308.56337899999926,
+          "serverMs": 305.5,
+          "id": "25086b39-f597-4f1c-aeb0-ce699faeabe7"
+        },
+        {
+          "status": 200,
+          "clientMs": 307.28264800002216,
+          "serverMs": 304.3,
+          "id": "d73d4ba1-4775-46e3-ba19-854276198302"
+        },
+        {
+          "status": 200,
+          "clientMs": 305.92376000000513,
+          "serverMs": 303.1,
+          "id": "375a6ef7-113b-4fa9-adf6-5eed1c7be852"
+        },
+        {
+          "status": 200,
+          "clientMs": 307.3336530000088,
+          "serverMs": 304.2,
+          "id": "d2c7c87f-a7a2-4eeb-b281-23fee8ed074a"
+        },
+        {
+          "status": 200,
+          "clientMs": 307.00344400000176,
+          "serverMs": 304.2,
+          "id": "75f296f7-ea80-4d5c-95fd-4be2f2e8f949"
+        },
+        {
+          "status": 200,
+          "clientMs": 307.20706600000267,
+          "serverMs": 304.5,
+          "id": "42d59d32-edca-4b11-ac99-e6d21efa851b"
+        },
+        {
+          "status": 200,
+          "clientMs": 307.40403599999263,
+          "serverMs": 304.4,
+          "id": "428c65d4-57c0-4e5b-8f88-ee644b5995ac"
+        },
+        {
+          "status": 200,
+          "clientMs": 308.5739590000012,
+          "serverMs": 305.9,
+          "id": "44a8ae17-9623-45e4-bfae-32311b8ba75c"
+        }
+      ],
+      "db": {
+        "queries": {
+          "min": 1,
+          "max": 1,
+          "mean": 1,
+          "p50": 1,
+          "p95": 1,
+          "p99": 1
+        },
+        "ms": {
+          "min": 300.8,
+          "max": 306.5,
+          "mean": 304,
+          "p50": 303.9,
+          "p95": 306.5,
+          "p99": 306.5
+        },
+        "logServer": {
+          "min": 301.4,
+          "max": 307.2,
+          "mean": 304.7,
+          "p50": 304.6,
+          "p95": 307.2,
+          "p99": 307.2
+        },
+        "joinedCount": 15
+      }
+    },
+    {
+      "name": "GET /admin/kpis",
+      "path": "/admin/kpis",
+      "method": "GET",
+      "auth": "admin",
+      "ok": true,
+      "successCount": 15,
+      "errorCount": 0,
+      "client": {
+        "min": 1535.6,
+        "max": 2636.7,
+        "mean": 1970.8,
+        "p50": 1821.4,
+        "p95": 2636.7,
+        "p99": 2636.7
+      },
+      "server": {
+        "min": 1532.6,
+        "max": 2634.2,
+        "mean": 1968.1,
+        "p50": 1818.8,
+        "p95": 2634.2,
+        "p99": 2634.2
+      },
+      "samples": [
+        {
+          "status": 200,
+          "clientMs": 2048.4686660000007,
+          "serverMs": 2045.8,
+          "id": "9be37dd2-1a65-402e-a66b-400184482e53"
+        },
+        {
+          "status": 200,
+          "clientMs": 2150.6886790000135,
+          "serverMs": 2148,
+          "id": "31bcd3a2-a668-4d68-8e43-472d9882fa7b"
+        },
+        {
+          "status": 200,
+          "clientMs": 2150.008652999997,
+          "serverMs": 2146.7,
+          "id": "9036cef1-080e-40c6-9b63-b521188eb42e"
+        },
+        {
+          "status": 200,
+          "clientMs": 2458.236492999975,
+          "serverMs": 2455.5,
+          "id": "8963e385-2480-4a2e-9e66-84d951897dc8"
+        },
+        {
+          "status": 200,
+          "clientMs": 2559.8980999999912,
+          "serverMs": 2557.1,
+          "id": "869b6878-7994-4bdc-a6b0-07f0dbc59d9c"
+        },
+        {
+          "status": 200,
+          "clientMs": 1535.6395759999868,
+          "serverMs": 1532.6,
+          "id": "ab8ae630-1143-4959-a196-8b320d04fe72"
+        },
+        {
+          "status": 200,
+          "clientMs": 1741.1426360000041,
+          "serverMs": 1738.6,
+          "id": "67a9d20a-a273-43d2-9b33-67a6d7d46b9c"
+        },
+        {
+          "status": 200,
+          "clientMs": 1535.9490969999752,
+          "serverMs": 1533.3,
+          "id": "72a6c91a-a0f0-422a-8881-9c02d0f6d02c"
+        },
+        {
+          "status": 200,
+          "clientMs": 1740.490282999992,
+          "serverMs": 1737.8,
+          "id": "abc7b086-d7fd-41a1-b6a5-7ca017418d26"
+        },
+        {
+          "status": 200,
+          "clientMs": 1661.2543799999985,
+          "serverMs": 1658.5,
+          "id": "dd9f7ed0-aed0-40cd-b547-0938e241f05e"
+        },
+        {
+          "status": 200,
+          "clientMs": 1821.4293109999853,
+          "serverMs": 1818.8,
+          "id": "4333d74d-9b14-4987-8e6d-d23559270cfe"
+        },
+        {
+          "status": 200,
+          "clientMs": 2278.0498570000054,
+          "serverMs": 2275.5,
+          "id": "370f6db0-07c8-4364-addf-8c83ccf30c74"
+        },
+        {
+          "status": 200,
+          "clientMs": 2636.6980150000018,
+          "serverMs": 2634.2,
+          "id": "87464384-12fe-4015-b30c-a1386f6068ab"
+        },
+        {
+          "status": 200,
+          "clientMs": 1536.117572999996,
+          "serverMs": 1533.5,
+          "id": "08da811b-4ff0-4b2f-8ebf-87ca767d7c2e"
+        },
+        {
+          "status": 200,
+          "clientMs": 1707.8303890000097,
+          "serverMs": 1705.3,
+          "id": "cfbb5975-1c01-41c1-8678-140a80e8f5e3"
+        }
+      ],
+      "db": {
+        "queries": {
+          "min": 14,
+          "max": 14,
+          "mean": 14,
+          "p50": 14,
+          "p95": 14,
+          "p99": 14
+        },
+        "ms": {
+          "min": 4254.5,
+          "max": 5771.9,
+          "mean": 4862.7,
+          "p50": 4791.8,
+          "p95": 5771.9,
+          "p99": 5771.9
+        },
+        "logServer": {
+          "min": 1532.9,
+          "max": 2634.6,
+          "mean": 1968.4,
+          "p50": 1819,
+          "p95": 2634.6,
+          "p99": 2634.6
+        },
+        "joinedCount": 15
+      }
+    },
+    {
+      "name": "GET /notifications/unread-count",
+      "path": "/notifications/unread-count",
+      "method": "GET",
+      "auth": "customer",
+      "ok": true,
+      "successCount": 15,
+      "errorCount": 0,
+      "client": {
+        "min": 301.1,
+        "max": 609.2,
+        "mean": 327.2,
+        "p50": 307.1,
+        "p95": 609.2,
+        "p99": 609.2
+      },
+      "server": {
+        "min": 298.1,
+        "max": 606.6,
+        "mean": 324.5,
+        "p50": 304.1,
+        "p95": 606.6,
+        "p99": 606.6
+      },
+      "samples": [
+        {
+          "status": 200,
+          "clientMs": 301.056362000003,
+          "serverMs": 299.4,
+          "id": "7a1928ee-853c-4836-b39c-f4a58db449e1"
+        },
+        {
+          "status": 200,
+          "clientMs": 311.5800459999882,
+          "serverMs": 310,
+          "id": "ae274554-2d66-494e-8529-fb666fc3ab16"
+        },
+        {
+          "status": 200,
+          "clientMs": 307.1981899999955,
+          "serverMs": 304.4,
+          "id": "e1dc7d5b-d79c-4ee3-b59c-9e9b41e2b3c6"
+        },
+        {
+          "status": 200,
+          "clientMs": 307.8118400000094,
+          "serverMs": 304.9,
+          "id": "dd5e99a8-233a-44b7-b833-f0d2a7d6739d"
+        },
+        {
+          "status": 200,
+          "clientMs": 307.03478200000245,
+          "serverMs": 304.3,
+          "id": "e6beeda3-6ab9-49ba-aac7-b82e7588e21e"
+        },
+        {
+          "status": 200,
+          "clientMs": 301.70582000000286,
+          "serverMs": 299.5,
+          "id": "c6fbf082-5710-42a2-982a-c844b139e093"
+        },
+        {
+          "status": 200,
+          "clientMs": 307.228185999993,
+          "serverMs": 303.9,
+          "id": "02953986-11d4-47c5-ab11-52d79b64f28f"
+        },
+        {
+          "status": 200,
+          "clientMs": 307.07269400000223,
+          "serverMs": 303.9,
+          "id": "5b6b3ea0-df7a-466e-8a79-ec3a03662434"
+        },
+        {
+          "status": 200,
+          "clientMs": 306.9951280000096,
+          "serverMs": 303.9,
+          "id": "3af2ef91-b058-41f7-ba2a-7aa4d37478ac"
+        },
+        {
+          "status": 200,
+          "clientMs": 316.9754930000054,
+          "serverMs": 314.1,
+          "id": "45be6dbc-cd7c-4f63-836e-0c362bfc105a"
+        },
+        {
+          "status": 200,
+          "clientMs": 301.22028899998986,
+          "serverMs": 298.1,
+          "id": "718b23a9-2309-4dbe-942c-d1e7581fa777"
+        },
+        {
+          "status": 200,
+          "clientMs": 303.1960850000032,
+          "serverMs": 301.4,
+          "id": "a3deb1e8-44e0-4c33-9d2b-cc9f9719be77"
+        },
+        {
+          "status": 200,
+          "clientMs": 312.4661269999924,
+          "serverMs": 309.7,
+          "id": "d6ca5582-7953-45ac-8ed7-236c6e1c1671"
+        },
+        {
+          "status": 200,
+          "clientMs": 306.9237150000117,
+          "serverMs": 304.1,
+          "id": "66eb04f2-95f4-45c3-ac97-f0fe2215d507"
+        },
+        {
+          "status": 200,
+          "clientMs": 609.1951750000007,
+          "serverMs": 606.6,
+          "id": "98cdec43-12c9-449b-a507-b5483abd9ec6"
+        }
+      ],
+      "db": {
+        "queries": {
+          "min": 1,
+          "max": 1,
+          "mean": 1,
+          "p50": 1,
+          "p95": 1,
+          "p99": 1
+        },
+        "ms": {
+          "min": 297.7,
+          "max": 606.2,
+          "mean": 324.2,
+          "p50": 303.7,
+          "p95": 606.2,
+          "p99": 606.2
+        },
+        "logServer": {
+          "min": 298.5,
+          "max": 606.8,
+          "mean": 324.8,
+          "p50": 304.3,
+          "p95": 606.8,
+          "p99": 606.8
+        },
+        "joinedCount": 15
+      }
+    },
+    {
+      "name": "GET /chat/conversations",
+      "path": "/chat/conversations",
+      "method": "GET",
+      "auth": "customer",
+      "ok": true,
+      "successCount": 15,
+      "errorCount": 0,
+      "client": {
+        "min": 1126.1,
+        "max": 1849.1,
+        "mean": 1372,
+        "p50": 1237.3,
+        "p95": 1849.1,
+        "p99": 1849.1
+      },
+      "server": {
+        "min": 1123.4,
+        "max": 1846.5,
+        "mean": 1369.3,
+        "p50": 1234.4,
+        "p95": 1846.5,
+        "p99": 1846.5
+      },
+      "samples": [
+        {
+          "status": 200,
+          "clientMs": 1553.130896000017,
+          "serverMs": 1550.3,
+          "id": "f451aa5e-6664-4a5a-97a2-6b6695bf00b3"
+        },
+        {
+          "status": 200,
+          "clientMs": 1779.7815430000192,
+          "serverMs": 1776.8,
+          "id": "d55d8f25-ca06-4a9a-aecc-b7bdc0a5a084"
+        },
+        {
+          "status": 200,
+          "clientMs": 1497.910527,
+          "serverMs": 1495.2,
+          "id": "262579a9-d8cf-42f0-99e3-18adbc2dd77d"
+        },
+        {
+          "status": 200,
+          "clientMs": 1313.4072860000015,
+          "serverMs": 1310.8,
+          "id": "a4697c12-3963-42f7-9dd8-4a2af331d87b"
+        },
+        {
+          "status": 200,
+          "clientMs": 1232.9062310000008,
+          "serverMs": 1230.3,
+          "id": "1ddff8f0-52b9-4b1a-b32b-5c33079e12f0"
+        },
+        {
+          "status": 200,
+          "clientMs": 1229.0752360000042,
+          "serverMs": 1226.2,
+          "id": "f78982fd-fce5-4643-b63f-61112eaffdaa"
+        },
+        {
+          "status": 200,
+          "clientMs": 1849.1158679999935,
+          "serverMs": 1846.5,
+          "id": "d97101b0-01ad-4ffb-841c-c26a8c10aa69"
+        },
+        {
+          "status": 200,
+          "clientMs": 1530.8130760000204,
+          "serverMs": 1527.9,
+          "id": "ad4739da-d09a-4915-9d29-88caaf987b7a"
+        },
+        {
+          "status": 200,
+          "clientMs": 1228.938158999983,
+          "serverMs": 1226.9,
+          "id": "981f477e-6bfb-45b2-a279-6da42bb22b37"
+        },
+        {
+          "status": 200,
+          "clientMs": 1230.9952469999844,
+          "serverMs": 1228.7,
+          "id": "b40781f6-42bd-453b-ac6f-62a79b18a2e7"
+        },
+        {
+          "status": 200,
+          "clientMs": 1322.304158999992,
+          "serverMs": 1319.5,
+          "id": "17723384-fade-4773-82e4-f819e3f53a2a"
+        },
+        {
+          "status": 200,
+          "clientMs": 1237.328302000009,
+          "serverMs": 1234.4,
+          "id": "114b09cc-c824-42df-b293-bf8e5a86570c"
+        },
+        {
+          "status": 200,
+          "clientMs": 1220.3480209999834,
+          "serverMs": 1217.8,
+          "id": "c9cfecac-a260-4d1d-bfc4-561ed2ce8446"
+        },
+        {
+          "status": 200,
+          "clientMs": 1126.0837160000228,
+          "serverMs": 1123.4,
+          "id": "921ea278-fbe8-4552-8b20-5894051d13f7"
+        },
+        {
+          "status": 200,
+          "clientMs": 1228.4834169999813,
+          "serverMs": 1225.4,
+          "id": "15f0b9ed-c14d-44c9-acb9-1fa58a8324a5"
+        }
+      ],
+      "db": {
+        "queries": {
+          "min": 1,
+          "max": 1,
+          "mean": 1,
+          "p50": 1,
+          "p95": 1,
+          "p99": 1
+        },
+        "ms": {
+          "min": 1122.9,
+          "max": 1845.9,
+          "mean": 1368.8,
+          "p50": 1233.8,
+          "p95": 1845.9,
+          "p99": 1845.9
+        },
+        "logServer": {
+          "min": 1123.6,
+          "max": 1846.7,
+          "mean": 1369.6,
+          "p50": 1234.6,
+          "p95": 1846.7,
+          "p99": 1846.7
+        },
+        "joinedCount": 15
+      }
+    },
+    {
+      "name": "GET /visits/my",
+      "path": "/visits/my",
+      "method": "GET",
+      "auth": "customer",
+      "ok": true,
+      "successCount": 15,
+      "errorCount": 0,
+      "client": {
+        "min": 2457.1,
+        "max": 4413.1,
+        "mean": 3404.5,
+        "p50": 3482.1,
+        "p95": 4413.1,
+        "p99": 4413.1
+      },
+      "server": {
+        "min": 2455.1,
+        "max": 4410.5,
+        "mean": 3402.2,
+        "p50": 3480.2,
+        "p95": 4410.5,
+        "p99": 4410.5
+      },
+      "samples": [
+        {
+          "status": 200,
+          "clientMs": 4413.126180000021,
+          "serverMs": 4410.5,
+          "id": "592ed038-f388-4ad7-ad37-1fcb4b5c995d"
+        },
+        {
+          "status": 200,
+          "clientMs": 4188.6778129999875,
+          "serverMs": 4186.6,
+          "id": "bb297ae3-b0e6-4c53-9ac7-2f6bdec48a5c"
+        },
+        {
+          "status": 200,
+          "clientMs": 4096.55334100005,
+          "serverMs": 4094.8,
+          "id": "2ce14c1b-49f9-4098-832d-18f13623fc6e"
+        },
+        {
+          "status": 200,
+          "clientMs": 3482.128540000005,
+          "serverMs": 3480.2,
+          "id": "45fd3afb-94cb-4c8c-aa2c-06b214742310"
+        },
+        {
+          "status": 200,
+          "clientMs": 2457.1155409999774,
+          "serverMs": 2455.1,
+          "id": "6a83a56d-7d43-4488-b1d7-d0d6d29e60e7"
+        },
+        {
+          "status": 200,
+          "clientMs": 2458.427881999989,
+          "serverMs": 2455.6,
+          "id": "c8ecb12f-2050-4f36-b5a2-182bda6eb7be"
+        },
+        {
+          "status": 200,
+          "clientMs": 3276.7908399999724,
+          "serverMs": 3273.8,
+          "id": "5d5a6b70-ebf8-4346-bbdb-ef746683406a"
+        },
+        {
+          "status": 200,
+          "clientMs": 4260.499763999949,
+          "serverMs": 4258.5,
+          "id": "e9239d11-59a4-4039-a722-14f183dbc88e"
+        },
+        {
+          "status": 200,
+          "clientMs": 3521.539953999978,
+          "serverMs": 3519.7,
+          "id": "cbe7757e-5b2d-454a-a195-4be34d213ec7"
+        },
+        {
+          "status": 200,
+          "clientMs": 2458.023092999996,
+          "serverMs": 2455.6,
+          "id": "48d0cf67-6ddd-4d42-982d-981106723c45"
+        },
+        {
+          "status": 200,
+          "clientMs": 3105.4688059999608,
+          "serverMs": 3102.6,
+          "id": "6b4a9f02-40af-4088-8462-e84f52f2be25"
+        },
+        {
+          "status": 200,
+          "clientMs": 2677.9136230000295,
+          "serverMs": 2676.1,
+          "id": "97e32010-5bbe-47d6-a006-6c6ed3cecda9"
+        },
+        {
+          "status": 200,
+          "clientMs": 4244.330824000004,
+          "serverMs": 4241.3,
+          "id": "12491e31-058b-4c30-b3c4-18900454311b"
+        },
+        {
+          "status": 200,
+          "clientMs": 3491.3025630000047,
+          "serverMs": 3489.2,
+          "id": "e4e1e3f6-aff0-482b-85d9-37f6a805d4a5"
+        },
+        {
+          "status": 200,
+          "clientMs": 2935.7691950000008,
+          "serverMs": 2933.9,
+          "id": "a359f820-bcf9-4899-83ed-e22fbe801a69"
+        }
+      ],
+      "db": {
+        "queries": {
+          "min": 22,
+          "max": 22,
+          "mean": 22,
+          "p50": 22,
+          "p95": 22,
+          "p99": 22
+        },
+        "ms": {
+          "min": 11805.4,
+          "max": 20948.5,
+          "mean": 14687.1,
+          "p50": 14086.9,
+          "p95": 20948.5,
+          "p99": 20948.5
+        },
+        "logServer": {
+          "min": 2455.3,
+          "max": 4410.7,
+          "mean": 3402.5,
+          "p50": 3480.5,
+          "p95": 4410.7,
+          "p99": 4410.7
+        },
+        "joinedCount": 15
+      }
+    }
+  ]
+}

@@ -10,10 +10,23 @@ import { customerQuoteService } from "@/features/customer-jobs/services/customer
 
 const REFRESH_EVENTS = [
   SOCKET_EVENTS.jobOffer,
+  "job:offer",
+  "job.offer",
   SOCKET_EVENTS.jobOfferAccepted,
+  "job:offer:accepted",
+  "job.offer.accepted",
   SOCKET_EVENTS.jobStatusChanged,
+  "job:statusChanged",
+  "job:status:changed",
+  "job.status.changed",
   SOCKET_EVENTS.jobClosed,
+  "job:closed",
   SOCKET_EVENTS.jobCancelled,
+  "job:cancelled",
+  "notification:new",
+  "notification.new",
+  "offer:submitted",
+  "offer.submitted",
 ] as const;
 
 /**
@@ -34,6 +47,8 @@ export function CustomerRealtimeSync() {
 
     const refresh = () => {
       void queryClient.invalidateQueries({ queryKey: ["customer"] });
+      void queryClient.invalidateQueries({ queryKey: ["customer", "jobs"] });
+      void queryClient.invalidateQueries({ queryKey: ["customer", "notifications"] });
     };
 
     const handleVisitArrived = (data: any) => {

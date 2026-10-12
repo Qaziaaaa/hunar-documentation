@@ -29,6 +29,8 @@ export default function VerificationDetailPage({
   const [showRejectModal, setShowRejectModal] = useState(false);
   const [showChangesModal, setShowChangesModal] = useState(false);
   const [reasonInput, setReasonInput] = useState("");
+  const [actionError, setActionError] = useState<string | null>(null);
+  const [acting, setActing] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -76,47 +78,72 @@ export default function VerificationDetailPage({
     );
   }
 
-  const handleApprove = () => {
-    void adminApi
-      .decideVerification(request.id, "APPROVE")
-      .then(() => setRequest((prev) => (prev ? { ...prev, status: "VERIFIED" } : prev)));
-    setTimeout(() => {
-      router.push("/admin/verifications");
-    }, 1000);
+  const handleApprove = async () => {
+    setActionError(null);
+    setActing(true);
+    try {
+      await adminApi.decideVerification(request.id, "APPROVE");
+      setRequest((prev) => (prev ? { ...prev, status: "VERIFIED" } : prev));
+      setTimeout(() => {
+        router.push("/admin/verifications");
+      }, 1000);
+    } catch (err) {
+      setActionError(
+        err instanceof Error ? err.message : "Failed to approve verification",
+      );
+    } finally {
+      setActing(false);
+    }
   };
 
-  const handleRejectConfirm = () => {
-    void adminApi
-      .decideVerification(request.id, "REJECT", reasonInput || "Identity documents failed verification rules.")
-      .then(() =>
-        setRequest((prev) =>
-          prev
-            ? {
-                ...prev,
-                status: "REJECTED",
-                rejectionReason: reasonInput || "Identity documents failed verification rules.",
-              }
-            : prev
-        )
+  const handleRejectConfirm = async () => {
+    setActionError(null);
+    setActing(true);
+    try {
+      await adminApi.decideVerification(request.id, "REJECT", reasonInput || "Identity documents failed verification rules.");
+      setRequest((prev) =>
+        prev
+          ? {
+              ...prev,
+              status: "REJECTED",
+              rejectionReason: reasonInput || "Identity documents failed verification rules.",
+            }
+          : prev
       );
-    setShowRejectModal(false);
+      setShowRejectModal(false);
+      setReasonInput("");
+    } catch (err) {
+      setActionError(
+        err instanceof Error ? err.message : "Failed to reject verification",
+      );
+    } finally {
+      setActing(false);
+    }
   };
 
-  const handleChangesConfirm = () => {
-    void adminApi
-      .decideVerification(request.id, "REQUEST_CHANGES", reasonInput || "Please re-upload clearer photos of your CNIC.")
-      .then(() =>
-        setRequest((prev) =>
-          prev
-            ? {
-                ...prev,
-                status: "CHANGES_REQUESTED",
-                rejectionReason: reasonInput || "Please re-upload clearer photos of your CNIC.",
-              }
-            : prev
-        )
+  const handleChangesConfirm = async () => {
+    setActionError(null);
+    setActing(true);
+    try {
+      await adminApi.decideVerification(request.id, "REQUEST_CHANGES", reasonInput || "Please re-upload clearer photos of your CNIC.");
+      setRequest((prev) =>
+        prev
+          ? {
+              ...prev,
+              status: "CHANGES_REQUESTED",
+              rejectionReason: reasonInput || "Please re-upload clearer photos of your CNIC.",
+            }
+          : prev
       );
-    setShowChangesModal(false);
+      setShowChangesModal(false);
+      setReasonInput("");
+    } catch (err) {
+      setActionError(
+        err instanceof Error ? err.message : "Failed to request changes",
+      );
+    } finally {
+      setActing(false);
+    }
   };
 
   return (
@@ -129,6 +156,12 @@ export default function VerificationDetailPage({
         >
           <ArrowLeft className="size-4" /> Back to Verification Queue
         </Link>
+
+        {actionError && !showRejectModal && !showChangesModal && (
+          <div className="rounded-2xl border border-red-200 bg-red-50 p-4 text-sm font-bold text-red-700">
+            Action failed: {actionError}
+          </div>
+        )}
 
         {/* Header */}
         <div className="flex flex-col justify-between gap-4 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm md:flex-row md:items-center">
@@ -183,10 +216,11 @@ export default function VerificationDetailPage({
             <button
               type="button"
               onClick={handleApprove}
-              className="inline-flex items-center gap-1.5 rounded-xl bg-teal px-5 py-2.5 text-xs font-bold text-white shadow-md shadow-teal/25 transition hover:bg-teal-600"
+              disabled={acting}
+              className="inline-flex items-center gap-1.5 rounded-xl bg-teal px-5 py-2.5 text-xs font-bold text-white shadow-md shadow-teal/25 transition hover:bg-teal-600 disabled:cursor-not-allowed disabled:opacity-60"
             >
               <CheckCircle2 className="size-4" />
-              <span>Approve & Grant Badge</span>
+              <span>{acting ? "Working..." : "Approve & Grant Badge"}</span>
             </button>
           </div>
         </div>
@@ -335,6 +369,12 @@ export default function VerificationDetailPage({
                 className="mt-4 h-24 w-full rounded-xl border border-slate-200 p-3 text-xs outline-none focus:border-teal"
               />
 
+              {actionError && (
+                <p className="mt-3 rounded-xl border border-red-200 bg-red-50 p-3 text-xs font-bold text-red-700">
+                  {actionError}
+                </p>
+              )}
+
               <div className="mt-6 flex justify-end gap-3">
                 <button
                   type="button"
@@ -346,9 +386,10 @@ export default function VerificationDetailPage({
                 <button
                   type="button"
                   onClick={handleRejectConfirm}
-                  className="rounded-xl bg-red-600 px-5 py-2 text-xs font-bold text-white shadow-md"
+                  disabled={acting}
+                  className="rounded-xl bg-red-600 px-5 py-2 text-xs font-bold text-white shadow-md disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                  Confirm Reject
+                  {acting ? "Rejecting..." : "Confirm Reject"}
                 </button>
               </div>
             </div>
@@ -373,6 +414,12 @@ export default function VerificationDetailPage({
                 className="mt-4 h-24 w-full rounded-xl border border-slate-200 p-3 text-xs outline-none focus:border-teal"
               />
 
+              {actionError && (
+                <p className="mt-3 rounded-xl border border-red-200 bg-red-50 p-3 text-xs font-bold text-red-700">
+                  {actionError}
+                </p>
+              )}
+
               <div className="mt-6 flex justify-end gap-3">
                 <button
                   type="button"
@@ -384,9 +431,10 @@ export default function VerificationDetailPage({
                 <button
                   type="button"
                   onClick={handleChangesConfirm}
-                  className="rounded-xl bg-orange px-5 py-2 text-xs font-bold text-white shadow-md"
+                  disabled={acting}
+                  className="rounded-xl bg-orange px-5 py-2 text-xs font-bold text-white shadow-md disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                  Send Change Request
+                  {acting ? "Sending..." : "Send Change Request"}
                 </button>
               </div>
             </div>

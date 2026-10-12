@@ -22,6 +22,7 @@ import {
   RespondOfferDto,
 } from './offers.validation';
 import { NegotiationEntry } from '../../common/event-bus/events';
+import { RedisService } from '../../common/redis/redis.service';
 
 @Injectable()
 export class OffersService {
@@ -31,6 +32,7 @@ export class OffersService {
     private readonly jobsService: JobsService,
     private readonly realtime: RealtimeService,
     private readonly config: ConfigService,
+    private readonly redis?: RedisService,
   ) {}
 
   private get maxRounds(): number {
@@ -58,20 +60,44 @@ export class OffersService {
       throw new ConflictException('OFFER_DUPLICATE: you already submitted an offer for this job');
     }
 
+    const message = dto.note ?? dto.message ?? null;
     const offer = await this.prisma.jobOffer.create({
       data: {
         jobId,
         workerId,
         visitCharge: dto.visitCharge,
-        message: dto.note ?? null,
+        message,
         status: 'PENDING',
         negotiationRound: 0,
         negotiationHistory: [],
+      },
+      include: {
+        worker: {
+          select: {
+            id: true,
+            name: true,
+            avatarUrl: true,
+            phone: true,
+            workerProfile: {
+              select: {
+                skills: true,
+                experienceYears: true,
+                bio: true,
+              },
+            },
+          },
+        },
       },
     });
 
     if (job.status === 'OPEN') {
       await this.jobsService.transitionJobState(jobId, 'OFFERS_RECEIVED');
+    }
+
+    if (this.redis) {
+      await this.redis.delPattern(`perf:jobs:customer:${job.customerId}:*`);
+      await this.redis.delPattern(`perf:job:detail:${jobId}:*`);
+      await this.redis.delPattern(`perf:offers:my:${workerId}:*`);
     }
 
     this.eventBus.emit('offer.submitted', {
@@ -80,11 +106,38 @@ export class OffersService {
       workerId,
       visitCharge: dto.visitCharge,
     });
+
+    const populatedOffer = {
+      id: offer.id,
+      jobId,
+      workerId,
+      worker: {
+        id: offer.worker?.id ?? workerId,
+        name: offer.worker?.name ?? 'Verified Pro',
+        avatarUrl: offer.worker?.avatarUrl ?? '',
+        phone: offer.worker?.phone ?? '',
+        rating: 5.0,
+        totalReviews: 0,
+        completedJobsCount: 0,
+        skills: offer.worker?.workerProfile?.skills ?? [],
+        experienceYears: offer.worker?.workerProfile?.experienceYears ?? 0,
+        bio: offer.worker?.workerProfile?.bio ?? '',
+      },
+      visitCharge: Number(offer.visitCharge),
+      visitFee: Number(offer.visitCharge),
+      message: offer.message,
+      note: offer.message,
+      status: offer.status,
+      negotiationRound: offer.negotiationRound,
+      createdAt: offer.createdAt,
+    };
+
     this.realtime.emitToRoom(userRoom(job.customerId), JOB_EVENTS.jobOffer, {
       jobId,
       offerId: offer.id,
       workerId,
       visitCharge: dto.visitCharge,
+      offer: populatedOffer,
     });
 
     return offer;
@@ -168,13 +221,17 @@ export class OffersService {
   }
 
   async getMyOffers(workerId: string, query: OfferListQueryDto) {
-    const { page, limit, skip } = normalizePage(query);
+    // B5: frontend requests ?limit=100; default maxLimit=50 clipped the page.
+    const { page, limit, skip } = normalizePage(query, 100);
     const where = {
       workerId,
       ...(query.status ? { status: query.status as OfferStatus } : {}),
       ...(query.jobId ? { jobId: query.jobId } : {}),
     };
-    const [offers, total] = await this.prisma.$transaction([
+    // Promise.all, not $transaction: the batch transaction's BEGIN/COMMIT
+    // cost ~3 extra DB round trips at this RTT; the only semantic difference
+    // is a possible ±1 items/total mismatch if an offer is written mid-request.
+    const [offers, total] = await Promise.all([
       this.prisma.jobOffer.findMany({
         where,
         skip,
@@ -360,21 +417,27 @@ export class OffersService {
       );
     }
 
+    const visitCharge = dto.visitCharge ?? dto.counterAmount ?? dto.counterPrice;
+    if (visitCharge == null || visitCharge < 0) {
+      throw new BadRequestException('INVALID_COUNTER_PRICE: counter price must be a positive number');
+    }
+    const note = dto.note ?? dto.message ?? null;
+
     const history = this.pushHistory(offer.negotiationHistory, {
       by,
-      amount: dto.visitCharge,
-      note: dto.note,
+      amount: visitCharge,
+      note,
       timestamp: new Date().toISOString(),
     });
 
     const updated = await this.prisma.jobOffer.update({
       where: { id: offerId },
       data: {
-        visitCharge: dto.visitCharge,
+        visitCharge,
         status: 'COUNTERED',
         negotiationRound: nextRound,
         negotiationHistory: history,
-        message: dto.note,
+        message: note,
       },
     });
 

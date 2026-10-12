@@ -1,5 +1,6 @@
 import { Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { PrismaClient } from '@prisma/client';
+import { requestMetricsStorage } from '../common/performance/request-metrics';
 
 const CONNECT_ATTEMPTS = 5;
 const CONNECT_RETRY_BASE_DELAY_MS = 1000;
@@ -16,6 +17,20 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
         timeout: 30000,
       },
     });
+
+    if (process.env.PERF_DB_METRICS === '1') {
+      this.$use(async (params, next) => {
+        const store = requestMetricsStorage.getStore();
+        if (!store) return next(params);
+        const startedNs = process.hrtime.bigint();
+        try {
+          return await next(params);
+        } finally {
+          store.dbQueries += 1;
+          store.dbMs += Number(process.hrtime.bigint() - startedNs) / 1e6;
+        }
+      });
+    }
   }
 
   async onModuleInit(): Promise<void> {

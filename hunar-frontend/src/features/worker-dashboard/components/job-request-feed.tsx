@@ -13,6 +13,7 @@ const JobRequestModal = dynamic(
 
 import { useLocale } from "next-intl";
 import { ApiError } from "@/lib/api-client";
+import { getSocket } from "@/lib/socket";
 import { listNearbyJobs } from "@/services/worker/jobs.service";
 import { subscribeToNotifications } from "@/services/worker/notification.service";
 import { timeAgo, formatDate, formatTime, formatDateSlot, isDateOnlyTimestamp, formatPreferredTiming } from "@/lib/format";
@@ -198,7 +199,10 @@ export function JobRequestFeed({
   }, [requestGps]);
 
   useEffect(() => {
-    const intervalId = window.setInterval(() => refreshLiveJobs(), 8000);
+    refreshLiveJobs();
+    if (!isApiMode) return;
+    // Interval poll removed (perf sprint): refresh happens on window focus
+    // and whenever the backend pushes JOB_MATCHED/new_job/job:new over the socket.
     const onFocus = () => refreshLiveJobs();
     const onJobCreated = () => refreshLiveJobs();
     window.addEventListener("focus", onFocus);
@@ -209,14 +213,50 @@ export function JobRequestFeed({
       const type = String((notification as { type?: unknown }).type ?? "");
       if (type === "JOB_MATCHED" || type === "new_job") refreshLiveJobs();
     });
+
+    // B8 fallback: socket push is the primary refresh trigger. If the socket
+    // never connects (backend down, proxy blocks websockets), the feed would go
+    // permanently stale — poll slowly while disconnected, and refetch the
+    // moment the socket connects.
+    const socket = getSocket();
+    let fallbackInterval: ReturnType<typeof setInterval> | null = null;
+    const syncFallbackPolling = () => {
+      if (socket?.connected) {
+        if (fallbackInterval) {
+          clearInterval(fallbackInterval);
+          fallbackInterval = null;
+        }
+      } else if (!fallbackInterval) {
+        fallbackInterval = setInterval(refreshLiveJobs, 30_000);
+      }
+    };
+    const onConnect = () => {
+      refreshLiveJobs();
+      syncFallbackPolling();
+    };
+    // inDrive-style push: the backend broadcasts job:new to the `workers`
+    // room the moment a job goes live, so the card appears immediately.
+    const onJobPush = () => refreshLiveJobs();
+    socket?.on("connect", onConnect);
+    socket?.on("job:new", onJobPush);
+    socket?.on("disconnect", syncFallbackPolling);
+    socket?.on("connect_error", syncFallbackPolling);
+    syncFallbackPolling();
+
     return () => {
-      window.clearInterval(intervalId);
       window.removeEventListener("focus", onFocus);
       window.removeEventListener("hunar_job_created", onJobCreated);
       window.removeEventListener("storage", onJobCreated);
       unsubscribe();
+      socket?.off("connect", onConnect);
+      socket?.off("job:new", onJobPush);
+      socket?.off("disconnect", syncFallbackPolling);
+      socket?.off("connect_error", syncFallbackPolling);
+      if (fallbackInterval) {
+        clearInterval(fallbackInterval);
+      }
     };
-  }, [refreshLiveJobs]);
+  }, [refreshLiveJobs, isApiMode]);
 
   const sourceJobs = useMemo(() => {
     return liveJobs.map(toFeedJobRequest);

@@ -118,8 +118,19 @@ export function CustomerOffersHubView({ initialJobs }: CustomerOffersHubViewProp
         }
 
         // Category filter
-        if (categoryFilter !== "all" && job.category !== categoryFilter) {
-          return null;
+        if (categoryFilter !== "all") {
+          const filterLower = categoryFilter.toLowerCase();
+          const jobCatLower = (job.category || "").toLowerCase();
+          const jobSubCatLower = (job.subCategory || "").toLowerCase();
+          const matches =
+            jobCatLower.includes(filterLower) ||
+            jobSubCatLower.includes(filterLower) ||
+            (filterLower.includes("plumb") && jobCatLower.includes("plumb")) ||
+            (filterLower.includes("electr") && jobCatLower.includes("electr")) ||
+            (filterLower.includes("ac") && (jobCatLower.includes("ac") || jobCatLower.includes("refriger")));
+          if (!matches) {
+            return null;
+          }
         }
 
         // Search filter (matches job title, worker name, or trade tags)

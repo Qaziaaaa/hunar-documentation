@@ -12,17 +12,38 @@ export class CreateOfferDto {
   @IsOptional()
   @IsString()
   note?: string;
+
+  @IsOptional()
+  @IsString()
+  message?: string;
 }
 
 export class CounterOfferDto {
+  @IsOptional()
   @Type(() => Number)
   @IsNumber()
   @Min(0)
-  visitCharge: number;
+  visitCharge?: number;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  @Min(0)
+  counterAmount?: number;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  @Min(0)
+  counterPrice?: number;
 
   @IsOptional()
   @IsString()
   note?: string;
+
+  @IsOptional()
+  @IsString()
+  message?: string;
 }
 
 export class RespondOfferDto {

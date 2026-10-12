@@ -13,7 +13,7 @@ import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { RealtimeService } from './realtime.service';
 import { JwtPayload } from '../../common/types/jwt-payload.interface';
-import { jobRoom, LOCATION_EVENTS } from '../jobs/jobs.events';
+import { jobRoom, LOCATION_EVENTS, WORKERS_ROOM } from '../jobs/jobs.events';
 
 @WebSocketGateway()
 export class RealtimeGateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
@@ -55,6 +55,10 @@ export class RealtimeGateway implements OnGatewayInit, OnGatewayConnection, OnGa
       return;
     }
     this.realtimeService.register(client, payload.sub);
+    // Marketplace fan-out: job:new goes to every connected worker feed.
+    if (payload.role === 'WORKER') {
+      this.realtimeService.joinRoom(client, WORKERS_ROOM);
+    }
     this.logger.debug(`Client connected: ${client.id} (user: ${payload.sub})`);
   }
 

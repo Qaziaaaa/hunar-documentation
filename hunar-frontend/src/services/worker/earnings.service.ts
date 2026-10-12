@@ -1,4 +1,5 @@
 import { http, getAccessToken } from "@/lib/api-client";
+import { unwrapRows } from "@/lib/unwrap-rows";
 import type { WalletSummary, WalletTransaction } from "@/types/finance";
 
 interface BackendWalletSnapshot {
@@ -73,13 +74,18 @@ export async function getWalletSummary(): Promise<WalletSummary> {
 
 export async function getWalletTransactions(): Promise<WalletTransaction[]> {
   if (!getAccessToken()) {
-    throw new Error("Authentication required to view wallet transactions");
+    return [];
   }
-  const res = await http.get<BackendPage<BackendLedgerEntry> | BackendLedgerEntry[]>("/wallet/ledger");
-  const items = Array.isArray(res)
-    ? res
-    : (res as any)?.items ?? (res as any)?.data ?? [];
-  return (items ?? []).map(mapLedgerEntry);
+  try {
+    const res = await http.get<BackendPage<BackendLedgerEntry> | BackendLedgerEntry[]>("/wallet/ledger");
+    const items: BackendLedgerEntry[] = unwrapRows(res);
+    return (items ?? []).map(mapLedgerEntry);
+  } catch (err: any) {
+    if (err?.status === 401) {
+      return [];
+    }
+    throw err;
+  }
 }
 
 export interface WorkerEarningRecordDto {

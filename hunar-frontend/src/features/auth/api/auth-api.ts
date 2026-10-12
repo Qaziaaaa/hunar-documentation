@@ -203,15 +203,15 @@ export function getWorkerMe() {
   return getMe();
 }
 
-export async function logout(): Promise<void> {
+export async function logout(role?: "WORKER" | "CUSTOMER" | "ADMIN"): Promise<void> {
   try {
     await http.post("/auth/logout");
   } catch {
     // Ignore server logout errors on local cleanup
   } finally {
-    clearTokens();
+    clearTokens(role);
   }
 }
 
-export const logoutWorker = logout;
-export const logoutCustomer = logout;
+export const logoutWorker = () => logout("WORKER");
+export const logoutCustomer = () => logout("CUSTOMER");

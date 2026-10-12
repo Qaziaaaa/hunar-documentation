@@ -42,20 +42,51 @@ export class WalletService {
     private readonly ledger: LedgerService,
   ) {}
 
-  private get commissionRate(): number {
-    return Number(this.config.get<string>('app.commissionRate', '0.10'));
-  }
+  // PlatformSetting['commissionRate'] is the admin-managed source of truth
+  // (B2 fix): the env var is only the fallback for fresh installs. The seed row
+  // uses the legacy snake_case key, so both are accepted until it is renamed.
+  // 60s TTL keeps the money path at one read/minute instead of per-transaction;
+  // cross-instance invalidation is unnecessary while the backend is a single
+  // in-process deployment.
+  private commissionRateCache: { value: number; expiresAt: number } | null = null;
+  private static readonly COMMISSION_RATE_TTL_MS = 60_000;
 
-  private commissionFor(visitCharge: number): number {
-    return calculateCommission(visitCharge, this.commissionRate);
+  private async getCommissionRate(): Promise<number> {
+    const now = Date.now();
+    if (this.commissionRateCache && now < this.commissionRateCache.expiresAt) {
+      return this.commissionRateCache.value;
+    }
+    const rows = await this.prisma.platformSetting.findMany({
+      where: { key: { in: ['commissionRate', 'commission_rate'] } },
+      select: { key: true, value: true },
+    });
+    const byKey = new Map(rows.map((r) => [r.key, r.value]));
+    const raw = byKey.get('commissionRate') ?? byKey.get('commission_rate');
+    const parsed = Number(raw);
+    const value =
+      raw !== undefined && Number.isFinite(parsed) && parsed >= 0
+        ? parsed
+        : Number(this.config.get<string>('app.commissionRate', '0.10'));
+    this.commissionRateCache = {
+      value,
+      expiresAt: now + WalletService.COMMISSION_RATE_TTL_MS,
+    };
+    return value;
   }
 
   private async getOrCreateWallet(userId: string) {
-    return this.prisma.workerWallet.upsert({
-      where: { userId },
-      update: {},
-      create: { userId },
-    });
+    // findUnique, not upsert: Prisma's upsert runs BEGIN + 3 SELECTs + COMMIT
+    // (~5 RTT, measured 1.3–2.0s at this DB latency) even when the row exists.
+    // This is a read hot path (balance polling); creation only happens on
+    // genuine first touch, and the unique PK makes the concurrent-create race
+    // resolve to a read-back.
+    const existing = await this.prisma.workerWallet.findUnique({ where: { userId } });
+    if (existing) return existing;
+    try {
+      return await this.prisma.workerWallet.create({ data: { userId } });
+    } catch {
+      return this.prisma.workerWallet.findUniqueOrThrow({ where: { userId } });
+    }
   }
 
   private snapshot(wallet: {
@@ -141,13 +172,15 @@ export class WalletService {
       return sum + visitFee + repairFee;
     }, 0);
 
+    const commissionRate = await this.getCommissionRate();
     const totalCommissions = completedJobs.reduce((sum, j) => {
       const visitFee = Number(j.lockedVisitCharge ?? j.suggestedVisitCharge ?? 0);
-      return sum + this.commissionFor(visitFee);
+      return sum + calculateCommission(visitFee, commissionRate);
     }, 0);
 
     const effectiveGross = completedJobsGross;
-    const effectiveNet = effectiveGross - (totalCommissions > 0 ? totalCommissions : commissionsPaid);
+    const effectiveNet =
+      effectiveGross - (totalCommissions > 0 ? totalCommissions : commissionsPaid);
 
     const records = completedJobs.map((j) => {
       const visitFee = Number(j.lockedVisitCharge ?? j.suggestedVisitCharge ?? 0);
@@ -155,7 +188,7 @@ export class WalletService {
         ? Number(j.repairs[0].lockedAmount ?? j.repairs[0].amount ?? 0)
         : 0;
       const gross = visitFee + repairFee;
-      const commission = this.commissionFor(visitFee);
+      const commission = calculateCommission(visitFee, commissionRate);
       const net = Math.round((gross - commission) * 100) / 100;
       return {
         id: j.id,
@@ -334,7 +367,8 @@ export class WalletService {
     if (!job) {
       throw new NotFoundException('Job not found');
     }
-    const amount = this.commissionFor(Number(job.lockedVisitCharge ?? 0));
+    const rate = await this.getCommissionRate();
+    const amount = calculateCommission(Number(job.lockedVisitCharge ?? 0), rate);
     if (amount <= 0) {
       return { held: false, amount: 0, reason: 'NO_COMMISSION' };
     }
@@ -399,7 +433,7 @@ export class WalletService {
             jobId,
             workerId,
             visitCharge: job.lockedVisitCharge!,
-            commissionRate: this.commissionRate,
+            commissionRate: rate,
             amount,
             status: 'PENDING',
           },
@@ -665,7 +699,8 @@ export class WalletService {
     if (!claimed) return { credited: true, alreadyCredited: true, amount: grossAmount };
 
     // Platform commission is 10% of Visit Fee ONLY!
-    const commissionAmount = this.commissionFor(visitFee);
+    const rate = await this.getCommissionRate();
+    const commissionAmount = calculateCommission(visitFee, rate);
     const netAmount = Math.round((grossAmount - commissionAmount) * 100) / 100;
 
     try {
@@ -745,7 +780,7 @@ export class WalletService {
             jobId,
             workerId,
             visitCharge: visitFee,
-            commissionRate: this.commissionRate,
+            commissionRate: rate,
             amount: commissionAmount,
             status: 'VERIFIED',
             verifiedAt: new Date(),

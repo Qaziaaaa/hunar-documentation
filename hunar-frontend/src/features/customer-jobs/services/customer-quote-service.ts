@@ -1,6 +1,6 @@
 "use client";
 
-import { http, getAccessToken } from "@/lib/api-client";
+import { http, getAccessToken, ApiError } from "@/lib/api-client";
 
 export interface PendingRepairQuote {
   repairId: string;
@@ -64,7 +64,8 @@ class CustomerQuoteService {
   }
 
   async checkBackendPendingQuote(): Promise<PendingRepairQuote | null> {
-    if (!getAccessToken()) {
+    const token = getAccessToken("CUSTOMER") || getAccessToken();
+    if (!token) {
       return this.getActiveQuote();
     }
     try {
@@ -80,6 +81,9 @@ class CustomerQuoteService {
         return null;
       }
     } catch (err) {
+      if (err instanceof ApiError && (err.status === 401 || err.status === 403)) {
+        return this.getActiveQuote();
+      }
       console.warn("[CustomerQuoteService] checkBackendPendingQuote error:", err);
       return this.getActiveQuote();
     }

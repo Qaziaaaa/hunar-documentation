@@ -1,4 +1,5 @@
 import { http, getStoredUserRaw, getStoredUser } from "@/lib/api-client";
+import { unwrapRows } from "@/lib/unwrap-rows";
 import { connectSocket, getSocket } from "@/lib/socket";
 import { CHAT_EVENT } from "@/lib/socket-events";
 import type {
@@ -25,7 +26,7 @@ function getCurrentUserId(): string | undefined {
 export async function getConversations(): Promise<Conversation[]> {
   try {
     const res = await http.get<any[]>("/chat/conversations");
-    const rawList: any[] = Array.isArray(res) ? res : (res as any)?.items ?? [];
+    const rawList: any[] = unwrapRows(res);
     return rawList.map((item) => ({
       id: item.id,
       jobId: item.jobId,
@@ -57,7 +58,7 @@ export async function getMessages(
       res = await http.get<any>(`/chat/${conversationId}`);
     }
 
-    const rawList: any[] = Array.isArray(res) ? res : (res?.items ?? []);
+    const rawList: any[] = unwrapRows(res);
     const user = getStoredUser();
     const currentUserId = user?.id;
     const isWorker = user?.role === "WORKER";

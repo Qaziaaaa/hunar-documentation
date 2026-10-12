@@ -69,6 +69,7 @@ export async function submitWorkerOffer(
   const created = await http.post<BackendOfferRow>(`/jobs/${jobId}/offers`, {
     visitCharge,
     message,
+    note: message,
   });
   return mapBackendOffer(created);
 }
@@ -80,8 +81,11 @@ export async function sendWorkerCounterOffer(
   message?: string,
 ): Promise<void> {
   await http.put(`/jobs/${jobId}/offers/${offerId}/counter`, {
+    visitCharge: counterAmount,
     counterAmount,
+    counterPrice: counterAmount,
     message,
+    note: message,
   });
 }
 

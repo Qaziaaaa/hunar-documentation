@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   AlertTriangle,
@@ -37,6 +37,13 @@ export function CustomerJobDetailsView({ initialJob }: CustomerJobDetailsViewPro
   const locale = useLocale();
   const isUrdu = locale === "ur";
   const [job, setJob] = useState<CustomerJob>(initialJob);
+
+  useEffect(() => {
+    if (initialJob) {
+      setJob(initialJob);
+    }
+  }, [initialJob]);
+
   const [selectedOfferForProfile, setSelectedOfferForProfile] = useState<WorkerOffer | null>(null);
   const [selectedOfferForBooking, setSelectedOfferForBooking] = useState<WorkerOffer | null>(null);
   const [isPlayingAudio, setIsPlayingAudio] = useState(false);

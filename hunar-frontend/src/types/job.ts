@@ -70,8 +70,11 @@ export interface JobCustomer {
   avatarUrl?: string;
   rating?: number;
   reviewCount?: number;
+  reviewsCount?: number;
   totalOrders?: number;
   isVerified?: boolean;
+  memberSince?: string;
+  user?: { avatarUrl?: string };
 }
 
 export interface CustomerSummary {

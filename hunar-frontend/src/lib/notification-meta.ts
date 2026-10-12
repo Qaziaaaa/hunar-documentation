@@ -50,6 +50,18 @@ export function notificationIcon(
       return Star;
     case "verification_result":
       return ShieldCheck;
+    case "new_offer":
+    case "repair_estimate_ready":
+      return Handshake;
+    case "visit_scheduled":
+      return Clock;
+    case "inspection_submitted":
+    case "job_completed":
+      return CheckCircle2;
+    case "repair_approved":
+      return BadgeCheck;
+    case "payment_confirmed":
+      return Banknote;
     default:
       return Bell;
   }
@@ -78,6 +90,16 @@ export function notificationCategory(
       return "reviews";
     case "verification_result":
       return "account";
+    case "new_offer":
+    case "repair_estimate_ready":
+    case "repair_approved":
+      return "offers";
+    case "visit_scheduled":
+    case "inspection_submitted":
+    case "job_completed":
+      return "jobs";
+    case "payment_confirmed":
+      return "commission";
     default:
       return "system";
   }

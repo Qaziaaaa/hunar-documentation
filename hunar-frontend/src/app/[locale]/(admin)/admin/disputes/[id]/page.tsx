@@ -24,6 +24,8 @@ export default function DisputeDetailPage({
   const [dispute, setDispute] = useState<DisputeReport | null>(null);
   const [loading, setLoading] = useState(true);
   const [resolutionNotes, setResolutionNotes] = useState("");
+  const [actionError, setActionError] = useState<string | null>(null);
+  const [acting, setActing] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -68,36 +70,52 @@ export default function DisputeDetailPage({
     );
   }
 
-  const handleResolve = () => {
-    void adminApi.resolveDispute(dispute.id, "RESOLVED", resolutionNotes || "Resolved: Refund released to customer.")
-      .then(() =>
-        setDispute((prev) =>
-          prev
-            ? {
-                ...prev,
-                status: "RESOLVED",
-                resolutionNotes: resolutionNotes || "Resolved: Refund released to customer.",
-              }
-            : prev
-        )
+  const handleResolve = async () => {
+    setActionError(null);
+    setActing(true);
+    try {
+      await adminApi.resolveDispute(dispute.id, "RESOLVED", resolutionNotes || "Resolved: Refund released to customer.");
+      setDispute((prev) =>
+        prev
+          ? {
+              ...prev,
+              status: "RESOLVED",
+              resolutionNotes: resolutionNotes || "Resolved: Refund released to customer.",
+            }
+          : prev
       );
-    setTimeout(() => router.push("/admin/disputes"), 1000);
+      setTimeout(() => router.push("/admin/disputes"), 1000);
+    } catch (err) {
+      setActionError(
+        err instanceof Error ? err.message : "Failed to resolve dispute",
+      );
+    } finally {
+      setActing(false);
+    }
   };
 
-  const handleDismiss = () => {
-    void adminApi.resolveDispute(dispute.id, "DISMISSED", resolutionNotes || "Dispute report dismissed after review.")
-      .then(() =>
-        setDispute((prev) =>
-          prev
-            ? {
-                ...prev,
-                status: "DISMISSED",
-                resolutionNotes: resolutionNotes || "Dispute report dismissed after review.",
-              }
-            : prev
-        )
+  const handleDismiss = async () => {
+    setActionError(null);
+    setActing(true);
+    try {
+      await adminApi.resolveDispute(dispute.id, "DISMISSED", resolutionNotes || "Dispute report dismissed after review.");
+      setDispute((prev) =>
+        prev
+          ? {
+              ...prev,
+              status: "DISMISSED",
+              resolutionNotes: resolutionNotes || "Dispute report dismissed after review.",
+            }
+          : prev
       );
-    setTimeout(() => router.push("/admin/disputes"), 1000);
+      setTimeout(() => router.push("/admin/disputes"), 1000);
+    } catch (err) {
+      setActionError(
+        err instanceof Error ? err.message : "Failed to dismiss dispute",
+      );
+    } finally {
+      setActing(false);
+    }
   };
 
   return (
@@ -106,6 +124,12 @@ export default function DisputeDetailPage({
         <Link href="/admin/disputes" className="inline-flex items-center gap-2 text-xs font-bold text-slate-500 hover:text-navy">
           <ArrowLeft className="size-4" /> Back to Disputes Queue
         </Link>
+
+        {actionError && (
+          <div className="rounded-2xl border border-red-200 bg-red-50 p-4 text-sm font-bold text-red-700">
+            Action failed: {actionError}
+          </div>
+        )}
 
         {/* Header */}
         <div className="flex flex-col justify-between gap-4 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm md:flex-row md:items-center">
@@ -127,16 +151,18 @@ export default function DisputeDetailPage({
             <button
               type="button"
               onClick={handleDismiss}
-              className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-2 text-xs font-bold text-slate-700 hover:bg-slate-100"
+              disabled={acting}
+              className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-2 text-xs font-bold text-slate-700 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60"
             >
               Dismiss Report
             </button>
             <button
               type="button"
               onClick={handleResolve}
-              className="flex items-center gap-1.5 rounded-xl bg-teal px-5 py-2 text-xs font-bold text-white shadow-md hover:bg-teal-600"
+              disabled={acting}
+              className="flex items-center gap-1.5 rounded-xl bg-teal px-5 py-2 text-xs font-bold text-white shadow-md hover:bg-teal-600 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              <CheckCircle2 className="size-4" /> Resolve & Refund
+              <CheckCircle2 className="size-4" /> {acting ? "Working..." : "Resolve & Refund"}
             </button>
           </div>
         </div>

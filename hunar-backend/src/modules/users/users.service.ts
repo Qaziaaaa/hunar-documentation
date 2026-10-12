@@ -88,7 +88,7 @@ export class UsersService {
             label: 'Workshop',
             address: dto.workshopLocation.trim(),
             latitude: 34.0045,
-            longitude: 71.4770,
+            longitude: 71.477,
           });
         }
 

@@ -17,7 +17,7 @@ import type {
   WorkerUser,
   WithdrawalRequest,
 } from "@/types/admin";
-import { getLocallyCreatedJobs } from "@/features/post-job/api/post-job-api";
+import { MOCK_WORKERS, MOCK_CUSTOMERS } from "@/mocks/admin.mock";
 
 interface BackendCategoryRow {
   id: string;
@@ -340,85 +340,27 @@ export const adminApi = {
   },
 
   async getKpis(): Promise<AdminKpiStats> {
-    try {
-      return await http.get<AdminKpiStats>("/admin/kpis");
-    } catch {
-      return {
-        totalJobs: 0,
-        openJobs: 0,
-        activeJobs: 0,
-        completedJobs: 0,
-        cancelledJobs: 0,
-        totalCustomers: 0,
-        newCustomersThisWeek: 0,
-        totalWorkers: 0,
-        verifiedWorkers: 0,
-        pendingWorkers: 0,
-        suspendedWorkers: 0,
-        totalRevenue: 0,
-        totalPaymentsProcessed: 0,
-        activeNowCount: 0,
-      };
-    }
+    // B4: no more zero-filled fallback — callers render a real failure state.
+    return http.get<AdminKpiStats>("/admin/kpis");
   },
 
   async listJobs(query: PaginationQuery = {}): Promise<PageResult<LiveJobItem>> {
-    let items: LiveJobItem[] = [];
-    let meta: PageMeta = { page: 1, limit: 50, total: 0, totalPages: 1 };
-    try {
-      const params = new URLSearchParams({
-        page: String(query.page ?? 1),
-        limit: String(Math.min(query.limit ?? 50, 50)),
-      });
-      const res = await http.get<{ data: BackendJobRow[]; meta: PageMeta }>(
-        `/admin/jobs?${params.toString()}`,
-      );
-      items = (res?.data ?? (Array.isArray(res) ? res : [])).map(toLiveJobItem);
-      if (res?.meta) meta = res.meta;
-    } catch (e) {
-      console.warn("Failed to fetch admin jobs", e);
-    }
+    const params = new URLSearchParams({
+      page: String(query.page ?? 1),
+      limit: String(Math.min(query.limit ?? 50, 50)),
+    });
+    const res = await http.get<{ data: BackendJobRow[]; meta: PageMeta }>(
+      `/admin/jobs?${params.toString()}`,
+    );
+    const items = (res?.data ?? (Array.isArray(res) ? res : [])).map(toLiveJobItem);
+    const meta = res?.meta ?? { page: 1, limit: 50, total: items.length, totalPages: 1 };
     meta.total = items.length;
     return { items, meta };
   },
 
   async getJobDetail(jobId: string): Promise<JobDetailItem> {
-    try {
-      const raw = await http.get<any>(`/admin/jobs/${jobId}`);
-      return toJobDetailItem(raw);
-    } catch (e) {
-      const localJobs = getLocallyCreatedJobs();
-      const local = localJobs.find((j) => j.id === jobId);
-      if (local) {
-        const live: LiveJobItem = {
-          id: local.id,
-          title: local.title,
-          category: typeof local.category === "object" ? local.category?.name ?? "General" : "General",
-          customerName: local.customer?.name ?? "Customer",
-          workerName: undefined,
-          amount: local.lockedVisitCharge ?? local.suggestedVisitCharge ?? 0,
-          status: "OPEN",
-          city: local.city || "Peshawar",
-          createdAt: local.createdAt,
-        };
-        return {
-          ...live,
-          description: local.description ?? "",
-          address: local.address || [local.area, local.city].filter(Boolean).join(", ") || "Peshawar",
-          visitCharge: local.lockedVisitCharge ?? local.suggestedVisitCharge ?? 0,
-          estimatedTotal: local.lockedVisitCharge ?? local.suggestedVisitCharge ?? 0,
-          auditTrail: [
-            {
-              step: "Posted",
-              actor: local.customer?.name ?? "Customer",
-              action: `Job "${local.title}" created`,
-              timestamp: new Date(local.createdAt).toLocaleString(),
-            },
-          ],
-        };
-      }
-      throw e;
-    }
+    const raw = await http.get<any>(`/admin/jobs/${jobId}`);
+    return toJobDetailItem(raw);
   },
 
   async cancelJob(jobId: string, reason: string) {
@@ -426,43 +368,29 @@ export const adminApi = {
   },
 
   async listWorkers(query: PaginationQuery = {}): Promise<PageResult<WorkerUser>> {
-    let items: WorkerUser[] = [];
-    let meta: PageMeta = { page: 1, limit: 50, total: 0, totalPages: 1 };
-    try {
-      const params = new URLSearchParams({
-        page: String(query.page ?? 1),
-        limit: String(Math.min(query.limit ?? 50, 50)),
-      });
-      const res = await http.get<{ data: BackendUserRow[]; meta: PageMeta }>(
-        `/admin/workers?${params.toString()}`,
-      );
-      items = (res?.data ?? (Array.isArray(res) ? res : [])).map(toWorkerUser);
-      if (res?.meta) meta = res.meta;
-    } catch (e) {
-      console.warn("Failed to fetch workers from API", e);
-    }
-
+    const params = new URLSearchParams({
+      page: String(query.page ?? 1),
+      limit: String(Math.min(query.limit ?? 50, 50)),
+    });
+    const res = await http.get<{ data: BackendUserRow[]; meta: PageMeta }>(
+      `/admin/workers?${params.toString()}`,
+    );
+    const items = (res?.data ?? (Array.isArray(res) ? res : [])).map(toWorkerUser);
+    const meta = res?.meta ?? { page: 1, limit: 50, total: items.length, totalPages: 1 };
     meta.total = items.length;
     return { items, meta };
   },
 
   async listCustomers(query: PaginationQuery = {}): Promise<PageResult<CustomerUser>> {
-    let items: CustomerUser[] = [];
-    let meta: PageMeta = { page: 1, limit: 50, total: 0, totalPages: 1 };
-    try {
-      const params = new URLSearchParams({
-        page: String(query.page ?? 1),
-        limit: String(Math.min(query.limit ?? 50, 50)),
-      });
-      const res = await http.get<{ data: BackendUserRow[]; meta: PageMeta }>(
-        `/admin/customers?${params.toString()}`,
-      );
-      items = (res?.data ?? (Array.isArray(res) ? res : [])).map(toCustomerUser);
-      if (res?.meta) meta = res.meta;
-    } catch (e) {
-      console.warn("Failed to fetch customers from API", e);
-    }
-
+    const params = new URLSearchParams({
+      page: String(query.page ?? 1),
+      limit: String(Math.min(query.limit ?? 50, 50)),
+    });
+    const res = await http.get<{ data: BackendUserRow[]; meta: PageMeta }>(
+      `/admin/customers?${params.toString()}`,
+    );
+    const items = (res?.data ?? (Array.isArray(res) ? res : [])).map(toCustomerUser);
+    const meta = res?.meta ?? { page: 1, limit: 50, total: items.length, totalPages: 1 };
     meta.total = items.length;
     return { items, meta };
   },
@@ -655,7 +583,8 @@ export const adminApi = {
   async getSettings(): Promise<PlatformSettings> {
     const s = await http.get<Record<string, string>>("/admin/settings");
     return {
-      commissionRate: Number(s.commissionRate ?? "0.10"),
+      // B2: legacy seed key is 'commission_rate'; canonical writes use 'commissionRate'.
+      commissionRate: Number(s.commissionRate ?? s.commission_rate ?? "0.10"),
       defaultSearchRadiusKm: Number(s.serviceRadiusKm ?? 10),
       maxActiveOffersPerWorker: 1,
       requireManualVerification: true,
@@ -731,37 +660,19 @@ export const adminApi = {
     });
   },
 };
+// Read paths below used to swallow API errors and serve MOCK_*/zero data — the
+// admin dashboard (client component since perf-sprint chunk 7) must show real
+// failure states instead of invented numbers. Errors now propagate so callers
+// show real failure states instead of invented numbers.
+// Write paths keep their boolean contract (false = surfaced failure).
 
 // Exported async helpers used by Server Components & Hooks
 export async function fetchAdminKpis(): Promise<AdminKpiStats> {
-  try {
-    return await adminApi.getKpis();
-  } catch {
-    return {
-      totalJobs: 0,
-      openJobs: 0,
-      activeJobs: 0,
-      completedJobs: 0,
-      cancelledJobs: 0,
-      totalCustomers: 0,
-      newCustomersThisWeek: 0,
-      totalWorkers: 0,
-      verifiedWorkers: 0,
-      pendingWorkers: 0,
-      suspendedWorkers: 0,
-      totalRevenue: 0,
-      totalPaymentsProcessed: 0,
-      activeNowCount: 0,
-    };
-  }
+  return adminApi.getKpis();
 }
 
 export async function fetchPendingVerifications(): Promise<VerificationRequest[]> {
-  try {
-    return await adminApi.listVerifications("PENDING");
-  } catch {
-    return [];
-  }
+  return adminApi.listVerifications("PENDING");
 }
 
 export async function approveWorkerVerification(userId: string): Promise<boolean> {
@@ -783,19 +694,11 @@ export async function rejectWorkerVerification(userId: string, reason: string): 
 }
 
 export async function fetchRecentTransactions(): Promise<PaymentTransaction[]> {
-  try {
-    return await adminApi.listTransactions();
-  } catch {
-    return [];
-  }
+  return adminApi.listTransactions();
 }
 
 export async function fetchWithdrawalRequests(): Promise<WithdrawalRequest[]> {
-  try {
-    return await adminApi.listWithdrawals();
-  } catch {
-    return [];
-  }
+  return adminApi.listWithdrawals();
 }
 
 export async function processWithdrawalRequest(
@@ -812,11 +715,7 @@ export async function processWithdrawalRequest(
 }
 
 export async function fetchDisputesQueue(): Promise<DisputeReport[]> {
-  try {
-    return await adminApi.listDisputes();
-  } catch {
-    return [];
-  }
+  return adminApi.listDisputes();
 }
 
 export async function resolveDispute(
@@ -833,34 +732,16 @@ export async function resolveDispute(
 }
 
 export async function fetchLiveJobsStream(): Promise<LiveJobItem[]> {
-  try {
-    const res = await adminApi.listJobs({ limit: 50 });
-    return res.items;
-  } catch {
-    return [];
-  }
+  const res = await adminApi.listJobs({ limit: 50 });
+  return res.items;
 }
 
 export async function fetchAuditLogsFeed(): Promise<AuditLogEntry[]> {
-  try {
-    return await adminApi.listAuditLogs();
-  } catch {
-    return [];
-  }
+  return adminApi.listAuditLogs();
 }
 
 export async function fetchPlatformSettings(): Promise<PlatformSettings> {
-  try {
-    return await adminApi.getSettings();
-  } catch {
-    return {
-      commissionRate: 0.1,
-      defaultSearchRadiusKm: 10,
-      maxActiveOffersPerWorker: 1,
-      requireManualVerification: true,
-      maintenanceMode: false,
-    };
-  }
+  return adminApi.getSettings();
 }
 
 export async function updatePlatformSettings(
@@ -875,19 +756,11 @@ export async function updatePlatformSettings(
 }
 
 export async function fetchTopWorkers(): Promise<WorkerUser[]> {
-  try {
-    const res = await adminApi.listWorkers({ limit: 50 });
-    return res.items;
-  } catch {
-    return [];
-  }
+  const res = await adminApi.listWorkers({ limit: 50 });
+  return res.items;
 }
 
 export async function fetchCustomers(): Promise<CustomerUser[]> {
-  try {
-    const res = await adminApi.listCustomers({ limit: 50 });
-    return res.items;
-  } catch {
-    return [];
-  }
+  const res = await adminApi.listCustomers({ limit: 50 });
+  return res.items;
 }

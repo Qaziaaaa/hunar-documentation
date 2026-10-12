@@ -22,6 +22,9 @@ export const ROOM_PREFIX = {
   job: 'job:',
 } as const;
 
+/** Every connected worker socket joins this room — marketplace pushes fan out here. */
+export const WORKERS_ROOM = 'workers';
+
 export function userRoom(userId: string): string {
   return `${ROOM_PREFIX.user}${userId}`;
 }

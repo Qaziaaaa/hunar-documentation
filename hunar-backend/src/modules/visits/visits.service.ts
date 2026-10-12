@@ -5,7 +5,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { Role } from '@prisma/client';
+import { Prisma, Role } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { EventBusService } from '../../common/event-bus/event-bus.service';
 import { normalizePage, toPageResult } from '../../common/helpers/pagination.util';
@@ -104,11 +104,20 @@ export class VisitsService {
 
   async getMyVisits(user: JwtPayload, query: VisitQueryDto) {
     const { page, limit, skip } = normalizePage(query);
+    const cacheKey = `perf:visits:my:${user.sub}:${page}:${limit}:${query.status ?? 'all'}`;
+
+    // Read-through cache — visits list is heavy (joins + DISTINCT ON location)
+    const cached = await this.redis.get(cacheKey);
+    if (cached) {
+      try { return JSON.parse(cached); } catch {}
+    }
+
     const where =
       user.role === Role.WORKER ? { workerId: user.sub } : { job: { customerId: user.sub } };
     const whereWithStatus = query.status ? { ...where, status: query.status as never } : where;
 
-    const [visits, total] = await this.prisma.$transaction([
+    // Promise.all, not $transaction: batch BEGIN/COMMIT costs ~3 extra RTTs.
+    const [visits, total] = await Promise.all([
       this.prisma.visit.findMany({
         where: whereWithStatus,
         skip,
@@ -148,25 +157,48 @@ export class VisitsService {
       this.prisma.visit.count({ where: whereWithStatus }),
     ]);
 
-    const items = await Promise.all(
-      visits.map(async (v) => {
-        const latestLoc = await this.prisma.locationTracking.findFirst({
-          where: { jobId: v.jobId },
-          orderBy: { recordedAt: 'desc' },
-          select: { latitude: true, longitude: true },
-        });
-        return {
-          ...v,
-          customerLat: v.job?.latitude,
-          customerLng: v.job?.longitude,
-          customerAddress: v.job?.address,
-          currentLat: latestLoc?.latitude ?? null,
-          currentLng: latestLoc?.longitude ?? null,
-        };
-      }),
-    );
+    // One latest-location row per job instead of a findFirst per visit (N+1:
+    // up to `limit` queries per page). DISTINCT ON uses the @@index([jobId]).
+    const latestByJob = new Map<string, { latitude: number; longitude: number }>();
+    if (visits.length > 0) {
+      const jobIds = [...new Set(visits.map((v) => v.jobId))];
+      const latestRows = await this.prisma.$queryRaw<
+        Array<{ jobId: string; latitude: number; longitude: number }>
+      >(Prisma.sql`
+        SELECT DISTINCT ON ("jobId") "jobId", "latitude", "longitude"
+        FROM "LocationTracking"
+        WHERE "jobId" IN (${Prisma.join(jobIds)})
+        ORDER BY "jobId", "recordedAt" DESC
+      `);
+      for (const r of latestRows) {
+        latestByJob.set(r.jobId, { latitude: r.latitude, longitude: r.longitude });
+      }
+    }
 
-    return toPageResult(items, total, page, limit);
+    const items = visits.map((v) => {
+      const latestLoc = latestByJob.get(v.jobId);
+      return {
+        ...v,
+        customerLat: v.job?.latitude,
+        customerLng: v.job?.longitude,
+        customerAddress: v.job?.address,
+        currentLat: latestLoc?.latitude ?? null,
+        currentLng: latestLoc?.longitude ?? null,
+      };
+    });
+
+    const result = toPageResult(items, total, page, limit);
+    // Cache for 20s — stale-on-mutation is fine; WebSocket pushes real-time changes.
+    await this.redis.set(cacheKey, JSON.stringify(result), 20);
+    return result;
+  }
+
+  /** Bust all visit-list cache entries for both participants of a visit. */
+  private async invalidateVisitCache(workerId: string, customerId?: string) {
+    await this.redis.delPattern(`perf:visits:my:${workerId}:*`);
+    if (customerId) {
+      await this.redis.delPattern(`perf:visits:my:${customerId}:*`);
+    }
   }
 
   async rescheduleVisit(visitId: string, user: JwtPayload, scheduledTime: Date) {
@@ -210,6 +242,8 @@ export class VisitsService {
       oldStatus: 'WORKER_ASSIGNED',
       newStatus: 'VISIT_SCHEDULED',
     });
+    // Bust cached visits lists for this worker
+    this.invalidateVisitCache(visit.workerId).catch(() => 0);
     return updated;
   }
 
@@ -262,6 +296,7 @@ export class VisitsService {
       oldStatus: 'VISIT_SCHEDULED',
       newStatus: 'VISIT_IN_PROGRESS',
     });
+    this.invalidateVisitCache(visit.workerId, visit.job.customerId).catch(() => 0);
     return updated;
   }
 
@@ -333,6 +368,7 @@ export class VisitsService {
       visitId: visit.id,
     });
 
+    this.invalidateVisitCache(visit.workerId, visit.job.customerId).catch(() => 0);
     return {
       success: true,
       otp,
@@ -410,6 +446,7 @@ export class VisitsService {
       newStatus: 'VISIT_COMPLETED',
     });
 
+    this.invalidateVisitCache(visit.workerId, visit.job.customerId).catch(() => 0);
     return {
       success: true,
       message: 'OTP verified successfully. The worker is now allowed inside the premises.',
@@ -456,6 +493,7 @@ export class VisitsService {
       oldStatus: 'VISIT_COMPLETED',
       newStatus: 'INSPECTION_DONE',
     });
+    this.invalidateVisitCache(visit.workerId, visit.job.customerId).catch(() => 0);
     return updated;
   }
 

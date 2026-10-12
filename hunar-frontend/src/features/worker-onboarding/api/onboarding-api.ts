@@ -50,17 +50,16 @@ export interface WorkerOnboardingApiResponse {
 }
 
 /**
- * Fetch existing worker onboarding progress & saved draft from backend
+ * Fetch existing worker onboarding progress & saved draft from backend.
+ * Returns null only for a successful response without a saved profile; API
+ * errors propagate so callers decide whether to skip the sync (perf sprint:
+ * no more silent catch-to-null on server failures).
  */
 export async function fetchWorkerOnboardingProfile(): Promise<WorkerOnboardingApiResponse | null> {
-  try {
-    const raw = await http.get<any>("/users/worker/me");
-    const data = raw?.data ?? raw;
-    if (data?.user) {
-      return data as WorkerOnboardingApiResponse;
-    }
-  } catch (err) {
-    console.warn("[fetchWorkerOnboardingProfile] Server not reached or unauthenticated:", err);
+  const raw = await http.get<any>("/users/worker/me");
+  const data = raw?.data ?? raw;
+  if (data?.user) {
+    return data as WorkerOnboardingApiResponse;
   }
   return null;
 }

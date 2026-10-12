@@ -101,7 +101,7 @@ export class WorkerProfileService {
           longitude: area.longitude,
         },
       });
-      }
+    }
     // Location update skipped — ServiceArea.table has no `location` column and PostGIS is not configured.
     // This prevents 500 errors during job creation and other operations.
 
@@ -211,8 +211,7 @@ export class WorkerProfileService {
       }),
     ]);
 
-    const avgRating =
-      ratingAgg._avg.rating !== null ? Number(ratingAgg._avg.rating.toFixed(1)) : 0;
+    const avgRating = ratingAgg._avg.rating !== null ? Number(ratingAgg._avg.rating.toFixed(1)) : 0;
 
     return {
       id: user.id,

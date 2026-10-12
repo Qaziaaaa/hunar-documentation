@@ -26,6 +26,8 @@ export default function JobDetailPage({
   const [loading, setLoading] = useState(true);
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [cancelReason, setCancelReason] = useState("");
+  const [cancelling, setCancelling] = useState(false);
+  const [cancelError, setCancelError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -73,20 +75,30 @@ export default function JobDetailPage({
     );
   }
 
-  const handleForceCancel = () => {
-    setJob((prev) =>
-      prev
-        ? {
-            ...prev,
-            status: "CANCELLED",
-            cancelReason: cancelReason || "Cancelled by Admin intervention",
-          }
-        : prev
-    );
-    if (resolvedParams) {
-      void adminApi.cancelJob(resolvedParams.id, cancelReason).catch(() => undefined);
+  const handleForceCancel = async () => {
+    if (!resolvedParams) {
+      setCancelError("Job id unavailable — reload the page and try again.");
+      return;
     }
-    setShowCancelModal(false);
+    setCancelError(null);
+    setCancelling(true);
+    try {
+      await adminApi.cancelJob(resolvedParams.id, cancelReason);
+      setJob((prev) =>
+        prev
+          ? {
+              ...prev,
+              status: "CANCELLED",
+              cancelReason: cancelReason || "Cancelled by Admin intervention",
+            }
+          : prev
+      );
+      setShowCancelModal(false);
+    } catch (err) {
+      setCancelError(err instanceof Error ? err.message : "Failed to cancel job");
+    } finally {
+      setCancelling(false);
+    }
   };
 
   return (
@@ -207,12 +219,22 @@ export default function JobDetailPage({
                 placeholder="Enter cancellation reason..."
                 className="mt-4 h-24 w-full rounded-xl border border-slate-200 p-3 text-xs outline-none focus:border-teal"
               />
+              {cancelError && (
+                <p className="mt-3 rounded-xl border border-red-200 bg-red-50 p-3 text-xs font-bold text-red-700">
+                  {cancelError}
+                </p>
+              )}
               <div className="mt-6 flex justify-end gap-3">
                 <button type="button" onClick={() => setShowCancelModal(false)} className="rounded-xl border border-slate-200 px-4 py-2 text-xs font-bold text-slate-600">
                   Cancel
                 </button>
-                <button type="button" onClick={handleForceCancel} className="rounded-xl bg-red-600 px-5 py-2 text-xs font-bold text-white shadow-md">
-                  Confirm Cancellation
+                <button
+                  type="button"
+                  onClick={handleForceCancel}
+                  disabled={cancelling}
+                  className="rounded-xl bg-red-600 px-5 py-2 text-xs font-bold text-white shadow-md disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {cancelling ? "Cancelling..." : "Confirm Cancellation"}
                 </button>
               </div>
             </div>

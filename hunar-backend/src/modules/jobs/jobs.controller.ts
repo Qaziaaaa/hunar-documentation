@@ -56,10 +56,7 @@ export class JobsController {
 
   @Put(':id/complete')
   @Roles(Role.WORKER, Role.ADMIN)
-  complete(
-    @CurrentUser() user: JwtPayload,
-    @Param('id', ParseOrderCodePipe) id: string,
-  ) {
+  complete(@CurrentUser() user: JwtPayload, @Param('id', ParseOrderCodePipe) id: string) {
     return this.jobsService.completeJob(id, user);
   }
 }
