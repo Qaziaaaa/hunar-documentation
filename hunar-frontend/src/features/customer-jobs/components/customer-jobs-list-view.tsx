@@ -22,11 +22,25 @@ import { Link } from "@/i18n/navigation";
 import { useLocale } from "next-intl";
 import { formatJobDate, formatPostedAt } from "@/lib/format";
 import type { CustomerJob, WorkerOffer } from "../types";
-import { CustomerJobDetailsModal } from "./customer-job-details-modal";
-import { CustomerReviewOffersModal } from "./customer-review-offers-modal";
-import { WorkerProfileModal } from "./worker-profile-modal";
-import { SelectWorkerModal } from "./select-worker-modal";
-import { acceptWorkerOffer, rejectWorkerOffer } from "../api/customer-jobs-api";
+import dynamic from "next/dynamic";
+
+const CustomerJobDetailsModal = dynamic(
+  () => import("./customer-job-details-modal").then((m) => m.CustomerJobDetailsModal),
+  { ssr: false }
+);
+const CustomerReviewOffersModal = dynamic(
+  () => import("./customer-review-offers-modal").then((m) => m.CustomerReviewOffersModal),
+  { ssr: false }
+);
+const WorkerProfileModal = dynamic(
+  () => import("./worker-profile-modal").then((m) => m.WorkerProfileModal),
+  { ssr: false }
+);
+const SelectWorkerModal = dynamic(
+  () => import("./select-worker-modal").then((m) => m.SelectWorkerModal),
+  { ssr: false }
+);
+import { acceptWorkerOffer, rejectWorkerOffer, getCustomerJobs } from "../api/customer-jobs-api";
 
 interface CustomerJobsListViewProps {
   initialJobs?: CustomerJob[];
@@ -41,6 +55,37 @@ export function CustomerJobsListView({ initialJobs, jobs: jobsProp }: CustomerJo
   const [jobs, setJobs] = useState<CustomerJob[]>(resolvedInitialJobs);
   const [selectedFilter, setSelectedFilter] = useState<"scheduled" | "offers" | "completed">("scheduled");
   const [searchQuery, setSearchQuery] = useState("");
+
+  // Incremental pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(resolvedInitialJobs.length >= 20);
+
+  const handleLoadMore = async () => {
+    if (isLoadingMore) return;
+    setIsLoadingMore(true);
+    try {
+      const nextPage = currentPage + 1;
+      const moreJobs = await getCustomerJobs({ page: nextPage, limit: 20 });
+      if (!moreJobs || moreJobs.length === 0) {
+        setHasMore(false);
+      } else {
+        setJobs((prev) => {
+          const existingIds = new Set(prev.map((j) => j.id));
+          const newJobs = moreJobs.filter((j) => !existingIds.has(j.id));
+          return [...prev, ...newJobs];
+        });
+        setCurrentPage(nextPage);
+        if (moreJobs.length < 20) {
+          setHasMore(false);
+        }
+      }
+    } catch (err) {
+      console.warn("Failed to load more jobs:", err);
+    } finally {
+      setIsLoadingMore(false);
+    }
+  };
 
   // Modals state
   const [selectedJobForDetails, setSelectedJobForDetails] = useState<CustomerJob | null>(null);
@@ -176,7 +221,7 @@ export function CustomerJobsListView({ initialJobs, jobs: jobsProp }: CustomerJo
   const completedCount = jobs.filter((j) => j.status === "completed").length;
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-6 pb-24 lg:pb-8 animate-in fade-in-50 duration-300 text-[#123B5D]">
+    <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-6 pb-24 lg:pb-8 animate-in fade-in-50 duration-300 text-[#123B5D]">
       {/* Toast Notification */}
       {toastMessage && (
         <div
@@ -194,23 +239,35 @@ export function CustomerJobsListView({ initialJobs, jobs: jobsProp }: CustomerJo
       )}
 
       {/* 3 Proper Segmented Tabs Bar & Search */}
-      <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3.5">
+      <div className="w-full flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3.5">
         {/* Proper Tabs Segmented Control */}
-        <div className="bg-slate-100/90 p-1.5 rounded-2xl flex items-center gap-1.5 border border-slate-200/80 shadow-2xs overflow-x-auto scrollbar-none">
+        <div className="w-full sm:w-auto bg-slate-100/90 p-1 sm:p-1.5 rounded-2xl grid grid-cols-3 sm:flex items-center gap-1 sm:gap-1.5 border border-slate-200/80 shadow-2xs">
           {/* Tab 1: Scheduled Visits */}
           <button
             type="button"
             onClick={() => setSelectedFilter("scheduled")}
-            className={`px-4 py-2.5 rounded-xl text-xs sm:text-sm whitespace-nowrap transition-all cursor-pointer flex items-center gap-2 ${
+            className={`w-full min-w-0 py-2 px-1 sm:px-4 sm:py-2.5 rounded-xl text-[11px] sm:text-sm font-semibold transition-all cursor-pointer flex items-center justify-center gap-1 sm:gap-2 ${
               selectedFilter === "scheduled"
                 ? "bg-white text-[#123B5D] font-bold shadow-xs border border-slate-200/60"
-                : "text-slate-600 font-semibold hover:text-[#123B5D] hover:bg-white/50"
+                : "text-slate-600 hover:text-[#123B5D] hover:bg-white/50"
             }`}
           >
-            <Clock className={`size-4 ${selectedFilter === "scheduled" ? "text-teal" : "text-slate-400"}`} />
-            <span>{isUrdu ? "شیڈول وزٹس" : "Scheduled Visits"}</span>
+            <Clock className={`size-3.5 sm:size-4 shrink-0 ${selectedFilter === "scheduled" ? "text-teal" : "text-slate-400"}`} />
+            <span className="truncate">
+              {isUrdu ? (
+                <>
+                  <span>شیڈول</span>
+                  <span className="hidden sm:inline"> وزٹس</span>
+                </>
+              ) : (
+                <>
+                  <span>Scheduled</span>
+                  <span className="hidden sm:inline"> Visits</span>
+                </>
+              )}
+            </span>
             <span
-              className={`px-2 py-0.5 rounded-full text-[11px] font-extrabold ${
+              className={`px-1.5 sm:px-2 py-0.5 rounded-full text-[10px] sm:text-[11px] font-extrabold shrink-0 ${
                 selectedFilter === "scheduled"
                   ? "bg-teal text-white shadow-2xs"
                   : "bg-slate-200 text-slate-700"
@@ -224,17 +281,29 @@ export function CustomerJobsListView({ initialJobs, jobs: jobsProp }: CustomerJo
           <button
             type="button"
             onClick={() => setSelectedFilter("offers")}
-            className={`px-4 py-2.5 rounded-xl text-xs sm:text-sm whitespace-nowrap transition-all cursor-pointer flex items-center gap-2 ${
+            className={`w-full min-w-0 py-2 px-1 sm:px-4 sm:py-2.5 rounded-xl text-[11px] sm:text-sm font-semibold transition-all cursor-pointer flex items-center justify-center gap-1 sm:gap-2 ${
               selectedFilter === "offers"
                 ? "bg-white text-[#123B5D] font-bold shadow-xs border border-slate-200/60"
-                : "text-slate-600 font-semibold hover:text-[#123B5D] hover:bg-white/50"
+                : "text-slate-600 hover:text-[#123B5D] hover:bg-white/50"
             }`}
           >
-            <Tag className={`size-4 ${selectedFilter === "offers" ? "text-teal" : "text-slate-400"}`} />
-            <span>{isUrdu ? "موصولہ آفرز" : "Offers to Review"}</span>
+            <Tag className={`size-3.5 sm:size-4 shrink-0 ${selectedFilter === "offers" ? "text-teal" : "text-slate-400"}`} />
+            <span className="truncate">
+              {isUrdu ? (
+                <>
+                  <span>آفرز</span>
+                  <span className="hidden sm:inline"> موصولہ</span>
+                </>
+              ) : (
+                <>
+                  <span>Offers</span>
+                  <span className="hidden sm:inline"> to Review</span>
+                </>
+              )}
+            </span>
             {activeCount > 0 ? (
               <span
-                className={`px-2 py-0.5 rounded-full text-[11px] font-extrabold flex items-center gap-1 ${
+                className={`px-1.5 sm:px-2 py-0.5 rounded-full text-[10px] sm:text-[11px] font-extrabold flex items-center gap-1 shrink-0 ${
                   selectedFilter === "offers"
                     ? "bg-teal text-white shadow-2xs"
                     : "bg-teal/10 text-teal"
@@ -244,7 +313,7 @@ export function CustomerJobsListView({ initialJobs, jobs: jobsProp }: CustomerJo
                 <span>{activeCount}</span>
               </span>
             ) : (
-              <span className="px-2 py-0.5 rounded-full text-[11px] font-extrabold bg-slate-200 text-slate-700">
+              <span className="px-1.5 sm:px-2 py-0.5 rounded-full text-[10px] sm:text-[11px] font-extrabold bg-slate-200 text-slate-700 shrink-0">
                 0
               </span>
             )}
@@ -254,16 +323,25 @@ export function CustomerJobsListView({ initialJobs, jobs: jobsProp }: CustomerJo
           <button
             type="button"
             onClick={() => setSelectedFilter("completed")}
-            className={`px-4 py-2.5 rounded-xl text-xs sm:text-sm whitespace-nowrap transition-all cursor-pointer flex items-center gap-2 ${
+            className={`w-full min-w-0 py-2 px-1 sm:px-4 sm:py-2.5 rounded-xl text-[11px] sm:text-sm font-semibold transition-all cursor-pointer flex items-center justify-center gap-1 sm:gap-2 ${
               selectedFilter === "completed"
                 ? "bg-white text-[#123B5D] font-bold shadow-xs border border-slate-200/60"
-                : "text-slate-600 font-semibold hover:text-[#123B5D] hover:bg-white/50"
+                : "text-slate-600 hover:text-[#123B5D] hover:bg-white/50"
             }`}
           >
-            <CheckCircle2 className={`size-4 ${selectedFilter === "completed" ? "text-teal" : "text-slate-400"}`} />
-            <span>{isUrdu ? "مکمل شدہ" : "Completed"}</span>
+            <CheckCircle2 className={`size-3.5 sm:size-4 shrink-0 ${selectedFilter === "completed" ? "text-teal" : "text-slate-400"}`} />
+            <span className="truncate">
+              {isUrdu ? (
+                <>
+                  <span>مکمل</span>
+                  <span className="hidden sm:inline"> شدہ</span>
+                </>
+              ) : (
+                <span>Completed</span>
+              )}
+            </span>
             <span
-              className={`px-2 py-0.5 rounded-full text-[11px] font-extrabold ${
+              className={`px-1.5 sm:px-2 py-0.5 rounded-full text-[10px] sm:text-[11px] font-extrabold shrink-0 ${
                 selectedFilter === "completed"
                   ? "bg-teal text-white shadow-2xs"
                   : "bg-slate-200 text-slate-700"
@@ -275,7 +353,7 @@ export function CustomerJobsListView({ initialJobs, jobs: jobsProp }: CustomerJo
         </div>
 
         {/* Search Box */}
-        <div className="relative min-w-[240px]">
+        <div className="relative w-full md:w-auto md:min-w-[260px]">
           <Search className="size-4 absolute left-3.5 rtl:left-auto rtl:right-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
           <input
             type="text"
@@ -289,7 +367,8 @@ export function CustomerJobsListView({ initialJobs, jobs: jobsProp }: CustomerJo
 
       {/* Work Orders List */}
       {filteredJobs.length > 0 ? (
-        <div className="space-y-4">
+        <>
+          <div className="space-y-4">
           {filteredJobs.map((job) => {
             const hasAssignedWorker = !!job.selectedOffer;
             const assignedWorker = job.selectedOffer?.worker;
@@ -404,7 +483,14 @@ export function CustomerJobsListView({ initialJobs, jobs: jobsProp }: CustomerJo
                           <img
                             src={assignedWorker.avatarUrl}
                             alt={assignedWorker.name}
+                            width={40}
+                            height={40}
+                            loading="lazy"
+                            decoding="async"
                             className="w-full h-full object-cover"
+                            onError={(e) => {
+                              (e.currentTarget as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(assignedWorker.name)}&background=0F766E&color=fff`;
+                            }}
                           />
                         </div>
                         <div className="min-w-0">
@@ -452,7 +538,7 @@ export function CustomerJobsListView({ initialJobs, jobs: jobsProp }: CustomerJo
                         <>
                           <Zap className="size-3.5 text-amber-600 fill-current shrink-0" />
                           <span className="font-bold text-amber-700">
-                            {isUrdu ? "⚡ فوری آمد (30 تا 60 منٹ)" : "⚡ Immediate (Within 30–60 mins)"}
+                            {isUrdu ? "فوری آمد (30 تا 60 منٹ)" : "Immediate (Within 30–60 mins)"}
                           </span>
                         </>
                       ) : (
@@ -524,23 +610,36 @@ export function CustomerJobsListView({ initialJobs, jobs: jobsProp }: CustomerJo
                       </Link>
                     )}
 
-                    {job.status === "completed" && (
-                      <Link
-                        href={`/customer/job/${job.id}/complete`}
-                        className="h-9 px-4 rounded-xl font-semibold text-xs sm:text-sm text-white bg-success hover:bg-success/90 transition-colors shadow-sm flex items-center justify-center gap-1.5 cursor-pointer active:scale-98"
-                      >
-                        <CheckCircle2 className="size-3.5" />
-                        <span>{isUrdu ? "وارنٹی و رسید دیکھیں" : "View Invoice & Warranty"}</span>
-                      </Link>
-                    )}
                   </div>
                 </div>
               </article>
             );
           })}
         </div>
+
+          {/* Incremental Pagination: Load More Button */}
+          {hasMore && (
+            <div className="flex justify-center pt-2">
+              <button
+                type="button"
+                onClick={handleLoadMore}
+                disabled={isLoadingMore}
+                className="px-6 py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-[#123B5D] text-xs sm:text-sm font-bold shadow-2xs transition-all active:scale-95 disabled:opacity-50 flex items-center gap-2 cursor-pointer"
+              >
+                {isLoadingMore ? (
+                  <>
+                    <span className="size-4 rounded-full border-2 border-teal border-t-transparent animate-spin" />
+                    <span>{isUrdu ? "مزید لوڈ ہو رہا ہے..." : "Loading more bookings..."}</span>
+                  </>
+                ) : (
+                  <span>{isUrdu ? "مزید جابز دیکھیں" : "Load More Bookings"}</span>
+                )}
+              </button>
+            </div>
+          )}
+        </>
       ) : (
-        <div className="bg-white rounded-2xl p-10 sm:p-12 text-center space-y-4 shadow-2xs border border-[#E2E8F0]">
+        <div className="w-full bg-white rounded-2xl p-10 sm:p-12 text-center space-y-4 shadow-2xs border border-[#E2E8F0]">
           <div className="size-16 rounded-2xl bg-teal-50 text-[#0F8B8D] flex items-center justify-center mx-auto shadow-2xs">
             <Layers className="size-8" />
           </div>
@@ -566,45 +665,51 @@ export function CustomerJobsListView({ initialJobs, jobs: jobsProp }: CustomerJo
         </div>
       )}
 
-      {/* Customer Job Details Modal */}
-      <CustomerJobDetailsModal
-        job={selectedJobForDetails}
-        isOpen={Boolean(selectedJobForDetails)}
-        onClose={() => setSelectedJobForDetails(null)}
-        onReviewOffers={(job) => {
-          setSelectedJobForDetails(null);
-          setSelectedJobForOffers(job);
-        }}
-      />
+      {/* Customer Job Details Modal - Loaded dynamically on demand */}
+      {selectedJobForDetails && (
+        <CustomerJobDetailsModal
+          job={selectedJobForDetails}
+          isOpen={Boolean(selectedJobForDetails)}
+          onClose={() => setSelectedJobForDetails(null)}
+          onReviewOffers={(job) => {
+            setSelectedJobForDetails(null);
+            setSelectedJobForOffers(job);
+          }}
+        />
+      )}
 
-      {/* Customer Review Offers Modal */}
-      <CustomerReviewOffersModal
-        job={selectedJobForOffers}
-        isOpen={Boolean(selectedJobForOffers)}
-        onClose={() => setSelectedJobForOffers(null)}
-        onViewJobDetails={(job) => {
-          setSelectedJobForOffers(null);
-          setSelectedJobForDetails(job);
-        }}
-        onViewProfile={(offer) => setSelectedOfferForProfile(offer)}
-        onSelectWorker={(job, offer) => setBookingSelection({ job, offer })}
-        onRejectOffer={handleRejectOffer}
-      />
+      {/* Customer Review Offers Modal - Loaded dynamically on demand */}
+      {selectedJobForOffers && (
+        <CustomerReviewOffersModal
+          job={selectedJobForOffers}
+          isOpen={Boolean(selectedJobForOffers)}
+          onClose={() => setSelectedJobForOffers(null)}
+          onViewJobDetails={(job) => {
+            setSelectedJobForOffers(null);
+            setSelectedJobForDetails(job);
+          }}
+          onViewProfile={(offer) => setSelectedOfferForProfile(offer)}
+          onSelectWorker={(job, offer) => setBookingSelection({ job, offer })}
+          onRejectOffer={handleRejectOffer}
+        />
+      )}
 
-      {/* Worker Profile Modal */}
-      <WorkerProfileModal
-        offer={selectedOfferForProfile}
-        isOpen={Boolean(selectedOfferForProfile)}
-        onClose={() => setSelectedOfferForProfile(null)}
-        onSelectWorker={(offer) => {
-          setSelectedOfferForProfile(null);
-          if (selectedJobForOffers) {
-            setBookingSelection({ job: selectedJobForOffers, offer });
-          }
-        }}
-      />
+      {/* Worker Profile Modal - Loaded dynamically on demand */}
+      {selectedOfferForProfile && (
+        <WorkerProfileModal
+          offer={selectedOfferForProfile}
+          isOpen={Boolean(selectedOfferForProfile)}
+          onClose={() => setSelectedOfferForProfile(null)}
+          onSelectWorker={(offer) => {
+            setSelectedOfferForProfile(null);
+            if (selectedJobForOffers) {
+              setBookingSelection({ job: selectedJobForOffers, offer });
+            }
+          }}
+        />
+      )}
 
-      {/* Select Worker / Booking Confirmation Modal */}
+      {/* Select Worker / Booking Confirmation Modal - Loaded dynamically on demand */}
       {bookingSelection && (
         <SelectWorkerModal
           job={bookingSelection.job}

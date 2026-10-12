@@ -67,12 +67,13 @@ export async function getCustomerUnreadCount(): Promise<number> {
 export async function markCustomerNotificationRead(
   notificationId: string,
 ): Promise<void> {
-  await http.put(`/notifications/${notificationId}/read`);
+  await http.patch(`/notifications/${notificationId}/read`);
 }
 
 export async function markAllCustomerNotificationsRead(): Promise<void> {
-  await http.put(`/notifications/read-all`);
+  await http.patch(`/notifications/read-all`);
 }
+
 
 export function subscribeToCustomerNotifications(
   listener: NotificationListener,

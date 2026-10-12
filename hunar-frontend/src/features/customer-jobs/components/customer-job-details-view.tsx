@@ -420,14 +420,7 @@ export function CustomerJobDetailsView({ initialJob }: CustomerJobDetailsViewPro
               )}
 
               {/* Action Buttons for Active Job */}
-              {job.status === "completed" ? (
-                <Link
-                  href={`/customer/job/${job.id}/complete`}
-                  className="w-full flex items-center justify-center gap-2 py-3 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow-xs transition-all cursor-pointer"
-                >
-                  <span>{isUrdu ? "وارنٹی سرٹیفکیٹ اور رسید دیکھیں →" : "View Warranty Certificate & Invoice →"}</span>
-                </Link>
-              ) : (
+              {job.status !== "completed" && (
                 <div className="space-y-2.5">
                   <Link
                     href={`/customer/job/${job.id}/tracking`}

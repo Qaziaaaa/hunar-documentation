@@ -80,7 +80,12 @@ export function SelectWorkerModal({
                 <img
                   src={worker.avatarUrl}
                   alt={worker.name}
+                  loading="lazy"
+                  decoding="async"
                   className="w-full h-full object-cover"
+                  onError={(e) => {
+                    (e.currentTarget as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(worker.name || "Worker")}&background=0F766E&color=fff`;
+                  }}
                 />
               </div>
               <div>
@@ -126,7 +131,7 @@ export function SelectWorkerModal({
                 </span>
                 <span>
                   {job.scheduleType === "asap"
-                    ? (isUrdu ? "⚡ فوری آمد (30 تا 60 منٹ)" : "⚡ Immediate (Within 30–60 mins)")
+                    ? (isUrdu ? "فوری آمد (30 تا 60 منٹ)" : "Immediate (Within 30–60 mins)")
                     : `${formatJobDate(job.preferredDate) || (isUrdu ? "آج" : "Today")} • ${job.preferredTimeSlot || (isUrdu ? "مناسب وقت" : "Flexible Timing")}`}
                 </span>
               </div>

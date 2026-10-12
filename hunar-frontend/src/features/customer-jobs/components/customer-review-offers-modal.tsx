@@ -172,7 +172,12 @@ export function CustomerReviewOffersModal({
                     <img
                       src={job.selectedOffer.worker.avatarUrl}
                       alt={job.selectedOffer.worker.name}
+                      loading="lazy"
+                      decoding="async"
                       className="w-full h-full object-cover"
+                      onError={(e) => {
+                        (e.currentTarget as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(job.selectedOffer?.worker.name || "Worker")}&background=0F766E&color=fff`;
+                      }}
                     />
                     {job.selectedOffer.worker.isCnicVerified && (
                       <span className="absolute bottom-0 right-0 size-3.5 bg-[#16A34A] rounded-full ring-2 ring-white flex items-center justify-center text-white">
@@ -218,7 +223,7 @@ export function CustomerReviewOffersModal({
               {/* Direct Transition Actions */}
               <div className="flex flex-col sm:flex-row items-center gap-2.5 pt-1">
                 <a
-                  href={`/customer/visits`}
+                  href={`/customer/job/${job.id}/tracking`}
                   className="w-full sm:flex-1 py-2.5 px-4 rounded-xl bg-[#0F766E] hover:bg-[#115E59] text-white font-bold text-xs sm:text-sm shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-98"
                 >
                   <Clock className="size-4" />
@@ -255,7 +260,12 @@ export function CustomerReviewOffersModal({
                           <img
                             src={worker.avatarUrl}
                             alt={worker.name}
+                            loading="lazy"
+                            decoding="async"
                             className="w-full h-full object-cover"
+                            onError={(e) => {
+                              (e.currentTarget as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(worker.name || "Worker")}&background=0F766E&color=fff`;
+                            }}
                           />
                           {worker.isCnicVerified && (
                             <span

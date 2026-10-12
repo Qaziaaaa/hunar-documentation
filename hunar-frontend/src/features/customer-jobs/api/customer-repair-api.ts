@@ -3,7 +3,7 @@ import type { JobCompletionData } from "../types";
 
 export interface ReviewSubmissionPayload {
   rating: number; // 1 to 5
-  comment: string;
+  comment?: string;
   punctualityRating?: number;
   qualityRating?: number;
   behaviorRating?: number;
@@ -160,13 +160,13 @@ export async function submitJobReview(
   jobId: string,
   payload: ReviewSubmissionPayload
 ): Promise<{ success: boolean; reviewId?: string }> {
-  const res = await http.post<{ id?: string }>(`/jobs/${jobId}/review`, {
+  const body: Record<string, any> = {
     rating: payload.rating,
-    comment: payload.comment,
-    punctualityRating: payload.punctualityRating,
-    qualityRating: payload.qualityRating,
-    behaviorRating: payload.behaviorRating,
-  });
+  };
+  if (payload.comment && payload.comment.trim().length > 0) {
+    body.comment = payload.comment.trim();
+  }
+  const res = await http.post<{ id?: string }>(`/jobs/${jobId}/review`, body);
   return { success: true, reviewId: res?.id };
 }
 

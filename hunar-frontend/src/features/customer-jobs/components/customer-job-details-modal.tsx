@@ -185,6 +185,8 @@ export function CustomerJobDetailsModal({
                       <img
                         src={photoUrl}
                         alt={`Attachment ${idx + 1}`}
+                        loading="lazy"
+                        decoding="async"
                         className="w-full h-full object-cover group-hover:opacity-90 transition-opacity"
                       />
                     </button>
@@ -271,7 +273,7 @@ export function CustomerJobDetailsModal({
                     <>
                       <Zap className="size-3 text-amber-600 fill-current shrink-0" />
                       <span className="font-bold text-amber-700">
-                        {isUrdu ? "⚡ فوری آمد (30 تا 60 منٹ)" : "⚡ Immediate (Within 30–60 mins)"}
+                        {isUrdu ? "فوری آمد (30 تا 60 منٹ)" : "Immediate (Within 30–60 mins)"}
                       </span>
                     </>
                   ) : (
@@ -346,7 +348,12 @@ export function CustomerJobDetailsModal({
                       <img
                         src={job.selectedOffer.worker.avatarUrl}
                         alt={job.selectedOffer.worker.name}
+                        loading="lazy"
+                        decoding="async"
                         className="w-full h-full object-cover"
+                        onError={(e) => {
+                          (e.currentTarget as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(job.selectedOffer?.worker.name || "Worker")}&background=0F766E&color=fff`;
+                        }}
                       />
                     </div>
                     <div>
@@ -391,7 +398,7 @@ export function CustomerJobDetailsModal({
                 {/* Direct Action to Live Tracking */}
                 <div className="pt-1">
                   <a
-                    href="/customer/visits"
+                    href={`/customer/job/${job.id}/tracking`}
                     className="w-full py-2.5 px-4 rounded-xl bg-[#0F766E] hover:bg-[#115E59] text-white font-bold text-xs sm:text-sm shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-98"
                   >
                     <Clock className="size-4" />
@@ -410,15 +417,6 @@ export function CustomerJobDetailsModal({
                 <p className="text-[11px] text-emerald-700/90">
                   {isUrdu ? "ادائیگی کی تصدیق ہو چکی ہے اور 5 روزہ وارنٹی فعال ہے۔" : "Payment has been settled and 5-Day Craftsmanship Warranty is active."}
                 </p>
-                <div className="pt-1">
-                  <a
-                    href={`/customer/job/${job.id}/complete`}
-                    className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs shadow-2xs transition-colors"
-                  >
-                    <span>{isUrdu ? "وارنٹی سرٹیفکیٹ اور رسید دیکھیں" : "View Warranty Certificate & Invoice"}</span>
-                    <ArrowRight className="size-3.5 rtl:rotate-180" />
-                  </a>
-                </div>
               </div>
             )}
           </div>

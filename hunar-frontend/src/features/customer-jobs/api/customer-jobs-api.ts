@@ -2,11 +2,25 @@ import { http } from "@/lib/api-client";
 import { extractTimeSlotFromVisitTime } from "@/lib/format";
 import type { CustomerJob, JobStatus, WorkerOffer, WorkerProfile } from "../types";
 
+export interface GetCustomerJobsOptions {
+  page?: number;
+  limit?: number;
+  status?: string;
+}
+
 /**
- * Fetch all jobs for the logged-in customer, enriched with offers & selected worker.
+ * Fetch jobs for the logged-in customer incrementally, enriched on-demand with worker/offers.
  */
-export async function getCustomerJobs(): Promise<CustomerJob[]> {
-  const res = await http.get<unknown>("/jobs/customer?limit=100");
+export async function getCustomerJobs(options?: GetCustomerJobsOptions | unknown): Promise<CustomerJob[]> {
+  const isOptionsObject =
+    typeof options === "object" &&
+    options !== null &&
+    ("page" in options || "limit" in options || "status" in options);
+  const opts = isOptionsObject ? (options as GetCustomerJobsOptions) : undefined;
+  const page = opts?.page ?? 1;
+  const limit = opts?.limit ?? 20;
+  const statusQuery = opts?.status ? `&status=${encodeURIComponent(opts.status)}` : "";
+  const res = await http.get<unknown>(`/jobs/customer?page=${page}&limit=${limit}${statusQuery}`);
   const rows: unknown[] = Array.isArray(res)
     ? res
     : (res as { data?: unknown[]; items?: unknown[] })?.data ??
@@ -15,18 +29,21 @@ export async function getCustomerJobs(): Promise<CustomerJob[]> {
 
   const backendJobs = rows.map(transformListRow);
 
+  // Only enrich jobs that have active offers or assigned workers
+  const jobsToEnrich = backendJobs.filter(
+    (j) =>
+      j.status === "visit_scheduled" ||
+      j.status === "completed" ||
+      (j.offerCount ?? 0) > 0
+  );
+
   await Promise.allSettled(
-    backendJobs.map(async (job) => {
+    jobsToEnrich.map(async (job) => {
       try {
         const detail = await getJobDetail(job.id);
         Object.assign(job, detail);
       } catch (err) {
         console.warn(`[getCustomerJobs] Detail fetch failed for ${job.id}:`, err);
-      }
-      try {
-        job.offers = await getJobOffers(job.id);
-      } catch (err) {
-        console.warn(`[getCustomerJobs] Offers fetch failed for ${job.id}:`, err);
       }
     })
   );
@@ -43,6 +60,14 @@ export async function getJobDetail(jobId: string): Promise<CustomerJob> {
     throw new Error(`JOB_NOT_FOUND: ${jobId}`);
   }
   const isAsap = res.urgency === "EMERGENCY" || res.urgency === "URGENT" || res.urgency === "HIGH";
+  let offers: WorkerOffer[] = (res.offers || []).map(transformBackendOffer);
+  if (offers.length === 0 && Number(res.offerCount ?? 0) > 0) {
+    try {
+      offers = await getJobOffers(jobId);
+    } catch (err) {
+      console.warn(`[getJobDetail] Offers fetch failed for ${jobId}:`, err);
+    }
+  }
   return {
     id: res.id,
     title: res.title,
@@ -59,10 +84,11 @@ export async function getJobDetail(jobId: string): Promise<CustomerJob> {
     preferredTimeSlot:
       res.preferredTimeSlot ||
       res.timeSlot ||
-      (isAsap ? "⚡ Immediate (Within 30–60 mins)" : extractTimeSlotFromVisitTime(res.preferredVisitTime)),
+      (isAsap ? "Immediate (Within 30–60 mins)" : extractTimeSlotFromVisitTime(res.preferredVisitTime)),
     status: mapJobStatus(res.status),
     createdAt: res.createdAt || new Date().toISOString(),
-    offers: (res.offers || []).map(transformBackendOffer),
+    offerCount: Number(res.offerCount ?? offers.length),
+    offers,
     selectedOffer: res.selectedWorker
       ? transformBackendOffer({
           id: res.selectedWorkerId,
@@ -82,16 +108,11 @@ export async function getJobDetail(jobId: string): Promise<CustomerJob> {
  * Fetch all bids/offers for a specific job
  */
 export async function getJobOffers(jobId: string): Promise<WorkerOffer[]> {
-  try {
-    const res = await http.get<any[]>(`/jobs/${jobId}/offers`);
-    if (!Array.isArray(res)) {
-      return [];
-    }
-    return res.map(transformBackendOffer);
-  } catch (err) {
-    console.warn(`[getJobOffers] Failed for ${jobId}:`, err);
+  const res = await http.get<any[]>(`/jobs/${jobId}/offers`);
+  if (!Array.isArray(res)) {
     return [];
   }
+  return res.map(transformBackendOffer);
 }
 
 /**
@@ -209,9 +230,10 @@ function transformListRow(row: any): CustomerJob {
     preferredTimeSlot:
       row.preferredTimeSlot ||
       row.timeSlot ||
-      (isAsap ? "⚡ Immediate (Within 30–60 mins)" : extractTimeSlotFromVisitTime(row.preferredVisitTime)),
+      (isAsap ? "Immediate (Within 30–60 mins)" : extractTimeSlotFromVisitTime(row.preferredVisitTime)),
     status: mapJobStatus(row.status),
     createdAt: row.createdAt || new Date().toISOString(),
+    offerCount: Number(row.offerCount ?? 0),
     offers: [],
     suggestedVisitCharge: row.suggestedVisitCharge != null ? Number(row.suggestedVisitCharge) : undefined,
   };
