@@ -15,6 +15,10 @@ const PHONE = {
   admin: '03120000000',
 };
 
+// Admin panel authenticates by email (see auth.service.ts loginAdmin), so the
+// seeded admin needs an email in addition to a phone number.
+const ADMIN_EMAIL = 'admin@hunar.pk';
+
 const SAMPLE_JOBS = [
   {
     title: 'Kitchen sink pipe leaking',
@@ -109,9 +113,10 @@ async function main(): Promise<void> {
   });
   await prisma.user.upsert({
     where: { phone: PHONE.admin },
-    update: {},
+    update: { email: ADMIN_EMAIL },
     create: {
       phone: PHONE.admin,
+      email: ADMIN_EMAIL,
       passwordHash: hash('admin123'),
       name: 'Test Admin',
       role: Role.ADMIN,
@@ -151,7 +156,7 @@ async function main(): Promise<void> {
   console.log('Test logins (TEMPORARY auth):');
   console.log(`  Worker   -> ${PHONE.worker} / worker123`);
   console.log(`  Customer -> ${PHONE.customer} / customer123`);
-  console.log(`  Admin    -> ${PHONE.admin} / admin123`);
+  console.log(`  Admin    -> ${ADMIN_EMAIL} / admin123 (panel login uses email)`);
 }
 
 main()
