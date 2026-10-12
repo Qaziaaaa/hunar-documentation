@@ -115,8 +115,7 @@ describe('JobsService — getAvailableJobs (worker relevance)', () => {
       },
       $queryRaw: jest.fn(async (sql) => {
         const rendered = Array.isArray(sql?.strings) ? sql.strings.join('') : String(sql);
-        expect(rendered).toContain('sr."categoryId" IN (');
-        expect(rendered).toContain('c."name" = ANY');
+        expect(rendered).toContain('sr."categoryId" = ANY');
         expect(rendered).toContain('"ServiceArea"');
         expect(rendered).toContain('sa."userId"');
         return [
@@ -293,6 +292,8 @@ describe('JobsService — getJobDetail location privacy', () => {
       jobOffer: {
         findMany: jest.fn(async () => job.offers ?? []),
       },
+      // Fire-and-forget VIEWING-status update in getJobDetail
+      $executeRaw: jest.fn(async () => 0),
     } as unknown as PrismaService;
     const eventBus = { emit: jest.fn() } as unknown as EventBusService;
     const realtime = { emitToRoom: jest.fn() } as unknown as RealtimeService;
