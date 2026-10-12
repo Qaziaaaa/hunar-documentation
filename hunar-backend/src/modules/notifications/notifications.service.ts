@@ -8,6 +8,7 @@ import {
   notificationTemplates,
   NotificationData,
 } from './notification.templates';
+import { haversineKm } from '../../common/helpers/geo.util';
 
 // Notification type identifiers mirror the tracked NotificationType.prisma enum 1:1 so the
 // listener can pass plain string literals. Keys are proven by notification.templates.ts.
@@ -69,11 +70,18 @@ export class NotificationsService {
     latitude: number,
     longitude: number,
   ): Promise<string[]> {
+    // Match skills stored as category IDs (onboarding) or display names
+    // (hand-seeded profiles) — otherwise a legacy worker never gets JOB_MATCHED.
+    const category = await this.prisma.serviceCategory.findUnique({
+      where: { id: categoryId },
+      select: { name: true },
+    });
+    const skillKeys = category?.name ? [categoryId, category.name] : [categoryId];
     const candidates = await this.prisma.workerProfile.findMany({
       where: {
         verificationStatus: WorkerVerificationStatus.APPROVED,
         isAvailable: true,
-        skills: { has: categoryId },
+        skills: { hasSome: skillKeys },
       },
       select: { userId: true, serviceRadiusKm: true },
     });
@@ -149,6 +157,7 @@ export class NotificationsService {
       type: NotificationTypeId;
       title: string;
       body: string;
+      data: Prisma.JsonValue | null;
       isRead: boolean;
       readAt: Date | null;
       createdAt: Date;
@@ -171,6 +180,7 @@ export class NotificationsService {
           type: true,
           title: true,
           body: true,
+          data: true,
           isRead: true,
           readAt: true,
           createdAt: true,
@@ -216,16 +226,4 @@ export class NotificationsService {
     });
     return { count: updated.count };
   }
-}
-
-/** Great-circle distance in kilometres (matcher used by findMatchingWorkerIds). */
-function haversineKm(lat1: number, lng1: number, lat2: number, lng2: number): number {
-  const R = 6371;
-  const toRad = (deg: number) => (deg * Math.PI) / 180;
-  const dLat = toRad(lat2 - lat1);
-  const dLng = toRad(lng2 - lng1);
-  const a =
-    Math.sin(dLat / 2) ** 2 +
-    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
-  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }

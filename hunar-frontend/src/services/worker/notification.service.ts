@@ -82,6 +82,13 @@ const DEFAULT_PREFERENCES: NotificationPreferences = {
     earnings_recorded: true,
     new_review: true,
     verification_result: true,
+    new_offer: true,
+    visit_scheduled: true,
+    inspection_submitted: true,
+    repair_estimate_ready: true,
+    repair_approved: true,
+    payment_confirmed: true,
+    job_completed: true,
   },
 };
 

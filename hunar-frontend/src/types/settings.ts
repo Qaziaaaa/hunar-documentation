@@ -3,7 +3,7 @@ import type { NotificationType } from "./notification";
 export type NotificationChannelType = "system" | NotificationType;
 
 export interface NotificationPreferences {
-  enabled: Record<NotificationChannelType, boolean>;
+  enabled: Partial<Record<NotificationChannelType, boolean>>;
 }
 
 export interface ChangePasswordInput {

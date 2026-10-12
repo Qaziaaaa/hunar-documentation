@@ -10,7 +10,14 @@ export type NotificationType =
   | "commission_verified"
   | "earnings_recorded"
   | "new_review"
-  | "verification_result";
+  | "verification_result"
+  | "new_offer"
+  | "visit_scheduled"
+  | "inspection_submitted"
+  | "repair_estimate_ready"
+  | "repair_approved"
+  | "payment_confirmed"
+  | "job_completed";
 
 export interface AppNotification {
   id: string;
