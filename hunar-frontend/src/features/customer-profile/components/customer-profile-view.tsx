@@ -1,7 +1,7 @@
 "use client";
 
 import { useLocale, useTranslations } from "next-intl";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   AlertCircle,
   Bell,
@@ -14,6 +14,8 @@ import {
   Star,
   User,
 } from "lucide-react";
+import { ErrorState } from "@/components/shared/error-state";
+import { LoadingState } from "@/components/shared/loading-state";
 import { PersonalProfileTab } from "./personal-profile-tab";
 import { SavedAddressesTab } from "./saved-addresses-tab";
 import { NotificationsTab } from "./notifications-tab";
@@ -72,6 +74,8 @@ export function CustomerProfileView() {
   const t = useTranslations("CustomerPortal.Profile");
 
   const [profile, setProfile] = useState<CustomerProfileData>(initialEmptyProfile);
+  const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<
     "personal" | "addresses" | "notifications" | "security"
   >("personal");
@@ -80,26 +84,37 @@ export function CustomerProfileView() {
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const loadProfile = useCallback(() => {
+    setIsLoading(true);
+    setLoadError(null);
+    getCustomerProfile()
+      .then((data) => {
+        setProfile({
+          ...data,
+          savedAddresses: getSavedAddresses(),
+        });
+      })
+      .catch((err) => {
+        console.warn("Failed to load customer profile:", err);
+        setLoadError(
+          err instanceof Error && err.message !== "UNAUTHORIZED"
+            ? err.message
+            : "Failed to load profile"
+        );
+      })
+      .finally(() => {
+        setIsLoading(false);
+      });
+  }, []);
+
   useEffect(() => {
     // Sync client-side saved addresses after hydration
     setProfile((prev) => ({
       ...prev,
       savedAddresses: getSavedAddresses(),
     }));
-
-    getCustomerProfile()
-      .then((data) => {
-        if (data) {
-          setProfile((prev) => ({
-            ...data,
-            savedAddresses: getSavedAddresses(),
-          }));
-        }
-      })
-      .catch((err) => {
-        console.warn("Failed to load customer profile:", err);
-      });
-  }, []);
+    loadProfile();
+  }, [loadProfile]);
 
   const showToast = (msg: string) => {
     setSuccessToast(msg);
@@ -167,22 +182,12 @@ export function CustomerProfileView() {
           : "Profile picture updated successfully!"
       );
     } catch (err) {
-      console.warn("Backend avatar upload failed, falling back to local preview:", err);
-      try {
-        const previewUrl = URL.createObjectURL(file);
-        await handleUpdateProfile({ avatarUrl: previewUrl });
-        showToast(
-          isUrdu
-            ? "پروفائل تصویر کامیابی سے اپ ڈیٹ ہو گئی!"
-            : "Profile picture updated!"
-        );
-      } catch {
-        showError(
-          isUrdu
-            ? "تصویر اپ لوڈ کرنے میں خرابی پیش آئی"
-            : "Failed to upload profile picture"
-        );
-      }
+      console.warn("Avatar upload failed:", err);
+      showError(
+        isUrdu
+          ? "تصویر اپ لوڈ کرنے میں خرابی پیش آئی"
+          : "Failed to upload profile picture. Please try again."
+      );
     } finally {
       setIsUploadingAvatar(false);
       if (fileInputRef.current) fileInputRef.current.value = "";
@@ -240,6 +245,28 @@ export function CustomerProfileView() {
     }));
   };
 
+  if (isLoading) {
+    return (
+      <LoadingState
+        label={isUrdu ? "پروفائل لوڈ کی جا رہی ہے..." : "Loading profile..."}
+      />
+    );
+  }
+
+  if (loadError) {
+    return (
+      <ErrorState
+        title={isUrdu ? "پروفائل لوڈ کرنے میں ناکامی" : "Unable to load profile"}
+        description={
+          isUrdu
+            ? "براہ کرم اپنا نیٹ ورک کنکشن چیک کریں اور دوبارہ کوشش کریں۔"
+            : "Please check your network connection and try again."
+        }
+        onRetry={loadProfile}
+      />
+    );
+  }
+
   return (
     <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-6 pb-16 animate-in fade-in-50 duration-300 text-[#123B5D]">
       {/* Toast Notification */}
@@ -293,6 +320,9 @@ export function CustomerProfileView() {
                   <img
                     src={profile.avatarUrl}
                     alt={profile.fullName || (isUrdu ? "کسٹمر" : "Customer")}
+                    width={80}
+                    height={80}
+                    decoding="async"
                     className="size-full object-cover"
                     onError={(e) => {
                       (e.currentTarget as HTMLElement).style.display = "none";

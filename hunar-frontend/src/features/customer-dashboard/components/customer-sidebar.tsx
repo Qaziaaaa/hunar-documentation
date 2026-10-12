@@ -62,7 +62,10 @@ export function CustomerSidebar({ isOpen, onClose }: CustomerSidebarProps) {
       href: "/customer/dashboard",
       icon: Grid,
       badge: null,
-      isActive: pathname === "/customer/dashboard" || pathname.includes("/customer/dashboard"),
+      isActive:
+        pathname === "/customer" ||
+        pathname === "/customer/dashboard" ||
+        pathname.includes("/customer/dashboard"),
     },
     {
       label: locale === "ur" ? "میری بکنگز" : "My Bookings",

@@ -7,8 +7,22 @@ import { usePathname } from "@/i18n/navigation";
 import { CustomerBottomNav } from "@/features/customer-dashboard/components/customer-bottom-nav";
 import { CustomerHeader } from "@/features/customer-dashboard/components/customer-header";
 import { CustomerSidebar } from "@/features/customer-dashboard/components/customer-sidebar";
-import { CustomerArrivalOtpModal } from "@/features/customer-visits/components/customer-arrival-otp-modal";
-import { CustomerRepairQuoteModal } from "@/features/customer-jobs/components/customer-repair-quote-modal";
+import dynamic from "next/dynamic";
+
+const CustomerArrivalOtpModal = dynamic(
+  () =>
+    import(
+      "@/features/customer-visits/components/customer-arrival-otp-modal"
+    ).then((m) => m.CustomerArrivalOtpModal),
+  { ssr: false }
+);
+const CustomerRepairQuoteModal = dynamic(
+  () =>
+    import(
+      "@/features/customer-jobs/components/customer-repair-quote-modal"
+    ).then((m) => m.CustomerRepairQuoteModal),
+  { ssr: false }
+);
 import {
   customerQuoteService,
   type PendingRepairQuote,
@@ -135,7 +149,7 @@ export default function CustomerLayout({
           </div>
 
           {/* Page Content */}
-          <main className={`w-full flex-1 bg-white flex flex-col ${isChat ? "overflow-hidden min-h-0" : ""}`}>
+          <main className={`w-full flex-1 bg-white flex flex-col items-stretch ${isChat ? "overflow-hidden min-h-0" : ""}`}>
             {children}
           </main>
         </div>
@@ -151,22 +165,26 @@ export default function CustomerLayout({
           </div>
         )}
 
-        {/* Customer Doorstep Arrival OTP Modal */}
-        <CustomerArrivalOtpModal
-          isOpen={isArrivalOtpOpen}
-          session={arrivalSession}
-          onSuccess={handleOtpVerified}
-          onClose={() => setIsArrivalOtpOpen(false)}
-          isUrdu={isUrdu}
-        />
+        {/* Customer Doorstep Arrival OTP Modal - Loaded dynamically on demand */}
+        {isArrivalOtpOpen && (
+          <CustomerArrivalOtpModal
+            isOpen={isArrivalOtpOpen}
+            session={arrivalSession}
+            onSuccess={handleOtpVerified}
+            onClose={() => setIsArrivalOtpOpen(false)}
+            isUrdu={isUrdu}
+          />
+        )}
 
-        {/* Mandatory Customer Repair Quote Approval Modal */}
-        <CustomerRepairQuoteModal
-          isOpen={isQuoteModalOpen}
-          quote={activeQuote}
-          onDecision={handleQuoteDecision}
-          isUrdu={isUrdu}
-        />
+        {/* Mandatory Customer Repair Quote Approval Modal - Loaded dynamically on demand */}
+        {isQuoteModalOpen && (
+          <CustomerRepairQuoteModal
+            isOpen={isQuoteModalOpen}
+            quote={activeQuote}
+            onDecision={handleQuoteDecision}
+            isUrdu={isUrdu}
+          />
+        )}
       </div>
     </CustomerSearchProvider>
   );
