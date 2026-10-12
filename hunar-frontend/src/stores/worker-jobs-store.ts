@@ -20,8 +20,9 @@ import {
 import { cancelWorkerJob } from "@/services/worker/cancellation.service";
 import { getWalletSummary } from "@/services/worker/earnings.service";
 import { getWorkerProfile } from "@/services/worker/profile.service";
-import { http } from "@/lib/api-client";
-import type { Job } from "@/types/job";
+import { http, getStoredUser } from "@/lib/api-client";
+import { parseDurationToMinutes } from "@/lib/duration";
+import { getMaxNegotiationRounds } from "@/lib/negotiation";
 
 export interface WorkerState {
   jobs: JobRequest[];
@@ -34,6 +35,8 @@ export interface WorkerState {
   workerSkills: string[];
   workerArea: string;
   hydrated: boolean;
+  status: "idle" | "loading" | "ready" | "error";
+  error: string | null;
 }
 
 let socketListenersInitialized = false;
@@ -162,6 +165,8 @@ let globalState: WorkerState = {
   workerSkills: [],
   workerArea: "",
   hydrated: false,
+  status: "idle",
+  error: null,
 };
 
 const visitIdByJob = new Map<string, string>();
@@ -183,19 +188,35 @@ export const workerStore = {
     return globalState;
   },
 
-  async hydrate() {
-    if (globalState.hydrated) {
+  async hydrate(options: { force?: boolean } = {}) {
+    if (globalState.hydrated && !options.force) {
       return;
     }
+    patch({ status: "loading", error: null });
     try {
-      const [nearby, active, history, offers, wallet, profile] = await Promise.all([
-        listNearbyJobs().catch(() => [] as Job[]),
-        listWorkerJobs().catch(() => [] as Job[]),
-        listWorkerHistoryJobs().catch(() => [] as Job[]),
-        listMyOffers().catch(() => [] as VisitOffer[]),
-        getWalletSummary().catch(() => null),
-        getWorkerProfile().catch(() => null),
+      const settled = await Promise.allSettled([
+        listNearbyJobs(),
+        listWorkerJobs(),
+        listWorkerHistoryJobs(),
+        listMyOffers(),
+        getWalletSummary(),
+        getWorkerProfile(),
       ]);
+
+      const [nearbyRes, activeRes, historyRes, offersRes, walletRes, profileRes] =
+        settled;
+      // Only the job-side calls gate the feed; wallet/profile failures are
+      // best-effort here (their dedicated pages surface their own errors).
+      const rejection = [nearbyRes, activeRes, historyRes, offersRes].find(
+        (r) => r.status === "rejected"
+      ) as PromiseRejectedResult | undefined;
+
+      const nearby = nearbyRes.status === "fulfilled" ? nearbyRes.value : [];
+      const active = activeRes.status === "fulfilled" ? activeRes.value : [];
+      const history = historyRes.status === "fulfilled" ? historyRes.value : [];
+      const offers = offersRes.status === "fulfilled" ? offersRes.value : [];
+      const wallet = walletRes.status === "fulfilled" ? walletRes.value : null;
+      const profile = profileRes.status === "fulfilled" ? profileRes.value : null;
 
       const seen = new Set<string>();
       const jobs: JobRequest[] = [];
@@ -227,13 +248,26 @@ export const workerStore = {
         workerSkills,
         workerArea,
         hydrated: true,
+        status: rejection ? "error" : "ready",
+        error: rejection
+          ? rejection.reason instanceof Error && rejection.reason.message
+            ? rejection.reason.message
+            : "Could not load your jobs. Please try again."
+          : null,
       });
 
       await this.backfillResourceIds();
       initWorkerSocketListeners();
     } catch (err) {
       console.error("[workerStore] hydrate failed:", err);
-      patch({ hydrated: true });
+      patch({
+        hydrated: true,
+        status: "error",
+        error:
+          err instanceof Error && err.message
+            ? err.message
+            : "Could not load your jobs. Please try again.",
+      });
     }
   },
 
@@ -295,11 +329,15 @@ export const workerStore = {
     const commission = Math.round(visitCharge * 0.1); // 10% platform commission
     const net = visitCharge - commission;
 
+    const user = getStoredUser();
+    const workerId = user?.id || "worker-me";
+    const workerName = user?.name || "Technician";
+
     const newOffer: VisitOffer = {
       id: `off-${Date.now()}`,
       jobId,
-      workerId: "worker-me",
-      workerName: "Me",
+      workerId,
+      workerName,
       visitCharge,
       platformCommission: commission,
       workerNetEarnings: net,
@@ -307,7 +345,7 @@ export const workerStore = {
       status: "sent",
       createdAt: new Date().toISOString(),
       currentRound: 1,
-      maxRounds: 3,
+      maxRounds: getMaxNegotiationRounds(),
       counterHistory: [
         {
           round: 1,
@@ -646,7 +684,7 @@ export const workerStore = {
           repairPlan: report.repairPlan,
           repairEstimate: report.repairPriceEstimate,
           inspectionPhotos: report.photos,
-          estimatedRepairTimeMin: 60,
+          estimatedRepairTimeMin: parseDurationToMinutes(report.estimatedRepairTime),
         });
 
         const repair = await http.post(`/visits/${targetId}/estimate`, {
@@ -788,12 +826,12 @@ export const workerStore = {
     });
   },
 
-  completeJob(jobId: string, repairCharge: number = 1500) {
+  completeJob(jobId: string, repairCharge: number = 0) {
     const job = globalState.jobs.find((j) => j.id === jobId);
     const offer = globalState.offers[jobId];
     const visitFee = offer?.agreedVisitCharge ?? offer?.visitCharge ?? job?.visitCharge ?? (job as any)?.suggestedVisitCharge ?? 0;
     const isDeclined = job?.status === "repair_declined" || repairCharge === 0;
-    const finalRepairCharge = isDeclined ? 0 : repairCharge;
+    const finalRepairCharge = isDeclined ? 0 : Math.max(0, repairCharge);
     const gross = visitFee + finalRepairCharge;
     const commission = Math.round(visitFee * 0.1); // 10% of Visit Fee only
     const net = gross - commission;

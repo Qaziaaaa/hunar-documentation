@@ -1,5 +1,6 @@
 import type { Job, Visit, JobCategory } from "@/types/job";
 import type { VisitOffer } from "@/types/offer";
+import { getMaxNegotiationRounds } from "@/lib/negotiation";
 import { isoDaysAgo, isoHoursAgo } from "./utils";
 
 export const MOCK_WORKER_ID = "worker-demo-1";
@@ -224,7 +225,7 @@ export const mockOffers: VisitOffer[] = [
     status: "accepted",
     createdAt: isoHoursAgo(20),
     currentRound: 1,
-    maxRounds: 3,
+    maxRounds: getMaxNegotiationRounds(),
     counterHistory: [],
     agreedVisitCharge: 800,
   },
@@ -240,7 +241,7 @@ export const mockOffers: VisitOffer[] = [
     status: "accepted",
     createdAt: isoHoursAgo(5),
     currentRound: 1,
-    maxRounds: 3,
+    maxRounds: getMaxNegotiationRounds(),
     counterHistory: [],
     agreedVisitCharge: 450,
   },

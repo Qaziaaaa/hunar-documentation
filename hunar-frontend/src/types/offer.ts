@@ -26,7 +26,7 @@ export interface VisitOffer {
   status: OfferLifecycleStatus;
   createdAt: string;
   currentRound: number;
-  maxRounds: number; // default: 3 rounds
+  maxRounds: number; // default: HUNAR_CONFIG.defaultMaxNegotiationRounds
   counterHistory: CounterHistoryItem[];
   customerCounterAmount?: number;
   customerCounterMessage?: string;

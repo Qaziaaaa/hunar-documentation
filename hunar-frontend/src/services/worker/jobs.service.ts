@@ -110,12 +110,27 @@ function mapBackendJob(row: BackendJobRow): Job {
   };
 }
 
-export async function listWorkerJobs(): Promise<Job[]> {
+export interface GetWorkerJobsOptions {
+  page?: number;
+  limit?: number;
+}
+
+export async function listWorkerJobs(options?: GetWorkerJobsOptions | unknown): Promise<Job[]> {
   if (!getAccessToken()) {
     return [];
   }
   try {
-    const res = await http.get<any>("/workers/me/jobs/active");
+    const params = new URLSearchParams();
+    if (typeof options === "object" && options !== null) {
+      if ("page" in options && typeof (options as any).page === "number") {
+        params.set("page", String((options as any).page));
+      }
+      if ("limit" in options && typeof (options as any).limit === "number") {
+        params.set("limit", String((options as any).limit));
+      }
+    }
+    const queryStr = params.toString() ? `?${params.toString()}` : "";
+    const res = await http.get<any>(`/workers/me/jobs/active${queryStr}`);
     const items: BackendJobRow[] = Array.isArray(res)
       ? res
       : (res as any)?.data ?? (res as any)?.items ?? [];
@@ -126,12 +141,22 @@ export async function listWorkerJobs(): Promise<Job[]> {
   }
 }
 
-export async function listWorkerHistoryJobs(): Promise<Job[]> {
+export async function listWorkerHistoryJobs(options?: GetWorkerJobsOptions | unknown): Promise<Job[]> {
   if (!getAccessToken()) {
     return [];
   }
   try {
-    const res = await http.get<any>("/workers/me/jobs/history");
+    const params = new URLSearchParams();
+    if (typeof options === "object" && options !== null) {
+      if ("page" in options && typeof (options as any).page === "number") {
+        params.set("page", String((options as any).page));
+      }
+      if ("limit" in options && typeof (options as any).limit === "number") {
+        params.set("limit", String((options as any).limit));
+      }
+    }
+    const queryStr = params.toString() ? `?${params.toString()}` : "";
+    const res = await http.get<any>(`/workers/me/jobs/history${queryStr}`);
     const items: BackendJobRow[] = Array.isArray(res)
       ? res
       : (res as any)?.data ?? (res as any)?.items ?? [];
