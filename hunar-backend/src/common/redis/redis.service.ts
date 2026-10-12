@@ -2,7 +2,13 @@ import { Inject, Injectable, OnModuleDestroy } from '@nestjs/common';
 import { REDIS_PROVIDER } from './redis.constants';
 
 export interface RedisClient {
-  set(key: string, value: string, mode?: string, ttlSeconds?: number, nx?: string): Promise<'OK' | null>;
+  set(
+    key: string,
+    value: string,
+    mode?: string,
+    ttlSeconds?: number,
+    nx?: string,
+  ): Promise<'OK' | null>;
   get(key: string): Promise<string | null>;
   del(key: string): Promise<number>;
   exists(key: string): Promise<number>;
@@ -35,6 +41,13 @@ export class RedisService implements OnModuleDestroy {
 
   async del(key: string): Promise<void> {
     await this.client.del(key);
+  }
+
+  async delPattern(pattern: string): Promise<number> {
+    if (typeof (this.client as any).delPattern === 'function') {
+      return (this.client as any).delPattern(pattern);
+    }
+    return 0;
   }
 
   async exists(key: string): Promise<boolean> {
