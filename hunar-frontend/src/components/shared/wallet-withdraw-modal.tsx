@@ -93,7 +93,7 @@ export function WalletWithdrawModal({
             Withdraw Earnings
           </DialogTitle>
           <DialogDescription className="text-xs text-muted-foreground">
-            Withdraw your HUNAR earnings directly to EasyPaisa, JazzCash, or Bank IBAN (Min Rs. 100).
+            Withdraw your WorkerFIX earnings directly to EasyPaisa, JazzCash, or Bank IBAN (Min Rs. 100).
           </DialogDescription>
         </DialogHeader>
 

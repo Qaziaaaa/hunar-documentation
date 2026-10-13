@@ -1,6 +1,4 @@
 export * from "./types";
-export * from "./mock-data";
-export * from "./mock-job-requests";
 export * from "./components/worker-dashboard-shell";
 export * from "./components/dashboard-header";
 export * from "./components/dashboard-sidebar";

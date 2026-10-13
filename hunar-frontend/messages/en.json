@@ -345,7 +345,7 @@
     },
     "earnings": {
       "title": "Earnings",
-      "description": "Your earnings, HUNAR commission and payment status.",
+      "description": "Your earnings, WorkerFIX commission and payment status.",
       "totalEarned": "Total earned",
       "totalEarnedHint": "Gross from completed jobs",
       "totalCommission": "Total commission",
@@ -363,7 +363,7 @@
       "paymentMethodValue": "Bank transfer",
       "afterPaymentTitle": "After paying",
       "whatsappInstruction": "Send the payment screenshot on WhatsApp to {number}.",
-      "whatsappMessageExample": "\"After paying your HUNAR commission, send the payment screenshot on WhatsApp to {number}.\"",
+      "whatsappMessageExample": "\"After paying your WorkerFIX commission, send the payment screenshot on WhatsApp to {number}.\"",
       "transactionsTitle": "Transactions",
       "transactionsDescription": "A chronological record of your commission payments.",
       "colJob": "Job #",

@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useRouter, usePathname } from "@/i18n/navigation";
 import { Briefcase } from "lucide-react";
+import { ErrorState } from "@/components/shared/error-state";
 import { http, getAccessToken, getStoredUser, clearTokens } from "@/lib/api-client";
 import { connectSocket, disconnectSocket } from "@/lib/socket";
 import { timeAgo } from "@/lib/format";
@@ -15,13 +16,52 @@ import {
 import type { AppNotification } from "@/types/notification";
 import { DashboardHeader } from "./dashboard-header";
 import { DashboardSidebar } from "./dashboard-sidebar";
-import { JobRequestFeed } from "./job-request-feed";
 import { MobileNavBar } from "./mobile-nav-bar";
-import { WorkerJobsHub } from "@/features/jobs/components/worker-jobs-hub";
-import { WorkerEarningsContent } from "@/app/[locale]/(worker)/worker/earnings/page";
-import { WalletContent } from "@/app/[locale]/(worker)/worker/wallet/page";
+import { JobRequestFeed } from "./job-request-feed";
+import dynamic from "next/dynamic";
+
+const WorkerJobsHub = dynamic(
+  () => import("@/features/jobs/components/worker-jobs-hub").then((m) => m.WorkerJobsHub),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="w-full h-64 bg-slate-50 border border-slate-200/60 rounded-3xl animate-pulse flex items-center justify-center text-slate-400 text-xs font-semibold">
+        Loading jobs...
+      </div>
+    ),
+  }
+);
+const WorkerEarningsContent = dynamic(
+  () =>
+    import("@/app/[locale]/(worker)/worker/earnings/page").then(
+      (m) => m.WorkerEarningsContent
+    ),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="w-full h-64 bg-slate-50 border border-slate-200/60 rounded-3xl animate-pulse flex items-center justify-center text-slate-400 text-xs font-semibold">
+        Loading earnings...
+      </div>
+    ),
+  }
+);
+const WalletContent = dynamic(
+  () =>
+    import("@/app/[locale]/(worker)/worker/wallet/page").then(
+      (m) => m.WalletContent
+    ),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="w-full h-64 bg-slate-50 border border-slate-200/60 rounded-3xl animate-pulse flex items-center justify-center text-slate-400 text-xs font-semibold">
+        Loading wallet...
+      </div>
+    ),
+  }
+);
 import { getWorkerEarnings } from "@/services/worker/earnings.service";
 import { listWorkerJobs } from "@/services/worker/jobs.service";
+import { isUpcomingRawStatus } from "@/stores/worker-jobs-adapter";
 import type {
   DashboardTab,
   WorkerDashboardProfile,
@@ -178,11 +218,15 @@ export function WorkerDashboardShell({
   const [notifications, setNotifications] = useState<DashboardNotification[]>([]);
 
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+  const [syncError, setSyncError] = useState<string | null>(null);
+  const [hasCachedProfile, setHasCachedProfile] = useState<boolean>(false);
+  const [upcomingJobsCount, setUpcomingJobsCount] = useState<number>(0);
 
   // Sync profile & online status from client localStorage on mount to prevent hydration mismatch
   useEffect(() => {
     const initial = loadInitialProfile();
     setProfile(initial.profile);
+    setHasCachedProfile(initial.isLoaded);
     setIsLoadingProfile(!initial.isLoaded);
   }, []);
 
@@ -231,18 +275,41 @@ export function WorkerDashboardShell({
     }
   }, [router]);
 
-  // Sync profile & online status from live backend on mount
-  useEffect(() => {
-    async function syncBackendProfile() {
-      if (!getAccessToken()) return;
-      try {
-        const [raw, earningsData, myActiveJobs] = await Promise.all([
-          http.get<any>("/users/worker/me").catch(() => null),
-          getWorkerEarnings().catch(() => null),
-          listWorkerJobs().catch(() => []),
-        ]);
-        const data = raw?.data ?? raw;
-        const liveActiveJobs = Array.isArray(myActiveJobs) ? myActiveJobs.length : undefined;
+  // Sync profile & online status from live backend
+  const syncBackendProfile = useCallback(async () => {
+    if (!getAccessToken()) return;
+    setSyncError(null);
+    try {
+      const [profileRes, earningsRes, jobsRes] = await Promise.allSettled([
+        http.get<any>("/users/worker/me"),
+        getWorkerEarnings(),
+        listWorkerJobs(),
+      ]);
+
+      const rejection = [profileRes, earningsRes, jobsRes].find(
+        (r) => r.status === "rejected"
+      ) as PromiseRejectedResult | undefined;
+      if (rejection) {
+        const reason = rejection.reason;
+        setSyncError(
+          reason instanceof Error && reason.message
+            ? reason.message
+            : "Could not refresh your data. Please try again."
+        );
+      }
+
+      const raw = profileRes.status === "fulfilled" ? profileRes.value : null;
+      const earningsData =
+        earningsRes.status === "fulfilled" ? earningsRes.value : null;
+      const myActiveJobs = jobsRes.status === "fulfilled" ? jobsRes.value : [];
+      const data = raw?.data ?? raw;
+      const liveActiveJobs = Array.isArray(myActiveJobs) ? myActiveJobs.length : undefined;
+      const liveUpcomingJobs = Array.isArray(myActiveJobs)
+        ? myActiveJobs.filter((j) => isUpcomingRawStatus(j.status)).length
+        : undefined;
+      if (liveUpcomingJobs !== undefined) {
+        setUpcomingJobsCount(liveUpcomingJobs);
+      }
 
         if (data?.user) {
           const wp = data.workerProfile;
@@ -318,14 +385,24 @@ export function WorkerDashboardShell({
             return nextProfile;
           });
         }
-      } catch (err) {
-        console.warn("[WorkerDashboardShell] Syncing live profile:", err);
-      } finally {
-        setIsLoadingProfile(false);
-      }
+    } catch (err) {
+      console.warn("[WorkerDashboardShell] Syncing live profile:", err);
+      setSyncError(
+        err instanceof Error && err.message
+          ? err.message
+          : "Could not refresh your data. Please try again."
+      );
+    } finally {
+      setIsLoadingProfile(false);
     }
-    syncBackendProfile();
   }, []);
+
+  useEffect(() => {
+    const id = window.setTimeout(() => {
+      void syncBackendProfile();
+    }, 0);
+    return () => window.clearTimeout(id);
+  }, [syncBackendProfile]);
 
   const handleLogout = async () => {
     try {
@@ -412,6 +489,17 @@ export function WorkerDashboardShell({
     }
 
     if (activeTab === "dashboard") {
+      if (syncError && !hasCachedProfile) {
+        return (
+          <div className="max-w-7xl mx-auto w-full">
+            <ErrorState
+              title="Unable to load your dashboard"
+              description={syncError}
+              onRetry={() => void syncBackendProfile()}
+            />
+          </div>
+        );
+      }
       return (
         <div className="space-y-4 max-w-7xl mx-auto w-full animate-in fade-in duration-200">
           <JobRequestFeed
@@ -481,6 +569,25 @@ export function WorkerDashboardShell({
 
         {/* Main Content Area */}
         <main className="flex-1 bg-white px-3 sm:px-6 py-4 sm:py-6">
+          {syncError && hasCachedProfile && (
+            <div className="mb-4 max-w-7xl mx-auto w-full rounded-2xl border border-amber-200 bg-amber-50/80 p-3.5 text-xs text-amber-900 flex items-center justify-between gap-3">
+              <span>
+                <strong>
+                  {activeTab === "dashboard"
+                    ? "Showing saved data."
+                    : "Could not refresh your data."}
+                </strong>{" "}
+                {syncError}
+              </span>
+              <button
+                type="button"
+                onClick={() => void syncBackendProfile()}
+                className="shrink-0 font-bold text-[#0F8B8D] hover:underline cursor-pointer"
+              >
+                Retry
+              </button>
+            </div>
+          )}
           {renderMainContent()}
         </main>
       </div>
@@ -489,7 +596,7 @@ export function WorkerDashboardShell({
       <MobileNavBar
         activeTab={activeTab}
         onSelectTab={handleSelectTab}
-        activeJobsCount={profile.activeJobsCount}
+        upcomingJobsCount={upcomingJobsCount}
       />
     </div>
   );

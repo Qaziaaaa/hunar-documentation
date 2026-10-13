@@ -10,8 +10,18 @@ import { connectSocket } from "@/lib/socket";
 import { http } from "@/lib/api-client";
 import { getWorkerProfile } from "@/services/worker/profile.service";
 import { workerStore } from "@/stores/worker-jobs-store";
-import { WorkerChatModal } from "./worker-chat-modal";
-import { WorkerArrivalOtpModal } from "./worker-arrival-otp-modal";
+import { HUNAR_CONFIG } from "@/lib/config";
+import dynamic from "next/dynamic";
+
+const WorkerChatModal = dynamic(
+  () => import("./worker-chat-modal").then((mod) => mod.WorkerChatModal),
+  { ssr: false }
+);
+
+const WorkerArrivalOtpModal = dynamic(
+  () => import("./worker-arrival-otp-modal").then((mod) => mod.WorkerArrivalOtpModal),
+  { ssr: false }
+);
 import {
   arrivalService,
   SUCCESS_VERIFICATION_MESSAGE,
@@ -38,22 +48,6 @@ interface WorkerVisitTrackingViewProps {
   offer?: VisitOffer;
   onArrived?: () => void;
 }
-
-// Peshawar high-detail road route points
-const PESHAWAR_ROAD_POINTS: [number, number][] = [
-  [34.004869, 71.511284],
-  [34.005201, 71.514086],
-  [34.006157, 71.51861],
-  [34.006888, 71.524865],
-  [34.007397, 71.527823],
-  [34.008288, 71.531717],
-  [34.008853, 71.534727],
-  [34.009398, 71.535448],
-  [34.010809, 71.536774],
-  [34.011449, 71.536697],
-  [34.0145, 71.5358],
-  [34.015, 71.535],
-];
 
 function calculateHaversineKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
   const R = 6371; // km
@@ -97,9 +91,7 @@ export function WorkerVisitTrackingView({
   const [showWorkerOtpModal, setShowWorkerOtpModal] = useState(false);
   const [arrivedAtTime, setArrivedAtTime] = useState<number>(Date.now());
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
-  const [routePoints, setRoutePoints] = useState<[number, number][]>(
-    PESHAWAR_ROAD_POINTS
-  );
+  const [routePoints, setRoutePoints] = useState<[number, number][]>([]);
 
   // Customer / Job exact coordinates from job location
   const customerLat = job.location.coordinates?.lat || 0;
@@ -193,6 +185,20 @@ export function WorkerVisitTrackingView({
     let isCancelled = false;
 
     async function fetchRoadRoute() {
+      // Guard against unassigned / privacy-sanitized (0,0) coordinates
+      if (
+        !customerLat ||
+        !customerLng ||
+        (customerLat === 0 && customerLng === 0) ||
+        !workerLat ||
+        !workerLng ||
+        (workerLat === 0 && workerLng === 0)
+      ) {
+        setLiveDistanceKm(null);
+        setLiveEtaMinutes(null);
+        return;
+      }
+
       // Calculate direct Haversine distance in km as baseline
       const directKm = calculateHaversineKm(workerLat, workerLng, customerLat, customerLng);
 
@@ -221,7 +227,12 @@ export function WorkerVisitTrackingView({
         }
       } catch {
         if (!isCancelled) {
-          setRoutePoints(PESHAWAR_ROAD_POINTS);
+          // No road route available: fall back to a straight line between the
+          // actual worker and customer coordinates (never a fabricated route).
+          setRoutePoints([
+            [workerLat, workerLng],
+            [customerLat, customerLng],
+          ]);
         }
       }
 
@@ -774,9 +785,15 @@ export function WorkerVisitTrackingView({
                 <img
                   src={job.customer.avatarUrl}
                   alt={job.customer.name}
+                  loading="lazy"
+                  decoding="async"
                   className="size-full object-cover"
+                  onError={(e) => {
+                    (e.currentTarget as HTMLElement).style.display = "none";
+                  }}
                 />
-              ) : (
+              ) : null}
+              {(!job.customer.avatarUrl) && (
                 job.customer.name.slice(0, 2).toUpperCase()
               )}
             </div>
@@ -899,9 +916,15 @@ export function WorkerVisitTrackingView({
                     <img
                       src={job.customer.avatarUrl}
                       alt={job.customer.name}
+                      loading="lazy"
+                      decoding="async"
                       className="size-full object-cover"
+                      onError={(e) => {
+                        (e.currentTarget as HTMLElement).style.display = "none";
+                      }}
                     />
-                  ) : (
+                  ) : null}
+                  {(!job.customer.avatarUrl) && (
                     job.customer.name.slice(0, 2).toUpperCase()
                   )}
                 </div>
@@ -1020,15 +1043,17 @@ export function WorkerVisitTrackingView({
       {/* ======================================================== */}
 
       {/* Customer-Matched Worker Chat Modal */}
-      <WorkerChatModal
-        job={job}
-        isOpen={showChatModal}
-        onClose={() => setShowChatModal(false)}
-        onCallCustomer={() => {
-          setShowChatModal(false);
-          setShowCallModal(true);
-        }}
-      />
+      {showChatModal && (
+        <WorkerChatModal
+          job={job}
+          isOpen={showChatModal}
+          onClose={() => setShowChatModal(false)}
+          onCallCustomer={() => {
+            setShowChatModal(false);
+            setShowCallModal(true);
+          }}
+        />
+      )}
 
       {/* Call Customer Direct Modal */}
       {showCallModal && (
@@ -1164,15 +1189,15 @@ export function WorkerVisitTrackingView({
 
             <div className="space-y-2">
               <a
-                href="tel:0800-WORKERFIX"
+                href={`tel:${HUNAR_CONFIG.rawSupportPhone}`}
                 className="w-full py-3 px-4 rounded-xl bg-[#0F8B8D] hover:bg-[#0B7F74] text-white text-xs font-extrabold flex items-center justify-center gap-2 shadow-sm transition-all"
               >
                 <PhoneCall className="size-4" />
-                <span>{isUrdu ? "ہیلپ لائن پر کال کریں" : "Call Helpline (0800-WORKERFIX)"}</span>
+                <span>{isUrdu ? "ہیلپ لائن پر کال کریں" : `Call Helpline (${HUNAR_CONFIG.supportPhone})`}</span>
               </a>
 
               <a
-                href="https://wa.me/923000000000?text=Salam%20Hunar%20Support%2C%20I%20am%20a%20technician%20on%20job%20"
+                href={`https://wa.me/${HUNAR_CONFIG.rawWhatsapp}?text=Salam%20WorkerFIX%20Support%2C%20I%20am%20a%20technician%20on%20job%20`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-full py-3 px-4 rounded-xl bg-[#123B5D] hover:bg-[#0E2E49] text-white text-xs font-extrabold flex items-center justify-center gap-2 shadow-sm transition-all"
@@ -1202,14 +1227,16 @@ export function WorkerVisitTrackingView({
       )}
 
       {/* Worker Doorstep OTP Modal */}
-      <WorkerArrivalOtpModal
-        isOpen={showWorkerOtpModal}
-        otp={currentSecurityPin}
-        arrivedAt={arrivedAtTime}
-        customerName={job.customer.name}
-        onClose={() => setShowWorkerOtpModal(false)}
-        isUrdu={isUrdu}
-      />
+      {showWorkerOtpModal && (
+        <WorkerArrivalOtpModal
+          isOpen={showWorkerOtpModal}
+          otp={currentSecurityPin}
+          arrivedAt={arrivedAtTime}
+          customerName={job.customer.name}
+          onClose={() => setShowWorkerOtpModal(false)}
+          isUrdu={isUrdu}
+        />
+      )}
     </div>
   );
 }

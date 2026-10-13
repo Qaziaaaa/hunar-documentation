@@ -3,7 +3,6 @@
 import { useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { getAccessToken } from "@/lib/api-client";
-import { isMockMode } from "@/lib/data-source";
 import { connectSocket, disconnectSocket } from "@/lib/socket";
 import { SOCKET_EVENTS } from "@/lib/socket-events";
 import { arrivalService } from "@/features/jobs/services/arrival-verification-service";
@@ -39,7 +38,7 @@ export function CustomerRealtimeSync() {
   const queryClient = useQueryClient();
 
   useEffect(() => {
-    if (isMockMode() || !getAccessToken()) return;
+    if (!getAccessToken()) return;
     const socket = connectSocket();
     if (!socket) return;
 

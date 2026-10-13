@@ -22,13 +22,6 @@ const BACKEND_TYPE_MAP: Record<string, NotificationType> = {
   EARNINGS_RECORDED: "earnings_recorded",
   REVIEW_RECEIVED: "new_review",
   VERIFICATION_RESULT: "verification_result",
-  NEW_OFFER: "new_offer",
-  VISIT_SCHEDULED: "visit_scheduled",
-  INSPECTION_SUBMITTED: "inspection_submitted",
-  REPAIR_ESTIMATE_READY: "repair_estimate_ready",
-  REPAIR_APPROVED: "repair_approved",
-  PAYMENT_CONFIRMED: "payment_confirmed",
-  JOB_COMPLETED: "job_completed",
 };
 
 interface BackendNotificationRow {
@@ -43,12 +36,10 @@ interface BackendNotificationRow {
   resourceId?: string;
   resource_id?: string;
   href?: string;
-  data?: { jobId?: string; offerId?: string; visitId?: string } | null;
 }
 
 function normalizeBackendNotification(raw: unknown): AppNotification {
   const n = (raw ?? {}) as BackendNotificationRow;
-  const jobId = n.data?.jobId;
   return {
     id: n.id ?? `notif-${Date.now()}`,
     type: BACKEND_TYPE_MAP[n.type ?? ""] ?? "new_job",
@@ -56,8 +47,8 @@ function normalizeBackendNotification(raw: unknown): AppNotification {
     message: n.message ?? n.body ?? "",
     createdAt: n.createdAt ?? new Date().toISOString(),
     read: typeof n.read === "boolean" ? n.read : Boolean(n.isRead),
-    resourceId: n.resourceId ?? n.resource_id ?? jobId ?? n.data?.offerId ?? n.data?.visitId,
-    href: n.href ?? (jobId ? `/customer/jobs/${jobId}` : undefined),
+    resourceId: n.resourceId ?? n.resource_id,
+    href: n.href,
   };
 }
 
@@ -80,8 +71,9 @@ export async function markCustomerNotificationRead(
 }
 
 export async function markAllCustomerNotificationsRead(): Promise<void> {
-  await http.put(`/notifications/read`);
+  await http.patch(`/notifications/read-all`);
 }
+
 
 export function subscribeToCustomerNotifications(
   listener: NotificationListener,

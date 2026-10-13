@@ -1,7 +1,20 @@
 import { http } from "@/lib/api-client";
 import type { VerificationOutcome, WorkerVerificationData } from "../types";
 
-const LOCAL_STORAGE_KEY = "hunar_worker_verification_status";
+const LOCAL_STORAGE_KEY = "workerfix.worker_verification_status";
+const LEGACY_LOCAL_STORAGE_KEY = "hunar_worker_verification_status";
+
+function readStoredVerification(): string | null {
+  if (typeof window === "undefined") return null;
+  const current = localStorage.getItem(LOCAL_STORAGE_KEY);
+  if (current) return current;
+  const legacy = localStorage.getItem(LEGACY_LOCAL_STORAGE_KEY);
+  if (legacy) {
+    localStorage.setItem(LOCAL_STORAGE_KEY, legacy);
+    localStorage.removeItem(LEGACY_LOCAL_STORAGE_KEY);
+  }
+  return legacy;
+}
 
 function mapBackendStatusToOutcome(status?: string): VerificationOutcome {
   if (!status) return "pending";
@@ -73,7 +86,7 @@ export async function getVerificationStatus(): Promise<WorkerVerificationData> {
   }
 
   if (typeof window !== "undefined") {
-    const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
+    const stored = readStoredVerification();
     if (stored) {
       try {
         return JSON.parse(stored) as WorkerVerificationData;
@@ -89,10 +102,7 @@ export async function getVerificationStatus(): Promise<WorkerVerificationData> {
 export function setSimulatedVerificationStatus(
   status: VerificationOutcome,
 ): WorkerVerificationData {
-  const current =
-    typeof window !== "undefined"
-      ? localStorage.getItem(LOCAL_STORAGE_KEY)
-      : null;
+  const current = readStoredVerification();
   const base = current
     ? (JSON.parse(current) as WorkerVerificationData)
     : DEFAULT_VERIFICATION_DATA;

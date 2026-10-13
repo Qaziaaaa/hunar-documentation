@@ -156,7 +156,12 @@ export function ActiveJobPreVisit({ job, offer }: ActiveJobPreVisitProps) {
                     <img
                       src={job.customer.avatarUrl}
                       alt={job.customer.name}
+                      loading="lazy"
+                      decoding="async"
                       className="w-full h-full object-cover"
+                      onError={(e) => {
+                        (e.currentTarget as HTMLElement).style.display = "none";
+                      }}
                     />
                   ) : (
                     <User className="w-5 h-5 text-[#0F8B8D]" />

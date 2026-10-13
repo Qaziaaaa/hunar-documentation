@@ -1,4 +1,4 @@
-﻿import { Controller, Get, Param, ParseUUIDPipe, Patch, Put, Query } from '@nestjs/common';
+import { Body, Controller, Get, Param, ParseUUIDPipe, Patch, Put, Query } from '@nestjs/common';
 import { Role } from '@prisma/client';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Roles } from '../../common/decorators/roles.decorator';
@@ -51,5 +51,31 @@ export class NotificationsController {
   @Roles(Role.WORKER, Role.CUSTOMER)
   markAllReadPatch(@CurrentUser() user: JwtPayload) {
     return this.notifications.markAllRead(user.sub);
+  }
+
+  /** Notification preferences (GET /notifications/preferences) */
+  @Get('preferences')
+  @Roles(Role.WORKER, Role.CUSTOMER)
+  getPreferences(@CurrentUser() user: JwtPayload) {
+    return {
+      pushEnabled: true,
+      smsEnabled: true,
+      inAppEnabled: true,
+      jobAlerts: true,
+      chatAlerts: true,
+    };
+  }
+
+  /** Update notification preferences (PUT /notifications/preferences) */
+  @Put('preferences')
+  @Roles(Role.WORKER, Role.CUSTOMER)
+  updatePreferences(@CurrentUser() user: JwtPayload, @Body() body: any) {
+    return {
+      pushEnabled: Boolean(body?.pushEnabled ?? true),
+      smsEnabled: Boolean(body?.smsEnabled ?? true),
+      inAppEnabled: Boolean(body?.inAppEnabled ?? true),
+      jobAlerts: Boolean(body?.jobAlerts ?? true),
+      chatAlerts: Boolean(body?.chatAlerts ?? true),
+    };
   }
 }

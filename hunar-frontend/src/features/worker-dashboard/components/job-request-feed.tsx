@@ -1,13 +1,17 @@
 "use client";
 
 import { useState, useMemo, useEffect, useCallback } from "react";
+import dynamic from "next/dynamic";
 import { JobRequestCard } from "./job-request-card";
-import { JobRequestModal } from "./job-request-modal";
 import { RadarSearchView } from "./radar-search-view";
 import type { JobRequest, JobRequestCategory } from "../types";
 
+const JobRequestModal = dynamic(
+  () => import("./job-request-modal").then((mod) => mod.JobRequestModal),
+  { ssr: false }
+);
+
 import { useLocale } from "next-intl";
-import { isMockMode } from "@/lib/data-source";
 import { ApiError } from "@/lib/api-client";
 import { getSocket } from "@/lib/socket";
 import { listNearbyJobs } from "@/services/worker/jobs.service";
@@ -124,7 +128,6 @@ export function JobRequestFeed({
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [sentOfferIds, setSentOfferIds] = useState<string[]>([]);
   const [hiddenJobIds, setHiddenJobIds] = useState<string[]>([]);
-  const isApiMode = !isMockMode();
   const [liveJobs, setLiveJobs] = useState<Job[]>([]);
   const [feedError, setFeedError] = useState<string | null>(null);
   const [geoCoords, setGeoCoords] = useState<{ lat: number; lng: number } | null>(null);
@@ -310,8 +313,8 @@ export function JobRequestFeed({
         </div>
       )}
 
-      {/* LIVE FEED STATUS (api mode only) */}
-      {isApiMode && feedError && (
+      {/* LIVE FEED STATUS */}
+      {feedError && (
         <div className="rounded-2xl border border-rose-200 bg-rose-50/80 p-3.5 text-xs text-rose-800">
           <strong>{isUrdu ? "اپ ڈیٹ ناکام:" : "Could not refresh:"}</strong> {feedError}
         </div>
@@ -366,12 +369,14 @@ export function JobRequestFeed({
       )}
 
       {/* JOB REQUEST DETAILS MODAL */}
-      <JobRequestModal
-        job={selectedJob}
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        onOfferSent={handleOfferSent}
-      />
+      {isModalOpen && selectedJob && (
+        <JobRequestModal
+          job={selectedJob}
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          onOfferSent={handleOfferSent}
+        />
+      )}
     </section>
   );
 }

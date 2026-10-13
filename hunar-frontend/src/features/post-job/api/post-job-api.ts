@@ -1,6 +1,4 @@
 import { http } from "@/lib/api-client";
-import { isMockMode } from "@/lib/data-source";
-import { generateMockOrderCode } from "@/lib/order-code";
 import type { PostJobData } from "../types";
 
 /**
@@ -140,9 +138,6 @@ export function getLocallyCreatedJobs(): any[] {
  * Upload a job photo to the backend S3/MinIO bucket.
  */
 export async function uploadJobPhoto(file: File): Promise<{ key: string; url: string }> {
-  if (isMockMode()) {
-    return { key: `local-job-photo-${Date.now()}`, url: URL.createObjectURL(file) };
-  }
   try {
     const formData = new FormData();
     formData.append("file", file);
@@ -165,20 +160,18 @@ async function resolveAudioForSubmission(url?: string): Promise<string | undefin
     const res = await fetch(url);
     const blob = await res.blob();
 
-    if (!isMockMode()) {
-      try {
-        const formData = new FormData();
-        const file = new File([blob], `job-voice-${Date.now()}.webm`, {
-          type: blob.type || "audio/webm",
-        });
-        formData.append("file", file);
-        const uploadRes = await http.upload<{ key: string; url: string }>("/uploads/voice-note", formData);
-        if (uploadRes?.url) {
-          return uploadRes.url;
-        }
-      } catch (uploadErr) {
-        console.warn("Direct upload to /uploads/voice-note failed, using base64 fallback:", uploadErr);
+    try {
+      const formData = new FormData();
+      const file = new File([blob], `job-voice-${Date.now()}.webm`, {
+        type: blob.type || "audio/webm",
+      });
+      formData.append("file", file);
+      const uploadRes = await http.upload<{ key: string; url: string }>("/uploads/voice-note", formData);
+      if (uploadRes?.url) {
+        return uploadRes.url;
       }
+    } catch (uploadErr) {
+      console.warn("Direct upload to /uploads/voice-note failed, using base64 fallback:", uploadErr);
     }
 
     return await new Promise<string | undefined>((resolve) => {
@@ -210,20 +203,18 @@ async function resolveImagesForSubmission(urls: string[]): Promise<string[]> {
       try {
         const res = await fetch(url);
         const blob = await res.blob();
-        if (!isMockMode()) {
-          try {
-            const formData = new FormData();
-            const file = new File([blob], `job-photo-${Date.now()}.jpg`, {
-              type: blob.type || "image/jpeg",
-            });
-            formData.append("file", file);
-            const uploadRes = await http.upload<{ key: string; url: string }>("/uploads/job-photo", formData);
-            if (uploadRes?.url) {
-              resolved.push(uploadRes.url);
-              continue;
-            }
-          } catch {}
-        }
+        try {
+          const formData = new FormData();
+          const file = new File([blob], `job-photo-${Date.now()}.jpg`, {
+            type: blob.type || "image/jpeg",
+          });
+          formData.append("file", file);
+          const uploadRes = await http.upload<{ key: string; url: string }>("/uploads/job-photo", formData);
+          if (uploadRes?.url) {
+            resolved.push(uploadRes.url);
+            continue;
+          }
+        } catch {}
         const dataUrl = await new Promise<string>((resolve) => {
           const reader = new FileReader();
           reader.onloadend = () => resolve(reader.result as string);
@@ -241,13 +232,27 @@ async function resolveImagesForSubmission(urls: string[]): Promise<string[]> {
   return resolved;
 }
 
-export async function fetchServiceCategories(): Promise<{ id: string; name: string }[]> {
+export interface BackendCategory {
+  id: string;
+  name: string;
+  nameUrdu?: string;
+  defaultVisitCharge?: number | null;
+  suggestedFee?: number | null;
+}
+
+let cachedCategories: BackendCategory[] | null = null;
+
+export async function fetchServiceCategories(): Promise<BackendCategory[]> {
   try {
     const res = await http.get<any>("/categories");
     const items = Array.isArray(res) ? res : res?.data ?? [];
+    if (items.length > 0) {
+      cachedCategories = items;
+    }
     return items;
-  } catch {
-    return [];
+  } catch (err) {
+    console.warn("[post-job-api] Failed to fetch service categories:", err);
+    return cachedCategories ?? [];
   }
 }
 
@@ -255,27 +260,44 @@ export async function fetchServiceCategories(): Promise<{ id: string; name: stri
  * Post a new job request to POST /jobs
  */
 export async function createJob(data: PostJobData): Promise<CreatedJobResponse> {
-  const categoryId =
-    data.category && (data.category.startsWith("seed-category-") || data.category.length > 20)
-      ? data.category
-      : CATEGORY_ID_MAP[data.category?.toLowerCase()] || CATEGORY_ID_MAP.plumbing || "seed-category-1";
+  if (!data.category) {
+    throw new Error("CATEGORY_REQUIRED: Please select a valid service category.");
+  }
+  let categoryId: string = data.category;
+  if (data.category && (data.category.startsWith("seed-category-") || data.category.length > 20)) {
+    categoryId = data.category;
+  } else if (data.category) {
+    if (!cachedCategories || cachedCategories.length === 0) {
+      await fetchServiceCategories();
+    }
+    const slug = data.category.toLowerCase();
+    const dynamicMatch = cachedCategories?.find(
+      (c) =>
+        c.id.toLowerCase() === slug ||
+        c.name.toLowerCase().includes(slug) ||
+        slug.includes(c.name.toLowerCase())
+    );
+    categoryId = dynamicMatch ? dynamicMatch.id : (CATEGORY_ID_MAP[slug] || "seed-category-1");
+  } else {
+    categoryId = "seed-category-1";
+  }
 
   const resolvedVoiceNoteUrl = await resolveAudioForSubmission(data.voiceNoteUrl);
   const resolvedImages = await resolveImagesForSubmission(data.photos || []);
 
   const payload: CreateJobPayload = {
     categoryId,
-    title: data.title || "Home Repair Request",
-    description: data.description,
+    title: data.title?.trim() || "Home Repair Request",
+    description: data.description?.trim() || undefined,
     images: resolvedImages,
     voiceNoteUrl: resolvedVoiceNoteUrl,
-    latitude: typeof data.latitude === "number" && !isNaN(data.latitude) ? data.latitude : 0,
-    longitude: typeof data.longitude === "number" && !isNaN(data.longitude) ? data.longitude : 0,
+    latitude: typeof data.latitude === "number" && !isNaN(data.latitude) && data.latitude !== 0 ? data.latitude : 34.0151,
+    longitude: typeof data.longitude === "number" && !isNaN(data.longitude) && data.longitude !== 0 ? data.longitude : 71.5249,
     address:
       data.landmark && data.landmark.trim()
         ? `${data.address || ""} (Near: ${data.landmark.trim()})`.trim()
         : data.address || "",
-    city: data.city || "",
+    city: data.city || "Peshawar",
     area: data.area || "",
     urgency: data.scheduleType === "asap" ? "EMERGENCY" : "NORMAL",
     suggestedVisitCharge: data.suggestedVisitFee ? Number(data.suggestedVisitFee) : undefined,

@@ -17,7 +17,7 @@ import {
 } from './jobs.validation';
 import { JwtPayload } from '../../common/types/jwt-payload.interface';
 import { normalizePage, toPageResult } from '../../common/helpers/pagination.util';
-import { getWorkerProfileCompletion } from '../../common/helpers/worker-profile.util';
+import { expandSkillNames, getWorkerProfileCompletion } from '../../common/helpers/worker-profile.util';
 import { sanitizeToAreaOrSector } from '../../common/helpers/location.util';
 import { RealtimeService } from '../realtime/realtime.service';
 import { JOB_EVENTS, userRoom, WORKERS_ROOM } from './jobs.events';
@@ -147,14 +147,9 @@ export class JobsService {
   ) { }
 
   async createJob(customerId: string, dto: CreateJobDto) {
-    let category = await this.prisma.serviceCategory.findFirst({
+    const category = await this.prisma.serviceCategory.findFirst({
       where: { id: dto.categoryId, isActive: true },
     });
-    if (!category) {
-      category = await this.prisma.serviceCategory.findFirst({
-        where: { isActive: true },
-      });
-    }
     if (!category) {
       throw new BadRequestException('CATEGORY_NOT_FOUND: invalid or inactive category');
     }
@@ -395,7 +390,28 @@ export class JobsService {
     `);
     if (!skipWorkerRelevanceFilters) {
       if (profile && profile.skills.length > 0) {
-        conditions.push(Prisma.sql`sr."categoryId" = ANY (${profile.skills})`);
+        const searchNames = expandSkillNames(profile.skills);
+        const matchingCategories = await this.prisma.serviceCategory.findMany({
+          where: {
+            OR: [
+              { id: { in: profile.skills } },
+              { name: { in: searchNames } },
+            ],
+            isActive: true,
+          },
+          select: { id: true },
+        });
+        const categoryIds = matchingCategories.map((c) => c.id);
+        for (const s of profile.skills) {
+          if (!categoryIds.includes(s) && (s.startsWith('seed-category-') || s.length > 20)) {
+            categoryIds.push(s);
+          }
+        }
+        if (categoryIds.length > 0) {
+          conditions.push(Prisma.sql`sr."categoryId" = ANY (${categoryIds})`);
+        } else {
+          conditions.push(Prisma.sql`FALSE`);
+        }
       } else {
         conditions.push(Prisma.sql`FALSE`);
       }

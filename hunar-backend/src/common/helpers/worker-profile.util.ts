@@ -55,3 +55,41 @@ export function getWorkerProfileCompletion(
     missingSteps: [...new Set(missingSteps)],
   };
 }
+
+export const SKILL_TO_CATEGORY_NAMES: Record<string, string[]> = {
+  Plumber: ['Plumbing', 'Plumber'],
+  Plumbing: ['Plumbing', 'Plumber'],
+  Electrician: ['Electrical', 'Electrician'],
+  Electrical: ['Electrical', 'Electrician'],
+  'AC Technician': ['AC & Refrigeration', 'AC Technician', 'AC Repair'],
+  'AC & Refrigeration': ['AC & Refrigeration', 'AC Technician', 'AC Repair'],
+  Carpenter: ['Carpentry', 'Carpenter'],
+  Carpentry: ['Carpentry', 'Carpenter'],
+  Painter: ['Painting', 'Painter'],
+  Painting: ['Painting', 'Painter'],
+  Cleaning: ['Cleaning', 'Cleaner'],
+  Cleaner: ['Cleaning', 'Cleaner'],
+  Mason: ['Masonry', 'Mason'],
+  Masonry: ['Masonry', 'Mason'],
+  'Pest Control': ['Pest Control'],
+  'General Handyman': ['General Handyman'],
+  Mechanic: ['General Handyman', 'Mechanic'],
+  'Solar Technician': ['General Handyman', 'Solar Technician'],
+  Welder: ['General Handyman', 'Welder'],
+  'Appliance Repair': ['General Handyman', 'Appliance Repair'],
+};
+
+export function expandSkillNames(skills: string[] = []): string[] {
+  if (!skills || skills.length === 0) return [];
+  const expanded = new Set<string>();
+  for (const s of skills) {
+    if (s && typeof s === 'string') {
+      expanded.add(s);
+      const mapped = SKILL_TO_CATEGORY_NAMES[s];
+      if (mapped) {
+        for (const m of mapped) expanded.add(m);
+      }
+    }
+  }
+  return Array.from(expanded);
+}

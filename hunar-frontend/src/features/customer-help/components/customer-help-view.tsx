@@ -40,13 +40,7 @@ export function CustomerHelpView() {
 
   const { data: myDisputes = [] } = useQuery<any[]>({
     queryKey: ["customer", "disputes"],
-    queryFn: async () => {
-      try {
-        return await http.get<any[]>("/disputes/my");
-      } catch {
-        return [];
-      }
-    },
+    queryFn: () => http.get<any[]>("/disputes/my"),
     staleTime: 30_000,
   });
 

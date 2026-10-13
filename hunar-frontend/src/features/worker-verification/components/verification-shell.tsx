@@ -14,6 +14,8 @@ import {
 } from "../api/verification-api";
 import type { VerificationOutcome, WorkerVerificationData } from "../types";
 
+const IS_DEV = process.env.NODE_ENV !== "production";
+
 export function VerificationShell() {
   const t = useTranslations("WorkerVerification.Shell");
   const [data, setData] = useState<WorkerVerificationData | null>(null);
@@ -28,6 +30,7 @@ export function VerificationShell() {
   }, []);
 
   const handleSelectStatus = (status: VerificationOutcome) => {
+    if (!IS_DEV) return;
     const updated = setSimulatedVerificationStatus(status);
     setData(updated);
     setCurrentStatus(status);
@@ -64,11 +67,13 @@ export function VerificationShell() {
         >
           <div className="mx-auto flex w-full max-w-[500px] flex-col lg:h-full lg:justify-between lg:my-auto">
             <div>
-              {/* Interactive Status Switcher */}
-              <StatusTesterBar
-                currentStatus={currentStatus}
-                onSelectStatus={handleSelectStatus}
-              />
+              {/* Interactive Status Switcher (development/testing only) */}
+              {IS_DEV && (
+                <StatusTesterBar
+                  currentStatus={currentStatus}
+                  onSelectStatus={handleSelectStatus}
+                />
+              )}
 
               {/* Dynamic Status View Display */}
               <div className="pt-2 pb-2">

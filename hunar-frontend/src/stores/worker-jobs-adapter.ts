@@ -53,7 +53,7 @@ const CATEGORY_DISPLAY: Record<string, string> = {
 };
 
 function displayCategory(name?: string | null): string {
-  if (!name) return "Plumber";
+  if (!name) return "General Service";
   return CATEGORY_DISPLAY[name] ?? name;
 }
 
@@ -64,6 +64,17 @@ function displayUrgency(raw?: string | null): JobUrgency {
 
 function toDisplayStatus(raw: string): JobStatus {
   return DISPLAY_STATUS[raw] ?? (raw as JobStatus);
+}
+
+const UPCOMING_DISPLAY_STATUSES: string[] = [
+  "accepted",
+  "visit_in_progress",
+];
+
+export function isUpcomingRawStatus(rawStatus?: string | null): boolean {
+  if (!rawStatus) return false;
+  const display = toDisplayStatus(String(rawStatus).toUpperCase());
+  return UPCOMING_DISPLAY_STATUSES.includes(display);
 }
 
 function timeAgo(iso: string): string {
@@ -84,7 +95,7 @@ function visitWindow(preferred?: string | null, created?: string, isUrgent?: boo
   if (isUrgent) {
     return {
       date: "Today",
-      timeSlot: "⚡ Immediate (Within 30–60 mins)",
+      timeSlot: "Immediate (Within 30–60 mins)",
     };
   }
 

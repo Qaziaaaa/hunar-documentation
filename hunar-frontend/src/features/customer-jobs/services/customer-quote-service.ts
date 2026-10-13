@@ -1,7 +1,6 @@
 "use client";
 
 import { http, getAccessToken, ApiError } from "@/lib/api-client";
-import { isMockMode } from "@/lib/data-source";
 
 export interface PendingRepairQuote {
   repairId: string;
@@ -65,8 +64,8 @@ class CustomerQuoteService {
   }
 
   async checkBackendPendingQuote(): Promise<PendingRepairQuote | null> {
-    const customerToken = getAccessToken("CUSTOMER");
-    if (isMockMode() || !customerToken) {
+    const token = getAccessToken("CUSTOMER") || getAccessToken();
+    if (!token) {
       return this.getActiveQuote();
     }
     try {

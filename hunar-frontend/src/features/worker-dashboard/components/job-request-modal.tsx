@@ -25,7 +25,6 @@ import {
 import { VoicePlayer } from "./voice-player";
 import { Button } from "@/components/ui/button";
 import { submitWorkerOffer } from "@/services/worker/offers.service";
-import { isMockMode } from "@/lib/data-source";
 import { ApiError } from "@/lib/api-client";
 import { formatPreferredTiming } from "@/lib/format";
 import type { JobRequest } from "../types";
@@ -107,9 +106,7 @@ export function JobRequestModal({
     setIsSending(true);
     setSendError(null);
     try {
-      if (!isMockMode()) {
-        await submitWorkerOffer(job.id, visitCharge);
-      }
+      await submitWorkerOffer(job.id, visitCharge);
       setIsSending(false);
       setIsSent(true);
       onOfferSent?.(job.id, visitCharge);
@@ -203,6 +200,8 @@ export function JobRequestModal({
                     <img
                       src={job.customer.avatarUrl}
                       alt={job.customer.firstName || "Customer"}
+                      loading="lazy"
+                      decoding="async"
                       className="size-full object-cover rounded-full"
                       onError={(e) => {
                         (e.currentTarget as HTMLElement).style.display = "none";
@@ -370,6 +369,7 @@ export function JobRequestModal({
                         alt={`Attachment ${idx + 1}`}
                         className="size-full object-cover group-hover:scale-105 transition-transform duration-200"
                         loading="lazy"
+                        decoding="async"
                       />
                       <div className="absolute inset-0 flex items-center justify-center bg-navy/30 opacity-0 group-hover:opacity-100 transition-opacity">
                         <Maximize2 className="size-5 text-white" />
@@ -465,6 +465,7 @@ export function JobRequestModal({
               <img
                 src={selectedImagePreview}
                 alt="Enlarged attachment"
+                decoding="async"
                 className="max-h-[85vh] max-w-[90vw] object-contain rounded-2xl shadow-2xl"
               />
             </div>

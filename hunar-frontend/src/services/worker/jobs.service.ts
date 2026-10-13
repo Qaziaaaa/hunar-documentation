@@ -1,8 +1,5 @@
 import { http, getAccessToken } from "@/lib/api-client";
-import { unwrapRows } from "@/lib/unwrap-rows";
 import type { Job, JobStatus, JobUrgency } from "@/types/job";
-import { isMockMode, simulateLatency } from "@/lib/data-source";
-import { mockJobs } from "@/mocks/jobs.mock";
 
 const NEARBY_STATUSES = ["OPEN", "OFFERS_RECEIVED", "RECEIVING_OFFERS"];
 const HISTORY_STATUSES = [
@@ -113,13 +110,30 @@ function mapBackendJob(row: BackendJobRow): Job {
   };
 }
 
-export async function listWorkerJobs(): Promise<Job[]> {
+export interface GetWorkerJobsOptions {
+  page?: number;
+  limit?: number;
+}
+
+export async function listWorkerJobs(options?: GetWorkerJobsOptions | unknown): Promise<Job[]> {
   if (!getAccessToken()) {
     return [];
   }
   try {
-    const res = await http.get<any>("/workers/me/jobs/active");
-    const items: BackendJobRow[] = unwrapRows(res);
+    const params = new URLSearchParams();
+    if (typeof options === "object" && options !== null) {
+      if ("page" in options && typeof (options as any).page === "number") {
+        params.set("page", String((options as any).page));
+      }
+      if ("limit" in options && typeof (options as any).limit === "number") {
+        params.set("limit", String((options as any).limit));
+      }
+    }
+    const queryStr = params.toString() ? `?${params.toString()}` : "";
+    const res = await http.get<any>(`/workers/me/jobs/active${queryStr}`);
+    const items: BackendJobRow[] = Array.isArray(res)
+      ? res
+      : (res as any)?.data ?? (res as any)?.items ?? [];
     return items.map(mapBackendJob);
   } catch (err: any) {
     if (err?.status === 401) return [];
@@ -127,13 +141,25 @@ export async function listWorkerJobs(): Promise<Job[]> {
   }
 }
 
-export async function listWorkerHistoryJobs(): Promise<Job[]> {
+export async function listWorkerHistoryJobs(options?: GetWorkerJobsOptions | unknown): Promise<Job[]> {
   if (!getAccessToken()) {
     return [];
   }
   try {
-    const res = await http.get<any>("/workers/me/jobs/history");
-    const items: BackendJobRow[] = unwrapRows(res);
+    const params = new URLSearchParams();
+    if (typeof options === "object" && options !== null) {
+      if ("page" in options && typeof (options as any).page === "number") {
+        params.set("page", String((options as any).page));
+      }
+      if ("limit" in options && typeof (options as any).limit === "number") {
+        params.set("limit", String((options as any).limit));
+      }
+    }
+    const queryStr = params.toString() ? `?${params.toString()}` : "";
+    const res = await http.get<any>(`/workers/me/jobs/history${queryStr}`);
+    const items: BackendJobRow[] = Array.isArray(res)
+      ? res
+      : (res as any)?.data ?? (res as any)?.items ?? [];
     return items.map(mapBackendJob);
   } catch (err: any) {
     if (err?.status === 401) return [];
@@ -149,39 +175,22 @@ export async function listNearbyJobs(location?: {
   if (!getAccessToken()) {
     return [];
   }
-  let list: Job[] = [];
-  if (isMockMode()) {
-    list = mockJobs.filter((job) => isNearbyJob(job.status));
-  } else {
-    const resolved = location ?? { lat: 33.98, lng: 71.43, radiusKm: 25 };
-    const params = new URLSearchParams();
-    params.set("lat", String(resolved.lat));
-    params.set("lng", String(resolved.lng));
-    params.set("radiusKm", String(resolved.radiusKm ?? 25));
-    const res = await http.get<BackendPage<BackendJobRow> | BackendJobRow[]>(
-      `/jobs/available?${params.toString()}`,
-    );
-    const items: BackendJobRow[] = unwrapRows(res);
-    list = (items ?? []).map(mapBackendJob);
-  }
-
-  return isMockMode() ? simulateLatency(list) : list;
+  const resolved = location ?? { lat: 33.98, lng: 71.43, radiusKm: 25 };
+  const params = new URLSearchParams();
+  params.set("lat", String(resolved.lat));
+  params.set("lng", String(resolved.lng));
+  params.set("radiusKm", String(resolved.radiusKm ?? 25));
+  const res = await http.get<BackendPage<BackendJobRow> | BackendJobRow[]>(
+    `/jobs/available?${params.toString()}`,
+  );
+  const items: BackendJobRow[] = Array.isArray(res)
+    ? res
+    : (res as any)?.items ?? (res as any)?.data ?? [];
+  return (items ?? []).map(mapBackendJob);
 }
 
 export async function getWorkerJob(jobId: string): Promise<Job> {
-  if (isMockMode()) {
-    const job = mockJobs.find((j) => j.id === jobId);
-    if (!job) throw new Error(`JOB_NOT_FOUND:${jobId}`);
-    return simulateLatency({ ...job });
-  }
-
-  try {
-    return mapBackendJob(await http.get<BackendJobRow>(`/jobs/${jobId}`));
-  } catch (e) {
-    const fallback = mockJobs.find((j) => j.id === jobId);
-    if (fallback) return fallback;
-    throw e;
-  }
+  return mapBackendJob(await http.get<BackendJobRow>(`/jobs/${jobId}`));
 }
 
 export const queryKeys = {

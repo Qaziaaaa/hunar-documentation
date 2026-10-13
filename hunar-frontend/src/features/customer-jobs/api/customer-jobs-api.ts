@@ -1,16 +1,54 @@
 import { http } from "@/lib/api-client";
 import { extractTimeSlotFromVisitTime } from "@/lib/format";
-import { unwrapRows } from "@/lib/unwrap-rows";
 import type { CustomerJob, JobStatus, WorkerOffer, WorkerProfile } from "../types";
 
+export interface GetCustomerJobsOptions {
+  page?: number;
+  limit?: number;
+  status?: string;
+}
+
 /**
- * Fetch all jobs for the logged-in customer, enriched with offers & selected worker.
- * The backend returns description, urgency and per-job offers in this single
- * response — the old per-job detail/offers fan-out (1 + 2N requests) is gone.
+ * Fetch jobs for the logged-in customer incrementally, enriched on-demand with worker/offers.
  */
-export async function getCustomerJobs(): Promise<CustomerJob[]> {
-  const res = await http.get<unknown>("/jobs/customer?limit=100");
-  return unwrapRows(res).map(transformListRow);
+export async function getCustomerJobs(options?: GetCustomerJobsOptions | unknown): Promise<CustomerJob[]> {
+  const isOptionsObject =
+    typeof options === "object" &&
+    options !== null &&
+    ("page" in options || "limit" in options || "status" in options);
+  const opts = isOptionsObject ? (options as GetCustomerJobsOptions) : undefined;
+  const page = opts?.page ?? 1;
+  const limit = opts?.limit ?? 20;
+  const statusQuery = opts?.status ? `&status=${encodeURIComponent(opts.status)}` : "";
+  const res = await http.get<unknown>(`/jobs/customer?page=${page}&limit=${limit}${statusQuery}`);
+  const rows: unknown[] = Array.isArray(res)
+    ? res
+    : (res as { data?: unknown[]; items?: unknown[] })?.data ??
+      (res as { items?: unknown[] })?.items ??
+      [];
+
+  const backendJobs = rows.map(transformListRow);
+
+  // Only enrich jobs that have active offers or assigned workers
+  const jobsToEnrich = backendJobs.filter(
+    (j) =>
+      j.status === "visit_scheduled" ||
+      j.status === "completed" ||
+      (j.offerCount ?? 0) > 0
+  );
+
+  await Promise.allSettled(
+    jobsToEnrich.map(async (job) => {
+      try {
+        const detail = await getJobDetail(job.id);
+        Object.assign(job, detail);
+      } catch (err) {
+        console.warn(`[getCustomerJobs] Detail fetch failed for ${job.id}:`, err);
+      }
+    })
+  );
+
+  return backendJobs;
 }
 
 /**
@@ -22,6 +60,14 @@ export async function getJobDetail(jobId: string): Promise<CustomerJob> {
     throw new Error(`JOB_NOT_FOUND: ${jobId}`);
   }
   const isAsap = res.urgency === "EMERGENCY" || res.urgency === "URGENT" || res.urgency === "HIGH";
+  let offers: WorkerOffer[] = (res.offers || []).map(transformBackendOffer);
+  if (offers.length === 0 && Number(res.offerCount ?? 0) > 0) {
+    try {
+      offers = await getJobOffers(jobId);
+    } catch (err) {
+      console.warn(`[getJobDetail] Offers fetch failed for ${jobId}:`, err);
+    }
+  }
   return {
     id: res.id,
     title: res.title,
@@ -38,10 +84,11 @@ export async function getJobDetail(jobId: string): Promise<CustomerJob> {
     preferredTimeSlot:
       res.preferredTimeSlot ||
       res.timeSlot ||
-      (isAsap ? "⚡ Immediate (Within 30–60 mins)" : extractTimeSlotFromVisitTime(res.preferredVisitTime)),
+      (isAsap ? "Immediate (Within 30–60 mins)" : extractTimeSlotFromVisitTime(res.preferredVisitTime)),
     status: mapJobStatus(res.status),
     createdAt: res.createdAt || new Date().toISOString(),
-    offers: (res.offers || []).map(transformBackendOffer),
+    offerCount: Number(res.offerCount ?? offers.length),
+    offers,
     selectedOffer: res.selectedWorker
       ? transformBackendOffer({
           id: res.selectedWorkerId,
@@ -172,21 +219,22 @@ function transformListRow(row: any): CustomerJob {
     title: row.title,
     category: row.categoryName || "General Service",
     subCategory: row.categoryName || "General Service",
-    description: row.description || "",
+    description: "",
     photos: row.images || [],
     voiceNoteUrl: row.voiceNoteUrl,
     address: row.address,
-    area: row.area || "Peshawar",
-    city: row.city || "Peshawar",
-    scheduleType: isAsap ? "asap" : (row.urgency === "URGENT" ? "asap" : "scheduled"),
+    area: row.area || "",
+    city: row.city || "",
+    scheduleType: isAsap ? "asap" : "scheduled",
     preferredDate: row.preferredVisitTime || row.createdAt || new Date().toISOString(),
     preferredTimeSlot:
       row.preferredTimeSlot ||
       row.timeSlot ||
-      (isAsap ? "⚡ Immediate (Within 30–60 mins)" : extractTimeSlotFromVisitTime(row.preferredVisitTime)),
+      (isAsap ? "Immediate (Within 30–60 mins)" : extractTimeSlotFromVisitTime(row.preferredVisitTime)),
     status: mapJobStatus(row.status),
     createdAt: row.createdAt || new Date().toISOString(),
-    offers: Array.isArray(row.offers) ? row.offers.map(transformBackendOffer) : [],
+    offerCount: Number(row.offerCount ?? 0),
+    offers: [],
     suggestedVisitCharge: row.suggestedVisitCharge != null ? Number(row.suggestedVisitCharge) : undefined,
   };
 }

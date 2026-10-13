@@ -3,8 +3,17 @@
 import React, { useState } from "react";
 import { JobRequest } from "@/types/job";
 import { formatRs } from "@/lib/design-tokens";
-import { WorkerInvoiceModal } from "./worker-invoice-modal";
-import { WorkerJobDetailsModal } from "./worker-job-details-modal";
+import dynamic from "next/dynamic";
+
+const WorkerInvoiceModal = dynamic(
+  () => import("./worker-invoice-modal").then((mod) => mod.WorkerInvoiceModal),
+  { ssr: false }
+);
+
+const WorkerJobDetailsModal = dynamic(
+  () => import("./worker-job-details-modal").then((mod) => mod.WorkerJobDetailsModal),
+  { ssr: false }
+);
 import {
   CheckCircle2,
   Calendar,
@@ -26,7 +35,7 @@ export function WorkerPastJobCard({ job }: WorkerPastJobCardProps) {
   const visitCharge = job.visitCharge ?? 0;
   const repairCharge = job.repairCharge ?? 0;
   const grossTotal = visitCharge + repairCharge;
-  const platformCommission = job.platformCommission ?? Math.round(grossTotal * 0.1);
+  const platformCommission = job.platformCommission ?? Math.round(visitCharge * 0.1);
   const netEarnings = job.workerNetEarnings ?? (grossTotal - platformCommission);
   const warrantyDays = job.warrantyDays;
   const invoiceNumber = job.invoiceNumber || `INV-${job.id}`;

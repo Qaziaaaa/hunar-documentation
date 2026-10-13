@@ -7,6 +7,7 @@ import {
 import { PrismaService } from '../../prisma/prisma.service';
 import { MapboxService } from './mapbox.service';
 import {
+  expandSkillNames,
   getWorkerProfileCompletion,
   WORKER_PROFILE_TOTAL_STEPS,
   WorkerProfileCompletionInput,
@@ -181,9 +182,16 @@ export class WorkerProfileService {
     const profile = await this.prisma.workerProfile.findUnique({ where: { userId } });
     const serviceAreas = await this.listServiceAreas(userId);
     const documents = await this.listDocuments(userId);
+    const searchNames = expandSkillNames(profile?.skills);
     const skillCategories = profile?.skills?.length
       ? await this.prisma.serviceCategory.findMany({
-          where: { id: { in: profile.skills }, isActive: true },
+          where: {
+            OR: [
+              { id: { in: profile.skills } },
+              { name: { in: searchNames } },
+            ],
+            isActive: true,
+          },
           select: { id: true, name: true, nameUrdu: true },
         })
       : [];
@@ -263,9 +271,16 @@ export class WorkerProfileService {
       throw new NotFoundException('Worker profile not found');
     }
     const serviceAreas = await this.listServiceAreas(workerId);
+    const searchNames = expandSkillNames(profile.skills);
     const skillCategories = profile.skills.length
       ? await this.prisma.serviceCategory.findMany({
-          where: { id: { in: profile.skills }, isActive: true },
+          where: {
+            OR: [
+              { id: { in: profile.skills } },
+              { name: { in: searchNames } },
+            ],
+            isActive: true,
+          },
           select: { id: true, name: true, nameUrdu: true },
         })
       : [];

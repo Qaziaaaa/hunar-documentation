@@ -470,7 +470,7 @@ export function CustomerOffersHubView({ initialJobs }: CustomerOffersHubViewProp
               <div className="pt-2 flex items-center justify-center gap-3 flex-wrap">
                 {statusFilter === "pending" && (
                   <Link
-                    href="/customer/visits"
+                    href="/customer/jobs"
                     className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#0F8B8D] hover:bg-[#0F8B8D]/90 text-white text-xs font-bold shadow-xs transition-all"
                   >
                     <span>{isUrdu ? "شیڈول وزٹس دیکھیں" : "View Scheduled Visits"}</span>

@@ -249,9 +249,15 @@ export function WorkerLiveJobCard({
                   <img
                     src={job.customer.avatarUrl}
                     alt={job.customer.name}
+                    loading="lazy"
+                    decoding="async"
                     className="size-full object-cover"
+                    onError={(e) => {
+                      (e.currentTarget as HTMLElement).style.display = "none";
+                    }}
                   />
-                ) : (
+                ) : null}
+                {(!job.customer.avatarUrl) && (
                   job.customer.name.slice(0, 2).toUpperCase()
                 )}
               </div>

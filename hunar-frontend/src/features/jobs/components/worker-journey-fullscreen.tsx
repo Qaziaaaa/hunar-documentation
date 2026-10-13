@@ -8,8 +8,28 @@ import { VisitOffer } from "@/types/offer";
 import { formatRs } from "@/lib/design-tokens";
 import { sanitizePriceInput, parsePriceOrZero } from "@/lib/money";
 import { workerStore, useWorkerJobs } from "@/stores/worker-jobs-store";
-import { WorkerVisitTrackingView } from "./worker-visit-tracking-view";
-import { WorkerChatModal } from "./worker-chat-modal";
+import { HUNAR_CONFIG } from "@/lib/config";
+import dynamic from "next/dynamic";
+
+const WorkerVisitTrackingView = dynamic(
+  () => import("./worker-visit-tracking-view").then((mod) => mod.WorkerVisitTrackingView),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="min-h-screen bg-slate-900 flex items-center justify-center p-6 text-white">
+        <div className="flex flex-col items-center gap-3">
+          <div className="size-10 rounded-full border-3 border-teal-500 border-t-transparent animate-spin" />
+          <p className="text-sm font-semibold text-slate-300">Loading visit map & navigation...</p>
+        </div>
+      </div>
+    ),
+  }
+);
+
+const WorkerChatModal = dynamic(
+  () => import("./worker-chat-modal").then((mod) => mod.WorkerChatModal),
+  { ssr: false }
+);
 import {
   Phone,
   MessageCircle,
@@ -54,7 +74,6 @@ export function WorkerJourneyFullscreen({
   const [showChatModal, setShowChatModal] = useState(false);
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [showSupportModal, setShowSupportModal] = useState(false);
-  const [showSettlementModal, setShowSettlementModal] = useState(false);
   const [customerRating, setCustomerRating] = useState(5);
   const [selectedReviewTags, setSelectedReviewTags] = useState<string[]>([]);
   const [cancelReason, setCancelReason] = useState("");
@@ -137,20 +156,21 @@ export function WorkerJourneyFullscreen({
 
   // 3. Handle Complete Job (Full repair)
   const handleCompleteRepairJob = () => {
-    const charge = activeJob.repairCharge ?? (numRepairPrice > 0 ? numRepairPrice : 1500);
+    const charge = activeJob.repairCharge ?? (numRepairPrice > 0 ? numRepairPrice : 0);
+    if (charge <= 0) {
+      setErrorMsg(isUrdu ? "مرمت کی رقم درج کرنا ضروری ہے۔" : "A valid repair charge is required to complete this job.");
+      return;
+    }
     workerStore.completeJob(job.id, charge);
-    setShowSettlementModal(true);
   };
 
   // 4. Handle Settle Visit Fee Only (When customer declined repair)
   const handleSettleVisitOnlyJob = () => {
     workerStore.completeJob(job.id, 0);
-    setShowSettlementModal(true);
   };
 
   // 5. Handle Exit back to jobs hub
   const handleFinishAndExit = () => {
-    setShowSettlementModal(false);
     router.push("/worker/jobs");
   };
 
@@ -263,9 +283,15 @@ export function WorkerJourneyFullscreen({
                 <img
                   src={job.customer.avatarUrl}
                   alt={job.customer.name}
+                  loading="lazy"
+                  decoding="async"
                   className="size-full object-cover"
+                  onError={(e) => {
+                    (e.currentTarget as HTMLElement).style.display = "none";
+                  }}
                 />
-              ) : (
+              ) : null}
+              {(!job.customer.avatarUrl) && (
                 job.customer.name.slice(0, 2).toUpperCase()
               )}
             </div>
@@ -508,6 +534,8 @@ export function WorkerJourneyFullscreen({
                             <img
                               src={photoUrl}
                               alt={`Fault evidence ${idx + 1}`}
+                              loading="lazy"
+                              decoding="async"
                               className="size-full object-cover"
                             />
                             <button
@@ -841,15 +869,15 @@ export function WorkerJourneyFullscreen({
 
             <div className="space-y-2">
               <a
-                href="tel:0800-WORKERFIX"
+                href={`tel:${HUNAR_CONFIG.rawSupportPhone}`}
                 className="w-full py-3 px-4 rounded-xl bg-[#0F8B8D] hover:bg-[#0B7F74] text-white text-xs font-extrabold flex items-center justify-center gap-2 shadow-sm transition-all"
               >
                 <PhoneCall className="size-4" />
-                <span>{isUrdu ? "ہیلپ لائن پر کال کریں" : "Call Helpline (0800-WORKERFIX)"}</span>
+                <span>{isUrdu ? "ہیلپ لائن پر کال کریں" : `Call Helpline (${HUNAR_CONFIG.supportPhone})`}</span>
               </a>
 
               <a
-                href="https://wa.me/923000000000?text=Salam%20Hunar%20Support%2C%20I%20am%20a%20technician%20on%20job%20"
+                href={`https://wa.me/${HUNAR_CONFIG.rawWhatsapp}?text=Salam%20WorkerFIX%20Support%2C%20I%20am%20a%20technician%20on%20job%20`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-full py-3 px-4 rounded-xl bg-[#123B5D] hover:bg-[#0E2E49] text-white text-xs font-extrabold flex items-center justify-center gap-2 shadow-sm transition-all"
@@ -964,15 +992,17 @@ export function WorkerJourneyFullscreen({
       )}
 
       {/* Customer-Matched Worker Chat Modal */}
-      <WorkerChatModal
-        job={job}
-        isOpen={showChatModal}
-        onClose={() => setShowChatModal(false)}
-        onCallCustomer={() => {
-          setShowChatModal(false);
-          setShowCallModal(true);
-        }}
-      />
+      {showChatModal && (
+        <WorkerChatModal
+          job={job}
+          isOpen={showChatModal}
+          onClose={() => setShowChatModal(false)}
+          onCallCustomer={() => {
+            setShowChatModal(false);
+            setShowCallModal(true);
+          }}
+        />
+      )}
     </div>
   );
 }

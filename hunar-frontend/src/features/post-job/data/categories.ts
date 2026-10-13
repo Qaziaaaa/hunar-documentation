@@ -26,8 +26,6 @@ export interface CategoryOption {
   subCategories: string[];
   suggestedFee: number;
   popular?: boolean;
-  defaultTitle?: string;
-  defaultDescription?: string;
 }
 
 export const CATEGORY_OPTIONS: CategoryOption[] = [
@@ -49,8 +47,6 @@ export const CATEGORY_OPTIONS: CategoryOption[] = [
     ],
     suggestedFee: 500,
     popular: true,
-    defaultTitle: "Kitchen pipe leakage under sink",
-    defaultDescription: "Water is constantly dripping under the kitchen sink and needs urgent pipe inspection and washer replacement.",
   },
   {
     id: "electrician",
@@ -70,8 +66,6 @@ export const CATEGORY_OPTIONS: CategoryOption[] = [
     ],
     suggestedFee: 500,
     popular: true,
-    defaultTitle: "Main DB breaker tripping repeatedly",
-    defaultDescription: "The main distribution board circuit breaker trips when running appliances. Need diagnosis for possible short circuit.",
   },
   {
     id: "ac-technician",
@@ -91,8 +85,6 @@ export const CATEGORY_OPTIONS: CategoryOption[] = [
     ],
     suggestedFee: 500,
     popular: true,
-    defaultTitle: "Split AC indoor unit leaking water and not cooling",
-    defaultDescription: "The split AC unit turns on and blows warm air with water dripping from the front grill. Needs immediate inspection and filter deep cleaning.",
   },
   {
     id: "carpenter",
@@ -112,8 +104,6 @@ export const CATEGORY_OPTIONS: CategoryOption[] = [
     ],
     suggestedFee: 500,
     popular: true,
-    defaultTitle: "Main door lock and handle replacement",
-    defaultDescription: "Door handle is loose and key cylinder gets stuck. Needs replacement with new mortise lock.",
   },
   {
     id: "painter",
@@ -132,8 +122,6 @@ export const CATEGORY_OPTIONS: CategoryOption[] = [
       "Texture & Wallpaper Installation",
     ],
     suggestedFee: 500,
-    defaultTitle: "Single bedroom wall putty and paint refresh",
-    defaultDescription: "Need one master bedroom repainted with weather-resistant paint and putty repair on moisture patches.",
   },
   {
     id: "cleaner",
@@ -151,8 +139,6 @@ export const CATEGORY_OPTIONS: CategoryOption[] = [
       "Post-Construction Scrubbing",
     ],
     suggestedFee: 500,
-    defaultTitle: "Sofa set vacuum deep cleaning and washing",
-    defaultDescription: "7-seater fabric sofa requires deep foam wash and stain extraction.",
   },
   {
     id: "solar-technician",
@@ -170,8 +156,6 @@ export const CATEGORY_OPTIONS: CategoryOption[] = [
       "Panel Cleaning & Output Testing",
     ],
     suggestedFee: 500,
-    defaultTitle: "Solar inverter error code 09 and battery check",
-    defaultDescription: "Hybrid inverter showing error code and not charging batteries properly during peak sunlight.",
   },
   {
     id: "welder",
@@ -188,8 +172,6 @@ export const CATEGORY_OPTIONS: CategoryOption[] = [
       "Rooftop Shed Frame Welding",
     ],
     suggestedFee: 500,
-    defaultTitle: "Main iron gate hinge welding repair",
-    defaultDescription: "Main driveway gate hinge has come loose from the pillar and needs welding reinforcement.",
   },
   {
     id: "cctv-security",
@@ -206,8 +188,6 @@ export const CATEGORY_OPTIONS: CategoryOption[] = [
       "Video Doorbell & Intercom",
     ],
     suggestedFee: 500,
-    defaultTitle: "4 CCTV camera installation with DVR setup",
-    defaultDescription: "Need 4 HD outdoor security cameras installed with mobile phone remote viewing configuration.",
   },
   {
     id: "mason-mistry",
@@ -223,8 +203,6 @@ export const CATEGORY_OPTIONS: CategoryOption[] = [
       "Floor Leveling & Concrete Work",
     ],
     suggestedFee: 500,
-    defaultTitle: "Bathroom floor tile replacement and grouting",
-    defaultDescription: "Few cracked floor tiles need replacement and waterproof grouting in guest bathroom.",
   },
   {
     id: "gardener",
@@ -240,8 +218,6 @@ export const CATEGORY_OPTIONS: CategoryOption[] = [
       "New Plants & Flower Beds",
     ],
     suggestedFee: 500,
-    defaultTitle: "Lawn mowing and hedge trimming",
-    defaultDescription: "Front yard lawn grass needs mowing, edge trimming, and fertilizer application.",
   },
   {
     id: "pest-control",
@@ -257,8 +233,6 @@ export const CATEGORY_OPTIONS: CategoryOption[] = [
       "Rodent & Mosquito Spray",
     ],
     suggestedFee: 500,
-    defaultTitle: "Anti-termite treatment for wooden door frames",
-    defaultDescription: "Signs of termite activity on wooden door frames and baseboards. Requires chemical treatment.",
   },
   {
     id: "movers",
@@ -274,8 +248,6 @@ export const CATEGORY_OPTIONS: CategoryOption[] = [
       "Suzuki Pickup / Shehzore Transport",
     ],
     suggestedFee: 500,
-    defaultTitle: "House furniture shifting from Hayatabad to Town",
-    defaultDescription: "Bed, wardrobe, refrigerator, and 10 boxes need loading, transport, and unloading.",
   },
 ];
 
@@ -298,10 +270,10 @@ export const PESHAWAR_AREAS = [
   "Ring Road Belt",
   "DHA Phase 1",
   "Model Town",
-  "Blue Area / Commercial Zone",
-  "F-6 / F-7 Sector",
-  "Gulberg / Canal Bank",
-  "Bahria Town Sector",
+  "Kohat Road Belt",
+  "Dalazak Road",
+  "Charsadda Road",
+  "Board Bazaar",
 ];
 
 export const SERVICE_AREAS = PESHAWAR_AREAS;

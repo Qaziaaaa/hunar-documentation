@@ -7,7 +7,12 @@ import { JobRequest } from "@/types/job";
 import { VisitOffer } from "@/types/offer";
 import { formatRs } from "@/lib/design-tokens";
 import { workerStore } from "@/stores/worker-jobs-store";
-import { WorkerChatModal } from "./worker-chat-modal";
+import dynamic from "next/dynamic";
+
+const WorkerChatModal = dynamic(
+  () => import("./worker-chat-modal").then((mod) => mod.WorkerChatModal),
+  { ssr: false }
+);
 import { VoicePlayer } from "@/features/worker-dashboard/components/voice-player";
 import {
   X,
@@ -80,7 +85,7 @@ export function WorkerJobDetailsModal({
          offer?.visitCharge ??
          job.visitCharge ??
          job.customerSuggestedPrice ??
-         300);
+         0);
 
   const isEnRoute = job.status === "visit_in_progress";
 
@@ -227,6 +232,7 @@ export function WorkerJobDetailsModal({
                             alt={`Attachment ${idx + 1}`}
                             className="size-full object-cover group-hover:scale-105 transition-transform duration-200"
                             loading="lazy"
+                            decoding="async"
                           />
                           <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 flex items-center justify-center transition-colors">
                             <ExternalLink className="size-4 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -272,9 +278,15 @@ export function WorkerJobDetailsModal({
                           <img
                             src={job.customer.avatarUrl}
                             alt={job.customer.name}
+                            loading="lazy"
+                            decoding="async"
                             className="size-full object-cover"
+                            onError={(e) => {
+                              (e.currentTarget as HTMLElement).style.display = "none";
+                            }}
                           />
-                        ) : (
+                        ) : null}
+                        {(!job.customer.avatarUrl) && (
                           job.customer.name.slice(0, 2).toUpperCase()
                         )}
                       </div>
@@ -385,6 +397,7 @@ export function WorkerJobDetailsModal({
             <img
               src={selectedPhoto}
               alt="Preview"
+              decoding="async"
               className="max-w-full max-h-[80vh] object-contain"
             />
             <button

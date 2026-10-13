@@ -89,7 +89,7 @@ const seeds: NotificationSeed[] = [
     type: "commission_reminder",
     title: "Commission due",
     message:
-      "Commission Rs. 30 is due. Pay to HUNAR bank account and send the screenshot on WhatsApp +92 314 0837519.",
+      "Commission Rs. 30 is due. Pay to WorkerFIX bank account and send the screenshot on WhatsApp +92 314 0837519.",
     createdAt: isoDaysAgo(9, 17),
     read: true,
     resourceId: "job-plumb-303",

@@ -126,6 +126,9 @@ export function CustomerChatView() {
 
   // Messages state grouped by visit ID
   const [messagesByVisit, setMessagesByVisit] = useState<Record<string, ChatMessage[]>>({});
+  const [chatPages, setChatPages] = useState<Record<string, number>>({});
+  const [hasOlderMsgs, setHasOlderMsgs] = useState<Record<string, boolean>>({});
+  const [isLoadingOlder, setIsLoadingOlder] = useState(false);
 
   // Unread badge counts per visit
   const [unreadCounts, setUnreadCounts] = useState<Record<string, number>>({});
@@ -161,9 +164,11 @@ export function CustomerChatView() {
     // Immediately join the job room so real-time socket events flow immediately
     joinConversationRoom(currentVisit.jobId);
 
-    getMessagesByJob(currentVisit.jobId)
+    getMessagesByJob(currentVisit.jobId, 1, 30)
       .then((backendMsgs) => {
         if (isCancelled) return;
+        setChatPages((prev) => ({ ...prev, [currentVisit.id]: 1 }));
+        setHasOlderMsgs((prev) => ({ ...prev, [currentVisit.id]: (backendMsgs?.length ?? 0) >= 30 }));
         if (!backendMsgs || backendMsgs.length === 0) {
           setMessagesByVisit((prev) => ({
             ...prev,
@@ -217,6 +222,61 @@ export function CustomerChatView() {
       isCancelled = true;
     };
   }, [currentVisit?.id, currentVisit?.jobId]);
+
+  const handleLoadOlder = async () => {
+    if (!currentVisit?.jobId || isLoadingOlder) return;
+    const curPage = chatPages[currentVisit.id] || 1;
+    setIsLoadingOlder(true);
+    try {
+      const olderMsgs = await getMessagesByJob(currentVisit.jobId, curPage + 1, 30);
+      if (!olderMsgs || olderMsgs.length === 0) {
+        setHasOlderMsgs((prev) => ({ ...prev, [currentVisit.id]: false }));
+      } else {
+        const currentUserId = getStoredUser()?.id;
+        const formattedOlder: ChatMessage[] = olderMsgs.map((m) => {
+          const isFromMe = currentUserId ? m.senderId === currentUserId : m.senderRole === "CUSTOMER";
+          const voice = parseVoiceNote(m.text || m.content);
+          const msgType: "text" | "voice" | "image" = voice ? "voice" : m.imageUrl ? "image" : "text";
+          return {
+            id: m.id,
+            messageId: m.id,
+            senderId: m.senderId,
+            receiverId: m.receiverId || voice?.receiverId,
+            jobId: m.jobId || voice?.jobId || currentVisit.jobId,
+            sender: isFromMe ? "customer" : "technician",
+            type: msgType,
+            messageType: msgType,
+            text: voice ? undefined : (m.text || m.content),
+            audioUrl: voice?.audioUrl,
+            durationSeconds: voice?.durationSeconds,
+            imageUrl: m.imageUrl,
+            time: new Date(m.createdAt).toLocaleTimeString([], {
+              hour: "2-digit",
+              minute: "2-digit",
+            }),
+            createdAt: m.createdAt,
+          };
+        });
+        setMessagesByVisit((prev) => {
+          const existing = prev[currentVisit.id] || [];
+          const existingIds = new Set(existing.map((m) => m.id));
+          const uniqueOlder = formattedOlder.filter((m) => !existingIds.has(m.id));
+          return {
+            ...prev,
+            [currentVisit.id]: [...uniqueOlder, ...existing],
+          };
+        });
+        setChatPages((prev) => ({ ...prev, [currentVisit.id]: curPage + 1 }));
+        if (olderMsgs.length < 30) {
+          setHasOlderMsgs((prev) => ({ ...prev, [currentVisit.id]: false }));
+        }
+      }
+    } catch (err) {
+      console.warn("Failed to load older messages:", err);
+    } finally {
+      setIsLoadingOlder(false);
+    }
+  };
 
   // Real-time incoming message listener for active conversation
   useEffect(() => {
@@ -556,6 +616,8 @@ export function CustomerChatView() {
                           <img
                             src={visit.technician.avatarUrl}
                             alt={visit.technician.name}
+                            loading="lazy"
+                            decoding="async"
                             className="size-full object-cover"
                           />
                         ) : (
@@ -698,6 +760,8 @@ export function CustomerChatView() {
                       <img
                         src={currentVisit.technician.avatarUrl}
                         alt={currentVisit.technician.name}
+                        loading="lazy"
+                        decoding="async"
                         className="size-full object-cover"
                       />
                     ) : (
@@ -759,6 +823,23 @@ export function CustomerChatView() {
               className="flex-1 overflow-y-auto p-4 sm:p-5 lg:p-6 space-y-4 bg-slate-50/30 scrollbar-none [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
               style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
             >
+              {/* Incremental Chat History Pagination */}
+              {currentVisit && hasOlderMsgs[currentVisit.id] && (
+                <div className="flex justify-center pb-2">
+                  <button
+                    type="button"
+                    onClick={handleLoadOlder}
+                    disabled={isLoadingOlder}
+                    className="text-xs font-semibold text-[#0F8B8D] hover:underline py-1.5 px-3 rounded-xl bg-teal-50 hover:bg-teal-100/60 border border-teal-200/60 transition-colors cursor-pointer flex items-center gap-1.5"
+                  >
+                    {isLoadingOlder && (
+                      <span className="size-3 rounded-full border-2 border-teal border-t-transparent animate-spin" />
+                    )}
+                    <span>{isUrdu ? "پرانے پیغامات دیکھیں" : "Load older messages"}</span>
+                  </button>
+                </div>
+              )}
+
               {messages.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-full min-h-[240px] text-center p-6 space-y-2">
                   <div className="size-12 rounded-2xl bg-teal-50 border border-teal-200 text-[#0F8B8D] flex items-center justify-center">
@@ -820,6 +901,8 @@ export function CustomerChatView() {
                           <img
                             src={msg.imageUrl}
                             alt="Shared photo"
+                            loading="lazy"
+                            decoding="async"
                             className="w-full object-cover max-h-64"
                           />
                         </div>

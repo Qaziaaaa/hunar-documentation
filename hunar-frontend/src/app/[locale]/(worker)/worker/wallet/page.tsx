@@ -10,7 +10,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { WorkerDashboardShell } from "@/features/worker-dashboard";
 import { formatRsExact } from "@/lib/money";
 import { getSocket } from "@/lib/socket";
-import { isMockMode } from "@/lib/data-source";
 import {
   getWalletSummary,
   getWalletTransactions,

@@ -211,6 +211,8 @@ export function JobRequestCard({
               <img
                 src={job.customer.avatarUrl}
                 alt={job.customer.firstName || "Customer"}
+                loading="lazy"
+                decoding="async"
                 className="size-full object-cover rounded-full"
                 onError={(e) => {
                   (e.currentTarget as HTMLElement).style.display = "none";
@@ -290,7 +292,7 @@ export function JobRequestCard({
                 {isUrgent && (
                   <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/15 px-2 py-0.5 text-[10.5px] font-extrabold text-amber-700 border border-amber-500/30">
                     <Zap className="size-3 fill-current text-amber-600" />
-                    <span>{isUrdu ? "فوری (30–60 منٹ)" : "⚡ Immediate (30–60m)"}</span>
+                    <span>{isUrdu ? "فوری (30–60 منٹ)" : "Immediate (30–60m)"}</span>
                   </span>
                 )}
                 <span className="inline-flex items-center gap-1 rounded-full bg-slate-100/80 px-2 py-0.5 text-[10.5px] font-bold text-[#123B5D]">
@@ -331,6 +333,7 @@ export function JobRequestCard({
                       alt={`Job preview ${idx + 1}`}
                       className="size-full object-cover"
                       loading="lazy"
+                      decoding="async"
                     />
                   </div>
                 ))}
@@ -350,6 +353,7 @@ export function JobRequestCard({
                   alt={job.category || "Job photo"}
                   className="size-full object-cover group-hover:scale-105 transition-transform duration-300"
                   loading="lazy"
+                  decoding="async"
                 />
               </div>
             ) : (
@@ -365,6 +369,7 @@ export function JobRequestCard({
                       alt={`Job photo ${idx + 1}`}
                       className="size-full object-cover group-hover:scale-105 transition-transform duration-300"
                       loading="lazy"
+                      decoding="async"
                     />
                     {idx === 1 && validImages.length > 2 && (
                       <span className="absolute bottom-1 right-1 rounded-md bg-black/65 px-1.5 py-0.5 text-[9.5px] font-extrabold text-white backdrop-blur-xs">

@@ -271,10 +271,10 @@ export function formatPreferredTiming(
     value === "URGENT" ||
     (typeof value === "string" && /immediate|asap|جلد از جلد|30.?60/i.test(value))
   ) {
-    return isUrdu ? "⚡ فوری آمد (30 تا 60 منٹ)" : "⚡ Immediate (Within 30–60 mins)";
+    return isUrdu ? "فوری آمد (30 تا 60 منٹ)" : "Immediate (Within 30–60 mins)";
   }
   if (!value) return isUrdu ? "مناسب وقت" : "Flexible Timing";
-  const raw = value.trim();
+  const raw = value.replace(/^⚡\s*/, "").trim();
   if (!raw) return isUrdu ? "مناسب وقت" : "Flexible Timing";
 
   // If already a human-readable label without ISO pattern, return as-is

@@ -89,6 +89,30 @@ export const AVAILABLE_SKILLS: SkillItemConfig[] = [
   },
 ];
 
+const SKILL_ALIASES: Record<string, string> = {
+  Plumbing: "Plumber",
+  Electrical: "Electrician",
+  "AC & Refrigeration": "AC Technician",
+  "AC Repair": "AC Technician",
+  Carpentry: "Carpenter",
+  Painting: "Painter",
+  Masonry: "Mason",
+  Cleaner: "Cleaning",
+  "seed-category-1": "Plumber",
+  "seed-category-2": "Electrician",
+  "seed-category-3": "AC Technician",
+  "seed-category-4": "Carpenter",
+  "seed-category-5": "Painter",
+  "seed-category-6": "Cleaning",
+  "seed-category-7": "Mason",
+  "seed-category-8": "Pest Control",
+  "seed-category-9": "Mechanic",
+};
+
+function normalizeSkill(s: string): string {
+  return SKILL_ALIASES[s] || s;
+}
+
 export function Step2Skills({
   formData,
   updateFormData,
@@ -105,13 +129,14 @@ export function Step2Skills({
   const t = useTranslations("WorkerOnboarding.Step2");
   const tSkills = useTranslations("WorkerOnboarding.Skills");
 
-  const validSelectedSkills = (formData.skills || []).filter((s) =>
+  const normalizedSkills = (formData.skills || []).map(normalizeSkill);
+  const validSelectedSkills = Array.from(new Set(normalizedSkills)).filter((s) =>
     AVAILABLE_SKILLS.some((item) => item.id === s)
   );
   const selectedCount = validSelectedSkills.length;
 
   const toggleSkill = (skillId: string) => {
-    const current = (formData.skills || []).filter((s) =>
+    const current = Array.from(new Set((formData.skills || []).map(normalizeSkill))).filter((s) =>
       AVAILABLE_SKILLS.some((item) => item.id === s)
     );
     if (current.includes(skillId)) {
@@ -144,7 +169,7 @@ export function Step2Skills({
         {/* Grid of Skill Cards (2-col) */}
         <div className="grid grid-cols-2 gap-3 max-h-[380px] sm:max-h-[440px] overflow-y-auto pr-1 py-1">
           {AVAILABLE_SKILLS.map((skill) => {
-            const isSelected = formData.skills?.includes(skill.id);
+            const isSelected = normalizedSkills.includes(skill.id);
             const Icon = skill.icon;
             const skillName = tSkills(skill.nameKey);
             const skillDesc = tSkills(skill.descKey);

@@ -1,4 +1,5 @@
 import { http } from "@/lib/api-client";
+import { getMaxNegotiationRounds } from "@/lib/negotiation";
 import type { VisitOffer } from "@/types/offer";
 
 interface BackendOfferRow {
@@ -41,7 +42,7 @@ function mapBackendOffer(w: BackendOfferRow): VisitOffer {
           : "sent") as VisitOffer["status"],
     createdAt: w.createdAt,
     currentRound: w.negotiationRound + 1,
-    maxRounds: 3,
+    maxRounds: getMaxNegotiationRounds(),
     counterHistory: [
       {
         round: 1,

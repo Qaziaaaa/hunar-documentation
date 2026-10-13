@@ -144,7 +144,8 @@ export function ActiveVisitBanner({ visit: propVisit }: ActiveVisitBannerProps =
       hasDraggedRef.current = false;
       return;
     }
-    router.push("/customer/visits");
+    const targetJobId = liveVisit.jobId || liveVisit.id;
+    router.push(`/customer/job/${targetJobId}/tracking`);
   };
 
   if (!liveVisit) return null;
@@ -170,9 +171,9 @@ export function ActiveVisitBanner({ visit: propVisit }: ActiveVisitBannerProps =
   const technicianPhone = technician?.phone || legacyWorker.workerPhone || "";
 
   const visitCharges =
-    liveVisit.visitCharges && liveVisit.visitCharges > 0
+    typeof liveVisit.visitCharges === "number" && liveVisit.visitCharges > 0
       ? liveVisit.visitCharges
-      : 300;
+      : 0;
 
   const area = isUrdu
     ? liveVisit.customerAreaUr ?? liveVisit.customerArea ?? legacyWorker.address

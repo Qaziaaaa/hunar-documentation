@@ -9,7 +9,7 @@ import { ErrorState } from "@/components/shared/error-state";
 export default function CustomerJobsPage() {
   const { data, isPending, isError, refetch } = useQuery({
     queryKey: ["customer", "jobs"],
-    queryFn: getCustomerJobs,
+    queryFn: () => getCustomerJobs({ page: 1, limit: 20 }),
     staleTime: 30_000,
   });
 

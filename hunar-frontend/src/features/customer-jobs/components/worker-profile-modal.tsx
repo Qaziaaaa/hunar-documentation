@@ -67,7 +67,12 @@ export function WorkerProfileModal({
               <img
                 src={worker.avatarUrl}
                 alt={worker.name}
+                loading="lazy"
+                decoding="async"
                 className="w-full h-full object-cover"
+                onError={(e) => {
+                  (e.currentTarget as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(worker.name || "Worker")}&background=0F766E&color=fff`;
+                }}
               />
               <span
                 className="absolute bottom-1 right-1 rtl:right-auto rtl:left-1 bg-[#16A34A] text-white p-1 rounded-full ring-2 ring-white flex items-center justify-center"
