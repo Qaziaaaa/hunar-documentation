@@ -200,7 +200,6 @@ export function JobRequestFeed({
 
   useEffect(() => {
     refreshLiveJobs();
-    if (!isApiMode) return;
     // Interval poll removed (perf sprint): refresh happens on window focus
     // and whenever the backend pushes JOB_MATCHED/new_job/job:new over the socket.
     const onFocus = () => refreshLiveJobs();
@@ -256,7 +255,7 @@ export function JobRequestFeed({
         clearInterval(fallbackInterval);
       }
     };
-  }, [refreshLiveJobs, isApiMode]);
+  }, [refreshLiveJobs]);
 
   const sourceJobs = useMemo(() => {
     return liveJobs.map(toFeedJobRequest);
