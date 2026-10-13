@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback, useRef } from "react";
 import { Link, useRouter } from "@/i18n/navigation";
 import { useLocale } from "next-intl";
 import {
@@ -84,9 +84,12 @@ export function CustomerJobTrackingView({ jobId }: CustomerJobTrackingViewProps)
   // Live worker GPS coordinates (updated dynamically via Socket.IO)
   const [liveWorkerLat, setLiveWorkerLat] = useState<number | null>(null);
   const [liveWorkerLng, setLiveWorkerLng] = useState<number | null>(null);
+  const isFetchingRef = useRef(false);
 
   const fetchTracking = useCallback(
-    async () => {
+    async (isBackground = false) => {
+      if (isFetchingRef.current) return;
+      isFetchingRef.current = true;
       try {
         const session = arrivalService.getSession();
         const isJobSessionPending =
@@ -106,34 +109,43 @@ export function CustomerJobTrackingView({ jobId }: CustomerJobTrackingViewProps)
           setLiveWorkerLng(tracking.workerLocation.longitude);
         }
       } catch (err: any) {
-        console.error("Failed to load visit tracking:", err);
-        setError(
-          err?.message ||
-            (isUrdu
-              ? "وزٹ ٹریکنگ کی معلومات حاصل نہیں ہو سکیں۔"
-              : "Unable to load live visit tracking.")
-        );
+        console.warn("Failed to load visit tracking:", err);
+        // Only set error state if we don't already have live data on screen
+        if (!isBackground) {
+          setData((currentData) => {
+            if (!currentData) {
+              setError(
+                err?.message ||
+                  (isUrdu
+                    ? "وزٹ ٹریکنگ کی معلومات حاصل نہیں ہو سکیں۔"
+                    : "Unable to load live visit tracking.")
+              );
+            }
+            return currentData;
+          });
+        }
       } finally {
+        isFetchingRef.current = false;
         setIsLoading(false);
       }
     },
     [jobId, isUrdu]
   );
 
-  // Auto-refresh: Initial fetch + background auto-polling every 6 seconds + instant refetch on tab visibility
+  // Auto-refresh: Initial fetch + background auto-polling every 12 seconds + instant refetch on tab visibility
   useEffect(() => {
-    void fetchTracking();
+    void fetchTracking(false);
 
     const interval = setInterval(() => {
       if (typeof document !== "undefined" && document.visibilityState === "hidden") {
         return;
       }
-      void fetchTracking();
-    }, 6000);
+      void fetchTracking(true);
+    }, 12000);
 
     const handleVisibilityChange = () => {
       if (typeof document !== "undefined" && document.visibilityState === "visible") {
-        void fetchTracking();
+        void fetchTracking(true);
       }
     };
 
@@ -267,8 +279,8 @@ export function CustomerJobTrackingView({ jobId }: CustomerJobTrackingViewProps)
     );
   }
 
-  // Error State
-  if (error || !data) {
+  // Error State (only shown if initial data load failed)
+  if (!data) {
     return (
       <div className="max-w-2xl mx-auto px-4 py-16 text-center space-y-5">
         <div className="size-16 rounded-2xl bg-red-50 text-red-600 flex items-center justify-center mx-auto border border-red-100">
