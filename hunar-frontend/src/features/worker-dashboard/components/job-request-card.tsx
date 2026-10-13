@@ -346,7 +346,7 @@ export function JobRequestCard({
         {validImages.length > 0 && (
           <div className="hidden sm:flex sm:w-[36%] md:w-[40%] shrink-0 items-center justify-end pointer-events-none pl-2 sm:pl-3">
             {validImages.length === 1 ? (
-              <div className="relative w-full h-24 sm:h-26 md:h-28 overflow-hidden rounded-lg border border-slate-200/80 bg-slate-100 shadow-2xs group-hover:border-teal/40 transition-colors">
+              <div className="relative w-[calc(50%-4px)] h-24 sm:h-26 md:h-28 overflow-hidden rounded-lg border border-slate-200/80 bg-slate-100 shadow-2xs group-hover:border-teal/40 transition-colors">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={validImages[0]}
@@ -354,6 +354,10 @@ export function JobRequestCard({
                   className="size-full object-cover group-hover:scale-105 transition-transform duration-300"
                   loading="lazy"
                   decoding="async"
+                  onError={(e) => {
+                    const parent = e.currentTarget.parentElement;
+                    if (parent) parent.style.display = "none";
+                  }}
                 />
               </div>
             ) : (
@@ -370,6 +374,10 @@ export function JobRequestCard({
                       className="size-full object-cover group-hover:scale-105 transition-transform duration-300"
                       loading="lazy"
                       decoding="async"
+                      onError={(e) => {
+                        const parent = e.currentTarget.parentElement;
+                        if (parent) parent.style.display = "none";
+                      }}
                     />
                     {idx === 1 && validImages.length > 2 && (
                       <span className="absolute bottom-1 right-1 rounded-md bg-black/65 px-1.5 py-0.5 text-[9.5px] font-extrabold text-white backdrop-blur-xs">

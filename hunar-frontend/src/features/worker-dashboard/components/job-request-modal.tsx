@@ -155,7 +155,8 @@ export function JobRequestModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-navy/60 backdrop-blur-xs p-0 sm:p-4 overflow-y-auto animate-in fade-in duration-200"
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-navy/60 backdrop-blur-xs p-0 sm:p-4 overflow-y-auto overflow-x-hidden scrollbar-none no-scrollbar [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden animate-in fade-in duration-200"
+      style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
       onClick={onClose}
       data-purpose="job-request-details-modal"
     >
@@ -189,8 +190,11 @@ export function JobRequestModal({
           </button>
         </div>
 
-        {/* MODAL BODY (Scrollable) */}
-        <div className="flex-1 overflow-y-auto px-4 sm:px-6 pb-6 space-y-5">
+        {/* MODAL BODY (Scrollable without visible scrollbars) */}
+        <div
+          className="flex-1 overflow-y-auto overflow-x-hidden scrollbar-none no-scrollbar [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden px-4 sm:px-6 pb-6 space-y-5"
+          style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+        >
           {/* SECTION 1: Customer Profile Header Card */}
           <div className="rounded-2xl bg-slate-50/70 p-4">
             <div className="flex items-center justify-between gap-3">
@@ -270,28 +274,28 @@ export function JobRequestModal({
           </div>
 
           {/* SECTION 2: Key Job Specifications & Location */}
-          <div className="space-y-3 pt-1">
-            <h2 className="text-xl sm:text-2xl font-black tracking-tight text-navy leading-tight">
+          <div className="space-y-3 pt-1 min-w-0 max-w-full">
+            <h2 className="text-xl sm:text-2xl font-black tracking-tight text-navy leading-tight break-words [overflow-wrap:anywhere] [word-break:break-word]">
               {job.title}
             </h2>
 
             {/* Quick Metadata Matrix Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs pt-1">
-              <div className="flex items-start gap-3">
+              <div className="flex items-start gap-3 min-w-0">
                 <div className="flex size-9 items-center justify-center rounded-xl bg-teal/15 text-teal shrink-0 mt-0.5 shadow-2xs">
                   <MapPin className="size-4.5" />
                 </div>
-                <div className="min-w-0">
+                <div className="min-w-0 flex-1">
                   <span className="text-xs font-extrabold uppercase tracking-wider text-slate-600 block mb-0.5">
                     {isUrdu ? "علاقہ / سیکٹر" : "Area / Sector"} ({job.distance})
                   </span>
-                  <p className="font-extrabold text-navy text-sm sm:text-base leading-snug">
+                  <p className="font-extrabold text-navy text-sm sm:text-base leading-snug break-words [overflow-wrap:anywhere]">
                     {job.locationArea}
                   </p>
                 </div>
               </div>
 
-              <div className="flex items-start gap-3">
+              <div className="flex items-start gap-3 min-w-0">
                 <div
                   className={`flex size-9 items-center justify-center rounded-xl shrink-0 mt-0.5 shadow-2xs ${
                     isUrgent
@@ -305,12 +309,12 @@ export function JobRequestModal({
                     <Calendar className="size-4.5" />
                   )}
                 </div>
-                <div className="min-w-0">
+                <div className="min-w-0 flex-1">
                   <span className="text-xs font-extrabold uppercase tracking-wider text-slate-600 block mb-0.5">
                     {isUrdu ? "ترجیحی وقت" : "Preferred Visit Window"}
                   </span>
                   <p
-                    className={`font-extrabold text-sm sm:text-base leading-snug ${
+                    className={`font-extrabold text-sm sm:text-base leading-snug break-words [overflow-wrap:anywhere] ${
                       isUrgent ? "text-amber-800" : "text-navy"
                     }`}
                   >
@@ -322,11 +326,11 @@ export function JobRequestModal({
           </div>
 
           {/* SECTION 3: Complete Problem Description */}
-          <div className="space-y-2 pt-2">
+          <div className="space-y-2 pt-2 min-w-0 max-w-full">
             <h4 className="text-sm sm:text-base font-extrabold text-navy">
               {isUrdu ? "تفصیلی وضاحت" : "Detailed Description"}
             </h4>
-            <p className="text-sm sm:text-[15px] font-normal leading-relaxed text-slate-900">
+            <p className="text-sm sm:text-[15px] font-normal leading-relaxed text-slate-900 break-words [overflow-wrap:anywhere] [word-break:break-word] whitespace-pre-wrap min-w-0 max-w-full">
               {job.description}
             </p>
           </div>

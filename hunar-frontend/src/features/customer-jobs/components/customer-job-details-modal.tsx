@@ -143,10 +143,13 @@ export function CustomerJobDetailsModal({
           </div>
 
           {/* Modal Scrollable Body */}
-          <div className="overflow-y-auto p-5 sm:p-6 space-y-5 flex-1">
+          <div
+            className="overflow-y-auto overflow-x-hidden scrollbar-none no-scrollbar [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden p-5 sm:p-6 space-y-5 flex-1"
+            style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+          >
             {/* Title & Created Timestamp */}
-            <div className="space-y-1">
-              <h2 className="text-lg sm:text-xl font-bold text-[#1A1A2E] leading-snug">
+            <div className="space-y-1 min-w-0">
+              <h2 className="text-lg sm:text-xl font-bold text-[#1A1A2E] leading-snug break-words [overflow-wrap:anywhere]">
                 {job.title}
               </h2>
               <p className="text-xs text-slate-500 font-medium">
@@ -155,11 +158,11 @@ export function CustomerJobDetailsModal({
             </div>
 
             {/* Problem Description */}
-            <div className="space-y-2">
+            <div className="space-y-2 min-w-0 max-w-full">
               <h3 className="text-xs uppercase font-bold tracking-wider text-slate-400">
                 {isUrdu ? "مسئلے کی تفصیل" : "Problem Description"}
               </h3>
-              <div className="p-4 rounded-2xl bg-slate-50 text-xs sm:text-sm text-slate-700 leading-relaxed border border-slate-100/80">
+              <div className="p-4 rounded-2xl bg-slate-50 text-xs sm:text-sm text-slate-700 leading-relaxed border border-slate-100/80 break-words [overflow-wrap:anywhere] [word-break:break-word] whitespace-pre-wrap min-w-0 max-w-full">
                 {job.description || (isUrdu ? "کوئی اضافی تفصیل درج نہیں ہے۔" : "No additional description provided.")}
               </div>
             </div>

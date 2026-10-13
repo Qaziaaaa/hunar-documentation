@@ -377,9 +377,9 @@ export interface ApiClientOptions extends RequestInit {
 }
 
 // A hung fetch used to spin forever (perceived perf: infinite spinner).
-// GETs get 15s (worst observed server p99 is ~4.4s), mutations 30s,
-// uploads 60s — all overridable per call via options.timeoutMs.
-const DEFAULT_GET_TIMEOUT_MS = 15_000;
+// GETs get 30s (accommodating Neon DB serverless cold starts & remote SSL latency),
+// mutations 30s, uploads 60s — all overridable per call via options.timeoutMs.
+const DEFAULT_GET_TIMEOUT_MS = 30_000;
 const DEFAULT_MUTATION_TIMEOUT_MS = 30_000;
 const UPLOAD_TIMEOUT_MS = 60_000;
 

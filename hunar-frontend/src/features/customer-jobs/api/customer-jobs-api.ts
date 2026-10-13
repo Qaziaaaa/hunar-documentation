@@ -27,28 +27,7 @@ export async function getCustomerJobs(options?: GetCustomerJobsOptions | unknown
       (res as { items?: unknown[] })?.items ??
       [];
 
-  const backendJobs = rows.map(transformListRow);
-
-  // Only enrich jobs that have active offers or assigned workers
-  const jobsToEnrich = backendJobs.filter(
-    (j) =>
-      j.status === "visit_scheduled" ||
-      j.status === "completed" ||
-      (j.offerCount ?? 0) > 0
-  );
-
-  await Promise.allSettled(
-    jobsToEnrich.map(async (job) => {
-      try {
-        const detail = await getJobDetail(job.id);
-        Object.assign(job, detail);
-      } catch (err) {
-        console.warn(`[getCustomerJobs] Detail fetch failed for ${job.id}:`, err);
-      }
-    })
-  );
-
-  return backendJobs;
+  return rows.map(transformListRow);
 }
 
 /**
@@ -214,12 +193,15 @@ function mapJobStatus(status?: string): JobStatus {
 
 function transformListRow(row: any): CustomerJob {
   const isAsap = row.urgency === "EMERGENCY" || row.urgency === "URGENT" || row.urgency === "HIGH";
+  const offers: WorkerOffer[] = Array.isArray(row.offers)
+    ? row.offers.map(transformBackendOffer)
+    : [];
   return {
     id: row.id,
     title: row.title,
-    category: row.categoryName || "General Service",
-    subCategory: row.categoryName || "General Service",
-    description: "",
+    category: row.categoryName || row.category?.name || "General Service",
+    subCategory: row.categoryName || row.category?.name || "General Service",
+    description: row.description || "",
     photos: row.images || [],
     voiceNoteUrl: row.voiceNoteUrl,
     address: row.address,
@@ -233,8 +215,17 @@ function transformListRow(row: any): CustomerJob {
       (isAsap ? "Immediate (Within 30–60 mins)" : extractTimeSlotFromVisitTime(row.preferredVisitTime)),
     status: mapJobStatus(row.status),
     createdAt: row.createdAt || new Date().toISOString(),
-    offerCount: Number(row.offerCount ?? 0),
-    offers: [],
+    offerCount: Number(row.offerCount ?? offers.length),
+    offers,
+    selectedOffer: row.selectedWorker
+      ? transformBackendOffer({
+          id: row.selectedWorkerId,
+          jobId: row.id,
+          worker: row.selectedWorker,
+          visitCharge: Number(row.lockedVisitCharge ?? 0),
+          createdAt: row.createdAt,
+        })
+      : undefined,
     suggestedVisitCharge: row.suggestedVisitCharge != null ? Number(row.suggestedVisitCharge) : undefined,
   };
 }

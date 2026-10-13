@@ -307,22 +307,6 @@ export async function createJob(data: PostJobData): Promise<CreatedJobResponse> 
         : buildPreferredVisitTime(data.preferredDate, data.preferredTimeSlot),
   };
 
-  if (isMockMode()) {
-    return {
-      id: generateMockOrderCode(),
-      customerId: "cust-current-user",
-      categoryId,
-      title: payload.title,
-      description: payload.description,
-      status: "OPEN",
-      address: payload.address,
-      city: payload.city,
-      area: payload.area,
-      suggestedVisitCharge: payload.suggestedVisitCharge,
-      createdAt: new Date().toISOString(),
-    };
-  }
-
   // B9: no more silent local fallback. A failed POST previously produced a
   // phantom job with a 4-digit id (never on the backend, permanently merged
   // into every list) while the wizard celebrated success. Errors now

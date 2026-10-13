@@ -161,13 +161,16 @@ export function WorkerJobDetailsModal({
           {/* ======================================================== */}
           {/* 2. SCROLLABLE MODAL BODY */}
           {/* ======================================================== */}
-          <div className="p-4 sm:p-6 lg:p-7 overflow-y-auto bg-white">
+          <div
+            className="p-4 sm:p-6 lg:p-7 overflow-y-auto overflow-x-hidden scrollbar-none no-scrollbar [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden bg-white"
+            style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+          >
             <div className="space-y-5 lg:space-y-0 lg:grid lg:grid-cols-12 lg:gap-7">
               {/* Left Column: Job Info, Problem Details, Voice Note, Attached Photos */}
-              <div className="lg:col-span-7 space-y-5">
+              <div className="lg:col-span-7 space-y-5 min-w-0">
                 {/* Title & Timing Row */}
-                <div>
-                  <h2 className="text-base sm:text-xl lg:text-2xl font-black text-slate-900 leading-snug tracking-tight">
+                <div className="min-w-0">
+                  <h2 className="text-base sm:text-xl lg:text-2xl font-black text-slate-900 leading-snug tracking-tight break-words [overflow-wrap:anywhere]">
                     {job.title}
                   </h2>
                   <div className="flex items-center gap-2 mt-2 flex-wrap text-xs text-slate-500">
@@ -190,11 +193,11 @@ export function WorkerJobDetailsModal({
                 </div>
 
                 {/* Problem Description */}
-                <div className="space-y-1.5">
+                <div className="space-y-1.5 min-w-0 max-w-full">
                   <h4 className="text-xs font-extrabold uppercase tracking-wider text-slate-500">
                     Problem Description
                   </h4>
-                  <div className="bg-slate-50 rounded-2xl p-4 border border-slate-200/80 text-xs sm:text-sm text-slate-700 leading-relaxed font-normal">
+                  <div className="bg-slate-50 rounded-2xl p-4 border border-slate-200/80 text-xs sm:text-sm text-slate-700 leading-relaxed font-normal break-words [overflow-wrap:anywhere] [word-break:break-word] whitespace-pre-wrap min-w-0 max-w-full">
                     {job.description || job.problemSummary}
                   </div>
                 </div>
