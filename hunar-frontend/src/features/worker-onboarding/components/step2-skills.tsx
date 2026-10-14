@@ -1,116 +1,46 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import {
   AirVent,
   AlertCircle,
   ArrowLeft,
   ArrowRight,
+  BrickWall,
+  Briefcase,
+  Bug,
   Check,
+  Droplets,
   Flame,
   Hammer,
+  Loader2,
   Paintbrush,
-  Pipette,
-  SunMedium,
+  RefreshCw,
+  Sparkles,
+  Sun,
   Tv,
   Wrench,
   Zap,
 } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
+import { BackendCategory, fetchCategories } from "../api/onboarding-api";
 import type { WorkerProfileFormData } from "../types";
 
-interface SkillItemConfig {
-  id: string;
-  nameKey: string;
-  descKey: string;
-  icon: React.ComponentType<{ className?: string }>;
-}
-
-export const AVAILABLE_SKILLS: SkillItemConfig[] = [
-  {
-    id: "Electrician",
-    nameKey: "Electrician",
-    descKey: "ElectricianDesc",
-    icon: Zap,
-  },
-  {
-    id: "Plumber",
-    nameKey: "Plumber",
-    descKey: "PlumberDesc",
-    icon: Wrench,
-  },
-  {
-    id: "AC Technician",
-    nameKey: "AC Technician",
-    descKey: "AC TechnicianDesc",
-    icon: AirVent,
-  },
-  {
-    id: "Carpenter",
-    nameKey: "Carpenter",
-    descKey: "CarpenterDesc",
-    icon: Hammer,
-  },
-  {
-    id: "Painter",
-    nameKey: "Painter",
-    descKey: "PainterDesc",
-    icon: Paintbrush,
-  },
-  {
-    id: "Mechanic",
-    nameKey: "Mechanic",
-    descKey: "MechanicDesc",
-    icon: Wrench,
-  },
-  {
-    id: "Solar Technician",
-    nameKey: "Solar Technician",
-    descKey: "Solar TechnicianDesc",
-    icon: SunMedium,
-  },
-  {
-    id: "Mason",
-    nameKey: "Mason",
-    descKey: "MasonDesc",
-    icon: Pipette,
-  },
-  {
-    id: "Welder",
-    nameKey: "Welder",
-    descKey: "WelderDesc",
-    icon: Flame,
-  },
-  {
-    id: "Appliance Repair",
-    nameKey: "Appliance Repair",
-    descKey: "Appliance RepairDesc",
-    icon: Tv,
-  },
-];
-
-const SKILL_ALIASES: Record<string, string> = {
-  Plumbing: "Plumber",
-  Electrical: "Electrician",
-  "AC & Refrigeration": "AC Technician",
-  "AC Repair": "AC Technician",
-  Carpentry: "Carpenter",
-  Painting: "Painter",
-  Masonry: "Mason",
-  Cleaner: "Cleaning",
-  "seed-category-1": "Plumber",
-  "seed-category-2": "Electrician",
-  "seed-category-3": "AC Technician",
-  "seed-category-4": "Carpenter",
-  "seed-category-5": "Painter",
-  "seed-category-6": "Cleaning",
-  "seed-category-7": "Mason",
-  "seed-category-8": "Pest Control",
-  "seed-category-9": "Mechanic",
-};
-
-function normalizeSkill(s: string): string {
-  return SKILL_ALIASES[s] || s;
+export function getCategoryIcon(name: string) {
+  const lower = (name || "").toLowerCase();
+  if (lower.includes("plumb")) return Droplets;
+  if (lower.includes("electr")) return Zap;
+  if (lower.includes("ac") || lower.includes("refrig") || lower.includes("air")) return AirVent;
+  if (lower.includes("carpent") || lower.includes("wood")) return Hammer;
+  if (lower.includes("paint")) return Paintbrush;
+  if (lower.includes("clean")) return Sparkles;
+  if (lower.includes("mason")) return BrickWall;
+  if (lower.includes("pest")) return Bug;
+  if (lower.includes("solar")) return Sun;
+  if (lower.includes("weld")) return Flame;
+  if (lower.includes("appliance")) return Tv;
+  return Wrench;
 }
 
 export function Step2Skills({
@@ -127,22 +57,54 @@ export function Step2Skills({
   stepError: string | null;
 }) {
   const t = useTranslations("WorkerOnboarding.Step2");
-  const tSkills = useTranslations("WorkerOnboarding.Skills");
+  const locale = useLocale();
+  const isUrdu = locale === "ur";
 
-  const normalizedSkills = (formData.skills || []).map(normalizeSkill);
-  const validSelectedSkills = Array.from(new Set(normalizedSkills)).filter((s) =>
-    AVAILABLE_SKILLS.some((item) => item.id === s)
-  );
-  const selectedCount = validSelectedSkills.length;
+  const [categories, setCategories] = useState<BackendCategory[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [fetchError, setFetchError] = useState<string | null>(null);
 
-  const toggleSkill = (skillId: string) => {
-    const current = Array.from(new Set((formData.skills || []).map(normalizeSkill))).filter((s) =>
-      AVAILABLE_SKILLS.some((item) => item.id === s)
-    );
-    if (current.includes(skillId)) {
-      updateFormData({ skills: current.filter((s) => s !== skillId) });
+  const loadCategories = () => {
+    setIsLoading(true);
+    setFetchError(null);
+
+    fetchCategories()
+      .then((items) => {
+        // Only active categories from DB, ordered by sortOrder
+        const active = (items || [])
+          .filter((c) => c.isActive !== false)
+          .sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
+        setCategories(active);
+      })
+      .catch((err) => {
+        console.error("[Step2Skills] Failed to fetch categories from DB:", err);
+        setFetchError("Unable to load categories from database.");
+      })
+      .finally(() => {
+        setIsLoading(false);
+      });
+  };
+
+  useEffect(() => {
+    loadCategories();
+  }, []);
+
+  const selectedSkills = formData.skills || [];
+  const selectedCount = selectedSkills.length;
+
+  const toggleCategory = (cat: BackendCategory) => {
+    // Check match either by name or ID
+    const isSelected =
+      selectedSkills.includes(cat.name) || selectedSkills.includes(cat.id);
+
+    if (isSelected) {
+      updateFormData({
+        skills: selectedSkills.filter((s) => s !== cat.name && s !== cat.id),
+      });
     } else {
-      updateFormData({ skills: [...current, skillId] });
+      updateFormData({
+        skills: [...selectedSkills.filter((s) => s !== cat.name && s !== cat.id), cat.name],
+      });
     }
   };
 
@@ -166,54 +128,87 @@ export function Step2Skills({
           </span>
         </div>
 
-        {/* Grid of Skill Cards (2-col) */}
-        <div className="grid grid-cols-2 gap-3 max-h-[380px] sm:max-h-[440px] overflow-y-auto pr-1 py-1">
-          {AVAILABLE_SKILLS.map((skill) => {
-            const isSelected = normalizedSkills.includes(skill.id);
-            const Icon = skill.icon;
-            const skillName = tSkills(skill.nameKey);
-            const skillDesc = tSkills(skill.descKey);
-
-            return (
+        {/* Loading State */}
+        {isLoading && (
+          <div className="grid grid-cols-3 gap-2.5 sm:gap-3 py-1">
+            {[1, 2, 3, 4, 5, 6].map((idx) => (
               <div
-                key={skill.id}
-                onClick={() => toggleSkill(skill.id)}
-                className={`group flex cursor-pointer flex-col items-center justify-center rounded-2xl p-3.5 text-center transition-all shadow-2xs ${
-                  isSelected
-                    ? "border-2 border-teal bg-teal/10 shadow-xs"
-                    : "border border-slate-200 bg-white hover:border-teal/50 hover:bg-slate-50"
-                }`}
+                key={idx}
+                className="flex animate-pulse flex-col items-center justify-center rounded-2xl border border-slate-200 bg-white p-3 text-center min-h-[105px]"
               >
+                <div className="size-10 rounded-full bg-slate-200 mb-2" />
+                <div className="h-3.5 w-16 rounded-md bg-slate-200 mb-1.5" />
+                <div className="h-2.5 w-12 rounded-md bg-slate-100" />
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Error State */}
+        {!isLoading && fetchError && categories.length === 0 && (
+          <div className="flex flex-col items-center justify-center rounded-2xl border border-red-200 bg-red-50 p-6 text-center">
+            <AlertCircle className="size-8 text-error mb-2" />
+            <p className="text-sm font-semibold text-slate-800">{fetchError}</p>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={loadCategories}
+              className="mt-3 gap-1.5 rounded-full border-teal text-teal hover:bg-teal/10"
+            >
+              <RefreshCw className="size-3.5" />
+              <span>Retry</span>
+            </Button>
+          </div>
+        )}
+
+        {/* Database Categories Grid (3-col, no scrollbar) */}
+        {!isLoading && categories.length > 0 && (
+          <div className="grid grid-cols-3 gap-2.5 sm:gap-3 py-1">
+            {categories.map((cat) => {
+              const isSelected =
+                selectedSkills.includes(cat.name) || selectedSkills.includes(cat.id);
+              const Icon = getCategoryIcon(cat.name);
+              const displayName = isUrdu && cat.nameUrdu ? cat.nameUrdu : cat.name;
+
+              return (
                 <div
-                  className={`mb-2 flex size-11 items-center justify-center rounded-full transition-transform group-hover:scale-105 ${
+                  key={cat.id}
+                  onClick={() => toggleCategory(cat)}
+                  className={`group flex cursor-pointer flex-col items-center justify-center rounded-2xl p-3 text-center transition-all shadow-2xs ${
                     isSelected
-                      ? "bg-navy text-white shadow-xs"
-                      : "bg-slate-100 text-slate-700"
+                      ? "border-2 border-teal bg-teal/10 shadow-xs"
+                      : "border border-slate-200 bg-white hover:border-teal/50 hover:bg-slate-50"
                   }`}
                 >
-                  <Icon className="size-5" />
+                  <div
+                    className={`mb-2 flex size-10 items-center justify-center rounded-full transition-transform group-hover:scale-105 ${
+                      isSelected
+                        ? "bg-navy text-white shadow-xs"
+                        : "bg-slate-100 text-slate-700"
+                    }`}
+                  >
+                    <Icon className="size-4.5" />
+                  </div>
+
+                  <span className="text-xs sm:text-sm font-bold text-navy truncate w-full" title={displayName}>
+                    {displayName}
+                  </span>
+
+                  {isSelected ? (
+                    <span className="mt-1.5 flex items-center justify-center gap-1 text-[11px] font-bold text-teal">
+                      <Check className="size-3" /> {t("selected")}
+                    </span>
+                  ) : (
+                    <span className="mt-1.5 text-[11px] font-medium text-slate-400">
+                      {t("tapToSelect")}
+                    </span>
+                  )}
                 </div>
-
-                <span className="text-sm sm:text-base font-bold text-navy">
-                  {skillName}
-                </span>
-                <span className="text-xs sm:text-[13px] text-muted-foreground line-clamp-1 mt-0.5">
-                  {skillDesc}
-                </span>
-
-                {isSelected ? (
-                  <span className="mt-2 flex items-center gap-1 text-xs font-bold text-teal">
-                    <Check className="size-3.5" /> {t("selected")}
-                  </span>
-                ) : (
-                  <span className="mt-2 text-xs font-medium text-slate-400">
-                    {t("tapToSelect")}
-                  </span>
-                )}
-              </div>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
+        )}
 
         {stepError && (
           <div className="flex items-center gap-2 rounded-xl bg-error/10 p-2.5 text-sm font-medium text-error">

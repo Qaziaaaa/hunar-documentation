@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { WorkerProfileFormData } from "../types";
 
-const PESHAWAR_AREAS = [
+export const PESHAWAR_AREAS = [
   "Hayatabad",
   "University Town",
   "Peshawar Cantt",
@@ -53,12 +53,17 @@ export function Step4ServiceAreas({
   const tAreas = useTranslations("WorkerOnboarding.Areas");
   const tRadii = useTranslations("WorkerOnboarding.Radii");
 
+  // Keep only recognized localities in active selection
+  const validAreasList = PESHAWAR_AREAS as readonly string[];
+  const selectedAreas = (formData.serviceAreas || []).filter((a) =>
+    validAreasList.includes(a),
+  );
+
   const toggleArea = (area: string) => {
-    const current = formData.serviceAreas || [];
-    if (current.includes(area)) {
-      updateFormData({ serviceAreas: current.filter((a) => a !== area) });
+    if (selectedAreas.includes(area)) {
+      updateFormData({ serviceAreas: selectedAreas.filter((a) => a !== area) });
     } else {
-      updateFormData({ serviceAreas: [...current, area] });
+      updateFormData({ serviceAreas: [...selectedAreas, area] });
     }
   };
 
@@ -91,13 +96,13 @@ export function Step4ServiceAreas({
               {t("selectTowns")} <span className="text-error">*</span>
             </label>
             <span className="text-sm font-bold text-teal">
-              {t("selectedCount", { count: formData.serviceAreas?.length || 0 })}
+              {t("selectedCount", { count: selectedAreas.length })}
             </span>
           </div>
 
           <div className="flex flex-wrap gap-2 max-h-[190px] overflow-y-auto pr-1">
             {PESHAWAR_AREAS.map((area) => {
-              const isSelected = formData.serviceAreas?.includes(area);
+              const isSelected = selectedAreas.includes(area);
               return (
                 <button
                   key={area}
