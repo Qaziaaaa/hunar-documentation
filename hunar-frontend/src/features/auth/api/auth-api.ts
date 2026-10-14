@@ -28,6 +28,7 @@ export interface AuthResponse {
     id: string;
     phone: string;
     name?: string;
+    avatarUrl?: string;
     role: "WORKER" | "CUSTOMER" | "ADMIN";
     isVerified?: boolean;
   };

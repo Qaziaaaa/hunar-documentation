@@ -510,27 +510,27 @@ export async function apiClient<T>(
 }
 
 export const http = {
-  get: <T>(path: string, options?: ApiClientOptions) => apiClient<T>(path, options),
-  post: <T>(path: string, body?: unknown, options?: ApiClientOptions) =>
+  get: <T,>(path: string, options?: ApiClientOptions) => apiClient<T>(path, options),
+  post: <T,>(path: string, body?: unknown, options?: ApiClientOptions) =>
     apiClient<T>(path, {
       method: "POST",
       body: body === undefined ? undefined : JSON.stringify(body),
       ...options,
     }),
-  patch: <T>(path: string, body?: unknown, options?: ApiClientOptions) =>
+  patch: <T,>(path: string, body?: unknown, options?: ApiClientOptions) =>
     apiClient<T>(path, {
       method: "PATCH",
       body: body === undefined ? undefined : JSON.stringify(body),
       ...options,
     }),
-  put: <T>(path: string, body?: unknown, options?: ApiClientOptions) =>
+  put: <T,>(path: string, body?: unknown, options?: ApiClientOptions) =>
     apiClient<T>(path, {
       method: "PUT",
       body: body === undefined ? undefined : JSON.stringify(body),
       ...options,
     }),
-  delete: <T>(path: string, options?: ApiClientOptions) => apiClient<T>(path, { method: "DELETE", ...options }),
-  upload: <T>(path: string, formData: FormData, options?: ApiClientOptions) =>
+  delete: <T,>(path: string, options?: ApiClientOptions) => apiClient<T>(path, { method: "DELETE", ...options }),
+  upload: <T,>(path: string, formData: FormData, options?: ApiClientOptions) =>
     apiClient<T>(path, {
       method: "POST",
       body: formData,
