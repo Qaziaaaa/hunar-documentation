@@ -49,6 +49,20 @@ export async function getCustomerProfile(): Promise<CustomerProfileData> {
         .toUpperCase()
     : "C";
 
+  // Keep stored user synchronized with database profile
+  const stored = getStoredUser("CUSTOMER") ?? getStoredUser();
+  if (stored) {
+    const nextAvatar = u.avatarUrl !== undefined ? (u.avatarUrl || undefined) : stored.avatarUrl;
+    const nextName = name || stored.name;
+    if (nextAvatar !== stored.avatarUrl || nextName !== stored.name) {
+      setTokens(getAccessToken("CUSTOMER") || "", getRefreshToken("CUSTOMER") || "", {
+        ...stored,
+        name: nextName,
+        avatarUrl: nextAvatar,
+      });
+    }
+  }
+
   return {
     ...defaultCustomerProfile,
     id: u.id,
@@ -87,13 +101,13 @@ export async function updateCustomerProfile(
           .toUpperCase()
       : "C";
 
-    const nextAvatar = u?.avatarUrl || data.avatarUrl;
-    const stored = getStoredUser();
+    const nextAvatar = u?.avatarUrl !== undefined ? (u?.avatarUrl || undefined) : (data.avatarUrl || undefined);
+    const stored = getStoredUser("CUSTOMER") ?? getStoredUser();
     if (stored) {
-      setTokens(getAccessToken() || "", getRefreshToken() || "", {
+      setTokens(getAccessToken("CUSTOMER") || "", getRefreshToken("CUSTOMER") || "", {
         ...stored,
         name: name || stored.name,
-        avatarUrl: nextAvatar !== undefined ? (nextAvatar || undefined) : stored.avatarUrl,
+        avatarUrl: nextAvatar !== undefined ? nextAvatar : stored.avatarUrl,
       });
     }
 
