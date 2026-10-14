@@ -49,6 +49,38 @@ export interface WorkerOnboardingApiResponse {
   };
 }
 
+export interface BackendCategory {
+  id: string;
+  name: string;
+  nameUrdu?: string | null;
+  isActive: boolean;
+  sortOrder?: number;
+  defaultVisitCharge?: number | null;
+}
+
+let cachedCategories: BackendCategory[] | null = null;
+
+/**
+ * Fetch active service categories from GET /categories (backed by PostgreSQL ServiceCategory table)
+ */
+export async function fetchCategories(): Promise<BackendCategory[]> {
+  if (cachedCategories && cachedCategories.length > 0) {
+    return cachedCategories;
+  }
+  try {
+    const raw = await http.get<any>("/categories");
+    const items: BackendCategory[] = Array.isArray(raw) ? raw : raw?.data ?? [];
+    if (items.length > 0) {
+      cachedCategories = items.filter((c) => c.isActive !== false);
+      return cachedCategories;
+    }
+    return [];
+  } catch (err) {
+    console.warn("[onboarding-api] Failed to fetch service categories from DB:", err);
+    return cachedCategories ?? [];
+  }
+}
+
 /**
  * Fetch existing worker onboarding progress & saved draft from backend.
  * Returns null only for a successful response without a saved profile; API
@@ -147,13 +179,17 @@ export async function saveWorkerDocuments(docs: {
   const payload: Record<string, unknown> = {
     cnicFront: {
       url: docs.cnicFrontUrl,
-      fileName: docs.cnicFrontName || "cnic_front.jpg",
-      mimeType: "image/jpeg",
+      fileName: docs.cnicFrontName || "cnic-front.jpg",
+      mimeType: (docs.cnicFrontName || "").toLowerCase().endsWith(".pdf")
+        ? "application/pdf"
+        : "image/jpeg",
     },
     cnicBack: {
       url: docs.cnicBackUrl,
-      fileName: docs.cnicBackName || "cnic_back.jpg",
-      mimeType: "image/jpeg",
+      fileName: docs.cnicBackName || "cnic-back.jpg",
+      mimeType: (docs.cnicBackName || "").toLowerCase().endsWith(".pdf")
+        ? "application/pdf"
+        : "image/jpeg",
     },
   };
 
@@ -161,7 +197,9 @@ export async function saveWorkerDocuments(docs: {
     payload.certificate = {
       url: docs.certificateUrl,
       fileName: docs.certificateName || "certificate.pdf",
-      mimeType: "application/pdf",
+      mimeType: (docs.certificateName || "").toLowerCase().endsWith(".pdf")
+        ? "application/pdf"
+        : "image/jpeg",
     };
   }
 
