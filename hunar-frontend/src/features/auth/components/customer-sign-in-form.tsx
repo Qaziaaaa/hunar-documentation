@@ -15,6 +15,7 @@ import {
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
+import { useSearchParams } from "next/navigation";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,6 +24,7 @@ import { setTokens } from "@/lib/api-client";
 import { customerLogin } from "../api/auth-api";
 import { getErrorMessage } from "../lib/error";
 import { normalizePkPhone } from "../lib/phone";
+import { getSafeRedirect } from "../lib/redirect";
 import { phoneSchema } from "../schemas/signup";
 
 const signInSchema = z.object({
@@ -35,9 +37,15 @@ type SignInValues = z.infer<typeof signInSchema>;
 export function CustomerSignInForm() {
   const t = useTranslations("Auth");
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirectParam = searchParams.get("redirect");
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
+
+  const signUpHref = redirectParam
+    ? `/customer/sign-up?redirect=${encodeURIComponent(redirectParam)}`
+    : "/customer/sign-up";
 
   const {
     register,
@@ -58,7 +66,7 @@ export function CustomerSignInForm() {
     try {
       const response = await customerLogin(normalized, values.password);
       setTokens(response.accessToken, response.refreshToken, response.user);
-      router.push("/customer/dashboard");
+      router.push(getSafeRedirect(redirectParam));
     } catch (error) {
       setSubmitError(getErrorMessage(error));
     } finally {
@@ -89,7 +97,7 @@ export function CustomerSignInForm() {
             {t("signIn")}
           </span>
           <Link
-            href="/customer/sign-up"
+            href={signUpHref}
             className="flex-1 rounded-full py-1.5 text-center text-xs font-semibold text-navy transition"
           >
             {t("register")}
@@ -205,7 +213,7 @@ export function CustomerSignInForm() {
         <p className="mt-3 text-center text-sm text-muted-foreground">
           {t("noAccount")}{" "}
           <Link
-            href="/customer/sign-up"
+            href={signUpHref}
             className="font-semibold text-teal hover:underline"
           >
             {t("createOne")}

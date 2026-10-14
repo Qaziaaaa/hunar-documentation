@@ -1,6 +1,8 @@
+import { Suspense } from "react";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { AuthShell } from "@/features/auth/components/auth-shell";
 import { CustomerSignupFlow } from "@/features/auth/components/customer-signup-flow";
+import { LoadingState } from "@/components/shared/loading-state";
 
 export async function generateMetadata({
   params,
@@ -22,7 +24,9 @@ export default async function CustomerSignUpPage({
 
   return (
     <AuthShell role="customer">
-      <CustomerSignupFlow />
+      <Suspense fallback={<LoadingState label="Loading sign up..." />}>
+        <CustomerSignupFlow />
+      </Suspense>
     </AuthShell>
   );
 }
