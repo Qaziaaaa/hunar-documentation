@@ -8,6 +8,7 @@ import { Link, useRouter } from "@/i18n/navigation";
 import { CATEGORY_OPTIONS, resolveCategoryOption } from "../data/categories";
 import type { PostJobData, PostJobStep, ServiceCategory } from "../types";
 import { createJob } from "../api/post-job-api";
+import { buildPostJobSignInHref } from "../lib/return-url";
 import { ApiError, getAccessToken, getStoredUser } from "@/lib/api-client";
 import { toLocalDateString } from "@/lib/format";
 import { JobPostedSuccessModal } from "./job-posted-success-modal";
@@ -75,12 +76,18 @@ export function PostJobWizard() {
   const categoryParam = searchParams.get("category");
   const subCategoryParam = searchParams.get("subCategory") || searchParams.get("sub");
   const searchParam = searchParams.get("search");
+  const shouldResumeReview = searchParams.get("resume") === "review";
 
   const initialCategoryMatch = resolveCategoryOption(categoryParam || searchParam);
 
-  const [currentStep, setCurrentStep] = useState<PostJobStep>(2);
+  const [currentStep, setCurrentStep] = useState<PostJobStep>(
+    shouldResumeReview ? 4 : 2
+  );
   const [formData, setFormData] = useState<PostJobData>(() => {
     const saved = getStoredDraft();
+    if (shouldResumeReview && saved) {
+      return { ...INITIAL_FORM_DATA, ...saved };
+    }
     if (initialCategoryMatch) {
       return {
         ...INITIAL_FORM_DATA,
@@ -106,12 +113,13 @@ export function PostJobWizard() {
   const [postedJobId, setPostedJobId] = useState<string | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
-  // If accessed directly without selecting a category, redirect to Step 1 on the dashboard
+  // If accessed directly without selecting a category, redirect to Step 1 on the dashboard.
+  // Skipped when resuming at Step 4 after authentication (draft restores the category).
   useEffect(() => {
-    if (!initialCategoryMatch) {
-      router.replace("/customer/dashboard");
-    }
-  }, [initialCategoryMatch, router]);
+    if (initialCategoryMatch) return;
+    if (shouldResumeReview && getStoredDraft()?.category) return;
+    router.replace("/customer/dashboard");
+  }, [initialCategoryMatch, shouldResumeReview, router]);
 
   // Persist form draft in sessionStorage so navigating to dashboard and back preserves user input
   useEffect(() => {
@@ -120,6 +128,7 @@ export function PostJobWizard() {
 
   // Sync if category search param changes dynamically
   useEffect(() => {
+    if (shouldResumeReview) return;
     const rawParam = categoryParam || searchParam;
     if (rawParam) {
       const match = resolveCategoryOption(rawParam);
@@ -135,7 +144,7 @@ export function PostJobWizard() {
         setCurrentStep(2);
       }
     }
-  }, [categoryParam, subCategoryParam, searchParam]);
+  }, [categoryParam, subCategoryParam, searchParam, shouldResumeReview]);
 
   // Form Field Updaters
   const handleUpdateField = <K extends keyof PostJobData>(
@@ -160,6 +169,19 @@ export function PostJobWizard() {
     }
   };
   const handleNextStep = handleNext;
+
+  // Step 3 -> Step 4 requires an authenticated customer. Unauthenticated users
+  // are sent to sign in and returned to Step 4 with the draft preserved.
+  const handleStep3Next = () => {
+    const customerToken = getAccessToken("CUSTOMER");
+    if (customerToken) {
+      setCurrentStep(4);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      return;
+    }
+    persistDraft(formData);
+    router.push(buildPostJobSignInHref(formData));
+  };
 
   const handleBack = () => {
     if (currentStep > 2) {
@@ -294,7 +316,7 @@ export function PostJobWizard() {
             <Step3LocationSchedule
               data={formData}
               onChange={updateFormData}
-              onNext={handleNextStep}
+              onNext={handleStep3Next}
               onBack={handlePrevStep}
             />
           )}
