@@ -14,22 +14,8 @@ import type { WorkerVerificationData } from "../types";
 export function RequestChangesView({ data }: { data: WorkerVerificationData }) {
   const t = useTranslations("WorkerVerification.RequestChanges");
 
-  const changeItems = data.changeRequests || [
-    {
-      id: "cr_1",
-      field: "cnicBack",
-      title: "CNIC Back Photo",
-      adminNote: "Please re-upload with all 4 corners visible and readable family code.",
-      stepNumber: 5,
-    },
-    {
-      id: "cr_2",
-      field: "primaryAddress",
-      title: "Base Workshop Address",
-      adminNote: "Please provide a specific street/chowk location.",
-      stepNumber: 4,
-    },
-  ];
+  const changeItems =
+    data.changeRequests && data.changeRequests.length > 0 ? data.changeRequests : null;
 
   return (
     <div className="space-y-4 text-left rtl:text-right">
@@ -58,47 +44,49 @@ export function RequestChangesView({ data }: { data: WorkerVerificationData }) {
               {t("adminNotesTitle")}
             </h3>
             <p className="text-xs sm:text-sm font-medium leading-relaxed text-slate-800">
-              {data.adminNotes || t("defaultAdminNote")}
+              {data.adminNotes || data.rejectionReason || t("defaultAdminNote")}
             </p>
           </div>
         </div>
       </div>
 
-      {/* Itemized Action List */}
-      <div className="rounded-2xl bg-white p-2 space-y-3">
-        <h4 className="text-xs font-extrabold uppercase tracking-wider text-navy flex items-center justify-between">
-          <span className="flex items-center gap-1.5">
-            <Edit className="size-3.5 text-teal" />
-            {t("itemsRequiring", { count: changeItems.length })}
-          </span>
-          <span className="text-[10px] text-orange font-bold">{t("actionNeeded")}</span>
-        </h4>
+      {/* Itemized Action List — only rendered when structured change requests exist */}
+      {changeItems && changeItems.length > 0 && (
+        <div className="rounded-2xl bg-white p-2 space-y-3">
+          <h4 className="text-xs font-extrabold uppercase tracking-wider text-navy flex items-center justify-between">
+            <span className="flex items-center gap-1.5">
+              <Edit className="size-3.5 text-teal" />
+              {t("itemsRequiring", { count: changeItems.length })}
+            </span>
+            <span className="text-[10px] text-orange font-bold">{t("actionNeeded")}</span>
+          </h4>
 
-        <div className="space-y-2">
-          {changeItems.map((item) => (
-            <div
-              key={item.id}
-              className="flex items-center justify-between gap-3 rounded-xl border border-slate-200/80 bg-slate-50/60 p-3"
-            >
-              <div className="space-y-0.5 min-w-0">
-                <span className="block text-xs font-bold text-navy truncate">
-                  {item.title}
-                </span>
-                <p className="text-[11px] text-muted-foreground leading-tight">
-                  {item.adminNote}
-                </p>
-              </div>
-
-              <Link
-                href="/worker/onboarding"
-                className="shrink-0 rounded-full border border-teal/40 bg-white px-2.5 py-1 text-[11px] font-bold text-teal shadow-2xs hover:bg-teal/10"
+          <div className="space-y-2">
+            {changeItems.map((item) => (
+              <div
+                key={item.id}
+                className="flex items-center justify-between gap-3 rounded-xl border border-slate-200/80 bg-slate-50/60 p-3"
               >
-                {t("editStep", { step: item.stepNumber })}
-              </Link>
-            </div>
-          ))}
+                <div className="space-y-0.5 min-w-0">
+                  <span className="block text-xs font-bold text-navy truncate">
+                    {item.title}
+                  </span>
+                  <p className="text-[11px] text-muted-foreground leading-tight">
+                    {item.adminNote}
+                  </p>
+                </div>
+
+                <Link
+                  href="/worker/onboarding"
+                  className="shrink-0 rounded-full border border-teal/40 bg-white px-2.5 py-1 text-[11px] font-bold text-teal shadow-2xs hover:bg-teal/10"
+                >
+                  {t("editStep", { step: item.stepNumber })}
+                </Link>
+              </div>
+            ))}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Re-submission Button */}
       <div className="pt-2">

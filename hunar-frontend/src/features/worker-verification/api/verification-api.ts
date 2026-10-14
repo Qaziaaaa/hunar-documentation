@@ -1,21 +1,6 @@
 import { http } from "@/lib/api-client";
 import type { VerificationOutcome, WorkerVerificationData } from "../types";
 
-const LOCAL_STORAGE_KEY = "workerfix.worker_verification_status";
-const LEGACY_LOCAL_STORAGE_KEY = "hunar_worker_verification_status";
-
-function readStoredVerification(): string | null {
-  if (typeof window === "undefined") return null;
-  const current = localStorage.getItem(LOCAL_STORAGE_KEY);
-  if (current) return current;
-  const legacy = localStorage.getItem(LEGACY_LOCAL_STORAGE_KEY);
-  if (legacy) {
-    localStorage.setItem(LOCAL_STORAGE_KEY, legacy);
-    localStorage.removeItem(LEGACY_LOCAL_STORAGE_KEY);
-  }
-  return legacy;
-}
-
 function mapBackendStatusToOutcome(status?: string): VerificationOutcome {
   if (!status) return "pending";
   switch (status.toUpperCase()) {
@@ -32,116 +17,46 @@ function mapBackendStatusToOutcome(status?: string): VerificationOutcome {
   }
 }
 
-const DEFAULT_VERIFICATION_DATA: WorkerVerificationData = {
-  status: "pending",
-  workerId: "",
-  fullName: "",
-  phone: "",
-  skills: [],
-  city: "",
-  serviceAreas: [],
-  submittedAt: new Date().toISOString(),
-  rejectionReason: undefined,
-  adminNotes: undefined,
-  changeRequests: [],
-  tradeCertificateName: undefined,
-};
-
 export async function getVerificationStatus(): Promise<WorkerVerificationData> {
-  try {
-    const raw = await http.get<any>("/users/worker/me");
-    const data = raw?.data ?? raw;
+  const raw = await http.get<any>("/users/worker/me");
+  const data = raw?.data ?? raw;
 
-    if (data?.user) {
-      const profile = data.workerProfile;
-      const status = mapBackendStatusToOutcome(profile?.verificationStatus);
-      const certDoc = data.documents?.find((d: any) => d.type === "CERTIFICATE");
+  if (data?.user) {
+    const profile = data.workerProfile;
+    const status = mapBackendStatusToOutcome(profile?.verificationStatus);
+    const certDoc = data.documents?.find((d: any) => d.type === "CERTIFICATE");
 
-      const parsed: WorkerVerificationData = {
-        status,
-        workerId: data.user.id ? `WRK-${data.user.id.slice(0, 8).toUpperCase()}` : "",
-        fullName: data.user.name || "",
-        phone: data.user.phone ? data.user.phone.replace(/^(\+92|0)/, "") : "",
-        skills: profile?.skills?.length ? profile.skills : [],
-        city: (data.user as any)?.city || (profile as any)?.city || "",
-        serviceAreas: data.serviceAreas?.length
-          ? data.serviceAreas.map((a: any) => (typeof a === "string" ? a : a.label || a.address || "")).filter(Boolean)
-          : [],
-        submittedAt: profile?.submittedAt || new Date().toISOString(),
-        reviewedAt: profile?.verifiedAt || undefined,
-        rejectionReason: profile?.rejectionReason || undefined,
-        adminNotes: profile?.adminNote || undefined,
-        profilePhoto: data.user.avatarUrl || undefined,
-        tradeCertificateName: certDoc?.fileName || undefined,
-      };
+    const parsed: WorkerVerificationData = {
+      status,
+      workerId: data.user.id ? `WRK-${data.user.id.slice(0, 8).toUpperCase()}` : "",
+      fullName: data.user.name || "",
+      phone: data.user.phone ? data.user.phone.replace(/^(\+92|0)/, "") : "",
+      skills: profile?.skills?.length ? profile.skills : [],
+      city: (data.user as any)?.city || (profile as any)?.city || "Peshawar",
+      serviceAreas: data.serviceAreas?.length
+        ? data.serviceAreas.map((a: any) => (typeof a === "string" ? a : a.label || a.address || "")).filter(Boolean)
+        : [],
+      submittedAt: profile?.submittedAt || profile?.updatedAt || new Date().toISOString(),
+      reviewedAt: profile?.verifiedAt || undefined,
+      rejectionReason: profile?.rejectionReason || undefined,
+      adminNotes: profile?.adminNote || undefined,
+      profilePhoto: data.user.avatarUrl || undefined,
+      tradeCertificateName: certDoc?.fileName || undefined,
+    };
 
-      if (typeof window !== "undefined") {
-        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(parsed));
-      }
-
-      return parsed;
-    }
-  } catch (err) {
-    console.warn("[getVerificationStatus] Server unreachable, using local status:", err);
+    return parsed;
   }
 
-  if (typeof window !== "undefined") {
-    const stored = readStoredVerification();
-    if (stored) {
-      try {
-        return JSON.parse(stored) as WorkerVerificationData;
-      } catch {
-        // use default
-      }
-    }
-  }
-
-  return DEFAULT_VERIFICATION_DATA;
-}
-
-export function setSimulatedVerificationStatus(
-  status: VerificationOutcome,
-): WorkerVerificationData {
-  const current = readStoredVerification();
-  const base = current
-    ? (JSON.parse(current) as WorkerVerificationData)
-    : DEFAULT_VERIFICATION_DATA;
-
-  const updated: WorkerVerificationData = {
-    ...base,
-    status,
-    reviewedAt:
-      status !== "pending" ? new Date().toISOString() : undefined,
-  };
-
-  if (typeof window !== "undefined") {
-    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(updated));
-  }
-
-  return updated;
+  throw new Error("Unable to retrieve worker profile from backend.");
 }
 
 export async function resubmitVerification(
   _data?: Partial<WorkerVerificationData>,
 ): Promise<{ success: boolean; message: string }> {
-  try {
-    const raw = await http.post<any>("/users/worker/submit");
-    const res = raw?.data ?? raw;
-    if (res) {
-      setSimulatedVerificationStatus("pending");
-      return {
-        success: true,
-        message: "Profile and updated documents re-submitted for admin review.",
-      };
-    }
-  } catch (err: any) {
-    console.warn("[resubmitVerification] Backend submission error:", err);
-  }
-
-  // Simulate successful re-submission fallback
-  setSimulatedVerificationStatus("pending");
+  const raw = await http.post<any>("/users/worker/submit");
+  const res = raw?.data ?? raw;
   return {
     success: true,
-    message: "Profile and updated documents re-submitted for admin review.",
+    message: res?.message || "Profile and updated documents re-submitted for admin review.",
   };
 }
