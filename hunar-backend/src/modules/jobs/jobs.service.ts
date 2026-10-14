@@ -23,6 +23,7 @@ import { RealtimeService } from '../realtime/realtime.service';
 import { JOB_EVENTS, userRoom, WORKERS_ROOM } from './jobs.events';
 import { generateUniqueOrderCode } from '../../common/helpers/order-code.util';
 import { RedisService } from '../../common/redis/redis.service';
+import { haversineKm } from '../../common/helpers/geo.util';
 
 export interface JobCardRow {
   id: string;
@@ -266,6 +267,24 @@ export class JobsService {
                   name: true,
                   avatarUrl: true,
                   phone: true,
+                  isVerified: true,
+                  workerProfile: {
+                    select: {
+                      skills: true,
+                      experienceYears: true,
+                      bio: true,
+                      verificationStatus: true,
+                      serviceRadiusKm: true,
+                    },
+                  },
+                  serviceAreas: {
+                    select: {
+                      label: true,
+                      address: true,
+                      latitude: true,
+                      longitude: true,
+                    },
+                  },
                 },
               },
             },
@@ -274,6 +293,39 @@ export class JobsService {
       }),
       this.prisma.serviceRequest.count({ where }),
     ]);
+
+    const workerIds = [
+      ...new Set(rows.flatMap((j) => j.offers.map((o) => o.workerId)).filter(Boolean)),
+    ];
+
+    const [ratingRows, completedRows] = await Promise.all([
+      workerIds.length > 0
+        ? (this.prisma.review.groupBy({
+            by: ['revieweeId'],
+            where: { revieweeId: { in: workerIds }, isVisible: true },
+            _avg: { rating: true },
+            _count: { _all: true },
+          }) as unknown as Promise<
+            Array<{ revieweeId: string; _avg: { rating: number | null }; _count: { _all: number } }>
+          >)
+        : Promise.resolve([]),
+      workerIds.length > 0
+        ? (this.prisma.serviceRequest.groupBy({
+            by: ['selectedWorkerId'],
+            where: {
+              selectedWorkerId: { in: workerIds },
+              status: { in: ['COMPLETED', 'PAID', 'REVIEWED'] },
+            },
+            _count: { _all: true },
+          }) as unknown as Promise<
+            Array<{ selectedWorkerId: string | null; _count: { _all: number } }>
+          >)
+        : Promise.resolve([]),
+    ]);
+
+    const ratingMap = new Map(ratingRows.map((r) => [r.revieweeId, r]));
+    const completedMap = new Map(completedRows.map((c) => [c.selectedWorkerId!, c]));
+
     const items = rows.map((j) => ({
       id: j.id,
       title: j.title,
@@ -292,29 +344,61 @@ export class JobsService {
       images: j.images,
       voiceNoteUrl: j.voiceNoteUrl,
       createdAt: j.createdAt,
-      offers: (j.offers || []).map((o) => ({
-        id: o.id,
-        jobId: o.jobId,
-        workerId: o.workerId,
-        worker: o.worker
-          ? {
-              id: o.worker.id,
-              name: o.worker.name,
-              avatarUrl: o.worker.avatarUrl,
-              phone: o.worker.phone,
-            }
-          : null,
-        visitCharge: Number(o.visitCharge),
-        message: o.message,
-        status: o.status,
-        negotiationRound: o.negotiationRound,
-        lockedAt: o.lockedAt,
-        createdAt: o.createdAt,
-      })),
+      offers: (j.offers || []).map((o) => {
+        const w = o.worker;
+        const r = ratingMap.get(o.workerId);
+        const c = completedMap.get(o.workerId);
+        let distanceKm = 0;
+        if (j.latitude != null && j.longitude != null && w?.serviceAreas?.length) {
+          const distances = w.serviceAreas.map((sa) =>
+            haversineKm(j.latitude, j.longitude, sa.latitude, sa.longitude),
+          );
+          distanceKm = Math.round(Math.min(...distances) * 10) / 10;
+        }
+        const diffMs = new Date(o.createdAt).getTime() - new Date(j.createdAt).getTime();
+        const diffMins = Math.max(0, Math.round(diffMs / 60000));
+        let responseTime: string | null = null;
+        if (diffMins < 1) responseTime = '< 1m';
+        else if (diffMins < 60) responseTime = `${diffMins}m`;
+        else if (diffMins < 1440) responseTime = `${Math.floor(diffMins / 60)}h ${diffMins % 60}m`;
+        else responseTime = `${Math.floor(diffMins / 1440)}d`;
+
+        return {
+          id: o.id,
+          jobId: o.jobId,
+          workerId: o.workerId,
+          worker: w
+            ? {
+                id: w.id,
+                name: w.name,
+                avatarUrl: w.avatarUrl,
+                phone: w.phone,
+                avgRating: r?._avg.rating !== null && r?._avg.rating !== undefined ? Number(r._avg.rating.toFixed(1)) : 0,
+                ratingCount: r?._count._all ?? 0,
+                completedJobs: c?._count._all ?? 0,
+                skills: w.workerProfile?.skills ?? [],
+                experienceYears: w.workerProfile?.experienceYears ?? 0,
+                bio: w.workerProfile?.bio ?? '',
+                isVerified: w.isVerified,
+                isNadraCleared: w.workerProfile?.verificationStatus === 'APPROVED',
+                isCnicVerified: w.workerProfile?.verificationStatus === 'APPROVED',
+                serviceArea: w.serviceAreas?.[0]?.label ?? w.serviceAreas?.[0]?.address ?? '',
+                responseTime,
+              }
+            : null,
+          visitCharge: Number(o.visitCharge),
+          message: o.message,
+          distanceKm,
+          status: o.status,
+          negotiationRound: o.negotiationRound,
+          lockedAt: o.lockedAt,
+          createdAt: o.createdAt,
+        };
+      }),
     }));
     const result = toPageResult(items, total, page, limit);
     if (this.redis) {
-      await this.redis.set(cacheKey, JSON.stringify(result), 30);
+      await this.redis.set(cacheKey, JSON.stringify(result), 5);
     }
     return result;
   }
@@ -718,11 +802,22 @@ export class JobsService {
                 name: true,
                 avatarUrl: true,
                 phone: true,
+                isVerified: true,
                 workerProfile: {
                   select: {
                     skills: true,
                     experienceYears: true,
                     bio: true,
+                    verificationStatus: true,
+                    serviceRadiusKm: true,
+                  },
+                },
+                serviceAreas: {
+                  select: {
+                    label: true,
+                    address: true,
+                    latitude: true,
+                    longitude: true,
                   },
                 },
               },
@@ -815,6 +910,21 @@ export class JobsService {
       const w = o.worker;
       const r = ratingMap.get(o.workerId);
       const c = completedMap.get(o.workerId);
+      let offerDistanceKm = 0;
+      if (job.latitude != null && job.longitude != null && w?.serviceAreas?.length) {
+        const distances = w.serviceAreas.map((sa) =>
+          haversineKm(job.latitude!, job.longitude!, sa.latitude, sa.longitude),
+        );
+        offerDistanceKm = Math.round(Math.min(...distances) * 10) / 10;
+      }
+      const diffMs = new Date(o.createdAt).getTime() - new Date(job.createdAt).getTime();
+      const diffMins = Math.max(0, Math.round(diffMs / 60000));
+      let responseTime: string | null = null;
+      if (diffMins < 1) responseTime = '< 1m';
+      else if (diffMins < 60) responseTime = `${diffMins}m`;
+      else if (diffMins < 1440) responseTime = `${Math.floor(diffMins / 60)}h ${diffMins % 60}m`;
+      else responseTime = `${Math.floor(diffMins / 1440)}d`;
+
       return {
         id: o.id,
         jobId: o.jobId,
@@ -825,16 +935,22 @@ export class JobsService {
               name: w.name,
               avatarUrl: w.avatarUrl,
               phone: canSeeFullAddress ? w.phone : null,
-              avgRating: r?._avg.rating ?? null,
+              avgRating: r?._avg.rating !== null && r?._avg.rating !== undefined ? Number(r._avg.rating.toFixed(1)) : 0,
               ratingCount: r?._count._all ?? 0,
               completedJobs: c?._count._all ?? 0,
               skills: w.workerProfile?.skills ?? [],
               experienceYears: w.workerProfile?.experienceYears ?? 0,
               bio: w.workerProfile?.bio ?? '',
+              isVerified: w.isVerified,
+              isNadraCleared: w.workerProfile?.verificationStatus === 'APPROVED',
+              isCnicVerified: w.workerProfile?.verificationStatus === 'APPROVED',
+              serviceArea: w.serviceAreas?.[0]?.label ?? w.serviceAreas?.[0]?.address ?? '',
+              responseTime,
             }
           : null,
         visitCharge: Number(o.visitCharge),
         message: o.message,
+        distanceKm: offerDistanceKm,
         status: o.status,
         negotiationRound: o.negotiationRound,
         lockedAt: o.lockedAt,

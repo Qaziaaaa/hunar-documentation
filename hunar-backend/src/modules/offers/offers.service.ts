@@ -23,6 +23,7 @@ import {
 } from './offers.validation';
 import { NegotiationEntry } from '../../common/event-bus/events';
 import { RedisService } from '../../common/redis/redis.service';
+import { haversineKm } from '../../common/helpers/geo.util';
 
 @Injectable()
 export class OffersService {
@@ -166,13 +167,37 @@ export class OffersService {
         data: { status: 'VIEWING' },
       });
     }
-
     const where = user.role === Role.WORKER ? { jobId, workerId: user.sub } : { jobId };
     const offers = await this.prisma.jobOffer.findMany({
       where,
       orderBy: { visitCharge: 'asc' },
       include: {
-        worker: { select: { id: true, name: true, avatarUrl: true, phone: true } },
+        worker: {
+          select: {
+            id: true,
+            name: true,
+            avatarUrl: true,
+            phone: true,
+            isVerified: true,
+            workerProfile: {
+              select: {
+                skills: true,
+                experienceYears: true,
+                bio: true,
+                verificationStatus: true,
+                serviceRadiusKm: true,
+              },
+            },
+            serviceAreas: {
+              select: {
+                label: true,
+                address: true,
+                latitude: true,
+                longitude: true,
+              },
+            },
+          },
+        },
       },
     });
 
@@ -199,25 +224,57 @@ export class OffersService {
     const ratingMap = new Map(ratingAgg.map((r) => [r.revieweeId, r]));
     const completedMap = new Map(completedAgg.map((c) => [c.selectedWorkerId!, c]));
 
-    return offers.map((o) => ({
-      id: o.id,
-      jobId: o.jobId,
-      workerId: o.workerId,
-      worker: {
-        name: o.worker.name,
-        avatarUrl: o.worker.avatarUrl,
-        phone: o.worker.phone,
-        avgRating: ratingMap.get(o.workerId)?._avg.rating ?? null,
-        ratingCount: ratingMap.get(o.workerId)?._count._all ?? 0,
-        completedJobs: completedMap.get(o.workerId)?._count._all ?? 0,
-      },
-      visitCharge: Number(o.visitCharge),
-      message: o.message,
-      status: o.status,
-      negotiationRound: o.negotiationRound,
-      lockedAt: o.lockedAt,
-      createdAt: o.createdAt,
-    }));
+    return offers.map((o) => {
+      const w = o.worker;
+      const r = ratingMap.get(o.workerId);
+      const c = completedMap.get(o.workerId);
+      let distanceKm = 0;
+      if (job?.latitude != null && job?.longitude != null && w?.serviceAreas?.length) {
+        const distances = w.serviceAreas.map((sa) =>
+          haversineKm(job.latitude!, job.longitude!, sa.latitude, sa.longitude),
+        );
+        distanceKm = Math.round(Math.min(...distances) * 10) / 10;
+      }
+      const diffMs = job?.createdAt ? new Date(o.createdAt).getTime() - new Date(job.createdAt).getTime() : 0;
+      const diffMins = Math.max(0, Math.round(diffMs / 60000));
+      let responseTime: string | null = null;
+      if (diffMins < 1) responseTime = '< 1m';
+      else if (diffMins < 60) responseTime = `${diffMins}m`;
+      else if (diffMins < 1440) responseTime = `${Math.floor(diffMins / 60)}h ${diffMins % 60}m`;
+      else responseTime = `${Math.floor(diffMins / 1440)}d`;
+
+      return {
+        id: o.id,
+        jobId: o.jobId,
+        workerId: o.workerId,
+        worker: w
+          ? {
+              id: w.id,
+              name: w.name,
+              avatarUrl: w.avatarUrl,
+              phone: w.phone,
+              avgRating: r?._avg.rating !== null && r?._avg.rating !== undefined ? Number(r._avg.rating.toFixed(1)) : 0,
+              ratingCount: r?._count._all ?? 0,
+              completedJobs: c?._count._all ?? 0,
+              skills: w.workerProfile?.skills ?? [],
+              experienceYears: w.workerProfile?.experienceYears ?? 0,
+              bio: w.workerProfile?.bio ?? '',
+              isVerified: w.isVerified,
+              isNadraCleared: w.workerProfile?.verificationStatus === 'APPROVED',
+              isCnicVerified: w.workerProfile?.verificationStatus === 'APPROVED',
+              serviceArea: w.serviceAreas?.[0]?.label ?? w.serviceAreas?.[0]?.address ?? '',
+              responseTime,
+            }
+          : null,
+        visitCharge: Number(o.visitCharge),
+        message: o.message,
+        distanceKm,
+        status: o.status,
+        negotiationRound: o.negotiationRound,
+        lockedAt: o.lockedAt,
+        createdAt: o.createdAt,
+      };
+    });
   }
 
   async getMyOffers(workerId: string, query: OfferListQueryDto) {
