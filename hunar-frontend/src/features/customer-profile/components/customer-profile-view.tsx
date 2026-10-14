@@ -9,13 +9,18 @@ import {
   CheckCircle2,
   Loader2,
   Lock,
+  LogIn,
   MapPin,
   ShieldCheck,
   Star,
   User,
 } from "lucide-react";
 import { ErrorState } from "@/components/shared/error-state";
+import { Link } from "@/i18n/navigation";
+import { ApiError } from "@/lib/api-client";
 import { LoadingState } from "@/components/shared/loading-state";
+import { useQueryClient } from "@tanstack/react-query";
+import { resolveAvatarUrl } from "@/lib/avatar";
 import { PersonalProfileTab } from "./personal-profile-tab";
 import { SavedAddressesTab } from "./saved-addresses-tab";
 import { NotificationsTab } from "./notifications-tab";
@@ -69,6 +74,7 @@ const initialEmptyProfile: CustomerProfileData = {
 };
 
 export function CustomerProfileView() {
+  const queryClient = useQueryClient();
   const locale = useLocale();
   const isUrdu = locale === "ur";
   const t = useTranslations("CustomerPortal.Profile");
@@ -76,6 +82,7 @@ export function CustomerProfileView() {
   const [profile, setProfile] = useState<CustomerProfileData>(initialEmptyProfile);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [loadErrorObj, setLoadErrorObj] = useState<unknown>(null);
   const [activeTab, setActiveTab] = useState<
     "personal" | "addresses" | "notifications" | "security"
   >("personal");
@@ -87,6 +94,7 @@ export function CustomerProfileView() {
   const loadProfile = useCallback(() => {
     setIsLoading(true);
     setLoadError(null);
+    setLoadErrorObj(null);
     getCustomerProfile()
       .then((data) => {
         setProfile({
@@ -96,6 +104,7 @@ export function CustomerProfileView() {
       })
       .catch((err) => {
         console.warn("Failed to load customer profile:", err);
+        setLoadErrorObj(err);
         setLoadError(
           err instanceof Error && err.message !== "UNAUTHORIZED"
             ? err.message
@@ -141,6 +150,8 @@ export function CustomerProfileView() {
         ...prev,
         ...saved,
       }));
+      queryClient.setQueryData(["customer", "profile"], saved);
+      void queryClient.invalidateQueries({ queryKey: ["customer", "profile"] });
     } catch (err) {
       console.warn("Error persisting customer profile update:", err);
     }
@@ -254,13 +265,47 @@ export function CustomerProfileView() {
   }
 
   if (loadError) {
+    const isAuthError =
+      loadErrorObj instanceof ApiError &&
+      (loadErrorObj.status === 401 || loadErrorObj.status === 403);
+
+    if (isAuthError) {
+      return (
+        <div
+          role="alert"
+          className="flex flex-col items-center justify-center gap-4 rounded-xl border border-primary/20 bg-primary/5 px-6 py-14 text-center"
+        >
+          <span className="flex size-14 items-center justify-center rounded-full bg-primary/10 text-primary">
+            <LogIn aria-hidden="true" className="size-7" />
+          </span>
+          <div className="space-y-1">
+            <h3 className="text-base font-semibold text-navy">
+              {isUrdu ? "آپ لاگ ان نہیں ہیں" : "You're not logged in"}
+            </h3>
+            <p className="mx-auto max-w-sm text-sm text-muted-foreground">
+              {isUrdu
+                ? "اپنی پروفائل دیکھنے کے لیے بطور کسٹمر لاگ ان کریں۔"
+                : "Please log in as a customer to view your profile."}
+            </p>
+          </div>
+          <Link
+            href="/customer/login"
+            className="mt-2 inline-flex items-center gap-2 rounded-lg bg-primary px-5 py-2.5 text-sm font-medium text-white transition hover:bg-primary/90"
+          >
+            <LogIn className="size-4" />
+            {isUrdu ? "کسٹمر لاگ ان" : "Log in as Customer"}
+          </Link>
+        </div>
+      );
+    }
+
     return (
       <ErrorState
         title={isUrdu ? "پروفائل لوڈ کرنے میں ناکامی" : "Unable to load profile"}
         description={
           isUrdu
-            ? "براہ کرم اپنا نیٹ ورک کنکشن چیک کریں اور دوبارہ کوشش کریں۔"
-            : "Please check your network connection and try again."
+            ? "کچھ خرابی پیش آئی۔ براہ کرم اپنا نیٹ ورک کنکشن چیک کریں اور دوبارہ کوشش کریں۔"
+            : "Something went wrong. Please check your network connection and try again."
         }
         onRetry={loadProfile}
       />
@@ -318,7 +363,7 @@ export function CustomerProfileView() {
               <div className="size-16 sm:size-20 rounded-full bg-[#123B5D] text-white flex items-center justify-center font-bold text-xl sm:text-2xl shadow-sm ring-4 ring-[#123B5D]/10 overflow-hidden relative">
                 {profile.avatarUrl ? (
                   <img
-                    src={profile.avatarUrl}
+                    src={resolveAvatarUrl(profile.avatarUrl)}
                     alt={profile.fullName || (isUrdu ? "کسٹمر" : "Customer")}
                     width={80}
                     height={80}

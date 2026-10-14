@@ -2,6 +2,7 @@
 
 import { useCallback, useState } from "react";
 import { useRouter } from "@/i18n/navigation";
+import { useSearchParams } from "next/navigation";
 import { setTokens } from "@/lib/api-client";
 import {
   OTP_RULES,
@@ -13,6 +14,7 @@ import {
 } from "../api/auth-api";
 import { getApiErrorPayload, getErrorMessage } from "../lib/error";
 import { formatPkPhone, normalizePkPhone } from "../lib/phone";
+import { getSafeRedirect } from "../lib/redirect";
 import type {
   OtpFormValues,
   PasswordFormValues,
@@ -27,6 +29,8 @@ type Step = "phone" | "otp" | "password" | "success";
 
 export function CustomerSignupFlow() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirectParam = searchParams.get("redirect");
   const locale = useLocale();
   const isUrdu = locale === "ur";
   const [step, setStep] = useState<Step>("phone");
@@ -182,7 +186,7 @@ export function CustomerSignupFlow() {
         </p>
         <button
           type="button"
-          onClick={() => router.push("/customer/dashboard")}
+          onClick={() => router.push(getSafeRedirect(redirectParam))}
           className="mt-6 w-full py-3 px-4 rounded-xl bg-teal-700 text-white font-semibold text-sm hover:bg-teal-800 transition-colors shadow-xs"
         >
           {isUrdu ? "کسٹمر ڈیش بورڈ پر جائیں" : "Go to Customer Dashboard"}
@@ -196,6 +200,7 @@ export function CustomerSignupFlow() {
       submitting={submitting}
       submitError={submitError}
       role="customer"
+      redirectTo={redirectParam}
       onSubmit={handlePhoneSubmit}
     />
   );

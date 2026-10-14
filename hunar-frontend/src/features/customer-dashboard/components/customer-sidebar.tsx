@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   Calendar,
@@ -21,6 +22,8 @@ import { logoutCustomer } from "@/features/auth/api/auth-api";
 import { WorkerFixLogo } from "@/components/shared/workerfix-logo";
 import { useStoredUser } from "@/lib/use-stored-user";
 import { getCustomerJobs } from "@/features/customer-jobs/api/customer-jobs-api";
+import { getCustomerProfile } from "@/features/customer-profile/api/customer-profile-api";
+import { resolveAvatarUrl } from "@/lib/avatar";
 
 interface CustomerSidebarProps {
   isOpen?: boolean;
@@ -33,8 +36,35 @@ export function CustomerSidebar({ isOpen, onClose }: CustomerSidebarProps) {
   const router = useRouter();
   const locale = useLocale();
   const storedUser = useStoredUser();
-  const customerName = storedUser?.name || storedUser?.phone || "Customer";
-  const customerInitial = customerName.charAt(0).toUpperCase() || "C";
+  const isCustomer = storedUser?.role === "CUSTOMER";
+  const guestLabel = locale === "ur" ? "مہمان" : "Guest";
+
+  const { data: customerProfile } = useQuery({
+    queryKey: ["customer", "profile"],
+    queryFn: getCustomerProfile,
+    staleTime: 60_000,
+    enabled: isCustomer,
+  });
+
+  const activeAvatarUrl = customerProfile?.avatarUrl || storedUser?.avatarUrl;
+  const fullCustomerName = isCustomer
+    ? customerProfile?.fullName || storedUser?.name || storedUser?.phone || (locale === "ur" ? "کسٹمر" : "Customer")
+    : guestLabel;
+
+  // Show only the first name in the sidebar profile card
+  const customerFirstName = isCustomer && fullCustomerName
+    ? fullCustomerName.trim().split(/\s+/)[0]
+    : fullCustomerName;
+
+  const customerInitial = isCustomer
+    ? customerProfile?.avatarInitials || fullCustomerName.charAt(0).toUpperCase() || "C"
+    : "G";
+
+  const [imageError, setImageError] = useState(false);
+
+  useEffect(() => {
+    setImageError(false);
+  }, [activeAvatarUrl]);
 
   const { data: jobs = [] } = useQuery({
     queryKey: ["customer", "jobs", "sidebar"],
@@ -219,12 +249,13 @@ export function CustomerSidebar({ isOpen, onClose }: CustomerSidebarProps) {
               }`}
             >
               <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                <div className="w-8 h-8 rounded-full bg-[#123B5D] flex items-center justify-center text-white font-bold text-xs shrink-0 overflow-hidden">
-                  {storedUser?.avatarUrl ? (
+                <div className="w-8 h-8 rounded-full bg-[#123B5D] flex items-center justify-center text-white font-bold text-xs shrink-0 overflow-hidden ring-1 ring-slate-200">
+                  {isCustomer && activeAvatarUrl && !imageError ? (
                     <img
-                      src={storedUser.avatarUrl}
-                      alt={customerName}
+                      src={resolveAvatarUrl(activeAvatarUrl)}
+                      alt={customerFirstName}
                       className="size-full object-cover"
+                      onError={() => setImageError(true)}
                     />
                   ) : (
                     customerInitial
@@ -232,7 +263,7 @@ export function CustomerSidebar({ isOpen, onClose }: CustomerSidebarProps) {
                 </div>
                 <div className="flex flex-col min-w-0 flex-1">
                   <span className="text-xs font-semibold text-slate-900 truncate">
-                    {customerName}
+                    {customerFirstName}
                   </span>
                   <span className="text-[10px] font-medium text-slate-500 truncate">
                     {locale === "ur" ? "کسٹمر پروفائل" : "Customer Profile"}

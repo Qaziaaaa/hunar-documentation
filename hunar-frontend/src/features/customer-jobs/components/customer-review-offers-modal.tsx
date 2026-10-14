@@ -27,6 +27,7 @@ interface CustomerReviewOffersModalProps {
   onViewProfile: (offer: WorkerOffer) => void;
   onSelectWorker: (job: CustomerJob, offer: WorkerOffer) => void;
   onRejectOffer: (job: CustomerJob, offer: WorkerOffer) => void;
+  confirmingOfferId?: string | null;
 }
 
 export function CustomerReviewOffersModal({
@@ -37,6 +38,7 @@ export function CustomerReviewOffersModal({
   onViewProfile,
   onSelectWorker,
   onRejectOffer,
+  confirmingOfferId,
 }: CustomerReviewOffersModalProps) {
   const locale = useLocale();
   const isUrdu = locale === "ur";
@@ -189,9 +191,11 @@ export function CustomerReviewOffersModal({
                     <h4 className="text-sm font-bold text-[#123B5D]">
                       {job.selectedOffer.worker.name}
                     </h4>
-                    <p className="text-xs text-slate-500 font-medium">
-                      {job.selectedOffer.worker.businessName || (isUrdu ? "تصدیق شدہ کاریگر" : "Certified Pro")}
-                    </p>
+                    {job.selectedOffer.worker.businessName && (
+                      <p className="text-xs text-slate-500 font-medium">
+                        {job.selectedOffer.worker.businessName}
+                      </p>
+                    )}
                     <div className="flex items-center gap-1.5 text-xs text-[#F59E0B] font-bold mt-0.5">
                       <Star className="size-3 fill-[#F59E0B]" />
                       <span>{job.selectedOffer.worker.rating.toFixed(1)}</span>
@@ -207,7 +211,7 @@ export function CustomerReviewOffersModal({
                     {isUrdu ? "طے شدہ وزٹ فیس" : "Agreed Visit Fee"}
                   </span>
                   <span className="text-lg font-extrabold text-[#0F766E]">
-                    Rs. {(job.selectedOffer.visitFee || (job as any).suggestedVisitCharge || 0).toLocaleString()}
+                    Rs. {Number(job.selectedOffer.visitFee).toLocaleString()}
                   </span>
                 </div>
               </div>
@@ -318,13 +322,8 @@ export function CustomerReviewOffersModal({
                             {isUrdu ? "وزٹ و معائنہ فیس" : "Visit & Diagnostic Fee"}
                           </span>
                           <span className="text-base sm:text-xl font-extrabold text-[#0F766E]">
-                            Rs. {(offer.visitFee || (job as any).suggestedVisitCharge || 0).toLocaleString()}
+                            Rs. {Number(offer.visitFee).toLocaleString()}
                           </span>
-                        </div>
-
-                        <div className="inline-flex items-center gap-1 text-[11px] font-semibold text-slate-600 sm:mt-1">
-                          <Clock className="size-3 text-[#0F766E]" />
-                          <span>{offer.estimatedArrival}</span>
                         </div>
                       </div>
                     </div>
@@ -341,18 +340,28 @@ export function CustomerReviewOffersModal({
 
                     {/* Verified Badges & Distance Pills */}
                     <div className="flex flex-wrap gap-1.5 pt-0.5">
-                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg text-[11px] font-medium bg-slate-50 text-slate-600 border border-slate-100">
-                        <MapPin className="size-3 text-[#0F766E]" />
-                        <span>{isUrdu ? `${offer.distanceKm} کلومیٹر دور` : `${offer.distanceKm} km away`}</span>
-                      </span>
-                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg text-[11px] font-medium bg-slate-50 text-slate-600 border border-slate-100">
-                        <Clock className="size-3 text-slate-400" />
-                        <span>{isUrdu ? `جواب: ${worker.responseTime}` : `Resp: ${worker.responseTime}`}</span>
-                      </span>
-                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg text-[11px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-100">
-                        <ShieldCheck className="size-3 text-emerald-600" />
-                        <span>{isUrdu ? "نادرا سی این آئی سی تصدیق شدہ" : "NADRA CNIC Cleared"}</span>
-                      </span>
+                      {Number(offer.distanceKm) > 0 && (
+                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg text-[11px] font-medium bg-slate-50 text-slate-600 border border-slate-100">
+                          <MapPin className="size-3 text-[#0F766E]" />
+                          <span>
+                            {isUrdu
+                              ? `${offer.distanceKm} کلومیٹر دور`
+                              : `${offer.distanceKm} km away`}
+                          </span>
+                        </span>
+                      )}
+                      {worker.responseTime ? (
+                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg text-[11px] font-medium bg-slate-50 text-slate-600 border border-slate-100">
+                          <Clock className="size-3 text-slate-400" />
+                          <span>{isUrdu ? `جواب: ${worker.responseTime}` : `Resp: ${worker.responseTime}`}</span>
+                        </span>
+                      ) : null}
+                      {worker.isCnicVerified && (
+                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg text-[11px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-100">
+                          <ShieldCheck className="size-3 text-emerald-600" />
+                          <span>{isUrdu ? "نادرا سی این آئی سی تصدیق شدہ" : "NADRA CNIC Cleared"}</span>
+                        </span>
+                      )}
                     </div>
 
                     {/* Decline Confirmation Prompt or Standard Action Buttons */}
@@ -406,14 +415,24 @@ export function CustomerReviewOffersModal({
                           <span className="hidden sm:inline">{isUrdu ? "مسترد کریں" : "Decline"}</span>
                         </button>
 
-                        {/* Accept / Select Worker */}
+                        {/* Confirm Booking */}
                         <button
                           type="button"
+                          disabled={confirmingOfferId === offer.id}
                           onClick={() => onSelectWorker(job, offer)}
-                          className="flex-1 py-2.5 px-3 rounded-xl bg-[#0F766E] hover:bg-[#115E59] text-white font-bold text-xs sm:text-sm shadow-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer active:scale-99"
+                          className="flex-1 py-2.5 px-3.5 rounded-xl bg-[#0F766E] hover:bg-[#115E59] text-white font-bold text-xs sm:text-sm shadow-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer active:scale-99 disabled:opacity-60 whitespace-nowrap"
                         >
-                          <CheckCircle2 className="size-4" />
-                          <span>{isUrdu ? "کاریگر منتخب کریں" : "Select Worker"}</span>
+                          {confirmingOfferId === offer.id ? (
+                            <>
+                              <Clock className="size-4 animate-spin shrink-0" />
+                              <span>{isUrdu ? "تصدیق ہو رہی ہے..." : "Confirming..."}</span>
+                            </>
+                          ) : (
+                            <>
+                              <CheckCircle2 className="size-4 shrink-0" />
+                              <span>{isUrdu ? "بکنگ کنفرم کریں" : "Confirm Booking"}</span>
+                            </>
+                          )}
                         </button>
                       </div>
                     )}

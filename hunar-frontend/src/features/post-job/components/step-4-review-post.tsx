@@ -19,6 +19,7 @@ import { formatJobDate } from "@/lib/format";
 import { Link } from "@/i18n/navigation";
 import { CATEGORY_OPTIONS } from "../data/categories";
 import type { PostJobData, PostJobStep } from "../types";
+import { buildPostJobSignInHref } from "../lib/return-url";
 import { VoiceNoteBubblePlayer } from "./voice-note-recorder";
 
 interface Step4ReviewPostProps {
@@ -264,7 +265,7 @@ export function Step4ReviewPost({
             submitError.toLowerCase().includes("لاگ ان") ||
             submitError.toLowerCase().includes("کسٹمر")) && (
             <Link
-              href="/customer/sign-in?redirect=/customer/post-job"
+              href={buildPostJobSignInHref(data)}
               className="inline-flex items-center gap-1 font-bold text-teal hover:underline text-xs bg-white px-3 py-1.5 rounded-lg border border-teal/20 shadow-xs transition"
             >
               <span>{isUrdu ? "کسٹمر اکاؤنٹ میں لاگ ان کریں" : "Sign In as Customer"}</span>

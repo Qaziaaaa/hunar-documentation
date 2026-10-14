@@ -1,6 +1,6 @@
 import { http } from "@/lib/api-client";
 import { extractTimeSlotFromVisitTime } from "@/lib/format";
-import type { CustomerJob, JobStatus, WorkerOffer, WorkerProfile } from "../types";
+import type { CustomerJob, JobStatus, WorkerOffer, WorkerProfile, WorkerReview } from "../types";
 
 export interface GetCustomerJobsOptions {
   page?: number;
@@ -152,8 +152,18 @@ export async function cancelCustomerJob(
 export async function getWorkerPublicProfile(
   workerId: string
 ): Promise<WorkerProfile | null> {
-  const res = await http.get<any>(`/users/worker/${workerId}`);
-  return res ? transformBackendWorker(res) : null;
+  try {
+    const res = await http.get<any>(`/workers/${workerId}`);
+    return res ? transformBackendWorker(res) : null;
+  } catch {
+    try {
+      const res = await http.get<any>(`/users/worker/${workerId}`);
+      return res ? transformBackendWorker(res) : null;
+    } catch (err) {
+      console.warn(`[getWorkerPublicProfile] Failed for ${workerId}:`, err);
+      return null;
+    }
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -231,28 +241,80 @@ function transformListRow(row: any): CustomerJob {
 }
 
 function transformBackendWorker(worker: any): WorkerProfile {
+  const rawSkills: string[] = Array.isArray(worker.skillNames) && worker.skillNames.length > 0
+    ? worker.skillNames
+    : Array.isArray(worker.skills)
+    ? worker.skills
+        .map((s: any) => (typeof s === "string" ? s : s.name || s.nameUrdu || ""))
+        .filter(Boolean)
+    : Array.isArray(worker.expertiseTags)
+    ? worker.expertiseTags
+    : [];
+
+  const skillsList: string[] = rawSkills.filter(
+    (s) => !s.startsWith("seed-category-") && !/^[0-9a-f]{8}-[0-9a-f]{4}-/i.test(s)
+  );
+
+  const rawReviews = Array.isArray(worker.reviews) ? worker.reviews : [];
+  const reviews: WorkerReview[] = rawReviews.map((r: any) => ({
+    id: r.id || String(Math.random()),
+    customerName: r.customerName || r.reviewer?.name || "Customer",
+    customerArea: r.customerArea || r.job?.area || r.job?.city || "",
+    rating: Number(r.rating || 0),
+    date: r.date || (r.createdAt ? new Date(r.createdAt).toLocaleDateString() : ""),
+    comment: r.comment || "",
+  }));
+
+  const ratingAvg =
+    typeof worker.rating === "object" && worker.rating !== null
+      ? Number(worker.rating.average ?? 0)
+      : Number(worker.rating ?? worker.avgRating ?? 0);
+
+  const totalReviewsCount =
+    typeof worker.rating === "object" && worker.rating !== null
+      ? Number(worker.rating.count ?? 0)
+      : Number(worker.totalReviews ?? worker.reviewCount ?? worker.ratingCount ?? 0);
+
+  const completedCount = Number(
+    worker.completedJobsCount ?? worker.completedJobs ?? 0
+  );
+
+  const primaryArea =
+    worker.serviceArea ||
+    worker.primaryArea ||
+    (Array.isArray(worker.serviceAreas) && worker.serviceAreas[0]?.label) ||
+    (Array.isArray(worker.serviceAreas) && worker.serviceAreas[0]?.address) ||
+    "";
+
   return {
-    id: worker.id || "worker-unknown",
-    name: worker.name || worker.fullName || "Worker",
+    id: worker.id || "",
+    name: worker.name || worker.fullName || "",
     businessName: worker.businessName,
     avatarUrl: worker.avatarUrl || worker.avatar || "",
     phone: worker.phone || worker.mobile || "",
-    rating: Number(worker.rating ?? worker.avgRating ?? 0),
-    totalReviews: Number(worker.totalReviews ?? worker.reviewCount ?? worker.ratingCount ?? 0),
-    jobSuccessRate: Number(worker.jobSuccessRate ?? 0),
-    completedJobsCount: Number(worker.completedJobsCount ?? worker.completedJobs ?? 0),
+    rating: ratingAvg,
+    totalReviews: totalReviewsCount,
+    jobSuccessRate: worker.jobSuccessRate != null ? Number(worker.jobSuccessRate) : null,
+    completedJobsCount: completedCount,
     responseTime: worker.responseTime || "",
-    tradeCategory: worker.tradeCategory || worker.category?.name || "Technician",
-    serviceArea: worker.serviceArea || worker.area || "",
+    tradeCategory:
+      worker.tradeCategory ||
+      worker.category?.name ||
+      (skillsList[0] || ""),
+    serviceArea: primaryArea,
     experienceYears: Number(worker.experienceYears || worker.yearsOfExperience || 0),
     bio: worker.bio || worker.about || "",
-    isCnicVerified: !!worker.isCnicVerified,
-    isNadraCleared: !!worker.isNadraCleared,
-    isPoliceCleared: !!worker.isPoliceCleared,
-    hunarBadgeId: worker.hunarBadgeNumber ? `#OW-${worker.hunarBadgeNumber}` : "",
-    expertiseTags: worker.skills || worker.expertiseTags || [],
-    workProjects: [],
-    reviews: [],
+    isCnicVerified: Boolean(worker.isCnicVerified),
+    isNadraCleared: Boolean(worker.isNadraCleared),
+    isPoliceCleared: Boolean(worker.isPoliceCleared),
+    hunarBadgeId: worker.hunarBadgeNumber
+      ? `#OW-${worker.hunarBadgeNumber}`
+      : worker.id
+      ? `#OW-${worker.id.slice(0, 4).toUpperCase()}`
+      : "",
+    expertiseTags: skillsList,
+    workProjects: Array.isArray(worker.workProjects) ? worker.workProjects : [],
+    reviews,
     ratingBreakdown: worker.ratingBreakdown || {
       fiveStar: 0,
       fourStar: 0,

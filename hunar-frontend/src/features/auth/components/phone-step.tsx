@@ -17,15 +17,20 @@ export function PhoneStep({
   submitting,
   submitError,
   role = "worker",
+  redirectTo,
 }: {
   onSubmit: (values: PhoneFormValues) => void;
   submitting: boolean;
   submitError: string | null;
   role?: "customer" | "worker";
+  redirectTo?: string | null;
 }) {
   const t = useTranslations("Auth");
   const isCustomer = role === "customer";
   const signInHref = isCustomer ? "/customer/sign-in" : "/worker/sign-in";
+  const signInLink = redirectTo
+    ? `${signInHref}?redirect=${encodeURIComponent(redirectTo)}`
+    : signInHref;
 
   const {
     register,
@@ -63,7 +68,7 @@ export function PhoneStep({
         <p className="mt-1 text-sm font-medium text-muted-foreground">
           {isCustomer ? "Already have an account?" : t("alreadyAccount")}{" "}
           <Link
-            href={signInHref}
+            href={signInLink}
             className="font-semibold text-teal hover:underline"
           >
             {t("signIn")}
@@ -72,7 +77,7 @@ export function PhoneStep({
 
         <div className="mx-auto mt-4 flex max-w-[280px] items-center rounded-full bg-slate-200 p-1 shadow-inner">
           <Link
-            href={signInHref}
+            href={signInLink}
             className="flex-1 rounded-full py-1.5 text-center text-xs font-semibold text-navy transition"
           >
             {t("signIn")}

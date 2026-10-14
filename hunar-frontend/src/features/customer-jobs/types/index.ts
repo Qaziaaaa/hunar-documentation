@@ -30,7 +30,7 @@ export interface WorkerProfile {
   phone: string;
   rating: number;
   totalReviews: number;
-  jobSuccessRate: number; // e.g. 98%
+  jobSuccessRate?: number | null;
   completedJobsCount: number;
   responseTime: string; // e.g. "< 15m"
   tradeCategory: string;
