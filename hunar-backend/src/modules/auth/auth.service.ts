@@ -56,6 +56,7 @@ export interface SafeUser {
   id: string;
   phone: string;
   name: string;
+  avatarUrl?: string | null;
   role: Role;
   isActive: boolean;
   isVerified: boolean;
@@ -514,6 +515,7 @@ export class AuthService {
       id: user.id,
       phone: user.phone,
       name: user.name ?? '',
+      avatarUrl: user.avatarUrl ?? null,
       role: user.role,
       isActive: user.isActive,
       isVerified: user.isVerified,
