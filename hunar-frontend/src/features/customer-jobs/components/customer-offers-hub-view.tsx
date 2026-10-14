@@ -19,7 +19,6 @@ import { useLocale } from "next-intl";
 import { formatPostedAt } from "@/lib/format";
 import { WorkerOfferCard } from "./worker-offer-card";
 import { WorkerProfileModal } from "./worker-profile-modal";
-import { SelectWorkerModal } from "./select-worker-modal";
 import { acceptWorkerOffer } from "../api/customer-jobs-api";
 import type { CustomerJob, WorkerOffer } from "../types";
 
@@ -45,7 +44,7 @@ export function CustomerOffersHubView({ initialJobs }: CustomerOffersHubViewProp
 
   // Modals state
   const [selectedOfferForProfile, setSelectedOfferForProfile] = useState<WorkerOffer | null>(null);
-  const [selectedOfferForBooking, setSelectedOfferForBooking] = useState<{ job: CustomerJob; offer: WorkerOffer } | null>(null);
+  const [confirmingOfferId, setConfirmingOfferId] = useState<string | null>(null);
   const [successToast, setSuccessToast] = useState<string | null>(null);
   const [toastTone, setToastTone] = useState<"success" | "error">("success");
   const queryClient = useQueryClient();
@@ -69,6 +68,7 @@ export function CustomerOffersHubView({ initialJobs }: CustomerOffersHubViewProp
 
   // Handle direct booking confirmation
   const handleConfirmBooking = async (offer: WorkerOffer) => {
+    setConfirmingOfferId(offer.id);
     try {
       await acceptWorkerOffer(offer.jobId, offer.id);
     } catch (err) {
@@ -79,6 +79,7 @@ export function CustomerOffersHubView({ initialJobs }: CustomerOffersHubViewProp
           : "Booking failed — the visit was not scheduled. Please try again.",
         "error"
       );
+      setConfirmingOfferId(null);
       return;
     }
     setJobs((prevJobs) =>
@@ -93,7 +94,8 @@ export function CustomerOffersHubView({ initialJobs }: CustomerOffersHubViewProp
         return job;
       })
     );
-    setSelectedOfferForBooking(null);
+    setSelectedOfferForProfile(null);
+    setConfirmingOfferId(null);
     void queryClient.invalidateQueries({ queryKey: ["customer"] });
     showToast(
       isUrdu
@@ -422,8 +424,9 @@ export function CustomerOffersHubView({ initialJobs }: CustomerOffersHubViewProp
                       <WorkerOfferCard
                         key={offer.id}
                         offer={offer}
+                        isConfirming={confirmingOfferId === offer.id}
                         onViewProfile={(off) => setSelectedOfferForProfile(off)}
-                        onSelectWorker={(off) => setSelectedOfferForBooking({ job, offer: off })}
+                        onSelectWorker={(off) => handleConfirmBooking(off)}
                       />
                     ))}
                   </div>
@@ -596,21 +599,9 @@ export function CustomerOffersHubView({ initialJobs }: CustomerOffersHubViewProp
           isOpen={true}
           onClose={() => setSelectedOfferForProfile(null)}
           onSelectWorker={(offer: WorkerOffer) => {
-            const job = jobs.find((j) => j.id === offer.jobId) || jobs[0];
             setSelectedOfferForProfile(null);
-            setSelectedOfferForBooking({ job, offer });
+            handleConfirmBooking(offer);
           }}
-        />
-      )}
-
-      {/* Worker Direct Booking Modal */}
-      {selectedOfferForBooking && (
-        <SelectWorkerModal
-          job={selectedOfferForBooking.job}
-          offer={selectedOfferForBooking.offer}
-          isOpen={true}
-          onClose={() => setSelectedOfferForBooking(null)}
-          onConfirmBooking={handleConfirmBooking}
         />
       )}
     </div>

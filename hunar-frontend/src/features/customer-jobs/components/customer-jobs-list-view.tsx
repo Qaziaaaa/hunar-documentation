@@ -37,10 +37,6 @@ const WorkerProfileModal = dynamic(
   () => import("./worker-profile-modal").then((m) => m.WorkerProfileModal),
   { ssr: false }
 );
-const SelectWorkerModal = dynamic(
-  () => import("./select-worker-modal").then((m) => m.SelectWorkerModal),
-  { ssr: false }
-);
 import { acceptWorkerOffer, rejectWorkerOffer, getCustomerJobs } from "../api/customer-jobs-api";
 
 interface CustomerJobsListViewProps {
@@ -111,7 +107,7 @@ export function CustomerJobsListView({ initialJobs, jobs: jobsProp }: CustomerJo
   const [selectedJobForDetails, setSelectedJobForDetails] = useState<CustomerJob | null>(null);
   const [selectedJobForOffers, setSelectedJobForOffers] = useState<CustomerJob | null>(null);
   const [selectedOfferForProfile, setSelectedOfferForProfile] = useState<WorkerOffer | null>(null);
-  const [bookingSelection, setBookingSelection] = useState<{ job: CustomerJob; offer: WorkerOffer } | null>(null);
+  const [confirmingOfferId, setConfirmingOfferId] = useState<string | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [toastTone, setToastTone] = useState<"success" | "error">("success");
   const queryClient = useQueryClient();
@@ -149,11 +145,9 @@ export function CustomerJobsListView({ initialJobs, jobs: jobsProp }: CustomerJo
     }
   }, [jobs]);
 
-  // Handle confirming booking / accepting offer
-  const handleConfirmBooking = async (offer: WorkerOffer) => {
-    if (!bookingSelection) return;
-    const targetJob = bookingSelection.job;
-
+  // Handle directly confirming booking / accepting offer (no intermediate popup)
+  const handleConfirmBooking = async (targetJob: CustomerJob, offer: WorkerOffer) => {
+    setConfirmingOfferId(offer.id);
     try {
       await acceptWorkerOffer(targetJob.id, offer.id);
     } catch (err) {
@@ -164,6 +158,7 @@ export function CustomerJobsListView({ initialJobs, jobs: jobsProp }: CustomerJo
           : "Booking failed — the visit was not scheduled. Please try again.",
         "error"
       );
+      setConfirmingOfferId(null);
       return;
     }
 
@@ -180,9 +175,10 @@ export function CustomerJobsListView({ initialJobs, jobs: jobsProp }: CustomerJo
       })
     );
 
-    setBookingSelection(null);
     setSelectedJobForOffers(null);
     setSelectedJobForDetails(null);
+    setSelectedOfferForProfile(null);
+    setConfirmingOfferId(null);
 
     void queryClient.invalidateQueries({ queryKey: ["customer"] });
 
@@ -745,8 +741,9 @@ export function CustomerJobsListView({ initialJobs, jobs: jobsProp }: CustomerJo
             setSelectedJobForDetails(job);
           }}
           onViewProfile={(offer) => setSelectedOfferForProfile(offer)}
-          onSelectWorker={(job, offer) => setBookingSelection({ job, offer })}
+          onSelectWorker={(job, offer) => handleConfirmBooking(job, offer)}
           onRejectOffer={handleRejectOffer}
+          confirmingOfferId={confirmingOfferId}
         />
       )}
 
@@ -757,22 +754,14 @@ export function CustomerJobsListView({ initialJobs, jobs: jobsProp }: CustomerJo
           isOpen={Boolean(selectedOfferForProfile)}
           onClose={() => setSelectedOfferForProfile(null)}
           onSelectWorker={(offer) => {
+            const targetJob =
+              selectedJobForOffers ||
+              jobs.find((j) => j.offers.some((o) => o.id === offer.id));
             setSelectedOfferForProfile(null);
-            if (selectedJobForOffers) {
-              setBookingSelection({ job: selectedJobForOffers, offer });
+            if (targetJob) {
+              handleConfirmBooking(targetJob, offer);
             }
           }}
-        />
-      )}
-
-      {/* Select Worker / Booking Confirmation Modal - Loaded dynamically on demand */}
-      {bookingSelection && (
-        <SelectWorkerModal
-          job={bookingSelection.job}
-          offer={bookingSelection.offer}
-          isOpen={Boolean(bookingSelection)}
-          onClose={() => setBookingSelection(null)}
-          onConfirmBooking={handleConfirmBooking}
         />
       )}
     </div>

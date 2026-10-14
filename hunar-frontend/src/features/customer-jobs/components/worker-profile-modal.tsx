@@ -1,8 +1,10 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import {
   Check,
   CheckCircle2,
+  Clock,
   Fingerprint,
   MapPin,
   MessageSquare,
@@ -12,7 +14,8 @@ import {
   X,
 } from "lucide-react";
 import { useLocale } from "next-intl";
-import type { WorkerOffer } from "../types";
+import { getWorkerPublicProfile } from "../api/customer-jobs-api";
+import type { WorkerOffer, WorkerProfile } from "../types";
 
 interface WorkerProfileModalProps {
   offer: WorkerOffer | null;
@@ -30,9 +33,33 @@ export function WorkerProfileModal({
   const locale = useLocale();
   const isUrdu = locale === "ur";
 
+  const [profile, setProfile] = useState<WorkerProfile | null>(offer?.worker ?? null);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (!offer?.worker) return;
+    setProfile(offer.worker);
+
+    if (isOpen && offer.worker.id) {
+      setLoading(true);
+      getWorkerPublicProfile(offer.worker.id)
+        .then((fullProfile) => {
+          if (fullProfile) {
+            setProfile(fullProfile);
+          }
+        })
+        .catch((err) => {
+          console.warn("Failed to load full public profile:", err);
+        })
+        .finally(() => {
+          setLoading(false);
+        });
+    }
+  }, [offer, isOpen]);
+
   if (!isOpen || !offer) return null;
 
-  const { worker } = offer;
+  const worker = profile || offer.worker;
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6 animate-in fade-in-50 duration-200">
@@ -47,6 +74,11 @@ export function WorkerProfileModal({
               <CheckCircle2 className="size-3.5" />
               {isUrdu ? "آج دستیاب ہے" : "Available Today"}
             </span>
+            {loading && (
+              <span className="text-xs text-slate-400 flex items-center gap-1">
+                <Clock className="size-3 animate-spin" />
+              </span>
+            )}
           </div>
           <button
             type="button"
@@ -96,10 +128,26 @@ export function WorkerProfileModal({
                     )}
                     <ShieldCheck className="size-4 text-[#16A34A]" />
                   </div>
-                  <p className="text-xs font-medium text-slate-500 flex items-center gap-1 mt-0.5">
-                    <MapPin className="size-3 text-[#0F766E]" />
-                    {worker.serviceArea}
-                  </p>
+                  {(worker.serviceArea || worker.experienceYears > 0) && (
+                    <p className="text-xs font-medium text-slate-500 flex items-center gap-1.5 mt-0.5 flex-wrap">
+                      {worker.serviceArea && (
+                        <span className="inline-flex items-center gap-1">
+                          <MapPin className="size-3 text-[#0F766E]" />
+                          <span>{worker.serviceArea}</span>
+                        </span>
+                      )}
+                      {worker.serviceArea && worker.experienceYears > 0 && (
+                        <span className="text-slate-300">•</span>
+                      )}
+                      {worker.experienceYears > 0 && (
+                        <span>
+                          {isUrdu
+                            ? `${worker.experienceYears}+ سال کا تجربہ`
+                            : `${worker.experienceYears}+ Years Experience`}
+                        </span>
+                      )}
+                    </p>
+                  )}
                 </div>
 
                 <div className="text-left sm:text-right rtl:text-right rtl:sm:text-left">
@@ -107,43 +155,49 @@ export function WorkerProfileModal({
                     {isUrdu ? "مجوزہ فیس" : "Proposed Fee"}
                   </span>
                   <span className="text-lg sm:text-xl font-extrabold text-[#0F766E]">
-                    Rs. {offer.visitFee.toLocaleString()}
+                    Rs. {Number(offer.visitFee).toLocaleString()}
                   </span>
                 </div>
               </div>
 
-              <p className="text-xs text-slate-600 leading-relaxed pt-1">
-                {worker.bio}
-              </p>
+              {worker.bio && (
+                <p className="text-xs text-slate-600 leading-relaxed pt-1">
+                  {worker.bio}
+                </p>
+              )}
             </div>
           </div>
 
           {/* Verified Credentials Bar */}
-          <div className="flex flex-wrap gap-2 p-3 bg-slate-50/80 rounded-2xl">
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-semibold bg-white text-[#123B5D] shadow-2xs">
-              <CheckCircle2 className="size-3.5 text-[#16A34A]" />
-              {isUrdu ? "شناختی کارڈ تصدیق شدہ" : "CNIC Verified"}
-            </span>
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-semibold bg-white text-[#123B5D] shadow-2xs">
-              <Fingerprint className="size-3.5 text-[#16A34A]" />
-              {isUrdu ? "نادرا بائیومیٹرک کلیئرڈ" : "NADRA Biometrics Cleared"}
-            </span>
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-semibold bg-white text-[#0F766E] shadow-2xs">
-              <ShieldCheck className="size-3.5 text-[#0F766E]" />
-              {isUrdu ? `WorkerFIX سرٹیفائیڈ پرو (${worker.hunarBadgeId})` : `WorkerFIX Certified Pro (${worker.hunarBadgeId})`}
-            </span>
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-semibold bg-white text-[#123B5D] shadow-2xs">
-              <ShieldCheck className="size-3.5 text-[#16A34A]" />
-              {isUrdu ? "پولیس تصدیق شدہ" : "Police Character Cleared"}
-            </span>
-          </div>
+          {(worker.isCnicVerified || worker.isNadraCleared) && (
+            <div className="flex flex-wrap gap-2 p-3 bg-slate-50/80 rounded-2xl">
+              {worker.isCnicVerified && (
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-semibold bg-white text-[#123B5D] shadow-2xs">
+                  <CheckCircle2 className="size-3.5 text-[#16A34A]" />
+                  {isUrdu ? "شناختی کارڈ تصدیق شدہ" : "CNIC Verified"}
+                </span>
+              )}
+              {worker.isNadraCleared && (
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-semibold bg-white text-[#123B5D] shadow-2xs">
+                  <Fingerprint className="size-3.5 text-[#16A34A]" />
+                  {isUrdu ? "نادرا بائیومیٹرک کلیئرڈ" : "NADRA Biometrics Cleared"}
+                </span>
+              )}
+              {(worker.isNadraCleared || worker.isCnicVerified) && (
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-semibold bg-white text-[#0F766E] shadow-2xs">
+                  <ShieldCheck className="size-3.5 text-[#0F766E]" />
+                  {isUrdu ? "WorkerFIX تصدیق شدہ کاریگر" : "WorkerFIX Certified Pro"}
+                </span>
+              )}
+            </div>
+          )}
 
           {/* Key Stats Bento Grid */}
-          <div className="grid grid-cols-4 gap-2 sm:gap-3 p-3.5 bg-white rounded-2xl shadow-sm border border-slate-100">
+          <div className={`grid ${worker.responseTime ? "grid-cols-4" : "grid-cols-3"} gap-2 sm:gap-3 p-3.5 bg-white rounded-2xl shadow-sm border border-slate-100`}>
             <div className="text-center border-r rtl:border-r-0 rtl:border-l border-slate-100 pr-1 sm:pr-2 rtl:pr-0 rtl:pl-1 rtl:sm:pl-2">
               <div className="flex items-center justify-center text-[#F59E0B] font-bold text-sm sm:text-base">
                 <Star className="size-4 fill-[#F59E0B] mr-0.5 rtl:mr-0 rtl:ml-0.5" />
-                {worker.rating.toFixed(1)}
+                {worker.rating > 0 ? worker.rating.toFixed(1) : (isUrdu ? "نیا" : "New")}
               </div>
               <p className="text-[10.5px] text-slate-500 mt-0.5">
                 {isUrdu ? `${worker.totalReviews} ریویوز` : `${worker.totalReviews} reviews`}
@@ -152,14 +206,14 @@ export function WorkerProfileModal({
 
             <div className="text-center border-r rtl:border-r-0 rtl:border-l border-slate-100 pr-1 sm:pr-2 rtl:pr-0 rtl:pl-1 rtl:sm:pl-2">
               <span className="text-sm sm:text-base font-bold text-[#123B5D]">
-                {worker.jobSuccessRate}%
+                {worker.jobSuccessRate != null ? `${worker.jobSuccessRate}%` : (isUrdu ? "نئے کاریگر" : "New Pro")}
               </span>
               <p className="text-[10.5px] text-slate-500 mt-0.5">
                 {isUrdu ? "کامیابی کا تناسب" : "Job Success"}
               </p>
             </div>
 
-            <div className="text-center border-r rtl:border-r-0 rtl:border-l border-slate-100 pr-1 sm:pr-2 rtl:pr-0 rtl:pl-1 rtl:sm:pl-2">
+            <div className={`text-center ${worker.responseTime ? "border-r rtl:border-r-0 rtl:border-l border-slate-100 pr-1 sm:pr-2 rtl:pr-0 rtl:pl-1 rtl:sm:pl-2" : ""}`}>
               <span className="text-sm sm:text-base font-bold text-[#123B5D]">
                 {worker.completedJobsCount}
               </span>
@@ -168,33 +222,37 @@ export function WorkerProfileModal({
               </p>
             </div>
 
-            <div className="text-center">
-              <span className="text-sm sm:text-base font-bold text-[#0F766E]">
-                {worker.responseTime}
-              </span>
-              <p className="text-[10.5px] text-slate-500 mt-0.5">
-                {isUrdu ? "جواب کا وقت" : "Resp. Time"}
-              </p>
-            </div>
+            {worker.responseTime ? (
+              <div className="text-center">
+                <span className="text-sm sm:text-base font-bold text-[#0F766E]">
+                  {worker.responseTime}
+                </span>
+                <p className="text-[10.5px] text-slate-500 mt-0.5">
+                  {isUrdu ? "جواب کا وقت" : "Resp. Time"}
+                </p>
+              </div>
+            ) : null}
           </div>
 
           {/* Service Expertise Tags */}
-          <div className="space-y-2">
-            <h4 className="text-xs uppercase font-bold tracking-wider text-slate-400 flex items-center gap-1.5">
-              <Wrench className="size-3.5 text-[#0F766E]" />
-              {isUrdu ? "سروس کی مہارت" : "Service Expertise"}
-            </h4>
-            <div className="flex flex-wrap gap-1.5">
-              {worker.expertiseTags.map((tag) => (
-                <span
-                  key={tag}
-                  className="px-2.5 py-1 bg-slate-50 rounded-lg text-xs font-medium text-[#123B5D]"
-                >
-                  {tag}
-                </span>
-              ))}
+          {worker.expertiseTags.length > 0 && (
+            <div className="space-y-2">
+              <h4 className="text-xs uppercase font-bold tracking-wider text-slate-400 flex items-center gap-1.5">
+                <Wrench className="size-3.5 text-[#0F766E]" />
+                {isUrdu ? "سروس کی مہارت" : "Service Expertise"}
+              </h4>
+              <div className="flex flex-wrap gap-1.5">
+                {worker.expertiseTags.map((tag) => (
+                  <span
+                    key={tag}
+                    className="px-2.5 py-1 bg-slate-50 rounded-lg text-xs font-medium text-[#123B5D]"
+                  >
+                    {tag}
+                  </span>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Recent Verified Work Photos */}
           {worker.workProjects.length > 0 && (
@@ -313,9 +371,11 @@ export function WorkerProfileModal({
                             <span className="text-xs font-bold text-[#123B5D]">
                               {rev.customerName}
                             </span>
-                            <span className="text-[10px] text-slate-400">
-                              • {rev.customerArea}
-                            </span>
+                            {rev.customerArea && rev.customerArea.trim() !== "" && (
+                              <span className="text-[10px] text-slate-400">
+                                • {rev.customerArea}
+                              </span>
+                            )}
                           </div>
                           <div className="flex items-center text-[#F59E0B] text-xs font-bold">
                             <Star className="size-3 fill-[#F59E0B] mr-0.5 rtl:mr-0 rtl:ml-0.5" />
@@ -357,7 +417,7 @@ export function WorkerProfileModal({
             className="py-3 px-6 rounded-2xl bg-[#0F766E] hover:bg-[#115E59] text-white font-bold text-xs sm:text-sm shadow-sm transition-all active:scale-[0.99] flex items-center gap-2 cursor-pointer"
           >
             <CheckCircle2 className="size-4.5" />
-            <span>{isUrdu ? "کاریگر منتخب کریں اور بُک کریں" : "Select Worker & Book"}</span>
+            <span>{isUrdu ? "بکنگ کنفرم کریں" : "Confirm Booking"}</span>
           </button>
         </div>
       </div>

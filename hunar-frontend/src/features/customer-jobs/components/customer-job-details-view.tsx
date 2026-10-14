@@ -25,7 +25,6 @@ import { useLocale } from "next-intl";
 import { formatDateTime, formatJobDate } from "@/lib/format";
 import { WorkerOfferCard } from "./worker-offer-card";
 import { WorkerProfileModal } from "./worker-profile-modal";
-import { SelectWorkerModal } from "./select-worker-modal";
 import { acceptWorkerOffer } from "../api/customer-jobs-api";
 import type { CustomerJob, WorkerOffer } from "../types";
 
@@ -45,7 +44,7 @@ export function CustomerJobDetailsView({ initialJob }: CustomerJobDetailsViewPro
   }, [initialJob]);
 
   const [selectedOfferForProfile, setSelectedOfferForProfile] = useState<WorkerOffer | null>(null);
-  const [selectedOfferForBooking, setSelectedOfferForBooking] = useState<WorkerOffer | null>(null);
+  const [confirmingOfferId, setConfirmingOfferId] = useState<string | null>(null);
   const [isPlayingAudio, setIsPlayingAudio] = useState(false);
   const [previewPhoto, setPreviewPhoto] = useState<string | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
@@ -76,6 +75,7 @@ export function CustomerJobDetailsView({ initialJob }: CustomerJobDetailsViewPro
 
   // Direct Booking Confirmation Handler
   const handleConfirmBooking = async (offer: WorkerOffer) => {
+    setConfirmingOfferId(offer.id);
     try {
       await acceptWorkerOffer(job.id, offer.id);
     } catch (err) {
@@ -86,6 +86,7 @@ export function CustomerJobDetailsView({ initialJob }: CustomerJobDetailsViewPro
           : "Booking failed — the visit was not scheduled. Please try again.",
         "error"
       );
+      setConfirmingOfferId(null);
       return;
     }
     setJob((prev) => ({
@@ -93,7 +94,8 @@ export function CustomerJobDetailsView({ initialJob }: CustomerJobDetailsViewPro
       status: "visit_scheduled",
       selectedOffer: offer,
     }));
-    setSelectedOfferForBooking(null);
+    setSelectedOfferForProfile(null);
+    setConfirmingOfferId(null);
     void queryClient.invalidateQueries({ queryKey: ["customer"] });
     showToast(
       isUrdu
@@ -486,8 +488,9 @@ export function CustomerJobDetailsView({ initialJob }: CustomerJobDetailsViewPro
                     <WorkerOfferCard
                       key={offer.id}
                       offer={offer}
+                      isConfirming={confirmingOfferId === offer.id}
                       onViewProfile={(off) => setSelectedOfferForProfile(off)}
-                      onSelectWorker={(off) => setSelectedOfferForBooking(off)}
+                      onSelectWorker={(off) => handleConfirmBooking(off)}
                     />
                   ))}
                 </div>
@@ -538,17 +541,8 @@ export function CustomerJobDetailsView({ initialJob }: CustomerJobDetailsViewPro
         onClose={() => setSelectedOfferForProfile(null)}
         onSelectWorker={(off) => {
           setSelectedOfferForProfile(null);
-          setSelectedOfferForBooking(off);
+          handleConfirmBooking(off);
         }}
-      />
-
-      {/* Select Worker & Confirm Booking Dialog */}
-      <SelectWorkerModal
-        job={job}
-        offer={selectedOfferForBooking}
-        isOpen={Boolean(selectedOfferForBooking)}
-        onClose={() => setSelectedOfferForBooking(null)}
-        onConfirmBooking={handleConfirmBooking}
       />
 
       {/* Photo Lightbox Modal */}
