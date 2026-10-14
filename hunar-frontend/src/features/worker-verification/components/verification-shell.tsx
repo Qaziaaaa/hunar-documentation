@@ -1,47 +1,48 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import { VerificationLeftShowcase } from "./verification-left-showcase";
-import { StatusTesterBar } from "./status-tester-bar";
 import { ApprovedView } from "./approved-view";
 import { RejectedView } from "./rejected-view";
 import { RequestChangesView } from "./request-changes-view";
 import { PendingView } from "./pending-view";
-import {
-  getVerificationStatus,
-  setSimulatedVerificationStatus,
-} from "../api/verification-api";
+import { getVerificationStatus } from "../api/verification-api";
 import type { VerificationOutcome, WorkerVerificationData } from "../types";
-
-const IS_DEV = process.env.NODE_ENV !== "production";
 
 export function VerificationShell() {
   const t = useTranslations("WorkerVerification.Shell");
   const [data, setData] = useState<WorkerVerificationData | null>(null);
-  const [currentStatus, setCurrentStatus] =
-    useState<VerificationOutcome>("pending");
+  const [currentStatus, setCurrentStatus] = useState<VerificationOutcome>("pending");
 
-  useEffect(() => {
-    getVerificationStatus().then((result) => {
+  const fetchStatus = useCallback(async () => {
+    try {
+      const result = await getVerificationStatus();
       setData(result);
       setCurrentStatus(result.status);
-    });
+    } catch (err) {
+      console.warn("[VerificationShell] Could not fetch real verification status:", err);
+    }
   }, []);
 
-  const handleSelectStatus = (status: VerificationOutcome) => {
-    if (!IS_DEV) return;
-    const updated = setSimulatedVerificationStatus(status);
-    setData(updated);
-    setCurrentStatus(status);
-  };
+  useEffect(() => {
+    // Clear any previous mock/simulated statuses left in localStorage
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("workerfix.worker_verification_status");
+      localStorage.removeItem("hunar_worker_verification_status");
+    }
+    fetchStatus();
+  }, [fetchStatus]);
 
-  const handleRefresh = () => {
-    getVerificationStatus().then((result) => {
-      setData(result);
-      setCurrentStatus(result.status);
-    });
-  };
+  // Real-time polling: if status is "pending", poll every 10s so when admin approves or rejects,
+  // the page immediately flips to the real decision without manual reloads.
+  useEffect(() => {
+    if (currentStatus !== "pending") return;
+    const interval = setInterval(() => {
+      fetchStatus();
+    }, 10000);
+    return () => clearInterval(interval);
+  }, [currentStatus, fetchStatus]);
 
   if (!data) {
     return (
@@ -60,22 +61,14 @@ export function VerificationShell() {
         {/* Left Column: Full-Height Showcase */}
         <VerificationLeftShowcase />
 
-        {/* Right Column: Interactive Verification Result Console */}
+        {/* Right Column: Real Verification Result Console */}
         <section
           className="flex flex-col bg-white px-4 py-4 sm:px-8 sm:py-8 lg:px-12 lg:py-10 lg:col-span-7 xl:col-span-7 lg:min-h-screen lg:justify-between"
           data-purpose="verification-result-container"
         >
           <div className="mx-auto flex w-full max-w-[500px] flex-col lg:h-full lg:justify-between lg:my-auto">
             <div>
-              {/* Interactive Status Switcher (development/testing only) */}
-              {IS_DEV && (
-                <StatusTesterBar
-                  currentStatus={currentStatus}
-                  onSelectStatus={handleSelectStatus}
-                />
-              )}
-
-              {/* Dynamic Status View Display */}
+              {/* Dynamic Real Status View Display */}
               <div className="pt-2 pb-2">
                 {currentStatus === "approved" && <ApprovedView data={data} />}
                 {currentStatus === "rejected" && <RejectedView data={data} />}
@@ -83,7 +76,7 @@ export function VerificationShell() {
                   <RequestChangesView data={data} />
                 )}
                 {currentStatus === "pending" && (
-                  <PendingView data={data} onRefresh={handleRefresh} />
+                  <PendingView data={data} onRefresh={fetchStatus} />
                 )}
               </div>
             </div>

@@ -7,6 +7,7 @@ import {
   ArrowRight,
   Camera,
   Check,
+  Lock,
   Plus,
   Trash2,
   User,
@@ -15,9 +16,11 @@ import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { uploadWorkerDocument } from "../api/onboarding-api";
+import {
+  ALL_PAKISTAN_CITIES,
+  MAJOR_PAKISTAN_CITIES,
+} from "../data/pakistan-cities";
 import type { WorkerProfileFormData } from "../types";
-
-const CITIES = ["Peshawar", "Mardan", "Charsadda", "Nowshera", "Swabi"] as const;
 
 export function Step1PersonalDetails({
   formData,
@@ -35,6 +38,19 @@ export function Step1PersonalDetails({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [photoMessage, setPhotoMessage] = useState<string | null>(null);
   const [isPhotoUploading, setIsPhotoUploading] = useState(false);
+
+  // Normalize display phone (e.g. "+923010000000" -> "03010000000")
+  const displayPhone = formData.phone
+    ? formData.phone.startsWith("+92")
+      ? formData.phone.slice(3).startsWith("0")
+        ? formData.phone.slice(3)
+        : `0${formData.phone.slice(3)}`
+      : formData.phone
+    : "";
+
+  const getCityName = (city: string) => {
+    return tCities.has(city) ? tCities(city) : city;
+  };
 
   const handlePhotoSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -212,27 +228,40 @@ export function Step1PersonalDetails({
             </div>
           </div>
 
-          {/* Phone Number */}
+          {/* Phone Number (Disabled - comes from registration) */}
           <div className="space-y-1.5">
-            <label
-              htmlFor="phone"
-              className="ml-1 block text-xs font-bold uppercase tracking-wider text-navy"
-            >
-              {t("phone")} <span className="text-error">*</span>
-            </label>
+            <div className="flex items-center justify-between">
+              <label
+                htmlFor="phone"
+                className="ml-1 block text-xs font-bold uppercase tracking-wider text-navy"
+              >
+                {t("phone")} <span className="text-error">*</span>
+              </label>
+              <span className="text-[11px] font-semibold text-teal inline-flex items-center gap-1">
+                <Check className="size-3 text-teal stroke-[3]" />
+                <span>{t("phoneVerified")}</span>
+              </span>
+            </div>
             <div className="relative">
-              <span className="absolute left-3.5 top-1/2 -translate-y-1/2 select-none border-r border-slate-300 pr-2 text-sm font-bold text-slate-700">
+              <span className="absolute left-3.5 top-1/2 -translate-y-1/2 select-none border-r border-slate-300 pr-2 text-sm font-bold text-slate-500">
                 +92
               </span>
               <Input
                 id="phone"
                 type="tel"
-                value={formData.phone}
-                onChange={(e) => updateFormData({ phone: e.target.value })}
+                value={displayPhone}
+                disabled
+                readOnly
+                aria-disabled="true"
+                tabIndex={-1}
                 placeholder="03xx-xxxxxxx"
-                className="h-11 sm:h-12 rounded-full pl-16 text-sm sm:text-base font-medium text-slate-800 shadow-2xs focus:border-teal"
+                className="h-11 sm:h-12 rounded-full pl-16 pr-10 text-sm sm:text-base font-semibold text-slate-700 bg-slate-100/90 border-slate-200 cursor-not-allowed select-none shadow-none"
               />
+              <Lock className="absolute right-3.5 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
             </div>
+            <p className="ml-1 text-[11px] text-muted-foreground">
+              {t("phoneRegistrationNote")}
+            </p>
           </div>
 
           {/* City & Email 2-col */}
@@ -250,11 +279,20 @@ export function Step1PersonalDetails({
                 onChange={(e) => updateFormData({ city: e.target.value })}
                 className="h-11 sm:h-12 w-full rounded-full border border-slate-200 bg-white px-3.5 text-sm sm:text-base font-medium text-slate-800 shadow-2xs focus:border-teal focus:outline-none focus:ring-2 focus:ring-teal/20"
               >
-                {CITIES.map((city) => (
-                  <option key={city} value={city}>
-                    {tCities(city)}
-                  </option>
-                ))}
+                <optgroup label={t("majorCitiesGroup")}>
+                  {MAJOR_PAKISTAN_CITIES.map((city) => (
+                    <option key={`major-${city}`} value={city}>
+                      {getCityName(city)}
+                    </option>
+                  ))}
+                </optgroup>
+                <optgroup label={t("allCitiesGroup")}>
+                  {ALL_PAKISTAN_CITIES.map((city) => (
+                    <option key={`all-${city}`} value={city}>
+                      {getCityName(city)}
+                    </option>
+                  ))}
+                </optgroup>
               </select>
             </div>
 

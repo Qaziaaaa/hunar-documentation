@@ -38,6 +38,11 @@ const nextConfig: NextConfig = {
         pathname: "/**",
       },
       {
+        protocol: "https",
+        hostname: "res.cloudinary.com",
+        pathname: "/**",
+      },
+      {
         protocol: origin.protocol.replace(":", "") as "http" | "https",
         hostname: origin.hostname,
         port: origin.port,

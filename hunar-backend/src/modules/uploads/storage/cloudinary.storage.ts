@@ -14,11 +14,12 @@ export class CloudinaryStorage implements StorageClient {
 
   async put(key: string, data: Buffer, contentType: string): Promise<void> {
     const resourceType = this.getResourceType(contentType);
+    const publicId = resourceType === 'raw' ? key : key.replace(/\.[^/.]+$/, '');
 
     await new Promise((resolve, reject) => {
       const uploadStream = cloudinary.uploader.upload_stream(
         {
-          public_id: key.replace(/\.[^/.]+$/, ''),
+          public_id: publicId,
           resource_type: resourceType,
         },
         (error) => {
@@ -35,8 +36,8 @@ export class CloudinaryStorage implements StorageClient {
   }
 
   async delete(key: string): Promise<void> {
-    const publicId = key.replace(/\.[^/.]+$/, '');
     const resourceType = this.getResourceTypeFromKey(key);
+    const publicId = resourceType === 'raw' ? key : key.replace(/\.[^/.]+$/, '');
 
     await cloudinary.uploader.destroy(publicId, {
       resource_type: resourceType,
@@ -52,11 +53,21 @@ export class CloudinaryStorage implements StorageClient {
   }
 
   getPublicUrl(key: string): string {
+    const resourceType = this.getResourceTypeFromKey(key);
+    if (resourceType === 'raw') {
+      return cloudinary.url(key, {
+        secure: true,
+        resource_type: 'raw',
+      });
+    }
+
+    const extension = key.split('.').pop()?.toLowerCase();
     const publicId = key.replace(/\.[^/.]+$/, '');
 
     return cloudinary.url(publicId, {
       secure: true,
-      resource_type: this.getResourceTypeFromKey(key),
+      resource_type: resourceType,
+      format: extension,
     });
   }
 

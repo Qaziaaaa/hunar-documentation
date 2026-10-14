@@ -100,7 +100,11 @@ function makeDb(): any {
     serviceCategory: {
       async findMany({ where, select }: any) {
         let rows = Array.from(db.serviceCategories.values());
-        if (where?.id?.in) {
+        if (where?.OR) {
+          const ids = where.OR.find((cond: any) => cond?.id?.in)?.id?.in ?? [];
+          const names = where.OR.find((cond: any) => cond?.name?.in)?.name?.in ?? [];
+          rows = rows.filter((c) => ids.includes(c.id) || names.includes(c.name));
+        } else if (where?.id?.in) {
           rows = rows.filter((c) => where.id.in.includes(c.id));
         }
         if (where?.isActive !== undefined) {
@@ -197,13 +201,29 @@ function makeDb(): any {
           _count: { rating: _count?.rating ? rows.length : 0 },
         };
       },
+      async findMany({ where }: any) {
+        let rows = db.reviews.filter((r) => r.revieweeId === where?.revieweeId);
+        if (where?.isVisible !== undefined) {
+          rows = rows.filter((r) => r.isVisible === where.isVisible);
+        }
+        return rows;
+      },
     },
 
     serviceRequest: {
       async count({ where }: any) {
-        return db.serviceRequests.filter(
-          (j) => j.selectedWorkerId === where?.selectedWorkerId && j.status === where?.status,
-        ).length;
+        return db.serviceRequests.filter((j) => {
+          if (where?.selectedWorkerId && j.selectedWorkerId !== where.selectedWorkerId) return false;
+          if (where?.status?.in) return where.status.in.includes(j.status);
+          if (where?.status && j.status !== where.status) return false;
+          return true;
+        }).length;
+      },
+    },
+
+    jobOffer: {
+      async findMany() {
+        return [];
       },
     },
 
