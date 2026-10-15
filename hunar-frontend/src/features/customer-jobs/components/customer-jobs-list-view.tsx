@@ -37,59 +37,105 @@ const WorkerProfileModal = dynamic(
   () => import("./worker-profile-modal").then((m) => m.WorkerProfileModal),
   { ssr: false }
 );
-import { acceptWorkerOffer, rejectWorkerOffer, getCustomerJobs } from "../api/customer-jobs-api";
+import { acceptWorkerOffer, rejectWorkerOffer, getCustomerJobs, getJobDetail } from "../api/customer-jobs-api";
 
 interface CustomerJobsListViewProps {
   initialJobs?: CustomerJob[];
   jobs?: CustomerJob[];
+  initialTab?: "scheduled" | "offers" | "completed" | string;
 }
 
-export function CustomerJobsListView({ initialJobs, jobs: jobsProp }: CustomerJobsListViewProps) {
+export function CustomerJobsListView({ initialJobs, jobs: jobsProp, initialTab }: CustomerJobsListViewProps) {
   const locale = useLocale();
   const isUrdu = locale === "ur";
   const searchParams = useSearchParams();
   const tabParam = searchParams.get("tab");
 
   const resolvedInitialJobs = initialJobs ?? jobsProp ?? [];
-  const [jobs, setJobs] = useState<CustomerJob[]>(resolvedInitialJobs);
+  const initialCounts = (resolvedInitialJobs as any).counts;
+  const [tabCounts, setTabCounts] = useState<{ offers: number; scheduled: number; completed: number } | null>(
+    initialCounts ?? null
+  );
 
-  const determineInitialFilter = (): "scheduled" | "offers" | "completed" => {
-    if (tabParam === "offers") return "offers";
-    if (tabParam === "completed") return "completed";
-    if (tabParam === "scheduled") return "scheduled";
-    const hasActiveOffers = resolvedInitialJobs.some((j) => j.status === "receiving_offers");
-    const hasScheduled = resolvedInitialJobs.some((j) => j.status === "visit_scheduled");
-    if (hasActiveOffers && !hasScheduled) return "offers";
-    return "scheduled";
-  };
+  const determinedInitialFilter = (
+    tabParam === "offers" || tabParam === "scheduled" || tabParam === "completed"
+      ? tabParam
+      : initialTab === "offers" || initialTab === "scheduled" || initialTab === "completed"
+      ? initialTab
+      : "scheduled"
+  ) as "scheduled" | "offers" | "completed";
 
-  const [selectedFilter, setSelectedFilter] = useState<"scheduled" | "offers" | "completed">(determineInitialFilter);
+  const [selectedFilter, setSelectedFilter] = useState<"scheduled" | "offers" | "completed">(determinedInitialFilter);
   const [searchQuery, setSearchQuery] = useState("");
 
+  const [tabJobsCache, setTabJobsCache] = useState<Record<string, CustomerJob[]>>({
+    [determinedInitialFilter]: resolvedInitialJobs,
+  });
+
+  const [jobs, setJobs] = useState<CustomerJob[]>(resolvedInitialJobs);
+  const [isTabLoading, setIsTabLoading] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(resolvedInitialJobs.length >= 20);
+
+  // Sync tab with URL parameter if present
   useEffect(() => {
     if (tabParam === "offers" || tabParam === "scheduled" || tabParam === "completed") {
       setSelectedFilter(tabParam);
     }
   }, [tabParam]);
 
-  // Incremental pagination state
-  const [currentPage, setCurrentPage] = useState(1);
-  const [isLoadingMore, setIsLoadingMore] = useState(false);
-  const [hasMore, setHasMore] = useState(resolvedInitialJobs.length >= 20);
+  // Server-side Tab Fetching with in-memory Tab Cache
+  useEffect(() => {
+    let isMounted = true;
+    const cached = tabJobsCache[selectedFilter];
+    if (cached !== undefined) {
+      setJobs(cached);
+      setCurrentPage(1);
+      setHasMore(cached.length >= 20);
+      return;
+    }
+
+    const fetchTab = async () => {
+      setIsTabLoading(true);
+      try {
+        const data = await getCustomerJobs({ tab: selectedFilter, page: 1, limit: 20 });
+        if (!isMounted) return;
+        if ((data as any).counts) {
+          setTabCounts((data as any).counts);
+        }
+        setTabJobsCache((prev) => ({ ...prev, [selectedFilter]: data }));
+        setJobs(data);
+        setCurrentPage(1);
+        setHasMore(data.length >= 20);
+      } catch (err) {
+        console.warn("Failed to load jobs for tab:", err);
+      } finally {
+        if (isMounted) setIsTabLoading(false);
+      }
+    };
+
+    fetchTab();
+    return () => {
+      isMounted = false;
+    };
+  }, [selectedFilter]);
 
   const handleLoadMore = async () => {
     if (isLoadingMore) return;
     setIsLoadingMore(true);
     try {
       const nextPage = currentPage + 1;
-      const moreJobs = await getCustomerJobs({ page: nextPage, limit: 20 });
+      const moreJobs = await getCustomerJobs({ tab: selectedFilter, page: nextPage, limit: 20 });
       if (!moreJobs || moreJobs.length === 0) {
         setHasMore(false);
       } else {
         setJobs((prev) => {
           const existingIds = new Set(prev.map((j) => j.id));
           const newJobs = moreJobs.filter((j) => !existingIds.has(j.id));
-          return [...prev, ...newJobs];
+          const combined = [...prev, ...newJobs];
+          setTabJobsCache((c) => ({ ...c, [selectedFilter]: combined }));
+          return combined;
         });
         setCurrentPage(nextPage);
         if (moreJobs.length < 20) {
@@ -118,10 +164,38 @@ export function CustomerJobsListView({ initialJobs, jobs: jobsProp }: CustomerJo
     setTimeout(() => setToastMessage(null), 4000);
   };
 
+  // On-demand detail & offers loaders to keep list query light
+  const handleOpenDetailsModal = async (job: CustomerJob) => {
+    setSelectedJobForDetails(job);
+    try {
+      const fullJob = await getJobDetail(job.id);
+      setSelectedJobForDetails(fullJob);
+      setJobs((prev) => prev.map((j) => (j.id === fullJob.id ? fullJob : j)));
+    } catch (err) {
+      console.warn("Could not fetch full job detail:", err);
+    }
+  };
+
+  const handleOpenOffersModal = async (job: CustomerJob) => {
+    setSelectedJobForOffers(job);
+    if ((job.offerCount ?? 0) > 0 && (!job.offers[0]?.worker?.bio || !job.offers[0]?.worker?.rating)) {
+      try {
+        const fullJob = await getJobDetail(job.id);
+        setSelectedJobForOffers(fullJob);
+        setJobs((prev) => prev.map((j) => (j.id === fullJob.id ? fullJob : j)));
+      } catch (err) {
+        console.warn("Could not fetch full offers:", err);
+      }
+    }
+  };
+
   // Sync state if props change
   useEffect(() => {
     const list = initialJobs ?? jobsProp;
     if (list) {
+      if ((list as any).counts) {
+        setTabCounts((list as any).counts);
+      }
       setJobs(list);
       if (!tabParam) {
         const hasActiveOffers = list.some((j) => j.status === "receiving_offers");
@@ -238,9 +312,9 @@ export function CustomerJobsListView({ initialJobs, jobs: jobsProp }: CustomerJo
     return matchesFilter && matchesSearch;
   });
 
-  const activeCount = jobs.filter((j) => j.status === "receiving_offers").length;
-  const scheduledCount = jobs.filter((j) => j.status === "visit_scheduled").length;
-  const completedCount = jobs.filter((j) => j.status === "completed").length;
+  const activeCount = tabCounts?.offers ?? jobs.filter((j) => j.status === "receiving_offers").length;
+  const scheduledCount = tabCounts?.scheduled ?? jobs.filter((j) => j.status === "visit_scheduled").length;
+  const completedCount = tabCounts?.completed ?? jobs.filter((j) => j.status === "completed").length;
 
   return (
     <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-6 pb-24 lg:pb-8 animate-in fade-in-50 duration-300 text-[#123B5D]">
@@ -418,12 +492,39 @@ export function CustomerJobsListView({ initialJobs, jobs: jobsProp }: CustomerJo
       )}
 
       {/* Work Orders List */}
-      {filteredJobs.length > 0 ? (
+      {isTabLoading ? (
+        <div className="space-y-4 animate-pulse">
+          {[1, 2].map((i) => (
+            <div
+              key={i}
+              className="bg-white rounded-2xl border border-slate-200 p-5 sm:p-6 shadow-xs flex flex-col gap-4"
+            >
+              <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
+                <div className="space-y-2.5 flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <div className="h-5 w-16 bg-slate-200 rounded" />
+                    <div className="h-5 w-28 bg-slate-200 rounded-full" />
+                  </div>
+                  <div className="h-6 w-3/4 max-w-md bg-slate-200 rounded-md" />
+                  <div className="h-4 w-32 bg-slate-100 rounded" />
+                </div>
+                <div className="h-10 w-28 bg-slate-100 rounded-xl" />
+              </div>
+              <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 h-16" />
+              <div className="pt-2 border-t border-slate-100 flex justify-end gap-2.5">
+                <div className="h-9 w-24 bg-slate-200 rounded-xl" />
+                <div className="h-9 w-32 bg-slate-200 rounded-xl" />
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : filteredJobs.length > 0 ? (
         <>
           <div className="space-y-4">
           {filteredJobs.map((job) => {
             const hasAssignedWorker = !!job.selectedOffer;
             const assignedWorker = job.selectedOffer?.worker;
+            const totalOffers = job.offerCount || job.offers?.length || 0;
 
             return (
               <article
@@ -442,7 +543,7 @@ export function CustomerJobsListView({ initialJobs, jobs: jobsProp }: CustomerJo
                       {job.status === "receiving_offers" && (
                         <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-[#0F766E]/10 text-[#0F766E] border border-[#0F766E]/20">
                           <span className="size-1.5 rounded-full bg-[#0F766E] animate-ping" />
-                          {isUrdu ? `${job.offers.length} آفرز موصول ہوئیں` : `${job.offers.length} Offers Received`}
+                          {isUrdu ? `${totalOffers} آفرز موصول ہوئیں` : `${totalOffers} Offers Received`}
                         </span>
                       )}
 
@@ -568,11 +669,15 @@ export function CustomerJobsListView({ initialJobs, jobs: jobsProp }: CustomerJo
                         <div>
                           <span className="font-semibold text-sm text-[#1A1A2E] block">
                             {isUrdu
-                              ? `${job.offers.length} تصدیق شدہ ماہرین نے آفر بھیجی`
-                              : `${job.offers.length} Verified Pros Responded`}
+                              ? `${totalOffers} تصدیق شدہ ماہرین نے آفر بھیجی`
+                              : `${totalOffers} Verified Pros Responded`}
                           </span>
                           <span className="text-xs text-[#64748B]">
-                            {job.offers.map((o) => o.worker.name).join(", ")}
+                            {job.offers && job.offers.length > 0
+                              ? job.offers.map((o) => o.worker?.name).filter(Boolean).join(", ")
+                              : isUrdu
+                              ? "کاریگروں کی آفرز کا جائزہ لیں"
+                              : "Tap Review Offers to view quotes"}
                           </span>
                         </div>
                       </div>
@@ -610,8 +715,8 @@ export function CustomerJobsListView({ initialJobs, jobs: jobsProp }: CustomerJo
                   <span className="text-xs text-[#64748B]">
                     {job.status === "receiving_offers"
                       ? isUrdu
-                        ? `${job.offers.length} تصدیق شدہ ماہرین نے اس جاب کے لیے آفرز جمع کروائی ہیں۔`
-                        : `${job.offers.length} verified technicians submitted quotes for this job.`
+                        ? `${totalOffers} تصدیق شدہ ماہرین نے اس جاب کے لیے آفرز جمع کروائی ہیں۔`
+                        : `${totalOffers} verified technicians submitted quotes for this job.`
                       : job.status === "visit_scheduled"
                       ? isUrdu
                         ? "کاریگر متعین ہو چکا ہے۔ دہلیز پر آمد کے وقت 4 ہندسوں کے سیکیورٹی PIN کی تصدیق کریں۔"
@@ -625,7 +730,7 @@ export function CustomerJobsListView({ initialJobs, jobs: jobsProp }: CustomerJo
                     {/* View Details Button -> opens Details Modal */}
                     <button
                       type="button"
-                      onClick={() => setSelectedJobForDetails(job)}
+                      onClick={() => handleOpenDetailsModal(job)}
                       className="h-9 px-4 rounded-xl font-semibold text-xs sm:text-sm text-[#1A1A2E] bg-white border border-[#E2E8F0] hover:bg-slate-50 transition-colors flex items-center justify-center cursor-pointer active:scale-98"
                     >
                       {isUrdu ? "تفصیلات دیکھیں" : "View Details"}
@@ -635,17 +740,17 @@ export function CustomerJobsListView({ initialJobs, jobs: jobsProp }: CustomerJo
                     {job.status === "receiving_offers" && (
                       <button
                         type="button"
-                        onClick={() => setSelectedJobForOffers(job)}
+                        onClick={() => handleOpenOffersModal(job)}
                         className="h-9 px-4 rounded-xl font-semibold text-xs sm:text-sm text-white bg-teal hover:bg-teal/90 transition-colors shadow-sm flex items-center justify-center gap-1.5 cursor-pointer active:scale-98"
                       >
                         <span>
                           {isUrdu
-                            ? job.offers.length === 1
+                            ? totalOffers === 1
                               ? "آفر کا جائزہ لیں"
-                              : `${job.offers.length} آفرز کا جائزہ لیں`
-                            : job.offers.length === 1
+                              : `${totalOffers} آفرز کا جائزہ لیں`
+                            : totalOffers === 1
                             ? "Review Offer"
-                            : `Review ${job.offers.length} Offers`}
+                            : `Review ${totalOffers} Offers`}
                         </span>
                         <ArrowRight className="size-3.5 rtl:rotate-180" />
                       </button>

@@ -2,11 +2,14 @@
 
 import { Briefcase, Home, MessageSquare } from "lucide-react";
 import { useLocale } from "next-intl";
+import { useQueryClient } from "@tanstack/react-query";
 import { Link, usePathname } from "@/i18n/navigation";
+import { getCustomerJobs } from "@/features/customer-jobs/api/customer-jobs-api";
 
 export function CustomerBottomNav() {
   const pathname = usePathname();
   const locale = useLocale();
+  const queryClient = useQueryClient();
   const isUrdu = locale === "ur";
 
   const isHome = pathname.includes("/customer/dashboard") || pathname === "/customer";
@@ -41,6 +44,24 @@ export function CustomerBottomNav() {
           <Link
             key={item.href}
             href={item.href}
+            onMouseEnter={() => {
+              if (item.href === "/customer/jobs") {
+                void queryClient.prefetchQuery({
+                  queryKey: ["customer", "jobs", { tab: "scheduled" }],
+                  queryFn: () => getCustomerJobs({ tab: "scheduled", page: 1, limit: 20 }),
+                  staleTime: 60_000,
+                });
+              }
+            }}
+            onTouchStart={() => {
+              if (item.href === "/customer/jobs") {
+                void queryClient.prefetchQuery({
+                  queryKey: ["customer", "jobs", { tab: "scheduled" }],
+                  queryFn: () => getCustomerJobs({ tab: "scheduled", page: 1, limit: 20 }),
+                  staleTime: 60_000,
+                });
+              }
+            }}
             className={`flex-1 flex flex-col items-center justify-center gap-1 py-1.5 px-3 rounded-2xl transition-all ${
               item.isActive
                 ? "text-[#0F766E] font-bold bg-[#0F766E]/10 shadow-2xs"

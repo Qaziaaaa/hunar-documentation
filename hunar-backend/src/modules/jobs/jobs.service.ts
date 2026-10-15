@@ -235,7 +235,7 @@ export class JobsService {
 
   async getCustomerJobs(customerId: string, query: CustomerJobsQueryDto) {
     const { page, limit, skip } = normalizePage(query);
-    const cacheKey = `perf:jobs:customer:${customerId}:${page}:${limit}:${query.status ?? 'all'}`;
+    const cacheKey = `perf:jobs:customer:${customerId}:${page}:${limit}:${query.tab ?? query.status ?? 'all'}`;
     if (this.redis) {
       const cached = await this.redis.get(cacheKey);
       if (cached) {
@@ -245,11 +245,36 @@ export class JobsService {
       }
     }
 
+    let statusFilter: Prisma.ServiceRequestWhereInput['status'];
+    if (query.tab === 'offers') {
+      statusFilter = { in: [JobStatus.OPEN, JobStatus.OFFERS_RECEIVED] };
+    } else if (query.tab === 'scheduled') {
+      statusFilter = {
+        in: [
+          JobStatus.OFFER_ACCEPTED,
+          JobStatus.WORKER_ASSIGNED,
+          JobStatus.VISIT_SCHEDULED,
+          JobStatus.VISIT_IN_PROGRESS,
+          JobStatus.INSPECTION_DONE,
+          JobStatus.REPAIR_NEGOTIATING,
+          JobStatus.REPAIR_APPROVED,
+          JobStatus.IN_PROGRESS,
+        ],
+      };
+    } else if (query.tab === 'completed') {
+      statusFilter = {
+        in: [JobStatus.VISIT_COMPLETED, JobStatus.COMPLETED, JobStatus.PAID, JobStatus.REVIEWED],
+      };
+    } else if (query.status) {
+      statusFilter = query.status;
+    }
+
     const where: Prisma.ServiceRequestWhereInput = {
       customerId,
-      ...(query.status ? { status: query.status } : {}),
+      ...(statusFilter ? { status: statusFilter } : {}),
     };
-    const [rows, total] = await this.prisma.$transaction([
+
+    const [rows, total, statusCounts] = await Promise.all([
       this.prisma.serviceRequest.findMany({
         where,
         skip,
@@ -258,33 +283,31 @@ export class JobsService {
         include: {
           category: { select: { id: true, name: true } },
           _count: { select: { offers: true } },
+          selectedWorker: {
+            select: {
+              id: true,
+              name: true,
+              avatarUrl: true,
+              phone: true,
+            },
+          },
           offers: {
             orderBy: { visitCharge: 'asc' },
-            include: {
+            take: 5,
+            select: {
+              id: true,
+              jobId: true,
+              workerId: true,
+              visitCharge: true,
+              message: true,
+              status: true,
+              createdAt: true,
               worker: {
                 select: {
                   id: true,
                   name: true,
                   avatarUrl: true,
                   phone: true,
-                  isVerified: true,
-                  workerProfile: {
-                    select: {
-                      skills: true,
-                      experienceYears: true,
-                      bio: true,
-                      verificationStatus: true,
-                      serviceRadiusKm: true,
-                    },
-                  },
-                  serviceAreas: {
-                    select: {
-                      label: true,
-                      address: true,
-                      latitude: true,
-                      longitude: true,
-                    },
-                  },
                 },
               },
             },
@@ -292,113 +315,136 @@ export class JobsService {
         },
       }),
       this.prisma.serviceRequest.count({ where }),
+      (this.prisma.serviceRequest.groupBy as any)({
+        by: ['status'],
+        where: { customerId },
+        _count: { _all: true },
+      }) as Promise<Array<{ status: JobStatus; _count: { _all: number } }>>,
     ]);
 
-    const workerIds = [
-      ...new Set(rows.flatMap((j) => j.offers.map((o) => o.workerId)).filter(Boolean)),
-    ];
+    let offersCount = 0;
+    let scheduledCount = 0;
+    let completedCount = 0;
 
-    const [ratingRows, completedRows] = await Promise.all([
-      workerIds.length > 0
-        ? (this.prisma.review.groupBy({
+    for (const sc of statusCounts) {
+      const s = sc.status;
+      const count = sc._count._all;
+      if (s === JobStatus.OPEN || s === JobStatus.OFFERS_RECEIVED) {
+        offersCount += count;
+      } else if (
+        s === JobStatus.OFFER_ACCEPTED ||
+        s === JobStatus.WORKER_ASSIGNED ||
+        s === JobStatus.VISIT_SCHEDULED ||
+        s === JobStatus.VISIT_IN_PROGRESS ||
+        s === JobStatus.INSPECTION_DONE ||
+        s === JobStatus.REPAIR_NEGOTIATING ||
+        s === JobStatus.REPAIR_APPROVED ||
+        s === JobStatus.IN_PROGRESS
+      ) {
+        scheduledCount += count;
+      } else if (
+        s === JobStatus.VISIT_COMPLETED ||
+        s === JobStatus.COMPLETED ||
+        s === JobStatus.PAID ||
+        s === JobStatus.REVIEWED
+      ) {
+        completedCount += count;
+      }
+    }
+
+    const selectedWorkerIds = [
+      ...new Set(rows.map((j) => j.selectedWorkerId).filter(Boolean)),
+    ] as string[];
+
+    const ratingRows =
+      selectedWorkerIds.length > 0
+        ? await this.prisma.review.groupBy({
             by: ['revieweeId'],
-            where: { revieweeId: { in: workerIds }, isVisible: true },
+            where: { revieweeId: { in: selectedWorkerIds }, isVisible: true },
             _avg: { rating: true },
             _count: { _all: true },
-          }) as unknown as Promise<
-            Array<{ revieweeId: string; _avg: { rating: number | null }; _count: { _all: number } }>
-          >)
-        : Promise.resolve([]),
-      workerIds.length > 0
-        ? (this.prisma.serviceRequest.groupBy({
-            by: ['selectedWorkerId'],
-            where: {
-              selectedWorkerId: { in: workerIds },
-              status: { in: ['COMPLETED', 'PAID', 'REVIEWED'] },
-            },
-            _count: { _all: true },
-          }) as unknown as Promise<
-            Array<{ selectedWorkerId: string | null; _count: { _all: number } }>
-          >)
-        : Promise.resolve([]),
-    ]);
+          })
+        : [];
 
-    const ratingMap = new Map(ratingRows.map((r) => [r.revieweeId, r]));
-    const completedMap = new Map(completedRows.map((c) => [c.selectedWorkerId!, c]));
+    const ratingMap = new Map(
+      (
+        ratingRows as Array<{
+          revieweeId: string;
+          _avg: { rating: number | null };
+          _count: { _all: number };
+        }>
+      ).map((r) => [r.revieweeId, r]),
+    );
 
-    const items = rows.map((j) => ({
-      id: j.id,
-      title: j.title,
-      description: j.description,
-      status: j.status,
-      categoryId: j.categoryId,
-      categoryName: j.category?.name ?? null,
-      address: j.address,
-      city: j.city,
-      area: j.area,
-      latitude: j.latitude,
-      longitude: j.longitude,
-      suggestedVisitCharge: j.suggestedVisitCharge != null ? Number(j.suggestedVisitCharge) : null,
-      preferredVisitTime: j.preferredVisitTime,
-      offerCount: j._count.offers,
-      images: j.images,
-      voiceNoteUrl: j.voiceNoteUrl,
-      createdAt: j.createdAt,
-      offers: (j.offers || []).map((o) => {
-        const w = o.worker;
-        const r = ratingMap.get(o.workerId);
-        const c = completedMap.get(o.workerId);
-        let distanceKm = 0;
-        if (j.latitude != null && j.longitude != null && w?.serviceAreas?.length) {
-          const distances = w.serviceAreas.map((sa) =>
-            haversineKm(j.latitude, j.longitude, sa.latitude, sa.longitude),
-          );
-          distanceKm = Math.round(Math.min(...distances) * 10) / 10;
-        }
-        const diffMs = new Date(o.createdAt).getTime() - new Date(j.createdAt).getTime();
-        const diffMins = Math.max(0, Math.round(diffMs / 60000));
-        let responseTime: string | null = null;
-        if (diffMins < 1) responseTime = '< 1m';
-        else if (diffMins < 60) responseTime = `${diffMins}m`;
-        else if (diffMins < 1440) responseTime = `${Math.floor(diffMins / 60)}h ${diffMins % 60}m`;
-        else responseTime = `${Math.floor(diffMins / 1440)}d`;
-
-        return {
+    const items = rows.map((j) => {
+      const sw = j.selectedWorker;
+      const r = sw ? ratingMap.get(sw.id) : null;
+      return {
+        id: j.id,
+        title: j.title,
+        description: j.description,
+        status: j.status,
+        categoryId: j.categoryId,
+        categoryName: j.category?.name ?? null,
+        address: j.address,
+        city: j.city,
+        area: j.area,
+        latitude: j.latitude,
+        longitude: j.longitude,
+        suggestedVisitCharge: j.suggestedVisitCharge != null ? Number(j.suggestedVisitCharge) : null,
+        preferredVisitTime: j.preferredVisitTime,
+        offerCount: j._count.offers,
+        images: j.images,
+        voiceNoteUrl: j.voiceNoteUrl,
+        createdAt: j.createdAt,
+        selectedWorkerId: j.selectedWorkerId,
+        lockedVisitCharge: j.lockedVisitCharge != null ? Number(j.lockedVisitCharge) : null,
+        selectedWorker: sw
+          ? {
+              id: sw.id,
+              name: sw.name,
+              avatarUrl: sw.avatarUrl,
+              phone: sw.phone,
+              rating:
+                r?._avg.rating !== null && r?._avg.rating !== undefined
+                  ? Number(r._avg.rating.toFixed(1))
+                  : 5.0,
+              ratingCount: r?._count._all ?? 0,
+            }
+          : null,
+        offers: (j.offers || []).map((o) => ({
           id: o.id,
           jobId: o.jobId,
           workerId: o.workerId,
-          worker: w
-            ? {
-                id: w.id,
-                name: w.name,
-                avatarUrl: w.avatarUrl,
-                phone: w.phone,
-                avgRating: r?._avg.rating !== null && r?._avg.rating !== undefined ? Number(r._avg.rating.toFixed(1)) : 0,
-                ratingCount: r?._count._all ?? 0,
-                completedJobs: c?._count._all ?? 0,
-                skills: w.workerProfile?.skills ?? [],
-                experienceYears: w.workerProfile?.experienceYears ?? 0,
-                bio: w.workerProfile?.bio ?? '',
-                isVerified: w.isVerified,
-                isNadraCleared: w.workerProfile?.verificationStatus === 'APPROVED',
-                isCnicVerified: w.workerProfile?.verificationStatus === 'APPROVED',
-                serviceArea: w.serviceAreas?.[0]?.label ?? w.serviceAreas?.[0]?.address ?? '',
-                responseTime,
-              }
-            : null,
           visitCharge: Number(o.visitCharge),
           message: o.message,
-          distanceKm,
           status: o.status,
-          negotiationRound: o.negotiationRound,
-          lockedAt: o.lockedAt,
           createdAt: o.createdAt,
-        };
-      }),
-    }));
-    const result = toPageResult(items, total, page, limit);
+          worker: o.worker
+            ? {
+                id: o.worker.id,
+                name: o.worker.name,
+                avatarUrl: o.worker.avatarUrl,
+                phone: o.worker.phone,
+              }
+            : null,
+        })),
+      };
+    });
+
+    const pageResult = toPageResult(items, total, page, limit);
+    const result = {
+      ...pageResult,
+      counts: {
+        offers: offersCount,
+        scheduled: scheduledCount,
+        completed: completedCount,
+        all: total,
+      },
+    };
+
     if (this.redis) {
-      await this.redis.set(cacheKey, JSON.stringify(result), 5);
+      await this.redis.set(cacheKey, JSON.stringify(result), 30);
     }
     return result;
   }

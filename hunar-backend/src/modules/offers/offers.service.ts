@@ -427,6 +427,10 @@ export class OffersService {
       newStatus: 'WORKER_ASSIGNED',
     });
 
+    if (this.redis) {
+      await this.redis.delPattern(`perf:jobs:customer:${job.customerId}:*`);
+    }
+
     return { acceptedOffer, rejectedOffers, lockedVisitCharge: finalCharge };
   }
 
@@ -538,6 +542,9 @@ export class OffersService {
     });
     this.eventBus.emit('offer.rejected', { offerId, jobId, workerId: offer.workerId });
     this.realtime.emitToRoom(userRoom(offer.workerId), JOB_EVENTS.jobClosed, { jobId });
+    if (this.redis) {
+      await this.redis.delPattern(`perf:jobs:customer:${job.customerId}:*`);
+    }
     return updated;
   }
 

@@ -6,28 +6,45 @@ export interface GetCustomerJobsOptions {
   page?: number;
   limit?: number;
   status?: string;
+  tab?: string;
 }
+
+export interface CustomerJobsCounts {
+  offers: number;
+  scheduled: number;
+  completed: number;
+  all: number;
+}
+
+export type CustomerJobsArray = CustomerJob[] & {
+  counts?: CustomerJobsCounts;
+  total?: number;
+};
 
 /**
  * Fetch jobs for the logged-in customer incrementally, enriched on-demand with worker/offers.
  */
-export async function getCustomerJobs(options?: GetCustomerJobsOptions | unknown): Promise<CustomerJob[]> {
+export async function getCustomerJobs(options?: GetCustomerJobsOptions | unknown): Promise<CustomerJobsArray> {
   const isOptionsObject =
     typeof options === "object" &&
     options !== null &&
-    ("page" in options || "limit" in options || "status" in options);
+    ("page" in options || "limit" in options || "status" in options || "tab" in options);
   const opts = isOptionsObject ? (options as GetCustomerJobsOptions) : undefined;
   const page = opts?.page ?? 1;
   const limit = opts?.limit ?? 20;
   const statusQuery = opts?.status ? `&status=${encodeURIComponent(opts.status)}` : "";
-  const res = await http.get<unknown>(`/jobs/customer?page=${page}&limit=${limit}${statusQuery}`);
+  const tabQuery = opts?.tab ? `&tab=${encodeURIComponent(opts.tab)}` : "";
+  const res = await http.get<any>(`/jobs/customer?page=${page}&limit=${limit}${statusQuery}${tabQuery}`);
   const rows: unknown[] = Array.isArray(res)
     ? res
-    : (res as { data?: unknown[]; items?: unknown[] })?.data ??
-      (res as { items?: unknown[] })?.items ??
-      [];
+    : res?.data ?? res?.items ?? [];
 
-  return rows.map(transformListRow);
+  const list: CustomerJobsArray = rows.map(transformListRow);
+  if (res && typeof res === "object") {
+    if (res.counts) list.counts = res.counts;
+    if (res.total != null) list.total = Number(res.total);
+  }
+  return list;
 }
 
 /**
