@@ -4,6 +4,7 @@ import {
   ForbiddenException,
   Injectable,
   NotFoundException,
+  Optional,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { OfferStatus, Role } from '@prisma/client';
@@ -24,6 +25,10 @@ import {
 import { NegotiationEntry } from '../../common/event-bus/events';
 import { RedisService } from '../../common/redis/redis.service';
 import { haversineKm } from '../../common/helpers/geo.util';
+import {
+  SETTINGS_DEFAULTS,
+  SettingsService,
+} from '../../common/settings/settings.service';
 
 @Injectable()
 export class OffersService {
@@ -34,10 +39,19 @@ export class OffersService {
     private readonly realtime: RealtimeService,
     private readonly config: ConfigService,
     private readonly redis?: RedisService,
+    @Optional() private readonly settings?: SettingsService,
   ) {}
 
   private get maxRounds(): number {
     return this.config.get<number>('app.maxNegotiationRounds', 5);
+  }
+
+  /** Admin-configured cap on simultaneously active (unanswered) offers. */
+  private async maxActiveOffersPerWorker(): Promise<number> {
+    return (
+      (await this.settings?.getMaxActiveOffersPerWorker()) ??
+      SETTINGS_DEFAULTS.maxActiveOffersPerWorker
+    );
   }
 
   async createOffer(workerId: string, jobId: string, dto: CreateOfferDto) {
@@ -59,6 +73,24 @@ export class OffersService {
     });
     if (existing) {
       throw new ConflictException('OFFER_DUPLICATE: you already submitted an offer for this job');
+    }
+
+    // Spam control (admin settings → maxActiveOffersPerWorker).
+    const maxActive = await this.maxActiveOffersPerWorker();
+    if (maxActive > 0) {
+      const activeOffers = await this.prisma.jobOffer.count({
+        where: {
+          workerId,
+          status: { in: [OfferStatus.PENDING, OfferStatus.VIEWING, OfferStatus.COUNTERED] },
+        },
+      });
+      if (activeOffers >= maxActive) {
+        throw new BadRequestException(
+          `MAX_ACTIVE_OFFERS: you can have at most ${maxActive} active offer${
+            maxActive === 1 ? '' : 's'
+          } at a time — wait for a response or withdraw one before offering again`,
+        );
+      }
     }
 
     const message = dto.note ?? dto.message ?? null;

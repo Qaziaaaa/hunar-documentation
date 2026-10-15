@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { AdminShell } from "@/features/admin/components/admin-shell";
 import { adminApi } from "@/features/admin/api/admin-api";
+import { AdminAvatar } from "@/features/admin/components/admin-avatar";
 import type { CustomerUser } from "@/types/admin";
 import {
   AlertCircle,
@@ -57,9 +57,14 @@ export default function CustomersPage() {
     setActionError(null);
 
     const suspending = actionCustomer.status === "ACTIVE";
+    const reason = suspendReason.trim();
+    if (suspending && !reason) {
+      setActionError("A suspension reason is required.");
+      return;
+    }
     try {
       if (suspending) {
-        await adminApi.suspendCustomer(actionCustomer.id, suspendReason);
+        await adminApi.suspendCustomer(actionCustomer.id, reason);
       } else {
         await adminApi.reactivateCustomer(actionCustomer.id);
       }
@@ -72,7 +77,7 @@ export default function CustomersPage() {
               status: newStatus,
               internalNotes:
                 newStatus === "SUSPENDED"
-                  ? `Suspended by admin: ${suspendReason || "No reason given"}`
+                  ? `Suspended by admin: ${reason}`
                   : c.internalNotes,
             };
           }
@@ -91,8 +96,7 @@ export default function CustomersPage() {
   };
 
   return (
-    <AdminShell>
-      <div className="space-y-6">
+<div className="space-y-6">
         {error && (
           <div className="flex items-center justify-between gap-3 rounded-2xl border border-red-200 bg-red-50 p-4">
             <div className="flex items-center gap-2">
@@ -209,9 +213,11 @@ export default function CustomersPage() {
                   <tr key={customer.id} className="transition hover:bg-slate-50">
                     <td className="py-4 px-4">
                       <div className="flex items-center gap-3">
-                        <div className="flex size-10 items-center justify-center rounded-xl bg-navy text-xs font-bold text-white shadow-sm">
-                          {customer.name.charAt(0)}
-                        </div>
+                        <AdminAvatar
+                          src={customer.avatarUrl}
+                          name={customer.name}
+                          className="size-10 rounded-xl"
+                        />
                         <div>
                           <p className="font-extrabold text-navy">{customer.name}</p>
                           <p className="text-[10px] text-slate-400">ID: {customer.id}</p>
@@ -234,7 +240,11 @@ export default function CustomersPage() {
                     <td className="py-4 px-4">
                       <div className="flex items-center gap-1 font-bold text-navy">
                         <Star className="size-3.5 fill-amber-400 text-amber-400" />
-                        <span>{customer.ratingGiven}</span>
+                        <span>
+                          {customer.ratingGiven > 0
+                            ? customer.ratingGiven.toFixed(1)
+                            : "—"}
+                        </span>
                       </div>
                     </td>
                     <td className="py-4 px-4">
@@ -311,9 +321,11 @@ export default function CustomersPage() {
 
               <div className="mt-5 space-y-4 text-xs">
                 <div className="flex items-center gap-4 rounded-2xl bg-slate-50 p-4">
-                  <div className="flex size-14 items-center justify-center rounded-2xl bg-navy text-xl font-bold text-white">
-                    {selectedCustomer.name.charAt(0)}
-                  </div>
+                  <AdminAvatar
+                    src={selectedCustomer.avatarUrl}
+                    name={selectedCustomer.name}
+                    className="size-14 rounded-2xl text-xl"
+                  />
                   <div>
                     <h4 className="text-base font-extrabold text-navy">
                       {selectedCustomer.name}
@@ -413,7 +425,10 @@ export default function CustomersPage() {
                 <button
                   type="button"
                   onClick={handleToggleStatus}
-                  className={`rounded-xl px-5 py-2.5 text-xs font-bold text-white shadow-md ${
+                  disabled={
+                    actionCustomer.status === "ACTIVE" && !suspendReason.trim()
+                  }
+                  className={`rounded-xl px-5 py-2.5 text-xs font-bold text-white shadow-md disabled:cursor-not-allowed disabled:opacity-60 ${
                     actionCustomer.status === "ACTIVE"
                       ? "bg-red-600 hover:bg-red-700"
                       : "bg-teal hover:bg-teal-600"
@@ -426,6 +441,5 @@ export default function CustomersPage() {
           </div>
         ) : null}
       </div>
-    </AdminShell>
-  );
+);
 }

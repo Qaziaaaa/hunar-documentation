@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Fragment, useCallback, useEffect, useRef, useState } from "react";
 import {
   fetchAdminKpis,
   fetchAuditLogsFeed,
+  fetchCommissionRate,
   fetchDisputesQueue,
   fetchLiveJobsStream,
   fetchPendingVerifications,
@@ -11,16 +12,8 @@ import {
   fetchTopWorkers,
   fetchWithdrawalRequests,
 } from "@/features/admin/api/admin-api";
-import { AdminShell } from "@/features/admin/components/admin-shell";
-import { KpiStatCards } from "@/features/admin/components/kpi-stat-cards";
-import { RecentTransactionsTable } from "@/features/admin/components/recent-transactions-table";
-import { DisputesQueueWidget } from "@/features/admin/components/disputes-queue-widget";
-import { CategorySupplyDemandChart } from "@/features/admin/components/category-supply-demand-chart";
-import { WithdrawalRequestsWidget } from "@/features/admin/components/withdrawal-requests-widget";
-import { AuditLogsFeed } from "@/features/admin/components/audit-logs-feed";
-import { DashboardRightPanel } from "@/features/admin/components/dashboard-right-panel";
 import { Link } from "@/i18n/navigation";
-import { AlertTriangle, FileCheck2, Loader2, ShieldCheck, Users } from "lucide-react";
+import { FileCheck2, ShieldCheck, Users } from "lucide-react";
 import type {
   AdminKpiStats,
   AuditLogEntry,
@@ -31,156 +24,313 @@ import type {
   WithdrawalRequest,
   WorkerUser,
 } from "@/types/admin";
+import { DashboardHeroCard } from "@/features/admin/components/dashboard/dashboard-hero-card";
+import { DashboardStatsGrid } from "@/features/admin/components/dashboard/dashboard-stats-grid";
+import { DashboardPipelineCard } from "@/features/admin/components/dashboard/dashboard-pipeline-card";
+import { DashboardDemandCard } from "@/features/admin/components/dashboard/dashboard-demand-card";
+import { DashboardToplistCard } from "@/features/admin/components/dashboard/dashboard-toplist-card";
+import { DashboardActivityTable } from "@/features/admin/components/dashboard/dashboard-activity-table";
+import {
+  CardSkeleton,
+  HeroSkeleton,
+  SectionError,
+  StatsSkeleton,
+  TableSkeleton,
+} from "@/features/admin/components/dashboard/dashboard-skeletons";
+import { playDashboardEntrance, resetDashboardEntrance } from "@/features/admin/components/dashboard/dashboard-entrance";
 
-interface DashboardData {
-  kpis: AdminKpiStats;
-  verifications: VerificationRequest[];
-  transactions: PaymentTransaction[];
-  withdrawals: WithdrawalRequest[];
-  disputes: DisputeReport[];
-  liveJobs: LiveJobItem[];
-  auditLogs: AuditLogEntry[];
-  topWorkers: WorkerUser[];
-}
-
-// Client component: the previous async server component ran every admin fetch
-// without a localStorage token (401) and the api layer answered with MOCK_*
-// data — the dashboard displayed invented KPIs. Fetching here carries the
-// authenticated token; errors now surface instead of substituting mocks.
+// Progressive sections: each data group loads independently (Promise.allSettled),
+// so the hero paints as soon as KPIs + transactions land, mid cards as soon as
+// jobs + workers land, and the activity table as soon as its feeds land — no
+// all-or-nothing spinner.
 export default function AdminDashboardPage() {
-  const [data, setData] = useState<DashboardData | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [reloadKey, setReloadKey] = useState(0);
+  const [kpis, setKpis] = useState<AdminKpiStats | null>(null);
+  const [transactions, setTransactions] = useState<PaymentTransaction[] | null>(null);
+  const [liveJobs, setLiveJobs] = useState<LiveJobItem[] | null>(null);
+  const [topWorkers, setTopWorkers] = useState<WorkerUser[] | null>(null);
+  const [withdrawals, setWithdrawals] = useState<WithdrawalRequest[] | null>(null);
+  const [disputes, setDisputes] = useState<DisputeReport[] | null>(null);
+  const [auditLogs, setAuditLogs] = useState<AuditLogEntry[] | null>(null);
+  const [verifications, setVerifications] = useState<VerificationRequest[] | null>(null);
+  const [commissionRate, setCommissionRate] = useState<number | null>(null);
 
-  useEffect(() => {
-    let cancelled = false;
-    Promise.all([
-      fetchAdminKpis(),
-      fetchPendingVerifications(),
-      fetchRecentTransactions(),
+  const [topError, setTopError] = useState<string | null>(null);
+  const [midError, setMidError] = useState<string | null>(null);
+  const [feedError, setFeedError] = useState<string | null>(null);
+
+  const viewRef = useRef<HTMLDivElement | null>(null);
+  const entrancePlayedRef = useRef(false);
+  const activityPlayedRef = useRef(false);
+  const mountedRef = useRef(true);
+  const inFlightRef = useRef(false);
+  const loadedRef = useRef({ top: false, mid: false, feed: false });
+
+  // Progressive sections: each data group loads independently (Promise.allSettled),
+  // so the hero paints as soon as KPIs + transactions land, mid cards as soon as
+  // jobs + workers land, and the activity table as soon as its feeds land — no
+  // all-or-nothing spinner. Skips ticks while a previous load is in flight.
+  const loadAll = useCallback(() => {
+    if (inFlightRef.current) return;
+    inFlightRef.current = true;
+    let pending = 3;
+    const settle = () => {
+      pending -= 1;
+      if (pending <= 0) inFlightRef.current = false;
+    };
+
+    // Section 1 — ov-top: hero + stats (+ real commission rate for the hero label)
+    Promise.allSettled([fetchAdminKpis(), fetchRecentTransactions(), fetchCommissionRate()]).then(
+      ([kpisResult, txResult, rateResult]) => {
+        if (mountedRef.current) {
+          if (kpisResult.status === "fulfilled") setKpis(kpisResult.value);
+          if (txResult.status === "fulfilled") setTransactions(txResult.value);
+          if (rateResult.status === "fulfilled") setCommissionRate(rateResult.value);
+          const allOk = kpisResult.status === "fulfilled" && txResult.status === "fulfilled";
+          if (allOk) {
+            loadedRef.current.top = true;
+            setTopError(null);
+          } else if (!loadedRef.current.top) {
+            const failed = [kpisResult, txResult].find((r) => r.status === "rejected");
+            if (failed && failed.status === "rejected") {
+              setTopError(
+                failed.reason instanceof Error ? failed.reason.message : "Failed to load KPIs",
+              );
+            }
+          }
+        }
+        settle();
+      },
+    );
+
+    // Section 2 — ov-mid: pipeline (kpis) + demand (jobs + workers) + toplist (workers)
+    Promise.allSettled([fetchLiveJobsStream(), fetchTopWorkers()]).then(
+      ([jobsResult, workersResult]) => {
+        if (mountedRef.current) {
+          if (jobsResult.status === "fulfilled") setLiveJobs(jobsResult.value);
+          if (workersResult.status === "fulfilled") setTopWorkers(workersResult.value);
+          const allOk = jobsResult.status === "fulfilled" && workersResult.status === "fulfilled";
+          if (allOk) {
+            loadedRef.current.mid = true;
+            setMidError(null);
+          } else if (!loadedRef.current.mid) {
+            const failed = [jobsResult, workersResult].find((r) => r.status === "rejected");
+            if (failed && failed.status === "rejected") {
+              setMidError(
+                failed.reason instanceof Error ? failed.reason.message : "Failed to load insights",
+              );
+            }
+          }
+        }
+        settle();
+      },
+    );
+
+    // Section 3 — activity table feeds
+    Promise.allSettled([
       fetchWithdrawalRequests(),
       fetchDisputesQueue(),
-      fetchLiveJobsStream(),
       fetchAuditLogsFeed(),
-      fetchTopWorkers(),
-    ])
-      .then(
-        ([kpis, verifications, transactions, withdrawals, disputes, liveJobs, auditLogs, topWorkers]) => {
-          if (cancelled) return;
-          setData({ kpis, verifications, transactions, withdrawals, disputes, liveJobs, auditLogs, topWorkers });
-        },
-      )
-      .catch((err: unknown) => {
-        if (cancelled) return;
-        setError(err instanceof Error ? err.message : "Failed to load dashboard data");
-      });
-    return () => {
-      cancelled = true;
+      fetchPendingVerifications(),
+    ]).then(([wdResult, dpResult, auResult, vfResult]) => {
+      if (mountedRef.current) {
+        if (wdResult.status === "fulfilled") setWithdrawals(wdResult.value);
+        if (dpResult.status === "fulfilled") setDisputes(dpResult.value);
+        if (auResult.status === "fulfilled") setAuditLogs(auResult.value);
+        if (vfResult.status === "fulfilled") setVerifications(vfResult.value);
+        const allOk =
+          wdResult.status === "fulfilled" &&
+          dpResult.status === "fulfilled" &&
+          auResult.status === "fulfilled" &&
+          vfResult.status === "fulfilled";
+        if (allOk) {
+          loadedRef.current.feed = true;
+          setFeedError(null);
+        } else if (!loadedRef.current.feed) {
+          const failed = [wdResult, dpResult, auResult, vfResult].find(
+            (r) => r.status === "rejected",
+          );
+          if (failed && failed.status === "rejected") {
+            setFeedError(
+              failed.reason instanceof Error ? failed.reason.message : "Failed to load activity",
+            );
+          }
+        }
+      }
+      settle();
+    });
+  }, []);
+
+  // Initial load + 20s live polling (skipped while the tab is hidden; a
+  // visibilitychange to visible triggers an immediate refresh instead).
+  useEffect(() => {
+    mountedRef.current = true;
+    loadAll();
+    const id = setInterval(() => {
+      if (!document.hidden) loadAll();
+    }, 20000);
+    const onVisible = () => {
+      if (!document.hidden) loadAll();
     };
-  }, [reloadKey]);
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      mountedRef.current = false;
+      clearInterval(id);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
+  }, [loadAll]);
+
+  const retry = useCallback(() => {
+    setTopError(null);
+    setMidError(null);
+    setFeedError(null);
+    loadedRef.current = { top: false, mid: false, feed: false };
+    entrancePlayedRef.current = false;
+    activityPlayedRef.current = false;
+    resetDashboardEntrance(viewRef.current);
+    loadAll();
+  }, [loadAll]);
+
+  // A section is "ready" when its critical inputs arrived; skeletons show per-card otherwise.
+  const topReady = kpis !== null && transactions !== null;
+  const midReady = liveJobs !== null && topWorkers !== null && kpis !== null;
+  const feedReady =
+    withdrawals !== null && disputes !== null && auditLogs !== null && verifications !== null;
+
+  // Card CSS entrance runs on mount when each section gets data.
+  useEffect(() => {
+    if (!topReady || !midReady) return;
+    if (entrancePlayedRef.current) return;
+    entrancePlayedRef.current = true;
+    if (viewRef.current) viewRef.current.dataset.entrance = "on";
+  }, [topReady, midReady]);
+
+  // Activity rows: sample x:16 stagger once the feed lands (may be after mid).
+  useEffect(() => {
+    if (!feedReady || activityPlayedRef.current) return;
+    activityPlayedRef.current = true;
+    requestAnimationFrame(() => {
+      if (viewRef.current) playDashboardEntrance(viewRef.current, { activityReady: true });
+    });
+  }, [feedReady]);
+
+  // Wharf title: plain text — entrance splits into per-char spans.
+  const titleText = "Operations Dashboard";
 
   return (
-    <AdminShell>
-      <div className="space-y-3">
-        {/* Page Header */}
-        <div className="flex flex-col justify-between gap-2 md:flex-row md:items-center border-b border-slate-200/60 pb-2">
-          <div>
-            <div className="flex items-center gap-1.5">
-              <span className="inline-flex items-center gap-1 rounded-full border border-teal/20 bg-teal/10 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-teal">
-                <ShieldCheck className="size-2.5" />
-                Live Control Center
-              </span>
-            </div>
-            <h1 className="mt-0.5 text-xl font-black tracking-tight text-navy">
-              Operations Dashboard
+<div ref={viewRef} className="wf-view" data-testid="dashboard-view">
+        {/* Page Header — Wharf .page */}
+        <header className="wf-page">
+          <div className="wf-page__text">
+            <span className="inline-flex items-center gap-1 rounded-full border border-teal/20 bg-teal/10 px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wider text-teal">
+              <ShieldCheck className="size-3" />
+              Live Control Center
+            </span>
+            <h1 className="wf-page__title">
+              {(() => {
+                let charIndex = 0;
+                const words = titleText.split(" ");
+                return words.map((word, wi) => (
+                  <Fragment key={word}>
+                    <span className="word">
+                      {[...word].map((ch) => {
+                        const idx = charIndex++;
+                        return (
+                          <span
+                            key={idx}
+                            className="ch"
+                            style={{ "--wi": idx } as React.CSSProperties}
+                          >
+                            {ch}
+                          </span>
+                        );
+                      })}
+                    </span>
+                    {wi < words.length - 1 ? " " : null}
+                  </Fragment>
+                ));
+              })()}
             </h1>
-            <p className="text-[11px] font-medium text-slate-500">
-              Real-time performance metrics, verification review queue, transactions ledger, and active jobs stream
+            <p className="wf-page__sub">
+              Real-time performance metrics, verification review queue, transactions ledger, and
+              active jobs stream
             </p>
           </div>
-
-          <div className="flex items-center gap-2">
-            <Link
-              href="/admin/users/workers"
-              className="inline-flex items-center gap-1 rounded-xl border border-slate-200 bg-white px-2.5 py-1.5 text-[11px] font-bold text-navy shadow-xs transition hover:bg-slate-50"
-            >
-              <Users className="size-3 text-teal" />
-              <span>Manage Workers</span>
+          <div className="wf-page__actions">
+            <Link href="/admin/users/workers" className="wf-btn wf-btn--ghost">
+              <Users className="size-4 text-teal" />
+              Manage Workers
             </Link>
-            <Link
-              href="/admin/verifications"
-              className="inline-flex items-center gap-1 rounded-xl bg-navy px-2.5 py-1.5 text-[11px] font-bold text-white shadow-xs shadow-navy/20 transition hover:bg-navy/90"
-            >
-              <FileCheck2 className="size-3 text-teal-300" />
-              <span>Verification Queue</span>
+            <Link href="/admin/verifications" className="wf-btn wf-btn--primary">
+              <FileCheck2 className="size-4 text-teal-300" />
+              Verification Queue
             </Link>
           </div>
-        </div>
+        </header>
 
-        {error ? (
-          <div className="rounded-2xl border border-red-200 bg-red-50 p-6 text-center">
-            <AlertTriangle className="mx-auto size-6 text-red-500" />
-            <p className="mt-2 text-sm font-bold text-red-700">Dashboard data failed to load</p>
-            <p className="mt-1 text-xs font-medium text-red-600">{error}</p>
-            <button
-              type="button"
-              onClick={() => {
-                setError(null);
-                setReloadKey((k) => k + 1);
-              }}
-              className="mt-3 rounded-xl bg-red-600 px-3 py-1.5 text-xs font-bold text-white transition hover:bg-red-700"
-            >
-              Retry
-            </button>
-          </div>
-        ) : !data ? (
-          <div className="flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white p-10 text-sm font-semibold text-slate-500">
-            <Loader2 className="size-4 animate-spin text-teal" />
-            Loading live operations data…
-          </div>
-        ) : (
-          <>
-            {/* Main Dashboard Layout with Integrated Right Cards */}
-            <div className="flex flex-col xl:flex-row gap-3 items-stretch">
-              {/* Left / Center Main Content */}
-              <div className="flex-1 min-w-0 flex flex-col gap-3">
-                {/* 1. KPI Stat Cards */}
-                <KpiStatCards stats={data.kpis} />
+        {/* ── ov-top: hero revenue (7fr) + 2×2 stats (5fr) ── */}
+        <section className="wf-ov-top" aria-label="Overview">
+          {topError ? (
+            <SectionError label="Revenue overview" error={topError} onRetry={retry} />
+          ) : kpis && transactions ? (
+            <DashboardHeroCard
+              totalRevenue={kpis.totalRevenue}
+              transactions={transactions}
+              commissionRate={commissionRate}
+            />
+          ) : (
+            <HeroSkeleton />
+          )}
+          {topError ? (
+            <SectionError label="Key metrics" error={topError} onRetry={retry} />
+          ) : kpis ? (
+            <DashboardStatsGrid kpis={kpis} liveJobs={liveJobs ?? []} />
+          ) : (
+            <StatsSkeleton />
+          )}
+        </section>
 
-                {/* 2. Category Chart (left) + Recent Transactions (right) — Side by Side */}
-                <div className="grid grid-cols-1 gap-3 lg:grid-cols-12 items-stretch">
-                  <div className="lg:col-span-5">
-                    <CategorySupplyDemandChart />
-                  </div>
-                  <div className="lg:col-span-7">
-                    <RecentTransactionsTable transactions={data.transactions} />
-                  </div>
-                </div>
+        {/* ── ov-mid: pipeline + demand + toplist (3-col) ── */}
+        <section className="wf-ov-mid" aria-label="Marketplace insights">
+          {midError ? (
+            <SectionError label="Job pipeline" error={midError} onRetry={retry} />
+          ) : kpis ? (
+            <DashboardPipelineCard kpis={kpis} />
+          ) : (
+            <CardSkeleton label="job pipeline" />
+          )}
+          {midError ? (
+            <SectionError label="Demand vs supply" error={midError} onRetry={retry} />
+          ) : liveJobs && topWorkers ? (
+            <DashboardDemandCard liveJobs={liveJobs} workers={topWorkers} />
+          ) : (
+            <CardSkeleton label="demand vs supply" />
+          )}
+          {midError ? (
+            <SectionError label="Top workers" error={midError} onRetry={retry} />
+          ) : topWorkers ? (
+            <DashboardToplistCard workers={topWorkers} totalWorkers={kpis?.totalWorkers} />
+          ) : (
+            <CardSkeleton label="top workers" />
+          )}
+        </section>
 
-                {/* 4. Worker Payout Clearances & Active Disputes */}
-                <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
-                  <WithdrawalRequestsWidget withdrawals={data.withdrawals} />
-                  <DisputesQueueWidget disputes={data.disputes} />
-                </div>
-
-                {/* 5. System Audit Log Feed */}
-                <div className="flex-1">
-                  <AuditLogsFeed logs={data.auditLogs} />
-                </div>
-              </div>
-
-              {/* Right Column Cards (Part of Dashboard) */}
-              <div className="w-full xl:w-80 2xl:w-88 shrink-0 flex flex-col h-full">
-                <DashboardRightPanel
-                  jobs={data.liveJobs}
-                  verifications={data.verifications}
-                  topWorkers={[...data.topWorkers].sort((a, b) => a.name.localeCompare(b.name))}
-                />
-              </div>
-            </div>
-          </>
-        )}
+        {/* ── Full-width activity table ── */}
+        <section aria-label="Recent activity">
+          {feedError ? (
+            <SectionError label="Recent activity" error={feedError} onRetry={retry} />
+          ) : withdrawals && disputes && auditLogs && verifications ? (
+            <DashboardActivityTable
+              transactions={transactions ?? []}
+              withdrawals={withdrawals}
+              disputes={disputes}
+              liveJobs={liveJobs ?? []}
+              auditLogs={auditLogs}
+              verifications={verifications}
+            />
+          ) : (
+            <TableSkeleton />
+          )}
+        </section>
       </div>
-    </AdminShell>
-  );
+);
 }

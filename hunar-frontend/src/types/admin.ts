@@ -139,9 +139,12 @@ export interface WithdrawalRequest {
 export interface DisputeReport {
   id: string;
   jobId: string;
+  reporterId?: string;
   reporterName: string;
   reporterRole: "CUSTOMER" | "WORKER";
   targetName: string;
+  respondentId?: string;
+  respondentRole?: "CUSTOMER" | "WORKER";
   issueCategory: string;
   description: string;
   evidenceUrls: string[];
@@ -172,8 +175,7 @@ export interface PlatformSettings {
   commissionRate: number;
   defaultSearchRadiusKm: number;
   maxActiveOffersPerWorker: number;
-  requireManualVerification: boolean;
-  maintenanceMode: boolean;
+  walletMaxNegativeBalance: number;
 }
 
 export interface AuditLogEntry {
@@ -183,4 +185,28 @@ export interface AuditLogEntry {
   targetResource: string;
   details: string;
   timestamp: string;
+}
+
+export interface AdminNotification {
+  id: string;
+  type: string;
+  title: string;
+  body: string;
+  data?: Record<string, unknown> | null;
+  isRead: boolean;
+  readAt?: string | null;
+  createdAt: string;
+}
+
+export interface JobsFunnelReport {
+  type: string;
+  period: { from: string; to: string };
+  data: {
+    posted: number;
+    offersReceived: number;
+    accepted: number;
+    completed: number;
+    cancelled: number;
+    conversionRate: string;
+  };
 }

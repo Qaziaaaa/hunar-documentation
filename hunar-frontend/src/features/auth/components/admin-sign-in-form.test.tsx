@@ -1,8 +1,16 @@
 import { render, screen, fireEvent, waitFor, act } from "@testing-library/react";
 import { AdminSignInForm } from "./admin-sign-in-form";
+import { adminApi } from "@/features/admin/api/admin-api";
+import { ADMIN_ACCESS_TOKEN_KEY, ADMIN_AUTH_USER_KEY } from "@/lib/api-client";
 
 jest.mock("@/i18n/navigation", () => ({
   useRouter: () => ({ push: jest.fn() }),
+}));
+
+jest.mock("@/features/admin/api/admin-api", () => ({
+  adminApi: {
+    login: jest.fn(),
+  },
 }));
 
 describe("AdminSignInForm", () => {
@@ -11,12 +19,17 @@ describe("AdminSignInForm", () => {
       localStorage.clear();
     }
     jest.clearAllMocks();
+    jest.mocked(adminApi.login).mockResolvedValue({
+      accessToken: "mock-admin-jwt-token-12345",
+      refreshToken: "mock-refresh-token",
+      user: { id: "admin-1", name: "Admin", email: "admin@hunar.pk" },
+    });
   });
 
   it("renders email and password fields", () => {
     render(<AdminSignInForm />);
     expect(screen.getByLabelText(/admin email address/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/password/i)).toBeInTheDocument();
+    expect(screen.getByLabelText("Password")).toBeInTheDocument();
   });
 
   it("shows validation error for invalid email", async () => {
@@ -34,7 +47,7 @@ describe("AdminSignInForm", () => {
     render(<AdminSignInForm />);
     const emailInput = screen.getByLabelText(/admin email address/i);
     fireEvent.change(emailInput, { target: { value: "admin@hunar.pk" } });
-    const passwordInput = screen.getByLabelText(/password/i);
+    const passwordInput = screen.getByLabelText("Password");
     fireEvent.change(passwordInput, { target: { value: "123" } });
     const submitButton = screen.getByRole("button", { name: /sign in to admin dashboard/i });
     fireEvent.click(submitButton);
@@ -45,7 +58,7 @@ describe("AdminSignInForm", () => {
 
   it("toggles password visibility", () => {
     render(<AdminSignInForm />);
-    const passwordInput = screen.getByLabelText(/password/i);
+    const passwordInput = screen.getByLabelText("Password");
     expect(passwordInput).toHaveAttribute("type", "password");
     const toggleButton = screen.getByLabelText(/show password/i);
     fireEvent.click(toggleButton);
@@ -67,13 +80,15 @@ describe("AdminSignInForm", () => {
     render(<AdminSignInForm />);
     const emailInput = screen.getByLabelText(/admin email address/i);
     fireEvent.change(emailInput, { target: { value: "admin@hunar.pk" } });
-    const passwordInput = screen.getByLabelText(/password/i);
+    const passwordInput = screen.getByLabelText("Password");
     fireEvent.change(passwordInput, { target: { value: "admin123" } });
     const submitButton = screen.getByRole("button", { name: /sign in to admin dashboard/i });
     fireEvent.click(submitButton);
+    // jest.setup.ts replaces localStorage with no-op jest.fn()s — assert on the recorded calls.
+    const setItem = jest.mocked(window.localStorage.setItem);
     await waitFor(() => {
-      expect(localStorage.getItem("hunar_admin_token")).toBe("mock-admin-jwt-token-12345");
-      expect(localStorage.getItem("hunar_admin_user")).toContain("admin-1");
+      expect(setItem).toHaveBeenCalledWith(ADMIN_ACCESS_TOKEN_KEY, "mock-admin-jwt-token-12345");
+      expect(setItem).toHaveBeenCalledWith(ADMIN_AUTH_USER_KEY, expect.stringContaining("admin-1"));
     });
   });
 

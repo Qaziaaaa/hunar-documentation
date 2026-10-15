@@ -1,7 +1,6 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { AdminShell } from "@/features/admin/components/admin-shell";
 import { adminApi } from "@/features/admin/api/admin-api";
 import { useAdminResource } from "@/features/admin/hooks/use-admin-resource";
 import { Link } from "@/i18n/navigation";
@@ -32,8 +31,7 @@ export default function JobsPage() {
   );
 
   return (
-    <AdminShell>
-      <div className="space-y-6">
+<div className="space-y-6">
         {jobsRes.error && (
           <div className="flex items-center justify-between gap-3 rounded-2xl border border-red-200 bg-red-50 p-4">
             <div className="flex items-center gap-2">
@@ -155,6 +153,5 @@ export default function JobsPage() {
           </table>
         </div>
       </div>
-    </AdminShell>
-  );
+);
 }

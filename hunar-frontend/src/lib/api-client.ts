@@ -46,6 +46,7 @@ export interface StoredUser {
   id: string;
   phone: string;
   name?: string;
+  email?: string;
   avatarUrl?: string;
   role: UserRole;
   isVerified?: boolean;

@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { AdminShell } from "@/features/admin/components/admin-shell";
 import { adminApi } from "@/features/admin/api/admin-api";
+import { AdminAvatar } from "@/features/admin/components/admin-avatar";
 import type { WorkerUser } from "@/types/admin";
 
 import {
@@ -31,6 +31,7 @@ export default function WorkersPage() {
   const [statusFilter, setStatusFilter] = useState<"ALL" | "VERIFIED" | "PENDING" | "SUSPENDED">("ALL");
   const [selectedWorker, setSelectedWorker] = useState<WorkerUser | null>(null);
   const [actionWorker, setActionWorker] = useState<WorkerUser | null>(null);
+  const [suspendReason, setSuspendReason] = useState("");
 
   useEffect(() => {
     adminApi
@@ -67,14 +68,27 @@ export default function WorkersPage() {
     return [...pool].sort((a, b) => b.totalEarnings - a.totalEarnings)[0];
   }, [workers]);
 
+  // Top Pro #1 renders as the golden first row — only when it survives the active filters.
+  const orderedRows = useMemo(() => {
+    if (!topWorker) return filtered;
+    const idx = filtered.findIndex((w) => w.id === topWorker.id);
+    if (idx <= 0) return filtered;
+    return [filtered[idx], ...filtered.filter((w) => w.id !== topWorker.id)];
+  }, [filtered, topWorker]);
+
   const handleToggleStatus = async () => {
     if (!actionWorker) return;
     setActionError(null);
 
     const suspending = actionWorker.status === "ACTIVE";
+    const reason = suspendReason.trim();
+    if (suspending && !reason) {
+      setActionError("A suspension reason is required.");
+      return;
+    }
     try {
       if (suspending) {
-        await adminApi.suspendWorker(actionWorker.id);
+        await adminApi.suspendWorker(actionWorker.id, reason);
       } else {
         await adminApi.reactivateWorker(actionWorker.id);
       }
@@ -91,17 +105,18 @@ export default function WorkersPage() {
         })
       );
       setActionWorker(null);
+      setSuspendReason("");
     } catch (err) {
       setActionError(
         err instanceof Error ? err.message : "Failed to update worker status",
       );
       setActionWorker(null);
+      setSuspendReason("");
     }
   };
 
   return (
-    <AdminShell>
-      <div className="space-y-6">
+<div className="space-y-6">
         {error && (
           <div className="flex items-center justify-between gap-3 rounded-2xl border border-red-200 bg-red-50 p-4">
             <div className="flex items-center gap-2">
@@ -141,33 +156,6 @@ export default function WorkersPage() {
             <p className="mt-1 text-sm font-medium text-slate-500">
               Manage worker profiles, verification statuses, wallet balances, and ratings
             </p>
-          </div>
-
-          {/* Top Pro #1 Highlight Card */}
-          <div className="w-full sm:w-auto shrink-0">
-            <div className="rounded-2xl border border-amber-300/70 bg-gradient-to-br from-amber-500/10 via-white to-amber-500/5 p-3.5 shadow-sm sm:w-64">
-              <div className="flex items-center justify-between gap-2">
-                <span className="text-[10px] font-extrabold uppercase tracking-wider text-amber-700 flex items-center gap-1">
-                  <Trophy className="size-3.5 text-amber-500" />
-                  Top Pro #1
-                </span>
-                <span className="inline-flex items-center gap-0.5 rounded-full bg-amber-100 px-2 py-0.5 text-[9px] font-extrabold text-amber-800">
-                  Top 1%
-                </span>
-              </div>
-              <div className="mt-2 flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-black text-navy">{topWorker?.name || "First worker"}</p>
-                  <div className="flex items-center gap-2 text-[10px] font-bold text-amber-900 mt-0.5">
-                    <span className="flex items-center gap-0.5 text-teal">
-                      <ShieldCheck className="size-3" /> {topWorker?.verificationStatus || "VERIFIED"}
-                    </span>
-                    <span>•</span>
-                    <span>{topWorker ? `Rs. ${Number(topWorker.totalEarnings ?? 0).toLocaleString()} Earned` : "Rs. 0 Earned"}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
           </div>
         </div>
 
@@ -240,17 +228,43 @@ export default function WorkersPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 font-medium">
-                {filtered.map((worker) => (
-                  <tr key={worker.id} className="transition hover:bg-slate-50">
+                {orderedRows.map((worker) => {
+                  const isTop = !!topWorker && worker.id === topWorker.id;
+                  return (
+                  <tr
+                    key={worker.id}
+                    className={
+                      isTop
+                        ? "bg-gradient-to-r from-amber-500/15 via-amber-50/80 to-white ring-1 ring-inset ring-amber-300/70 transition hover:from-amber-500/25"
+                        : "transition hover:bg-slate-50"
+                    }
+                  >
                     <td className="py-4 px-4">
                       <div className="flex items-center gap-3">
-                        <div className="flex size-10 items-center justify-center rounded-xl bg-navy text-xs font-bold text-white shadow-sm">
-                          {worker.name.charAt(0)}
-                        </div>
+                        <AdminAvatar
+                          src={worker.avatarUrl}
+                          name={worker.name}
+                          top={isTop}
+                          className="size-10 rounded-xl"
+                        />
                         <div>
-                          <p className="font-extrabold text-navy">{worker.name}</p>
+                          <p className="flex flex-wrap items-center gap-1.5 font-extrabold text-navy">
+                            {worker.name}
+                            {isTop && (
+                              <>
+                                <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[9px] font-extrabold uppercase tracking-wider text-amber-800 ring-1 ring-amber-300/70">
+                                  <Trophy className="size-3 text-amber-500" />
+                                  Top Pro #1
+                                </span>
+                                <span className="rounded-full bg-amber-500 px-2 py-0.5 text-[9px] font-extrabold uppercase tracking-wider text-white">
+                                  Top 1%
+                                </span>
+                              </>
+                            )}
+                          </p>
                           <p className="text-[10px] text-slate-400">
-                            {worker.phone} • {worker.serviceCity}
+                            {worker.phone}
+                            {worker.serviceCity ? ` • ${worker.serviceCity}` : ""}
                           </p>
                         </div>
                       </div>
@@ -288,7 +302,7 @@ export default function WorkersPage() {
                     <td className="py-4 px-4">
                       <div className="flex items-center gap-1 font-bold text-navy">
                         <Star className="size-3.5 fill-amber-400 text-amber-400" />
-                        <span>{worker.rating}</span>
+                        <span>{worker.rating > 0 ? worker.rating : "—"}</span>
                       </div>
                     </td>
                     <td className="py-4 px-4 font-extrabold text-navy">
@@ -343,7 +357,8 @@ export default function WorkersPage() {
                       </div>
                     </td>
                   </tr>
-                ))}
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -368,9 +383,11 @@ export default function WorkersPage() {
 
               <div className="mt-5 space-y-4 text-xs">
                 <div className="flex items-center gap-4 rounded-2xl bg-slate-50 p-4">
-                  <div className="flex size-14 items-center justify-center rounded-2xl bg-navy text-xl font-bold text-white">
-                    {selectedWorker.name.charAt(0)}
-                  </div>
+                  <AdminAvatar
+                    src={selectedWorker.avatarUrl}
+                    name={selectedWorker.name}
+                    className="size-14 rounded-2xl text-xl"
+                  />
                   <div>
                     <div className="flex items-center gap-2">
                       <h4 className="text-base font-extrabold text-navy">
@@ -381,7 +398,9 @@ export default function WorkersPage() {
                       </span>
                     </div>
                     <p className="text-slate-500">{selectedWorker.phone}</p>
-                    <p className="text-slate-400">{selectedWorker.email}</p>
+                    {selectedWorker.email ? (
+                      <p className="text-slate-400">{selectedWorker.email}</p>
+                    ) : null}
                   </div>
                 </div>
 
@@ -452,10 +471,33 @@ export default function WorkersPage() {
                 the worker profile for <strong className="text-navy">{actionWorker.name}</strong>?
               </p>
 
+              {actionWorker.status === "ACTIVE" ? (
+                <div className="mt-4 space-y-1.5">
+                  <label className="block text-xs font-semibold text-navy">
+                    Reason for Suspension (Required)
+                  </label>
+                  <textarea
+                    value={suspendReason}
+                    onChange={(e) => setSuspendReason(e.target.value)}
+                    placeholder="Enter reason for suspending this worker account..."
+                    className="h-20 w-full rounded-xl border border-slate-200 p-3 text-xs outline-none focus:border-teal"
+                  />
+                </div>
+              ) : null}
+
+              {actionError && (
+                <p className="mt-3 rounded-xl border border-red-200 bg-red-50 p-3 text-xs font-bold text-red-700">
+                  {actionError}
+                </p>
+              )}
+
               <div className="mt-6 flex items-center justify-end gap-3">
                 <button
                   type="button"
-                  onClick={() => setActionWorker(null)}
+                  onClick={() => {
+                    setActionWorker(null);
+                    setSuspendReason("");
+                  }}
                   className="rounded-xl border border-slate-200 px-4 py-2.5 text-xs font-bold text-slate-600 hover:bg-slate-100"
                 >
                   Cancel
@@ -463,7 +505,10 @@ export default function WorkersPage() {
                 <button
                   type="button"
                   onClick={handleToggleStatus}
-                  className={`rounded-xl px-5 py-2.5 text-xs font-bold text-white shadow-md ${
+                  disabled={
+                    actionWorker.status === "ACTIVE" && !suspendReason.trim()
+                  }
+                  className={`rounded-xl px-5 py-2.5 text-xs font-bold text-white shadow-md disabled:cursor-not-allowed disabled:opacity-60 ${
                     actionWorker.status === "ACTIVE"
                       ? "bg-red-600 hover:bg-red-700"
                       : "bg-teal hover:bg-teal-600"
@@ -476,6 +521,5 @@ export default function WorkersPage() {
           </div>
         ) : null}
       </div>
-    </AdminShell>
-  );
+);
 }

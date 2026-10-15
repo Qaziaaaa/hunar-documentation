@@ -98,6 +98,13 @@ function makeFakes(db: Db) {
       async findMany() {
         return [];
       },
+      async count({ where }: { where?: { workerId?: string; status?: { in?: string[] } } }) {
+        return Array.from(db.jobOffers.values()).filter(
+          (o) =>
+            (!where?.workerId || o.workerId === where.workerId) &&
+            (!where?.status?.in || where.status.in.includes(o.status)),
+        ).length;
+      },
     },
     visit: {
       async create({ data }: { data: any }) {

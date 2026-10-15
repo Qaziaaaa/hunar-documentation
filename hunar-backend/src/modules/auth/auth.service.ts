@@ -55,8 +55,9 @@ export interface AuthResult extends AuthTokens {
 export interface SafeUser {
   id: string;
   phone: string;
-  name: string;
+  name?: string | null;
   avatarUrl?: string | null;
+  email: string;
   role: Role;
   isActive: boolean;
   isVerified: boolean;
@@ -516,6 +517,7 @@ export class AuthService {
       phone: user.phone,
       name: user.name ?? '',
       avatarUrl: user.avatarUrl ?? null,
+      email: user.email ?? '',
       role: user.role,
       isActive: user.isActive,
       isVerified: user.isVerified,

@@ -1,15 +1,15 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { AdminShell } from "@/features/admin/components/admin-shell";
 import { Link } from "@/i18n/navigation";
-import { adminApi } from "@/features/admin/api/admin-api";
+import { adminApi, fetchCommissionRate } from "@/features/admin/api/admin-api";
 import type { PaymentTransaction } from "@/types/admin";
 import { AlertCircle, Coins, CreditCard, DollarSign, Lock } from "lucide-react";
 
 export default function PaymentsPage() {
   const [payments, setPayments] = useState<PaymentTransaction[]>([]);
   const [kpis, setKpis] = useState<{ totalRevenue: number; totalPaymentsProcessed: number } | null>(null);
+  const [commissionRate, setCommissionRate] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
@@ -24,11 +24,18 @@ export default function PaymentsPage() {
         setError(err instanceof Error ? err.message : "Failed to load payments data"),
       )
       .finally(() => setLoading(false));
+    fetchCommissionRate()
+      .then(setCommissionRate)
+      .catch(() => setCommissionRate(null));
   }, [reloadKey]);
 
+  const pct =
+    commissionRate != null ? Math.round(commissionRate * 100) : null;
+  const kpiValue = (n?: number) =>
+    loading ? "…" : kpis != null && n != null ? `Rs. ${n.toLocaleString()}` : "—";
+
   return (
-    <AdminShell>
-      <div className="space-y-6">
+<div className="space-y-6">
         {error && (
           <div className="flex items-center justify-between gap-3 rounded-2xl border border-red-200 bg-red-50 p-4">
             <div className="flex items-center gap-2">
@@ -67,14 +74,18 @@ export default function PaymentsPage() {
           <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
-                Total Platform Revenue (10%)
+                Total Platform Revenue{pct != null ? ` (${pct}%)` : ""}
               </span>
               <Coins className="size-5 text-teal" />
             </div>
             <p className="mt-2 text-3xl font-black text-navy">
-              Rs. {(kpis?.totalRevenue ?? 0).toLocaleString()}
+              {kpiValue(kpis?.totalRevenue)}
             </p>
-            <p className="mt-1 text-[11px] text-slate-400">10% earned on visit fees</p>
+            <p className="mt-1 text-[11px] text-slate-400">
+              {pct != null
+                ? `${pct}% earned on visit fees`
+                : "Commission rate unavailable"}
+            </p>
           </div>
 
           <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
@@ -85,9 +96,9 @@ export default function PaymentsPage() {
               <DollarSign className="size-5 text-navy" />
             </div>
             <p className="mt-2 text-3xl font-black text-navy">
-              Rs. {(kpis?.totalPaymentsProcessed ?? 0).toLocaleString()}
+              {kpiValue(kpis?.totalPaymentsProcessed)}
             </p>
-            <p className="mt-1 text-[11px] text-slate-400">Escrow & payment total</p>
+            <p className="mt-1 text-[11px] text-slate-400">Escrow &amp; payment total</p>
           </div>
 
           <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm flex flex-col justify-between">
@@ -118,7 +129,7 @@ export default function PaymentsPage() {
                 <th className="py-4 px-4">Customer</th>
                 <th className="py-4 px-4">Worker</th>
                 <th className="py-4 px-4">Amount</th>
-                <th className="py-4 px-4">Platform 10%</th>
+                <th className="py-4 px-4">Platform Fee</th>
                 <th className="py-4 px-4">Net Payout</th>
                 <th className="py-4 px-4">Status</th>
               </tr>
@@ -148,6 +159,5 @@ export default function PaymentsPage() {
           </table>
         </div>
       </div>
-    </AdminShell>
-  );
+);
 }

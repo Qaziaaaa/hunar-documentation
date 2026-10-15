@@ -10,7 +10,12 @@ function makeService(users: UserRow[] = [], total = users.length) {
     findMany: jest.fn().mockResolvedValue(users),
     count: jest.fn().mockResolvedValue(total),
   };
-  const prisma = { user } as unknown as ConstructorParameters<typeof AdminService>[0];
+  // Customer rows carry real spend/rating aggregates (listUsers).
+  const prisma = {
+    user,
+    payment: { groupBy: jest.fn().mockResolvedValue([]) },
+    review: { groupBy: jest.fn().mockResolvedValue([]) },
+  } as unknown as ConstructorParameters<typeof AdminService>[0];
   const audit = { record: jest.fn() } as unknown as AuditService;
   return { service: new AdminService(prisma, audit), user };
 }

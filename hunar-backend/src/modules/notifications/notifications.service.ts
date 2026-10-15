@@ -1,8 +1,9 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Optional } from '@nestjs/common';
 import { NotificationType, Prisma, WorkerVerificationStatus } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { RealtimeService } from '../realtime/realtime.service';
 import { NOTIFICATION_EVENTS, VISIT_WINDOW_AHEAD_MINUTES } from './notifications.events';
+import { SettingsService } from '../../common/settings/settings.service';
 import {
   buildNotificationTemplate,
   notificationTemplates,
@@ -33,6 +34,7 @@ export class NotificationsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly realtime: RealtimeService,
+    @Optional() private readonly settings?: SettingsService,
   ) {}
 
   /** Create + persist + realtime-push a notification for one worker. */
@@ -88,7 +90,9 @@ export class NotificationsService {
     if (candidates.length === 0) return [];
 
     const userIds = candidates.map((c) => c.userId);
-    const radiusByUser = new Map(candidates.map((c) => [c.userId, c.serviceRadiusKm ?? 10]));
+    // Per-worker radius falls back to the admin-configured platform default.
+    const defaultRadiusKm = (await this.settings?.getServiceRadiusKm()) ?? 10;
+    const radiusByUser = new Map(candidates.map((c) => [c.userId, c.serviceRadiusKm ?? defaultRadiusKm]));
     const areas = await this.prisma.serviceArea.findMany({
       where: { userId: { in: userIds } },
       select: { userId: true, latitude: true, longitude: true },

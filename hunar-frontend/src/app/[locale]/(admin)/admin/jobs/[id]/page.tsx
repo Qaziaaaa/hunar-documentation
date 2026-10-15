@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { AdminShell } from "@/features/admin/components/admin-shell";
 import { adminApi } from "@/features/admin/api/admin-api";
 import { Link } from "@/i18n/navigation";
 import type { JobDetailItem } from "@/types/admin";
@@ -54,24 +53,22 @@ export default function JobDetailPage({
 
   if (loading) {
     return (
-      <AdminShell>
-        <div className="p-8 text-center">
+<div className="p-8 text-center">
           <p className="text-base font-bold text-navy">Loading job audit record...</p>
         </div>
-      </AdminShell>
-    );
+);
   }
 
   if (!job) {
     return (
-      <AdminShell>
+      
         <div className="p-8 text-center">
           <p className="text-base font-bold text-navy">Job Audit Record Not Found</p>
           <Link href="/admin/jobs" className="mt-4 inline-flex items-center gap-2 text-xs font-bold text-teal">
             <ArrowLeft className="size-4" /> Back to Jobs
           </Link>
         </div>
-      </AdminShell>
+      
     );
   }
 
@@ -81,15 +78,20 @@ export default function JobDetailPage({
       return;
     }
     setCancelError(null);
+    const reason = cancelReason.trim();
+    if (!reason) {
+      setCancelError("A cancellation reason is required.");
+      return;
+    }
     setCancelling(true);
     try {
-      await adminApi.cancelJob(resolvedParams.id, cancelReason);
+      await adminApi.cancelJob(resolvedParams.id, reason);
       setJob((prev) =>
         prev
           ? {
               ...prev,
               status: "CANCELLED",
-              cancelReason: cancelReason || "Cancelled by Admin intervention",
+              cancelReason: reason,
             }
           : prev
       );
@@ -102,7 +104,7 @@ export default function JobDetailPage({
   };
 
   return (
-    <AdminShell>
+    
       <div className="mx-auto max-w-4xl space-y-6">
         <Link href="/admin/jobs" className="inline-flex items-center gap-2 text-xs font-bold text-slate-500 hover:text-navy">
           <ArrowLeft className="size-4" /> Back to Jobs Monitoring
@@ -182,6 +184,11 @@ export default function JobDetailPage({
           </h3>
 
           <div className="relative pl-6 border-l-2 border-slate-200 space-y-6">
+            {job.auditTrail.length === 0 && (
+              <p className="text-xs font-semibold text-slate-400">
+                No audit events recorded for this job yet.
+              </p>
+            )}
             {job.auditTrail.map((step, idx) => (
               <div key={idx} className="relative">
                 <span className="absolute -left-[31px] top-0.5 flex size-4 items-center justify-center rounded-full bg-teal text-white ring-4 ring-white">
@@ -231,7 +238,7 @@ export default function JobDetailPage({
                 <button
                   type="button"
                   onClick={handleForceCancel}
-                  disabled={cancelling}
+                  disabled={cancelling || !cancelReason.trim()}
                   className="rounded-xl bg-red-600 px-5 py-2 text-xs font-bold text-white shadow-md disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {cancelling ? "Cancelling..." : "Confirm Cancellation"}
@@ -241,6 +248,6 @@ export default function JobDetailPage({
           </div>
         ) : null}
       </div>
-    </AdminShell>
+    
   );
 }

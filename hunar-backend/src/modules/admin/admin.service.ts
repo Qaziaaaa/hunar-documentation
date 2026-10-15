@@ -24,6 +24,7 @@ import { ADMIN_EVENTS, ADMIN_ROOM } from './admin.events';
 import { JobStateMachine } from '../jobs/jobs.state-machine';
 import { JwtPayload } from '../../common/types/jwt-payload.interface';
 import { AUDIT_ACTIONS, AuditService } from './audit.service';
+import { SettingsService } from '../../common/settings/settings.service';
 import {
   AdminUserListQueryDto,
   AdminJobListQueryDto,
@@ -52,19 +53,12 @@ import {
 // Job states that mean the customer has paid for the (locked) visit charge.
 const PAID_JOB_STATUSES: JobStatus[] = [JobStatus.COMPLETED, JobStatus.PAID, JobStatus.REVIEWED];
 
-const DEFAULT_DISTANCE_SLABS = [
-  { minKm: 0, maxKm: 2, charge: 100, label: '0–2 KM' },
-  { minKm: 2, maxKm: 5, charge: 200, label: '2–5 KM' },
-  { minKm: 5, maxKm: 8, charge: 300, label: '5–8 KM' },
-  { minKm: 8, maxKm: 12, charge: 400, label: '8–12 KM' },
-  { minKm: 12, maxKm: 15, charge: 500, label: '12–15 KM' },
-  { minKm: 15, maxKm: null, charge: null, requiresApproval: true, label: '15+ KM' },
-];
-
 const LIST_USER_SELECT = {
   id: true,
   phone: true,
   name: true,
+  email: true,
+  serviceAreas: { select: { label: true }, orderBy: { createdAt: 'asc' } },
   avatarUrl: true,
   isActive: true,
   isVerified: true,
@@ -179,6 +173,7 @@ export class AdminService {
     private readonly audit: AuditService,
     @Optional() private readonly eventBus?: EventBusService,
     @Optional() private readonly realtime?: RealtimeService,
+    @Optional() private readonly settings?: SettingsService,
   ) {}
 
   // ----- Customers -----
@@ -1010,8 +1005,8 @@ export class AdminService {
             status: true,
             createdAt: true,
             updatedAt: true,
-            reporter: { select: { id: true, name: true, phone: true } },
-            respondent: { select: { id: true, name: true, phone: true } },
+            reporter: { select: { id: true, name: true, phone: true, role: true } },
+            respondent: { select: { id: true, name: true, phone: true, role: true } },
             job: { select: { id: true, title: true, status: true } },
           },
         }),
@@ -1027,7 +1022,9 @@ export class AdminService {
         description: row.description,
         status: row.status,
         reporter: row.reporter,
+        reporterRole: row.reporter?.role,
         respondent: row.respondent,
+        respondentRole: row.respondent?.role,
         createdAt: row.createdAt,
         updatedAt: row.updatedAt,
       }));
@@ -1223,15 +1220,32 @@ export class AdminService {
           defaultVisitCharge: true,
           distanceSlabs: true,
           createdAt: true,
+          _count: { select: { jobs: true } },
         },
       }),
       this.prisma.serviceCategory.count({ where }),
     ]);
 
+    // Skills are stored as category IDs on worker profiles — aggregate active workers per category.
+    const profiles = await this.prisma.workerProfile.findMany({
+      where: { user: { isActive: true, role: Role.WORKER } },
+      select: { skills: true },
+    });
+    const workerCounts = new Map<string, number>();
+    for (const p of profiles) {
+      for (const skillId of p.skills) {
+        workerCounts.set(skillId, (workerCounts.get(skillId) ?? 0) + 1);
+      }
+    }
+
     const items = rows.map((r) => ({
       ...r,
+      activeWorkersCount: workerCounts.get(r.id) ?? 0,
+      totalJobsCount: r._count?.jobs ?? 0,
       defaultVisitCharge: r.defaultVisitCharge != null ? Number(r.defaultVisitCharge) : null,
-      distanceSlabs: r.distanceSlabs ?? DEFAULT_DISTANCE_SLABS,
+      // Real configured slabs only — null until the admin saves some
+      // (the old injected Rs. 100–500 defaults were fake data).
+      distanceSlabs: r.distanceSlabs ?? null,
     }));
 
     return toPageResult(items, total, page, limit);
@@ -1566,6 +1580,25 @@ export class AdminService {
         });
 
         results.push(updated);
+      }
+    }
+
+    // Drop the SettingsService cache so the new values apply immediately.
+    await this.settings?.invalidate();
+
+    // A raised negative-balance floor takes effect right away: workers already
+    // below it are pushed offline instead of waiting for their next hold.
+    if (dto.walletMaxNegativeBalance !== undefined) {
+      const floor = dto.walletMaxNegativeBalance;
+      const belowFloor = await this.prisma.workerWallet.findMany({
+        where: { balance: { lt: floor } },
+        select: { userId: true },
+      });
+      if (belowFloor.length > 0) {
+        await this.prisma.workerProfile.updateMany({
+          where: { userId: { in: belowFloor.map((w) => w.userId) }, isAvailable: true },
+          data: { isAvailable: false },
+        });
       }
     }
 
@@ -2201,6 +2234,44 @@ export class AdminService {
       this.prisma.user.count({ where }),
     ]);
 
+    // WorkerProfile.skills stores category IDs — resolve them to display names.
+    const skillIds = [
+      ...new Set(users.flatMap((u) => u.workerProfile?.skills ?? [])),
+    ];
+    const categories = skillIds.length
+      ? await this.prisma.serviceCategory.findMany({
+          where: { id: { in: skillIds } },
+          select: { id: true, name: true },
+        })
+      : [];
+    const skillNames = new Map(categories.map((c) => [c.id, c.name]));
+
+    // Customer rows ship real spend + rating-given aggregates (the admin UI
+    // previously hardcoded 0 / 5.0 on the client).
+    let totalSpentByCustomer = new Map<string, number>();
+    let ratingGivenByCustomer = new Map<string, number>();
+    if (role === Role.CUSTOMER && users.length > 0) {
+      const ids = users.map((u) => u.id);
+      const [spendRows, ratingRows] = await Promise.all([
+        this.prisma.payment.groupBy({
+          by: ['customerId'],
+          where: { customerId: { in: ids }, status: 'COMPLETED' },
+          _sum: { amount: true },
+        }),
+        this.prisma.review.groupBy({
+          by: ['reviewerId'],
+          where: { reviewerId: { in: ids } },
+          _avg: { rating: true },
+        }),
+      ]);
+      totalSpentByCustomer = new Map(
+        spendRows.map((r) => [r.customerId, Number(r._sum.amount ?? 0)]),
+      );
+      ratingGivenByCustomer = new Map(
+        ratingRows.map((r) => [r.reviewerId, Number(r._avg.rating ?? 0)]),
+      );
+    }
+
     const items = users.map((user: AdminUserRow) => {
       const comms = (user as any).commissions || [];
       const totalEarned = comms.reduce(
@@ -2213,6 +2284,8 @@ export class AdminService {
         id: user.id,
         phone: user.phone,
         name: user.name,
+        email: user.email ?? null,
+        serviceAreas: (user.serviceAreas ?? []).map((a) => a.label),
         avatarUrl: user.avatarUrl,
         isActive: user.isActive,
         isVerified: user.isVerified,
@@ -2220,10 +2293,16 @@ export class AdminService {
         jobsCount: role === Role.WORKER ? user._count.offers : user._count.customerJobs,
         verificationStatus: user.workerProfile?.verificationStatus ?? null,
         experienceYears: user.workerProfile?.experienceYears ?? null,
-        skills: user.workerProfile?.skills ?? [],
+        skills: (user.workerProfile?.skills ?? []).map((id) => skillNames.get(id) ?? id),
         isAvailable: user.workerProfile?.isAvailable ?? false,
         walletBalance: balance,
         totalEarnings: totalEarned,
+        ...(role === Role.CUSTOMER
+          ? {
+              totalSpent: totalSpentByCustomer.get(user.id) ?? 0,
+              ratingGiven: ratingGivenByCustomer.get(user.id) ?? 0,
+            }
+          : {}),
       };
     });
 

@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { AdminShell } from "@/features/admin/components/admin-shell";
 import { adminApi } from "@/features/admin/api/admin-api";
 import type { DistanceSlab, ServiceCategory } from "@/types/admin";
 import {
@@ -81,11 +80,26 @@ export default function CategoriesPage() {
     setToastMessage(null);
   };
 
+  const addDistanceSlab = () => {
+    setEditingSlabs((prev) => {
+      const last = prev[prev.length - 1];
+      const minKm = last ? (last.maxKm ?? last.minKm + 2) : 0;
+      const maxKm = minKm + 2;
+      return [
+        ...prev,
+        { minKm, maxKm, charge: null, label: `${minKm}–${maxKm} KM` },
+      ];
+    });
+  };
+
+  const removeDistanceSlab = (idx: number) => {
+    setEditingSlabs((prev) => prev.filter((_, i) => i !== idx));
+  };
+
   const handleSaveDistanceSlabs = async () => {
     if (!selectedCategory) return;
     setSavingSlabs(true);
     setToastMessage(null);
-
     try {
       const updated = await adminApi.updateCategoryDistanceSlabs(selectedCategory.id, editingSlabs);
       setCategories((prev) =>
@@ -102,8 +116,7 @@ export default function CategoriesPage() {
   };
 
   return (
-    <AdminShell>
-      <div className="space-y-6">
+<div className="space-y-6">
         {pageError && (
           <div className="flex items-center justify-between gap-3 rounded-2xl border border-red-200 bg-red-50 p-4">
             <span className="flex items-center gap-2 text-sm font-bold text-red-700">
@@ -267,6 +280,11 @@ export default function CategoriesPage() {
                 </div>
 
                 <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
+                  {editingSlabs.length === 0 && (
+                    <p className="py-4 text-center text-[11px] font-semibold text-slate-400">
+                      No distance slabs configured for this category yet.
+                    </p>
+                  )}
                   {editingSlabs.map((slab, idx) => (
                     <div
                       key={idx}
@@ -309,9 +327,30 @@ export default function CategoriesPage() {
                             : "Admin / Worker Approval"}
                         </span>
                       )}
+
+                      {isEditingSlabs && (
+                        <button
+                          type="button"
+                          onClick={() => removeDistanceSlab(idx)}
+                          aria-label="Remove slab"
+                          className="flex size-6 shrink-0 items-center justify-center rounded-md text-slate-400 transition hover:bg-rose-50 hover:text-rose-600"
+                        >
+                          <X className="size-3.5" />
+                        </button>
+                      )}
                     </div>
                   ))}
                 </div>
+
+                {isEditingSlabs && (
+                  <button
+                    type="button"
+                    onClick={addDistanceSlab}
+                    className="mt-2 inline-flex w-full items-center justify-center gap-1.5 rounded-xl border border-dashed border-slate-300 px-3 py-2 text-[11px] font-bold text-slate-500 transition hover:border-teal/50 hover:text-teal"
+                  >
+                    <Plus className="size-3.5" /> Add distance slab
+                  </button>
+                )}
               </div>
 
               {/* Modal Footer Actions */}
@@ -396,6 +435,5 @@ export default function CategoriesPage() {
           </div>
         ) : null}
       </div>
-    </AdminShell>
-  );
+);
 }

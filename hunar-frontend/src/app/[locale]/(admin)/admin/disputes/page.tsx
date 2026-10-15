@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { AdminShell } from "@/features/admin/components/admin-shell";
 import { Link } from "@/i18n/navigation";
 import { formatDate } from "@/lib/format";
 import { adminApi } from "@/features/admin/api/admin-api";
@@ -21,8 +20,7 @@ export default function DisputesPage() {
   }, []);
 
   return (
-    <AdminShell>
-      <div className="space-y-6">
+<div className="space-y-6">
         <div>
           <div className="flex items-center gap-2">
             <span className="inline-flex items-center gap-1.5 rounded-full border border-orange/20 bg-orange/10 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-orange">
@@ -84,6 +82,5 @@ export default function DisputesPage() {
           </table>
         </div>
       </div>
-    </AdminShell>
-  );
+);
 }

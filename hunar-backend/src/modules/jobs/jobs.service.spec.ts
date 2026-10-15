@@ -113,6 +113,9 @@ describe('JobsService — getAvailableJobs (worker relevance)', () => {
           { type: 'CNIC_BACK', url: 'back.png' },
         ]),
       },
+      serviceCategory: {
+        findMany: jest.fn().mockResolvedValue([{ id: 'cat-electric', name: 'Electrician' }]),
+      },
       $queryRaw: jest.fn(async (sql) => {
         const rendered = Array.isArray(sql?.strings) ? sql.strings.join('') : String(sql);
         expect(rendered).toContain('sr."categoryId" = ANY');

@@ -467,6 +467,23 @@ export class AdminUpdateSettingsDto {
   @IsOptional()
   @IsString()
   announcement?: string;
+
+  // Wallet rules — enforced by payments/wallet.service (hold gate + offline rule).
+  // 0 = workers may never go negative; more negative = larger allowed debt.
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(-100000)
+  @Max(0)
+  walletMaxNegativeBalance?: number;
+
+  // Worker controls — enforced by offers.service (createOffer cap).
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(100)
+  maxActiveOffersPerWorker?: number;
 }
 
 // Reports (Admin flow §13). Analytics reports with export.

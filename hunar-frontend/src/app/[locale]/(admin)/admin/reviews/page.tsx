@@ -1,7 +1,6 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { AdminShell } from "@/features/admin/components/admin-shell";
 import { adminApi } from "@/features/admin/api/admin-api";
 import { useAdminResource } from "@/features/admin/hooks/use-admin-resource";
 import { Link } from "@/i18n/navigation";
@@ -59,8 +58,7 @@ export default function ReviewsPage() {
   };
 
   return (
-    <AdminShell>
-      <div className="space-y-6">
+<div className="space-y-6">
         {actionError && (
           <div className="rounded-2xl border border-red-200 bg-red-50 p-4 text-sm font-bold text-red-700">
             Action failed: {actionError}
@@ -218,6 +216,5 @@ export default function ReviewsPage() {
           </div>
         </div>
       </div>
-    </AdminShell>
-  );
+);
 }

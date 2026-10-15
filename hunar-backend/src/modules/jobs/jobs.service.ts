@@ -4,6 +4,7 @@ import {
   ForbiddenException,
   Injectable,
   NotFoundException,
+  Optional,
 } from '@nestjs/common';
 import { JobStatus, Prisma, Role, Urgency, WorkerVerificationStatus } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
@@ -24,6 +25,7 @@ import { JOB_EVENTS, userRoom, WORKERS_ROOM } from './jobs.events';
 import { generateUniqueOrderCode } from '../../common/helpers/order-code.util';
 import { RedisService } from '../../common/redis/redis.service';
 import { haversineKm } from '../../common/helpers/geo.util';
+import { SettingsService } from '../../common/settings/settings.service';
 
 export interface JobCardRow {
   id: string;
@@ -145,6 +147,7 @@ export class JobsService {
     private readonly eventBus: EventBusService,
     private readonly realtime: RealtimeService,
     private readonly redis?: RedisService,
+    @Optional() private readonly settings?: SettingsService,
   ) { }
 
   async createJob(customerId: string, dto: CreateJobDto) {
@@ -450,8 +453,10 @@ export class JobsService {
     }
     const workerLat = query.lat ?? 34.0045;
     const workerLng = query.lng ?? 71.477;
-    const radiusMeters = (query.radiusKm ?? 10) * 1000;
-    const workerRadiusKm = Number(profile?.serviceRadiusKm ?? 10);
+    // Default search radius is admin-configurable (settings → serviceRadiusKm).
+    const defaultRadiusKm = (await this.settings?.getServiceRadiusKm()) ?? 10;
+    const radiusMeters = (query.radiusKm ?? defaultRadiusKm) * 1000;
+    const workerRadiusKm = Number(profile?.serviceRadiusKm ?? defaultRadiusKm);
     const { page, limit, skip } = normalizePage(query);
 
     // Read-through cache \u2014 15s TTL; WS push handles instant new-job delivery.
