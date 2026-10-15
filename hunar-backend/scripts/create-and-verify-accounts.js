@@ -85,6 +85,7 @@ async function setupAccounts() {
       });
     } else {
       console.log(`Setting up Worker: ${acc.person} (${acc.phone})...`);
+      const defaultAvatar = "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=200&q=80";
       const user = await prisma.user.upsert({
         where: { phone: acc.phone },
         update: {
@@ -94,6 +95,7 @@ async function setupAccounts() {
           role: Role.WORKER,
           isVerified: true,
           isActive: true,
+          avatarUrl: defaultAvatar,
         },
         create: {
           phone: acc.phone,
@@ -103,6 +105,7 @@ async function setupAccounts() {
           role: Role.WORKER,
           isVerified: true,
           isActive: true,
+          avatarUrl: defaultAvatar,
         },
       });
 

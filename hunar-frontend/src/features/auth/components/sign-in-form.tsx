@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -20,6 +20,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Link, useRouter } from "@/i18n/navigation";
 import { setTokens } from "@/lib/api-client";
+import { fetchWorkerOnboardingProfile } from "@/features/worker-onboarding/api/onboarding-api";
 import { workerLogin } from "../api/auth-api";
 import { getErrorMessage } from "../lib/error";
 import { normalizePkPhone } from "../lib/phone";
@@ -58,7 +59,27 @@ export function SignInForm() {
     try {
       const response = await workerLogin(normalized, values.password);
       setTokens(response.accessToken, response.refreshToken, response.user);
-      router.push("/worker/dashboard");
+
+      try {
+        const onboardingData = await fetchWorkerOnboardingProfile();
+        const vStatus = onboardingData?.workerProfile?.verificationStatus;
+        const isComplete = onboardingData?.progress?.complete;
+
+        if (
+          !onboardingData ||
+          !onboardingData.workerProfile ||
+          vStatus === "NOT_SUBMITTED" ||
+          !isComplete
+        ) {
+          router.push("/worker/onboarding");
+        } else if (vStatus === "APPROVED") {
+          router.push("/worker/dashboard");
+        } else {
+          router.push("/worker/verification-status");
+        }
+      } catch {
+        router.push("/worker/onboarding");
+      }
     } catch (error) {
       setSubmitError(getErrorMessage(error));
     } finally {

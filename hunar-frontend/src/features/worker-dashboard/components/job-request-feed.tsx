@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect, useCallback } from "react";
+import { useState, useMemo, useEffect, useCallback, useRef } from "react";
 import dynamic from "next/dynamic";
 import { JobRequestCard } from "./job-request-card";
 import { RadarSearchView } from "./radar-search-view";
@@ -132,9 +132,10 @@ export function JobRequestFeed({
   const [feedError, setFeedError] = useState<string | null>(null);
   const [geoCoords, setGeoCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [geoStatus, setGeoStatus] = useState<"requesting" | "granted" | "denied" | "unavailable" | "idle">("idle");
+  const geoCoordsRef = useRef<{ lat: number; lng: number } | null>(null);
 
   const refreshLiveJobs = useCallback((coordsOverride?: { lat: number; lng: number } | null) => {
-    const coords = coordsOverride !== undefined ? coordsOverride : geoCoords;
+    const coords = coordsOverride !== undefined ? coordsOverride : geoCoordsRef.current;
     const locationArg = coords ? { lat: coords.lat, lng: coords.lng, radiusKm: 25 } : undefined;
     listNearbyJobs(locationArg)
       .then((jobs) => {
@@ -165,7 +166,7 @@ export function JobRequestFeed({
           );
         }
       });
-  }, [geoCoords]);
+  }, []);
 
   const requestGps = useCallback(() => {
     if (typeof window === "undefined" || !("geolocation" in navigator)) {
@@ -178,6 +179,7 @@ export function JobRequestFeed({
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         const coords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+        geoCoordsRef.current = coords;
         setGeoCoords(coords);
         setGeoStatus("granted");
         refreshLiveJobs(coords);
