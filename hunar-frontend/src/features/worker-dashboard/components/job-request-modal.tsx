@@ -25,9 +25,13 @@ import {
 import { VoicePlayer } from "./voice-player";
 import { Button } from "@/components/ui/button";
 import { submitWorkerOffer } from "@/services/worker/offers.service";
+import { getWalletBalance } from "@/services/worker/earnings.service";
 import { ApiError } from "@/lib/api-client";
 import { formatPreferredTiming } from "@/lib/format";
 import type { JobRequest } from "../types";
+
+const WALLET_INSUFFICIENT_OFFER_MESSAGE =
+  "Your wallet balance is insufficient to submit an offer. Please top up your wallet to continue.";
 
 const CATEGORY_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
   Electrician: Zap,
@@ -106,6 +110,22 @@ export function JobRequestModal({
     setIsSending(true);
     setSendError(null);
     try {
+      // Pre-check the live wallet balance; the backend validates it again on submit.
+      const balance = await getWalletBalance();
+      if (balance <= 0) {
+        setIsSending(false);
+        setSendError(WALLET_INSUFFICIENT_OFFER_MESSAGE);
+        return;
+      }
+    } catch (err) {
+      if (err instanceof ApiError && err.status === 401) {
+        setIsSending(false);
+        setSendError("Your session expired. Please sign in again to send an offer.");
+        return;
+      }
+      // Network/read failure: let the backend make the final call.
+    }
+    try {
       await submitWorkerOffer(job.id, visitCharge);
       setIsSending(false);
       setIsSent(true);
@@ -121,6 +141,8 @@ export function JobRequestModal({
         setSendError("Sign in with a worker account to send offers.");
       } else if (err instanceof ApiError && err.status === 409) {
         setSendError("You already sent an offer for this job.");
+      } else if (err instanceof ApiError && err.status === 400) {
+        setSendError(err.message || WALLET_INSUFFICIENT_OFFER_MESSAGE);
       } else {
         setSendError("Could not send your offer. Please try again.");
       }

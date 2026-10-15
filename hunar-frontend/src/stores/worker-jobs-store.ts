@@ -326,6 +326,17 @@ export const workerStore = {
       };
     }
 
+    // Wallet guard: a worker with a zero balance cannot offer. The backend
+    // re-validates the live database balance on submit and is the authority.
+    if (globalState.walletBalance <= 0) {
+      return {
+        success: false,
+        error:
+          "Your wallet balance is insufficient to submit an offer. Please top up your wallet to continue.",
+      };
+    }
+
+    const previousStatus = globalState.jobs.find((j) => j.id === jobId)?.status;
     const commission = Math.round(visitCharge * 0.1); // 10% platform commission
     const net = visitCharge - commission;
 
@@ -372,6 +383,22 @@ export const workerStore = {
       })
       .catch((err) => {
         console.error("[workerStore] send offer failed:", err);
+        // The server rejected the offer (e.g. zero wallet balance) — roll back
+        // the optimistic state so a rejected offer is never shown as sent.
+        const offers = { ...globalState.offers };
+        delete offers[jobId];
+        patch({
+          offers,
+          jobs: globalState.jobs.map((j) =>
+            j.id === jobId
+              ? {
+                  ...j,
+                  status: previousStatus ?? j.status,
+                  totalOffers: Math.max(0, j.totalOffers - 1),
+                }
+              : j
+          ),
+        });
       });
 
     const s = getSocket();

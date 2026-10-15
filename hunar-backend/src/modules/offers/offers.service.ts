@@ -12,6 +12,7 @@ import { EventBusService } from '../../common/event-bus/event-bus.service';
 import { normalizePage, toPageResult } from '../../common/helpers/pagination.util';
 import { assertWorkerEligible } from '../../common/helpers/worker-eligibility.util';
 import { JobsService } from '../jobs/jobs.service';
+import { WalletService } from '../payments/wallet.service';
 import { JwtPayload } from '../../common/types/jwt-payload.interface';
 import { RealtimeService } from '../realtime/realtime.service';
 import { JOB_EVENTS, userRoom } from '../jobs/jobs.events';
@@ -25,6 +26,11 @@ import { NegotiationEntry } from '../../common/event-bus/events';
 import { RedisService } from '../../common/redis/redis.service';
 import { haversineKm } from '../../common/helpers/geo.util';
 
+/** No offer-submission fee exists today; workers only need a positive balance. */
+export const OFFER_SUBMISSION_FEE = 0;
+export const OFFER_WALLET_INSUFFICIENT_MESSAGE =
+  'Your wallet balance is insufficient to submit an offer. Please top up your wallet to continue.';
+
 @Injectable()
 export class OffersService {
   constructor(
@@ -33,6 +39,7 @@ export class OffersService {
     private readonly jobsService: JobsService,
     private readonly realtime: RealtimeService,
     private readonly config: ConfigService,
+    private readonly wallet: WalletService,
     private readonly redis?: RedisService,
   ) {}
 
@@ -59,6 +66,15 @@ export class OffersService {
     });
     if (existing) {
       throw new ConflictException('OFFER_DUPLICATE: you already submitted an offer for this job');
+    }
+
+    // Wallet guard: the authenticated worker's live balance is read from the
+    // database (never from the client). A zero balance - or one that cannot
+    // cover an existing offer-submission fee - blocks the offer before it is
+    // persisted. No amount is deducted here.
+    const { balance } = await this.wallet.getBalance(workerId);
+    if (balance <= 0 || balance < OFFER_SUBMISSION_FEE) {
+      throw new BadRequestException(OFFER_WALLET_INSUFFICIENT_MESSAGE);
     }
 
     const message = dto.note ?? dto.message ?? null;
