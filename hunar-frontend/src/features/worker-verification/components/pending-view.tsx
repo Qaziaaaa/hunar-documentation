@@ -1,37 +1,21 @@
 "use client";
 
-import { useState } from "react";
 import {
   Bell,
   CheckCircle2,
   Clock,
-  Home,
-  Loader2,
-  RefreshCw,
   Sparkles,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { Link } from "@/i18n/navigation";
-import { Button, buttonVariants } from "@/components/ui/button";
 import type { WorkerVerificationData } from "../types";
 
 export function PendingView({
   data,
-  onRefresh,
 }: {
   data: WorkerVerificationData;
-  onRefresh: () => void;
+  onRefresh?: () => void;
 }) {
   const t = useTranslations("WorkerVerification.Pending");
-  const [isRefreshing, setIsRefreshing] = useState(false);
-
-  const handleRefresh = () => {
-    setIsRefreshing(true);
-    onRefresh();
-    setTimeout(() => {
-      setIsRefreshing(false);
-    }, 600);
-  };
 
   return (
     <div className="space-y-4 text-left rtl:text-right">
@@ -76,12 +60,12 @@ export function PendingView({
             <div className="relative z-10 flex size-7 shrink-0 items-center justify-center rounded-full border-2 border-orange bg-white text-orange shadow-xs">
               <span className="size-2.5 rounded-full bg-orange animate-ping" />
             </div>
-            <div className="leading-tight">
-              <div className="flex items-center gap-1.5">
+            <div className="leading-tight flex-1 min-w-0">
+              <div className="flex flex-wrap items-center gap-1.5">
                 <p className="text-xs font-bold text-orange">
                   {t("step2Title")}
                 </p>
-                <span className="rounded-full bg-orange/10 px-1.5 py-0.2 text-[9px] font-bold text-orange">
+                <span className="inline-flex shrink-0 whitespace-nowrap items-center rounded-full bg-orange/10 px-1.5 py-0.5 text-[9px] font-bold text-orange">
                   {t("step2Badge")}
                 </span>
               </div>
@@ -117,37 +101,6 @@ export function PendingView({
         <p className="text-[11px] text-muted-foreground leading-relaxed pl-6 rtl:pl-0 rtl:pr-6">
           {t("turnaroundDesc", { phone: data.phone })}
         </p>
-      </div>
-
-      {/* Actions */}
-      <div className="flex flex-col sm:flex-row items-center gap-2.5 pt-2">
-        <Button
-          type="button"
-          size="lg"
-          onClick={handleRefresh}
-          disabled={isRefreshing}
-          className="h-12 w-full sm:flex-1 rounded-full bg-teal text-sm font-bold text-white shadow-md shadow-teal/20 hover:bg-teal/90"
-        >
-          {isRefreshing ? (
-            <Loader2 className="mr-2 rtl:mr-0 rtl:ml-2 size-4 animate-spin" />
-          ) : (
-            <RefreshCw className="mr-2 rtl:mr-0 rtl:ml-2 size-4" />
-          )}
-          <span>{t("checkStatusBtn")}</span>
-        </Button>
-
-        <Link
-          href="/"
-          className={buttonVariants({
-            variant: "outline",
-            size: "lg",
-            className:
-              "h-12 w-full sm:w-auto rounded-full border-2 border-navy text-xs sm:text-sm font-bold text-navy hover:bg-slate-50",
-          })}
-        >
-          <Home className="mr-1.5 rtl:mr-0 rtl:ml-1.5 size-4" />
-          <span>{t("backToHome")}</span>
-        </Link>
       </div>
     </div>
   );
