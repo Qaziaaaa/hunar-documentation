@@ -313,6 +313,23 @@ export function WorkerDashboardShell({
 
         if (data?.user) {
           const wp = data.workerProfile;
+          const vStatus = wp?.verificationStatus;
+          const isComplete = data.progress?.complete;
+
+          // Guard against un-onboarded or un-verified workers accessing worker dashboard/jobs/wallet
+          // 1. If worker is already APPROVED, grant direct access to dashboard (never redirect back to onboarding)
+          if (vStatus !== "APPROVED") {
+            // 2. Un-submitted or incomplete onboarding belongs on wizard
+            if (!wp || vStatus === "NOT_SUBMITTED" || isComplete === false) {
+              router.replace("/worker/onboarding");
+              return;
+            }
+
+            // 3. Submitted and waiting for verification (PENDING, REJECTED, CHANGES_REQUESTED)
+            router.replace("/worker/verification-status");
+            return;
+          }
+
           const areas = data.serviceAreas?.map((a: any) => a.label) || [];
           const liveSkills =
             wp?.skillCategories
