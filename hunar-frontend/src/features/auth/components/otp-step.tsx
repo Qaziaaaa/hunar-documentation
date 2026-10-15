@@ -86,18 +86,20 @@ export function OtpStep({
         className="mt-7 flex flex-1 flex-col"
         noValidate
       >
-        <Controller
-          control={control}
-          name="code"
-          render={({ field }) => (
-            <OtpInput
-              value={field.value}
-              onChange={field.onChange}
-              disabled={submitting}
-              invalid={Boolean(errors.code) || Boolean(submitError)}
-            />
-          )}
-        />
+        <div className="w-full flex justify-center">
+          <Controller
+            control={control}
+            name="code"
+            render={({ field }) => (
+              <OtpInput
+                value={field.value}
+                onChange={field.onChange}
+                disabled={submitting}
+                invalid={Boolean(errors.code) || Boolean(submitError)}
+              />
+            )}
+          />
+        </div>
 
 {errors.code ? (
             <p className="mt-3 text-center text-xs font-medium text-error">

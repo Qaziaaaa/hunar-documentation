@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Calendar,
   ChevronRight,
@@ -35,6 +35,7 @@ export function CustomerSidebar({ isOpen, onClose }: CustomerSidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
   const locale = useLocale();
+  const queryClient = useQueryClient();
   const storedUser = useStoredUser();
   const isCustomer = storedUser?.role === "CUSTOMER";
   const guestLabel = locale === "ur" ? "مہمان" : "Guest";
@@ -178,6 +179,24 @@ export function CustomerSidebar({ isOpen, onClose }: CustomerSidebarProps) {
                   key={item.href}
                   href={item.href}
                   onClick={onClose}
+                  onMouseEnter={() => {
+                    if (item.href === "/customer/jobs") {
+                      void queryClient.prefetchQuery({
+                        queryKey: ["customer", "jobs", { tab: "scheduled" }],
+                        queryFn: () => getCustomerJobs({ tab: "scheduled", page: 1, limit: 20 }),
+                        staleTime: 60_000,
+                      });
+                    }
+                  }}
+                  onTouchStart={() => {
+                    if (item.href === "/customer/jobs") {
+                      void queryClient.prefetchQuery({
+                        queryKey: ["customer", "jobs", { tab: "scheduled" }],
+                        queryFn: () => getCustomerJobs({ tab: "scheduled", page: 1, limit: 20 }),
+                        staleTime: 60_000,
+                      });
+                    }
+                  }}
                   className={`flex items-center justify-between px-3 py-2.5 rounded-lg text-xs font-semibold transition-colors ${
                     item.isActive
                       ? "bg-[#0F8B8D] text-white shadow-xs"

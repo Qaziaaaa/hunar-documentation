@@ -2,7 +2,8 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
-import { getStoredUser } from "@/lib/api-client";
+import { clearTokens, getAccessToken, getStoredUser } from "@/lib/api-client";
+import { useRouter } from "@/i18n/navigation";
 import type { WizardStep, WorkerProfileFormData } from "../types";
 import { fetchWorkerOnboardingProfile, submitWorkerProfile } from "../api/onboarding-api";
 import { PESHAWAR_AREAS } from "../components/step4-service-areas";
@@ -48,13 +49,21 @@ export function isPlaceholderOrDummyDoc(url?: string | null): boolean {
 
 export function useWorkerWizard() {
   const tVal = useTranslations("WorkerOnboarding.Validation");
+  const router = useRouter();
   const [currentStep, setCurrentStep] = useState<WizardStep>(1);
   const [formData, setFormData] = useState<WorkerProfileFormData>(cleanDefaultFormData);
   const [stepError, setStepError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
 
   // Initialize from storage and sync with server draft
   useEffect(() => {
+    const token = getAccessToken();
+    if (!token) {
+      router.replace("/worker/sign-up");
+      return;
+    }
+
     const storedUser = getStoredUser();
     const savedDraft = typeof window !== "undefined" ? window.localStorage.getItem(STORAGE_KEY) : null;
     const validAreaNames = new Set<string>(PESHAWAR_AREAS);
@@ -79,12 +88,7 @@ export function useWorkerWizard() {
           }
         }
 
-        // Filter out dummy/test seed names like "(Worker)" or "(Customer)" so worker types their real full name
-        const rawDraftName = typeof parsed.fullName === "string" ? parsed.fullName : "";
-        const cleanDraftName =
-          rawDraftName.includes("(Worker)") || rawDraftName.includes("(Customer)")
-            ? ""
-            : rawDraftName;
+        const cleanDraftName = typeof parsed.fullName === "string" ? parsed.fullName : "";
 
         // Ensure face portrait is not pre-filled by default: only keep if explicitly uploaded with a fileName
         const cleanDraftPhoto =
@@ -146,9 +150,29 @@ export function useWorkerWizard() {
       }));
     }
 
-    // Server profile sync
+    // Server profile sync & route guard
     fetchWorkerOnboardingProfile().then((serverData) => {
-      if (!serverData) return;
+      if (!serverData) {
+        setIsCheckingAuth(false);
+        return;
+      }
+
+      const vStatus = serverData.workerProfile?.verificationStatus;
+
+      // Guard 1: Already APPROVED workers must NOT re-run onboarding (protects profile & jobs)
+      if (vStatus === "APPROVED") {
+        router.replace("/worker/dashboard");
+        return;
+      }
+
+      // Guard 2: Workers who completed all 5 steps and are waiting for admin review belong on status page
+      if (vStatus === "PENDING" && serverData.progress?.complete === true) {
+        router.replace("/worker/verification-status");
+        return;
+      }
+
+      setIsCheckingAuth(false);
+
       setFormData((prev) => {
         const cnicFrontDoc = serverData.documents?.find((d) => d.type === "CNIC_FRONT");
         const cnicBackDoc = serverData.documents?.find((d) => d.type === "CNIC_BACK");
@@ -183,11 +207,7 @@ export function useWorkerWizard() {
             ? prev.serviceAreas.filter((a) => validAreaNames.has(a))
             : serverAreas;
 
-        // Clean out test names or seed names from server
-        const serverUserName = serverData.user?.name || "";
-        const isServerTestName =
-          serverUserName.includes("(Worker)") || serverUserName.includes("(Customer)");
-        const cleanServerName = isServerTestName ? "" : serverUserName;
+        const cleanServerName = serverData.user?.name || "";
 
         // Clean out seed placeholder CNIC documents from server
         const cleanServerFront = isPlaceholderOrDummyDoc(cnicFrontDoc?.url) ? "" : cnicFrontDoc!.url;
@@ -237,10 +257,11 @@ export function useWorkerWizard() {
         return nextSyncedData;
       });
     }).catch((err) => {
+      setIsCheckingAuth(false);
       // Sync is best-effort: local draft stays authoritative if the server is unreachable
       console.warn("[useWorkerWizard] server profile sync skipped:", err);
     });
-  }, []);
+  }, [router]);
 
   const updateFormData = useCallback((partial: Partial<WorkerProfileFormData>) => {
     setFormData((prev) => {
@@ -374,11 +395,22 @@ export function useWorkerWizard() {
     }
   }, [formData, goToStep]);
 
+  const logoutAndSwitchWorker = useCallback(() => {
+    clearTokens("WORKER");
+    if (typeof window !== "undefined") {
+      window.localStorage.removeItem(STORAGE_KEY);
+    }
+    router.replace("/worker/sign-up");
+  }, [router]);
+
+
   return {
     currentStep,
     formData,
     stepError,
     isSubmitting,
+    isCheckingAuth,
+    logoutAndSwitchWorker,
     updateFormData,
     goToStep,
     nextStep,
@@ -386,3 +418,4 @@ export function useWorkerWizard() {
     submitFinalProfile,
   };
 }
+

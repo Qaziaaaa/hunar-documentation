@@ -98,7 +98,7 @@ export function OtpInput({
   };
 
   return (
-    <div className="flex items-center justify-between gap-2" dir="ltr">
+    <div className="flex items-center justify-center gap-1.5 sm:gap-2.5 mx-auto w-full" dir="ltr">
       {slots.map((digit, index) => (
         <input
           key={index}
@@ -116,7 +116,7 @@ export function OtpInput({
           maxLength={1}
           disabled={disabled}
           className={cn(
-            "h-14 w-11 rounded-2xl border-2 text-center text-xl font-bold text-navy shadow-sm transition-all outline-none focus:border-teal focus:ring-4 focus:ring-teal/15 disabled:opacity-60 sm:w-12",
+            "h-13 w-10 sm:h-14 sm:w-12 rounded-xl sm:rounded-2xl border-2 text-center text-lg sm:text-xl font-bold text-navy shadow-xs sm:shadow-sm transition-all outline-none focus:border-teal focus:ring-4 focus:ring-teal/15 disabled:opacity-60",
             digit ? "border-teal bg-teal/10" : "border-slate-200 bg-white",
             invalid && "border-error bg-error/5",
           )}

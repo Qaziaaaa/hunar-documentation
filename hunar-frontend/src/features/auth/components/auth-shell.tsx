@@ -138,9 +138,9 @@ export function AuthShell({
         {isCustomer ? <CustomerAuthShowcase /> : <WorkerAuthShowcase />}
 
         {/* Right Column: Form and Authentication Container (Zero Scroll on Desktop) */}
-        <section className="flex min-h-svh w-full flex-1 flex-col justify-between bg-white lg:col-span-6 xl:col-span-5 lg:min-h-0 lg:h-full lg:overflow-hidden px-6 lg:px-8 xl:px-10 py-4">
+        <section className="flex min-h-svh w-full flex-1 flex-col justify-between bg-white lg:col-span-6 xl:col-span-5 lg:min-h-0 lg:h-full lg:overflow-hidden lg:px-8 xl:px-10 lg:py-4">
           {/* Mobile Top Header (Hidden on Desktop) */}
-          <div className="lg:hidden">
+          <div className="lg:hidden w-full">
             <AuthTopBar />
           </div>
 
@@ -157,10 +157,10 @@ export function AuthShell({
 
           {/* Main Auth Content / Form Area */}
           <div
-            className="flex flex-1 flex-col px-6 pb-6 pt-4 lg:px-0 lg:py-0 lg:justify-center lg:items-center"
+            className="flex flex-1 flex-col px-4 sm:px-6 pb-6 pt-4 lg:px-0 lg:py-0 lg:justify-center lg:items-center"
             data-purpose="auth-content"
           >
-            <div className="w-full max-w-[360px] flex flex-1 flex-col justify-center">
+            <div className="w-full max-w-[360px] mx-auto flex flex-1 flex-col justify-center">
               {children}
             </div>
           </div>

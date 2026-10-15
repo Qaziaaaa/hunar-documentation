@@ -1,19 +1,24 @@
 "use client";
 
+import { useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { CustomerJobsListView } from "@/features/customer-jobs/components/customer-jobs-list-view";
 import { getCustomerJobs } from "@/features/customer-jobs/api/customer-jobs-api";
-import { LoadingState } from "@/components/shared/loading-state";
+import { CustomerJobsSkeleton } from "@/features/customer-jobs/components/customer-jobs-skeleton";
 import { ErrorState } from "@/components/shared/error-state";
 import { ApiError } from "@/lib/api-client";
 import { Link } from "@/i18n/navigation";
 import { LogIn } from "lucide-react";
 
 export default function CustomerJobsPage() {
+  const searchParams = useSearchParams();
+  const rawTab = searchParams.get("tab");
+  const tab = rawTab === "offers" || rawTab === "completed" || rawTab === "scheduled" ? rawTab : "scheduled";
+
   const { data, isPending, isError, error, refetch } = useQuery({
-    queryKey: ["customer", "jobs"],
-    queryFn: () => getCustomerJobs({ page: 1, limit: 20 }),
-    staleTime: 30_000,
+    queryKey: ["customer", "jobs", { tab }],
+    queryFn: () => getCustomerJobs({ tab, page: 1, limit: 20 }),
+    staleTime: 60_000,
     retry: (failureCount, err) => {
       // Don't retry on auth errors — the user simply isn't logged in
       if (err instanceof ApiError && (err.status === 401 || err.status === 403)) {
@@ -24,7 +29,7 @@ export default function CustomerJobsPage() {
   });
 
   if (isPending) {
-    return <LoadingState label="Loading your jobs..." />;
+    return <CustomerJobsSkeleton />;
   }
 
   if (isError) {
@@ -68,5 +73,5 @@ export default function CustomerJobsPage() {
     );
   }
 
-  return <CustomerJobsListView initialJobs={data ?? []} />;
+  return <CustomerJobsListView initialJobs={data ?? []} initialTab={tab} />;
 }

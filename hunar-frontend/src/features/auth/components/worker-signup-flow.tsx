@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useState } from "react";
+import { useRouter } from "@/i18n/navigation";
 import { setTokens } from "@/lib/api-client";
 import {
   OTP_RULES,
@@ -25,6 +26,7 @@ import { SignupSuccess } from "./signup-success";
 type Step = "phone" | "otp" | "password" | "success";
 
 export function WorkerSignupFlow() {
+  const router = useRouter();
   const [step, setStep] = useState<Step>("phone");
   const [phone, setPhone] = useState("");
   const [requestId, setRequestId] = useState("");
@@ -121,7 +123,7 @@ export function WorkerSignupFlow() {
         password: values.password,
       });
       setTokens(response.accessToken, response.refreshToken);
-      setStep("success");
+      router.push("/worker/onboarding");
     } catch (error) {
       setSubmitError(getErrorMessage(error));
     } finally {

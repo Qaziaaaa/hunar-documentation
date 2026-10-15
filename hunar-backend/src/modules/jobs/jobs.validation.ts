@@ -83,6 +83,10 @@ export class CustomerJobsQueryDto {
   status?: JobStatus;
 
   @IsOptional()
+  @IsString()
+  tab?: string;
+
+  @IsOptional()
   @Type(() => Number)
   @IsInt()
   @Min(1)

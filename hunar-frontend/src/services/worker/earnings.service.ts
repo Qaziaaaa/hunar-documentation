@@ -56,6 +56,18 @@ function mapLedgerEntry(entry: BackendLedgerEntry): WalletTransaction {
   };
 }
 
+/**
+ * Live worker wallet balance straight from the backend (never client-supplied).
+ * Used to pre-check offer submission; the server remains the final authority.
+ */
+export async function getWalletBalance(): Promise<number> {
+  if (!getAccessToken()) {
+    throw new Error("Authentication required to view wallet balance");
+  }
+  const snapshot = await http.get<BackendWalletSnapshot>("/wallet/balance");
+  return Number(snapshot.balance);
+}
+
 export async function getWalletSummary(): Promise<WalletSummary> {
   if (!getAccessToken()) {
     throw new Error("Authentication required to view wallet summary");
