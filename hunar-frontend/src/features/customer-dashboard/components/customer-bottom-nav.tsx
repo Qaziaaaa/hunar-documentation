@@ -47,8 +47,8 @@ export function CustomerBottomNav() {
             onMouseEnter={() => {
               if (item.href === "/customer/jobs") {
                 void queryClient.prefetchQuery({
-                  queryKey: ["customer", "jobs", { tab: "scheduled" }],
-                  queryFn: () => getCustomerJobs({ tab: "scheduled", page: 1, limit: 20 }),
+                  queryKey: ["customer", "jobs", "feed"],
+                  queryFn: () => getCustomerJobs({ limit: 50 }),
                   staleTime: 60_000,
                 });
               }
@@ -56,8 +56,8 @@ export function CustomerBottomNav() {
             onTouchStart={() => {
               if (item.href === "/customer/jobs") {
                 void queryClient.prefetchQuery({
-                  queryKey: ["customer", "jobs", { tab: "scheduled" }],
-                  queryFn: () => getCustomerJobs({ tab: "scheduled", page: 1, limit: 20 }),
+                  queryKey: ["customer", "jobs", "feed"],
+                  queryFn: () => getCustomerJobs({ limit: 50 }),
                   staleTime: 60_000,
                 });
               }

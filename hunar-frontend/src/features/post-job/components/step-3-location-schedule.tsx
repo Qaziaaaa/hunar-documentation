@@ -16,7 +16,21 @@ import {
   Users,
   Zap,
 } from "lucide-react";
-import { PeshawarMapPicker, PESHAWAR_HOTSPOTS, getHotspotArea } from "./peshawar-map-picker";
+import dynamic from "next/dynamic";
+import { PESHAWAR_HOTSPOTS, getHotspotArea } from "./peshawar-map-data";
+
+const PeshawarMapPicker = dynamic(
+  () => import("./peshawar-map-picker").then((mod) => mod.PeshawarMapPicker),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="w-full h-48 sm:h-64 rounded-2xl bg-slate-50 border border-slate-200/80 animate-pulse flex flex-col items-center justify-center gap-2 text-slate-400">
+        <MapPin className="w-7 h-7 text-[#0F8B8D]/40 animate-bounce" />
+        <span className="text-xs font-semibold text-slate-500">Loading Map...</span>
+      </div>
+    ),
+  }
+);
 import { SERVICE_AREAS } from "../data/categories";
 import type { PostJobData, TimeWindowOption } from "../types";
 import {

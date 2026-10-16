@@ -15,6 +15,7 @@ import { useLocale } from "next-intl";
 import { CATEGORY_OPTIONS } from "../data/categories";
 import type { PostJobData } from "../types";
 import { VoiceNoteRecorder } from "./voice-note-recorder";
+import { compressImage } from "@/lib/image-compression";
 
 interface Step2JobDetailsProps {
   data: PostJobData;
@@ -33,22 +34,37 @@ export function Step2JobDetails({
   const isUrdu = locale === "ur";
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [error, setError] = useState<string | null>(null);
+  const [isCompressing, setIsCompressing] = useState(false);
 
   const selectedCategory = CATEGORY_OPTIONS.find((c) => c.id === data.category);
   const Icon = selectedCategory?.icon || Layers;
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
 
-    const newPhotos: string[] = [...data.photos];
-    for (let i = 0; i < files.length; i++) {
-      if (newPhotos.length >= 5) break;
-      const file = files[i];
-      const objectUrl = URL.createObjectURL(file);
-      newPhotos.push(objectUrl);
+    setIsCompressing(true);
+    try {
+      const newPhotos: string[] = [...data.photos];
+      for (let i = 0; i < files.length; i++) {
+        if (newPhotos.length >= 5) break;
+        const file = files[i];
+        // Downscale & compress to ~150KB-250KB before creating preview
+        const compressedBlob = await compressImage(file, {
+          maxWidth: 1280,
+          maxHeight: 1280,
+          quality: 0.8,
+        });
+        const objectUrl = URL.createObjectURL(compressedBlob);
+        newPhotos.push(objectUrl);
+      }
+      onChange({ photos: newPhotos });
+    } finally {
+      setIsCompressing(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
     }
-    onChange({ photos: newPhotos });
   };
 
   const handleRemovePhoto = (index: number) => {
@@ -251,7 +267,14 @@ export function Step2JobDetails({
                 className="hidden"
               />
 
-              {data.photos.length === 0 ? (
+              {isCompressing ? (
+                <div className="flex flex-col items-center justify-center text-center py-5 space-y-2">
+                  <span className="size-6 rounded-full border-2 border-teal border-t-transparent animate-spin" />
+                  <span className="text-xs font-bold text-teal">
+                    {isUrdu ? "تصاویر کا سائز بہتر بنایا جا رہا ہے..." : "Optimizing photos..."}
+                  </span>
+                </div>
+              ) : data.photos.length === 0 ? (
                 <div
                   onClick={() => fileInputRef.current?.click()}
                   className="flex flex-col items-center justify-center text-center cursor-pointer py-3 space-y-1.5"

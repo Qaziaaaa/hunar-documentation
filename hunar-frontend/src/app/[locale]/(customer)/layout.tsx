@@ -83,12 +83,7 @@ export default function CustomerLayout({
       setActiveQuote(currentQuote);
       setIsQuoteModalOpen(true);
     }
-    void customerQuoteService.checkBackendPendingQuote().then((q) => {
-      if (q && (q.status === "PROPOSED" || q.status === "COUNTERED")) {
-        setActiveQuote(q);
-        setIsQuoteModalOpen(true);
-      }
-    });
+
 
     const unsubscribeQuote = customerQuoteService.subscribe((quote, eventType) => {
       if (eventType === "PROPOSED" && quote) {
