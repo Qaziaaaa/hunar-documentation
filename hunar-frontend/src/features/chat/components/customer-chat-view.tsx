@@ -140,9 +140,19 @@ export function CustomerChatView() {
     }
   }, [selectedVisitId]);
 
-  const messages = currentVisit
-    ? messagesByVisit[currentVisit.id] || []
-    : [];
+  const messages = useMemo(() => {
+    if (!currentVisit) return [];
+    const raw = messagesByVisit[currentVisit.id] || [];
+    const seen = new Set<string>();
+    const unique: ChatMessage[] = [];
+    for (const m of raw) {
+      const key = m.id || m.messageId;
+      if (key && seen.has(key)) continue;
+      if (key) seen.add(key);
+      unique.push(m);
+    }
+    return unique;
+  }, [currentVisit, messagesByVisit]);
 
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
@@ -201,9 +211,15 @@ export function CustomerChatView() {
             createdAt: m.createdAt,
           };
         });
+        const seenIds = new Set<string>();
+        const uniqueFormatted = formatted.filter((m) => {
+          if (m.id && seenIds.has(m.id)) return false;
+          if (m.id) seenIds.add(m.id);
+          return true;
+        });
         setMessagesByVisit((prev) => ({
           ...prev,
-          [currentVisit.id]: formatted,
+          [currentVisit.id]: uniqueFormatted,
         }));
         if (backendMsgs[0]?.conversationId) {
           joinConversationRoom(backendMsgs[0].conversationId);
@@ -855,13 +871,14 @@ export function CustomerChatView() {
                   </p>
                 </div>
               ) : (
-                messages.map((msg) => {
+                messages.map((msg, idx) => {
                 const isCustomer = msg.sender === "customer";
+                const itemKey = msg.id ? `${msg.id}-${idx}` : `msg-${idx}`;
 
                 if (msg.type === "voice") {
                   return (
                     <div
-                      key={msg.id}
+                      key={itemKey}
                       className={`flex flex-col ${
                         isCustomer ? "items-end rtl:items-start" : "items-start rtl:items-end"
                       }`}
@@ -882,7 +899,7 @@ export function CustomerChatView() {
 
                 return (
                   <div
-                    key={msg.id}
+                    key={itemKey}
                     className={`flex flex-col ${
                       isCustomer ? "items-end rtl:items-start" : "items-start rtl:items-end"
                     }`}

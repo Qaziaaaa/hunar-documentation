@@ -353,11 +353,12 @@ export function QuickChatDrawer({ visit, isOpen, onClose }: QuickChatDrawerProps
               </p>
             </div>
           ) : (
-            messages.map((msg) => {
+            messages.map((msg, idx) => {
               const isCustomer = msg.sender === "customer";
+              const itemKey = msg.id ? `${msg.id}-${idx}` : `msg-${idx}`;
               return (
                 <div
-                  key={msg.id}
+                  key={itemKey}
                   className={`flex flex-col ${
                     isCustomer
                       ? "items-end rtl:items-start"

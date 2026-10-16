@@ -448,13 +448,22 @@ export function WorkerDashboardShell({
   useEffect(() => {
     if (!getAccessToken()) return;
     let cancelled = false;
-    getNotifications()
-      .then((list) => {
-        if (!cancelled) setNotifications(list.map(mapAppNotification));
-      })
-      .catch((err) => {
-        console.warn("[WorkerDashboardShell] Loading notifications:", err);
-      });
+    const fetchInbox = (retries = 1) => {
+      getNotifications()
+        .then((list) => {
+          if (!cancelled) setNotifications(list.map(mapAppNotification));
+        })
+        .catch((err) => {
+          if (retries > 0 && !cancelled) {
+            setTimeout(() => {
+              if (!cancelled) fetchInbox(retries - 1);
+            }, 3000);
+            return;
+          }
+          console.warn("[WorkerDashboardShell] Loading notifications:", err);
+        });
+    };
+    fetchInbox();
     const unsubscribe = subscribeToNotifications((notification) => {
       setNotifications((prev) => [
         mapAppNotification(notification as AppNotification),
