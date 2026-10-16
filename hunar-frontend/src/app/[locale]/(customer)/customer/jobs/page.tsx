@@ -13,12 +13,13 @@ import { LogIn } from "lucide-react";
 export default function CustomerJobsPage() {
   const searchParams = useSearchParams();
   const rawTab = searchParams.get("tab");
-  const tab = rawTab === "offers" || rawTab === "completed" || rawTab === "scheduled" ? rawTab : "scheduled";
+  const tab = rawTab === "offers" || rawTab === "completed" || rawTab === "scheduled" ? rawTab : undefined;
 
   const { data, isPending, isError, error, refetch } = useQuery({
-    queryKey: ["customer", "jobs", { tab }],
-    queryFn: () => getCustomerJobs({ tab, page: 1, limit: 20 }),
-    staleTime: 60_000,
+    queryKey: ["customer", "jobs", "feed"],
+    queryFn: () => getCustomerJobs({ limit: 50 }),
+    staleTime: 5 * 60_000,
+    placeholderData: (previousData) => previousData,
     retry: (failureCount, err) => {
       // Don't retry on auth errors — the user simply isn't logged in
       if (err instanceof ApiError && (err.status === 401 || err.status === 403)) {

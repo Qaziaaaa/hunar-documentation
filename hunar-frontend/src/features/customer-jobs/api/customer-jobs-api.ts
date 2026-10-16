@@ -41,8 +41,10 @@ export async function getCustomerJobs(options?: GetCustomerJobsOptions | unknown
 
   const list: CustomerJobsArray = rows.map(transformListRow);
   if (res && typeof res === "object") {
-    if (res.counts) list.counts = res.counts;
-    if (res.total != null) list.total = Number(res.total);
+    const rawCounts = (res as any).counts ?? (res as any).meta?.counts;
+    if (rawCounts) list.counts = rawCounts;
+    const rawTotal = (res as any).total ?? (res as any).meta?.total;
+    if (rawTotal != null) list.total = Number(rawTotal);
   }
   return list;
 }
@@ -192,6 +194,7 @@ function mapJobStatus(status?: string): JobStatus {
     case "OPEN":
     case "OFFERS_RECEIVED":
       return "receiving_offers";
+    case "OFFER_ACCEPTED":
     case "WORKER_ASSIGNED":
       // Backend auto-creates a SCHEDULED visit row when the offer is accepted,
       // so from the customer's perspective the visit is already scheduled.
@@ -199,12 +202,12 @@ function mapJobStatus(status?: string): JobStatus {
     case "VISIT_SCHEDULED":
       return "visit_scheduled";
     case "VISIT_IN_PROGRESS":
-    case "VISIT_COMPLETED":
     case "INSPECTION_DONE":
     case "REPAIR_NEGOTIATING":
     case "REPAIR_APPROVED":
     case "IN_PROGRESS":
       return "in_progress";
+    case "VISIT_COMPLETED":
     case "COMPLETED":
     case "PAID":
     case "REVIEWED":

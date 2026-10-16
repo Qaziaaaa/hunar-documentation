@@ -182,8 +182,8 @@ export function CustomerSidebar({ isOpen, onClose }: CustomerSidebarProps) {
                   onMouseEnter={() => {
                     if (item.href === "/customer/jobs") {
                       void queryClient.prefetchQuery({
-                        queryKey: ["customer", "jobs", { tab: "scheduled" }],
-                        queryFn: () => getCustomerJobs({ tab: "scheduled", page: 1, limit: 20 }),
+                        queryKey: ["customer", "jobs", "feed"],
+                        queryFn: () => getCustomerJobs({ limit: 50 }),
                         staleTime: 60_000,
                       });
                     }
@@ -191,8 +191,8 @@ export function CustomerSidebar({ isOpen, onClose }: CustomerSidebarProps) {
                   onTouchStart={() => {
                     if (item.href === "/customer/jobs") {
                       void queryClient.prefetchQuery({
-                        queryKey: ["customer", "jobs", { tab: "scheduled" }],
-                        queryFn: () => getCustomerJobs({ tab: "scheduled", page: 1, limit: 20 }),
+                        queryKey: ["customer", "jobs", "feed"],
+                        queryFn: () => getCustomerJobs({ limit: 50 }),
                         staleTime: 60_000,
                       });
                     }

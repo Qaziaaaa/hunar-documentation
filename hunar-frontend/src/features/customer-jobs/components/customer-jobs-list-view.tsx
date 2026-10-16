@@ -57,42 +57,91 @@ export function CustomerJobsListView({ initialJobs, jobs: jobsProp, initialTab }
     initialCounts ?? null
   );
 
+  const partitionJobs = (list: CustomerJob[]) => ({
+    scheduled: list.filter((j) => j.status === "visit_scheduled" || j.status === "in_progress"),
+    offers: list.filter((j) => j.status === "receiving_offers" || (j as any).status === "open"),
+    completed: list.filter((j) => j.status === "completed"),
+  });
+
   const determinedInitialFilter = (
-    tabParam === "offers" || tabParam === "scheduled" || tabParam === "completed"
+    tabParam === "offers" || tabParam === "completed" || tabParam === "scheduled"
       ? tabParam
-      : initialTab === "offers" || initialTab === "scheduled" || initialTab === "completed"
+      : initialTab === "offers" || initialTab === "completed" || initialTab === "scheduled"
       ? initialTab
+      : resolvedInitialJobs.some((j) => j.status === "receiving_offers" || (j as any).status === "open") &&
+        !resolvedInitialJobs.some((j) => j.status === "visit_scheduled" || j.status === "in_progress")
+      ? "offers"
       : "scheduled"
   ) as "scheduled" | "offers" | "completed";
 
   const [selectedFilter, setSelectedFilter] = useState<"scheduled" | "offers" | "completed">(determinedInitialFilter);
   const [searchQuery, setSearchQuery] = useState("");
 
-  const [tabJobsCache, setTabJobsCache] = useState<Record<string, CustomerJob[]>>({
-    [determinedInitialFilter]: resolvedInitialJobs,
+  const [tabJobsCache, setTabJobsCache] = useState<Record<string, CustomerJob[]>>(() => {
+    return partitionJobs(resolvedInitialJobs);
   });
 
-  const [jobs, setJobs] = useState<CustomerJob[]>(resolvedInitialJobs);
+  const [jobs, setJobs] = useState<CustomerJob[]>(() => {
+    const partitioned = partitionJobs(resolvedInitialJobs);
+    return partitioned[determinedInitialFilter] ?? resolvedInitialJobs;
+  });
+
   const [isTabLoading, setIsTabLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(resolvedInitialJobs.length >= 20);
 
-  // Sync tab with URL parameter if present
+  // Sync state whenever fresh initialJobs arrive (e.g. background TanStack Query sync)
   useEffect(() => {
-    if (tabParam === "offers" || tabParam === "scheduled" || tabParam === "completed") {
-      setSelectedFilter(tabParam);
+    if (!resolvedInitialJobs || resolvedInitialJobs.length === 0) return;
+    const partitioned = partitionJobs(resolvedInitialJobs);
+    setTabJobsCache(partitioned);
+    setJobs(partitioned[selectedFilter] ?? []);
+    if ((resolvedInitialJobs as any).counts) {
+      setTabCounts((resolvedInitialJobs as any).counts);
     }
-  }, [tabParam]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [resolvedInitialJobs]);
 
-  // Server-side Tab Fetching with in-memory Tab Cache
-  useEffect(() => {
-    let isMounted = true;
-    const cached = tabJobsCache[selectedFilter];
+  // Instant 0ms Tab Switcher
+  const handleSelectTab = (tab: "scheduled" | "offers" | "completed") => {
+    setSelectedFilter(tab);
+    const cached = tabJobsCache[tab];
     if (cached !== undefined) {
       setJobs(cached);
       setCurrentPage(1);
       setHasMore(cached.length >= 20);
+    } else {
+      const partitioned = partitionJobs(resolvedInitialJobs);
+      setJobs(partitioned[tab] ?? []);
+    }
+    if (typeof window !== "undefined") {
+      const url = new URL(window.location.href);
+      if (url.searchParams.get("tab") !== tab) {
+        url.searchParams.set("tab", tab);
+        window.history.replaceState(null, "", url.toString());
+      }
+    }
+  };
+
+  // Sync tab with URL parameter if present
+  useEffect(() => {
+    if (
+      (tabParam === "offers" || tabParam === "scheduled" || tabParam === "completed") &&
+      tabParam !== selectedFilter
+    ) {
+      handleSelectTab(tabParam);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tabParam]);
+
+  // Background fetch fallback ONLY if tab cache is missing completely
+  useEffect(() => {
+    let isMounted = true;
+    const cached = tabJobsCache[selectedFilter];
+
+    // If already in memory (including empty list for 0 jobs), skip network call entirely
+    if (cached !== undefined) {
       return;
     }
 
@@ -119,7 +168,7 @@ export function CustomerJobsListView({ initialJobs, jobs: jobsProp, initialTab }
     return () => {
       isMounted = false;
     };
-  }, [selectedFilter]);
+  }, [selectedFilter, tabJobsCache]);
 
   const handleLoadMore = async () => {
     if (isLoadingMore) return;
@@ -189,23 +238,6 @@ export function CustomerJobsListView({ initialJobs, jobs: jobsProp, initialTab }
     }
   };
 
-  // Sync state if props change
-  useEffect(() => {
-    const list = initialJobs ?? jobsProp;
-    if (list) {
-      if ((list as any).counts) {
-        setTabCounts((list as any).counts);
-      }
-      setJobs(list);
-      if (!tabParam) {
-        const hasActiveOffers = list.some((j) => j.status === "receiving_offers");
-        const hasScheduled = list.some((j) => j.status === "visit_scheduled");
-        if (hasActiveOffers && !hasScheduled) {
-          setSelectedFilter("offers");
-        }
-      }
-    }
-  }, [initialJobs, jobsProp, tabParam]);
 
   // Keep modal jobs synced with updated state
   useEffect(() => {
@@ -298,23 +330,26 @@ export function CustomerJobsListView({ initialJobs, jobs: jobsProp, initialTab }
 
   const filteredJobs = jobs.filter((job) => {
     const matchesFilter =
-      (selectedFilter === "offers" && job.status === "receiving_offers") ||
-      (selectedFilter === "scheduled" && job.status === "visit_scheduled") ||
+      (selectedFilter === "offers" && (job.status === "receiving_offers" || (job as any).status === "open")) ||
+      (selectedFilter === "scheduled" && (job.status === "visit_scheduled" || job.status === "in_progress")) ||
       (selectedFilter === "completed" && job.status === "completed");
 
-    const query = searchQuery.toLowerCase();
+    const query = searchQuery.trim().toLowerCase();
+    if (!query) return matchesFilter;
+
     const matchesSearch =
-      job.title.toLowerCase().includes(query) ||
-      job.area.toLowerCase().includes(query) ||
-      job.subCategory.toLowerCase().includes(query) ||
-      job.id.toLowerCase().includes(query);
+      job.title?.toLowerCase().includes(query) ||
+      job.area?.toLowerCase().includes(query) ||
+      job.subCategory?.toLowerCase().includes(query) ||
+      job.id?.toLowerCase().includes(query);
 
     return matchesFilter && matchesSearch;
   });
 
-  const activeCount = tabCounts?.offers ?? jobs.filter((j) => j.status === "receiving_offers").length;
-  const scheduledCount = tabCounts?.scheduled ?? jobs.filter((j) => j.status === "visit_scheduled").length;
-  const completedCount = tabCounts?.completed ?? jobs.filter((j) => j.status === "completed").length;
+  const partitioned = partitionJobs(resolvedInitialJobs);
+  const activeCount = tabCounts?.offers ?? partitioned.offers.length;
+  const scheduledCount = tabCounts?.scheduled ?? partitioned.scheduled.length;
+  const completedCount = tabCounts?.completed ?? partitioned.completed.length;
 
   return (
     <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-6 pb-24 lg:pb-8 animate-in fade-in-50 duration-300 text-[#123B5D]">
@@ -341,7 +376,7 @@ export function CustomerJobsListView({ initialJobs, jobs: jobsProp, initialTab }
           {/* Tab 1: Scheduled Visits */}
           <button
             type="button"
-            onClick={() => setSelectedFilter("scheduled")}
+            onClick={() => handleSelectTab("scheduled")}
             className={`w-full min-w-0 py-2 px-1 sm:px-4 sm:py-2.5 rounded-xl text-[11px] sm:text-sm font-semibold transition-all cursor-pointer flex items-center justify-center gap-1 sm:gap-2 ${
               selectedFilter === "scheduled"
                 ? "bg-white text-[#123B5D] font-bold shadow-xs border border-slate-200/60"
@@ -376,7 +411,7 @@ export function CustomerJobsListView({ initialJobs, jobs: jobsProp, initialTab }
           {/* Tab 2: Offers to Review */}
           <button
             type="button"
-            onClick={() => setSelectedFilter("offers")}
+            onClick={() => handleSelectTab("offers")}
             className={`w-full min-w-0 py-2 px-1 sm:px-4 sm:py-2.5 rounded-xl text-[11px] sm:text-sm font-semibold transition-all cursor-pointer flex items-center justify-center gap-1 sm:gap-2 ${
               selectedFilter === "offers"
                 ? "bg-white text-[#123B5D] font-bold shadow-xs border border-slate-200/60"
@@ -418,7 +453,7 @@ export function CustomerJobsListView({ initialJobs, jobs: jobsProp, initialTab }
           {/* Tab 3: Completed */}
           <button
             type="button"
-            onClick={() => setSelectedFilter("completed")}
+            onClick={() => handleSelectTab("completed")}
             className={`w-full min-w-0 py-2 px-1 sm:px-4 sm:py-2.5 rounded-xl text-[11px] sm:text-sm font-semibold transition-all cursor-pointer flex items-center justify-center gap-1 sm:gap-2 ${
               selectedFilter === "completed"
                 ? "bg-white text-[#123B5D] font-bold shadow-xs border border-slate-200/60"
@@ -464,7 +499,7 @@ export function CustomerJobsListView({ initialJobs, jobs: jobsProp, initialTab }
       {/* Banner if there are offers waiting while on Scheduled tab */}
       {selectedFilter === "scheduled" && activeCount > 0 && (
         <div
-          onClick={() => setSelectedFilter("offers")}
+          onClick={() => handleSelectTab("offers")}
           className="bg-teal/10 hover:bg-teal/15 border border-teal/20 rounded-2xl p-4 flex items-center justify-between gap-3 cursor-pointer transition-all duration-200"
         >
           <div className="flex items-center gap-3">
