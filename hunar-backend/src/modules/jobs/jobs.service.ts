@@ -4,6 +4,7 @@ import {
   ForbiddenException,
   Injectable,
   NotFoundException,
+  Optional,
 } from '@nestjs/common';
 import { JobStatus, Prisma, Role, Urgency, WorkerVerificationStatus } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
@@ -144,7 +145,7 @@ export class JobsService {
     private readonly prisma: PrismaService,
     private readonly eventBus: EventBusService,
     private readonly realtime: RealtimeService,
-    private readonly redis?: RedisService,
+    @Optional() private readonly redis?: RedisService,
   ) { }
 
   async createJob(customerId: string, dto: CreateJobDto) {
@@ -356,25 +357,51 @@ export class JobsService {
       ...new Set(rows.map((j) => j.selectedWorkerId).filter(Boolean)),
     ] as string[];
 
-    const ratingRows =
-      selectedWorkerIds.length > 0
-        ? await this.prisma.review.groupBy({
-            by: ['revieweeId'],
-            where: { revieweeId: { in: selectedWorkerIds }, isVisible: true },
-            _avg: { rating: true },
-            _count: { _all: true },
-          })
-        : [];
+    const ratingMap = new Map<string, { rating: number; count: number }>();
+    const missingWorkerIds: string[] = [];
 
-    const ratingMap = new Map(
-      (
-        ratingRows as Array<{
-          revieweeId: string;
-          _avg: { rating: number | null };
-          _count: { _all: number };
-        }>
-      ).map((r) => [r.revieweeId, r]),
-    );
+    if (this.redis) {
+      await Promise.all(
+        selectedWorkerIds.map(async (wid) => {
+          const cached = await this.redis.get(`perf:worker:rating:${wid}`);
+          if (cached) {
+            try {
+              ratingMap.set(wid, JSON.parse(cached));
+            } catch {}
+          } else {
+            missingWorkerIds.push(wid);
+          }
+        }),
+      );
+    } else {
+      missingWorkerIds.push(...selectedWorkerIds);
+    }
+
+    if (missingWorkerIds.length > 0) {
+      const ratingRows = await this.prisma.review.groupBy({
+        by: ['revieweeId'],
+        where: { revieweeId: { in: missingWorkerIds }, isVisible: true },
+        _avg: { rating: true },
+        _count: { _all: true },
+      });
+
+      for (const r of ratingRows as Array<{
+        revieweeId: string;
+        _avg: { rating: number | null };
+        _count: { _all: number };
+      }>) {
+        const rating =
+          r._avg.rating !== null && r._avg.rating !== undefined
+            ? Number(r._avg.rating.toFixed(1))
+            : 5.0;
+        const count = r._count._all ?? 0;
+        const entry = { rating, count };
+        ratingMap.set(r.revieweeId, entry);
+        if (this.redis) {
+          void this.redis.set(`perf:worker:rating:${r.revieweeId}`, JSON.stringify(entry), 300);
+        }
+      }
+    }
 
     const items = rows.map((j) => {
       const sw = j.selectedWorker;
@@ -405,11 +432,8 @@ export class JobsService {
               name: sw.name,
               avatarUrl: sw.avatarUrl,
               phone: sw.phone,
-              rating:
-                r?._avg.rating !== null && r?._avg.rating !== undefined
-                  ? Number(r._avg.rating.toFixed(1))
-                  : 5.0,
-              ratingCount: r?._count._all ?? 0,
+              rating: r ? r.rating : 5.0,
+              ratingCount: r ? r.count : 0,
             }
           : null,
         offers: (j.offers || []).map((o) => ({
@@ -1229,11 +1253,23 @@ export class JobsService {
   }
 
   async getCategories() {
+    const cacheKey = 'perf:categories:all';
+    if (this.redis) {
+      try {
+        const cached = await this.redis.get(cacheKey);
+        if (cached) {
+          return JSON.parse(cached);
+        }
+      } catch {
+        // Fall back to database on cache error
+      }
+    }
+
     const list = await this.prisma.serviceCategory.findMany({
       where: { isActive: true },
       orderBy: { sortOrder: 'asc' },
     });
-    return list.map((c) => {
+    const result = list.map((c) => {
       const fee = c.defaultVisitCharge != null ? Number(c.defaultVisitCharge) : null;
       return {
         ...c,
@@ -1241,6 +1277,16 @@ export class JobsService {
         suggestedFee: fee,
       };
     });
+
+    if (this.redis) {
+      try {
+        await this.redis.set(cacheKey, JSON.stringify(result), 3600);
+      } catch {
+        // Non-blocking write error
+      }
+    }
+
+    return result;
   }
 
   async createDispute(userId: string, dto: { jobId: string; type?: string; description: string; evidence?: any }) {

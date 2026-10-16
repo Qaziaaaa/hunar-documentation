@@ -23,6 +23,7 @@ import { JOB_EVENTS, userRoom } from '../jobs/jobs.events';
 import { ADMIN_EVENTS, ADMIN_ROOM } from './admin.events';
 import { JobStateMachine } from '../jobs/jobs.state-machine';
 import { JwtPayload } from '../../common/types/jwt-payload.interface';
+import { RedisService } from '../../common/redis/redis.service';
 import { AUDIT_ACTIONS, AuditService } from './audit.service';
 import {
   AdminUserListQueryDto,
@@ -179,6 +180,7 @@ export class AdminService {
     private readonly audit: AuditService,
     @Optional() private readonly eventBus?: EventBusService,
     @Optional() private readonly realtime?: RealtimeService,
+    @Optional() private readonly redis?: RedisService,
   ) {}
 
   // ----- Customers -----
@@ -1282,6 +1284,8 @@ export class AdminService {
       timestamp: new Date(),
     });
 
+    await this.redis?.del('perf:categories:all').catch(() => {});
+
     return category;
   }
 
@@ -1346,6 +1350,8 @@ export class AdminService {
       timestamp: new Date(),
     });
 
+    await this.redis?.del('perf:categories:all').catch(() => {});
+
     return updated;
   }
 
@@ -1391,6 +1397,8 @@ export class AdminService {
       name: existing.name,
       timestamp: new Date(),
     });
+
+    await this.redis?.del('perf:categories:all').catch(() => {});
 
     return updated;
   }
