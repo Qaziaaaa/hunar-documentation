@@ -84,6 +84,37 @@ class ArrivalVerificationService {
     return session;
   }
 
+  async checkBackendPendingArrival(): Promise<ArrivalSession | null> {
+    const token = getAccessToken("CUSTOMER") || getAccessToken();
+    if (!token) return this.getSession();
+    try {
+      const visits = await http.get<any[]>("/visits/my?limit=5");
+      if (Array.isArray(visits)) {
+        const pendingVisit = visits.find(
+          (v: any) =>
+            v.isArrivalPending ||
+            v.arrivalPending ||
+            (v.arrivalOtp && v.status !== "COMPLETED" && v.job?.status !== "VISIT_COMPLETED")
+        );
+        if (pendingVisit) {
+          const session = this.startArrivalSession({
+            jobId: pendingVisit.jobId,
+            visitId: pendingVisit.id,
+            otp: pendingVisit.arrivalOtp || "",
+            workerName: pendingVisit.worker?.name || "Technician",
+            workerPhone: pendingVisit.worker?.phone,
+            customerName: pendingVisit.customer?.name,
+            customerAddress: pendingVisit.customerAddress || pendingVisit.job?.address,
+          });
+          return session;
+        }
+      }
+      return this.getSession();
+    } catch {
+      return this.getSession();
+    }
+  }
+
   async verifyOtp(
     enteredOtp: string,
     fallbackSession?: Partial<ArrivalSession>
@@ -221,6 +252,10 @@ class ArrivalVerificationService {
       } catch {}
       this.broadcast("SESSION_CLEARED", null);
     }
+  }
+
+  clearArrivalSession(): void {
+    this.clearSession();
   }
 
   private broadcast(type: string, data: ArrivalSession | null) {

@@ -16,14 +16,28 @@ export function WorkerJobsHub() {
   const params = useParams();
   const locale = (params?.locale as string) || "en";
   const isUrdu = locale === "ur";
-  const { jobs, offers, status, error } = useWorkerJobs();
+  const { jobs, offers, status, hydrated, error } = useWorkerJobs();
 
   // Tab State: "upcoming" | "past"
   const [activeTab, setActiveTab] = useState<"upcoming" | "past">("upcoming");
 
-  // 1. Upcoming Scheduled Visits (all accepted visits or active visits ready to dispatch)
+  // Revalidate active jobs immediately on mount so the latest upcoming jobs appear instantly
+  React.useEffect(() => {
+    void workerStore.syncActiveJobs();
+  }, []);
+
+  // 1. Upcoming & Active Visits (all accepted visits or active visits ready to dispatch or in-progress)
   const upcomingVisits = jobs.filter(
-    (j) => j.status === "accepted" || j.status === "visit_in_progress"
+    (j) =>
+      j.status === "accepted" ||
+      j.status === "visit_in_progress" ||
+      j.status === "visit_completed" ||
+      j.status === "inspecting" ||
+      j.status === "inspection_submitted" ||
+      j.status === "repair_negotiating" ||
+      j.status === "repair_approved" ||
+      j.status === "repair_in_progress" ||
+      j.status === "repair_declined"
   );
 
   // 2. Past Completed Jobs
@@ -32,11 +46,12 @@ export function WorkerJobsHub() {
   const [pastLimit, setPastLimit] = useState(INITIAL_PAST_LIMIT);
   const visiblePastJobs = pastJobs.slice(0, pastLimit);
 
-  if (status === "loading" && jobs.length === 0) {
-    return <LoadingState label="Loading your jobs..." />;
+  // Prevent flashing "No Upcoming Visits" before initial store hydration finishes
+  if ((!hydrated || status === "loading") && jobs.length === 0) {
+    return <LoadingState label={isUrdu ? "جابز لوڈ کی جا رہی ہیں..." : "Loading your jobs..."} />;
   }
 
-  if (status === "error") {
+  if (status === "error" && jobs.length === 0) {
     return (
       <ErrorState
         title="Unable to load your jobs"
