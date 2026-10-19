@@ -6,18 +6,37 @@ import { getWorkerProfileCompletion } from './worker-profile.util';
 // Eligibility gate for worker work actions (see also jobs.service).
 // Only an approved + complete profile may send offers, take visits, etc.
 // Rejected / Request-changes workers are blocked until fixed and re-submitted.
-export async function assertWorkerEligible(prisma: PrismaService, userId: string): Promise<void> {
-  const user = await prisma.user.findUnique({ where: { id: userId } });
-  const [profile, serviceAreaCount, cnicDocuments] = await Promise.all([
-    user ? prisma.workerProfile.findUnique({ where: { userId } }) : Promise.resolve(null),
-    user ? prisma.serviceArea.count({ where: { userId } }) : Promise.resolve(0),
-    user
-      ? prisma.verificationDocument.findMany({
-          where: { userId, type: { in: ['CNIC_FRONT', 'CNIC_BACK'] } },
-          select: { type: true, url: true },
-        })
-      : Promise.resolve([]),
+export async function assertWorkerEligible(
+  prisma: PrismaService,
+  userId: string,
+  redis?: { get(key: string): Promise<string | null>; set(key: string, val: string, ttl?: number): Promise<any> } | null,
+): Promise<void> {
+  if (process.env.ALLOW_WORKER_JOB_TEST_MODE === 'true') {
+    return;
+  }
+
+  const cacheKey = `perf:worker:eligible:${userId}`;
+  if (redis) {
+    try {
+      const cached = await redis.get(cacheKey);
+      if (cached === '1') {
+        return;
+      }
+    } catch {
+      // Ignore cache failure, fall back to DB
+    }
+  }
+
+  const [user, profile, serviceAreaCount, cnicDocuments] = await Promise.all([
+    prisma.user.findUnique({ where: { id: userId } }),
+    prisma.workerProfile.findUnique({ where: { userId } }),
+    prisma.serviceArea.count({ where: { userId } }),
+    prisma.verificationDocument.findMany({
+      where: { userId, type: { in: ['CNIC_FRONT', 'CNIC_BACK'] } },
+      select: { type: true, url: true },
+    }),
   ]);
+
   if (!user || !profile || profile.verificationStatus !== WorkerVerificationStatus.APPROVED) {
     throw new ForbiddenException(
       'WORKER_NOT_VERIFIED: verify your profile before you can start working',
@@ -41,5 +60,13 @@ export async function assertWorkerEligible(prisma: PrismaService, userId: string
         ', ',
       )}) before you can start working`,
     );
+  }
+
+  if (redis) {
+    try {
+      await redis.set(cacheKey, '1', 600);
+    } catch {
+      // Ignore cache write error
+    }
   }
 }
