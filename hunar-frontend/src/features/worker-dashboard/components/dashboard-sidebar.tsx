@@ -26,6 +26,7 @@ export function DashboardSidebar({
   onSelectTab,
   profile,
   unreadNotificationsCount = 0,
+  upcomingJobsCount = 0,
   isOpen,
   onClose,
   onLogout,
@@ -35,6 +36,7 @@ export function DashboardSidebar({
   onSelectTab: (tab: DashboardTab) => void;
   profile: WorkerDashboardProfile;
   unreadNotificationsCount?: number;
+  upcomingJobsCount?: number;
   isOpen?: boolean;
   onClose?: () => void;
   onLogout?: () => void;
@@ -67,6 +69,7 @@ export function DashboardSidebar({
           id: "jobs" as DashboardTab,
           label: isUrdu ? "تمام جابز" : "All Jobs",
           icon: Briefcase,
+          badge: upcomingJobsCount > 0 ? upcomingJobsCount : undefined,
         },
       ],
     },

@@ -25,6 +25,7 @@ import {
 import { VoicePlayer } from "./voice-player";
 import { Button } from "@/components/ui/button";
 import { submitWorkerOffer } from "@/services/worker/offers.service";
+import { workerStore } from "@/stores/worker-jobs-store";
 import { ApiError } from "@/lib/api-client";
 import { formatPreferredTiming } from "@/lib/format";
 import type { JobRequest } from "../types";
@@ -106,13 +107,14 @@ export function JobRequestModal({
     setIsSending(true);
     setSendError(null);
     try {
-      await submitWorkerOffer(job.id, visitCharge);
+      const serverOffer = await submitWorkerOffer(job.id, visitCharge);
+      workerStore.recordOfferSent(serverOffer as any, job.id);
       setIsSending(false);
       setIsSent(true);
       onOfferSent?.(job.id, visitCharge);
       setTimeout(() => {
         onClose();
-      }, 1000);
+      }, 250);
     } catch (err) {
       setIsSending(false);
       if (err instanceof ApiError && err.status === 401) {
