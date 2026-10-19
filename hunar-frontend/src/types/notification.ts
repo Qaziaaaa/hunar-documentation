@@ -17,7 +17,9 @@ export type NotificationType =
   | "repair_estimate_ready"
   | "repair_approved"
   | "payment_confirmed"
-  | "job_completed";
+  | "job_completed"
+  | "job_expired_no_worker"
+  | "job_cancelled";
 
 export interface AppNotification {
   id: string;

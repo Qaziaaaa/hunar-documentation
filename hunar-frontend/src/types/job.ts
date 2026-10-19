@@ -135,6 +135,8 @@ export interface Job {
   offerCount?: number;
   repairEstimate?: number;
   repairCharge?: number;
+  nextVisit?: { id: string; status?: string | null; scheduledDate?: string | null } | null;
+  visitId?: string;
 }
 
 export interface JobRequest {
@@ -171,6 +173,8 @@ export interface JobRequest {
   warrantyDays?: number;
   securityPin?: string;
   etaMinutes?: number;
+  nextVisit?: { id: string; status?: string | null; scheduledDate?: string | null } | null;
+  visitId?: string;
 }
 
 export interface Visit {
