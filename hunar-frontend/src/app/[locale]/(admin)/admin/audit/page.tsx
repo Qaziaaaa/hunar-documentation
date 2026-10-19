@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { adminApi } from "@/features/admin/api/admin-api";
 import type { AuditLogEntry } from "@/types/admin";
+import { TableRowsSkeleton } from "@/features/admin/components/table-skeleton";
 import { AlertCircle, RefreshCw, ShieldCheck } from "lucide-react";
 
 export default function AuditTrailPage() {
@@ -70,7 +71,7 @@ export default function AuditTrailPage() {
             </thead>
             <tbody className="divide-y divide-slate-100 font-medium">
               {loading ? (
-                <tr><td colSpan={6} className="py-6 px-4 text-center text-slate-500">Loading audit log...</td></tr>
+                <TableRowsSkeleton colSpan={6} label="Loading audit log" />
               ) : logs.length === 0 ? (
                 <tr><td colSpan={6} className="py-6 px-4 text-center text-slate-500">{error ? "Audit log unavailable." : "No audit entries recorded yet."}</td></tr>
               ) : (

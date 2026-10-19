@@ -5,6 +5,7 @@ import { Link } from "@/i18n/navigation";
 import { formatDate } from "@/lib/format";
 import { adminApi } from "@/features/admin/api/admin-api";
 import type { DisputeReport } from "@/types/admin";
+import { TableRowsSkeleton } from "@/features/admin/components/table-skeleton";
 import { AlertTriangle, Eye, ShieldAlert } from "lucide-react";
 
 export default function DisputesPage() {
@@ -50,7 +51,7 @@ export default function DisputesPage() {
             </thead>
             <tbody className="divide-y divide-slate-100 font-medium">
               {loading ? (
-                <tr><td colSpan={7} className="py-6 px-4 text-center text-slate-500">Loading disputes...</td></tr>
+                <TableRowsSkeleton colSpan={7} label="Loading disputes" />
               ) : disputes.length === 0 ? (
                 <tr><td colSpan={7} className="py-6 px-4 text-center text-slate-500">No disputes reported yet.</td></tr>
               ) : (

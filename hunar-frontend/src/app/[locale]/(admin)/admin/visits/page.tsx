@@ -1,8 +1,10 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { adminApi } from "@/features/admin/api/admin-api";
-import { useAdminResource } from "@/features/admin/hooks/use-admin-resource";
+import { adminKeys } from "@/features/admin/queries";
+import { TableRowsSkeleton } from "@/features/admin/components/table-skeleton";
 import { Link } from "@/i18n/navigation";
 import {
   Calendar,
@@ -18,12 +20,16 @@ import {
 } from "lucide-react";
 
 export default function VisitsPage() {
-  const visitsRes = useAdminResource(() => adminApi.listVisits({ limit: 50 }));
+  const visitsQuery = useQuery({
+    queryKey: adminKeys.visits,
+    queryFn: () => adminApi.listVisits({ limit: 50 }),
+    staleTime: 0,
+  });
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
   const [selectedVisit, setSelectedVisit] = useState<any | null>(null);
 
-  const visits = visitsRes.data?.items ?? [];
+  const visits = visitsQuery.data?.items ?? [];
 
   const filtered = useMemo(
     () =>
@@ -106,7 +112,9 @@ export default function VisitsPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 font-medium">
-                {filtered.map((visit: any) => (
+                {visitsQuery.isPending ? (
+                  <TableRowsSkeleton colSpan={7} label="Loading visits" />
+                ) : filtered.map((visit: any) => (
                   <tr key={visit.id} className="transition hover:bg-slate-50">
                     <td className="py-4 px-4">
                       <p className="font-extrabold text-navy">{visit.jobTitle}</p>

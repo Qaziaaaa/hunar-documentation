@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { adminApi } from "@/features/admin/api/admin-api";
 import { AdminAvatar } from "@/features/admin/components/admin-avatar";
 import type { WorkerUser } from "@/types/admin";
+import { TableRowsSkeleton } from "@/features/admin/components/table-skeleton";
 
 import {
   AlertCircle,
@@ -228,7 +229,9 @@ export default function WorkersPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 font-medium">
-                {orderedRows.map((worker) => {
+                {loading ? (
+                  <TableRowsSkeleton colSpan={7} label="Loading workers" />
+                ) : orderedRows.map((worker) => {
                   const isTop = !!topWorker && worker.id === topWorker.id;
                   return (
                   <tr

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Link } from "@/i18n/navigation";
 import { adminApi } from "@/features/admin/api/admin-api";
 import type { WithdrawalRequest } from "@/types/admin";
+import { TableRowsSkeleton } from "@/features/admin/components/table-skeleton";
 import { AlertCircle, ArrowLeft, Ban, CheckCircle2, Lock, Wallet } from "lucide-react";
 
 export default function WithdrawalsPage() {
@@ -98,7 +99,7 @@ export default function WithdrawalsPage() {
             </thead>
             <tbody className="divide-y divide-slate-100 font-medium">
               {loading ? (
-                <tr><td colSpan={7} className="py-6 px-4 text-center text-slate-500">Loading withdrawal requests...</td></tr>
+                <TableRowsSkeleton colSpan={7} label="Loading withdrawal requests" />
               ) : items.length === 0 ? (
                 <tr><td colSpan={7} className="py-6 px-4 text-center text-slate-500">No withdrawal requests yet.</td></tr>
               ) : (

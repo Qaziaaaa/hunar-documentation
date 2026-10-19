@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { adminApi } from "@/features/admin/api/admin-api";
 import { AdminAvatar } from "@/features/admin/components/admin-avatar";
 import type { CustomerUser } from "@/types/admin";
+import { TableRowsSkeleton } from "@/features/admin/components/table-skeleton";
 import {
   AlertCircle,
   Ban,
@@ -209,7 +210,9 @@ export default function CustomersPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 font-medium">
-                {filtered.map((customer) => (
+                {loading ? (
+                  <TableRowsSkeleton colSpan={8} label="Loading customers" />
+                ) : filtered.map((customer) => (
                   <tr key={customer.id} className="transition hover:bg-slate-50">
                     <td className="py-4 px-4">
                       <div className="flex items-center gap-3">

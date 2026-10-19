@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Link } from "@/i18n/navigation";
 import { adminApi, fetchCommissionRate } from "@/features/admin/api/admin-api";
 import type { PaymentTransaction } from "@/types/admin";
+import { TableRowsSkeleton } from "@/features/admin/components/table-skeleton";
 import { AlertCircle, Coins, CreditCard, DollarSign, Lock } from "lucide-react";
 
 export default function PaymentsPage() {
@@ -136,7 +137,7 @@ export default function PaymentsPage() {
             </thead>
             <tbody className="divide-y divide-slate-100 font-medium">
               {loading ? (
-                <tr><td colSpan={7} className="py-6 px-4 text-center text-slate-500">Loading transactions...</td></tr>
+                <TableRowsSkeleton colSpan={7} label="Loading transactions" />
               ) : payments.length === 0 ? (
                 <tr><td colSpan={7} className="py-6 px-4 text-center text-slate-500">No transactions yet.</td></tr>
               ) : (
