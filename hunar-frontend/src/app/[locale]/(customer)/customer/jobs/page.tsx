@@ -18,8 +18,8 @@ export default function CustomerJobsPage() {
   const { data, isPending, isError, error, refetch } = useQuery({
     queryKey: ["customer", "jobs", "feed"],
     queryFn: () => getCustomerJobs({ limit: 50 }),
-    staleTime: 5 * 60_000,
-    placeholderData: (previousData) => previousData,
+    staleTime: 0,
+    refetchOnMount: "always",
     retry: (failureCount, err) => {
       // Don't retry on auth errors — the user simply isn't logged in
       if (err instanceof ApiError && (err.status === 401 || err.status === 403)) {

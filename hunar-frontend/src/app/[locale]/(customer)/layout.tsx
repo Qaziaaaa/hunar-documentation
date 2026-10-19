@@ -9,13 +9,7 @@ import { CustomerHeader } from "@/features/customer-dashboard/components/custome
 import { CustomerSidebar } from "@/features/customer-dashboard/components/customer-sidebar";
 import dynamic from "next/dynamic";
 
-const CustomerArrivalOtpModal = dynamic(
-  () =>
-    import(
-      "@/features/customer-visits/components/customer-arrival-otp-modal"
-    ).then((m) => m.CustomerArrivalOtpModal),
-  { ssr: false }
-);
+import { CustomerArrivalOtpModal } from "@/features/customer-visits/components/customer-arrival-otp-modal";
 const CustomerRepairQuoteModal = dynamic(
   () =>
     import(
@@ -125,6 +119,7 @@ export default function CustomerLayout({
   }
 
   const isChat = pathname.includes("/customer/chat");
+  const isTrackingPage = pathname.includes("/tracking");
 
   return (
     <CustomerSearchProvider>
@@ -160,8 +155,8 @@ export default function CustomerLayout({
           </div>
         )}
 
-        {/* Customer Doorstep Arrival OTP Modal - Loaded dynamically on demand */}
-        {isArrivalOtpOpen && (
+        {/* Customer Doorstep Arrival OTP Modal - Loaded dynamically on demand across customer portal */}
+        {isArrivalOtpOpen && !isTrackingPage && (
           <CustomerArrivalOtpModal
             isOpen={isArrivalOtpOpen}
             session={arrivalSession}

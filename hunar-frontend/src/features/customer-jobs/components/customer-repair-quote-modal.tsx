@@ -59,7 +59,7 @@ export function CustomerRepairQuoteModal({
     try {
       setIsProcessing("ACCEPT");
       setErrorMessage(null);
-      await acceptRepairEstimate(quote.repairId || quote.jobId);
+      await acceptRepairEstimate(quote.repairId, quote.jobId);
       customerQuoteService.clearQuoteSession();
       onDecision(
         "ACCEPTED",
@@ -84,7 +84,7 @@ export function CustomerRepairQuoteModal({
     try {
       setIsProcessing("REJECT");
       setErrorMessage(null);
-      await rejectRepairEstimate(quote.repairId || quote.jobId);
+      await rejectRepairEstimate(quote.repairId, quote.jobId);
       customerQuoteService.clearQuoteSession();
       onDecision(
         "REJECTED",

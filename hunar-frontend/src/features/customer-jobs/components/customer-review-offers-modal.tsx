@@ -198,7 +198,13 @@ export function CustomerReviewOffersModal({
                     )}
                     <div className="flex items-center gap-1.5 text-xs text-[#F59E0B] font-bold mt-0.5">
                       <Star className="size-3 fill-[#F59E0B]" />
-                      <span>{job.selectedOffer.worker.rating.toFixed(1)}</span>
+                      <span>
+                        {job.selectedOffer.worker.rating > 0
+                          ? job.selectedOffer.worker.rating.toFixed(1)
+                          : isUrdu
+                          ? "نیا"
+                          : "New"}
+                      </span>
                       <span className="text-slate-400 font-normal">
                         ({job.selectedOffer.worker.completedJobsCount} {isUrdu ? "کام" : "jobs"})
                       </span>
@@ -303,7 +309,13 @@ export function CustomerReviewOffersModal({
                           <div className="flex items-center gap-2 pt-0.5 text-xs">
                             <span className="flex items-center text-[#F59E0B] font-bold">
                               <Star className="size-3.5 fill-[#F59E0B] mr-0.5 rtl:mr-0 rtl:ml-0.5" />
-                              <span>{worker.rating.toFixed(1)}</span>
+                              <span>
+                                {worker.rating > 0
+                                  ? worker.rating.toFixed(1)
+                                  : isUrdu
+                                  ? "نیا"
+                                  : "New"}
+                              </span>
                             </span>
                             <span className="text-slate-300">•</span>
                             <span className="text-slate-500 font-medium">

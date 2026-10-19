@@ -96,7 +96,7 @@ export function CustomerJobDetailsView({ initialJob }: CustomerJobDetailsViewPro
     }));
     setSelectedOfferForProfile(null);
     setConfirmingOfferId(null);
-    void queryClient.invalidateQueries({ queryKey: ["customer"] });
+    void queryClient.invalidateQueries({ queryKey: ["customer", "jobs"] });
     showToast(
       isUrdu
         ? `${offer.worker.name} کی بکنگ کامیابی سے ہو گئی! سیکیورٹی PIN فعال ہے۔`
