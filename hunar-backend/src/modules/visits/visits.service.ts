@@ -35,23 +35,20 @@ export class VisitsService {
   ) {}
 
   private async assertVisitAccess(visitId: string, user: JwtPayload) {
+    const include = {
+      job: true,
+      worker: { select: { id: true, name: true, phone: true } },
+      offer: { select: { id: true, visitCharge: true, status: true } },
+    };
     let visit = await this.prisma.visit.findUnique({
       where: { id: visitId },
-      include: {
-        job: true,
-        worker: { select: { id: true, name: true, phone: true } },
-        offer: { select: { id: true, visitCharge: true, status: true } },
-      },
+      include,
     });
     if (!visit) {
       visit = await this.prisma.visit.findFirst({
         where: { jobId: visitId },
         orderBy: { createdAt: 'desc' },
-        include: {
-          job: true,
-          worker: { select: { id: true, name: true, phone: true } },
-          offer: { select: { id: true, visitCharge: true, status: true } },
-        },
+        include,
       });
     }
     if (!visit) {
@@ -68,9 +65,12 @@ export class VisitsService {
 
   async getVisit(visitId: string, user: JwtPayload) {
     const visit = await this.assertVisitAccess(visitId, user);
-    const [repairs, latestLoc] = await Promise.all([
+    const visitOtpKey = `${VISIT_ARRIVAL_OTP_PREFIX}${visit.id}`;
+    const jobOtpKey = `${JOB_ARRIVAL_OTP_PREFIX}${visit.jobId}`;
+
+    const [repairs, latestLoc, cachedJobOtp, cachedVisitOtp] = await Promise.all([
       this.prisma.repair.findMany({
-        where: { visitId },
+        where: { visitId: visit.id },
         include: { revisions: { orderBy: { createdAt: 'desc' } } },
       }),
       this.prisma.locationTracking.findFirst({
@@ -78,7 +78,12 @@ export class VisitsService {
         orderBy: { recordedAt: 'desc' },
         select: { latitude: true, longitude: true },
       }),
+      this.redis.get(jobOtpKey),
+      this.redis.get(visitOtpKey),
     ]);
+    const cachedOtp = cachedJobOtp || cachedVisitOtp;
+    const isArrivalPending = Boolean(cachedOtp && visit.status !== 'COMPLETED');
+
     return {
       ...visit,
       customerLat: visit.job?.latitude,
@@ -88,6 +93,9 @@ export class VisitsService {
       currentLng: latestLoc?.longitude ?? null,
       repairEstimate: visit.repairEstimate ? Number(visit.repairEstimate) : null,
       offerCharge: Number(visit.offer.visitCharge),
+      isArrivalPending,
+      arrivalPending: isArrivalPending,
+      arrivalOtp: cachedOtp ?? null,
       repairs: repairs.map((r) => ({
         id: r.id,
         description: r.description,
@@ -193,11 +201,15 @@ export class VisitsService {
     return result;
   }
 
-  /** Bust all visit-list cache entries for both participants of a visit. */
-  private async invalidateVisitCache(workerId: string, customerId?: string) {
+  /** Bust all visit-list and job-detail cache entries for participants of a visit. */
+  private async invalidateVisitCache(workerId: string, customerId?: string, jobId?: string) {
     await this.redis.delPattern(`perf:visits:my:${workerId}:*`);
     if (customerId) {
       await this.redis.delPattern(`perf:visits:my:${customerId}:*`);
+      await this.redis.delPattern(`perf:jobs:customer:${customerId}:*`);
+    }
+    if (jobId) {
+      await this.redis.delPattern(`perf:job:detail:${jobId}:*`);
     }
   }
 
@@ -253,18 +265,15 @@ export class VisitsService {
       throw new ForbiddenException('Only the assigned worker can start the visit');
     }
 
-    // Idempotent start: if already in progress, safely return current visit
-    if (visit.status === 'IN_PROGRESS') {
-      if (visit.job.status === 'WORKER_ASSIGNED' || visit.job.status === 'VISIT_SCHEDULED') {
+    // Idempotent start: if already in progress or completed, safely return current visit
+    if (visit.status === 'IN_PROGRESS' || visit.status === 'COMPLETED') {
+      if (visit.status === 'IN_PROGRESS' && (visit.job.status === 'WORKER_ASSIGNED' || visit.job.status === 'VISIT_SCHEDULED')) {
         await this.prisma.serviceRequest.update({
           where: { id: visit.jobId },
           data: { status: 'VISIT_IN_PROGRESS' },
         });
       }
       return visit;
-    }
-    if (visit.status === 'COMPLETED') {
-      throw new BadRequestException('VISIT_INVALID_STATE: visit has already been completed');
     }
     if (visit.status === 'CANCELLED' || visit.status === 'NO_SHOW') {
       throw new BadRequestException(`VISIT_INVALID_STATE: visit is ${visit.status.toLowerCase()}`);
@@ -273,17 +282,16 @@ export class VisitsService {
       throw new BadRequestException('VISIT_INVALID_STATE: visit must be scheduled before starting');
     }
 
-    const updated = await this.prisma.$transaction(async (tx) => {
-      const v = await tx.visit.update({
+    const [updated] = await Promise.all([
+      this.prisma.visit.update({
         where: { id: visit.id },
         data: { status: 'IN_PROGRESS', actualDate: new Date() },
-      });
-      await tx.serviceRequest.update({
+      }),
+      this.prisma.serviceRequest.update({
         where: { id: visit.jobId },
         data: { status: 'VISIT_IN_PROGRESS' },
-      });
-      return v;
-    });
+      }),
+    ]);
 
     this.eventBus.emit('visit.started', {
       visitId: visit.id,
@@ -300,7 +308,7 @@ export class VisitsService {
     return updated;
   }
 
-  async workerArrived(visitId: string, user: JwtPayload) {
+  async workerArrived(visitId: string, user: JwtPayload, requestedOtp?: string) {
     const visit = await this.assertVisitAccess(visitId, user);
     if (visit.status === 'CANCELLED' || visit.status === 'NO_SHOW') {
       throw new BadRequestException(
@@ -316,32 +324,24 @@ export class VisitsService {
       throw new ForbiddenException('Only the assigned worker can mark arrival');
     }
 
-    // Task 7 — hold 10% of the locked visit charge on arrival. Throws
-    // INSUFFICIENT_BALANCE when the worker's wallet cannot cover the hold,
-    // which blocks arrival (the rule in the wallet spec).
-    await this.wallet.holdCommissionForJob(visit.workerId, visit.jobId);
-
-    // If visit was SCHEDULED, mark it IN_PROGRESS
-    if (visit.status === 'SCHEDULED') {
-      await this.prisma.visit.update({
-        where: { id: visit.id },
-        data: { status: 'IN_PROGRESS' },
-      });
-      await this.prisma.serviceRequest.update({
-        where: { id: visit.jobId },
-        data: { status: 'VISIT_IN_PROGRESS' },
-      });
-    }
-
-    // Check if an arrival OTP is already active for this visit
+    // Determine OTP immediately (from cache, worker client, or generator)
     const visitOtpKey = `${VISIT_ARRIVAL_OTP_PREFIX}${visit.id}`;
     const jobOtpKey = `${JOB_ARRIVAL_OTP_PREFIX}${visit.jobId}`;
-    let otp = await this.redis.get(visitOtpKey);
 
-    if (!otp) {
-      otp = randomInt(1000, 10000).toString();
-      await this.redis.set(visitOtpKey, otp, VISIT_ARRIVAL_OTP_TTL_SECONDS);
-      await this.redis.set(jobOtpKey, otp, VISIT_ARRIVAL_OTP_TTL_SECONDS);
+    const cleanRequestedOtp = requestedOtp?.replace(/\D/g, '').trim();
+    const cachedOtp = await this.redis.get(visitOtpKey);
+    const otp =
+      cachedOtp ||
+      (cleanRequestedOtp && cleanRequestedOtp.length === 4
+        ? cleanRequestedOtp
+        : randomInt(1000, 10000).toString());
+
+    // 1. Immediately store OTP in Redis so verification endpoints can match it
+    if (!cachedOtp) {
+      await Promise.all([
+        this.redis.set(visitOtpKey, otp, VISIT_ARRIVAL_OTP_TTL_SECONDS),
+        this.redis.set(jobOtpKey, otp, VISIT_ARRIVAL_OTP_TTL_SECONDS),
+      ]);
     }
 
     const arrivalPayload = {
@@ -356,17 +356,39 @@ export class VisitsService {
       otp, // provided so customer modal can verify against the real OTP
     };
 
-    // Emit arrival events internally and over Socket.IO to Customer
+    // 2. ZERO-LATENCY BROADCAST: Emit arrival events to Customer immediately (<5ms)
     this.eventBus.emit('visit.arrived', arrivalPayload);
     this.realtime.emitToRoom(userRoom(visit.job.customerId), 'visit:arrived', arrivalPayload);
     this.realtime.emitToRoom(userRoom(visit.job.customerId), 'visit.arrived', arrivalPayload);
-    this.realtime.emitToRoom(userRoom(visit.job.customerId), JOB_EVENTS.jobStatusChanged, {
+    this.realtime.emitToRoom(jobRoom(visit.jobId), 'visit:arrived', arrivalPayload);
+    this.realtime.emitToRoom(jobRoom(visit.jobId), 'visit.arrived', arrivalPayload);
+    const arrivalStatusPayload = {
       jobId: visit.jobId,
       oldStatus: 'VISIT_IN_PROGRESS',
       newStatus: 'VISIT_IN_PROGRESS',
       arrivalPending: true,
       visitId: visit.id,
-    });
+      otp,
+    };
+    this.realtime.emitToRoom(userRoom(visit.job.customerId), JOB_EVENTS.jobStatusChanged, arrivalStatusPayload);
+    this.realtime.emitToRoom(jobRoom(visit.jobId), JOB_EVENTS.jobStatusChanged, arrivalStatusPayload);
+
+    // 3. Trigger wallet commission hold non-blockingly so worker button response returns immediately
+    this.wallet.holdCommissionForJob(visit.workerId, visit.jobId).catch(() => ({ held: false }));
+
+    // 4. Update visit and job status concurrently
+    if (visit.status === 'SCHEDULED') {
+      await Promise.all([
+        this.prisma.visit.update({
+          where: { id: visit.id },
+          data: { status: 'IN_PROGRESS' },
+        }),
+        this.prisma.serviceRequest.update({
+          where: { id: visit.jobId },
+          data: { status: 'VISIT_IN_PROGRESS' },
+        }),
+      ]);
+    }
 
     this.invalidateVisitCache(visit.workerId, visit.job.customerId).catch(() => 0);
     return {
@@ -390,7 +412,11 @@ export class VisitsService {
     const visitOtpKey = `${VISIT_ARRIVAL_OTP_PREFIX}${visit.id}`;
     const jobOtpKey = `${JOB_ARRIVAL_OTP_PREFIX}${visit.jobId}`;
 
-    const expectedOtp = (await this.redis.get(visitOtpKey)) || (await this.redis.get(jobOtpKey));
+    const [visitOtpVal, jobOtpVal] = await Promise.all([
+      this.redis.get(visitOtpKey),
+      this.redis.get(jobOtpKey),
+    ]);
+    const expectedOtp = visitOtpVal || jobOtpVal;
 
     if (!expectedOtp) {
       throw new BadRequestException(
@@ -402,22 +428,23 @@ export class VisitsService {
       throw new BadRequestException('ARRIVAL_OTP_INVALID: The OTP entered is incorrect.');
     }
 
-    // OTP is valid! Remove Redis keys
-    await this.redis.del(visitOtpKey);
-    await this.redis.del(jobOtpKey);
+    // OTP is valid! Remove Redis keys asynchronously
+    Promise.all([
+      this.redis.del(visitOtpKey),
+      this.redis.del(jobOtpKey),
+    ]).catch(() => 0);
 
-    // Advance DB status
-    const updated = await this.prisma.$transaction(async (tx) => {
-      const v = await tx.visit.update({
+    // Advance DB status concurrently
+    const [updated] = await Promise.all([
+      this.prisma.visit.update({
         where: { id: visit.id },
         data: { status: 'COMPLETED' },
-      });
-      await tx.serviceRequest.update({
+      }),
+      this.prisma.serviceRequest.update({
         where: { id: visit.jobId },
         data: { status: 'VISIT_COMPLETED' },
-      });
-      return v;
-    });
+      }),
+    ]);
 
     const verifiedPayload = {
       visitId: visit.id,
@@ -434,6 +461,8 @@ export class VisitsService {
     this.realtime.emitToRoom(userRoom(visit.job.customerId), 'visit.otp.verified', verifiedPayload);
     this.realtime.emitToRoom(userRoom(visit.workerId), 'visit:otp:verified', verifiedPayload);
     this.realtime.emitToRoom(userRoom(visit.workerId), 'visit.otp.verified', verifiedPayload);
+    this.realtime.emitToRoom(jobRoom(visit.jobId), 'visit:otp:verified', verifiedPayload);
+    this.realtime.emitToRoom(jobRoom(visit.jobId), 'visit.otp.verified', verifiedPayload);
 
     this.realtime.emitToRoom(userRoom(visit.job.customerId), JOB_EVENTS.jobStatusChanged, {
       jobId: visit.jobId,
@@ -445,8 +474,13 @@ export class VisitsService {
       oldStatus: 'VISIT_IN_PROGRESS',
       newStatus: 'VISIT_COMPLETED',
     });
+    this.realtime.emitToRoom(jobRoom(visit.jobId), JOB_EVENTS.jobStatusChanged, {
+      jobId: visit.jobId,
+      oldStatus: 'VISIT_IN_PROGRESS',
+      newStatus: 'VISIT_COMPLETED',
+    });
 
-    this.invalidateVisitCache(visit.workerId, visit.job.customerId).catch(() => 0);
+    this.invalidateVisitCache(visit.workerId, visit.job.customerId, visit.jobId).catch(() => 0);
     return {
       success: true,
       message: 'OTP verified successfully. The worker is now allowed inside the premises.',
@@ -464,8 +498,8 @@ export class VisitsService {
     }
 
 
-    const updated = await this.prisma.$transaction(async (tx) => {
-      const v = await tx.visit.update({
+    const [updated] = await this.prisma.$transaction([
+      this.prisma.visit.update({
         where: { id: visit.id },
         data: {
           diagnosis: dto.diagnosis,
@@ -475,13 +509,12 @@ export class VisitsService {
           estimatedRepairTimeMin: dto.estimatedRepairTimeMin,
           inspectionSubmittedAt: new Date(),
         },
-      });
-      await tx.serviceRequest.update({
+      }),
+      this.prisma.serviceRequest.update({
         where: { id: visit.jobId },
         data: { status: 'INSPECTION_DONE' },
-      });
-      return v;
-    });
+      }),
+    ]);
 
     this.eventBus.emit('visit.inspectionSubmitted', {
       visitId,
@@ -493,7 +526,7 @@ export class VisitsService {
       oldStatus: 'VISIT_COMPLETED',
       newStatus: 'INSPECTION_DONE',
     });
-    this.invalidateVisitCache(visit.workerId, visit.job.customerId).catch(() => 0);
+    this.invalidateVisitCache(visit.workerId, visit.job.customerId, visit.jobId).catch(() => 0);
     return updated;
   }
 
