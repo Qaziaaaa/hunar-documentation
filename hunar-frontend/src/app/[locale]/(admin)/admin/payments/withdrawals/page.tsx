@@ -1,10 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { AdminShell } from "@/features/admin/components/admin-shell";
 import { Link } from "@/i18n/navigation";
 import { adminApi } from "@/features/admin/api/admin-api";
 import type { WithdrawalRequest } from "@/types/admin";
+import { TableRowsSkeleton } from "@/features/admin/components/table-skeleton";
 import { AlertCircle, ArrowLeft, Ban, CheckCircle2, Lock, Wallet } from "lucide-react";
 
 export default function WithdrawalsPage() {
@@ -43,8 +43,7 @@ export default function WithdrawalsPage() {
   };
 
   return (
-    <AdminShell>
-      <div className="space-y-6">
+<div className="space-y-6">
         {error && (
           <div className="flex items-center justify-between gap-3 rounded-2xl border border-red-200 bg-red-50 p-4">
             <span className="flex items-center gap-2 text-sm font-bold text-red-700">
@@ -100,7 +99,7 @@ export default function WithdrawalsPage() {
             </thead>
             <tbody className="divide-y divide-slate-100 font-medium">
               {loading ? (
-                <tr><td colSpan={7} className="py-6 px-4 text-center text-slate-500">Loading withdrawal requests...</td></tr>
+                <TableRowsSkeleton colSpan={7} label="Loading withdrawal requests" />
               ) : items.length === 0 ? (
                 <tr><td colSpan={7} className="py-6 px-4 text-center text-slate-500">No withdrawal requests yet.</td></tr>
               ) : (
@@ -172,6 +171,5 @@ export default function WithdrawalsPage() {
           </div>
         ) : null}
       </div>
-    </AdminShell>
-  );
+);
 }

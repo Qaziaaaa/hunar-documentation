@@ -1,4 +1,6 @@
 import { http } from "@/lib/api-client";
+import { isMockMode } from "@/lib/data-source";
+import { generateMockOrderCode } from "@/lib/order-code";
 import { compressImage } from "@/lib/image-compression";
 import type { PostJobData } from "../types";
 

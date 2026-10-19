@@ -1,19 +1,114 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { AdminShell } from "@/features/admin/components/admin-shell";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { keepPreviousData, useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { adminApi } from "@/features/admin/api/admin-api";
-import { useAdminResource } from "@/features/admin/hooks/use-admin-resource";
+import { adminKeys, fetchJobsPage, JOBS_PAGE_SIZE } from "@/features/admin/queries";
 import { Link } from "@/i18n/navigation";
 import type { LiveJobItem } from "@/types/admin";
+import { TableRowsSkeleton } from "@/features/admin/components/table-skeleton";
 import { AlertCircle, Briefcase, Eye, Filter, Search } from "lucide-react";
 
 export default function JobsPage() {
-  const jobsRes = useAdminResource(() => adminApi.listJobs({ limit: 50 }));
+  // Paged browse: 25 per Load More, always refetched on mount (matches the
+  // old load-once hook but keeps already-seen pages on screen while it does).
+  const jobsQuery = useInfiniteQuery({
+    queryKey: adminKeys.jobsList,
+    queryFn: ({ pageParam }) => fetchJobsPage(pageParam as number),
+    initialPageParam: 1,
+    getNextPageParam: (last) =>
+      last.meta.page < last.meta.totalPages ? last.meta.page + 1 : undefined,
+    refetchOnMount: "always",
+    refetchOnWindowFocus: true,
+  });
+
+  // Live delta: every 20s ask only for jobs created after the newest row we
+  // already have (tiny response), prepend the genuinely new ones.
+  const latestRef = useRef<string | null>(null);
+  const deltaQuery = useQuery({
+    queryKey: adminKeys.jobsDelta,
+    queryFn: async () => {
+      const since = latestRef.current;
+      const res = await adminApi.listJobs({
+        page: 1,
+        limit: JOBS_PAGE_SIZE,
+        ...(since ? { since } : {}),
+      });
+      return res.items;
+    },
+    refetchInterval: 10_000,
+    refetchIntervalInBackground: true,
+    refetchOnWindowFocus: true,
+    placeholderData: keepPreviousData,
+  });
+
+  const [liveExtra, setLiveExtra] = useState<LiveJobItem[]>([]);
+  useEffect(() => {
+    const incoming = deltaQuery.data;
+    if (!incoming || incoming.length === 0) return;
+    queueMicrotask(() => {
+      setLiveExtra((prev) => {
+        const seen = new Set(prev.map((j) => j.id));
+        const fresh = incoming.filter((j) => !seen.has(j.id));
+        if (fresh.length === 0) return prev;
+        return [...fresh, ...prev].slice(0, 200);
+      });
+    });
+  }, [deltaQuery.data]);
+
+  const pagedJobs = useMemo(
+    () => (jobsQuery.data?.pages ?? []).flatMap((p) => p.items),
+    [jobsQuery.data],
+  );
+
+  // Newest first, deduped across the live feed and every loaded page.
+  const jobs = useMemo(() => {
+    const seen = new Set<string>();
+    const out: LiveJobItem[] = [];
+    for (const j of [...liveExtra, ...pagedJobs]) {
+      if (seen.has(j.id)) continue;
+      seen.add(j.id);
+      out.push(j);
+    }
+    return out;
+  }, [liveExtra, pagedJobs]);
+
+  // Track the newest createdAt on screen — the next delta asks only for newer.
+  useEffect(() => {
+    let max: string | null = null;
+    for (const j of jobs) {
+      if (j.createdAt && (!max || j.createdAt > max)) max = j.createdAt;
+    }
+    latestRef.current = max;
+  }, [jobs]);
+
+  const loadError =
+    jobsQuery.isError && !jobsQuery.data
+      ? jobsQuery.error instanceof Error && jobsQuery.error.message
+        ? jobsQuery.error.message
+        : "Failed to load jobs"
+      : null;
+
+  const fetchNextPage = jobsQuery.fetchNextPage;
+  const hasNextPage = jobsQuery.hasNextPage;
+  const isFetchingNextPage = jobsQuery.isFetchingNextPage;
+  const loadMoreRef = useRef<HTMLButtonElement | null>(null);
+  // Auto Load More when the button scrolls near the viewport.
+  useEffect(() => {
+    const el = loadMoreRef.current;
+    if (!el || !hasNextPage || isFetchingNextPage) return;
+    const io = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((e) => e.isIntersecting)) void fetchNextPage();
+      },
+      { rootMargin: "600px 0px" },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
+
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
-
-  const jobs = jobsRes.data?.items ?? [];
 
   const filtered = useMemo(
     () =>
@@ -32,18 +127,20 @@ export default function JobsPage() {
   );
 
   return (
-    <AdminShell>
-      <div className="space-y-6">
-        {jobsRes.error && (
+<div className="space-y-6">
+        {loadError && (
           <div className="flex items-center justify-between gap-3 rounded-2xl border border-red-200 bg-red-50 p-4">
             <div className="flex items-center gap-2">
               <AlertCircle className="size-4 shrink-0 text-red-500" />
               <span className="text-sm font-bold text-red-700">Jobs failed to load</span>
-              <span className="text-xs font-medium text-red-600">{jobsRes.error}</span>
+              <span className="text-xs font-medium text-red-600">{loadError}</span>
             </div>
             <button
               type="button"
-              onClick={() => void jobsRes.reload()}
+              onClick={() => {
+                void jobsQuery.refetch();
+                void deltaQuery.refetch();
+              }}
               className="rounded-xl bg-red-600 px-3 py-1.5 text-xs font-bold text-white transition hover:bg-red-700"
             >
               Retry
@@ -109,7 +206,9 @@ export default function JobsPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 font-medium">
-              {filtered.map((job) => (
+              {jobsQuery.isPending ? (
+                <TableRowsSkeleton colSpan={6} label="Loading jobs" />
+              ) : filtered.map((job) => (
                 <tr key={job.id} className="transition hover:bg-slate-50">
                   <td className="py-4 px-4">
                     <p className="font-extrabold text-navy">{job.title}</p>
@@ -154,7 +253,26 @@ export default function JobsPage() {
             </tbody>
           </table>
         </div>
+
+        {hasNextPage ? (
+          <div className="flex items-center justify-center gap-3">
+            <button
+              ref={loadMoreRef}
+              type="button"
+              onClick={() => void fetchNextPage()}
+              disabled={isFetchingNextPage}
+              className="rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-xs font-bold text-navy shadow-sm transition hover:bg-slate-50 disabled:opacity-60"
+            >
+              {isFetchingNextPage
+                ? "Loading…"
+                : `Load more jobs (${jobs.length} loaded${
+                    jobsQuery.data?.pages[0]?.meta.total
+                      ? ` of ${jobsQuery.data.pages[0].meta.total}`
+                      : ""
+                  })`}
+            </button>
+          </div>
+        ) : null}
       </div>
-    </AdminShell>
-  );
+);
 }

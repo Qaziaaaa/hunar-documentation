@@ -26,6 +26,7 @@ import { JOB_EVENTS, userRoom, WORKERS_ROOM } from './jobs.events';
 import { generateUniqueOrderCode } from '../../common/helpers/order-code.util';
 import { RedisService } from '../../common/redis/redis.service';
 import { haversineKm } from '../../common/helpers/geo.util';
+import { SettingsService } from '../../common/settings/settings.service';
 
 export interface JobCardRow {
   id: string;
@@ -154,6 +155,7 @@ export class JobsService {
     private readonly eventBus: EventBusService,
     private readonly realtime: RealtimeService,
     @Optional() private readonly redis?: RedisService,
+    @Optional() private readonly settings?: SettingsService,
   ) { }
 
   clearAvailableJobsCache() {
@@ -570,7 +572,9 @@ export class JobsService {
 
     const workerLat = query.lat ?? 34.0045;
     const workerLng = query.lng ?? 71.477;
-    const radiusMeters = (query.radiusKm ?? 10) * 1000;
+    // Default search radius is admin-configurable (settings → serviceRadiusKm).
+    const defaultRadiusKm = (await this.settings?.getServiceRadiusKm()) ?? 10;
+    const radiusMeters = (query.radiusKm ?? defaultRadiusKm) * 1000;
     const { page, limit, skip } = normalizePage(query);
 
     const latRounded = Math.round(workerLat * 100) / 100;
@@ -682,7 +686,7 @@ export class JobsService {
       }
     }
 
-    const workerRadiusKm = Number(profile?.serviceRadiusKm ?? 10);
+    const workerRadiusKm = Number(profile?.serviceRadiusKm ?? defaultRadiusKm);
 
     const halfRadiusDeg = radiusMeters / 111000.0;
     const latOffset = halfRadiusDeg;

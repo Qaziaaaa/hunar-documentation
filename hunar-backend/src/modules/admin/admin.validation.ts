@@ -101,6 +101,13 @@ export class AdminJobListQueryDto {
   @IsDateString()
   to?: string;
 
+  // Delta polling: return only jobs created after this ISO timestamp (newer
+  // than everything the client already has). Optional — callers without it
+  // see the unchanged newest-first list.
+  @IsOptional()
+  @IsDateString()
+  since?: string;
+
   @IsOptional()
   @Type(() => Number)
   @IsInt()
@@ -467,6 +474,23 @@ export class AdminUpdateSettingsDto {
   @IsOptional()
   @IsString()
   announcement?: string;
+
+  // Wallet rules — enforced by payments/wallet.service (hold gate + offline rule).
+  // 0 = workers may never go negative; more negative = larger allowed debt.
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(-100000)
+  @Max(0)
+  walletMaxNegativeBalance?: number;
+
+  // Worker controls — enforced by offers.service (createOffer cap).
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(100)
+  maxActiveOffersPerWorker?: number;
 }
 
 // Reports (Admin flow §13). Analytics reports with export.

@@ -10,3 +10,11 @@ export function formatOrderCode(code: string, prefixHash = false): string {
   const clean = code.trim().toUpperCase();
   return prefixHash ? `#${clean}` : clean;
 }
+
+const LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+const DIGITS = '0123456789';
+
+export function generateMockOrderCode(): string {
+  const randChar = (charset: string) => charset[Math.floor(Math.random() * charset.length)];
+  return `${randChar(LETTERS)}${randChar(LETTERS)}${randChar(DIGITS)}-${randChar(DIGITS)}${randChar(DIGITS)}${randChar(LETTERS)}`;
+}

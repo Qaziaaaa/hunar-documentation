@@ -1,9 +1,10 @@
-import { ForbiddenException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { OffersService } from './offers.service';
+import { OffersService, OFFER_WALLET_INSUFFICIENT_MESSAGE } from './offers.service';
 import { EventBusService } from '../../common/event-bus/event-bus.service';
 import { JobsService } from '../jobs/jobs.service';
 import { RealtimeService } from '../realtime/realtime.service';
+import { WalletService } from '../payments/wallet.service';
 
 class Db {
   users = new Map<string, any>();
@@ -12,6 +13,7 @@ class Db {
   verificationDocuments: any[] = [];
   serviceRequests = new Map<string, any>();
   jobOffers = new Map<string, any>();
+  walletBalances = new Map<string, number>();
 }
 
 function seedEligibleWorker(db: Db, id: string) {
@@ -27,6 +29,7 @@ function seedEligibleWorker(db: Db, id: string) {
   db.serviceAreas.push({ userId: id });
   db.verificationDocuments.push({ userId: id, type: 'CNIC_FRONT', url: 'f.jpg' });
   db.verificationDocuments.push({ userId: id, type: 'CNIC_BACK', url: 'b.jpg' });
+  db.walletBalances.set(id, 200);
 }
 
 function makeFakes(db: Db) {
@@ -98,6 +101,13 @@ function makeFakes(db: Db) {
       async findMany() {
         return [];
       },
+      async count({ where }: { where?: { workerId?: string; status?: { in?: string[] } } }) {
+        return Array.from(db.jobOffers.values()).filter(
+          (o) =>
+            (!where?.workerId || o.workerId === where.workerId) &&
+            (!where?.status?.in || where.status.in.includes(o.status)),
+        ).length;
+      },
     },
     visit: {
       async create({ data }: { data: any }) {
@@ -112,8 +122,16 @@ function makeFakes(db: Db) {
   } as unknown as JobsService;
   const realtime = { emitToRoom: jest.fn() } as unknown as RealtimeService;
   const config = { get: jest.fn(() => 5) } as unknown as ConfigService;
+  const wallet = {
+    getBalance: jest.fn(async (workerId: string) => ({
+      userId: workerId,
+      balance: db.walletBalances.get(workerId) ?? 0,
+      heldBalance: 0,
+      totalBalance: db.walletBalances.get(workerId) ?? 0,
+    })),
+  } as unknown as WalletService;
 
-  return { prisma, eventBus, jobsService, realtime, config };
+  return { prisma, eventBus, jobsService, realtime, config, wallet };
 }
 
 describe('OffersService eligibility', () => {
@@ -126,6 +144,7 @@ describe('OffersService eligibility', () => {
       fakes.jobsService,
       fakes.realtime,
       fakes.config,
+      fakes.wallet,
     );
     seedEligibleWorker(db, 'w1');
     db.workerProfiles.set('w1', { ...db.workerProfiles.get('w1'), verificationStatus: 'REJECTED' });
@@ -147,6 +166,7 @@ describe('OffersService eligibility', () => {
       fakes.jobsService,
       fakes.realtime,
       fakes.config,
+      fakes.wallet,
     );
     seedEligibleWorker(db, 'w1');
     db.serviceRequests.set('job1', {
@@ -164,6 +184,32 @@ describe('OffersService eligibility', () => {
     expect(fakes.jobsService.transitionJobState).toHaveBeenCalledWith('job1', 'OFFERS_RECEIVED');
   });
 
+  it('blocks a worker with a zero wallet balance from submitting an offer', async () => {
+    const db = new Db();
+    const fakes = makeFakes(db);
+    const service = new OffersService(
+      fakes.prisma,
+      fakes.eventBus,
+      fakes.jobsService,
+      fakes.realtime,
+      fakes.config,
+      fakes.wallet,
+    );
+    seedEligibleWorker(db, 'w1');
+    db.walletBalances.set('w1', 0);
+    db.serviceRequests.set('job1', { id: 'job1', status: 'OPEN', customerId: 'c1' });
+
+    await expect(service.createOffer('w1', 'job1', { visitCharge: 500 })).rejects.toThrow(
+      BadRequestException,
+    );
+    await expect(service.createOffer('w1', 'job1', { visitCharge: 500 })).rejects.toThrow(
+      OFFER_WALLET_INSUFFICIENT_MESSAGE,
+    );
+    expect(db.jobOffers.size).toBe(0);
+    expect(fakes.eventBus.emit).not.toHaveBeenCalled();
+    expect(fakes.jobsService.transitionJobState).not.toHaveBeenCalled();
+  });
+
   it('emits offer.accepted on acceptance so the chat conversation is auto-created', async () => {
     const db = new Db();
     const fakes = makeFakes(db);
@@ -173,6 +219,7 @@ describe('OffersService eligibility', () => {
       fakes.jobsService,
       fakes.realtime,
       fakes.config,
+      fakes.wallet,
     );
     seedEligibleWorker(db, 'w1');
     db.serviceRequests.set('job1', {

@@ -3,6 +3,7 @@ import {
   ForbiddenException,
   Injectable,
   NotFoundException,
+  Optional,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JobStatus, WalletLedgerType } from '@prisma/client';
@@ -14,6 +15,7 @@ import { RealtimeService } from '../realtime/realtime.service';
 import { WALLET_EVENTS, walletRoom } from './wallet.events';
 import { LedgerService } from './ledger.service';
 import { TopupDecideDto, TopupDto, TopupQueryDto } from './payments.validation';
+import { SETTINGS_DEFAULTS, SettingsService } from '../../common/settings/settings.service';
 
 // Redis idempotency markers keep every money movement safe against double-fires
 // (webhooks, retries, concurrent requests). The DB-unique WalletLedger.idempotencyKey
@@ -40,38 +42,21 @@ export class WalletService {
     private readonly realtime: RealtimeService,
     private readonly config: ConfigService,
     private readonly ledger: LedgerService,
+    @Optional() private readonly settings?: SettingsService,
   ) {}
 
-  // PlatformSetting['commissionRate'] is the admin-managed source of truth
-  // (B2 fix): the env var is only the fallback for fresh installs. The seed row
-  // uses the legacy snake_case key, so both are accepted until it is renamed.
-  // 60s TTL keeps the money path at one read/minute instead of per-transaction;
-  // cross-instance invalidation is unnecessary while the backend is a single
-  // in-process deployment.
-  private commissionRateCache: { value: number; expiresAt: number } | null = null;
-  private static readonly COMMISSION_RATE_TTL_MS = 60_000;
-
+  // PlatformSetting['commissionRate'] is the admin-managed source of truth;
+  // SettingsService owns the 60s read cache (single source for all settings).
   private async getCommissionRate(): Promise<number> {
-    const now = Date.now();
-    if (this.commissionRateCache && now < this.commissionRateCache.expiresAt) {
-      return this.commissionRateCache.value;
-    }
-    const rows = await this.prisma.platformSetting.findMany({
-      where: { key: { in: ['commissionRate', 'commission_rate'] } },
-      select: { key: true, value: true },
-    });
-    const byKey = new Map(rows.map((r) => [r.key, r.value]));
-    const raw = byKey.get('commissionRate') ?? byKey.get('commission_rate');
-    const parsed = Number(raw);
-    const value =
-      raw !== undefined && Number.isFinite(parsed) && parsed >= 0
-        ? parsed
-        : Number(this.config.get<string>('app.commissionRate', '0.10'));
-    this.commissionRateCache = {
-      value,
-      expiresAt: now + WalletService.COMMISSION_RATE_TTL_MS,
-    };
-    return value;
+    if (this.settings) return this.settings.getCommissionRate();
+    // Unit tests construct WalletService manually without SettingsService.
+    return Number(this.config.get<string>('app.commissionRate', '0.10')) || SETTINGS_DEFAULTS.commissionRate;
+  }
+
+  /** Admin-configured negative-balance floor (legacy default: Rs. -500). */
+  private async getWalletMaxNegativeBalance(): Promise<number> {
+    if (this.settings) return this.settings.getWalletMaxNegativeBalance();
+    return SETTINGS_DEFAULTS.walletMaxNegativeBalance;
   }
 
   private async getOrCreateWallet(userId: string) {
@@ -405,6 +390,9 @@ export class WalletService {
       };
     }
 
+    // Admin-configured negative-balance floor (settings page → walletMaxNegativeBalance).
+    const floor = await this.getWalletMaxNegativeBalance();
+
     try {
       const result = await this.prisma.$transaction(async (tx) => {
         const wallet = await tx.workerWallet.upsert({
@@ -414,17 +402,25 @@ export class WalletService {
         });
         const balance = Number(wallet.balance);
         const heldBalance = Number(wallet.heldBalance);
-        if (balance < amount) {
+        const newBalance = Math.round((balance - amount) * 100) / 100;
+        if (newBalance < floor) {
           throw new BadRequestException(
-            `INSUFFICIENT_BALANCE: wallet balance Rs. ${balance} cannot cover the commission hold Rs. ${amount}. Top up your wallet before arriving.`,
+            `INSUFFICIENT_BALANCE: wallet balance Rs. ${balance} cannot cover the commission hold Rs. ${amount} without falling below the minimum balance Rs. ${floor}. Top up your wallet before arriving.`,
           );
         }
-        const newBalance = Math.round((balance - amount) * 100) / 100;
         const newHeld = Math.round((heldBalance + amount) * 100) / 100;
         await tx.workerWallet.update({
           where: { userId: workerId },
           data: { balance: newBalance, heldBalance: newHeld },
         });
+        // Offline rule: a worker parked at/below the floor cannot fund any
+        // further hold — stop dispatching new work until they top up.
+        if (newBalance <= floor) {
+          await tx.workerProfile.updateMany({
+            where: { userId: workerId, isAvailable: true },
+            data: { isAvailable: false },
+          });
+        }
         const commission = await tx.commission.upsert({
           where: { jobId },
           update: {},
@@ -481,7 +477,7 @@ export class WalletService {
           workerId,
           balance: wallet.balance,
           required: amount,
-          maxNegativeBalance: 0,
+          maxNegativeBalance: floor,
         });
       }
       throw error;

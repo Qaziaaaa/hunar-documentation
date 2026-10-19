@@ -13,6 +13,7 @@ import s3Config from './config/s3.config';
 import { PrismaModule } from './prisma/prisma.module';
 import { RedisModule } from './common/redis/redis.module';
 import { EventBusModule } from './common/event-bus/event-bus.module';
+import { SettingsModule } from './common/settings/settings.module';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 import { RolesGuard } from './common/guards/roles.guard';
 
@@ -43,6 +44,7 @@ import { PaymentsModule } from './modules/payments/payments.module';
     PrismaModule,
     RedisModule,
     EventBusModule,
+    SettingsModule,
     HealthModule,
     AuthModule,
     UsersModule,

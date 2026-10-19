@@ -17,6 +17,7 @@ import { getSocket } from "@/lib/socket";
 import { listNearbyJobs, getWorkerJob } from "@/services/worker/jobs.service";
 import { subscribeToNotifications } from "@/services/worker/notification.service";
 import { timeAgo, formatDate, formatTime, formatDateSlot, isDateOnlyTimestamp, formatPreferredTiming } from "@/lib/format";
+import { isMockMode } from "@/lib/data-source";
 import { formatAreaOrSector } from "@/lib/location";
 import type { Job } from "@/types/job";
 
@@ -146,6 +147,7 @@ export function JobRequestFeed({
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [sentOfferIds, setSentOfferIds] = useState<string[]>([]);
   const [hiddenJobIds, setHiddenJobIds] = useState<string[]>([]);
+  const isApiMode = !isMockMode();
   const [liveJobs, setLiveJobs] = useState<Job[]>([]);
   const [feedError, setFeedError] = useState<string | null>(null);
   const [geoCoords, setGeoCoords] = useState<{ lat: number; lng: number } | null>(null);

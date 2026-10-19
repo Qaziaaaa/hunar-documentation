@@ -1,7 +1,6 @@
 import { Body, Controller, Get, Param, ParseUUIDPipe, Put } from '@nestjs/common';
 import { Role, WorkerVerificationStatus } from '@prisma/client';
 import { Roles } from '../../common/decorators/roles.decorator';
-import { Public } from '../../common/decorators/public.decorator';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { JwtPayload } from '../../common/types/jwt-payload.interface';
 import { AdminVerificationService } from './admin-verification.service';
@@ -15,7 +14,6 @@ import {
 // Admin verification workflow (Admin flow §M2, tasks 18–23).
 // Static routes are declared before ':userId' so "pending" is never captured as an id.
 @Controller('admin/verifications')
-@Public()
 @Roles(Role.ADMIN, Role.SUPER_ADMIN)
 export class AdminVerificationController {
   constructor(private readonly verificationService: AdminVerificationService) {}

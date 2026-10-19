@@ -4,6 +4,7 @@ import {
   ForbiddenException,
   Injectable,
   NotFoundException,
+  Optional,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { OfferStatus, Role } from '@prisma/client';
@@ -12,6 +13,7 @@ import { EventBusService } from '../../common/event-bus/event-bus.service';
 import { normalizePage, toPageResult } from '../../common/helpers/pagination.util';
 import { assertWorkerEligible } from '../../common/helpers/worker-eligibility.util';
 import { JobsService } from '../jobs/jobs.service';
+import { WalletService } from '../payments/wallet.service';
 import { JwtPayload } from '../../common/types/jwt-payload.interface';
 import { RealtimeService } from '../realtime/realtime.service';
 import { JOB_EVENTS, userRoom, WORKERS_ROOM } from '../jobs/jobs.events';
@@ -24,6 +26,15 @@ import {
 import { NegotiationEntry } from '../../common/event-bus/events';
 import { RedisService } from '../../common/redis/redis.service';
 import { haversineKm } from '../../common/helpers/geo.util';
+import {
+  SETTINGS_DEFAULTS,
+  SettingsService,
+} from '../../common/settings/settings.service';
+
+/** No offer-submission fee exists today; workers only need a positive balance. */
+export const OFFER_SUBMISSION_FEE = 0;
+export const OFFER_WALLET_INSUFFICIENT_MESSAGE =
+  'Your wallet balance is insufficient to submit an offer. Please top up your wallet to continue.';
 
 @Injectable()
 export class OffersService {
@@ -33,11 +44,21 @@ export class OffersService {
     private readonly jobsService: JobsService,
     private readonly realtime: RealtimeService,
     private readonly config: ConfigService,
+    private readonly wallet: WalletService,
     private readonly redis?: RedisService,
+    @Optional() private readonly settings?: SettingsService,
   ) {}
 
   private get maxRounds(): number {
     return this.config.get<number>('app.maxNegotiationRounds', 5);
+  }
+
+  /** Admin-configured cap on simultaneously active (unanswered) offers. */
+  private async maxActiveOffersPerWorker(): Promise<number> {
+    return (
+      (await this.settings?.getMaxActiveOffersPerWorker()) ??
+      SETTINGS_DEFAULTS.maxActiveOffersPerWorker
+    );
   }
 
   async createOffer(workerId: string, jobId: string, dto: CreateOfferDto) {
@@ -60,6 +81,33 @@ export class OffersService {
     }
     if (existing) {
       throw new ConflictException('OFFER_DUPLICATE: you already submitted an offer for this job');
+    }
+
+    // Wallet guard: the authenticated worker's live balance is read from the
+    // database (never from the client). A zero balance - or one that cannot
+    // cover an existing offer-submission fee - blocks the offer before it is
+    // persisted. No amount is deducted here.
+    const { balance } = await this.wallet.getBalance(workerId);
+    if (balance <= 0 || balance < OFFER_SUBMISSION_FEE) {
+      throw new BadRequestException(OFFER_WALLET_INSUFFICIENT_MESSAGE);
+    }
+
+    // Spam control (admin settings → maxActiveOffersPerWorker).
+    const maxActive = await this.maxActiveOffersPerWorker();
+    if (maxActive > 0) {
+      const activeOffers = await this.prisma.jobOffer.count({
+        where: {
+          workerId,
+          status: { in: [OfferStatus.PENDING, OfferStatus.VIEWING, OfferStatus.COUNTERED] },
+        },
+      });
+      if (activeOffers >= maxActive) {
+        throw new BadRequestException(
+          `MAX_ACTIVE_OFFERS: you can have at most ${maxActive} active offer${
+            maxActive === 1 ? '' : 's'
+          } at a time — wait for a response or withdraw one before offering again`,
+        );
+      }
     }
 
     const message = dto.note ?? dto.message ?? null;

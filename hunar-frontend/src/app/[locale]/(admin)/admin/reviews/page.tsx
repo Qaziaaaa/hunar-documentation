@@ -1,9 +1,10 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { AdminShell } from "@/features/admin/components/admin-shell";
+import { useQuery } from "@tanstack/react-query";
 import { adminApi } from "@/features/admin/api/admin-api";
-import { useAdminResource } from "@/features/admin/hooks/use-admin-resource";
+import { adminKeys } from "@/features/admin/queries";
+import { TableRowsSkeleton } from "@/features/admin/components/table-skeleton";
 import { Link } from "@/i18n/navigation";
 import {
   Eye,
@@ -17,13 +18,17 @@ import {
 } from "lucide-react";
 
 export default function ReviewsPage() {
-  const reviewsRes = useAdminResource(() => adminApi.listReviews({ limit: 50 }));
+  const reviewsQuery = useQuery({
+    queryKey: adminKeys.reviews,
+    queryFn: () => adminApi.listReviews({ limit: 50 }),
+    staleTime: 0,
+  });
   const [search, setSearch] = useState("");
   const [ratingFilter, setRatingFilter] = useState<string>("ALL");
   const [reviewsList, setReviewsList] = useState<any[]>([]);
   const [actionError, setActionError] = useState<string | null>(null);
 
-  const rawReviews = reviewsRes.data?.items ?? [];
+  const rawReviews = reviewsQuery.data?.items ?? [];
   const reviews = reviewsList.length > 0 ? reviewsList : rawReviews;
 
   const filtered = useMemo(
@@ -59,8 +64,7 @@ export default function ReviewsPage() {
   };
 
   return (
-    <AdminShell>
-      <div className="space-y-6">
+<div className="space-y-6">
         {actionError && (
           <div className="rounded-2xl border border-red-200 bg-red-50 p-4 text-sm font-bold text-red-700">
             Action failed: {actionError}
@@ -129,7 +133,9 @@ export default function ReviewsPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 font-medium">
-                {filtered.map((rev: any) => (
+                {reviewsQuery.isPending ? (
+                  <TableRowsSkeleton colSpan={7} label="Loading reviews" />
+                ) : filtered.map((rev: any) => (
                   <tr key={rev.id} className="transition hover:bg-slate-50">
                     <td className="py-4 px-4">
                       <Link
@@ -218,6 +224,5 @@ export default function ReviewsPage() {
           </div>
         </div>
       </div>
-    </AdminShell>
-  );
+);
 }

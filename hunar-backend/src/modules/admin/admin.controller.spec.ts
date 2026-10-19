@@ -45,7 +45,9 @@ describe('AdminController HTTP — GET /admin/customers', () => {
             user: { findMany, count, findFirst, update: updateUser },
             serviceRequest: { findMany: findManyJobs, count, findFirst, findUnique: findUniqueJob },
             walletLedger: { findMany: findManyTransactions, count },
-            review: { findMany: findManyReviews },
+            // Customer list aggregates spend (payment.groupBy) + rating given (review.groupBy).
+            payment: { groupBy: jest.fn().mockResolvedValue([]) },
+            review: { findMany: findManyReviews, groupBy: jest.fn().mockResolvedValue([]) },
             jobOffer: { findMany: findManyOffers },
             visit: { findMany: findManyVisits },
             repair: { findMany: findManyRepairs },

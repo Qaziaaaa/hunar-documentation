@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { AdminShell } from "@/features/admin/components/admin-shell";
 import { Link } from "@/i18n/navigation";
 import { adminApi } from "@/features/admin/api/admin-api";
+import { AdminAvatar } from "@/features/admin/components/admin-avatar";
 import type { VerificationRequest } from "@/types/admin";
 
 import {
@@ -44,8 +44,7 @@ export default function VerificationsQueuePage() {
   );
 
   return (
-    <AdminShell>
-      <div className="space-y-6">
+<div className="space-y-6">
         {/* Header */}
         <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
           <div>
@@ -93,9 +92,11 @@ export default function VerificationsQueuePage() {
               <div>
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="flex size-12 items-center justify-center rounded-2xl bg-navy text-lg font-bold text-white shadow-md shadow-navy/15">
-                      {item.workerName.charAt(0)}
-                    </div>
+                    <AdminAvatar
+                      src={item.workerAvatar}
+                      name={item.workerName}
+                      className="size-12 rounded-2xl text-lg shadow-md shadow-navy/15"
+                    />
                     <div>
                       <h3 className="text-base font-extrabold text-navy">
                         {item.workerName}
@@ -131,7 +132,12 @@ export default function VerificationsQueuePage() {
                   </div>
                   <div className="flex items-center gap-2 text-slate-600">
                     <Calendar className="size-4 shrink-0 text-slate-400" />
-                    <span>Submitted: {new Date(item.submittedAt).toLocaleDateString()}</span>
+                    <span>
+                      Submitted:{" "}
+                      {item.submittedAt
+                        ? new Date(item.submittedAt).toLocaleDateString()
+                        : "date not on file"}
+                    </span>
                   </div>
                 </div>
 
@@ -159,6 +165,5 @@ export default function VerificationsQueuePage() {
         </div>
         )}
       </div>
-    </AdminShell>
-  );
+);
 }

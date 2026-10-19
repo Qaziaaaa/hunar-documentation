@@ -18,13 +18,15 @@ import {
 import { PrismaService } from '../../prisma/prisma.service';
 import { normalizePage, toPageResult } from '../../common/helpers/pagination.util';
 import { EventBusService } from '../../common/event-bus/event-bus.service';
+import { RedisService } from '../../common/redis/redis.service';
 import { RealtimeService } from '../realtime/realtime.service';
+import { AdminVerificationService } from './admin-verification.service';
 import { JOB_EVENTS, userRoom } from '../jobs/jobs.events';
 import { ADMIN_EVENTS, ADMIN_ROOM } from './admin.events';
 import { JobStateMachine } from '../jobs/jobs.state-machine';
 import { JwtPayload } from '../../common/types/jwt-payload.interface';
-import { RedisService } from '../../common/redis/redis.service';
 import { AUDIT_ACTIONS, AuditService } from './audit.service';
+import { SettingsService } from '../../common/settings/settings.service';
 import {
   AdminUserListQueryDto,
   AdminJobListQueryDto,
@@ -53,19 +55,12 @@ import {
 // Job states that mean the customer has paid for the (locked) visit charge.
 const PAID_JOB_STATUSES: JobStatus[] = [JobStatus.COMPLETED, JobStatus.PAID, JobStatus.REVIEWED];
 
-const DEFAULT_DISTANCE_SLABS = [
-  { minKm: 0, maxKm: 2, charge: 100, label: '0–2 KM' },
-  { minKm: 2, maxKm: 5, charge: 200, label: '2–5 KM' },
-  { minKm: 5, maxKm: 8, charge: 300, label: '5–8 KM' },
-  { minKm: 8, maxKm: 12, charge: 400, label: '8–12 KM' },
-  { minKm: 12, maxKm: 15, charge: 500, label: '12–15 KM' },
-  { minKm: 15, maxKm: null, charge: null, requiresApproval: true, label: '15+ KM' },
-];
-
 const LIST_USER_SELECT = {
   id: true,
   phone: true,
   name: true,
+  email: true,
+  serviceAreas: { select: { label: true }, orderBy: { createdAt: 'asc' } },
   avatarUrl: true,
   isActive: true,
   isVerified: true,
@@ -180,7 +175,9 @@ export class AdminService {
     private readonly audit: AuditService,
     @Optional() private readonly eventBus?: EventBusService,
     @Optional() private readonly realtime?: RealtimeService,
+    @Optional() private readonly settings?: SettingsService,
     @Optional() private readonly redis?: RedisService,
+    @Optional() private readonly verifications?: AdminVerificationService,
   ) {}
 
   // ----- Customers -----
@@ -432,11 +429,12 @@ export class AdminService {
       ...(query.categoryId ? { categoryId: query.categoryId } : {}),
       ...(query.city ? { city: query.city } : {}),
       ...(query.area ? { area: query.area } : {}),
-      ...(query.from || query.to
+      ...(query.from || query.to || query.since
         ? {
             createdAt: {
               ...(query.from ? { gte: new Date(query.from) } : {}),
               ...(query.to ? { lte: new Date(query.to) } : {}),
+              ...(query.since ? { gt: new Date(query.since) } : {}),
             },
           }
         : {}),
@@ -1012,8 +1010,8 @@ export class AdminService {
             status: true,
             createdAt: true,
             updatedAt: true,
-            reporter: { select: { id: true, name: true, phone: true } },
-            respondent: { select: { id: true, name: true, phone: true } },
+            reporter: { select: { id: true, name: true, phone: true, role: true } },
+            respondent: { select: { id: true, name: true, phone: true, role: true } },
             job: { select: { id: true, title: true, status: true } },
           },
         }),
@@ -1029,7 +1027,9 @@ export class AdminService {
         description: row.description,
         status: row.status,
         reporter: row.reporter,
+        reporterRole: row.reporter?.role,
         respondent: row.respondent,
+        respondentRole: row.respondent?.role,
         createdAt: row.createdAt,
         updatedAt: row.updatedAt,
       }));
@@ -1225,15 +1225,32 @@ export class AdminService {
           defaultVisitCharge: true,
           distanceSlabs: true,
           createdAt: true,
+          _count: { select: { jobs: true } },
         },
       }),
       this.prisma.serviceCategory.count({ where }),
     ]);
 
+    // Skills are stored as category IDs on worker profiles — aggregate active workers per category.
+    const profiles = await this.prisma.workerProfile.findMany({
+      where: { user: { isActive: true, role: Role.WORKER } },
+      select: { skills: true },
+    });
+    const workerCounts = new Map<string, number>();
+    for (const p of profiles) {
+      for (const skillId of p.skills) {
+        workerCounts.set(skillId, (workerCounts.get(skillId) ?? 0) + 1);
+      }
+    }
+
     const items = rows.map((r) => ({
       ...r,
+      activeWorkersCount: workerCounts.get(r.id) ?? 0,
+      totalJobsCount: r._count?.jobs ?? 0,
       defaultVisitCharge: r.defaultVisitCharge != null ? Number(r.defaultVisitCharge) : null,
-      distanceSlabs: r.distanceSlabs ?? DEFAULT_DISTANCE_SLABS,
+      // Real configured slabs only — null until the admin saves some
+      // (the old injected Rs. 100–500 defaults were fake data).
+      distanceSlabs: r.distanceSlabs ?? null,
     }));
 
     return toPageResult(items, total, page, limit);
@@ -1498,6 +1515,153 @@ export class AdminService {
     };
   }
 
+  // ----- Dashboard (live admin dashboard — KPIs + workforce, short-TTL cached) -----
+
+  private static readonly DASHBOARD_OVERVIEW_CACHE_KEY = 'admin:dashboard:overview:v1';
+  private static readonly DASHBOARD_OVERVIEW_CACHE_TTL_SECONDS = 15;
+
+  // One round trip for the dashboard hero + mid cards: KPIs (14 counts) plus a
+  // lean workforce snapshot. Cached briefly — KPI churn only matters at ~15s
+  // freshness, and every refetch otherwise costs a full multi-count wave.
+  async getDashboardOverview() {
+    if (this.redis) {
+      const cached = await this.redis.get(AdminService.DASHBOARD_OVERVIEW_CACHE_KEY);
+      if (cached) {
+        try {
+          return JSON.parse(cached) as {
+            kpis: Awaited<ReturnType<AdminService['getKpis']>>;
+            workers: unknown[];
+          };
+        } catch {
+          // fall through to a fresh compute
+        }
+      }
+    }
+
+    const [kpis, workers] = await Promise.all([this.getKpis(), this.getDashboardWorkers()]);
+    const payload = { kpis, workers };
+
+    if (this.redis) {
+      await this.redis.set(
+        AdminService.DASHBOARD_OVERVIEW_CACHE_KEY,
+        JSON.stringify(payload),
+        AdminService.DASHBOARD_OVERVIEW_CACHE_TTL_SECONDS,
+      );
+    }
+    return payload;
+  }
+
+  // Lean worker rows for the dashboard toplist + demand/supply cards. Same
+  // shape the worker directory ships (flattened profile fields) minus the
+  // per-worker commissions array; ratings and earnings come from two groupBy
+  // aggregates instead of row fan-out, and skills resolve to display names.
+  private async getDashboardWorkers() {
+    const users = await this.prisma.user.findMany({
+      where: { role: Role.WORKER },
+      orderBy: { createdAt: 'desc' },
+      take: 50,
+      select: {
+        id: true,
+        phone: true,
+        name: true,
+        email: true,
+        avatarUrl: true,
+        isActive: true,
+        isVerified: true,
+        createdAt: true,
+        serviceAreas: { select: { label: true }, orderBy: { createdAt: 'asc' } },
+        wallet: { select: { balance: true } },
+        workerProfile: {
+          select: {
+            verificationStatus: true,
+            experienceYears: true,
+            skills: true,
+            isAvailable: true,
+          },
+        },
+      },
+    });
+    if (users.length === 0) {
+      return [];
+    }
+
+    const ids = users.map((u) => u.id);
+    const skillIds = [...new Set(users.flatMap((u) => u.workerProfile?.skills ?? []))];
+    const [categories, ratingRows, earningRows] = await Promise.all([
+      skillIds.length
+        ? this.prisma.serviceCategory.findMany({
+            where: { id: { in: skillIds } },
+            select: { id: true, name: true },
+          })
+        : Promise.resolve([] as Array<{ id: string; name: string }>),
+      this.prisma.review.groupBy({
+        by: ['revieweeId'],
+        where: { revieweeId: { in: ids } },
+        _avg: { rating: true },
+      }),
+      this.prisma.commission.groupBy({
+        by: ['workerId'],
+        where: { workerId: { in: ids } },
+        _sum: { visitCharge: true },
+      }),
+    ]);
+
+    const skillNames = new Map(categories.map((c) => [c.id, c.name]));
+    const ratings = new Map(
+      ratingRows.map((r) => [r.revieweeId, Math.round(Number(r._avg.rating ?? 0) * 10) / 10]),
+    );
+    const earnings = new Map(
+      earningRows.map((r) => [r.workerId, Number(r._sum.visitCharge ?? 0)]),
+    );
+
+    return users.map((user) => ({
+      id: user.id,
+      phone: user.phone,
+      name: user.name,
+      email: user.email ?? null,
+      serviceAreas: (user.serviceAreas ?? []).map((a) => a.label),
+      avatarUrl: user.avatarUrl,
+      isActive: user.isActive,
+      isVerified: user.isVerified,
+      createdAt: user.createdAt,
+      verificationStatus: user.workerProfile?.verificationStatus ?? null,
+      experienceYears: user.workerProfile?.experienceYears ?? null,
+      skills: (user.workerProfile?.skills ?? []).map((id) => skillNames.get(id) ?? id),
+      isAvailable: user.workerProfile?.isAvailable ?? false,
+      walletBalance: user.wallet ? Number(user.wallet.balance) : 0,
+      totalEarnings: earnings.get(user.id) ?? 0,
+      rating: ratings.get(user.id) ?? 0,
+    }));
+  }
+
+  // Recent-activity feeds for the dashboard table (small limits — the table
+  // shows a merged ~25-row window; the dedicated queue pages keep their full
+  // lists and are served by their own endpoints, untouched).
+  async getDashboardActivity() {
+    const [withdrawals, disputes, auditLogs, pending] = await Promise.all([
+      this.listWithdrawals({ page: 1, limit: 10 }),
+      this.listDisputes({ page: 1, limit: 10 }),
+      this.listAuditLogs({ page: 1, limit: 10 }),
+      this.verifications ? this.verifications.listPending() : Promise.resolve([]),
+    ]);
+
+    // Activity means *recently submitted* — newest first, unlike the FIFO queue.
+    const verifications = pending
+      .slice()
+      .sort(
+        (a, b) =>
+          new Date(b.submittedAt ?? 0).getTime() - new Date(a.submittedAt ?? 0).getTime(),
+      )
+      .slice(0, 10);
+
+    return {
+      withdrawals: withdrawals.items,
+      disputes: disputes.items,
+      auditLogs: auditLogs.items,
+      verifications,
+    };
+  }
+
   // Update commission rate (super-admin only).
   async updateCommissionRate(dto: AdminUpdateCommissionRateDto, actor: JwtPayload) {
     if (actor.role !== 'SUPER_ADMIN') {
@@ -1574,6 +1738,25 @@ export class AdminService {
         });
 
         results.push(updated);
+      }
+    }
+
+    // Drop the SettingsService cache so the new values apply immediately.
+    await this.settings?.invalidate();
+
+    // A raised negative-balance floor takes effect right away: workers already
+    // below it are pushed offline instead of waiting for their next hold.
+    if (dto.walletMaxNegativeBalance !== undefined) {
+      const floor = dto.walletMaxNegativeBalance;
+      const belowFloor = await this.prisma.workerWallet.findMany({
+        where: { balance: { lt: floor } },
+        select: { userId: true },
+      });
+      if (belowFloor.length > 0) {
+        await this.prisma.workerProfile.updateMany({
+          where: { userId: { in: belowFloor.map((w) => w.userId) }, isAvailable: true },
+          data: { isAvailable: false },
+        });
       }
     }
 
@@ -2209,6 +2392,57 @@ export class AdminService {
       this.prisma.user.count({ where }),
     ]);
 
+    // WorkerProfile.skills stores category IDs — resolve them to display names.
+    const skillIds = [
+      ...new Set(users.flatMap((u) => u.workerProfile?.skills ?? [])),
+    ];
+    const categories = skillIds.length
+      ? await this.prisma.serviceCategory.findMany({
+          where: { id: { in: skillIds } },
+          select: { id: true, name: true },
+        })
+      : [];
+    const skillNames = new Map(categories.map((c) => [c.id, c.name]));
+
+    // Customer rows ship real spend + rating-given aggregates (the admin UI
+    // previously hardcoded 0 / 5.0 on the client). Worker rows ship their
+    // rating average (reviewee side) so the client no longer fetches up to
+    // 3×100 reviews just to sort a directory.
+    let totalSpentByCustomer = new Map<string, number>();
+    let ratingGivenByCustomer = new Map<string, number>();
+    let ratingByWorker = new Map<string, number>();
+    if (role === Role.CUSTOMER && users.length > 0) {
+      const ids = users.map((u) => u.id);
+      const [spendRows, ratingRows] = await Promise.all([
+        this.prisma.payment.groupBy({
+          by: ['customerId'],
+          where: { customerId: { in: ids }, status: 'COMPLETED' },
+          _sum: { amount: true },
+        }),
+        this.prisma.review.groupBy({
+          by: ['reviewerId'],
+          where: { reviewerId: { in: ids } },
+          _avg: { rating: true },
+        }),
+      ]);
+      totalSpentByCustomer = new Map(
+        spendRows.map((r) => [r.customerId, Number(r._sum.amount ?? 0)]),
+      );
+      ratingGivenByCustomer = new Map(
+        ratingRows.map((r) => [r.reviewerId, Number(r._avg.rating ?? 0)]),
+      );
+    } else if (role === Role.WORKER && users.length > 0) {
+      const ids = users.map((u) => u.id);
+      const ratingRows = await this.prisma.review.groupBy({
+        by: ['revieweeId'],
+        where: { revieweeId: { in: ids } },
+        _avg: { rating: true },
+      });
+      ratingByWorker = new Map(
+        ratingRows.map((r) => [r.revieweeId, Math.round(Number(r._avg.rating ?? 0) * 10) / 10]),
+      );
+    }
+
     const items = users.map((user: AdminUserRow) => {
       const comms = (user as any).commissions || [];
       const totalEarned = comms.reduce(
@@ -2221,6 +2455,8 @@ export class AdminService {
         id: user.id,
         phone: user.phone,
         name: user.name,
+        email: user.email ?? null,
+        serviceAreas: (user.serviceAreas ?? []).map((a) => a.label),
         avatarUrl: user.avatarUrl,
         isActive: user.isActive,
         isVerified: user.isVerified,
@@ -2228,10 +2464,21 @@ export class AdminService {
         jobsCount: role === Role.WORKER ? user._count.offers : user._count.customerJobs,
         verificationStatus: user.workerProfile?.verificationStatus ?? null,
         experienceYears: user.workerProfile?.experienceYears ?? null,
-        skills: user.workerProfile?.skills ?? [],
+        skills: (user.workerProfile?.skills ?? []).map((id) => skillNames.get(id) ?? id),
         isAvailable: user.workerProfile?.isAvailable ?? false,
         walletBalance: balance,
         totalEarnings: totalEarned,
+        ...(role === Role.CUSTOMER
+          ? {
+              totalSpent: totalSpentByCustomer.get(user.id) ?? 0,
+              ratingGiven: ratingGivenByCustomer.get(user.id) ?? 0,
+            }
+          : {}),
+        ...(role === Role.WORKER
+          ? {
+              rating: ratingByWorker.get(user.id) ?? 0,
+            }
+          : {}),
       };
     });
 

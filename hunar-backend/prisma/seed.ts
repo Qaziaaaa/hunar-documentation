@@ -70,6 +70,22 @@ async function main(): Promise<void> {
     create: { key: 'commission_rate', value: '0.10' },
   });
 
+  // Runtime-controlled business values (settings page). update: {} so an
+  // existing row (admin-edited) is never clobbered by re-seeding.
+  const settingDefaults: Record<string, string> = {
+    commissionRate: '0.10',
+    serviceRadiusKm: '10',
+    walletMaxNegativeBalance: '-500',
+    maxActiveOffersPerWorker: '1',
+  };
+  for (const [key, value] of Object.entries(settingDefaults)) {
+    await prisma.platformSetting.upsert({
+      where: { key },
+      update: {},
+      create: { key, value },
+    });
+  }
+
   console.log('Seeding service categories...');
   const categories: Record<string, string> = {};
   categories.Plumbing = await upsertCategory('Plumbing', 'پلمبرنگ', 1, 500);
