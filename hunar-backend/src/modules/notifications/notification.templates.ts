@@ -191,4 +191,9 @@ export const notificationTemplates: Record<string, (d: NotificationData) => Noti
       title: 'Job completed',
       body: `The job "${d.jobTitle ?? 'the job'}" has been completed. Please leave a review.`,
     }),
+
+    JOB_EXPIRED_NO_WORKER: (d) => ({
+      title: 'Job Request Expired',
+      body: `No available worker accepted your request for "${d.jobTitle ?? 'the job'}" within 20 hours. The request has expired, but you can repost it anytime.`,
+    }),
   };

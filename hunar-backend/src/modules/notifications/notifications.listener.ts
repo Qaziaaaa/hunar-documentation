@@ -383,6 +383,18 @@ export class NotificationsListener {
     });
   }
 
+  // 5. Job expired — no worker accepted within 20 hours
+  @OnEvent('job.expired')
+  async handleJobExpired(payload: { jobId: string; customerId: string; jobTitle?: string; reason?: string }) {
+    await this.safe('job.expired', async () => {
+      await this.notifications.createNotification(payload.customerId, 'JOB_EXPIRED_NO_WORKER', {
+        jobId: payload.jobId,
+        jobTitle: payload.jobTitle,
+        reason: payload.reason,
+      });
+    });
+  }
+
   private async notifyWithJob(
     workerId: string,
     jobId: string,
