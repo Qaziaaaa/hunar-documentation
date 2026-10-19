@@ -1,6 +1,7 @@
 import { http } from "@/lib/api-client";
 import { isMockMode } from "@/lib/data-source";
 import { generateMockOrderCode } from "@/lib/order-code";
+import { compressImage } from "@/lib/image-compression";
 import type { PostJobData } from "../types";
 
 /**
@@ -204,7 +205,8 @@ async function resolveImagesForSubmission(urls: string[]): Promise<string[]> {
     if (url.startsWith("blob:")) {
       try {
         const res = await fetch(url);
-        const blob = await res.blob();
+        const rawBlob = await res.blob();
+        const blob = await compressImage(rawBlob, { maxWidth: 1280, maxHeight: 1280, quality: 0.8 });
         try {
           const formData = new FormData();
           const file = new File([blob], `job-photo-${Date.now()}.jpg`, {

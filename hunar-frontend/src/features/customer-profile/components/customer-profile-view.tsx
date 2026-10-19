@@ -19,6 +19,7 @@ import { ErrorState } from "@/components/shared/error-state";
 import { Link } from "@/i18n/navigation";
 import { ApiError } from "@/lib/api-client";
 import { LoadingState } from "@/components/shared/loading-state";
+import { CustomerProfileSkeleton } from "./customer-profile-skeleton";
 import { useQueryClient } from "@tanstack/react-query";
 import { resolveAvatarUrl } from "@/lib/avatar";
 import { PersonalProfileTab } from "./personal-profile-tab";
@@ -257,11 +258,7 @@ export function CustomerProfileView() {
   };
 
   if (isLoading) {
-    return (
-      <LoadingState
-        label={isUrdu ? "پروفائل لوڈ کی جا رہی ہے..." : "Loading profile..."}
-      />
-    );
+    return <CustomerProfileSkeleton />;
   }
 
   if (loadError) {

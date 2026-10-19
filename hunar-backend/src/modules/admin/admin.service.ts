@@ -1301,6 +1301,8 @@ export class AdminService {
       timestamp: new Date(),
     });
 
+    await this.redis?.del('perf:categories:all').catch(() => {});
+
     return category;
   }
 
@@ -1365,6 +1367,8 @@ export class AdminService {
       timestamp: new Date(),
     });
 
+    await this.redis?.del('perf:categories:all').catch(() => {});
+
     return updated;
   }
 
@@ -1410,6 +1414,8 @@ export class AdminService {
       name: existing.name,
       timestamp: new Date(),
     });
+
+    await this.redis?.del('perf:categories:all').catch(() => {});
 
     return updated;
   }

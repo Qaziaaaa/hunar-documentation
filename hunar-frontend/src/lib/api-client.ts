@@ -378,10 +378,10 @@ export interface ApiClientOptions extends RequestInit {
 }
 
 // A hung fetch used to spin forever (perceived perf: infinite spinner).
-// GETs get 30s (accommodating Neon DB serverless cold starts & remote SSL latency),
-// mutations 30s, uploads 60s — all overridable per call via options.timeoutMs.
-const DEFAULT_GET_TIMEOUT_MS = 30_000;
-const DEFAULT_MUTATION_TIMEOUT_MS = 30_000;
+// GETs get 45s (accommodating Neon DB serverless cold starts & remote SSL latency),
+// mutations 45s, uploads 60s — all overridable per call via options.timeoutMs.
+const DEFAULT_GET_TIMEOUT_MS = 45_000;
+const DEFAULT_MUTATION_TIMEOUT_MS = 45_000;
 const UPLOAD_TIMEOUT_MS = 60_000;
 
 export async function apiClient<T>(
@@ -498,11 +498,18 @@ export async function apiClient<T>(
   // The backend wraps every successful response in { success: true, data, meta? }.
   if (raw && typeof raw === "object" && "success" in raw) {
     if ("meta" in raw && (raw as { meta?: unknown }).meta) {
-      const envelope = raw as { data?: T; meta?: unknown };
+      const envelope = raw as { data?: T; meta?: unknown; [k: string]: unknown };
+      const metaObj =
+        typeof envelope.meta === "object" && envelope.meta !== null ? (envelope.meta as Record<string, unknown>) : {};
+      const counts = (envelope as any).counts ?? metaObj.counts;
+      const total = (envelope as any).total ?? metaObj.total;
       return {
+        ...envelope,
         data: envelope.data,
         items: envelope.data,
         meta: envelope.meta,
+        counts,
+        total,
       } as unknown as T;
     }
     return (raw as { data?: T }).data as T;

@@ -14,7 +14,7 @@ export class TransformInterceptor<T> implements NestInterceptor<T, Record<string
             items?: T;
             [k: string]: unknown;
           };
-          return { success: true, data: (items ?? rest) as T, meta };
+          return { success: true, data: (items ?? rest) as T, meta: { ...meta, ...rest }, ...rest };
         }
         return { success: true, data: data as T };
       }),

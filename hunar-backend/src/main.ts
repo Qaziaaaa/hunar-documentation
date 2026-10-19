@@ -45,10 +45,22 @@ async function bootstrap(): Promise<void> {
   // instead of re-validating every avatar/thumbnail on each render.
   app.use(
     '/uploads',
+    (req: any, res: any, next: any) => {
+      res.setHeader('Access-Control-Allow-Origin', '*');
+      res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+      next();
+    },
     express.static(path.join(process.cwd(), 'uploads'), {
       maxAge: '30d',
       immutable: true,
+      setHeaders: (res: any) => {
+        res.setHeader('Access-Control-Allow-Origin', '*');
+        res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+      },
     }),
+    (req: any, res: any) => {
+      res.status(404).end();
+    },
   );
   app.use(express.json({ limit: '10mb' }));
   app.use(express.urlencoded({ extended: true, limit: '10mb' }));

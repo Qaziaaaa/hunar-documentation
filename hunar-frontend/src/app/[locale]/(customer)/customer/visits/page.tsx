@@ -6,6 +6,7 @@ import { Link } from "@/i18n/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { getCustomerVisits } from "@/features/customer-visits/api/customer-visits-api";
 import { LoadingState } from "@/components/shared/loading-state";
+import { CustomerJobsSkeleton } from "@/features/customer-jobs/components/customer-jobs-skeleton";
 import { ErrorState } from "@/components/shared/error-state";
 import { ApiError } from "@/lib/api-client";
 import { LogIn } from "lucide-react";
@@ -73,5 +74,5 @@ export default function CustomerVisitsPage() {
     );
   }
 
-  return <LoadingState label="Redirecting to your active visit tracking..." />;
+  return <CustomerJobsSkeleton />;
 }
