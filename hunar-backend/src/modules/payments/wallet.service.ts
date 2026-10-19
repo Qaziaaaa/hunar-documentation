@@ -374,7 +374,10 @@ export class WalletService {
     }
 
     // Database source-of-truth check: if commission or hold ledger already exists, consider already held
-    const existingCommission = await this.prisma.commission.findUnique({ where: { jobId } });
+    const [existingCommission, existingHoldLedger] = await Promise.all([
+      this.prisma.commission.findUnique({ where: { jobId } }),
+      this.prisma.walletLedger.findUnique({ where: { idempotencyKey: `hold:${jobId}` } }),
+    ]);
     if (existingCommission) {
       return {
         held: true,
@@ -383,10 +386,6 @@ export class WalletService {
         amount,
       };
     }
-
-    const existingHoldLedger = await this.prisma.walletLedger.findUnique({
-      where: { idempotencyKey: `hold:${jobId}` },
-    });
     if (existingHoldLedger) {
       return {
         held: true,

@@ -14,7 +14,7 @@ import { assertWorkerEligible } from '../../common/helpers/worker-eligibility.ut
 import { JobsService } from '../jobs/jobs.service';
 import { JwtPayload } from '../../common/types/jwt-payload.interface';
 import { RealtimeService } from '../realtime/realtime.service';
-import { JOB_EVENTS, userRoom } from '../jobs/jobs.events';
+import { JOB_EVENTS, userRoom, WORKERS_ROOM } from '../jobs/jobs.events';
 import {
   CounterOfferDto,
   CreateOfferDto,
@@ -41,10 +41,15 @@ export class OffersService {
   }
 
   async createOffer(workerId: string, jobId: string, dto: CreateOfferDto) {
-    // Only an approved + complete worker may send offers (Task 3 eligibility).
-    await assertWorkerEligible(this.prisma, workerId);
+    // Concurrently verify worker eligibility, fetch job, and check for existing offer
+    const [, job, existing] = await Promise.all([
+      assertWorkerEligible(this.prisma, workerId, this.redis),
+      this.prisma.serviceRequest.findUnique({ where: { id: jobId } }),
+      this.prisma.jobOffer.findUnique({
+        where: { jobId_workerId: { jobId, workerId } },
+      }),
+    ]);
 
-    const job = await this.prisma.serviceRequest.findUnique({ where: { id: jobId } });
     if (!job) {
       throw new NotFoundException('Job not found');
     }
@@ -53,10 +58,6 @@ export class OffersService {
         'JOB_INVALID_STATE: offers are no longer accepted for this job',
       );
     }
-
-    const existing = await this.prisma.jobOffer.findUnique({
-      where: { jobId_workerId: { jobId, workerId } },
-    });
     if (existing) {
       throw new ConflictException('OFFER_DUPLICATE: you already submitted an offer for this job');
     }
@@ -92,13 +93,14 @@ export class OffersService {
     });
 
     if (job.status === 'OPEN') {
-      await this.jobsService.transitionJobState(jobId, 'OFFERS_RECEIVED');
+      await this.jobsService.transitionJobState(jobId, 'OFFERS_RECEIVED').catch(() => 0);
     }
-
     if (this.redis) {
-      await this.redis.delPattern(`perf:jobs:customer:${job.customerId}:*`);
-      await this.redis.delPattern(`perf:job:detail:${jobId}:*`);
-      await this.redis.delPattern(`perf:offers:my:${workerId}:*`);
+      await Promise.all([
+        this.redis.delPattern(`perf:jobs:customer:${job.customerId}:*`),
+        this.redis.delPattern(`perf:job:detail:${jobId}:*`),
+        this.redis.delPattern(`perf:offers:my:${workerId}:*`),
+      ]).catch(() => 0);
     }
 
     this.eventBus.emit('offer.submitted', {
@@ -162,10 +164,13 @@ export class OffersService {
     }
 
     if (user.role === Role.CUSTOMER) {
-      await this.prisma.jobOffer.updateMany({
-        where: { jobId, status: 'PENDING' },
-        data: { status: 'VIEWING' },
-      });
+      // Fire-and-forget non-blocking status update to avoid slowing down offer retrieval
+      this.prisma.jobOffer
+        .updateMany({
+          where: { jobId, status: 'PENDING' },
+          data: { status: 'VIEWING' },
+        })
+        .catch(() => 0);
     }
     const where = user.role === Role.WORKER ? { jobId, workerId: user.sub } : { jobId };
     const offers = await this.prisma.jobOffer.findMany({
@@ -202,24 +207,35 @@ export class OffersService {
     });
 
     const workerIds = [...new Set(offers.map((o) => o.workerId))];
-    const ratingAgg = (await this.prisma.review.groupBy({
-      by: ['revieweeId'],
-      where: { revieweeId: { in: workerIds }, isVisible: true },
-      _avg: { rating: true },
-      _count: { _all: true },
-    })) as unknown as Array<{
-      revieweeId: string;
-      _avg: { rating: number | null };
-      _count: { _all: number };
-    }>;
-    const completedAgg = (await this.prisma.serviceRequest.groupBy({
-      by: ['selectedWorkerId'],
-      where: {
-        selectedWorkerId: { in: workerIds },
-        status: { in: ['COMPLETED', 'PAID', 'REVIEWED'] },
-      },
-      _count: { _all: true },
-    })) as unknown as Array<{ selectedWorkerId: string | null; _count: { _all: number } }>;
+
+    const [ratingAgg, completedAgg] = await Promise.all([
+      workerIds.length > 0
+        ? (this.prisma.review.groupBy({
+            by: ['revieweeId'],
+            where: { revieweeId: { in: workerIds }, isVisible: true },
+            _avg: { rating: true },
+            _count: { _all: true },
+          }) as unknown as Promise<
+            Array<{
+              revieweeId: string;
+              _avg: { rating: number | null };
+              _count: { _all: number };
+            }>
+          >)
+        : Promise.resolve([]),
+      workerIds.length > 0
+        ? (this.prisma.serviceRequest.groupBy({
+            by: ['selectedWorkerId'],
+            where: {
+              selectedWorkerId: { in: workerIds },
+              status: { in: ['VISIT_COMPLETED', 'COMPLETED', 'PAID', 'REVIEWED'] },
+            },
+            _count: { _all: true },
+          }) as unknown as Promise<
+            Array<{ selectedWorkerId: string | null; _count: { _all: number } }>
+          >)
+        : Promise.resolve([]),
+    ]);
 
     const ratingMap = new Map(ratingAgg.map((r) => [r.revieweeId, r]));
     const completedMap = new Map(completedAgg.map((c) => [c.selectedWorkerId!, c]));
@@ -361,45 +377,42 @@ export class OffersService {
       );
     }
 
-    if (job.status === 'OPEN') {
-      await this.prisma.jobOffer.updateMany({
-        where: { jobId, NOT: { id: offerId }, status: { in: ['PENDING', 'VIEWING', 'COUNTERED'] } },
-        data: { status: 'REJECTED' },
-      });
-    }
-
     const acceptedWorkerId = offer.workerId;
     const { acceptedOffer, rejectedOffers } = await this.prisma.$transaction(async (tx) => {
-      const acceptedOffer = await tx.jobOffer.update({
-        where: { id: offerId },
-        data: { status: 'ACCEPTED', lockedAt: new Date() },
-      });
-      const rejectedOffers = await tx.jobOffer.findMany({
-        where: { jobId, NOT: { id: offerId }, status: { in: ['PENDING', 'VIEWING', 'COUNTERED'] } },
-        select: { id: true, workerId: true },
-      });
-      await tx.jobOffer.updateMany({
-        where: { jobId, NOT: { id: offerId }, status: { in: ['PENDING', 'VIEWING', 'COUNTERED'] } },
-        data: { status: 'REJECTED' },
-      });
-      await tx.serviceRequest.update({
-        where: { id: jobId },
-        data: {
-          status: 'WORKER_ASSIGNED',
-          selectedWorkerId: acceptedWorkerId,
-          lockedVisitCharge: finalCharge,
-        },
-      });
-      // Auto-create the visit record (worker schedules the actual time via the Visit flow).
-      await tx.visit.create({
-        data: {
-          jobId,
-          workerId: acceptedWorkerId,
-          offerId,
-          scheduledDate: job.preferredVisitTime ?? new Date(),
-          status: 'SCHEDULED',
-        },
-      });
+      const [acceptedOffer, rejectedOffers] = await Promise.all([
+        tx.jobOffer.update({
+          where: { id: offerId },
+          data: { status: 'ACCEPTED', lockedAt: new Date() },
+        }),
+        tx.jobOffer.findMany({
+          where: { jobId, NOT: { id: offerId }, status: { in: ['PENDING', 'VIEWING', 'COUNTERED'] } },
+          select: { id: true, workerId: true },
+        }),
+      ]);
+
+      await Promise.all([
+        tx.jobOffer.updateMany({
+          where: { jobId, NOT: { id: offerId }, status: { in: ['PENDING', 'VIEWING', 'COUNTERED'] } },
+          data: { status: 'REJECTED' },
+        }),
+        tx.serviceRequest.update({
+          where: { id: jobId },
+          data: {
+            status: 'WORKER_ASSIGNED',
+            selectedWorkerId: acceptedWorkerId,
+            lockedVisitCharge: finalCharge,
+          },
+        }),
+        tx.visit.create({
+          data: {
+            jobId,
+            workerId: acceptedWorkerId,
+            offerId,
+            scheduledDate: job.preferredVisitTime ?? new Date(),
+            status: 'SCHEDULED',
+          },
+        }),
+      ]);
       return { acceptedOffer, rejectedOffers };
     });
 
@@ -426,9 +439,15 @@ export class OffersService {
       oldStatus: job.status,
       newStatus: 'WORKER_ASSIGNED',
     });
+    this.realtime.emitToRoom(WORKERS_ROOM, JOB_EVENTS.jobClosed, { jobId });
 
+    this.jobsService.clearAvailableJobsCache?.();
     if (this.redis) {
-      await this.redis.delPattern(`perf:jobs:customer:${job.customerId}:*`);
+      await Promise.all([
+        this.redis.delPattern(`perf:jobs:customer:${job.customerId}:*`),
+        this.redis.delPattern(`perf:job:detail:${jobId}:*`),
+        this.redis.delPattern('perf:jobs:available:*'),
+      ]).catch(() => 0);
     }
 
     return { acceptedOffer, rejectedOffers, lockedVisitCharge: finalCharge };
@@ -465,7 +484,7 @@ export class OffersService {
         throw new ForbiddenException('You can only counter your own offer');
       }
       // Only an approved + complete worker may negotiate (Task 3 eligibility).
-      await assertWorkerEligible(this.prisma, offer.workerId);
+      await assertWorkerEligible(this.prisma, offer.workerId, this.redis);
       by = 'worker';
     } else {
       throw new ForbiddenException('Role not authorised to negotiate');
