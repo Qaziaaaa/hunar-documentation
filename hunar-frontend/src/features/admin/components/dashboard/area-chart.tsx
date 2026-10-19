@@ -80,7 +80,10 @@ export function AreaChart({ points, labels, className = "", detailed = false }: 
   const wrapRef = useRef<HTMLDivElement>(null);
   const tipRef = useRef<HTMLDivElement>(null);
   const clipRef = useRef<SVGGElement>(null);
-  const [active, setActive] = useState<number | null>(null);
+  const crossRef = useRef<SVGGElement>(null);
+  // Pointer state lives in a ref (sample mutates DOM directly): tracking the
+  // crosshair must never trigger a React re-render — that was the stutter.
+  const activeRef = useRef<number | null>(null);
   const [size, setSize] = useState({ w: 0, h: 0 });
   const uid = useId();
 
@@ -151,43 +154,48 @@ export function AreaChart({ points, labels, className = "", detailed = false }: 
       const tip = tipRef.current;
       const svg = svgRef.current;
       const wrap = wrapRef.current;
-      if (!tip || !svg || !wrap || !geo) return;
-      setActive(i);
+      const cross = crossRef.current;
+      if (!tip || !svg || !wrap || !cross || !geo) return;
+      const wasHidden = !tip.style.opacity || tip.style.opacity === "0";
+      activeRef.current = i;
       const rect = svg.getBoundingClientRect();
       const wRect = wrap.getBoundingClientRect();
-      const sx = geo.px(i);
-      const px = (sx / w) * rect.width + (rect.left - wRect.left);
+      const cx = geo.px(i);
+      const cy = geo.py(points[i]);
+      const px = (cx / w) * rect.width + (rect.left - wRect.left);
+      const py = (cy / h) * rect.height + (rect.top - wRect.top);
       const val = points[i];
       tip.innerHTML = `<b>Rs. ${Math.round(val).toLocaleString()}</b><span>${labels?.[i] ?? ""}</span>`;
       tip.style.opacity = "1";
+      // Sample placement: 26px right of the point (flip left on overflow),
+      // vertically centred on the point and clamped to the chart box.
       const tw = tip.offsetWidth;
-      tip.style.transform = `translate(${Math.min(Math.max(px - tw / 2, 0), Math.max(wRect.width - tw, 0))}px, 8px)`;
-      const cross = svg.querySelector<SVGGElement>(`#${uid}-cross`);
-      if (cross) {
-        cross.style.opacity = "1";
-        const cx = geo.px(i);
-        const cy = geo.py(val);
-        const line = cross.querySelector("line");
-        const dot = cross.querySelector("circle");
-        if (line) {
-          line.setAttribute("x1", String(cx));
-          line.setAttribute("x2", String(cx));
-        }
-        if (dot) {
-          dot.setAttribute("cx", String(cx));
-          dot.setAttribute("cy", String(cy));
-        }
+      const th = tip.offsetHeight;
+      const tx = px + 26 + tw > wRect.width ? px - 26 - tw : px + 26;
+      const ty = Math.max(4, Math.min(Math.max(wRect.height - th - 4, 4), py - th / 2));
+      if (wasHidden) {
+        // First reveal after hide: land in place (sample H.set), then glide.
+        tip.style.transition = "none";
+        tip.style.transform = `translate(${tx}px, ${ty}px)`;
+        void tip.offsetWidth;
+        tip.style.transition = "";
+      } else {
+        tip.style.transform = `translate(${tx}px, ${ty}px)`;
       }
+      // Crosshair: x glides via the group transform (CSS .25s power3.out),
+      // the dot snaps its cy to the sampled point like the sample does.
+      cross.style.transform = `translateX(${cx.toFixed(1)}px)`;
+      cross.querySelectorAll("circle").forEach((c) => c.setAttribute("cy", cy.toFixed(1)));
+      cross.style.opacity = "1";
     },
-    [geo, points, labels, uid, w],
+    [geo, points, labels, w, h],
   );
 
   const hideTip = useCallback(() => {
-    setActive(null);
-    tipRef.current && (tipRef.current.style.opacity = "0");
-    const cross = svgRef.current?.querySelector<SVGGElement>(`#${uid}-cross`);
-    if (cross) cross.style.opacity = "0";
-  }, [uid]);
+    activeRef.current = null;
+    if (tipRef.current) tipRef.current.style.opacity = "0";
+    if (crossRef.current) crossRef.current.style.opacity = "0";
+  }, []);
 
   if (points.length < 2) {
     return (
@@ -229,7 +237,7 @@ export function AreaChart({ points, labels, className = "", detailed = false }: 
         onKeyDown={(e) => {
           if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
           e.preventDefault();
-          const cur = active ?? lastI;
+          const cur = activeRef.current ?? lastI;
           const next = Math.min(Math.max(cur + (e.key === "ArrowRight" ? 1 : -1), 0), lastI);
           showTip(next);
         }}
@@ -281,9 +289,16 @@ export function AreaChart({ points, labels, className = "", detailed = false }: 
         )}
 
         {detailed && (
-          <g id={`${uid}-cross`} className="wf-chart__cross" style={{ opacity: 0 }} aria-hidden>
+          <g
+            id={`${uid}-cross`}
+            ref={crossRef}
+            className="wf-chart__cross"
+            style={{ opacity: 0 }}
+            aria-hidden
+          >
             <line x1="0" y1={PAD.t} x2="0" y2={h - PAD.b} />
-            <circle cx="0" cy="0" r="4" className="wf-chart__dot" />
+            <circle cx="0" cy="0" r="7" className="wf-chart__ring" />
+            <circle cx="0" cy="0" r="4.5" className="wf-chart__dot" />
           </g>
         )}
       </svg>

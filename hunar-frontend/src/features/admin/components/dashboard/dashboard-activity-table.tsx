@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import {
   AlertTriangle,
   CheckCircle,
@@ -320,6 +320,113 @@ export function DashboardActivityTable({
 
   const visible = filter === "all" ? rows : rows.filter((r) => r.kind === filter);
 
+  // ── Sample motion: yo() FLIP filter + yc() live-row insert ──
+  const tbodyRef = useRef<HTMLTableSectionElement | null>(null);
+  // Row tops captured at filter-click time (viewport coords) — consumed by
+  // the FLIP effect below, so this must be declared before it.
+  const flipBeforeRef = useRef<Map<string, number> | null>(null);
+  const prevVisibleRef = useRef<Set<string> | null>(null);
+
+  const motionOk = () =>
+    process.env.NODE_ENV !== "test" &&
+    typeof window !== "undefined" &&
+    !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  const handleFilterChange = (next: FilterKind) => {
+    if (next === filter) return;
+    if (motionOk()) {
+      const map = new Map<string, number>();
+      tbodyRef.current?.querySelectorAll<HTMLElement>("tr[data-row-id]").forEach((tr) => {
+        map.set(tr.dataset.rowId!, tr.getBoundingClientRect().top);
+      });
+      flipBeforeRef.current = map;
+    }
+    setFilter(next);
+  };
+
+  // Insert check runs BEFORE the FLIP effect (declaration order) so it can
+  // see the pending filter flag without consuming it.
+  useLayoutEffect(() => {
+    const ids = new Set(visible.map((r) => r.id));
+    const prev = prevVisibleRef.current;
+    prevVisibleRef.current = ids;
+    if (!prev || flipBeforeRef.current) return;
+    const view = tbodyRef.current?.closest<HTMLElement>(".wf-view");
+    // Entrance owns the first choreography; inserts only fire afterwards.
+    if (!view || view.dataset.entrance !== "on") return;
+    const inserted = visible.filter((r) => !prev.has(r.id));
+    if (inserted.length === 0) return;
+    inserted.forEach((row, i) => {
+      const tr = tbodyRef.current?.querySelector<HTMLElement>(
+        `tr[data-row-id="${row.id}"]`,
+      );
+      if (!tr || typeof tr.animate !== "function") return;
+      tr.getAnimations().forEach((a) => a.cancel());
+      const a = tr.animate(
+        [
+          { opacity: 0, transform: "translateX(18px)" },
+          { opacity: 1, transform: "translateX(0px)" },
+        ],
+        {
+          duration: 500,
+          delay: i * 40,
+          easing: "cubic-bezier(0.215, 0.61, 0.355, 1)",
+          fill: "both",
+        },
+      );
+      a.onfinish = () => a.cancel();
+    });
+  }, [visible]);
+
+  // Sample yo(): survivors slide .55s power3.inOut stagger .012; rows that
+  // enter the filter fade in (y10 scale.98 → .45s power3.out stagger .03).
+  useLayoutEffect(() => {
+    const before = flipBeforeRef.current;
+    if (!before) return;
+    flipBeforeRef.current = null;
+    if (!motionOk()) return;
+    const rowsEls = Array.from(
+      tbodyRef.current?.querySelectorAll<HTMLElement>("tr[data-row-id]") ?? [],
+    );
+    let enterIdx = 0;
+    rowsEls.forEach((tr, i) => {
+      const prevTop = before.get(tr.dataset.rowId!);
+      if (typeof tr.animate !== "function") return;
+      if (prevTop === undefined) {
+        const a = tr.animate(
+          [
+            { opacity: 0, transform: "translateY(10px) scale(0.98)" },
+            { opacity: 1, transform: "translateY(0px) scale(1)" },
+          ],
+          {
+            duration: 450,
+            delay: enterIdx++ * 30,
+            easing: "cubic-bezier(0.215, 0.61, 0.355, 1)",
+            fill: "both",
+          },
+        );
+        a.onfinish = () => a.cancel();
+        return;
+      }
+      const dy = prevTop - tr.getBoundingClientRect().top;
+      if (Math.abs(dy) < 1) return;
+      tr.getAnimations().forEach((a) => a.cancel());
+      const a = tr.animate(
+        [
+          { transform: `translateY(${dy}px)` },
+          { transform: "translateY(0px)" },
+        ],
+        {
+          duration: 550,
+          delay: i * 12,
+          easing: "cubic-bezier(0.645, 0.045, 0.355, 1)",
+          fill: "both",
+        },
+      );
+      a.onfinish = () => a.cancel();
+    });
+  }, [filter]);
+
   const handleApprovePayout = async (id: string, name: string, amount: number) => {
     setProcessingId(id);
     await processWithdrawalRequest(id, "approve");
@@ -426,7 +533,7 @@ export function DashboardActivityTable({
             <SegControl
               options={FILTER_OPTIONS}
               value={filter}
-              onChange={setFilter}
+              onChange={handleFilterChange}
               size="sm"
               label="Filter activity"
               className="min-w-0"
@@ -452,11 +559,11 @@ export function DashboardActivityTable({
                   <th aria-label="Actions" />
                 </tr>
               </thead>
-              <tbody>
+              <tbody ref={tbodyRef}>
                 {visible.map((row) => {
                   const kind = KIND_PILL[row.kind];
                   return (
-                    <tr key={row.id}>
+                    <tr key={row.id} data-row-id={row.id} data-flip>
                       <td className="wf-act-when mono">
                         <time dateTime={row.when}>{timeAgo(row.when)}</time>
                       </td>
@@ -491,7 +598,7 @@ export function DashboardActivityTable({
                           <>
                             <button
                               type="button"
-                              className="wf-btn wf-btn--sm wf-btn--primary mr-2"
+                              className="wf-btn wf-btn--sm wf-btn--primary magnetic mr-2"
                               disabled={processingId === row.id.replace(/^wd-/, "")}
                               onClick={() => {
                                 const wd = withdrawals.find((w) => `wd-${w.id}` === row.id);

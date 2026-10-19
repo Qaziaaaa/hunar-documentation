@@ -44,6 +44,7 @@ function StatCard({
   spark,
   href,
   pulse,
+  ci,
 }: {
   title: string;
   icon: React.ReactNode;
@@ -53,6 +54,7 @@ function StatCard({
   spark?: number[];
   href: string;
   pulse?: boolean;
+  ci: number;
 }) {
   return (
     <Link
@@ -60,7 +62,7 @@ function StatCard({
       className={`wf-card wf-stat${variant ? ` wf-stat--${variant}` : ""}`}
       data-card
       data-lift
-      style={{ "--ci": 1 } as React.CSSProperties}
+      style={{ "--ci": ci } as React.CSSProperties}
     >
       <div className="wf-stat__head">
         <span className="wf-stat__icon" aria-hidden>
@@ -111,6 +113,7 @@ export function DashboardStatsGrid({
         value={totalJobs}
         note={`${kpis.activeJobs} active · ${kpis.completedJobs} done`}
         spark={jobSpark}
+        ci={0}
       />
       <StatCard
         title="Customers"
@@ -125,6 +128,7 @@ export function DashboardStatsGrid({
             +{kpis.newCustomersThisWeek} this week
           </span>
         }
+        ci={1}
       />
       <StatCard
         title="Workers"
@@ -144,6 +148,7 @@ export function DashboardStatsGrid({
             </span>
           </>
         }
+        ci={2}
       />
       <StatCard
         title="Active Now"
@@ -153,6 +158,7 @@ export function DashboardStatsGrid({
         value={activeNow}
         note="Live jobs in progress"
         pulse
+        ci={3}
       />
     </div>
   );

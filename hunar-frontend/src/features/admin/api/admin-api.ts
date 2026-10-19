@@ -67,6 +67,7 @@ interface BackendUserRow {
   isAvailable: boolean;
   workerProfile?: any;
   _count?: any;
+  rating?: number;
 }
 
 interface BackendVerificationRow {
@@ -278,31 +279,6 @@ function toCustomerUser(c: BackendUserRow): CustomerUser {
   };
 }
 
-async function fetchWorkerRatingMap(): Promise<Map<string, number>> {
-  const sums = new Map<string, { total: number; count: number }>();
-  for (let page = 1; page <= 3; page++) {
-    const res = await http.get<{ data: any[]; meta?: PageMeta }>(
-      `/admin/reviews?limit=100&page=${page}`,
-    );
-    const rows = res?.data ?? (Array.isArray(res) ? (res as any[]) : []);
-    for (const r of rows) {
-      const id = r?.revieweeId ?? r?.reviewee?.id;
-      const rating = Number(r?.rating);
-      if (!id || !Number.isFinite(rating)) continue;
-      const cur = sums.get(id) ?? { total: 0, count: 0 };
-      cur.total += rating;
-      cur.count += 1;
-      sums.set(id, cur);
-    }
-    if (page >= (res?.meta?.totalPages ?? 1)) break;
-  }
-  const map = new Map<string, number>();
-  for (const [id, s] of sums) {
-    map.set(id, s.count > 0 ? Math.round((s.total / s.count) * 10) / 10 : 0);
-  }
-  return map;
-}
-
 function toVerificationRequest(v: BackendVerificationRow): VerificationRequest {
   const cnicFront = v.documents?.find((d) => d.type === "CNIC_FRONT");
   const cnicBack = v.documents?.find((d) => d.type === "CNIC_BACK");
@@ -375,6 +351,66 @@ function toServiceCategory(c: any): ServiceCategory {
     // Real slabs only — categories without configured charges show an empty
     // state in the editor instead of invented Rs. 100–500 pricing.
     distanceSlabs: Array.isArray(c.distanceSlabs) ? c.distanceSlabs : [],
+  };
+}
+
+function toAuditLogEntry(log: any): AuditLogEntry {
+  let detailsStr = log.reason ?? "";
+  let metaObj = log.metadata;
+
+  if (typeof detailsStr === "string" && (detailsStr.startsWith("{") || detailsStr.startsWith("["))) {
+    try {
+      metaObj = JSON.parse(detailsStr);
+    } catch {}
+  }
+
+  let formattedDetails = "";
+  if (metaObj && typeof metaObj === "object") {
+    if ("from" in metaObj && "to" in metaObj) {
+      // Generic before → after (settings values, category renames, etc.).
+      const fmt = (v: unknown) => {
+        if (v === null || v === undefined) return "—";
+        if (typeof v === "object") return (v as { name?: string }).name ?? JSON.stringify(v);
+        return String(v);
+      };
+      formattedDetails = `${fmt(metaObj.from)} → ${fmt(metaObj.to)}`;
+    } else if (metaObj.name) {
+      formattedDetails = `Category updated: "${metaObj.name}"`;
+    } else if (metaObj.verificationStatus) {
+      formattedDetails = `Worker verification set to ${metaObj.verificationStatus}`;
+    } else if (metaObj.reason) {
+      formattedDetails = String(metaObj.reason);
+    } else if (metaObj.status) {
+      formattedDetails = `Status changed to ${metaObj.status}`;
+    } else {
+      formattedDetails = log.action ? log.action.replace(/_/g, " ") : "Admin Action";
+    }
+  } else if (detailsStr && detailsStr !== "{}" && !detailsStr.startsWith("{")) {
+    formattedDetails = detailsStr;
+  } else {
+    formattedDetails = log.action ? log.action.replace(/_/g, " ") : "Admin Action";
+  }
+
+  const typeMap: Record<string, string> = {
+    SERVICE_CATEGORY: "Category",
+    WORKER: "Worker",
+    CUSTOMER: "Customer",
+    JOB: "Job",
+    PAYMENT: "Payment",
+    USER: "User",
+    PLATFORM_SETTING: "Setting",
+  };
+  const label = log.targetType ? (typeMap[log.targetType] ?? log.targetType.replace(/_/g, " ")) : "System";
+  const shortId = log.targetId ? (log.targetId.length > 8 ? log.targetId.substring(0, 8) : log.targetId) : "";
+  const formattedTarget = shortId ? `${label} (${shortId})` : label;
+
+  return {
+    id: log.id,
+    adminName: log.actorRole ?? "ADMIN",
+    actionType: log.action ?? "ACTION",
+    targetResource: formattedTarget,
+    details: formattedDetails,
+    timestamp: log.createdAt,
   };
 }
 
@@ -453,11 +489,12 @@ export const adminApi = {
     return http.put(`/admin/wallet/${workerId}/unfreeze`);
   },
 
-  async listJobs(query: PaginationQuery = {}): Promise<PageResult<LiveJobItem>> {
+  async listJobs(query: PaginationQuery & { since?: string } = {}): Promise<PageResult<LiveJobItem>> {
     const params = new URLSearchParams({
       page: String(query.page ?? 1),
       limit: String(Math.min(query.limit ?? 50, 50)),
     });
+    if (query.since) params.set("since", query.since);
     const res = await http.get<{ data: BackendJobRow[]; meta: PageMeta }>(
       `/admin/jobs?${params.toString()}`,
     );
@@ -480,15 +517,12 @@ export const adminApi = {
       page: String(query.page ?? 1),
       limit: String(Math.min(query.limit ?? 50, 50)),
     });
-    const [res, ratings] = await Promise.all([
-      http.get<{ data: BackendUserRow[]; meta: PageMeta }>(
-        `/admin/workers?${params.toString()}`,
-      ),
-      fetchWorkerRatingMap(),
-    ]);
-    const items = (res?.data ?? (Array.isArray(res) ? res : [])).map(toWorkerUser).map((w) => ({
-      ...w,
-      rating: ratings.get(w.id) ?? 0,
+    const res = await http.get<{ data: BackendUserRow[]; meta: PageMeta }>(
+      `/admin/workers?${params.toString()}`,
+    );
+    const items = (res?.data ?? (Array.isArray(res) ? res : [])).map((row) => ({
+      ...toWorkerUser(row),
+      rating: row.rating ?? 0,
     }));
     const meta = res?.meta ?? { page: 1, limit: 50, total: items.length, totalPages: 1 };
     return { items, meta };
@@ -509,17 +543,14 @@ export const adminApi = {
 
   async getWorkerDetail(workerId: string): Promise<any> {
     try {
-      const [res, ratings] = await Promise.all([
-        http.get<any>(`/admin/workers/${workerId}`),
-        fetchWorkerRatingMap(),
-      ]);
+      const res = await http.get<any>(`/admin/workers/${workerId}`);
       if (res && res.profile) {
         return {
           ...toWorkerUser({
             ...res.profile,
             skills: res.profile.skills?.map((s: any) => typeof s === "object" ? s.name : s) ?? [],
           }),
-          rating: ratings.get(workerId) ?? 0,
+          rating: Number(res.stats?.ratingAverage ?? 0),
           bio: res.profile.bio,
           documents: res.documents ?? [],
           jobs: res.jobs ?? [],
@@ -743,65 +774,44 @@ export const adminApi = {
       "/admin/audit?limit=50",
     );
     const rows = res?.data ?? (Array.isArray(res) ? res : []);
-    return rows.map((log) => {
-      let detailsStr = log.reason ?? "";
-      let metaObj = log.metadata;
+    return rows.map(toAuditLogEntry);
+  },
 
-      if (typeof detailsStr === "string" && (detailsStr.startsWith("{") || detailsStr.startsWith("["))) {
-        try {
-          metaObj = JSON.parse(detailsStr);
-        } catch {}
-      }
+  // Live dashboard: KPIs + lean workforce in one short-TTL-cached round trip.
+  async getDashboardOverview(): Promise<{
+    kpis: AdminKpiStats;
+    workers: WorkerUser[];
+  }> {
+    const res = await http.get<{
+      kpis: AdminKpiStats;
+      workers?: Array<Partial<BackendUserRow> & { rating?: number }>;
+    }>("/admin/dashboard/overview");
+    const workers = (res?.workers ?? []).map((row) => ({
+      ...toWorkerUser(row as BackendUserRow),
+      rating: row.rating ?? 0,
+    }));
+    return { kpis: res.kpis, workers };
+  },
 
-      let formattedDetails = "";
-      if (metaObj && typeof metaObj === "object") {
-        if ("from" in metaObj && "to" in metaObj) {
-          // Generic before → after (settings values, category renames, etc.).
-          const fmt = (v: unknown) => {
-            if (v === null || v === undefined) return "—";
-            if (typeof v === "object") return (v as { name?: string }).name ?? JSON.stringify(v);
-            return String(v);
-          };
-          formattedDetails = `${fmt(metaObj.from)} → ${fmt(metaObj.to)}`;
-        } else if (metaObj.name) {
-          formattedDetails = `Category updated: "${metaObj.name}"`;
-        } else if (metaObj.verificationStatus) {
-          formattedDetails = `Worker verification set to ${metaObj.verificationStatus}`;
-        } else if (metaObj.reason) {
-          formattedDetails = String(metaObj.reason);
-        } else if (metaObj.status) {
-          formattedDetails = `Status changed to ${metaObj.status}`;
-        } else {
-          formattedDetails = log.action ? log.action.replace(/_/g, " ") : "Admin Action";
-        }
-      } else if (detailsStr && detailsStr !== "{}" && !detailsStr.startsWith("{")) {
-        formattedDetails = detailsStr;
-      } else {
-        formattedDetails = log.action ? log.action.replace(/_/g, " ") : "Admin Action";
-      }
-
-      const typeMap: Record<string, string> = {
-        SERVICE_CATEGORY: "Category",
-        WORKER: "Worker",
-        CUSTOMER: "Customer",
-        JOB: "Job",
-        PAYMENT: "Payment",
-        USER: "User",
-        PLATFORM_SETTING: "Setting",
-      };
-      const label = log.targetType ? (typeMap[log.targetType] ?? log.targetType.replace(/_/g, " ")) : "System";
-      const shortId = log.targetId ? (log.targetId.length > 8 ? log.targetId.substring(0, 8) : log.targetId) : "";
-      const formattedTarget = shortId ? `${label} (${shortId})` : label;
-
-      return {
-        id: log.id,
-        adminName: log.actorRole ?? "ADMIN",
-        actionType: log.action ?? "ACTION",
-        targetResource: formattedTarget,
-        details: formattedDetails,
-        timestamp: log.createdAt,
-      };
-    });
+  // Live dashboard: the four activity-table feeds in one request.
+  async getDashboardActivity(): Promise<{
+    withdrawals: WithdrawalRequest[];
+    disputes: DisputeReport[];
+    auditLogs: AuditLogEntry[];
+    verifications: VerificationRequest[];
+  }> {
+    const res = await http.get<{
+      withdrawals?: any[];
+      disputes?: any[];
+      auditLogs?: any[];
+      verifications?: any[];
+    }>("/admin/dashboard/activity");
+    return {
+      withdrawals: (res?.withdrawals ?? []).map(toWithdrawalRequest),
+      disputes: (res?.disputes ?? []).map(toDisputeReport),
+      auditLogs: (res?.auditLogs ?? []).map(toAuditLogEntry),
+      verifications: (res?.verifications ?? []).map(toVerificationRequest),
+    };
   },
 };
 // Read paths below used to swallow API errors and serve MOCK_*/zero data — the
@@ -813,6 +823,22 @@ export const adminApi = {
 // Exported async helpers used by Server Components & Hooks
 export async function fetchAdminKpis(): Promise<AdminKpiStats> {
   return adminApi.getKpis();
+}
+
+export async function fetchDashboardOverview(): Promise<{
+  kpis: AdminKpiStats;
+  workers: WorkerUser[];
+}> {
+  return adminApi.getDashboardOverview();
+}
+
+export async function fetchDashboardActivity(): Promise<{
+  withdrawals: WithdrawalRequest[];
+  disputes: DisputeReport[];
+  auditLogs: AuditLogEntry[];
+  verifications: VerificationRequest[];
+}> {
+  return adminApi.getDashboardActivity();
 }
 
 export async function fetchPendingVerifications(): Promise<VerificationRequest[]> {

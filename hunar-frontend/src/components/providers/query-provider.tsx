@@ -15,6 +15,15 @@ function staleTimeFor(query: Query): number {
   if (domain === "notifications" || (domain === "worker" && sub === "notifications")) {
     return 15_000;
   }
+  // Admin: dashboard sections poll on their own cadences — keep staleTime at
+  // or below those intervals so a remount never serves older data than the
+  // next tick would. Lists stay short so navigation back is fresh.
+  if (domain === "admin") {
+    if (sub === "overview") return 15_000;
+    if (sub === "jobs") return 20_000;
+    if (sub === "activity" || sub === "transactions") return 60_000;
+    return 30_000;
+  }
   // Transactional but chatty: chats, money, job status
   if (sub === "chat" || sub === "wallet") return 30_000;
   if (domain === "customer" && (sub === "jobs" || sub === "job")) return 30_000;
