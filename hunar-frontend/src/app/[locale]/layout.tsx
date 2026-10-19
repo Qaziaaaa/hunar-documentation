@@ -101,9 +101,19 @@ export default async function LocaleLayout({
     <html
       lang={locale}
       dir={dir}
+      suppressHydrationWarning
       className={`${inter.variable} ${hanken.variable} ${bricolage.variable} h-full antialiased`}
     >
       <head>
+        {/* Pre-paint admin theme (Next docs: preventing-flash-before-hydration).
+            Runs during parsing so html[data-theme] is set before first paint.
+            Dark applies only on /admin/* (the one glow-styled surface);
+            every other portal on this origin stays light. */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var isAdmin=/\\/admin(\\/|$)/.test(location.pathname);var t=localStorage.getItem("workerfix.admin.theme")||"system";var dark=isAdmin&&(t==="dark"||(t!=="light"&&window.matchMedia("(prefers-color-scheme: dark)").matches));document.documentElement.setAttribute("data-theme",dark?"dark":"light");}catch(e){document.documentElement.setAttribute("data-theme","light");}})()`,
+          }}
+        />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
         <link

@@ -69,7 +69,7 @@
   /* Wharf-style design tokens (additive — admin dashboard restyle) */
   --radius-wharf: 24px;
   --shadow-wharf: 0 1px 0 #ffffffd9 inset, 0 18px 40px -26px #28244659;
-  --shadow-wharf-hover: 0 1px 0 #ffffffd9 inset, 0 24px 48px -24px #28244670;
+  --shadow-wharf-hover: 0 1px 0 #ffffffd9 inset, 0 18px 40px -26px #28244659;
   --duration-wharf: 220ms;
 }
 
@@ -119,9 +119,9 @@
   --status-completed: #16a34a;
   --status-cancelled: #dc2626;
 
-  /* Wharf shadows — sample shape, deepened presence (light) */
-  --shadow-wharf: 0 1px 0 #ffffffd9 inset, 0 20px 46px -24px #28244673;
-  --shadow-wharf-hover: 0 1px 0 #ffffffd9 inset, 0 26px 52px -24px #28244685;
+  /* Wharf shadows — exact sample (--shadow) values */
+  --shadow-wharf: 0 1px 0 #ffffffd9 inset, 0 18px 40px -26px #28244659;
+  --shadow-wharf-hover: 0 1px 0 #ffffffd9 inset, 0 18px 40px -26px #28244659;
   --shadow-tray: 0 20px 50px -20px #1f1f2459;
   --shadow-dlg: 0 30px 80px -30px #00000073;
   --focus-wharf: 0 0 0 2px #fffefa, 0 0 0 4px #172033;
@@ -155,9 +155,9 @@
   --sidebar-border: rgba(255, 255, 255, 0.1);
   --sidebar-ring: #0f8b8d;
 
-  /* Wharf shadows (sample dark, deepened) */
-  --shadow-wharf: 0 1px 0 #ffffff0f inset, 0 20px 46px -24px #000000cc;
-  --shadow-wharf-hover: 0 1px 0 #ffffff0f inset, 0 26px 52px -24px #000000d9;
+  /* Wharf shadows (exact sample dark --shadow values) */
+  --shadow-wharf: 0 1px 0 #ffffff0f inset, 0 18px 40px -26px #000000b3;
+  --shadow-wharf-hover: 0 1px 0 #ffffff0f inset, 0 18px 40px -26px #000000b3;
   --focus-wharf: 0 0 0 2px #202026, 0 0 0 4px #f1f0ea;
 }
 
@@ -331,6 +331,95 @@ html[dir="rtl"] {
   --stage-2: #0f8b8d; /* teal */
   --stage-3: #123b5d; /* navy */
   --stage-4: #cbd5e1; /* slate-300 */
+  --shimmer-hi: rgba(255, 255, 255, 0.55);
+  --line: var(--line);
+  --wash: rgba(23, 32, 51, 0.05);
+  --surface: #fffefab8;
+  --surface-strong: var(--surface-strong);
+  --surface-soft: rgba(255, 255, 255, 0.6);
+  --surface-mid: rgba(255, 255, 255, 0.7);
+  --danger-bg: #ffe4e1;
+  --bad-bg: #fbe3df;
+  --bad-fg: #b9392f;
+  --good-bg: #e1f1e4;
+  --good-fg: #25693e;
+}
+
+/* ── Admin dark theme (pre-paint script sets html[data-theme]) ──────────
+   Attribute-scoped, not .admin-glow-scoped: Radix portals and wf toasts
+   mount OUTSIDE the glow wrapper and must flip too. Non-admin pages never
+   receive data-theme="dark" (pre-paint script guards by pathname). */
+html[data-theme="dark"] {
+  --navy: #e9eef9;
+  --ink: #e8edf7;
+  --muted: #8fa1ba;
+  --hair: #29344a;
+  --hair-2: rgba(255, 255, 255, 0.16);
+  --line: rgba(255, 255, 255, 0.12);
+  --wash: rgba(255, 255, 255, 0.06);
+  --well: #131a2b;
+  --card-2: #131a2b;
+  --solid: #1d2740;
+  --surface: rgba(28, 37, 64, 0.85);
+  --surface-strong: rgba(24, 32, 55, 0.94);
+  --surface-soft: rgba(255, 255, 255, 0.05);
+  --surface-mid: rgba(255, 255, 255, 0.07);
+  --edge: rgba(255, 255, 255, 0.07);
+  --night: #1f5f9e;
+  --night-2: #2b74bf;
+  --night-ink: #ffffff;
+  --acc: #17a8aa;
+  --acc-soft: rgba(23, 168, 170, 0.16);
+  --acc-text: #45c9cb;
+  --warn: #f0b27a;
+  --warn-bg: #3a2a14;
+  --danger-bg: #3d1e1c;
+  --bad-bg: #43201d;
+  --bad-fg: #ff9c8f;
+  --good-bg: #143524;
+  --good-fg: #7ee2a8;
+  --area-alpha: 0.5;
+  --grid: #29344a;
+  --axis: #8aa0bb;
+  --stage-2: #17a8aa;
+  --stage-3: #4b8fd1;
+  --stage-4: #475569;
+  --shimmer-hi: rgba(255, 255, 255, 0.1);
+  --shadow-wharf: 0 1px 0 #ffffff0f inset, 0 18px 40px -26px #000000b3;
+  --shadow-wharf-hover: 0 1px 0 #ffffff0f inset, 0 18px 40px -26px #000000b3;
+  --shadow-tray: 0 20px 50px -20px #000000a6;
+  --shadow-dlg: 0 30px 80px -30px #000000b3;
+  --focus-wharf: 0 0 0 2px #101726, 0 0 0 4px #9fd8d4;
+
+  /* shadcn tokens — feeds @apply border-border / ring / base body styles */
+  --background: #0d1424;
+  --foreground: #f1f5f9;
+  --card: #1c2540;
+  --card-foreground: #f1f5f9;
+  --popover: #1c2540;
+  --popover-foreground: #f1f5f9;
+  --primary: #0f8b8d;
+  --primary-foreground: #ffffff;
+  --secondary: #17324f;
+  --secondary-foreground: #f1f5f9;
+  /* --muted intentionally NOT redeclared: the wf secondary-text token
+     (wf --muted: #8fa1ba) shares this name and must win for text; shadcn's
+     muted *background* is pinned via html[data-theme="dark"] .bg-muted. */
+  --muted-foreground: #94a3b8;
+  --accent: #3a2a08;
+  --accent-foreground: #f1f5f9;
+  --destructive: #ef4444;
+  --border: rgba(255, 255, 255, 0.1);
+  --input: rgba(255, 255, 255, 0.15);
+  --ring: #0f8b8d;
+  --sidebar: #0b1b2b;
+  --sidebar-foreground: #f1f5f9;
+  --sidebar-primary: #0f8b8d;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #17324f;
+  --sidebar-accent-foreground: #f1f5f9;
+  --sidebar-border: rgba(255, 255, 255, 0.1);
+  --sidebar-ring: #0f8b8d;
 }
 
 /* Brand-tinted radial glow background (sample's technique, teal/amber) */
@@ -346,6 +435,16 @@ html[dir="rtl"] {
   /* Sample body base: 15px/1.45 — admin shell only */
   font-size: 15px;
   line-height: 1.45;
+}
+html[data-theme="dark"] .admin-glow {
+  background-color: #0d1424;
+  background-image:
+    radial-gradient(70% 55% at 100% 0%, rgba(15, 139, 141, 0.28) 0%, transparent 70%),
+    radial-gradient(45% 40% at 0% 100%, rgba(245, 158, 11, 0.12) 0%, transparent 70%),
+    linear-gradient(160deg, #0c1322 0%, #0d1527 55%, #0c1a24 100%);
+}
+html[data-theme="dark"] body:has(.admin-glow) {
+  background-color: #0d1424;
 }
 
 /* ── Admin shell grid (sample .app: clamp sidebar + main) ── */
@@ -398,9 +497,9 @@ html[dir="rtl"] {
   position: sticky;
   top: 0;
   padding: 18px 14px 16px;
-  background: #fffefacc;
+  background: var(--surface-strong);
   color: var(--ink);
-  border-right: 1px solid rgba(23, 32, 51, 0.1);
+  border-right: 1px solid var(--line);
   min-width: 0;
 }
 
@@ -428,7 +527,7 @@ html[dir="rtl"] {
   transition: background-color var(--flip), color var(--flip);
 }
 .wf-icon-btn:hover {
-  background: rgba(23, 32, 51, 0.05);
+  background: var(--wash);
   color: var(--ink);
 }
 .wf-icon-btn--side {
@@ -443,8 +542,8 @@ html[dir="rtl"] {
   height: 40px;
   margin: 18px 4px 6px;
   border-radius: var(--r-md);
-  background: rgba(255, 255, 255, 0.6);
-  border: 1px solid rgba(23, 32, 51, 0.1);
+  background: var(--surface-soft);
+  border: 1px solid var(--line);
 }
 .wf-search__icon {
   position: absolute;
@@ -484,7 +583,7 @@ html[dir="rtl"] {
   right: 8px;
   font: 500 11.5px/1.4 var(--font);
   color: var(--muted);
-  border: 1px solid rgba(23, 32, 51, 0.1);
+  border: 1px solid var(--line);
   border-radius: 6px;
   padding: 2px 6px;
   pointer-events: none;
@@ -500,7 +599,7 @@ html[dir="rtl"] {
 }
 
 .wf-sidebar__foot {
-  border-top: 1px solid rgba(23, 32, 51, 0.1);
+  border-top: 1px solid var(--line);
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -541,9 +640,9 @@ html[dir="rtl"] {
   display: none;
   width: 36px;
   height: 36px;
-  border: 1px solid rgba(23, 32, 51, 0.1);
+  border: 1px solid var(--line);
   border-radius: var(--r-md);
-  background: rgba(255, 255, 255, 0.7);
+  background: var(--surface-mid);
 }
 
 /* Sample tray/dlg shadows (themed via --shadow-tray / --shadow-dlg) */
@@ -556,10 +655,11 @@ html[dir="rtl"] {
 
 /* Sample .dot halo — status/live dots sit on a card-colored ring */
 .wf-dot {
-  box-shadow: 0 0 0 2px #fffefacc;
+  box-shadow: 0 0 0 2px var(--surface-strong);
 }
-.dark .wf-dot {
-  box-shadow: 0 0 0 2px #202026cc;
+.dark .wf-dot,
+html[data-theme="dark"] .wf-dot {
+  box-shadow: 0 0 0 2px var(--surface-strong);
 }
 
 /* Sample focus ring (admin scope): 2px solid + 4px ink */
@@ -612,7 +712,7 @@ html[dir="rtl"] {
   min-width: 0;
   padding: var(--pad);
   border-radius: var(--r-card);
-  background: #fffefab8;
+  background: var(--surface);
   border: 1px solid var(--edge);
   box-shadow: var(--shadow-wharf);
   transition:
@@ -712,8 +812,8 @@ html[dir="rtl"] {
   cursor: default;
 }
 .wf-btn--danger {
-  background: #ffe4e1;
-  color: #b9392f;
+  background: var(--danger-bg);
+  color: var(--bad-fg);
 }
 
 /* ── Pill badge (exact sample: h24, 12.5px, 6px dot) ── */
@@ -736,20 +836,20 @@ html[dir="rtl"] {
   flex: none;
 }
 .wf-pill--good {
-  color: #25693e;
-  background: #e1f1e4;
+  color: var(--good-fg);
+  background: var(--good-bg);
 }
 .wf-pill--warn {
   color: var(--warn);
   background: var(--warn-bg);
 }
 .wf-pill--bad {
-  color: #b9392f;
-  background: #fbe3df;
+  color: var(--bad-fg);
+  background: var(--bad-bg);
 }
 .wf-pill--info {
   color: var(--acc-text);
-  background: rgba(15, 139, 141, 0.1);
+  background: var(--acc-soft);
 }
 .wf-pill--muted {
   color: var(--muted);
@@ -761,7 +861,7 @@ html[dir="rtl"] {
   display: inline-flex;
   align-items: center;
   gap: 2px;
-  color: #25693e;
+  color: var(--good-fg);
   font-size: 13px;
   font-weight: 600;
 }
@@ -771,7 +871,7 @@ html[dir="rtl"] {
   stroke-width: 2.2px;
 }
 .wf-delta--down {
-  color: #b9392f;
+  color: var(--bad-fg);
 }
 .wf-delta--flat {
   color: var(--muted);
@@ -1413,8 +1513,15 @@ html[dir="rtl"] {
   fill: var(--solid);
   stroke: none;
 }
+.wf-chart__cross {
+  /* Sample quickTo glide: crosshair x .25s power3.out, tip .3s */
+  transition:
+    opacity 0.2s,
+    transform 0.25s var(--e-out3);
+  will-change: transform;
+}
 .wf-chart__cross line {
-  stroke: #cbd5e1;
+  stroke: var(--axis);
   stroke-width: 1px;
 }
 .wf-chart__tip {
@@ -1433,6 +1540,10 @@ html[dir="rtl"] {
   white-space: nowrap;
   pointer-events: none;
   opacity: 0;
+  transition:
+    opacity 0.2s,
+    transform 0.3s var(--e-out3);
+  will-change: transform;
 }
 .wf-chart__tip b {
   font-size: 14px;
@@ -1453,6 +1564,10 @@ html[dir="rtl"] {
   align-items: flex-start;
   gap: 16px;
   padding: 4px 0 6px;
+  /* Sample header is 61px, but the shell's absolute util cluster
+     (.wf-util-row, top:12 + ~38 tall) owns the title line here — keep the
+     header tall enough that bottom-aligned actions clear it with a gap. */
+  min-height: 90px;
 }
 .wf-page__text {
   flex: 1 1 320px;
@@ -1477,6 +1592,12 @@ html[dir="rtl"] {
 .wf-page__title .ch {
   display: inline-block;
 }
+/* Route focus (admin-shell focuses the h1) must not paint a ring — sample: none */
+.wf-page__title:focus,
+.wf-page__title:focus-visible {
+  outline: none;
+  box-shadow: none;
+}
 .wf-page__sub {
   color: var(--muted);
   max-width: 62ch;
@@ -1487,7 +1608,7 @@ html[dir="rtl"] {
   flex-wrap: wrap;
   align-items: center;
   gap: 10px;
-  /* Bottom-align with the sub line, flush to the opposite (right) edge */
+  /* Flush right, below the util cluster (which sits on the title line) */
   margin-left: auto;
   margin-top: auto;
 }
@@ -1547,6 +1668,58 @@ html[dir="rtl"] {
 }
 .wf-toast--out {
   animation: wf-toast-out 0.3s var(--e-in2) both;
+}
+
+/* ── Motion: skeleton shimmer (admin loading states) ── */
+.wf-shimmer {
+  position: relative;
+  overflow: hidden;
+  background: rgba(23, 32, 51, 0.07);
+}
+.wf-shimmer::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--shimmer-hi),
+    transparent
+  );
+  animation: wf-shimmer 1.4s ease-in-out infinite;
+}
+@keyframes wf-shimmer {
+  to {
+    transform: translateX(100%);
+  }
+}
+
+/* ── Motion: table skeleton rows (sample row enter: opacity/y:10 → .45s
+   power3.out, stagger .03 — no spinner, no sweep) ── */
+.wf-skel-row {
+  background: color-mix(in srgb, var(--well) 65%, transparent);
+  border-radius: var(--r-md);
+  opacity: 0;
+  animation: wf-skel-row-in 0.45s var(--e-out3) both;
+  animation-delay: calc(var(--si, 0) * 30ms);
+}
+@keyframes wf-skel-row-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.wf-skel-bar {
+  background: color-mix(in srgb, var(--ink) 8%, transparent);
+  border-radius: 9999px;
+}
+.wf-skel-bar--box {
+  border-radius: 6px;
 }
 
 /* ── Motion: card entrance (sample: y30 scale.985 → .8s power3.out stagger .06) ── */
@@ -1660,15 +1833,28 @@ html[dir="rtl"] {
   }
 }
 
-/* Leave transition hint on route change (sample: cards out .18s power2.in) */
+/* Route change exit (sample: .2s power2.in stagger .012, y-10).
+   Driven per-element from admin-shell via WAAPI for the stagger; this
+   keyframe documents the target values. */
 @keyframes wf-cards-out {
   to {
     opacity: 0;
-    transform: translateY(-8px);
+    transform: translateY(-10px);
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .wf-shimmer::after {
+    animation: none;
+  }
+  .wf-skel-row {
+    animation: none !important;
+    opacity: 1;
+  }
+  .wf-chart__cross,
+  .wf-chart__tip {
+    transition: none;
+  }
   .wf-view [data-card],
   .wf-page__title .ch,
   .wf-anim-stack .wf-stack__seg,
@@ -1827,3 +2013,107 @@ html[dir="rtl"] {
     min-height: 38px;
   }
 }
+
+/* ── Admin dark utility sweep ───────────────────────────────────────────
+   Mechanical dark equivalents for every Tailwind color utility used inside
+   the admin shell (dashboard + all /admin pages). Scoped to
+   html[data-theme="dark"] — other portals are untouched — and
+   unlayered so these beat Tailwind's @layer utilities. Escape note: class
+   names with / or : are escaped as \/ and \:. */
+html[data-theme="dark"] .bg-white { background-color: #1c2540; }
+html[data-theme="dark"] .bg-muted { background-color: #17324f; }
+html[data-theme="dark"] .bg-slate-50 { background-color: #131a2b; }
+html[data-theme="dark"] .bg-slate-50\/50 { background-color: rgb(19 26 43 / 0.5); }
+html[data-theme="dark"] .bg-slate-50\/70 { background-color: rgb(19 26 43 / 0.7); }
+html[data-theme="dark"] .bg-slate-100 { background-color: #182034; }
+html[data-theme="dark"] .bg-slate-100\/80 { background-color: rgb(24 32 52 / 0.8); }
+html[data-theme="dark"] .bg-slate-200 { background-color: #222b42; }
+html[data-theme="dark"] .bg-slate-300 { background-color: #2e3a54; }
+html[data-theme="dark"] .bg-slate-400 { background-color: #46536e; }
+html[data-theme="dark"] .bg-slate-900\/60 { background-color: rgb(2 6 16 / 0.75); }
+html[data-theme="dark"] .bg-amber-50 { background-color: #2e2310; }
+html[data-theme="dark"] .bg-amber-50\/50 { background-color: rgb(46 35 16 / 0.5); }
+html[data-theme="dark"] .bg-amber-50\/70 { background-color: rgb(46 35 16 / 0.7); }
+html[data-theme="dark"] .bg-amber-100 { background-color: #3a2c14; }
+html[data-theme="dark"] .bg-green-50 { background-color: #12301f; }
+html[data-theme="dark"] .bg-green-50\/50 { background-color: rgb(18 48 31 / 0.5); }
+html[data-theme="dark"] .bg-green-100 { background-color: #143523; }
+html[data-theme="dark"] .bg-green-200 { background-color: #1a4630; }
+html[data-theme="dark"] .bg-red-50 { background-color: #33191a; }
+html[data-theme="dark"] .bg-red-100 { background-color: #3d1e1f; }
+html[data-theme="dark"] .bg-rose-50 { background-color: #35191f; }
+html[data-theme="dark"] .bg-rose-50\/60 { background-color: rgb(53 25 31 / 0.6); }
+html[data-theme="dark"] .bg-rose-100 { background-color: #3f1d25; }
+html[data-theme="dark"] .bg-blue-100 { background-color: #16304d; }
+html[data-theme="dark"] .bg-navy { background-color: #1f5f9e; }
+html[data-theme="dark"] .bg-navy\/5 { background-color: rgb(31 95 158 / 0.2); }
+html[data-theme="dark"] .bg-navy\/10 { background-color: rgb(31 95 158 / 0.3); }
+html[data-theme="dark"] .bg-navy\/60 { background-color: rgb(31 95 158 / 0.75); }
+html[data-theme="dark"] .bg-navy\/90 { background-color: rgb(31 95 158 / 0.95); }
+html[data-theme="dark"] .bg-teal { background-color: #12a1a3; }
+
+html[data-theme="dark"] .text-navy { color: #e9eef9; }
+html[data-theme="dark"] .text-slate-200 { color: #b6c2d6; }
+html[data-theme="dark"] .text-slate-300 { color: #9aa9c0; }
+html[data-theme="dark"] .text-slate-400 { color: #8496b0; }
+html[data-theme="dark"] .text-slate-500 { color: #8ea0b8; }
+html[data-theme="dark"] .text-slate-600 { color: #a9b7cc; }
+html[data-theme="dark"] .text-slate-700 { color: #c3cede; }
+html[data-theme="dark"] .text-slate-800 { color: #dbe3ef; }
+html[data-theme="dark"] .text-slate-900 { color: #eef2f9; }
+html[data-theme="dark"] .text-teal { color: #38c3c5; }
+html[data-theme="dark"] .text-teal-300 { color: #7fd8d9; }
+html[data-theme="dark"] .text-orange { color: #fbb040; }
+html[data-theme="dark"] .text-amber-600 { color: #fbbf24; }
+html[data-theme="dark"] .text-amber-700 { color: #fcd34d; }
+html[data-theme="dark"] .text-amber-800 { color: #fcd34d; }
+html[data-theme="dark"] .text-amber-900 { color: #fde68a; }
+html[data-theme="dark"] .text-amber-950 { color: #fef3c7; }
+html[data-theme="dark"] .text-green-600 { color: #4ade80; }
+html[data-theme="dark"] .text-green-700 { color: #6ee7a0; }
+html[data-theme="dark"] .text-red-600 { color: #f87171; }
+html[data-theme="dark"] .text-red-700 { color: #fca5a5; }
+html[data-theme="dark"] .text-rose-600 { color: #fb7185; }
+html[data-theme="dark"] .text-rose-700 { color: #fda4af; }
+html[data-theme="dark"] .text-rose-800 { color: #fecdd3; }
+html[data-theme="dark"] .text-rose-900 { color: #ffe1e6; }
+html[data-theme="dark"] .text-blue-700 { color: #7db4ea; }
+
+html[data-theme="dark"] .border-slate-100 { border-color: #222c40; }
+html[data-theme="dark"] .border-slate-200 { border-color: #2a3550; }
+html[data-theme="dark"] .border-slate-200\/60 { border-color: rgb(42 53 80 / 0.6); }
+html[data-theme="dark"] .border-slate-200\/80 { border-color: rgb(42 53 80 / 0.8); }
+html[data-theme="dark"] .border-slate-300 { border-color: #3a4764; }
+html[data-theme="dark"] .border-slate-500 { border-color: #4a5877; }
+html[data-theme="dark"] .border-red-200 { border-color: #5b2a2c; }
+html[data-theme="dark"] .border-rose-200 { border-color: #5e2c37; }
+html[data-theme="dark"] .border-amber-200 { border-color: #55401f; }
+html[data-theme="dark"] .border-amber-200\/80 { border-color: rgb(85 64 31 / 0.8); }
+html[data-theme="dark"] .border-green-200 { border-color: #24573c; }
+html[data-theme="dark"] .border-blue-200 { border-color: #2b4a6e; }
+html[data-theme="dark"] .border-navy { border-color: #4b86c4; }
+html[data-theme="dark"] .divide-slate-100 > * { border-color: #222c40; }
+html[data-theme="dark"] .fill-teal { fill: #2fbfc1; }
+
+html[data-theme="dark"] .focus\:bg-white:focus { background-color: #1d2740; }
+html[data-theme="dark"] .focus\:border-navy:focus { border-color: #4b86c4; }
+html[data-theme="dark"] .group-hover\:bg-slate-200:is(:where(.group):hover *) { background-color: #222b42; }
+html[data-theme="dark"] .group-hover\:text-navy:is(:where(.group):hover *) { color: #e9eef9; }
+html[data-theme="dark"] .hover\:bg-slate-50:hover { background-color: #131a2b; }
+html[data-theme="dark"] .hover\:bg-slate-100:hover { background-color: #182034; }
+html[data-theme="dark"] .hover\:bg-slate-100\/80:hover { background-color: rgb(24 32 52 / 0.8); }
+html[data-theme="dark"] .hover\:bg-slate-200:hover { background-color: #222b42; }
+html[data-theme="dark"] .hover\:bg-navy\/90:hover { background-color: rgb(31 95 158 / 0.95); }
+html[data-theme="dark"] .hover\:bg-teal:hover { background-color: #0e9294; }
+html[data-theme="dark"] .hover\:bg-green-100:hover { background-color: #143523; }
+html[data-theme="dark"] .hover\:bg-green-200:hover { background-color: #1a4630; }
+html[data-theme="dark"] .hover\:bg-red-100:hover { background-color: #3d1e1f; }
+html[data-theme="dark"] .hover\:bg-rose-50:hover { background-color: #35191f; }
+html[data-theme="dark"] .hover\:text-navy:hover { color: #e9eef9; }
+html[data-theme="dark"] .hover\:text-teal:hover { color: #45c9cb; }
+html[data-theme="dark"] .hover\:text-slate-600:hover { color: #a9b7cc; }
+html[data-theme="dark"] .hover\:text-rose-600:hover { color: #fb7185; }
+
+html[data-theme="dark"] .wf-shimmer { background: rgb(255 255 255 / 0.06); }
+html[data-theme="dark"] .to-white { --tw-gradient-to: #1c2540; }
+html[data-theme="dark"] .via-amber-50\/80 { --tw-gradient-via: rgb(66 48 16 / 0.8); }
