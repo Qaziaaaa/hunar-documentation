@@ -101,6 +101,13 @@ export class AdminJobListQueryDto {
   @IsDateString()
   to?: string;
 
+  // Delta polling: return only jobs created after this ISO timestamp (newer
+  // than everything the client already has). Optional — callers without it
+  // see the unchanged newest-first list.
+  @IsOptional()
+  @IsDateString()
+  since?: string;
+
   @IsOptional()
   @Type(() => Number)
   @IsInt()

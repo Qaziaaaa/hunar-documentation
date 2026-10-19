@@ -258,6 +258,18 @@ export class AdminController {
     return this.adminService.getKpis();
   }
 
+  // ----- Dashboard (live overview polled by the admin dashboard page) -----
+
+  @Get('dashboard/overview')
+  getDashboardOverview() {
+    return this.adminService.getDashboardOverview();
+  }
+
+  @Get('dashboard/activity')
+  getDashboardActivity() {
+    return this.adminService.getDashboardActivity();
+  }
+
   // ----- Reports -----
 
   @Get('reports/:type')

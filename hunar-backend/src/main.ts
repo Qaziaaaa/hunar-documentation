@@ -23,6 +23,21 @@ async function bootstrap(): Promise<void> {
   // payloads uncompressed where the framing overhead would cost more than it saves.
   app.use(compression({ threshold: 1024 }));
 
+  // Admin JSON feeds the SPA dashboard/lists only: always revalidate against the
+  // ETag (304 when unchanged) so the browser disk cache can never serve a stale
+  // body. Scoped to admin GETs — uploads keep their immutable caching below, and
+  // worker/customer APIs are untouched.
+  const adminApiPrefix = `/${apiPrefix}/admin`;
+  app.use((req, res, next) => {
+    if (
+      req.method === 'GET' &&
+      (req.path === adminApiPrefix || req.path.startsWith(`${adminApiPrefix}/`))
+    ) {
+      res.setHeader('Cache-Control', 'no-cache');
+    }
+    next();
+  });
+
   // Increase body size limits for file uploads (multipart)
   const express = require('express');
   const path = require('path');
