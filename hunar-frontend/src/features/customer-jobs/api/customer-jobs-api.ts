@@ -99,6 +99,8 @@ export async function getJobDetail(jobId: string): Promise<CustomerJob> {
       : undefined,
     securityPin: res.securityPin,
     suggestedVisitCharge: res.suggestedVisitCharge != null ? Number(res.suggestedVisitCharge) : undefined,
+    cancelReason: res.cancelReason || undefined,
+    cancelledAt: res.cancelledAt || undefined,
   };
 }
 
@@ -257,6 +259,8 @@ function transformListRow(row: any): CustomerJob {
         })
       : undefined,
     suggestedVisitCharge: row.suggestedVisitCharge != null ? Number(row.suggestedVisitCharge) : undefined,
+    cancelReason: row.cancelReason || undefined,
+    cancelledAt: row.cancelledAt || undefined,
   };
 }
 
@@ -345,7 +349,7 @@ function transformBackendWorker(worker: any): WorkerProfile {
   };
 }
 
-function transformBackendOffer(offer: any): WorkerOffer {
+export function transformBackendOffer(offer: any): WorkerOffer {
   return {
     id: offer.id,
     jobId: offer.jobId,
