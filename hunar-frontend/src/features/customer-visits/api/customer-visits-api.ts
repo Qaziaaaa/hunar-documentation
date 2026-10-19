@@ -227,16 +227,43 @@ export function resolveVisitTrackingStage(params: {
     };
   }
 
-  // 4. Inspection submitted
-  if (normJobStatus === "INSPECTION_DONE" || isInspectionSubmitted) {
+  // 3b. Repair Approved / In Progress
+  if (normJobStatus === "REPAIR_APPROVED" || normJobStatus === "IN_PROGRESS") {
     return {
       currentStageId: "INSPECTION_DONE",
-      stageHeadline: "Inspection Report Submitted",
-      stageHeadlineUr: "معائنہ رپورٹ جمع کر دی گئی ہے",
-      stageExplanation: "The technician has completed the on-site inspection and submitted their diagnostic findings.",
-      stageExplanationUr: "کاریگر نے موقع پر معائنہ مکمل کر کے تشخیص رپورٹ جمع کر دی ہے۔",
-      nextStepText: "Review the technician's diagnosis below.",
-      nextStepTextUr: "نیچے کاریگر کی تشخیص اور رپورٹ دیکھیں۔",
+      stageHeadline: "Repair Work In Progress",
+      stageHeadlineUr: "مرمت کا کام جاری ہے",
+      stageExplanation: "You have approved the repair quote. The technician is currently executing the repair work on-site.",
+      stageExplanationUr: "آپ نے مرمت کا تخمینہ منظور کر لیا ہے۔ کاریگر اس وقت موقع پر کام مکمل کر رہا ہے۔",
+      nextStepText: "Once the repair is completed, inspect the workmanship and finalize payment.",
+      nextStepTextUr: "کام مکمل ہونے کے بعد معائنہ کریں اور حتمی تصدیق کریں۔",
+      timelineSteps: createTimelineSteps({
+        activeStage: "INSPECTION_DONE",
+        ...params,
+      }),
+      isMapVisible: false,
+    };
+  }
+
+  // 4. Inspection submitted / Repair quote negotiating
+  if (normJobStatus === "REPAIR_NEGOTIATING" || normJobStatus === "INSPECTION_DONE" || isInspectionSubmitted) {
+    const isQuotePending = normJobStatus === "REPAIR_NEGOTIATING";
+    return {
+      currentStageId: "INSPECTION_DONE",
+      stageHeadline: isQuotePending ? "Repair Quote Submitted — Approval Required" : "Inspection Report Submitted",
+      stageHeadlineUr: isQuotePending ? "مرمت کا تخمینہ موصول ہو گیا — منظوری درکار ہے" : "معائنہ رپورٹ جمع کر دی گئی ہے",
+      stageExplanation: isQuotePending
+        ? "The technician has completed diagnosis and proposed a repair quote. Please review and decide whether to approve."
+        : "The technician has completed the on-site inspection and submitted their diagnostic findings.",
+      stageExplanationUr: isQuotePending
+        ? "کاریگر نے معائنہ مکمل کر کے مرمت کا تخمینہ پیش کر دیا ہے۔ براہ کرم اس کا جائزہ لے کر منظوری کا فیصلہ کریں۔"
+        : "کاریگر نے موقع پر معائنہ مکمل کر کے تشخیص رپورٹ جمع کر دی ہے۔",
+      nextStepText: isQuotePending
+        ? "Review the repair quote popup or diagnostic report below to authorize repair."
+        : "Review the technician's diagnosis below.",
+      nextStepTextUr: isQuotePending
+        ? "مرمت کا کام شروع کروانے کے لیے تخمینہ منظور کریں۔"
+        : "نیچے کاریگر کی تشخیص اور رپورٹ دیکھیں۔",
       timelineSteps: createTimelineSteps({
         activeStage: "INSPECTION_DONE",
         ...params,
@@ -504,10 +531,18 @@ export async function getCustomerJobVisitTracking(
     visit?.inspectionSubmittedAt || rawJobStatus === "INSPECTION_DONE"
   );
 
+  const isArrivalPendingFromVisit = Boolean(
+    visit?.isArrivalPending ||
+    visit?.arrivalPending ||
+    (visit?.arrivalOtp && rawVisitStatus !== "COMPLETED" && rawJobStatus !== "VISIT_COMPLETED")
+  );
+  const isPendingOtp = Boolean(options?.isDoorstepPendingOtp || isArrivalPendingFromVisit);
+  const resolvedDoorstepOtp = options?.doorstepOtp || visit?.arrivalOtp || null;
+
   const stageResult = resolveVisitTrackingStage({
     jobStatus: rawJobStatus,
     visitStatus: rawVisitStatus,
-    isDoorstepPendingOtp: options?.isDoorstepPendingOtp,
+    isDoorstepPendingOtp: isPendingOtp,
     hasInspectionSubmitted,
     scheduledDate: visit?.scheduledDate || (job as any).preferredDate || null,
     startedAt: visit?.actualDate || null,
@@ -562,8 +597,8 @@ export async function getCustomerJobVisitTracking(
     technician,
     workerLocation,
     isMapVisible: stageResult.isMapVisible,
-    isDoorstepPendingOtp: Boolean(options?.isDoorstepPendingOtp),
-    doorstepOtp: options?.doorstepOtp || null,
+    isDoorstepPendingOtp: isPendingOtp || stageResult.currentStageId === "ARRIVED",
+    doorstepOtp: resolvedDoorstepOtp,
     inspection: inspectionData,
   };
 }
