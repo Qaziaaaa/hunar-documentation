@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { Check, X } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useSearchParams } from "next/navigation";
@@ -19,12 +20,18 @@ import { WizardProgressStepper } from "./wizard-progress-stepper";
 import { WorkerFixLogo } from "@/components/shared/workerfix-logo";
 
 const DRAFT_STORAGE_KEY = "workerfix_customer_post_job_draft";
+const ALT_DRAFT_KEY = "workerfix_draft_job";
 
 function getStoredDraft(): Partial<PostJobData> | null {
   if (typeof window === "undefined") return null;
   try {
-    const raw = sessionStorage.getItem(DRAFT_STORAGE_KEY);
-    return raw ? JSON.parse(raw) : null;
+    const raw =
+      sessionStorage.getItem(DRAFT_STORAGE_KEY) ??
+      localStorage.getItem(DRAFT_STORAGE_KEY) ??
+      sessionStorage.getItem(ALT_DRAFT_KEY) ??
+      localStorage.getItem(ALT_DRAFT_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw) as Partial<PostJobData>;
   } catch {
     return null;
   }
@@ -33,7 +40,11 @@ function getStoredDraft(): Partial<PostJobData> | null {
 function persistDraft(data: PostJobData) {
   if (typeof window === "undefined") return;
   try {
-    sessionStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(data));
+    const raw = JSON.stringify(data);
+    sessionStorage.setItem(DRAFT_STORAGE_KEY, raw);
+    localStorage.setItem(DRAFT_STORAGE_KEY, raw);
+    sessionStorage.setItem(ALT_DRAFT_KEY, raw);
+    localStorage.setItem(ALT_DRAFT_KEY, raw);
   } catch {
     // ignore
   }
@@ -43,6 +54,9 @@ function clearDraft() {
   if (typeof window === "undefined") return;
   try {
     sessionStorage.removeItem(DRAFT_STORAGE_KEY);
+    localStorage.removeItem(DRAFT_STORAGE_KEY);
+    sessionStorage.removeItem(ALT_DRAFT_KEY);
+    localStorage.removeItem(ALT_DRAFT_KEY);
   } catch {
     // ignore
   }
@@ -70,6 +84,7 @@ const INITIAL_FORM_DATA: PostJobData = {
 
 export function PostJobWizard() {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const locale = useLocale();
   const t = useTranslations("CustomerPortal.PostJob");
   const searchParams = useSearchParams();
@@ -84,64 +99,108 @@ export function PostJobWizard() {
     shouldResumeReview ? 4 : 2
   );
   const [formData, setFormData] = useState<PostJobData>(() => {
-    const saved = getStoredDraft();
-    if (shouldResumeReview && saved) {
-      return { ...INITIAL_FORM_DATA, ...saved };
+    const fallback: PostJobData = initialCategoryMatch
+      ? {
+          ...INITIAL_FORM_DATA,
+          category: initialCategoryMatch.id,
+          subCategory: subCategoryParam || initialCategoryMatch.subCategories[0] || "",
+          title: subCategoryParam || "",
+          suggestedVisitFee: initialCategoryMatch.suggestedFee || 0,
+        }
+      : INITIAL_FORM_DATA;
+
+    if (typeof window !== "undefined") {
+      const saved = getStoredDraft();
+      if (saved && (saved.title || saved.description || saved.address || saved.category)) {
+        return {
+          ...fallback,
+          ...saved,
+          category: saved.category || fallback.category,
+          subCategory: saved.subCategory || fallback.subCategory,
+          title: saved.title || fallback.title,
+        };
+      }
     }
-    if (initialCategoryMatch) {
-      return {
-        ...INITIAL_FORM_DATA,
-        ...(saved || {}),
-        category: initialCategoryMatch.id,
-        subCategory:
-          subCategoryParam ||
-          (saved?.category === initialCategoryMatch.id && saved?.subCategory
-            ? saved.subCategory
-            : initialCategoryMatch.subCategories[0] || ""),
-        title:
-          subCategoryParam ||
-          (saved?.title ? saved.title : ""),
-        description:
-          saved?.description || "",
-        suggestedVisitFee:
-          saved?.suggestedVisitFee || initialCategoryMatch.suggestedFee || 0,
-      };
-    }
-    return saved ? { ...INITIAL_FORM_DATA, ...saved } : INITIAL_FORM_DATA;
+    return fallback;
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [postedJobId, setPostedJobId] = useState<string | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const isHydratedRef = useRef(false);
+  const isFirstMountRef = useRef(true);
+
+  // Restore and merge draft from storage without losing any fields
+  useEffect(() => {
+    const saved = getStoredDraft();
+    if (saved) {
+      setFormData((prev) => ({
+        ...prev,
+        ...saved,
+        category: saved.category || initialCategoryMatch?.id || prev.category,
+        subCategory: saved.subCategory || subCategoryParam || prev.subCategory,
+        title: saved.title || prev.title,
+        description: saved.description !== undefined ? saved.description : prev.description,
+        address: saved.address !== undefined ? saved.address : prev.address,
+        area: saved.area !== undefined ? saved.area : prev.area,
+        city: saved.city || prev.city || "Peshawar",
+        landmark: saved.landmark !== undefined ? saved.landmark : prev.landmark,
+        latitude: saved.latitude !== undefined ? saved.latitude : prev.latitude,
+        longitude: saved.longitude !== undefined ? saved.longitude : prev.longitude,
+        scheduleType: saved.scheduleType || prev.scheduleType,
+        preferredDate: saved.preferredDate || prev.preferredDate,
+        preferredTimeSlot: saved.preferredTimeSlot || prev.preferredTimeSlot,
+        photos: saved.photos && saved.photos.length > 0 ? saved.photos : prev.photos,
+        voiceNoteUrl: saved.voiceNoteUrl || prev.voiceNoteUrl,
+        voiceNoteDuration: saved.voiceNoteDuration || prev.voiceNoteDuration,
+        suggestedVisitFee: saved.suggestedVisitFee || prev.suggestedVisitFee,
+      }));
+      if (shouldResumeReview) {
+        setCurrentStep(4);
+      }
+    }
+    isHydratedRef.current = true;
+  }, [shouldResumeReview, initialCategoryMatch, subCategoryParam]);
 
   // If accessed directly without selecting a category, redirect to Step 1 on the dashboard.
   // Skipped when resuming at Step 4 after authentication (draft restores the category).
   useEffect(() => {
     if (initialCategoryMatch) return;
     if (shouldResumeReview && getStoredDraft()?.category) return;
+    if (getStoredDraft()?.category) return;
     router.replace("/customer/dashboard");
   }, [initialCategoryMatch, shouldResumeReview, router]);
 
-  // Persist form draft in sessionStorage so navigating to dashboard and back preserves user input
+  // Persist form draft ONLY after hydration to prevent overwriting with initial state
   useEffect(() => {
-    persistDraft(formData);
+    if (isFirstMountRef.current) {
+      isFirstMountRef.current = false;
+      return;
+    }
+    if (isHydratedRef.current) {
+      persistDraft(formData);
+    }
   }, [formData]);
 
-  // Sync if category search param changes dynamically
+  // Sync if category search param changes dynamically without clobbering existing user inputs
   useEffect(() => {
     if (shouldResumeReview) return;
     const rawParam = categoryParam || searchParam;
     if (rawParam) {
       const match = resolveCategoryOption(rawParam);
       if (match) {
-        setFormData((prev) => ({
-          ...prev,
-          category: match.id,
-          subCategory: subCategoryParam || match.subCategories[0] || "",
-          title: subCategoryParam || prev.title || "",
-          description: prev.description || "",
-          suggestedVisitFee: match.suggestedFee || 0,
-        }));
-        setCurrentStep(2);
+        setFormData((prev) => {
+          if (prev.category === match.id && (prev.title || prev.description)) {
+            return prev;
+          }
+          return {
+            ...prev,
+            category: match.id,
+            subCategory: subCategoryParam || prev.subCategory || match.subCategories[0] || "",
+            title: prev.title || subCategoryParam || "",
+            description: prev.description || "",
+            suggestedVisitFee: match.suggestedFee || prev.suggestedVisitFee || 0,
+          };
+        });
       }
     }
   }, [categoryParam, subCategoryParam, searchParam, shouldResumeReview]);
@@ -151,14 +210,22 @@ export function PostJobWizard() {
     field: K,
     value: PostJobData[K]
   ) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
+    setFormData((prev) => {
+      const updated = { ...prev, [field]: value };
+      persistDraft(updated);
+      return updated;
+    });
   };
 
   const updateFormData = (updatesOrField: Partial<PostJobData> | keyof PostJobData, value?: any) => {
     if (typeof updatesOrField === "string") {
       handleUpdateField(updatesOrField, value);
     } else {
-      setFormData((prev) => ({ ...prev, ...updatesOrField }));
+      setFormData((prev) => {
+        const updated = { ...prev, ...updatesOrField };
+        persistDraft(updated);
+        return updated;
+      });
     }
   };
 
@@ -170,16 +237,32 @@ export function PostJobWizard() {
   };
   const handleNextStep = handleNext;
 
+  // Helper to reliably check for a valid customer authentication session
+  const getCustomerAuthToken = (): string | null => {
+    const directToken = getAccessToken("CUSTOMER");
+    if (directToken) return directToken;
+
+    const genericToken = getAccessToken();
+    if (genericToken) {
+      const stored = getStoredUser("CUSTOMER") ?? getStoredUser();
+      if (stored?.role === "WORKER" || stored?.role === "ADMIN") {
+        return null;
+      }
+      return genericToken;
+    }
+    return null;
+  };
+
   // Step 3 -> Step 4 requires an authenticated customer. Unauthenticated users
   // are sent to sign in and returned to Step 4 with the draft preserved.
   const handleStep3Next = () => {
-    const customerToken = getAccessToken("CUSTOMER");
+    persistDraft(formData);
+    const customerToken = getCustomerAuthToken();
     if (customerToken) {
       setCurrentStep(4);
       window.scrollTo({ top: 0, behavior: "smooth" });
       return;
     }
-    persistDraft(formData);
     router.push(buildPostJobSignInHref(formData));
   };
 
@@ -207,8 +290,8 @@ export function PostJobWizard() {
   };
 
   const handleSubmitJob = async () => {
-    const customerToken = getAccessToken("CUSTOMER");
-    const storedUser = getStoredUser();
+    const customerToken = getCustomerAuthToken();
+    const storedUser = getStoredUser("CUSTOMER") ?? getStoredUser();
 
     if (!customerToken) {
       if (typeof window !== "undefined") {
@@ -243,6 +326,7 @@ export function PostJobWizard() {
           sessionStorage.removeItem("workerfix_draft_job");
         } catch {}
       }
+      void queryClient.invalidateQueries({ queryKey: ["customer", "jobs"] });
       setPostedJobId(res.id);
     } catch (err) {
       console.error("Failed to post job:", err);
@@ -258,11 +342,22 @@ export function PostJobWizard() {
                 : "Your customer session expired. Please sign in again.")
         );
       } else {
-        setSubmitError(
-          err instanceof Error && err.message
-            ? err.message
-            : "Could not post your job. Please check your connection and try again.",
-        );
+        const isNetworkError =
+          (err instanceof TypeError && err.message?.includes("Failed to fetch")) ||
+          (err instanceof Error && (err.message?.includes("NetworkError") || err.message?.includes("Failed to fetch")));
+        if (isNetworkError) {
+          setSubmitError(
+            locale === "ur"
+              ? "سرور سے رابطہ قائم نہیں ہو سکا۔ براہ کرم اپنا انٹرنیٹ چیک کریں یا یقینی بنائیں کہ بیک اینڈ فعال ہے۔"
+              : "Unable to reach the server. Please check your connection or verify that the backend server is running."
+          );
+        } else {
+          setSubmitError(
+            err instanceof Error && err.message
+              ? err.message
+              : "Could not post your job. Please check your connection and try again.",
+          );
+        }
       }
     } finally {
       setIsSubmitting(false);
