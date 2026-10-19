@@ -16,6 +16,7 @@ import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { uploadWorkerDocument } from "../api/onboarding-api";
+import { compressImage } from "@/lib/image-compression";
 import {
   ALL_PAKISTAN_CITIES,
   MAJOR_PAKISTAN_CITIES,
@@ -65,7 +66,19 @@ export function Step1PersonalDetails({
     setIsPhotoUploading(true);
     setPhotoMessage(null);
     try {
-      const result = await uploadWorkerDocument(file, "avatar");
+      let fileToUpload = file;
+      if (file.type.startsWith("image/")) {
+        const compressedBlob = await compressImage(file, {
+          maxWidth: 800,
+          maxHeight: 800,
+          quality: 0.85,
+        });
+        fileToUpload = new File([compressedBlob], file.name, {
+          type: compressedBlob.type || file.type,
+        });
+      }
+
+      const result = await uploadWorkerDocument(fileToUpload, "avatar");
       updateFormData({
         profilePhoto: result.url,
         profilePhotoName: file.name,
