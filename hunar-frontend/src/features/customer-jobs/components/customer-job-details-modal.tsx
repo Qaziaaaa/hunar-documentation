@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import {
+  AlertCircle,
   Calendar,
   CheckCircle2,
   Clock,
@@ -9,15 +10,18 @@ import {
   MapPin,
   Pause,
   Play,
+  RotateCcw,
   ShieldCheck,
   Volume2,
   Wrench,
   X,
+  XCircle,
   ArrowRight,
   User,
   Zap,
 } from "lucide-react";
 import { useLocale } from "next-intl";
+import { useRouter } from "@/i18n/navigation";
 import { formatJobDate, formatPostedAt } from "@/lib/format";
 import type { CustomerJob } from "../types";
 
@@ -26,6 +30,7 @@ interface CustomerJobDetailsModalProps {
   isOpen: boolean;
   onClose: () => void;
   onReviewOffers?: (job: CustomerJob) => void;
+  onRepostJob?: (job: CustomerJob) => void;
 }
 
 export function CustomerJobDetailsModal({
@@ -33,7 +38,9 @@ export function CustomerJobDetailsModal({
   isOpen,
   onClose,
   onReviewOffers,
+  onRepostJob,
 }: CustomerJobDetailsModalProps) {
+  const router = useRouter();
   const locale = useLocale();
   const isUrdu = locale === "ur";
 
@@ -128,6 +135,28 @@ export function CustomerJobDetailsModal({
                 <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
                   <CheckCircle2 className="size-3.5" />
                   <span>{isUrdu ? "مکمل اور تصدیق شدہ" : "Completed & Verified"}</span>
+                </span>
+              )}
+
+              {job.status === "cancelled" && (
+                <span
+                  className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${
+                    job.cancelReason === "EXPIRED_NO_WORKER_ACCEPTED"
+                      ? "bg-amber-50 text-amber-700 border border-amber-200"
+                      : "bg-slate-100 text-slate-700 border border-slate-200"
+                  }`}
+                >
+                  {job.cancelReason === "EXPIRED_NO_WORKER_ACCEPTED" ? (
+                    <>
+                      <Clock className="size-3.5 text-amber-600" />
+                      <span>{isUrdu ? "میعاد ختم (کوئی کاریگر نہیں ملا)" : "Expired (No Worker Accepted)"}</span>
+                    </>
+                  ) : (
+                    <>
+                      <XCircle className="size-3.5 text-slate-500" />
+                      <span>{isUrdu ? "منسوخ شدہ" : "Cancelled"}</span>
+                    </>
+                  )}
                 </span>
               )}
             </div>
@@ -422,6 +451,43 @@ export function CustomerJobDetailsModal({
                 </p>
               </div>
             )}
+
+            {job.status === "cancelled" && (
+              <div
+                className={`p-4 rounded-2xl border text-xs sm:text-sm space-y-2 ${
+                  job.cancelReason === "EXPIRED_NO_WORKER_ACCEPTED"
+                    ? "bg-amber-50/80 border-amber-200 text-amber-900"
+                    : "bg-slate-50 border-slate-200 text-slate-700"
+                }`}
+              >
+                <div className="flex items-center gap-2 font-bold">
+                  {job.cancelReason === "EXPIRED_NO_WORKER_ACCEPTED" ? (
+                    <>
+                      <Clock className="size-4 text-amber-600 shrink-0" />
+                      <span className="text-amber-950">
+                        {isUrdu ? "درخواست کی میعاد ختم ہو گئی ہے" : "Service Request Expired"}
+                      </span>
+                    </>
+                  ) : (
+                    <>
+                      <AlertCircle className="size-4 text-slate-500 shrink-0" />
+                      <span className="text-slate-900">
+                        {isUrdu ? "درخواست منسوخ ہے" : "Service Request Cancelled"}
+                      </span>
+                    </>
+                  )}
+                </div>
+                <p className="text-xs leading-relaxed opacity-90">
+                  {job.cancelReason === "EXPIRED_NO_WORKER_ACCEPTED"
+                    ? isUrdu
+                      ? "مقررہ وقت (20 گھنٹے) کے دوران کسی دستیاب کاریگر نے آپ کی درخواست قبول نہیں کی۔ آپ اسے دوبارہ ایک کلک سے نئی درخواست کے طور پر شائع کر سکتے ہیں۔"
+                      : "No available worker accepted your request within the 20-hour window. The request has expired, but you can easily repost it with the same details."
+                    : isUrdu
+                    ? `منسوخی کی وجہ: ${job.cancelReason || "گاہک یا سسٹم کی طرف سے منسوخ"}`
+                    : `Cancellation reason: ${job.cancelReason || "Cancelled by user or system"}`}
+                </p>
+              </div>
+            )}
           </div>
 
           {/* Modal Footer */}
@@ -446,6 +512,44 @@ export function CustomerJobDetailsModal({
                     : `Review ${job.offers.length} Offers`}
                 </span>
                 <ArrowRight className="size-4 rtl:rotate-180" />
+              </button>
+            )}
+
+            {job.status === "cancelled" && (
+              <button
+                type="button"
+                onClick={() => {
+                  onClose();
+                  if (onRepostJob) {
+                    onRepostJob(job);
+                  } else {
+                    try {
+                      sessionStorage.setItem(
+                        "workerfix_customer_post_job_draft",
+                        JSON.stringify({
+                          title: job.title,
+                          description: job.description || "",
+                          address: job.address || "",
+                          area: job.area || "",
+                          city: job.city || "Peshawar",
+                          landmark: job.landmark || "",
+                          category: job.category || "",
+                          subCategory: job.subCategory || "",
+                          scheduleType: job.scheduleType || "asap",
+                          suggestedVisitFee: job.suggestedVisitCharge || 500,
+                          photos: job.photos || [],
+                        })
+                      );
+                    } catch {}
+                    router.push(
+                      `/customer/post-job?category=${encodeURIComponent(job.category || "")}&subCategory=${encodeURIComponent(job.subCategory || "")}`
+                    );
+                  }
+                }}
+                className="py-2.5 px-4 rounded-xl bg-teal hover:bg-teal/90 text-white font-bold text-xs sm:text-sm shadow-xs transition-all flex items-center gap-1.5 cursor-pointer active:scale-98"
+              >
+                <RotateCcw className="size-4" />
+                <span>{isUrdu ? "دوبارہ پوسٹ کریں" : "Repost Request"}</span>
               </button>
             )}
           </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import { JobRequest, JobFeedFilters } from "@/types/job";
 import { VisitOffer, CounterHistoryItem } from "@/types/offer";
 import { InspectionReport } from "@/types/inspection";
@@ -55,7 +55,7 @@ function initWorkerSocketListeners() {
     if (newStatus === "REPAIR_APPROVED") {
       patch({
         jobs: globalState.jobs.map((j) =>
-          j.id === jobId
+          j.id?.toLowerCase() === jobId?.toLowerCase()
             ? {
                 ...j,
                 status: "repair_approved" as const,
@@ -67,7 +67,7 @@ function initWorkerSocketListeners() {
     } else if (newStatus === "REPAIR_DECLINED" || newStatus === "REPAIR_REJECTED") {
       patch({
         jobs: globalState.jobs.map((j) =>
-          j.id === jobId
+          j.id?.toLowerCase() === jobId?.toLowerCase()
             ? {
                 ...j,
                 status: "repair_declined" as const,
@@ -76,10 +76,10 @@ function initWorkerSocketListeners() {
             : j
         ),
       });
-    } else if (newStatus === "VISIT_COMPLETED") {
+    } else if (newStatus === "VISIT_COMPLETED" || newStatus === "IN_PREMISES") {
       patch({
         jobs: globalState.jobs.map((j) =>
-          j.id === jobId
+          j.id?.toLowerCase() === jobId?.toLowerCase()
             ? {
                 ...j,
                 status:
@@ -96,11 +96,33 @@ function initWorkerSocketListeners() {
     }
   };
 
-  const handleRepairApproved = (data: any) => {
-    if (!data?.jobId) return;
+  const handleVisitOtpVerified = (data: any) => {
+    const jobId = data?.jobId;
+    if (!jobId) return;
     patch({
       jobs: globalState.jobs.map((j) =>
-        j.id === data.jobId
+        j.id?.toLowerCase() === jobId?.toLowerCase()
+          ? {
+              ...j,
+              status:
+                j.status === "inspecting" ||
+                j.status === "inspection_submitted" ||
+                j.status.startsWith("repair_") ||
+                j.status === "completed"
+                  ? j.status
+                  : ("inspecting" as const),
+            }
+          : j
+      ),
+    });
+  };
+
+  const handleRepairApproved = (data: any) => {
+    if (!data?.jobId) return;
+    const targetJobId = data.jobId?.toLowerCase();
+    patch({
+      jobs: globalState.jobs.map((j) =>
+        j.id?.toLowerCase() === targetJobId
           ? {
               ...j,
               status: "repair_approved" as const,
@@ -113,9 +135,10 @@ function initWorkerSocketListeners() {
 
   const handleRepairRejected = (data: any) => {
     if (!data?.jobId) return;
+    const targetJobId = data.jobId?.toLowerCase();
     patch({
       jobs: globalState.jobs.map((j) =>
-        j.id === data.jobId
+        j.id?.toLowerCase() === targetJobId
           ? {
               ...j,
               status: "repair_declined" as const,
@@ -135,12 +158,144 @@ function initWorkerSocketListeners() {
     }
   };
 
+  const handleOfferAccepted = (data: any) => {
+    if (!data?.jobId) return;
+    const { jobId, offerId, agreedPrice } = data;
+    const existingOffer = globalState.offers[jobId];
+    const agreed = agreedPrice ?? existingOffer?.visitCharge ?? 0;
+    const commission = Math.round(agreed * 0.1);
+    const net = agreed - commission;
+
+    patch({
+      offers: {
+        ...globalState.offers,
+        [jobId]: existingOffer
+          ? {
+              ...existingOffer,
+              status: "accepted",
+              agreedVisitCharge: agreed,
+              visitCharge: agreed,
+              platformCommission: commission,
+              workerNetEarnings: net,
+            }
+          : {
+              id: offerId || `off-${Date.now()}`,
+              jobId,
+              workerId: "worker-me",
+              workerName: "Me",
+              visitCharge: agreed,
+              platformCommission: commission,
+              workerNetEarnings: net,
+              status: "accepted",
+              createdAt: new Date().toISOString(),
+              currentRound: 1,
+              maxRounds: 3,
+              counterHistory: [],
+              agreedVisitCharge: agreed,
+            },
+      },
+      jobs: globalState.jobs.map((j) =>
+        j.id === jobId
+          ? {
+              ...j,
+              status: "accepted" as const,
+              visitCharge: agreed,
+            }
+          : j
+      ),
+    });
+    void workerStore.syncActiveJobs();
+    void workerStore.backfillResourceIds();
+  };
+
+  const handleJobClosed = (data: any) => {
+    if (!data?.jobId) return;
+    const { jobId } = data;
+    const existingOffer = globalState.offers[jobId];
+    patch({
+      offers: existingOffer
+        ? {
+            ...globalState.offers,
+            [jobId]: { ...existingOffer, status: "closed_assigned" },
+          }
+        : globalState.offers,
+      jobs: globalState.jobs.map((j) =>
+        j.id === jobId ? { ...j, status: "closed_assigned" as const } : j
+      ),
+    });
+  };
+
+  const handleJobOffer = (data: any) => {
+    if (!data?.jobId) return;
+    const { jobId, visitCharge, sender, notes } = data;
+    if (sender === "CUSTOMER" || data.action === "COUNTER") {
+      const offer = globalState.offers[jobId];
+      if (offer) {
+        const nextRound = offer.currentRound + 1;
+        const updatedHistory: CounterHistoryItem[] = [
+          ...offer.counterHistory,
+          {
+            round: nextRound,
+            sender: "customer",
+            amount: visitCharge,
+            message: notes || `Customer counter offer of Rs. ${visitCharge}`,
+            createdAt: new Date().toISOString(),
+          },
+        ];
+
+        patch({
+          offers: {
+            ...globalState.offers,
+            [jobId]: {
+              ...offer,
+              currentRound: nextRound,
+              status: "counter_received",
+              customerCounterAmount: visitCharge,
+              customerCounterMessage: notes,
+              counterHistory: updatedHistory,
+            },
+          },
+          jobs: globalState.jobs.map((j) =>
+            j.id === jobId ? { ...j, status: "counter_received" as const } : j
+          ),
+        });
+      }
+    }
+  };
+
+  const handleJobCancelled = (data: any) => {
+    if (!data?.jobId) return;
+    patch({
+      jobs: globalState.jobs.map((j) =>
+        j.id === data.jobId ? { ...j, status: "cancelled" as const } : j
+      ),
+    });
+  };
+
+  const handleJobNew = (data: any) => {
+    const rawJob = data?.job || (data?.id ? data : null);
+    if (!rawJob?.id) return;
+    if (globalState.jobs.some((j) => j.id === rawJob.id)) return;
+    const newJob = mapJobToRequest(rawJob);
+    patch({
+      jobs: [newJob, ...globalState.jobs],
+    });
+  };
+
   socket.on("job:statusChanged", handleStatusChanged);
   socket.on("job:status:changed", handleStatusChanged);
+  socket.on("job:offer:accepted", handleOfferAccepted);
+  socket.on("job:offerAccepted", handleOfferAccepted);
+  socket.on("job:closed", handleJobClosed);
+  socket.on("job:offer", handleJobOffer);
+  socket.on("job:cancelled", handleJobCancelled);
+  socket.on("job:new", handleJobNew);
   socket.on("repair:approved", handleRepairApproved);
   socket.on("repair.approved", handleRepairApproved);
   socket.on("repair:rejected", handleRepairRejected);
   socket.on("repair.rejected", handleRepairRejected);
+  socket.on("visit:otp:verified", handleVisitOtpVerified);
+  socket.on("visit.otp.verified", handleVisitOtpVerified);
   socket.on("wallet:balanceUpdated", handleBalanceUpdated);
   socket.on("wallet:balance:updated", handleBalanceUpdated);
 }
@@ -154,8 +309,24 @@ const defaultFilters: JobFeedFilters = {
   hideFarJobs: false,
 };
 
+const WORKER_JOBS_SESSION_KEY = "hunar_worker_store_jobs";
+
+function loadInitialWorkerJobs(): JobRequest[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = sessionStorage.getItem(WORKER_JOBS_SESSION_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    }
+  } catch {}
+  return [];
+}
+
+const initialCachedJobs = loadInitialWorkerJobs();
+
 let globalState: WorkerState = {
-  jobs: [],
+  jobs: initialCachedJobs,
   offers: {},
   inspectionReports: {},
   filters: defaultFilters,
@@ -164,8 +335,8 @@ let globalState: WorkerState = {
   walletHold: 0,
   workerSkills: [],
   workerArea: "",
-  hydrated: false,
-  status: "idle",
+  hydrated: initialCachedJobs.length > 0,
+  status: initialCachedJobs.length > 0 ? "ready" : "idle",
   error: null,
 };
 
@@ -183,16 +354,154 @@ function patch(state: Partial<WorkerState>) {
   notify();
 }
 
+export const JOB_STATUS_RANK: Record<string, number> = {
+  open: 0,
+  counter_received: 1,
+  offers_received: 1,
+  accepted: 2,
+  visit_scheduled: 2,
+  visit_in_progress: 3,
+  visit_completed: 4,
+  inspecting: 5,
+  inspection_submitted: 6,
+  repair_negotiating: 7,
+  repair_approved: 8,
+  repair_declined: 8,
+  repair_in_progress: 9,
+  completed: 10,
+  cancelled: 11,
+};
+
 export const workerStore = {
   getState() {
     return globalState;
   },
 
+  updateJobStatus(jobId: string, status: any, repairCharge?: number) {
+    patch({
+      jobs: globalState.jobs.map((j) =>
+        j.id === jobId
+          ? {
+              ...j,
+              status,
+              ...(repairCharge !== undefined ? { repairCharge } : {}),
+            }
+          : j
+      ),
+    });
+  },
+
+  upsertJob(job: JobRequest) {
+    const normId = job.id?.toLowerCase();
+    const existing = globalState.jobs.find((j) => j.id?.toLowerCase() === normId);
+    if (existing) {
+      const existingRank = JOB_STATUS_RANK[existing.status] ?? 0;
+      const incomingRank = JOB_STATUS_RANK[job.status] ?? 0;
+      const finalStatus = incomingRank >= existingRank ? job.status : existing.status;
+      patch({
+        jobs: globalState.jobs.map((j) =>
+          j.id?.toLowerCase() === normId
+            ? {
+                ...j,
+                ...job,
+                status: finalStatus,
+                ...(finalStatus === existing.status && existing.repairCharge != null
+                  ? { repairCharge: existing.repairCharge }
+                  : {}),
+              }
+            : j
+        ),
+      });
+    } else {
+      patch({
+        jobs: [job, ...globalState.jobs],
+      });
+    }
+  },
+
+  async syncActiveJobs() {
+    try {
+      const activeJobs = await listWorkerJobs();
+      if (!Array.isArray(activeJobs)) return;
+
+      const activeMapped: JobRequest[] = [];
+      const activeIds = new Set<string>();
+
+      for (const raw of activeJobs) {
+        if (!raw?.id) continue;
+        activeIds.add(raw.id.toLowerCase());
+        const visitId =
+          (raw as any).nextVisit?.id ||
+          (raw as any).visits?.[0]?.id ||
+          (raw as any).visitId;
+        if (visitId) {
+          visitIdByJob.set(raw.id, visitId);
+          visitIdByJob.set(raw.id.toLowerCase(), visitId);
+        }
+        const mapped = mapJobToRequest(raw);
+        const existing = globalState.jobs.find(
+          (j) => j.id?.toLowerCase() === raw.id?.toLowerCase()
+        );
+        if (existing) {
+          const existingRank = JOB_STATUS_RANK[existing.status] ?? 0;
+          const mappedRank = JOB_STATUS_RANK[mapped.status] ?? 0;
+          if (existingRank > mappedRank) {
+            mapped.status = existing.status;
+            if (existing.repairCharge != null) {
+              mapped.repairCharge = existing.repairCharge;
+            }
+          }
+        }
+        activeMapped.push(mapped);
+      }
+
+      // Merge: replace active jobs with fresh server active jobs, keeping nearby/history that aren't in activeIds
+      const nonActiveJobs = globalState.jobs.filter((j) => {
+        const norm = j.id?.toLowerCase();
+        if (activeIds.has(norm)) return false;
+        const isLocalActive =
+          j.status === "accepted" ||
+          j.status === "visit_in_progress" ||
+          j.status === "visit_completed" ||
+          j.status === "inspecting" ||
+          j.status === "inspection_submitted" ||
+          j.status === "repair_negotiating" ||
+          j.status === "repair_approved" ||
+          j.status === "repair_in_progress" ||
+          j.status === "repair_declined";
+        return !isLocalActive;
+      });
+
+      const updatedJobs = [...activeMapped, ...nonActiveJobs];
+      patch({
+        jobs: updatedJobs,
+        hydrated: true,
+        status: "ready",
+      });
+
+      if (typeof window !== "undefined") {
+        try {
+          sessionStorage.setItem(WORKER_JOBS_SESSION_KEY, JSON.stringify(updatedJobs.slice(0, 50)));
+        } catch {}
+      }
+    } catch (err) {
+      console.warn("[workerStore] syncActiveJobs failed:", err);
+    }
+  },
+
   async hydrate(options: { force?: boolean } = {}) {
-    if (globalState.hydrated && !options.force) {
+    if (globalState.hydrated && !options.force && globalState.jobs.length > 0) {
+      // Re-validate in background without wiping UI or showing spinners
+      void this.performHydration(true);
       return;
     }
-    patch({ status: "loading", error: null });
+    await this.performHydration(false);
+  },
+
+  async performHydration(isBackgroundSync: boolean = false) {
+    if (!isBackgroundSync && !globalState.hydrated) {
+      patch({ status: "loading", error: null });
+    }
     try {
       const settled = await Promise.allSettled([
         listNearbyJobs(),
@@ -223,17 +532,48 @@ export const workerStore = {
       for (const job of [...nearby, ...active, ...history]) {
         if (seen.has(job.id)) continue;
         seen.add(job.id);
-        if ((job as any).nextVisit?.id) {
-          visitIdByJob.set(job.id, (job as any).nextVisit.id);
+        const visitId =
+          (job as any).nextVisit?.id ||
+          (job as any).visits?.[0]?.id ||
+          (job as any).visitId;
+        if (visitId) {
+          visitIdByJob.set(job.id, visitId);
         }
-        jobs.push(mapJobToRequest(job));
+        const mapped = mapJobToRequest(job);
+        const existing = globalState.jobs.find(
+          (j) => j.id?.toLowerCase() === job.id?.toLowerCase()
+        );
+        if (existing) {
+          const existingRank = JOB_STATUS_RANK[existing.status] ?? 0;
+          const mappedRank = JOB_STATUS_RANK[mapped.status] ?? 0;
+          if (existingRank > mappedRank) {
+            mapped.status = existing.status;
+            if (existing.repairCharge != null) {
+              mapped.repairCharge = existing.repairCharge;
+            }
+          }
+        }
+        jobs.push(mapped);
+      }
+
+      // Only preserve un-synced in-flight jobs if the active jobs call failed
+      if (activeRes.status === "rejected") {
+        for (const existing of globalState.jobs) {
+          if (!seen.has(existing.id) && existing.status !== "completed" && existing.status !== "cancelled") {
+            seen.add(existing.id);
+            jobs.push(existing);
+          }
+        }
       }
 
       const offersMap: Record<string, VisitOffer> = {};
       for (const offer of offers) {
         offersMap[offer.jobId] = offer;
         if (offer.jobId && !visitIdByJob.get(offer.jobId)) {
-          visitIdByJob.set(offer.jobId, (offer as any).visitId || "");
+          const offerVisitId = (offer as any).visitId || (offer as any).nextVisit?.id;
+          if (offerVisitId) {
+            visitIdByJob.set(offer.jobId, offerVisitId);
+          }
         }
       }
 
@@ -256,7 +596,14 @@ export const workerStore = {
           : null,
       });
 
-      await this.backfillResourceIds();
+      if (typeof window !== "undefined") {
+        try {
+          sessionStorage.setItem(WORKER_JOBS_SESSION_KEY, JSON.stringify(jobs.slice(0, 50)));
+        } catch {}
+      }
+
+      // Non-blocking backfill: runs in background so UI renders immediately
+      void this.backfillResourceIds();
       initWorkerSocketListeners();
     } catch (err) {
       console.error("[workerStore] hydrate failed:", err);
@@ -279,21 +626,35 @@ export const workerStore = {
         repairIdByJob.set(r.jobId, r.id);
         if (r.visitId) visitIdByJob.set(r.jobId, r.visitId);
       }
-      for (const job of globalState.jobs) {
-        if (!visitIdByJob.has(job.id)) {
+
+      // Only inspect active jobs requiring visits that do not already have one
+      const jobsNeedingVisits = globalState.jobs.filter(
+        (job) =>
+          !visitIdByJob.has(job.id) &&
+          (job.status === "accepted" ||
+            job.status === "visit_in_progress" ||
+            job.status === "inspecting" ||
+            job.status.startsWith("repair_"))
+      );
+
+      if (jobsNeedingVisits.length === 0) return;
+
+      // Parallel batch query capped to maximum 6 active jobs simultaneously
+      await Promise.allSettled(
+        jobsNeedingVisits.slice(0, 6).map(async (job) => {
           try {
             const detail = await http.get<{
               id: string;
               visits?: { id: string }[];
             }>(`/jobs/${job.id}`).catch(() => null);
-            if (detail?.visits?.[0]) {
+            if (detail?.visits?.[0]?.id) {
               visitIdByJob.set(job.id, detail.visits[0].id);
             }
           } catch {
-            // no visit yet for this job
+            // best-effort
           }
-        }
-      }
+        })
+      );
     } catch (err) {
       console.error("[workerStore] backfill resource ids failed:", err);
     }
@@ -401,10 +762,22 @@ export const workerStore = {
         });
       });
 
-    const s = getSocket();
-    s?.emit("job:offer:submit", { jobId, visitCharge, message });
-
     return { success: true };
+  },
+
+  recordOfferSent(serverOffer: VisitOffer, jobId: string) {
+    patch({
+      offers: { ...globalState.offers, [jobId]: serverOffer },
+      jobs: globalState.jobs.map((j) =>
+        j.id === jobId
+          ? {
+              ...j,
+              status: "offer_sent" as const,
+              totalOffers: (j.totalOffers || 0) + 1,
+            }
+          : j
+      ),
+    });
   },
 
   // Task 6: Accept customer's counter offer
@@ -502,31 +875,41 @@ export const workerStore = {
 
   // Task 8a: Start Visit -> visit_in_progress
   startVisit(jobId: string) {
-    const current = globalState.jobs.find((j) => j.id === jobId);
-    if (current && current.status === "visit_in_progress") {
+    const normId = jobId?.toLowerCase();
+    const current = globalState.jobs.find((j) => j.id?.toLowerCase() === normId);
+    if (
+      current &&
+      (current.status === "visit_in_progress" ||
+        current.status === "visit_completed" ||
+        current.status === "inspecting" ||
+        current.status === "inspection_submitted" ||
+        current.status.startsWith("repair_") ||
+        current.status === "completed")
+    ) {
       return;
     }
-    const visitId = visitIdByJob.get(jobId);
+    const visitId = visitIdByJob.get(jobId) || visitIdByJob.get(normId);
     const url = visitId ? `/visits/${visitId}/start` : `/jobs/${jobId}/start`;
     http.put(url).catch((err) => {
       console.error("[workerStore] start visit failed:", err);
     });
     patch({
       jobs: globalState.jobs.map((j) =>
-        j.id === jobId ? { ...j, status: "visit_in_progress" as const } : j
+        j.id?.toLowerCase() === normId ? { ...j, status: "visit_in_progress" as const } : j
       ),
     });
   },
 
   // Task 8b: Arrival Doorstep action -> generates real OTP & notifies customer
-  async arriveAtDoorstep(jobId: string): Promise<{
+  async arriveAtDoorstep(jobId: string, clientOtp?: string): Promise<{
     success: boolean;
     otp?: string;
     visitId?: string;
     arrivedAt?: number;
     error?: string;
   }> {
-    const job = globalState.jobs.find((j) => j.id === jobId);
+    const normId = jobId?.toLowerCase();
+    const job = globalState.jobs.find((j) => j.id?.toLowerCase() === normId);
     const visitCharge =
       (job as any)?.agreedVisitCharge ??
       job?.visitCharge ??
@@ -544,30 +927,19 @@ export const workerStore = {
     }
 
     try {
-      const visitId = visitIdByJob.get(jobId);
-      const url = visitId ? `/visits/${visitId}/arrived` : `/jobs/${jobId}/arrived`;
-      let res;
-      try {
-        res = await http.put<{
-          success: boolean;
-          otp: string;
-          visitId: string;
-          jobId: string;
-          arrivedAt: number;
-        }>(url);
-      } catch (firstErr: any) {
-        // Fallback to /visits/:id/arrived with jobId
-        const fallbackUrl = url.startsWith('/jobs')
-          ? `/visits/${jobId}/arrived`
-          : `/jobs/${jobId}/arrived`;
-        res = await http.put<{
-          success: boolean;
-          otp: string;
-          visitId: string;
-          jobId: string;
-          arrivedAt: number;
-        }>(fallbackUrl);
-      }
+      const visitId =
+        visitIdByJob.get(jobId) ||
+        visitIdByJob.get(normId) ||
+        (job as any)?.visitId ||
+        (job as any)?.nextVisit?.id;
+      const targetId = visitId || jobId;
+      const res = await http.put<{
+        success: boolean;
+        otp: string;
+        visitId: string;
+        jobId: string;
+        arrivedAt: number;
+      }>(`/visits/${targetId}/arrived`, clientOtp ? { otp: clientOtp } : undefined);
 
       const otp = (res as any)?.otp || (res as any)?.data?.otp;
       const visitIdRet = (res as any)?.visitId || (res as any)?.data?.visitId;
@@ -577,11 +949,12 @@ export const workerStore = {
       if (otp || isSuccess) {
         if (visitIdRet) {
           visitIdByJob.set(jobId, visitIdRet);
+          visitIdByJob.set(normId, visitIdRet);
         }
         patch({
           walletHold: globalState.walletHold + requiredHold,
           jobs: globalState.jobs.map((j) =>
-            j.id === jobId
+            j.id?.toLowerCase() === normId
               ? {
                   ...j,
                   status:
@@ -614,7 +987,8 @@ export const workerStore = {
 
   // Task 8b: I've Arrived -> visit_completed
   arriveAtSite(jobId: string): { success: boolean; error?: string; requiredHold?: number } {
-    const job = globalState.jobs.find((j) => j.id === jobId);
+    const normId = jobId?.toLowerCase();
+    const job = globalState.jobs.find((j) => j.id?.toLowerCase() === normId);
     const visitCharge =
       (job as any)?.agreedVisitCharge ??
       job?.visitCharge ??
@@ -624,39 +998,58 @@ export const workerStore = {
       0;
     const requiredHold = Math.round(visitCharge * 0.1); // 10% platform commission
 
+    const exists = globalState.jobs.some((j) => j.id?.toLowerCase() === normId);
     patch({
-      jobs: globalState.jobs.map((j) =>
-        j.id === jobId
-          ? {
-              ...j,
-              status:
-                j.status === "inspecting" ||
-                j.status === "inspection_submitted" ||
-                j.status.startsWith("repair_") ||
-                j.status === "completed"
-                  ? j.status
-                  : ("visit_completed" as const),
-            }
-          : j
-      ),
+      jobs: exists
+        ? globalState.jobs.map((j) =>
+            j.id?.toLowerCase() === normId
+              ? {
+                  ...j,
+                  status:
+                    j.status === "inspecting" ||
+                    j.status === "inspection_submitted" ||
+                    j.status.startsWith("repair_") ||
+                    j.status === "completed"
+                      ? j.status
+                      : ("visit_completed" as const),
+                }
+              : j
+          )
+        : job
+        ? [{ ...job, status: "visit_completed" as const }, ...globalState.jobs]
+        : globalState.jobs,
     });
     return { success: true, requiredHold };
   },
 
   // Task 8c: Start Inspection -> inspecting
   startInspection(jobId: string) {
+    const normId = jobId?.toLowerCase();
+    const exists = globalState.jobs.some((j) => j.id?.toLowerCase() === normId);
+    const job = globalState.jobs.find((j) => j.id?.toLowerCase() === normId);
     patch({
-      jobs: globalState.jobs.map((j) =>
-        j.id === jobId ? { ...j, status: "inspecting" as const } : j
-      ),
+      jobs: exists
+        ? globalState.jobs.map((j) =>
+            j.id?.toLowerCase() === normId ? { ...j, status: "inspecting" as const } : j
+          )
+        : job
+        ? [{ ...job, status: "inspecting" as const }, ...globalState.jobs]
+        : globalState.jobs,
     });
   },
 
+  registerVisitId(jobId: string, visitId: string) {
+    if (jobId && visitId) {
+      visitIdByJob.set(jobId, visitId);
+      visitIdByJob.set(jobId.toLowerCase(), visitId);
+    }
+  },
+
   // Task 8d: Submit Inspection -> 5 required fields
-  submitInspection(
+  async submitInspection(
     jobId: string,
     report: Omit<InspectionReport, "jobId" | "submittedAt">
-  ): { success: boolean; error?: string } {
+  ): Promise<{ success: boolean; error?: string }> {
     if (!report.diagnosis?.trim()) {
       return { success: false, error: "Diagnosis is required." };
     }
@@ -682,7 +1075,7 @@ export const workerStore = {
     patch({
       inspectionReports: { ...globalState.inspectionReports, [jobId]: fullReport },
       jobs: globalState.jobs.map((j) =>
-        j.id === jobId
+        j.id?.toLowerCase() === jobId?.toLowerCase()
           ? {
               ...j,
               status: "inspection_submitted" as const,
@@ -692,61 +1085,50 @@ export const workerStore = {
       ),
     });
 
-    const getOrFetchVisitId = async () => {
-      const vId = visitIdByJob.get(jobId);
-      if (vId) return vId;
-      const detail = await http.get<{ id: string; visits?: { id: string }[] }>(`/jobs/${jobId}`).catch(() => null);
-      const fetchedId = detail?.visits?.[0]?.id;
-      if (fetchedId) {
-        visitIdByJob.set(jobId, fetchedId);
-      }
-      return fetchedId;
-    };
+    const targetId = visitIdByJob.get(jobId) || visitIdByJob.get(jobId?.toLowerCase()) || jobId;
+    try {
+      await http.put(`/visits/${targetId}/inspection`, {
+        diagnosis: report.diagnosis,
+        repairPlan: report.repairPlan,
+        repairEstimate: report.repairPriceEstimate,
+        inspectionPhotos: report.photos,
+        estimatedRepairTimeMin: parseDurationToMinutes(report.estimatedRepairTime),
+      });
 
-    getOrFetchVisitId().then(async (vId) => {
-      const targetId = vId || jobId;
-      try {
-        await http.put(`/visits/${targetId}/inspection`, {
-          diagnosis: report.diagnosis,
-          repairPlan: report.repairPlan,
-          repairEstimate: report.repairPriceEstimate,
-          inspectionPhotos: report.photos,
-          estimatedRepairTimeMin: parseDurationToMinutes(report.estimatedRepairTime),
-        });
+      const repair = await http.post(`/visits/${targetId}/estimate`, {
+        description: report.diagnosis,
+        amount: report.repairPriceEstimate,
+        itemsBreakdown: { plan: report.repairPlan },
+      });
 
-        const repair = await http.post(`/visits/${targetId}/estimate`, {
-          description: report.diagnosis,
-          amount: report.repairPriceEstimate,
-          itemsBreakdown: { plan: report.repairPlan },
-        }).catch((err) => {
-          console.warn("[workerStore] create repair estimate:", err);
-          return null;
-        });
-
-        const r = repair as { id?: string; jobId?: string; amount?: number } | null;
-        if (r?.id && r?.jobId) {
-          repairIdByJob.set(r.jobId, r.id);
-          if (vId) {
-            visitIdByJob.set(r.jobId, vId);
-          }
-          patch({
-            jobs: globalState.jobs.map((j) =>
-              j.id === jobId
-                ? {
-                    ...j,
-                    status: "repair_negotiating" as const,
-                    repairCharge: report.repairPriceEstimate,
-                  }
-                : j
-            ),
-          });
+      const r = repair as { id?: string; jobId?: string; amount?: number } | null;
+      if (r?.id && r?.jobId) {
+        repairIdByJob.set(r.jobId, r.id);
+        repairIdByJob.set(r.jobId.toLowerCase(), r.id);
+        if (targetId) {
+          visitIdByJob.set(r.jobId, targetId);
+          visitIdByJob.set(r.jobId.toLowerCase(), targetId);
         }
-      } catch (err) {
-        console.error("[workerStore] submit inspection failed:", err);
       }
-    });
-
-    return { success: true };
+      patch({
+        jobs: globalState.jobs.map((j) =>
+          j.id?.toLowerCase() === jobId?.toLowerCase()
+            ? {
+                ...j,
+                status: "repair_negotiating" as const,
+                repairCharge: report.repairPriceEstimate,
+              }
+            : j
+        ),
+      });
+      return { success: true };
+    } catch (err: any) {
+      console.error("[workerStore] submit inspection failed:", err);
+      return {
+        success: false,
+        error: err?.response?.data?.message || err?.message || "Failed to submit inspection and quotation.",
+      };
+    }
   },
 
   // Cancel Job (Active pre-visit)
@@ -917,16 +1299,30 @@ export const workerStore = {
   },
 };
 
-// React Hook for consuming the store
-export function useWorkerJobs() {
-  const [state, setState] = useState<WorkerState>(workerStore.getState());
+const SERVER_WORKER_STATE: WorkerState = {
+  jobs: [],
+  offers: {},
+  inspectionReports: {},
+  filters: defaultFilters,
+  workerOnline: false,
+  walletBalance: 0,
+  walletHold: 0,
+  workerSkills: [],
+  workerArea: "",
+  hydrated: false,
+  status: "idle",
+  error: null,
+};
 
+// React Hook for consuming the store with hydration-safe external store subscription
+export function useWorkerJobs(): WorkerState {
   useEffect(() => {
     workerStore.hydrate();
-    return workerStore.subscribe(() => {
-      setState(workerStore.getState());
-    });
   }, []);
 
-  return state;
+  return useSyncExternalStore(
+    (notify) => workerStore.subscribe(notify),
+    () => workerStore.getState(),
+    () => SERVER_WORKER_STATE
+  );
 }

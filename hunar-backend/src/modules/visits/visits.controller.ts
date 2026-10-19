@@ -54,17 +54,22 @@ export class VisitsController {
 
   @Put('visits/:id/arrived')
   @Roles(Role.WORKER)
-  arrived(@CurrentUser() user: JwtPayload, @Param('id') id: string) {
-    return this.visitsService.workerArrived(id, user);
+  arrived(
+    @CurrentUser() user: JwtPayload,
+    @Param('id') id: string,
+    @Body() body?: { otp?: string },
+  ) {
+    return this.visitsService.workerArrived(id, user, body?.otp);
   }
 
   @Put('jobs/:jobId/arrived')
   @Roles(Role.WORKER)
   arrivedByJob(
     @CurrentUser() user: JwtPayload,
-    @Param('jobId', ParseOrderCodePipe) jobId: string,
+    @Param('jobId') jobId: string,
+    @Body() body?: { otp?: string },
   ) {
-    return this.visitsService.workerArrived(jobId, user);
+    return this.visitsService.workerArrived(jobId, user, body?.otp);
   }
 
   @Put('visits/:id/verify-arrival-otp')

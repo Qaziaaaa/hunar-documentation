@@ -6,6 +6,7 @@ import {
   NotFoundException,
   Optional,
 } from '@nestjs/common';
+import { Cron } from '@nestjs/schedule';
 import { JobStatus, Prisma, Role, Urgency, WorkerVerificationStatus } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { EventBusService } from '../../common/event-bus/event-bus.service';
@@ -140,6 +141,13 @@ const ACTIVE_JOB_STATUSES: JobStatus[] = [
   'IN_PROGRESS',
 ];
 
+interface MemoryCacheItem<T> {
+  value: T;
+  expiresAt: number;
+}
+const availableJobsMemoryCache = new Map<string, MemoryCacheItem<any>>();
+const workerProfileMemoryCache = new Map<string, MemoryCacheItem<any>>();
+
 @Injectable()
 export class JobsService {
   constructor(
@@ -149,6 +157,10 @@ export class JobsService {
     @Optional() private readonly redis?: RedisService,
     @Optional() private readonly settings?: SettingsService,
   ) { }
+
+  clearAvailableJobsCache() {
+    availableJobsMemoryCache.clear();
+  }
 
   async createJob(customerId: string, dto: CreateJobDto) {
     const category = await this.prisma.serviceCategory.findFirst({
@@ -208,8 +220,12 @@ export class JobsService {
       await this.redis.delPattern('perf:jobs:available:*');
     }
 
-    // Instant broadcast to all connected workers in the workers room
-    this.realtime.emitToRoom(WORKERS_ROOM, JOB_EVENTS.jobNew, {
+    const customer = await this.prisma.user.findUnique({
+      where: { id: customerId },
+      select: { id: true, name: true, avatarUrl: true },
+    });
+
+    const jobPayload = {
       jobId: job.id,
       job: {
         id: job.id,
@@ -217,6 +233,15 @@ export class JobsService {
         description: job.description,
         categoryId: category.id,
         categoryName: category.name,
+        customerId: job.customerId,
+        customer: {
+          id: customer?.id ?? customerId,
+          name: customer?.name ?? 'Customer',
+          avatarUrl: customer?.avatarUrl ?? '',
+          rating: 5.0,
+          reviewCount: 0,
+          totalOrders: 1,
+        },
         address: job.address,
         area: job.area,
         city: job.city,
@@ -231,7 +256,13 @@ export class JobsService {
         createdAt: job.createdAt,
         offerCount: 0,
       },
-    });
+    };
+
+    // Instant broadcast to all connected workers in the workers room
+    this.realtime.emitToRoom(WORKERS_ROOM, JOB_EVENTS.jobNew, jobPayload);
+
+    // Also notify the customer's room so all open customer views sync instantly
+    this.realtime.emitToRoom(userRoom(customerId), JOB_EVENTS.jobNew, jobPayload);
 
     return job;
   }
@@ -246,6 +277,10 @@ export class JobsService {
           return JSON.parse(cached);
         } catch {}
       }
+    }
+
+    if (process.env.NODE_ENV !== 'test') {
+      void this.expireStaleOpenJobs().catch(() => {});
     }
 
     let statusFilter: Prisma.ServiceRequestWhereInput['status'];
@@ -266,7 +301,13 @@ export class JobsService {
       };
     } else if (query.tab === 'completed') {
       statusFilter = {
-        in: [JobStatus.VISIT_COMPLETED, JobStatus.COMPLETED, JobStatus.PAID, JobStatus.REVIEWED],
+        in: [
+          JobStatus.VISIT_COMPLETED,
+          JobStatus.COMPLETED,
+          JobStatus.PAID,
+          JobStatus.REVIEWED,
+          JobStatus.CANCELLED,
+        ],
       };
     } else if (query.status) {
       statusFilter = query.status;
@@ -311,6 +352,15 @@ export class JobsService {
                   name: true,
                   avatarUrl: true,
                   phone: true,
+                  isVerified: true,
+                  workerProfile: {
+                    select: {
+                      skills: true,
+                      experienceYears: true,
+                      bio: true,
+                      verificationStatus: true,
+                    },
+                  },
                 },
               },
             },
@@ -349,22 +399,23 @@ export class JobsService {
         s === JobStatus.VISIT_COMPLETED ||
         s === JobStatus.COMPLETED ||
         s === JobStatus.PAID ||
-        s === JobStatus.REVIEWED
+        s === JobStatus.REVIEWED ||
+        s === JobStatus.CANCELLED
       ) {
         completedCount += count;
       }
     }
 
-    const selectedWorkerIds = [
-      ...new Set(rows.map((j) => j.selectedWorkerId).filter(Boolean)),
-    ] as string[];
+    const selectedWorkerIds = rows.map((j) => j.selectedWorkerId).filter(Boolean) as string[];
+    const offerWorkerIds = rows.flatMap((j) => (j.offers || []).map((o) => o.workerId)).filter(Boolean) as string[];
+    const allWorkerIds = [...new Set([...selectedWorkerIds, ...offerWorkerIds])];
 
     const ratingMap = new Map<string, { rating: number; count: number }>();
     const missingWorkerIds: string[] = [];
 
     if (this.redis) {
       await Promise.all(
-        selectedWorkerIds.map(async (wid) => {
+        allWorkerIds.map(async (wid) => {
           const cached = await this.redis.get(`perf:worker:rating:${wid}`);
           if (cached) {
             try {
@@ -376,7 +427,7 @@ export class JobsService {
         }),
       );
     } else {
-      missingWorkerIds.push(...selectedWorkerIds);
+      missingWorkerIds.push(...allWorkerIds);
     }
 
     if (missingWorkerIds.length > 0) {
@@ -395,7 +446,7 @@ export class JobsService {
         const rating =
           r._avg.rating !== null && r._avg.rating !== undefined
             ? Number(r._avg.rating.toFixed(1))
-            : 5.0;
+            : 0;
         const count = r._count._all ?? 0;
         const entry = { rating, count };
         ratingMap.set(r.revieweeId, entry);
@@ -405,9 +456,27 @@ export class JobsService {
       }
     }
 
+    const completedMap = new Map<string, number>();
+    if (allWorkerIds.length > 0) {
+      const completedRows = await this.prisma.serviceRequest.groupBy({
+        by: ['selectedWorkerId'],
+        where: {
+          selectedWorkerId: { in: allWorkerIds },
+          status: { in: ['VISIT_COMPLETED', 'COMPLETED', 'PAID', 'REVIEWED'] },
+        },
+        _count: { _all: true },
+      });
+      for (const c of completedRows as Array<{ selectedWorkerId: string | null; _count: { _all: number } }>) {
+        if (c.selectedWorkerId) {
+          completedMap.set(c.selectedWorkerId, c._count._all ?? 0);
+        }
+      }
+    }
+
     const items = rows.map((j) => {
       const sw = j.selectedWorker;
       const r = sw ? ratingMap.get(sw.id) : null;
+      const swCompleted = sw ? completedMap.get(sw.id) ?? 0 : 0;
       return {
         id: j.id,
         title: j.title,
@@ -426,6 +495,8 @@ export class JobsService {
         images: j.images,
         voiceNoteUrl: j.voiceNoteUrl,
         createdAt: j.createdAt,
+        cancelReason: j.cancelReason,
+        cancelledAt: j.cancelledAt,
         selectedWorkerId: j.selectedWorkerId,
         lockedVisitCharge: j.lockedVisitCharge != null ? Number(j.lockedVisitCharge) : null,
         selectedWorker: sw
@@ -434,27 +505,46 @@ export class JobsService {
               name: sw.name,
               avatarUrl: sw.avatarUrl,
               phone: sw.phone,
-              rating: r ? r.rating : 5.0,
+              rating: r ? r.rating : 0,
+              avgRating: r ? r.rating : 0,
               ratingCount: r ? r.count : 0,
+              completedJobs: swCompleted,
+              completedJobsCount: swCompleted,
             }
           : null,
-        offers: (j.offers || []).map((o) => ({
-          id: o.id,
-          jobId: o.jobId,
-          workerId: o.workerId,
-          visitCharge: Number(o.visitCharge),
-          message: o.message,
-          status: o.status,
-          createdAt: o.createdAt,
-          worker: o.worker
-            ? {
-                id: o.worker.id,
-                name: o.worker.name,
-                avatarUrl: o.worker.avatarUrl,
-                phone: o.worker.phone,
-              }
-            : null,
-        })),
+        offers: (j.offers || []).map((o) => {
+          const ow = o.worker;
+          const rOffer = ow ? ratingMap.get(ow.id) : null;
+          const compJobs = ow ? completedMap.get(ow.id) ?? 0 : 0;
+          return {
+            id: o.id,
+            jobId: o.jobId,
+            workerId: o.workerId,
+            visitCharge: Number(o.visitCharge),
+            message: o.message,
+            status: o.status,
+            createdAt: o.createdAt,
+            worker: ow
+              ? {
+                  id: ow.id,
+                  name: ow.name,
+                  avatarUrl: ow.avatarUrl,
+                  phone: ow.phone,
+                  rating: rOffer ? rOffer.rating : 0,
+                  avgRating: rOffer ? rOffer.rating : 0,
+                  ratingCount: rOffer ? rOffer.count : 0,
+                  completedJobs: compJobs,
+                  completedJobsCount: compJobs,
+                  skills: ow.workerProfile?.skills ?? [],
+                  experienceYears: ow.workerProfile?.experienceYears ?? 0,
+                  bio: ow.workerProfile?.bio ?? '',
+                  isVerified: ow.isVerified,
+                  isNadraCleared: ow.workerProfile?.verificationStatus === 'APPROVED',
+                  isCnicVerified: ow.workerProfile?.verificationStatus === 'APPROVED',
+                }
+              : null,
+          };
+        }),
       };
     });
 
@@ -479,63 +569,124 @@ export class JobsService {
     if (worker.role !== Role.WORKER) {
       throw new ForbiddenException('Only workers can view the nearby jobs feed');
     }
-    const user = await this.prisma.user.findUnique({ where: { id: worker.sub } });
-    if (!user) {
-      throw new NotFoundException('User not found');
-    }
-    const skipWorkerRelevanceFilters = process.env.ALLOW_WORKER_JOB_TEST_MODE === 'true';
-    const [profile, serviceAreaCount, cnicDocuments] = await Promise.all([
-      this.prisma.workerProfile.findUnique({ where: { userId: worker.sub } }),
-      this.prisma.serviceArea.count({ where: { userId: worker.sub } }),
-      this.prisma.verificationDocument.findMany({
-        where: { userId: worker.sub, type: { in: ['CNIC_FRONT', 'CNIC_BACK'] } },
-        select: { type: true, url: true },
-      }),
-    ]);
-    if (!skipWorkerRelevanceFilters) {
-      if (
-        !user.isVerified ||
-        !profile ||
-        profile.verificationStatus !== WorkerVerificationStatus.APPROVED
-      ) {
-        throw new ForbiddenException('WORKER_NOT_VERIFIED: verify your profile before viewing jobs');
-      }
-      const cnicFront = cnicDocuments.find((d) => d.type === 'CNIC_FRONT');
-      const cnicBack = cnicDocuments.find((d) => d.type === 'CNIC_BACK');
-      const completion = getWorkerProfileCompletion({
-        name: user.name,
-        avatarUrl: user.avatarUrl,
-        skills: profile.skills,
-        experienceYears: profile.experienceYears,
-        bio: profile.bio,
-        serviceAreaCount,
-        cnicFrontUrl: cnicFront?.url ?? null,
-        cnicBackUrl: cnicBack?.url ?? null,
-      });
-      if (!completion.complete) {
-        throw new ForbiddenException(
-          `WORKER_PROFILE_INCOMPLETE: complete your profile (missing ${completion.missingSteps.join(
-            ', ',
-          )}) before viewing jobs`,
-        );
-      }
-    }
+
     const workerLat = query.lat ?? 34.0045;
     const workerLng = query.lng ?? 71.477;
     // Default search radius is admin-configurable (settings → serviceRadiusKm).
     const defaultRadiusKm = (await this.settings?.getServiceRadiusKm()) ?? 10;
     const radiusMeters = (query.radiusKm ?? defaultRadiusKm) * 1000;
-    const workerRadiusKm = Number(profile?.serviceRadiusKm ?? defaultRadiusKm);
     const { page, limit, skip } = normalizePage(query);
 
-    // Read-through cache \u2014 15s TTL; WS push handles instant new-job delivery.
-    const availCacheKey = `perf:jobs:available:${worker.sub}:${page}:${limit}:${workerLat}:${workerLng}:${radiusMeters}:${query.categoryId ?? ''}:${query.area ?? ''}:${query.city ?? ''}:${query.minCharge ?? ''}:${query.maxCharge ?? ''}:${query.postedWithinMin ?? ''}:${query.hasNoOffers ?? ''}`;
-    if (this.redis) {
-      const cached = await this.redis.get(availCacheKey);
-      if (cached) {
-        try { return JSON.parse(cached); } catch {}
+    const latRounded = Math.round(workerLat * 100) / 100;
+    const lngRounded = Math.round(workerLng * 100) / 100;
+    const availCacheKey = `perf:jobs:available:${worker.sub}:${page}:${limit}:${latRounded}:${lngRounded}:${radiusMeters}:${query.categoryId ?? ''}:${query.area ?? ''}:${query.city ?? ''}:${query.minCharge ?? ''}:${query.maxCharge ?? ''}:${query.postedWithinMin ?? ''}:${query.hasNoOffers ?? ''}`;
+
+    const skipWorkerRelevanceFilters = process.env.ALLOW_WORKER_JOB_TEST_MODE === 'true';
+
+    // 1. Instant L1 memory cache (sub-millisecond return!)
+    if (process.env.NODE_ENV !== 'test') {
+      const memCached = availableJobsMemoryCache.get(availCacheKey);
+      if (memCached && memCached.expiresAt > Date.now()) {
+        return memCached.value;
       }
     }
+
+    // 2. L2 Redis check
+    if (this.redis && process.env.NODE_ENV !== 'test') {
+      const cached = await this.redis.get(availCacheKey);
+      if (cached) {
+        try {
+          const parsed = JSON.parse(cached);
+          availableJobsMemoryCache.set(availCacheKey, { value: parsed, expiresAt: Date.now() + 15_000 });
+          return parsed;
+        } catch {}
+      }
+    }
+
+    let cachedProfile = (process.env.NODE_ENV !== 'test')
+      ? workerProfileMemoryCache.get(worker.sub)
+      : undefined;
+    let profile = cachedProfile?.value?.profile;
+    let serviceAreaCount = cachedProfile?.value?.serviceAreaCount ?? 0;
+
+    if (!cachedProfile || cachedProfile.expiresAt <= Date.now()) {
+      const [user, dbProfile, dbServiceAreaCount, cnicDocuments] = await Promise.all([
+        this.prisma.user.findUnique({ where: { id: worker.sub } }),
+        this.prisma.workerProfile.findUnique({ where: { userId: worker.sub } }),
+        this.prisma.serviceArea.count({ where: { userId: worker.sub } }),
+        this.prisma.verificationDocument.findMany({
+          where: { userId: worker.sub, type: { in: ['CNIC_FRONT', 'CNIC_BACK'] } },
+          select: { type: true, url: true },
+        }),
+      ]);
+      if (!user) {
+        throw new NotFoundException('User not found');
+      }
+      profile = dbProfile;
+      serviceAreaCount = dbServiceAreaCount;
+
+      if (!skipWorkerRelevanceFilters) {
+        if (
+          !user.isVerified ||
+          !profile ||
+          profile.verificationStatus !== WorkerVerificationStatus.APPROVED
+        ) {
+          throw new ForbiddenException('WORKER_NOT_VERIFIED: verify your profile before viewing jobs');
+        }
+        const cnicFront = cnicDocuments.find((d) => d.type === 'CNIC_FRONT');
+        const cnicBack = cnicDocuments.find((d) => d.type === 'CNIC_BACK');
+        const completion = getWorkerProfileCompletion({
+          name: user.name,
+          avatarUrl: user.avatarUrl,
+          skills: profile.skills,
+          experienceYears: profile.experienceYears,
+          bio: profile.bio,
+          serviceAreaCount,
+          cnicFrontUrl: cnicFront?.url ?? null,
+          cnicBackUrl: cnicBack?.url ?? null,
+        });
+        if (!completion.complete) {
+          throw new ForbiddenException(
+            `WORKER_PROFILE_INCOMPLETE: complete your profile (missing ${completion.missingSteps.join(
+              ', ',
+            )}) before viewing jobs`,
+          );
+        }
+      }
+
+      let resolvedCategoryIds: string[] = [];
+      if (!skipWorkerRelevanceFilters && profile && profile.skills.length > 0) {
+        if (this.prisma.serviceCategory?.findMany) {
+          const searchNames = expandSkillNames(profile.skills);
+          const matchingCategories = await this.prisma.serviceCategory.findMany({
+            where: {
+              OR: [
+                { id: { in: profile.skills } },
+                { name: { in: searchNames } },
+              ],
+              isActive: true,
+            },
+            select: { id: true },
+          });
+          resolvedCategoryIds = matchingCategories.map((c) => c.id);
+        }
+        for (const s of profile.skills) {
+          if (!resolvedCategoryIds.includes(s)) {
+            resolvedCategoryIds.push(s);
+          }
+        }
+      }
+
+      cachedProfile = {
+        value: { profile, serviceAreaCount, categoryIds: resolvedCategoryIds },
+        expiresAt: Date.now() + 60_000,
+      };
+      if (process.env.NODE_ENV !== 'test' && !skipWorkerRelevanceFilters) {
+        workerProfileMemoryCache.set(worker.sub, cachedProfile);
+      }
+    }
+
+    const workerRadiusKm = Number(profile?.serviceRadiusKm ?? defaultRadiusKm);
 
     const halfRadiusDeg = radiusMeters / 111000.0;
     const latOffset = halfRadiusDeg;
@@ -547,24 +698,8 @@ export class JobsService {
       AND sr."longitude" BETWEEN ${workerLng - lngOffset} AND ${workerLng + lngOffset}
     `);
     if (!skipWorkerRelevanceFilters) {
+      const categoryIds = cachedProfile?.value?.categoryIds ?? [];
       if (profile && profile.skills.length > 0) {
-        const searchNames = expandSkillNames(profile.skills);
-        const matchingCategories = await this.prisma.serviceCategory.findMany({
-          where: {
-            OR: [
-              { id: { in: profile.skills } },
-              { name: { in: searchNames } },
-            ],
-            isActive: true,
-          },
-          select: { id: true },
-        });
-        const categoryIds = matchingCategories.map((c) => c.id);
-        for (const s of profile.skills) {
-          if (!categoryIds.includes(s) && (s.startsWith('seed-category-') || s.length > 20)) {
-            categoryIds.push(s);
-          }
-        }
         if (categoryIds.length > 0) {
           conditions.push(Prisma.sql`sr."categoryId" = ANY (${categoryIds})`);
         } else {
@@ -581,9 +716,9 @@ export class JobsService {
             AND (
               3956 * 2 * ASIN(
                 SQRT(
-                  POWER(SIN((sa."latitude" - ${query.lat}) * PI() / 180.0 / 2), 2) +
-                  COS(sa."latitude" * PI() / 180.0) * COS(${query.lat} * PI() / 180.0) *
-                  POWER(SIN((sa."longitude" - ${query.lng}) * PI() / 180.0 / 2), 2)
+                  POWER(SIN((sa."latitude" - ${workerLat}) * PI() / 180.0 / 2), 2) +
+                  COS(sa."latitude" * PI() / 180.0) * COS(${workerLat} * PI() / 180.0) *
+                  POWER(SIN((sa."longitude" - ${workerLng}) * PI() / 180.0 / 2), 2)
                 )
               )
             ) <= ${workerRadiusKm}
@@ -613,6 +748,9 @@ export class JobsService {
       conditions.push(
         Prisma.sql`sr."createdAt" >= NOW() - (${query.postedWithinMin} * INTERVAL '1 minute')`,
       );
+    } else if (process.env.NODE_ENV !== 'test' && !skipWorkerRelevanceFilters) {
+      // Default live feed freshness cutoff: jobs posted within the last 20 hours
+      conditions.push(Prisma.sql`sr."createdAt" >= NOW() - INTERVAL '20 hours'`);
     }
     if (query.hasNoOffers) {
       conditions.push(Prisma.sql`NOT EXISTS (SELECT 1 FROM "JobOffer" o WHERE o."jobId" = sr.id)`);
@@ -657,9 +795,9 @@ export class JobsService {
         (
       3956 * 2 * ASIN(
         SQRT(
-          POWER(SIN((sr."latitude" - ${query.lat}) * PI() / 180.0 / 2), 2) +
-          COS(sr."latitude" * PI() / 180.0) * COS(${query.lat} * PI() / 180.0) *
-          POWER(SIN((sr."longitude" - ${query.lng}) * PI() / 180.0 / 2), 2)
+          POWER(SIN((sr."latitude" - ${workerLat}) * PI() / 180.0 / 2), 2) +
+          COS(sr."latitude" * PI() / 180.0) * COS(${workerLat} * PI() / 180.0) *
+          POWER(SIN((sr."longitude" - ${workerLng}) * PI() / 180.0 / 2), 2)
         )
       )
     ) AS "distanceKm"
@@ -679,6 +817,9 @@ export class JobsService {
     const total = Number(countRows[0]?.total ?? 0);
 
     const result = toPageResult(rows.map(mapJobCard), total, page, limit);
+    if (process.env.NODE_ENV !== 'test' && !skipWorkerRelevanceFilters) {
+      availableJobsMemoryCache.set(availCacheKey, { value: result, expiresAt: Date.now() + 15_000 });
+    }
     if (this.redis) {
       // Cache for 15s — workers' feed; stale is acceptable, WS push covers new jobs instantly.
       await this.redis.set(availCacheKey, JSON.stringify(result), 15);
@@ -701,7 +842,7 @@ export class JobsService {
         orderBy: { createdAt: 'desc' },
         include: {
           category: { select: { id: true, name: true } },
-          customer: { select: { id: true, name: true, phone: true } },
+          customer: { select: { id: true, name: true, phone: true, avatarUrl: true } },
           visits: {
             where: { workerId },
             orderBy: { scheduledDate: 'asc' },
@@ -833,7 +974,7 @@ export class JobsService {
       where: { id: jobId },
       include: {
         category: true,
-        customer: { select: { id: true, name: true, phone: true } },
+        customer: { select: { id: true, name: true, phone: true, avatarUrl: true } },
         visits: {
           orderBy: { createdAt: 'desc' },
           select: {
@@ -958,7 +1099,7 @@ export class JobsService {
             by: ['selectedWorkerId'],
             where: {
               selectedWorkerId: { in: workerIds },
-              status: { in: ['COMPLETED', 'PAID', 'REVIEWED'] },
+              status: { in: ['VISIT_COMPLETED', 'COMPLETED', 'PAID', 'REVIEWED'] },
             },
             _count: { _all: true },
           })
@@ -1237,10 +1378,13 @@ export class JobsService {
       oldStatus: job.status,
       newStatus: updated.status,
     });
+    this.clearAvailableJobsCache();
     if (this.redis) {
-      await this.redis.delPattern(`perf:jobs:customer:${job.customerId}:*`);
-      await this.redis.delPattern(`perf:job:detail:${jobId}:*`);
-      await this.redis.delPattern('perf:jobs:available:*');
+      await Promise.all([
+        this.redis.delPattern(`perf:jobs:customer:${job.customerId}:*`),
+        this.redis.delPattern(`perf:job:detail:${jobId}:*`),
+        this.redis.delPattern('perf:jobs:available:*'),
+      ]).catch(() => 0);
     }
     const recipients = [job.customerId];
     if (job.selectedWorkerId) {
@@ -1341,6 +1485,77 @@ export class JobsService {
       },
       orderBy: { createdAt: 'desc' },
     });
+  }
+
+  /**
+   * Background Cron + On-demand job expiration task:
+   * Periodically scans and auto-cancels stale unassigned jobs older than 20 hours
+   * with reason 'EXPIRED_NO_WORKER_ACCEPTED' and notifies customers.
+   */
+  @Cron('0 */10 * * * *')
+  async expireStaleOpenJobs(): Promise<number> {
+    const cutoff = new Date(Date.now() - 20 * 60 * 60 * 1000);
+    const staleJobs = await this.prisma.serviceRequest.findMany({
+      where: {
+        status: { in: [JobStatus.OPEN, JobStatus.OFFERS_RECEIVED] },
+        createdAt: { lte: cutoff },
+        selectedWorkerId: null,
+      },
+      select: {
+        id: true,
+        customerId: true,
+        title: true,
+        status: true,
+        offers: { select: { id: true } },
+      },
+      take: 100,
+    });
+
+    if (staleJobs.length === 0) return 0;
+
+    for (const job of staleJobs) {
+      await this.prisma.$transaction(async (tx) => {
+        await tx.serviceRequest.update({
+          where: { id: job.id },
+          data: {
+            status: JobStatus.CANCELLED,
+            cancelReason: 'EXPIRED_NO_WORKER_ACCEPTED',
+            cancelledAt: new Date(),
+          },
+        });
+
+        if (job.offers.length > 0) {
+          await tx.jobOffer.updateMany({
+            where: { jobId: job.id, status: { in: ['PENDING', 'VIEWING', 'COUNTERED'] } },
+            data: { status: 'REJECTED' },
+          });
+        }
+      });
+
+      this.eventBus.emit('job.cancelled', {
+        jobId: job.id,
+        reason: 'EXPIRED_NO_WORKER_ACCEPTED',
+      });
+
+      this.eventBus.emit('job.expired', {
+        jobId: job.id,
+        customerId: job.customerId,
+        jobTitle: job.title,
+        reason: 'EXPIRED_NO_WORKER_ACCEPTED',
+      });
+
+      this.realtime.emitToRoom(userRoom(job.customerId), JOB_EVENTS.jobCancelled, {
+        jobId: job.id,
+        reason: 'EXPIRED_NO_WORKER_ACCEPTED',
+      });
+    }
+
+    availableJobsMemoryCache.clear();
+    if (this.redis) {
+      await this.redis.delPattern('perf:jobs:*');
+    }
+
+    return staleJobs.length;
   }
 }
 

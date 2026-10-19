@@ -11,15 +11,17 @@ import {
   Layers,
   MapPin,
   Plus,
+  RotateCcw,
   Search,
   ShieldCheck,
   Star,
   Tag,
   User,
   Wrench,
+  XCircle,
   Zap,
 } from "lucide-react";
-import { Link } from "@/i18n/navigation";
+import { Link, useRouter } from "@/i18n/navigation";
 import { useLocale } from "next-intl";
 import { formatJobDate, formatPostedAt } from "@/lib/format";
 import type { CustomerJob, WorkerOffer } from "../types";
@@ -38,6 +40,7 @@ const WorkerProfileModal = dynamic(
   { ssr: false }
 );
 import { acceptWorkerOffer, rejectWorkerOffer, getCustomerJobs, getJobDetail } from "../api/customer-jobs-api";
+import { getSocket } from "@/lib/socket";
 
 interface CustomerJobsListViewProps {
   initialJobs?: CustomerJob[];
@@ -46,6 +49,7 @@ interface CustomerJobsListViewProps {
 }
 
 export function CustomerJobsListView({ initialJobs, jobs: jobsProp, initialTab }: CustomerJobsListViewProps) {
+  const router = useRouter();
   const locale = useLocale();
   const isUrdu = locale === "ur";
   const searchParams = useSearchParams();
@@ -60,7 +64,7 @@ export function CustomerJobsListView({ initialJobs, jobs: jobsProp, initialTab }
   const partitionJobs = (list: CustomerJob[]) => ({
     scheduled: list.filter((j) => j.status === "visit_scheduled" || j.status === "in_progress"),
     offers: list.filter((j) => j.status === "receiving_offers" || (j as any).status === "open"),
-    completed: list.filter((j) => j.status === "completed"),
+    completed: list.filter((j) => j.status === "completed" || (j as any).status === "cancelled"),
   });
 
   const determinedInitialFilter = (
@@ -93,7 +97,7 @@ export function CustomerJobsListView({ initialJobs, jobs: jobsProp, initialTab }
 
   // Sync state whenever fresh initialJobs arrive (e.g. background TanStack Query sync)
   useEffect(() => {
-    if (!resolvedInitialJobs || resolvedInitialJobs.length === 0) return;
+    if (!resolvedInitialJobs) return;
     const partitioned = partitionJobs(resolvedInitialJobs);
     setTabJobsCache(partitioned);
     setJobs(partitioned[selectedFilter] ?? []);
@@ -135,18 +139,15 @@ export function CustomerJobsListView({ initialJobs, jobs: jobsProp, initialTab }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tabParam]);
 
-  // Background fetch fallback ONLY if tab cache is missing completely
+  // Always ensure fresh tab data from server, displaying cache immediately while revalidating
   useEffect(() => {
     let isMounted = true;
-    const cached = tabJobsCache[selectedFilter];
+    const hasCache = tabJobsCache[selectedFilter] !== undefined;
 
-    // If already in memory (including empty list for 0 jobs), skip network call entirely
-    if (cached !== undefined) {
-      return;
-    }
-
-    const fetchTab = async () => {
-      setIsTabLoading(true);
+    const fetchTab = async (silent: boolean = false) => {
+      if (!silent && !hasCache) {
+        setIsTabLoading(true);
+      }
       try {
         const data = await getCustomerJobs({ tab: selectedFilter, page: 1, limit: 20 });
         if (!isMounted) return;
@@ -164,11 +165,37 @@ export function CustomerJobsListView({ initialJobs, jobs: jobsProp, initialTab }
       }
     };
 
-    fetchTab();
+    // Revalidate from server
+    fetchTab(hasCache);
+
+    // Socket listener for real-time live updates
+    const socket = getSocket();
+    const handleLiveUpdate = () => {
+      if (isMounted) {
+        void fetchTab(true);
+      }
+    };
+
+    if (socket) {
+      if (!socket.connected) socket.connect();
+      socket.on("job:offer", handleLiveUpdate);
+      socket.on("job:new", handleLiveUpdate);
+      socket.on("job:statusChanged", handleLiveUpdate);
+      socket.on("job:status:changed", handleLiveUpdate);
+      socket.on("job:offer:accepted", handleLiveUpdate);
+    }
+
     return () => {
       isMounted = false;
+      if (socket) {
+        socket.off("job:offer", handleLiveUpdate);
+        socket.off("job:new", handleLiveUpdate);
+        socket.off("job:statusChanged", handleLiveUpdate);
+        socket.off("job:status:changed", handleLiveUpdate);
+        socket.off("job:offer:accepted", handleLiveUpdate);
+      }
     };
-  }, [selectedFilter, tabJobsCache]);
+  }, [selectedFilter]);
 
   const handleLoadMore = async () => {
     if (isLoadingMore) return;
@@ -286,7 +313,7 @@ export function CustomerJobsListView({ initialJobs, jobs: jobsProp, initialTab }
     setSelectedOfferForProfile(null);
     setConfirmingOfferId(null);
 
-    void queryClient.invalidateQueries({ queryKey: ["customer"] });
+    void queryClient.invalidateQueries({ queryKey: ["customer", "jobs"] });
 
     showToast(
       isUrdu
@@ -295,14 +322,9 @@ export function CustomerJobsListView({ initialJobs, jobs: jobsProp, initialTab }
     );
   };
 
-  // Handle declining / rejecting an offer
+  // Handle declining / rejecting an offer optimistically
   const handleRejectOffer = async (job: CustomerJob, offer: WorkerOffer) => {
-    try {
-      await rejectWorkerOffer(job.id, offer.id);
-    } catch (err) {
-      console.warn("rejectWorkerOffer error:", err);
-    }
-
+    // 1. Optimistic removal: remove immediately from UI for instant response
     setJobs((prev) =>
       prev.map((j) => {
         if (j.id === job.id) {
@@ -326,13 +348,69 @@ export function CustomerJobsListView({ initialJobs, jobs: jobsProp, initialTab }
         ? `${offer.worker.name} کی آفر مسترد کر دی گئی۔`
         : `Offer from ${offer.worker.name} was declined.`
     );
+
+    // 2. Background API call
+    try {
+      await rejectWorkerOffer(job.id, offer.id);
+    } catch (err) {
+      console.warn("rejectWorkerOffer error:", err);
+      // Rollback on failure
+      setJobs((prev) =>
+        prev.map((j) => {
+          if (j.id === job.id) {
+            return {
+              ...j,
+              offers: [offer, ...j.offers],
+            };
+          }
+          return j;
+        })
+      );
+      setSelectedJobForOffers((prev) =>
+        prev && prev.id === job.id
+          ? { ...prev, offers: [offer, ...prev.offers] }
+          : prev
+      );
+      showToast(
+        isUrdu
+          ? "آفر مسترد کرنے میں ناکامی ہوئی۔ دوبارہ کوشش کریں۔"
+          : "Could not decline offer. Please try again.",
+        "error"
+      );
+    }
+  };
+
+  const handleRepostJob = (job: CustomerJob) => {
+    if (typeof window !== "undefined") {
+      try {
+        sessionStorage.setItem(
+          "workerfix_customer_post_job_draft",
+          JSON.stringify({
+            title: job.title,
+            description: job.description || "",
+            address: job.address || "",
+            area: job.area || "",
+            city: job.city || "Peshawar",
+            landmark: job.landmark || "",
+            category: job.category || "",
+            subCategory: job.subCategory || "",
+            scheduleType: job.scheduleType || "asap",
+            suggestedVisitFee: job.suggestedVisitCharge || 500,
+            photos: job.photos || [],
+          })
+        );
+      } catch {}
+      router.push(
+        `/customer/post-job?category=${encodeURIComponent(job.category || "")}&subCategory=${encodeURIComponent(job.subCategory || "")}`
+      );
+    }
   };
 
   const filteredJobs = jobs.filter((job) => {
     const matchesFilter =
       (selectedFilter === "offers" && (job.status === "receiving_offers" || (job as any).status === "open")) ||
       (selectedFilter === "scheduled" && (job.status === "visit_scheduled" || job.status === "in_progress")) ||
-      (selectedFilter === "completed" && job.status === "completed");
+      (selectedFilter === "completed" && (job.status === "completed" || (job as any).status === "cancelled"));
 
     const query = searchQuery.trim().toLowerCase();
     if (!query) return matchesFilter;
@@ -596,6 +674,28 @@ export function CustomerJobsListView({ initialJobs, jobs: jobsProp, initialTab }
                         </span>
                       )}
 
+                      {job.status === "cancelled" && (
+                        <span
+                          className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold ${
+                            job.cancelReason === "EXPIRED_NO_WORKER_ACCEPTED"
+                              ? "bg-amber-500/10 text-amber-700 border border-amber-500/20"
+                              : "bg-slate-100 text-slate-700 border border-slate-200"
+                          }`}
+                        >
+                          {job.cancelReason === "EXPIRED_NO_WORKER_ACCEPTED" ? (
+                            <>
+                              <Clock className="size-3.5 text-amber-600" />
+                              {isUrdu ? "میعاد ختم (کوئی کاریگر نہیں ملا)" : "Expired (No Worker Accepted)"}
+                            </>
+                          ) : (
+                            <>
+                              <XCircle className="size-3.5 text-slate-500" />
+                              {isUrdu ? "منسوخ شدہ" : "Cancelled"}
+                            </>
+                          )}
+                        </span>
+                      )}
+
                       <span className="text-xs text-[#64748B]">
                         {isUrdu ? `پوسٹ کی گئی: ${formatPostedAt(job.createdAt)}` : `Posted ${formatPostedAt(job.createdAt)}`}
                       </span>
@@ -614,7 +714,23 @@ export function CustomerJobsListView({ initialJobs, jobs: jobsProp, initialTab }
                   </div>
 
                   {/* Pricing / Budget Detail Callout */}
-                  {job.status === "completed" && job.selectedOffer ? (
+                  {job.status === "cancelled" ? (
+                    <div className="flex items-center sm:flex-col sm:items-end rtl:sm:items-start justify-between bg-white sm:bg-transparent p-3 sm:p-0 rounded-xl border sm:border-0 border-[#E2E8F0] shrink-0">
+                      <span className="text-xs text-[#64748B]">
+                        {isUrdu ? "حالت" : "Status"}
+                      </span>
+                      <div className="flex items-center gap-1.5 text-xs sm:text-sm font-bold text-amber-700">
+                        {job.cancelReason === "EXPIRED_NO_WORKER_ACCEPTED" ? (
+                          <>
+                            <Clock className="size-4 text-amber-600" />
+                            <span>{isUrdu ? "20 گھنٹے بعد میعاد ختم" : "Expired (20h Limit)"}</span>
+                          </>
+                        ) : (
+                          <span className="text-slate-500">{isUrdu ? "منسوخ شدہ" : "Cancelled"}</span>
+                        )}
+                      </div>
+                    </div>
+                  ) : job.status === "completed" && job.selectedOffer ? (
                     <div className="flex items-center sm:flex-col sm:items-end rtl:sm:items-start justify-between bg-white sm:bg-transparent p-3 sm:p-0 rounded-xl border sm:border-0 border-[#E2E8F0] shrink-0">
                       <span className="text-xs text-[#64748B]">
                         {isUrdu ? "کل ادائیگی" : "Total Paid"}
@@ -664,7 +780,23 @@ export function CustomerJobsListView({ initialJobs, jobs: jobsProp, initialTab }
                 <div className="bg-white border border-[#E2E8F0] rounded-xl p-4 grid grid-cols-1 md:grid-cols-2 gap-3 items-center">
                   {/* Left Column: Pro Details or Offers Count */}
                   <div className="flex items-center gap-3">
-                    {hasAssignedWorker && assignedWorker ? (
+                    {job.status === "cancelled" && job.cancelReason === "EXPIRED_NO_WORKER_ACCEPTED" ? (
+                      <div className="flex items-center gap-3">
+                        <div className="size-10 rounded-xl bg-amber-500/10 text-amber-700 flex items-center justify-center font-bold text-sm shrink-0">
+                          <Clock className="size-5 text-amber-600" />
+                        </div>
+                        <div>
+                          <span className="font-semibold text-sm text-[#1A1A2E] block">
+                            {isUrdu ? "کوئی کاریگر دستیاب نہیں ہوا" : "No Worker Accepted in Time"}
+                          </span>
+                          <span className="text-xs text-amber-700/80">
+                            {isUrdu
+                              ? "20 گھنٹے مکمل ہو گئے ہیں۔ آپ دوبارہ پوسٹ کر سکتے ہیں۔"
+                              : "Request timed out after 20 hours. You can repost anytime."}
+                          </span>
+                        </div>
+                      </div>
+                    ) : hasAssignedWorker && assignedWorker ? (
                       <>
                         <div className="size-10 rounded-full overflow-hidden shrink-0 border border-[#E2E8F0]">
                           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -688,7 +820,13 @@ export function CustomerJobsListView({ initialJobs, jobs: jobsProp, initialTab }
                             </span>
                             <div className="flex items-center text-xs font-bold text-[#F59E0B]">
                               <Star className="size-3.5 fill-[#F59E0B] mr-0.5 rtl:mr-0 rtl:ml-0.5" />
-                              <span>{assignedWorker.rating.toFixed(1)}</span>
+                              <span>
+                                {assignedWorker.rating > 0
+                                  ? assignedWorker.rating.toFixed(1)
+                                  : isUrdu
+                                  ? "نیا"
+                                  : "New"}
+                              </span>
                             </div>
                           </div>
                           <span className="text-xs text-[#64748B] truncate block">
@@ -756,6 +894,14 @@ export function CustomerJobsListView({ initialJobs, jobs: jobsProp, initialTab }
                       ? isUrdu
                         ? "کاریگر متعین ہو چکا ہے۔ دہلیز پر آمد کے وقت 4 ہندسوں کے سیکیورٹی PIN کی تصدیق کریں۔"
                         : "Technician confirmed. Verify 4-digit Doorstep PIN upon arrival."
+                      : job.status === "cancelled"
+                      ? job.cancelReason === "EXPIRED_NO_WORKER_ACCEPTED"
+                        ? isUrdu
+                          ? "کوئی کاریگر دستیاب نہیں ہوا۔ آپ اسی تفصیلات کے ساتھ نئی درخواست دوبارہ پوسٹ کر سکتے ہیں۔"
+                          : "No worker accepted within 20 hours. You can repost this request anytime."
+                        : isUrdu
+                        ? "یہ درخواست منسوخ کر دی گئی ہے۔"
+                        : "This request was cancelled."
                       : isUrdu
                       ? "کام مکمل ہو چکا ہے اور تسلی بخش ادائیگی طے پا چکی ہے۔"
                       : "Job completed and payment successfully settled."}
@@ -770,6 +916,18 @@ export function CustomerJobsListView({ initialJobs, jobs: jobsProp, initialTab }
                     >
                       {isUrdu ? "تفصیلات دیکھیں" : "View Details"}
                     </button>
+
+                    {/* Repost Button for Cancelled/Expired Jobs */}
+                    {job.status === "cancelled" && (
+                      <button
+                        type="button"
+                        onClick={() => handleRepostJob(job)}
+                        className="h-9 px-4 rounded-xl font-semibold text-xs sm:text-sm text-white bg-teal hover:bg-teal/90 transition-colors shadow-sm flex items-center justify-center gap-1.5 cursor-pointer active:scale-98"
+                      >
+                        <RotateCcw className="size-3.5" />
+                        <span>{isUrdu ? "دوبارہ پوسٹ کریں" : "Repost Request"}</span>
+                      </button>
+                    )}
 
                     {/* Review Offer Button -> opens in-context Offers Modal */}
                     {job.status === "receiving_offers" && (
@@ -867,6 +1025,7 @@ export function CustomerJobsListView({ initialJobs, jobs: jobsProp, initialTab }
             setSelectedJobForDetails(null);
             setSelectedJobForOffers(job);
           }}
+          onRepostJob={handleRepostJob}
         />
       )}
 

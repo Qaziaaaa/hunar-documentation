@@ -24,7 +24,12 @@ export function WorkerOfferCard({
     worker.avatarUrl && worker.avatarUrl.trim() !== ""
       ? worker.avatarUrl
       : `https://ui-avatars.com/api/?name=${encodeURIComponent(worker.name || "Worker")}&background=0F766E&color=fff`;
-  const ratingDisplay = Number(worker.rating || 0).toFixed(1);
+  const ratingDisplay =
+    Number(worker.rating || 0) > 0
+      ? Number(worker.rating).toFixed(1)
+      : isUrdu
+      ? "نیا"
+      : "New";
   const feeDisplay = Number(offer.visitFee ?? 0).toLocaleString();
 
   return (

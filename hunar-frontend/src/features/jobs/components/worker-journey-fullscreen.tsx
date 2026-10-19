@@ -9,22 +9,17 @@ import { formatRs } from "@/lib/design-tokens";
 import { sanitizePriceInput, parsePriceOrZero } from "@/lib/money";
 import { workerStore, useWorkerJobs } from "@/stores/worker-jobs-store";
 import { HUNAR_CONFIG } from "@/lib/config";
+import { compressImage } from "@/lib/image-compression";
+import { connectSocket, disconnectSocket } from "@/lib/socket";
+import { getWorkerJob } from "@/services/worker/jobs.service";
+import { http } from "@/lib/api-client";
 import dynamic from "next/dynamic";
+import {
+  arrivalService,
+  type ArrivalSession,
+} from "../services/arrival-verification-service";
 
-const WorkerVisitTrackingView = dynamic(
-  () => import("./worker-visit-tracking-view").then((mod) => mod.WorkerVisitTrackingView),
-  {
-    ssr: false,
-    loading: () => (
-      <div className="min-h-screen bg-slate-900 flex items-center justify-center p-6 text-white">
-        <div className="flex flex-col items-center gap-3">
-          <div className="size-10 rounded-full border-3 border-teal-500 border-t-transparent animate-spin" />
-          <p className="text-sm font-semibold text-slate-300">Loading visit map & navigation...</p>
-        </div>
-      </div>
-    ),
-  }
-);
+import { WorkerVisitTrackingView } from "./worker-visit-tracking-view";
 
 const WorkerChatModal = dynamic(
   () => import("./worker-chat-modal").then((mod) => mod.WorkerChatModal),
@@ -68,8 +63,16 @@ export function WorkerJourneyFullscreen({
   const locale = (params?.locale as string) || "en";
   const isUrdu = locale === "ur";
   const { jobs, walletBalance } = useWorkerJobs();
-  const activeJob = jobs.find((j) => j.id === job.id) || job;
+  const normJobId = job.id?.toLowerCase();
+  const activeJob =
+    jobs.find(
+      (j) =>
+        j.id?.toLowerCase() === normJobId ||
+        (j as any).jobNumber?.toLowerCase() === normJobId ||
+        (j as any).orderCode?.toLowerCase() === normJobId
+    ) || job;
 
+  const [verifiedSuccessNotice, setVerifiedSuccessNotice] = useState<string | null>(null);
   const [showCallModal, setShowCallModal] = useState(false);
   const [showChatModal, setShowChatModal] = useState(false);
   const [showCancelModal, setShowCancelModal] = useState(false);
@@ -78,6 +81,30 @@ export function WorkerJourneyFullscreen({
   const [selectedReviewTags, setSelectedReviewTags] = useState<string[]>([]);
   const [cancelReason, setCancelReason] = useState("");
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  // Check arrival session from arrivalService to permanently gate against screen reversal
+  const [isOtpSessionVerified, setIsOtpSessionVerified] = useState(() => {
+    if (typeof window === "undefined") return false;
+    const sess = arrivalService.getSession();
+    return Boolean(
+      sess &&
+      sess.status === "otp_verified" &&
+      (!sess.jobId || sess.jobId.toLowerCase() === normJobId)
+    );
+  });
+
+  useEffect(() => {
+    const unsub = arrivalService.subscribe((sess: ArrivalSession | null, eventType: string) => {
+      if (
+        sess &&
+        (eventType === "OTP_VERIFIED" || sess.status === "otp_verified") &&
+        (!sess.jobId || sess.jobId.toLowerCase() === normJobId)
+      ) {
+        setIsOtpSessionVerified(true);
+      }
+    });
+    return () => unsub();
+  }, [normJobId]);
 
   // Form fields for inspection
   const [diagnosis, setDiagnosis] = useState("");
@@ -104,20 +131,47 @@ export function WorkerJourneyFullscreen({
          (activeJob as any).suggestedVisitCharge ??
          0);
 
-  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
 
-    Array.from(files).forEach((file) => {
-      if (!file.type.startsWith("image/")) return;
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        if (event.target?.result) {
-          setPhotos((prev) => [...prev, event.target!.result as string]);
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      if (!file.type.startsWith("image/")) continue;
+      try {
+        const compressed = await compressImage(file, { maxWidth: 1280, maxHeight: 1280, quality: 0.8 });
+        
+        // Attempt direct upload to /uploads/inspection-photo for efficient lightweight URL reference
+        const formData = new FormData();
+        formData.append("file", compressed || file);
+        try {
+          const res = await http.upload<{ url?: string; key?: string }>("/uploads/inspection-photo", formData);
+          const photoUrl = res?.url || (res?.key ? `/uploads/${res.key}` : null);
+          if (photoUrl) {
+            setPhotos((prev) => [...prev, photoUrl]);
+            continue;
+          }
+        } catch {
+          // Fall back to compressed base64 if direct upload endpoint fails
         }
-      };
-      reader.readAsDataURL(file);
-    });
+
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          if (event.target?.result) {
+            setPhotos((prev) => [...prev, event.target!.result as string]);
+          }
+        };
+        reader.readAsDataURL(compressed);
+      } catch {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          if (event.target?.result) {
+            setPhotos((prev) => [...prev, event.target!.result as string]);
+          }
+        };
+        reader.readAsDataURL(file);
+      }
+    }
     e.target.value = "";
   };
 
@@ -126,11 +180,11 @@ export function WorkerJourneyFullscreen({
   };
 
   // 1. Handle Submit Inspection
-  const handleSubmitInspection = (e: React.FormEvent) => {
+  const handleSubmitInspection = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg(null);
     if (!diagnosis.trim() || !repairPrice || numRepairPrice <= 0) {
-      setErrorMsg("Please fill in diagnosis and price estimate.");
+      setErrorMsg(isUrdu ? "تشخیص اور تخمینہ قیمت درج کریں۔" : "Please fill in diagnosis and price estimate.");
       return;
     }
     if (photos.length === 0) {
@@ -138,15 +192,24 @@ export function WorkerJourneyFullscreen({
       return;
     }
 
-    setIsSubmitting(true);
-    workerStore.submitInspection(job.id, {
-      diagnosis: diagnosis.trim(),
-      repairPlan: "Standard on-site repair and parts replacement",
-      repairPriceEstimate: numRepairPrice,
-      estimatedRepairTime: "Standard",
-      photos: photos,
-    });
-    setIsSubmitting(false);
+    try {
+      setIsSubmitting(true);
+      const res = await workerStore.submitInspection(job.id, {
+        diagnosis: diagnosis.trim(),
+        repairPlan: "Standard on-site repair and parts replacement",
+        repairPriceEstimate: numRepairPrice,
+        estimatedRepairTime: "Standard",
+        photos: photos,
+      });
+
+      if (!res.success) {
+        setErrorMsg(res.error || (isUrdu ? "کوٹیشن جمع کرنے میں خرابی پیش آگئی۔" : "Failed to submit quotation. Please try again."));
+      }
+    } catch (err: any) {
+      setErrorMsg(err?.message || (isUrdu ? "کوٹیشن جمع کرنے میں خرابی پیش آگئی۔" : "Failed to submit quotation."));
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   // 2. Handle Start Repair
@@ -187,40 +250,140 @@ export function WorkerJourneyFullscreen({
     );
   };
 
-  // Determine current active workflow stage (Streamlined 3-Step Flow)
-  const isEnRoute = activeJob.status === "accepted" || activeJob.status === "visit_in_progress";
-  const isInspecting = activeJob.status === "visit_completed" || activeJob.status === "inspecting";
+  // Determine current active workflow stage (Streamlined 3-Step Flow - Strictly Mutually Exclusive)
+  const isCompleted = activeJob.status === "completed";
+
   const isDecisionOrExecution =
-    activeJob.status === "inspection_submitted" ||
-    activeJob.status === "repair_negotiating" ||
-    activeJob.status === "repair_approved" ||
-    activeJob.status === "repair_in_progress" ||
-    activeJob.status === "repair_declined" ||
-    activeJob.status === "completed";
+    !isCompleted &&
+    (activeJob.status === "inspection_submitted" ||
+      activeJob.status === "repair_negotiating" ||
+      activeJob.status === "repair_approved" ||
+      activeJob.status === "repair_in_progress" ||
+      activeJob.status === "repair_declined");
+
+  const isInspecting =
+    !isCompleted &&
+    !isDecisionOrExecution &&
+    (activeJob.status === "visit_completed" ||
+      activeJob.status === "inspecting" ||
+      isOtpSessionVerified);
+
+  const isEnRoute =
+    !isCompleted &&
+    !isDecisionOrExecution &&
+    !isInspecting &&
+    (activeJob.status === "accepted" || activeJob.status === "visit_in_progress");
 
   const isAwaitingDecision =
     activeJob.status === "inspection_submitted" || activeJob.status === "repair_negotiating";
   const isApproved = activeJob.status === "repair_approved";
   const isInRepair = activeJob.status === "repair_in_progress";
-  const isCompleted = activeJob.status === "completed";
   const isDeclined =
     activeJob.status === "repair_declined" ||
     (isCompleted && (activeJob.repairCharge === 0 || activeJob.repairCharge === undefined));
 
+  // Maintain active socket connection on the fullscreen worker journey
+  useEffect(() => {
+    connectSocket();
+    return () => {
+      disconnectSocket();
+    };
+  }, []);
+
+  // Realtime safety net: lightweight polling while waiting on customer quote approval/rejection
+  useEffect(() => {
+    if (!isAwaitingDecision || !activeJob.id) return;
+
+    let isMounted = true;
+    const interval = setInterval(async () => {
+      try {
+        const freshJob: any = await getWorkerJob(activeJob.id);
+        if (!freshJob || !isMounted) return;
+        const mappedStatus = freshJob.status?.toUpperCase?.();
+        if (mappedStatus === "REPAIR_APPROVED") {
+          workerStore.updateJobStatus(
+            activeJob.id,
+            "repair_approved",
+            freshJob.repair?.lockedAmount ?? freshJob.repairCharge
+          );
+        } else if (mappedStatus === "REPAIR_DECLINED" || mappedStatus === "REPAIR_REJECTED") {
+          workerStore.updateJobStatus(activeJob.id, "repair_declined", 0);
+        } else if (mappedStatus === "COMPLETED") {
+          workerStore.updateJobStatus(activeJob.id, "completed");
+        }
+      } catch {
+        // ignore background poll errors
+      }
+    }, 6000);
+
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
+  }, [isAwaitingDecision, activeJob.id]);
+
+  // Realtime safety net: lightweight polling while on En Route / Arrival waiting for OTP verification
+  useEffect(() => {
+    if (!isEnRoute || !activeJob.id) return;
+
+    let isMounted = true;
+    const interval = setInterval(async () => {
+      try {
+        const freshJob: any = await getWorkerJob(activeJob.id);
+        if (!freshJob || !isMounted) return;
+        const mappedStatus = freshJob.status?.toUpperCase?.();
+        if (
+          mappedStatus === "VISIT_COMPLETED" ||
+          mappedStatus === "INSPECTION_DONE" ||
+          mappedStatus === "IN_PREMISES"
+        ) {
+          setIsOtpSessionVerified(true);
+          workerStore.arriveAtSite(activeJob.id);
+          workerStore.startInspection(activeJob.id);
+        }
+      } catch {
+        // ignore background poll errors
+      }
+    }, 6000);
+
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
+  }, [isEnRoute, activeJob.id]);
+
   // When En Route or starting visit to customer doorstep, render the dedicated Visit Tracking Screen (Step 1)
   if (isEnRoute) {
-    return <WorkerVisitTrackingView job={activeJob} offer={offer} />;
+    return (
+      <WorkerVisitTrackingView
+        job={activeJob}
+        offer={offer}
+        onArrived={() => {
+          setIsOtpSessionVerified(true);
+          setVerifiedSuccessNotice(
+            isUrdu
+              ? "او ٹی پی کی تصدیق کامیاب ہو گئی۔ آپ گاہک کے پاس پہنچ چکے ہیں اور معائنہ شروع کر دیا گیا ہے۔"
+              : "Doorstep OTP verified successfully. You have entered the premises and inspection has started."
+          );
+          workerStore.arriveAtSite(activeJob.id);
+          workerStore.startInspection(activeJob.id);
+        }}
+      />
+    );
   }
 
   // Get current step number and label for 3-Step Journey
   const getStepInfo = () => {
-    if (isInspecting) {
-      return { step: 2, title: isUrdu ? "تشخیص و کوٹیشن" : "Diagnosis & Quote" };
-    }
     if (isCompleted) {
       return { step: 3, title: isUrdu ? "ادائیگی و ریٹنگ" : "Settlement & Rating" };
     }
-    return { step: 3, title: isUrdu ? "فیصلہ و مرمت" : "Decision & Execution" };
+    if (isDecisionOrExecution) {
+      return { step: 3, title: isUrdu ? "فیصلہ و مرمت" : "Decision & Execution" };
+    }
+    if (isInspecting) {
+      return { step: 2, title: isUrdu ? "تشخیص و کوٹیشن" : "Diagnosis & Quote" };
+    }
+    return { step: 1, title: isUrdu ? "راستے میں" : "En Route" };
   };
 
   const stepInfo = getStepInfo();
@@ -273,6 +436,24 @@ export function WorkerJourneyFullscreen({
             <Headphones className="size-4.5" />
           </button>
         </header>
+
+        {/* Verification Success Alert Banner */}
+        {verifiedSuccessNotice && (
+          <div className="bg-emerald-50 border-b border-emerald-200 px-4 sm:px-6 py-2.5 flex items-center justify-between gap-3 text-emerald-900 text-xs sm:text-sm font-semibold animate-in fade-in slide-in-from-top-1">
+            <div className="flex items-center gap-2">
+              <CheckCircle2 className="size-4 text-emerald-600 shrink-0" />
+              <span>{verifiedSuccessNotice}</span>
+            </div>
+            <button
+              type="button"
+              onClick={() => setVerifiedSuccessNotice(null)}
+              className="text-emerald-700 hover:text-emerald-950 p-1 rounded hover:bg-emerald-100 transition-colors"
+              title="Dismiss"
+            >
+              <X className="size-4" />
+            </button>
+          </div>
+        )}
 
         {/* 2. Customer & Doorstep Verified Mini-Bar */}
         <div className="bg-white border-b border-slate-200/80 px-4 sm:px-6 lg:px-8 py-3.5 flex items-center justify-between gap-3 shadow-2xs">
@@ -446,12 +627,10 @@ export function WorkerJourneyFullscreen({
                 </div>
               </div>
             </div>
-          ) : null}
-
-          {/* ======================================================== */}
-          {/* STEP 2: ON-SITE DIAGNOSTIC INSPECTION & QUOTATION */}
-          {/* ======================================================== */}
-          {isInspecting && (
+          ) : isInspecting ? (
+            /* ======================================================== */
+            /* STEP 2: ON-SITE DIAGNOSTIC INSPECTION & QUOTATION */
+            /* ======================================================== */
             <form onSubmit={handleSubmitInspection} className="animate-in fade-in">
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start">
                 {/* Left Column: Diagnostic Form Fields */}
@@ -627,12 +806,10 @@ export function WorkerJourneyFullscreen({
                 </div>
               </div>
             </form>
-          )}
-
-          {/* ======================================================== */}
-          {/* STEP 3: CUSTOMER DECISION & REPAIR EXECUTION */}
-          {/* ======================================================== */}
-          {isDecisionOrExecution && !isCompleted && (
+          ) : isDecisionOrExecution ? (
+            /* ======================================================== */
+            /* STEP 3: CUSTOMER DECISION & REPAIR EXECUTION */
+            /* ======================================================== */
             <div className="animate-in fade-in">
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start">
                 {/* Left Column: Decision & Progress Checklist */}
@@ -820,7 +997,7 @@ export function WorkerJourneyFullscreen({
                 </div>
               </div>
             </div>
-          )}
+          ) : null}
         </main>
       </div>
 

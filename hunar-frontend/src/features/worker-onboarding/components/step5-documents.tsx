@@ -15,6 +15,7 @@ import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { uploadWorkerDocument } from "../api/onboarding-api";
+import { compressImage } from "@/lib/image-compression";
 import type { WorkerProfileFormData } from "../types";
 
 export function Step5Documents({
@@ -56,8 +57,20 @@ export function Step5Documents({
     else setIsUploadingBack(true);
 
     try {
+      let fileToUpload = file;
+      if (file.type.startsWith("image/")) {
+        const compressedBlob = await compressImage(file, {
+          maxWidth: 1600,
+          maxHeight: 1600,
+          quality: 0.85,
+        });
+        fileToUpload = new File([compressedBlob], file.name, {
+          type: compressedBlob.type || file.type,
+        });
+      }
+
       const result = await uploadWorkerDocument(
-        file,
+        fileToUpload,
         side === "front" ? "cnic_front" : "cnic_back",
       );
       if (side === "front") {

@@ -20,7 +20,7 @@ import {
 } from "lucide-react";
 import { formatJobDate } from "@/lib/format";
 import { formatRs } from "@/lib/design-tokens";
-import { getSocket } from "@/lib/socket";
+import { connectSocket, getSocket } from "@/lib/socket";
 import { CustomerVisitProgressTimeline } from "./customer-visit-progress-timeline";
 import dynamic from "next/dynamic";
 
@@ -39,13 +39,7 @@ const CustomerLiveTrackingMap = dynamic(
     ),
   }
 );
-const CustomerArrivalOtpModal = dynamic(
-  () =>
-    import("./customer-arrival-otp-modal").then(
-      (m) => m.CustomerArrivalOtpModal
-    ),
-  { ssr: false }
-);
+import { CustomerArrivalOtpModal } from "./customer-arrival-otp-modal";
 const QuickChatDrawer = dynamic(
   () => import("./quick-chat-drawer").then((m) => m.QuickChatDrawer),
   { ssr: false }
@@ -75,9 +69,10 @@ export function CustomerJobTrackingView({ jobId }: CustomerJobTrackingViewProps)
   // Doorstep arrival session & modal state
   const [arrivalSession, setArrivalSession] = useState<ArrivalSession | null>(() => {
     const s = arrivalService.getSession();
-    return s && s.jobId === jobId ? s : null;
+    return s && (!s.jobId || s.jobId.toLowerCase() === jobId?.toLowerCase()) ? s : null;
   });
   const [isOtpModalOpen, setIsOtpModalOpen] = useState(false);
+  const [userDismissedModal, setUserDismissedModal] = useState(false);
   const [successToast, setSuccessToast] = useState<string | null>(null);
   const [isChatOpen, setIsChatOpen] = useState(false);
 
@@ -108,6 +103,30 @@ export function CustomerJobTrackingView({ jobId }: CustomerJobTrackingViewProps)
           setLiveWorkerLat(tracking.workerLocation.latitude);
           setLiveWorkerLng(tracking.workerLocation.longitude);
         }
+
+        // Auto-activate arrival session & auto-open OTP modal if worker has arrived
+        if (
+          (tracking.isDoorstepPendingOtp || tracking.currentStageId === "ARRIVED") &&
+          tracking.currentStageId !== "IN_PREMISES" &&
+          tracking.currentStageId !== "COMPLETED"
+        ) {
+          const resolvedOtp = tracking.doorstepOtp || session?.otp || "";
+          const activeSession: ArrivalSession = {
+            jobId,
+            visitId: session?.visitId,
+            otp: resolvedOtp,
+            arrivedAt: session?.arrivedAt || Date.now(),
+            status: "pending_otp",
+            workerName: tracking.technician?.name || "Technician",
+            workerPhone: tracking.technician?.phone || undefined,
+            customerAddress: tracking.customerAddress,
+          };
+          setArrivalSession(activeSession);
+          arrivalService.startArrivalSession(activeSession);
+          if (!userDismissedModal) {
+            setIsOtpModalOpen(true);
+          }
+        }
       } catch (err: any) {
         console.warn("Failed to load visit tracking:", err);
         // Only set error state if we don't already have live data on screen
@@ -129,19 +148,31 @@ export function CustomerJobTrackingView({ jobId }: CustomerJobTrackingViewProps)
         setIsLoading(false);
       }
     },
-    [jobId, isUrdu]
+    [jobId, isUrdu, userDismissedModal]
   );
 
-  // Auto-refresh: Initial fetch + background auto-polling every 12 seconds + instant refetch on tab visibility
+  const dataRef = useRef(data);
+  dataRef.current = data;
+  const fetchTrackingRef = useRef(fetchTracking);
+  fetchTrackingRef.current = fetchTracking;
+
+  // Auto-refresh: Initial fetch + rapid background auto-polling (2.5s while active/arriving, 8s otherwise)
   useEffect(() => {
     void fetchTracking(false);
+
+    const isPendingStage =
+      !data ||
+      data.currentStageId === "ARRIVED" ||
+      data.currentStageId === "EN_ROUTE" ||
+      isOtpModalOpen;
+    const intervalMs = isPendingStage ? 2500 : 8000;
 
     const interval = setInterval(() => {
       if (typeof document !== "undefined" && document.visibilityState === "hidden") {
         return;
       }
       void fetchTracking(true);
-    }, 12000);
+    }, intervalMs);
 
     const handleVisibilityChange = () => {
       if (typeof document !== "undefined" && document.visibilityState === "visible") {
@@ -155,76 +186,112 @@ export function CustomerJobTrackingView({ jobId }: CustomerJobTrackingViewProps)
       clearInterval(interval);
       document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
-  }, [fetchTracking]);
+  }, [fetchTracking, data?.currentStageId, isOtpModalOpen]);
 
-  // Real-time Socket.IO and ArrivalService synchronization
+  // Real-time Socket.IO and ArrivalService synchronization with stable listeners
   useEffect(() => {
     if (!jobId) return;
 
+    // Helper: case-insensitive job/visit matcher
+    const isMatchingJob = (payloadJobId?: string, payloadVisitId?: string) => {
+      if (!payloadJobId && !payloadVisitId) return true;
+      if (payloadJobId && payloadJobId.toLowerCase() === jobId?.toLowerCase()) return true;
+      const currentVisitId = (dataRef.current as any)?.visitId;
+      if (payloadVisitId && currentVisitId && payloadVisitId === currentVisitId) return true;
+      return false;
+    };
+
     // 1. Listen for arrival session changes from local service
     const unsubscribeArrival = arrivalService.subscribe((s, eventType) => {
-      if (s && s.jobId === jobId) {
+      if (s && (!s.jobId || s.jobId.toLowerCase() === jobId?.toLowerCase())) {
         setArrivalSession(s);
         if (eventType === "ARRIVAL_STARTED" || s.status === "pending_otp") {
-          void fetchTracking();
+          setUserDismissedModal(false);
+          setIsOtpModalOpen(true);
+          void fetchTrackingRef.current(true);
         } else if (eventType === "OTP_VERIFIED" || s.status === "otp_verified") {
-          void fetchTracking();
+          setIsOtpModalOpen(false);
+          void fetchTrackingRef.current(true);
         }
       }
     });
 
     // 2. Real-time Socket.IO listeners
-    const socket = getSocket();
+    const socket = connectSocket();
     if (socket) {
-      // Start listening to location updates for this job room
+      // Start listening to location & status updates for this job room
       socket.emit("location:track:start", { jobId });
 
+      const onConnect = () => {
+        socket.emit("location:track:start", { jobId });
+      };
+      socket.on("connect", onConnect);
+
       const handleJobStatusChanged = (payload: any) => {
-        if (payload?.jobId === jobId) {
+        if (isMatchingJob(payload?.jobId, payload?.visitId)) {
           if (payload?.arrivalPending) {
-            setArrivalSession({
+            const newSession: ArrivalSession = {
               jobId,
               visitId: payload.visitId,
               otp: payload.otp || "",
               arrivedAt: Date.now(),
               status: "pending_otp",
-              workerName: data?.technician?.name || "Technician",
-            });
+              workerName: payload.workerName || dataRef.current?.technician?.name || "Technician",
+            };
+            setArrivalSession(newSession);
+            setUserDismissedModal(false);
+            setIsOtpModalOpen(true);
+            arrivalService.startArrivalSession(newSession);
+          } else if (
+            payload?.newStatus === "VISIT_COMPLETED" ||
+            payload?.newStatus === "COMPLETED" ||
+            payload?.newStatus === "INSPECTION_DONE"
+          ) {
+            setArrivalSession(null);
+            setIsOtpModalOpen(false);
+            arrivalService.clearArrivalSession();
           }
-          void fetchTracking();
+          void fetchTrackingRef.current(true);
         }
       };
 
       const handleVisitArrived = (payload: any) => {
-        if (payload?.jobId === jobId) {
-          setArrivalSession({
+        if (isMatchingJob(payload?.jobId, payload?.visitId)) {
+          const newSession: ArrivalSession = {
             jobId,
             visitId: payload.visitId,
             otp: payload.otp || "",
             arrivedAt: payload.arrivedAt || Date.now(),
             status: "pending_otp",
-            workerName: payload.workerName || data?.technician?.name || "Technician",
+            workerName: payload.workerName || dataRef.current?.technician?.name || "Technician",
             workerPhone: payload.workerPhone,
-          });
-          void fetchTracking();
+          };
+          setArrivalSession(newSession);
+          setUserDismissedModal(false);
+          setIsOtpModalOpen(true);
+          arrivalService.startArrivalSession(newSession);
+          void fetchTrackingRef.current(true);
         }
       };
 
       const handleOtpVerified = (payload: any) => {
-        if (payload?.jobId === jobId) {
+        if (isMatchingJob(payload?.jobId, payload?.visitId)) {
           setArrivalSession(null);
-          void fetchTracking();
+          setIsOtpModalOpen(false);
+          arrivalService.clearArrivalSession();
+          void fetchTrackingRef.current(true);
         }
       };
 
       const handleLocationUpdate = (payload: any) => {
-        if (payload?.jobId === jobId && payload?.latitude && payload?.longitude) {
+        if (isMatchingJob(payload?.jobId) && payload?.latitude && payload?.longitude) {
           setLiveWorkerLat(payload.latitude);
           setLiveWorkerLng(payload.longitude);
         }
       };
 
       socket.on("job:status:changed", handleJobStatusChanged);
+      socket.on("job:statusChanged", handleJobStatusChanged);
       socket.on("visit:arrived", handleVisitArrived);
       socket.on("visit.arrived", handleVisitArrived);
       socket.on("visit:otp:verified", handleOtpVerified);
@@ -233,8 +300,10 @@ export function CustomerJobTrackingView({ jobId }: CustomerJobTrackingViewProps)
 
       return () => {
         unsubscribeArrival();
+        socket.off("connect", onConnect);
         socket.emit("location:track:stop", { jobId });
         socket.off("job:status:changed", handleJobStatusChanged);
+        socket.off("job:statusChanged", handleJobStatusChanged);
         socket.off("visit:arrived", handleVisitArrived);
         socket.off("visit.arrived", handleVisitArrived);
         socket.off("visit:otp:verified", handleOtpVerified);
@@ -246,7 +315,7 @@ export function CustomerJobTrackingView({ jobId }: CustomerJobTrackingViewProps)
     return () => {
       unsubscribeArrival();
     };
-  }, [jobId, fetchTracking, data?.technician?.name]);
+  }, [jobId]);
 
   // Loading Skeleton State
   if (isLoading) {
@@ -447,7 +516,10 @@ export function CustomerJobTrackingView({ jobId }: CustomerJobTrackingViewProps)
 
                   <button
                     type="button"
-                    onClick={() => setIsOtpModalOpen(true)}
+                    onClick={() => {
+                      setUserDismissedModal(false);
+                      setIsOtpModalOpen(true);
+                    }}
                     className="w-full sm:w-auto px-4.5 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs shadow-xs transition-all cursor-pointer shrink-0 active:scale-98"
                   >
                     {isUrdu ? "دہلیز PIN درج کریں" : "Enter Doorstep PIN"}
@@ -915,11 +987,15 @@ export function CustomerJobTrackingView({ jobId }: CustomerJobTrackingViewProps)
           session={arrivalSession}
           onSuccess={(msg) => {
             setIsOtpModalOpen(false);
+            setUserDismissedModal(false);
             setSuccessToast(msg);
-            void fetchTracking();
+            void fetchTracking(true);
             setTimeout(() => setSuccessToast(null), 5000);
           }}
-          onClose={() => setIsOtpModalOpen(false)}
+          onClose={() => {
+            setIsOtpModalOpen(false);
+            setUserDismissedModal(true);
+          }}
           isUrdu={isUrdu}
         />
       )}

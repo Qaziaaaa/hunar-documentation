@@ -12,7 +12,7 @@ import { normalizePage, toPageResult } from '../../common/helpers/pagination.uti
 import { JobsService } from '../jobs/jobs.service';
 import { JwtPayload } from '../../common/types/jwt-payload.interface';
 import { RealtimeService } from '../realtime/realtime.service';
-import { JOB_EVENTS, userRoom } from '../jobs/jobs.events';
+import { JOB_EVENTS, userRoom, jobRoom } from '../jobs/jobs.events';
 import {
   RepairAcceptDto,
   RepairCounterDto,
@@ -69,13 +69,18 @@ export class RepairService {
   }
 
   async createEstimate(visitId: string, user: JwtPayload, dto: RepairEstimateDto) {
-    let visit = await this.prisma.visit.findUnique({ where: { id: visitId } });
-    if (!visit) {
-      visit = await this.prisma.visit.findFirst({
-        where: { jobId: visitId },
-        orderBy: { createdAt: 'desc' },
-      });
-    }
+    const visitInclude = {
+      job: true,
+      worker: { select: { id: true, name: true, phone: true, avatarUrl: true } },
+      repairs: { orderBy: { createdAt: 'desc' as const }, take: 1 },
+    };
+    const visit = await this.prisma.visit.findFirst({
+      where: {
+        OR: [{ id: visitId }, { jobId: visitId }],
+      },
+      orderBy: { createdAt: 'desc' },
+      include: visitInclude,
+    });
     if (!visit) {
       throw new NotFoundException('Visit not found');
     }
@@ -85,22 +90,18 @@ export class RepairService {
     if (!visit.inspectionSubmittedAt) {
       throw new BadRequestException('Inspection must be submitted before a repair estimate');
     }
-    const job = await this.prisma.serviceRequest.findUniqueOrThrow({ where: { id: visit.jobId } });
+    const job = visit.job;
+    if (!job) {
+      throw new NotFoundException('Job not found');
+    }
     if (!['INSPECTION_DONE', 'REPAIR_NEGOTIATING', 'VISIT_COMPLETED', 'VISIT_IN_PROGRESS'].includes(job.status)) {
       throw new BadRequestException(
         'JOB_INVALID_STATE: estimate requires inspection to be complete',
       );
     }
 
-    const worker = await this.prisma.user.findUnique({
-      where: { id: user.sub },
-      select: { id: true, name: true, phone: true, avatarUrl: true },
-    });
-
-    const existingRepair = await this.prisma.repair.findFirst({
-      where: { jobId: visit.jobId },
-      orderBy: { createdAt: 'desc' },
-    });
+    const worker = visit.worker;
+    const existingRepair = visit.repairs?.[0];
 
     let repair;
     if (existingRepair) {
@@ -165,6 +166,22 @@ export class RepairService {
     this.realtime.emitToRoom(userRoom(job.customerId), 'repair:proposed', quotePayload);
     this.realtime.emitToRoom(userRoom(job.customerId), 'repair.proposed', quotePayload);
     this.realtime.emitToRoom(userRoom(job.customerId), JOB_EVENTS.jobStatusChanged, {
+      jobId: visit.jobId,
+      oldStatus: 'INSPECTION_DONE',
+      newStatus: 'REPAIR_NEGOTIATING',
+      repairQuote: quotePayload,
+    });
+    this.realtime.emitToRoom(userRoom(visit.workerId), 'repair:proposed', quotePayload);
+    this.realtime.emitToRoom(userRoom(visit.workerId), 'repair.proposed', quotePayload);
+    this.realtime.emitToRoom(userRoom(visit.workerId), JOB_EVENTS.jobStatusChanged, {
+      jobId: visit.jobId,
+      oldStatus: 'INSPECTION_DONE',
+      newStatus: 'REPAIR_NEGOTIATING',
+      repairQuote: quotePayload,
+    });
+    this.realtime.emitToRoom(jobRoom(visit.jobId), 'repair:proposed', quotePayload);
+    this.realtime.emitToRoom(jobRoom(visit.jobId), 'repair.proposed', quotePayload);
+    this.realtime.emitToRoom(jobRoom(visit.jobId), JOB_EVENTS.jobStatusChanged, {
       jobId: visit.jobId,
       oldStatus: 'INSPECTION_DONE',
       newStatus: 'REPAIR_NEGOTIATING',
@@ -276,6 +293,18 @@ export class RepairService {
       amount: dto.amount,
       round: nextRound,
     });
+    const counterPayload = {
+      repairId: id,
+      jobId: repair.jobId,
+      by,
+      amount: dto.amount,
+      note: dto.note,
+      round: nextRound,
+    };
+    this.realtime.emitToRoom(userRoom(repair.job.customerId), 'repair:countered', counterPayload);
+    this.realtime.emitToRoom(userRoom(repair.workerId), 'repair:countered', counterPayload);
+    this.realtime.emitToRoom(userRoom(repair.job.customerId), 'repair:updated', { repairId: id, jobId: repair.jobId });
+    this.realtime.emitToRoom(userRoom(repair.workerId), 'repair:updated', { repairId: id, jobId: repair.jobId });
     return updated;
   }
 
@@ -357,17 +386,16 @@ export class RepairService {
       );
     }
 
-    const updated = await this.prisma.$transaction(async (tx) => {
-      const r = await tx.repair.update({
+    const [updated] = await Promise.all([
+      this.prisma.repair.update({
         where: { id: repair.id },
         data: { status: 'ACCEPTED', lockedAmount, lockedAt: new Date() },
-      });
-      await tx.serviceRequest.update({
+      }),
+      this.prisma.serviceRequest.update({
         where: { id: repair.jobId },
         data: { status: 'REPAIR_APPROVED' },
-      });
-      return r;
-    });
+      }),
+    ]);
 
     const visitCharge = Number(
       repair.job.lockedVisitCharge ?? repair.job.suggestedVisitCharge ?? 0,

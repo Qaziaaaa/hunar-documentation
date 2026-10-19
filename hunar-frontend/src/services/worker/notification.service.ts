@@ -24,6 +24,7 @@ const BACKEND_TYPE_MAP: Record<string, NotificationType> = {
   EARNINGS_RECORDED: "earnings_recorded",
   REVIEW_RECEIVED: "new_review",
   VERIFICATION_RESULT: "verification_result",
+  JOB_EXPIRED_NO_WORKER: "job_expired_no_worker",
 };
 
 interface BackendNotificationRow {

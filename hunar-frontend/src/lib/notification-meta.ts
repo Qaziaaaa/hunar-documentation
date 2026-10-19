@@ -58,6 +58,10 @@ export function notificationIcon(
     case "inspection_submitted":
     case "job_completed":
       return CheckCircle2;
+    case "job_expired_no_worker":
+      return Clock;
+    case "job_cancelled":
+      return XCircle;
     case "repair_approved":
       return BadgeCheck;
     case "payment_confirmed":
@@ -97,6 +101,8 @@ export function notificationCategory(
     case "visit_scheduled":
     case "inspection_submitted":
     case "job_completed":
+    case "job_expired_no_worker":
+    case "job_cancelled":
       return "jobs";
     case "payment_confirmed":
       return "commission";

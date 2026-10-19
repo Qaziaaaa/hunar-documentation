@@ -50,6 +50,8 @@ interface BackendJobRow {
   offerCount?: number;
   repairEstimate?: number | null;
   repairCharge?: number | null;
+  nextVisit?: { id: string; status?: string | null; scheduledDate?: string | null } | null;
+  visits?: { id: string; status?: string | null }[];
   customer?: {
     id: string;
     name?: string | null;
@@ -107,6 +109,8 @@ function mapBackendJob(row: BackendJobRow): Job {
     offerCount: row.offerCount,
     repairEstimate: row.repairEstimate != null ? Number(row.repairEstimate) : undefined,
     repairCharge: row.repairCharge != null ? Number(row.repairCharge) : (row.repairEstimate != null ? Number(row.repairEstimate) : undefined),
+    nextVisit: row.nextVisit ?? row.visits?.[0] ?? undefined,
+    visitId: row.nextVisit?.id ?? row.visits?.[0]?.id ?? undefined,
   };
 }
 

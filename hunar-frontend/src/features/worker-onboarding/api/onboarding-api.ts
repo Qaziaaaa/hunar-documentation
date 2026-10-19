@@ -144,7 +144,16 @@ export async function saveWorkerBasicProfile(data: {
   if (data.profilePhoto?.trim()) payload.avatarUrl = data.profilePhoto.trim();
   if (Array.isArray(data.skills)) payload.skills = data.skills;
   if (data.experienceYears !== undefined && data.experienceYears !== "") {
-    payload.experienceYears = Number(data.experienceYears) || 0;
+    if (typeof data.experienceYears === "number") {
+      payload.experienceYears = data.experienceYears;
+    } else {
+      const str = String(data.experienceYears);
+      if (str.startsWith("< 1")) payload.experienceYears = 0;
+      else if (str.startsWith("1 - 3")) payload.experienceYears = 2;
+      else if (str.startsWith("4 - 7")) payload.experienceYears = 5;
+      else if (str.startsWith("8+")) payload.experienceYears = 8;
+      else payload.experienceYears = Number(str) || 0;
+    }
   }
   if (data.bio?.trim()) payload.bio = data.bio.trim();
 

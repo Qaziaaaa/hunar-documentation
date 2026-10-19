@@ -188,5 +188,7 @@ export function mapJobToRequest(
       (job as any).repairCharge ??
       (job as any).repairEstimate ??
       undefined,
+    nextVisit: extras.nextVisit ?? job.nextVisit ?? undefined,
+    visitId: extras.nextVisit?.id ?? job.visitId ?? job.nextVisit?.id ?? undefined,
   };
 }

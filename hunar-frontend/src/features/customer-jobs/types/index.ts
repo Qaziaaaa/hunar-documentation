@@ -89,6 +89,8 @@ export interface CustomerJob {
   selectedOffer?: WorkerOffer;
   securityPin?: string; // 4-digit doorstep code, e.g. "6492"
   suggestedVisitCharge?: number;
+  cancelReason?: string;
+  cancelledAt?: string;
 }
 
 export interface JobEvidencePhoto {

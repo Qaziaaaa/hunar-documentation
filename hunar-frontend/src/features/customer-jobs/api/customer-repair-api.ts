@@ -119,23 +119,51 @@ export async function getJobRepairInvoice(jobId: string, repairDeclined?: boolea
  * Customer accepts repair estimate / invoice
  */
 export async function acceptRepairEstimate(
-  repairId: string,
+  repairId?: string,
+  jobId?: string,
   paymentMethod: string = "cash"
-): Promise<{ success: boolean }> {
-  const res = await http.put<{ id?: string }>(`/repairs/${repairId}/accept`, { paymentMethod });
-  return { success: true, ...(res ? { id: res.id } : {}) };
+): Promise<{ success: boolean; id?: string }> {
+  if (repairId) {
+    try {
+      const res = await http.put<{ id?: string }>(`/repairs/${repairId}/accept`, { paymentMethod });
+      return { success: true, ...(res ? { id: res.id } : {}) };
+    } catch (err) {
+      if (jobId) {
+        const res = await http.put<{ id?: string }>(`/jobs/${jobId}/repair/approve`, { paymentMethod });
+        return { success: true, ...(res ? { id: res.id } : {}) };
+      }
+      throw err;
+    }
+  } else if (jobId) {
+    const res = await http.put<{ id?: string }>(`/jobs/${jobId}/repair/approve`, { paymentMethod });
+    return { success: true, ...(res ? { id: res.id } : {}) };
+  }
+  throw new Error("Missing repairId or jobId to accept repair estimate");
 }
 
 /**
  * Customer rejects repair estimate
  */
-export async function rejectRepairEstimate(repairIdOrJobId: string): Promise<{ success: boolean }> {
-  try {
-    await http.put(`/repairs/${repairIdOrJobId}/reject`);
-  } catch {
-    await http.put(`/jobs/${repairIdOrJobId}/repair/reject`);
+export async function rejectRepairEstimate(
+  repairId?: string,
+  jobId?: string
+): Promise<{ success: boolean }> {
+  if (repairId) {
+    try {
+      await http.put(`/repairs/${repairId}/reject`);
+      return { success: true };
+    } catch (err) {
+      if (jobId) {
+        await http.put(`/jobs/${jobId}/repair/reject`);
+        return { success: true };
+      }
+      throw err;
+    }
+  } else if (jobId) {
+    await http.put(`/jobs/${jobId}/repair/reject`);
+    return { success: true };
   }
-  return { success: true };
+  throw new Error("Missing repairId or jobId to reject repair estimate");
 }
 
 /**

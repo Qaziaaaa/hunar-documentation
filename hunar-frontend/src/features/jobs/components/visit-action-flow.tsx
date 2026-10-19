@@ -6,6 +6,7 @@ import { VisitOffer } from "@/types/offer";
 import { formatRs } from "@/lib/design-tokens";
 import { sanitizePriceInput, parsePriceOrZero } from "@/lib/money";
 import { workerStore, useWorkerJobs } from "@/stores/worker-jobs-store";
+import { compressImage } from "@/lib/image-compression";
 import {
   Navigation,
   MapPin,
@@ -38,20 +39,32 @@ export function VisitActionFlow({ job, offer }: VisitActionFlowProps) {
   const [formError, setFormError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
 
-    Array.from(files).forEach((file) => {
-      if (!file.type.startsWith("image/")) return;
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        if (event.target?.result) {
-          setInspectionPhotos((prev) => [...prev, event.target!.result as string]);
-        }
-      };
-      reader.readAsDataURL(file);
-    });
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      if (!file.type.startsWith("image/")) continue;
+      try {
+        const compressed = await compressImage(file, { maxWidth: 1280, maxHeight: 1280, quality: 0.8 });
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          if (event.target?.result) {
+            setInspectionPhotos((prev) => [...prev, event.target!.result as string]);
+          }
+        };
+        reader.readAsDataURL(compressed);
+      } catch {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          if (event.target?.result) {
+            setInspectionPhotos((prev) => [...prev, event.target!.result as string]);
+          }
+        };
+        reader.readAsDataURL(file);
+      }
+    }
     e.target.value = "";
   };
 
@@ -96,7 +109,7 @@ export function VisitActionFlow({ job, offer }: VisitActionFlowProps) {
   };
 
   // 8d. Handle Submit Inspection Form
-  const handleSubmitInspection = (e: React.FormEvent) => {
+  const handleSubmitInspection = async (e: React.FormEvent) => {
     e.preventDefault();
     setFormError(null);
 
@@ -121,18 +134,21 @@ export function VisitActionFlow({ job, offer }: VisitActionFlowProps) {
       return;
     }
 
-    setIsSubmitting(true);
-    const res = workerStore.submitInspection(job.id, {
-      diagnosis: diagnosis.trim(),
-      repairPlan: repairPlan.trim(),
-      repairPriceEstimate: numRepairEstimate,
-      photos: inspectionPhotos,
-      estimatedRepairTime: estimatedRepairTime.trim(),
-    });
+    try {
+      setIsSubmitting(true);
+      const res = await workerStore.submitInspection(job.id, {
+        diagnosis: diagnosis.trim(),
+        repairPlan: repairPlan.trim(),
+        repairPriceEstimate: numRepairEstimate,
+        photos: inspectionPhotos,
+        estimatedRepairTime: estimatedRepairTime.trim(),
+      });
 
-    setIsSubmitting(false);
-    if (!res.success) {
-      setFormError(res.error ?? "Failed to submit.");
+      if (!res.success) {
+        setFormError(res.error ?? "Failed to submit.");
+      }
+    } finally {
+      setIsSubmitting(false);
     }
   };
 

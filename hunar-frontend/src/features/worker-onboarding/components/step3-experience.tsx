@@ -42,6 +42,20 @@ const EXP_OPTIONS = [
   },
 ];
 
+function isExpOptionSelected(selectedVal: string | undefined, optRawValue: string): boolean {
+  if (!selectedVal) return false;
+  if (selectedVal === optRawValue) return true;
+
+  const num = parseInt(selectedVal, 10);
+  if (!isNaN(num)) {
+    if (optRawValue.startsWith("< 1") && num < 1) return true;
+    if (optRawValue.startsWith("1 - 3") && num >= 1 && num <= 3) return true;
+    if (optRawValue.startsWith("4 - 7") && num >= 4 && num <= 7) return true;
+    if (optRawValue.startsWith("8+") && num >= 8) return true;
+  }
+  return false;
+}
+
 export function Step3Experience({
   formData,
   updateFormData,
@@ -128,9 +142,7 @@ export function Step3Experience({
           </label>
           <div className="grid grid-cols-4 gap-2 text-center">
             {EXP_OPTIONS.map((opt) => {
-              const isSelected =
-                formData.experienceYears === opt.rawValue ||
-                formData.experienceYears?.includes(opt.rawValue.split(" ")[0]);
+              const isSelected = isExpOptionSelected(formData.experienceYears, opt.rawValue);
               return (
                 <button
                   key={opt.key}

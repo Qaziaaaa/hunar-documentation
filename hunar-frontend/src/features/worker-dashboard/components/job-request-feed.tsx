@@ -14,7 +14,7 @@ const JobRequestModal = dynamic(
 import { useLocale } from "next-intl";
 import { ApiError } from "@/lib/api-client";
 import { getSocket } from "@/lib/socket";
-import { listNearbyJobs } from "@/services/worker/jobs.service";
+import { listNearbyJobs, getWorkerJob } from "@/services/worker/jobs.service";
 import { subscribeToNotifications } from "@/services/worker/notification.service";
 import { timeAgo, formatDate, formatTime, formatDateSlot, isDateOnlyTimestamp, formatPreferredTiming } from "@/lib/format";
 import { isMockMode } from "@/lib/data-source";
@@ -37,7 +37,10 @@ const CATEGORY_LABELS: Record<string, JobRequestCategory> = {
 };
 
 function toFeedJobRequest(job: Job): JobRequest {
-  const rawFullName = job.customer?.name?.trim() || "";
+  const rawFullName =
+    job.customer?.name?.trim() ||
+    (job as any).customerName?.trim() ||
+    "";
   // Strip '(Customer)' or '(Worker)' suffixes from seed/test accounts, e.g. "Abdullah (Customer)" -> "Abdullah"
   const cleanName = rawFullName.replace(/\s*\((Customer|Worker)\)/gi, "").trim();
   const fullName = cleanName || "Customer";
@@ -59,6 +62,7 @@ function toFeedJobRequest(job: Job): JobRequest {
   const rawAvatar =
     (job as any).customer?.avatarUrl ||
     (job as any).customer?.user?.avatarUrl ||
+    (job as any).customerAvatarUrl ||
     job.customer?.avatarUrl;
   // Only use avatarUrl if the customer has genuinely uploaded a photo
   const avatarUrl =
@@ -114,6 +118,20 @@ function toFeedJobRequest(job: Job): JobRequest {
   };
 }
 
+function getDistanceKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  const R = 6371;
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLon = ((lon2 - lon1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+}
+
 export function JobRequestFeed({
   searchQuery = "",
   city = "",
@@ -136,15 +154,31 @@ export function JobRequestFeed({
   const [geoStatus, setGeoStatus] = useState<"requesting" | "granted" | "denied" | "unavailable" | "idle">("idle");
   const geoCoordsRef = useRef<{ lat: number; lng: number } | null>(null);
 
-  const refreshLiveJobs = useCallback((coordsOverride?: { lat: number; lng: number } | null) => {
+  const refreshLiveJobs = useCallback((coordsOverride?: { lat: number; lng: number } | null, isSilent = false, retryCount = 0) => {
     const coords = coordsOverride !== undefined ? coordsOverride : geoCoordsRef.current;
     const locationArg = coords ? { lat: coords.lat, lng: coords.lng, radiusKm: 25 } : undefined;
     listNearbyJobs(locationArg)
       .then((jobs) => {
         setLiveJobs(jobs);
         setFeedError(null);
+        if (typeof window !== "undefined") {
+          try {
+            sessionStorage.setItem("hunar_worker_cached_jobs", JSON.stringify(jobs.slice(0, 30)));
+          } catch {}
+        }
       })
       .catch((err: unknown) => {
+        // If it's a background revalidation, don't interrupt the user with an error banner
+        if (isSilent) return;
+
+        // On transient failure during mount, attempt 1 silent retry after 1.5s before showing error banner
+        if (retryCount === 0) {
+          setTimeout(() => {
+            refreshLiveJobs(coordsOverride, false, 1);
+          }, 1500);
+          return;
+        }
+
         if (err instanceof ApiError && err.status === 403) {
           const msg = err.message || "";
           if (msg.includes("WORKER_NOT_VERIFIED") || msg.includes("verify your profile")) {
@@ -181,10 +215,20 @@ export function JobRequestFeed({
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         const coords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+        const prev = geoCoordsRef.current;
+        // Debounce GPS movement: only reload if moved > 250m
+        const hasMoved = !prev || getDistanceKm(prev.lat, prev.lng, coords.lat, coords.lng) >= 0.25;
         geoCoordsRef.current = coords;
         setGeoCoords(coords);
         setGeoStatus("granted");
-        refreshLiveJobs(coords);
+        if (typeof window !== "undefined") {
+          try {
+            sessionStorage.setItem("hunar_worker_coords", JSON.stringify(coords));
+          } catch {}
+        }
+        if (hasMoved) {
+          refreshLiveJobs(coords);
+        }
       },
       (err) => {
         if (err.code === 1) {
@@ -194,9 +238,33 @@ export function JobRequestFeed({
         }
         refreshLiveJobs(null);
       },
-      { enableHighAccuracy: true, timeout: 8000, maximumAge: 60000 },
+      { enableHighAccuracy: false, timeout: 3500, maximumAge: 300000 },
     );
   }, [refreshLiveJobs]);
+
+  // Fast restore from session cache on mount (0ms latency!)
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const cachedRaw = sessionStorage.getItem("hunar_worker_cached_jobs");
+        if (cachedRaw) {
+          const parsed = JSON.parse(cachedRaw);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            setLiveJobs(parsed);
+          }
+        }
+        const cachedCoordsRaw = sessionStorage.getItem("hunar_worker_coords");
+        if (cachedCoordsRaw) {
+          const parsedCoords = JSON.parse(cachedCoordsRaw);
+          if (parsedCoords?.lat && parsedCoords?.lng) {
+            geoCoordsRef.current = parsedCoords;
+            setGeoCoords(parsedCoords);
+            setGeoStatus("granted");
+          }
+        }
+      } catch {}
+    }
+  }, []);
 
   useEffect(() => {
     requestGps();
@@ -204,23 +272,17 @@ export function JobRequestFeed({
 
   useEffect(() => {
     refreshLiveJobs();
-    // Interval poll removed (perf sprint): refresh happens on window focus
-    // and whenever the backend pushes JOB_MATCHED/new_job/job:new over the socket.
-    const onFocus = () => refreshLiveJobs();
-    const onJobCreated = () => refreshLiveJobs();
+    const onFocus = () => refreshLiveJobs(undefined, true);
+    const onJobCreated = () => refreshLiveJobs(undefined, true);
     window.addEventListener("focus", onFocus);
     window.addEventListener("hunar_job_created", onJobCreated);
     window.addEventListener("storage", onJobCreated);
 
     const unsubscribe = subscribeToNotifications((notification) => {
       const type = String((notification as { type?: unknown }).type ?? "");
-      if (type === "JOB_MATCHED" || type === "new_job") refreshLiveJobs();
+      if (type === "JOB_MATCHED" || type === "new_job") refreshLiveJobs(undefined, true);
     });
 
-    // B8 fallback: socket push is the primary refresh trigger. If the socket
-    // never connects (backend down, proxy blocks websockets), the feed would go
-    // permanently stale — poll slowly while disconnected, and refetch the
-    // moment the socket connects.
     const socket = getSocket();
     let fallbackInterval: ReturnType<typeof setInterval> | null = null;
     const syncFallbackPolling = () => {
@@ -230,18 +292,83 @@ export function JobRequestFeed({
           fallbackInterval = null;
         }
       } else if (!fallbackInterval) {
-        fallbackInterval = setInterval(refreshLiveJobs, 30_000);
+        fallbackInterval = setInterval(() => refreshLiveJobs(undefined, true), 30_000);
       }
     };
     const onConnect = () => {
-      refreshLiveJobs();
+      refreshLiveJobs(undefined, true);
       syncFallbackPolling();
     };
-    // inDrive-style push: the backend broadcasts job:new to the `workers`
-    // room the moment a job goes live, so the card appears immediately.
-    const onJobPush = () => refreshLiveJobs();
+    // inDrive-style instant card push: prepend incoming job directly to feed
+    const onJobPush = (payload: any) => {
+      const incomingJob = payload?.job || (payload?.id ? payload : null);
+      if (incomingJob && incomingJob.id) {
+        setLiveJobs((prev) => {
+          const existsIdx = prev.findIndex((j) => j.id === incomingJob.id);
+          if (existsIdx !== -1) {
+            const next = [...prev];
+            next[existsIdx] = { ...next[existsIdx], ...incomingJob };
+            return next;
+          }
+          return [incomingJob, ...prev];
+        });
+
+        // Fail-safe: if customer details are missing on the push payload, fetch the complete job immediately
+        if (!incomingJob.customer?.name && !incomingJob.customerName) {
+          getWorkerJob(incomingJob.id)
+            .then((fullJob) => {
+              if (fullJob && fullJob.customer) {
+                setLiveJobs((prev) =>
+                  prev.map((j) => (j.id === fullJob.id ? { ...j, ...fullJob } : j))
+                );
+              }
+            })
+            .catch(() => 0);
+        }
+      }
+      refreshLiveJobs(undefined, true);
+    };
+
+    const onJobClosed = (payload: any) => {
+      const closedId = payload?.jobId || payload?.id || payload?.job?.id;
+      if (!closedId) return;
+      setLiveJobs((prev) => {
+        const next = prev.filter((j) => j.id !== closedId);
+        if (typeof window !== "undefined") {
+          try {
+            sessionStorage.setItem("hunar_worker_cached_jobs", JSON.stringify(next.slice(0, 30)));
+          } catch {}
+        }
+        return next;
+      });
+      setSelectedJob((current) => (current?.id === closedId ? null : current));
+    };
+
+    const onJobStatusChanged = (payload: any) => {
+      const status = payload?.newStatus || payload?.status;
+      if (status && status !== "OPEN" && status !== "OFFERS_RECEIVED") {
+        onJobClosed(payload);
+      }
+    };
+
+    const onWindowJobClosed = (e: Event) => {
+      const customEvent = e as CustomEvent<{ jobId?: string; id?: string }>;
+      const id = customEvent.detail?.jobId || customEvent.detail?.id;
+      if (id) {
+        onJobClosed({ jobId: id });
+      }
+    };
+
+    window.addEventListener("hunar_job_closed", onWindowJobClosed);
+
     socket?.on("connect", onConnect);
     socket?.on("job:new", onJobPush);
+    socket?.on("job:closed", onJobClosed);
+    socket?.on("job:offer:accepted", onJobClosed);
+    socket?.on("job:offerAccepted", onJobClosed);
+    socket?.on("job:cancelled", onJobClosed);
+    socket?.on("job:status:changed", onJobStatusChanged);
+    socket?.on("job:statusChanged", onJobStatusChanged);
     socket?.on("disconnect", syncFallbackPolling);
     socket?.on("connect_error", syncFallbackPolling);
     syncFallbackPolling();
@@ -249,10 +376,17 @@ export function JobRequestFeed({
     return () => {
       window.removeEventListener("focus", onFocus);
       window.removeEventListener("hunar_job_created", onJobCreated);
+      window.removeEventListener("hunar_job_closed", onWindowJobClosed);
       window.removeEventListener("storage", onJobCreated);
       unsubscribe();
       socket?.off("connect", onConnect);
       socket?.off("job:new", onJobPush);
+      socket?.off("job:closed", onJobClosed);
+      socket?.off("job:offer:accepted", onJobClosed);
+      socket?.off("job:offerAccepted", onJobClosed);
+      socket?.off("job:cancelled", onJobClosed);
+      socket?.off("job:status:changed", onJobStatusChanged);
+      socket?.off("job:statusChanged", onJobStatusChanged);
       socket?.off("disconnect", syncFallbackPolling);
       socket?.off("connect_error", syncFallbackPolling);
       if (fallbackInterval) {
@@ -341,7 +475,7 @@ export function JobRequestFeed({
         </div>
       )}
 
-      {/* JOB REQUESTS LIST WITH REDUCED THICKNESS DIVIDER BETWEEN REQUESTS */}
+      {/* JOB REQUESTS LIST: ONLY TWO STATES: JOBS IF PRESENT, RADAR SCANNER OTHERWISE */}
       {filteredJobs.length > 0 ? (
         <div className="flex flex-col w-full">
           {filteredJobs.map((job: JobRequest, index: number) => (

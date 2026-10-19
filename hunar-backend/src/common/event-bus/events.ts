@@ -25,6 +25,7 @@ export interface HunarDomainEvents {
   };
   'job.statusChanged': { jobId: string; oldStatus: string; newStatus: string };
   'job.cancelled': { jobId: string; reason?: string };
+  'job.expired': { jobId: string; customerId: string; jobTitle?: string; reason?: string };
 
   'offer.submitted': { offerId: string; jobId: string; workerId: string; visitCharge: number };
   'offer.countered': {

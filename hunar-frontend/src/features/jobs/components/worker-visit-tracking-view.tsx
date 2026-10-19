@@ -40,6 +40,7 @@ import {
   ShieldCheck,
   MapPin,
   Clock,
+  Loader2,
 } from "lucide-react";
 import "leaflet/dist/leaflet.css";
 
@@ -88,6 +89,7 @@ export function WorkerVisitTrackingView({
   const [cancelReason, setCancelReason] = useState("");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isArriving, setIsArriving] = useState(false);
+  const isArrivingRef = useRef(false);
   const [showWorkerOtpModal, setShowWorkerOtpModal] = useState(false);
   const [arrivedAtTime, setArrivedAtTime] = useState<number>(Date.now());
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -537,27 +539,121 @@ export function WorkerVisitTrackingView({
     const socket = connectSocket();
     if (!socket) return;
 
+    // Join job room so worker also receives broadcasts sent to jobRoom(job.id)
+    if (job?.id) {
+      socket.emit("location:track:start", { jobId: job.id });
+    }
+
+    const onConnect = () => {
+      if (job?.id) {
+        socket.emit("location:track:start", { jobId: job.id });
+      }
+    };
+    socket.on("connect", onConnect);
+
     const handleOtpVerified = (payload: any) => {
-      if (payload && (payload.jobId === job.id || payload.visitId)) {
+      const normJobId = job.id?.toLowerCase();
+      const payloadJobId = payload?.jobId?.toLowerCase();
+      const payloadVisitId = payload?.visitId;
+      const expectedVisitId = (job as any)?.visitId || (job as any)?.nextVisit?.id;
+
+      if (
+        !payloadJobId ||
+        payloadJobId === normJobId ||
+        (payloadVisitId && payloadVisitId === expectedVisitId)
+      ) {
         arrivalService.verifyOtpSuccess({ jobId: job.id, ...payload });
+        setShowWorkerOtpModal(false);
+        setIsArriving(false);
+        const successMsg = isUrdu ? SUCCESS_VERIFICATION_MESSAGE_UR : SUCCESS_VERIFICATION_MESSAGE;
+        setSuccessMessage(successMsg);
+        workerStore.arriveAtSite(job.id);
+        workerStore.startInspection(job.id);
+        if (onArrived) {
+          onArrived();
+        }
+      }
+    };
+
+    const handleJobStatusChanged = (payload: any) => {
+      const normJobId = job.id?.toLowerCase();
+      const payloadJobId = payload?.jobId?.toLowerCase();
+      if (
+        payload &&
+        (!payloadJobId || payloadJobId === normJobId) &&
+        (payload.newStatus === "VISIT_COMPLETED" ||
+          payload.newStatus === "IN_PREMISES" ||
+          payload.newStatus === "INSPECTION_DONE")
+      ) {
+        handleOtpVerified(payload);
       }
     };
 
     socket.on("visit:otp:verified", handleOtpVerified);
     socket.on("visit.otp.verified", handleOtpVerified);
+    socket.on("job:statusChanged", handleJobStatusChanged);
+    socket.on("job:status:changed", handleJobStatusChanged);
 
     return () => {
+      socket.off("connect", onConnect);
       socket.off("visit:otp:verified", handleOtpVerified);
       socket.off("visit.otp.verified", handleOtpVerified);
+      socket.off("job:statusChanged", handleJobStatusChanged);
+      socket.off("job:status:changed", handleJobStatusChanged);
     };
-  }, [job.id]);
+  }, [job.id, onArrived, isUrdu]);
+
+  // Safety net polling: while worker OTP modal is open, poll visit status every 2 seconds
+  useEffect(() => {
+    if (!showWorkerOtpModal && !isArriving) return;
+
+    let isMounted = true;
+    const interval = setInterval(async () => {
+      try {
+        const visitId = (job as any)?.visitId || (job as any)?.nextVisit?.id || job.id;
+        const res: any = await http.get(`/visits/${visitId}`).catch(() => null);
+        if (!res || !isMounted) return;
+
+        const visitStatus = (res.status || res.visitStatus || "").toUpperCase();
+        const jobStatus = (res.job?.status || res.jobStatus || "").toUpperCase();
+
+        if (
+          visitStatus === "COMPLETED" ||
+          jobStatus === "VISIT_COMPLETED" ||
+          jobStatus === "INSPECTION_DONE" ||
+          res.isArrivalPending === false
+        ) {
+          setShowWorkerOtpModal(false);
+          setIsArriving(false);
+          const successMsg = isUrdu ? SUCCESS_VERIFICATION_MESSAGE_UR : SUCCESS_VERIFICATION_MESSAGE;
+          setSuccessMessage(successMsg);
+          arrivalService.verifyOtpSuccess({ jobId: job.id });
+          workerStore.arriveAtSite(job.id);
+          workerStore.startInspection(job.id);
+          if (onArrived) {
+            onArrived();
+          }
+        }
+      } catch {
+        // ignore background poll errors
+      }
+    }, 5000);
+
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
+  }, [showWorkerOtpModal, isArriving, job.id, isUrdu, onArrived]);
 
   // Subscribe to real-time arrival OTP verification
   useEffect(() => {
     const unsubscribe = arrivalService.subscribe((session, eventType) => {
+      const normJobId = job.id?.toLowerCase();
+      const sessionJobId = session?.jobId?.toLowerCase();
+
       if (
         session &&
-        (session.jobId === job.id || session.otp === currentSecurityPin) &&
+        (!sessionJobId || sessionJobId === normJobId || session.otp === currentSecurityPin) &&
         (eventType === "OTP_VERIFIED" || session.status === "otp_verified")
       ) {
         setShowWorkerOtpModal(false);
@@ -565,16 +661,11 @@ export function WorkerVisitTrackingView({
         const successMsg = isUrdu ? SUCCESS_VERIFICATION_MESSAGE_UR : SUCCESS_VERIFICATION_MESSAGE;
         setSuccessMessage(successMsg);
 
-        // Allow worker to see success confirmation before transitioning to inspection
-        const timer = setTimeout(() => {
-          workerStore.arriveAtSite(job.id);
-          workerStore.startInspection(job.id);
-          if (onArrived) {
-            onArrived();
-          }
-        }, 1500);
-
-        return () => clearTimeout(timer);
+        workerStore.arriveAtSite(job.id);
+        workerStore.startInspection(job.id);
+        if (onArrived) {
+          onArrived();
+        }
       }
     });
 
@@ -583,6 +674,7 @@ export function WorkerVisitTrackingView({
 
   // Handle "I'm here" / Reached Doorstep CTA
   const handleReachedDoorstep = async () => {
+    if (isArriving || isArrivingRef.current) return;
     setErrorMessage(null);
 
     // Verify 10% commission hold
@@ -596,19 +688,44 @@ export function WorkerVisitTrackingView({
       return;
     }
 
+    // Instantly generate/retrieve 4-digit arrival OTP
+    const optimisticOtp =
+      currentSecurityPin ||
+      (job as any)?.activeArrivalOtp ||
+      Math.floor(1000 + Math.random() * 9000).toString();
+    const now = Date.now();
+
+    // Instantly open OTP modal (0ms latency, zero button freeze)
+    setCurrentSecurityPin(optimisticOtp);
+    setArrivedAtTime(now);
+    setShowWorkerOtpModal(true);
+
+    arrivalService.startArrivalSession({
+      jobId: job.id,
+      visitId: (job as any)?.visitId || (job as any)?.nextVisit?.id,
+      otp: optimisticOtp,
+      workerName: workerProfileName || "Technician",
+      customerName: job.customer.name,
+      customerAddress: job.location.fullAddress || (job.location as any).address || job.location.area,
+    });
+
     try {
+      isArrivingRef.current = true;
       setIsArriving(true);
-      const res = await workerStore.arriveAtDoorstep(job.id);
-      if (!res.success || !res.otp) {
+      const res = await workerStore.arriveAtDoorstep(job.id, optimisticOtp);
+      if (!res.success) {
+        setShowWorkerOtpModal(false);
         setErrorMessage(res.error || "Failed to notify arrival");
-        setIsArriving(false);
         return;
       }
 
-      const realOtp = res.otp;
-      setCurrentSecurityPin(realOtp);
-      const now = res.arrivedAt || Date.now();
-      setArrivedAtTime(now);
+      const realOtp = res.otp || optimisticOtp;
+      if (realOtp !== optimisticOtp) {
+        setCurrentSecurityPin(realOtp);
+      }
+      if (res.arrivedAt) {
+        setArrivedAtTime(res.arrivedAt);
+      }
 
       arrivalService.startArrivalSession({
         jobId: job.id,
@@ -618,11 +735,11 @@ export function WorkerVisitTrackingView({
         customerName: job.customer.name,
         customerAddress: job.location.fullAddress || (job.location as any).address || job.location.area,
       });
-
-      setShowWorkerOtpModal(true);
-      setIsArriving(false);
     } catch (err: any) {
+      setShowWorkerOtpModal(false);
       setErrorMessage(err?.message || "Failed to notify arrival");
+    } finally {
+      isArrivingRef.current = false;
       setIsArriving(false);
     }
   };
@@ -877,10 +994,23 @@ export function WorkerVisitTrackingView({
             type="button"
             onClick={handleReachedDoorstep}
             disabled={isArriving}
-            className="w-full py-3.5 sm:py-4 rounded-2xl bg-gradient-to-r from-[#123B5D] to-[#0F8B8D] hover:opacity-95 active:scale-[0.99] text-white font-extrabold text-base sm:text-lg shadow-lg shadow-[#0F8B8D]/25 transition-all flex items-center justify-center gap-2 cursor-pointer"
+            className={`w-full py-3.5 sm:py-4 rounded-2xl bg-gradient-to-r from-[#123B5D] to-[#0F8B8D] text-white font-extrabold text-base sm:text-lg shadow-lg shadow-[#0F8B8D]/25 transition-all flex items-center justify-center gap-2 ${
+              isArriving
+                ? "opacity-80 cursor-wait pointer-events-none"
+                : "hover:opacity-95 active:scale-[0.99] cursor-pointer"
+            }`}
           >
-            <CheckCircle2 className="size-5 text-teal-200" />
-            <span>{isUrdu ? "میں دہلیز پر پہنچ گیا ہوں" : "I'm here (Doorstep)"}</span>
+            {isArriving ? (
+              <>
+                <Loader2 className="size-5 text-teal-200 animate-spin" />
+                <span>{isUrdu ? "اطلاع دی جا رہی ہے..." : "Notifying Customer..."}</span>
+              </>
+            ) : (
+              <>
+                <CheckCircle2 className="size-5 text-teal-200" />
+                <span>{isUrdu ? "میں دہلیز پر پہنچ گیا ہوں" : "I'm here (Doorstep)"}</span>
+              </>
+            )}
           </button>
         </div>
       </div>
@@ -1025,10 +1155,23 @@ export function WorkerVisitTrackingView({
             type="button"
             onClick={handleReachedDoorstep}
             disabled={isArriving}
-            className="w-full py-4 rounded-2xl bg-gradient-to-r from-[#123B5D] to-[#0F8B8D] hover:opacity-95 active:scale-[0.99] text-white font-extrabold text-base shadow-lg shadow-[#0F8B8D]/25 transition-all flex items-center justify-center gap-2.5 cursor-pointer"
+            className={`w-full py-4 rounded-2xl bg-gradient-to-r from-[#123B5D] to-[#0F8B8D] text-white font-extrabold text-base shadow-lg shadow-[#0F8B8D]/25 transition-all flex items-center justify-center gap-2.5 ${
+              isArriving
+                ? "opacity-80 cursor-wait pointer-events-none"
+                : "hover:opacity-95 active:scale-[0.99] cursor-pointer"
+            }`}
           >
-            <CheckCircle2 className="size-5 text-teal-200" />
-            <span>{isUrdu ? "میں دہلیز پر پہنچ گیا ہوں" : "I'm here (Doorstep)"}</span>
+            {isArriving ? (
+              <>
+                <Loader2 className="size-5 text-teal-200 animate-spin" />
+                <span>{isUrdu ? "اطلاع دی جا رہی ہے..." : "Notifying Customer..."}</span>
+              </>
+            ) : (
+              <>
+                <CheckCircle2 className="size-5 text-teal-200" />
+                <span>{isUrdu ? "میں دہلیز پر پہنچ گیا ہوں" : "I'm here (Doorstep)"}</span>
+              </>
+            )}
           </button>
           <p className="text-[11px] text-center text-slate-400">
             {isUrdu

@@ -2,7 +2,8 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useRouter, usePathname } from "@/i18n/navigation";
-import { Briefcase } from "lucide-react";
+import { useLocale } from "next-intl";
+import { Briefcase, WifiOff } from "lucide-react";
 import { ErrorState } from "@/components/shared/error-state";
 import { http, getAccessToken, getStoredUser, clearTokens } from "@/lib/api-client";
 import { connectSocket, disconnectSocket } from "@/lib/socket";
@@ -59,9 +60,9 @@ const WalletContent = dynamic(
     ),
   }
 );
-import { getWorkerEarnings } from "@/services/worker/earnings.service";
 import { listWorkerJobs } from "@/services/worker/jobs.service";
 import { isUpcomingRawStatus } from "@/stores/worker-jobs-adapter";
+import { workerStore } from "@/stores/worker-jobs-store";
 import type {
   DashboardTab,
   WorkerDashboardProfile,
@@ -188,6 +189,8 @@ const NOTIF_TYPE_MAP: Record<AppNotification["type"], DashboardNotification["typ
   repair_approved: "offer",
   payment_confirmed: "commission",
   job_completed: "job",
+  job_expired_no_worker: "job",
+  job_cancelled: "job",
 };
 
 function mapAppNotification(n: AppNotification): DashboardNotification {
@@ -210,6 +213,7 @@ export function WorkerDashboardShell({
 } = {}) {
   const router = useRouter();
   const pathname = usePathname();
+  const locale = useLocale();
 
   const [profile, setProfile] = useState<WorkerDashboardProfile>(EMPTY_WORKER_PROFILE);
   const [isLoadingProfile, setIsLoadingProfile] = useState<boolean>(true);
@@ -275,32 +279,40 @@ export function WorkerDashboardShell({
     }
   }, [router]);
 
-  // Sync profile & online status from live backend
-  const syncBackendProfile = useCallback(async () => {
+  // Sync profile & online status from live backend (fast: only profile & active jobs)
+  const syncBackendProfile = useCallback(async (isRetry: boolean = false) => {
     if (!getAccessToken()) return;
-    setSyncError(null);
+    if (isRetry) {
+      setSyncError(null);
+    }
     try {
-      const [profileRes, earningsRes, jobsRes] = await Promise.allSettled([
+      const [profileRes, jobsRes] = await Promise.allSettled([
         http.get<any>("/users/worker/me"),
-        getWorkerEarnings(),
         listWorkerJobs(),
       ]);
 
-      const rejection = [profileRes, earningsRes, jobsRes].find(
+      const rejection = [profileRes, jobsRes].find(
         (r) => r.status === "rejected"
       ) as PromiseRejectedResult | undefined;
       if (rejection) {
-        const reason = rejection.reason;
-        setSyncError(
-          reason instanceof Error && reason.message
-            ? reason.message
-            : "Could not refresh your data. Please try again."
-        );
+        if (!isRetry) {
+          // Grace period: transient network hiccup on cold refresh. Retry silently once after 1.5s before surfacing error banner.
+          window.setTimeout(() => {
+            void syncBackendProfile(true);
+          }, 1500);
+        } else {
+          const reason = rejection.reason;
+          setSyncError(
+            reason instanceof Error && reason.message
+              ? reason.message
+              : "Unstable internet connection. Some updates might be delayed."
+          );
+        }
+      } else {
+        setSyncError(null);
       }
 
       const raw = profileRes.status === "fulfilled" ? profileRes.value : null;
-      const earningsData =
-        earningsRes.status === "fulfilled" ? earningsRes.value : null;
       const myActiveJobs = jobsRes.status === "fulfilled" ? jobsRes.value : [];
       const data = raw?.data ?? raw;
       const liveActiveJobs = Array.isArray(myActiveJobs) ? myActiveJobs.length : undefined;
@@ -347,7 +359,7 @@ export function WorkerDashboardShell({
           const liveCompletedJobs =
             typeof data.completedJobs === "number"
               ? data.completedJobs
-              : earningsData?.completedJobsCount;
+              : undefined;
 
           setProfile((prev) => {
             const nextProfile: WorkerDashboardProfile = {
@@ -366,10 +378,10 @@ export function WorkerDashboardShell({
               rating: liveRating !== undefined ? liveRating : (prev.rating ?? 0),
               reviewCount: typeof data.reviewsCount === "number" ? data.reviewsCount : prev.reviewCount,
               activeJobsCount: liveActiveJobs !== undefined ? liveActiveJobs : prev.activeJobsCount,
-              totalEarnings: earningsData?.grossEarnings ?? prev.totalEarnings,
+              totalEarnings: prev.totalEarnings,
               completedJobsCount: liveCompletedJobs !== undefined ? liveCompletedJobs : prev.completedJobsCount,
-              totalCommissionPaid: earningsData?.commissionsPaid ?? prev.totalCommissionPaid,
-              walletBalance: earningsData?.balance ?? prev.walletBalance,
+              totalCommissionPaid: prev.totalCommissionPaid,
+              walletBalance: prev.walletBalance,
             };
 
             try {
@@ -381,15 +393,11 @@ export function WorkerDashboardShell({
 
             return nextProfile;
           });
-        } else if (earningsData || liveActiveJobs !== undefined) {
+        } else if (liveActiveJobs !== undefined) {
           setProfile((prev) => {
             const nextProfile: WorkerDashboardProfile = {
               ...prev,
               activeJobsCount: liveActiveJobs !== undefined ? liveActiveJobs : prev.activeJobsCount,
-              totalEarnings: earningsData?.grossEarnings ?? prev.totalEarnings,
-              completedJobsCount: earningsData?.completedJobsCount ?? prev.completedJobsCount,
-              totalCommissionPaid: earningsData?.commissionsPaid ?? prev.totalCommissionPaid,
-              walletBalance: earningsData?.balance ?? prev.walletBalance,
             };
 
             try {
@@ -403,12 +411,18 @@ export function WorkerDashboardShell({
           });
         }
     } catch (err) {
-      console.warn("[WorkerDashboardShell] Syncing live profile:", err);
-      setSyncError(
-        err instanceof Error && err.message
-          ? err.message
-          : "Could not refresh your data. Please try again."
-      );
+      if (!isRetry) {
+        window.setTimeout(() => {
+          void syncBackendProfile(true);
+        }, 1500);
+      } else {
+        console.warn("[WorkerDashboardShell] Syncing live profile:", err);
+        setSyncError(
+          err instanceof Error && err.message
+            ? err.message
+            : "Unstable internet connection. Some updates might be delayed."
+        );
+      }
     } finally {
       setIsLoadingProfile(false);
     }
@@ -417,6 +431,7 @@ export function WorkerDashboardShell({
   useEffect(() => {
     const id = window.setTimeout(() => {
       void syncBackendProfile();
+      void workerStore.hydrate();
     }, 0);
     return () => window.clearTimeout(id);
   }, [syncBackendProfile]);
@@ -521,7 +536,7 @@ export function WorkerDashboardShell({
             <ErrorState
               title="Unable to load your dashboard"
               description={syncError}
-              onRetry={() => void syncBackendProfile()}
+              onRetry={() => void syncBackendProfile(true)}
             />
           </div>
         );
@@ -572,6 +587,7 @@ export function WorkerDashboardShell({
         onSelectTab={handleSelectTab}
         profile={profile}
         unreadNotificationsCount={unreadNotificationsCount}
+        upcomingJobsCount={upcomingJobsCount}
         isOpen={isMobileSidebarOpen}
         onClose={() => setIsMobileSidebarOpen(false)}
         onLogout={handleLogout}
@@ -596,21 +612,26 @@ export function WorkerDashboardShell({
         {/* Main Content Area */}
         <main className="flex-1 bg-white px-3 sm:px-6 py-4 sm:py-6">
           {syncError && hasCachedProfile && (
-            <div className="mb-4 max-w-7xl mx-auto w-full rounded-2xl border border-amber-200 bg-amber-50/80 p-3.5 text-xs text-amber-900 flex items-center justify-between gap-3">
-              <span>
-                <strong>
-                  {activeTab === "dashboard"
-                    ? "Showing saved data."
-                    : "Could not refresh your data."}
-                </strong>{" "}
-                {syncError}
+            <div className="mb-4 max-w-7xl mx-auto w-full rounded-2xl border border-amber-200 bg-amber-50/80 p-3.5 text-xs text-amber-900 flex items-center justify-between gap-3 shadow-2xs animate-in fade-in">
+              <span className="flex items-center gap-2">
+                <WifiOff className="size-4 shrink-0 text-amber-700" />
+                <span>
+                  <strong>
+                    {locale === "ur"
+                      ? "انٹرنیٹ کنکشن غیر مستحکم ہے۔"
+                      : "Unstable internet connection."}
+                  </strong>{" "}
+                  {locale === "ur"
+                    ? "ایپ میں سستی محسوس ہو سکتی ہے اور کچھ اپ ڈیٹس میں تاخیر ہو سکتی ہے۔"
+                    : "The app might feel slow and some updates might be delayed."}
+                </span>
               </span>
               <button
                 type="button"
-                onClick={() => void syncBackendProfile()}
+                onClick={() => void syncBackendProfile(true)}
                 className="shrink-0 font-bold text-[#0F8B8D] hover:underline cursor-pointer"
               >
-                Retry
+                {locale === "ur" ? "دوبارہ کوشش کریں" : "Retry"}
               </button>
             </div>
           )}

@@ -62,8 +62,8 @@ async function bootstrap(): Promise<void> {
       res.status(404).end();
     },
   );
-  app.use(express.json({ limit: '10mb' }));
-  app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+  app.use(express.json({ limit: '50mb' }));
+  app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
   app.useGlobalPipes(new AppValidationPipe());
   app.useGlobalFilters(new GlobalExceptionFilter());

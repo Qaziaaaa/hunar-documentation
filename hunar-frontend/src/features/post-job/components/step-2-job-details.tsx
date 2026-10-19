@@ -49,14 +49,18 @@ export function Step2JobDetails({
       for (let i = 0; i < files.length; i++) {
         if (newPhotos.length >= 5) break;
         const file = files[i];
-        // Downscale & compress to ~150KB-250KB before creating preview
+        // Downscale & compress to ~150KB before creating persistent data URL
         const compressedBlob = await compressImage(file, {
           maxWidth: 1280,
           maxHeight: 1280,
           quality: 0.8,
         });
-        const objectUrl = URL.createObjectURL(compressedBlob);
-        newPhotos.push(objectUrl);
+        const dataUrl = await new Promise<string>((resolve) => {
+          const reader = new FileReader();
+          reader.onloadend = () => resolve(reader.result as string);
+          reader.readAsDataURL(compressedBlob);
+        });
+        newPhotos.push(dataUrl);
       }
       onChange({ photos: newPhotos });
     } finally {
@@ -211,7 +215,7 @@ export function Step2JobDetails({
                 >
                   {isUrdu ? "تفصیلی وضاحت" : "Detailed Description"} <span className="text-red-500">*</span>
                 </label>
-                <span className="text-xs text-slate-600 font-bold">
+                <span className="text-xs text-slate-600 font-bold" suppressHydrationWarning>
                   {data.description.length} / 1000
                 </span>
               </div>

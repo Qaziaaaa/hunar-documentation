@@ -451,13 +451,24 @@ export function VoiceNoteRecorder({
         mediaRecorder.onstop = () => {
           const recordedType = mimeType || "audio/webm";
           const audioBlob = new Blob(audioChunksRef.current, { type: recordedType });
-          const url = URL.createObjectURL(audioBlob);
           const finalDuration = Math.max(1, recordingTimeRef.current || Math.round((Date.now() - startTimeRef.current) / 1000));
 
-          setAudioUrl(url);
-          setAudioDuration(finalDuration);
-          onAudioRecorded?.(url, finalDuration);
-          onRecordingComplete?.(url, finalDuration);
+          const reader = new FileReader();
+          reader.onloadend = () => {
+            const persistentUrl = (reader.result as string) || URL.createObjectURL(audioBlob);
+            setAudioUrl(persistentUrl);
+            setAudioDuration(finalDuration);
+            onAudioRecorded?.(persistentUrl, finalDuration);
+            onRecordingComplete?.(persistentUrl, finalDuration);
+          };
+          reader.onerror = () => {
+            const fallbackUrl = URL.createObjectURL(audioBlob);
+            setAudioUrl(fallbackUrl);
+            setAudioDuration(finalDuration);
+            onAudioRecorded?.(fallbackUrl, finalDuration);
+            onRecordingComplete?.(fallbackUrl, finalDuration);
+          };
+          reader.readAsDataURL(audioBlob);
 
           if (streamRef.current) {
             streamRef.current.getTracks().forEach((track) => track.stop());

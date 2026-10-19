@@ -64,6 +64,13 @@ export function JobRequestCard({
   const dragStartX = useRef(0);
   const dragStartY = useRef(0);
   const isSwipingHorizontal = useRef(false);
+  const rafId = useRef<number | null>(null);
+
+  React.useEffect(() => {
+    return () => {
+      if (rafId.current !== null) cancelAnimationFrame(rafId.current);
+    };
+  }, []);
 
   // Trigger dismissal animation and removal
   const triggerDismiss = () => {
@@ -99,16 +106,16 @@ export function JobRequestCard({
     }
 
     if (isSwipingHorizontal.current) {
-      // Only allow dragging to the right (positive deltaX)
-      if (deltaX > 0) {
-        setOffsetX(deltaX);
-      } else {
-        setOffsetX(0);
-      }
+      if (rafId.current !== null) cancelAnimationFrame(rafId.current);
+      rafId.current = requestAnimationFrame(() => {
+        // Only allow dragging to the right (positive deltaX)
+        setOffsetX(deltaX > 0 ? deltaX : 0);
+      });
     }
   };
 
   const handleTouchEnd = () => {
+    if (rafId.current !== null) cancelAnimationFrame(rafId.current);
     setIsDragging(false);
     if (offsetX > 90) {
       triggerDismiss();
@@ -132,11 +139,15 @@ export function JobRequestCard({
     const deltaX = e.clientX - dragStartX.current;
     if (deltaX > 5) {
       isSwipingHorizontal.current = true;
-      setOffsetX(deltaX);
+      if (rafId.current !== null) cancelAnimationFrame(rafId.current);
+      rafId.current = requestAnimationFrame(() => {
+        setOffsetX(deltaX);
+      });
     }
   };
 
   const handleMouseUp = () => {
+    if (rafId.current !== null) cancelAnimationFrame(rafId.current);
     if (!isDragging) return;
     setIsDragging(false);
     if (offsetX > 90) {
@@ -199,6 +210,8 @@ export function JobRequestCard({
         style={{
           transform: `translateX(${offsetX}px)`,
           transition: isDragging ? "none" : "transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1)",
+          willChange: "transform",
+          touchAction: "pan-y",
         }}
         className="group relative flex w-full cursor-pointer select-none gap-2.5 sm:gap-3.5 bg-white p-3 sm:p-4 border-b-2 border-slate-300 last:border-b-0 transition-all hover:bg-slate-50/80 active:scale-[0.995]"
         data-purpose="job-request-card"

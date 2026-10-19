@@ -1,7 +1,25 @@
-const API_URL =
-  process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api/v1";
+export function getApiUrl(): string {
+  const envUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api/v1";
+  if (typeof window === "undefined") {
+    return envUrl;
+  }
+  try {
+    const url = new URL(envUrl);
+    if (url.hostname === "localhost" || url.hostname === "127.0.0.1") {
+      const currentHost = window.location.hostname;
+      if (currentHost && currentHost !== "localhost") {
+        url.hostname = currentHost;
+        return url.toString().replace(/\/$/, "");
+      }
+    }
+    return envUrl;
+  } catch {
+    return envUrl;
+  }
+}
 
-export const API_BASE_URL = API_URL;
+export const API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api/v1";
 
 export const ACCESS_TOKEN_KEY = "workerfix.access_token";
 export const REFRESH_TOKEN_KEY = "workerfix.refresh_token";
@@ -61,6 +79,34 @@ export function getRoleFromContext(pathname?: string): UserRole | null {
   return null;
 }
 
+export interface DecodedJwtPayload {
+  sub?: string;
+  phone?: string;
+  role?: string;
+  purpose?: string;
+  exp?: number;
+  iat?: number;
+}
+
+export function parseJwtPayload(token: string | null | undefined): DecodedJwtPayload | null {
+  if (!token || typeof token !== "string") return null;
+  try {
+    const parts = token.split(".");
+    if (parts.length < 2) return null;
+    const base64Url = parts[1];
+    const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
+    const jsonPayload = decodeURIComponent(
+      atob(base64)
+        .split("")
+        .map((c) => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
+        .join("")
+    );
+    return JSON.parse(jsonPayload) as DecodedJwtPayload;
+  } catch {
+    return null;
+  }
+}
+
 function getRawGenericStoredUser(): StoredUser | null {
   if (typeof window === "undefined") return null;
   const raw =
@@ -79,33 +125,75 @@ export function getAccessToken(roleHint?: UserRole): string | null {
   if (typeof window === "undefined") return null;
   const targetRole = roleHint ?? getRoleFromContext();
 
+  const genericToken =
+    window.localStorage.getItem(ACCESS_TOKEN_KEY) ??
+    window.localStorage.getItem(LEGACY_ACCESS_TOKEN_KEY) ??
+    window.localStorage.getItem(OLD_LEGACY_ACCESS_TOKEN_KEY);
+
   if (targetRole === "CUSTOMER") {
     const custToken = window.localStorage.getItem(CUSTOMER_ACCESS_TOKEN_KEY);
     if (custToken) return custToken;
-    const genericUser = getRawGenericStoredUser();
-    if (genericUser?.role === "CUSTOMER") {
-      return (
-        window.localStorage.getItem(ACCESS_TOKEN_KEY) ??
-        window.localStorage.getItem(LEGACY_ACCESS_TOKEN_KEY) ??
-        window.localStorage.getItem(OLD_LEGACY_ACCESS_TOKEN_KEY)
-      );
+
+    if (genericToken) {
+      const payload = parseJwtPayload(genericToken);
+      const jwtRole = payload?.role ? (payload.role.toUpperCase() as UserRole) : null;
+      const genericUser = getRawGenericStoredUser();
+      const userRole = genericUser?.role ? (genericUser.role.toUpperCase() as UserRole) : null;
+
+      const isExplicitCustomer = jwtRole === "CUSTOMER" || userRole === "CUSTOMER";
+      const isOtherRole =
+        jwtRole === "WORKER" || jwtRole === "ADMIN" || userRole === "WORKER" || userRole === "ADMIN";
+
+      if (isExplicitCustomer || !isOtherRole) {
+        // Auto-heal / backfill role-scoped storage so future queries are instant
+        try {
+          window.localStorage.setItem(CUSTOMER_ACCESS_TOKEN_KEY, genericToken);
+          if (!window.localStorage.getItem(CUSTOMER_AUTH_USER_KEY)) {
+            const healedUser: StoredUser = {
+              id: payload?.sub || genericUser?.id || "customer",
+              phone: payload?.phone || genericUser?.phone || "",
+              name: genericUser?.name,
+              avatarUrl: genericUser?.avatarUrl,
+              role: "CUSTOMER",
+              isVerified: genericUser?.isVerified,
+            };
+            window.localStorage.setItem(CUSTOMER_AUTH_USER_KEY, JSON.stringify(healedUser));
+          }
+        } catch {}
+        return genericToken;
+      }
     }
-    // Generic token belongs to WORKER or ADMIN — never send it to customer endpoints
     return null;
   }
 
   if (targetRole === "WORKER") {
     const workerToken = window.localStorage.getItem(WORKER_ACCESS_TOKEN_KEY);
     if (workerToken) return workerToken;
-    const genericUser = getRawGenericStoredUser();
-    if (genericUser?.role === "WORKER") {
-      return (
-        window.localStorage.getItem(ACCESS_TOKEN_KEY) ??
-        window.localStorage.getItem(LEGACY_ACCESS_TOKEN_KEY) ??
-        window.localStorage.getItem(OLD_LEGACY_ACCESS_TOKEN_KEY)
-      );
+
+    if (genericToken) {
+      const payload = parseJwtPayload(genericToken);
+      const jwtRole = payload?.role ? (payload.role.toUpperCase() as UserRole) : null;
+      const genericUser = getRawGenericStoredUser();
+      const userRole = genericUser?.role ? (genericUser.role.toUpperCase() as UserRole) : null;
+
+      if (jwtRole === "WORKER" || userRole === "WORKER") {
+        try {
+          window.localStorage.setItem(WORKER_ACCESS_TOKEN_KEY, genericToken);
+          if (!window.localStorage.getItem(WORKER_AUTH_USER_KEY)) {
+            const healedUser: StoredUser = {
+              id: payload?.sub || genericUser?.id || "worker",
+              phone: payload?.phone || genericUser?.phone || "",
+              name: genericUser?.name,
+              avatarUrl: genericUser?.avatarUrl,
+              role: "WORKER",
+              isVerified: genericUser?.isVerified,
+            };
+            window.localStorage.setItem(WORKER_AUTH_USER_KEY, JSON.stringify(healedUser));
+          }
+        } catch {}
+        return genericToken;
+      }
     }
-    // Generic token belongs to CUSTOMER or ADMIN — never send it to worker endpoints
     return null;
   }
 
@@ -114,59 +202,57 @@ export function getAccessToken(roleHint?: UserRole): string | null {
       window.localStorage.getItem(ADMIN_ACCESS_TOKEN_KEY) ??
       window.localStorage.getItem("hunar_admin_token");
     if (adminToken) return adminToken;
-    const genericUser = getRawGenericStoredUser();
-    if (genericUser?.role === "ADMIN") {
-      return (
-        window.localStorage.getItem(ACCESS_TOKEN_KEY) ??
-        window.localStorage.getItem(LEGACY_ACCESS_TOKEN_KEY)
-      );
+
+    if (genericToken) {
+      const payload = parseJwtPayload(genericToken);
+      const jwtRole = payload?.role ? (payload.role.toUpperCase() as UserRole) : null;
+      const genericUser = getRawGenericStoredUser();
+      const userRole = genericUser?.role ? (genericUser.role.toUpperCase() as UserRole) : null;
+
+      if (jwtRole === "ADMIN" || userRole === "ADMIN") {
+        try {
+          window.localStorage.setItem(ADMIN_ACCESS_TOKEN_KEY, genericToken);
+        } catch {}
+        return genericToken;
+      }
     }
     return null;
   }
 
-  return (
-    window.localStorage.getItem(ACCESS_TOKEN_KEY) ??
-    window.localStorage.getItem(LEGACY_ACCESS_TOKEN_KEY) ??
-    window.localStorage.getItem(OLD_LEGACY_ACCESS_TOKEN_KEY)
-  );
+  return genericToken;
 }
 
 export function getRefreshToken(roleHint?: UserRole): string | null {
   if (typeof window === "undefined") return null;
   const targetRole = roleHint ?? getRoleFromContext();
 
+  const genericRefresh =
+    window.localStorage.getItem(REFRESH_TOKEN_KEY) ??
+    window.localStorage.getItem(LEGACY_REFRESH_TOKEN_KEY) ??
+    window.localStorage.getItem(OLD_LEGACY_REFRESH_TOKEN_KEY);
+
   if (targetRole === "CUSTOMER") {
-    return (
-      window.localStorage.getItem(CUSTOMER_REFRESH_TOKEN_KEY) ??
-      (getRawGenericStoredUser()?.role === "CUSTOMER"
-        ? window.localStorage.getItem(REFRESH_TOKEN_KEY)
-        : null)
-    );
+    const custRefresh = window.localStorage.getItem(CUSTOMER_REFRESH_TOKEN_KEY);
+    if (custRefresh) return custRefresh;
+    if (getAccessToken("CUSTOMER")) return genericRefresh;
+    return null;
   }
 
   if (targetRole === "WORKER") {
-    return (
-      window.localStorage.getItem(WORKER_REFRESH_TOKEN_KEY) ??
-      (getRawGenericStoredUser()?.role === "WORKER"
-        ? window.localStorage.getItem(REFRESH_TOKEN_KEY)
-        : null)
-    );
+    const workerRefresh = window.localStorage.getItem(WORKER_REFRESH_TOKEN_KEY);
+    if (workerRefresh) return workerRefresh;
+    if (getAccessToken("WORKER")) return genericRefresh;
+    return null;
   }
 
   if (targetRole === "ADMIN") {
-    return (
-      window.localStorage.getItem(ADMIN_REFRESH_TOKEN_KEY) ??
-      (getRawGenericStoredUser()?.role === "ADMIN"
-        ? window.localStorage.getItem(REFRESH_TOKEN_KEY)
-        : null)
-    );
+    const adminRefresh = window.localStorage.getItem(ADMIN_REFRESH_TOKEN_KEY);
+    if (adminRefresh) return adminRefresh;
+    if (getAccessToken("ADMIN")) return genericRefresh;
+    return null;
   }
 
-  return (
-    window.localStorage.getItem(REFRESH_TOKEN_KEY) ??
-    window.localStorage.getItem(LEGACY_REFRESH_TOKEN_KEY) ??
-    window.localStorage.getItem(OLD_LEGACY_REFRESH_TOKEN_KEY)
-  );
+  return genericRefresh;
 }
 
 // Emitted whenever the stored auth user is written/cleared (same-tab signal for useSyncExternalStore subscribers)
@@ -180,21 +266,61 @@ export function getStoredUserRaw(roleHint?: UserRole): string | null {
     const custRaw = window.localStorage.getItem(CUSTOMER_AUTH_USER_KEY);
     if (custRaw) return custRaw;
     const generic = getRawGenericStoredUser();
-    return generic?.role === "CUSTOMER" ? JSON.stringify(generic) : null;
+    if (generic?.role?.toUpperCase() === "CUSTOMER") return JSON.stringify(generic);
+
+    const token = getAccessToken("CUSTOMER");
+    if (token) {
+      const payload = parseJwtPayload(token);
+      if (payload?.sub) {
+        const reconstructed: StoredUser = {
+          id: payload.sub,
+          phone: payload.phone || generic?.phone || "",
+          name: generic?.name,
+          avatarUrl: generic?.avatarUrl,
+          role: "CUSTOMER",
+          isVerified: generic?.isVerified,
+        };
+        try {
+          window.localStorage.setItem(CUSTOMER_AUTH_USER_KEY, JSON.stringify(reconstructed));
+        } catch {}
+        return JSON.stringify(reconstructed);
+      }
+    }
+    return null;
   }
 
   if (targetRole === "WORKER") {
     const workerRaw = window.localStorage.getItem(WORKER_AUTH_USER_KEY);
     if (workerRaw) return workerRaw;
     const generic = getRawGenericStoredUser();
-    return generic?.role === "WORKER" ? JSON.stringify(generic) : null;
+    if (generic?.role?.toUpperCase() === "WORKER") return JSON.stringify(generic);
+
+    const token = getAccessToken("WORKER");
+    if (token) {
+      const payload = parseJwtPayload(token);
+      if (payload?.sub && payload.role?.toUpperCase() === "WORKER") {
+        const reconstructed: StoredUser = {
+          id: payload.sub,
+          phone: payload.phone || generic?.phone || "",
+          name: generic?.name,
+          avatarUrl: generic?.avatarUrl,
+          role: "WORKER",
+          isVerified: generic?.isVerified,
+        };
+        try {
+          window.localStorage.setItem(WORKER_AUTH_USER_KEY, JSON.stringify(reconstructed));
+        } catch {}
+        return JSON.stringify(reconstructed);
+      }
+    }
+    return null;
   }
 
   if (targetRole === "ADMIN") {
     const adminRaw = window.localStorage.getItem(ADMIN_AUTH_USER_KEY);
     if (adminRaw) return adminRaw;
     const generic = getRawGenericStoredUser();
-    return generic?.role === "ADMIN" ? JSON.stringify(generic) : null;
+    return generic?.role?.toUpperCase() === "ADMIN" ? JSON.stringify(generic) : null;
   }
 
   return (
@@ -220,26 +346,51 @@ export function setTokens(
   user?: StoredUser,
 ): void {
   if (typeof window === "undefined") return;
+  if (!accessToken) return;
+
   window.localStorage.setItem(ACCESS_TOKEN_KEY, accessToken);
-  window.localStorage.setItem(REFRESH_TOKEN_KEY, refreshToken);
-  if (user) {
-    window.localStorage.setItem(AUTH_USER_KEY, JSON.stringify(user));
+  if (refreshToken) {
+    window.localStorage.setItem(REFRESH_TOKEN_KEY, refreshToken);
+  }
+
+  const payload = parseJwtPayload(accessToken);
+  const jwtRole = payload?.role ? (payload.role.toUpperCase() as UserRole) : undefined;
+  const role: UserRole | undefined = user?.role
+    ? (user.role.toUpperCase() as UserRole)
+    : jwtRole;
+
+  let effectiveUser = user;
+  if (effectiveUser && role) {
+    effectiveUser = { ...effectiveUser, role };
+  } else if (!effectiveUser && payload?.sub && role) {
+    const existing = getStoredUser(role) ?? getRawGenericStoredUser();
+    effectiveUser = {
+      id: payload.sub,
+      phone: payload.phone || existing?.phone || "",
+      name: existing?.name,
+      avatarUrl: existing?.avatarUrl,
+      role,
+      isVerified: existing?.isVerified,
+    };
+  }
+
+  if (effectiveUser) {
+    window.localStorage.setItem(AUTH_USER_KEY, JSON.stringify(effectiveUser));
   }
 
   // Also save in role-isolated storage
-  const role = user?.role;
   if (role === "CUSTOMER") {
     window.localStorage.setItem(CUSTOMER_ACCESS_TOKEN_KEY, accessToken);
-    window.localStorage.setItem(CUSTOMER_REFRESH_TOKEN_KEY, refreshToken);
-    if (user) window.localStorage.setItem(CUSTOMER_AUTH_USER_KEY, JSON.stringify(user));
+    if (refreshToken) window.localStorage.setItem(CUSTOMER_REFRESH_TOKEN_KEY, refreshToken);
+    if (effectiveUser) window.localStorage.setItem(CUSTOMER_AUTH_USER_KEY, JSON.stringify(effectiveUser));
   } else if (role === "WORKER") {
     window.localStorage.setItem(WORKER_ACCESS_TOKEN_KEY, accessToken);
-    window.localStorage.setItem(WORKER_REFRESH_TOKEN_KEY, refreshToken);
-    if (user) window.localStorage.setItem(WORKER_AUTH_USER_KEY, JSON.stringify(user));
+    if (refreshToken) window.localStorage.setItem(WORKER_REFRESH_TOKEN_KEY, refreshToken);
+    if (effectiveUser) window.localStorage.setItem(WORKER_AUTH_USER_KEY, JSON.stringify(effectiveUser));
   } else if (role === "ADMIN") {
     window.localStorage.setItem(ADMIN_ACCESS_TOKEN_KEY, accessToken);
-    window.localStorage.setItem(ADMIN_REFRESH_TOKEN_KEY, refreshToken);
-    if (user) window.localStorage.setItem(ADMIN_AUTH_USER_KEY, JSON.stringify(user));
+    if (refreshToken) window.localStorage.setItem(ADMIN_REFRESH_TOKEN_KEY, refreshToken);
+    if (effectiveUser) window.localStorage.setItem(ADMIN_AUTH_USER_KEY, JSON.stringify(effectiveUser));
   }
 
   window.dispatchEvent(new Event(AUTH_USER_CHANGED_EVENT));
@@ -325,7 +476,7 @@ async function executeSilentRefresh(): Promise<string | null> {
   try {
     // Single refresh endpoint; the backend /auth/refresh is role-agnostic.
     // 10s cap: a hung refresh would otherwise block every queued 401 retry.
-    const res = await fetch(`${API_URL}/auth/refresh`, {
+    const res = await fetch(`${getApiUrl()}/auth/refresh`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ refreshToken }),
@@ -378,11 +529,10 @@ export interface ApiClientOptions extends RequestInit {
 }
 
 // A hung fetch used to spin forever (perceived perf: infinite spinner).
-// GETs get 45s (accommodating Neon DB serverless cold starts & remote SSL latency),
-// mutations 45s, uploads 60s — all overridable per call via options.timeoutMs.
-const DEFAULT_GET_TIMEOUT_MS = 45_000;
-const DEFAULT_MUTATION_TIMEOUT_MS = 45_000;
-const UPLOAD_TIMEOUT_MS = 60_000;
+// Accommodating Neon DB serverless cold starts & remote cross-region SSL latency
+const DEFAULT_GET_TIMEOUT_MS = 60_000;
+const DEFAULT_MUTATION_TIMEOUT_MS = 60_000;
+const UPLOAD_TIMEOUT_MS = 90_000;
 
 export async function apiClient<T>(
   path: string,
@@ -400,13 +550,19 @@ export async function apiClient<T>(
     path.startsWith("/users/worker") ||
     path.startsWith("/workers") ||
     path.startsWith("/commissions") ||
-    path.startsWith("/jobs/available")
+    path.startsWith("/jobs/available") ||
+    path.startsWith("/visits") ||
+    path.startsWith("/uploads/inspection-photo") ||
+    path.startsWith("/uploads/worker-document") ||
+    path.startsWith("/uploads/cnic-document")
   ) {
     roleHint = "WORKER";
   } else if (
     path.startsWith("/auth/customer") ||
     path.startsWith("/repairs/pending") ||
     path.startsWith("/jobs/customer") ||
+    path.startsWith("/uploads/job-photo") ||
+    path.startsWith("/uploads/voice-note") ||
     (path === "/jobs" && options.method === "POST")
   ) {
     roleHint = "CUSTOMER";
@@ -444,10 +600,10 @@ export async function apiClient<T>(
 
   let res: Response;
   try {
-    res = await fetch(`${API_URL}${path}`, { ...options, headers, signal: controller.signal });
+    res = await fetch(`${getApiUrl()}${path}`, { ...options, headers, signal: controller.signal });
   } catch (err) {
     if (timedOut) {
-      throw new ApiError(`REQUEST_TIMEOUT: no response within ${timeoutMs}ms`, 0);
+      throw new ApiError(`REQUEST_TIMEOUT: no response within ${timeoutMs}ms (${method} ${path})`, 0);
     }
     throw err;
   } finally {
