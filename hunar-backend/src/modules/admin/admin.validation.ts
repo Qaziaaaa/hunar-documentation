@@ -1,6 +1,7 @@
 import { Type } from 'class-transformer';
 import {
   IsArray,
+  IsBoolean,
   IsDateString,
   IsEnum,
   IsIn,
@@ -436,6 +437,10 @@ export class AdminUpdateCategoryDto {
   @IsNumber()
   @Min(0)
   defaultVisitCharge?: number;
+
+  @IsOptional()
+  @IsBoolean()
+  isActive?: boolean;
 }
 
 // Platform settings (Admin flow §12). Admin views and updates platform settings.

@@ -9,7 +9,7 @@ import {
   POPULAR_SEARCH_TAGS,
 } from "../data/categories";
 import type { PostJobData, ServiceCategory } from "../types";
-import { fetchServiceCategories, BackendCategory } from "../api/post-job-api";
+import { fetchServiceCategories, BackendCategory, CATEGORY_ID_MAP } from "../api/post-job-api";
 
 interface Step1ServiceSelectProps {
   data: PostJobData;
@@ -41,15 +41,24 @@ export function Step1ServiceSelect({
     };
   }, []);
 
-  // Merge live database visit fees into category options
+  // Merge live database visit fees into category options, filtering out deactivated ones
   const resolvedCategoryOptions = useMemo(() => {
     if (!backendCategories.length) return CATEGORY_OPTIONS;
-    return CATEGORY_OPTIONS.map((cat) => {
+    return CATEGORY_OPTIONS.filter((cat) => {
+      return backendCategories.some(
+        (b) =>
+          b.id.toLowerCase() === cat.id.toLowerCase() ||
+          b.name.toLowerCase().includes(cat.id.toLowerCase()) ||
+          cat.name.toLowerCase().includes(b.name.toLowerCase()) ||
+          (CATEGORY_ID_MAP[cat.id.toLowerCase()] && CATEGORY_ID_MAP[cat.id.toLowerCase()] === b.id)
+      );
+    }).map((cat) => {
       const live = backendCategories.find(
         (b) =>
           b.id.toLowerCase() === cat.id.toLowerCase() ||
           b.name.toLowerCase().includes(cat.id.toLowerCase()) ||
-          cat.name.toLowerCase().includes(b.name.toLowerCase())
+          cat.name.toLowerCase().includes(b.name.toLowerCase()) ||
+          (CATEGORY_ID_MAP[cat.id.toLowerCase()] && CATEGORY_ID_MAP[cat.id.toLowerCase()] === b.id)
       );
       if (live && live.defaultVisitCharge != null && live.defaultVisitCharge > 0) {
         return {

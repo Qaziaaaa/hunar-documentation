@@ -103,7 +103,7 @@ export interface CreatedJobResponse {
   createdAt: string;
 }
 
-const CATEGORY_ID_MAP: Record<string, string> = {
+export const CATEGORY_ID_MAP: Record<string, string> = {
   plumbing: "seed-category-1",
   plumber: "seed-category-1",
   electrical: "seed-category-2",
@@ -250,9 +250,7 @@ export async function fetchServiceCategories(): Promise<BackendCategory[]> {
   try {
     const res = await http.get<any>("/categories");
     const items = Array.isArray(res) ? res : res?.data ?? [];
-    if (items.length > 0) {
-      cachedCategories = items;
-    }
+    cachedCategories = items;
     return items;
   } catch (err) {
     console.warn("[post-job-api] Failed to fetch service categories:", err);
