@@ -219,15 +219,25 @@ export class AdminController {
 
   @Put('categories/:id')
   updateCategory(
-    @Param('id', ParseUUIDPipe) id: string,
+    @Param('id') id: string,
     @Body() dto: AdminUpdateCategoryDto,
     @CurrentUser() actor: JwtPayload,
   ) {
     return this.adminService.updateCategory(id, dto, actor);
   }
 
+  @Put('categories/:id/activate')
+  activateCategory(@Param('id') id: string, @CurrentUser() actor: JwtPayload) {
+    return this.adminService.activateCategory(id, actor);
+  }
+
+  @Put('categories/:id/reactivate')
+  reactivateCategory(@Param('id') id: string, @CurrentUser() actor: JwtPayload) {
+    return this.adminService.activateCategory(id, actor);
+  }
+
   @Put('categories/:id/deactivate')
-  deactivateCategory(@Param('id', ParseUUIDPipe) id: string, @CurrentUser() actor: JwtPayload) {
+  deactivateCategory(@Param('id') id: string, @CurrentUser() actor: JwtPayload) {
     return this.adminService.deactivateCategory(id, actor);
   }
 
