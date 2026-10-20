@@ -10,7 +10,6 @@ import {
   FolderTree,
   Info,
   Plus,
-  Power,
   Save,
   Truck,
   Wrench,
@@ -31,6 +30,7 @@ export default function CategoriesPage() {
   const [toastMessage, setToastMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [pageError, setPageError] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
+  const [togglingId, setTogglingId] = useState<string | null>(null);
 
   useEffect(() => {
     adminApi
@@ -44,8 +44,9 @@ export default function CategoriesPage() {
 
   const handleToggleCategory = async (id: string) => {
     const target = categories.find((c) => c.id === id);
-    if (!target) return;
+    if (!target || togglingId === id) return;
     setPageError(null);
+    setTogglingId(id);
     try {
       await adminApi.toggleCategory(id, !target.isActive);
       setCategories((prev) =>
@@ -55,6 +56,8 @@ export default function CategoriesPage() {
       setPageError(
         err instanceof Error ? err.message : "Failed to update category",
       );
+    } finally {
+      setTogglingId(null);
     }
   };
 
@@ -183,21 +186,39 @@ export default function CategoriesPage() {
                   </div>
                 </div>
 
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleToggleCategory(cat.id);
-                  }}
-                  className={`flex size-9 items-center justify-center rounded-xl transition ${
-                    cat.isActive
-                      ? "bg-green-100 text-green-700 hover:bg-green-200"
-                      : "bg-slate-100 text-slate-400 hover:bg-slate-200"
-                  }`}
-                  title={cat.isActive ? "Deactivate" : "Activate"}
+                <div
+                  className="flex flex-col items-end gap-1.5 shrink-0"
+                  onClick={(e) => e.stopPropagation()}
                 >
-                  <Power className="size-4" />
-                </button>
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={cat.isActive}
+                    disabled={togglingId === cat.id}
+                    onClick={() => handleToggleCategory(cat.id)}
+                    className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full p-0.5 transition-colors duration-200 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-teal focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60 ${
+                      cat.isActive ? "bg-emerald-500" : "bg-slate-300"
+                    }`}
+                    title={cat.isActive ? "Click to deactivate" : "Click to activate"}
+                  >
+                    <span className="sr-only">
+                      {cat.isActive ? "Deactivate category" : "Activate category"}
+                    </span>
+                    <span
+                      aria-hidden="true"
+                      className={`pointer-events-none inline-block size-5 transform rounded-full bg-white shadow-sm ring-0 transition-transform duration-200 ease-in-out ${
+                        cat.isActive ? "translate-x-5" : "translate-x-0"
+                      }`}
+                    />
+                  </button>
+                  <span
+                    className={`text-[10px] font-extrabold uppercase tracking-wider ${
+                      cat.isActive ? "text-emerald-600" : "text-slate-400"
+                    }`}
+                  >
+                    {cat.isActive ? "Active" : "Inactive"}
+                  </span>
+                </div>
               </div>
             ))}
           </div>
