@@ -137,7 +137,7 @@ export default function CategoriesPage() {
             </button>
           </div>
         )}
-        <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+        <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end sm:pt-4">
           <div>
             <div className="flex items-center gap-2">
               <span className="inline-flex items-center gap-1.5 rounded-full border border-teal/20 bg-teal/10 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-teal">
@@ -155,7 +155,7 @@ export default function CategoriesPage() {
           <button
             type="button"
             onClick={() => setShowAddModal(true)}
-            className="inline-flex items-center gap-2 rounded-xl bg-navy px-4 py-2.5 text-xs font-bold text-white shadow-md transition hover:bg-navy/90"
+            className="inline-flex items-center gap-2 rounded-xl bg-navy px-4 py-2.5 text-xs font-bold text-white shadow-md transition hover:bg-navy/90 sm:mt-6 sm:self-end"
           >
             <Plus className="size-4 text-teal-300" /> Add New Category
           </button>
