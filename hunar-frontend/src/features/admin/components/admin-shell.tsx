@@ -15,7 +15,6 @@ import {
   LayoutDashboard,
   LogOut,
   Menu,
-  Monitor,
   Moon,
   Search,
   Settings,
@@ -67,10 +66,9 @@ const AdminShellContext = createContext<{ openDrawer: () => void }>({
 
 /** Admin theme: localStorage (pre-paint script) + html[data-theme]. */
 const THEME_KEY = "workerfix.admin.theme";
-type ThemeChoice = "light" | "dark" | "system";
+type ThemeChoice = "light" | "dark";
 const THEME_OPTIONS: { value: ThemeChoice; label: string; Icon: typeof Sun }[] = [
   { value: "light", label: "Light", Icon: Sun },
-  { value: "system", label: "System", Icon: Monitor },
   { value: "dark", label: "Dark", Icon: Moon },
 ];
 
@@ -133,28 +131,22 @@ export function AdminUtilities() {
   const [themeChoice, setThemeChoice] = useState<ThemeChoice>(() => {
     try {
       const stored = localStorage.getItem(THEME_KEY);
-      if (stored === "light" || stored === "dark" || stored === "system") {
+      if (stored === "light" || stored === "dark") {
         return stored;
       }
     } catch {
       /* storage unavailable */
     }
-    return "system";
+    return "light";
   });
   useLayoutEffect(() => {
-    const mq = window.matchMedia("(prefers-color-scheme: dark)");
     const apply = () => {
-      const dark =
-        themeChoice === "dark" ||
-        (themeChoice === "system" && mq.matches);
       document.documentElement.setAttribute(
         "data-theme",
-        dark ? "dark" : "light",
+        themeChoice === "dark" ? "dark" : "light",
       );
     };
     apply();
-    mq.addEventListener("change", apply);
-    return () => mq.removeEventListener("change", apply);
   }, [themeChoice]);
   const pickTheme = (value: ThemeChoice) => {
     setThemeChoice(value);
@@ -1031,6 +1023,18 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
     },
   ];
 
+  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({
+    Operations: false,
+    Governance: false,
+  });
+
+  const toggleGroup = useCallback((title: string) => {
+    setOpenGroups((prev) => ({
+      ...prev,
+      [title]: !prev[title],
+    }));
+  }, []);
+
   const openDrawer = useCallback(() => {
     setCollapsed(false);
     setMobileOpen(true);
@@ -1123,57 +1127,80 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
                 willChange: "transform",
               }}
             />
-            {navGroups.map((group) => (
-              <div key={group.title}>
-                <p data-boot className="relative px-3 text-[11px] font-bold uppercase tracking-wider text-slate-400">
-                  {group.title}
-                </p>
-                <div className="mt-2 space-y-1">
-                  {group.items.map((item) => {
-                    const isActive = pathname.startsWith(item.href);
-                    const Icon = item.icon;
-                    return (
-                      <Link
-                        key={item.href}
-                        href={item.href}
-                        onClick={() => setMobileOpen(false)}
-                        title={item.label}
-                        data-boot
-                        data-nav-active={isActive ? "true" : undefined}
-                        className={`group relative flex items-center justify-between rounded-xl px-3.5 py-2.5 text-[13px] font-semibold transition-colors duration-wharf ${
-                          isActive
-                            ? "text-white"
-                            : "text-slate-600 hover:bg-slate-100/80 hover:text-navy"
+            {navGroups.map((group) => {
+              const isMain = group.title === "Main";
+              const isOpen = isMain || collapsed || Boolean(openGroups[group.title]);
+
+              return (
+                <div key={group.title}>
+                  {isMain ? (
+                    <p data-boot className="relative px-3 text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                      {group.title}
+                    </p>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => toggleGroup(group.title)}
+                      data-boot
+                      className="wf-nav-toggle relative flex w-full items-center justify-between px-3 text-[11px] font-bold uppercase tracking-wider text-slate-400 transition hover:text-navy cursor-pointer select-none"
+                    >
+                      <span>{group.title}</span>
+                      <ChevronDown
+                        className={`size-3.5 transition-transform duration-200 ${
+                          isOpen ? "" : "-rotate-90"
                         }`}
-                      >
-                        <div className="flex items-center gap-3">
-                          <Icon
-                            className={`size-4 transition-colors duration-wharf ${
+                      />
+                    </button>
+                  )}
+                  {isOpen ? (
+                    <div className="mt-2 space-y-1">
+                      {group.items.map((item) => {
+                        const isActive = pathname.startsWith(item.href);
+                        const Icon = item.icon;
+                        return (
+                          <Link
+                            key={item.href}
+                            href={item.href}
+                            onClick={() => setMobileOpen(false)}
+                            title={item.label}
+                            data-boot
+                            data-nav-active={isActive ? "true" : undefined}
+                            className={`group relative flex items-center justify-between rounded-xl px-3.5 py-2.5 text-[13px] font-semibold transition-colors duration-wharf ${
                               isActive
-                                ? "text-teal-300"
-                                : "text-slate-400 group-hover:text-navy"
-                            }`}
-                          />
-                          <span>{item.label}</span>
-                        </div>
-                        {item.badge ? (
-                          <span
-                            className={`rounded-full px-2.5 py-0.5 text-[11px] font-extrabold uppercase tracking-wide transition ${
-                              item.badgeColor ||
-                              (isActive
-                                ? "bg-teal text-white shadow-sm"
-                                : "bg-slate-100 text-slate-600 group-hover:bg-slate-200")
+                                ? "text-white"
+                                : "text-slate-600 hover:bg-slate-100/80 hover:text-navy"
                             }`}
                           >
-                            {item.badge}
-                          </span>
-                        ) : null}
-                      </Link>
-                    );
-                  })}
+                            <div className="flex items-center gap-3">
+                              <Icon
+                                className={`size-4 transition-colors duration-wharf ${
+                                  isActive
+                                    ? "text-teal-300"
+                                    : "text-slate-400 group-hover:text-navy"
+                                }`}
+                              />
+                              <span>{item.label}</span>
+                            </div>
+                            {item.badge ? (
+                              <span
+                                className={`rounded-full px-2.5 py-0.5 text-[11px] font-extrabold uppercase tracking-wide transition ${
+                                  item.badgeColor ||
+                                  (isActive
+                                    ? "bg-teal text-white shadow-sm"
+                                    : "bg-slate-100 text-slate-600 group-hover:bg-slate-200")
+                                }`}
+                              >
+                                {item.badge}
+                              </span>
+                            ) : null}
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  ) : null}
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </nav>
         </div>
 

@@ -22,7 +22,6 @@ import {
   Star,
   Trophy,
   UserCheck,
-  Wallet,
   X,
 } from "lucide-react";
 
@@ -33,7 +32,7 @@ export default function WorkersPage() {
   const [actionError, setActionError] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState<"ALL" | "VERIFIED" | "PENDING" | "SUSPENDED">("ALL");
+  const [statusFilter, setStatusFilter] = useState<"ALL" | "SUSPENDED">("ALL");
   const [selectedWorker, setSelectedWorker] = useState<WorkerUser | null>(null);
   const [actionWorker, setActionWorker] = useState<WorkerUser | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -57,8 +56,6 @@ export default function WorkersPage() {
           w.skills.some((s) => s.toLowerCase().includes(search.toLowerCase()));
 
         let matchesStatus = true;
-        if (statusFilter === "VERIFIED") matchesStatus = w.verificationStatus === "VERIFIED";
-        if (statusFilter === "PENDING") matchesStatus = w.verificationStatus === "PENDING";
         if (statusFilter === "SUSPENDED") matchesStatus = w.status === "SUSPENDED";
 
         return matchesSearch && matchesStatus;
@@ -228,25 +225,14 @@ export default function WorkersPage() {
               </button>
               <button
                 type="button"
-                onClick={() => setStatusFilter("VERIFIED")}
+                onClick={() => setStatusFilter("SUSPENDED")}
                 className={`rounded-lg px-3 py-1.5 font-bold transition ${
-                  statusFilter === "VERIFIED"
-                    ? "bg-teal text-white shadow-sm"
+                  statusFilter === "SUSPENDED"
+                    ? "bg-red-500 text-white shadow-sm"
                     : "text-slate-600 hover:text-navy"
                 }`}
               >
-                Verified
-              </button>
-              <button
-                type="button"
-                onClick={() => setStatusFilter("PENDING")}
-                className={`rounded-lg px-3 py-1.5 font-bold transition ${
-                  statusFilter === "PENDING"
-                    ? "bg-orange text-white shadow-sm"
-                    : "text-slate-600 hover:text-navy"
-                }`}
-              >
-                Pending
+                Suspended
               </button>
             </div>
           </div>
@@ -464,6 +450,24 @@ export default function WorkersPage() {
                       <p className="text-slate-400">{selectedWorker.email}</p>
                     ) : null}
                   </div>
+                </div>
+
+                <div>
+                  <p className="font-bold text-navy">Trade Skills:</p>
+                  {selectedWorker.skills.length > 0 ? (
+                    <div className="mt-1.5 flex flex-wrap gap-1">
+                      {selectedWorker.skills.map((skill) => (
+                        <span
+                          key={skill}
+                          className="rounded-md bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-700"
+                        >
+                          {skill}
+                        </span>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="mt-1 text-slate-400">No trade categories assigned.</p>
+                  )}
                 </div>
 
                 <div className="grid grid-cols-3 gap-3">

@@ -476,6 +476,7 @@ html[data-theme="dark"] body:has(.admin-glow) {
   .admin-app--rail .wf-search,
   .admin-app--rail .wf-sidebar__foot,
   .admin-app--rail .wf-sidebar__navs p,
+  .admin-app--rail .wf-sidebar__navs .wf-nav-toggle,
   .admin-app--rail .wf-sidebar__navs a span {
     display: none;
   }
@@ -501,6 +502,11 @@ html[data-theme="dark"] body:has(.admin-glow) {
   color: var(--ink);
   border-right: 1px solid var(--line);
   min-width: 0;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.wf-sidebar::-webkit-scrollbar {
+  display: none;
 }
 
 .wf-sidebar__top {
@@ -593,9 +599,13 @@ html[data-theme="dark"] body:has(.admin-glow) {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
-  scrollbar-width: thin;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
   padding: 10px 0 8px;
   position: relative;
+}
+.wf-sidebar__navs::-webkit-scrollbar {
+  display: none;
 }
 
 .wf-sidebar__foot {

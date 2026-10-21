@@ -354,10 +354,34 @@ export class AdminService {
     const skillIds = user.workerProfile?.skills ?? [];
     const [skills, jobs, earningsAggregate, commissions, reviews] = await Promise.all([
       skillIds.length
-        ? this.prisma.serviceCategory.findMany({
-            where: { id: { in: skillIds } },
-            select: { id: true, name: true, nameUrdu: true },
-          })
+        ? (async () => {
+            // WorkerProfile.skills may hold category IDs (current writers) or
+            // raw category names (legacy rows). Resolve both so the detail
+            // endpoint never silently drops skills the list endpoint shows.
+            const byId = await this.prisma.serviceCategory.findMany({
+              where: { id: { in: skillIds } },
+              select: { id: true, name: true, nameUrdu: true },
+            });
+            const byIdMap = new Map(byId.map((c) => [c.id, c]));
+            const unresolved = [...new Set(skillIds.filter((s) => !byIdMap.has(s)))];
+            const byName = unresolved.length
+              ? await this.prisma.serviceCategory.findMany({
+                  where: { name: { in: unresolved } },
+                  select: { id: true, name: true, nameUrdu: true },
+                })
+              : [];
+            const byNameMap = new Map(byName.map((c) => [c.name, c]));
+            const seen = new Set<string>();
+            const resolved: Array<{ id: string; name: string; nameUrdu: string | null }> = [];
+            for (const raw of skillIds) {
+              const cat = byIdMap.get(raw) ?? byNameMap.get(raw);
+              const key = cat?.id ?? raw;
+              if (seen.has(key)) continue;
+              seen.add(key);
+              resolved.push(cat ?? { id: raw, name: raw, nameUrdu: null });
+            }
+            return resolved;
+          })()
         : Promise.resolve([]),
       this.prisma.serviceRequest.findMany({
         where: { OR: [{ selectedWorkerId: id }, { offers: { some: { workerId: id } } }] },
@@ -2462,6 +2486,9 @@ export class AdminService {
 
     const where: Prisma.UserWhereInput = {
       role,
+      // Workers directory lists verified workers only; unverified/pending
+      // accounts live in the verifications queue instead.
+      ...(role === Role.WORKER ? { isVerified: true } : {}),
       ...(query.status ? { isActive: query.status === 'active' } : {}),
       ...(query.search
         ? {

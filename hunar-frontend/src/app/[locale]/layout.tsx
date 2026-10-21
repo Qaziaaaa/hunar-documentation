@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Script from "next/script";
 import { Bricolage_Grotesque, Hanken_Grotesk, Inter } from "next/font/google";
 import { hasLocale, NextIntlClientProvider } from "next-intl";
 import { getMessages, getTranslations, setRequestLocale } from "next-intl/server";
@@ -105,15 +106,6 @@ export default async function LocaleLayout({
       className={`${inter.variable} ${hanken.variable} ${bricolage.variable} h-full antialiased`}
     >
       <head>
-        {/* Pre-paint admin theme (Next docs: preventing-flash-before-hydration).
-            Runs during parsing so html[data-theme] is set before first paint.
-            Dark applies only on /admin/* (the one glow-styled surface);
-            every other portal on this origin stays light. */}
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `(function(){try{var isAdmin=/\\/admin(\\/|$)/.test(location.pathname);var t=localStorage.getItem("workerfix.admin.theme")||"system";var dark=isAdmin&&(t==="dark"||(t!=="light"&&window.matchMedia("(prefers-color-scheme: dark)").matches));document.documentElement.setAttribute("data-theme",dark?"dark":"light");}catch(e){document.documentElement.setAttribute("data-theme","light");}})()`,
-          }}
-        />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
         <link
@@ -125,6 +117,12 @@ export default async function LocaleLayout({
         <link rel="apple-touch-icon" href="/workerfix-icon.png" />
       </head>
       <body className="min-h-screen w-full overflow-x-hidden flex flex-col">
+        {/* Pre-paint admin theme (prevents flash before hydration). Runs before interactive. */}
+        <Script
+          id="workerfix-admin-theme"
+          src="/admin-theme.js"
+          strategy="beforeInteractive"
+        />
         <NextIntlClientProvider messages={messages}>
           <QueryProvider>{children}</QueryProvider>
         </NextIntlClientProvider>
