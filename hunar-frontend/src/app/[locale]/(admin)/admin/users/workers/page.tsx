@@ -28,7 +28,7 @@ export default function WorkersPage() {
   const [actionError, setActionError] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState<"ALL" | "VERIFIED" | "PENDING" | "SUSPENDED">("ALL");
+  const [statusFilter, setStatusFilter] = useState<"ALL" | "SUSPENDED">("ALL");
   const [selectedWorker, setSelectedWorker] = useState<WorkerUser | null>(null);
   const [actionWorker, setActionWorker] = useState<WorkerUser | null>(null);
   const [suspendReason, setSuspendReason] = useState("");
@@ -52,8 +52,6 @@ export default function WorkersPage() {
           w.skills.some((s) => s.toLowerCase().includes(search.toLowerCase()));
 
         let matchesStatus = true;
-        if (statusFilter === "VERIFIED") matchesStatus = w.verificationStatus === "VERIFIED";
-        if (statusFilter === "PENDING") matchesStatus = w.verificationStatus === "PENDING";
         if (statusFilter === "SUSPENDED") matchesStatus = w.status === "SUSPENDED";
 
         return matchesSearch && matchesStatus;
@@ -188,25 +186,14 @@ export default function WorkersPage() {
               </button>
               <button
                 type="button"
-                onClick={() => setStatusFilter("VERIFIED")}
+                onClick={() => setStatusFilter("SUSPENDED")}
                 className={`rounded-lg px-3 py-1.5 font-bold transition ${
-                  statusFilter === "VERIFIED"
-                    ? "bg-teal text-white shadow-sm"
+                  statusFilter === "SUSPENDED"
+                    ? "bg-red-500 text-white shadow-sm"
                     : "text-slate-600 hover:text-navy"
                 }`}
               >
-                Verified
-              </button>
-              <button
-                type="button"
-                onClick={() => setStatusFilter("PENDING")}
-                className={`rounded-lg px-3 py-1.5 font-bold transition ${
-                  statusFilter === "PENDING"
-                    ? "bg-orange text-white shadow-sm"
-                    : "text-slate-600 hover:text-navy"
-                }`}
-              >
-                Pending
+                Suspended
               </button>
             </div>
           </div>
