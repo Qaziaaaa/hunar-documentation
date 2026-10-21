@@ -4,6 +4,7 @@ import type {
   AdminKpiStats,
   AdminNotification,
   AuditLogEntry,
+  CategoryFormValues,
   CustomerUser,
   DisputeReport,
   JobDetailItem,
@@ -23,8 +24,10 @@ interface BackendCategoryRow {
   id: string;
   name: string;
   nameUrdu?: string;
+  imageUrl?: string | null;
   isActive: boolean;
   sortOrder: number;
+  defaultVisitCharge?: number | null;
   createdAt: string;
 }
 
@@ -344,10 +347,14 @@ function toServiceCategory(c: any): ServiceCategory {
   return {
     id: c.id,
     name: c.name,
+    nameUrdu: c.nameUrdu ?? null,
+    imageUrl: c.imageUrl ?? null,
     iconName: "Wrench",
     activeWorkersCount: Number(c.activeWorkersCount ?? 0),
     totalJobsCount: Number(c.totalJobsCount ?? 0),
     isActive: c.isActive,
+    sortOrder: Number(c.sortOrder ?? 0),
+    defaultVisitCharge: c.defaultVisitCharge != null ? Number(c.defaultVisitCharge) : null,
     // Real slabs only — categories without configured charges show an empty
     // state in the editor instead of invented Rs. 100–500 pricing.
     distanceSlabs: Array.isArray(c.distanceSlabs) ? c.distanceSlabs : [],
@@ -715,8 +722,15 @@ export const adminApi = {
     return rows.map(toServiceCategory);
   },
 
-  async createCategory(name: string): Promise<ServiceCategory> {
-    const created = await http.post<BackendCategoryRow>("/admin/categories", { name });
+  async uploadCategoryImage(file: File): Promise<string> {
+    const fd = new FormData();
+    fd.append("file", file);
+    const res = await http.upload<{ url: string }>("/uploads/category-image", fd);
+    return res?.url ?? "";
+  },
+
+  async createCategory(payload: CategoryFormValues): Promise<ServiceCategory> {
+    const created = await http.post<BackendCategoryRow>("/admin/categories", payload);
     return toServiceCategory(created);
   },
 
@@ -724,8 +738,9 @@ export const adminApi = {
     return http.put(`/admin/categories/${id}/${active ? "activate" : "deactivate"}`);
   },
 
-  async updateCategory(id: string, name: string) {
-    return http.put(`/admin/categories/${id}`, { name });
+  async updateCategory(id: string, payload: CategoryFormValues): Promise<ServiceCategory> {
+    const updated = await http.put<BackendCategoryRow>(`/admin/categories/${id}`, payload);
+    return toServiceCategory(updated);
   },
 
   async updateCategoryDistanceSlabs(id: string, distanceSlabs: any[]): Promise<ServiceCategory> {

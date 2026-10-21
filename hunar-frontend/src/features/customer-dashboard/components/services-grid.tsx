@@ -201,11 +201,15 @@ export function ServicesGrid() {
         id: b.id,
         title: b.name,
         titleUr: b.nameUrdu || b.name,
-        image: "/services/mason.jpg",
+        image: b.imageUrl || "/services/mason.jpg",
         href: `/customer/post-job?category=${encodeURIComponent(b.id)}`,
       }));
 
-    return [...filtered, ...customServices];
+    // Prefer the admin-uploaded cover image over the hardcoded seed photos.
+    return [...filtered, ...customServices].map((service) => {
+      const cat = activeCategories.find((c) => c.id === service.id);
+      return cat?.imageUrl ? { ...service, image: cat.imageUrl } : service;
+    });
   }, [activeCategories]);
 
   const normalizedQuery = searchQuery.trim().toLowerCase();

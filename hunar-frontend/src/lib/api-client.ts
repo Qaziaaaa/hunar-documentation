@@ -544,7 +544,11 @@ export async function apiClient<T>(
     headers.set("Content-Type", "application/json");
   }
   let roleHint: UserRole | undefined;
-  if (path.startsWith("/admin") || path.startsWith("/api/v1/admin")) {
+  if (
+    path.startsWith("/admin") ||
+    path.startsWith("/api/v1/admin") ||
+    path.startsWith("/uploads/category-image")
+  ) {
     roleHint = "ADMIN";
   } else if (
     path.startsWith("/users/worker") ||

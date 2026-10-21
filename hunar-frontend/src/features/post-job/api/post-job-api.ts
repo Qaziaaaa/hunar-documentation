@@ -240,6 +240,7 @@ export interface BackendCategory {
   id: string;
   name: string;
   nameUrdu?: string;
+  imageUrl?: string | null;
   defaultVisitCharge?: number | null;
   suggestedFee?: number | null;
 }
