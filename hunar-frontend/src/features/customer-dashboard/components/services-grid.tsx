@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import Image from "next/image";
 import {
   ArrowRight,
@@ -12,6 +12,11 @@ import {
 import { Link } from "@/i18n/navigation";
 import { useLocale } from "next-intl";
 import { useCustomerSearch } from "./customer-search-context";
+import {
+  fetchServiceCategories,
+  BackendCategory,
+  CATEGORY_ID_MAP,
+} from "@/features/post-job/api/post-job-api";
 
 export interface ServiceItem {
   id: string;
@@ -116,19 +121,101 @@ export const ALL_SERVICES: ServiceItem[] = [
 
 ];
 
+function isServiceActive(service: ServiceItem, activeCategories: BackendCategory[]): boolean {
+  const targetSeedId = CATEGORY_ID_MAP[service.id.toLowerCase()];
+
+  return activeCategories.some((cat) => {
+    if (targetSeedId && cat.id.toLowerCase() === targetSeedId.toLowerCase()) {
+      return true;
+    }
+    if (cat.id.toLowerCase() === service.id.toLowerCase()) {
+      return true;
+    }
+    const catName = cat.name.toLowerCase();
+    const serviceTitle = service.title.toLowerCase();
+    const serviceId = service.id.toLowerCase();
+
+    if (catName === serviceTitle || catName === serviceId) {
+      return true;
+    }
+    if (serviceTitle.includes(catName) || catName.includes(serviceTitle)) {
+      return true;
+    }
+    if (
+      (catName.includes("plumb") && serviceId === "plumber") ||
+      (catName.includes("electr") && serviceId === "electrician") ||
+      ((catName.includes("ac") || catName.includes("refriger")) && serviceId === "ac-technician") ||
+      (catName.includes("carpent") && serviceId === "carpenter") ||
+      (catName.includes("paint") && serviceId === "painter") ||
+      (catName.includes("clean") && serviceId === "cleaner") ||
+      (catName.includes("mason") && serviceId === "mason-mistry") ||
+      (catName.includes("pest") && serviceId === "pest-control") ||
+      (catName.includes("handyman") &&
+        (serviceId === "solar-technician" || serviceId === "gardener" || serviceId === "cctv-security"))
+    ) {
+      return true;
+    }
+    return false;
+  });
+}
+
 export function ServicesGrid() {
   const [showAll, setShowAll] = useState(false);
   const locale = useLocale();
   const { searchQuery } = useCustomerSearch();
+  const [activeCategories, setActiveCategories] = useState<BackendCategory[] | null>(null);
+
+  useEffect(() => {
+    let mounted = true;
+    const loadCategories = () => {
+      fetchServiceCategories().then((cats) => {
+        if (mounted && Array.isArray(cats)) {
+          setActiveCategories(cats);
+        }
+      });
+    };
+
+    loadCategories();
+
+    // Re-fetch on tab focus and periodically so changes in Admin reflect dynamically
+    window.addEventListener("focus", loadCategories);
+    const interval = setInterval(loadCategories, 5000);
+    return () => {
+      mounted = false;
+      window.removeEventListener("focus", loadCategories);
+      clearInterval(interval);
+    };
+  }, []);
+
+  const activeServices = useMemo(() => {
+    if (!activeCategories) return ALL_SERVICES;
+
+    const filtered = ALL_SERVICES.filter((service) =>
+      isServiceActive(service, activeCategories)
+    );
+
+    // Also include custom active categories created by Admin that aren't in seeded list
+    const customServices: ServiceItem[] = activeCategories
+      .filter((b) => !b.id.startsWith("seed-category-"))
+      .map((b) => ({
+        id: b.id,
+        title: b.name,
+        titleUr: b.nameUrdu || b.name,
+        image: "/services/mason.jpg",
+        href: `/customer/post-job?category=${encodeURIComponent(b.id)}`,
+      }));
+
+    return [...filtered, ...customServices];
+  }, [activeCategories]);
 
   const normalizedQuery = searchQuery.trim().toLowerCase();
 
   // Live-filter services: case-insensitive, partial match on title (EN/UR), subCategory, and id
   const displayedServices = useMemo(() => {
     if (!normalizedQuery) {
-      return showAll ? ALL_SERVICES : ALL_SERVICES.slice(0, 12);
+      return showAll ? activeServices : activeServices.slice(0, 12);
     }
-    return ALL_SERVICES.filter((service) => {
+    return activeServices.filter((service) => {
       const matchesTitle = service.title.toLowerCase().includes(normalizedQuery);
       const matchesTitleUr = service.titleUr.includes(searchQuery.trim());
       const matchesSubCategory = service.subCategory
@@ -137,7 +224,7 @@ export function ServicesGrid() {
       const matchesId = service.id.toLowerCase().includes(normalizedQuery);
       return matchesTitle || matchesTitleUr || matchesSubCategory || matchesId;
     });
-  }, [normalizedQuery, searchQuery, showAll]);
+  }, [normalizedQuery, searchQuery, showAll, activeServices]);
 
   const isSearching = normalizedQuery.length > 0;
 

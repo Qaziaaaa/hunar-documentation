@@ -18,7 +18,6 @@ import {
   Star,
   Trophy,
   UserCheck,
-  Wallet,
   X,
 } from "lucide-react";
 
@@ -405,6 +404,24 @@ export default function WorkersPage() {
                       <p className="text-slate-400">{selectedWorker.email}</p>
                     ) : null}
                   </div>
+                </div>
+
+                <div>
+                  <p className="font-bold text-navy">Trade Skills:</p>
+                  {selectedWorker.skills.length > 0 ? (
+                    <div className="mt-1.5 flex flex-wrap gap-1">
+                      {selectedWorker.skills.map((skill) => (
+                        <span
+                          key={skill}
+                          className="rounded-md bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-700"
+                        >
+                          {skill}
+                        </span>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="mt-1 text-slate-400">No trade categories assigned.</p>
+                  )}
                 </div>
 
                 <div className="grid grid-cols-3 gap-3">

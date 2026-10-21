@@ -1332,6 +1332,7 @@ export class AdminService {
         ...(dto.sortOrder !== undefined ? { sortOrder: dto.sortOrder } : {}),
         ...(dto.defaultVisitCharge !== undefined ? { defaultVisitCharge: dto.defaultVisitCharge } : {}),
         ...(dto.distanceSlabs !== undefined ? { distanceSlabs: dto.distanceSlabs } : {}),
+        ...(dto.isActive !== undefined ? { isActive: dto.isActive } : {}),
       },
       select: {
         id: true,
@@ -1364,6 +1365,54 @@ export class AdminService {
       type: 'category',
       event: ADMIN_EVENTS.categoryUpdated,
       categoryId: id,
+      timestamp: new Date(),
+    });
+
+    await this.redis?.del('perf:categories:all').catch(() => {});
+
+    return updated;
+  }
+
+  // Activate / reactivate a category.
+  async activateCategory(id: string, actor: JwtPayload) {
+    const existing = await this.prisma.serviceCategory.findUnique({
+      where: { id },
+      select: { id: true, name: true, isActive: true },
+    });
+    if (!existing) {
+      throw new NotFoundException('Category not found');
+    }
+    if (existing.isActive) {
+      throw new BadRequestException('Category is already active');
+    }
+
+    const updated = await this.prisma.serviceCategory.update({
+      where: { id },
+      data: { isActive: true },
+      select: { id: true, name: true, isActive: true },
+    });
+
+    await this.audit.record({
+      actorId: actor.sub,
+      actorRole: actor.role,
+      action: 'CATEGORY_ACTIVATED',
+      targetType: 'SERVICE_CATEGORY',
+      targetId: id,
+      reason: null,
+      metadata: { name: existing.name },
+    });
+
+    this.realtime.emitToRoom(ADMIN_ROOM, ADMIN_EVENTS.categoryActivated, {
+      categoryId: id,
+      name: existing.name,
+      activatedBy: actor.sub,
+      timestamp: new Date(),
+    });
+    this.realtime.emitToRoom(ADMIN_ROOM, ADMIN_EVENTS.newAlert, {
+      type: 'category',
+      event: ADMIN_EVENTS.categoryActivated,
+      categoryId: id,
+      name: existing.name,
       timestamp: new Date(),
     });
 

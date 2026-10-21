@@ -721,7 +721,7 @@ export const adminApi = {
   },
 
   async toggleCategory(id: string, active: boolean) {
-    return http.put(`/admin/categories/${id}/deactivate`);
+    return http.put(`/admin/categories/${id}/${active ? "activate" : "deactivate"}`);
   },
 
   async updateCategory(id: string, name: string) {
