@@ -400,6 +400,11 @@ export class AdminCreateCategoryDto {
   nameUrdu?: string;
 
   @IsOptional()
+  @IsString()
+  @MaxLength(1000)
+  imageUrl?: string;
+
+  @IsOptional()
   @Type(() => Number)
   @IsInt()
   @Min(0)
@@ -422,6 +427,11 @@ export class AdminUpdateCategoryDto {
   @IsString()
   @MaxLength(100)
   nameUrdu?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(1000)
+  imageUrl?: string;
 
   @IsOptional()
   @Type(() => Number)

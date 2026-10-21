@@ -130,6 +130,11 @@ export class UploadsService {
     return this.uploadPhoto(UploadCategory.WALLET_SCREENSHOT, userId, file);
   }
 
+  /** Admin category cover image (not exposed through the generic dispatcher). */
+  uploadCategoryImage(userId: string, file: Express.Multer.File): Promise<UploadFileResult> {
+    return this.uploadPhoto(UploadCategory.CATEGORY_IMAGE, userId, file);
+  }
+
   getUrl(key: string): string {
     return this.storage.getPublicUrl(key);
   }
