@@ -4,10 +4,17 @@ import { useState, useMemo, useEffect } from "react";
 import Image from "next/image";
 import {
   ArrowRight,
+  Briefcase,
+  Car,
   ChevronDown,
   ChevronUp,
+  Cpu,
   Grid,
   SearchX,
+  Truck,
+  Tv,
+  Wrench,
+  type LucideIcon,
 } from "lucide-react";
 import { Link } from "@/i18n/navigation";
 import { useLocale } from "next-intl";
@@ -22,9 +29,246 @@ export interface ServiceItem {
   id: string;
   title: string;
   titleUr: string;
-  image: string;
+  image?: string | null;
+  icon?: LucideIcon;
+  gradient?: string;
   subCategory?: string;
   href?: string;
+}
+
+export interface CategoryAsset {
+  image?: string;
+  icon?: LucideIcon;
+  gradient?: string;
+}
+
+/**
+ * Intelligent asset & icon picker for admin-created or custom categories.
+ * Maps known trade keywords to existing high-res 3D photographic assets or trade icons,
+ * and falls back to a clean, branded neutral placeholder instead of hardcoded mason.jpg.
+ */
+export function pickCategoryAsset(categoryName: string): CategoryAsset {
+  const norm = categoryName.toLowerCase().trim();
+
+  // 1. Photographic Image Picker (matches name to known high-res 3D photographic assets)
+  if (
+    norm.includes("plumb") ||
+    norm.includes("tap") ||
+    norm.includes("leak") ||
+    norm.includes("pipe") ||
+    norm.includes("sanitary") ||
+    norm.includes("پلمبر")
+  ) {
+    return { image: "/services/plumber.jpg" };
+  }
+  if (
+    norm.includes("electr") ||
+    norm.includes("wire") ||
+    norm.includes("light") ||
+    norm.includes("ups") ||
+    norm.includes("switch") ||
+    norm.includes("الیکٹریشن")
+  ) {
+    return { image: "/services/electrician.jpg" };
+  }
+  if (
+    norm.includes("ac") ||
+    norm.includes("air") ||
+    norm.includes("cool") ||
+    norm.includes("hvac") ||
+    norm.includes("refriger") ||
+    norm.includes("اے سی")
+  ) {
+    return { image: "/services/AC.jpg" };
+  }
+  if (
+    norm.includes("carpent") ||
+    norm.includes("wood") ||
+    norm.includes("furniture") ||
+    norm.includes("door") ||
+    norm.includes("کارپینٹر")
+  ) {
+    return { image: "/services/carpenter.jpg" };
+  }
+  if (
+    norm.includes("paint") ||
+    norm.includes("polish") ||
+    norm.includes("whitewash") ||
+    norm.includes("پینٹر")
+  ) {
+    return { image: "/services/painter.jpg" };
+  }
+  if (
+    norm.includes("mason") ||
+    norm.includes("mistri") ||
+    norm.includes("mistry") ||
+    norm.includes("brick") ||
+    norm.includes("cement") ||
+    norm.includes("مستری")
+  ) {
+    return { image: "/services/mason.jpg" };
+  }
+  if (
+    norm.includes("solar") ||
+    norm.includes("inverter") ||
+    norm.includes("panel") ||
+    norm.includes("سولر")
+  ) {
+    return { image: "/services/solar setup.jpg" };
+  }
+  if (
+    norm.includes("garden") ||
+    norm.includes("lawn") ||
+    norm.includes("plant") ||
+    norm.includes("مالی")
+  ) {
+    return { image: "/services/gardner.jpg" };
+  }
+  if (
+    norm.includes("pest") ||
+    norm.includes("termite") ||
+    norm.includes("fumigat") ||
+    norm.includes("spray") ||
+    norm.includes("کیڑے")
+  ) {
+    return { image: "/services/pest.jpg" };
+  }
+  if (
+    norm.includes("clean") ||
+    norm.includes("wash") ||
+    norm.includes("maid") ||
+    norm.includes("janitor") ||
+    norm.includes("صفائی")
+  ) {
+    return { image: "/services/cleaning.jpg" };
+  }
+  if (
+    norm.includes("cctv") ||
+    norm.includes("camera") ||
+    norm.includes("secur") ||
+    norm.includes("surveillance") ||
+    norm.includes("سیکیورٹی")
+  ) {
+    return { image: "/services/CCTV.jpg" };
+  }
+  if (
+    norm.includes("geyser") ||
+    norm.includes("heater") ||
+    norm.includes("boiler") ||
+    norm.includes("گیزر")
+  ) {
+    return { image: "/services/geyser.jpg" };
+  }
+  if (
+    norm.includes("tank") ||
+    norm.includes("reservoir") ||
+    norm.includes("ٹینک")
+  ) {
+    return { image: "/services/water tank.jpg" };
+  }
+
+  // 2. Icon Picker for other known trade categories
+  if (
+    norm.includes("mover") ||
+    norm.includes("shift") ||
+    norm.includes("transport") ||
+    norm.includes("pack") ||
+    norm.includes("truck") ||
+    norm.includes("گاڑی")
+  ) {
+    return {
+      icon: Truck,
+      gradient: "from-amber-500/15 via-orange-500/5 to-slate-50",
+    };
+  }
+  if (
+    norm.includes("tech") ||
+    norm.includes("it") ||
+    norm.includes("computer") ||
+    norm.includes("network") ||
+    norm.includes("software")
+  ) {
+    return {
+      icon: Cpu,
+      gradient: "from-blue-500/15 via-indigo-500/5 to-slate-50",
+    };
+  }
+  if (
+    norm.includes("car") ||
+    norm.includes("auto") ||
+    norm.includes("bike") ||
+    norm.includes("motor") ||
+    norm.includes("mechanic")
+  ) {
+    return {
+      icon: Car,
+      gradient: "from-rose-500/15 via-red-500/5 to-slate-50",
+    };
+  }
+  if (
+    norm.includes("appliance") ||
+    norm.includes("tv") ||
+    norm.includes("oven") ||
+    norm.includes("microwave")
+  ) {
+    return {
+      icon: Tv,
+      gradient: "from-purple-500/15 via-violet-500/5 to-slate-50",
+    };
+  }
+
+  // 3. Neutral Branded Placeholder for unclassified / admin custom services
+  return {
+    icon: Briefcase,
+    gradient: "from-[#0F8B8D]/15 via-slate-100 to-[#123B5D]/5",
+  };
+}
+
+function ServiceCardMedia({
+  service,
+  displayTitle,
+  priority,
+}: {
+  service: ServiceItem;
+  displayTitle: string;
+  priority: boolean;
+}) {
+  const [hasError, setHasError] = useState(false);
+
+  if (service.image && !hasError) {
+    return (
+      <div className="relative w-full h-28 sm:h-36 rounded-xl sm:rounded-2xl overflow-hidden bg-[#F9FAFC] shrink-0">
+        <Image
+          src={service.image}
+          alt={displayTitle}
+          fill
+          priority={priority}
+          onError={() => setHasError(true)}
+          className="object-cover group-hover:scale-105 transition-transform duration-300"
+          sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+        />
+      </div>
+    );
+  }
+
+  const IconComponent = service.icon || Briefcase;
+
+  return (
+    <div
+      className={`relative w-full h-28 sm:h-36 rounded-xl sm:rounded-2xl overflow-hidden shrink-0 flex items-center justify-center p-3 select-none bg-gradient-to-br ${
+        service.gradient || "from-[#0F8B8D]/15 via-slate-100 to-[#123B5D]/5"
+      } border border-slate-200/70 transition-all duration-300 group-hover:border-[#0F8B8D]/40 group-hover:shadow-inner`}
+    >
+      {/* Decorative ambient glows */}
+      <div className="absolute -top-6 -right-6 size-20 rounded-full bg-[#0F8B8D]/10 blur-xl pointer-events-none" />
+      <div className="absolute -bottom-6 -left-6 size-20 rounded-full bg-[#123B5D]/10 blur-xl pointer-events-none" />
+
+      {/* Centered Floating Icon Badge */}
+      <div className="relative z-10 size-12 sm:size-14 rounded-2xl bg-white shadow-xs border border-slate-200/80 flex items-center justify-center text-[#0F8B8D] group-hover:text-[#123B5D] group-hover:scale-110 group-hover:shadow-sm transition-all duration-300">
+        <IconComponent className="size-6 sm:size-7 stroke-[1.75]" />
+      </div>
+    </div>
+  );
 }
 
 export const ALL_SERVICES: ServiceItem[] = [
@@ -194,16 +438,27 @@ export function ServicesGrid() {
       isServiceActive(service, activeCategories)
     );
 
+    const seenTitles = new Set(filtered.map((s) => s.title.toLowerCase()));
+
     // Also include custom active categories created by Admin that aren't in seeded list
     const customServices: ServiceItem[] = activeCategories
-      .filter((b) => !b.id.startsWith("seed-category-"))
-      .map((b) => ({
-        id: b.id,
-        title: b.name,
-        titleUr: b.nameUrdu || b.name,
-        image: "/services/mason.jpg",
-        href: `/customer/post-job?category=${encodeURIComponent(b.id)}`,
-      }));
+      .filter(
+        (b) =>
+          !b.id.startsWith("seed-category-") &&
+          !seenTitles.has(b.name.toLowerCase())
+      )
+      .map((b) => {
+        const asset = pickCategoryAsset(b.name);
+        return {
+          id: b.id,
+          title: b.name,
+          titleUr: b.nameUrdu || b.name,
+          image: asset.image,
+          icon: asset.icon,
+          gradient: asset.gradient,
+          href: `/customer/post-job?category=${encodeURIComponent(b.id)}`,
+        };
+      });
 
     return [...filtered, ...customServices];
   }, [activeCategories]);
@@ -258,8 +513,8 @@ export function ServicesGrid() {
         </button>
       </div>
 
-      {/* 3 in 1 line on Mobile, 4 in 1 line on Desktop */}
-      <div className="grid grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4 w-full content-start">
+      {/* 2 in 1 line on Mobile, 4 in 1 line on Desktop */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4 w-full content-start">
         {displayedServices.map((service, index) => {
           const displayTitle = locale === "ur" ? service.titleUr : service.title;
           const serviceHref =
@@ -271,17 +526,12 @@ export function ServicesGrid() {
               href={serviceHref}
               className="group flex flex-col justify-between p-2 sm:p-3 rounded-2xl sm:rounded-3xl border border-slate-200 bg-[#F9FAFC] hover:border-[#0F8B8D] shadow-2xs hover:shadow-md transition-all duration-300 cursor-pointer active:scale-95 h-full"
             >
-              {/* Inner Image Container - Fixed identical height & full width */}
-              <div className="relative w-full h-24 sm:h-36 rounded-xl sm:rounded-2xl overflow-hidden bg-[#F9FAFC] shrink-0">
-                <Image
-                  src={service.image}
-                  alt={displayTitle}
-                  fill
-                  priority={index < 4}
-                  className="object-cover group-hover:scale-105 transition-transform duration-300"
-                  sizes="(max-width: 640px) 33vw, 25vw"
-                />
-              </div>
+              {/* Inner Media Container - Image or Dynamic Neutral Placeholder */}
+              <ServiceCardMedia
+                service={service}
+                displayTitle={displayTitle}
+                priority={index < 4}
+              />
 
               {/* Service Title & Arrow */}
               <div className="flex items-center justify-between px-1 pt-2 pb-0.5 gap-1.5 min-h-[38px] sm:min-h-[44px]">

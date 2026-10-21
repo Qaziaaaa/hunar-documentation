@@ -257,10 +257,26 @@ export function CustomerSidebar({ isOpen, onClose }: CustomerSidebarProps) {
           {/* Customer Profile Section at Bottom */}
           <div className="flex items-center gap-2 pt-1">
             <Link
-              href="/customer/profile"
+              href={isCustomer ? "/customer/profile" : "/customer/sign-in"}
               onClick={onClose}
-              aria-label={locale === "ur" ? "کسٹمر پروفائل" : "Customer Profile"}
-              title={locale === "ur" ? "پروفائل دیکھیں" : "View Profile"}
+              aria-label={
+                isCustomer
+                  ? locale === "ur"
+                    ? "کسٹمر پروفائل"
+                    : "Customer Profile"
+                  : locale === "ur"
+                  ? "لاگ ان کریں"
+                  : "Sign In"
+              }
+              title={
+                isCustomer
+                  ? locale === "ur"
+                    ? "پروفائل دیکھیں"
+                    : "View Profile"
+                  : locale === "ur"
+                  ? "اکاؤنٹ میں لاگ ان کریں"
+                  : "Sign In to Account"
+              }
               className={`group flex-1 flex items-center justify-between gap-2.5 p-2 rounded-xl border transition-all cursor-pointer ${
                 pathname.includes("/customer/profile")
                   ? "border-[#0F8B8D]/40 bg-[#0F8B8D]/10"
@@ -285,21 +301,30 @@ export function CustomerSidebar({ isOpen, onClose }: CustomerSidebarProps) {
                     {customerFirstName}
                   </span>
                   <span className="text-[10px] font-medium text-slate-500 truncate">
-                    {locale === "ur" ? "کسٹمر پروفائل" : "Customer Profile"}
+                    {isCustomer
+                      ? locale === "ur"
+                        ? "کسٹمر پروفائل"
+                        : "Customer Profile"
+                      : locale === "ur"
+                      ? "لاگ ان کریں"
+                      : "Sign In"}
                   </span>
                 </div>
               </div>
               <ChevronRight className="size-4 text-slate-400 group-hover:text-[#0F8B8D] shrink-0 transition-colors" />
             </Link>
 
-            <button
-              onClick={handleLogout}
-              className="size-9 rounded-xl border border-slate-200 bg-slate-50/80 hover:bg-red-50 hover:border-red-200 text-slate-400 hover:text-red-600 transition-colors flex items-center justify-center shrink-0 cursor-pointer"
-              title={locale === "ur" ? "لاگ آؤٹ" : "Sign Out"}
-              aria-label={locale === "ur" ? "لاگ آؤٹ" : "Sign Out"}
-            >
-              <LogOut className="size-4" />
-            </button>
+            {isCustomer && (
+              <button
+                type="button"
+                onClick={handleLogout}
+                className="size-9 rounded-xl border border-slate-200 bg-slate-50/80 hover:bg-red-50 hover:border-red-200 text-slate-400 hover:text-red-600 transition-colors flex items-center justify-center shrink-0 cursor-pointer"
+                title={locale === "ur" ? "لاگ آؤٹ" : "Sign Out"}
+                aria-label={locale === "ur" ? "لاگ آؤٹ" : "Sign Out"}
+              >
+                <LogOut className="size-4" />
+              </button>
+            )}
           </div>
         </div>
       </aside>
