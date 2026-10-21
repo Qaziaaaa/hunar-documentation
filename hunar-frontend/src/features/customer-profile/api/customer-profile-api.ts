@@ -146,3 +146,13 @@ export async function uploadCustomerAvatar(
     throw err;
   }
 }
+
+/**
+ * Change customer password via backend auth endpoint
+ */
+export async function changeCustomerPassword(dto: {
+  currentPassword: string;
+  newPassword: string;
+}): Promise<{ success: boolean; message?: string }> {
+  return http.put<{ success: boolean; message?: string }>("/auth/change-password", dto);
+}

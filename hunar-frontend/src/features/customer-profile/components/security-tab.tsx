@@ -15,6 +15,7 @@ import {
   Smartphone,
   Trash2,
 } from "lucide-react";
+import { changeCustomerPassword } from "../api/customer-profile-api";
 import type { ActiveDevice } from "../types";
 
 interface SecurityTabProps {
@@ -29,13 +30,17 @@ export function SecurityTab({ devices, onSaveFeedback }: SecurityTabProps) {
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [activeDeviceList, setActiveDeviceList] = useState(devices);
 
-  const handlePasswordSubmit = (e: React.FormEvent) => {
+  const handlePasswordSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setErrorMessage(null);
+
     if (newPassword.length < 8) {
-      alert(
+      setErrorMessage(
         isUrdu
           ? "نیا پاس ورڈ کم از کم 8 حروف پر مشتمل ہونا چاہیے۔"
           : "New password must be at least 8 characters long."
@@ -43,20 +48,34 @@ export function SecurityTab({ devices, onSaveFeedback }: SecurityTabProps) {
       return;
     }
     if (newPassword !== confirmPassword) {
-      alert(
+      setErrorMessage(
         isUrdu ? "پاس ورڈز ایک دوسرے سے مماثل نہیں ہیں۔" : "Passwords do not match."
       );
       return;
     }
 
-    setCurrentPassword("");
-    setNewPassword("");
-    setConfirmPassword("");
-    onSaveFeedback(
-      isUrdu
-        ? "اکاؤنٹ پاس ورڈ کامیابی سے تبدیل ہو گیا!"
-        : "Account password updated successfully!"
-    );
+    try {
+      setIsUpdatingPassword(true);
+      await changeCustomerPassword({ currentPassword, newPassword });
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+      onSaveFeedback(
+        isUrdu
+          ? "اکاؤنٹ پاس ورڈ کامیابی سے تبدیل ہو گیا!"
+          : "Account password updated successfully!"
+      );
+    } catch (err: any) {
+      const msg =
+        err?.response?.data?.message ||
+        err?.message ||
+        (isUrdu
+          ? "پاس ورڈ تبدیل کرنے میں خرابی پیش آگئی۔ براہ کرم موجودہ پاس ورڈ چیک کریں۔"
+          : "Failed to update password. Please check your current password and try again.");
+      setErrorMessage(Array.isArray(msg) ? msg.join(", ") : String(msg));
+    } finally {
+      setIsUpdatingPassword(false);
+    }
   };
 
   const handleSignOutOtherDevices = () => {
@@ -140,11 +159,23 @@ export function SecurityTab({ devices, onSaveFeedback }: SecurityTabProps) {
                 </div>
               </div>
 
+              {errorMessage && (
+                <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-semibold flex items-center gap-2">
+                  <AlertTriangle className="size-4 shrink-0 text-red-500" />
+                  <span>{errorMessage}</span>
+                </div>
+              )}
+
               <button
                 type="submit"
-                className="w-full h-11 rounded-xl bg-[#123B5D] hover:bg-[#0c2a44] text-white font-bold text-xs shadow-2xs transition-all active:scale-[0.99] cursor-pointer"
+                disabled={isUpdatingPassword}
+                className="w-full h-11 rounded-xl bg-[#123B5D] hover:bg-[#0c2a44] disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold text-xs shadow-2xs transition-all active:scale-[0.99] cursor-pointer flex items-center justify-center gap-2"
               >
-                {isUrdu ? "پاس ورڈ اپ ڈیٹ کریں" : "Update Password"}
+                {isUpdatingPassword ? (
+                  <span>{isUrdu ? "تبدیل کیا جا رہا ہے..." : "Updating password..."}</span>
+                ) : (
+                  <span>{isUrdu ? "پاس ورڈ اپ ڈیٹ کریں" : "Update Password"}</span>
+                )}
               </button>
             </form>
           </div>
