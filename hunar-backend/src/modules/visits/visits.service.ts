@@ -124,52 +124,69 @@ export class VisitsService {
       user.role === Role.WORKER ? { workerId: user.sub } : { job: { customerId: user.sub } };
     const whereWithStatus = query.status ? { ...where, status: query.status as never } : where;
 
-    // Promise.all, not $transaction: batch BEGIN/COMMIT costs ~3 extra RTTs.
-    const [visits, total] = await Promise.all([
-      this.prisma.visit.findMany({
-        where: whereWithStatus,
-        skip,
-        take: limit,
-        orderBy: { scheduledDate: 'desc' },
-        include: {
-          job: {
-            select: {
-              id: true,
-              title: true,
-              area: true,
-              city: true,
-              address: true,
-              latitude: true,
-              longitude: true,
-              status: true,
-              lockedVisitCharge: true,
-              category: { select: { name: true } },
-            },
-          },
-          worker: {
-            select: {
-              id: true,
-              name: true,
-              phone: true,
-              avatarUrl: true,
-            },
-          },
-          offer: {
-            select: {
-              visitCharge: true,
-              status: true,
-            },
+    // Optimize page 1: if results < limit, total is already known without a redundant DB round-trip
+    let visits: any[];
+    let total: number;
+
+    const findVisitsPromise = this.prisma.visit.findMany({
+      where: whereWithStatus,
+      skip,
+      take: limit,
+      orderBy: { scheduledDate: 'desc' },
+      include: {
+        job: {
+          select: {
+            id: true,
+            title: true,
+            area: true,
+            city: true,
+            address: true,
+            latitude: true,
+            longitude: true,
+            status: true,
+            lockedVisitCharge: true,
+            category: { select: { name: true } },
           },
         },
-      }),
-      this.prisma.visit.count({ where: whereWithStatus }),
-    ]);
+        worker: {
+          select: {
+            id: true,
+            name: true,
+            phone: true,
+            avatarUrl: true,
+          },
+        },
+        offer: {
+          select: {
+            visitCharge: true,
+            status: true,
+          },
+        },
+      },
+    });
 
-    // One latest-location row per job instead of a findFirst per visit (N+1:
-    // up to `limit` queries per page). DISTINCT ON uses the @@index([jobId]).
+    if (page === 1) {
+      visits = await findVisitsPromise;
+      if (visits.length < limit) {
+        total = visits.length;
+      } else {
+        total = await this.prisma.visit.count({ where: whereWithStatus });
+      }
+    } else {
+      [visits, total] = await Promise.all([
+        findVisitsPromise,
+        this.prisma.visit.count({ where: whereWithStatus }),
+      ]);
+    }
+
+    // Only query location tracking for active / traveling visits
     const latestByJob = new Map<string, { latitude: number; longitude: number }>();
-    if (visits.length > 0) {
-      const jobIds = [...new Set(visits.map((v) => v.jobId))];
+    const activeVisits = visits.filter((v) =>
+      ['SCHEDULED', 'IN_PROGRESS', 'EN_ROUTE', 'STARTED', 'ARRIVED'].includes(v.status),
+    );
+
+    if (activeVisits.length > 0) {
+      const jobIds = [...new Set(activeVisits.map((v) => v.jobId))];
       const latestRows = await this.prisma.$queryRaw<
         Array<{ jobId: string; latitude: number; longitude: number }>
       >(Prisma.sql`

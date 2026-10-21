@@ -17,6 +17,7 @@ export interface ChatMessage {
   durationSeconds?: number;
   messageType?: "text" | "voice" | "image";
   status: MessageStatus;
+  isRead?: boolean;
   createdAt: string;
 }
 
@@ -32,6 +33,7 @@ export interface Conversation {
   id: string;
   jobId: string;
   jobTitle?: string;
+  jobStatus?: string;
   customerId: string;
   customerName: string;
   customerAvatar?: string;
@@ -45,4 +47,5 @@ export interface SendMessageInput {
   conversationId: string;
   text?: string;
   imageUrl?: string;
+  imageKey?: string;
 }

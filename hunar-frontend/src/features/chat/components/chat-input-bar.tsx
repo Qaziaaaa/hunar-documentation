@@ -17,6 +17,8 @@ interface ChatInputBarProps {
   onSendMessage: (text: string) => void;
   onSendVoiceNote: (audioUrl: string, durationSeconds: number) => void;
   onSendImage?: (file: File) => void;
+  onTyping?: () => void;
+  onStopTyping?: () => void;
   quickSuggestions?: string[];
   disabled?: boolean;
 }
@@ -25,6 +27,8 @@ export function ChatInputBar({
   onSendMessage,
   onSendVoiceNote,
   onSendImage,
+  onTyping,
+  onStopTyping,
   quickSuggestions,
   disabled = false,
 }: ChatInputBarProps) {
@@ -39,6 +43,7 @@ export function ChatInputBar({
   const streamRef = useRef<MediaStream | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const typingTimerRef = useRef<NodeJS.Timeout | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const defaultSuggestions = isUrdu
@@ -60,6 +65,7 @@ export function ChatInputBar({
   useEffect(() => {
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
+      if (typingTimerRef.current) clearTimeout(typingTimerRef.current);
       if (streamRef.current) {
         streamRef.current.getTracks().forEach((track) => track.stop());
         streamRef.current = null;
@@ -161,9 +167,26 @@ export function ChatInputBar({
     setRecordingSeconds(0);
   };
 
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    setText(val);
+    if (onTyping && val.trim().length > 0) {
+      onTyping();
+      if (typingTimerRef.current) clearTimeout(typingTimerRef.current);
+      typingTimerRef.current = setTimeout(() => {
+        onStopTyping?.();
+      }, 2500);
+    } else if (val.trim().length === 0) {
+      if (typingTimerRef.current) clearTimeout(typingTimerRef.current);
+      onStopTyping?.();
+    }
+  };
+
   const handleSendText = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     if (!text.trim() || disabled) return;
+    if (typingTimerRef.current) clearTimeout(typingTimerRef.current);
+    onStopTyping?.();
     onSendMessage(text.trim());
     setText("");
   };
@@ -275,7 +298,7 @@ export function ChatInputBar({
             <input
               type="text"
               value={text}
-              onChange={(e) => setText(e.target.value)}
+              onChange={handleInputChange}
               disabled={disabled}
               placeholder={
                 isUrdu

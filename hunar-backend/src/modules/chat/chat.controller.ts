@@ -53,4 +53,13 @@ export class ChatController {
   ) {
     return this.chatService.sendMessage(conversationId, user.sub, dto);
   }
+
+  @Post(':targetId/read')
+  @Roles(Role.WORKER, Role.CUSTOMER)
+  markAsRead(
+    @CurrentUser() user: JwtPayload,
+    @Param('targetId') targetId: string,
+  ) {
+    return this.chatService.markAsRead(targetId?.trim(), user.sub);
+  }
 }
