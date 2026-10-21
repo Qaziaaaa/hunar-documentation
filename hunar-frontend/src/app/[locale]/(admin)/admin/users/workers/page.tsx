@@ -1,10 +1,14 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { adminApi } from "@/features/admin/api/admin-api";
+import { adminApi, SuspendUserPayload } from "@/features/admin/api/admin-api";
 import { AdminAvatar } from "@/features/admin/components/admin-avatar";
 import type { WorkerUser } from "@/types/admin";
 import { TableRowsSkeleton } from "@/features/admin/components/table-skeleton";
+import {
+  SuspendUserModal,
+  SuspendModalUser,
+} from "@/features/admin/components/suspend-user-modal";
 
 import {
   AlertCircle,
@@ -32,7 +36,7 @@ export default function WorkersPage() {
   const [statusFilter, setStatusFilter] = useState<"ALL" | "VERIFIED" | "PENDING" | "SUSPENDED">("ALL");
   const [selectedWorker, setSelectedWorker] = useState<WorkerUser | null>(null);
   const [actionWorker, setActionWorker] = useState<WorkerUser | null>(null);
-  const [suspendReason, setSuspendReason] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     adminApi
@@ -77,42 +81,77 @@ export default function WorkersPage() {
     return [filtered[idx], ...filtered.filter((w) => w.id !== topWorker.id)];
   }, [filtered, topWorker]);
 
-  const handleToggleStatus = async () => {
-    if (!actionWorker) return;
-    setActionError(null);
+  const modalWorker: SuspendModalUser | null = useMemo(() => {
+    if (!actionWorker) return null;
+    return {
+      id: actionWorker.id,
+      name: actionWorker.name,
+      phone: actionWorker.phone,
+      role: "WORKER",
+      status: actionWorker.status,
+      suspendedUntil: actionWorker.suspendedUntil,
+      suspensionReason: actionWorker.suspensionReason,
+      suspensionType: actionWorker.suspensionType,
+    };
+  }, [actionWorker]);
 
-    const suspending = actionWorker.status === "ACTIVE";
-    const reason = suspendReason.trim();
-    if (suspending && !reason) {
-      setActionError("A suspension reason is required.");
-      return;
-    }
+  const handleConfirmSuspend = async (payload: SuspendUserPayload) => {
+    if (!actionWorker) return;
+    setIsSubmitting(true);
+    setActionError(null);
     try {
-      if (suspending) {
-        await adminApi.suspendWorker(actionWorker.id, reason);
-      } else {
-        await adminApi.reactivateWorker(actionWorker.id);
-      }
+      await adminApi.suspendWorker(actionWorker.id, payload);
       setWorkers((prev) =>
         prev.map((w) => {
           if (w.id === actionWorker.id) {
-            const newStatus = w.status === "ACTIVE" ? "SUSPENDED" : "ACTIVE";
             return {
               ...w,
-              status: newStatus,
+              status: "SUSPENDED",
+              suspensionReason: payload.description || payload.reason,
+              suspensionType: payload.type,
+              suspendedUntil: payload.duration ? payload.duration : null,
             };
           }
           return w;
         })
       );
       setActionWorker(null);
-      setSuspendReason("");
     } catch (err) {
       setActionError(
-        err instanceof Error ? err.message : "Failed to update worker status",
+        err instanceof Error ? err.message : "Failed to suspend worker account",
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleConfirmReactivate = async () => {
+    if (!actionWorker) return;
+    setIsSubmitting(true);
+    setActionError(null);
+    try {
+      await adminApi.reactivateWorker(actionWorker.id);
+      setWorkers((prev) =>
+        prev.map((w) => {
+          if (w.id === actionWorker.id) {
+            return {
+              ...w,
+              status: "ACTIVE",
+              suspendedUntil: null,
+              suspensionReason: null,
+              suspensionType: null,
+            };
+          }
+          return w;
+        })
       );
       setActionWorker(null);
-      setSuspendReason("");
+    } catch (err) {
+      setActionError(
+        err instanceof Error ? err.message : "Failed to reactivate worker account",
+      );
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -312,15 +351,35 @@ export default function WorkersPage() {
                       Rs. {worker.walletBalance.toLocaleString()}
                     </td>
                     <td className="py-4 px-4">
-                      <span
-                        className={`inline-flex rounded-full border px-2.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wide ${
-                          worker.status === "ACTIVE"
-                            ? "border-teal/20 bg-teal/10 text-teal"
-                            : "border-red-200 bg-red-100 text-red-700"
-                        }`}
-                      >
-                        {worker.status}
-                      </span>
+                      {worker.status === "ACTIVE" ? (
+                        <span className="inline-flex rounded-full border border-teal/20 bg-teal/10 px-2.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wide text-teal">
+                          ACTIVE
+                        </span>
+                      ) : (
+                        <div className="flex flex-col items-start gap-0.5">
+                          <span className="inline-flex items-center gap-1 rounded-full border border-red-200 bg-red-100 px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wide text-red-700">
+                            {worker.suspensionType === "TEMPORARY" ? (
+                              <>
+                                <Clock className="size-3" />
+                                Temporary
+                              </>
+                            ) : (
+                              <>
+                                <Ban className="size-3" />
+                                Suspended
+                              </>
+                            )}
+                          </span>
+                          {worker.suspensionReason && (
+                            <span
+                              className="max-w-[140px] truncate text-[10px] text-slate-500"
+                              title={worker.suspensionReason}
+                            >
+                              {worker.suspensionReason}
+                            </span>
+                          )}
+                        </div>
+                      )}
                     </td>
                     <td className="py-4 px-4 text-right">
                       <div className="flex items-center justify-end gap-2">
@@ -455,74 +514,15 @@ export default function WorkersPage() {
           </div>
         ) : null}
 
-        {/* Suspend / Reactivate Confirmation Modal */}
-        {actionWorker ? (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-navy/60 p-4 backdrop-blur-sm">
-            <div className="w-full max-w-md rounded-3xl border border-slate-200 bg-white p-6 shadow-2xl">
-              <div className="flex items-center gap-3 text-error">
-                <AlertCircle className="size-6 shrink-0" />
-                <h3 className="text-lg font-extrabold text-navy">
-                  Confirm Worker Account Action
-                </h3>
-              </div>
-
-              <p className="mt-3 text-xs leading-relaxed text-slate-600">
-                Are you sure you want to{" "}
-                <strong className="text-navy">
-                  {actionWorker.status === "ACTIVE" ? "SUSPEND" : "REACTIVATE"}
-                </strong>{" "}
-                the worker profile for <strong className="text-navy">{actionWorker.name}</strong>?
-              </p>
-
-              {actionWorker.status === "ACTIVE" ? (
-                <div className="mt-4 space-y-1.5">
-                  <label className="block text-xs font-semibold text-navy">
-                    Reason for Suspension (Required)
-                  </label>
-                  <textarea
-                    value={suspendReason}
-                    onChange={(e) => setSuspendReason(e.target.value)}
-                    placeholder="Enter reason for suspending this worker account..."
-                    className="h-20 w-full rounded-xl border border-slate-200 p-3 text-xs outline-none focus:border-teal"
-                  />
-                </div>
-              ) : null}
-
-              {actionError && (
-                <p className="mt-3 rounded-xl border border-red-200 bg-red-50 p-3 text-xs font-bold text-red-700">
-                  {actionError}
-                </p>
-              )}
-
-              <div className="mt-6 flex items-center justify-end gap-3">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setActionWorker(null);
-                    setSuspendReason("");
-                  }}
-                  className="rounded-xl border border-slate-200 px-4 py-2.5 text-xs font-bold text-slate-600 hover:bg-slate-100"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  onClick={handleToggleStatus}
-                  disabled={
-                    actionWorker.status === "ACTIVE" && !suspendReason.trim()
-                  }
-                  className={`rounded-xl px-5 py-2.5 text-xs font-bold text-white shadow-md disabled:cursor-not-allowed disabled:opacity-60 ${
-                    actionWorker.status === "ACTIVE"
-                      ? "bg-red-600 hover:bg-red-700"
-                      : "bg-teal hover:bg-teal-600"
-                  }`}
-                >
-                  Confirm Action
-                </button>
-              </div>
-            </div>
-          </div>
-        ) : null}
+        {/* Section 5: Suspend / Reactivate Modal */}
+        <SuspendUserModal
+          isOpen={!!actionWorker}
+          user={modalWorker}
+          onClose={() => setActionWorker(null)}
+          onConfirmSuspend={handleConfirmSuspend}
+          onConfirmReactivate={handleConfirmReactivate}
+          isSubmitting={isSubmitting}
+        />
       </div>
-);
+  );
 }

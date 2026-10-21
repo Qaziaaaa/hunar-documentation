@@ -59,7 +59,7 @@ export class AdminController {
     @Body() dto: SuspendUserDto,
     @CurrentUser() actor: JwtPayload,
   ) {
-    return this.adminService.suspendCustomer(id, actor, dto.reason);
+    return this.adminService.suspendCustomer(id, actor, dto);
   }
 
   @Put('customers/:id/reactivate')
@@ -85,7 +85,7 @@ export class AdminController {
     @Body() dto: SuspendUserDto,
     @CurrentUser() actor: JwtPayload,
   ) {
-    return this.adminService.suspendWorker(id, actor, dto.reason);
+    return this.adminService.suspendWorker(id, actor, dto);
   }
 
   @Put('workers/:id/reactivate')

@@ -68,6 +68,9 @@ interface BackendUserRow {
   workerProfile?: any;
   _count?: any;
   rating?: number;
+  suspendedUntil?: string | null;
+  suspensionReason?: string | null;
+  suspensionType?: "PERMANENT" | "TEMPORARY" | null;
 }
 
 interface BackendVerificationRow {
@@ -260,6 +263,9 @@ function toWorkerUser(w: BackendUserRow): WorkerUser {
     status: w.isActive ? "ACTIVE" : "SUSPENDED",
     experienceYears: profile?.experienceYears ?? w.experienceYears ?? 0,
     serviceCity: w.serviceAreas?.[0] ?? "",
+    suspendedUntil: w.suspendedUntil ?? null,
+    suspensionReason: w.suspensionReason ?? null,
+    suspensionType: w.suspensionType ?? null,
   };
 }
 
@@ -276,6 +282,9 @@ function toCustomerUser(c: BackendUserRow): CustomerUser {
     totalSpent: Number((c as any).totalSpent ?? 0),
     ratingGiven: Number((c as any).ratingGiven ?? 0),
     status: c.isActive ? "ACTIVE" : "SUSPENDED",
+    suspendedUntil: c.suspendedUntil ?? null,
+    suspensionReason: c.suspensionReason ?? null,
+    suspensionType: c.suspensionType ?? null,
   };
 }
 
@@ -412,6 +421,22 @@ function toAuditLogEntry(log: any): AuditLogEntry {
     details: formattedDetails,
     timestamp: log.createdAt,
   };
+}
+
+export interface SuspendUserPayload {
+  type: "PERMANENT" | "TEMPORARY";
+  reason: string;
+  violationType?: string;
+  description: string;
+  duration?:
+    | "2_HOURS"
+    | "6_HOURS"
+    | "12_HOURS"
+    | "1_DAY"
+    | "3_DAYS"
+    | "1_WEEK"
+    | "2_WEEKS"
+    | "1_MONTH";
 }
 
 export const adminApi = {
@@ -582,18 +607,24 @@ export const adminApi = {
       throw e;
     }
   },
-
-  async suspendWorker(workerId: string, reason: string) {
-    // Backend requires a non-empty reason (SuspendUserDto) — no invented default.
-    return http.put(`/admin/workers/${workerId}/suspend`, { reason });
+  async suspendWorker(workerId: string, payload: string | SuspendUserPayload) {
+    const body =
+      typeof payload === "string"
+        ? { reason: payload, description: payload, type: "PERMANENT" }
+        : payload;
+    return http.put(`/admin/workers/${workerId}/suspend`, body);
   },
 
   async reactivateWorker(workerId: string) {
     return http.put(`/admin/workers/${workerId}/reactivate`);
   },
 
-  async suspendCustomer(customerId: string, reason: string) {
-    return http.put(`/admin/customers/${customerId}/suspend`, { reason });
+  async suspendCustomer(customerId: string, payload: string | SuspendUserPayload) {
+    const body =
+      typeof payload === "string"
+        ? { reason: payload, description: payload, type: "PERMANENT" }
+        : payload;
+    return http.put(`/admin/customers/${customerId}/suspend`, body);
   },
 
   async reactivateCustomer(customerId: string) {

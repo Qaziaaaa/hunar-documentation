@@ -14,6 +14,7 @@ import {
   Max,
   MaxLength,
   Min,
+  ValidateIf,
 } from 'class-validator';
 import {
   CommissionStatus,
@@ -123,12 +124,82 @@ export class AdminJobListQueryDto {
   limit?: number;
 }
 
+export enum SuspensionType {
+  PERMANENT = 'PERMANENT',
+  TEMPORARY = 'TEMPORARY',
+}
+
+export enum SuspensionDuration {
+  TWO_HOURS = '2_HOURS',
+  SIX_HOURS = '6_HOURS',
+  TWELVE_HOURS = '12_HOURS',
+  ONE_DAY = '1_DAY',
+  THREE_DAYS = '3_DAYS',
+  ONE_WEEK = '1_WEEK',
+  TWO_WEEKS = '2_WEEKS',
+  ONE_MONTH = '1_MONTH',
+}
+
+export function computeSuspendedUntil(duration: string, now: Date = new Date()): Date {
+  const until = new Date(now.getTime());
+  switch (duration) {
+    case '2_HOURS':
+      until.setHours(until.getHours() + 2);
+      break;
+    case '6_HOURS':
+      until.setHours(until.getHours() + 6);
+      break;
+    case '12_HOURS':
+      until.setHours(until.getHours() + 12);
+      break;
+    case '1_DAY':
+      until.setDate(until.getDate() + 1);
+      break;
+    case '3_DAYS':
+      until.setDate(until.getDate() + 3);
+      break;
+    case '1_WEEK':
+      until.setDate(until.getDate() + 7);
+      break;
+    case '2_WEEKS':
+      until.setDate(until.getDate() + 14);
+      break;
+    case '1_MONTH':
+      until.setMonth(until.getMonth() + 1);
+      break;
+    default:
+      until.setDate(until.getDate() + 1);
+      break;
+  }
+  return until;
+}
+
 // Suspend is a sensitive action — the admin must always state why (stored in the audit trail).
+// Supports Permanent and Temporary suspensions per Section 5 specification.
 export class SuspendUserDto {
+  @IsOptional()
+  @IsEnum(SuspensionType)
+  type?: SuspensionType;
+
   @IsString()
   @IsNotEmpty()
-  @MaxLength(1000)
+  @MaxLength(500)
   reason!: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(500)
+  violationType?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(2000)
+  description?: string;
+
+  @ValidateIf((o) => o.type === SuspensionType.TEMPORARY)
+  @IsOptional()
+  @IsEnum(SuspensionDuration)
+  duration?: SuspensionDuration;
 }
 
 // Force-cancel is a sensitive action — the admin must always state why (stored in the audit trail).

@@ -305,7 +305,27 @@ export class AuthService {
     }
 
     if (!user.isActive) {
-      throw new UnauthorizedException('Account is deactivated');
+      if (user.suspendedUntil && user.suspendedUntil <= new Date()) {
+        await this.prisma.user.update({
+          where: { id: user.id },
+          data: {
+            isActive: true,
+            suspendedUntil: null,
+            suspensionReason: null,
+            suspensionType: null,
+          },
+        });
+        user.isActive = true;
+      } else {
+        if (user.suspendedUntil) {
+          throw new UnauthorizedException(
+            `Account is temporarily suspended until ${user.suspendedUntil.toLocaleString()}. Reason: ${user.suspensionReason || 'Terms violation'}`,
+          );
+        }
+        throw new UnauthorizedException(
+          `Account is permanently suspended. Reason: ${user.suspensionReason || 'Account suspended by admin'}`,
+        );
+      }
     }
 
     if (user.role !== Role.WORKER) {
@@ -337,7 +357,27 @@ export class AuthService {
     }
 
     if (!user.isActive) {
-      throw new UnauthorizedException('Account is deactivated');
+      if (user.suspendedUntil && user.suspendedUntil <= new Date()) {
+        await this.prisma.user.update({
+          where: { id: user.id },
+          data: {
+            isActive: true,
+            suspendedUntil: null,
+            suspensionReason: null,
+            suspensionType: null,
+          },
+        });
+        user.isActive = true;
+      } else {
+        if (user.suspendedUntil) {
+          throw new UnauthorizedException(
+            `Account is temporarily suspended until ${user.suspendedUntil.toLocaleString()}. Reason: ${user.suspensionReason || 'Terms violation'}`,
+          );
+        }
+        throw new UnauthorizedException(
+          `Account is permanently suspended. Reason: ${user.suspensionReason || 'Account suspended by admin'}`,
+        );
+      }
     }
 
     if (user.role !== Role.CUSTOMER) {
