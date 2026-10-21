@@ -2442,6 +2442,9 @@ export class AdminService {
 
     const where: Prisma.UserWhereInput = {
       role,
+      // Workers directory lists verified workers only; unverified/pending
+      // accounts live in the verifications queue instead.
+      ...(role === Role.WORKER ? { isVerified: true } : {}),
       ...(query.status ? { isActive: query.status === 'active' } : {}),
       ...(query.search
         ? {
