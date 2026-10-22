@@ -5,6 +5,7 @@ import {
   NotFoundException,
   Optional,
 } from '@nestjs/common';
+import { Cron } from '@nestjs/schedule';
 import type { Response as ExpressResponse } from 'express';
 import {
   CommissionStatus,
@@ -36,6 +37,7 @@ import {
   AdminCommissionListQueryDto,
   AdminWithdrawalListQueryDto,
   AdminFreezeWalletDto,
+  AdminTopUpWalletDto,
   AdminDisputeListQueryDto,
   AdminResolveDisputeDto,
   AdminCategoryListQueryDto,
@@ -50,6 +52,10 @@ import {
   AdminKpiStatsDto,
   AdminVisitListQueryDto,
   AdminReviewListQueryDto,
+  SuspendUserDto,
+  SuspensionType,
+  SuspensionDuration,
+  computeSuspendedUntil,
 } from './admin.validation';
 
 // Job states that mean the customer has paid for the (locked) visit charge.
@@ -64,6 +70,9 @@ const LIST_USER_SELECT = {
   avatarUrl: true,
   isActive: true,
   isVerified: true,
+  suspendedUntil: true,
+  suspensionReason: true,
+  suspensionType: true,
   createdAt: true,
   wallet: { select: { balance: true } },
   commissions: { select: { amount: true, visitCharge: true } },
@@ -196,6 +205,9 @@ export class AdminService {
         avatarUrl: true,
         isActive: true,
         isVerified: true,
+        suspendedUntil: true,
+        suspensionReason: true,
+        suspensionType: true,
         createdAt: true,
         updatedAt: true,
         _count: { select: { customerJobs: true } },
@@ -203,6 +215,18 @@ export class AdminService {
     });
     if (!user) {
       throw new NotFoundException('Customer not found');
+    }
+
+    // Auto-reactivate if temporary suspension duration has passed
+    if (!user.isActive && user.suspendedUntil && user.suspendedUntil <= new Date()) {
+      user.isActive = true;
+      user.suspendedUntil = null;
+      user.suspensionReason = null;
+      user.suspensionType = null;
+      await this.prisma.user.update({
+        where: { id: user.id },
+        data: { isActive: true, suspendedUntil: null, suspensionReason: null, suspensionType: null },
+      });
     }
 
     const [jobs, reviews] = await Promise.all([
@@ -259,6 +283,9 @@ export class AdminService {
         avatarUrl: user.avatarUrl,
         isActive: user.isActive,
         isVerified: user.isVerified,
+        suspendedUntil: user.suspendedUntil,
+        suspensionReason: user.suspensionReason,
+        suspensionType: user.suspensionType,
         createdAt: user.createdAt,
       },
       stats: {
@@ -275,7 +302,7 @@ export class AdminService {
     };
   }
 
-  suspendCustomer(id: string, actor: JwtPayload, reason: string) {
+  suspendCustomer(id: string, actor: JwtPayload, reason: string | SuspendUserDto) {
     return this.setUserStatus(Role.CUSTOMER, id, false, actor, reason);
   }
 
@@ -299,6 +326,9 @@ export class AdminService {
         avatarUrl: true,
         isActive: true,
         isVerified: true,
+        suspendedUntil: true,
+        suspensionReason: true,
+        suspensionType: true,
         createdAt: true,
         updatedAt: true,
         workerProfile: true,
@@ -308,6 +338,18 @@ export class AdminService {
     });
     if (!user) {
       throw new NotFoundException('Worker not found');
+    }
+
+    // Auto-reactivate if temporary suspension duration has passed
+    if (!user.isActive && user.suspendedUntil && user.suspendedUntil <= new Date()) {
+      user.isActive = true;
+      user.suspendedUntil = null;
+      user.suspensionReason = null;
+      user.suspensionType = null;
+      await this.prisma.user.update({
+        where: { id: user.id },
+        data: { isActive: true, suspendedUntil: null, suspensionReason: null, suspensionType: null },
+      });
     }
 
     const skillIds = user.workerProfile?.skills ?? [];
@@ -405,6 +447,9 @@ export class AdminService {
         avatarUrl: user.avatarUrl,
         isActive: user.isActive,
         isVerified: user.isVerified,
+        suspendedUntil: user.suspendedUntil,
+        suspensionReason: user.suspensionReason,
+        suspensionType: user.suspensionType,
         createdAt: user.createdAt,
         skills,
         experienceYears: user.workerProfile?.experienceYears ?? null,
@@ -434,7 +479,7 @@ export class AdminService {
     };
   }
 
-  suspendWorker(id: string, actor: JwtPayload, reason: string) {
+  suspendWorker(id: string, actor: JwtPayload, reason: string | SuspendUserDto) {
     return this.setUserStatus(Role.WORKER, id, false, actor, reason);
   }
 
@@ -992,6 +1037,84 @@ export class AdminService {
     });
 
     return updated;
+  }
+
+  // Admin manually tops up / credits a worker's wallet
+  async topUpWorkerWallet(workerId: string, actor: JwtPayload, dto: AdminTopUpWalletDto) {
+    const worker = await this.prisma.user.findFirst({
+      where: { id: workerId, role: Role.WORKER },
+      select: { id: true, name: true, phone: true },
+    });
+    if (!worker) {
+      throw new NotFoundException('Worker not found');
+    }
+
+    const amount = Number(dto.amount);
+    if (!amount || amount <= 0) {
+      throw new BadRequestException('Amount must be greater than 0');
+    }
+
+    return this.prisma.$transaction(async (tx) => {
+      const currentWallet = await tx.workerWallet.upsert({
+        where: { userId: workerId },
+        update: {},
+        create: { userId: workerId, balance: 0, heldBalance: 0, isFrozen: false },
+      });
+
+      const currentBalance = Number(currentWallet.balance);
+      const newBalance = Math.round((currentBalance + amount) * 100) / 100;
+
+      const updatedWallet = await tx.workerWallet.update({
+        where: { userId: workerId },
+        data: { balance: newBalance },
+      });
+
+      const idemKey = `admin_topup_${workerId}_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+      await tx.walletLedger.create({
+        data: {
+          userId: workerId,
+          type: 'TOPUP_CREDIT',
+          amount: amount,
+          balanceAfter: newBalance,
+          referenceType: 'admin_topup',
+          referenceId: actor.sub,
+          note: dto.note || `Admin wallet top-up of Rs. ${amount}`,
+          idempotencyKey: idemKey,
+        },
+      });
+
+      await this.audit.record({
+        actorId: actor.sub,
+        actorRole: actor.role,
+        action: 'WALLET_TOPUP',
+        targetType: 'WORKER_WALLET',
+        targetId: workerId,
+        reason: dto.note || 'Admin wallet top-up',
+        metadata: {
+          amount,
+          previousBalance: currentBalance,
+          newBalance,
+        },
+      });
+
+      this.realtime.emitToRoom(ADMIN_ROOM, ADMIN_EVENTS.newAlert, {
+        type: 'wallet',
+        event: 'admin:wallet:topup',
+        workerId,
+        amount,
+        newBalance,
+        timestamp: new Date(),
+      });
+
+      return {
+        success: true,
+        workerId,
+        workerName: worker.name,
+        amount,
+        previousBalance: currentBalance,
+        balance: newBalance,
+      };
+    });
   }
 
   // Dispute queue (Admin flow §10). List disputes with filters and pagination.
@@ -2524,6 +2647,28 @@ export class AdminService {
       );
     }
 
+    const now = new Date();
+    // On-the-fly auto-reactivate any user whose temporary suspension duration has passed
+    for (const u of users) {
+      if (!u.isActive && u.suspendedUntil && u.suspendedUntil <= now) {
+        u.isActive = true;
+        u.suspendedUntil = null;
+        u.suspensionReason = null;
+        u.suspensionType = null;
+        this.prisma.user
+          .update({
+            where: { id: u.id },
+            data: {
+              isActive: true,
+              suspendedUntil: null,
+              suspensionReason: null,
+              suspensionType: null,
+            },
+          })
+          .catch(() => {});
+      }
+    }
+
     const items = users.map((user: AdminUserRow) => {
       const comms = (user as any).commissions || [];
       const totalEarned = comms.reduce(
@@ -2541,6 +2686,9 @@ export class AdminService {
         avatarUrl: user.avatarUrl,
         isActive: user.isActive,
         isVerified: user.isVerified,
+        suspendedUntil: user.suspendedUntil ?? null,
+        suspensionReason: user.suspensionReason ?? null,
+        suspensionType: user.suspensionType ?? null,
         createdAt: user.createdAt,
         jobsCount: role === Role.WORKER ? user._count.offers : user._count.customerJobs,
         verificationStatus: user.workerProfile?.verificationStatus ?? null,
@@ -2566,17 +2714,80 @@ export class AdminService {
     return toPageResult(items, total, page, limit);
   }
 
+  // Scheduled job: automatically reactivate accounts when their temporary suspension expires
+  @Cron('*/5 * * * *')
+  async autoReactivateExpiredSuspensions() {
+    try {
+      const now = new Date();
+      const expiredUsers = await this.prisma.user.findMany({
+        where: {
+          isActive: false,
+          suspendedUntil: { lte: now },
+        },
+        select: {
+          id: true,
+          role: true,
+          phone: true,
+          name: true,
+          suspensionReason: true,
+          suspensionType: true,
+        },
+      });
+
+      if (expiredUsers.length === 0) return;
+
+      for (const u of expiredUsers) {
+        await this.prisma.user.update({
+          where: { id: u.id },
+          data: {
+            isActive: true,
+            suspendedUntil: null,
+            suspensionReason: null,
+            suspensionType: null,
+          },
+        });
+
+        await this.audit.record({
+          actorId: 'system',
+          actorRole: Role.SUPER_ADMIN,
+          action: AUDIT_ACTIONS.USER_REACTIVATED,
+          targetType: u.role,
+          targetId: u.id,
+          reason: 'Temporary suspension duration expired (automatically reactivated)',
+          metadata: {
+            phone: u.phone,
+            name: u.name,
+            autoReactivated: true,
+            previousReason: u.suspensionReason,
+          },
+        });
+      }
+    } catch (err) {
+      // Don't crash scheduled task
+      console.error('[AdminService] autoReactivateExpiredSuspensions error:', err);
+    }
+  }
+
   // Suspend/reactivate a user in a specific role. Suspension always states a reason and is audit-logged.
+  // Supports Permanent & Temporary suspension per Section 5 specification.
   private async setUserStatus(
     role: Role,
     id: string,
     activate: boolean,
     actor: JwtPayload,
-    reason?: string,
+    suspendInput?: SuspendUserDto | string,
   ) {
     const user = await this.prisma.user.findFirst({
       where: { id, role },
-      select: { id: true, phone: true, name: true, isActive: true },
+      select: {
+        id: true,
+        phone: true,
+        name: true,
+        isActive: true,
+        suspendedUntil: true,
+        suspensionReason: true,
+        suspensionType: true,
+      },
     });
     if (!user) {
       throw new NotFoundException(
@@ -2590,10 +2801,81 @@ export class AdminService {
     }
 
     return this.prisma.$transaction(async (tx) => {
+      let suspendedUntil: Date | null = null;
+      let suspensionReason: string | null = null;
+      let suspensionType: string | null = null;
+      let reasonSummary: string | null = null;
+      let auditMetadata: Record<string, any> = { phone: user.phone, name: user.name };
+
+      if (!activate) {
+        if (typeof suspendInput === 'string') {
+          suspensionType = SuspensionType.PERMANENT;
+          suspensionReason = suspendInput.trim();
+          reasonSummary = suspendInput.trim();
+          auditMetadata = {
+            ...auditMetadata,
+            suspensionType: SuspensionType.PERMANENT,
+            reason: suspendInput.trim(),
+            description: suspendInput.trim(),
+          };
+        } else if (suspendInput) {
+          const type = suspendInput.type || SuspensionType.PERMANENT;
+          suspensionType = type;
+          const mainReason = suspendInput.reason || 'Account suspended by admin';
+          const violationType = suspendInput.violationType;
+          const description = (suspendInput.description || mainReason).trim();
+          const duration = suspendInput.duration;
+
+          if (type === SuspensionType.TEMPORARY && duration) {
+            suspendedUntil = computeSuspendedUntil(duration);
+          }
+
+          let fullReason = `[${type}] ${mainReason}`;
+          if (violationType) {
+            fullReason += ` (${violationType})`;
+          }
+          if (description && description !== mainReason) {
+            fullReason += `: ${description}`;
+          }
+          if (duration) {
+            fullReason += ` [Duration: ${duration}]`;
+          }
+
+          suspensionReason = fullReason;
+          reasonSummary = fullReason;
+
+          auditMetadata = {
+            ...auditMetadata,
+            suspensionType: type,
+            reason: mainReason,
+            violationType: violationType || null,
+            description,
+            duration: duration || null,
+            suspendedUntil: suspendedUntil ? suspendedUntil.toISOString() : null,
+          };
+        } else {
+          suspensionType = SuspensionType.PERMANENT;
+          suspensionReason = 'Account suspended by admin';
+          reasonSummary = 'Account suspended by admin';
+        }
+      }
+
       const updated = await tx.user.update({
         where: { id },
-        data: { isActive: activate },
-        select: { id: true, isActive: true, updatedAt: true },
+        data: {
+          isActive: activate,
+          suspendedUntil: activate ? null : suspendedUntil,
+          suspensionReason: activate ? null : suspensionReason,
+          suspensionType: activate ? null : suspensionType,
+        },
+        select: {
+          id: true,
+          isActive: true,
+          suspendedUntil: true,
+          suspensionReason: true,
+          suspensionType: true,
+          updatedAt: true,
+        },
       });
 
       await this.audit.record(
@@ -2603,13 +2885,21 @@ export class AdminService {
           action: activate ? AUDIT_ACTIONS.USER_REACTIVATED : AUDIT_ACTIONS.USER_SUSPENDED,
           targetType: role,
           targetId: id,
-          reason: activate ? null : (reason ?? null),
-          metadata: { phone: user.phone, name: user.name },
+          reason: activate ? null : reasonSummary,
+          metadata: auditMetadata,
         },
         tx,
       );
 
-      return { id: updated.id, role, isActive: updated.isActive, updatedAt: updated.updatedAt };
+      return {
+        id: updated.id,
+        role,
+        isActive: updated.isActive,
+        suspendedUntil: updated.suspendedUntil,
+        suspensionReason: updated.suspensionReason,
+        suspensionType: updated.suspensionType,
+        updatedAt: updated.updatedAt,
+      };
     });
   }
 

@@ -116,7 +116,7 @@ export default async function LocaleLayout({
         <link rel="shortcut icon" href="/workerfix-icon.png" type="image/png" />
         <link rel="apple-touch-icon" href="/workerfix-icon.png" />
       </head>
-      <body className="min-h-screen w-full overflow-x-hidden flex flex-col">
+      <body suppressHydrationWarning className="min-h-screen w-full overflow-x-hidden flex flex-col">
         {/* Pre-paint admin theme (prevents flash before hydration). Runs before interactive. */}
         <Script
           id="workerfix-admin-theme"

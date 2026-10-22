@@ -43,6 +43,9 @@ export interface CustomerUser {
   ratingGiven: number;
   status: UserStatus;
   internalNotes?: string;
+  suspendedUntil?: string | null;
+  suspensionReason?: string | null;
+  suspensionType?: "PERMANENT" | "TEMPORARY" | null;
 }
 
 export interface WorkerUser {
@@ -64,6 +67,9 @@ export interface WorkerUser {
   experienceYears: number;
   bio?: string;
   serviceCity: string;
+  suspendedUntil?: string | null;
+  suspensionReason?: string | null;
+  suspensionType?: "PERMANENT" | "TEMPORARY" | null;
 }
 
 export interface VerificationRequest {
