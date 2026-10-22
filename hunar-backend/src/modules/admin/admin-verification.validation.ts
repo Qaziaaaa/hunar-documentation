@@ -23,21 +23,47 @@ export class VerificationDecisionDto {
   @IsNotEmpty()
   @MaxLength(1000)
   adminNote?: string;
+
+  @IsOptional()
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(1000)
+  note?: string;
 }
 
 // Spec-aligned per-action bodies (PUT .../reject and .../request-changes).
 export class RejectVerificationDto {
+  @IsOptional()
   @IsString()
   @IsNotEmpty()
   @MaxLength(1000)
-  reason!: string;
+  reason?: string;
+
+  @IsOptional()
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(1000)
+  note?: string;
 }
 
 export class RequestChangesDto {
+  @IsOptional()
   @IsString()
   @IsNotEmpty()
   @MaxLength(1000)
-  adminNote!: string;
+  adminNote?: string;
+
+  @IsOptional()
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(1000)
+  note?: string;
+
+  @IsOptional()
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(1000)
+  reason?: string;
 }
 
 // Revoking an approved verification is sensitive — a reason is mandatory.

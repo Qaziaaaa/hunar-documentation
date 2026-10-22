@@ -619,6 +619,17 @@ export const adminApi = {
     return http.put(`/admin/workers/${workerId}/reactivate`);
   },
 
+  async topUpWorkerWallet(workerId: string, amount: number, note?: string) {
+    return http.put<{
+      success: boolean;
+      workerId: string;
+      workerName: string;
+      amount: number;
+      previousBalance: number;
+      balance: number;
+    }>(`/admin/wallet/${workerId}/topup`, { amount, note });
+  },
+
   async suspendCustomer(customerId: string, payload: string | SuspendUserPayload) {
     const body =
       typeof payload === "string"
@@ -643,8 +654,27 @@ export const adminApi = {
     return toVerificationRequest(row);
   },
 
-  async decideVerification(userId: string, decision: string, reason?: string) {
-    return http.put(`/admin/verifications/${userId}`, { decision, note: reason });
+  async decideVerification(
+    userId: string,
+    decision: "APPROVE" | "APPROVED" | "REJECT" | "REJECTED" | "REQUEST_CHANGES" | string,
+    reason?: string,
+  ) {
+    const normalized =
+      decision === "APPROVE" || decision === "APPROVED"
+        ? "APPROVED"
+        : decision === "REJECT" || decision === "REJECTED"
+        ? "REJECTED"
+        : "REQUEST_CHANGES";
+
+    if (normalized === "APPROVED") {
+      return http.put(`/admin/verifications/${userId}/approve`);
+    } else if (normalized === "REJECTED") {
+      return http.put(`/admin/verifications/${userId}/reject`, { reason: reason || "" });
+    } else {
+      return http.put(`/admin/verifications/${userId}/request-changes`, {
+        adminNote: reason || "",
+      });
+    }
   },
 
   async listTransactions(): Promise<PaymentTransaction[]> {

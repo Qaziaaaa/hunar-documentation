@@ -81,7 +81,7 @@ export default function VerificationDetailPage({
     setActionError(null);
     setActing(true);
     try {
-      await adminApi.decideVerification(request.id, "APPROVE");
+      await adminApi.decideVerification(request.id, "APPROVED");
       setRequest((prev) => (prev ? { ...prev, status: "VERIFIED" } : prev));
       setTimeout(() => {
         router.push("/admin/verifications");
@@ -104,7 +104,7 @@ export default function VerificationDetailPage({
     }
     setActing(true);
     try {
-      await adminApi.decideVerification(request.id, "REJECT", reason);
+      await adminApi.decideVerification(request.id, "REJECTED", reason);
       setRequest((prev) =>
         prev
           ? {
@@ -116,6 +116,9 @@ export default function VerificationDetailPage({
       );
       setShowRejectModal(false);
       setReasonInput("");
+      setTimeout(() => {
+        router.push("/admin/verifications");
+      }, 1000);
     } catch (err) {
       setActionError(
         err instanceof Error ? err.message : "Failed to reject verification",
@@ -146,6 +149,9 @@ export default function VerificationDetailPage({
       );
       setShowChangesModal(false);
       setReasonInput("");
+      setTimeout(() => {
+        router.push("/admin/verifications");
+      }, 1000);
     } catch (err) {
       setActionError(
         err instanceof Error ? err.message : "Failed to request changes",
@@ -208,7 +214,11 @@ export default function VerificationDetailPage({
           <div className="flex items-center gap-3">
             <button
               type="button"
-              onClick={() => setShowChangesModal(true)}
+              onClick={() => {
+                setActionError(null);
+                setReasonInput("");
+                setShowChangesModal(true);
+              }}
               className="inline-flex items-center gap-1.5 rounded-xl border border-orange/30 bg-orange/10 px-4 py-2.5 text-xs font-bold text-orange transition hover:bg-orange/20"
             >
               <AlertCircle className="size-4" />
@@ -217,7 +227,11 @@ export default function VerificationDetailPage({
 
             <button
               type="button"
-              onClick={() => setShowRejectModal(true)}
+              onClick={() => {
+                setActionError(null);
+                setReasonInput("");
+                setShowRejectModal(true);
+              }}
               className="inline-flex items-center gap-1.5 rounded-xl border border-red-200 bg-red-50 px-4 py-2.5 text-xs font-bold text-red-600 transition hover:bg-red-100"
             >
               <XCircle className="size-4" />

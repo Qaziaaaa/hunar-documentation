@@ -13,6 +13,7 @@ import {
   AdminWithdrawalListQueryDto,
   AdminProcessWithdrawalDto,
   AdminFreezeWalletDto,
+  AdminTopUpWalletDto,
   AdminDisputeListQueryDto,
   AdminResolveDisputeDto,
   AdminDisputeNoteDto,
@@ -164,6 +165,15 @@ export class AdminController {
     @CurrentUser() actor: JwtPayload,
   ) {
     return this.adminService.unfreezeWallet(workerId, actor);
+  }
+
+  @Put('wallet/:workerId/topup')
+  topUpWorkerWallet(
+    @Param('workerId', ParseUUIDPipe) workerId: string,
+    @Body() dto: AdminTopUpWalletDto,
+    @CurrentUser() actor: JwtPayload,
+  ) {
+    return this.adminService.topUpWorkerWallet(workerId, actor, dto);
   }
 
   // ----- Disputes -----

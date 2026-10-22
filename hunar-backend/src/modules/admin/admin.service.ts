@@ -37,6 +37,7 @@ import {
   AdminCommissionListQueryDto,
   AdminWithdrawalListQueryDto,
   AdminFreezeWalletDto,
+  AdminTopUpWalletDto,
   AdminDisputeListQueryDto,
   AdminResolveDisputeDto,
   AdminCategoryListQueryDto,
@@ -1036,6 +1037,84 @@ export class AdminService {
     });
 
     return updated;
+  }
+
+  // Admin manually tops up / credits a worker's wallet
+  async topUpWorkerWallet(workerId: string, actor: JwtPayload, dto: AdminTopUpWalletDto) {
+    const worker = await this.prisma.user.findFirst({
+      where: { id: workerId, role: Role.WORKER },
+      select: { id: true, name: true, phone: true },
+    });
+    if (!worker) {
+      throw new NotFoundException('Worker not found');
+    }
+
+    const amount = Number(dto.amount);
+    if (!amount || amount <= 0) {
+      throw new BadRequestException('Amount must be greater than 0');
+    }
+
+    return this.prisma.$transaction(async (tx) => {
+      const currentWallet = await tx.workerWallet.upsert({
+        where: { userId: workerId },
+        update: {},
+        create: { userId: workerId, balance: 0, heldBalance: 0, isFrozen: false },
+      });
+
+      const currentBalance = Number(currentWallet.balance);
+      const newBalance = Math.round((currentBalance + amount) * 100) / 100;
+
+      const updatedWallet = await tx.workerWallet.update({
+        where: { userId: workerId },
+        data: { balance: newBalance },
+      });
+
+      const idemKey = `admin_topup_${workerId}_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+      await tx.walletLedger.create({
+        data: {
+          userId: workerId,
+          type: 'TOPUP_CREDIT',
+          amount: amount,
+          balanceAfter: newBalance,
+          referenceType: 'admin_topup',
+          referenceId: actor.sub,
+          note: dto.note || `Admin wallet top-up of Rs. ${amount}`,
+          idempotencyKey: idemKey,
+        },
+      });
+
+      await this.audit.record({
+        actorId: actor.sub,
+        actorRole: actor.role,
+        action: 'WALLET_TOPUP',
+        targetType: 'WORKER_WALLET',
+        targetId: workerId,
+        reason: dto.note || 'Admin wallet top-up',
+        metadata: {
+          amount,
+          previousBalance: currentBalance,
+          newBalance,
+        },
+      });
+
+      this.realtime.emitToRoom(ADMIN_ROOM, ADMIN_EVENTS.newAlert, {
+        type: 'wallet',
+        event: 'admin:wallet:topup',
+        workerId,
+        amount,
+        newBalance,
+        timestamp: new Date(),
+      });
+
+      return {
+        success: true,
+        workerId,
+        workerName: worker.name,
+        amount,
+        previousBalance: currentBalance,
+        balance: newBalance,
+      };
+    });
   }
 
   // Dispute queue (Admin flow §10). List disputes with filters and pagination.

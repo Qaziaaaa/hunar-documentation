@@ -370,6 +370,20 @@ export class AdminFreezeWalletDto {
   reason: string;
 }
 
+// Manual wallet top-up by admin
+export class AdminTopUpWalletDto {
+  @Type(() => Number)
+  @IsNumber()
+  @Min(1)
+  @Max(1000000)
+  amount: number;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(500)
+  note?: string;
+}
+
 // Dispute queue (Admin flow §10). Admin dispute resolution.
 export class AdminDisputeListQueryDto {
   @IsOptional()
