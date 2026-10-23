@@ -82,7 +82,7 @@ export async function getJobDetail(jobId: string): Promise<CustomerJob> {
     preferredTimeSlot:
       res.preferredTimeSlot ||
       res.timeSlot ||
-      (isAsap ? "Immediate (Within 30–60 mins)" : extractTimeSlotFromVisitTime(res.preferredVisitTime)),
+      (isAsap ? "⚡ Immediate" : extractTimeSlotFromVisitTime(res.preferredVisitTime)),
     status: mapJobStatus(res.status),
     createdAt: res.createdAt || new Date().toISOString(),
     offerCount: Number(res.offerCount ?? offers.length),
@@ -99,6 +99,12 @@ export async function getJobDetail(jobId: string): Promise<CustomerJob> {
       : undefined,
     securityPin: res.securityPin,
     suggestedVisitCharge: res.suggestedVisitCharge != null ? Number(res.suggestedVisitCharge) : undefined,
+    repairCharge: Number(res.repairCharge ?? res.repairEstimate ?? 0),
+    totalAmount:
+      (res.selectedWorker ? Number(res.lockedVisitCharge ?? 0) : 0) +
+      Number(res.repairCharge ?? res.repairEstimate ?? 0),
+    hasReviewed: Boolean(res.hasReviewed || res.customerReview || (Array.isArray(res.reviews) && res.reviews.length > 0)),
+    customerReview: res.customerReview ?? (Array.isArray(res.reviews) && res.reviews[0] ? res.reviews[0] : null),
     cancelReason: res.cancelReason || undefined,
     cancelledAt: res.cancelledAt || undefined,
   };
@@ -244,7 +250,7 @@ function transformListRow(row: any): CustomerJob {
     preferredTimeSlot:
       row.preferredTimeSlot ||
       row.timeSlot ||
-      (isAsap ? "Immediate (Within 30–60 mins)" : extractTimeSlotFromVisitTime(row.preferredVisitTime)),
+      (isAsap ? "⚡ Immediate" : extractTimeSlotFromVisitTime(row.preferredVisitTime)),
     status: mapJobStatus(row.status),
     createdAt: row.createdAt || new Date().toISOString(),
     offerCount: Number(row.offerCount ?? offers.length),
@@ -259,6 +265,12 @@ function transformListRow(row: any): CustomerJob {
         })
       : undefined,
     suggestedVisitCharge: row.suggestedVisitCharge != null ? Number(row.suggestedVisitCharge) : undefined,
+    repairCharge: Number(row.repairCharge ?? 0),
+    totalAmount:
+      (row.selectedWorker ? Number(row.lockedVisitCharge ?? 0) : 0) +
+      Number(row.repairCharge ?? 0),
+    hasReviewed: Boolean(row.hasReviewed || row.customerReview || (Array.isArray(row.reviews) && row.reviews.length > 0)),
+    customerReview: row.customerReview ?? (Array.isArray(row.reviews) && row.reviews[0] ? row.reviews[0] : null),
     cancelReason: row.cancelReason || undefined,
     cancelledAt: row.cancelledAt || undefined,
   };

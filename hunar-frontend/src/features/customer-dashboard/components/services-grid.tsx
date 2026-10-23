@@ -9,6 +9,7 @@ import {
   ChevronDown,
   ChevronUp,
   Cpu,
+  Flame,
   Grid,
   SearchX,
   Truck,
@@ -24,9 +25,11 @@ import {
   BackendCategory,
   CATEGORY_ID_MAP,
 } from "@/features/post-job/api/post-job-api";
+import { CATEGORY_ALIASES } from "@/features/post-job/data/categories";
 
 export interface ServiceItem {
   id: string;
+  categoryId?: string;
   title: string;
   titleUr: string;
   image?: string | null;
@@ -325,6 +328,20 @@ export const ALL_SERVICES: ServiceItem[] = [
     titleUr: "مالی / باغبانی",
     image: "/services/gardner.jpg",
   },
+  {
+    id: "welder",
+    title: "Welder",
+    titleUr: "ویلڈر",
+    icon: Flame,
+    gradient: "from-orange-500/15 via-amber-500/5 to-slate-50",
+  },
+  {
+    id: "movers",
+    title: "Movers & Packers",
+    titleUr: "شفٹنگ اور ٹرانسپورٹ",
+    icon: Truck,
+    gradient: "from-amber-500/15 via-orange-500/5 to-slate-50",
+  },
 
 
   // Extra hidden rows (Expanded on "Show All")
@@ -347,7 +364,8 @@ export const ALL_SERVICES: ServiceItem[] = [
     image: "/services/CCTV.jpg",
   },
   {
-    id: "plumber",
+    id: "geyser",
+    categoryId: "plumber",
     title: "Geyser & Heating",
     titleUr: "گیزر و ہیٹنگ",
     image: "/services/geyser.jpg",
@@ -355,9 +373,10 @@ export const ALL_SERVICES: ServiceItem[] = [
     href: "/customer/post-job?category=plumber&subCategory=Geyser+Installation+(Gas/Electric)",
   },
   {
-    id: "cleaner",
-    title: "Water Tank Clean",
-    titleUr: "واٹر ٹینک صفائی",
+    id: "water-tank",
+    categoryId: "cleaner",
+    title: "Water Tank",
+    titleUr: "واٹر ٹینک",
     image: "/services/water tank.jpg",
     subCategory: "Water Tank Deep Cleaning",
     href: "/customer/post-job?category=cleaner&subCategory=Water+Tank+Deep+Cleaning",
@@ -366,36 +385,36 @@ export const ALL_SERVICES: ServiceItem[] = [
 ];
 
 function isServiceActive(service: ServiceItem, activeCategories: BackendCategory[]): boolean {
-  const targetSeedId = CATEGORY_ID_MAP[service.id.toLowerCase()];
+  const categoryKey = (service.categoryId || service.id).toLowerCase();
+  const targetSeedId = CATEGORY_ID_MAP[categoryKey] || CATEGORY_ID_MAP[service.id.toLowerCase()];
 
   return activeCategories.some((cat) => {
     if (targetSeedId && cat.id.toLowerCase() === targetSeedId.toLowerCase()) {
       return true;
     }
-    if (cat.id.toLowerCase() === service.id.toLowerCase()) {
+    if (cat.id.toLowerCase() === categoryKey || cat.id.toLowerCase() === service.id.toLowerCase()) {
       return true;
     }
     const catName = cat.name.toLowerCase();
     const serviceTitle = service.title.toLowerCase();
-    const serviceId = service.id.toLowerCase();
 
-    if (catName === serviceTitle || catName === serviceId) {
+    if (catName === serviceTitle || catName === categoryKey || catName === service.id.toLowerCase()) {
       return true;
     }
     if (serviceTitle.includes(catName) || catName.includes(serviceTitle)) {
       return true;
     }
     if (
-      (catName.includes("plumb") && serviceId === "plumber") ||
-      (catName.includes("electr") && serviceId === "electrician") ||
-      ((catName.includes("ac") || catName.includes("refriger")) && serviceId === "ac-technician") ||
-      (catName.includes("carpent") && serviceId === "carpenter") ||
-      (catName.includes("paint") && serviceId === "painter") ||
-      (catName.includes("clean") && serviceId === "cleaner") ||
-      (catName.includes("mason") && serviceId === "mason-mistry") ||
-      (catName.includes("pest") && serviceId === "pest-control") ||
+      (catName.includes("plumb") && (categoryKey === "plumber" || service.id === "geyser")) ||
+      (catName.includes("electr") && categoryKey === "electrician") ||
+      ((catName.includes("ac") || catName.includes("refriger")) && categoryKey === "ac-technician") ||
+      (catName.includes("carpent") && categoryKey === "carpenter") ||
+      (catName.includes("paint") && categoryKey === "painter") ||
+      (catName.includes("clean") && (categoryKey === "cleaner" || service.id === "water-tank")) ||
+      (catName.includes("mason") && categoryKey === "mason-mistry") ||
+      (catName.includes("pest") && categoryKey === "pest-control") ||
       (catName.includes("handyman") &&
-        (serviceId === "solar-technician" || serviceId === "gardener" || serviceId === "cctv-security"))
+        (categoryKey === "solar-technician" || categoryKey === "gardener" || categoryKey === "cctv-security"))
     ) {
       return true;
     }
@@ -456,7 +475,7 @@ export function ServicesGrid() {
           image: asset.image,
           icon: asset.icon,
           gradient: asset.gradient,
-          href: `/customer/post-job?category=${encodeURIComponent(b.id)}`,
+          href: `/customer/post-job?category=${encodeURIComponent(b.name.toLowerCase().replace(/[^a-z0-9]+/g, '-'))}&categoryId=${encodeURIComponent(b.id)}&categoryName=${encodeURIComponent(b.name)}${b.nameUrdu ? `&categoryNameUrdu=${encodeURIComponent(b.nameUrdu)}` : ""}`,
         };
       });
 
@@ -465,19 +484,18 @@ export function ServicesGrid() {
 
   const normalizedQuery = searchQuery.trim().toLowerCase();
 
-  // Live-filter services: case-insensitive, partial match on title (EN/UR), subCategory, and id
+  // Live-filter services: case-insensitive, partial match on title (EN/UR) or exact trade alias
   const displayedServices = useMemo(() => {
     if (!normalizedQuery) {
       return showAll ? activeServices : activeServices.slice(0, 12);
     }
+    const aliasCategoryId = CATEGORY_ALIASES[normalizedQuery];
+
     return activeServices.filter((service) => {
       const matchesTitle = service.title.toLowerCase().includes(normalizedQuery);
       const matchesTitleUr = service.titleUr.includes(searchQuery.trim());
-      const matchesSubCategory = service.subCategory
-        ?.toLowerCase()
-        .includes(normalizedQuery);
-      const matchesId = service.id.toLowerCase().includes(normalizedQuery);
-      return matchesTitle || matchesTitleUr || matchesSubCategory || matchesId;
+      const matchesAlias = aliasCategoryId ? service.id === aliasCategoryId : false;
+      return matchesTitle || matchesTitleUr || matchesAlias;
     });
   }, [normalizedQuery, searchQuery, showAll, activeServices]);
 
@@ -518,11 +536,11 @@ export function ServicesGrid() {
         {displayedServices.map((service, index) => {
           const displayTitle = locale === "ur" ? service.titleUr : service.title;
           const serviceHref =
-            service.href || `/customer/post-job?category=${service.id}`;
+            service.href || `/customer/post-job?category=${service.categoryId || service.id}`;
 
           return (
             <Link
-              key={`${service.id}-${service.title}`}
+              key={service.id}
               href={serviceHref}
               className="group flex flex-col justify-between p-2 sm:p-3 rounded-2xl sm:rounded-3xl border border-slate-200 bg-[#F9FAFC] hover:border-[#0F8B8D] shadow-2xs hover:shadow-md transition-all duration-300 cursor-pointer active:scale-95 h-full"
             >

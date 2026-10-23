@@ -62,6 +62,7 @@ export interface WorkerOffer {
   distanceKm: number;
   createdAt: string;
   note?: string;
+  isDeclined?: boolean;
 }
 
 export interface CustomerJob {
@@ -89,6 +90,15 @@ export interface CustomerJob {
   selectedOffer?: WorkerOffer;
   securityPin?: string; // 4-digit doorstep code, e.g. "6492"
   suggestedVisitCharge?: number;
+  repairCharge?: number;
+  totalAmount?: number;
+  hasReviewed?: boolean;
+  customerReview?: {
+    id?: string;
+    rating: number;
+    comment?: string;
+    date?: string;
+  } | null;
   cancelReason?: string;
   cancelledAt?: string;
 }

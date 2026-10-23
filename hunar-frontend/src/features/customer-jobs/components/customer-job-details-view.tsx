@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   AlertTriangle,
@@ -19,12 +19,14 @@ import {
   ShieldCheck,
   Volume2,
   Wrench,
+  Star,
 } from "lucide-react";
 import { Link } from "@/i18n/navigation";
 import { useLocale } from "next-intl";
 import { formatDateTime, formatJobDate } from "@/lib/format";
 import { WorkerOfferCard } from "./worker-offer-card";
 import { WorkerProfileModal } from "./worker-profile-modal";
+import { CustomerReviewModal } from "./customer-review-modal";
 import { acceptWorkerOffer } from "../api/customer-jobs-api";
 import type { CustomerJob, WorkerOffer } from "../types";
 
@@ -45,8 +47,12 @@ export function CustomerJobDetailsView({ initialJob }: CustomerJobDetailsViewPro
 
   const [selectedOfferForProfile, setSelectedOfferForProfile] = useState<WorkerOffer | null>(null);
   const [confirmingOfferId, setConfirmingOfferId] = useState<string | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
   const [isPlayingAudio, setIsPlayingAudio] = useState(false);
+  const [audioDuration, setAudioDuration] = useState<number | null>(null);
+  const [audioCurrentTime, setAudioCurrentTime] = useState<number>(0);
   const [previewPhoto, setPreviewPhoto] = useState<string | null>(null);
+  const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [toastTone, setToastTone] = useState<"success" | "error">("success");
   const queryClient = useQueryClient();
@@ -57,10 +63,65 @@ export function CustomerJobDetailsView({ initialJob }: CustomerJobDetailsViewPro
     setTimeout(() => setToastMessage(null), 4000);
   };
 
+  // Reset audio state when job voice note changes
+  useEffect(() => {
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
+    }
+    setIsPlayingAudio(false);
+    setAudioCurrentTime(0);
+    setAudioDuration(null);
+  }, [job?.voiceNoteUrl]);
+
+  // Format seconds to mm:ss
+  const formatAudioDuration = (seconds?: number | null) => {
+    if (!seconds || isNaN(seconds) || !isFinite(seconds) || seconds <= 0) {
+      return job?.voiceNoteDuration ? `0:${String(job.voiceNoteDuration).padStart(2, "0")}` : "--:--";
+    }
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins}:${String(secs).padStart(2, "0")}`;
+  };
+
+  const handleLoadedMetadata = () => {
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    if (!isNaN(audio.duration) && isFinite(audio.duration) && audio.duration > 0) {
+      setAudioDuration(audio.duration);
+    } else if (audio.duration === Infinity) {
+      // Chrome MediaRecorder WebM bug: seeking near the end resolves true duration
+      const onSeeked = () => {
+        audio.removeEventListener("seeked", onSeeked);
+        if (!isNaN(audio.duration) && isFinite(audio.duration) && audio.duration > 0) {
+          setAudioDuration(audio.duration);
+        }
+        audio.currentTime = 0;
+      };
+      audio.addEventListener("seeked", onSeeked, { once: true });
+      audio.currentTime = 1e101;
+    }
+  };
+
+  const handleTimeUpdate = () => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    setAudioCurrentTime(audio.currentTime);
+    if (!isNaN(audio.duration) && isFinite(audio.duration) && audio.duration > 0) {
+      setAudioDuration(audio.duration);
+    }
+  };
+
+  const handleAudioEnded = () => {
+    setIsPlayingAudio(false);
+    setAudioCurrentTime(0);
+  };
+
   // Audio Playback Handler
   const handleToggleAudio = () => {
     if (!job.voiceNoteUrl) return;
-    const audio = document.getElementById("job-details-voice-player") as HTMLAudioElement | null;
+    const audio = audioRef.current || (document.getElementById("job-details-voice-player") as HTMLAudioElement | null);
     if (!audio) return;
 
     if (isPlayingAudio) {
@@ -69,7 +130,6 @@ export function CustomerJobDetailsView({ initialJob }: CustomerJobDetailsViewPro
     } else {
       audio.play().catch(() => {});
       setIsPlayingAudio(true);
-      audio.onended = () => setIsPlayingAudio(false);
     }
   };
 
@@ -290,8 +350,13 @@ export function CustomerJobDetailsView({ initialJob }: CustomerJobDetailsViewPro
             {job.voiceNoteUrl && (
               <div className="p-3 bg-slate-50 rounded-2xl flex items-center gap-3">
                 <audio
+                  ref={audioRef}
                   id="job-details-voice-player"
                   src={job.voiceNoteUrl}
+                  preload="metadata"
+                  onLoadedMetadata={handleLoadedMetadata}
+                  onTimeUpdate={handleTimeUpdate}
+                  onEnded={handleAudioEnded}
                   className="hidden"
                 />
                 <button
@@ -311,15 +376,22 @@ export function CustomerJobDetailsView({ initialJob }: CustomerJobDetailsViewPro
                       <Volume2 className="size-3 text-[#0F766E]" />
                       {isUrdu ? "وائس نوٹ" : "Voice Note"}
                     </span>
-                    <span className="text-slate-400 text-[11px]">
-                      {job.voiceNoteDuration ? `0:${String(job.voiceNoteDuration).padStart(2, "0")}` : "--:--"}
+                    <span className="text-slate-400 text-[11px] font-mono">
+                      {isPlayingAudio
+                        ? `${formatAudioDuration(audioCurrentTime)} / ${formatAudioDuration(audioDuration || job.voiceNoteDuration)}`
+                        : formatAudioDuration(audioDuration || job.voiceNoteDuration)}
                     </span>
                   </div>
                   <div className="h-1.5 bg-slate-200 rounded-full overflow-hidden">
                     <div
-                      className={`h-full bg-[#0F766E] rounded-full transition-all ${
-                        isPlayingAudio ? "w-3/4" : "w-1/3"
-                      }`}
+                      className="h-full bg-[#0F766E] rounded-full transition-all duration-150"
+                      style={{
+                        width: `${
+                          audioDuration && audioDuration > 0
+                            ? Math.min(100, Math.max(0, (audioCurrentTime / audioDuration) * 100))
+                            : isPlayingAudio ? 50 : 0
+                        }%`,
+                      }}
                     />
                   </div>
                 </div>
@@ -350,7 +422,7 @@ export function CustomerJobDetailsView({ initialJob }: CustomerJobDetailsViewPro
                   <span className="font-bold text-[#123B5D]">
                     {formatJobDate(job.preferredDate) || (isUrdu ? "آج" : "Today")}
                   </span>{" "}
-                  • {job.preferredTimeSlot || (job.scheduleType === "asap" ? (isUrdu ? "فوری / ابھی" : "Immediate / ASAP") : (isUrdu ? "مناسب وقت" : "Flexible Timing"))}
+                  • {job.preferredTimeSlot || (job.scheduleType === "asap" ? (isUrdu ? "⚡ فوری" : "⚡ Immediate") : (isUrdu ? "مناسب وقت" : "Flexible Timing"))}
                 </p>
               </div>
             </div>
@@ -403,11 +475,27 @@ export function CustomerJobDetailsView({ initialJob }: CustomerJobDetailsViewPro
 
                 <div className="text-right rtl:text-left">
                   <span className="text-[11px] text-slate-400 block font-medium">
-                    {isUrdu ? "طے شدہ وزٹ فیس" : "Agreed Visit Fee"}
+                    {job.status === "completed"
+                      ? (isUrdu ? "کل ادا شدہ رقم" : "Total Paid")
+                      : (isUrdu ? "طے شدہ وزٹ فیس" : "Agreed Visit Fee")}
                   </span>
                   <span className="text-lg font-extrabold text-[#0F766E]">
-                    Rs. {job.selectedOffer.visitFee.toLocaleString()}
+                    Rs.{" "}
+                    {(
+                      job.status === "completed"
+                        ? ((job.totalAmount && job.totalAmount > 0)
+                            ? job.totalAmount
+                            : (job.selectedOffer.visitFee + (job.repairCharge ?? 0)))
+                        : job.selectedOffer.visitFee
+                    ).toLocaleString()}
                   </span>
+                  {job.status === "completed" && Boolean(job.repairCharge && job.repairCharge > 0) && (
+                    <span className="text-[10px] text-slate-500 block">
+                      {isUrdu
+                        ? `وزٹ Rs. ${job.selectedOffer.visitFee} + مرمت Rs. ${job.repairCharge}`
+                        : `Visit Rs. ${job.selectedOffer.visitFee} + Repair Rs. ${job.repairCharge}`}
+                    </span>
+                  )}
                 </div>
               </div>
 
@@ -461,6 +549,55 @@ export function CustomerJobDetailsView({ initialJob }: CustomerJobDetailsViewPro
                       <span>{isUrdu ? "پیغام بھیجیں" : "Message"}</span>
                     </Link>
                   </div>
+                </div>
+              )}
+
+              {/* Rate & Review Card for Completed Job */}
+              {job.status === "completed" && (
+                <div className="p-4 rounded-2xl bg-emerald-50/70 border border-emerald-200 text-xs text-emerald-800 space-y-3">
+                  <div className="flex items-center justify-between flex-wrap gap-2">
+                    <div className="flex items-center gap-1.5 font-bold">
+                      <CheckCircle2 className="size-4 text-emerald-600" />
+                      <span>
+                        {isUrdu
+                          ? "سروس کامیابی سے مکمل ہو چکی ہے"
+                          : "Service Successfully Completed"}
+                      </span>
+                    </div>
+                    {job.hasReviewed ? (
+                      <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-200/70 text-emerald-950 flex items-center gap-1">
+                        <Star className="size-3 fill-emerald-800 text-emerald-800" />
+                        <span>
+                          {job.customerReview?.rating ?? 5}/5 {isUrdu ? "ریویو درج ہے" : "Reviewed"}
+                        </span>
+                      </span>
+                    ) : null}
+                  </div>
+
+                  <p className="text-[11px] text-emerald-700/90">
+                    {isUrdu
+                      ? "ادائیگی کی تصدیق ہو چکی ہے اور 5 روزہ وارنٹی فعال ہے۔ کاریگر کی حوصلہ افزائی کے لیے اپنا ریویو درج کریں۔"
+                      : "Payment has been settled and 5-Day Craftsmanship Warranty is active. Please rate your technician's workmanship."}
+                  </p>
+
+                  {job.customerReview?.comment && (
+                    <div className="p-2.5 rounded-xl bg-white/80 border border-emerald-100 text-[11px] text-slate-700 italic">
+                      &ldquo;{job.customerReview.comment}&rdquo;
+                    </div>
+                  )}
+
+                  {!job.hasReviewed && (
+                    <button
+                      type="button"
+                      onClick={() => setIsReviewModalOpen(true)}
+                      className="w-full py-2.5 px-4 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs sm:text-sm shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-98"
+                    >
+                      <Star className="size-4 fill-slate-950" />
+                      <span>
+                        {isUrdu ? "کاریگر کو ریویو دیں اور ریٹنگ درج کریں" : "Rate & Review Technician"}
+                      </span>
+                    </button>
+                  )}
                 </div>
               )}
             </div>
@@ -561,6 +698,29 @@ export function CustomerJobDetailsView({ initialJob }: CustomerJobDetailsViewPro
           </div>
         </div>
       )}
+      {/* Review Modal for Completed Jobs */}
+      <CustomerReviewModal
+        job={job}
+        isOpen={isReviewModalOpen}
+        onClose={() => setIsReviewModalOpen(false)}
+        onReviewSubmitted={(review) => {
+          setJob((prev) => ({
+            ...prev,
+            hasReviewed: true,
+            customerReview: {
+              rating: review.rating,
+              comment: review.comment,
+              date: new Date().toISOString(),
+            },
+          }));
+          void queryClient.invalidateQueries({ queryKey: ["customer", "jobs"] });
+          showToast(
+            isUrdu
+              ? "آپ کا ریویو کامیابی سے جمع کر لیا گیا ہے!"
+              : "Your review has been successfully submitted!"
+          );
+        }}
+      />
     </div>
   );
 }

@@ -417,15 +417,21 @@ export function CustomerReviewOffersModal({
                         </button>
 
                         {/* Decline / Reject Offer */}
-                        <button
-                          type="button"
-                          onClick={() => setDecliningOfferId(offer.id)}
-                          className="py-2.5 px-3 rounded-xl bg-white hover:bg-red-50 text-slate-500 hover:text-red-600 font-semibold text-xs transition-colors flex items-center justify-center gap-1 border border-slate-200 hover:border-red-200 cursor-pointer"
-                          title={isUrdu ? "آفر مسترد کریں" : "Decline Offer"}
-                        >
-                          <Trash2 className="size-3.5" />
-                          <span className="hidden sm:inline">{isUrdu ? "مسترد کریں" : "Decline"}</span>
-                        </button>
+                        {!offer.isDeclined ? (
+                          <button
+                            type="button"
+                            onClick={() => setDecliningOfferId(offer.id)}
+                            className="py-2.5 px-3 rounded-xl bg-white hover:bg-red-50 text-slate-500 hover:text-red-600 font-semibold text-xs transition-colors flex items-center justify-center gap-1 border border-slate-200 hover:border-red-200 cursor-pointer"
+                            title={isUrdu ? "آفر مسترد کریں" : "Decline Offer"}
+                          >
+                            <Trash2 className="size-3.5" />
+                            <span className="hidden sm:inline">{isUrdu ? "مسترد کریں" : "Decline"}</span>
+                          </button>
+                        ) : (
+                          <span className="px-2.5 py-1 rounded-xl text-xs font-bold text-red-600 bg-red-50 border border-red-200 flex items-center">
+                            {isUrdu ? "مسترد شدہ" : "Declined"}
+                          </span>
+                        )}
 
                         {/* Confirm Booking */}
                         <button

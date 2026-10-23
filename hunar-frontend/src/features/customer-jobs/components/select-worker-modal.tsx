@@ -131,7 +131,7 @@ export function SelectWorkerModal({
                 </span>
                 <span>
                   {job.scheduleType === "asap"
-                    ? (isUrdu ? "فوری آمد (30 تا 60 منٹ)" : "Immediate (Within 30–60 mins)")
+                    ? (isUrdu ? "⚡ فوری" : "⚡ Immediate")
                     : `${formatJobDate(job.preferredDate) || (isUrdu ? "آج" : "Today")} • ${job.preferredTimeSlot || (isUrdu ? "مناسب وقت" : "Flexible Timing")}`}
                 </span>
               </div>

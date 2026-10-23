@@ -411,7 +411,7 @@ export class OffersService {
     if (!offer) {
       throw new NotFoundException('Offer not found for this job');
     }
-    if (!['PENDING', 'VIEWING', 'COUNTERED'].includes(offer.status)) {
+    if (!['PENDING', 'VIEWING', 'COUNTERED', 'REJECTED'].includes(offer.status)) {
       throw new BadRequestException(
         'OFFER_INVALID_STATE: offer cannot be accepted in its current state',
       );

@@ -481,7 +481,7 @@ export function CustomerOffersHubView({ initialJobs }: CustomerOffersHubViewProp
                   </Link>
                 )}
                 <Link
-                  href="/customer/post-job"
+                  href="/customer/dashboard"
                   className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-all"
                 >
                   <Plus className="size-4" />
@@ -579,7 +579,7 @@ export function CustomerOffersHubView({ initialJobs }: CustomerOffersHubViewProp
             </p>
             <div className="pt-2">
               <Link
-                href="/customer/post-job"
+                href="/customer/dashboard"
                 className="inline-flex items-center gap-1.5 text-xs font-bold text-[#0F766E] hover:underline"
               >
                 <span>
