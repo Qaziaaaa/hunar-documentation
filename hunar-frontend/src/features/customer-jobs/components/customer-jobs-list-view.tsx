@@ -39,6 +39,10 @@ const WorkerProfileModal = dynamic(
   () => import("./worker-profile-modal").then((m) => m.WorkerProfileModal),
   { ssr: false }
 );
+const CustomerReviewModal = dynamic(
+  () => import("./customer-review-modal").then((m) => m.CustomerReviewModal),
+  { ssr: false }
+);
 import { acceptWorkerOffer, rejectWorkerOffer, getCustomerJobs, getJobDetail } from "../api/customer-jobs-api";
 import { getSocket } from "@/lib/socket";
 
@@ -230,6 +234,7 @@ export function CustomerJobsListView({ initialJobs, jobs: jobsProp, initialTab }
   const [selectedJobForOffers, setSelectedJobForOffers] = useState<CustomerJob | null>(null);
   const [selectedOfferForProfile, setSelectedOfferForProfile] = useState<WorkerOffer | null>(null);
   const [confirmingOfferId, setConfirmingOfferId] = useState<string | null>(null);
+  const [reviewingJob, setReviewingJob] = useState<CustomerJob | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [toastTone, setToastTone] = useState<"success" | "error">("success");
   const queryClient = useQueryClient();
@@ -324,13 +329,13 @@ export function CustomerJobsListView({ initialJobs, jobs: jobsProp, initialTab }
 
   // Handle declining / rejecting an offer optimistically
   const handleRejectOffer = async (job: CustomerJob, offer: WorkerOffer) => {
-    // 1. Optimistic removal: remove immediately from UI for instant response
+    // 1. Mark declined instead of deleting, allowing the customer to still accept after declining
     setJobs((prev) =>
       prev.map((j) => {
         if (j.id === job.id) {
           return {
             ...j,
-            offers: j.offers.filter((o) => o.id !== offer.id),
+            offers: j.offers.map((o) => (o.id === offer.id ? { ...o, isDeclined: true } : o)),
           };
         }
         return j;
@@ -339,14 +344,17 @@ export function CustomerJobsListView({ initialJobs, jobs: jobsProp, initialTab }
 
     setSelectedJobForOffers((prev) =>
       prev && prev.id === job.id
-        ? { ...prev, offers: prev.offers.filter((o) => o.id !== offer.id) }
+        ? {
+            ...prev,
+            offers: prev.offers.map((o) => (o.id === offer.id ? { ...o, isDeclined: true } : o)),
+          }
         : prev
     );
 
     showToast(
       isUrdu
-        ? `${offer.worker.name} کی آفر مسترد کر دی گئی۔`
-        : `Offer from ${offer.worker.name} was declined.`
+        ? `${offer.worker.name} کی آفر مسترد کر دی گئی۔ آپ ضرورت پڑنے پر اب بھی اسے قبول کر سکتے ہیں۔`
+        : `Offer from ${offer.worker.name} was declined. You can still accept it if needed.`
     );
 
     // 2. Background API call
@@ -574,35 +582,6 @@ export function CustomerJobsListView({ initialJobs, jobs: jobsProp, initialTab }
         </div>
       </div>
 
-      {/* Banner if there are offers waiting while on Scheduled tab */}
-      {selectedFilter === "scheduled" && activeCount > 0 && (
-        <div
-          onClick={() => handleSelectTab("offers")}
-          className="bg-teal/10 hover:bg-teal/15 border border-teal/20 rounded-2xl p-4 flex items-center justify-between gap-3 cursor-pointer transition-all duration-200"
-        >
-          <div className="flex items-center gap-3">
-            <div className="size-9 rounded-xl bg-teal text-white flex items-center justify-center shrink-0 font-bold text-sm">
-              <Tag className="size-5" />
-            </div>
-            <div>
-              <h4 className="text-sm font-bold text-[#123B5D]">
-                {isUrdu
-                  ? `آپ کے پاس ${activeCount} کام کے لیے نئی آفرز موصول ہوئی ہیں!`
-                  : `You have new offers received on ${activeCount} job${activeCount > 1 ? "s" : ""}!`}
-              </h4>
-              <p className="text-xs text-slate-500">
-                {isUrdu
-                  ? "کاریگروں کے ریٹس دیکھنے اور منتخب کرنے کے لیے یہاں کلک کریں۔"
-                  : "Click here to review technician quotes and confirm your booking."}
-              </p>
-            </div>
-          </div>
-          <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-teal text-white font-bold text-xs shrink-0 shadow-xs">
-            <span>{isUrdu ? "آفرز دیکھیں" : "View Offers"}</span>
-            <ArrowRight className="size-3.5 rtl:rotate-180" />
-          </div>
-        </div>
-      )}
 
       {/* Work Orders List */}
       {isTabLoading ? (
@@ -737,11 +716,25 @@ export function CustomerJobsListView({ initialJobs, jobs: jobsProp, initialTab }
                       </span>
                       <div className="flex items-center gap-1 text-lg sm:text-xl font-bold text-[#1A1A2E]">
                         <ShieldCheck className="size-5 text-[#0F766E]" />
-                        <span>Rs. {job.selectedOffer.visitFee.toLocaleString()}</span>
+                        <span>
+                          Rs. {(
+                            (job.totalAmount && job.totalAmount > 0)
+                              ? job.totalAmount
+                              : (job.selectedOffer.visitFee + (job.repairCharge ?? 0))
+                          ).toLocaleString()}
+                        </span>
                       </div>
-                      <span className="text-[11px] text-[#0F766E] font-semibold">
-                        {isUrdu ? "تصدیق شدہ کام" : "Verified Handover"}
-                      </span>
+                      {Boolean(job.repairCharge && job.repairCharge > 0) ? (
+                        <span className="text-[10px] text-slate-500 font-medium">
+                          {isUrdu
+                            ? `وزٹ Rs. ${job.selectedOffer.visitFee} + مرمت Rs. ${job.repairCharge}`
+                            : `Visit Rs. ${job.selectedOffer.visitFee} + Repair Rs. ${job.repairCharge}`}
+                        </span>
+                      ) : (
+                        <span className="text-[11px] text-[#0F766E] font-semibold">
+                          {isUrdu ? "تصدیق شدہ کام" : "Verified Handover"}
+                        </span>
+                      )}
                     </div>
                   ) : job.status === "visit_scheduled" && job.selectedOffer ? (
                     <div className="flex items-center sm:flex-col sm:items-end rtl:sm:items-start justify-between bg-white sm:bg-transparent p-3 sm:p-0 rounded-xl border sm:border-0 border-[#E2E8F0] shrink-0">
@@ -868,7 +861,7 @@ export function CustomerJobsListView({ initialJobs, jobs: jobsProp, initialTab }
                         <>
                           <Zap className="size-3.5 text-amber-600 fill-current shrink-0" />
                           <span className="font-bold text-amber-700">
-                            {isUrdu ? "فوری آمد (30 تا 60 منٹ)" : "Immediate (Within 30–60 mins)"}
+                            {isUrdu ? "فوری" : "Immediate"}
                           </span>
                         </>
                       ) : (
@@ -960,6 +953,27 @@ export function CustomerJobsListView({ initialJobs, jobs: jobsProp, initialTab }
                       </Link>
                     )}
 
+                    {/* Rate & Review Button for Completed Jobs */}
+                    {job.status === "completed" && (
+                      job.hasReviewed ? (
+                        <div className="h-9 px-3 rounded-xl bg-emerald-50 text-emerald-800 border border-emerald-200 text-xs font-bold flex items-center gap-1.5">
+                          <Star className="size-3.5 fill-emerald-600 text-emerald-600" />
+                          <span>
+                            {job.customerReview?.rating ?? 5}/5 {isUrdu ? "ریویو درج ہے" : "Reviewed"}
+                          </span>
+                        </div>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => setReviewingJob(job)}
+                          className="h-9 px-4 rounded-xl font-bold text-xs sm:text-sm text-slate-950 bg-amber-400 hover:bg-amber-500 transition-colors shadow-xs flex items-center justify-center gap-1.5 cursor-pointer active:scale-98"
+                        >
+                          <Star className="size-3.5 fill-slate-950" />
+                          <span>{isUrdu ? "ریویو دیں" : "Rate & Review"}</span>
+                        </button>
+                      )
+                    )}
+
                   </div>
                 </div>
               </article>
@@ -1005,7 +1019,7 @@ export function CustomerJobsListView({ initialJobs, jobs: jobsProp, initialTab }
           </div>
           <div className="pt-2">
             <Link
-              href="/customer/post-job"
+              href="/customer/dashboard"
               className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#0F8B8D] hover:bg-[#0F8B8D]/90 text-white text-xs font-bold shadow-xs transition-all active:scale-95"
             >
               <Plus className="size-4" />
@@ -1060,6 +1074,38 @@ export function CustomerJobsListView({ initialJobs, jobs: jobsProp, initialTab }
             if (targetJob) {
               handleConfirmBooking(targetJob, offer);
             }
+          }}
+        />
+      )}
+      {/* Customer Review Modal for Completed Jobs */}
+      {reviewingJob && (
+        <CustomerReviewModal
+          job={reviewingJob}
+          isOpen={Boolean(reviewingJob)}
+          onClose={() => setReviewingJob(null)}
+          onReviewSubmitted={(review) => {
+            const updatedId = reviewingJob.id;
+            setJobs((prev) =>
+              prev.map((j) =>
+                j.id === updatedId
+                  ? {
+                      ...j,
+                      hasReviewed: true,
+                      customerReview: {
+                        rating: review.rating,
+                        comment: review.comment,
+                        date: new Date().toISOString(),
+                      },
+                    }
+                  : j
+              )
+            );
+            void queryClient.invalidateQueries({ queryKey: ["customer", "jobs"] });
+            showToast(
+              isUrdu
+                ? "آپ کا ریویو کامیابی سے درج کر لیا گیا ہے!"
+                : "Your review has been successfully recorded!"
+            );
           }}
         />
       )}

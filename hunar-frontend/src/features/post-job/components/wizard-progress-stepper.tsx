@@ -6,6 +6,7 @@ import type { PostJobStep } from "../types";
 
 export interface WizardProgressStepperProps {
   currentStep: PostJobStep;
+  maxVisitedStep?: PostJobStep;
   onGoToStep: (step: PostJobStep) => void;
   locale: string;
 }
@@ -25,11 +26,13 @@ const STEPS: StepMeta[] = [
 
 export function WizardProgressStepper({
   currentStep,
+  maxVisitedStep,
   onGoToStep,
   locale,
 }: WizardProgressStepperProps) {
   const isUrdu = locale === "ur";
   const progressPercent = Math.round((currentStep / 4) * 100);
+  const effectiveMax = Math.max(currentStep, maxVisitedStep ?? currentStep);
 
   return (
     <div className="w-full max-w-3xl lg:max-w-5xl xl:max-w-6xl mx-auto mb-3 lg:mb-4 px-1 sm:px-4">
@@ -40,9 +43,9 @@ export function WizardProgressStepper({
       >
         <ol className="flex items-center w-full">
           {STEPS.map((s, idx) => {
-            const isCompleted = currentStep > s.step;
             const isActive = currentStep === s.step;
-            const isUpcoming = currentStep < s.step;
+            const isCompleted = s.step < currentStep || (s.step <= effectiveMax && !isActive);
+            const isUpcoming = s.step > effectiveMax;
             const label = isUrdu ? s.labelUr : s.label;
 
             return (
@@ -51,7 +54,7 @@ export function WizardProgressStepper({
                   type="button"
                   disabled={isUpcoming}
                   onClick={() => {
-                    if (isCompleted) onGoToStep(s.step);
+                    if (s.step <= effectiveMax) onGoToStep(s.step);
                   }}
                   className={`w-full flex items-center justify-center gap-2 py-2 px-3 rounded-xl text-xs transition-all select-none ${
                     isActive
@@ -96,9 +99,9 @@ export function WizardProgressStepper({
       <div className="sm:hidden py-1.5">
         <ol className="flex items-center w-full justify-between gap-1">
           {STEPS.map((s, idx) => {
-            const isCompleted = currentStep > s.step;
             const isActive = currentStep === s.step;
-            const isUpcoming = currentStep < s.step;
+            const isCompleted = s.step < currentStep || (s.step <= effectiveMax && !isActive);
+            const isUpcoming = s.step > effectiveMax;
             const label = isUrdu ? s.labelUr : s.label;
 
             return (
@@ -108,7 +111,7 @@ export function WizardProgressStepper({
                     type="button"
                     disabled={isUpcoming}
                     onClick={() => {
-                      if (isCompleted) onGoToStep(s.step);
+                      if (s.step <= effectiveMax) onGoToStep(s.step);
                     }}
                     className={`w-full flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-xl text-[11px] transition-all whitespace-nowrap ${
                       isActive

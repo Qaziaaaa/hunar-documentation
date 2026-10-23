@@ -34,10 +34,12 @@ export function JobRequestCard({
   job,
   onClick,
   onHide,
+  isMatchedCategory = false,
 }: {
   job: JobRequest;
   onClick: (job: JobRequest) => void;
   onHide?: (jobId: string) => void;
+  isMatchedCategory?: boolean;
 }) {
   const locale = useLocale();
   const isUrdu = locale === "ur";
@@ -217,7 +219,13 @@ export function JobRequestCard({
         data-purpose="job-request-card"
       >
         {/* LEFT SIDE — Customer Profile */}
-        <div className="flex w-18 sm:w-20 shrink-0 flex-col items-center border-r border-slate-100/80 pr-2 sm:pr-2.5 text-center pointer-events-none">
+        <div
+          className={`flex w-18 sm:w-20 shrink-0 flex-col items-center pr-2 sm:pr-2.5 text-center pointer-events-none transition-colors ${
+            isMatchedCategory
+              ? "border-r-2 border-[#0F8B8D]"
+              : "border-r border-slate-100/80"
+          }`}
+        >
           {/* Customer Profile Image or First Letter Initial */}
           <div className="relative mb-1 size-11 sm:size-12 overflow-hidden rounded-full border border-[#123B5D]/20 bg-[#123B5D]/10 text-[#123B5D] flex items-center justify-center group-hover:border-[#0F8B8D] transition-colors shadow-2xs select-none">
             {job.customer.avatarUrl ? (
@@ -305,7 +313,7 @@ export function JobRequestCard({
                 {isUrgent && (
                   <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/15 px-2 py-0.5 text-[10.5px] font-extrabold text-amber-700 border border-amber-500/30">
                     <Zap className="size-3 fill-current text-amber-600" />
-                    <span>{isUrdu ? "فوری (30–60 منٹ)" : "Immediate (30–60m)"}</span>
+                    <span>{isUrdu ? "فوری" : "Immediate"}</span>
                   </span>
                 )}
                 <span className="inline-flex items-center gap-1 rounded-full bg-slate-100/80 px-2 py-0.5 text-[10.5px] font-bold text-[#123B5D]">

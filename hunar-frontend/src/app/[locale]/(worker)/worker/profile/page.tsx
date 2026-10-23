@@ -470,7 +470,7 @@ function ProfileContent() {
                   </Badge>
                 ) : null}
               </CardHeader>
-              <CardContent className="p-5 space-y-4 flex flex-col flex-1">
+              <CardContent className="p-5 space-y-4 flex flex-col flex-1 min-w-0 overflow-x-hidden">
                 {ratingQuery.isPending || reviewsQuery.isPending ? (
                   <LoadingState label={isUrdu ? "جائزے لوڈ ہو رہے ہیں..." : "Loading reviews..."} />
                 ) : ratingQuery.isError || reviewsQuery.isError ? (
@@ -488,7 +488,7 @@ function ProfileContent() {
                       />
                     )}
 
-                    <div className="space-y-3 pt-2">
+                    <div className="space-y-3 pt-2 min-w-0 overflow-x-hidden">
                       {!reviewsQuery.data?.items || reviewsQuery.data.items.length === 0 ? (
                         <div className="text-center py-6 text-slate-400 text-xs">
                           {isUrdu ? "ابھی تک کوئی جائزہ موجود نہیں ہے۔" : "No customer reviews yet."}
@@ -832,14 +832,14 @@ function ProfileContent() {
 
       {/* Mobile Only: Reviews Dialog Modal */}
       <Dialog open={mobileReviewsOpen} onOpenChange={setMobileReviewsOpen}>
-        <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto p-5">
+        <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto overflow-x-hidden p-5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           <DialogHeader className="pb-3 border-b border-slate-100">
             <DialogTitle className="text-base font-bold text-[#123B5D] flex items-center gap-2">
               <Star className="size-4.5 text-amber-500 fill-amber-500" />
               {isUrdu ? "گاہکوں کے جائزے" : "Customer Reviews"}
             </DialogTitle>
           </DialogHeader>
-          <div className="space-y-4 pt-2">
+          <div className="space-y-4 pt-2 min-w-0 overflow-x-hidden">
             {ratingQuery.isPending || reviewsQuery.isPending ? (
               <LoadingState label={isUrdu ? "جائزے لوڈ ہو رہے ہیں..." : "Loading reviews..."} />
             ) : ratingQuery.isError || reviewsQuery.isError ? (
@@ -857,7 +857,7 @@ function ProfileContent() {
                   />
                 )}
 
-                <div className="space-y-3 pt-2">
+                <div className="space-y-3 pt-2 min-w-0 overflow-x-hidden">
                   {!reviewsQuery.data?.items || reviewsQuery.data.items.length === 0 ? (
                     <div className="text-center py-6 text-slate-400 text-xs">
                       {isUrdu ? "ابھی تک کوئی جائزہ موجود نہیں ہے۔" : "No customer reviews yet."}
@@ -881,7 +881,7 @@ function ProfileContent() {
 
       {/* Desktop: All Reviews Dialog */}
       <Dialog open={desktopReviewsOpen} onOpenChange={setDesktopReviewsOpen}>
-        <DialogContent className="max-w-xl max-h-[85vh] overflow-y-auto p-5">
+        <DialogContent className="max-w-xl max-h-[85vh] overflow-y-auto overflow-x-hidden p-5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           <DialogHeader className="pb-3 border-b border-slate-100">
             <DialogTitle className="text-base font-bold text-[#123B5D] flex items-center gap-2">
               <Star className="size-4.5 text-amber-500 fill-amber-500" />
@@ -893,7 +893,7 @@ function ProfileContent() {
               ) : null}
             </DialogTitle>
           </DialogHeader>
-          <div className="space-y-4 pt-2">
+          <div className="space-y-4 pt-2 min-w-0 overflow-x-hidden">
             {ratingQuery.data && (
               <RatingSummary
                 summary={ratingQuery.data}
@@ -902,7 +902,7 @@ function ProfileContent() {
                 starLabel={isUrdu ? "ستارے" : "Stars"}
               />
             )}
-            <div className="space-y-3 pt-1">
+            <div className="space-y-3 pt-1 min-w-0 overflow-x-hidden">
               {!reviewsQuery.data?.items || reviewsQuery.data.items.length === 0 ? (
                 <div className="text-center py-6 text-slate-400 text-xs">
                   {isUrdu ? "ابھی تک کوئی جائزہ موجود نہیں ہے۔" : "No customer reviews yet."}

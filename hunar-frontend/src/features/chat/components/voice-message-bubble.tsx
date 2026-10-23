@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { Play, Pause, Volume2, Mic } from "lucide-react";
+import { audioManager } from "../lib/audio-manager";
 
 interface VoiceMessageBubbleProps {
   audioUrl?: string;
@@ -38,6 +39,7 @@ export function VoiceMessageBubble({
       audio.onended = () => {
         setIsPlaying(false);
         setProgress(0);
+        audioManager.stop(audio);
       };
       audio.ontimeupdate = () => {
         if (audio.duration && !isNaN(audio.duration) && audio.duration > 0) {
@@ -47,6 +49,7 @@ export function VoiceMessageBubble({
       audio.onerror = (e) => {
         console.warn("[VoiceMessageBubble] Audio loading/playback error:", e);
         setIsPlaying(false);
+        audioManager.stop(audio);
       };
       audioRef.current = audio;
     } else {
@@ -54,6 +57,7 @@ export function VoiceMessageBubble({
     }
     return () => {
       if (audioRef.current) {
+        audioManager.stop(audioRef.current);
         audioRef.current.pause();
         audioRef.current = null;
       }
@@ -66,11 +70,15 @@ export function VoiceMessageBubble({
 
     if (isPlaying) {
       audioRef.current.pause();
+      audioManager.stop(audioRef.current);
       setIsPlaying(false);
       return;
     }
 
     audioRef.current.playbackRate = speed;
+    audioManager.play(audioRef.current, () => {
+      setIsPlaying(false);
+    });
     audioRef.current
       .play()
       .then(() => {
@@ -79,6 +87,7 @@ export function VoiceMessageBubble({
       .catch((err) => {
         console.warn("[VoiceMessageBubble] Audio play blocked/failed:", err);
         setIsPlaying(false);
+        if (audioRef.current) audioManager.stop(audioRef.current);
       });
   };
 

@@ -64,12 +64,13 @@ export async function generateUniqueOrderCode(
 @Injectable()
 export class ParseOrderCodePipe implements PipeTransform<string, string> {
   transform(value: string): string {
-    if (!value || typeof value !== 'string' || !ORDER_CODE_REGEX.test(value.trim())) {
+    const cleaned = typeof value === 'string' ? value.replace(/^#/, '').trim() : '';
+    if (!cleaned || !ORDER_CODE_REGEX.test(cleaned)) {
       throw new BadRequestException(
         `Invalid Order Code format: "${value}". Must match LLD-DDL (e.g. AW3-90W).`,
       );
     }
-    return value.trim();
+    return cleaned;
   }
 }
 

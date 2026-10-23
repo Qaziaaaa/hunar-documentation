@@ -2,13 +2,16 @@
 
 import { useLocale } from "next-intl";
 import { useState, useEffect } from "react";
-import { Check, CheckCheck, User, X, Phone, ShieldCheck } from "lucide-react";
+import { Check, CheckCheck, Loader2, User, X, Phone, ShieldCheck } from "lucide-react";
 import { sendChatMessage, uploadChatImage, getMessagesByJob, parseVoiceNote, encodeVoiceNote, uploadVoiceNote } from "@/features/chat/api/chat-api";
-import { joinConversationRoom, subscribeToMessages } from "@/services/worker/chat.service";
+import { joinConversationRoom, subscribeToMessages, markConversationRead, subscribeToReadReceipts } from "@/services/worker/chat.service";
 import { getStoredUser } from "@/lib/api-client";
 import { ChatInputBar } from "@/features/chat/components/chat-input-bar";
 import { VoiceMessageBubble } from "@/features/chat/components/voice-message-bubble";
 import type { ScheduledVisit } from "../types";
+
+// Module-level in-memory cache so reopening quick chat loads instantly in 0ms
+const quickChatCache: Record<string, ChatMessage[]> = {};
 
 interface QuickChatDrawerProps {
   visit: ScheduledVisit | null;
@@ -31,30 +34,44 @@ interface ChatMessage {
   imageUrl?: string;
   time: string;
   createdAt?: string;
+  isRead?: boolean;
 }
 
 export function QuickChatDrawer({ visit, isOpen, onClose }: QuickChatDrawerProps) {
   const locale = useLocale();
   const isUrdu = locale === "ur";
 
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [messages, setMessages] = useState<ChatMessage[]>(() => {
+    return visit?.jobId && quickChatCache[visit.jobId] ? quickChatCache[visit.jobId] : [];
+  });
+  const [isLoading, setIsLoading] = useState(false);
 
   // Load real messages for visit when drawer opens
   useEffect(() => {
     if (!isOpen || !visit?.jobId) {
-      setMessages([]);
       return;
     }
     let isCancelled = false;
-    setMessages([]);
+
+    // Fast-path: if we already have cached messages, display them immediately in 0ms!
+    if (quickChatCache[visit.jobId]?.length) {
+      setMessages(quickChatCache[visit.jobId]);
+      setIsLoading(false);
+    } else {
+      setMessages([]);
+      setIsLoading(true);
+    }
 
     // Immediately join the job room so real-time socket events flow immediately
     joinConversationRoom(visit.jobId);
+    void markConversationRead(visit.jobId);
 
     getMessagesByJob(visit.jobId)
       .then((backendMsgs) => {
         if (isCancelled) return;
+        setIsLoading(false);
         if (!backendMsgs || backendMsgs.length === 0) {
+          quickChatCache[visit.jobId] = [];
           setMessages([]);
           return;
         }
@@ -76,6 +93,7 @@ export function QuickChatDrawer({ visit, isOpen, onClose }: QuickChatDrawerProps
             audioUrl: voice?.audioUrl,
             durationSeconds: voice?.durationSeconds,
             imageUrl: m.imageUrl,
+            isRead: Boolean(m.isRead),
             time: new Date(m.createdAt).toLocaleTimeString([], {
               hour: "2-digit",
               minute: "2-digit",
@@ -83,13 +101,18 @@ export function QuickChatDrawer({ visit, isOpen, onClose }: QuickChatDrawerProps
             createdAt: m.createdAt,
           };
         });
+        quickChatCache[visit.jobId] = formatted;
         setMessages(formatted);
         if (backendMsgs[0]?.conversationId) {
           joinConversationRoom(backendMsgs[0].conversationId);
+          void markConversationRead(backendMsgs[0].conversationId);
         }
       })
       .catch(() => {
-        if (!isCancelled) setMessages([]);
+        if (!isCancelled) {
+          setIsLoading(false);
+          setMessages(quickChatCache[visit.jobId] || []);
+        }
       });
 
     return () => {
@@ -109,6 +132,11 @@ export function QuickChatDrawer({ visit, isOpen, onClose }: QuickChatDrawerProps
       const voice = parseVoiceNote(msg.text || (msg as any).content);
       const msgType: "text" | "voice" | "image" = voice ? "voice" : msg.imageUrl ? "image" : "text";
 
+      // If from technician while drawer is open, mark as read immediately
+      if (!isFromMe) {
+        void markConversationRead(visit.jobId);
+      }
+
       setMessages((prev) => {
         if (prev.some((m) => m.id === msg.id)) return prev;
 
@@ -126,6 +154,7 @@ export function QuickChatDrawer({ visit, isOpen, onClose }: QuickChatDrawerProps
               id: msg.id,
               messageId: msg.id,
               audioUrl: voice?.audioUrl || copy[tempIdx].audioUrl,
+              isRead: Boolean(msg.isRead),
             };
             return copy;
           }
@@ -146,6 +175,7 @@ export function QuickChatDrawer({ visit, isOpen, onClose }: QuickChatDrawerProps
           audioUrl: voice?.audioUrl,
           durationSeconds: voice?.durationSeconds,
           imageUrl: msg.imageUrl,
+          isRead: true, // Customer is currently viewing the drawer
           time: new Date(msg.createdAt).toLocaleTimeString([], {
             hour: "2-digit",
             minute: "2-digit",
@@ -155,8 +185,29 @@ export function QuickChatDrawer({ visit, isOpen, onClose }: QuickChatDrawerProps
         return [...prev, newMsg];
       });
     });
+
+    // Real-time socket listener for read receipts (updates single tick to double tick)
+    const unsubscribeRead = subscribeToReadReceipts((receipt) => {
+      const currentUserId = getStoredUser()?.id;
+      // Do not mark customer's own sent messages as read when own client triggers read receipt
+      if (receipt.readerId && currentUserId && receipt.readerId === currentUserId) {
+        return;
+      }
+
+      const isThisJob =
+        (receipt.jobId && receipt.jobId === visit.jobId) ||
+        (receipt.conversationId && receipt.conversationId === visit.jobId);
+
+      if (isThisJob) {
+        setMessages((prev) =>
+          prev.map((m) => (m.sender === "customer" ? { ...m, isRead: true } : m))
+        );
+      }
+    });
+
     return () => {
       unsubscribe();
+      unsubscribeRead();
     };
   }, [isOpen, visit?.jobId]);
 
@@ -177,6 +228,7 @@ export function QuickChatDrawer({ visit, isOpen, onClose }: QuickChatDrawerProps
       type: "text",
       messageType: "text",
       text: messageText,
+      isRead: false,
       time: isUrdu ? "ابھی" : "Just now",
       createdAt: new Date().toISOString(),
     };
@@ -186,7 +238,16 @@ export function QuickChatDrawer({ visit, isOpen, onClose }: QuickChatDrawerProps
     sendChatMessage(visit.jobId, messageText, { isJobId: true })
       .then((sent) => {
         setMessages((prev) =>
-          prev.map((m) => (m.id === tempId ? { ...m, id: sent.id, messageId: sent.id } : m))
+          prev.map((m) =>
+            m.id === tempId
+              ? {
+                  ...m,
+                  id: sent.id,
+                  messageId: sent.id,
+                  isRead: Boolean(sent.isRead),
+                }
+              : m
+          )
         );
         if (sent.conversationId) {
           joinConversationRoom(sent.conversationId);
@@ -213,6 +274,7 @@ export function QuickChatDrawer({ visit, isOpen, onClose }: QuickChatDrawerProps
       messageType: "voice",
       audioUrl,
       durationSeconds,
+      isRead: false,
       time: isUrdu ? "ابھی" : "Just now",
       createdAt: new Date().toISOString(),
     };
@@ -245,6 +307,7 @@ export function QuickChatDrawer({ visit, isOpen, onClose }: QuickChatDrawerProps
                 id: sent.id,
                 messageId: sent.id,
                 audioUrl: serverAudioUrl,
+                isRead: Boolean(sent.isRead),
               }
             : m
         )
@@ -260,11 +323,14 @@ export function QuickChatDrawer({ visit, isOpen, onClose }: QuickChatDrawerProps
 
   const handleSendImage = async (file: File) => {
     const previewUrl = URL.createObjectURL(file);
+    const tempId = `m-${Date.now()}`;
     const newMsg: ChatMessage = {
-      id: `m-${Date.now()}`,
+      id: tempId,
+      messageId: tempId,
       sender: "customer",
       type: "image",
       imageUrl: previewUrl,
+      isRead: false,
       time: isUrdu ? "ابھی" : "Just now",
     };
 
@@ -273,7 +339,22 @@ export function QuickChatDrawer({ visit, isOpen, onClose }: QuickChatDrawerProps
     uploadChatImage(file)
       .then((res) => {
         if (res?.key) {
-          sendChatMessage(visit.jobId, "", { isJobId: true, imageKey: res.key });
+          sendChatMessage(visit.jobId, "", { isJobId: true, imageKey: res.key })
+            .then((sent) => {
+              setMessages((prev) =>
+                prev.map((m) =>
+                  m.id === tempId
+                    ? {
+                        ...m,
+                        id: sent.id,
+                        messageId: sent.id,
+                        isRead: Boolean(sent.isRead),
+                      }
+                    : m
+                )
+              );
+            })
+            .catch(() => {});
         }
       })
       .catch(() => {});
@@ -338,7 +419,14 @@ export function QuickChatDrawer({ visit, isOpen, onClose }: QuickChatDrawerProps
 
         {/* Messages Feed */}
         <div className="flex-1 overflow-y-auto p-4 space-y-3.5 bg-slate-50/30">
-          {messages.length === 0 ? (
+          {isLoading && messages.length === 0 ? (
+            <div className="flex flex-col items-center justify-center h-full min-h-[220px] text-center p-6 space-y-3">
+              <Loader2 className="size-8 text-[#0F8B8D] animate-spin" />
+              <p className="text-xs font-semibold text-slate-500">
+                {isUrdu ? "پیغامات لوڈ ہو رہے ہیں..." : "Loading messages..."}
+              </p>
+            </div>
+          ) : messages.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full min-h-[220px] text-center p-6 space-y-2">
               <div className="size-12 rounded-2xl bg-teal-50 border border-teal-200 text-[#0F8B8D] flex items-center justify-center">
                 <ShieldCheck className="size-6 text-[#0F8B8D]" />
@@ -399,7 +487,13 @@ export function QuickChatDrawer({ visit, isOpen, onClose }: QuickChatDrawerProps
                     }`}
                   >
                     <span>{msg.time}</span>
-                    {isCustomer && <CheckCheck className="size-3.5 text-teal-300" />}
+                    {isCustomer && (
+                      msg.isRead ? (
+                        <CheckCheck className="size-3.5 text-teal-300" aria-label="Read" />
+                      ) : (
+                        <Check className="size-3.5 text-slate-300" aria-label="Sent" />
+                      )
+                    )}
                   </div>
                 </div>
               );

@@ -80,11 +80,11 @@ export function PeshawarMapPicker({
         latitude: lat,
         longitude: lng,
         area: geo.area,
-        landmark: "",
-        address: "",
+        ...(data.address ? { address: data.address } : {}),
+        ...(data.landmark ? { landmark: data.landmark } : {}),
       });
     },
-    [onChange]
+    [onChange, data.address, data.landmark]
   );
 
   // Live GPS locator

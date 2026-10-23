@@ -1,4 +1,5 @@
 import { http, getStoredUser, API_BASE_URL } from "@/lib/api-client";
+import { getSocket } from "@/lib/socket";
 
 export interface ChatMessage {
   id: string;
@@ -27,6 +28,7 @@ export interface ChatConversation {
   lastMessage?: string;
   lastMessageAt?: string;
   updatedAt?: string;
+  unreadCount?: number;
   job?: { id: string; title: string; status: string };
   customer?: { id: string; name: string; avatarUrl: string | null };
   worker?: { id: string; name: string; avatarUrl: string | null };
@@ -117,6 +119,37 @@ export async function sendChatMessage(
   options?: { isJobId?: boolean; imageKey?: string }
 ): Promise<ChatMessage> {
   const text = content?.trim() || "";
+
+  // Fast-path: WebSocket emission if connected and text message (sub-10ms delivery)
+  if (!options?.imageKey) {
+    const socket = getSocket();
+    if (socket?.connected) {
+      try {
+        const wsRes = await new Promise<any>((resolve, reject) => {
+          const timer = setTimeout(() => reject(new Error("WS_TIMEOUT")), 300);
+          socket.emit(
+            "chat:send",
+            {
+              conversationId: targetId,
+              jobId: targetId,
+              text: text || undefined,
+            },
+            (response: any) => {
+              clearTimeout(timer);
+              if (response?.error) reject(new Error(response.error));
+              else resolve(response?.message || response);
+            }
+          );
+        });
+        const msgObj = wsRes?.message || wsRes;
+        if (msgObj && (msgObj.id || msgObj.text || msgObj.content)) {
+          return normalizeChatMessage(msgObj);
+        }
+      } catch {
+        // Fallback to HTTP gracefully
+      }
+    }
+  }
 
   // If designated as a jobId, send via POST /chat/send
   if (options?.isJobId) {

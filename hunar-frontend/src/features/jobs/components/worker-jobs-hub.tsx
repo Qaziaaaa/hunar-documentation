@@ -21,9 +21,10 @@ export function WorkerJobsHub() {
   // Tab State: "upcoming" | "past"
   const [activeTab, setActiveTab] = useState<"upcoming" | "past">("upcoming");
 
-  // Revalidate active jobs immediately on mount so the latest upcoming jobs appear instantly
+  // Revalidate jobs immediately on mount so latest upcoming and past jobs appear instantly
   React.useEffect(() => {
     void workerStore.syncActiveJobs();
+    void workerStore.hydrate();
   }, []);
 
   // 1. Upcoming & Active Visits (all accepted visits or active visits ready to dispatch or in-progress)

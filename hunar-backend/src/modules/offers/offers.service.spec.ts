@@ -135,6 +135,20 @@ function makeFakes(db: Db) {
 }
 
 describe('OffersService eligibility', () => {
+  const originalTestMode = process.env.ALLOW_WORKER_JOB_TEST_MODE;
+
+  beforeEach(() => {
+    delete process.env.ALLOW_WORKER_JOB_TEST_MODE;
+  });
+
+  afterAll(() => {
+    if (originalTestMode !== undefined) {
+      process.env.ALLOW_WORKER_JOB_TEST_MODE = originalTestMode;
+    } else {
+      delete process.env.ALLOW_WORKER_JOB_TEST_MODE;
+    }
+  });
+
   it('blocks a rejected worker from submitting an offer', async () => {
     const db = new Db();
     const fakes = makeFakes(db);

@@ -277,7 +277,9 @@ export function JobRequestModal({
                         </span>
                       </>
                     )}
-                    {job.customer.memberSince && job.customer.memberSince !== "—" && (
+                    {job.customer.memberSince &&
+                      job.customer.memberSince !== "—" &&
+                      job.customer.memberSince !== "Member" && (
                       <>
                         <span className="text-slate-300 hidden sm:inline">·</span>
                         <span className="text-slate-400 text-[11px] hidden sm:inline">

@@ -1,5 +1,6 @@
 import {
   BrickWall,
+  Briefcase,
   Bug,
   Cctv,
   Droplets,
@@ -278,7 +279,7 @@ export const PESHAWAR_AREAS = [
 
 export const SERVICE_AREAS = PESHAWAR_AREAS;
 
-const CATEGORY_ALIASES: Record<string, ServiceCategory> = {
+export const CATEGORY_ALIASES: Record<string, ServiceCategory> = {
   cleaning: "cleaner",
   clean: "cleaner",
   "deep-cleaning": "cleaner",
@@ -333,6 +334,52 @@ const CATEGORY_ALIASES: Record<string, ServiceCategory> = {
   mover: "movers",
   shifting: "movers",
   transport: "movers",
+  "movers & packers": "movers",
+  "movers-packers": "movers",
+  "solar & ups": "solar-technician",
+  "solar-ups": "solar-technician",
+  "ac & refrigeration": "ac-technician",
+  "ac-refrigeration": "ac-technician",
+  "gardener (mali)": "gardener",
+  "gardener-mali": "gardener",
+  "seed-category-1": "plumber",
+  "seed-category-2": "electrician",
+  "seed-category-3": "ac-technician",
+  "seed-category-4": "carpenter",
+  "seed-category-5": "painter",
+  "seed-category-6": "cleaner",
+  "seed-category-7": "mason-mistry",
+  "seed-category-8": "pest-control",
+  "seed-category-9": "electrician",
+  "seed-category-10": "solar-technician",
+  "seed-category-11": "cctv-security",
+  "seed-category-12": "welder",
+  "seed-category-13": "gardener",
+  "seed-category-14": "movers",
+};
+
+export function createCustomCategoryOption(
+  id: string,
+  name: string,
+  urduName?: string,
+  fee?: number
+): CategoryOption {
+  const cleanName = (name || id || "Custom Service").trim();
+  return {
+    id: id as ServiceCategory,
+    name: cleanName,
+    urduName: urduName || cleanName,
+    subtitle: `${cleanName} Services & Repair`,
+    icon: Briefcase,
+    iconColor: "text-[#0F8B8D]",
+    iconBg: "bg-teal-50 border-teal-200/60",
+    subCategories: [
+      `${cleanName} Inspection & Estimate`,
+      `${cleanName} Repair / Fix`,
+      `New ${cleanName} Installation`,
+    ],
+    suggestedFee: fee || 500,
+  };
 };
 
 export function resolveCategoryOption(

@@ -23,7 +23,10 @@ export function WorkerInvoiceModal({ job, onClose }: WorkerInvoiceModalProps) {
   const grossTotal = visitCharge + repairCharge;
   const platformCommission = job.platformCommission ?? Math.round(grossTotal * 0.1);
   const netEarnings = job.workerNetEarnings ?? (grossTotal - platformCommission);
-  const invoiceNumber = job.invoiceNumber || `INV-${job.id}`;
+  const cleanJobId = job.id?.replace(/^INV-/, "") || job.id;
+  const receiptReference = job.invoiceNumber && !job.invoiceNumber.startsWith("INV-")
+    ? job.invoiceNumber
+    : `Order #${cleanJobId}`;
   const warrantyDays = job.warrantyDays ?? 5;
 
   const handlePrint = () => {
@@ -42,7 +45,7 @@ export function WorkerInvoiceModal({ job, onClose }: WorkerInvoiceModalProps) {
             <div className="min-w-0">
               <div className="flex items-center gap-1.5 flex-wrap">
                 <span className="text-[11px] sm:text-xs font-mono font-bold text-[#0F8B8D]">
-                  {invoiceNumber}
+                  {receiptReference}
                 </span>
                 <span className="px-2 py-0.2 rounded-full bg-emerald-50 text-emerald-700 text-[9.5px] sm:text-[10px] font-bold border border-emerald-200">
                   PAID &amp; SETTLED

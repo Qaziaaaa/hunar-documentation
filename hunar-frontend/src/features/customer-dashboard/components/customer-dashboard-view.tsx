@@ -33,7 +33,7 @@ export function CustomerDashboardView() {
       {/* Active Visit & Doorstep OTP PIN Banner */}
       <ActiveVisitBanner />
 
-      {/* Small Service Cards (3 in 1 line, max 3 lines with Show All button) */}
+      {/* Small Service Cards (2 in 1 line on mobile, 4 in 1 line on desktop) */}
       <ServicesGrid />
 
       {/* WorkerFIX Branding Banner below service grid - hidden on mobile view */}

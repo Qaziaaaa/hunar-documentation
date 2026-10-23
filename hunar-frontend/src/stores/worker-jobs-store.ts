@@ -39,6 +39,23 @@ export interface WorkerState {
   error: string | null;
 }
 
+/** Case-insensitive whitespace-trimmed job ID matcher to avoid casing mismatches */
+export function matchesJobId(targetId?: string | null, candidateId?: string | null): boolean {
+  if (!targetId || !candidateId) return false;
+  return targetId.toLowerCase().trim() === candidateId.toLowerCase().trim();
+}
+
+/** Case-insensitive VisitOffer dictionary lookup */
+export function getOfferForJob(offers: Record<string, VisitOffer>, jobId?: string | null): VisitOffer | undefined {
+  if (!jobId) return undefined;
+  if (offers[jobId]) return offers[jobId];
+  const norm = jobId.toLowerCase().trim();
+  for (const [key, offer] of Object.entries(offers)) {
+    if (key.toLowerCase().trim() === norm) return offer;
+  }
+  return undefined;
+}
+
 let socketListenersInitialized = false;
 
 function initWorkerSocketListeners() {
@@ -161,7 +178,7 @@ function initWorkerSocketListeners() {
   const handleOfferAccepted = (data: any) => {
     if (!data?.jobId) return;
     const { jobId, offerId, agreedPrice } = data;
-    const existingOffer = globalState.offers[jobId];
+    const existingOffer = getOfferForJob(globalState.offers, jobId);
     const agreed = agreedPrice ?? existingOffer?.visitCharge ?? 0;
     const commission = Math.round(agreed * 0.1);
     const net = agreed - commission;
@@ -195,7 +212,7 @@ function initWorkerSocketListeners() {
             },
       },
       jobs: globalState.jobs.map((j) =>
-        j.id === jobId
+        matchesJobId(jobId, j.id)
           ? {
               ...j,
               status: "accepted" as const,
@@ -211,7 +228,7 @@ function initWorkerSocketListeners() {
   const handleJobClosed = (data: any) => {
     if (!data?.jobId) return;
     const { jobId } = data;
-    const existingOffer = globalState.offers[jobId];
+    const existingOffer = getOfferForJob(globalState.offers, jobId);
     patch({
       offers: existingOffer
         ? {
@@ -220,7 +237,7 @@ function initWorkerSocketListeners() {
           }
         : globalState.offers,
       jobs: globalState.jobs.map((j) =>
-        j.id === jobId ? { ...j, status: "closed_assigned" as const } : j
+        matchesJobId(jobId, j.id) ? { ...j, status: "closed_assigned" as const } : j
       ),
     });
   };
@@ -229,7 +246,7 @@ function initWorkerSocketListeners() {
     if (!data?.jobId) return;
     const { jobId, visitCharge, sender, notes } = data;
     if (sender === "CUSTOMER" || data.action === "COUNTER") {
-      const offer = globalState.offers[jobId];
+      const offer = getOfferForJob(globalState.offers, jobId);
       if (offer) {
         const nextRound = offer.currentRound + 1;
         const updatedHistory: CounterHistoryItem[] = [
@@ -256,7 +273,7 @@ function initWorkerSocketListeners() {
             },
           },
           jobs: globalState.jobs.map((j) =>
-            j.id === jobId ? { ...j, status: "counter_received" as const } : j
+            matchesJobId(jobId, j.id) ? { ...j, status: "counter_received" as const } : j
           ),
         });
       }
@@ -267,7 +284,7 @@ function initWorkerSocketListeners() {
     if (!data?.jobId) return;
     patch({
       jobs: globalState.jobs.map((j) =>
-        j.id === data.jobId ? { ...j, status: "cancelled" as const } : j
+        matchesJobId(data.jobId, j.id) ? { ...j, status: "cancelled" as const } : j
       ),
     });
   };
@@ -275,7 +292,7 @@ function initWorkerSocketListeners() {
   const handleJobNew = (data: any) => {
     const rawJob = data?.job || (data?.id ? data : null);
     if (!rawJob?.id) return;
-    if (globalState.jobs.some((j) => j.id === rawJob.id)) return;
+    if (globalState.jobs.some((j) => matchesJobId(rawJob.id, j.id))) return;
     const newJob = mapJobToRequest(rawJob);
     patch({
       jobs: [newJob, ...globalState.jobs],
@@ -380,7 +397,7 @@ export const workerStore = {
   updateJobStatus(jobId: string, status: any, repairCharge?: number) {
     patch({
       jobs: globalState.jobs.map((j) =>
-        j.id === jobId
+        matchesJobId(jobId, j.id)
           ? {
               ...j,
               status,
@@ -697,7 +714,7 @@ export const workerStore = {
       };
     }
 
-    const previousStatus = globalState.jobs.find((j) => j.id === jobId)?.status;
+    const previousStatus = globalState.jobs.find((j) => matchesJobId(jobId, j.id))?.status;
     const commission = Math.round(visitCharge * 0.1); // 10% platform commission
     const net = visitCharge - commission;
 
@@ -732,7 +749,7 @@ export const workerStore = {
     patch({
       offers: { ...globalState.offers, [jobId]: newOffer },
       jobs: globalState.jobs.map((j) =>
-        j.id === jobId ? { ...j, status: "offer_sent" as const, totalOffers: j.totalOffers + 1 } : j
+        matchesJobId(jobId, j.id) ? { ...j, status: "offer_sent" as const, totalOffers: j.totalOffers + 1 } : j
       ),
     });
 
@@ -751,7 +768,7 @@ export const workerStore = {
         patch({
           offers,
           jobs: globalState.jobs.map((j) =>
-            j.id === jobId
+            matchesJobId(jobId, j.id)
               ? {
                   ...j,
                   status: previousStatus ?? j.status,
@@ -769,7 +786,7 @@ export const workerStore = {
     patch({
       offers: { ...globalState.offers, [jobId]: serverOffer },
       jobs: globalState.jobs.map((j) =>
-        j.id === jobId
+        matchesJobId(jobId, j.id)
           ? {
               ...j,
               status: "offer_sent" as const,
@@ -782,7 +799,7 @@ export const workerStore = {
 
   // Task 6: Accept customer's counter offer
   acceptCounterOffer(jobId: string): boolean {
-    const offer = globalState.offers[jobId];
+    const offer = getOfferForJob(globalState.offers, jobId);
     if (!offer || !offer.customerCounterAmount) return false;
 
     const agreedPrice = offer.customerCounterAmount;
@@ -811,7 +828,7 @@ export const workerStore = {
     patch({
       offers: { ...globalState.offers, [jobId]: updatedOffer },
       jobs: globalState.jobs.map((j) =>
-        j.id === jobId ? { ...j, status: "accepted" as const } : j
+        matchesJobId(jobId, j.id) ? { ...j, status: "accepted" as const } : j
       ),
     });
 
@@ -823,7 +840,7 @@ export const workerStore = {
 
   // Task 6: Send worker counter-offer (Bounded Rounds: max 3)
   sendWorkerCounter(jobId: string, counterAmount: number, message?: string): { success: boolean; error?: string } {
-    const offer = globalState.offers[jobId];
+    const offer = getOfferForJob(globalState.offers, jobId);
     if (!offer) return { success: false, error: "Offer not found" };
 
     if (offer.currentRound >= offer.maxRounds) {
@@ -863,7 +880,7 @@ export const workerStore = {
     patch({
       offers: { ...globalState.offers, [jobId]: updatedOffer },
       jobs: globalState.jobs.map((j) =>
-        j.id === jobId ? { ...j, status: "offer_sent" as const } : j
+        matchesJobId(jobId, j.id) ? { ...j, status: "offer_sent" as const } : j
       ),
     });
 
@@ -1135,7 +1152,7 @@ export const workerStore = {
   cancelJob(jobId: string, reason: string) {
     patch({
       jobs: globalState.jobs.map((j) =>
-        j.id === jobId ? { ...j, status: "cancelled" as const } : j
+        matchesJobId(jobId, j.id) ? { ...j, status: "cancelled" as const } : j
       ),
     });
 
@@ -1144,71 +1161,10 @@ export const workerStore = {
     });
   },
 
-  // Simulation: Another worker assigned (Real-time Socket.IO trigger)
-  simulateClosedAssigned(jobId: string) {
-    const offer = globalState.offers[jobId];
-    if (offer) {
-      patch({
-        offers: { ...globalState.offers, [jobId]: { ...offer, status: "closed_assigned" } },
-        jobs: globalState.jobs.map((j) =>
-          j.id === jobId ? { ...j, status: "closed_assigned" as const } : j
-        ),
-      });
-    }
-  },
-
-  // Simulation: Customer viewing offer
-  simulateCustomerViewing(jobId: string) {
-    const offer = globalState.offers[jobId];
-    if (offer && offer.status === "sent") {
-      patch({
-        offers: { ...globalState.offers, [jobId]: { ...offer, status: "viewing" } },
-        jobs: globalState.jobs.map((j) =>
-          j.id === jobId ? { ...j, status: "customer_viewing" as const } : j
-        ),
-      });
-    }
-  },
-
-  // Simulation: Customer sent counter
-  simulateCustomerCounter(jobId: string, counterAmount: number, message: string) {
-    const offer = globalState.offers[jobId];
-    if (offer) {
-      const nextRound = offer.currentRound + 1;
-      const updatedHistory: CounterHistoryItem[] = [
-        ...offer.counterHistory,
-        {
-          round: nextRound,
-          sender: "customer",
-          amount: counterAmount,
-          message,
-          createdAt: new Date().toISOString(),
-        },
-      ];
-
-      patch({
-        offers: {
-          ...globalState.offers,
-          [jobId]: {
-            ...offer,
-            currentRound: nextRound,
-            status: "counter_received",
-            customerCounterAmount: counterAmount,
-            customerCounterMessage: message,
-            counterHistory: updatedHistory,
-          },
-        },
-        jobs: globalState.jobs.map((j) =>
-          j.id === jobId ? { ...j, status: "counter_received" as const } : j
-        ),
-      });
-    }
-  },
-
   approveRepair(jobId: string) {
     patch({
       jobs: globalState.jobs.map((j) =>
-        j.id === jobId ? { ...j, status: "repair_approved" as const } : j
+        matchesJobId(jobId, j.id) ? { ...j, status: "repair_approved" as const } : j
       ),
     });
   },
@@ -1216,13 +1172,13 @@ export const workerStore = {
   declineRepair(jobId: string) {
     patch({
       jobs: globalState.jobs.map((j) =>
-        j.id === jobId ? { ...j, status: "repair_declined" as const } : j
+        matchesJobId(jobId, j.id) ? { ...j, status: "repair_declined" as const } : j
       ),
     });
   },
 
   startRepair(jobId: string) {
-    const repairId = repairIdByJob.get(jobId);
+    const repairId = repairIdByJob.get(jobId) || repairIdByJob.get(jobId?.toLowerCase());
     if (repairId) {
       startRepairApi(repairId).catch((err) => {
         console.error("[workerStore] start repair failed:", err);
@@ -1230,14 +1186,14 @@ export const workerStore = {
     }
     patch({
       jobs: globalState.jobs.map((j) =>
-        j.id === jobId ? { ...j, status: "repair_in_progress" as const } : j
+        matchesJobId(jobId, j.id) ? { ...j, status: "repair_in_progress" as const } : j
       ),
     });
   },
 
   completeJob(jobId: string, repairCharge: number = 0) {
-    const job = globalState.jobs.find((j) => j.id === jobId);
-    const offer = globalState.offers[jobId];
+    const job = globalState.jobs.find((j) => matchesJobId(jobId, j.id));
+    const offer = getOfferForJob(globalState.offers, jobId);
     const visitFee = offer?.agreedVisitCharge ?? offer?.visitCharge ?? job?.visitCharge ?? (job as any)?.suggestedVisitCharge ?? 0;
     const isDeclined = job?.status === "repair_declined" || repairCharge === 0;
     const finalRepairCharge = isDeclined ? 0 : Math.max(0, repairCharge);
@@ -1247,7 +1203,7 @@ export const workerStore = {
 
     patch({
       jobs: globalState.jobs.map((j) =>
-        j.id === jobId
+        matchesJobId(jobId, j.id)
           ? {
               ...j,
               status: "completed" as const,
@@ -1256,7 +1212,6 @@ export const workerStore = {
               platformCommission: commission,
               workerNetEarnings: net,
               completedAt: new Date().toISOString(),
-              invoiceNumber: `INV-${jobId}`,
               warrantyDays: isDeclined ? 0 : (j.warrantyDays ?? 5),
             }
           : j
@@ -1279,7 +1234,7 @@ export const workerStore = {
     });
 
     // 2. Complete active repair if repair was registered and accepted
-    const repairId = repairIdByJob.get(jobId);
+    const repairId = repairIdByJob.get(jobId) || repairIdByJob.get(jobId?.toLowerCase());
     if (repairId && finalRepairCharge > 0) {
       startRepairApi(repairId)
         .catch(() => {})

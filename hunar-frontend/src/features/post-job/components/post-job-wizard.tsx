@@ -6,7 +6,11 @@ import { Check, X } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useSearchParams } from "next/navigation";
 import { Link, useRouter } from "@/i18n/navigation";
-import { CATEGORY_OPTIONS, resolveCategoryOption } from "../data/categories";
+import {
+  CATEGORY_OPTIONS,
+  resolveCategoryOption,
+  createCustomCategoryOption,
+} from "../data/categories";
 import type { PostJobData, PostJobStep, ServiceCategory } from "../types";
 import { createJob } from "../api/post-job-api";
 import { buildPostJobSignInHref } from "../lib/return-url";
@@ -89,17 +93,39 @@ export function PostJobWizard() {
   const t = useTranslations("CustomerPortal.PostJob");
   const searchParams = useSearchParams();
   const categoryParam = searchParams.get("category");
+  const categoryIdParam = searchParams.get("categoryId");
+  const categoryNameParam = searchParams.get("categoryName");
+  const categoryNameUrduParam = searchParams.get("categoryNameUrdu");
   const subCategoryParam = searchParams.get("subCategory") || searchParams.get("sub");
   const searchParam = searchParams.get("search");
   const shouldResumeReview = searchParams.get("resume") === "review";
 
-  const initialCategoryMatch = resolveCategoryOption(categoryParam || searchParam);
+  const resolveTargetCategory = (query: string | null | undefined) => {
+    if (!query) return undefined;
+    const standardMatch = resolveCategoryOption(query);
+    if (standardMatch) return standardMatch;
+    if (categoryNameParam || categoryParam || categoryIdParam) {
+      return createCustomCategoryOption(
+        categoryIdParam || categoryParam || categoryNameParam || query,
+        categoryNameParam || query,
+        categoryNameUrduParam || undefined
+      );
+    }
+    return undefined;
+  };
+
+  const initialCategoryMatch = resolveTargetCategory(
+    categoryParam || searchParam || categoryIdParam || categoryNameParam
+  );
 
   const [currentStep, setCurrentStep] = useState<PostJobStep>(
     shouldResumeReview ? 4 : 2
   );
+  const [maxVisitedStep, setMaxVisitedStep] = useState<PostJobStep>(
+    shouldResumeReview ? 4 : 2
+  );
   const [formData, setFormData] = useState<PostJobData>(() => {
-    const fallback: PostJobData = initialCategoryMatch
+    return initialCategoryMatch
       ? {
           ...INITIAL_FORM_DATA,
           category: initialCategoryMatch.id,
@@ -108,20 +134,6 @@ export function PostJobWizard() {
           suggestedVisitFee: initialCategoryMatch.suggestedFee || 0,
         }
       : INITIAL_FORM_DATA;
-
-    if (typeof window !== "undefined") {
-      const saved = getStoredDraft();
-      if (saved && (saved.title || saved.description || saved.address || saved.category)) {
-        return {
-          ...fallback,
-          ...saved,
-          category: saved.category || fallback.category,
-          subCategory: saved.subCategory || fallback.subCategory,
-          title: saved.title || fallback.title,
-        };
-      }
-    }
-    return fallback;
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [postedJobId, setPostedJobId] = useState<string | null>(null);
@@ -133,40 +145,72 @@ export function PostJobWizard() {
   useEffect(() => {
     const saved = getStoredDraft();
     if (saved) {
-      setFormData((prev) => ({
-        ...prev,
-        ...saved,
-        category: saved.category || initialCategoryMatch?.id || prev.category,
-        subCategory: saved.subCategory || subCategoryParam || prev.subCategory,
-        title: saved.title || prev.title,
-        description: saved.description !== undefined ? saved.description : prev.description,
-        address: saved.address !== undefined ? saved.address : prev.address,
-        area: saved.area !== undefined ? saved.area : prev.area,
-        city: saved.city || prev.city || "Peshawar",
-        landmark: saved.landmark !== undefined ? saved.landmark : prev.landmark,
-        latitude: saved.latitude !== undefined ? saved.latitude : prev.latitude,
-        longitude: saved.longitude !== undefined ? saved.longitude : prev.longitude,
-        scheduleType: saved.scheduleType || prev.scheduleType,
-        preferredDate: saved.preferredDate || prev.preferredDate,
-        preferredTimeSlot: saved.preferredTimeSlot || prev.preferredTimeSlot,
-        photos: saved.photos && saved.photos.length > 0 ? saved.photos : prev.photos,
-        voiceNoteUrl: saved.voiceNoteUrl || prev.voiceNoteUrl,
-        voiceNoteDuration: saved.voiceNoteDuration || prev.voiceNoteDuration,
-        suggestedVisitFee: saved.suggestedVisitFee || prev.suggestedVisitFee,
-      }));
-      if (shouldResumeReview) {
-        setCurrentStep(4);
+      const isDifferentCategory = Boolean(
+        initialCategoryMatch &&
+        saved.category &&
+        saved.category.toLowerCase() !== initialCategoryMatch.id.toLowerCase()
+      );
+
+      if (isDifferentCategory) {
+        // Discard old category draft state from storage so new category starts fresh
+        setFormData((prev) => ({
+          ...prev,
+          category: initialCategoryMatch!.id,
+          subCategory: subCategoryParam || initialCategoryMatch!.subCategories[0] || "",
+          title: subCategoryParam || "",
+          description: "",
+          photos: [],
+          voiceNoteUrl: undefined,
+          voiceNoteDuration: undefined,
+          suggestedVisitFee: initialCategoryMatch!.suggestedFee || 500,
+          address: saved.address || prev.address,
+          area: saved.area || prev.area,
+          city: saved.city || prev.city || "Peshawar",
+          landmark: saved.landmark || prev.landmark,
+          latitude: saved.latitude ?? prev.latitude,
+          longitude: saved.longitude ?? prev.longitude,
+          scheduleType: saved.scheduleType || prev.scheduleType,
+          preferredDate: saved.preferredDate || prev.preferredDate,
+          preferredTimeSlot: saved.preferredTimeSlot || prev.preferredTimeSlot,
+        }));
+      } else {
+        setFormData((prev) => ({
+          ...prev,
+          ...saved,
+          category: saved.category || initialCategoryMatch?.id || prev.category,
+          subCategory: saved.subCategory || subCategoryParam || prev.subCategory,
+          title: saved.title || prev.title,
+          description: saved.description !== undefined ? saved.description : prev.description,
+          address: saved.address !== undefined ? saved.address : prev.address,
+          area: saved.area !== undefined ? saved.area : prev.area,
+          city: saved.city || prev.city || "Peshawar",
+          landmark: saved.landmark !== undefined ? saved.landmark : prev.landmark,
+          latitude: saved.latitude !== undefined ? saved.latitude : prev.latitude,
+          longitude: saved.longitude !== undefined ? saved.longitude : prev.longitude,
+          scheduleType: saved.scheduleType || prev.scheduleType,
+          preferredDate: saved.preferredDate || prev.preferredDate,
+          preferredTimeSlot: saved.preferredTimeSlot || prev.preferredTimeSlot,
+          photos:
+            saved.photos && saved.photos.length > 0
+              ? saved.photos.slice(0, 3)
+              : prev.photos,
+          voiceNoteUrl: saved.voiceNoteUrl || prev.voiceNoteUrl,
+          voiceNoteDuration: saved.voiceNoteDuration || prev.voiceNoteDuration,
+          suggestedVisitFee: saved.suggestedVisitFee || prev.suggestedVisitFee,
+        }));
+        if (shouldResumeReview) {
+          setCurrentStep(4);
+        }
       }
     }
     isHydratedRef.current = true;
-  }, [shouldResumeReview, initialCategoryMatch, subCategoryParam]);
+  }, [shouldResumeReview, initialCategoryMatch?.id, subCategoryParam]);
 
   // If accessed directly without selecting a category, redirect to Step 1 on the dashboard.
   // Skipped when resuming at Step 4 after authentication (draft restores the category).
   useEffect(() => {
     if (initialCategoryMatch) return;
     if (shouldResumeReview && getStoredDraft()?.category) return;
-    if (getStoredDraft()?.category) return;
     router.replace("/customer/dashboard");
   }, [initialCategoryMatch, shouldResumeReview, router]);
 
@@ -184,26 +228,29 @@ export function PostJobWizard() {
   // Sync if category search param changes dynamically without clobbering existing user inputs
   useEffect(() => {
     if (shouldResumeReview) return;
-    const rawParam = categoryParam || searchParam;
+    const rawParam = categoryParam || searchParam || categoryIdParam || categoryNameParam;
     if (rawParam) {
-      const match = resolveCategoryOption(rawParam);
+      const match = resolveTargetCategory(rawParam);
       if (match) {
         setFormData((prev) => {
-          if (prev.category === match.id && (prev.title || prev.description)) {
+          if (prev.category === match.id) {
             return prev;
           }
           return {
             ...prev,
             category: match.id,
-            subCategory: subCategoryParam || prev.subCategory || match.subCategories[0] || "",
-            title: prev.title || subCategoryParam || "",
-            description: prev.description || "",
-            suggestedVisitFee: match.suggestedFee || prev.suggestedVisitFee || 0,
+            subCategory: subCategoryParam || match.subCategories[0] || "",
+            title: subCategoryParam || "",
+            description: "",
+            photos: [],
+            voiceNoteUrl: undefined,
+            voiceNoteDuration: undefined,
+            suggestedVisitFee: match.suggestedFee || prev.suggestedVisitFee || 500,
           };
         });
       }
     }
-  }, [categoryParam, subCategoryParam, searchParam, shouldResumeReview]);
+  }, [categoryParam, subCategoryParam, searchParam, categoryIdParam, categoryNameParam, shouldResumeReview]);
 
   // Form Field Updaters
   const handleUpdateField = <K extends keyof PostJobData>(
@@ -231,7 +278,9 @@ export function PostJobWizard() {
 
   const handleNext = () => {
     if (currentStep < 4) {
-      setCurrentStep((prev) => (prev + 1) as PostJobStep);
+      const next = (currentStep + 1) as PostJobStep;
+      setCurrentStep(next);
+      setMaxVisitedStep((prev) => Math.max(prev, next) as PostJobStep);
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
   };
@@ -260,6 +309,7 @@ export function PostJobWizard() {
     const customerToken = getCustomerAuthToken();
     if (customerToken) {
       setCurrentStep(4);
+      setMaxVisitedStep(4);
       window.scrollTo({ top: 0, behavior: "smooth" });
       return;
     }
@@ -283,7 +333,7 @@ export function PostJobWizard() {
       router.push("/customer/dashboard");
       return;
     }
-    if (step <= currentStep) {
+    if (step <= maxVisitedStep) {
       setCurrentStep(step);
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
@@ -392,6 +442,7 @@ export function PostJobWizard() {
         {/* Modern Redesigned Step Progression Stepper */}
         <WizardProgressStepper
           currentStep={currentStep}
+          maxVisitedStep={maxVisitedStep}
           onGoToStep={handleGoToStep}
           locale={locale}
         />

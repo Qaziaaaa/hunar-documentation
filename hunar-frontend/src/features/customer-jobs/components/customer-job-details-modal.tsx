@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import {
   AlertCircle,
   Calendar,
@@ -19,10 +19,12 @@ import {
   ArrowRight,
   User,
   Zap,
+  Star,
 } from "lucide-react";
 import { useLocale } from "next-intl";
 import { useRouter } from "@/i18n/navigation";
 import { formatJobDate, formatPostedAt } from "@/lib/format";
+import { CustomerReviewModal } from "./customer-review-modal";
 import type { CustomerJob } from "../types";
 
 interface CustomerJobDetailsModalProps {
@@ -44,8 +46,30 @@ export function CustomerJobDetailsModal({
   const locale = useLocale();
   const isUrdu = locale === "ur";
 
+  const audioRef = useRef<HTMLAudioElement | null>(null);
   const [isPlayingAudio, setIsPlayingAudio] = useState(false);
+  const [audioDuration, setAudioDuration] = useState<number | null>(null);
+  const [audioCurrentTime, setAudioCurrentTime] = useState<number>(0);
   const [previewPhoto, setPreviewPhoto] = useState<string | null>(null);
+  const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
+  const [currentJob, setCurrentJob] = useState<CustomerJob | null>(job);
+
+  useEffect(() => {
+    setCurrentJob(job);
+  }, [job]);
+
+  // Reset audio state when job changes or modal closes
+  useEffect(() => {
+    if (!isOpen) {
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current.currentTime = 0;
+      }
+      setIsPlayingAudio(false);
+      setAudioCurrentTime(0);
+      setAudioDuration(null);
+    }
+  }, [isOpen, job?.voiceNoteUrl]);
 
   // Close on Escape key
   useEffect(() => {
@@ -70,10 +94,54 @@ export function CustomerJobDetailsModal({
     };
   }, [isOpen, onClose, previewPhoto]);
 
+  // Format seconds to mm:ss
+  const formatAudioDuration = (seconds?: number | null) => {
+    if (!seconds || isNaN(seconds) || !isFinite(seconds) || seconds <= 0) {
+      return job?.voiceNoteDuration ? `0:${String(job.voiceNoteDuration).padStart(2, "0")}` : "--:--";
+    }
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins}:${String(secs).padStart(2, "0")}`;
+  };
+
+  const handleLoadedMetadata = () => {
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    if (!isNaN(audio.duration) && isFinite(audio.duration) && audio.duration > 0) {
+      setAudioDuration(audio.duration);
+    } else if (audio.duration === Infinity) {
+      // Chrome MediaRecorder WebM bug: seeking near the end resolves true duration
+      const onSeeked = () => {
+        audio.removeEventListener("seeked", onSeeked);
+        if (!isNaN(audio.duration) && isFinite(audio.duration) && audio.duration > 0) {
+          setAudioDuration(audio.duration);
+        }
+        audio.currentTime = 0;
+      };
+      audio.addEventListener("seeked", onSeeked, { once: true });
+      audio.currentTime = 1e101;
+    }
+  };
+
+  const handleTimeUpdate = () => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    setAudioCurrentTime(audio.currentTime);
+    if (!isNaN(audio.duration) && isFinite(audio.duration) && audio.duration > 0) {
+      setAudioDuration(audio.duration);
+    }
+  };
+
+  const handleAudioEnded = () => {
+    setIsPlayingAudio(false);
+    setAudioCurrentTime(0);
+  };
+
   // Audio Playback Handler
   const handleToggleAudio = () => {
     if (!job?.voiceNoteUrl) return;
-    const audio = document.getElementById("job-modal-voice-player") as HTMLAudioElement | null;
+    const audio = audioRef.current || (document.getElementById("job-modal-voice-player") as HTMLAudioElement | null);
     if (!audio) return;
 
     if (isPlayingAudio) {
@@ -82,7 +150,6 @@ export function CustomerJobDetailsModal({
     } else {
       audio.play().catch(() => {});
       setIsPlayingAudio(true);
-      audio.onended = () => setIsPlayingAudio(false);
     }
   };
 
@@ -235,8 +302,13 @@ export function CustomerJobDetailsModal({
                 </h3>
                 <div className="p-3.5 bg-slate-50 border border-slate-100 rounded-2xl flex items-center gap-3">
                   <audio
+                    ref={audioRef}
                     id="job-modal-voice-player"
                     src={job.voiceNoteUrl}
+                    preload="metadata"
+                    onLoadedMetadata={handleLoadedMetadata}
+                    onTimeUpdate={handleTimeUpdate}
+                    onEnded={handleAudioEnded}
                     className="hidden"
                   />
                   <button
@@ -257,14 +329,21 @@ export function CustomerJobDetailsModal({
                         <span>{isUrdu ? "وائس میسج چلائیں" : "Listen to Voice Note"}</span>
                       </span>
                       <span className="text-slate-400 text-[11px] font-mono">
-                        {job.voiceNoteDuration ? `0:${String(job.voiceNoteDuration).padStart(2, "0")}` : "--:--"}
+                        {isPlayingAudio
+                          ? `${formatAudioDuration(audioCurrentTime)} / ${formatAudioDuration(audioDuration || job.voiceNoteDuration)}`
+                          : formatAudioDuration(audioDuration || job.voiceNoteDuration)}
                       </span>
                     </div>
                     <div className="h-1.5 bg-slate-200 rounded-full overflow-hidden">
                       <div
-                        className={`h-full bg-[#0F766E] rounded-full transition-all duration-300 ${
-                          isPlayingAudio ? "w-3/4 animate-pulse" : "w-1/4"
-                        }`}
+                        className="h-full bg-[#0F766E] rounded-full transition-all duration-150"
+                        style={{
+                          width: `${
+                            audioDuration && audioDuration > 0
+                              ? Math.min(100, Math.max(0, (audioCurrentTime / audioDuration) * 100))
+                              : isPlayingAudio ? 50 : 0
+                          }%`,
+                        }}
                       />
                     </div>
                   </div>
@@ -302,20 +381,18 @@ export function CustomerJobDetailsModal({
                 </p>
                 <div className="flex items-center gap-1 text-[11px] text-slate-500">
                   {job.scheduleType === "asap" ? (
-                    <>
+                    <span className="inline-flex items-center gap-1 font-bold text-amber-700">
                       <Zap className="size-3 text-amber-600 fill-current shrink-0" />
-                      <span className="font-bold text-amber-700">
-                        {isUrdu ? "فوری آمد (30 تا 60 منٹ)" : "Immediate (Within 30–60 mins)"}
-                      </span>
-                    </>
+                      <span>{isUrdu ? "فوری" : "Immediate"}</span>
+                    </span>
                   ) : (
                     <>
                       <Clock className="size-3 text-slate-400" />
                       <span>{job.preferredTimeSlot || (isUrdu ? "مناسب وقت" : "Flexible Timing")}</span>
+                      <span className="text-slate-300">•</span>
+                      <span className="capitalize">{isUrdu ? "شیڈولڈ" : "Scheduled"}</span>
                     </>
                   )}
-                  <span className="text-slate-300">•</span>
-                  <span className="capitalize">{job.scheduleType === "asap" ? (isUrdu ? "فوری" : "Immediate (ASAP)") : (isUrdu ? "شیڈولڈ" : "Scheduled")}</span>
                 </div>
               </div>
             </div>
@@ -441,14 +518,124 @@ export function CustomerJobDetailsModal({
             )}
 
             {job.status === "completed" && (
-              <div className="p-4 rounded-2xl bg-emerald-50/70 border border-emerald-200 text-xs text-emerald-800 space-y-2">
-                <div className="flex items-center gap-1.5 font-bold">
-                  <CheckCircle2 className="size-4 text-emerald-600" />
-                  <span>{isUrdu ? "یہ کام تسلی بخش طور پر مکمل ہو چکا ہے" : "This service has been successfully completed"}</span>
+              <div className="space-y-3">
+                {/* Completed Worker & Total Accounting Breakdown */}
+                {job.selectedOffer && (
+                  <div className="p-4 sm:p-5 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
+                    <div className="flex items-center justify-between flex-wrap gap-2">
+                      <div className="flex items-center gap-3">
+                        <div className="size-11 rounded-xl overflow-hidden shrink-0 border border-slate-200">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={job.selectedOffer.worker.avatarUrl}
+                            alt={job.selectedOffer.worker.name}
+                            loading="lazy"
+                            decoding="async"
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              (e.currentTarget as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(
+                                job.selectedOffer?.worker.name || "Worker"
+                              )}&background=0F766E&color=fff`;
+                            }}
+                          />
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-sm font-bold text-[#123B5D]">
+                              {job.selectedOffer.worker.name}
+                            </span>
+                            <ShieldCheck className="size-3.5 text-emerald-600" />
+                          </div>
+                          <p className="text-xs text-slate-500">
+                            {job.selectedOffer.worker.businessName ||
+                              (isUrdu ? "تصدیق شدہ کاریگر" : "Certified Technician")}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="text-right rtl:text-left">
+                        <span className="text-[11px] text-slate-400 block font-medium">
+                          {isUrdu ? "کل ادا شدہ رقم" : "Total Paid"}
+                        </span>
+                        <span className="text-lg font-extrabold text-[#0F766E]">
+                          Rs.{" "}
+                          {(
+                            (currentJob?.totalAmount && currentJob.totalAmount > 0)
+                              ? currentJob.totalAmount
+                              : (job.selectedOffer.visitFee + (currentJob?.repairCharge ?? 0))
+                          ).toLocaleString()}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Breakdown pill */}
+                    <div className="pt-2 border-t border-slate-200/80 flex items-center justify-between text-xs text-slate-600 flex-wrap gap-2">
+                      <span className="text-slate-500">
+                        {isUrdu ? "فیس کی تفصیل:" : "Fee Breakdown:"}
+                      </span>
+                      <div className="flex items-center gap-3 font-semibold text-slate-700">
+                        <span>
+                          {isUrdu ? "وزٹ فیس: " : "Visit Fee: "}
+                          Rs. {job.selectedOffer.visitFee.toLocaleString()}
+                        </span>
+                        {Boolean(currentJob?.repairCharge && currentJob.repairCharge > 0) && (
+                          <span>
+                            {isUrdu ? "مرمت چارجز: " : "Repair: "}
+                            Rs. {currentJob?.repairCharge?.toLocaleString()}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Completed Status & Review Callout */}
+                <div className="p-4 rounded-2xl bg-emerald-50/70 border border-emerald-200 text-xs text-emerald-800 space-y-3">
+                  <div className="flex items-center justify-between flex-wrap gap-2">
+                    <div className="flex items-center gap-1.5 font-bold">
+                      <CheckCircle2 className="size-4 text-emerald-600" />
+                      <span>
+                        {isUrdu
+                          ? "یہ کام تسلی بخش طور پر مکمل ہو چکا ہے"
+                          : "This service has been successfully completed"}
+                      </span>
+                    </div>
+
+                    {currentJob?.hasReviewed ? (
+                      <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-200/70 text-emerald-950 flex items-center gap-1">
+                        <Star className="size-3 fill-emerald-800 text-emerald-800" />
+                        <span>
+                          {currentJob.customerReview?.rating ?? 5}/5 {isUrdu ? "ریویو درج ہے" : "Reviewed"}
+                        </span>
+                      </span>
+                    ) : null}
+                  </div>
+
+                  <p className="text-[11px] text-emerald-700/90">
+                    {isUrdu
+                      ? "ادائیگی کی تصدیق ہو چکی ہے اور 5 روزہ وارنٹی فعال ہے۔"
+                      : "Payment has been settled and 5-Day Craftsmanship Warranty is active."}
+                  </p>
+
+                  {currentJob?.customerReview?.comment && (
+                    <div className="p-2.5 rounded-xl bg-white/80 border border-emerald-100 text-[11px] text-slate-700 italic">
+                      &ldquo;{currentJob.customerReview.comment}&rdquo;
+                    </div>
+                  )}
+
+                  {!currentJob?.hasReviewed && (
+                    <button
+                      type="button"
+                      onClick={() => setIsReviewModalOpen(true)}
+                      className="w-full py-2.5 px-4 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs sm:text-sm shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-98"
+                    >
+                      <Star className="size-4 fill-slate-950" />
+                      <span>
+                        {isUrdu ? "کاریگر کو ریویو دیں اور ریٹنگ درج کریں" : "Rate & Review Technician"}
+                      </span>
+                    </button>
+                  )}
                 </div>
-                <p className="text-[11px] text-emerald-700/90">
-                  {isUrdu ? "ادائیگی کی تصدیق ہو چکی ہے اور 5 روزہ وارنٹی فعال ہے۔" : "Payment has been settled and 5-Day Craftsmanship Warranty is active."}
-                </p>
               </div>
             )}
 
@@ -578,6 +765,29 @@ export function CustomerJobDetailsModal({
             </button>
           </div>
         </div>
+      )}
+      {/* Review Modal for Completed Jobs */}
+      {currentJob && (
+        <CustomerReviewModal
+          job={currentJob}
+          isOpen={isReviewModalOpen}
+          onClose={() => setIsReviewModalOpen(false)}
+          onReviewSubmitted={(review) => {
+            setCurrentJob((prev) =>
+              prev
+                ? {
+                    ...prev,
+                    hasReviewed: true,
+                    customerReview: {
+                      rating: review.rating,
+                      comment: review.comment,
+                      date: new Date().toISOString(),
+                    },
+                  }
+                : null
+            );
+          }}
+        />
       )}
     </>
   );

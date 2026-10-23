@@ -1,14 +1,16 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { Role } from '@prisma/client';
+import { Injectable, NotFoundException, Optional } from '@nestjs/common';
+import { Role, JobStatus } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { WorkerProfileService } from './worker-profile.service';
 import { UpdateMyProfileDto } from './users.validation';
+import { RedisService } from '../../common/redis/redis.service';
 
 @Injectable()
 export class UsersService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly workerProfileService: WorkerProfileService,
+    @Optional() private readonly redis?: RedisService,
   ) {}
 
   async getMyProfile(userId: string) {
@@ -19,6 +21,12 @@ export class UsersService {
     if (user.role === Role.WORKER) {
       return this.workerProfileService.getWorkerOnboarding(userId);
     }
+    const completedJobsCount = await this.prisma.serviceRequest.count({
+      where: {
+        customerId: userId,
+        status: { in: [JobStatus.COMPLETED, JobStatus.PAID, JobStatus.REVIEWED] },
+      },
+    });
     return {
       user: {
         id: user.id,
@@ -27,6 +35,9 @@ export class UsersService {
         name: user.name,
         avatarUrl: user.avatarUrl,
         role: user.role,
+        isVerified: user.isVerified,
+        createdAt: user.createdAt,
+        completedJobsCount,
       },
     };
   }
@@ -237,4 +248,131 @@ export class UsersService {
     });
     return { success: true, message: 'Account deleted successfully' };
   }
+
+  async getCustomerAddresses(userId: string) {
+    const rows = await this.prisma.serviceArea.findMany({
+      where: { userId },
+      orderBy: { createdAt: 'asc' },
+    });
+    if (rows.length > 0) {
+      return rows.map((row) => {
+        let extra: any = {};
+        if (row.address && row.address.startsWith('{')) {
+          try {
+            extra = JSON.parse(row.address);
+          } catch {}
+        }
+        return {
+          id: row.id,
+          label: row.label,
+          tag: extra.tag || 'other',
+          fullAddress: extra.fullAddress || row.address,
+          area: extra.area || 'Peshawar',
+          city: extra.city || 'Peshawar',
+          landmark: extra.landmark || '',
+          latitude: row.latitude,
+          longitude: row.longitude,
+          isDefault: Boolean(extra.isDefault),
+        };
+      });
+    }
+
+    if (this.redis) {
+      const cached = await this.redis.get(`customer_addresses:${userId}`);
+      if (cached) {
+        try {
+          const parsed = JSON.parse(cached);
+          if (Array.isArray(parsed)) return parsed;
+        } catch {}
+      }
+    }
+    return [];
+  }
+
+  async saveCustomerAddresses(userId: string, addresses: any[]) {
+    await this.prisma.serviceArea.deleteMany({ where: { userId } });
+    const createdList = [];
+    for (let i = 0; i < addresses.length; i++) {
+      const a = addresses[i];
+      const isDefault = Boolean(a.isDefault || (i === 0 && addresses.length === 1));
+      const extra = {
+        fullAddress: a.fullAddress || a.address || '',
+        area: a.area || 'Peshawar',
+        city: a.city || 'Peshawar',
+        landmark: a.landmark || '',
+        tag: a.tag || 'other',
+        isDefault,
+      };
+      const row = await this.prisma.serviceArea.create({
+        data: {
+          id: a.id && a.id.length >= 10 && !a.id.startsWith('addr-') ? a.id : undefined,
+          userId,
+          label: a.label || 'Home',
+          address: JSON.stringify(extra),
+          latitude: typeof a.latitude === 'number' ? a.latitude : 34.0151,
+          longitude: typeof a.longitude === 'number' ? a.longitude : 71.5249,
+        },
+      });
+      createdList.push({
+        id: row.id,
+        label: row.label,
+        tag: extra.tag,
+        fullAddress: extra.fullAddress,
+        area: extra.area,
+        city: extra.city,
+        landmark: extra.landmark,
+        latitude: row.latitude,
+        longitude: row.longitude,
+        isDefault: extra.isDefault,
+      });
+    }
+
+    if (this.redis) {
+      await this.redis.set(`customer_addresses:${userId}`, JSON.stringify(createdList));
+    }
+
+    return createdList;
+  }
+
+  async deleteCustomerAddress(userId: string, addressId: string) {
+    await this.prisma.serviceArea.deleteMany({
+      where: { id: addressId, userId },
+    });
+    const remaining = await this.getCustomerAddresses(userId);
+    if (this.redis) {
+      await this.redis.set(`customer_addresses:${userId}`, JSON.stringify(remaining));
+    }
+    return remaining;
+  }
+
+  async getCustomerNotificationPreferences(userId: string) {
+    const defaultPrefs = {
+      instantQuotesSms: true,
+      instantQuotesWhatsapp: true,
+      technicianArrivalPush: true,
+      technicianArrivalInApp: true,
+      directPaymentReceiptsEmail: true,
+      directPaymentReceiptsSms: false,
+      marketingAndTips: false,
+    };
+    if (this.redis) {
+      const cached = await this.redis.get(`customer_notifications:${userId}`);
+      if (cached) {
+        try {
+          return { ...defaultPrefs, ...JSON.parse(cached) };
+        } catch {}
+      }
+    }
+    return defaultPrefs;
+  }
+
+  async updateCustomerNotificationPreferences(userId: string, prefs: any) {
+    const current = await this.getCustomerNotificationPreferences(userId);
+    const updated = { ...current, ...prefs };
+    if (this.redis) {
+      await this.redis.set(`customer_notifications:${userId}`, JSON.stringify(updated));
+    }
+    return updated;
+  }
 }
+

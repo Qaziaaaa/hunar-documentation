@@ -33,6 +33,16 @@ export class RealtimeService {
     this.server?.to(room).emit(event, data);
   }
 
+  emitToRooms(rooms: string[], event: string, data: unknown): void {
+    if (!this.server || !rooms.length) return;
+    const unique = Array.from(new Set(rooms.filter(Boolean)));
+    this.server.to(unique).emit(event, data);
+  }
+
+  emitToUser(userId: string, event: string, data: unknown): void {
+    this.emitToRoom(`user:${userId}`, event, data);
+  }
+
   emitToUsers(userIds: string[], event: string, data: unknown): void {
     for (const uid of userIds) {
       this.emitToRoom(`user:${uid}`, event, data);

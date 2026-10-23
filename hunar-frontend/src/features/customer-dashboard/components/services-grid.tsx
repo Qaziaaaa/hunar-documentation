@@ -4,10 +4,18 @@ import { useState, useMemo, useEffect } from "react";
 import Image from "next/image";
 import {
   ArrowRight,
+  Briefcase,
+  Car,
   ChevronDown,
   ChevronUp,
+  Cpu,
+  Flame,
   Grid,
   SearchX,
+  Truck,
+  Tv,
+  Wrench,
+  type LucideIcon,
 } from "lucide-react";
 import { Link } from "@/i18n/navigation";
 import { useLocale } from "next-intl";
@@ -17,14 +25,253 @@ import {
   BackendCategory,
   CATEGORY_ID_MAP,
 } from "@/features/post-job/api/post-job-api";
+import { CATEGORY_ALIASES } from "@/features/post-job/data/categories";
 
 export interface ServiceItem {
   id: string;
+  categoryId?: string;
   title: string;
   titleUr: string;
-  image: string;
+  image?: string | null;
+  icon?: LucideIcon;
+  gradient?: string;
   subCategory?: string;
   href?: string;
+}
+
+export interface CategoryAsset {
+  image?: string;
+  icon?: LucideIcon;
+  gradient?: string;
+}
+
+/**
+ * Intelligent asset & icon picker for admin-created or custom categories.
+ * Maps known trade keywords to existing high-res 3D photographic assets or trade icons,
+ * and falls back to a clean, branded neutral placeholder instead of hardcoded mason.jpg.
+ */
+export function pickCategoryAsset(categoryName: string): CategoryAsset {
+  const norm = categoryName.toLowerCase().trim();
+
+  // 1. Photographic Image Picker (matches name to known high-res 3D photographic assets)
+  if (
+    norm.includes("plumb") ||
+    norm.includes("tap") ||
+    norm.includes("leak") ||
+    norm.includes("pipe") ||
+    norm.includes("sanitary") ||
+    norm.includes("پلمبر")
+  ) {
+    return { image: "/services/plumber.jpg" };
+  }
+  if (
+    norm.includes("electr") ||
+    norm.includes("wire") ||
+    norm.includes("light") ||
+    norm.includes("ups") ||
+    norm.includes("switch") ||
+    norm.includes("الیکٹریشن")
+  ) {
+    return { image: "/services/electrician.jpg" };
+  }
+  if (
+    norm.includes("ac") ||
+    norm.includes("air") ||
+    norm.includes("cool") ||
+    norm.includes("hvac") ||
+    norm.includes("refriger") ||
+    norm.includes("اے سی")
+  ) {
+    return { image: "/services/AC.jpg" };
+  }
+  if (
+    norm.includes("carpent") ||
+    norm.includes("wood") ||
+    norm.includes("furniture") ||
+    norm.includes("door") ||
+    norm.includes("کارپینٹر")
+  ) {
+    return { image: "/services/carpenter.jpg" };
+  }
+  if (
+    norm.includes("paint") ||
+    norm.includes("polish") ||
+    norm.includes("whitewash") ||
+    norm.includes("پینٹر")
+  ) {
+    return { image: "/services/painter.jpg" };
+  }
+  if (
+    norm.includes("mason") ||
+    norm.includes("mistri") ||
+    norm.includes("mistry") ||
+    norm.includes("brick") ||
+    norm.includes("cement") ||
+    norm.includes("مستری")
+  ) {
+    return { image: "/services/mason.jpg" };
+  }
+  if (
+    norm.includes("solar") ||
+    norm.includes("inverter") ||
+    norm.includes("panel") ||
+    norm.includes("سولر")
+  ) {
+    return { image: "/services/solar setup.jpg" };
+  }
+  if (
+    norm.includes("garden") ||
+    norm.includes("lawn") ||
+    norm.includes("plant") ||
+    norm.includes("مالی")
+  ) {
+    return { image: "/services/gardner.jpg" };
+  }
+  if (
+    norm.includes("pest") ||
+    norm.includes("termite") ||
+    norm.includes("fumigat") ||
+    norm.includes("spray") ||
+    norm.includes("کیڑے")
+  ) {
+    return { image: "/services/pest.jpg" };
+  }
+  if (
+    norm.includes("clean") ||
+    norm.includes("wash") ||
+    norm.includes("maid") ||
+    norm.includes("janitor") ||
+    norm.includes("صفائی")
+  ) {
+    return { image: "/services/cleaning.jpg" };
+  }
+  if (
+    norm.includes("cctv") ||
+    norm.includes("camera") ||
+    norm.includes("secur") ||
+    norm.includes("surveillance") ||
+    norm.includes("سیکیورٹی")
+  ) {
+    return { image: "/services/CCTV.jpg" };
+  }
+  if (
+    norm.includes("geyser") ||
+    norm.includes("heater") ||
+    norm.includes("boiler") ||
+    norm.includes("گیزر")
+  ) {
+    return { image: "/services/geyser.jpg" };
+  }
+  if (
+    norm.includes("tank") ||
+    norm.includes("reservoir") ||
+    norm.includes("ٹینک")
+  ) {
+    return { image: "/services/water tank.jpg" };
+  }
+
+  // 2. Icon Picker for other known trade categories
+  if (
+    norm.includes("mover") ||
+    norm.includes("shift") ||
+    norm.includes("transport") ||
+    norm.includes("pack") ||
+    norm.includes("truck") ||
+    norm.includes("گاڑی")
+  ) {
+    return {
+      icon: Truck,
+      gradient: "from-amber-500/15 via-orange-500/5 to-slate-50",
+    };
+  }
+  if (
+    norm.includes("tech") ||
+    norm.includes("it") ||
+    norm.includes("computer") ||
+    norm.includes("network") ||
+    norm.includes("software")
+  ) {
+    return {
+      icon: Cpu,
+      gradient: "from-blue-500/15 via-indigo-500/5 to-slate-50",
+    };
+  }
+  if (
+    norm.includes("car") ||
+    norm.includes("auto") ||
+    norm.includes("bike") ||
+    norm.includes("motor") ||
+    norm.includes("mechanic")
+  ) {
+    return {
+      icon: Car,
+      gradient: "from-rose-500/15 via-red-500/5 to-slate-50",
+    };
+  }
+  if (
+    norm.includes("appliance") ||
+    norm.includes("tv") ||
+    norm.includes("oven") ||
+    norm.includes("microwave")
+  ) {
+    return {
+      icon: Tv,
+      gradient: "from-purple-500/15 via-violet-500/5 to-slate-50",
+    };
+  }
+
+  // 3. Neutral Branded Placeholder for unclassified / admin custom services
+  return {
+    icon: Briefcase,
+    gradient: "from-[#0F8B8D]/15 via-slate-100 to-[#123B5D]/5",
+  };
+}
+
+function ServiceCardMedia({
+  service,
+  displayTitle,
+  priority,
+}: {
+  service: ServiceItem;
+  displayTitle: string;
+  priority: boolean;
+}) {
+  const [hasError, setHasError] = useState(false);
+
+  if (service.image && !hasError) {
+    return (
+      <div className="relative w-full h-28 sm:h-36 rounded-xl sm:rounded-2xl overflow-hidden bg-[#F9FAFC] shrink-0">
+        <Image
+          src={service.image}
+          alt={displayTitle}
+          fill
+          priority={priority}
+          onError={() => setHasError(true)}
+          className="object-cover group-hover:scale-105 transition-transform duration-300"
+          sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+        />
+      </div>
+    );
+  }
+
+  const IconComponent = service.icon || Briefcase;
+
+  return (
+    <div
+      className={`relative w-full h-28 sm:h-36 rounded-xl sm:rounded-2xl overflow-hidden shrink-0 flex items-center justify-center p-3 select-none bg-gradient-to-br ${
+        service.gradient || "from-[#0F8B8D]/15 via-slate-100 to-[#123B5D]/5"
+      } border border-slate-200/70 transition-all duration-300 group-hover:border-[#0F8B8D]/40 group-hover:shadow-inner`}
+    >
+      {/* Decorative ambient glows */}
+      <div className="absolute -top-6 -right-6 size-20 rounded-full bg-[#0F8B8D]/10 blur-xl pointer-events-none" />
+      <div className="absolute -bottom-6 -left-6 size-20 rounded-full bg-[#123B5D]/10 blur-xl pointer-events-none" />
+
+      {/* Centered Floating Icon Badge */}
+      <div className="relative z-10 size-12 sm:size-14 rounded-2xl bg-white shadow-xs border border-slate-200/80 flex items-center justify-center text-[#0F8B8D] group-hover:text-[#123B5D] group-hover:scale-110 group-hover:shadow-sm transition-all duration-300">
+        <IconComponent className="size-6 sm:size-7 stroke-[1.75]" />
+      </div>
+    </div>
+  );
 }
 
 export const ALL_SERVICES: ServiceItem[] = [
@@ -81,6 +328,20 @@ export const ALL_SERVICES: ServiceItem[] = [
     titleUr: "مالی / باغبانی",
     image: "/services/gardner.jpg",
   },
+  {
+    id: "welder",
+    title: "Welder",
+    titleUr: "ویلڈر",
+    icon: Flame,
+    gradient: "from-orange-500/15 via-amber-500/5 to-slate-50",
+  },
+  {
+    id: "movers",
+    title: "Movers & Packers",
+    titleUr: "شفٹنگ اور ٹرانسپورٹ",
+    icon: Truck,
+    gradient: "from-amber-500/15 via-orange-500/5 to-slate-50",
+  },
 
 
   // Extra hidden rows (Expanded on "Show All")
@@ -103,7 +364,8 @@ export const ALL_SERVICES: ServiceItem[] = [
     image: "/services/CCTV.jpg",
   },
   {
-    id: "plumber",
+    id: "geyser",
+    categoryId: "plumber",
     title: "Geyser & Heating",
     titleUr: "گیزر و ہیٹنگ",
     image: "/services/geyser.jpg",
@@ -111,9 +373,10 @@ export const ALL_SERVICES: ServiceItem[] = [
     href: "/customer/post-job?category=plumber&subCategory=Geyser+Installation+(Gas/Electric)",
   },
   {
-    id: "cleaner",
-    title: "Water Tank Clean",
-    titleUr: "واٹر ٹینک صفائی",
+    id: "water-tank",
+    categoryId: "cleaner",
+    title: "Water Tank",
+    titleUr: "واٹر ٹینک",
     image: "/services/water tank.jpg",
     subCategory: "Water Tank Deep Cleaning",
     href: "/customer/post-job?category=cleaner&subCategory=Water+Tank+Deep+Cleaning",
@@ -122,36 +385,36 @@ export const ALL_SERVICES: ServiceItem[] = [
 ];
 
 function isServiceActive(service: ServiceItem, activeCategories: BackendCategory[]): boolean {
-  const targetSeedId = CATEGORY_ID_MAP[service.id.toLowerCase()];
+  const categoryKey = (service.categoryId || service.id).toLowerCase();
+  const targetSeedId = CATEGORY_ID_MAP[categoryKey] || CATEGORY_ID_MAP[service.id.toLowerCase()];
 
   return activeCategories.some((cat) => {
     if (targetSeedId && cat.id.toLowerCase() === targetSeedId.toLowerCase()) {
       return true;
     }
-    if (cat.id.toLowerCase() === service.id.toLowerCase()) {
+    if (cat.id.toLowerCase() === categoryKey || cat.id.toLowerCase() === service.id.toLowerCase()) {
       return true;
     }
     const catName = cat.name.toLowerCase();
     const serviceTitle = service.title.toLowerCase();
-    const serviceId = service.id.toLowerCase();
 
-    if (catName === serviceTitle || catName === serviceId) {
+    if (catName === serviceTitle || catName === categoryKey || catName === service.id.toLowerCase()) {
       return true;
     }
     if (serviceTitle.includes(catName) || catName.includes(serviceTitle)) {
       return true;
     }
     if (
-      (catName.includes("plumb") && serviceId === "plumber") ||
-      (catName.includes("electr") && serviceId === "electrician") ||
-      ((catName.includes("ac") || catName.includes("refriger")) && serviceId === "ac-technician") ||
-      (catName.includes("carpent") && serviceId === "carpenter") ||
-      (catName.includes("paint") && serviceId === "painter") ||
-      (catName.includes("clean") && serviceId === "cleaner") ||
-      (catName.includes("mason") && serviceId === "mason-mistry") ||
-      (catName.includes("pest") && serviceId === "pest-control") ||
+      (catName.includes("plumb") && (categoryKey === "plumber" || service.id === "geyser")) ||
+      (catName.includes("electr") && categoryKey === "electrician") ||
+      ((catName.includes("ac") || catName.includes("refriger")) && categoryKey === "ac-technician") ||
+      (catName.includes("carpent") && categoryKey === "carpenter") ||
+      (catName.includes("paint") && categoryKey === "painter") ||
+      (catName.includes("clean") && (categoryKey === "cleaner" || service.id === "water-tank")) ||
+      (catName.includes("mason") && categoryKey === "mason-mistry") ||
+      (catName.includes("pest") && categoryKey === "pest-control") ||
       (catName.includes("handyman") &&
-        (serviceId === "solar-technician" || serviceId === "gardener" || serviceId === "cctv-security"))
+        (categoryKey === "solar-technician" || categoryKey === "gardener" || categoryKey === "cctv-security"))
     ) {
       return true;
     }
@@ -194,16 +457,27 @@ export function ServicesGrid() {
       isServiceActive(service, activeCategories)
     );
 
+    const seenTitles = new Set(filtered.map((s) => s.title.toLowerCase()));
+
     // Also include custom active categories created by Admin that aren't in seeded list
     const customServices: ServiceItem[] = activeCategories
-      .filter((b) => !b.id.startsWith("seed-category-"))
-      .map((b) => ({
-        id: b.id,
-        title: b.name,
-        titleUr: b.nameUrdu || b.name,
-        image: b.imageUrl || "/services/mason.jpg",
-        href: `/customer/post-job?category=${encodeURIComponent(b.id)}`,
-      }));
+      .filter(
+        (b) =>
+          !b.id.startsWith("seed-category-") &&
+          !seenTitles.has(b.name.toLowerCase())
+      )
+      .map((b) => {
+        const asset = pickCategoryAsset(b.name);
+        return {
+          id: b.id,
+          title: b.name,
+          titleUr: b.nameUrdu || b.name,
+          image: b.imageUrl || asset.image,
+          icon: asset.icon,
+          gradient: asset.gradient,
+          href: `/customer/post-job?category=${encodeURIComponent(b.name.toLowerCase().replace(/[^a-z0-9]+/g, '-'))}&categoryId=${encodeURIComponent(b.id)}&categoryName=${encodeURIComponent(b.name)}${b.nameUrdu ? `&categoryNameUrdu=${encodeURIComponent(b.nameUrdu)}` : ""}`,
+        };
+      });
 
     // Prefer the admin-uploaded cover image over the hardcoded seed photos.
     return [...filtered, ...customServices].map((service) => {
@@ -214,19 +488,18 @@ export function ServicesGrid() {
 
   const normalizedQuery = searchQuery.trim().toLowerCase();
 
-  // Live-filter services: case-insensitive, partial match on title (EN/UR), subCategory, and id
+  // Live-filter services: case-insensitive, partial match on title (EN/UR) or exact trade alias
   const displayedServices = useMemo(() => {
     if (!normalizedQuery) {
       return showAll ? activeServices : activeServices.slice(0, 12);
     }
+    const aliasCategoryId = CATEGORY_ALIASES[normalizedQuery];
+
     return activeServices.filter((service) => {
       const matchesTitle = service.title.toLowerCase().includes(normalizedQuery);
       const matchesTitleUr = service.titleUr.includes(searchQuery.trim());
-      const matchesSubCategory = service.subCategory
-        ?.toLowerCase()
-        .includes(normalizedQuery);
-      const matchesId = service.id.toLowerCase().includes(normalizedQuery);
-      return matchesTitle || matchesTitleUr || matchesSubCategory || matchesId;
+      const matchesAlias = aliasCategoryId ? service.id === aliasCategoryId : false;
+      return matchesTitle || matchesTitleUr || matchesAlias;
     });
   }, [normalizedQuery, searchQuery, showAll, activeServices]);
 
@@ -262,30 +535,25 @@ export function ServicesGrid() {
         </button>
       </div>
 
-      {/* 3 in 1 line on Mobile, 4 in 1 line on Desktop */}
-      <div className="grid grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4 w-full content-start">
+      {/* 2 in 1 line on Mobile, 4 in 1 line on Desktop */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4 w-full content-start">
         {displayedServices.map((service, index) => {
           const displayTitle = locale === "ur" ? service.titleUr : service.title;
           const serviceHref =
-            service.href || `/customer/post-job?category=${service.id}`;
+            service.href || `/customer/post-job?category=${service.categoryId || service.id}`;
 
           return (
             <Link
-              key={`${service.id}-${service.title}`}
+              key={service.id}
               href={serviceHref}
               className="group flex flex-col justify-between p-2 sm:p-3 rounded-2xl sm:rounded-3xl border border-slate-200 bg-[#F9FAFC] hover:border-[#0F8B8D] shadow-2xs hover:shadow-md transition-all duration-300 cursor-pointer active:scale-95 h-full"
             >
-              {/* Inner Image Container - Fixed identical height & full width */}
-              <div className="relative w-full h-24 sm:h-36 rounded-xl sm:rounded-2xl overflow-hidden bg-[#F9FAFC] shrink-0">
-                <Image
-                  src={service.image}
-                  alt={displayTitle}
-                  fill
-                  priority={index < 4}
-                  className="object-cover group-hover:scale-105 transition-transform duration-300"
-                  sizes="(max-width: 640px) 33vw, 25vw"
-                />
-              </div>
+              {/* Inner Media Container - Image or Dynamic Neutral Placeholder */}
+              <ServiceCardMedia
+                service={service}
+                displayTitle={displayTitle}
+                priority={index < 4}
+              />
 
               {/* Service Title & Arrow */}
               <div className="flex items-center justify-between px-1 pt-2 pb-0.5 gap-1.5 min-h-[38px] sm:min-h-[44px]">

@@ -15,16 +15,21 @@ let lastErrorLogged = 0;
 
 export function getSocket(): Socket | null {
   if (typeof window === "undefined") return null;
+  return connectSocket();
+}
+
+function initSocketInstance(): Socket | null {
+  if (typeof window === "undefined") return null;
   if (!socket) {
     const token = getAccessToken();
     lastToken = token;
     socket = io(SOCKET_URL, {
       autoConnect: false,
-      transports: ["websocket", "polling"],
+      transports: ["websocket"],
       auth: { token },
-      reconnectionAttempts: 5,
-      reconnectionDelay: 3000,
-      timeout: 8000,
+      reconnectionAttempts: 10,
+      reconnectionDelay: 1000,
+      timeout: 5000,
     });
 
     socket.on("connect", () => {
@@ -54,7 +59,7 @@ export function connectSocket(): Socket | null {
   }
 
   connectionCount++;
-  const s = getSocket();
+  const s = initSocketInstance();
   if (!s) return null;
 
   if (currentToken !== lastToken) {
@@ -80,23 +85,12 @@ export function disconnectSocket(force = false): void {
     disconnectTimeout = null;
   }
 
+  // Only fully disconnect when forced (e.g. user logout)
   if (force) {
     connectionCount = 0;
     if (socket?.connected) {
       socket.disconnect();
     }
     socket = null;
-    return;
-  }
-
-  if (connectionCount === 0) {
-    disconnectTimeout = setTimeout(() => {
-      if (connectionCount === 0 && socket) {
-        if (socket.connected) {
-          socket.disconnect();
-        }
-        socket = null;
-      }
-    }, 1200);
   }
 }
