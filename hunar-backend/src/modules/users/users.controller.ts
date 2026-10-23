@@ -71,6 +71,34 @@ export class UsersController {
     return this.usersService.deleteMe(user.sub);
   }
 
+  // ----- Customer saved addresses & notification preferences -----
+
+  @Get('me/addresses')
+  getAddresses(@CurrentUser() user: JwtPayload) {
+    return this.usersService.getCustomerAddresses(user.sub);
+  }
+
+  @Post('me/addresses')
+  saveAddresses(@CurrentUser() user: JwtPayload, @Body() body: any) {
+    const list = Array.isArray(body) ? body : body?.addresses ?? [];
+    return this.usersService.saveCustomerAddresses(user.sub, list);
+  }
+
+  @Delete('me/addresses/:id')
+  deleteAddress(@CurrentUser() user: JwtPayload, @Param('id') id: string) {
+    return this.usersService.deleteCustomerAddress(user.sub, id);
+  }
+
+  @Get('me/notification-preferences')
+  getNotificationPreferences(@CurrentUser() user: JwtPayload) {
+    return this.usersService.getCustomerNotificationPreferences(user.sub);
+  }
+
+  @Put('me/notification-preferences')
+  updateNotificationPreferences(@CurrentUser() user: JwtPayload, @Body() body: any) {
+    return this.usersService.updateCustomerNotificationPreferences(user.sub, body);
+  }
+
   // ----- Worker onboarding (6-step wizard) -----
 
   @Get('worker/me')

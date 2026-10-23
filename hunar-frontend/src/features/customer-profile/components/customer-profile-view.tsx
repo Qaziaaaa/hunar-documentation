@@ -30,11 +30,18 @@ import {
   getCustomerProfile,
   updateCustomerProfile,
   uploadCustomerAvatar,
+  getCustomerAddresses,
+  saveCustomerAddresses,
+  deleteCustomerAddressApi,
+  getCustomerNotificationPreferences,
+  updateCustomerNotificationPreferences,
 } from "../api/customer-profile-api";
 import {
   getSavedAddresses,
   saveSavedAddresses,
   deleteSavedAddress,
+  getSavedNotificationPreferences,
+  saveNotificationPreferences,
 } from "../services/saved-addresses-storage";
 import type {
   CustomerProfileData,
@@ -96,11 +103,60 @@ export function CustomerProfileView() {
     setIsLoading(true);
     setLoadError(null);
     setLoadErrorObj(null);
-    getCustomerProfile()
-      .then((data) => {
+
+    // Instant offline cache hydrate before network completes
+    const cachedAddresses = getSavedAddresses();
+    const cachedPrefs = getSavedNotificationPreferences();
+    if (cachedAddresses.length > 0 || cachedPrefs) {
+      setProfile((prev) => ({
+        ...prev,
+        savedAddresses: cachedAddresses.length > 0 ? cachedAddresses : prev.savedAddresses,
+        notifications: cachedPrefs || prev.notifications,
+      }));
+    }
+
+    Promise.allSettled([
+      getCustomerProfile(),
+      getCustomerAddresses(),
+      getCustomerNotificationPreferences(),
+    ])
+      .then(async ([profileRes, addressesRes, notifRes]) => {
+        if (profileRes.status === "rejected") {
+          throw profileRes.reason;
+        }
+
+        const profileData = profileRes.value;
+
+        // Remote database addresses or fallback to local cache
+        let remoteAddresses =
+          addressesRes.status === "fulfilled" && Array.isArray(addressesRes.value)
+            ? addressesRes.value
+            : [];
+
+        // If database was empty on first sync but customer already had local addresses, auto-migrate to DB
+        if (remoteAddresses.length === 0 && cachedAddresses.length > 0) {
+          try {
+            remoteAddresses = await saveCustomerAddresses(cachedAddresses);
+          } catch {
+            remoteAddresses = cachedAddresses;
+          }
+        } else if (remoteAddresses.length > 0) {
+          saveSavedAddresses(remoteAddresses);
+        } else {
+          remoteAddresses = getSavedAddresses();
+        }
+
+        const notifications =
+          notifRes.status === "fulfilled" && notifRes.value
+            ? notifRes.value
+            : getSavedNotificationPreferences() || profileData.notifications;
+
+        saveNotificationPreferences(notifications);
+
         setProfile({
-          ...data,
-          savedAddresses: getSavedAddresses(),
+          ...profileData,
+          savedAddresses: remoteAddresses,
+          notifications,
         });
       })
       .catch((err) => {
@@ -118,11 +174,6 @@ export function CustomerProfileView() {
   }, []);
 
   useEffect(() => {
-    // Sync client-side saved addresses after hydration
-    setProfile((prev) => ({
-      ...prev,
-      savedAddresses: getSavedAddresses(),
-    }));
     loadProfile();
   }, [loadProfile]);
 
@@ -206,55 +257,133 @@ export function CustomerProfileView() {
     }
   };
 
-  const handleSaveAddress = (address: SavedAddress) => {
-    setProfile((prev) => {
-      const exists = prev.savedAddresses.some((a) => a.id === address.id);
-      let updatedList = exists
-        ? prev.savedAddresses.map((a) => (a.id === address.id ? address : a))
-        : [...prev.savedAddresses, address];
+  const handleSaveAddress = async (address: SavedAddress) => {
+    // 1. Optimistic update in UI & localStorage
+    const current = profile.savedAddresses;
+    const exists = current.some((a) => a.id === address.id);
+    let updatedList = exists
+      ? current.map((a) => (a.id === address.id ? address : a))
+      : [...current, address];
 
-      if (address.isDefault) {
-        updatedList = updatedList.map((a) => ({
-          ...a,
-          isDefault: a.id === address.id,
+    if (address.isDefault) {
+      updatedList = updatedList.map((a) => ({
+        ...a,
+        isDefault: a.id === address.id,
+      }));
+    }
+
+    saveSavedAddresses(updatedList);
+    setProfile((prev) => ({
+      ...prev,
+      savedAddresses: updatedList,
+    }));
+
+    // 2. Persist to database & Redis via API
+    try {
+      const persisted = await saveCustomerAddresses(updatedList);
+      if (Array.isArray(persisted) && persisted.length > 0) {
+        setProfile((prev) => ({
+          ...prev,
+          savedAddresses: persisted,
         }));
       }
-
-      saveSavedAddresses(updatedList);
-      return {
-        ...prev,
-        savedAddresses: updatedList,
-      };
-    });
+      showToast(
+        isUrdu
+          ? "پتہ کامیابی سے محفوظ ہو گیا"
+          : "Address saved and synced across your devices"
+      );
+    } catch (err) {
+      console.warn("Failed to sync address to backend:", err);
+      showToast(
+        isUrdu
+          ? "پتہ محفوظ ہو گیا (آف لائن)"
+          : "Address saved locally"
+      );
+    }
   };
 
-  const handleSetDefaultAddress = (id: string) => {
-    setProfile((prev) => {
-      const updated = prev.savedAddresses.map((a) => ({
-        ...a,
-        isDefault: a.id === id,
-      }));
-      saveSavedAddresses(updated);
-      return {
-        ...prev,
-        savedAddresses: updated,
-      };
-    });
+  const handleSetDefaultAddress = async (id: string) => {
+    const updated = profile.savedAddresses.map((a) => ({
+      ...a,
+      isDefault: a.id === id,
+    }));
+    saveSavedAddresses(updated);
+    setProfile((prev) => ({
+      ...prev,
+      savedAddresses: updated,
+    }));
+
+    try {
+      const persisted = await saveCustomerAddresses(updated);
+      if (Array.isArray(persisted) && persisted.length > 0) {
+        setProfile((prev) => ({
+          ...prev,
+          savedAddresses: persisted,
+        }));
+      }
+      showToast(
+        isUrdu
+          ? "طے شدہ پتہ تبدیل کر دیا گیا"
+          : "Default address updated"
+      );
+    } catch (err) {
+      console.warn("Failed to sync default address to backend:", err);
+    }
   };
 
-  const handleDeleteAddress = (id: string) => {
+  const handleDeleteAddress = async (id: string) => {
     const updated = deleteSavedAddress(id);
     setProfile((prev) => ({
       ...prev,
       savedAddresses: updated,
     }));
+
+    try {
+      const remaining = await deleteCustomerAddressApi(id);
+      if (Array.isArray(remaining)) {
+        setProfile((prev) => ({
+          ...prev,
+          savedAddresses: remaining,
+        }));
+      }
+      showToast(
+        isUrdu
+          ? "پتہ کامیابی سے حذف کر دیا گیا"
+          : "Address deleted successfully"
+      );
+    } catch (err) {
+      console.warn("Failed to sync address deletion to backend:", err);
+    }
   };
 
-  const handleUpdatePreferences = (updated: NotificationPreferences) => {
+  const handleUpdatePreferences = async (updated: NotificationPreferences) => {
+    // 1. Optimistic update in UI & localStorage
     setProfile((prev) => ({
       ...prev,
       notifications: updated,
     }));
+    saveNotificationPreferences(updated);
+
+    // 2. Persist to database / Redis via API
+    try {
+      const saved = await updateCustomerNotificationPreferences(updated);
+      setProfile((prev) => ({
+        ...prev,
+        notifications: saved,
+      }));
+      showToast(
+        isUrdu
+          ? "اطلاعات کی ترجیحات کامیابی سے محفوظ ہو گئیں"
+          : "Notification preferences saved and synced"
+      );
+    } catch (err) {
+      console.warn("Failed to persist notification preferences to backend:", err);
+      showToast(
+        isUrdu
+          ? "ترجیحات محفوظ ہو گئیں (آف لائن)"
+          : "Preferences saved locally"
+      );
+    }
   };
 
   if (isLoading) {
@@ -332,7 +461,13 @@ export function CustomerProfileView() {
           <div className="flex items-center gap-2 flex-wrap">
             <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#123B5D]/10 text-[#123B5D] text-xs font-bold">
               <ShieldCheck className="size-3.5 text-[#0F766E]" />
-              {isUrdu ? "ٹائر 1 رہائشی اکاؤنٹ" : "Tier 1 Resident Account"}
+              {profile.isPhoneVerified
+                ? isUrdu
+                  ? "تصدیق شدہ کسٹمر"
+                  : "Verified Customer"
+                : isUrdu
+                ? "کسٹمر اکاؤنٹ"
+                : "Customer Account"}
             </span>
             <span className="text-slate-400 text-xs">•</span>
             <span className="text-slate-500 text-xs font-semibold">
@@ -418,9 +553,9 @@ export function CustomerProfileView() {
                 <h2 className="text-base sm:text-xl font-extrabold text-[#123B5D] leading-tight truncate">
                   {profile.fullName || (isUrdu ? "کسٹمر" : "Customer")}
                 </h2>
-                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200 text-xs font-bold">
-                  <Star className="size-3 fill-amber-400 text-amber-400" />
-                  <span>{isUrdu ? "گولڈ ممبر" : profile.memberTier}</span>
+                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-teal/10 text-teal border border-teal/20 text-xs font-bold">
+                  <CheckCircle2 className="size-3 text-teal" />
+                  <span>{isUrdu ? "کسٹمر ممبر" : "Customer Member"}</span>
                 </span>
               </div>
 
@@ -430,25 +565,42 @@ export function CustomerProfileView() {
                   : `Customer since ${profile.joinedDate} • ${profile.completedJobsCount} Jobs Completed`}
               </p>
 
-              <div className="mt-2 flex items-center gap-1.5 text-emerald-600 text-xs font-bold">
-                <ShieldCheck className="size-4 shrink-0" />
-                <span>
-                  {isUrdu
-                    ? "WorkerFIX تصدیق شدہ رہائشی (نادرا شناختی کارڈ اور موبائل تصدیق)"
-                    : "WorkerFIX Verified Resident (NADRA CNIC & Phone Linked)"}
-                </span>
+              <div
+                className={`mt-2 flex items-center gap-1.5 text-xs font-bold ${
+                  profile.isPhoneVerified ? "text-emerald-600" : "text-amber-600"
+                }`}
+              >
+                {profile.isPhoneVerified ? (
+                  <>
+                    <ShieldCheck className="size-4 shrink-0" />
+                    <span>
+                      {isUrdu
+                        ? "WorkerFIX تصدیق شدہ کسٹمر (موبائل تصدیق شدہ)"
+                        : "WorkerFIX Verified Customer (Phone Verified)"}
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle2 className="size-4 shrink-0" />
+                    <span>
+                      {isUrdu
+                        ? "موبائل تصدیق زیرِ التواء"
+                        : "Mobile Verification Pending"}
+                    </span>
+                  </>
+                )}
               </div>
             </div>
           </div>
 
-          {/* Trust Score & Rating Pills */}
+          {/* Account Metrics Summary */}
           <div className="flex items-center gap-4 sm:gap-6 bg-slate-50 border border-slate-200/80 px-5 py-3 rounded-2xl self-start lg:self-auto shadow-2xs">
             <div className="text-center">
               <div className="text-[10px] uppercase tracking-wider text-slate-400 font-bold">
-                {isUrdu ? "اعتمادی اسکور" : "Trust Score"}
+                {isUrdu ? "مکمل شدہ کام" : "Jobs Completed"}
               </div>
               <div className="text-xs sm:text-sm font-extrabold text-[#123B5D] mt-0.5">
-                {profile.trustScore}
+                {profile.completedJobsCount}
               </div>
             </div>
             <div className="h-8 w-px bg-slate-200" />
@@ -458,7 +610,13 @@ export function CustomerProfileView() {
               </div>
               <div className="text-xs sm:text-sm font-extrabold text-[#123B5D] flex items-center justify-center gap-1 mt-0.5">
                 <Star className="size-3.5 fill-amber-400 text-amber-400" />
-                <span>{profile.rating.toFixed(2)}</span>
+                <span>
+                  {profile.rating > 0
+                    ? profile.rating.toFixed(1)
+                    : isUrdu
+                    ? "نیا کسٹمر"
+                    : "New"}
+                </span>
               </div>
             </div>
           </div>
