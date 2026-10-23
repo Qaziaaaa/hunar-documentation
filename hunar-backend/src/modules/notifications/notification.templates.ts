@@ -32,7 +32,7 @@ function fmtTime(value: string | Date | undefined): string {
   if (!value) return 'scheduled time';
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return String(value);
-  return date.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+  return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
 }
 
 // Template resolved from a notification type + the domain-event payload.

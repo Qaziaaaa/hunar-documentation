@@ -409,14 +409,25 @@ export function WorkerJourneyFullscreen({
         {/* 1. TOP HEADER (Cancel visit on left, Headphone Support on right) */}
         {/* ======================================================== */}
         <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200/80 px-4 sm:px-6 lg:px-8 py-3.5 flex items-center justify-between shadow-2xs">
-          {/* Left: Cancel visit Button */}
-          <button
-            type="button"
-            onClick={() => setShowCancelModal(true)}
-            className="text-xs sm:text-sm font-bold text-slate-800 hover:text-red-600 bg-slate-50 hover:bg-red-50 px-3.5 py-1.5 rounded-full border border-slate-200 shadow-2xs transition-colors cursor-pointer"
-          >
-            {isUrdu ? "وزٹ منسوخ کریں" : "Cancel visit"}
-          </button>
+          {/* Left: Cancel visit Button (only before completion; once completed show Back to Jobs) */}
+          {!isCompleted ? (
+            <button
+              type="button"
+              onClick={() => setShowCancelModal(true)}
+              className="text-xs sm:text-sm font-bold text-slate-800 hover:text-red-600 bg-slate-50 hover:bg-red-50 px-3.5 py-1.5 rounded-full border border-slate-200 shadow-2xs transition-colors cursor-pointer"
+            >
+              {isUrdu ? "وزٹ منسوخ کریں" : "Cancel visit"}
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={handleFinishAndExit}
+              className="text-xs sm:text-sm font-bold text-slate-700 hover:text-[#123B5D] bg-slate-100 hover:bg-slate-200 px-3.5 py-1.5 rounded-full border border-slate-200 shadow-2xs transition-colors cursor-pointer flex items-center gap-1.5"
+            >
+              <span>←</span>
+              <span>{isUrdu ? "جابز پر واپس جائیں" : "Back to Jobs"}</span>
+            </button>
+          )}
 
           {/* Center: Stage Step Badge (3-Step Flow) */}
           <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-100 border border-slate-200/80 text-[11px] sm:text-xs font-extrabold text-[#123B5D]">
@@ -540,8 +551,8 @@ export function WorkerJourneyFullscreen({
                       </h3>
                       <p className="text-xs sm:text-sm text-slate-500 mt-1">
                         {isUrdu
-                          ? "ادائیگی کسٹمر سے وصول کر لی گئی۔ پلیٹ فارم فیس کاریگر والیٹ سے وضع کر لی گئی۔"
-                          : "Payment collected directly from customer. Platform fee (10% of visit fee) deducted from wallet."}
+                          ? "ادائیگی کسٹمر سے وصول کر لی گئی۔"
+                          : "Payment collected directly from customer."}
                       </p>
                     </div>
 
@@ -551,17 +562,15 @@ export function WorkerJourneyFullscreen({
                         <span>{isUrdu ? "طے شدہ وزٹ فیس:" : "Diagnostic Visit Fee:"}</span>
                         <span className="font-mono">{formatRs(agreedVisitCharge)}</span>
                       </div>
-                      <div className="flex justify-between items-center text-emerald-950 font-bold">
-                        <span>{isUrdu ? "مرمت لاگت:" : "Completed Repair Amount:"}</span>
-                        <span className="font-mono">{formatRs(finalRepairAmount)}</span>
-                      </div>
+                      {finalRepairAmount > 0 && (
+                        <div className="flex justify-between items-center text-emerald-950 font-bold">
+                          <span>{isUrdu ? "مرمت لاگت:" : "Completed Repair Amount:"}</span>
+                          <span className="font-mono">{formatRs(finalRepairAmount)}</span>
+                        </div>
+                      )}
                       <div className="border-t border-emerald-200 pt-3 flex justify-between items-center text-emerald-950 font-black text-sm sm:text-base">
                         <span>{isUrdu ? "کل آمدنی:" : "Total Earning:"}</span>
                         <span className="text-lg sm:text-xl text-emerald-800 font-mono">+{formatRs(grossJobValue)}</span>
-                      </div>
-                      <div className="border-t border-emerald-200/60 pt-2 flex justify-between items-center text-emerald-900 text-xs font-semibold">
-                        <span>{isUrdu ? "والیٹ سے وضع شدہ فیس (10% وزٹ فیس):" : "Wallet Deduction (10% Visit Fee):"}</span>
-                        <span className="text-orange-700 font-mono">-{formatRs(platformCommission)}</span>
                       </div>
                     </div>
                   </div>

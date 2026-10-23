@@ -3,8 +3,11 @@ export type DashboardTab =
   | "jobs"
   | "earnings"
   | "wallet"
+  | "notifications"
   | "chat"
-  | "profile";
+  | "profile"
+  | "reviews"
+  | "settings";
 
 export interface WorkerDashboardProfile {
   id: string;
@@ -60,7 +63,11 @@ export type JobRequestCategory =
   | "Solar Technician"
   | "Appliance Repair"
   | "Mechanic"
-  | "Welder";
+  | "Welder"
+  | "CCTV & Security"
+  | "Gardener"
+  | "Movers & Packers"
+  | (string & {});
 
 export interface JobRequest {
   id: string;

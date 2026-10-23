@@ -73,7 +73,7 @@ export interface StoredUser {
 export function getRoleFromContext(pathname?: string): UserRole | null {
   if (typeof window === "undefined" && !pathname) return null;
   const path = pathname ?? (typeof window !== "undefined" ? window.location.pathname : "");
-  if (path.includes("/customer")) return "CUSTOMER";
+  if (path.includes("/customer") || path.includes("/post-job")) return "CUSTOMER";
   if (path.includes("/worker")) return "WORKER";
   if (path.includes("/admin")) return "ADMIN";
   return null;
@@ -552,6 +552,7 @@ export async function apiClient<T>(
     path.startsWith("/commissions") ||
     path.startsWith("/jobs/available") ||
     path.startsWith("/visits") ||
+    path.startsWith("/repairs/my") ||
     path.startsWith("/uploads/inspection-photo") ||
     path.startsWith("/uploads/worker-document") ||
     path.startsWith("/uploads/cnic-document")
@@ -559,7 +560,8 @@ export async function apiClient<T>(
     roleHint = "WORKER";
   } else if (
     path.startsWith("/auth/customer") ||
-    path.startsWith("/repairs/pending") ||
+    path.startsWith("/repairs") ||
+    path.includes("/repair") ||
     path.startsWith("/jobs/customer") ||
     path.startsWith("/uploads/job-photo") ||
     path.startsWith("/uploads/voice-note") ||
