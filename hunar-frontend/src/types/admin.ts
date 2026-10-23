@@ -43,6 +43,9 @@ export interface CustomerUser {
   ratingGiven: number;
   status: UserStatus;
   internalNotes?: string;
+  suspendedUntil?: string | null;
+  suspensionReason?: string | null;
+  suspensionType?: "PERMANENT" | "TEMPORARY" | null;
 }
 
 export interface WorkerUser {
@@ -64,6 +67,9 @@ export interface WorkerUser {
   experienceYears: number;
   bio?: string;
   serviceCity: string;
+  suspendedUntil?: string | null;
+  suspensionReason?: string | null;
+  suspensionType?: "PERMANENT" | "TEMPORARY" | null;
 }
 
 export interface VerificationRequest {
@@ -164,11 +170,23 @@ export interface DistanceSlab {
 export interface ServiceCategory {
   id: string;
   name: string;
+  nameUrdu?: string | null;
+  imageUrl?: string | null;
   iconName: string;
   activeWorkersCount: number;
   totalJobsCount: number;
   isActive: boolean;
+  sortOrder?: number;
+  defaultVisitCharge?: number | null;
   distanceSlabs?: DistanceSlab[];
+}
+
+export interface CategoryFormValues {
+  name: string;
+  nameUrdu?: string;
+  imageUrl?: string;
+  sortOrder?: number;
+  defaultVisitCharge?: number;
 }
 
 export interface PlatformSettings {

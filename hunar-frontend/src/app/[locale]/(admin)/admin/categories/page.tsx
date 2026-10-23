@@ -1,14 +1,18 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { adminApi } from "@/features/admin/api/admin-api";
+import { compressImage } from "@/lib/image-compression";
 import type { DistanceSlab, ServiceCategory } from "@/types/admin";
 import {
   AlertCircle,
   CheckCircle2,
   Edit3,
   FolderTree,
+  ImagePlus,
   Info,
+  Loader2,
+  Pencil,
   Plus,
   Save,
   Truck,
@@ -16,11 +20,25 @@ import {
   X,
 } from "lucide-react";
 
+const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
+
 export default function CategoriesPage() {
   const [categories, setCategories] = useState<ServiceCategory[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [newCatName, setNewCatName] = useState("");
+
+  // Create / Edit form state
+  const [formMode, setFormMode] = useState<"create" | "edit" | null>(null);
+  const [formCat, setFormCat] = useState<ServiceCategory | null>(null);
+  const [formName, setFormName] = useState("");
+  const [formNameUrdu, setFormNameUrdu] = useState("");
+  const [formCharge, setFormCharge] = useState("");
+  const [formSortOrder, setFormSortOrder] = useState("");
+  const [formImageFile, setFormImageFile] = useState<File | null>(null);
+  const [formImagePreview, setFormImagePreview] = useState<string | null>(null);
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [savingForm, setSavingForm] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
+  const imageInputRef = useRef<HTMLInputElement>(null);
 
   // Distance Charges Modal State
   const [selectedCategory, setSelectedCategory] = useState<ServiceCategory | null>(null);
@@ -61,18 +79,128 @@ export default function CategoriesPage() {
     }
   };
 
-  const handleAddCategory = async () => {
-    if (!newCatName) return;
-    setPageError(null);
+  const closeForm = () => {
+    setFormMode(null);
+    setFormCat(null);
+    setFormName("");
+    setFormNameUrdu("");
+    setFormCharge("");
+    setFormSortOrder("");
+    setFormImageFile(null);
+    setFormImagePreview(null);
+    setFormError(null);
+    setUploadingImage(false);
+  };
+
+  const handleOpenCreate = () => {
+    closeForm();
+    setFormMode("create");
+    setFormCharge("500");
+    setFormSortOrder(String(categories.length + 1));
+  };
+
+  const handleOpenEdit = (cat: ServiceCategory) => {
+    closeForm();
+    setFormMode("edit");
+    setFormCat(cat);
+    setFormName(cat.name);
+    setFormNameUrdu(cat.nameUrdu ?? "");
+    setFormCharge(cat.defaultVisitCharge != null ? String(cat.defaultVisitCharge) : "");
+    setFormSortOrder(String(cat.sortOrder ?? 0));
+    setFormImagePreview(cat.imageUrl ?? null);
+  };
+
+  const handleFormImageSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    setFormError(null);
+    if (!ACCEPTED_IMAGE_TYPES.includes(file.type)) {
+      setFormError("Image must be JPEG, PNG, or WebP.");
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      setFormError("Image must be under 10 MB.");
+      return;
+    }
+    setUploadingImage(true);
     try {
-      const created = await adminApi.createCategory(newCatName);
-      setCategories((prev) => [...prev, created]);
-      setNewCatName("");
-      setShowAddModal(false);
+      const compressed = await compressImage(file, { maxWidth: 1024, maxHeight: 1024, quality: 0.85 });
+      const fileToUpload = new File([compressed], file.name, {
+        type: compressed.type || file.type,
+      });
+      if (formImagePreview?.startsWith("blob:")) URL.revokeObjectURL(formImagePreview);
+      setFormImageFile(fileToUpload);
+      setFormImagePreview(URL.createObjectURL(fileToUpload));
+    } catch {
+      setFormError("Could not process that image. Try another file.");
+    } finally {
+      setUploadingImage(false);
+    }
+  };
+
+  const handleRemoveFormImage = () => {
+    if (formImagePreview?.startsWith("blob:")) URL.revokeObjectURL(formImagePreview);
+    setFormImageFile(null);
+    setFormImagePreview(null);
+  };
+
+  const handleFormSubmit = async () => {
+    const name = formName.trim();
+    if (!name) {
+      setFormError("Category name is required.");
+      return;
+    }
+    const charge = Number(formCharge);
+    if (formCharge === "" || Number.isNaN(charge) || charge < 0) {
+      setFormError("Default visit charge is required (0 or more).");
+      return;
+    }
+    const sortOrder = formSortOrder === "" ? undefined : Number(formSortOrder);
+    if (sortOrder !== undefined && (Number.isNaN(sortOrder) || sortOrder < 0)) {
+      setFormError("Sort order must be 0 or more.");
+      return;
+    }
+    setFormError(null);
+    setSavingForm(true);
+    try {
+      let imageUrl: string | undefined;
+      if (formImageFile) {
+        imageUrl = await adminApi.uploadCategoryImage(formImageFile);
+      } else if (formMode === "edit") {
+        // undefined = keep as-is; "" = cleared by the admin
+        imageUrl = formImagePreview ?? "";
+      }
+      const payload = {
+        name,
+        nameUrdu: formNameUrdu.trim() || undefined,
+        imageUrl,
+        sortOrder,
+        defaultVisitCharge: charge,
+      };
+      if (formMode === "edit" && formCat) {
+        const updated = await adminApi.updateCategory(formCat.id, payload);
+        setCategories((prev) =>
+          prev.map((c) =>
+            c.id === formCat.id
+              ? {
+                  ...c,
+                  ...updated,
+                  nameUrdu: updated.nameUrdu ?? null,
+                  imageUrl: updated.imageUrl ?? null,
+                }
+              : c,
+          ),
+        );
+      } else {
+        const created = await adminApi.createCategory(payload);
+        setCategories((prev) => [...prev, created]);
+      }
+      closeForm();
     } catch (err) {
-      setPageError(
-        err instanceof Error ? err.message : "Failed to create category",
-      );
+      setFormError(err instanceof Error ? err.message : "Failed to save category.");
+    } finally {
+      setSavingForm(false);
     }
   };
 
@@ -154,7 +282,7 @@ export default function CategoriesPage() {
 
           <button
             type="button"
-            onClick={() => setShowAddModal(true)}
+            onClick={handleOpenCreate}
             className="inline-flex items-center gap-2 rounded-xl bg-navy px-4 py-2.5 text-xs font-bold text-white shadow-md transition hover:bg-navy/90 sm:mt-6 sm:self-end"
           >
             <Plus className="size-4 text-teal-300" /> Add New Category
@@ -172,17 +300,44 @@ export default function CategoriesPage() {
                 className="group flex items-center justify-between rounded-2xl border border-slate-200 bg-white p-5 shadow-xs transition-all duration-200 hover:-translate-y-0.5 hover:border-teal/40 hover:shadow-md cursor-pointer"
               >
                 <div className="flex items-center gap-3">
-                  <div className="flex size-11 items-center justify-center rounded-xl bg-navy text-white transition-transform duration-200 group-hover:scale-105">
-                    <Wrench className="size-5 text-teal-300" />
-                  </div>
+                  {cat.imageUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element -- uploaded /uploads paths render through the API rewrite
+                    <img
+                      src={cat.imageUrl}
+                      alt={cat.name}
+                      className="size-11 shrink-0 rounded-xl object-cover ring-1 ring-slate-200 transition-transform duration-200 group-hover:scale-105"
+                    />
+                  ) : (
+                    <div className="flex size-11 items-center justify-center rounded-xl bg-navy text-white transition-transform duration-200 group-hover:scale-105">
+                      <Wrench className="size-5 text-teal-300" />
+                    </div>
+                  )}
                   <div>
                     <h3 className="font-extrabold text-navy text-sm">{cat.name}</h3>
+                    {cat.nameUrdu ? (
+                      <p className="text-[11px] font-semibold text-slate-400" dir="rtl">
+                        {cat.nameUrdu}
+                      </p>
+                    ) : null}
                     <p className="text-xs text-slate-500">
                       {cat.activeWorkersCount} Workers • {cat.totalJobsCount} Jobs
                     </p>
-                    <span className="mt-1 inline-flex items-center gap-1 rounded-md bg-teal/10 px-1.5 py-0.5 text-[10px] font-extrabold text-teal">
-                      <Truck className="size-3" /> Delivery Charges Configured
-                    </span>
+                    <div className="mt-1 flex flex-wrap items-center gap-1">
+                      {cat.defaultVisitCharge != null ? (
+                        <span className="inline-flex items-center gap-1 rounded-md bg-navy/10 px-1.5 py-0.5 text-[10px] font-extrabold text-navy">
+                          Visit Fee Rs. {cat.defaultVisitCharge}
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 rounded-md bg-amber-100 px-1.5 py-0.5 text-[10px] font-extrabold text-amber-800">
+                          <AlertCircle className="size-3" /> Fee Not Set
+                        </span>
+                      )}
+                      {cat.distanceSlabs && cat.distanceSlabs.length > 0 ? (
+                        <span className="inline-flex items-center gap-1 rounded-md bg-teal/10 px-1.5 py-0.5 text-[10px] font-extrabold text-teal">
+                          <Truck className="size-3" /> Delivery Charges
+                        </span>
+                      ) : null}
+                    </div>
                   </div>
                 </div>
 
@@ -218,11 +373,217 @@ export default function CategoriesPage() {
                   >
                     {cat.isActive ? "Active" : "Inactive"}
                   </span>
+                  <button
+                    type="button"
+                    onClick={() => handleOpenEdit(cat)}
+                    className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-wider text-slate-600 transition hover:border-teal/50 hover:text-teal"
+                  >
+                    <Pencil className="size-3" /> Edit
+                  </button>
                 </div>
               </div>
             ))}
           </div>
         )}
+
+        {/* Create / Edit Category Modal */}
+        {formMode ? (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-navy/60 p-4 backdrop-blur-sm">
+            <div className="w-full max-w-lg rounded-3xl border border-slate-200 bg-white p-6 shadow-2xl">
+              <div className="flex items-start justify-between">
+                <div>
+                  <span className="inline-flex items-center gap-1 rounded-full border border-teal/20 bg-teal/10 px-2.5 py-0.5 text-[10px] font-bold text-teal uppercase tracking-wider">
+                    <FolderTree className="size-3" /> Service Category
+                  </span>
+                  <h3 className="mt-1 text-xl font-black text-navy">
+                    {formMode === "edit" ? "Edit Category" : "Add Service Category"}
+                  </h3>
+                  <p className="text-xs font-medium text-slate-500">
+                    {formMode === "edit"
+                      ? "Update details shown to customers across the app."
+                      : "Name, visit fee, and a cover image make the category ready for customers."}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={closeForm}
+                  className="rounded-lg p-1 text-slate-400 hover:bg-slate-100"
+                >
+                  <X className="size-5" />
+                </button>
+              </div>
+
+              <div className="mt-4 space-y-4">
+                {/* Cover image */}
+                <div>
+                  <label className="mb-1.5 block text-[11px] font-extrabold uppercase tracking-wider text-slate-500">
+                    Cover Image
+                  </label>
+                  <input
+                    ref={imageInputRef}
+                    type="file"
+                    accept={ACCEPTED_IMAGE_TYPES.join(",")}
+                    className="hidden"
+                    onChange={handleFormImageSelect}
+                  />
+                  {formImagePreview ? (
+                    <div className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-3">
+                      {/* eslint-disable-next-line @next/next/no-img-element -- preview covers may be blob: or /uploads paths */}
+                      <img
+                        src={formImagePreview}
+                        alt="Category cover preview"
+                        className="size-16 rounded-xl object-cover ring-1 ring-slate-200"
+                      />
+                      <div className="flex flex-col gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => imageInputRef.current?.click()}
+                          className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-[11px] font-bold text-slate-600 transition hover:border-teal/50 hover:text-teal"
+                        >
+                          Replace image
+                        </button>
+                        <button
+                          type="button"
+                          onClick={handleRemoveFormImage}
+                          className="rounded-lg border border-rose-200 bg-white px-3 py-1.5 text-[11px] font-bold text-rose-600 transition hover:bg-rose-50"
+                        >
+                          Remove image
+                        </button>
+                      </div>
+                      {uploadingImage ? (
+                        <span className="ml-auto flex items-center gap-1.5 text-[11px] font-bold text-teal">
+                          <Loader2 className="size-3.5 animate-spin" /> Processing…
+                        </span>
+                      ) : null}
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => imageInputRef.current?.click()}
+                      disabled={uploadingImage}
+                      className="flex w-full flex-col items-center justify-center gap-1.5 rounded-2xl border-2 border-dashed border-slate-300 bg-slate-50 px-4 py-6 text-center transition hover:border-teal/50 hover:bg-teal/5 disabled:opacity-60"
+                    >
+                      {uploadingImage ? (
+                        <Loader2 className="size-6 animate-spin text-teal" />
+                      ) : (
+                        <ImagePlus className="size-6 text-slate-400" />
+                      )}
+                      <span className="text-xs font-bold text-slate-600">
+                        {uploadingImage ? "Processing image…" : "Upload cover image"}
+                      </span>
+                      <span className="text-[10px] font-semibold text-slate-400">
+                        JPEG, PNG, or WebP • up to 5 MB after compression
+                      </span>
+                    </button>
+                  )}
+                </div>
+
+                {/* Name */}
+                <div>
+                  <label className="mb-1.5 block text-[11px] font-extrabold uppercase tracking-wider text-slate-500">
+                    Category Name *
+                  </label>
+                  <input
+                    type="text"
+                    value={formName}
+                    onChange={(e) => setFormName(e.target.value)}
+                    placeholder="e.g. Appliance Repair"
+                    maxLength={100}
+                    className="h-11 w-full rounded-xl border border-slate-200 px-3 text-xs font-medium outline-none transition focus:border-teal focus:ring-2 focus:ring-teal/15"
+                  />
+                </div>
+
+                {/* Urdu name */}
+                <div>
+                  <label className="mb-1.5 block text-[11px] font-extrabold uppercase tracking-wider text-slate-500">
+                    Urdu Name
+                  </label>
+                  <input
+                    type="text"
+                    value={formNameUrdu}
+                    onChange={(e) => setFormNameUrdu(e.target.value)}
+                    placeholder="مثلاً اپلائینس مرمت"
+                    maxLength={100}
+                    dir="rtl"
+                    className="h-11 w-full rounded-xl border border-slate-200 px-3 text-xs font-medium outline-none transition focus:border-teal focus:ring-2 focus:ring-teal/15"
+                  />
+                </div>
+
+                {/* Visit charge + sort order */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="mb-1.5 block text-[11px] font-extrabold uppercase tracking-wider text-slate-500">
+                      Default Visit Fee (Rs) *
+                    </label>
+                    <input
+                      type="number"
+                      min={0}
+                      value={formCharge}
+                      onChange={(e) => setFormCharge(e.target.value)}
+                      placeholder="500"
+                      className="h-11 w-full rounded-xl border border-slate-200 px-3 text-xs font-medium outline-none transition focus:border-teal focus:ring-2 focus:ring-teal/15"
+                    />
+                    <p className="mt-1 text-[10px] font-semibold text-slate-400">
+                      Suggested visiting fee when customers post a job.
+                    </p>
+                  </div>
+                  <div>
+                    <label className="mb-1.5 block text-[11px] font-extrabold uppercase tracking-wider text-slate-500">
+                      Sort Order
+                    </label>
+                    <input
+                      type="number"
+                      min={0}
+                      value={formSortOrder}
+                      onChange={(e) => setFormSortOrder(e.target.value)}
+                      placeholder="1"
+                      className="h-11 w-full rounded-xl border border-slate-200 px-3 text-xs font-medium outline-none transition focus:border-teal focus:ring-2 focus:ring-teal/15"
+                    />
+                    <p className="mt-1 text-[10px] font-semibold text-slate-400">
+                      Position in the customer listing.
+                    </p>
+                  </div>
+                </div>
+
+                {formError ? (
+                  <div className="flex items-center gap-2 rounded-xl border border-rose-200 bg-rose-50 p-3 text-xs font-bold text-rose-700">
+                    <AlertCircle className="size-4 shrink-0" /> {formError}
+                  </div>
+                ) : null}
+              </div>
+
+              <div className="mt-6 flex justify-end gap-3 border-t border-slate-100 pt-4">
+                <button
+                  type="button"
+                  onClick={closeForm}
+                  className="rounded-xl border border-slate-200 px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-100"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleFormSubmit}
+                  disabled={savingForm || uploadingImage}
+                  className="inline-flex items-center gap-1.5 rounded-xl bg-navy px-5 py-2 text-xs font-bold text-white shadow-md transition hover:bg-navy/90 disabled:opacity-50"
+                >
+                  {savingForm ? (
+                    <>
+                      <Loader2 className="size-3.5 animate-spin text-teal-300" /> Saving…
+                    </>
+                  ) : formMode === "edit" ? (
+                    <>
+                      <Save className="size-3.5 text-teal-300" /> Save Changes
+                    </>
+                  ) : (
+                    <>
+                      <Plus className="size-3.5 text-teal-300" /> Create Category
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        ) : null}
 
         {/* Delivery / Distance Charges Modal */}
         {selectedCategory ? (
@@ -419,38 +780,6 @@ export default function CategoriesPage() {
                     </button>
                   </>
                 )}
-              </div>
-            </div>
-          </div>
-        ) : null}
-
-        {/* Add Modal */}
-        {showAddModal ? (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-navy/60 p-4 backdrop-blur-sm">
-            <div className="w-full max-w-md rounded-3xl border border-slate-200 bg-white p-6 shadow-2xl">
-              <h3 className="text-lg font-extrabold text-navy">Add Service Category</h3>
-              <input
-                type="text"
-                value={newCatName}
-                onChange={(e) => setNewCatName(e.target.value)}
-                placeholder="Category name (e.g., Appliance Repair)..."
-                className="mt-4 h-11 w-full rounded-xl border border-slate-200 px-3 text-xs outline-none focus:border-teal"
-              />
-              <div className="mt-6 flex justify-end gap-3">
-                <button
-                  type="button"
-                  onClick={() => setShowAddModal(false)}
-                  className="rounded-xl border border-slate-200 px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-100"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  onClick={handleAddCategory}
-                  className="rounded-xl bg-navy px-5 py-2 text-xs font-bold text-white shadow-md hover:bg-navy/90"
-                >
-                  Add Category
-                </button>
               </div>
             </div>
           </div>

@@ -1,10 +1,14 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { adminApi } from "@/features/admin/api/admin-api";
+import { adminApi, SuspendUserPayload } from "@/features/admin/api/admin-api";
 import { AdminAvatar } from "@/features/admin/components/admin-avatar";
 import type { WorkerUser } from "@/types/admin";
 import { TableRowsSkeleton } from "@/features/admin/components/table-skeleton";
+import {
+  SuspendUserModal,
+  SuspendModalUser,
+} from "@/features/admin/components/suspend-user-modal";
 
 import {
   AlertCircle,
@@ -13,11 +17,13 @@ import {
   Clock,
   Eye,
   Filter,
+  Plus,
   Search,
   ShieldCheck,
   Star,
   Trophy,
   UserCheck,
+  Wallet,
   X,
 } from "lucide-react";
 
@@ -28,10 +34,18 @@ export default function WorkersPage() {
   const [actionError, setActionError] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState<"ALL" | "VERIFIED" | "PENDING" | "SUSPENDED">("ALL");
+  const [statusFilter, setStatusFilter] = useState<"ALL" | "SUSPENDED">("ALL");
   const [selectedWorker, setSelectedWorker] = useState<WorkerUser | null>(null);
   const [actionWorker, setActionWorker] = useState<WorkerUser | null>(null);
-  const [suspendReason, setSuspendReason] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Worker wallet top-up modal state
+  const [topUpWorker, setTopUpWorker] = useState<WorkerUser | null>(null);
+  const [topUpAmount, setTopUpAmount] = useState("500");
+  const [topUpNote, setTopUpNote] = useState("");
+  const [topUpLoading, setTopUpLoading] = useState(false);
+  const [topUpError, setTopUpError] = useState<string | null>(null);
+  const [topUpSuccess, setTopUpSuccess] = useState<string | null>(null);
 
   useEffect(() => {
     adminApi
@@ -52,8 +66,6 @@ export default function WorkersPage() {
           w.skills.some((s) => s.toLowerCase().includes(search.toLowerCase()));
 
         let matchesStatus = true;
-        if (statusFilter === "VERIFIED") matchesStatus = w.verificationStatus === "VERIFIED";
-        if (statusFilter === "PENDING") matchesStatus = w.verificationStatus === "PENDING";
         if (statusFilter === "SUSPENDED") matchesStatus = w.status === "SUSPENDED";
 
         return matchesSearch && matchesStatus;
@@ -76,42 +88,121 @@ export default function WorkersPage() {
     return [filtered[idx], ...filtered.filter((w) => w.id !== topWorker.id)];
   }, [filtered, topWorker]);
 
-  const handleToggleStatus = async () => {
-    if (!actionWorker) return;
-    setActionError(null);
+  const modalWorker: SuspendModalUser | null = useMemo(() => {
+    if (!actionWorker) return null;
+    return {
+      id: actionWorker.id,
+      name: actionWorker.name,
+      phone: actionWorker.phone,
+      role: "WORKER",
+      status: actionWorker.status,
+      suspendedUntil: actionWorker.suspendedUntil,
+      suspensionReason: actionWorker.suspensionReason,
+      suspensionType: actionWorker.suspensionType,
+    };
+  }, [actionWorker]);
 
-    const suspending = actionWorker.status === "ACTIVE";
-    const reason = suspendReason.trim();
-    if (suspending && !reason) {
-      setActionError("A suspension reason is required.");
-      return;
-    }
+  const handleConfirmSuspend = async (payload: SuspendUserPayload) => {
+    if (!actionWorker) return;
+    setIsSubmitting(true);
+    setActionError(null);
     try {
-      if (suspending) {
-        await adminApi.suspendWorker(actionWorker.id, reason);
-      } else {
-        await adminApi.reactivateWorker(actionWorker.id);
-      }
+      await adminApi.suspendWorker(actionWorker.id, payload);
       setWorkers((prev) =>
         prev.map((w) => {
           if (w.id === actionWorker.id) {
-            const newStatus = w.status === "ACTIVE" ? "SUSPENDED" : "ACTIVE";
             return {
               ...w,
-              status: newStatus,
+              status: "SUSPENDED",
+              suspensionReason: payload.description || payload.reason,
+              suspensionType: payload.type,
+              suspendedUntil: payload.duration ? payload.duration : null,
             };
           }
           return w;
         })
       );
       setActionWorker(null);
-      setSuspendReason("");
     } catch (err) {
       setActionError(
-        err instanceof Error ? err.message : "Failed to update worker status",
+        err instanceof Error ? err.message : "Failed to suspend worker account",
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleConfirmReactivate = async () => {
+    if (!actionWorker) return;
+    setIsSubmitting(true);
+    setActionError(null);
+    try {
+      await adminApi.reactivateWorker(actionWorker.id);
+      setWorkers((prev) =>
+        prev.map((w) => {
+          if (w.id === actionWorker.id) {
+            return {
+              ...w,
+              status: "ACTIVE",
+              suspendedUntil: null,
+              suspensionReason: null,
+              suspensionType: null,
+            };
+          }
+          return w;
+        })
       );
       setActionWorker(null);
-      setSuspendReason("");
+    } catch (err) {
+      setActionError(
+        err instanceof Error ? err.message : "Failed to reactivate worker account",
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleTopUpSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!topUpWorker) return;
+    const amountNum = Number(topUpAmount);
+    if (!amountNum || amountNum <= 0) {
+      setTopUpError("Please enter an amount greater than 0.");
+      return;
+    }
+    setTopUpLoading(true);
+    setTopUpError(null);
+    setTopUpSuccess(null);
+    try {
+      const res = await adminApi.topUpWorkerWallet(
+        topUpWorker.id,
+        amountNum,
+        topUpNote.trim() || undefined,
+      );
+      setWorkers((prev) =>
+        prev.map((w) =>
+          w.id === topUpWorker.id
+            ? { ...w, walletBalance: res.balance ?? w.walletBalance + amountNum }
+            : w,
+        ),
+      );
+      setTopUpSuccess(
+        `Rs. ${amountNum.toLocaleString()} credited successfully! New balance: Rs. ${(
+          res.balance ?? topUpWorker.walletBalance + amountNum
+        ).toLocaleString()}`,
+      );
+      setTimeout(() => {
+        setTopUpWorker(null);
+        setTopUpAmount("500");
+        setTopUpNote("");
+        setTopUpSuccess(null);
+      }, 1200);
+    } catch (err) {
+      setTopUpError(
+        err instanceof Error ? err.message : "Failed to top up worker wallet",
+      );
+    } finally {
+      setTopUpLoading(false);
     }
   };
 
@@ -151,10 +242,10 @@ export default function WorkersPage() {
               </span>
             </div>
             <h1 className="mt-2 text-3xl font-black tracking-tight text-navy">
-              Worker Accounts & Verification
+              Worker Accounts & Directory
             </h1>
             <p className="mt-1 text-sm font-medium text-slate-500">
-              Manage worker profiles, verification statuses, wallet balances, and ratings
+              Manage worker profiles, wallet balances, ratings, and account status
             </p>
           </div>
         </div>
@@ -188,25 +279,14 @@ export default function WorkersPage() {
               </button>
               <button
                 type="button"
-                onClick={() => setStatusFilter("VERIFIED")}
+                onClick={() => setStatusFilter("SUSPENDED")}
                 className={`rounded-lg px-3 py-1.5 font-bold transition ${
-                  statusFilter === "VERIFIED"
-                    ? "bg-teal text-white shadow-sm"
+                  statusFilter === "SUSPENDED"
+                    ? "bg-red-500 text-white shadow-sm"
                     : "text-slate-600 hover:text-navy"
                 }`}
               >
-                Verified
-              </button>
-              <button
-                type="button"
-                onClick={() => setStatusFilter("PENDING")}
-                className={`rounded-lg px-3 py-1.5 font-bold transition ${
-                  statusFilter === "PENDING"
-                    ? "bg-orange text-white shadow-sm"
-                    : "text-slate-600 hover:text-navy"
-                }`}
-              >
-                Pending
+                Suspended
               </button>
             </div>
           </div>
@@ -220,7 +300,6 @@ export default function WorkersPage() {
                 <tr className="border-b border-slate-100 bg-slate-50/50 text-[10px] font-bold uppercase tracking-wider text-slate-400">
                   <th className="py-4 px-4">Worker Details</th>
                   <th className="py-4 px-4">Trade Skills</th>
-                  <th className="py-4 px-4">Verification</th>
                   <th className="py-4 px-4">Rating</th>
                   <th className="py-4 px-4">Wallet Balance</th>
                   <th className="py-4 px-4">Status</th>
@@ -229,7 +308,7 @@ export default function WorkersPage() {
               </thead>
               <tbody className="divide-y divide-slate-100 font-medium">
                 {loading ? (
-                  <TableRowsSkeleton colSpan={7} label="Loading workers" />
+                  <TableRowsSkeleton colSpan={6} label="Loading workers" />
                 ) : orderedRows.map((worker) => {
                   const isTop = !!topWorker && worker.id === topWorker.id;
                   return (
@@ -284,24 +363,6 @@ export default function WorkersPage() {
                       </div>
                     </td>
                     <td className="py-4 px-4">
-                      <span
-                        className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wide ${
-                          worker.verificationStatus === "VERIFIED"
-                            ? "border-teal/20 bg-teal/10 text-teal"
-                            : worker.verificationStatus === "PENDING"
-                            ? "border-orange/20 bg-orange/10 text-orange"
-                            : "border-red-200 bg-red-100 text-red-700"
-                        }`}
-                      >
-                        {worker.verificationStatus === "VERIFIED" ? (
-                          <ShieldCheck className="size-3" />
-                        ) : (
-                          <Clock className="size-3" />
-                        )}
-                        {worker.verificationStatus}
-                      </span>
-                    </td>
-                    <td className="py-4 px-4">
                       <div className="flex items-center gap-1 font-bold text-navy">
                         <Star className="size-3.5 fill-amber-400 text-amber-400" />
                         <span>{worker.rating > 0 ? worker.rating : "—"}</span>
@@ -311,18 +372,52 @@ export default function WorkersPage() {
                       Rs. {worker.walletBalance.toLocaleString()}
                     </td>
                     <td className="py-4 px-4">
-                      <span
-                        className={`inline-flex rounded-full border px-2.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wide ${
-                          worker.status === "ACTIVE"
-                            ? "border-teal/20 bg-teal/10 text-teal"
-                            : "border-red-200 bg-red-100 text-red-700"
-                        }`}
-                      >
-                        {worker.status}
-                      </span>
+                      {worker.status === "ACTIVE" ? (
+                        <span className="inline-flex rounded-full border border-teal/20 bg-teal/10 px-2.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wide text-teal">
+                          ACTIVE
+                        </span>
+                      ) : (
+                        <div className="flex flex-col items-start gap-0.5">
+                          <span className="inline-flex items-center gap-1 rounded-full border border-red-200 bg-red-100 px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wide text-red-700">
+                            {worker.suspensionType === "TEMPORARY" ? (
+                              <>
+                                <Clock className="size-3" />
+                                Temporary
+                              </>
+                            ) : (
+                              <>
+                                <Ban className="size-3" />
+                                Suspended
+                              </>
+                            )}
+                          </span>
+                          {worker.suspensionReason && (
+                            <span
+                              className="max-w-[140px] truncate text-[10px] text-slate-500"
+                              title={worker.suspensionReason}
+                            >
+                              {worker.suspensionReason}
+                            </span>
+                          )}
+                        </div>
+                      )}
                     </td>
                     <td className="py-4 px-4 text-right">
                       <div className="flex items-center justify-end gap-2">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setTopUpWorker(worker);
+                            setTopUpAmount("500");
+                            setTopUpNote("");
+                            setTopUpError(null);
+                            setTopUpSuccess(null);
+                          }}
+                          className="flex size-8 items-center justify-center rounded-lg border border-teal/30 bg-teal/5 text-teal transition hover:bg-teal hover:text-white"
+                          title="Top Up Wallet (+)"
+                        >
+                          <Wallet className="size-4" />
+                        </button>
                         <button
                           type="button"
                           onClick={() => {
@@ -472,74 +567,182 @@ export default function WorkersPage() {
           </div>
         ) : null}
 
-        {/* Suspend / Reactivate Confirmation Modal */}
-        {actionWorker ? (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-navy/60 p-4 backdrop-blur-sm">
+        {/* Section 5: Suspend / Reactivate Modal */}
+        <SuspendUserModal
+          isOpen={!!actionWorker}
+          user={modalWorker}
+          onClose={() => setActionWorker(null)}
+          onConfirmSuspend={handleConfirmSuspend}
+          onConfirmReactivate={handleConfirmReactivate}
+          isSubmitting={isSubmitting}
+        />
+
+        {/* Worker Wallet Top-Up Modal */}
+        {topUpWorker ? (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-navy/60 p-4 backdrop-blur-sm animate-in fade-in duration-150">
             <div className="w-full max-w-md rounded-3xl border border-slate-200 bg-white p-6 shadow-2xl">
-              <div className="flex items-center gap-3 text-error">
-                <AlertCircle className="size-6 shrink-0" />
-                <h3 className="text-lg font-extrabold text-navy">
-                  Confirm Worker Account Action
-                </h3>
-              </div>
-
-              <p className="mt-3 text-xs leading-relaxed text-slate-600">
-                Are you sure you want to{" "}
-                <strong className="text-navy">
-                  {actionWorker.status === "ACTIVE" ? "SUSPEND" : "REACTIVATE"}
-                </strong>{" "}
-                the worker profile for <strong className="text-navy">{actionWorker.name}</strong>?
-              </p>
-
-              {actionWorker.status === "ACTIVE" ? (
-                <div className="mt-4 space-y-1.5">
-                  <label className="block text-xs font-semibold text-navy">
-                    Reason for Suspension (Required)
-                  </label>
-                  <textarea
-                    value={suspendReason}
-                    onChange={(e) => setSuspendReason(e.target.value)}
-                    placeholder="Enter reason for suspending this worker account..."
-                    className="h-20 w-full rounded-xl border border-slate-200 p-3 text-xs outline-none focus:border-teal"
-                  />
+              <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+                <div className="flex items-center gap-2.5">
+                  <div className="flex size-10 items-center justify-center rounded-2xl bg-teal/10 text-teal">
+                    <Wallet className="size-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-base font-extrabold text-navy">
+                      Worker Wallet Top-Up
+                    </h3>
+                    <p className="text-[11px] font-medium text-slate-400">
+                      Add balance (+) directly to worker account
+                    </p>
+                  </div>
                 </div>
-              ) : null}
-
-              {actionError && (
-                <p className="mt-3 rounded-xl border border-red-200 bg-red-50 p-3 text-xs font-bold text-red-700">
-                  {actionError}
-                </p>
-              )}
-
-              <div className="mt-6 flex items-center justify-end gap-3">
                 <button
                   type="button"
                   onClick={() => {
-                    setActionWorker(null);
-                    setSuspendReason("");
+                    setTopUpWorker(null);
+                    setTopUpAmount("500");
+                    setTopUpNote("");
+                    setTopUpError(null);
+                    setTopUpSuccess(null);
                   }}
-                  className="rounded-xl border border-slate-200 px-4 py-2.5 text-xs font-bold text-slate-600 hover:bg-slate-100"
+                  className="rounded-lg p-1 text-slate-400 hover:bg-slate-100"
                 >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  onClick={handleToggleStatus}
-                  disabled={
-                    actionWorker.status === "ACTIVE" && !suspendReason.trim()
-                  }
-                  className={`rounded-xl px-5 py-2.5 text-xs font-bold text-white shadow-md disabled:cursor-not-allowed disabled:opacity-60 ${
-                    actionWorker.status === "ACTIVE"
-                      ? "bg-red-600 hover:bg-red-700"
-                      : "bg-teal hover:bg-teal-600"
-                  }`}
-                >
-                  Confirm Action
+                  <X className="size-5" />
                 </button>
               </div>
+
+              {/* Worker Target Info Banner */}
+              <div className="mt-4 flex items-center justify-between rounded-2xl bg-slate-50 p-3.5">
+                <div className="flex items-center gap-3">
+                  <AdminAvatar
+                    src={topUpWorker.avatarUrl}
+                    name={topUpWorker.name}
+                    className="size-10 rounded-xl"
+                  />
+                  <div>
+                    <p className="font-extrabold text-navy">{topUpWorker.name}</p>
+                    <p className="text-[10px] text-slate-400">{topUpWorker.phone}</p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className="text-[9px] font-bold uppercase tracking-wider text-slate-400">
+                    Current Wallet
+                  </p>
+                  <p className="font-black text-navy">
+                    Rs. {topUpWorker.walletBalance.toLocaleString()}
+                  </p>
+                </div>
+              </div>
+
+              <form onSubmit={handleTopUpSubmit} className="mt-4 space-y-4 text-xs">
+                {/* Quick Preset Buttons */}
+                <div>
+                  <label className="mb-1.5 block font-bold text-navy">
+                    Quick Select Amount
+                  </label>
+                  <div className="grid grid-cols-4 gap-2">
+                    {[100, 500, 1000, 2000].map((preset) => (
+                      <button
+                        key={preset}
+                        type="button"
+                        onClick={() => setTopUpAmount(String(preset))}
+                        className={`rounded-xl py-2 text-center text-xs font-extrabold transition ${
+                          topUpAmount === String(preset)
+                            ? "bg-teal text-white shadow-sm ring-2 ring-teal/30"
+                            : "border border-slate-200 bg-slate-50 text-slate-600 hover:border-teal/50 hover:bg-white"
+                        }`}
+                      >
+                        +Rs. {preset}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Amount Input */}
+                <div>
+                  <label className="block font-bold text-navy">
+                    Amount to Add (PKR) <span className="text-red-500">*</span>
+                  </label>
+                  <div className="relative mt-1">
+                    <span className="absolute left-3.5 top-1/2 -translate-y-1/2 font-extrabold text-slate-400">
+                      Rs.
+                    </span>
+                    <input
+                      type="number"
+                      min="1"
+                      max="1000000"
+                      value={topUpAmount}
+                      onChange={(e) => setTopUpAmount(e.target.value)}
+                      placeholder="e.g. 500"
+                      required
+                      className="h-11 w-full rounded-xl border border-slate-200 bg-slate-50 pl-11 pr-4 text-sm font-black text-navy outline-none transition focus:border-teal focus:bg-white focus:ring-2 focus:ring-teal/15"
+                    />
+                  </div>
+                  {Number(topUpAmount) > 0 ? (
+                    <p className="mt-1.5 flex items-center justify-between text-[11px] font-semibold text-slate-500">
+                      <span>Projected New Balance:</span>
+                      <span className="font-extrabold text-teal">
+                        Rs. {(topUpWorker.walletBalance + Number(topUpAmount)).toLocaleString()}
+                      </span>
+                    </p>
+                  ) : null}
+                </div>
+
+                {/* Reference / Note */}
+                <div>
+                  <label className="block font-bold text-navy">
+                    Note / Reference (Optional)
+                  </label>
+                  <input
+                    type="text"
+                    value={topUpNote}
+                    onChange={(e) => setTopUpNote(e.target.value)}
+                    placeholder="e.g. Cash received at office, Performance bonus"
+                    className="mt-1 h-10 w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 text-xs font-medium outline-none transition focus:border-teal focus:bg-white focus:ring-2 focus:ring-teal/15"
+                  />
+                </div>
+
+                {topUpSuccess && (
+                  <div className="flex items-center gap-2 rounded-xl border border-teal/30 bg-teal/10 p-3 text-xs font-bold text-teal">
+                    <CheckCircle2 className="size-4 shrink-0" />
+                    <span>{topUpSuccess}</span>
+                  </div>
+                )}
+
+                {topUpError && (
+                  <div className="flex items-center gap-2 rounded-xl border border-red-200 bg-red-50 p-3 text-xs font-bold text-red-600">
+                    <AlertCircle className="size-4 shrink-0" />
+                    <span>{topUpError}</span>
+                  </div>
+                )}
+
+                <div className="mt-6 flex items-center justify-end gap-3 pt-2">
+                  <button
+                    type="button"
+                    disabled={topUpLoading}
+                    onClick={() => {
+                      setTopUpWorker(null);
+                      setTopUpAmount("500");
+                      setTopUpNote("");
+                      setTopUpError(null);
+                      setTopUpSuccess(null);
+                    }}
+                    className="rounded-xl border border-slate-200 px-4 py-2.5 text-xs font-bold text-slate-600 hover:bg-slate-100 disabled:opacity-60"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={topUpLoading || !Number(topUpAmount) || Number(topUpAmount) <= 0}
+                    className="flex items-center gap-2 rounded-xl bg-teal px-5 py-2.5 text-xs font-bold text-white shadow-md transition hover:bg-teal-600 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    <Plus className="size-4" />
+                    {topUpLoading ? "Crediting..." : `Top Up Rs. ${Number(topUpAmount || 0).toLocaleString()}`}
+                  </button>
+                </div>
+              </form>
             </div>
           </div>
         ) : null}
       </div>
-);
+  );
 }

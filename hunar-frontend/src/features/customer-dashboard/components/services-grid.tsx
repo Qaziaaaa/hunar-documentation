@@ -472,14 +472,18 @@ export function ServicesGrid() {
           id: b.id,
           title: b.name,
           titleUr: b.nameUrdu || b.name,
-          image: asset.image,
+          image: b.imageUrl || asset.image,
           icon: asset.icon,
           gradient: asset.gradient,
           href: `/customer/post-job?category=${encodeURIComponent(b.name.toLowerCase().replace(/[^a-z0-9]+/g, '-'))}&categoryId=${encodeURIComponent(b.id)}&categoryName=${encodeURIComponent(b.name)}${b.nameUrdu ? `&categoryNameUrdu=${encodeURIComponent(b.nameUrdu)}` : ""}`,
         };
       });
 
-    return [...filtered, ...customServices];
+    // Prefer the admin-uploaded cover image over the hardcoded seed photos.
+    return [...filtered, ...customServices].map((service) => {
+      const cat = activeCategories.find((c) => c.id === service.id);
+      return cat?.imageUrl ? { ...service, image: cat.imageUrl } : service;
+    });
   }, [activeCategories]);
 
   const normalizedQuery = searchQuery.trim().toLowerCase();

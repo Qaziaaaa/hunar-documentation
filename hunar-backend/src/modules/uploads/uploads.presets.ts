@@ -10,6 +10,7 @@ export enum UploadCategory {
   CNIC_DOCUMENT = 'cnic-document',
   WALLET_SCREENSHOT = 'wallet-screenshot',
   VOICE_NOTE = 'voice-note',
+  CATEGORY_IMAGE = 'category-image',
 }
 
 export interface CompressOptions {
@@ -103,6 +104,14 @@ export const UPLOAD_PRESETS: Record<UploadCategory, UploadPreset> = {
     isDocument: false,
     allowedMimeTypes: AUDIO_MIME_TYPES,
     maxBytes: 10 * MB,
+  },
+  [UploadCategory.CATEGORY_IMAGE]: {
+    category: UploadCategory.CATEGORY_IMAGE,
+    folder: 'category-images',
+    isDocument: false,
+    allowedMimeTypes: IMAGE_MIME_TYPES,
+    maxBytes: 5 * MB,
+    compress: { maxSizePx: 1024, quality: 80 },
   },
 };
 

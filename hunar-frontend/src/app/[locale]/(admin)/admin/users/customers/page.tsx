@@ -1,14 +1,19 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { adminApi } from "@/features/admin/api/admin-api";
+import { adminApi, SuspendUserPayload } from "@/features/admin/api/admin-api";
 import { AdminAvatar } from "@/features/admin/components/admin-avatar";
 import type { CustomerUser } from "@/types/admin";
 import { TableRowsSkeleton } from "@/features/admin/components/table-skeleton";
 import {
+  SuspendUserModal,
+  SuspendModalUser,
+} from "@/features/admin/components/suspend-user-modal";
+import {
   AlertCircle,
   Ban,
   CheckCircle2,
+  Clock,
   Eye,
   Filter,
   Search,
@@ -27,7 +32,7 @@ export default function CustomersPage() {
   const [statusFilter, setStatusFilter] = useState<"ALL" | "ACTIVE" | "SUSPENDED">("ALL");
   const [selectedCustomer, setSelectedCustomer] = useState<CustomerUser | null>(null);
   const [actionCustomer, setActionCustomer] = useState<CustomerUser | null>(null);
-  const [suspendReason, setSuspendReason] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     adminApi
@@ -53,46 +58,78 @@ export default function CustomersPage() {
     [customers, search, statusFilter],
   );
 
-  const handleToggleStatus = async () => {
-    if (!actionCustomer) return;
-    setActionError(null);
+  const modalCustomer: SuspendModalUser | null = useMemo(() => {
+    if (!actionCustomer) return null;
+    return {
+      id: actionCustomer.id,
+      name: actionCustomer.name,
+      phone: actionCustomer.phone,
+      role: "CUSTOMER",
+      status: actionCustomer.status,
+      suspendedUntil: actionCustomer.suspendedUntil,
+      suspensionReason: actionCustomer.suspensionReason,
+      suspensionType: actionCustomer.suspensionType,
+    };
+  }, [actionCustomer]);
 
-    const suspending = actionCustomer.status === "ACTIVE";
-    const reason = suspendReason.trim();
-    if (suspending && !reason) {
-      setActionError("A suspension reason is required.");
-      return;
-    }
+  const handleConfirmSuspend = async (payload: SuspendUserPayload) => {
+    if (!actionCustomer) return;
+    setIsSubmitting(true);
+    setActionError(null);
     try {
-      if (suspending) {
-        await adminApi.suspendCustomer(actionCustomer.id, reason);
-      } else {
-        await adminApi.reactivateCustomer(actionCustomer.id);
-      }
+      await adminApi.suspendCustomer(actionCustomer.id, payload);
       setCustomers((prev) =>
         prev.map((c) => {
           if (c.id === actionCustomer.id) {
-            const newStatus = c.status === "ACTIVE" ? "SUSPENDED" : "ACTIVE";
             return {
               ...c,
-              status: newStatus,
-              internalNotes:
-                newStatus === "SUSPENDED"
-                  ? `Suspended by admin: ${reason}`
-                  : c.internalNotes,
+              status: "SUSPENDED",
+              suspensionReason: payload.description || payload.reason,
+              suspensionType: payload.type,
+              suspendedUntil: payload.duration ? payload.duration : null,
+              internalNotes: `Suspended [${payload.type}]: ${payload.reason}`,
             };
           }
           return c;
         })
       );
       setActionCustomer(null);
-      setSuspendReason("");
     } catch (err) {
       setActionError(
-        err instanceof Error ? err.message : "Failed to update customer status",
+        err instanceof Error ? err.message : "Failed to suspend customer account",
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleConfirmReactivate = async () => {
+    if (!actionCustomer) return;
+    setIsSubmitting(true);
+    setActionError(null);
+    try {
+      await adminApi.reactivateCustomer(actionCustomer.id);
+      setCustomers((prev) =>
+        prev.map((c) => {
+          if (c.id === actionCustomer.id) {
+            return {
+              ...c,
+              status: "ACTIVE",
+              suspendedUntil: null,
+              suspensionReason: null,
+              suspensionType: null,
+            };
+          }
+          return c;
+        })
       );
       setActionCustomer(null);
-      setSuspendReason("");
+    } catch (err) {
+      setActionError(
+        err instanceof Error ? err.message : "Failed to reactivate customer account",
+      );
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -251,15 +288,35 @@ export default function CustomersPage() {
                       </div>
                     </td>
                     <td className="py-4 px-4">
-                      <span
-                        className={`inline-flex rounded-full border px-2.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wide ${
-                          customer.status === "ACTIVE"
-                            ? "border-teal/20 bg-teal/10 text-teal"
-                            : "border-red-200 bg-red-100 text-red-700"
-                        }`}
-                      >
-                        {customer.status}
-                      </span>
+                      {customer.status === "ACTIVE" ? (
+                        <span className="inline-flex rounded-full border border-teal/20 bg-teal/10 px-2.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wide text-teal">
+                          ACTIVE
+                        </span>
+                      ) : (
+                        <div className="flex flex-col items-start gap-0.5">
+                          <span className="inline-flex items-center gap-1 rounded-full border border-red-200 bg-red-100 px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wide text-red-700">
+                            {customer.suspensionType === "TEMPORARY" ? (
+                              <>
+                                <Clock className="size-3" />
+                                Temporary
+                              </>
+                            ) : (
+                              <>
+                                <Ban className="size-3" />
+                                Suspended
+                              </>
+                            )}
+                          </span>
+                          {customer.suspensionReason && (
+                            <span
+                              className="max-w-[140px] truncate text-[10px] text-slate-500"
+                              title={customer.suspensionReason}
+                            >
+                              {customer.suspensionReason}
+                            </span>
+                          )}
+                        </div>
+                      )}
                     </td>
                     <td className="py-4 px-4 text-right">
                       <div className="flex items-center justify-end gap-2">
@@ -382,67 +439,15 @@ export default function CustomersPage() {
           </div>
         ) : null}
 
-        {/* Suspend / Reactivate Confirmation Modal */}
-        {actionCustomer ? (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-navy/60 p-4 backdrop-blur-sm">
-            <div className="w-full max-w-md rounded-3xl border border-slate-200 bg-white p-6 shadow-2xl">
-              <div className="flex items-center gap-3 text-error">
-                <AlertCircle className="size-6 shrink-0" />
-                <h3 className="text-lg font-extrabold text-navy">
-                  Confirm Account Action
-                </h3>
-              </div>
-
-              <p className="mt-3 text-xs leading-relaxed text-slate-600">
-                Are you sure you want to{" "}
-                <strong className="text-navy">
-                  {actionCustomer.status === "ACTIVE"
-                    ? "SUSPEND"
-                    : "REACTIVATE"}
-                </strong>{" "}
-                the account for <strong className="text-navy">{actionCustomer.name}</strong>?
-              </p>
-
-              {actionCustomer.status === "ACTIVE" ? (
-                <div className="mt-4 space-y-1.5">
-                  <label className="block text-xs font-semibold text-navy">
-                    Reason for Suspension (Required)
-                  </label>
-                  <textarea
-                    value={suspendReason}
-                    onChange={(e) => setSuspendReason(e.target.value)}
-                    placeholder="Enter reason for suspending this customer account..."
-                    className="h-20 w-full rounded-xl border border-slate-200 p-3 text-xs outline-none focus:border-teal"
-                  />
-                </div>
-              ) : null}
-
-              <div className="mt-6 flex items-center justify-end gap-3">
-                <button
-                  type="button"
-                  onClick={() => setActionCustomer(null)}
-                  className="rounded-xl border border-slate-200 px-4 py-2.5 text-xs font-bold text-slate-600 hover:bg-slate-100"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  onClick={handleToggleStatus}
-                  disabled={
-                    actionCustomer.status === "ACTIVE" && !suspendReason.trim()
-                  }
-                  className={`rounded-xl px-5 py-2.5 text-xs font-bold text-white shadow-md disabled:cursor-not-allowed disabled:opacity-60 ${
-                    actionCustomer.status === "ACTIVE"
-                      ? "bg-red-600 hover:bg-red-700"
-                      : "bg-teal hover:bg-teal-600"
-                  }`}
-                >
-                  Confirm Action
-                </button>
-              </div>
-            </div>
-          </div>
-        ) : null}
+        {/* Section 5: Suspend / Reactivate Modal */}
+        <SuspendUserModal
+          isOpen={!!actionCustomer}
+          user={modalCustomer}
+          onClose={() => setActionCustomer(null)}
+          onConfirmSuspend={handleConfirmSuspend}
+          onConfirmReactivate={handleConfirmReactivate}
+          isSubmitting={isSubmitting}
+        />
       </div>
-);
+  );
 }
