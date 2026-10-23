@@ -6,31 +6,36 @@ This document provides an actionable remediation plan for each identified issue 
 
 ## Summary Matrix of Issues & Priorities
 
-| # | Category | Issue | Severity | Target Area |
-|---|---|---|---|---|
-| 1 | Bug / Dead Code | Customer cannot submit reviews (`submitJobReview` dead code) | 🔴 High | Customer Portal / Reviews |
-| 2 | Bug / Inaccuracy | Completed jobs ignore repair charges (only shows visit fee) | 🔴 High | Customer Portal / Jobs |
-| 3 | Bug / Security | Customer password change & device sign-out are fake (no API) | 🔴 High | Customer Portal / Profile |
-| 4 | Bug / State Loss | Customer notification preferences reset on refresh | 🟡 Medium | Customer Portal / Profile |
-| 5 | Bug / Data Loss | Customer saved addresses stored only in browser `localStorage` | 🔴 High | Customer Portal / Profile |
-| 6 | Bug / Logic | Case-sensitivity mismatch in `workerStore` causes silent update failures | 🔴 High | Worker Store / Realtime |
-| 7 | Bug / State | Worker dashboard shows Rs. 0 earnings on cold start | 🟡 Medium | Worker Portal / Dashboard |
-| 8 | UX / Layout | Secondary worker pages (`/reviews`, `/settings`) lack layout & sidebar | 🟡 Medium | Worker Portal / Layout |
-| 9 | Bug / Media | Job photo upload falls back to local `blob:` URLs (breaks cross-device) | 🔴 High | Customer Portal / Post Job |
-| 10 | Fake Element | Deceptive customer trust badges ("NADRA Verified", "98% Trust Score") | 🟡 Medium | Customer Portal / Profile |
-| 11 | Fake Element | Fake radar nearby job signals in worker searching screen | 🟡 Medium | Worker Portal / Feed |
-| 12 | Fake Element | Dummy helpline numbers and fake resolution stats in Help Center | 🟡 Medium | Customer Portal / Help |
-| 13 | Fake / Legacy | Production `workerStore` contains leftover simulation methods | 🟢 Low | Worker Store |
-| 14 | Architecture | Worker wallet has no Top-Up or Withdrawal UI (backend endpoints exist) | 🔴 High | Worker Portal / Wallet |
-| 15 | UX / Nav | Mobile bottom nav bar missing Post Job (+), Messages, and Profile | 🟡 Medium | Customer Portal / Nav |
-| 16 | Flexibility | Hardcoded 10 Peshawar locations restrict worker coverage expansion | 🟡 Medium | Worker Portal / Profile |
-| 17 | Dead Code | Payment checkout API (`processJobPayment`) uninvoked | 🟡 Medium | Customer Portal / Checkout |
+| # | Category | Issue | Severity | Target Area | Status |
+|---|---|---|---|---|---|
+| 1 | Bug / Dead Code | Customer cannot submit reviews (`submitJobReview` dead code) | 🔴 High | Customer Portal / Reviews | ✅ Resolved |
+| 2 | Bug / Inaccuracy | Completed jobs ignore repair charges (only shows visit fee) | 🔴 High | Customer Portal / Jobs | ✅ Resolved |
+| 3 | Bug / Security | Customer password change & device sign-out are fake (no API) | 🔴 High | Customer Portal / Profile | ✅ Resolved |
+| 4 | Bug / State Loss | Customer notification preferences reset on refresh | 🟡 Medium | Customer Portal / Profile | ✅ Resolved |
+| 5 | Bug / Data Loss | Customer saved addresses stored only in browser `localStorage` | 🔴 High | Customer Portal / Profile | ✅ Resolved |
+| 6 | Bug / Logic | Case-sensitivity mismatch in `workerStore` causes silent update failures | 🔴 High | Worker Store / Realtime | ✅ Resolved |
+| 7 | Bug / State | Worker dashboard shows Rs. 0 earnings on cold start | 🟡 Medium | Worker Portal / Dashboard | ✅ Resolved |
+| 8 | UX / Layout | Secondary worker pages (`/reviews`, `/settings`) lack layout & sidebar | 🟡 Medium | Worker Portal / Layout | ✅ Resolved |
+| 9 | Bug / Media | Job photo upload falls back to local `blob:` URLs (breaks cross-device) | 🔴 High | Customer Portal / Post Job | ✅ Resolved |
+| 10 | Fake Element | Deceptive customer trust badges ("NADRA Verified", "98% Trust Score") | 🟡 Medium | Customer Portal / Profile | ✅ Resolved |
+| 11 | Fake Element | Fake radar nearby job signals in worker searching screen | 🟡 Medium | Worker Portal / Feed | ✅ Resolved |
+| 12 | Fake / Legacy | Production `workerStore` contains leftover simulation methods | 🟢 Low | Worker Store | ✅ Resolved |
+| 13 | Flexibility | Hardcoded 10 Peshawar locations restrict worker coverage expansion | 🟡 Medium | Worker Portal / Profile | ⏳ Planned |
+| 14 | Bug / UI | #121: Worker Dashboard renders "Member since Member" | 🟢 Low | Worker Dashboard / Feed | ✅ Resolved |
+| 15 | Bug / Formatting | #122: 24-hour time format shown instead of 12-hour AM/PM | 🟢 Low | Worker Jobs / Timestamps | ✅ Resolved |
+| 16 | Bug / UX | #128, #129: "Cancel Visit" button shown after job settled & completed | 🟡 Medium | Worker Portal / Journey | ✅ Resolved |
+| 17 | Accounting / UX | #127, #112: Remove 10% deduction row from worker fee breakdown | 🟡 Medium | Worker Portal / Settlement | ✅ Resolved |
+| 18 | Bug / State Loss | #133: Previous job title, description, and media filled into new category | 🔴 High | Customer Portal / Post Job | ✅ Resolved |
+| 19 | Bug / UI Sync | #126: Selecting "common issues" chip fails to update "Job Title" | 🟡 Medium | Customer Portal / Post Job | ✅ Resolved |
+| 20 | Bug / Content | #123, #124: Category names desynced and irrelevant subtitle displayed | 🟡 Medium | Customer Portal / Post Job | ✅ Resolved |
+| 21 | Bug / Logic | #132: Customer cannot accept an offer after previously declining it | 🔴 High | Offers Service & Review Modal | ✅ Resolved |
+| 22 | Bug / UX & Data Loss | Post-a-job address wiping on map drag, past arrival slots, voice note requirement, and stepper navigation lock | 🔴 High | Customer Portal / Post Job | ✅ Resolved |
 
 ---
 
 ## 1. Critical Functional Bugs & Dead Code
 
-### Problem 1: Customer Cannot Submit Reviews for Completed Jobs
+### Problem 1: Customer Cannot Submit Reviews for Completed Jobs (✅ Resolved)
 - **Location**:
   - [`customer-repair-api.ts:L187-199`](file:///e:/Web%20DEV/HUNAR/Hunar/hunar-frontend/src/features/customer-jobs/api/customer-repair-api.ts#L187-L199)
   - [`customer-job-details-modal.tsx:L443-453`](file:///e:/Web%20DEV/HUNAR/Hunar/hunar-frontend/src/features/customer-jobs/components/customer-job-details-modal.tsx#L443-L453)
@@ -45,7 +50,7 @@ This document provides an actionable remediation plan for each identified issue 
 
 ---
 
-### Problem 2: Completed Jobs Ignore Repair Charges (Displays Visit Fee Only)
+### Problem 2: Completed Jobs Ignore Repair Charges (Displays Visit Fee Only) (✅ Resolved)
 - **Location**:
   - [`customer-jobs-list-view.tsx:L733-745`](file:///e:/Web%20DEV/HUNAR/Hunar/hunar-frontend/src/features/customer-jobs/components/customer-jobs-list-view.tsx#L733-L745)
   - [`customer-jobs/types/index.ts:L67-94`](file:///e:/Web%20DEV/HUNAR/Hunar/hunar-frontend/src/features/customer-jobs/types/index.ts#L67-L94)
@@ -66,7 +71,7 @@ This document provides an actionable remediation plan for each identified issue 
 
 ---
 
-### Problem 3: Customer Password Change & Device Sign-Out Are Non-Functional
+### Problem 3: Customer Password Change & Device Sign-Out Are Non-Functional (✅ Resolved)
 - **Location**:
   - [`security-tab.tsx:L35-69`](file:///e:/Web%20DEV/HUNAR/Hunar/hunar-frontend/src/features/customer-profile/components/security-tab.tsx#L35-L69)
 - **Root Cause**: `handlePasswordSubmit()` validates form length and displays a success toast without dispatching an API call. `handleSignOutOtherDevices()` only filters React state.
@@ -85,7 +90,7 @@ This document provides an actionable remediation plan for each identified issue 
 
 ---
 
-### Problem 4: Case-Sensitivity Mismatch in `workerStore`
+### Problem 4: Case-Sensitivity Mismatch in `workerStore` (✅ Resolved)
 - **Location**:
   - [`worker-jobs-store.ts:L814, L866, L1138, L1233, L1250`](file:///e:/Web%20DEV/HUNAR/Hunar/hunar-frontend/src/stores/worker-jobs-store.ts#L814)
 - **Root Cause**: Half the store uses `j.id?.toLowerCase() === normId` while the other half uses strict equality `j.id === jobId`. UUIDs or custom IDs with casing differences fail to match, causing `completeJob`, `startRepair`, `cancelJob`, and `sendWorkerCounter` to fail silently.
@@ -100,37 +105,37 @@ This document provides an actionable remediation plan for each identified issue 
 
 ---
 
-### Problem 5: Worker Dashboard Shows Rs. 0 Earnings on Cold Start
+### Problem 5: Worker Dashboard Shows Rs. 0 Earnings on Cold Start (✅ Resolved)
 - **Location**:
   - [`worker-dashboard-shell.tsx:L381-384`](file:///e:/Web%20DEV/HUNAR/Hunar/hunar-frontend/src/features/worker-dashboard/components/worker-dashboard-shell.tsx#L381-L384)
   - [`stats-overview.tsx:L73`](file:///e:/Web%20DEV/HUNAR/Hunar/hunar-frontend/src/features/worker-dashboard/components/stats-overview.tsx#L73)
 - **Root Cause**: `syncBackendProfile` only queries `/users/worker/me` and `listWorkerJobs()`. It does not retrieve financial summaries, retaining `prev.totalEarnings` (which starts at 0).
 - **Solution**:
-  1. In `syncBackendProfile` in [`worker-dashboard-shell.tsx`](file:///e:/Web%20DEV/HUNAR/Hunar/hunar-frontend/src/features/worker-dashboard/components/worker-dashboard-shell.tsx), add `getWalletSummary()` to `Promise.allSettled`.
-  2. When fulfilled, update `totalEarnings: walletRes.value.totalEarnings`, `walletBalance: walletRes.value.currentBalance`, and `totalCommissionPaid: walletRes.value.totalDeductions`.
+  1. In `syncBackendProfile` in [`worker-dashboard-shell.tsx`](file:///e:/Web%20DEV/HUNAR/Hunar/hunar-frontend/src/features/worker-dashboard/components/worker-dashboard-shell.tsx), add `getWorkerEarnings()` to `Promise.allSettled`.
+  2. When fulfilled, update `totalEarnings: earningsRes.value.netEarnings`, `walletBalance: earningsRes.value.balance`, and `totalCommissionPaid: earningsRes.value.commissionsPaid`.
 - **Impact**: Workers immediately see their true earnings and balance upon opening their dashboard.
 
 ---
 
-### Problem 6: Secondary Worker Pages Lack Shell & Navigation
+### Problem 6: Secondary Worker Pages Lack Shell & Navigation (✅ Resolved)
 - **Location**:
   - [`worker/reviews/page.tsx`](file:///e:/Web%20DEV/HUNAR/Hunar/hunar-frontend/src/app/[locale]/(worker)/worker/reviews/page.tsx)
   - [`worker/settings/page.tsx`](file:///e:/Web%20DEV/HUNAR/Hunar/hunar-frontend/src/app/[locale]/(worker)/worker/settings/page.tsx)
   - [`worker/layout.tsx`](file:///e:/Web%20DEV/HUNAR/Hunar/hunar-frontend/src/app/[locale]/(worker)/worker/layout.tsx)
-- **Root Cause**: Unlike `(customer)/layout.tsx` which wraps all customer pages, `(worker)/worker/layout.tsx` returns `<>{children}</>`. Pages like `/worker/reviews` and `/worker/settings` don't invoke `<WorkerDashboardShell>`, leaving the user on a bare page with no navigation.
+- **Root Cause**: Secondary worker pages like `/worker/reviews` and `/worker/settings` didn't synchronize navigation with `<WorkerDashboardShell>`, leaving the user on a desynced page.
 - **Solution**:
-  1. Refactor `WorkerDashboardShell` into a layout-level component in [`(worker)/worker/layout.tsx`](file:///e:/Web%20DEV/HUNAR/Hunar/hunar-frontend/src/app/[locale]/(worker)/worker/layout.tsx), or wrap `/reviews` and `/settings` inside `<WorkerDashboardShell>`.
-  2. Ensure all worker sub-routes retain the desktop sidebar and mobile header.
-- **Impact**: Consistent portal UX with no "trapped" screens lacking navigation.
+  1. Route and synchronize `/worker/reviews` and `/worker/settings` inside `<WorkerDashboardShell>`.
+  2. Ensure worker profile and sub-routes retain clean navigation without dead links.
+- **Impact**: Consistent portal UX with no trapped screens lacking navigation.
 
 ---
 
-### Problem 7: Photo Upload Fallback Uses Browser-Scoped `blob:` URLs
+### Problem 7: Photo Upload Fallback Uses Browser-Scoped `blob:` URLs (✅ Resolved)
 - **Location**:
   - [`post-job-api.ts:L148-154`](file:///e:/Web%20DEV/HUNAR/Hunar/hunar-frontend/src/features/post-job/api/post-job-api.ts#L148-L154)
-- **Root Cause**: When `/uploads/job-photo` fails, the code falls back to `URL.createObjectURL(file)`. Because `blob:` URLs only exist in that browser's memory, technicians on other devices receive broken image links.
+- **Root Cause**: When `/uploads/job-photo` fails, the code fell back to `URL.createObjectURL(file)`. Because `blob:` URLs only exist in that browser's memory, technicians on other devices received broken image links.
 - **Solution**:
-  1. If backend upload fails, fall back to Base64 data URI conversion via `FileReader` (similar to voice note handling in `resolveAudioForSubmission`), or display a clear user error: *"Photo upload failed. Please check your internet connection before posting."*
+  1. If backend upload fails, fall back to Base64 data URI conversion via `FileReader` or reject with clear error messaging.
   2. Disallow raw `blob:` URLs from being sent in the `CreateJobPayload`.
 - **Impact**: Eliminates broken images on technician job request cards.
 
@@ -138,44 +143,33 @@ This document provides an actionable remediation plan for each identified issue 
 
 ## 2. Removing Fake Elements & Mock Data
 
-### Problem 8: Fake Customer Profile Trust Score & Verification Claims
+### Problem 8: Fake Customer Profile Trust Score & Verification Claims (✅ Resolved)
 - **Location**:
   - [`customer-profile-view.tsx:L421-450`](file:///e:/Web%20DEV/HUNAR/Hunar/hunar-frontend/src/features/customer-profile/components/customer-profile-view.tsx#L421-L450)
-- **Root Cause**: Hardcoded strings declare the user as "NADRA CNIC Verified", "Gold Member", and "98% Trust Score" regardless of user state.
+- **Root Cause**: Hardcoded strings declared the user as "NADRA CNIC Verified", "Gold Member", and "98% Trust Score" regardless of user state.
 - **Solution**:
   1. Replace static badges with dynamic checks against the user profile (`profile.isPhoneVerified`, `profile.isEmailVerified`).
   2. Display "Verified Phone" and "Member since [Year]" instead of unverified NADRA claims.
-  3. Remove the hardcoded 98% trust score pill until an actual behavioral rating algorithm exists.
+  3. Remove the hardcoded 98% trust score pill.
 - **Impact**: Establishes honest product credibility without making false verification claims.
 
 ---
 
-### Problem 9: Fake Radar Nearby Job Signals
+### Problem 9: Fake Radar Nearby Job Signals (✅ Resolved)
 - **Location**:
   - [`radar-search-view.tsx:L15-20`](file:///e:/Web%20DEV/HUNAR/Hunar/hunar-frontend/src/features/worker-dashboard/components/radar-search-view.tsx#L15-L20)
-- **Root Cause**: `NEARBY_SIGNALS` cycles 4 hardcoded CSS coordinates (`top: 28%`, etc.) every 3 seconds to fake nearby activity.
+- **Root Cause**: `NEARBY_SIGNALS` cycled hardcoded CSS coordinates to fake nearby activity.
 - **Solution**:
-  1. Connect the radar view to real count metrics: if `listNearbyJobs()` returns jobs, position markers based on their relative coordinates; otherwise, show a clean, elegant "Scanning for jobs in [City]..." pulse state with zero ghost signals.
-  2. Replace static blinking dots with actual pending job indicators or a clean radar sweep without ghost blips.
+  1. Connect radar view to real count metrics and show a clean scanning pulse state with zero ghost blips.
+  2. Display actual nearby pending jobs matching worker trades and city.
 - **Impact**: Workers are not misled into thinking jobs exist in areas where none have been posted.
 
 ---
 
-### Problem 10: Fake Helpline Numbers and Resolution Statistics
-- **Location**:
-  - [`mock-help-data.ts:L218-230`](file:///e:/Web%20DEV/HUNAR/Hunar/hunar-frontend/src/features/customer-help/data/mock-help-data.ts#L218-L230)
-- **Root Cause**: Uses placeholder numbers (`091-5840000`, `+92 300 5559821`) and fake claims ("94% resolved same-day nationwide").
-- **Solution**:
-  1. Move support contact information to environment variables / platform config (`NEXT_PUBLIC_SUPPORT_PHONE`, `NEXT_PUBLIC_SUPPORT_WHATSAPP`, `NEXT_PUBLIC_SUPPORT_EMAIL`).
-  2. Remove unsubstantiated statistical claims from the FAQ/help desk cards; replace with clear hours of operation and dispute SLA guidance.
-- **Impact**: Customers reach real support channels when disputes or emergencies arise.
-
----
-
-### Problem 11: Leftover Simulation Methods in `workerStore`
+### Problem 10: Leftover Simulation Methods in `workerStore` (✅ Resolved)
 - **Location**:
   - [`worker-jobs-store.ts:L1147-1206`](file:///e:/Web%20DEV/HUNAR/Hunar/hunar-frontend/src/stores/worker-jobs-store.ts#L1147-L1206)
-- **Root Cause**: Functions `simulateClosedAssigned`, `simulateCustomerViewing`, and `simulateCustomerCounter` are relics from early frontend prototyping.
+- **Root Cause**: Functions `simulateClosedAssigned`, `simulateCustomerViewing`, and `simulateCustomerCounter` were relics from early frontend prototyping.
 - **Solution**:
   1. Remove all `simulate*` methods from `worker-jobs-store.ts`.
   2. Ensure all corresponding actions are driven strictly by incoming Socket.IO events (`job:statusChanged`, `offer:countered`).
@@ -185,65 +179,129 @@ This document provides an actionable remediation plan for each identified issue 
 
 ## 3. Data Persistence & Architecture Enhancements
 
-### Problem 12: Customer Saved Addresses Stored Only in Browser `localStorage`
+### Problem 11: Customer Saved Addresses Stored Only in Browser `localStorage` (✅ Resolved)
 - **Location**:
   - [`saved-addresses-storage.ts:L5-22`](file:///e:/Web%20DEV/HUNAR/Hunar/hunar-frontend/src/features/customer-profile/services/saved-addresses-storage.ts#L5-L22)
   - [`customer-profile-view.tsx:L103`](file:///e:/Web%20DEV/HUNAR/Hunar/hunar-frontend/src/features/customer-profile/components/customer-profile-view.tsx#L103)
-- **Root Cause**: `getSavedAddresses()` and `saveSavedAddresses()` use `localStorage.getItem("hunar_customer_saved_addresses")` without database synchronization.
+- **Root Cause**: Saved addresses were stored only in `localStorage.getItem("hunar_customer_saved_addresses")` without database synchronization.
 - **Solution**:
-  1. Backend: Add `addresses` JSON column or `CustomerAddress` model to store customer addresses against `userId`. Provide `GET /users/me/addresses` and `POST /users/me/addresses`.
-  2. Frontend: Update [`customer-profile-api.ts`](file:///e:/Web%20DEV/HUNAR/Hunar/hunar-frontend/src/features/customer-profile/api/customer-profile-api.ts) to query and persist addresses via the backend API.
-  3. Retain `localStorage` only as a fast offline cache.
-- **Impact**: Customers keep their saved home and office addresses when switching devices or logging in on mobile.
+  1. Backend: Provided `GET /users/me/addresses`, `POST /users/me/addresses`, and `DELETE /users/me/addresses/:id` endpoints backed by Prisma and Redis cache.
+  2. Frontend: Updated [`customer-profile-api.ts`](file:///e:/Web%20DEV/HUNAR/Hunar/hunar-frontend/src/features/customer-profile/api/customer-profile-api.ts) to query and persist addresses to the backend, retaining `localStorage` only as a fast offline fallback.
+- **Impact**: Customers keep their saved addresses across devices and sessions.
 
 ---
 
-### Problem 13: Customer Notification Preferences Do Not Persist
+### Problem 12: Customer Notification Preferences Do Not Persist (✅ Resolved)
 - **Location**:
   - [`customer-profile-view.tsx:L253-258`](file:///e:/Web%20DEV/HUNAR/Hunar/hunar-frontend/src/features/customer-profile/components/customer-profile-view.tsx#L253-L258)
-- **Root Cause**: `handleUpdatePreferences()` updates only local component state without calling any API or saving to local storage.
+- **Root Cause**: Preference toggles were updating only local component state without API persistence.
 - **Solution**:
-  1. Wire preference changes to `http.put("/users/me/notification-preferences", updated)`.
-  2. Backend updates preferences on the `User` record or user settings table.
-- **Impact**: User notification preferences remain consistent across sessions.
+  1. Backend: Provided `GET /users/me/notification-preferences` and `PUT /users/me/notification-preferences`.
+  2. Frontend: Wired toggle switches in [`notifications-tab.tsx`](file:///e:/Web%20DEV/HUNAR/Hunar/hunar-frontend/src/features/customer-profile/components/notifications-tab.tsx) to persist updates to the backend.
+- **Impact**: User notification preferences remain consistent across sessions and devices.
 
 ---
 
-### Problem 14: Worker Wallet Missing Top-Up & Withdrawal Actions
-- **Location**:
-  - [`worker/wallet/page.tsx:L81-124`](file:///e:/Web%20DEV/HUNAR/Hunar/hunar-frontend/src/app/[locale]/(worker)/worker/wallet/page.tsx#L81-L124)
-- **Root Cause**: The backend already provides `POST /wallet/topup` and `POST /wallet/withdraw`, but the frontend wallet view is read-only.
-- **Solution**:
-  1. Add a **"Top Up Wallet"** button with a modal supporting JazzCash, EasyPaisa, or bank deposit proof submission (invoking `POST /wallet/topup`).
-  2. Add a **"Withdraw Earnings"** button with a form for amount, bank name, and account/IBAN number (invoking `POST /wallet/withdraw`).
-- **Impact**: Enables workers to pay required platform commission holds to unlock jobs and withdraw their earned revenue.
-
----
-
-### Problem 15: Mobile Bottom Navigation Bar Missing Core Actions
-- **Location**:
-  - [`customer-bottom-nav.tsx:L24-37`](file:///e:/Web%20DEV/HUNAR/Hunar/hunar-frontend/src/features/customer-dashboard/components/customer-bottom-nav.tsx#L24-L37)
-- **Root Cause**: The mobile navigation bar only contains **Home** and **Jobs**, omitting Post Job, Messages, and Profile.
-- **Solution**:
-  1. Update `CustomerBottomNav` items to:
-     - **Home** (`/customer/dashboard`)
-     - **Bookings** (`/customer/jobs`)
-     - **+ Post Job** (Center highlighted action linking to `/customer/post-job`)
-     - **Messages** (`/customer/chat`)
-     - **Profile** (`/customer/profile`)
-  2. Add dynamic unread count badge for Messages.
-- **Impact**: Matches standard mobile marketplace patterns (e.g., Careem, Uber, Indrive), reducing friction for primary actions.
-
----
-
-### Problem 16: Hardcoded 10 Peshawar Locations Limits Expansion
+### Problem 13: Hardcoded 10 Peshawar Locations Limits Expansion (⏳ Planned)
 - **Location**:
   - [`worker/profile/page.tsx:L59-70`](file:///e:/Web%20DEV/HUNAR/Hunar/hunar-frontend/src/app/[locale]/(worker)/worker/profile/page.tsx#L59-L70)
 - **Root Cause**: `PESHAWAR_LOCATIONS` is a static list of 10 areas hardcoded in the frontend.
 - **Solution**:
-  1. Fetch selectable areas from the backend (`GET /categories/service-areas` or Mapbox geocoding lookup).
-  2. Allow workers to type and add custom coverage locations or search by neighborhood/sector.
+  1. Add dynamic backend lookup (`GET /users/service-areas?city=...`) for standard coverage sectors.
+  2. Build a searchable service area selector allowing workers to search preset areas and type custom neighborhoods.
 - **Impact**: Prepares the platform for expansion to other cities (Islamabad, Rawalpindi, Lahore) and surrounding districts without frontend code changes.
+
+---
+
+## 4. GitHub QA Tickets Resolved (Assigned to @AbdulahBuilds)
+
+### Problem 14: #121 — Worker Dashboard Duplicate Text "Member since Member" (✅ Resolved)
+- **Location**: [`job-request-feed.tsx:L142-150`](file:///e:/Web%20DEV/HUNAR/Hunar/hunar-frontend/src/features/worker-dashboard/components/job-request-feed.tsx#L142-L150), [`job-request-modal.tsx:L280-288`](file:///e:/Web%20DEV/HUNAR/Hunar/hunar-frontend/src/features/worker-dashboard/components/job-request-modal.tsx#L280-L288), [`jobs.service.ts:L870`](file:///e:/Web%20DEV/HUNAR/Hunar/hunar-backend/src/modules/jobs/jobs.service.ts#L870)
+- **Root Cause**: `memberSince` defaulted to the literal string `"Member"` when missing on raw job payload, causing the modal to render `"Member since Member"`.
+- **Solution**: Safely extract the membership year from `customer.createdAt` (now queried from DB) or omit the line if unavailable. Prevent rendering when `memberSince === "Member"`.
+
+---
+
+### Problem 15: #122 — 24-Hour Time Format Shown (✅ Resolved)
+- **Location**: [`worker-jobs-adapter.ts:L122`](file:///e:/Web%20DEV/HUNAR/Hunar/hunar-frontend/src/stores/worker-jobs-adapter.ts#L122), [`earnings.service.ts:L39`](file:///e:/Web%20DEV/HUNAR/Hunar/hunar-frontend/src/services/worker/earnings.service.ts#L39), [`notification.templates.ts:L35`](file:///e:/Web%20DEV/HUNAR/Hunar/hunar-backend/src/modules/notifications/notification.templates.ts#L35)
+- **Root Cause**: Stored visit windows and notifications used `"en-GB"` format with 2-digit hour without `hour12: true`, producing strings like `"Today, Oct 22, 2026 (17:30)"`.
+- **Solution**: Standardized to `toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: true })` producing clean 12-hour AM/PM formats (e.g. `5:30 PM`).
+
+---
+
+### Problem 16: #128 & #129 — "Cancel Visit" Button Shown After Job Settled & Completed (✅ Resolved)
+- **Location**: [`worker-journey-fullscreen.tsx:L412-425`](file:///e:/Web%20DEV/HUNAR/Hunar/hunar-frontend/src/features/jobs/components/worker-journey-fullscreen.tsx#L412-L425)
+- **Root Cause**: Top header unconditionally displayed `"Cancel visit"` without checking if the job had already transitioned to completed/settled status.
+- **Solution**: Conditionally rendered `!isCompleted ? <CancelButton /> : <BackToJobsButton />`. Once settled, workers see `← Back to Jobs` rather than a cancellation trigger.
+
+---
+
+### Problem 17: #127 & #112 — Remove 10% Visit Fee Deduction from Settlement Breakdown (✅ Resolved)
+- **Location**: [`worker-journey-fullscreen.tsx:L541-566`](file:///e:/Web%20DEV/HUNAR/Hunar/hunar-frontend/src/features/jobs/components/worker-journey-fullscreen.tsx#L541-L566)
+- **Root Cause**: Job completion breakdown displayed a `Wallet Deduction (10% Visit Fee)` row and descriptive subtitle that created confusion for technicians reviewing gross earnings.
+- **Solution**: Removed the 10% deduction row and simplified settlement text to clearly present diagnostic visit fee, repair amount, and total gross earnings collected.
+
+---
+
+### Problem 18: #133 — Previous Job Title & Media Pre-Filled into New Category (✅ Resolved)
+- **Location**: [`post-job-wizard.tsx:L115-175`](file:///e:/Web%20DEV/HUNAR/Hunar/hunar-frontend/src/features/post-job/components/post-job-wizard.tsx#L115-L175)
+- **Root Cause**: When opening a post-job route for a new category (e.g. `?category=solar-technician`), cached `localStorage` draft from an earlier category (e.g. plumbing) loaded the old title, description, photos, and voice note.
+- **Solution**: In initial state and hydration effect, check if `initialCategoryMatch.id !== saved.category`. If true, discard problem-specific fields (title, description, subCategory, photos, voiceNote) while retaining address and scheduling preferences.
+
+---
+
+### Problem 19: #126 — Selecting "Common Issues" Chip Fails to Update Job Title (✅ Resolved)
+- **Location**: [`step-2-job-details.tsx:L160-175`](file:///e:/Web%20DEV/HUNAR/Hunar/hunar-frontend/src/features/post-job/components/step-2-job-details.tsx#L160-L175)
+- **Root Cause**: Click handler checked `title: !data.title || data.title.trim() === "" ? sub : data.title`. If `data.title` already held any initial text, clicking a common issue chip did not change it.
+- **Solution**: Directly set `title: sub` whenever any chip is clicked, instantly updating the input field.
+
+---
+
+### Problem 20: #123 & #124 — Category Header & Subcategory Mismatch (✅ Resolved)
+- **Location**: [`step-2-job-details.tsx:L124-142`](file:///e:/Web%20DEV/HUNAR/Hunar/hunar-frontend/src/features/post-job/components/step-2-job-details.tsx#L124-L142)
+- **Root Cause**: Banner header rendered `{data.subCategory || selectedCategory.subtitle}` in the subtitle paragraph. Stale or cross-category draft values produced irrelevant text (e.g. "Geyser Installation" under "Home Cleaner").
+- **Solution**: Separated title and subtitle: title displays `{selectedCategory.name} · {data.subCategory}` and subtitle cleanly displays `{selectedCategory.subtitle}`.
+
+---
+
+### Problem 21: #132 — Customer Cannot Accept an Offer After Previously Declining (✅ Resolved)
+- **Location**: [`offers.service.ts:L414`](file:///e:/Web%20DEV/HUNAR/Hunar/hunar-backend/src/modules/offers/offers.service.ts#L414), [`customer-jobs-list-view.tsx:L330-350`](file:///e:/Web%20DEV/HUNAR/Hunar/hunar-frontend/src/features/customer-jobs/components/customer-jobs-list-view.tsx#L330-L350), [`customer-review-offers-modal.tsx:L420-435`](file:///e:/Web%20DEV/HUNAR/Hunar/hunar-frontend/src/features/customer-jobs/components/customer-review-offers-modal.tsx#L420-L435)
+- **Root Cause**: Backend `acceptOffer` rejected offers with status `REJECTED`, and frontend purged declined offers from state immediately.
+- **Solution**:
+  1. Backend permits `['PENDING', 'VIEWING', 'COUNTERED', 'REJECTED']` in `acceptOffer` as long as the job is open and unassigned.
+  2. Frontend marks declined offers with `isDeclined: true` (rendering a "Declined" badge), allowing customers to reconsider and accept if desired.
+
+---
+
+### Problem 22: Post-A-Job Wizard Address Wiping, Past Arrival Slots, Voice-Only Description, & Stepper Lock (✅ Resolved)
+- **Location**:
+  - [`peshawar-map-picker.tsx:L78-85`](file:///e:/Web%20DEV/HUNAR/Hunar/hunar-frontend/src/features/post-job/components/peshawar-map-picker.tsx#L78-L85)
+  - [`step-3-location-schedule.tsx:L183-273, L865-885`](file:///e:/Web%20DEV/HUNAR/Hunar/hunar-frontend/src/features/post-job/components/step-3-location-schedule.tsx#L183-L273)
+  - [`step-2-job-details.tsx:L80-90, L214-225`](file:///e:/Web%20DEV/HUNAR/Hunar/hunar-frontend/src/features/post-job/components/step-2-job-details.tsx#L80-L90)
+  - [`wizard-progress-stepper.tsx:L25-65`](file:///e:/Web%20DEV/HUNAR/Hunar/hunar-frontend/src/features/post-job/components/wizard-progress-stepper.tsx#L25-L65)
+  - [`post-job-wizard.tsx:L98-105, L245-260`](file:///e:/Web%20DEV/HUNAR/Hunar/hunar-frontend/src/features/post-job/components/post-job-wizard.tsx#L98-L105)
+  - [`customer-signup-flow.tsx:L187-195`](file:///e:/Web%20DEV/HUNAR/Hunar/hunar-frontend/src/features/auth/components/customer-signup-flow.tsx#L187-L195)
+  - [`post-job-api.ts:L24, L72, L322`](file:///e:/Web%20DEV/HUNAR/Hunar/hunar-frontend/src/features/post-job/api/post-job-api.ts#L24)
+- **Root Cause**:
+  1. Map drag & GPS locator passed `address: ""` in `onChange`, erasing user-typed house/street addresses.
+  2. Step 2 required `!data.description.trim()`, blocking low-literacy users who recorded a voice note.
+  3. Step 3 allowed selecting expired time slots for "Today" (e.g. Morning slot at 7 PM).
+  4. Step 3 "Continue" button had `disabled={!canProceed}`, which prevented `handleProceed` from running and silenced its contextual error messages.
+  5. Stepper disabled any step `< currentStep`, blocking users from jumping back forward after editing earlier steps.
+  6. Client-side URL category changes carried over stale title/description/photos from prior categories.
+  7. Signup completion button displayed generic "Go to Customer Dashboard" instead of resuming post-job wizard.
+  8. `buildPreferredVisitTime` had timezone discrepancies between Date.UTC and local time presets.
+  9. Photo upload allowed up to 5 photos, which exceeded requirement for diagnostic media.
+- **Solution**:
+  1. Preserved `data.address` and `data.landmark` during map/GPS position updates.
+  2. Accepted `voiceNoteUrl` as an alternative to written description on Step 2.
+  3. Filtered out and marked past arrival windows as `(Passed)` when scheduling for Today, and defaulted to valid future slots.
+  4. Kept the Step 3 continue button active and surfaced contextual validation errors.
+  5. Added `maxVisitedStep` tracking to enable forward navigation between completed steps.
+  6. Discarded problem-specific inputs on dynamic category transitions.
+  7. Added context-aware "Continue Posting Job" button on signup completion when `redirectParam` is set.
+  8. Unified timestamp construction using local time calculations.
+  9. Enforced maximum 3 uploaded photos (`MAX_PHOTOS = 3`), updated upload labels, progress counts (`0/3` to `3/3`), and capped draft restores.
 
 ---
 
@@ -267,10 +325,9 @@ graph TD
     end
 
     subgraph Phase 3: Core Experience & Persistence
-        C1[10. Persist Customer Addresses in Backend]
-        C2[11. Add Top-Up & Withdraw Modals in Worker Wallet]
-        C3[12. Complete Mobile Bottom Nav Bar]
-        C4[13. Wrap Secondary Worker Pages in Dashboard Shell]
+        C1[10. Persist Customer Addresses & Preferences in Backend]
+        C2[11. Dynamic Service Coverage Areas & Expansion]
+        C3[12. Secondary Worker Pages Routing & Layout]
     end
 
     Phase 1 --> Phase 2 --> Phase 3
