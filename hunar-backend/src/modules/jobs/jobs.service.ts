@@ -183,6 +183,28 @@ export class JobsService {
       );
     }
 
+    if (dto.city && this.prisma.city?.findFirst) {
+      const cityRec = await this.prisma.city.findFirst({
+        where: { name: { equals: dto.city.trim(), mode: 'insensitive' } },
+      });
+      if (cityRec && !cityRec.isActive) {
+        throw new BadRequestException(
+          `CITY_INACTIVE: "${dto.city}" is currently inactive and not accepting new job postings.`,
+        );
+      }
+    }
+    if (dto.area && this.prisma.area?.findFirst) {
+      const areaRec = await this.prisma.area.findFirst({
+        where: { name: { equals: dto.area.trim(), mode: 'insensitive' } },
+        include: { city: true },
+      });
+      if (areaRec && (!areaRec.isActive || (areaRec.city && !areaRec.city.isActive))) {
+        throw new BadRequestException(
+          `AREA_INACTIVE: "${dto.area}" is currently inactive and not accepting new job postings.`,
+        );
+      }
+    }
+
     const orderCode = await generateUniqueOrderCode(this.prisma);
 
     const job = await this.prisma.serviceRequest.create({

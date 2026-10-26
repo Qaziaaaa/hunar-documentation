@@ -40,6 +40,7 @@ import {
 import type { SavedAddress } from "@/features/customer-profile/types";
 import { useLocale } from "next-intl";
 import { toLocalDateString } from "@/lib/format";
+import { http } from "@/lib/api-client";
 
 interface Step3LocationScheduleProps {
   data: PostJobData;
@@ -63,6 +64,25 @@ export function Step3LocationSchedule({
 
   const [specificTimeInput, setSpecificTimeInput] = useState("10:00");
   const [error, setError] = useState<string | null>(null);
+
+  // Dynamic active areas from backend database
+  const [availableAreas, setAvailableAreas] = useState<string[]>(SERVICE_AREAS);
+
+  useEffect(() => {
+    let alive = true;
+    http.get<any[]>("/locations/areas")
+      .then((res) => {
+        if (!alive) return;
+        const list = Array.isArray(res) ? res : ((res as any)?.data ?? []);
+        if (list && list.length > 0) {
+          setAvailableAreas(list.map((a: any) => a.name));
+        }
+      })
+      .catch(() => {});
+    return () => {
+      alive = false;
+    };
+  }, []);
 
   // Initialize saved-address logic on mount:
   // - First time (no saved address): show map/location selection UI directly
@@ -537,12 +557,12 @@ export function Step3LocationSchedule({
                   className="w-full h-10 px-3 rounded-xl text-xs sm:text-sm text-[#1A1A2E] bg-white border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#0F8B8D]/20 font-medium"
                 >
                   <option value="">{isUrdu ? "علاقہ منتخب کریں" : "Select Area"}</option>
-                  {SERVICE_AREAS.map((area) => (
+                  {availableAreas.map((area) => (
                     <option key={area} value={area}>
                       {area}
                     </option>
                   ))}
-                  {data.area && !SERVICE_AREAS.includes(data.area) && (
+                  {data.area && !availableAreas.includes(data.area) && (
                     <option key={data.area} value={data.area}>
                       {data.area}
                     </option>

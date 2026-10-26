@@ -82,6 +82,17 @@ export class WorkerProfileService {
         latitude = geocoded.latitude;
         longitude = geocoded.longitude;
       }
+      if (area.label && this.prisma.area?.findFirst) {
+        const areaRec = await this.prisma.area.findFirst({
+          where: { name: { equals: area.label.trim(), mode: 'insensitive' } },
+          include: { city: true },
+        });
+        if (areaRec && (!areaRec.isActive || (areaRec.city && !areaRec.city.isActive))) {
+          throw new BadRequestException(
+            `AREA_INACTIVE: "${area.label}" is currently inactive and cannot be selected as a service area.`,
+          );
+        }
+      }
       resolved.push({
         label: area.label.trim(),
         address: area.address.trim(),
