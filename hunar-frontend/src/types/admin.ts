@@ -228,3 +228,31 @@ export interface JobsFunnelReport {
     conversionRate: string;
   };
 }
+
+export interface CityItem {
+  id: string;
+  name: string;
+  nameUrdu?: string | null;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+  areasCount: number;
+  workersCount: number;
+  ordersCount: number;
+  areas?: Array<{ id: string; name: string; nameUrdu?: string | null; isActive: boolean }>;
+}
+
+export interface AreaItem {
+  id: string;
+  name: string;
+  nameUrdu?: string | null;
+  cityId: string;
+  cityName: string;
+  city?: { id: string; name: string; nameUrdu?: string | null; isActive: boolean };
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+  workersCount: number;
+  ordersCount: number;
+}
+

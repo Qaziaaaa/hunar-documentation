@@ -79,11 +79,13 @@ export function useWorkerWizard() {
           );
         }
 
-        // Sanitize service areas: only keep valid PESHAWAR_AREAS; ignore invalid/phantom entries
+        // Sanitize service areas: keep valid area strings; ignore empty/phantom seed entries
         let sanitizedAreas: string[] = [];
         if (Array.isArray(parsed.serviceAreas)) {
-          const filtered = parsed.serviceAreas.filter((a: string) => validAreaNames.has(a));
-          if (filtered.length > 0 && filtered.length < PESHAWAR_AREAS.length) {
+          const filtered = parsed.serviceAreas.filter(
+            (a: string) => typeof a === "string" && a.trim().length > 0 && !a.startsWith("seed-area-") && !a.startsWith("seed-category-"),
+          );
+          if (filtered.length > 0) {
             sanitizedAreas = filtered;
           }
         }
@@ -192,11 +194,13 @@ export function useWorkerWizard() {
             ? prev.skills
             : serverSkills;
 
-        // Validate server service areas against PESHAWAR_AREAS
+        // Validate server service areas
         let serverAreas: string[] = [];
         if (Array.isArray(areaLabels)) {
-          const filtered = areaLabels.filter((a: string) => validAreaNames.has(a));
-          if (filtered.length > 0 && filtered.length < PESHAWAR_AREAS.length) {
+          const filtered = areaLabels.filter(
+            (a: string) => typeof a === "string" && a.trim().length > 0 && !a.startsWith("seed-area-"),
+          );
+          if (filtered.length > 0) {
             serverAreas = filtered;
           }
         }
@@ -204,7 +208,7 @@ export function useWorkerWizard() {
         // Service areas must strictly be 0 selected unless worker previously chose an explicit subset
         const activeAreas =
           prev.serviceAreas && prev.serviceAreas.length > 0
-            ? prev.serviceAreas.filter((a) => validAreaNames.has(a))
+            ? prev.serviceAreas.filter((a) => typeof a === "string" && a.trim().length > 0)
             : serverAreas;
 
         const cleanServerName = serverData.user?.name || "";

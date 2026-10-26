@@ -32,6 +32,7 @@ import { UploadsModule } from './modules/uploads/uploads.module';
 import { ChatModule } from './modules/chat/chat.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { PaymentsModule } from './modules/payments/payments.module';
+import { LocationModule } from './modules/location/location.module';
 
 @Module({
   imports: [
@@ -60,6 +61,7 @@ import { PaymentsModule } from './modules/payments/payments.module';
     ChatModule,
     NotificationsModule,
     PaymentsModule,
+    LocationModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: JwtAuthGuard },

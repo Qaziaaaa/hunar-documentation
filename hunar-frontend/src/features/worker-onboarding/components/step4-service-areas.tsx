@@ -8,9 +8,11 @@ import {
   Compass,
   MapPin,
 } from "lucide-react";
+import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { http } from "@/lib/api-client";
 import type { WorkerProfileFormData } from "../types";
 
 export const PESHAWAR_AREAS = [
@@ -53,11 +55,26 @@ export function Step4ServiceAreas({
   const tAreas = useTranslations("WorkerOnboarding.Areas");
   const tRadii = useTranslations("WorkerOnboarding.Radii");
 
-  // Keep only recognized localities in active selection
-  const validAreasList = PESHAWAR_AREAS as readonly string[];
-  const selectedAreas = (formData.serviceAreas || []).filter((a) =>
-    validAreasList.includes(a),
-  );
+  // Active localities loaded dynamically from database, fallback to initial PESHAWAR_AREAS
+  const [availableAreas, setAvailableAreas] = useState<string[]>([...PESHAWAR_AREAS]);
+
+  useEffect(() => {
+    let alive = true;
+    http.get<any[]>("/locations/areas")
+      .then((res) => {
+        if (!alive) return;
+        const list = Array.isArray(res) ? res : ((res as any)?.data ?? []);
+        if (list && list.length > 0) {
+          setAvailableAreas(list.map((a: any) => a.name));
+        }
+      })
+      .catch(() => {});
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  const selectedAreas = formData.serviceAreas || [];
 
   const toggleArea = (area: string) => {
     if (selectedAreas.includes(area)) {
@@ -101,7 +118,7 @@ export function Step4ServiceAreas({
           </div>
 
           <div className="flex flex-wrap gap-2 max-h-[190px] overflow-y-auto pr-1">
-            {PESHAWAR_AREAS.map((area) => {
+            {availableAreas.map((area) => {
               const isSelected = selectedAreas.includes(area);
               return (
                 <button

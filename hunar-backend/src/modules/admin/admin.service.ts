@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ConflictException,
   ForbiddenException,
   Injectable,
   NotFoundException,
@@ -43,6 +44,10 @@ import {
   AdminCategoryListQueryDto,
   AdminCreateCategoryDto,
   AdminUpdateCategoryDto,
+  AdminCreateCityDto,
+  AdminUpdateCityDto,
+  AdminCreateAreaDto,
+  AdminUpdateAreaDto,
   AdminUpdateCommissionRateDto,
   AdminUpdateSettingsDto,
   AdminReportQueryDto,
@@ -1619,6 +1624,472 @@ export class AdminService {
     await this.redis?.del('perf:categories:all').catch(() => {});
 
     return updated;
+  }
+
+  // ----- City & Area Management -----
+
+  async listCities() {
+    const cities = await this.prisma.city.findMany({
+      orderBy: { name: 'asc' },
+      include: {
+        areas: {
+          select: { id: true, name: true, nameUrdu: true, isActive: true },
+          orderBy: { name: 'asc' },
+        },
+      },
+    });
+
+    const [workerServiceAreas, distinctRequests] = await Promise.all([
+      this.prisma.serviceArea.findMany({
+        where: { user: { isActive: true, role: Role.WORKER } },
+        select: { userId: true, label: true, address: true },
+      }),
+      this.prisma.serviceRequest.findMany({
+        select: { city: true },
+      }),
+    ]);
+
+    const orderCountMap = new Map<string, number>();
+    for (const req of distinctRequests) {
+      if (req.city) {
+        const key = req.city.trim().toLowerCase();
+        orderCountMap.set(key, (orderCountMap.get(key) ?? 0) + 1);
+      }
+    }
+
+    return cities.map((city) => {
+      const cityKey = city.name.trim().toLowerCase();
+      const areaNames = city.areas.map((a) => a.name.trim().toLowerCase());
+
+      const workerIds = new Set<string>();
+      for (const sa of workerServiceAreas) {
+        const lbl = (sa.label || '').trim().toLowerCase();
+        const addr = (sa.address || '').trim().toLowerCase();
+        if (
+          addr.includes(cityKey) ||
+          lbl.includes(cityKey) ||
+          areaNames.some((an) => lbl.includes(an) || addr.includes(an))
+        ) {
+          workerIds.add(sa.userId);
+        }
+      }
+
+      return {
+        id: city.id,
+        name: city.name,
+        nameUrdu: city.nameUrdu,
+        isActive: city.isActive,
+        createdAt: city.createdAt,
+        updatedAt: city.updatedAt,
+        areasCount: city.areas.length,
+        workersCount: workerIds.size,
+        ordersCount: orderCountMap.get(cityKey) ?? 0,
+        areas: city.areas,
+      };
+    });
+  }
+
+  async createCity(dto: AdminCreateCityDto, actor: JwtPayload) {
+    const trimmedName = dto.name.trim();
+    const existing = await this.prisma.city.findFirst({
+      where: { name: { equals: trimmedName, mode: 'insensitive' } },
+    });
+    if (existing) {
+      throw new ConflictException(`City with name "${trimmedName}" already exists`);
+    }
+
+    const city = await this.prisma.city.create({
+      data: {
+        name: trimmedName,
+        nameUrdu: dto.nameUrdu?.trim() || null,
+        isActive: dto.isActive !== undefined ? dto.isActive : true,
+      },
+    });
+
+    await this.audit.record({
+      actorId: actor.sub,
+      actorRole: actor.role,
+      action: 'CITY_CREATED',
+      targetType: 'CITY',
+      targetId: city.id,
+      reason: null,
+      metadata: { name: city.name },
+    });
+
+    return city;
+  }
+
+  async updateCity(id: string, dto: AdminUpdateCityDto, actor: JwtPayload) {
+    const existing = await this.prisma.city.findUnique({ where: { id } });
+    if (!existing) {
+      throw new NotFoundException('City not found');
+    }
+
+    if (dto.name) {
+      const trimmedName = dto.name.trim();
+      const duplicate = await this.prisma.city.findFirst({
+        where: {
+          name: { equals: trimmedName, mode: 'insensitive' },
+          id: { not: id },
+        },
+      });
+      if (duplicate) {
+        throw new ConflictException(`City with name "${trimmedName}" already exists`);
+      }
+    }
+
+    const updated = await this.prisma.city.update({
+      where: { id },
+      data: {
+        name: dto.name ? dto.name.trim() : undefined,
+        nameUrdu: dto.nameUrdu !== undefined ? dto.nameUrdu?.trim() || null : undefined,
+        isActive: dto.isActive !== undefined ? dto.isActive : undefined,
+      },
+    });
+
+    if (dto.isActive === false) {
+      await this.prisma.area.updateMany({
+        where: { cityId: id },
+        data: { isActive: false },
+      });
+    }
+
+    await this.audit.record({
+      actorId: actor.sub,
+      actorRole: actor.role,
+      action: 'CITY_UPDATED',
+      targetType: 'CITY',
+      targetId: id,
+      reason: null,
+      metadata: { name: updated.name },
+    });
+
+    return updated;
+  }
+
+  async toggleCity(id: string, active: boolean, actor: JwtPayload) {
+    const existing = await this.prisma.city.findUnique({ where: { id } });
+    if (!existing) {
+      throw new NotFoundException('City not found');
+    }
+
+    const updated = await this.prisma.city.update({
+      where: { id },
+      data: { isActive: active },
+    });
+
+    // When a city is deactivated (turned off), automatically deactivate all areas in that city
+    if (!active) {
+      await this.prisma.area.updateMany({
+        where: { cityId: id },
+        data: { isActive: false },
+      });
+    }
+
+    await this.audit.record({
+      actorId: actor.sub,
+      actorRole: actor.role,
+      action: active ? 'CITY_ACTIVATED' : 'CITY_DEACTIVATED',
+      targetType: 'CITY',
+      targetId: id,
+      reason: null,
+      metadata: { name: updated.name, isActive: active },
+    });
+
+    return updated;
+  }
+
+  async deleteCity(id: string, actor: JwtPayload) {
+    const existing = await this.prisma.city.findUnique({
+      where: { id },
+      include: { _count: { select: { areas: true } } },
+    });
+    if (!existing) {
+      throw new NotFoundException('City not found');
+    }
+
+    await this.prisma.city.delete({ where: { id } });
+
+    await this.audit.record({
+      actorId: actor.sub,
+      actorRole: actor.role,
+      action: 'CITY_DELETED',
+      targetType: 'CITY',
+      targetId: id,
+      reason: null,
+      metadata: { name: existing.name },
+    });
+
+    return { success: true, id };
+  }
+
+  async listAreas(cityId?: string) {
+    const areas = await this.prisma.area.findMany({
+      where: cityId ? { cityId } : undefined,
+      orderBy: [{ city: { name: 'asc' } }, { name: 'asc' }],
+      include: {
+        city: {
+          select: { id: true, name: true, nameUrdu: true, isActive: true },
+        },
+      },
+    });
+
+    const [workerServiceAreas, allRequests] = await Promise.all([
+      this.prisma.serviceArea.findMany({
+        where: { user: { isActive: true, role: Role.WORKER } },
+        select: { userId: true, label: true, address: true },
+      }),
+      this.prisma.serviceRequest.findMany({
+        select: { city: true, area: true },
+      }),
+    ]);
+
+    return areas.map((area) => {
+      const areaKey = area.name.trim().toLowerCase();
+      const cityKey = area.city?.name?.trim().toLowerCase() || '';
+
+      const workerIds = new Set<string>();
+      for (const sa of workerServiceAreas) {
+        const lbl = (sa.label || '').trim().toLowerCase();
+        const addr = (sa.address || '').trim().toLowerCase();
+        if (lbl.includes(areaKey) || addr.includes(areaKey)) {
+          workerIds.add(sa.userId);
+        }
+      }
+
+      let ordersCount = 0;
+      for (const req of allRequests) {
+        const reqArea = (req.area || '').trim().toLowerCase();
+        const reqCity = (req.city || '').trim().toLowerCase();
+        if (reqArea && (reqArea.includes(areaKey) || areaKey.includes(reqArea))) {
+          if (!cityKey || reqCity === cityKey || reqCity.includes(cityKey) || cityKey.includes(reqCity)) {
+            ordersCount++;
+          }
+        }
+      }
+
+      const isParentCityActive = area.city ? area.city.isActive : true;
+      const effectiveActive = isParentCityActive ? area.isActive : false;
+
+      return {
+        id: area.id,
+        name: area.name,
+        nameUrdu: area.nameUrdu,
+        cityId: area.cityId,
+        cityName: area.city?.name ?? '',
+        city: area.city,
+        isActive: effectiveActive,
+        createdAt: area.createdAt,
+        updatedAt: area.updatedAt,
+        workersCount: workerIds.size,
+        ordersCount,
+      };
+    });
+  }
+
+  async createArea(dto: AdminCreateAreaDto, actor: JwtPayload) {
+    const city = await this.prisma.city.findUnique({ where: { id: dto.cityId } });
+    if (!city) {
+      throw new NotFoundException('Selected city not found');
+    }
+
+    const trimmedName = dto.name.trim();
+    const existing = await this.prisma.area.findUnique({
+      where: {
+        cityId_name: {
+          cityId: dto.cityId,
+          name: trimmedName,
+        },
+      },
+    });
+    if (existing) {
+      throw new ConflictException(`Area "${trimmedName}" already exists in ${city.name}`);
+    }
+
+    const area = await this.prisma.area.create({
+      data: {
+        name: trimmedName,
+        cityId: dto.cityId,
+        nameUrdu: dto.nameUrdu?.trim() || null,
+        isActive: city.isActive ? (dto.isActive !== undefined ? dto.isActive : true) : false,
+      },
+      include: {
+        city: { select: { id: true, name: true, nameUrdu: true, isActive: true } },
+      },
+    });
+
+    await this.audit.record({
+      actorId: actor.sub,
+      actorRole: actor.role,
+      action: 'AREA_CREATED',
+      targetType: 'AREA',
+      targetId: area.id,
+      reason: null,
+      metadata: { name: area.name, cityId: area.cityId, cityName: city.name },
+    });
+
+    return {
+      ...area,
+      cityName: city.name,
+      workersCount: 0,
+      ordersCount: 0,
+    };
+  }
+
+  async updateArea(id: string, dto: AdminUpdateAreaDto, actor: JwtPayload) {
+    const existing = await this.prisma.area.findUnique({
+      where: { id },
+      include: { city: true },
+    });
+    if (!existing) {
+      throw new NotFoundException('Area not found');
+    }
+
+    const targetCityId = dto.cityId || existing.cityId;
+    const targetName = dto.name ? dto.name.trim() : existing.name;
+
+    if (dto.isActive === true) {
+      const parentCity = await this.prisma.city.findUnique({ where: { id: targetCityId } });
+      if (parentCity && !parentCity.isActive) {
+        throw new BadRequestException(
+          `Cannot activate area "${targetName}" because its parent city "${parentCity.name}" is deactivated. Please activate ${parentCity.name} first.`,
+        );
+      }
+    }
+
+    if (dto.name || dto.cityId) {
+      const duplicate = await this.prisma.area.findFirst({
+        where: {
+          cityId: targetCityId,
+          name: { equals: targetName, mode: 'insensitive' },
+          id: { not: id },
+        },
+      });
+      if (duplicate) {
+        throw new ConflictException(`Area "${targetName}" already exists in this city`);
+      }
+    }
+
+    const updated = await this.prisma.area.update({
+      where: { id },
+      data: {
+        name: dto.name ? dto.name.trim() : undefined,
+        cityId: dto.cityId || undefined,
+        nameUrdu: dto.nameUrdu !== undefined ? dto.nameUrdu?.trim() || null : undefined,
+        isActive: dto.isActive !== undefined ? dto.isActive : undefined,
+      },
+      include: {
+        city: { select: { id: true, name: true, nameUrdu: true, isActive: true } },
+      },
+    });
+
+    await this.audit.record({
+      actorId: actor.sub,
+      actorRole: actor.role,
+      action: 'AREA_UPDATED',
+      targetType: 'AREA',
+      targetId: id,
+      reason: null,
+      metadata: { name: updated.name, cityId: updated.cityId },
+    });
+
+    return {
+      ...updated,
+      cityName: updated.city?.name ?? '',
+    };
+  }
+
+  async toggleArea(id: string, active: boolean, actor: JwtPayload) {
+    const existing = await this.prisma.area.findUnique({
+      where: { id },
+      include: { city: true },
+    });
+    if (!existing) {
+      throw new NotFoundException('Area not found');
+    }
+
+    if (active && existing.city && !existing.city.isActive) {
+      throw new BadRequestException(
+        `Cannot activate area "${existing.name}" because its parent city "${existing.city.name}" is deactivated. Please activate ${existing.city.name} first.`,
+      );
+    }
+
+    const updated = await this.prisma.area.update({
+      where: { id },
+      data: { isActive: active },
+      include: { city: { select: { id: true, name: true, nameUrdu: true } } },
+    });
+
+    await this.audit.record({
+      actorId: actor.sub,
+      actorRole: actor.role,
+      action: active ? 'AREA_ACTIVATED' : 'AREA_DEACTIVATED',
+      targetType: 'AREA',
+      targetId: id,
+      reason: null,
+      metadata: { name: updated.name, isActive: active },
+    });
+
+    return updated;
+  }
+
+  async deleteArea(id: string, actor: JwtPayload) {
+    const existing = await this.prisma.area.findUnique({ where: { id } });
+    if (!existing) {
+      throw new NotFoundException('Area not found');
+    }
+
+    await this.prisma.area.delete({ where: { id } });
+
+    await this.audit.record({
+      actorId: actor.sub,
+      actorRole: actor.role,
+      action: 'AREA_DELETED',
+      targetType: 'AREA',
+      targetId: id,
+      reason: null,
+      metadata: { name: existing.name },
+    });
+
+    return { success: true, id };
+  }
+
+  // Public / client helper methods
+  async getActiveCitiesWithAreas() {
+    return this.prisma.city.findMany({
+      where: { isActive: true },
+      orderBy: { name: 'asc' },
+      select: {
+        id: true,
+        name: true,
+        nameUrdu: true,
+        areas: {
+          where: { isActive: true },
+          orderBy: { name: 'asc' },
+          select: { id: true, name: true, nameUrdu: true },
+        },
+      },
+    });
+  }
+
+  async getActiveAreas(city?: string) {
+    return this.prisma.area.findMany({
+      where: {
+        isActive: true,
+        city: {
+          isActive: true,
+          ...(city ? { name: { equals: city, mode: 'insensitive' } } : {}),
+        },
+      },
+      orderBy: { name: 'asc' },
+      select: {
+        id: true,
+        name: true,
+        nameUrdu: true,
+        cityId: true,
+        city: { select: { id: true, name: true, nameUrdu: true } },
+      },
+    });
   }
 
   // Platform settings (Admin flow §12). Get all platform settings.

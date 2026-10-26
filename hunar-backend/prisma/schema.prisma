@@ -143,6 +143,7 @@ enum NotificationType {
   REPAIR_APPROVED
   PAYMENT_CONFIRMED
   JOB_COMPLETED
+  JOB_EXPIRED_NO_WORKER
 }
 
 model User {
@@ -707,3 +708,32 @@ model AdminNotification {
   @@index([isRead, createdAt])
   @@index([type, createdAt])
 }
+
+model City {
+  id        String   @id @default(uuid())
+  name      String   @unique
+  nameUrdu  String?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  areas Area[]
+
+  @@index([isActive])
+}
+
+model Area {
+  id        String   @id @default(uuid())
+  name      String
+  nameUrdu  String?
+  cityId    String
+  city      City     @relation(fields: [cityId], references: [id], onDelete: Cascade)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([cityId, name])
+  @@index([cityId])
+  @@index([isActive])
+}
+

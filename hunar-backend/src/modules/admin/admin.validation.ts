@@ -796,3 +796,77 @@ export class AdminReviewListQueryDto {
   @Max(100)
   limit?: number;
 }
+
+// City & Area Management
+export class AdminCreateCityDto {
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(100)
+  name!: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(100)
+  nameUrdu?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  isActive?: boolean;
+}
+
+export class AdminUpdateCityDto {
+  @IsOptional()
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(100)
+  name?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(100)
+  nameUrdu?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  isActive?: boolean;
+}
+
+export class AdminCreateAreaDto {
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(100)
+  name!: string;
+
+  @IsUUID()
+  cityId!: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(100)
+  nameUrdu?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  isActive?: boolean;
+}
+
+export class AdminUpdateAreaDto {
+  @IsOptional()
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(100)
+  name?: string;
+
+  @IsOptional()
+  @IsUUID()
+  cityId?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(100)
+  nameUrdu?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  isActive?: boolean;
+}
