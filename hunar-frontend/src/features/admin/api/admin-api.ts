@@ -5,6 +5,8 @@ import type {
   AdminNotification,
   AuditLogEntry,
   CategoryFormValues,
+  AreaItem,
+  CityItem,
   CustomerUser,
   DisputeReport,
   JobDetailItem,
@@ -807,6 +809,65 @@ export const adminApi = {
   async updateCategoryDistanceSlabs(id: string, distanceSlabs: any[]): Promise<ServiceCategory> {
     const updated = await http.put<any>(`/admin/categories/${id}`, { distanceSlabs });
     return toServiceCategory(updated);
+  },
+
+  // Cities & Areas Management
+  async listCities(): Promise<CityItem[]> {
+    const res = await http.get<any>("/admin/cities");
+    return Array.isArray(res) ? res : (res?.data ?? []);
+  },
+
+  async createCity(payload: { name: string; nameUrdu?: string }): Promise<CityItem> {
+    const res = await http.post<any>("/admin/cities", payload);
+    return res?.data ?? res;
+  },
+
+  async updateCity(id: string, payload: { name?: string; nameUrdu?: string; isActive?: boolean }): Promise<CityItem> {
+    const res = await http.put<any>(`/admin/cities/${id}`, payload);
+    return res?.data ?? res;
+  },
+
+  async toggleCity(id: string, active: boolean) {
+    return http.put(`/admin/cities/${id}/${active ? "activate" : "deactivate"}`);
+  },
+
+  async deleteCity(id: string) {
+    return http.delete(`/admin/cities/${id}`);
+  },
+
+  async listAreas(cityId?: string): Promise<AreaItem[]> {
+    const url = cityId ? `/admin/areas?cityId=${encodeURIComponent(cityId)}` : "/admin/areas";
+    const res = await http.get<any>(url);
+    return Array.isArray(res) ? res : (res?.data ?? []);
+  },
+
+  async createArea(payload: { name: string; nameUrdu?: string; cityId: string }): Promise<AreaItem> {
+    const res = await http.post<any>("/admin/areas", payload);
+    return res?.data ?? res;
+  },
+
+  async updateArea(id: string, payload: { name?: string; nameUrdu?: string; cityId?: string; isActive?: boolean }): Promise<AreaItem> {
+    const res = await http.put<any>(`/admin/areas/${id}`, payload);
+    return res?.data ?? res;
+  },
+
+  async toggleArea(id: string, active: boolean) {
+    return http.put(`/admin/areas/${id}/${active ? "activate" : "deactivate"}`);
+  },
+
+  async deleteArea(id: string) {
+    return http.delete(`/admin/areas/${id}`);
+  },
+
+  async getPublicCities(): Promise<CityItem[]> {
+    const res = await http.get<any>("/locations/cities");
+    return Array.isArray(res) ? res : (res?.data ?? []);
+  },
+
+  async getPublicAreas(cityId?: string): Promise<AreaItem[]> {
+    const url = cityId ? `/locations/areas?cityId=${encodeURIComponent(cityId)}` : "/locations/areas";
+    const res = await http.get<any>(url);
+    return Array.isArray(res) ? res : (res?.data ?? []);
   },
 
   async getSettings(): Promise<PlatformSettings> {

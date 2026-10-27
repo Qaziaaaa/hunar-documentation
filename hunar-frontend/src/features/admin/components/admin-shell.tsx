@@ -14,6 +14,7 @@ import {
   LineChart,
   LayoutDashboard,
   LogOut,
+  MapPin,
   Menu,
   Moon,
   Search,
@@ -82,6 +83,7 @@ const G_SHORTCUTS: Record<string, string> = {
   t: "/admin/visits",
   s: "/admin/settings",
   r: "/admin/reports",
+  l: "/admin/locations",
 };
 
 /** True when an admin access or refresh token exists (401s can silent-refresh). */
@@ -1008,6 +1010,11 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
           label: "Categories",
           href: "/admin/categories",
           icon: FolderTree,
+        },
+        {
+          label: "Cities & Areas",
+          href: "/admin/locations",
+          icon: MapPin,
         },
         {
           label: "Reports",

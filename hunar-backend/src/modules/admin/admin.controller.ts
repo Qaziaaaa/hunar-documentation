@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, ParseUUIDPipe, Post, Put, Query, Res } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, ParseUUIDPipe, Post, Put, Query, Res } from '@nestjs/common';
 import type { Response } from 'express';
 import { Role } from '@prisma/client';
 import { AdminService } from './admin.service';
@@ -20,6 +20,10 @@ import {
   AdminCategoryListQueryDto,
   AdminCreateCategoryDto,
   AdminUpdateCategoryDto,
+  AdminCreateCityDto,
+  AdminUpdateCityDto,
+  AdminCreateAreaDto,
+  AdminUpdateAreaDto,
   AdminUpdateCommissionRateDto,
   AdminUpdateSettingsDto,
   AdminReportQueryDto,
@@ -249,6 +253,76 @@ export class AdminController {
   @Put('categories/:id/deactivate')
   deactivateCategory(@Param('id') id: string, @CurrentUser() actor: JwtPayload) {
     return this.adminService.deactivateCategory(id, actor);
+  }
+
+  // ----- Cities & Areas Management -----
+
+  @Get('cities')
+  listCities() {
+    return this.adminService.listCities();
+  }
+
+  @Post('cities')
+  createCity(@Body() dto: AdminCreateCityDto, @CurrentUser() actor: JwtPayload) {
+    return this.adminService.createCity(dto, actor);
+  }
+
+  @Put('cities/:id')
+  updateCity(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: AdminUpdateCityDto,
+    @CurrentUser() actor: JwtPayload,
+  ) {
+    return this.adminService.updateCity(id, dto, actor);
+  }
+
+  @Put('cities/:id/activate')
+  activateCity(@Param('id', ParseUUIDPipe) id: string, @CurrentUser() actor: JwtPayload) {
+    return this.adminService.toggleCity(id, true, actor);
+  }
+
+  @Put('cities/:id/deactivate')
+  deactivateCity(@Param('id', ParseUUIDPipe) id: string, @CurrentUser() actor: JwtPayload) {
+    return this.adminService.toggleCity(id, false, actor);
+  }
+
+  @Delete('cities/:id')
+  deleteCity(@Param('id', ParseUUIDPipe) id: string, @CurrentUser() actor: JwtPayload) {
+    return this.adminService.deleteCity(id, actor);
+  }
+
+  @Get('areas')
+  listAreas(@Query('cityId') cityId?: string) {
+    return this.adminService.listAreas(cityId);
+  }
+
+  @Post('areas')
+  createArea(@Body() dto: AdminCreateAreaDto, @CurrentUser() actor: JwtPayload) {
+    return this.adminService.createArea(dto, actor);
+  }
+
+  @Put('areas/:id')
+  updateArea(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: AdminUpdateAreaDto,
+    @CurrentUser() actor: JwtPayload,
+  ) {
+    return this.adminService.updateArea(id, dto, actor);
+  }
+
+  @Put('areas/:id/activate')
+  activateArea(@Param('id', ParseUUIDPipe) id: string, @CurrentUser() actor: JwtPayload) {
+    return this.adminService.toggleArea(id, true, actor);
+  }
+
+  @Put('areas/:id/deactivate')
+  deactivateArea(@Param('id', ParseUUIDPipe) id: string, @CurrentUser() actor: JwtPayload) {
+    return this.adminService.toggleArea(id, false, actor);
+  }
+
+  @Delete('areas/:id')
+  deleteArea(@Param('id', ParseUUIDPipe) id: string, @CurrentUser() actor: JwtPayload) {
+    return this.adminService.deleteArea(id, actor);
   }
 
   // ----- Platform Settings -----
