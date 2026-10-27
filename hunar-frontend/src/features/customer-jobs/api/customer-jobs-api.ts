@@ -342,7 +342,6 @@ function transformBackendWorker(worker: any): WorkerProfile {
     bio: worker.bio || worker.about || "",
     isCnicVerified: Boolean(worker.isCnicVerified),
     isNadraCleared: Boolean(worker.isNadraCleared),
-    isPoliceCleared: Boolean(worker.isPoliceCleared),
     hunarBadgeId: worker.hunarBadgeNumber
       ? `#OW-${worker.hunarBadgeNumber}`
       : worker.id
