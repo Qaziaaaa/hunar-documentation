@@ -129,8 +129,8 @@ export function PostJobWizard() {
       ? {
           ...INITIAL_FORM_DATA,
           category: initialCategoryMatch.id,
-          subCategory: subCategoryParam || initialCategoryMatch.subCategories[0] || "",
-          title: subCategoryParam || "",
+          subCategory: "",
+          title: "",
           suggestedVisitFee: initialCategoryMatch.suggestedFee || 0,
         }
       : INITIAL_FORM_DATA;
@@ -156,8 +156,8 @@ export function PostJobWizard() {
         setFormData((prev) => ({
           ...prev,
           category: initialCategoryMatch!.id,
-          subCategory: subCategoryParam || initialCategoryMatch!.subCategories[0] || "",
-          title: subCategoryParam || "",
+          subCategory: "",
+          title: "",
           description: "",
           photos: [],
           voiceNoteUrl: undefined,
@@ -204,7 +204,7 @@ export function PostJobWizard() {
       }
     }
     isHydratedRef.current = true;
-  }, [shouldResumeReview, initialCategoryMatch?.id, subCategoryParam]);
+  }, [shouldResumeReview, initialCategoryMatch?.id]);
 
   // If accessed directly without selecting a category, redirect to Step 1 on the dashboard.
   // Skipped when resuming at Step 4 after authentication (draft restores the category).
@@ -239,8 +239,8 @@ export function PostJobWizard() {
           return {
             ...prev,
             category: match.id,
-            subCategory: subCategoryParam || match.subCategories[0] || "",
-            title: subCategoryParam || "",
+            subCategory: "",
+            title: "",
             description: "",
             photos: [],
             voiceNoteUrl: undefined,
@@ -250,7 +250,7 @@ export function PostJobWizard() {
         });
       }
     }
-  }, [categoryParam, subCategoryParam, searchParam, categoryIdParam, categoryNameParam, shouldResumeReview]);
+  }, [categoryParam, searchParam, categoryIdParam, categoryNameParam, shouldResumeReview]);
 
   // Form Field Updaters
   const handleUpdateField = <K extends keyof PostJobData>(

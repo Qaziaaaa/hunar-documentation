@@ -135,6 +135,8 @@ export const CATEGORY_ID_MAP: Record<string, string> = {
   movers: "seed-category-14",
   "movers-packers": "seed-category-14",
   handyman: "seed-category-9",
+  "general-handyman": "seed-category-9",
+  "general handyman": "seed-category-9",
   general: "seed-category-9",
 };
 

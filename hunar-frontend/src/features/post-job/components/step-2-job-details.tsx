@@ -157,44 +157,6 @@ export function Step2JobDetails({
             </div>
           )}
 
-          {/* Quick Subcategory Switcher Chips */}
-          {selectedCategory && selectedCategory.subCategories.length > 0 && (
-            <div className="space-y-1.5 pt-0.5">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-extrabold text-slate-700">
-                  {isUrdu ? "عام مسائل:" : "Common issues:"}
-                </span>
-                <span className="text-[10px] text-slate-500 font-medium sm:hidden">
-                  {isUrdu ? "مزید کے لیے سکرول کریں ←" : "Swipe for more →"}
-                </span>
-              </div>
-              <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
-                {selectedCategory.subCategories.map((sub) => {
-                  const isCurrent = data.title === sub;
-                  return (
-                    <button
-                      key={sub}
-                      type="button"
-                      onClick={() => {
-                        setError(null);
-                        onChange({
-                          title: sub,
-                        });
-                      }}
-                      className={`px-3 py-1 rounded-lg text-xs font-bold whitespace-nowrap shrink-0 transition-all cursor-pointer ${
-                        isCurrent
-                          ? "bg-[#0F8B8D] text-white shadow-2xs"
-                          : "bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200"
-                      }`}
-                    >
-                      {sub}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-
           {/* Inputs */}
           <div className="space-y-4 pt-1">
             <div>
@@ -341,7 +303,7 @@ export function Step2JobDetails({
                       </button>
                     )}
                   </div>
-                  <div className="flex gap-1.5 overflow-x-auto pb-1">
+                  <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-none no-scrollbar">
                     {data.photos.map((url, index) => (
                       <div
                         key={index}
