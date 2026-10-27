@@ -4,7 +4,10 @@ import { AuthTrustFooter } from "./auth-trust-footer";
 jest.mock("next-intl", () => ({
   useTranslations: () => (key: string) => {
     const translations: Record<string, string> = {
-      "Auth.trustCnic": "CNIC Verified",
+      trustCnic: "Verified",
+      trustSecure: "Secure Payments",
+      copyright: "© 2024 Hunar. All rights reserved.",
+      "Auth.trustCnic": "Verified",
       "Auth.trustSecure": "Secure Payments",
       "Auth.copyright": "© 2024 Hunar. All rights reserved.",
     };
@@ -15,7 +18,7 @@ jest.mock("next-intl", () => ({
 describe("AuthTrustFooter", () => {
   it("renders trust items with icons", () => {
     render(<AuthTrustFooter />);
-    expect(screen.getByText("CNIC Verified")).toBeInTheDocument();
+    expect(screen.getByText("Verified")).toBeInTheDocument();
     expect(screen.getByText("Secure Payments")).toBeInTheDocument();
   });
 

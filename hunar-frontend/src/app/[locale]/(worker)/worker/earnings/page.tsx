@@ -581,7 +581,7 @@ export function WorkerEarningsContent() {
               </p>
             </div>
           ) : (
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto scrollbar-none no-scrollbar">
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="bg-slate-100/80 border-b border-slate-200 text-[11.5px] uppercase tracking-wider text-slate-600 font-extrabold">

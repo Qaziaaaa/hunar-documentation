@@ -646,6 +646,13 @@ export function CustomerJobsListView({ initialJobs, jobs: jobsProp, initialTab }
                         </span>
                       )}
 
+                      {job.status === "in_progress" && (
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-700 border border-emerald-500/20">
+                          <span className="size-1.5 rounded-full bg-emerald-600 animate-pulse" />
+                          {isUrdu ? "کام جاری ہے" : "Service In Progress"}
+                        </span>
+                      )}
+
                       {job.status === "completed" && (
                         <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
                           <CheckCircle2 className="size-3.5" />
@@ -736,15 +743,30 @@ export function CustomerJobsListView({ initialJobs, jobs: jobsProp, initialTab }
                         </span>
                       )}
                     </div>
-                  ) : job.status === "visit_scheduled" && job.selectedOffer ? (
+                  ) : (job.status === "visit_scheduled" || job.status === "in_progress") && job.selectedOffer ? (
                     <div className="flex items-center sm:flex-col sm:items-end rtl:sm:items-start justify-between bg-white sm:bg-transparent p-3 sm:p-0 rounded-xl border sm:border-0 border-[#E2E8F0] shrink-0">
                       <span className="text-xs text-[#64748B]">
-                        {isUrdu ? "طے شدہ وزٹ فیس" : "Agreed Visit Fee"}
+                        {job.repairCharge && job.repairCharge > 0
+                          ? (isUrdu ? "کل رقم (وزٹ + مرمت)" : "Total (Visit + Repair)")
+                          : (isUrdu ? "طے شدہ وزٹ فیس" : "Agreed Visit Fee")}
                       </span>
                       <div className="flex items-center gap-1 text-lg sm:text-xl font-bold text-[#1A1A2E]">
                         <ShieldCheck className="size-5 text-[#0F766E]" />
-                        <span>Rs. {job.selectedOffer.visitFee.toLocaleString()}</span>
+                        <span>
+                          Rs. {(
+                            (job.totalAmount && job.totalAmount > 0)
+                              ? job.totalAmount
+                              : (job.selectedOffer.visitFee + (job.repairCharge ?? 0))
+                          ).toLocaleString()}
+                        </span>
                       </div>
+                      {Boolean(job.repairCharge && job.repairCharge > 0) && (
+                        <span className="text-[10px] text-slate-500 font-medium">
+                          {isUrdu
+                            ? `وزٹ Rs. ${job.selectedOffer.visitFee} + مرمت Rs. ${job.repairCharge}`
+                            : `Visit Rs. ${job.selectedOffer.visitFee} + Repair Rs. ${job.repairCharge}`}
+                        </span>
+                      )}
                     </div>
                   ) : job.offers && job.offers.length > 0 ? (
                     <div className="flex items-center sm:flex-col sm:items-end rtl:sm:items-start justify-between bg-white sm:bg-transparent p-3 sm:p-0 rounded-xl border sm:border-0 border-[#E2E8F0] shrink-0">
@@ -887,6 +909,10 @@ export function CustomerJobsListView({ initialJobs, jobs: jobsProp, initialTab }
                       ? isUrdu
                         ? "کاریگر متعین ہو چکا ہے۔ دہلیز پر آمد کے وقت 4 ہندسوں کے سیکیورٹی PIN کی تصدیق کریں۔"
                         : "Technician confirmed. Verify 4-digit Doorstep PIN upon arrival."
+                      : job.status === "in_progress"
+                      ? isUrdu
+                        ? "کاریگر احاطے کے اندر کام / معائنہ کر رہا ہے۔ لائیو پراگریس ٹریک کریں۔"
+                        : "Technician is on-site performing inspection or repairs. Track live progress."
                       : job.status === "cancelled"
                       ? job.cancelReason === "EXPIRED_NO_WORKER_ACCEPTED"
                         ? isUrdu
@@ -942,13 +968,17 @@ export function CustomerJobsListView({ initialJobs, jobs: jobsProp, initialTab }
                       </button>
                     )}
 
-                    {job.status === "visit_scheduled" && (
+                    {(job.status === "visit_scheduled" || job.status === "in_progress") && (
                       <Link
                         href={`/customer/job/${job.id}/tracking`}
                         className="h-9 px-4 rounded-xl font-semibold text-xs sm:text-sm text-white bg-teal hover:bg-teal/90 transition-colors shadow-sm flex items-center justify-center gap-1.5 cursor-pointer active:scale-98"
                       >
                         <Clock className="size-3.5" />
-                        <span>{isUrdu ? "لائیو وزٹ ٹریک کریں" : "Track Live Visit"}</span>
+                        <span>
+                          {job.status === "in_progress"
+                            ? (isUrdu ? "لائیو پراگریس دیکھیں" : "Track Live Progress")
+                            : (isUrdu ? "لائیو وزٹ ٹریک کریں" : "Track Live Visit")}
+                        </span>
                         <ArrowRight className="size-3.5 rtl:rotate-180" />
                       </Link>
                     )}

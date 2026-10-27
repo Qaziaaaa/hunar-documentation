@@ -23,6 +23,7 @@ import { WorkerFixLogo } from "@/components/shared/workerfix-logo";
 import { useStoredUser } from "@/lib/use-stored-user";
 import { getCustomerJobs } from "@/features/customer-jobs/api/customer-jobs-api";
 import { getCustomerProfile } from "@/features/customer-profile/api/customer-profile-api";
+import { getAccessToken, getRefreshToken } from "@/lib/api-client";
 import { resolveAvatarUrl } from "@/lib/avatar";
 
 interface CustomerSidebarProps {
@@ -37,7 +38,8 @@ export function CustomerSidebar({ isOpen, onClose }: CustomerSidebarProps) {
   const locale = useLocale();
   const queryClient = useQueryClient();
   const storedUser = useStoredUser();
-  const isCustomer = storedUser?.role === "CUSTOMER";
+  const hasCustomerAuth = Boolean(getAccessToken("CUSTOMER") || getRefreshToken("CUSTOMER"));
+  const isCustomer = storedUser?.role === "CUSTOMER" && hasCustomerAuth;
   const guestLabel = locale === "ur" ? "مہمان" : "Guest";
 
   const { data: customerProfile } = useQuery({
@@ -71,6 +73,7 @@ export function CustomerSidebar({ isOpen, onClose }: CustomerSidebarProps) {
     queryKey: ["customer", "jobs", "sidebar"],
     queryFn: getCustomerJobs,
     staleTime: 60_000,
+    enabled: isCustomer,
   });
 
   const activeBookingsCount = jobs.filter(
@@ -135,7 +138,7 @@ export function CustomerSidebar({ isOpen, onClose }: CustomerSidebarProps) {
 
       {/* Full-Height Fixed Desktop Sidebar / Slide-over Mobile Drawer (z-50) */}
       <aside
-        className={`fixed top-0 start-0 z-50 h-screen w-64 lg:w-[260px] shrink-0 flex flex-col justify-between border-e border-slate-200 bg-white transition-transform duration-300 overflow-y-auto ${
+        className={`fixed top-0 start-0 z-50 h-screen w-64 lg:w-[260px] shrink-0 flex flex-col justify-between border-e border-slate-200 bg-white transition-transform duration-300 overflow-y-auto scrollbar-none no-scrollbar ${
           isOpen
             ? "translate-x-0 shadow-2xl flex"
             : "-translate-x-full rtl:translate-x-full lg:translate-x-0 lg:rtl:translate-x-0 lg:transform-none hidden lg:flex"
@@ -232,11 +235,6 @@ export function CustomerSidebar({ isOpen, onClose }: CustomerSidebarProps) {
             <p className="text-[11px] leading-snug text-slate-300">
               {t("verifiedDesc")}
             </p>
-            <div className="pt-1">
-              <span className="inline-flex items-center justify-center py-1 px-2.5 bg-[#0F8B8D] text-white text-[10px] font-bold rounded-md hover:bg-[#0F8B8D]/90 transition-colors">
-                {t("qualityGuarantee")}
-              </span>
-            </div>
           </div>
 
           {/* Language Switcher */}

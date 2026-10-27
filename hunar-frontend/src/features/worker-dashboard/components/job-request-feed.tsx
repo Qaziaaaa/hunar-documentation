@@ -42,41 +42,56 @@ const CATEGORY_LABELS: Record<string, JobRequestCategory> = {
   "Appliance Repair": "Appliance Repair",
 };
 
-export function isCategoryMatched(jobCategory?: string, workerSkills: string[] = []): boolean {
-  if (!jobCategory || !workerSkills || workerSkills.length === 0) return false;
+export function isCategoryMatched(
+  jobCategory?: string,
+  workerSkills: string[] = [],
+  jobCategoryId?: string,
+  rawCategory?: string
+): boolean {
+  if (!workerSkills || workerSkills.length === 0) return false;
+
+  // Direct categoryId match if provided
+  if (jobCategoryId && workerSkills.includes(jobCategoryId)) {
+    return true;
+  }
 
   const normalize = (str: string) => str.toLowerCase().replace(/[^a-z0-9]/g, "");
-  const normCategory = normalize(jobCategory);
-  if (!normCategory) return false;
+  const candidates = [jobCategory, rawCategory].filter(Boolean) as string[];
+  if (candidates.length === 0) return false;
 
-  return workerSkills.some((skill) => {
-    if (!skill) return false;
-    const normSkill = normalize(skill);
-    if (!normSkill) return false;
+  return candidates.some((cand) => {
+    const normCategory = normalize(cand);
+    if (!normCategory) return false;
 
-    // Direct normalized match (e.g. "plumber" === "plumber")
-    if (normSkill === normCategory) return true;
+    return workerSkills.some((skill) => {
+      if (!skill) return false;
+      const normSkill = normalize(skill);
+      if (!normSkill) return false;
 
-    // Stem / substring match with minimum length guard
-    if (
-      (normSkill.length >= 3 && normCategory.includes(normSkill)) ||
-      (normCategory.length >= 3 && normSkill.includes(normCategory))
-    ) {
-      return true;
-    }
+      // Direct normalized match (e.g. "plumber" === "plumber")
+      if (normSkill === normCategory) return true;
 
-    // Check alias mapping from CATEGORY_LABELS
-    for (const [backendCat, labelCat] of Object.entries(CATEGORY_LABELS)) {
-      const normBackend = normalize(backendCat);
-      const normLabel = normalize(labelCat);
-      const matchesSkill = normSkill === normBackend || normSkill === normLabel;
-      const matchesCategory = normCategory === normBackend || normCategory === normLabel;
-      if (matchesSkill && matchesCategory) {
+      // Stem / substring match with minimum length guard
+      if (
+        (normSkill.length >= 3 && normCategory.includes(normSkill)) ||
+        (normCategory.length >= 3 && normSkill.includes(normCategory))
+      ) {
         return true;
       }
-    }
 
-    return false;
+      // Check alias mapping from CATEGORY_LABELS
+      for (const [backendCat, labelCat] of Object.entries(CATEGORY_LABELS)) {
+        const normBackend = normalize(backendCat);
+        const normLabel = normalize(labelCat);
+        const matchesSkill = normSkill === normBackend || normSkill === normLabel;
+        const matchesCategory = normCategory === normBackend || normCategory === normLabel;
+        if (matchesSkill && matchesCategory) {
+          return true;
+        }
+      }
+
+      return false;
+    });
   });
 }
 
@@ -131,6 +146,8 @@ function toFeedJobRequest(job: Job): JobRequest {
   return {
     id: job.id,
     category,
+    categoryId: job.categoryId,
+    rawCategory,
     title: job.title,
     description: job.description ?? "",
     distance,
@@ -187,11 +204,13 @@ export function JobRequestFeed({
   city = "",
   isOnline = true,
   workerSkills: propSkills = [],
+  showRelevantJobs = false,
 }: {
   searchQuery?: string;
   city?: string;
   isOnline?: boolean;
   workerSkills?: string[];
+  showRelevantJobs?: boolean;
 }) {
   const locale = useLocale();
   const isUrdu = locale === "ur";
@@ -474,6 +493,19 @@ export function JobRequestFeed({
         return false;
       }
 
+      // Relevance Filter: When ON, exclude jobs from unrelated categories
+      if (showRelevantJobs) {
+        const isMatched = isCategoryMatched(
+          job.category,
+          effectiveWorkerSkills,
+          job.categoryId,
+          job.rawCategory
+        );
+        if (!isMatched) {
+          return false;
+        }
+      }
+
       // Search query
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase();
@@ -488,7 +520,7 @@ export function JobRequestFeed({
       }
       return true;
     });
-  }, [searchQuery, hiddenJobIds, sourceJobs]);
+  }, [searchQuery, hiddenJobIds, sourceJobs, showRelevantJobs, effectiveWorkerSkills]);
 
   const sortedJobs = useMemo(() => {
     if (!effectiveWorkerSkills || effectiveWorkerSkills.length === 0) {
@@ -496,8 +528,8 @@ export function JobRequestFeed({
     }
 
     return [...filteredJobs].sort((a, b) => {
-      const aMatched = isCategoryMatched(a.category, effectiveWorkerSkills);
-      const bMatched = isCategoryMatched(b.category, effectiveWorkerSkills);
+      const aMatched = isCategoryMatched(a.category, effectiveWorkerSkills, a.categoryId, a.rawCategory);
+      const bMatched = isCategoryMatched(b.category, effectiveWorkerSkills, b.categoryId, b.rawCategory);
 
       if (aMatched && !bMatched) return -1;
       if (!aMatched && bMatched) return 1;
@@ -567,7 +599,7 @@ export function JobRequestFeed({
                 job={job}
                 onClick={handleCardClick}
                 onHide={handleHideJob}
-                isMatchedCategory={isCategoryMatched(job.category, effectiveWorkerSkills)}
+                isMatchedCategory={isCategoryMatched(job.category, effectiveWorkerSkills, job.categoryId, job.rawCategory)}
               />
               {index < sortedJobs.length - 1 && (
                 <div

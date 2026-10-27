@@ -72,6 +72,8 @@ export type JobRequestCategory =
 export interface JobRequest {
   id: string;
   category: JobRequestCategory;
+  categoryId?: string;
+  rawCategory?: string;
   subCategory?: string;
   title: string;
   description: string;

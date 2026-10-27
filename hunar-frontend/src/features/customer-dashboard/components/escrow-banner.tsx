@@ -3,7 +3,7 @@
 import { Shield, ShieldAlert, Sparkles } from "lucide-react";
 import { Link } from "@/i18n/navigation";
 
-export function EscrowBanner() {
+export function ServiceProtectionBanner() {
   return (
     <div className="bg-[#123B5D] text-white p-5 sm:p-6 rounded-xl flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-xs">
       <div className="flex items-start gap-3.5">
@@ -15,7 +15,7 @@ export function EscrowBanner() {
             How WorkerFIX Protects Your Service Experience
           </h3>
           <p className="text-xs text-slate-200 mt-1 leading-relaxed">
-            All technicians are NADRA CNIC verified with doorstep OTP PIN confirmation and transparent pricing.
+            All technicians are verified with doorstep OTP PIN confirmation and transparent pricing.
           </p>
         </div>
       </div>
@@ -30,3 +30,5 @@ export function EscrowBanner() {
     </div>
   );
 }
+
+export const EscrowBanner = ServiceProtectionBanner;

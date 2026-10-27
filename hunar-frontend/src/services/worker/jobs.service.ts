@@ -189,6 +189,7 @@ export async function listNearbyJobs(location?: {
   lat: number;
   lng: number;
   radiusKm?: number;
+  onlyRelevant?: boolean;
 }): Promise<Job[]> {
   if (!getAccessToken()) {
     return [];
@@ -198,6 +199,9 @@ export async function listNearbyJobs(location?: {
   params.set("lat", String(resolved.lat));
   params.set("lng", String(resolved.lng));
   params.set("radiusKm", String(resolved.radiusKm ?? 25));
+  if (typeof resolved.onlyRelevant === "boolean") {
+    params.set("onlyRelevant", String(resolved.onlyRelevant));
+  }
   const res = await http.get<BackendPage<BackendJobRow> | BackendJobRow[]>(
     `/jobs/available?${params.toString()}`,
   );

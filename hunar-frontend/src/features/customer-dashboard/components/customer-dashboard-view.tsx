@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { useLocale } from "next-intl";
 import { useQueryClient } from "@tanstack/react-query";
 import { getCustomerJobs } from "@/features/customer-jobs/api/customer-jobs-api";
+import { getAccessToken, getRefreshToken } from "@/lib/api-client";
 import { ActiveVisitBanner } from "./active-visit-banner";
 import { WorkerFixBrandBanner } from "./hunar-brand-banner";
 import { ServicesGrid } from "./services-grid";
@@ -14,11 +15,13 @@ export function CustomerDashboardView() {
   const queryClient = useQueryClient();
 
   useEffect(() => {
-    void queryClient.prefetchQuery({
-      queryKey: ["customer", "jobs", "feed"],
-      queryFn: () => getCustomerJobs({ limit: 50 }),
-      staleTime: 5 * 60_000,
-    });
+    if (getAccessToken("CUSTOMER") || getRefreshToken("CUSTOMER")) {
+      void queryClient.prefetchQuery({
+        queryKey: ["customer", "jobs", "feed"],
+        queryFn: () => getCustomerJobs({ limit: 50 }),
+        staleTime: 5 * 60_000,
+      });
+    }
   }, [queryClient]);
 
   return (

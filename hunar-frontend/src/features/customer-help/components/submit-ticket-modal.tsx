@@ -298,7 +298,7 @@ export function SubmitTicketModal({
     <div
       role="dialog"
       aria-modal="true"
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 overflow-y-auto"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 overflow-y-auto scrollbar-none no-scrollbar"
     >
       <div className="bg-white w-full max-w-2xl rounded-2xl border border-slate-200 shadow-2xl overflow-hidden my-6 animate-in fade-in zoom-in-95 duration-200 rtl:text-right">
         {submittedCaseNum ? (
@@ -381,7 +381,7 @@ export function SubmitTicketModal({
             </div>
 
             {/* Modal Body / Form */}
-            <form onSubmit={handleSubmit} className="p-6 flex flex-col gap-5 max-h-[75vh] overflow-y-auto">
+            <form onSubmit={handleSubmit} className="p-6 flex flex-col gap-5 max-h-[75vh] overflow-y-auto scrollbar-none no-scrollbar">
               {submitError && (
                 <div className="flex items-center gap-2.5 p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs">
                   <AlertTriangle className="size-4 shrink-0 text-red-500" />

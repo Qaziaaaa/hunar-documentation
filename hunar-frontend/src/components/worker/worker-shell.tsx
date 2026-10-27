@@ -16,6 +16,7 @@ import {
 import { connectSocket, disconnectSocket } from "@/lib/socket";
 import { cn } from "@/lib/utils";
 import { WorkerFixLogo } from "@/components/shared/workerfix-logo";
+import { getAccessToken, getRefreshToken } from "@/lib/api-client";
 
 function Brand() {
   return (
@@ -32,9 +33,12 @@ export function WorkerShell({ children }: { children: React.ReactNode }) {
   const t = useTranslations("Worker.nav");
   const [mobileOpen, setMobileOpen] = useState(false);
 
+  const hasWorkerAuth = Boolean(getAccessToken("WORKER") || getRefreshToken("WORKER"));
+
   const { data: unread = 0 } = useQuery({
     queryKey: notificationKeys.unreadCount,
     queryFn: getUnreadCount,
+    enabled: hasWorkerAuth,
   });
 
   useEffect(() => {
@@ -58,7 +62,7 @@ export function WorkerShell({ children }: { children: React.ReactNode }) {
           <div className="flex h-16 items-center border-b border-border px-4">
             <Brand />
           </div>
-          <div className="flex-1 overflow-y-auto">
+          <div className="flex-1 overflow-y-auto scrollbar-none no-scrollbar">
             <WorkerNav unreadCount={unread} />
           </div>
         </aside>
@@ -83,7 +87,7 @@ export function WorkerShell({ children }: { children: React.ReactNode }) {
                   <X aria-hidden="true" className="size-5" />
                 </Button>
               </div>
-              <div className="flex-1 overflow-y-auto">
+              <div className="flex-1 overflow-y-auto scrollbar-none no-scrollbar">
                 <WorkerNav
                   unreadCount={unread}
                   onNavigate={() => setMobileOpen(false)}

@@ -89,11 +89,6 @@ export function Step4ReviewPost({
                   <span className="inline-block px-2.5 py-0.5 bg-[#0F8B8D]/10 text-[#0F8B8D] rounded-full text-[11px] font-bold">
                     {selectedCategory?.name || (isUrdu ? "سروس" : "Service")}
                   </span>
-                  {data.subCategory && (
-                    <span className="text-[11px] font-bold text-slate-600">
-                      • {data.subCategory}
-                    </span>
-                  )}
                 </div>
                 <h2 className="text-sm sm:text-base font-bold text-[#123B5D]">
                   {data.title || (isUrdu ? "بغیر عنوان جاب درخواست" : "Untitled Job Request")}
@@ -238,13 +233,13 @@ export function Step4ReviewPost({
               <div>
                 <h4 className="text-xs font-bold text-[#123B5D]">
                   {isUrdu
-                    ? "WorkerFIX 100% تصدیق شدہ کوالٹی اور تسلی بخش کام کی ضمانت"
-                    : "WorkerFIX 100% Verified Quality Guaranteed"}
+                    ? "WorkerFIX تصدیق شدہ سروس"
+                    : "WorkerFIX Verified Service"}
                 </h4>
                 <p className="text-[11px] text-slate-600 font-medium">
                   {isUrdu
-                    ? "تمام کاریگر نادرا سی این آئی سی سے تصدیق شدہ ہیں، ڈور سٹیپ او ٹی پی پن اور شفاف تصدیق شدہ وزٹ فیس کے ساتھ۔"
-                    : "All technicians are NADRA CNIC verified with doorstep OTP PIN confirmation and transparent pricing."}
+                    ? "تمام کاریگر تصدیق شدہ ہیں، ڈور سٹیپ او ٹی پی پن اور شفاف تصدیق شدہ وزٹ فیس کے ساتھ۔"
+                    : "All technicians are verified with doorstep OTP PIN confirmation and transparent pricing."}
                 </p>
               </div>
             </div>

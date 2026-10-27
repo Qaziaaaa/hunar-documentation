@@ -45,8 +45,8 @@ export const steps: Step[] = [
     alt: "Pay safely",
     image: "/landing/pay-safely.png",
     description:
-      "Pay with complete confidence using secure milestone escrow. Funds released only when you're 100% satisfied.",
-    linkText: "Escrow & Wallet",
+      "Pay with complete confidence using secure doorstep confirmation. Funds released only when you're 100% satisfied.",
+    linkText: "Pricing & Payments",
     href: "/customer/dashboard",
   },
 ];
@@ -220,7 +220,7 @@ export const categoryTabs = [
 export const valuePropPoints = [
   "The best for every budget with upfront estimates",
   "Quality work done quickly with verified professionals",
-  "Protected payments, every time via digital escrow",
+  "Protected payments, every time via digital confirmation",
   "24/7 dedicated support & 5-day rework warranty",
 ];
 
@@ -241,7 +241,7 @@ export const footerColumns: { title: string; links: { label: string; href: strin
       { label: "My Work Orders", href: "#" },
       { label: "Live GPS Arrival Tracker", href: "#" },
       { label: "Offers & Worker Selection", href: "#" },
-      { label: "Secure Escrow Protection", href: "#" },
+      { label: "Doorstep PIN Protection", href: "#" },
       { label: "Account Settings", href: "#" },
       { label: "24/7 Help & Support", href: "#" },
     ],
@@ -264,7 +264,7 @@ export const footerColumns: { title: string; links: { label: string; href: strin
     title: "Support",
     links: [
       { label: "Help & Support 24/7", href: "#" },
-      { label: "Escrow Trust & Money-Back Guarantee", href: "#" },
+      { label: "Satisfaction & Quality Assurance", href: "#" },
       { label: "Post a Service Request", href: "#services" },
       { label: "Customer Portal", href: "#" },
     ],

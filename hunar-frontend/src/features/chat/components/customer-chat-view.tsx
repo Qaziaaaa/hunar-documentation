@@ -43,7 +43,7 @@ import {
   sendStopTyping,
   markConversationRead,
 } from "@/services/worker/chat.service";
-import { getStoredUser } from "@/lib/api-client";
+import { getStoredUser, getAccessToken, getRefreshToken } from "@/lib/api-client";
 import { getCustomerVisits } from "@/features/customer-visits/api/customer-visits-api";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { ScheduledVisit } from "@/features/customer-visits/types";
@@ -162,11 +162,14 @@ export function CustomerChatView() {
     Record<string, { text: string; time: string; timestamp: number }>
   >({});
 
+  const hasCustomerAuth = Boolean(getAccessToken("CUSTOMER") || getRefreshToken("CUSTOMER"));
+
   // Fetch all customer visits
   const { data: visits, isLoading: isVisitsLoading } = useQuery({
     queryKey: ["customer", "visits"],
     queryFn: getCustomerVisits,
     staleTime: 30_000,
+    enabled: hasCustomerAuth,
   });
 
   // Fetch all conversations from /chat/conversations
@@ -174,6 +177,7 @@ export function CustomerChatView() {
     queryKey: ["customer", "conversations"],
     queryFn: listConversations,
     staleTime: 30_000,
+    enabled: hasCustomerAuth,
   });
 
   const isLoadingList =
@@ -1461,8 +1465,8 @@ export function CustomerChatView() {
             <ShieldCheck className="size-4 text-[#16A34A] shrink-0" />
             <span className="truncate">
               {isUrdu
-                ? "تمام کاریگر 100% نادرا تصدیق شدہ ہیں"
-                : "100% NADRA CNIC Verified Technicians"}
+                ? "تمام کاریگر 100% تصدیق شدہ ہیں"
+                : "100% Verified Technicians"}
             </span>
           </div>
         </aside>

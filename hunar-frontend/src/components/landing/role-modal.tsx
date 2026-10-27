@@ -93,7 +93,7 @@ function RoleModalContent({
                 </h3>
                 <p className="text-xs text-slate-500 mt-1 leading-relaxed">
                   Hire verified tradespeople, compare upfront bids, and pay
-                  securely with escrow protection.
+                  securely with protected pricing.
                 </p>
                 <ul className="space-y-1.5 text-xs text-slate-600 pt-3 mt-3 border-t border-slate-100 font-medium">
                   <li className="flex items-center gap-1.5">
@@ -106,7 +106,7 @@ function RoleModalContent({
                   </li>
                   <li className="flex items-center gap-1.5">
                     <CircleCheck className="w-[15px] h-[15px] text-[#5BBB7B]" />
-                    100% Escrow protected
+                    100% Protected payments
                   </li>
                 </ul>
               </div>
@@ -179,7 +179,7 @@ function RoleModalContent({
                 </h3>
                 <p className="text-xs text-slate-500 mt-1 leading-relaxed">
                   Platform governance, live operations radar, work order
-                  dispatch, escrow audit, and disputes.
+                  dispatch, quality audit, and disputes.
                 </p>
                 <ul className="space-y-1.5 text-xs text-slate-600 pt-3 mt-3 border-t border-slate-100 font-medium">
                   <li className="flex items-center gap-1.5">
@@ -192,7 +192,7 @@ function RoleModalContent({
                   </li>
                   <li className="flex items-center gap-1.5">
                     <CircleCheck className="w-[15px] h-[15px] text-[#123B5D]" />
-                    Escrow & KYC moderation
+                    KYC & dispute moderation
                   </li>
                 </ul>
               </div>
@@ -205,7 +205,7 @@ function RoleModalContent({
             </Link>
           </div>
           <div className="mt-6 pt-3 border-t border-slate-100 text-center text-xs text-slate-400">
-            Protected by SBP-compliant escrow guarantees and NADRA biometric
+            Protected by verified quality guarantees and NADRA biometric
             verification.
           </div>
         </div>

@@ -81,13 +81,13 @@ export function JobPostedSuccessModal({
           </div>
         </div>
 
-        {/* Safety Guarantee Note */}
+        {/* Safety Note */}
         <div className="flex items-center justify-center gap-1.5 text-[11.5px] text-slate-600 font-medium">
           <ShieldCheck className="size-4 text-green-600 shrink-0" />
           <span>
             {isUrdu
-              ? "آپ کے تحفظ کے لیے تمام کاریگر نادرا سی این آئی سی سے تصدیق شدہ ہیں"
-              : "All technicians are NADRA CNIC verified for your safety"}
+              ? "آپ کے تحفظ کے لیے تمام کاریگر تصدیق شدہ ہیں"
+              : "All technicians are verified for your safety"}
           </span>
         </div>
 

@@ -13,6 +13,7 @@ import { Link, useRouter } from "@/i18n/navigation";
 import { arrivalService } from "@/features/jobs/services/arrival-verification-service";
 import { useQuery } from "@tanstack/react-query";
 import { getCustomerVisits } from "@/features/customer-visits/api/customer-visits-api";
+import { getAccessToken, getRefreshToken } from "@/lib/api-client";
 import type { ScheduledVisit } from "@/features/customer-visits/types";
 
 interface ActiveVisitBannerProps {
@@ -25,11 +26,13 @@ export function ActiveVisitBanner({ visit: propVisit }: ActiveVisitBannerProps =
   const isUrdu = locale === "ur";
   const t = useTranslations("CustomerPortal.Visits");
 
+  const hasCustomerAuth = Boolean(getAccessToken("CUSTOMER") || getRefreshToken("CUSTOMER"));
+
   const { data: visits } = useQuery({
     queryKey: ["customer", "visits"],
     queryFn: getCustomerVisits,
     staleTime: 30_000,
-    enabled: propVisit === undefined,
+    enabled: propVisit === undefined && hasCustomerAuth,
   });
 
   const activeVisits = (visits ?? []).filter(

@@ -491,7 +491,7 @@ export function ChatScreen({ conversationId }: { conversationId?: string }) {
               />
             </div>
           </CardHeader>
-          <CardContent className="space-y-2 max-h-[34rem] overflow-y-auto">
+          <CardContent className="space-y-2 max-h-[34rem] overflow-y-auto scrollbar-none no-scrollbar">
             {filteredConversations.length === 0 ? (
               <p className="text-sm text-muted-foreground py-4 text-center">
                 {conversationSearch ? (isUrdu ? "کوئی گفتگو نہیں ملی" : "No conversations found") : t("chat.emptyDescription")}

@@ -181,7 +181,7 @@ export function ActiveCaseCard({ ticket }: ActiveCaseCardProps) {
             </div>
 
             {/* Modal Body */}
-            <div className="p-5 flex flex-col gap-4 max-h-[60vh] overflow-y-auto">
+            <div className="p-5 flex flex-col gap-4 max-h-[60vh] overflow-y-auto scrollbar-none no-scrollbar">
               <div className="flex flex-col gap-3 text-xs">
                 {/* Note 1 */}
                 <div className="p-3 rounded-xl bg-slate-50 border border-slate-200">

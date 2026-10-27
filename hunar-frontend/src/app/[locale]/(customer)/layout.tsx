@@ -123,7 +123,10 @@ export default function CustomerLayout({
 
   return (
     <CustomerSearchProvider>
-      <div className={`min-h-screen ${isChat ? "h-[100dvh] overflow-hidden" : ""} bg-white text-slate-900 font-sans antialiased`}>
+      <div
+        data-portal="customer"
+        className={`min-h-screen ${isChat ? "h-[100dvh] overflow-hidden" : ""} bg-white text-slate-900 font-sans antialiased scrollbar-none no-scrollbar`}
+      >
         <CustomerRealtimeSync />
         {/* Desktop Sidebar & Mobile Drawer */}
         <CustomerSidebar

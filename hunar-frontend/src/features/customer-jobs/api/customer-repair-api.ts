@@ -47,7 +47,6 @@ export async function getJobRepairInvoice(jobId: string, repairDeclined?: boolea
       bio: worker.bio || "",
       isCnicVerified: !!worker.isCnicVerified,
       isNadraCleared: !!worker.isNadraCleared,
-      isPoliceCleared: !!worker.isPoliceCleared,
       hunarBadgeId: worker.hunarBadgeNumber ? `#OW-${worker.hunarBadgeNumber}` : "",
       expertiseTags: worker.skills || [],
       workProjects: [],

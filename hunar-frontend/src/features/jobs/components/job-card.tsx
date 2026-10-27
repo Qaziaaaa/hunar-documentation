@@ -157,12 +157,7 @@ export function JobCard({ job, workerOffer }: JobCardProps) {
       </div>
 
       {/* Bottom CTA Bar */}
-      <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
-        <span className="inline-flex items-center gap-1 text-xs font-semibold text-[#0F8B8D]">
-          <ShieldCheck className="w-3.5 h-3.5" />
-          <span>Secure Escrow Protection</span>
-        </span>
-
+      <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-end">
         <Link
           href={`/worker/jobs/${job.id}`}
           className="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-[#0F8B8D] hover:bg-[#0F8B8D]/90 text-white font-bold text-xs transition-all shadow-xs group-hover:shadow-md"

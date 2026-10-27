@@ -69,9 +69,9 @@
     "successSubtitle": "Your worker (Pro) account is ready. Sign in to continue.",
     "continue": "Continue",
     "backToHome": "Back to home",
-    "trustCnic": "Nadra CNIC Verified",
+    "trustCnic": "Verified",
     "trustSecure": "100% Secure & Encrypted",
-    "copyright": "© 2026 WorkerFIX Services Inc. Guaranteed tradesperson protection.",
+    "copyright": "© 2026 WorkerFIX Services Inc. All rights reserved.",
     "signInTitle": "Welcome back",
     "signInSubtitle": "Sign in to your worker account.",
     "signInPasswordPlaceholder": "Enter your password",
@@ -676,8 +676,7 @@
         "signOut": "Sign Out",
         "language": "Language",
         "verifiedBadge": "WorkerFIX Verified",
-        "verifiedDesc": "100% NADRA CNIC Verified Pros & doorstep satisfaction guarantee.",
-        "qualityGuarantee": "Quality Guarantee"
+        "verifiedDesc": "100% Verified Pros with doorstep security PIN protection."
       },
       "Header": {
         "notifications": "Notifications",
@@ -829,13 +828,13 @@
   "WorkerOnboarding": {
     "Showcase": {
       "badgeVerified": "Pakistan Verified",
-      "badgeEscrow": "Escrow Guaranteed",
-      "title": "Find verified skilled tradespeople with escrow guarantee.",
-      "subtitle": "Register as a certified professional to receive verified client requests with protected milestone payments.",
+      "badgePro": "Verified Professional",
+      "title": "Find verified skilled tradespeople across your city.",
+      "subtitle": "Register as a certified professional to receive verified client requests with guaranteed payouts.",
       "popularSkills": "Popular Trade Skills",
       "peshawar": "Available Nationwide",
-      "nadraVerified": "NADRA CNIC Verified",
-      "escrowProtection": "100% Escrow Protection"
+      "nadraVerified": "Verified",
+      "payoutProtection": "Protected Payouts"
     },
     "Stepper": {
       "stepOf": "Step {current} of {total}",
@@ -1151,14 +1150,14 @@
     },
     "Showcase": {
       "badgeVerified": "Worker Verification",
-      "badgeNadra": "NADRA Protected",
+      "badgeNadra": "Verified",
       "title": "Trust & Safety Verification System",
       "subtitle": "Every tradesperson on WorkerFIX passes rigorous identity verification before receiving customer jobs.",
       "whyMatters": "Why Verification Matters:",
       "badgeTitle": "Official Verified Badge",
       "badgeDesc": "Increases customer hire rate by over 3.5x.",
-      "escrowTitle": "Escrow Payout Guarantee",
-      "escrowDesc": "Milestone funds are held securely until repair completion.",
+      "payoutTitle": "Protected Payouts",
+      "payoutDesc": "Earnings are credited directly to your wallet upon job completion.",
       "radarTitle": "GPS Radar Job Alerts",
       "radarDesc": "Receive instant push notifications for nearby customer requests.",
       "encrypted": "256-Bit Encrypted",
@@ -1180,7 +1179,7 @@
       "step1Desc": "Portrait photo, service areas, and Smart CNIC attached.",
       "step2Title": "2. Document & Identity Verification",
       "step2Badge": "In Progress",
-      "step2Desc": "Human compliance officer matching Smart CNIC with NADRA records.",
+      "step2Desc": "Human compliance officer matching Smart CNIC with verified records.",
       "step3Title": "3. Verified Pro Badge Activation",
       "step3Desc": "Worker portal unlocked to receive nearby customer jobs and send offers.",
       "turnaroundTitle": "Expected Review Turnaround:",
@@ -1193,7 +1192,7 @@
       "title": "Congratulations, {name}! 🎉",
       "subtitle": "Your credentials and Pakistani Smart CNIC documents have been verified by WorkerFIX compliance.",
       "verifiedPro": "Verified Pro",
-      "nadraCleared": "NADRA Cleared",
+      "nadraCleared": "Verified",
       "approvedTrades": "Approved Trades",
       "serviceRadar": "Service Radar",
       "unlockedTitle": "Unlocked Capabilities:",
@@ -1201,7 +1200,7 @@
       "cap1Desc": "Instant match alerts in your service areas.",
       "cap2Title": "Send Visit Offers",
       "cap2Desc": "Quote custom inspection fees and arrive on-site.",
-      "cap3Title": "Escrow Guaranteed",
+      "cap3Title": "Protected Payouts",
       "cap3Desc": "100% protected payouts for completed visits.",
       "dashboardBtn": "Go to Worker Dashboard"
     },

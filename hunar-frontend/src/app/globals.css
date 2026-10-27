@@ -277,15 +277,58 @@
   z-index: 800;
 }
 
-/* Hide scrollbars utilities */
+/* Hide scrollbars utilities & universal portal scrollbar removal */
 .no-scrollbar::-webkit-scrollbar,
 .scrollbar-none::-webkit-scrollbar {
-  display: none;
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
 }
+
 .no-scrollbar,
 .scrollbar-none {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
+  -ms-overflow-style: none !important;
+  scrollbar-width: none !important;
+}
+
+/* Global root HTML & BODY scrollbar hiding */
+html.scrollbar-none,
+body.scrollbar-none,
+html.no-scrollbar,
+body.no-scrollbar {
+  -ms-overflow-style: none !important;
+  scrollbar-width: none !important;
+}
+
+html.scrollbar-none::-webkit-scrollbar,
+body.scrollbar-none::-webkit-scrollbar,
+html.no-scrollbar::-webkit-scrollbar,
+body.no-scrollbar::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+/* Universal scrollbar hiding for customer and worker portals */
+[data-portal="customer"]::-webkit-scrollbar,
+[data-portal="worker"]::-webkit-scrollbar,
+[data-portal="customer"] *::-webkit-scrollbar,
+[data-portal="worker"] *::-webkit-scrollbar,
+[role="dialog"]::-webkit-scrollbar,
+[role="dialog"] *::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+[data-portal="customer"],
+[data-portal="worker"],
+[data-portal="customer"] *,
+[data-portal="worker"] *,
+[role="dialog"],
+[role="dialog"] * {
+  -ms-overflow-style: none !important;
+  scrollbar-width: none !important;
 }
 
 /* Noto Sans Arabic Font for Urdu (RTL) Mode */

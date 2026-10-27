@@ -217,10 +217,24 @@ export function CustomerJobDetailsView({ initialJob }: CustomerJobDetailsViewPro
                   ? `آفرز موصول ہو رہی ہیں (${job.offers.length} کاریگر)`
                   : `Receiving Offers (${job.offers.length} pros)`}
               </span>
-            ) : (
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-[#0F766E]/15 text-[#0F766E]">
+            ) : job.status === "in_progress" ? (
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/10 text-emerald-700 border border-emerald-500/20">
+                <span className="size-2 rounded-full bg-emerald-600 animate-pulse" />
+                {isUrdu ? "کام جاری ہے" : "Service In Progress"}
+              </span>
+            ) : job.status === "completed" ? (
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
                 <CheckCircle2 className="size-3.5" />
-                {isUrdu ? "وزٹ شیڈول ہو گیا" : "Visit Scheduled"}
+                {isUrdu ? "مکمل اور تصدیق شدہ" : "Completed & Verified"}
+              </span>
+            ) : job.status === "cancelled" ? (
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-slate-100 text-slate-700 border border-slate-200">
+                {isUrdu ? "منسوخ شدہ" : "Cancelled"}
+              </span>
+            ) : (
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-[#F59E0B]/10 text-[#F59E0B] border border-[#F59E0B]/20">
+                <span className="size-2 rounded-full bg-[#F59E0B]" />
+                {isUrdu ? "وزٹ شیڈول اور PIN فعال ہے" : "Visit Scheduled & PIN Active"}
               </span>
             )}
           </div>
@@ -576,8 +590,8 @@ export function CustomerJobDetailsView({ initialJob }: CustomerJobDetailsViewPro
 
                   <p className="text-[11px] text-emerald-700/90">
                     {isUrdu
-                      ? "ادائیگی کی تصدیق ہو چکی ہے اور 5 روزہ وارنٹی فعال ہے۔ کاریگر کی حوصلہ افزائی کے لیے اپنا ریویو درج کریں۔"
-                      : "Payment has been settled and 5-Day Craftsmanship Warranty is active. Please rate your technician's workmanship."}
+                      ? "ادائیگی کی تصدیق ہو چکی ہے۔ کاریگر کی حوصلہ افزائی کے لیے اپنا ریویو درج کریں۔"
+                      : "Payment has been settled. Please rate your technician's workmanship."}
                   </p>
 
                   {job.customerReview?.comment && (
@@ -656,13 +670,13 @@ export function CustomerJobDetailsView({ initialJob }: CustomerJobDetailsViewPro
               <div>
                 <h4 className="text-xs font-bold text-[#123B5D]">
                   {isUrdu
-                    ? "WorkerFIX 100% تصدیق شدہ کوالٹی کی ضمانت"
-                    : "WorkerFIX 100% Verified Quality Guarantee"}
+                    ? "WorkerFIX تصدیق شدہ سروس"
+                    : "WorkerFIX Verified Service"}
                 </h4>
                 <p className="text-[11px] text-slate-500">
                   {isUrdu
-                    ? "تمام کاریگر نادرا سی این آئی سی سے تصدیق شدہ ہیں، ڈور سٹیپ او ٹی پی پن اور فکسڈ وزٹ فیس کے ساتھ۔"
-                    : "NADRA CNIC verified technician with doorstep OTP PIN confirmation and transparent visit pricing."}
+                    ? "تمام کاریگر تصدیق شدہ ہیں، ڈور سٹیپ او ٹی پی پن اور فکسڈ وزٹ فیس کے ساتھ۔"
+                    : "Verified technician with doorstep OTP PIN confirmation and transparent visit pricing."}
                 </p>
               </div>
             </div>

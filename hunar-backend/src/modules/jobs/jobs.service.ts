@@ -626,7 +626,7 @@ export class JobsService {
 
     const latRounded = Math.round(workerLat * 100) / 100;
     const lngRounded = Math.round(workerLng * 100) / 100;
-    const availCacheKey = `perf:jobs:available:${worker.sub}:${page}:${limit}:${latRounded}:${lngRounded}:${radiusMeters}:${query.categoryId ?? ''}:${query.area ?? ''}:${query.city ?? ''}:${query.minCharge ?? ''}:${query.maxCharge ?? ''}:${query.postedWithinMin ?? ''}:${query.hasNoOffers ?? ''}`;
+    const availCacheKey = `perf:jobs:available:${worker.sub}:${page}:${limit}:${latRounded}:${lngRounded}:${radiusMeters}:${query.categoryId ?? ''}:${query.area ?? ''}:${query.city ?? ''}:${query.minCharge ?? ''}:${query.maxCharge ?? ''}:${query.postedWithinMin ?? ''}:${query.hasNoOffers ?? ''}:${query.onlyRelevant ?? ''}`;
 
     const skipWorkerRelevanceFilters = process.env.ALLOW_WORKER_JOB_TEST_MODE === 'true';
 
@@ -744,7 +744,11 @@ export class JobsService {
       sr."latitude" BETWEEN ${workerLat - latOffset} AND ${workerLat + latOffset}
       AND sr."longitude" BETWEEN ${workerLng - lngOffset} AND ${workerLng + lngOffset}
     `);
-    if (!skipWorkerRelevanceFilters) {
+    const shouldFilterCategories = query.onlyRelevant !== undefined
+      ? query.onlyRelevant
+      : !skipWorkerRelevanceFilters;
+
+    if (shouldFilterCategories) {
       const categoryIds = cachedProfile?.value?.categoryIds ?? [];
       if (profile && profile.skills.length > 0) {
         if (categoryIds.length > 0) {
@@ -755,6 +759,8 @@ export class JobsService {
       } else {
         conditions.push(Prisma.sql`FALSE`);
       }
+    }
+    if (!skipWorkerRelevanceFilters) {
       conditions.push(Prisma.sql`
         EXISTS (
           SELECT 1

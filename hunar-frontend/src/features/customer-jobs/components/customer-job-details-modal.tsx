@@ -158,7 +158,7 @@ export function CustomerJobDetailsModal({
   return (
     <>
       <div
-        className="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-5 animate-in fade-in-50 duration-200"
+        className="fixed inset-0 z-50 overflow-y-auto scrollbar-none no-scrollbar bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-5 animate-in fade-in-50 duration-200"
         onClick={(e) => {
           if (e.target === e.currentTarget) onClose();
         }}
@@ -195,6 +195,13 @@ export function CustomerJobDetailsModal({
                 <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-[#F59E0B]/10 text-[#F59E0B] border border-[#F59E0B]/20">
                   <span className="size-2 rounded-full bg-[#F59E0B]" />
                   <span>{isUrdu ? "وزٹ شیڈول ہو گیا" : "Visit Scheduled"}</span>
+                </span>
+              )}
+
+              {job.status === "in_progress" && (
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-700 border border-emerald-500/20">
+                  <span className="size-2 rounded-full bg-emerald-600 animate-pulse" />
+                  <span>{isUrdu ? "کام جاری ہے" : "Service In Progress"}</span>
                 </span>
               )}
 
@@ -448,7 +455,7 @@ export function CustomerJobDetailsModal({
               </div>
             )}
 
-            {job.status === "visit_scheduled" && job.selectedOffer && (
+            {(job.status === "visit_scheduled" || job.status === "in_progress") && job.selectedOffer && (
               <div className="p-4 sm:p-5 rounded-2xl bg-amber-50/70 border border-amber-200/60 space-y-3">
                 <div className="flex items-center justify-between flex-wrap gap-2">
                   <div className="flex items-center gap-3">
@@ -480,11 +487,24 @@ export function CustomerJobDetailsModal({
 
                   <div className="text-right rtl:text-left">
                     <span className="text-[11px] text-slate-400 block font-medium">
-                      {isUrdu ? "طے شدہ وزٹ فیس" : "Agreed Visit Fee"}
+                      {job.repairCharge && job.repairCharge > 0
+                        ? (isUrdu ? "کل رقم (وزٹ + مرمت)" : "Total (Visit + Repair)")
+                        : (isUrdu ? "طے شدہ وزٹ فیس" : "Agreed Visit Fee")}
                     </span>
                     <span className="text-base font-extrabold text-[#0F766E]">
-                      Rs. {job.selectedOffer.visitFee.toLocaleString()}
+                      Rs. {(
+                        (job.totalAmount && job.totalAmount > 0)
+                          ? job.totalAmount
+                          : (job.selectedOffer.visitFee + (job.repairCharge ?? 0))
+                      ).toLocaleString()}
                     </span>
+                    {Boolean(job.repairCharge && job.repairCharge > 0) && (
+                      <span className="text-[10px] text-slate-500 block">
+                        {isUrdu
+                          ? `وزٹ Rs. ${job.selectedOffer.visitFee} + مرمت Rs. ${job.repairCharge}`
+                          : `Visit Rs. ${job.selectedOffer.visitFee} + Repair Rs. ${job.repairCharge}`}
+                      </span>
+                    )}
                   </div>
                 </div>
 
@@ -511,7 +531,11 @@ export function CustomerJobDetailsModal({
                     className="w-full py-2.5 px-4 rounded-xl bg-[#0F766E] hover:bg-[#115E59] text-white font-bold text-xs sm:text-sm shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-98"
                   >
                     <Clock className="size-4" />
-                    <span>{isUrdu ? "لائیو وزٹ اور دہلیز PIN ٹریک کریں ←" : "Track Live Visit & Doorstep PIN →"}</span>
+                    <span>
+                      {job.status === "in_progress"
+                        ? (isUrdu ? "لائیو پراگریس ٹریک کریں ←" : "Track Live Progress →")
+                        : (isUrdu ? "لائیو وزٹ اور دہلیز PIN ٹریک کریں ←" : "Track Live Visit & Doorstep PIN →")}
+                    </span>
                   </a>
                 </div>
               </div>
@@ -700,6 +724,21 @@ export function CustomerJobDetailsModal({
                 </span>
                 <ArrowRight className="size-4 rtl:rotate-180" />
               </button>
+            )}
+
+            {(job.status === "visit_scheduled" || job.status === "in_progress") && (
+              <a
+                href={`/customer/job/${job.id}/tracking`}
+                className="py-2.5 px-4 rounded-xl bg-[#0F766E] hover:bg-[#115E59] text-white font-bold text-xs sm:text-sm shadow-xs transition-all flex items-center gap-1.5 cursor-pointer active:scale-98"
+              >
+                <Clock className="size-4" />
+                <span>
+                  {job.status === "in_progress"
+                    ? (isUrdu ? "لائیو پراگریس دیکھیں" : "Track Live Progress")
+                    : (isUrdu ? "لائیو وزٹ ٹریک کریں" : "Track Live Visit")}
+                </span>
+                <ArrowRight className="size-4 rtl:rotate-180" />
+              </a>
             )}
 
             {job.status === "cancelled" && (
