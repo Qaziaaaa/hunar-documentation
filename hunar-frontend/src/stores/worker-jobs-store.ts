@@ -20,7 +20,7 @@ import {
 import { cancelWorkerJob } from "@/services/worker/cancellation.service";
 import { getWalletSummary } from "@/services/worker/earnings.service";
 import { getWorkerProfile } from "@/services/worker/profile.service";
-import { http, getStoredUser } from "@/lib/api-client";
+import { http, getStoredUser, getAccessToken, getRefreshToken } from "@/lib/api-client";
 import { parseDurationToMinutes } from "@/lib/duration";
 import { getMaxNegotiationRounds } from "@/lib/negotiation";
 
@@ -518,6 +518,11 @@ export const workerStore = {
   async performHydration(isBackgroundSync: boolean = false) {
     if (!isBackgroundSync && !globalState.hydrated) {
       patch({ status: "loading", error: null });
+    }
+    const hasWorkerAuth = Boolean(getAccessToken("WORKER") || getRefreshToken("WORKER"));
+    if (!hasWorkerAuth) {
+      patch({ hydrated: true, status: "ready" });
+      return;
     }
     try {
       const settled = await Promise.allSettled([

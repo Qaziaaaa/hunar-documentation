@@ -9,7 +9,7 @@ import {
   Shield,
   UserCheck,
 } from "lucide-react";
-import { http } from "@/lib/api-client";
+import { http, getAccessToken, getRefreshToken } from "@/lib/api-client";
 import {
   MOCK_FAQS,
   MOCK_HELPLINE_INFO,
@@ -32,16 +32,20 @@ export function CustomerHelpView() {
   const [isTicketModalOpen, setIsTicketModalOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
+  const hasCustomerAuth = Boolean(getAccessToken("CUSTOMER") || getRefreshToken("CUSTOMER"));
+
   const { data: customerJobs = [] } = useQuery({
     queryKey: ["customer", "jobs"],
     queryFn: getCustomerJobs,
     staleTime: 30_000,
+    enabled: hasCustomerAuth,
   });
 
   const { data: myDisputes = [] } = useQuery<any[]>({
     queryKey: ["customer", "disputes"],
     queryFn: () => http.get<any[]>("/disputes/my"),
     staleTime: 30_000,
+    enabled: hasCustomerAuth,
   });
 
   const displayedTicket: SupportTicket | null =

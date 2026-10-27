@@ -121,9 +121,22 @@ function getRawGenericStoredUser(): StoredUser | null {
   }
 }
 
-export function getAccessToken(roleHint?: UserRole): string | null {
+export function isJwtExpired(token: string | null | undefined): boolean {
+  if (!token || typeof token !== "string") return true;
+  const payload = parseJwtPayload(token);
+  if (!payload || !payload.exp) return false;
+  return Date.now() >= payload.exp * 1000;
+}
+
+export function getAccessToken(roleHint?: UserRole, allowExpired = false): string | null {
   if (typeof window === "undefined") return null;
   const targetRole = roleHint ?? getRoleFromContext();
+
+  const validate = (t: string | null): string | null => {
+    if (!t) return null;
+    if (!allowExpired && isJwtExpired(t)) return null;
+    return t;
+  };
 
   const genericToken =
     window.localStorage.getItem(ACCESS_TOKEN_KEY) ??
@@ -132,7 +145,7 @@ export function getAccessToken(roleHint?: UserRole): string | null {
 
   if (targetRole === "CUSTOMER") {
     const custToken = window.localStorage.getItem(CUSTOMER_ACCESS_TOKEN_KEY);
-    if (custToken) return custToken;
+    if (custToken) return validate(custToken);
 
     if (genericToken) {
       const payload = parseJwtPayload(genericToken);
@@ -160,7 +173,7 @@ export function getAccessToken(roleHint?: UserRole): string | null {
             window.localStorage.setItem(CUSTOMER_AUTH_USER_KEY, JSON.stringify(healedUser));
           }
         } catch {}
-        return genericToken;
+        return validate(genericToken);
       }
     }
     return null;
@@ -168,7 +181,7 @@ export function getAccessToken(roleHint?: UserRole): string | null {
 
   if (targetRole === "WORKER") {
     const workerToken = window.localStorage.getItem(WORKER_ACCESS_TOKEN_KEY);
-    if (workerToken) return workerToken;
+    if (workerToken) return validate(workerToken);
 
     if (genericToken) {
       const payload = parseJwtPayload(genericToken);
@@ -191,7 +204,7 @@ export function getAccessToken(roleHint?: UserRole): string | null {
             window.localStorage.setItem(WORKER_AUTH_USER_KEY, JSON.stringify(healedUser));
           }
         } catch {}
-        return genericToken;
+        return validate(genericToken);
       }
     }
     return null;
@@ -201,7 +214,7 @@ export function getAccessToken(roleHint?: UserRole): string | null {
     const adminToken =
       window.localStorage.getItem(ADMIN_ACCESS_TOKEN_KEY) ??
       window.localStorage.getItem("hunar_admin_token");
-    if (adminToken) return adminToken;
+    if (adminToken) return validate(adminToken);
 
     if (genericToken) {
       const payload = parseJwtPayload(genericToken);
@@ -213,13 +226,13 @@ export function getAccessToken(roleHint?: UserRole): string | null {
         try {
           window.localStorage.setItem(ADMIN_ACCESS_TOKEN_KEY, genericToken);
         } catch {}
-        return genericToken;
+        return validate(genericToken);
       }
     }
     return null;
   }
 
-  return genericToken;
+  return validate(genericToken);
 }
 
 export function getRefreshToken(roleHint?: UserRole): string | null {
@@ -234,21 +247,21 @@ export function getRefreshToken(roleHint?: UserRole): string | null {
   if (targetRole === "CUSTOMER") {
     const custRefresh = window.localStorage.getItem(CUSTOMER_REFRESH_TOKEN_KEY);
     if (custRefresh) return custRefresh;
-    if (getAccessToken("CUSTOMER")) return genericRefresh;
+    if (getAccessToken("CUSTOMER", true)) return genericRefresh;
     return null;
   }
 
   if (targetRole === "WORKER") {
     const workerRefresh = window.localStorage.getItem(WORKER_REFRESH_TOKEN_KEY);
     if (workerRefresh) return workerRefresh;
-    if (getAccessToken("WORKER")) return genericRefresh;
+    if (getAccessToken("WORKER", true)) return genericRefresh;
     return null;
   }
 
   if (targetRole === "ADMIN") {
     const adminRefresh = window.localStorage.getItem(ADMIN_REFRESH_TOKEN_KEY);
     if (adminRefresh) return adminRefresh;
-    if (getAccessToken("ADMIN")) return genericRefresh;
+    if (getAccessToken("ADMIN", true)) return genericRefresh;
     return null;
   }
 
@@ -465,11 +478,12 @@ export function clearTokens(roleHint?: UserRole): void {
 
 // Track in-flight silent refresh promise to deduplicate concurrent 401s
 let refreshPromise: Promise<string | null> | null = null;
+let refreshPromiseRole: UserRole | undefined;
 
-async function executeSilentRefresh(): Promise<string | null> {
-  const refreshToken = getRefreshToken();
+async function executeSilentRefresh(roleHint?: UserRole): Promise<string | null> {
+  const refreshToken = getRefreshToken(roleHint);
   if (!refreshToken) {
-    clearTokens();
+    clearTokens(roleHint);
     return null;
   }
 
@@ -484,7 +498,7 @@ async function executeSilentRefresh(): Promise<string | null> {
     });
 
     if (!res.ok) {
-      clearTokens();
+      clearTokens(roleHint);
       return null;
     }
 
@@ -500,7 +514,7 @@ async function executeSilentRefresh(): Promise<string | null> {
     };
 
     if (!data?.accessToken) {
-      clearTokens();
+      clearTokens(roleHint);
       return null;
     }
 
@@ -508,17 +522,19 @@ async function executeSilentRefresh(): Promise<string | null> {
     setTokens(data.accessToken, newRefreshToken, data.user);
     return data.accessToken;
   } catch {
-    clearTokens();
+    clearTokens(roleHint);
     return null;
   }
 }
 
-export async function silentRefreshToken(): Promise<string | null> {
-  if (refreshPromise) {
+export async function silentRefreshToken(roleHint?: UserRole): Promise<string | null> {
+  if (refreshPromise && refreshPromiseRole === roleHint) {
     return refreshPromise;
   }
-  refreshPromise = executeSilentRefresh().finally(() => {
+  refreshPromiseRole = roleHint;
+  refreshPromise = executeSilentRefresh(roleHint).finally(() => {
     refreshPromise = null;
+    refreshPromiseRole = undefined;
   });
   return refreshPromise;
 }
@@ -543,7 +559,11 @@ export async function apiClient<T>(
   if (!headers.has("Content-Type") && !(options.body instanceof FormData)) {
     headers.set("Content-Type", "application/json");
   }
+
+  const contextRole = getRoleFromContext();
   let roleHint: UserRole | undefined;
+
+  // Dedicated, unambiguous paths always take precedence
   if (
     path.startsWith("/admin") ||
     path.startsWith("/api/v1/admin") ||
@@ -551,30 +571,53 @@ export async function apiClient<T>(
   ) {
     roleHint = "ADMIN";
   } else if (
+    path.startsWith("/auth/customer") ||
+    path.startsWith("/jobs/customer")
+  ) {
+    roleHint = "CUSTOMER";
+  } else if (
+    path.startsWith("/auth/worker") ||
     path.startsWith("/users/worker") ||
     path.startsWith("/workers") ||
-    path.startsWith("/commissions") ||
     path.startsWith("/jobs/available") ||
-    path.startsWith("/visits") ||
-    path.startsWith("/repairs/my") ||
+    path.startsWith("/commissions") ||
     path.startsWith("/uploads/inspection-photo") ||
     path.startsWith("/uploads/worker-document") ||
     path.startsWith("/uploads/cnic-document")
   ) {
     roleHint = "WORKER";
-  } else if (
-    path.startsWith("/auth/customer") ||
-    path.startsWith("/repairs") ||
-    path.includes("/repair") ||
-    path.startsWith("/jobs/customer") ||
-    path.startsWith("/uploads/job-photo") ||
-    path.startsWith("/uploads/voice-note") ||
-    (path === "/jobs" && options.method === "POST")
-  ) {
-    roleHint = "CUSTOMER";
+  } else if (contextRole) {
+    // If running inside a portal route (/customer, /worker, /admin), adhere to that context
+    roleHint = contextRole;
+  } else {
+    // Context-agnostic fallback for shared endpoints (/visits, /repairs, /jobs, /notifications, /chat, etc.)
+    if (getAccessToken("CUSTOMER") && !getAccessToken("WORKER")) {
+      roleHint = "CUSTOMER";
+    } else if (getAccessToken("WORKER") && !getAccessToken("CUSTOMER")) {
+      roleHint = "WORKER";
+    } else if (
+      path.startsWith("/repairs") ||
+      path.includes("/repair") ||
+      (path === "/jobs" && options.method === "POST")
+    ) {
+      roleHint = "CUSTOMER";
+    }
   }
 
-  const token = getAccessToken(roleHint);
+  const isAuthEndpoint =
+    path.includes("/auth/login") ||
+    path.includes("/auth/customer/login") ||
+    path.includes("/auth/register") ||
+    path.includes("/auth/customer/signup/complete") ||
+    path.includes("/auth/otp/") ||
+    path.includes("/auth/customer/otp/") ||
+    path.includes("/auth/refresh");
+
+  let token = getAccessToken(roleHint);
+  if (!token && !isAuthEndpoint && getRefreshToken(roleHint)) {
+    token = await silentRefreshToken(roleHint);
+  }
+
   if (token) {
     headers.set("Authorization", `Bearer ${token}`);
   }
@@ -618,21 +661,16 @@ export async function apiClient<T>(
   }
 
   // Handle 401 Unauthorized via Silent Token Refresh (once per request)
-  const isAuthEndpoint =
-    path.includes("/auth/login") ||
-    path.includes("/auth/customer/login") ||
-    path.includes("/auth/register") ||
-    path.includes("/auth/customer/signup/complete") ||
-    path.includes("/auth/otp/") ||
-    path.includes("/auth/customer/otp/") ||
-    path.includes("/auth/refresh");
-
-  if (res.status === 401 && !isRetry && !isAuthEndpoint && getRefreshToken()) {
-    const newToken = await silentRefreshToken();
+  if (res.status === 401 && !isRetry && !isAuthEndpoint && getRefreshToken(roleHint)) {
+    const newToken = await silentRefreshToken(roleHint);
     if (newToken) {
       headers.set("Authorization", `Bearer ${newToken}`);
       return apiClient<T>(path, { ...options, headers }, true);
     }
+  }
+
+  if (res.status === 401) {
+    clearTokens(roleHint);
   }
 
   if (!res.ok) {

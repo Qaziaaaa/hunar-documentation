@@ -7,6 +7,7 @@ import { WorkerUpcomingVisitCard } from "./worker-upcoming-visit-card";
 import { WorkerPastJobCard } from "./worker-past-job-card";
 import { ErrorState } from "@/components/shared/error-state";
 import { LoadingState } from "@/components/shared/loading-state";
+import { getAccessToken, getRefreshToken } from "@/lib/api-client";
 import {
   Calendar,
   CheckCircle2,
@@ -23,6 +24,7 @@ export function WorkerJobsHub() {
 
   // Revalidate jobs immediately on mount so latest upcoming and past jobs appear instantly
   React.useEffect(() => {
+    if (!getAccessToken("WORKER") && !getRefreshToken("WORKER")) return;
     void workerStore.syncActiveJobs();
     void workerStore.hydrate();
   }, []);
