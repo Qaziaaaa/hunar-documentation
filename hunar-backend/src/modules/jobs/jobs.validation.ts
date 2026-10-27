@@ -156,6 +156,12 @@ export class AvailableJobsQueryDto {
   @IsBoolean()
   hasNoOffers?: boolean;
 
+  /** Filter by worker relevance (categories/skills). When false, returns all categories. */
+  @IsOptional()
+  @Type(() => Boolean)
+  @IsBoolean()
+  onlyRelevant?: boolean;
+
   @IsOptional()
   @Type(() => Number)
   @IsInt()

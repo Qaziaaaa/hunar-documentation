@@ -5,7 +5,7 @@ import { useRouter, usePathname } from "@/i18n/navigation";
 import { useLocale } from "next-intl";
 import { Briefcase, WifiOff } from "lucide-react";
 import { ErrorState } from "@/components/shared/error-state";
-import { http, getAccessToken, getStoredUser, clearTokens } from "@/lib/api-client";
+import { http, getAccessToken, getStoredUser, clearTokens, getRefreshToken } from "@/lib/api-client";
 import { connectSocket, disconnectSocket } from "@/lib/socket";
 import { timeAgo } from "@/lib/format";
 import { logoutWorker } from "@/features/auth/api/auth-api";
@@ -227,13 +227,41 @@ export function WorkerDashboardShell({
   const [hasCachedProfile, setHasCachedProfile] = useState<boolean>(false);
   const [upcomingJobsCount, setUpcomingJobsCount] = useState<number>(0);
 
+  const SHOW_RELEVANT_JOBS_KEY = "workerfix_show_relevant_jobs";
+  const [showRelevantJobs, setShowRelevantJobs] = useState<boolean>(false);
+
   // Sync profile & online status from client localStorage on mount to prevent hydration mismatch
   useEffect(() => {
     const initial = loadInitialProfile();
     setProfile(initial.profile);
     setHasCachedProfile(initial.isLoaded);
     setIsLoadingProfile(!initial.isLoaded);
+
+    try {
+      const storedUser = getStoredUser();
+      const userKey = storedUser?.id ? `${SHOW_RELEVANT_JOBS_KEY}_${storedUser.id}` : null;
+      const savedUser = userKey ? window.localStorage.getItem(userKey) : null;
+      const savedGlobal = window.localStorage.getItem(SHOW_RELEVANT_JOBS_KEY);
+      const val = savedUser ?? savedGlobal;
+      if (val !== null) {
+        setShowRelevantJobs(val === "true");
+      }
+    } catch {}
   }, []);
+
+  const handleToggleShowRelevantJobs = (enabled?: boolean) => {
+    setShowRelevantJobs((prev) => {
+      const next = typeof enabled === "boolean" ? enabled : !prev;
+      try {
+        const storedUser = getStoredUser();
+        if (storedUser?.id) {
+          window.localStorage.setItem(`${SHOW_RELEVANT_JOBS_KEY}_${storedUser.id}`, String(next));
+        }
+        window.localStorage.setItem(SHOW_RELEVANT_JOBS_KEY, String(next));
+      } catch {}
+      return next;
+    });
+  };
 
   // Synchronize activeTab with URL pathname
   useEffect(() => {
@@ -276,8 +304,8 @@ export function WorkerDashboardShell({
 
   // Enforce worker role and token authentication on worker routes
   useEffect(() => {
-    const token = getAccessToken();
-    const user = getStoredUser();
+    const token = getAccessToken("WORKER") || getRefreshToken("WORKER");
+    const user = getStoredUser("WORKER");
     if (!token) {
       router.push("/worker/sign-in");
       return;
@@ -290,7 +318,7 @@ export function WorkerDashboardShell({
 
   // Sync profile & online status from live backend (fast: only profile & active jobs)
   const syncBackendProfile = useCallback(async (isRetry: boolean = false) => {
-    if (!getAccessToken()) return;
+    if (!getAccessToken("WORKER") && !getRefreshToken("WORKER")) return;
     if (isRetry) {
       setSyncError(null);
     }
@@ -363,11 +391,16 @@ export function WorkerDashboardShell({
           }
 
           const areas = data.serviceAreas?.map((a: any) => a.label) || [];
-          const liveSkills =
-            wp?.skillCategories
-              ?.map((c: { name?: string }) => c.name)
-              .filter(Boolean) ??
-              (wp?.skills?.length ? wp.skills : []);
+          const skillCategoryNames = (wp?.skillCategories ?? [])
+            .map((c: { name?: string }) => c.name)
+            .filter(Boolean);
+          const skillCategoryIds = (wp?.skillCategories ?? [])
+            .map((c: { id?: string }) => c.id)
+            .filter(Boolean);
+          const rawSkills = Array.isArray(wp?.skills) ? wp.skills : [];
+          const liveSkills = Array.from(
+            new Set([...skillCategoryNames, ...skillCategoryIds, ...rawSkills])
+          );
 
           const liveRating =
             typeof data.rating === "number"
@@ -568,6 +601,7 @@ export function WorkerDashboardShell({
             city={profile.city}
             isOnline={profile.isOnline}
             workerSkills={profile.skills}
+            showRelevantJobs={showRelevantJobs}
           />
         </div>
       );
@@ -601,7 +635,10 @@ export function WorkerDashboardShell({
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-white text-slate-900 pb-20 md:pb-8">
+    <div
+      data-portal="worker"
+      className="min-h-screen flex flex-col bg-white text-slate-900 pb-20 md:pb-8 scrollbar-none no-scrollbar"
+    >
       {/* Full-Height Fixed Desktop Sidebar */}
       <DashboardSidebar
         activeTab={activeTab}
@@ -628,6 +665,8 @@ export function WorkerDashboardShell({
           onSelectTab={handleSelectTab}
           onMarkNotificationsRead={handleMarkNotificationsRead}
           onOpenSidebar={() => setIsMobileSidebarOpen(true)}
+          showRelevantJobs={showRelevantJobs}
+          onToggleShowRelevantJobs={handleToggleShowRelevantJobs}
         />
 
         {/* Main Content Area */}
