@@ -97,7 +97,7 @@ export function Hero() {
                     Proof of quality
                   </p>
                   <p className="text-[11px] text-slate-500">
-                    100% CNIC & Police Verified
+                    100% Verified
                   </p>
                 </div>
               </span>
@@ -112,7 +112,7 @@ export function Hero() {
                     Safe and secure
                   </p>
                   <p className="text-[11px] text-slate-500">
-                    Escrow milestone release
+                    Doorstep OTP PIN release
                   </p>
                 </div>
               </span>

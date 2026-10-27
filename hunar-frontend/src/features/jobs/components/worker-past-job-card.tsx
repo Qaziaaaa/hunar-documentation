@@ -19,7 +19,6 @@ import {
   CheckCircle2,
   Calendar,
   Star,
-  ShieldCheck,
   FileText,
   MapPin,
   Eye,
@@ -38,7 +37,6 @@ export function WorkerPastJobCard({ job }: WorkerPastJobCardProps) {
   const grossTotal = visitCharge + repairCharge;
   const platformCommission = job.platformCommission ?? Math.round(visitCharge * 0.1);
   const netEarnings = job.workerNetEarnings ?? (grossTotal - platformCommission);
-  const warrantyDays = job.warrantyDays;
   const cleanJobId = job.id?.replace(/^INV-/, "") || job.id;
 
   const review = job.customerReview;
@@ -146,13 +144,6 @@ export function WorkerPastJobCard({ job }: WorkerPastJobCardProps) {
             </div>
           ) : null}
 
-          {/* Warranty Badge */}
-          {warrantyDays ? (
-            <div className="flex items-center gap-1.5 text-[10.5px] sm:text-[11px] font-semibold text-teal-700">
-              <ShieldCheck className="size-3.5 text-[#0F8B8D] shrink-0" />
-              <span>{warrantyDays}-Day Customer Guarantee Active</span>
-            </div>
-          ) : null}
         </div>
 
         {/* Footer Actions */}

@@ -210,8 +210,8 @@ export function CustomerOffersHubView({ initialJobs }: CustomerOffersHubViewProp
           </h1>
           <p className="text-xs sm:text-sm text-slate-500 max-w-2xl">
             {isUrdu
-              ? "تصدیق شدہ کاریگروں کے ریٹس کا موازنہ کریں، نادرا اسناد دیکھیں اور WorkerFIX تحفظ کے ساتھ وزٹ بک کریں۔"
-              : "Compare verified technician quotes, inspect NADRA credentials, and confirm bookings with WorkerFIX verified protection."}
+              ? "تصدیق شدہ کاریگروں کے ریٹس کا موازنہ کریں، تصدیق شدہ اسناد دیکھیں اور WorkerFIX تحفظ کے ساتھ وزٹ بک کریں۔"
+              : "Compare verified technician quotes, inspect verified credentials, and confirm bookings with WorkerFIX verified protection."}
           </p>
         </div>
 
@@ -502,10 +502,10 @@ export function CustomerOffersHubView({ initialJobs }: CustomerOffersHubViewProp
               </div>
               <div>
                 <h4 className="text-base font-bold text-[#123B5D]">
-                  {isUrdu ? "WorkerFIX تصدیق شدہ کوالٹی" : "WorkerFIX Verified Quality"}
+                  {isUrdu ? "WorkerFIX تصدیق شدہ سروس" : "WorkerFIX Verified Service"}
                 </h4>
                 <span className="text-xs font-semibold text-[#0F766E]">
-                  {isUrdu ? "100% گارنٹی شدہ تحفظ" : "100% Guaranteed Protection"}
+                  {isUrdu ? "محفوظ اور شفاف" : "Safe & Transparent"}
                 </span>
               </div>
             </div>
@@ -513,11 +513,11 @@ export function CustomerOffersHubView({ initialJobs }: CustomerOffersHubViewProp
             <p className="text-xs text-slate-600 leading-relaxed">
               {isUrdu ? (
                 <>
-                  آپ کی سروس <strong className="text-[#123B5D]">WorkerFIX ویریفائیڈ گارنٹی</strong> کے تحت محفوظ ہے۔ تمام کاریگر نادرا سی این آئی سی سے تصدیق شدہ ہیں اور موقع پر شفاف معائنہ فراہم کرتے ہیں۔
+                  آپ کی سروس <strong className="text-[#123B5D]">WorkerFIX تحفظ</strong> کے تحت محفوظ ہے۔ تمام کاریگر تصدیق شدہ ہیں اور موقع پر شفاف معائنہ فراہم کرتے ہیں۔
                 </>
               ) : (
                 <>
-                  Your service is protected by <strong className="text-[#123B5D]">WorkerFIX Verified Guarantee</strong>. Technicians are NADRA CNIC verified and provide transparent diagnosis directly on site.
+                  Your service is protected by <strong className="text-[#123B5D]">WorkerFIX Protection</strong>. Technicians are verified and provide transparent diagnosis directly on site.
                 </>
               )}
             </p>
@@ -543,20 +543,10 @@ export function CustomerOffersHubView({ initialJobs }: CustomerOffersHubViewProp
                 <CheckCircle2 className="size-4 text-[#0F766E] shrink-0 mt-0.5" />
                 <span>
                   {isUrdu
-                    ? "100% نادرا شناختی کارڈ اور پولیس کلیئرڈ ماہرین"
-                    : "100% NADRA CNIC & Police Background Checked Pros"}
+                    ? "100% تصدیق شدہ ماہرین"
+                    : "100% Verified Pros"}
                 </span>
               </div>
-            </div>
-
-            <div className="bg-slate-50 p-3 rounded-2xl flex items-center justify-between border border-slate-100">
-              <div className="flex items-center gap-2 text-xs font-bold text-[#123B5D]">
-                <ShieldCheck className="size-4 text-amber-500" />
-                <span>{isUrdu ? "تحفظ کی مہر" : "Protection Seal"}</span>
-              </div>
-              <span className="text-[11px] font-mono font-bold text-[#0F766E]">
-                PK-VERIFIED-2026
-              </span>
             </div>
           </div>
 
@@ -569,11 +559,11 @@ export function CustomerOffersHubView({ initialJobs }: CustomerOffersHubViewProp
             <p className="text-xs text-slate-500 leading-relaxed">
               {isUrdu ? (
                 <>
-                  انتخاب کرنے سے پہلے کاریگر کے سابقہ کام کی اصل تصاویر، کسٹمر ریٹنگز اور نادرا تصدیقی بیج دیکھنے کے لیے <strong className="text-[#123B5D]">پروفائل دیکھیں</strong> پر کلک کریں۔
+                  انتخاب کرنے سے پہلے کاریگر کے سابقہ کام کی اصل تصاویر، کسٹمر ریٹنگز اور تصدیقی بیج دیکھنے کے لیے <strong className="text-[#123B5D]">پروفائل دیکھیں</strong> پر کلک کریں۔
                 </>
               ) : (
                 <>
-                  Click <strong className="text-[#123B5D]">View Profile</strong> on any offer card to inspect the technician&apos;s real photos of past completed jobs, customer ratings, and NADRA verification badge before choosing.
+                  Click <strong className="text-[#123B5D]">View Profile</strong> on any offer card to inspect the technician&apos;s real photos of past completed jobs, customer ratings, and verification badge before choosing.
                 </>
               )}
             </p>

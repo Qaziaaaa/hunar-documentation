@@ -282,11 +282,11 @@ export function JobRequestCard({
             >
               {job.customer.totalOrders} orders
             </p>
-          ) : (
+          ) : job.customer.isVerified ? (
             <span className="mt-0.5 inline-block text-[9px] font-bold text-emerald-600 bg-emerald-50 px-1.5 py-0.2 rounded-full border border-emerald-100">
               Verified
             </span>
-          )}
+          ) : null}
 
           {/* Uploaded Time */}
           <span className="mt-0.5 block text-[9.5px] font-medium text-slate-400">

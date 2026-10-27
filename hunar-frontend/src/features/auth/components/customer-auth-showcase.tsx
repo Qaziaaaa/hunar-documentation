@@ -24,7 +24,7 @@ export function CustomerAuthShowcase() {
           Find verified skilled professionals for every home repair.
         </h1>
         <p className="mt-1.5 text-xs xl:text-sm text-slate-600 leading-relaxed">
-          Book background-checked electricians, plumbers, AC technicians, and carpenters near you with upfront pricing and escrow protection.
+          Book background-checked electricians, plumbers, AC technicians, and carpenters near you with upfront pricing and verified professionals.
         </p>
 
         {/* Real Service Photography Card with Floating Verified Pro Badge */}
@@ -69,15 +69,15 @@ export function CustomerAuthShowcase() {
       <div className="flex items-center justify-between pt-3 border-t border-slate-200/70 text-[11px] font-medium text-slate-500">
         <span className="inline-flex items-center gap-1">
           <ShieldCheck className="size-3.5 text-teal" />
-          NADRA CNIC Verified
+          Verified Professionals
         </span>
         <span className="inline-flex items-center gap-1">
           <Lock className="size-3.5 text-teal" />
-          Escrow Protection
+          Doorstep PIN Protection
         </span>
         <span className="inline-flex items-center gap-1">
           <CheckCircle2 className="size-3.5 text-teal" />
-          Fixed Price Guarantee
+          Transparent Pricing
         </span>
       </div>
     </aside>

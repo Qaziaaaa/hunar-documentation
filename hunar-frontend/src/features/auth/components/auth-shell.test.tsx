@@ -4,7 +4,7 @@ import { AuthShell } from "./auth-shell";
 jest.mock("next-intl", () => ({
   useTranslations: () => (key: string) => {
     const translations: Record<string, string> = {
-      trustCnic: "CNIC Verified",
+      trustCnic: "Verified",
       trustSecure: "Secure Payments",
       copyright: "© 2026 WorkerFIX Services Inc.",
     };

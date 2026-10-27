@@ -67,9 +67,9 @@ export function VerificationLeftShowcase() {
                   <ShieldCheck className="size-3.5" />
                 </div>
                 <div className="leading-tight">
-                  <span className="font-bold text-navy">{t("escrowTitle")}</span>
+                  <span className="font-bold text-navy">{t("payoutTitle")}</span>
                   <p className="text-[11px] text-muted-foreground mt-0.5">
-                    {t("escrowDesc")}
+                    {t("payoutDesc")}
                   </p>
                 </div>
               </div>

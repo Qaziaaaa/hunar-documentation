@@ -5,7 +5,6 @@ import {
   Check,
   CheckCircle2,
   Clock,
-  Fingerprint,
   MapPin,
   MessageSquare,
   ShieldCheck,
@@ -62,7 +61,7 @@ export function WorkerProfileModal({
   const worker = profile || offer.worker;
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6 animate-in fade-in-50 duration-200">
+    <div className="fixed inset-0 z-50 overflow-y-auto scrollbar-none no-scrollbar bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6 animate-in fade-in-50 duration-200">
       <div className="bg-white rounded-3xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
         {/* Modal Header */}
         <div className="flex items-center justify-between px-5 sm:px-6 py-4 border-b border-slate-100 bg-white sticky top-0 z-10">
@@ -91,7 +90,7 @@ export function WorkerProfileModal({
         </div>
 
         {/* Scrollable Content */}
-        <div className="overflow-y-auto p-5 sm:p-6 space-y-5 text-left rtl:text-right text-[#123B5D]">
+        <div className="overflow-y-auto p-5 sm:p-6 space-y-5 text-left rtl:text-right text-[#123B5D] scrollbar-none no-scrollbar">
           {/* Worker Bio & Identity Header */}
           <div className="flex flex-col sm:flex-row gap-4 sm:gap-5 items-start">
             <div className="relative size-20 sm:size-24 rounded-2xl overflow-hidden shrink-0 shadow-sm">
@@ -169,26 +168,16 @@ export function WorkerProfileModal({
           </div>
 
           {/* Verified Credentials Bar */}
-          {(worker.isCnicVerified || worker.isNadraCleared) && (
+          {worker.isCnicVerified && (
             <div className="flex flex-wrap gap-2 p-3 bg-slate-50/80 rounded-2xl">
-              {worker.isCnicVerified && (
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-semibold bg-white text-[#123B5D] shadow-2xs">
-                  <CheckCircle2 className="size-3.5 text-[#16A34A]" />
-                  {isUrdu ? "شناختی کارڈ تصدیق شدہ" : "CNIC Verified"}
-                </span>
-              )}
-              {worker.isNadraCleared && (
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-semibold bg-white text-[#123B5D] shadow-2xs">
-                  <Fingerprint className="size-3.5 text-[#16A34A]" />
-                  {isUrdu ? "نادرا بائیومیٹرک کلیئرڈ" : "NADRA Biometrics Cleared"}
-                </span>
-              )}
-              {(worker.isNadraCleared || worker.isCnicVerified) && (
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-semibold bg-white text-[#0F766E] shadow-2xs">
-                  <ShieldCheck className="size-3.5 text-[#0F766E]" />
-                  {isUrdu ? "WorkerFIX تصدیق شدہ کاریگر" : "WorkerFIX Certified Pro"}
-                </span>
-              )}
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-semibold bg-white text-[#123B5D] shadow-2xs">
+                <CheckCircle2 className="size-3.5 text-[#16A34A]" />
+                {isUrdu ? "تصدیق شدہ" : "Verified"}
+              </span>
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-semibold bg-white text-[#0F766E] shadow-2xs">
+                <ShieldCheck className="size-3.5 text-[#0F766E]" />
+                {isUrdu ? "WorkerFIX تصدیق شدہ کاریگر" : "WorkerFIX Certified Pro"}
+              </span>
             </div>
           )}
 

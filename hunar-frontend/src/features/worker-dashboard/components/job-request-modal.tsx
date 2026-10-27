@@ -7,7 +7,6 @@ import {
   MapPin,
   Star,
   Calendar,
-  ShieldCheck,
   Zap,
   Wrench,
   AirVent,
@@ -251,11 +250,6 @@ export function JobRequestModal({
                     <h3 className="text-base font-extrabold text-navy truncate">
                       {job.customer.fullName || job.customer.firstName}
                     </h3>
-                    {job.customer.isVerified && (
-                      <span className="inline-flex items-center text-teal" title="NADRA Phone Verified Customer">
-                        <ShieldCheck className="size-4" />
-                      </span>
-                    )}
                   </div>
                   <div className="mt-1 flex flex-wrap items-center gap-2 text-xs font-semibold text-slate-600">
                     {job.customer.rating > 0 ? (

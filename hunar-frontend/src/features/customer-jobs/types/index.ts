@@ -39,7 +39,6 @@ export interface WorkerProfile {
   bio: string;
   isCnicVerified: boolean;
   isNadraCleared: boolean;
-  isPoliceCleared: boolean;
   hunarBadgeId: string; // e.g. "#HN-4821"
   expertiseTags: string[];
   workProjects: WorkerWorkProject[];

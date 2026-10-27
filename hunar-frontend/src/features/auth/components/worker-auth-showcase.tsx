@@ -24,7 +24,7 @@ export function WorkerAuthShowcase() {
           Grow your skilled trade business across Pakistan.
         </h1>
         <p className="mt-1.5 text-xs xl:text-sm text-slate-600 leading-relaxed">
-          Receive daily local job leads on your phone, set your own service rates, and enjoy guaranteed weekly escrow payouts directly to your wallet.
+          Receive daily local job leads on your phone, set your own service rates, and enjoy guaranteed weekly payouts directly to your wallet.
         </p>
 
         {/* Real Skilled Tradesperson Photography Card with Floating Verified Pro Badge */}
@@ -70,7 +70,7 @@ export function WorkerAuthShowcase() {
         </span>
         <span className="inline-flex items-center gap-1">
           <Wallet className="size-3.5 text-teal" />
-          Guaranteed Escrow Payouts
+          Guaranteed Weekly Payouts
         </span>
         <span className="inline-flex items-center gap-1">
           <CheckCircle2 className="size-3.5 text-teal" />

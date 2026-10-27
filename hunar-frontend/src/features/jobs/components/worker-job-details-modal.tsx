@@ -24,7 +24,6 @@ import {
   Play,
   Pause,
   Volume2,
-  ShieldCheck,
   Navigation,
   CheckCircle2,
   Star,
@@ -264,11 +263,6 @@ export function WorkerJobDetailsModal({
                       <div className="text-xl sm:text-2xl font-black text-[#123B5D] mt-0.5">
                         {formatRs(isCompleted ? (job.workerNetEarnings ?? (agreedVisitCharge - Math.round(agreedVisitCharge * 0.1))) : agreedVisitCharge)}
                       </div>
-                    </div>
-
-                    <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#0F8B8D]/10 border border-[#0F8B8D]/20 shadow-2xs text-[11px] font-bold text-[#0F8B8D]">
-                      <ShieldCheck className="size-4 text-[#0F8B8D]" />
-                      <span>Guaranteed</span>
                     </div>
                   </div>
                   <p className="text-[11px] text-slate-500 font-medium leading-relaxed">

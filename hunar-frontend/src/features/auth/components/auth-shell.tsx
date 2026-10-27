@@ -90,8 +90,8 @@ export function AuthShell({
               </div>
               <div className="rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur-sm transition duration-200 hover:bg-white/10">
                 <LockKeyhole className="size-5 text-teal-300" />
-                <p className="mt-2 text-base font-bold">Escrow Protection</p>
-                <p className="mt-1 text-xs text-slate-300">Automated payment protection</p>
+                <p className="mt-2 text-base font-bold">Doorstep OTP PIN</p>
+                <p className="mt-1 text-xs text-slate-300">Secure arrival confirmation</p>
               </div>
             </div>
           </aside>
@@ -129,7 +129,10 @@ export function AuthShell({
   const isCustomer = resolvedRole === "customer";
 
   return (
-    <div className="flex min-h-svh flex-col items-center justify-center bg-slate-100/60 text-slate-800 lg:h-screen lg:max-h-screen lg:min-h-0 lg:overflow-hidden lg:p-4 xl:p-6">
+    <div
+      data-portal={isCustomer ? "customer" : "worker"}
+      className="flex min-h-svh flex-col items-center justify-center bg-slate-100/60 text-slate-800 lg:h-screen lg:max-h-screen lg:min-h-0 lg:overflow-hidden lg:p-4 xl:p-6 scrollbar-none no-scrollbar"
+    >
       <main
         data-purpose="auth-mobile-frame"
         className="flex min-h-svh w-full flex-col bg-white shadow-2xl sm:my-6 sm:min-h-[820px] sm:max-w-md sm:rounded-3xl sm:border sm:border-slate-100 lg:my-0 lg:h-full lg:max-h-none lg:min-h-0 lg:max-w-5xl xl:max-w-6xl lg:rounded-3xl lg:border lg:border-slate-200/80 lg:shadow-xl lg:grid lg:grid-cols-12 lg:overflow-hidden"
@@ -176,7 +179,7 @@ export function AuthShell({
           <div className="hidden lg:flex items-center justify-between border-t border-slate-100 pt-3 text-[11px] text-muted-foreground">
             <div className="flex items-center gap-1.5">
               <Lock className="size-3 text-teal" />
-              <span>256-bit SSL Encrypted &bull; NADRA CNIC Verified</span>
+              <span>256-bit SSL Encrypted &bull; Verified Professionals</span>
             </div>
             <a
               href="mailto:support@workerfix.pk"
