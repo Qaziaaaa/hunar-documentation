@@ -1226,7 +1226,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
       {/* Main Content Area */}
       <div className="wf-main-col">
         {/* Dynamic Main Body Content */}
-        <main ref={mainRef} className="wf-main flex-1 overflow-y-auto min-h-0">
+        <main ref={mainRef} className="wf-main flex-1 overflow-y-scroll min-h-0 [scrollbar-gutter:stable]">
           {/* Borderless utility cluster — floats top-right of main (sample: bell in page header) */}
           <div className="wf-util-row">
             <AdminMenuButton />

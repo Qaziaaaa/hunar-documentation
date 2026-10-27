@@ -811,6 +811,10 @@ export const adminApi = {
     return toServiceCategory(updated);
   },
 
+  async deleteCategory(id: string): Promise<{ success: boolean; id: string }> {
+    return http.delete<{ success: boolean; id: string }>(`/admin/categories/${id}`);
+  },
+
   // Cities & Areas Management
   async listCities(): Promise<CityItem[]> {
     const res = await http.get<any>("/admin/cities");

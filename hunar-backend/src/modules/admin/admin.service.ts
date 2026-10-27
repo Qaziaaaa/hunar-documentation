@@ -1626,6 +1626,50 @@ export class AdminService {
     return updated;
   }
 
+  // Delete a category (checks for active/existing jobs first).
+  async deleteCategory(id: string, actor: JwtPayload) {
+    const existing = await this.prisma.serviceCategory.findUnique({
+      where: { id },
+      include: {
+        _count: {
+          select: { jobs: true },
+        },
+      },
+    });
+    if (!existing) {
+      throw new NotFoundException('Category not found');
+    }
+
+    if (existing._count?.jobs > 0) {
+      throw new BadRequestException(
+        `Cannot delete "${existing.name}" category because it has ${existing._count.jobs} associated job(s). Please deactivate it instead to protect existing records.`,
+      );
+    }
+
+    await this.prisma.serviceCategory.delete({ where: { id } });
+
+    await this.audit.record({
+      actorId: actor.sub,
+      actorRole: actor.role,
+      action: 'CATEGORY_DELETED',
+      targetType: 'SERVICE_CATEGORY',
+      targetId: id,
+      reason: null,
+      metadata: { name: existing.name },
+    });
+
+    this.realtime.emitToRoom(ADMIN_ROOM, ADMIN_EVENTS.categoryDeleted, {
+      categoryId: id,
+      name: existing.name,
+      deletedBy: actor.sub,
+      timestamp: new Date(),
+    });
+
+    await this.redis?.del('perf:categories:all').catch(() => {});
+
+    return { success: true, id };
+  }
+
   // ----- City & Area Management -----
 
   async listCities() {
