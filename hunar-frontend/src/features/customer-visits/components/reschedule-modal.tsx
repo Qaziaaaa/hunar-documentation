@@ -57,7 +57,7 @@ export function RescheduleModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6 animate-in fade-in-50 duration-200">
+    <div className="fixed inset-0 z-50 overflow-y-auto scrollbar-none no-scrollbar bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6 animate-in fade-in-50 duration-200">
       <div className="bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden animate-in zoom-in-95 duration-200 space-y-5 p-6 rtl:text-right">
         {/* Modal Header */}
         <div className="flex items-center justify-between border-b border-slate-100 pb-3">

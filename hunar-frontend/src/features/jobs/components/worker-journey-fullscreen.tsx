@@ -532,7 +532,7 @@ export function WorkerJourneyFullscreen({
         {/* ======================================================== */}
         {/* 3. MAIN WORKFLOW CONTENT BODY */}
         {/* ======================================================== */}
-        <main className="flex-1 p-4 sm:p-6 lg:p-8 space-y-6 pb-12 lg:pb-16 overflow-y-auto">
+        <main className="flex-1 p-4 sm:p-6 lg:p-8 space-y-6 pb-12 lg:pb-16 overflow-y-auto scrollbar-none no-scrollbar">
           {/* ======================================================== */}
           {/* STEP 4: INSTANT EARNINGS SETTLEMENT & CUSTOMER RATING */}
           {/* ======================================================== */}

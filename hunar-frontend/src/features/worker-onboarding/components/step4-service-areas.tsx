@@ -100,7 +100,7 @@ export function Step4ServiceAreas({
             </span>
           </div>
 
-          <div className="flex flex-wrap gap-2 max-h-[190px] overflow-y-auto pr-1">
+          <div className="flex flex-wrap gap-2 max-h-[190px] overflow-y-auto pr-1 scrollbar-none no-scrollbar">
             {PESHAWAR_AREAS.map((area) => {
               const isSelected = selectedAreas.includes(area);
               return (
