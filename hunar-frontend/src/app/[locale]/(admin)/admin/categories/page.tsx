@@ -1,20 +1,26 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { adminApi } from "@/features/admin/api/admin-api";
 import { compressImage } from "@/lib/image-compression";
 import type { DistanceSlab, ServiceCategory } from "@/types/admin";
 import {
   AlertCircle,
+  ArrowUpDown,
   CheckCircle2,
   Edit3,
+  Filter,
   FolderTree,
   ImagePlus,
   Info,
   Loader2,
   Pencil,
   Plus,
+  RotateCcw,
   Save,
+  Search,
+  SlidersHorizontal,
+  Trash2,
   Truck,
   Wrench,
   X,
@@ -49,6 +55,113 @@ export default function CategoriesPage() {
   const [pageError, setPageError] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
   const [togglingId, setTogglingId] = useState<string | null>(null);
+
+  // Search & Filter State
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState<"ALL" | "ACTIVE" | "INACTIVE">("ALL");
+  const [pricingFilter, setPricingFilter] = useState<
+    "ALL" | "WITH_DELIVERY" | "WITHOUT_DELIVERY" | "FEE_SET" | "FEE_NOT_SET"
+  >("ALL");
+  const [sortBy, setSortBy] = useState<
+    "DEFAULT" | "NAME_ASC" | "NAME_DESC" | "WORKERS_DESC" | "JOBS_DESC" | "FEE_DESC" | "FEE_ASC"
+  >("DEFAULT");
+
+  const totalCount = categories.length;
+  const activeCount = useMemo(() => categories.filter((c) => c.isActive).length, [categories]);
+  const inactiveCount = useMemo(() => categories.filter((c) => !c.isActive).length, [categories]);
+
+  // Deleting category state
+  const [categoryToDelete, setCategoryToDelete] = useState<ServiceCategory | null>(null);
+  const [deletingCategory, setDeletingCategory] = useState(false);
+  const [deleteCategoryError, setDeleteCategoryError] = useState<string | null>(null);
+
+  const handleConfirmDeleteCategory = async () => {
+    if (!categoryToDelete) return;
+    setDeletingCategory(true);
+    setDeleteCategoryError(null);
+    try {
+      await adminApi.deleteCategory(categoryToDelete.id);
+      setCategories((prev) => prev.filter((c) => c.id !== categoryToDelete.id));
+      if (selectedCategory?.id === categoryToDelete.id) {
+        setSelectedCategory(null);
+      }
+      setCategoryToDelete(null);
+      setToastMessage({
+        type: "success",
+        text: `Category "${categoryToDelete.name}" deleted successfully.`,
+      });
+    } catch (err) {
+      setDeleteCategoryError(
+        err instanceof Error ? err.message : "Failed to delete category.",
+      );
+    } finally {
+      setDeletingCategory(false);
+    }
+  };
+
+  const isFilterActive =
+    search.trim() !== "" ||
+    statusFilter !== "ALL" ||
+    pricingFilter !== "ALL" ||
+    sortBy !== "DEFAULT";
+
+  const handleResetFilters = () => {
+    setSearch("");
+    setStatusFilter("ALL");
+    setPricingFilter("ALL");
+    setSortBy("DEFAULT");
+  };
+
+  const filteredCategories = useMemo(() => {
+    const q = search.trim().toLowerCase();
+
+    const list = categories.filter((cat) => {
+      // 1. Search filter (English name + Urdu name)
+      if (q) {
+        const matchesName = cat.name.toLowerCase().includes(q);
+        const matchesUrdu = cat.nameUrdu ? cat.nameUrdu.toLowerCase().includes(q) : false;
+        if (!matchesName && !matchesUrdu) return false;
+      }
+
+      // 2. Status filter
+      if (statusFilter === "ACTIVE" && !cat.isActive) return false;
+      if (statusFilter === "INACTIVE" && cat.isActive) return false;
+
+      // 3. Pricing & Delivery filter
+      if (pricingFilter === "WITH_DELIVERY") {
+        if (!cat.distanceSlabs || cat.distanceSlabs.length === 0) return false;
+      } else if (pricingFilter === "WITHOUT_DELIVERY") {
+        if (cat.distanceSlabs && cat.distanceSlabs.length > 0) return false;
+      } else if (pricingFilter === "FEE_SET") {
+        if (cat.defaultVisitCharge == null) return false;
+      } else if (pricingFilter === "FEE_NOT_SET") {
+        if (cat.defaultVisitCharge != null) return false;
+      }
+
+      return true;
+    });
+
+    // 4. Sort logic
+    return list.slice().sort((a, b) => {
+      switch (sortBy) {
+        case "NAME_ASC":
+          return a.name.localeCompare(b.name);
+        case "NAME_DESC":
+          return b.name.localeCompare(a.name);
+        case "WORKERS_DESC":
+          return (b.activeWorkersCount ?? 0) - (a.activeWorkersCount ?? 0);
+        case "JOBS_DESC":
+          return (b.totalJobsCount ?? 0) - (a.totalJobsCount ?? 0);
+        case "FEE_DESC":
+          return (b.defaultVisitCharge ?? 0) - (a.defaultVisitCharge ?? 0);
+        case "FEE_ASC":
+          return (a.defaultVisitCharge ?? 0) - (b.defaultVisitCharge ?? 0);
+        case "DEFAULT":
+        default:
+          return (a.sortOrder ?? 0) - (b.sortOrder ?? 0);
+      }
+    });
+  }, [categories, search, statusFilter, pricingFilter, sortBy]);
 
   useEffect(() => {
     adminApi
@@ -289,11 +402,155 @@ export default function CategoriesPage() {
           </button>
         </div>
 
+        {/* Filters & Search Toolbar (Single Top Row, Clean Sticky Toolbar) */}
+        <div className="sticky top-0 z-20 -mx-3 rounded-2xl bg-[#eaeef4]/90 px-3 py-2.5 backdrop-blur-md transition-all dark:bg-[#0d1424]/90">
+          <div className="flex flex-wrap items-center gap-2.5">
+          {/* Search Input */}
+          <div className="relative min-w-[240px] flex-1">
+            <Search className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search categories by name (English or اردو)..."
+              className="h-10 w-full rounded-xl border border-slate-200 bg-white pl-10 pr-9 text-xs font-medium text-navy shadow-xs outline-none transition placeholder:text-slate-400 focus:border-teal focus:ring-2 focus:ring-teal/15"
+            />
+            {search && (
+              <button
+                type="button"
+                onClick={() => setSearch("")}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded-full p-1 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600"
+                title="Clear search"
+              >
+                <X className="size-3.5" />
+              </button>
+            )}
+          </div>
+
+          {/* Status Segmented Control */}
+          <div className="flex items-center rounded-xl border border-slate-200 bg-white p-1 text-xs shadow-xs">
+            <button
+              type="button"
+              onClick={() => setStatusFilter("ALL")}
+              className={`min-w-[68px] rounded-lg px-3 py-1.5 text-center font-bold transition-all ${
+                statusFilter === "ALL"
+                  ? "bg-navy text-white shadow-xs"
+                  : "text-slate-600 hover:bg-slate-100 hover:text-navy"
+              }`}
+            >
+              All ({totalCount})
+            </button>
+            <button
+              type="button"
+              onClick={() => setStatusFilter("ACTIVE")}
+              className={`min-w-[76px] rounded-lg px-3 py-1.5 text-center font-bold transition-all ${
+                statusFilter === "ACTIVE"
+                  ? "bg-navy text-white shadow-xs"
+                  : "text-slate-600 hover:bg-slate-100 hover:text-navy"
+              }`}
+            >
+              Active ({activeCount})
+            </button>
+            <button
+              type="button"
+              onClick={() => setStatusFilter("INACTIVE")}
+              className={`min-w-[84px] rounded-lg px-3 py-1.5 text-center font-bold transition-all ${
+                statusFilter === "INACTIVE"
+                  ? "bg-navy text-white shadow-xs"
+                  : "text-slate-600 hover:bg-slate-100 hover:text-navy"
+              }`}
+            >
+              Inactive ({inactiveCount})
+            </button>
+          </div>
+
+          {/* Pricing & Delivery Filter Dropdown */}
+          <div className="relative">
+            <select
+              value={pricingFilter}
+              onChange={(e) => setPricingFilter(e.target.value as typeof pricingFilter)}
+              className="h-10 appearance-none rounded-xl border border-slate-200 bg-white pl-3.5 pr-8 text-xs font-bold text-slate-700 shadow-xs outline-none transition hover:border-slate-300 focus:border-teal focus:ring-2 focus:ring-teal/15 cursor-pointer"
+            >
+              <option value="ALL">All Delivery & Pricing</option>
+              <option value="WITH_DELIVERY">With Delivery Charges</option>
+              <option value="WITHOUT_DELIVERY">Standard (No Delivery)</option>
+              <option value="FEE_SET">Visit Fee Set</option>
+              <option value="FEE_NOT_SET">Visit Fee Not Set</option>
+            </select>
+            <SlidersHorizontal className="pointer-events-none absolute right-2.5 top-1/2 size-3.5 -translate-y-1/2 text-slate-400" />
+          </div>
+
+          {/* Sort Dropdown */}
+          <div className="relative">
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
+              className="h-10 appearance-none rounded-xl border border-slate-200 bg-white pl-3.5 pr-8 text-xs font-bold text-slate-700 shadow-xs outline-none transition hover:border-slate-300 focus:border-teal focus:ring-2 focus:ring-teal/15 cursor-pointer"
+            >
+              <option value="DEFAULT">Sort: Default Order</option>
+              <option value="NAME_ASC">Name (A → Z)</option>
+              <option value="NAME_DESC">Name (Z → A)</option>
+              <option value="WORKERS_DESC">Most Workers</option>
+              <option value="JOBS_DESC">Most Jobs</option>
+              <option value="FEE_DESC">Highest Visit Fee</option>
+              <option value="FEE_ASC">Lowest Visit Fee</option>
+            </select>
+            <ArrowUpDown className="pointer-events-none absolute right-2.5 top-1/2 size-3.5 -translate-y-1/2 text-slate-400" />
+          </div>
+
+          {/* Reset Button (Always visible by default) */}
+          <button
+            type="button"
+            onClick={handleResetFilters}
+            className={`inline-flex h-10 items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3.5 text-xs font-bold shadow-xs transition hover:bg-slate-50 cursor-pointer ${
+              isFilterActive
+                ? "text-teal hover:text-navy border-teal/40 bg-teal/5"
+                : "text-slate-600 hover:text-navy"
+            }`}
+            title="Reset all filters"
+          >
+            <RotateCcw
+              className={`size-3 transition-colors ${
+                isFilterActive ? "text-teal" : "text-slate-400"
+              }`}
+            />
+            <span>Reset</span>
+          </button>
+
+          {/* Category Count */}
+          <div className="inline-flex h-10 min-w-[130px] items-center justify-center rounded-xl border border-slate-200 bg-white px-3.5 text-xs font-medium tabular-nums text-slate-500 shadow-xs whitespace-nowrap">
+            Showing <span className="mx-1 font-extrabold text-navy">{filteredCategories.length}</span> of{" "}
+            <span className="ml-1 font-bold text-navy">{totalCount}</span>
+          </div>
+        </div>
+      </div>
+
         {loading ? (
           <p className="text-sm font-medium text-slate-500">Loading categories...</p>
+        ) : filteredCategories.length === 0 ? (
+          <div className="flex flex-col items-center justify-center rounded-3xl border border-dashed border-slate-200 bg-white px-6 py-16 text-center shadow-xs">
+            <div className="flex size-14 items-center justify-center rounded-2xl bg-slate-100 text-slate-400">
+              <Search className="size-7" />
+            </div>
+            <h3 className="mt-4 text-base font-extrabold text-navy">No categories found</h3>
+            <p className="mt-1 max-w-sm text-xs font-medium text-slate-500">
+              {search
+                ? `No service category matches your search "${search}". Try checking for spelling or reset filters.`
+                : "No service categories match your current filter settings."}
+            </p>
+            {isFilterActive && (
+              <button
+                type="button"
+                onClick={handleResetFilters}
+                className="mt-4 inline-flex items-center gap-1.5 rounded-xl bg-navy px-4 py-2 text-xs font-bold text-white shadow-xs transition hover:bg-navy/90"
+              >
+                <RotateCcw className="size-3.5 text-teal-300" /> Reset Filters
+              </button>
+            )}
+          </div>
         ) : (
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {categories.map((cat) => (
+            {filteredCategories.map((cat) => (
               <div
                 key={cat.id}
                 onClick={() => handleOpenDistanceModal(cat)}
@@ -351,9 +608,9 @@ export default function CategoriesPage() {
                     aria-checked={cat.isActive}
                     disabled={togglingId === cat.id}
                     onClick={() => handleToggleCategory(cat.id)}
-                    className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full p-0.5 transition-colors duration-200 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-teal focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60 ${
+                    className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full p-0.5 transition-colors duration-200 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-teal focus-visible:ring-offset-2 disabled:cursor-not-allowed ${
                       cat.isActive ? "bg-emerald-500" : "bg-slate-300"
-                    }`}
+                    } ${togglingId === cat.id ? "opacity-80" : ""}`}
                     title={cat.isActive ? "Click to deactivate" : "Click to activate"}
                   >
                     <span className="sr-only">
@@ -361,18 +618,28 @@ export default function CategoriesPage() {
                     </span>
                     <span
                       aria-hidden="true"
-                      className={`pointer-events-none inline-block size-5 transform rounded-full bg-white shadow-sm ring-0 transition-transform duration-200 ease-in-out ${
+                      className={`pointer-events-none flex size-5 items-center justify-center transform rounded-full bg-white shadow-sm ring-0 transition-transform duration-200 ease-in-out ${
                         cat.isActive ? "translate-x-5" : "translate-x-0"
                       }`}
-                    />
+                    >
+                      {togglingId === cat.id && (
+                        <Loader2 className="size-3 animate-spin text-teal-600" />
+                      )}
+                    </span>
                   </button>
-                  <span
-                    className={`text-[10px] font-extrabold uppercase tracking-wider ${
-                      cat.isActive ? "text-emerald-600" : "text-slate-400"
-                    }`}
-                  >
-                    {cat.isActive ? "Active" : "Inactive"}
-                  </span>
+                  {togglingId === cat.id ? (
+                    <span className="inline-flex items-center gap-1 text-[10px] font-extrabold uppercase tracking-wider text-teal">
+                      <Loader2 className="size-2.5 animate-spin" /> Updating
+                    </span>
+                  ) : (
+                    <span
+                      className={`text-[10px] font-extrabold uppercase tracking-wider ${
+                        cat.isActive ? "text-emerald-600" : "text-slate-400"
+                      }`}
+                    >
+                      {cat.isActive ? "Active" : "Inactive"}
+                    </span>
+                  )}
                   <button
                     type="button"
                     onClick={() => handleOpenEdit(cat)}
@@ -739,16 +1006,25 @@ export default function CategoriesPage() {
               <div className="flex items-center justify-between border-t border-slate-100 pt-3">
                 {!isEditingSlabs ? (
                   <>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setSelectedCategory(null);
-                        setToastMessage(null);
-                      }}
-                      className="rounded-xl border border-slate-200 px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-100"
-                    >
-                      Cancel
-                    </button>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSelectedCategory(null);
+                          setToastMessage(null);
+                        }}
+                        className="rounded-xl border border-slate-200 px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-100 transition"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setCategoryToDelete(selectedCategory)}
+                        className="inline-flex items-center gap-1.5 rounded-xl border border-rose-200 bg-rose-50 px-3.5 py-2 text-xs font-bold text-rose-600 transition hover:bg-rose-100 hover:border-rose-300"
+                      >
+                        <Trash2 className="size-3.5" /> Delete Category
+                      </button>
+                    </div>
                     <button
                       type="button"
                       onClick={() => setIsEditingSlabs(true)}
@@ -780,6 +1056,68 @@ export default function CategoriesPage() {
                     </button>
                   </>
                 )}
+              </div>
+            </div>
+          </div>
+        ) : null}
+
+        {/* Delete Confirmation Modal */}
+        {categoryToDelete ? (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-navy/60 p-4 backdrop-blur-sm">
+            <div className="w-full max-w-md rounded-3xl border border-slate-200 bg-white p-6 shadow-2xl">
+              <div className="flex items-center gap-3">
+                <div className="flex size-11 items-center justify-center rounded-2xl bg-rose-100 text-rose-600">
+                  <Trash2 className="size-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-black text-navy">Delete Category</h3>
+                  <p className="text-xs text-slate-500">Confirm category removal</p>
+                </div>
+              </div>
+
+              <div className="mt-4 rounded-2xl border border-slate-100 bg-slate-50 p-3.5 text-xs text-slate-600 leading-relaxed">
+                Are you sure you want to permanently delete{" "}
+                <span className="font-extrabold text-navy">&ldquo;{categoryToDelete.name}&rdquo;</span>?
+                <p className="mt-1 text-[11px] text-slate-400">
+                  Note: Categories with existing customer jobs cannot be deleted and must be deactivated instead.
+                </p>
+              </div>
+
+              {deleteCategoryError && (
+                <div className="mt-3 flex items-center gap-2 rounded-xl border border-rose-200 bg-rose-50 p-3 text-xs font-bold text-rose-700">
+                  <AlertCircle className="size-4 shrink-0" />
+                  <span>{deleteCategoryError}</span>
+                </div>
+              )}
+
+              <div className="mt-5 flex items-center justify-end gap-2.5">
+                <button
+                  type="button"
+                  disabled={deletingCategory}
+                  onClick={() => {
+                    setCategoryToDelete(null);
+                    setDeleteCategoryError(null);
+                  }}
+                  className="rounded-xl border border-slate-200 px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-100 transition disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  disabled={deletingCategory}
+                  onClick={handleConfirmDeleteCategory}
+                  className="inline-flex items-center gap-1.5 rounded-xl bg-rose-600 px-4 py-2 text-xs font-bold text-white shadow-md transition hover:bg-rose-700 disabled:opacity-50"
+                >
+                  {deletingCategory ? (
+                    <>
+                      <Loader2 className="size-3.5 animate-spin" /> Deleting…
+                    </>
+                  ) : (
+                    <>
+                      <Trash2 className="size-3.5" /> Confirm Delete
+                    </>
+                  )}
+                </button>
               </div>
             </div>
           </div>
