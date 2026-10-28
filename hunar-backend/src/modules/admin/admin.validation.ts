@@ -479,27 +479,30 @@ export class AdminCreateCategoryDto {
   @MaxLength(100)
   name: string;
 
-  @IsOptional()
   @IsString()
+  @IsNotEmpty()
   @MaxLength(100)
-  nameUrdu?: string;
+  nameUrdu: string;
 
-  @IsOptional()
   @IsString()
+  @IsNotEmpty()
   @MaxLength(1000)
-  imageUrl?: string;
+  imageUrl: string;
 
-  @IsOptional()
   @Type(() => Number)
   @IsInt()
   @Min(0)
-  sortOrder?: number;
+  sortOrder: number;
 
-  @IsOptional()
   @Type(() => Number)
   @IsNumber()
   @Min(0)
-  defaultVisitCharge?: number;
+  defaultVisitCharge: number;
+
+  @IsArray()
+  @IsString({ each: true })
+  @IsNotEmpty({ each: true })
+  commonIssues: string[];
 }
 
 export class AdminUpdateCategoryDto {
@@ -526,6 +529,11 @@ export class AdminUpdateCategoryDto {
 
   @IsOptional()
   distanceSlabs?: any;
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  commonIssues?: string[];
 
   @IsOptional()
   @Type(() => Number)
