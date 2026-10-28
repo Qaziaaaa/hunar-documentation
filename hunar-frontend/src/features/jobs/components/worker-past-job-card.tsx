@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { JobRequest } from "@/types/job";
 import { formatRs } from "@/lib/design-tokens";
+import { formatDate } from "@/lib/format";
 import dynamic from "next/dynamic";
 
 const WorkerInvoiceModal = dynamic(
@@ -18,7 +19,6 @@ import {
   CheckCircle2,
   Calendar,
   Star,
-  ShieldCheck,
   FileText,
   MapPin,
   Eye,
@@ -32,15 +32,38 @@ export function WorkerPastJobCard({ job }: WorkerPastJobCardProps) {
   const [showInvoice, setShowInvoice] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
 
-  const visitCharge = job.visitCharge ?? 0;
+  const visitCharge = job.visitCharge ?? job.customerSuggestedPrice ?? 0;
   const repairCharge = job.repairCharge ?? 0;
   const grossTotal = visitCharge + repairCharge;
   const platformCommission = job.platformCommission ?? Math.round(visitCharge * 0.1);
   const netEarnings = job.workerNetEarnings ?? (grossTotal - platformCommission);
-  const warrantyDays = job.warrantyDays;
-  const invoiceNumber = job.invoiceNumber || `INV-${job.id}`;
+  const cleanJobId = job.id?.replace(/^INV-/, "") || job.id;
 
   const review = job.customerReview;
+
+  // Format real completed date
+  const completedDateRaw = job.completedAt || (job as any).updatedAt || job.postedAt;
+  const completedDateText = (() => {
+    if (!completedDateRaw) return "Completed";
+    const d = new Date(completedDateRaw);
+    if (isNaN(d.getTime())) return formatDate(completedDateRaw);
+    const now = new Date();
+    const isToday =
+      d.getFullYear() === now.getFullYear() &&
+      d.getMonth() === now.getMonth() &&
+      d.getDate() === now.getDate();
+    if (isToday) return "Today";
+
+    const yesterday = new Date(now);
+    yesterday.setDate(now.getDate() - 1);
+    const isYesterday =
+      d.getFullYear() === yesterday.getFullYear() &&
+      d.getMonth() === yesterday.getMonth() &&
+      d.getDate() === yesterday.getDate();
+    if (isYesterday) return "Yesterday";
+
+    return formatDate(completedDateRaw);
+  })();
 
   return (
     <>
@@ -58,13 +81,13 @@ export function WorkerPastJobCard({ job }: WorkerPastJobCardProps) {
               </span>
 
               <span className="font-mono text-[10.5px] sm:text-xs font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md">
-                {invoiceNumber}
+                #{cleanJobId}
               </span>
             </div>
 
             <div className="flex items-center gap-1 text-[11px] text-slate-400">
               <Calendar className="size-3" />
-              <span>{job.preferredVisitWindow.date}</span>
+              <span>{completedDateText}</span>
             </div>
           </div>
 
@@ -88,12 +111,6 @@ export function WorkerPastJobCard({ job }: WorkerPastJobCardProps) {
               </span>
               <span className="text-base sm:text-xl font-black text-emerald-900">
                 {formatRs(grossTotal)}
-              </span>
-            </div>
-
-            <div className="text-right text-[10px] sm:text-[11px] text-emerald-700 font-bold shrink-0">
-              <span className="px-2.5 py-1 rounded-full bg-emerald-100/80 text-emerald-800 text-[10px]">
-                Paid to Wallet
               </span>
             </div>
           </div>
@@ -127,13 +144,6 @@ export function WorkerPastJobCard({ job }: WorkerPastJobCardProps) {
             </div>
           ) : null}
 
-          {/* Warranty Badge */}
-          {warrantyDays ? (
-            <div className="flex items-center gap-1.5 text-[10.5px] sm:text-[11px] font-semibold text-teal-700">
-              <ShieldCheck className="size-3.5 text-[#0F8B8D] shrink-0" />
-              <span>{warrantyDays}-Day Customer Guarantee Active</span>
-            </div>
-          ) : null}
         </div>
 
         {/* Footer Actions */}

@@ -209,6 +209,25 @@ export function Step3LocationSchedule({
     !isAfternoon &&
     !isEvening;
 
+  const currentHour = new Date().getHours();
+  const isSelectedDateToday = data.preferredDate === toLocalDateString();
+
+  const isSlotPassed = (slotId: TimeWindowOption): boolean => {
+    if (!isSelectedDateToday) return false;
+    if (slotId === "morning") return currentHour >= 12;
+    if (slotId === "afternoon") return currentHour >= 16;
+    if (slotId === "evening") return currentHour >= 20;
+    if (slotId === "specific") {
+      const [hStr] = (specificTimeInput || "").split(":");
+      const h = parseInt(hStr, 10);
+      if (!isNaN(h)) {
+        return h <= currentHour;
+      }
+      return currentHour >= 20;
+    }
+    return false;
+  };
+
   const handleSpecificTimeChange = (t24: string) => {
     if (!t24) return;
     setSpecificTimeInput(t24);
@@ -273,17 +292,17 @@ export function Step3LocationSchedule({
             latitude: lat,
             longitude: lng,
             area: getHotspotArea(closest),
-            landmark: "",
+            landmark: data.landmark || "",
             city: "Peshawar",
-            address: "",
+            address: data.address || "",
           });
           setSelectedAddressId(null);
         },
         () => {
           onChange({
             area: "Central District",
-            address: "",
-            landmark: "",
+            address: data.address || "",
+            landmark: data.landmark || "",
             city: "Peshawar",
             latitude: 34.0151,
             longitude: 71.5249,
@@ -353,6 +372,32 @@ export function Step3LocationSchedule({
           isUrdu ? "براہ کرم آمد کا وقت چنیں۔" : "Please select an arrival time."
         );
         return;
+      }
+      if (isSelectedDateToday) {
+        if (isMorning && currentHour >= 12) {
+          setError(
+            isUrdu
+              ? "صبح کا وقت گزر چکا ہے۔ براہ کرم دوپہر یا شام کا وقت منتخب کریں۔"
+              : "Morning slot has already passed for today. Please choose Afternoon or Evening."
+          );
+          return;
+        }
+        if (isAfternoon && currentHour >= 16) {
+          setError(
+            isUrdu
+              ? "دوپہر کا وقت گزر چکا ہے۔ براہ کرم شام کا وقت منتخب کریں۔"
+              : "Afternoon slot has already passed for today. Please choose Evening or select Tomorrow."
+          );
+          return;
+        }
+        if (isEvening && currentHour >= 20) {
+          setError(
+            isUrdu
+              ? "آج کے تمام اوقات گزر چکے ہیں۔ براہ کرم کل کے لیے شیڈول کریں۔"
+              : "All slots for today have passed. Please select Tomorrow or choose ASAP."
+          );
+          return;
+        }
       }
     }
 
@@ -678,13 +723,31 @@ export function Step3LocationSchedule({
           <button
             type="button"
             onClick={() => {
-              onChange({ scheduleType: "scheduled" });
-              if (!data.preferredDate) {
-                onChange({ preferredDate: calendarDays[0].dateString });
+              const currentH = new Date().getHours();
+              let initialDate = data.preferredDate || calendarDays[0].dateString;
+              let initialSlot = data.preferredTimeSlot;
+
+              if (initialDate === toLocalDateString()) {
+                if (currentH >= 20) {
+                  // After 8 PM, all slots today are passed; auto-select Tomorrow Morning
+                  initialDate = calendarDays[1]?.dateString || initialDate;
+                  initialSlot = "8:00 AM – 12:00 PM";
+                } else if (currentH >= 16) {
+                  initialSlot = "4:00 PM – 8:00 PM";
+                } else if (currentH >= 12) {
+                  initialSlot = "12:00 PM – 4:00 PM";
+                } else {
+                  initialSlot = "8:00 AM – 12:00 PM";
+                }
+              } else if (!initialSlot) {
+                initialSlot = "8:00 AM – 12:00 PM";
               }
-              if (!data.preferredTimeSlot) {
-                onChange({ preferredTimeSlot: "8:00 AM – 12:00 PM" });
-              }
+
+              onChange({
+                scheduleType: "scheduled",
+                preferredDate: initialDate,
+                preferredTimeSlot: initialSlot,
+              });
               setError(null);
             }}
             className={`p-3.5 rounded-2xl border text-start flex flex-col justify-between gap-2.5 transition-all cursor-pointer relative ${
@@ -785,30 +848,39 @@ export function Step3LocationSchedule({
               </label>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                 {timeWindows.map((slot) => {
+                  const passed = isSlotPassed(slot.id);
                   const isSelected =
-                    (slot.id === "morning" && isMorning) ||
+                    !passed &&
+                    ((slot.id === "morning" && isMorning) ||
                     (slot.id === "afternoon" && isAfternoon) ||
                     (slot.id === "evening" && isEvening) ||
-                    (slot.id === "specific" && isSpecificTime);
+                    (slot.id === "specific" && isSpecificTime));
 
                   return (
                     <button
                       key={slot.id}
                       type="button"
+                      disabled={passed}
                       onClick={() => {
+                        if (passed) return;
+                        setError(null);
                         if (slot.id === "specific") {
                           handleSpecificTimeChange(specificTimeInput);
                         } else {
                           onChange({ preferredTimeSlot: slot.time });
                         }
                       }}
-                      className={`p-3 rounded-2xl border text-center transition-all cursor-pointer flex flex-col items-center justify-center gap-0.5 ${
-                        isSelected
-                          ? "border-[#0F8B8D] bg-[#0F8B8D]/10 ring-1 ring-[#0F8B8D] text-[#0F8B8D]"
-                          : "border-slate-200 bg-white hover:bg-slate-50 text-slate-700"
+                      className={`p-3 rounded-2xl border text-center transition-all flex flex-col items-center justify-center gap-0.5 ${
+                        passed
+                          ? "border-slate-200 bg-slate-50 text-slate-400 opacity-40 cursor-not-allowed"
+                          : isSelected
+                          ? "border-[#0F8B8D] bg-[#0F8B8D]/10 ring-1 ring-[#0F8B8D] text-[#0F8B8D] cursor-pointer"
+                          : "border-slate-200 bg-white hover:bg-slate-50 text-slate-700 cursor-pointer"
                       }`}
                     >
-                      <span className="text-xs font-bold">{slot.label}</span>
+                      <span className="text-xs font-bold">
+                        {slot.label} {passed ? (isUrdu ? "(گزر چکا)" : "(Passed)") : ""}
+                      </span>
                       <span className="text-[10.5px] text-slate-500 font-medium">
                         {slot.id === "specific" && isSpecificTime
                           ? data.preferredTimeSlot
@@ -895,11 +967,10 @@ export function Step3LocationSchedule({
           <button
             type="button"
             onClick={handleProceed}
-            disabled={!canProceed}
-            className={`px-6 py-2.5 rounded-full transition-all duration-200 flex items-center gap-2 text-xs sm:text-sm font-bold cursor-pointer ${
+            className={`px-6 py-2.5 rounded-full transition-all duration-200 flex items-center gap-2 text-xs sm:text-sm font-bold cursor-pointer active:scale-[0.99] ${
               canProceed
-                ? "bg-[#0F8B8D] hover:bg-[#0D7A7C] text-white shadow-sm active:scale-[0.99]"
-                : "bg-slate-200 text-slate-400 cursor-not-allowed"
+                ? "bg-[#0F8B8D] hover:bg-[#0D7A7C] text-white shadow-sm"
+                : "bg-[#0F8B8D]/80 hover:bg-[#0F8B8D] text-white shadow-xs"
             }`}
           >
             <span>{isUrdu ? "جائزہ پر جائیں" : "Continue to Review"}</span>

@@ -102,6 +102,11 @@ async function main(): Promise<void> {
   categories.Masonry = await upsertCategory('Masonry', 'دھاتی', 7, 500);
   categories['Pest Control'] = await upsertCategory('Pest Control', 'کیڑے مار دوا', 8, 500);
   categories['General Handyman'] = await upsertCategory('General Handyman', 'عمومی مہارت', 9, 500);
+  categories['Solar & UPS'] = await upsertCategory('Solar & UPS', 'سولر اور یو پی ایس', 10, 500);
+  categories['CCTV & Security'] = await upsertCategory('CCTV & Security', 'سی سی ٹی وی کیمرے', 11, 500);
+  categories.Welder = await upsertCategory('Welder', 'ویلڈر', 12, 500);
+  categories['Gardener (Mali)'] = await upsertCategory('Gardener (Mali)', 'مالی / باغبان', 13, 500);
+  categories['Movers & Packers'] = await upsertCategory('Movers & Packers', 'شفٹنگ اور ٹرانسپورٹ', 14, 500);
 
   console.log('Seeding test users...');
   const hash = (pw: string): string => bcrypt.hashSync(pw, 10);

@@ -45,7 +45,7 @@ function DialogContent({
       <DialogPrimitive.Popup
         className={cn(
           "fixed left-1/2 top-1/2 z-50 grid w-[calc(100%-2rem)] max-w-lg -translate-x-1/2 -translate-y-1/2 gap-4 rounded-xl border border-border bg-card p-6 text-card-foreground shadow-lg",
-          "max-h-[min(90vh,42rem)] overflow-y-auto outline-none",
+          "max-h-[min(90vh,42rem)] overflow-y-auto scrollbar-none no-scrollbar outline-none",
           className
         )}
         {...props}

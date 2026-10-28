@@ -103,7 +103,7 @@ export default async function LocaleLayout({
       lang={locale}
       dir={dir}
       suppressHydrationWarning
-      className={`${inter.variable} ${hanken.variable} ${bricolage.variable} h-full antialiased`}
+      className={`${inter.variable} ${hanken.variable} ${bricolage.variable} h-full antialiased scrollbar-none no-scrollbar`}
     >
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -116,7 +116,7 @@ export default async function LocaleLayout({
         <link rel="shortcut icon" href="/workerfix-icon.png" type="image/png" />
         <link rel="apple-touch-icon" href="/workerfix-icon.png" />
       </head>
-      <body suppressHydrationWarning className="min-h-screen w-full overflow-x-hidden flex flex-col">
+      <body suppressHydrationWarning className="min-h-screen w-full overflow-x-hidden flex flex-col scrollbar-none no-scrollbar">
         {/* Pre-paint admin theme (prevents flash before hydration). Runs before interactive. */}
         <Script
           id="workerfix-admin-theme"

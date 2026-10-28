@@ -62,6 +62,15 @@ interface BackendJobRow {
     totalOrders?: number | null;
     isVerified?: boolean | null;
   };
+  completedAt?: string | null;
+  customerReview?: {
+    rating: number;
+    comment: string;
+    date: string;
+  } | null;
+  visitCharge?: number | null;
+  platformCommission?: number | null;
+  workerNetEarnings?: number | null;
 }
 
 interface BackendPage<T> {
@@ -105,10 +114,15 @@ function mapBackendJob(row: BackendJobRow): Job {
     preferredVisitTime: row.preferredVisitTime ?? undefined,
     createdAt,
     updatedAt: row.updatedAt ?? createdAt,
+    completedAt: row.completedAt ?? undefined,
+    customerReview: row.customerReview ?? undefined,
     distanceKm: row.distanceKm,
     offerCount: row.offerCount,
     repairEstimate: row.repairEstimate != null ? Number(row.repairEstimate) : undefined,
     repairCharge: row.repairCharge != null ? Number(row.repairCharge) : (row.repairEstimate != null ? Number(row.repairEstimate) : undefined),
+    visitCharge: row.visitCharge != null ? Number(row.visitCharge) : (row.lockedVisitCharge != null ? Number(row.lockedVisitCharge) : (row.suggestedVisitCharge != null ? Number(row.suggestedVisitCharge) : undefined)),
+    platformCommission: row.platformCommission != null ? Number(row.platformCommission) : undefined,
+    workerNetEarnings: row.workerNetEarnings != null ? Number(row.workerNetEarnings) : undefined,
     nextVisit: row.nextVisit ?? row.visits?.[0] ?? undefined,
     visitId: row.nextVisit?.id ?? row.visits?.[0]?.id ?? undefined,
   };
@@ -175,6 +189,7 @@ export async function listNearbyJobs(location?: {
   lat: number;
   lng: number;
   radiusKm?: number;
+  onlyRelevant?: boolean;
 }): Promise<Job[]> {
   if (!getAccessToken()) {
     return [];
@@ -184,6 +199,9 @@ export async function listNearbyJobs(location?: {
   params.set("lat", String(resolved.lat));
   params.set("lng", String(resolved.lng));
   params.set("radiusKm", String(resolved.radiusKm ?? 25));
+  if (typeof resolved.onlyRelevant === "boolean") {
+    params.set("onlyRelevant", String(resolved.onlyRelevant));
+  }
   const res = await http.get<BackendPage<BackendJobRow> | BackendJobRow[]>(
     `/jobs/available?${params.toString()}`,
   );

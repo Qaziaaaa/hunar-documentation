@@ -11,15 +11,19 @@ import {
   subscribeToNotifications,
 } from "@/services/worker/notification.service";
 import { cn } from "@/lib/utils";
+import { getAccessToken, getRefreshToken } from "@/lib/api-client";
 
 export function NotificationBell({ className }: { className?: string }) {
   const t = useTranslations("Worker.nav");
   const tNotif = useTranslations("Worker.notifications");
   const queryClient = useQueryClient();
 
+  const hasWorkerAuth = Boolean(getAccessToken("WORKER") || getRefreshToken("WORKER"));
+
   const { data: unread = 0 } = useQuery({
     queryKey: notificationKeys.unreadCount,
     queryFn: getUnreadCount,
+    enabled: hasWorkerAuth,
   });
 
   useEffect(() => {

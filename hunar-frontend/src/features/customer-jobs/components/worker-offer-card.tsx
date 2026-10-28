@@ -52,7 +52,7 @@ export function WorkerOfferCard({
             {worker.isCnicVerified && (
               <span
                 className="absolute bottom-0.5 right-0.5 rtl:right-auto rtl:left-0.5 size-4.5 rounded-full bg-[#16A34A] text-white flex items-center justify-center ring-2 ring-white"
-                title={isUrdu ? "نادرا سی این آئی سی تصدیق شدہ پرو" : "NADRA CNIC Verified Pro"}
+                title={isUrdu ? "تصدیق شدہ پرو" : "Verified Pro"}
               >
                 <CheckCircle2 className="size-3" />
               </span>
@@ -65,10 +65,12 @@ export function WorkerOfferCard({
               <h4 className="text-sm sm:text-base font-bold text-[#123B5D]">
                 {worker.name}
               </h4>
-              <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full bg-[#0F766E]/10 text-[#0F766E] text-[10px] font-bold">
-                <ShieldCheck className="size-3" />
-                {isUrdu ? "تصدیق شدہ پرو" : "Verified Pro"}
-              </span>
+              {worker.isCnicVerified && (
+                <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full bg-[#0F766E]/10 text-[#0F766E] text-[10px] font-bold">
+                  <ShieldCheck className="size-3" />
+                  {isUrdu ? "تصدیق شدہ پرو" : "Verified Pro"}
+                </span>
+              )}
             </div>
 
             {worker.businessName && (
@@ -140,7 +142,7 @@ export function WorkerOfferCard({
         {worker.isCnicVerified && (
           <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10.5px] font-medium bg-slate-50 text-slate-600">
             <ShieldCheck className="size-3 text-[#16A34A]" />
-            <span>{isUrdu ? "نادرا تصدیق شدہ" : "NADRA Cleared"}</span>
+            <span>{isUrdu ? "تصدیق شدہ" : "Verified"}</span>
           </span>
         )}
       </div>

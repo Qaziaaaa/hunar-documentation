@@ -47,7 +47,17 @@ export type JobCategoryName =
   | "Carpenter"
   | "Painter"
   | "Mechanic"
-  | "Cleaning & Sanitary";
+  | "Cleaning & Sanitary"
+  | "Home Cleaner"
+  | "Mason (Mistri)"
+  | "Pest Control"
+  | "Solar & UPS"
+  | "CCTV & Security"
+  | "Gardener"
+  | "Welder"
+  | "Movers & Packers"
+  | "Handyman"
+  | (string & {});
 
 export type JobUrgency = "emergency" | "standard" | "flexible" | "LOW" | "NORMAL" | "HIGH" | "EMERGENCY";
 
@@ -135,8 +145,16 @@ export interface Job {
   offerCount?: number;
   repairEstimate?: number;
   repairCharge?: number;
+  visitCharge?: number;
+  platformCommission?: number;
+  workerNetEarnings?: number;
   nextVisit?: { id: string; status?: string | null; scheduledDate?: string | null } | null;
   visitId?: string;
+  customerReview?: {
+    rating: number;
+    comment: string;
+    date: string;
+  } | null;
 }
 
 export interface JobRequest {

@@ -31,12 +31,13 @@ export async function getConversations(): Promise<Conversation[]> {
       id: item.id,
       jobId: item.jobId,
       jobTitle: item.job?.title || "Job Order",
+      jobStatus: item.job?.status,
       customerId: item.customerId,
       customerName: item.customer?.name || "Customer",
       customerAvatar: item.customer?.avatarUrl ?? undefined,
       lastMessage: item.lastMessage ?? undefined,
       lastMessageAt: item.lastMessageAt ?? item.updatedAt ?? undefined,
-      unreadCount: 0,
+      unreadCount: typeof item.unreadCount === "number" ? item.unreadCount : 0,
       active: item.isActive ?? true,
     }));
   } catch (err) {
@@ -77,6 +78,7 @@ export async function getMessages(
           text: item.text ?? item.content ?? undefined,
           imageUrl: item.imageUrl ?? undefined,
           status: "sent" as const,
+          isRead: Boolean(item.isRead),
           createdAt: item.createdAt || new Date().toISOString(),
         };
       })
@@ -91,11 +93,53 @@ export async function sendMessage(
   input: SendMessageInput,
 ): Promise<ChatMessage> {
   const currentUserId = getCurrentUserId();
+  const socket = getSocket();
+
+  // Fast-path: Direct WebSocket emission if connected and text message (sub-10ms delivery)
+  if (socket?.connected && !input.imageKey) {
+    try {
+      const wsRes = await new Promise<any>((resolve, reject) => {
+        const timer = setTimeout(() => reject(new Error("WS_TIMEOUT")), 300);
+        socket.emit(
+          "chat:send",
+          {
+            conversationId: input.conversationId,
+            jobId: input.conversationId,
+            text: input.text || undefined,
+          },
+          (response: any) => {
+            clearTimeout(timer);
+            if (response?.error) reject(new Error(response.error));
+            else resolve(response?.message || response);
+          }
+        );
+      });
+      const msgObj = wsRes?.message || wsRes;
+      if (msgObj && (msgObj.id || msgObj.text || msgObj.content)) {
+        return {
+          id: msgObj.id || `msg-${Date.now()}`,
+          conversationId: msgObj.conversationId || input.conversationId,
+          senderId: msgObj.senderId || currentUserId || "worker",
+          senderRole: "worker",
+          text: msgObj.text ?? input.text,
+          imageUrl: msgObj.imageUrl ?? input.imageUrl,
+          status: "sent",
+          isRead: false,
+          createdAt: msgObj.createdAt || new Date().toISOString(),
+        };
+      }
+    } catch {
+      // Fallback to HTTP gracefully
+    }
+  }
 
   try {
     const raw = await http.post<any>(
       `/chat/${input.conversationId}/messages`,
-      { text: input.text },
+      {
+        text: input.text || undefined,
+        imageKey: input.imageKey,
+      },
     );
     const persisted: ChatMessage = {
       id: raw.id || `msg-${Date.now()}`,
@@ -105,6 +149,7 @@ export async function sendMessage(
       text: raw.text ?? input.text,
       imageUrl: raw.imageUrl ?? input.imageUrl,
       status: "sent",
+      isRead: false,
       createdAt: raw.createdAt || new Date().toISOString(),
     };
     return persisted;
@@ -113,7 +158,8 @@ export async function sendMessage(
     try {
       const raw = await http.post<any>("/chat/send", {
         jobId: input.conversationId,
-        text: input.text,
+        text: input.text || undefined,
+        imageKey: input.imageKey,
       });
       const persisted: ChatMessage = {
         id: raw.id || `msg-${Date.now()}`,
@@ -123,6 +169,7 @@ export async function sendMessage(
         text: raw.text ?? input.text,
         imageUrl: raw.imageUrl ?? input.imageUrl,
         status: "sent",
+        isRead: false,
         createdAt: raw.createdAt || new Date().toISOString(),
       };
       return persisted;
@@ -136,8 +183,18 @@ export async function sendMessage(
 export async function markConversationRead(
   conversationId: string,
 ): Promise<void> {
-  void conversationId;
-  // Backend does not maintain per-message unread flag mutations via REST; no-op gracefully
+  try {
+    await http.post(`/chat/${conversationId}/read`);
+  } catch (err) {
+    console.warn("[markConversationRead] Failed via HTTP endpoint:", err);
+  }
+  const socket = getSocket();
+  if (socket) {
+    socket.emit(CHAT_EVENT.read, {
+      conversationId,
+      jobId: conversationId,
+    });
+  }
 }
 
 export function subscribeToMessages(listener: MessageListener): () => void {
@@ -146,7 +203,7 @@ export function subscribeToMessages(listener: MessageListener): () => void {
 
   const handle = (payload: any) => {
     const raw = payload?.message ?? payload;
-    if (!raw || (!raw.text && !raw.content)) return;
+    if (!raw || (!raw.text && !raw.content && !raw.imageUrl)) return;
 
     const user = getStoredUser();
     const currentUserId = user?.id;
@@ -168,6 +225,7 @@ export function subscribeToMessages(listener: MessageListener): () => void {
       content: raw.text ?? raw.content,
       imageUrl: raw.imageUrl,
       status: "sent",
+      isRead: Boolean(raw.isRead),
       createdAt: raw.createdAt || new Date().toISOString(),
     };
     listener(msg);
@@ -179,6 +237,63 @@ export function subscribeToMessages(listener: MessageListener): () => void {
     socket.off(CHAT_EVENT.receive, handle);
     socket.off("message", handle);
   };
+}
+
+export function subscribeToReadReceipts(
+  listener: (data: { conversationId?: string; jobId?: string; readerId: string; readAt: string }) => void,
+): () => void {
+  const socket = connectSocket();
+  if (!socket) return () => undefined;
+  const handle = (payload: any) => {
+    if (payload) listener(payload);
+  };
+  socket.on(CHAT_EVENT.read, handle);
+  return () => {
+    socket.off(CHAT_EVENT.read, handle);
+  };
+}
+
+export function subscribeToTyping(
+  listener: (data: { conversationId?: string; jobId?: string; userId: string; role?: string; isTyping: boolean }) => void,
+): () => void {
+  const socket = connectSocket();
+  if (!socket) return () => undefined;
+  const handleTyping = (payload: any) => {
+    if (payload) listener({ ...payload, isTyping: true });
+  };
+  const handleStopTyping = (payload: any) => {
+    if (payload) listener({ ...payload, isTyping: false });
+  };
+  socket.on(CHAT_EVENT.typing, handleTyping);
+  socket.on(CHAT_EVENT.stopTyping, handleStopTyping);
+  return () => {
+    socket.off(CHAT_EVENT.typing, handleTyping);
+    socket.off(CHAT_EVENT.stopTyping, handleStopTyping);
+  };
+}
+
+export function sendTyping(conversationId: string, jobId?: string): void {
+  const socket = getSocket();
+  if (!socket) return;
+  const user = getStoredUser();
+  socket.emit(CHAT_EVENT.typing, {
+    conversationId,
+    jobId: jobId || conversationId,
+    userId: user?.id,
+    role: user?.role,
+  });
+}
+
+export function sendStopTyping(conversationId: string, jobId?: string): void {
+  const socket = getSocket();
+  if (!socket) return;
+  const user = getStoredUser();
+  socket.emit(CHAT_EVENT.stopTyping, {
+    conversationId,
+    jobId: jobId || conversationId,
+    userId: user?.id,
+    role: user?.role,
+  });
 }
 
 export function subscribeToConversations(
@@ -193,16 +308,33 @@ export function subscribeToConversations(
   };
 }
 
+const activeJoinedRooms = new Set<string>();
+
 export function joinConversationRoom(conversationId: string): void {
+  if (!conversationId) return;
+  activeJoinedRooms.add(conversationId);
   const socket = connectSocket();
   if (!socket) return;
   socket.emit(CHAT_EVENT.join, {
     conversationId,
     jobId: conversationId,
   });
+
+  if (!(socket as any).__hunarRoomRejoinAttached) {
+    (socket as any).__hunarRoomRejoinAttached = true;
+    socket.on("connect", () => {
+      for (const roomId of activeJoinedRooms) {
+        socket.emit(CHAT_EVENT.join, {
+          conversationId: roomId,
+          jobId: roomId,
+        });
+      }
+    });
+  }
 }
 
 export function leaveConversationRoom(conversationId: string): void {
+  activeJoinedRooms.delete(conversationId);
   const socket = getSocket();
   if (!socket) return;
   socket.emit(CHAT_EVENT.leave, {

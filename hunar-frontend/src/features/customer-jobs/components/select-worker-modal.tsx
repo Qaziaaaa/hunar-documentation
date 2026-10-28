@@ -44,7 +44,7 @@ export function SelectWorkerModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in-50 duration-200">
+    <div className="fixed inset-0 z-50 overflow-y-auto scrollbar-none no-scrollbar bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in-50 duration-200">
       <div className="bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden animate-in zoom-in-95 duration-200 text-[#123B5D]">
         {/* Modal Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-white">
@@ -131,7 +131,7 @@ export function SelectWorkerModal({
                 </span>
                 <span>
                   {job.scheduleType === "asap"
-                    ? (isUrdu ? "فوری آمد (30 تا 60 منٹ)" : "Immediate (Within 30–60 mins)")
+                    ? (isUrdu ? "⚡ فوری" : "⚡ Immediate")
                     : `${formatJobDate(job.preferredDate) || (isUrdu ? "آج" : "Today")} • ${job.preferredTimeSlot || (isUrdu ? "مناسب وقت" : "Flexible Timing")}`}
                 </span>
               </div>

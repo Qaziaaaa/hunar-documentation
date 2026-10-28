@@ -5,6 +5,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Bell, Clock, Menu, Search, ShieldCheck, X } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { Link, usePathname } from "@/i18n/navigation";
+import { getAccessToken, getRefreshToken } from "@/lib/api-client";
 import { getCustomerNotifications, markAllCustomerNotificationsRead, subscribeToCustomerNotifications } from "@/features/customer-jobs/services/customer-notification-service";
 import { useCustomerSearch } from "./customer-search-context";
 
@@ -25,10 +26,13 @@ export function CustomerHeader({ onOpenSidebar, showSearch }: CustomerHeaderProp
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
+  const hasCustomerAuth = Boolean(getAccessToken("CUSTOMER") || getRefreshToken("CUSTOMER"));
+
   const { data: notifications = [], isLoading } = useQuery({
     queryKey: ["customer", "notifications"],
     queryFn: getCustomerNotifications,
     staleTime: 30_000,
+    enabled: hasCustomerAuth,
   });
 
   const markAllReadMutation = useMutation({
@@ -166,7 +170,7 @@ export function CustomerHeader({ onOpenSidebar, showSearch }: CustomerHeaderProp
                 ) : null}
               </div>
 
-              <div className="max-h-80 overflow-y-auto divide-y divide-slate-100">
+              <div className="max-h-80 overflow-y-auto divide-y divide-slate-100 scrollbar-none no-scrollbar">
                 {isLoading ? (
                   <div className="p-4 text-center text-xs text-slate-500">
                     {t("loading")}

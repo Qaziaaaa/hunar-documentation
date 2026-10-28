@@ -36,9 +36,10 @@ function mapLedgerEntry(entry: BackendLedgerEntry): WalletTransaction {
     month: "short",
     year: "numeric",
   }).format(date);
-  const formattedTime = new Intl.DateTimeFormat("en-GB", {
-    hour: "2-digit",
+  const formattedTime = new Intl.DateTimeFormat("en-US", {
+    hour: "numeric",
     minute: "2-digit",
+    hour12: true,
   }).format(date);
 
   const isDeduction = amount < 0 || entry.type?.includes("DEDUCT") || entry.type?.includes("HELD");

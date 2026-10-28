@@ -75,7 +75,7 @@ export function Step6Review({
           </p>
         </div>
 
-        <div className="max-h-[380px] sm:max-h-[440px] space-y-3 overflow-y-auto pr-1 text-xs sm:text-sm">
+        <div className="max-h-[380px] sm:max-h-[440px] space-y-3 overflow-y-auto pr-1 text-xs sm:text-sm scrollbar-none no-scrollbar">
           {/* 1. Personal Information & Photo Card */}
           <div className="rounded-2xl bg-white p-3 shadow-2xs border border-slate-100">
             <div className="mb-2 flex items-center justify-between">

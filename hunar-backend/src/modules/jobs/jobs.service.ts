@@ -349,6 +349,16 @@ export class JobsService {
         include: {
           category: { select: { id: true, name: true } },
           _count: { select: { offers: true } },
+          repairs: {
+            orderBy: { createdAt: 'desc' },
+            take: 1,
+            select: { id: true, amount: true, lockedAmount: true, status: true },
+          },
+          reviews: {
+            where: { isVisible: true },
+            select: { id: true, rating: true, comment: true, createdAt: true },
+            take: 1,
+          },
           selectedWorker: {
             select: {
               id: true,
@@ -521,6 +531,21 @@ export class JobsService {
         cancelledAt: j.cancelledAt,
         selectedWorkerId: j.selectedWorkerId,
         lockedVisitCharge: j.lockedVisitCharge != null ? Number(j.lockedVisitCharge) : null,
+        repairCharge:
+          j.repairs?.[0]?.lockedAmount != null
+            ? Number(j.repairs[0].lockedAmount)
+            : j.repairs?.[0]?.amount != null
+            ? Number(j.repairs[0].amount)
+            : 0,
+        hasReviewed: Boolean(j.reviews && j.reviews.length > 0),
+        customerReview: j.reviews?.[0]
+          ? {
+              id: j.reviews[0].id,
+              rating: j.reviews[0].rating,
+              comment: j.reviews[0].comment ?? '',
+              date: j.reviews[0].createdAt,
+            }
+          : null,
         selectedWorker: sw
           ? {
               id: sw.id,
@@ -601,7 +626,7 @@ export class JobsService {
 
     const latRounded = Math.round(workerLat * 100) / 100;
     const lngRounded = Math.round(workerLng * 100) / 100;
-    const availCacheKey = `perf:jobs:available:${worker.sub}:${page}:${limit}:${latRounded}:${lngRounded}:${radiusMeters}:${query.categoryId ?? ''}:${query.area ?? ''}:${query.city ?? ''}:${query.minCharge ?? ''}:${query.maxCharge ?? ''}:${query.postedWithinMin ?? ''}:${query.hasNoOffers ?? ''}`;
+    const availCacheKey = `perf:jobs:available:${worker.sub}:${page}:${limit}:${latRounded}:${lngRounded}:${radiusMeters}:${query.categoryId ?? ''}:${query.area ?? ''}:${query.city ?? ''}:${query.minCharge ?? ''}:${query.maxCharge ?? ''}:${query.postedWithinMin ?? ''}:${query.hasNoOffers ?? ''}:${query.onlyRelevant ?? ''}`;
 
     const skipWorkerRelevanceFilters = process.env.ALLOW_WORKER_JOB_TEST_MODE === 'true';
 
@@ -719,7 +744,11 @@ export class JobsService {
       sr."latitude" BETWEEN ${workerLat - latOffset} AND ${workerLat + latOffset}
       AND sr."longitude" BETWEEN ${workerLng - lngOffset} AND ${workerLng + lngOffset}
     `);
-    if (!skipWorkerRelevanceFilters) {
+    const shouldFilterCategories = query.onlyRelevant !== undefined
+      ? query.onlyRelevant
+      : !skipWorkerRelevanceFilters;
+
+    if (shouldFilterCategories) {
       const categoryIds = cachedProfile?.value?.categoryIds ?? [];
       if (profile && profile.skills.length > 0) {
         if (categoryIds.length > 0) {
@@ -730,6 +759,8 @@ export class JobsService {
       } else {
         conditions.push(Prisma.sql`FALSE`);
       }
+    }
+    if (!skipWorkerRelevanceFilters) {
       conditions.push(Prisma.sql`
         EXISTS (
           SELECT 1
@@ -864,7 +895,7 @@ export class JobsService {
         orderBy: { createdAt: 'desc' },
         include: {
           category: { select: { id: true, name: true } },
-          customer: { select: { id: true, name: true, phone: true, avatarUrl: true } },
+          customer: { select: { id: true, name: true, phone: true, avatarUrl: true, createdAt: true } },
           visits: {
             where: { workerId },
             orderBy: { scheduledDate: 'asc' },
@@ -935,49 +966,92 @@ export class JobsService {
         orderBy: { updatedAt: 'desc' },
         include: {
           category: { select: { id: true, name: true, nameUrdu: true } },
-          customer: { select: { id: true, name: true, phone: true } },
+          customer: { select: { id: true, name: true, phone: true, createdAt: true } },
           reviews: {
             where: { isVisible: true },
             select: { rating: true, comment: true, createdAt: true },
             take: 1,
+          },
+          repairs: {
+            where: { status: 'ACCEPTED' },
+            orderBy: { createdAt: 'desc' },
+            take: 1,
+            select: { id: true, amount: true, lockedAmount: true, status: true },
+          },
+          commissions: {
+            take: 1,
+            select: { amount: true, status: true },
           },
           _count: { select: { offers: true } },
         },
       }),
       this.prisma.serviceRequest.count({ where }),
     ]);
-    const items = rows.map((j) => ({
-      id: j.id,
-      title: j.title,
-      description: j.description,
-      status: j.status,
-      urgency: j.urgency,
-      categoryId: j.categoryId,
-      categoryName: j.category?.name ?? 'General',
-      categoryUrdu: j.category?.nameUrdu ?? undefined,
-      address: j.address,
-      city: j.city,
-      area: j.area,
-      latitude: j.latitude,
-      longitude: j.longitude,
-      suggestedVisitCharge:
-        j.suggestedVisitCharge != null ? Number(j.suggestedVisitCharge) : null,
-      lockedVisitCharge: j.lockedVisitCharge != null ? Number(j.lockedVisitCharge) : null,
-      preferredVisitTime: j.preferredVisitTime,
-      images: j.images,
-      voiceNoteUrl: j.voiceNoteUrl,
-      customer: j.customer,
-      customerReview: j.reviews?.[0]
-        ? {
-            rating: j.reviews[0].rating,
-            comment: j.reviews[0].comment ?? '',
-            date: j.reviews[0].createdAt,
-          }
-        : null,
-      offerCount: j._count.offers,
-      createdAt: j.createdAt,
-      completedAt: j.completedAt,
-    }));
+    const items = rows.map((j) => {
+      const repairCost =
+        j.repairs?.[0]?.lockedAmount != null
+          ? Number(j.repairs[0].lockedAmount)
+          : j.repairs?.[0]?.amount != null
+          ? Number(j.repairs[0].amount)
+          : null;
+
+      const visitFee =
+        j.lockedVisitCharge != null
+          ? Number(j.lockedVisitCharge)
+          : j.suggestedVisitCharge != null
+          ? Number(j.suggestedVisitCharge)
+          : null;
+
+      const commissionFee =
+        j.commissions?.[0]?.amount != null
+          ? Number(j.commissions[0].amount)
+          : visitFee != null
+          ? Math.round(visitFee * 0.1)
+          : null;
+
+      const workerNet =
+        visitFee != null
+          ? (visitFee + (repairCost ?? 0)) - (commissionFee ?? 0)
+          : null;
+
+      return {
+        id: j.id,
+        title: j.title,
+        description: j.description,
+        status: j.status,
+        urgency: j.urgency,
+        categoryId: j.categoryId,
+        categoryName: j.category?.name ?? 'General',
+        categoryUrdu: j.category?.nameUrdu ?? undefined,
+        address: j.address,
+        city: j.city,
+        area: j.area,
+        latitude: j.latitude,
+        longitude: j.longitude,
+        suggestedVisitCharge:
+          j.suggestedVisitCharge != null ? Number(j.suggestedVisitCharge) : null,
+        lockedVisitCharge: j.lockedVisitCharge != null ? Number(j.lockedVisitCharge) : null,
+        visitCharge: visitFee,
+        repairEstimate: repairCost,
+        repairCharge: repairCost,
+        platformCommission: commissionFee,
+        workerNetEarnings: workerNet,
+        preferredVisitTime: j.preferredVisitTime,
+        images: j.images,
+        voiceNoteUrl: j.voiceNoteUrl,
+        customer: j.customer,
+        customerReview: j.reviews?.[0]
+          ? {
+              rating: j.reviews[0].rating,
+              comment: j.reviews[0].comment ?? '',
+              date: j.reviews[0].createdAt,
+            }
+          : null,
+        offerCount: j._count.offers,
+        createdAt: j.createdAt,
+        completedAt: j.completedAt,
+      };
+    });
     return toPageResult(items, total, page, limit);
   }
 
@@ -996,7 +1070,7 @@ export class JobsService {
       where: { id: jobId },
       include: {
         category: true,
-        customer: { select: { id: true, name: true, phone: true, avatarUrl: true } },
+        customer: { select: { id: true, name: true, phone: true, avatarUrl: true, createdAt: true } },
         visits: {
           orderBy: { createdAt: 'desc' },
           select: {
@@ -1014,6 +1088,11 @@ export class JobsService {
           orderBy: { createdAt: 'desc' },
           take: 1,
           select: { id: true, amount: true, lockedAmount: true, status: true },
+        },
+        reviews: {
+          where: { isVisible: true },
+          select: { id: true, rating: true, comment: true, createdAt: true },
+          take: 1,
         },
         selectedWorker: {
           select: {
@@ -1235,6 +1314,15 @@ export class JobsService {
           offerCount: job.offers.length,
           myOffer,
           offers: visibleOffers,
+          hasReviewed: Boolean(job.reviews && job.reviews.length > 0),
+          customerReview: job.reviews?.[0]
+            ? {
+                id: job.reviews[0].id,
+                rating: job.reviews[0].rating,
+                comment: job.reviews[0].comment ?? '',
+                date: job.reviews[0].createdAt,
+              }
+            : null,
         }
       : {
           ...rest,
@@ -1244,6 +1332,15 @@ export class JobsService {
           offerCount: job.offers.length,
           myOffer,
           offers: visibleOffers,
+          hasReviewed: Boolean(job.reviews && job.reviews.length > 0),
+          customerReview: job.reviews?.[0]
+            ? {
+                id: job.reviews[0].id,
+                rating: job.reviews[0].rating,
+                comment: job.reviews[0].comment ?? '',
+                date: job.reviews[0].createdAt,
+              }
+            : null,
         };
 
     if (lat == null && lng == null && this.redis) {

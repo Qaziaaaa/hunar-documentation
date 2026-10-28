@@ -1,11 +1,13 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useMemo } from "react";
 import { useLocale } from "next-intl";
 import {
   X,
   Phone,
+  Check,
   CheckCheck,
+  Loader2,
   ShieldCheck,
   ArrowLeft,
   MapPin,
@@ -15,8 +17,11 @@ import { JobRequest } from "@/types/job";
 import { ChatInputBar } from "@/features/chat/components/chat-input-bar";
 import { VoiceMessageBubble } from "@/features/chat/components/voice-message-bubble";
 import { sendChatMessage, getMessagesByJob, uploadChatImage, parseVoiceNote, encodeVoiceNote, uploadVoiceNote, storeVoiceInCache, blobToBase64 } from "@/features/chat/api/chat-api";
-import { joinConversationRoom, subscribeToMessages } from "@/services/worker/chat.service";
+import { joinConversationRoom, subscribeToMessages, markConversationRead, subscribeToReadReceipts } from "@/services/worker/chat.service";
 import { getStoredUser } from "@/lib/api-client";
+
+// Module-level in-memory cache so reopening a chat loads instantly in 0ms
+const workerChatCache: Record<string, ChatMessage[]> = {};
 
 interface WorkerChatModalProps {
   job: JobRequest;
@@ -39,6 +44,7 @@ interface ChatMessage {
   durationSeconds?: number;
   imageUrl?: string;
   createdAt?: string;
+  isRead?: boolean;
   time: string;
 }
 
@@ -51,7 +57,27 @@ export function WorkerChatModal({
   const locale = useLocale();
   const isUrdu = locale === "ur";
 
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [messages, setMessages] = useState<ChatMessage[]>(() => {
+    return job?.id && workerChatCache[job.id] ? workerChatCache[job.id] : [];
+  });
+  const [isLoading, setIsLoading] = useState(false);
+
+  // Deduplicate messages by id or messageId so duplicate server/socket broadcasts never collide
+  const uniqueMessages = useMemo(() => {
+    const seen = new Set<string>();
+    const list: ChatMessage[] = [];
+    for (const m of messages) {
+      const key = m.id || m.messageId;
+      if (key && seen.has(key)) {
+        continue;
+      }
+      if (key) {
+        seen.add(key);
+      }
+      list.push(m);
+    }
+    return list;
+  }, [messages]);
 
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
@@ -63,30 +89,40 @@ export function WorkerChatModal({
     if (isOpen) {
       setTimeout(scrollToBottom, 100);
     }
-  }, [isOpen, messages]);
+  }, [isOpen, uniqueMessages]);
 
   // Load real messages for job when modal opens
   useEffect(() => {
     if (!isOpen || !job?.id) {
-      setMessages([]);
       return;
     }
     let isCancelled = false;
-    setMessages([]);
+
+    // Fast-path: if we already have cached messages, display them immediately in 0ms!
+    if (workerChatCache[job.id]?.length) {
+      setMessages(workerChatCache[job.id]);
+      setIsLoading(false);
+    } else {
+      setMessages([]);
+      setIsLoading(true);
+    }
 
     // Immediately join the job room so real-time socket events flow immediately
     joinConversationRoom(job.id);
+    void markConversationRead(job.id);
 
     getMessagesByJob(job.id)
       .then((backendMsgs) => {
         if (isCancelled) return;
+        setIsLoading(false);
         if (!backendMsgs || backendMsgs.length === 0) {
+          workerChatCache[job.id] = [];
           setMessages([]);
           return;
         }
         const currentUserId = getStoredUser()?.id;
         const formatted: ChatMessage[] = backendMsgs.map((m) => {
-          const isFromMe = currentUserId ? m.senderId === currentUserId : m.senderRole === "WORKER";
+          const isFromMe = currentUserId ? m.senderId === currentUserId : String(m.senderRole || "").toUpperCase() === "WORKER";
           const voice = parseVoiceNote(m.text || m.content);
           const msgType: "text" | "voice" | "image" = voice ? "voice" : m.imageUrl ? "image" : "text";
           return {
@@ -103,19 +139,35 @@ export function WorkerChatModal({
             durationSeconds: voice?.durationSeconds,
             imageUrl: m.imageUrl,
             createdAt: m.createdAt,
+            isRead: Boolean(m.isRead),
             time: new Date(m.createdAt).toLocaleTimeString([], {
               hour: "2-digit",
               minute: "2-digit",
             }),
           };
         });
-        setMessages(formatted);
+
+        // Deduplicate any repeated IDs from backend
+        const seenIds = new Set<string>();
+        const uniqueFormatted = formatted.filter((m) => {
+          const key = m.id || m.messageId;
+          if (key && seenIds.has(key)) return false;
+          if (key) seenIds.add(key);
+          return true;
+        });
+
+        workerChatCache[job.id] = uniqueFormatted;
+        setMessages(uniqueFormatted);
         if (backendMsgs[0]?.conversationId) {
           joinConversationRoom(backendMsgs[0].conversationId);
+          void markConversationRead(backendMsgs[0].conversationId);
         }
       })
       .catch(() => {
-        if (!isCancelled) setMessages([]);
+        if (!isCancelled) {
+          setIsLoading(false);
+          setMessages(workerChatCache[job.id] || []);
+        }
       });
 
     return () => {
@@ -131,7 +183,13 @@ export function WorkerChatModal({
       if (msg.jobId && msg.jobId !== job.id) return;
 
       const currentUserId = getStoredUser()?.id;
-      const isFromMe = currentUserId ? msg.senderId === currentUserId : msg.senderRole === "worker";
+      const roleStr = String(msg.senderRole || "").toLowerCase();
+      const isFromMe = currentUserId ? msg.senderId === currentUserId : roleStr === "worker";
+
+      // If from customer while modal is open, mark as read immediately
+      if (!isFromMe) {
+        void markConversationRead(job.id);
+      }
 
       setMessages((prev) => {
         if (prev.some((m) => m.id === msg.id || (m.messageId && m.messageId === msg.id))) return prev;
@@ -142,7 +200,9 @@ export function WorkerChatModal({
         // If from me, it's already shown optimistically. Reconcile temporary message if present.
         if (isFromMe) {
           const tempIndex = prev.findIndex(
-            (m) => m.id.startsWith("wm-") && (m.text === msg.text || (m.type === "voice" && voice))
+            (m) =>
+              (m.id.startsWith("wm-") || (m.messageId && m.messageId.startsWith("wm-"))) &&
+              (m.text?.trim() === msg.text?.trim() || (m.type === "voice" && voice))
           );
           if (tempIndex !== -1) {
             const copy = [...prev];
@@ -155,6 +215,7 @@ export function WorkerChatModal({
               audioUrl: voice?.audioUrl || copy[tempIndex].audioUrl,
               durationSeconds: voice?.durationSeconds || copy[tempIndex].durationSeconds,
               messageType: msgType,
+              isRead: Boolean(msg.isRead),
             };
             return copy;
           }
@@ -176,6 +237,7 @@ export function WorkerChatModal({
           durationSeconds: voice?.durationSeconds,
           imageUrl: msg.imageUrl,
           createdAt: msg.createdAt,
+          isRead: true, // Worker is viewing the chat modal right now
           time: new Date(msg.createdAt).toLocaleTimeString([], {
             hour: "2-digit",
             minute: "2-digit",
@@ -184,8 +246,29 @@ export function WorkerChatModal({
         return [...prev, newMsg];
       });
     });
+
+    // Real-time socket listener for read receipts (updates single tick to double tick)
+    const unsubscribeRead = subscribeToReadReceipts((receipt) => {
+      const currentUserId = getStoredUser()?.id;
+      // Do not mark worker's own sent messages as read when own client triggers read receipt
+      if (receipt.readerId && currentUserId && receipt.readerId === currentUserId) {
+        return;
+      }
+
+      const isThisJob =
+        (receipt.jobId && receipt.jobId === job.id) ||
+        (receipt.conversationId && (receipt.conversationId === job.id || (job as any).conversationId === receipt.conversationId));
+
+      if (isThisJob) {
+        setMessages((prev) =>
+          prev.map((m) => (m.sender === "worker" ? { ...m, isRead: true } : m))
+        );
+      }
+    });
+
     return () => {
       unsubscribe();
+      unsubscribeRead();
     };
   }, [isOpen, job?.id]);
 
@@ -204,6 +287,7 @@ export function WorkerChatModal({
       messageType: "text",
       type: "text",
       text: messageText,
+      isRead: false,
       time: isUrdu ? "ابھی" : "Just now",
     };
 
@@ -211,9 +295,22 @@ export function WorkerChatModal({
 
     sendChatMessage(job.id, messageText, { isJobId: true })
       .then((sent) => {
-        setMessages((prev) =>
-          prev.map((m) => (m.id === tempId ? { ...m, id: sent.id, messageId: sent.id } : m))
-        );
+        setMessages((prev) => {
+          const alreadyExists = prev.some((m) => m.id === sent.id || m.messageId === sent.id);
+          if (alreadyExists) {
+            return prev.filter((m) => m.id !== tempId);
+          }
+          return prev.map((m) =>
+            m.id === tempId
+              ? {
+                  ...m,
+                  id: sent.id,
+                  messageId: sent.id,
+                  isRead: Boolean(sent.isRead),
+                }
+              : m
+          );
+        });
         if (sent.conversationId) {
           joinConversationRoom(sent.conversationId);
         }
@@ -258,6 +355,7 @@ export function WorkerChatModal({
       type: "voice",
       audioUrl: effectiveAudioUrl,
       durationSeconds,
+      isRead: false,
       time: isUrdu ? "ابھی" : "Just now",
     };
 
@@ -272,18 +370,23 @@ export function WorkerChatModal({
 
     sendChatMessage(job.id, payloadText, { isJobId: true })
       .then((sent) => {
-        setMessages((prev) =>
-          prev.map((m) =>
+        setMessages((prev) => {
+          const alreadyExists = prev.some((m) => m.id === sent.id || m.messageId === sent.id);
+          if (alreadyExists) {
+            return prev.filter((m) => m.id !== tempId);
+          }
+          return prev.map((m) =>
             m.id === tempId
               ? {
                   ...m,
                   id: sent.id,
                   messageId: sent.id,
                   audioUrl: effectiveAudioUrl,
+                  isRead: Boolean(sent.isRead),
                 }
               : m
-          )
-        );
+          );
+        });
         if (sent.conversationId) {
           joinConversationRoom(sent.conversationId);
         }
@@ -295,11 +398,14 @@ export function WorkerChatModal({
 
   const handleSendImage = (file: File) => {
     const tempUrl = URL.createObjectURL(file);
+    const tempId = `wm-${Date.now()}`;
     const newMsg: ChatMessage = {
-      id: `wm-${Date.now()}`,
+      id: tempId,
+      messageId: tempId,
       sender: "worker",
       type: "image",
       imageUrl: tempUrl,
+      isRead: false,
       time: isUrdu ? "ابھی" : "Just now",
     };
 
@@ -308,7 +414,19 @@ export function WorkerChatModal({
     uploadChatImage(file)
       .then((res) => {
         if (res?.key) {
-          sendChatMessage(job.id, "", { isJobId: true, imageKey: res.key });
+          sendChatMessage(job.id, "", { isJobId: true, imageKey: res.key })
+            .then((sent) => {
+              setMessages((prev) => {
+                const alreadyExists = prev.some((m) => m.id === sent.id || m.messageId === sent.id);
+                if (alreadyExists) {
+                  return prev.filter((m) => m.id !== tempId);
+                }
+                return prev.map((m) =>
+                  m.id === tempId ? { ...m, id: sent.id, messageId: sent.id } : m
+                );
+              });
+            })
+            .catch(() => {});
         }
       })
       .catch(() => {});
@@ -330,113 +448,9 @@ export function WorkerChatModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs lg:p-6 xl:p-8 animate-in fade-in">
-      <div className="w-full h-full lg:h-[86vh] lg:max-w-5xl xl:max-w-6xl bg-white lg:rounded-3xl lg:border lg:border-slate-200 lg:shadow-2xl overflow-hidden flex flex-col lg:flex-row relative animate-in zoom-in-95 duration-200">
+      <div className="w-full h-full lg:h-[88vh] lg:max-w-3xl xl:max-w-4xl bg-white lg:rounded-3xl lg:border lg:border-slate-200 lg:shadow-2xl overflow-hidden flex flex-col relative animate-in zoom-in-95 duration-200">
         {/* ======================================================== */}
-        {/* DESKTOP LEFT SIDEBAR: CUSTOMER & JOB DETAILS PANE */}
-        {/* ======================================================== */}
-        <aside className="hidden lg:flex lg:w-[320px] xl:w-[360px] border-r border-slate-200 bg-slate-50/70 p-5 flex-col justify-between overflow-y-auto shrink-0">
-          <div className="space-y-5">
-            {/* Top Label */}
-            <div className="flex items-center justify-between border-b border-slate-200/80 pb-3">
-              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-                {isUrdu ? "کسٹمر اور جاب کی تفصیل" : "Customer & Job Info"}
-              </span>
-              <span className="flex items-center gap-1 text-[11px] font-bold text-emerald-600 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
-                <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                <span>ONLINE</span>
-              </span>
-            </div>
-
-            {/* Customer Profile Card */}
-            <div className="bg-white rounded-2xl border border-slate-200/90 p-4 space-y-3.5 shadow-2xs text-center">
-              <div className="relative inline-block mx-auto">
-                <div className="size-16 rounded-2xl bg-slate-100 border border-slate-200 flex items-center justify-center text-lg font-black text-[#123B5D] overflow-hidden shadow-2xs">
-                  {job.customer.avatarUrl ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={job.customer.avatarUrl}
-                      alt={job.customer.name}
-                      loading="lazy"
-                      decoding="async"
-                      className="size-full object-cover"
-                      onError={(e) => {
-                        (e.currentTarget as HTMLElement).style.display = "none";
-                      }}
-                    />
-                  ) : null}
-                  {(!job.customer.avatarUrl) && (
-                    job.customer.name.slice(0, 2).toUpperCase()
-                  )}
-                </div>
-                <span className="absolute -bottom-1 -right-1 size-3.5 rounded-full bg-emerald-500 ring-2 ring-white" />
-              </div>
-
-              <div>
-                <div className="flex items-center justify-center gap-1.5">
-                  <h4 className="font-extrabold text-slate-900 text-sm">
-                    {job.customer.name}
-                  </h4>
-                  <ShieldCheck className="size-4 text-emerald-600" />
-                </div>
-                <p className="text-xs text-slate-500 font-medium mt-0.5">
-                  ⭐ {job.customer.rating} ({job.customer.totalReviews} reviews)
-                </p>
-                <p className="text-xs text-slate-500 flex items-center justify-center gap-1 mt-1">
-                  <MapPin className="size-3 text-[#0F8B8D]" />
-                  <span>{job.location.area}</span>
-                </p>
-              </div>
-
-              {/* Call Customer CTA Button */}
-              {onCallCustomer && (
-                <button
-                  type="button"
-                  onClick={onCallCustomer}
-                  className="w-full py-2.5 rounded-xl bg-success hover:bg-success/90 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-xs transition-all cursor-pointer"
-                >
-                  <Phone className="size-3.5" />
-                  <span>{isUrdu ? "کسٹمر کو کال کریں" : "Call Customer"}</span>
-                </button>
-              )}
-            </div>
-
-            {/* Job Context Card */}
-            <div className="bg-white rounded-2xl border border-slate-200/90 p-4 space-y-2.5 shadow-2xs text-xs">
-              <span className="text-[10.5px] font-bold text-slate-400 uppercase tracking-wider block">
-                {isUrdu ? "ایکٹیو جاب آرڈر" : "Active Job Request"}
-              </span>
-              <p className="font-bold text-[#123B5D] text-sm leading-snug">
-                {job.title}
-              </p>
-              <div className="flex items-center justify-between pt-1 border-t border-slate-100 text-slate-600">
-                <span>{isUrdu ? "کیٹیگری:" : "Category:"}</span>
-                <span className="font-bold text-slate-800">{job.category}</span>
-              </div>
-              <div className="flex items-center justify-between text-slate-600">
-                <span>{isUrdu ? "طے شدہ وزٹ فیس:" : "Agreed Visit Fee:"}</span>
-                <span className="font-black font-mono text-[#0F8B8D] text-xs">
-                  {job.visitCharge || job.customerSuggestedPrice
-                    ? `Rs ${job.visitCharge || job.customerSuggestedPrice}`
-                    : "Not specified"}
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {/* Bottom Security Note */}
-          <div className="p-3 bg-teal-50/70 border border-teal-200/80 rounded-2xl text-[11px] text-teal-950 space-y-1">
-            <span className="font-bold flex items-center gap-1 text-[#0F8B8D]">
-              <Sparkles className="size-3.5" />
-              <span>WorkerFIX Protection</span>
-            </span>
-            <p className="text-slate-600 leading-relaxed">
-              Keep communication and payments on platform for safety guarantee.
-            </p>
-          </div>
-        </aside>
-
-        {/* ======================================================== */}
-        {/* RIGHT PANE: CHAT STREAM & INPUT BAR */}
+        {/* CHAT STREAM & INPUT BAR */}
         {/* ======================================================== */}
         <div className="flex-1 flex flex-col h-full bg-white min-w-0">
           {/* 1. CHAT TOP HEADER BAR */}
@@ -479,6 +493,7 @@ export function WorkerChatModal({
                   <h3 className="font-extrabold text-slate-900 text-sm truncate">
                     {job.customer.name}
                   </h3>
+                  <ShieldCheck className="size-3.5 text-emerald-600 shrink-0" />
                   <span className="hidden sm:inline-block px-1.5 py-0.2 rounded-md bg-emerald-50 text-emerald-700 text-[10px] font-bold border border-emerald-200">
                     Online
                   </span>
@@ -527,8 +542,15 @@ export function WorkerChatModal({
           </div>
 
           {/* 2. MESSAGES FEED */}
-          <div className="flex-1 overflow-y-auto p-4 sm:p-5 lg:p-6 space-y-4 bg-slate-50/30">
-            {messages.length === 0 ? (
+          <div className="flex-1 overflow-y-auto p-4 sm:p-5 lg:p-6 space-y-4 bg-slate-50/30 scrollbar-none no-scrollbar">
+            {isLoading && uniqueMessages.length === 0 ? (
+              <div className="flex flex-col items-center justify-center h-full min-h-[220px] text-center p-6 space-y-3">
+                <Loader2 className="size-8 text-[#0F8B8D] animate-spin" />
+                <p className="text-xs font-semibold text-slate-500">
+                  {isUrdu ? "پیغامات لوڈ ہو رہے ہیں..." : "Loading messages..."}
+                </p>
+              </div>
+            ) : uniqueMessages.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-full min-h-[220px] text-center p-6 space-y-2">
                 <div className="size-12 rounded-2xl bg-teal-50 border border-teal-200 text-[#0F8B8D] flex items-center justify-center">
                   <Sparkles className="size-6 text-[#0F8B8D]" />
@@ -543,13 +565,14 @@ export function WorkerChatModal({
                 </p>
               </div>
             ) : (
-              messages.map((msg) => {
+              uniqueMessages.map((msg, idx) => {
               const isMe = msg.sender === "worker";
+              const itemKey = msg.id ? `${msg.id}-${idx}` : `msg-${idx}`;
 
               if (msg.type === "voice") {
                 return (
                   <div
-                    key={msg.id}
+                    key={itemKey}
                     className={`flex flex-col ${isMe ? "items-end" : "items-start"}`}
                   >
                     <VoiceMessageBubble
@@ -561,7 +584,13 @@ export function WorkerChatModal({
                       className={`flex items-center gap-1 mt-1 justify-end text-[10px] text-slate-400`}
                     >
                       <span>{msg.time}</span>
-                      {isMe && <CheckCheck className="size-3.5 text-[#0F8B8D]" />}
+                      {isMe && (
+                        msg.isRead ? (
+                          <CheckCheck className="size-3.5 text-[#0F8B8D]" aria-label="Read" />
+                        ) : (
+                          <Check className="size-3.5 text-slate-400" aria-label="Sent" />
+                        )
+                      )}
                     </div>
                   </div>
                 );
@@ -569,7 +598,7 @@ export function WorkerChatModal({
 
               return (
                 <div
-                  key={msg.id}
+                  key={itemKey}
                   className={`flex flex-col ${isMe ? "items-end" : "items-start"}`}
                 >
                   <div
@@ -607,7 +636,13 @@ export function WorkerChatModal({
                       }`}
                     >
                       <span>{msg.time}</span>
-                      {isMe && <CheckCheck className="size-3.5 text-teal-300" />}
+                      {isMe && (
+                        msg.isRead ? (
+                          <CheckCheck className="size-3.5 text-teal-300" aria-label="Read" />
+                        ) : (
+                          <Check className="size-3.5 text-slate-300" aria-label="Sent" />
+                        )
+                      )}
                     </div>
                   </div>
                 </div>

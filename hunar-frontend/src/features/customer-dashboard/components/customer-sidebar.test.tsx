@@ -94,4 +94,12 @@ describe("CustomerSidebar", () => {
     renderWithClient(<CustomerSidebar />);
     expect(screen.getByTestId("logo")).toBeInTheDocument();
   });
+
+  it("renders Sign In link instead of Sign Out button when user is a Guest", () => {
+    (useStoredUser as jest.Mock).mockReturnValue(null);
+    renderWithClient(<CustomerSidebar />);
+    expect(screen.getByText("Guest")).toBeInTheDocument();
+    expect(screen.getAllByRole("link", { name: /sign in/i }).length).toBeGreaterThan(0);
+    expect(screen.queryByRole("button", { name: /sign out/i })).not.toBeInTheDocument();
+  });
 });

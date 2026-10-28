@@ -21,7 +21,7 @@ export function buildPreferredVisitTime(
   const day = parseInt(dateMatch[3], 10);
 
   if (!preferredTimeSlot || !preferredTimeSlot.trim()) {
-    const d = new Date(Date.UTC(year, month, day, 0, 0, 0, 0));
+    const d = new Date(year, month, day, 9, 0, 0, 0);
     return d.toISOString();
   }
 
@@ -69,7 +69,7 @@ export function buildPreferredVisitTime(
     return d.toISOString();
   }
 
-  const d = new Date(Date.UTC(year, month, day, 0, 0, 0, 0));
+  const d = new Date(year, month, day, 9, 0, 0, 0);
   return d.toISOString();
 }
 
@@ -106,6 +106,8 @@ export interface CreatedJobResponse {
 export const CATEGORY_ID_MAP: Record<string, string> = {
   plumbing: "seed-category-1",
   plumber: "seed-category-1",
+  geyser: "seed-category-1",
+  "geyser-heating": "seed-category-1",
   electrical: "seed-category-2",
   electrician: "seed-category-2",
   "ac-repair": "seed-category-3",
@@ -118,14 +120,23 @@ export const CATEGORY_ID_MAP: Record<string, string> = {
   appliance: "seed-category-5",
   cleaning: "seed-category-6",
   cleaner: "seed-category-6",
+  "water-tank": "seed-category-6",
+  "water-tank-clean": "seed-category-6",
   masonry: "seed-category-7",
   "mason-mistry": "seed-category-7",
   "pest-control": "seed-category-8",
-  "solar-technician": "seed-category-9",
-  welder: "seed-category-9",
-  "cctv-security": "seed-category-9",
-  gardener: "seed-category-9",
-  movers: "seed-category-9",
+  "solar-technician": "seed-category-10",
+  solar: "seed-category-10",
+  "cctv-security": "seed-category-11",
+  cctv: "seed-category-11",
+  welder: "seed-category-12",
+  gardener: "seed-category-13",
+  gardening: "seed-category-13",
+  movers: "seed-category-14",
+  "movers-packers": "seed-category-14",
+  handyman: "seed-category-9",
+  "general-handyman": "seed-category-9",
+  "general handyman": "seed-category-9",
   general: "seed-category-9",
 };
 
@@ -146,11 +157,26 @@ export async function uploadJobPhoto(file: File): Promise<{ key: string; url: st
     formData.append("file", file);
     return await http.upload<{ key: string; url: string }>("/uploads/job-photo", formData);
   } catch (err) {
-    console.warn("Upload photo endpoint offline, using local object URL fallback", err);
-    return {
-      key: `local-job-photo-${Date.now()}`,
-      url: URL.createObjectURL(file),
-    };
+    console.warn("Direct /uploads/job-photo upload failed, falling back to persistent data URI", err);
+    try {
+      const compressed = await compressImage(file, { maxWidth: 1280, maxHeight: 1280, quality: 0.8 });
+      const dataUri = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          if (typeof reader.result === "string") resolve(reader.result);
+          else reject(new Error("Failed reading image data"));
+        };
+        reader.onerror = () => reject(new Error("File read error"));
+        reader.readAsDataURL(compressed);
+      });
+      return {
+        key: `photo-${Date.now()}`,
+        url: dataUri,
+      };
+    } catch (fallbackErr) {
+      console.error("Base64 image conversion failed:", fallbackErr);
+      throw new Error("Photo upload failed. Please check your image file and try again.");
+    }
   }
 }
 
@@ -221,19 +247,21 @@ async function resolveImagesForSubmission(urls: string[]): Promise<string[]> {
         } catch {}
         const dataUrl = await new Promise<string>((resolve) => {
           const reader = new FileReader();
-          reader.onloadend = () => resolve(reader.result as string);
-          reader.onerror = () => resolve(url);
+          reader.onloadend = () => resolve(typeof reader.result === "string" ? reader.result : "");
+          reader.onerror = () => resolve("");
           reader.readAsDataURL(blob);
         });
-        resolved.push(dataUrl);
-      } catch {
-        resolved.push(url);
+        if (dataUrl && !dataUrl.startsWith("blob:")) {
+          resolved.push(dataUrl);
+        }
+      } catch (err) {
+        console.warn("Could not resolve blob photo:", err);
       }
     } else {
       resolved.push(url);
     }
   }
-  return resolved;
+  return resolved.filter((u) => !u.startsWith("blob:"));
 }
 
 export interface BackendCategory {
@@ -273,14 +301,16 @@ export async function createJob(data: PostJobData): Promise<CreatedJobResponse> 
     if (!cachedCategories || cachedCategories.length === 0) {
       await fetchServiceCategories();
     }
-    const slug = data.category.toLowerCase();
+    const rawSlug = data.category.toLowerCase();
+    const cleanSlug = rawSlug.replace(/[^a-z0-9]/g, "");
     const dynamicMatch = cachedCategories?.find(
       (c) =>
-        c.id.toLowerCase() === slug ||
-        c.name.toLowerCase().includes(slug) ||
-        slug.includes(c.name.toLowerCase())
+        c.id.toLowerCase() === rawSlug ||
+        c.name.toLowerCase().replace(/[^a-z0-9]/g, "") === cleanSlug ||
+        c.name.toLowerCase().includes(rawSlug) ||
+        rawSlug.includes(c.name.toLowerCase())
     );
-    categoryId = dynamicMatch ? dynamicMatch.id : (CATEGORY_ID_MAP[slug] || "seed-category-1");
+    categoryId = dynamicMatch ? dynamicMatch.id : (CATEGORY_ID_MAP[rawSlug] || "seed-category-1");
   } else {
     categoryId = "seed-category-1";
   }
@@ -291,7 +321,9 @@ export async function createJob(data: PostJobData): Promise<CreatedJobResponse> 
   const payload: CreateJobPayload = {
     categoryId,
     title: data.title?.trim() || "Home Repair Request",
-    description: data.description?.trim() || undefined,
+    description:
+      data.description?.trim() ||
+      (data.voiceNoteUrl ? "Voice note attached" : undefined),
     images: resolvedImages,
     voiceNoteUrl: resolvedVoiceNoteUrl,
     latitude: typeof data.latitude === "number" && !isNaN(data.latitude) && data.latitude !== 0 ? data.latitude : 34.0151,
@@ -303,7 +335,10 @@ export async function createJob(data: PostJobData): Promise<CreatedJobResponse> 
     city: data.city || "Peshawar",
     area: data.area || "",
     urgency: data.scheduleType === "asap" ? "EMERGENCY" : "NORMAL",
-    suggestedVisitCharge: data.suggestedVisitFee ? Number(data.suggestedVisitFee) : undefined,
+    suggestedVisitCharge:
+      data.suggestedVisitFee != null && !isNaN(Number(data.suggestedVisitFee))
+        ? Number(data.suggestedVisitFee)
+        : undefined,
     preferredVisitTime:
       data.scheduleType === "asap"
         ? undefined

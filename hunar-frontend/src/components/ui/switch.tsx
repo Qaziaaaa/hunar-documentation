@@ -2,6 +2,7 @@ import { Switch as SwitchPrimitive } from "@base-ui/react/switch";
 import { cn } from "@/lib/utils";
 
 interface SwitchProps {
+  id?: string;
   checked?: boolean;
   defaultChecked?: boolean;
   onCheckedChange?: (
@@ -15,6 +16,7 @@ interface SwitchProps {
 }
 
 function Switch({
+  id,
   checked,
   defaultChecked,
   onCheckedChange,
@@ -25,6 +27,7 @@ function Switch({
 }: SwitchProps) {
   return (
     <SwitchPrimitive.Root
+      id={id}
       name={name}
       data-slot="switch"
       checked={checked}

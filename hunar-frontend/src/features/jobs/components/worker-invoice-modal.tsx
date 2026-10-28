@@ -7,7 +7,6 @@ import { formatDate } from "@/lib/format";
 import {
   FileText,
   CheckCircle2,
-  ShieldCheck,
   Printer,
   X,
 } from "lucide-react";
@@ -23,16 +22,18 @@ export function WorkerInvoiceModal({ job, onClose }: WorkerInvoiceModalProps) {
   const grossTotal = visitCharge + repairCharge;
   const platformCommission = job.platformCommission ?? Math.round(grossTotal * 0.1);
   const netEarnings = job.workerNetEarnings ?? (grossTotal - platformCommission);
-  const invoiceNumber = job.invoiceNumber || `INV-${job.id}`;
-  const warrantyDays = job.warrantyDays ?? 5;
+  const cleanJobId = job.id?.replace(/^INV-/, "") || job.id;
+  const receiptReference = job.invoiceNumber && !job.invoiceNumber.startsWith("INV-")
+    ? job.invoiceNumber
+    : `Order #${cleanJobId}`;
 
   const handlePrint = () => {
     window.print();
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-3 sm:p-4 overflow-y-auto">
-      <div className="bg-white rounded-2xl sm:rounded-3xl max-w-lg lg:max-w-2xl w-full p-4 sm:p-7 lg:p-8 shadow-2xl space-y-4 sm:space-y-6 animate-in fade-in zoom-in-95 my-auto max-h-[92vh] overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-3 sm:p-4 overflow-y-auto scrollbar-none no-scrollbar">
+      <div className="bg-white rounded-2xl sm:rounded-3xl max-w-lg lg:max-w-2xl w-full p-4 sm:p-7 lg:p-8 shadow-2xl space-y-4 sm:space-y-6 animate-in fade-in zoom-in-95 my-auto max-h-[92vh] overflow-y-auto scrollbar-none no-scrollbar">
         {/* Header */}
         <div className="flex items-start justify-between border-b border-slate-100 pb-3 sm:pb-4 gap-2">
           <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
@@ -42,7 +43,7 @@ export function WorkerInvoiceModal({ job, onClose }: WorkerInvoiceModalProps) {
             <div className="min-w-0">
               <div className="flex items-center gap-1.5 flex-wrap">
                 <span className="text-[11px] sm:text-xs font-mono font-bold text-[#0F8B8D]">
-                  {invoiceNumber}
+                  {receiptReference}
                 </span>
                 <span className="px-2 py-0.2 rounded-full bg-emerald-50 text-emerald-700 text-[9.5px] sm:text-[10px] font-bold border border-emerald-200">
                   PAID &amp; SETTLED
@@ -136,15 +137,6 @@ export function WorkerInvoiceModal({ job, onClose }: WorkerInvoiceModalProps) {
                 {formatRs(grossTotal)}
               </span>
             </div>
-          </div>
-        </div>
-
-        {/* Warranty Badge */}
-        <div className="flex items-center gap-2.5 p-2.5 sm:p-3.5 rounded-xl sm:rounded-2xl bg-teal-50 border border-[#0F8B8D]/20 text-[11px] sm:text-xs">
-          <ShieldCheck className="size-4 sm:size-5 text-[#0F8B8D] shrink-0" />
-          <div className="text-slate-700 leading-relaxed">
-            <strong className="text-[#0F8B8D] font-extrabold">{warrantyDays}-Day Guarantee: </strong>
-            Customer is covered under WorkerFIX Pro protection warranty.
           </div>
         </div>
 

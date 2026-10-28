@@ -61,7 +61,7 @@ export function JobCard({ job, workerOffer }: JobCardProps) {
   return (
     <div className="group bg-white rounded-2xl border border-slate-200/80 shadow-[0_12px_16px_-6px_rgba(18,59,93,0.14)] hover:shadow-[0_16px_22px_-6px_rgba(18,59,93,0.20)] hover:border-[#0F8B8D]/40 transition-all duration-200 p-5 flex flex-col justify-between relative overflow-hidden">
       {/* Top Accent Strip for Emergency Jobs */}
-      {job.urgency === "emergency" && (
+      {job.status !== "completed" && job.urgency === "emergency" && (
         <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-red-500 to-amber-500" />
       )}
 
@@ -75,7 +75,7 @@ export function JobCard({ job, workerOffer }: JobCardProps) {
               <span>{job.category}</span>
             </span>
 
-            {job.urgency === "emergency" && (
+            {job.status !== "completed" && job.urgency === "emergency" && (
               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-red-50 border border-red-200 text-red-700 font-bold text-[11px] tracking-wide">
                 <Flame className="w-3 h-3 text-red-600 animate-pulse" />
                 Emergency
@@ -157,12 +157,7 @@ export function JobCard({ job, workerOffer }: JobCardProps) {
       </div>
 
       {/* Bottom CTA Bar */}
-      <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
-        <span className="inline-flex items-center gap-1 text-xs font-semibold text-[#0F8B8D]">
-          <ShieldCheck className="w-3.5 h-3.5" />
-          <span>Secure Escrow Protection</span>
-        </span>
-
+      <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-end">
         <Link
           href={`/worker/jobs/${job.id}`}
           className="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-[#0F8B8D] hover:bg-[#0F8B8D]/90 text-white font-bold text-xs transition-all shadow-xs group-hover:shadow-md"

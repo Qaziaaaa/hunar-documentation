@@ -49,10 +49,49 @@ const CATEGORY_DISPLAY: Record<string, string> = {
   Carpentry: "Carpenter",
   Painting: "Painter",
   Mechanics: "Mechanic",
-  "Cleaning & Sanitary": "Cleaning & Sanitary",
+  "Cleaning & Sanitary": "Home Cleaner",
+  Cleaning: "Home Cleaner",
+  Masonry: "Mason (Mistri)",
+  "Pest Control": "Pest Control",
+  "General Handyman": "Handyman",
+  Handyman: "Handyman",
+  "Solar & UPS": "Solar & UPS",
+  "Solar Energy": "Solar & UPS",
+  "Solar Technician": "Solar & UPS",
+  "CCTV & Security": "CCTV & Security",
+  Gardener: "Gardener",
+  "Gardener (Mali)": "Gardener",
+  Welder: "Welder",
+  "Movers & Packers": "Movers & Packers",
 };
 
-function displayCategory(name?: string | null): string {
+function inferCategoryFromText(text: string): string | null {
+  const lower = text.toLowerCase();
+  if (/cctv|camera|dvr|nvr|video doorbell|intercom/.test(lower)) return "CCTV & Security";
+  if (/solar|inverter|battery|ups/.test(lower)) return "Solar & UPS";
+  if (/pruning|grass|lawn|garden|plant|mali|fertilizer/.test(lower)) return "Gardener";
+  if (/welding|welder|iron gate|grill/.test(lower)) return "Welder";
+  if (/sofa|carpet|vacuum|deep clean|tank clean/.test(lower)) return "Home Cleaner";
+  if (/tile|grouting|plaster|mistri/.test(lower)) return "Mason (Mistri)";
+  if (/pipe|leak|drain|faucet|tap|mixer|commode|sanitary|geyser/.test(lower)) return "Plumber";
+  if (/wiring|circuit|breaker|switchboard|light|fan/.test(lower)) return "Electrician";
+  if (/ac |split|inverter ac|compressor|cooling|refriger/.test(lower)) return "AC Technician";
+  if (/paint|putty|primer|whitewash/.test(lower)) return "Painter";
+  if (/door|cabinet|drawer|wardrobe|furniture|wood|carpenter/.test(lower)) return "Carpenter";
+  if (/pest|termite|cockroach|fumigation|deemak/.test(lower)) return "Pest Control";
+  if (/mover|shifting|luggage|pickup/.test(lower)) return "Movers & Packers";
+  return null;
+}
+
+function displayCategory(name?: string | null, title?: string, description?: string): string {
+  const isGeneric = !name || name === "General Handyman" || name === "General" || name === "General Service" || name === "Handyman";
+  if (title || description) {
+    const inferred = inferCategoryFromText(`${title ?? ""} ${description ?? ""}`);
+    if (inferred && (isGeneric || (name === "Plumbing" && inferred !== "Plumber"))) {
+      return inferred;
+    }
+  }
+
   if (!name) return "General Service";
   return CATEGORY_DISPLAY[name] ?? name;
 }
@@ -95,7 +134,7 @@ function visitWindow(preferred?: string | null, created?: string, isUrgent?: boo
   if (isUrgent) {
     return {
       date: "Today",
-      timeSlot: "Immediate (Within 30–60 mins)",
+      timeSlot: "⚡ Immediate",
     };
   }
 
@@ -119,7 +158,7 @@ function visitWindow(preferred?: string | null, created?: string, isUrgent?: boo
   const base = createdDate ?? now;
   return {
     date: `Today, ${formatJobDate(toLocalDateString(now))}`,
-    timeSlot: base.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" }),
+    timeSlot: base.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: true }),
   };
 }
 
@@ -161,7 +200,7 @@ export function mapJobToRequest(
   return {
     id: job.id,
     title: job.title,
-    category: displayCategory(job.category?.name) as JobRequest["category"],
+    category: displayCategory(job.category?.name, job.title, job.description) as JobRequest["category"],
     urgency: displayUrgency(job.urgency as unknown as string),
     problemSummary: job.description?.slice(0, 140) ?? job.title,
     description: job.description ?? job.title,
@@ -183,8 +222,23 @@ export function mapJobToRequest(
     customer: customerFrom(job),
     totalOffers: 0,
     status: toDisplayStatus(job.status),
-    visitCharge: job.lockedVisitCharge ?? job.suggestedVisitCharge ?? undefined,
+    completedAt:
+      job.completedAt ??
+      (job as any).completed_at ??
+      (toDisplayStatus(job.status) === "completed" ? (job.updatedAt ?? job.createdAt) : undefined),
+    visitCharge: job.visitCharge ?? job.lockedVisitCharge ?? job.suggestedVisitCharge ?? undefined,
+    platformCommission: job.platformCommission ?? undefined,
+    workerNetEarnings: job.workerNetEarnings ?? undefined,
+    customerReview:
+      job.customerReview && job.customerReview.rating
+        ? {
+            rating: Number(job.customerReview.rating),
+            comment: job.customerReview.comment || "",
+            date: job.customerReview.date || "",
+          }
+        : undefined,
     repairCharge:
+      job.repairCharge ??
       (job as any).repairCharge ??
       (job as any).repairEstimate ??
       undefined,

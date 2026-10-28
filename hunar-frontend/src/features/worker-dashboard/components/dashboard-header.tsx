@@ -1,9 +1,11 @@
 "use client";
 
-import { Globe, Menu } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { Menu, Settings, X } from "lucide-react";
 import { cn } from "cn";
 import { usePathname, useRouter } from "@/i18n/navigation";
 import { useLocale } from "next-intl";
+import { Switch } from "@/components/ui/switch";
 import type {
   WorkerDashboardProfile,
   DashboardNotification,
@@ -20,6 +22,8 @@ export function DashboardHeader({
   onSelectTab,
   onMarkNotificationsRead,
   onOpenSidebar,
+  showRelevantJobs = false,
+  onToggleShowRelevantJobs,
 }: {
   profile?: WorkerDashboardProfile;
   notifications?: DashboardNotification[];
@@ -30,14 +34,46 @@ export function DashboardHeader({
   onSelectTab?: (tab: DashboardTab) => void;
   onMarkNotificationsRead?: () => void;
   onOpenSidebar?: () => void;
+  showRelevantJobs?: boolean;
+  onToggleShowRelevantJobs?: (enabled?: boolean) => void;
 }) {
   const locale = useLocale();
   const router = useRouter();
   const pathname = usePathname();
 
-  const toggleLocale = () => {
-    const nextLocale = locale === "en" ? "ur" : "en";
-    router.replace(pathname, { locale: nextLocale });
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const settingsRef = useRef<HTMLDivElement>(null);
+
+  // Close Settings panel when clicking outside or pressing Escape
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent | TouchEvent) {
+      if (settingsRef.current && !settingsRef.current.contains(event.target as Node)) {
+        setIsSettingsOpen(false);
+      }
+    }
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setIsSettingsOpen(false);
+      }
+    }
+
+    if (isSettingsOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+      document.addEventListener("touchstart", handleClickOutside);
+      document.addEventListener("keydown", handleKeyDown);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("touchstart", handleClickOutside);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isSettingsOpen]);
+
+  const handleSelectLanguage = (nextLocale: "en" | "ur") => {
+    if (nextLocale !== locale) {
+      router.replace(pathname, { locale: nextLocale });
+    }
   };
 
   return (
@@ -106,16 +142,118 @@ export function DashboardHeader({
           </div>
         </div>
 
-        {/* RIGHT: Urdu / English Language Switcher */}
-        <div className="flex items-center">
+        {/* RIGHT: Settings Button & Dropdown Panel */}
+        <div className="relative flex items-center" ref={settingsRef}>
           <button
-            onClick={toggleLocale}
-            className="flex h-9 items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3.5 text-xs font-bold text-slate-700 shadow-2xs transition-colors hover:border-teal/30 hover:bg-slate-50 cursor-pointer"
-            title="Switch English / اردو"
+            type="button"
+            onClick={() => setIsSettingsOpen((prev) => !prev)}
+            className={cn(
+              "p-2 rounded-xl text-slate-700 hover:text-slate-900 transition-colors cursor-pointer",
+              isSettingsOpen && "text-teal"
+            )}
+            title="Settings"
+            aria-label="Settings"
+            aria-expanded={isSettingsOpen}
+            aria-haspopup="true"
           >
-            <Globe className="size-3.5 text-teal" />
-            <span>{locale === "en" ? "اردو" : "EN"}</span>
+            <Settings className={cn("size-5 transition-transform duration-200", isSettingsOpen && "rotate-45 text-teal")} />
           </button>
+
+          {/* Compact Settings Panel */}
+          {isSettingsOpen && (
+            <div
+              className="absolute end-0 top-full mt-2 w-72 sm:w-80 rounded-2xl border border-slate-200/90 bg-white p-4 shadow-xl z-50 animate-in fade-in zoom-in-95 duration-150 text-start"
+              role="dialog"
+              aria-label="Settings"
+            >
+              {/* Panel Header */}
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                <div className="flex items-center gap-2">
+                  <Settings className="size-4 text-teal" />
+                  <span className="text-sm font-extrabold text-navy">
+                    {locale === "ur" ? "سیٹنگز" : "Settings"}
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsSettingsOpen(false)}
+                  className="rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors cursor-pointer"
+                  aria-label="Close"
+                  title="Close"
+                >
+                  <X className="size-4" />
+                </button>
+              </div>
+
+              {/* Language Selection */}
+              <div className="py-3">
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">
+                  {locale === "ur" ? "زبان (Language)" : "Language"}
+                </label>
+                <div className="grid grid-cols-2 gap-2" role="radiogroup" aria-label="Language">
+                  {/* Urdu Radio Option */}
+                  <label
+                    className={cn(
+                      "flex items-center gap-2 rounded-xl border p-2.5 text-xs font-bold cursor-pointer transition-all",
+                      locale === "ur"
+                        ? "border-teal bg-teal/5 text-teal ring-1 ring-teal/30 shadow-2xs"
+                        : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
+                    )}
+                  >
+                    <input
+                      type="radio"
+                      name="dashboard-language-selection"
+                      value="ur"
+                      checked={locale === "ur"}
+                      onChange={() => handleSelectLanguage("ur")}
+                      className="accent-teal size-3.5 cursor-pointer"
+                    />
+                    <span>اردو</span>
+                  </label>
+
+                  {/* English Radio Option */}
+                  <label
+                    className={cn(
+                      "flex items-center gap-2 rounded-xl border p-2.5 text-xs font-bold cursor-pointer transition-all",
+                      locale === "en"
+                        ? "border-teal bg-teal/5 text-teal ring-1 ring-teal/30 shadow-2xs"
+                        : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
+                    )}
+                  >
+                    <input
+                      type="radio"
+                      name="dashboard-language-selection"
+                      value="en"
+                      checked={locale === "en"}
+                      onChange={() => handleSelectLanguage("en")}
+                      className="accent-teal size-3.5 cursor-pointer"
+                    />
+                    <span>English</span>
+                  </label>
+                </div>
+              </div>
+
+              <div className="h-px bg-slate-100 my-1" />
+
+              {/* Show Relevant Jobs Toggle */}
+              <div className="pt-3">
+                <div className="flex items-center justify-between gap-3">
+                  <label
+                    htmlFor="show-relevant-jobs-toggle"
+                    className="text-xs sm:text-sm font-bold text-slate-800 cursor-pointer select-none"
+                  >
+                    Show Relevant Jobs
+                  </label>
+                  <Switch
+                    id="show-relevant-jobs-toggle"
+                    checked={showRelevantJobs}
+                    onCheckedChange={(checked) => onToggleShowRelevantJobs?.(checked)}
+                    aria-label="Show Relevant Jobs"
+                  />
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </header>

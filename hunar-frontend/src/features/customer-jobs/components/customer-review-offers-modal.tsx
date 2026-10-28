@@ -75,7 +75,7 @@ export function CustomerReviewOffersModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-5 animate-in fade-in-50 duration-200"
+      className="fixed inset-0 z-50 overflow-y-auto scrollbar-none no-scrollbar bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-5 animate-in fade-in-50 duration-200"
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
@@ -115,7 +115,7 @@ export function CustomerReviewOffersModal({
         </div>
 
         {/* Modal Scrollable Body */}
-        <div className="overflow-y-auto p-4 sm:p-6 space-y-4 flex-1">
+        <div className="overflow-y-auto p-4 sm:p-6 space-y-4 flex-1 scrollbar-none no-scrollbar">
           {/* Quick Job Context Strip */}
           <div className="p-3.5 sm:p-4 rounded-2xl bg-white border border-[#E2E8F0] shadow-2xs space-y-2">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
@@ -280,7 +280,7 @@ export function CustomerReviewOffersModal({
                           {worker.isCnicVerified && (
                             <span
                               className="absolute bottom-0.5 right-0.5 rtl:right-auto rtl:left-0.5 size-4 rounded-full bg-[#16A34A] text-white flex items-center justify-center ring-2 ring-white"
-                              title={isUrdu ? "نادرا تصدیق شدہ کاریگر" : "NADRA Verified Pro"}
+                              title={isUrdu ? "تصدیق شدہ کاریگر" : "Verified Pro"}
                             >
                               <CheckCircle2 className="size-3" />
                             </span>
@@ -293,10 +293,12 @@ export function CustomerReviewOffersModal({
                             <h4 className="text-sm sm:text-base font-bold text-[#1A1A2E]">
                               {worker.name}
                             </h4>
-                            <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full bg-[#0F766E]/10 text-[#0F766E] text-[10px] font-bold">
-                              <ShieldCheck className="size-3" />
-                              <span>{isUrdu ? "تصدیق شدہ پرو" : "Verified Pro"}</span>
-                            </span>
+                            {worker.isCnicVerified && (
+                              <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full bg-[#0F766E]/10 text-[#0F766E] text-[10px] font-bold">
+                                <ShieldCheck className="size-3" />
+                                <span>{isUrdu ? "تصدیق شدہ پرو" : "Verified Pro"}</span>
+                              </span>
+                            )}
                           </div>
 
                           {worker.businessName && (
@@ -371,7 +373,7 @@ export function CustomerReviewOffersModal({
                       {worker.isCnicVerified && (
                         <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg text-[11px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-100">
                           <ShieldCheck className="size-3 text-emerald-600" />
-                          <span>{isUrdu ? "نادرا سی این آئی سی تصدیق شدہ" : "NADRA CNIC Cleared"}</span>
+                          <span>{isUrdu ? "تصدیق شدہ" : "Verified"}</span>
                         </span>
                       )}
                     </div>
@@ -417,15 +419,21 @@ export function CustomerReviewOffersModal({
                         </button>
 
                         {/* Decline / Reject Offer */}
-                        <button
-                          type="button"
-                          onClick={() => setDecliningOfferId(offer.id)}
-                          className="py-2.5 px-3 rounded-xl bg-white hover:bg-red-50 text-slate-500 hover:text-red-600 font-semibold text-xs transition-colors flex items-center justify-center gap-1 border border-slate-200 hover:border-red-200 cursor-pointer"
-                          title={isUrdu ? "آفر مسترد کریں" : "Decline Offer"}
-                        >
-                          <Trash2 className="size-3.5" />
-                          <span className="hidden sm:inline">{isUrdu ? "مسترد کریں" : "Decline"}</span>
-                        </button>
+                        {!offer.isDeclined ? (
+                          <button
+                            type="button"
+                            onClick={() => setDecliningOfferId(offer.id)}
+                            className="py-2.5 px-3 rounded-xl bg-white hover:bg-red-50 text-slate-500 hover:text-red-600 font-semibold text-xs transition-colors flex items-center justify-center gap-1 border border-slate-200 hover:border-red-200 cursor-pointer"
+                            title={isUrdu ? "آفر مسترد کریں" : "Decline Offer"}
+                          >
+                            <Trash2 className="size-3.5" />
+                            <span className="hidden sm:inline">{isUrdu ? "مسترد کریں" : "Decline"}</span>
+                          </button>
+                        ) : (
+                          <span className="px-2.5 py-1 rounded-xl text-xs font-bold text-red-600 bg-red-50 border border-red-200 flex items-center">
+                            {isUrdu ? "مسترد شدہ" : "Declined"}
+                          </span>
+                        )}
 
                         {/* Confirm Booking */}
                         <button
@@ -477,8 +485,8 @@ export function CustomerReviewOffersModal({
             <ShieldCheck className="size-4 text-[#16A34A] shrink-0" />
             <span className="hidden sm:inline">
               {isUrdu
-                ? "نادرا تصدیق شدہ کاریگر اور شفاف فکسڈ وزٹ فیس"
-                : "NADRA verified technicians with doorstep security PIN"}
+                ? "تصدیق شدہ کاریگر اور شفاف فکسڈ وزٹ فیس"
+                : "Verified technicians with doorstep security PIN"}
             </span>
           </div>
 

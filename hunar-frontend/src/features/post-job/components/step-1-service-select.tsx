@@ -7,6 +7,7 @@ import {
   CATEGORY_OPTIONS,
   CategoryOption,
   POPULAR_SEARCH_TAGS,
+  createCustomCategoryOption,
 } from "../data/categories";
 import type { PostJobData, ServiceCategory } from "../types";
 import { fetchServiceCategories, BackendCategory, CATEGORY_ID_MAP } from "../api/post-job-api";
@@ -41,10 +42,11 @@ export function Step1ServiceSelect({
     };
   }, []);
 
-  // Merge live database visit fees into category options, filtering out deactivated ones
+  // Merge live database visit fees into category options, filtering out deactivated ones, and including dynamic admin-created categories
   const resolvedCategoryOptions = useMemo(() => {
     if (!backendCategories.length) return CATEGORY_OPTIONS;
-    return CATEGORY_OPTIONS.filter((cat) => {
+
+    const matchedPresets = CATEGORY_OPTIONS.filter((cat) => {
       return backendCategories.some(
         (b) =>
           b.id.toLowerCase() === cat.id.toLowerCase() ||
@@ -68,6 +70,20 @@ export function Step1ServiceSelect({
       }
       return cat;
     });
+
+    const seenNames = new Set(matchedPresets.map((p) => p.name.toLowerCase()));
+    const customCats: CategoryOption[] = backendCategories
+      .filter((b) => !seenNames.has(b.name.toLowerCase()))
+      .map((b) =>
+        createCustomCategoryOption(
+          b.id,
+          b.name,
+          b.nameUrdu || undefined,
+          b.defaultVisitCharge || 500
+        )
+      );
+
+    return [...matchedPresets, ...customCats];
   }, [backendCategories]);
 
   // Filtered categories based on search
@@ -78,22 +94,24 @@ export function Step1ServiceSelect({
       (cat) =>
         cat.name.toLowerCase().includes(q) ||
         (isUrdu && cat.urduName.includes(q)) ||
-        cat.subtitle.toLowerCase().includes(q) ||
-        cat.subCategories.some((sub) => sub.toLowerCase().includes(q))
+        cat.subtitle.toLowerCase().includes(q)
     );
   }, [searchQuery, isUrdu, resolvedCategoryOptions]);
 
   const selectedCategory = resolvedCategoryOptions.find(
-    (c) => c.id === data.category
+    (c) =>
+      c.id.toLowerCase() === data.category.toLowerCase() ||
+      (CATEGORY_ID_MAP[c.id.toLowerCase()] &&
+        CATEGORY_ID_MAP[c.id.toLowerCase()] === data.category) ||
+      (CATEGORY_ID_MAP[data.category.toLowerCase()] &&
+        CATEGORY_ID_MAP[data.category.toLowerCase()] === c.id)
   );
 
   const handleSelectCategory = (cat: CategoryOption) => {
     const isNew = data.category !== cat.id;
     onChange({
       category: cat.id,
-      subCategory: isNew
-        ? cat.subCategories[0] || ""
-        : data.subCategory || cat.subCategories[0] || "",
+      subCategory: "",
       title: data.title || "",
       description: data.description || "",
       suggestedVisitFee:
@@ -110,8 +128,8 @@ export function Step1ServiceSelect({
     if (targetCategory) {
       onChange({
         category: tag.category as ServiceCategory,
-        subCategory: tag.subCategory,
-        title: data.title ? data.title : tag.subCategory,
+        subCategory: "",
+        title: isUrdu && tag.urduLabel ? tag.urduLabel : tag.label,
         description: data.description || "",
         suggestedVisitFee: targetCategory.suggestedFee,
       });
@@ -226,41 +244,6 @@ export function Step1ServiceSelect({
           );
         })}
       </div>
-
-      {/* Subcategory Selector when Category is Selected */}
-      {selectedCategory && (
-        <div className="w-full max-w-3xl lg:max-w-5xl xl:max-w-6xl mx-auto p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2.5 animate-in fade-in-50 duration-200">
-          <div className="flex items-center justify-between flex-wrap gap-1">
-            <span className="text-xs font-extrabold text-[#123B5D]">
-              {isUrdu
-                ? `${selectedCategory.urduName} میں مخصوص کام:`
-                : `Specific task in ${selectedCategory.name}:`}
-            </span>
-            <span className="text-[11px] text-slate-600 font-medium">
-              {isUrdu ? "ایک منتخب کریں یا اگلے قدم پر اپنی مرضی سے لکھیں" : "Select one or type custom details in next step"}
-            </span>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {selectedCategory.subCategories.map((sub) => {
-              const isSubSelected = data.subCategory === sub;
-              return (
-                <button
-                  key={sub}
-                  type="button"
-                  onClick={() => onChange({ subCategory: sub, title: sub })}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
-                    isSubSelected
-                      ? "bg-[#0F8B8D] text-white border-[#0F8B8D] shadow-2xs"
-                      : "bg-white text-slate-700 border-slate-200 hover:border-[#0F8B8D]/50 hover:bg-slate-50"
-                  }`}
-                >
-                  {sub}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      )}
 
       {/* Fixed Bottom Action Bar */}
       <div className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200 py-3 sm:py-3.5 shadow-[0_-4px_20px_rgba(0,0,0,0.08)]">

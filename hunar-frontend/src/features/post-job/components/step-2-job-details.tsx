@@ -12,7 +12,11 @@ import {
   Upload,
 } from "lucide-react";
 import { useLocale } from "next-intl";
-import { CATEGORY_OPTIONS } from "../data/categories";
+import {
+  CATEGORY_OPTIONS,
+  createCustomCategoryOption,
+  resolveCategoryOption,
+} from "../data/categories";
 import type { PostJobData } from "../types";
 import { VoiceNoteRecorder } from "./voice-note-recorder";
 import { compressImage } from "@/lib/image-compression";
@@ -23,6 +27,8 @@ interface Step2JobDetailsProps {
   onNext: () => void;
   onBack: () => void;
 }
+
+const MAX_PHOTOS = 3;
 
 export function Step2JobDetails({
   data,
@@ -36,7 +42,16 @@ export function Step2JobDetails({
   const [error, setError] = useState<string | null>(null);
   const [isCompressing, setIsCompressing] = useState(false);
 
-  const selectedCategory = CATEGORY_OPTIONS.find((c) => c.id === data.category);
+  const hasText = Boolean(data.description.trim());
+  const hasVoice = Boolean(data.voiceNoteUrl);
+  const hasExplanation = hasText || hasVoice;
+
+  const selectedCategory =
+    CATEGORY_OPTIONS.find((c) => c.id === data.category) ||
+    resolveCategoryOption(data.category) ||
+    (data.category
+      ? createCustomCategoryOption(data.category, data.title || data.category)
+      : undefined);
   const Icon = selectedCategory?.icon || Layers;
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -47,7 +62,7 @@ export function Step2JobDetails({
     try {
       const newPhotos: string[] = [...data.photos];
       for (let i = 0; i < files.length; i++) {
-        if (newPhotos.length >= 5) break;
+        if (newPhotos.length >= MAX_PHOTOS) break;
         const file = files[i];
         // Downscale & compress to ~150KB before creating persistent data URL
         const compressedBlob = await compressImage(file, {
@@ -81,8 +96,12 @@ export function Step2JobDetails({
       setError(isUrdu ? "برائے مہربانی کام کا عنوان درج کریں۔" : "Please provide a title for the job request.");
       return;
     }
-    if (!data.description.trim()) {
-      setError(isUrdu ? "برائے مہربانی کام کی تفصیلی وضاحت درج کریں۔" : "Please provide a brief description of what needs repair or installation.");
+    if (!data.description.trim() && !data.voiceNoteUrl) {
+      setError(
+        isUrdu
+          ? "برائے مہربانی کام کی تفصیلی وضاحت درج کریں یا وائس نوٹ ریکارڈ کریں۔"
+          : "Please provide a brief description or record a voice note."
+      );
       return;
     }
     setError(null);
@@ -107,6 +126,7 @@ export function Step2JobDetails({
         </div>
       )}
 
+
       {/* Main Two-Column Desktop / Single-Column Mobile Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-6 items-start">
         {/* Left Column: Job Details */}
@@ -120,62 +140,19 @@ export function Step2JobDetails({
                 >
                   <Icon className="size-5 stroke-[2.2]" />
                 </div>
-                <div>
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="text-sm sm:text-base font-extrabold text-[#123B5D]">
-                      {isUrdu ? selectedCategory.urduName : selectedCategory.name}
-                    </span>
-                    <button
-                      type="button"
-                      onClick={onBack}
-                      className="text-[11px] font-bold text-[#0F8B8D] hover:underline inline-flex items-center gap-1 cursor-pointer bg-white hover:bg-slate-100 border border-slate-200 px-2 py-0.5 rounded-md transition-colors"
-                    >
-                      <Edit2 className="size-2.5" />
-                      <span>{isUrdu ? "سروس تبدیل کریں" : "Change Service"}</span>
-                    </button>
-                  </div>
-                  <p className="text-[11px] text-slate-600 font-semibold mt-0.5">
-                    {data.subCategory || selectedCategory.subtitle}
-                  </p>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-sm sm:text-base font-extrabold text-[#123B5D]">
+                    {isUrdu ? selectedCategory.urduName : selectedCategory.name}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={onBack}
+                    className="text-[11px] font-bold text-[#0F8B8D] hover:underline inline-flex items-center gap-1 cursor-pointer bg-white hover:bg-slate-100 border border-slate-200 px-2 py-0.5 rounded-md transition-colors"
+                  >
+                    <Edit2 className="size-2.5" />
+                    <span>{isUrdu ? "سروس تبدیل کریں" : "Change Service"}</span>
+                  </button>
                 </div>
-              </div>
-            </div>
-          )}
-
-          {/* Quick Subcategory Switcher Chips */}
-          {selectedCategory && selectedCategory.subCategories.length > 0 && (
-            <div className="space-y-1.5 pt-0.5">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-extrabold text-slate-700">
-                  {isUrdu ? "عام مسائل:" : "Common issues:"}
-                </span>
-                <span className="text-[10px] text-slate-500 font-medium sm:hidden">
-                  {isUrdu ? "مزید کے لیے سکرول کریں ←" : "Swipe for more →"}
-                </span>
-              </div>
-              <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
-                {selectedCategory.subCategories.map((sub) => {
-                  const isCurrent = data.subCategory === sub;
-                  return (
-                    <button
-                      key={sub}
-                      type="button"
-                      onClick={() =>
-                        onChange({
-                          subCategory: sub,
-                          title: !data.title || data.title.trim() === "" ? sub : data.title,
-                        })
-                      }
-                      className={`px-3 py-1 rounded-lg text-xs font-bold whitespace-nowrap shrink-0 transition-all cursor-pointer ${
-                        isCurrent
-                          ? "bg-[#0F8B8D] text-white shadow-2xs"
-                          : "bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200"
-                      }`}
-                    >
-                      {sub}
-                    </button>
-                  );
-                })}
               </div>
             </div>
           )}
@@ -213,7 +190,21 @@ export function Step2JobDetails({
                   htmlFor="job-description"
                   className="block text-sm sm:text-base font-extrabold text-[#123B5D]"
                 >
-                  {isUrdu ? "تفصیلی وضاحت" : "Detailed Description"} <span className="text-red-500">*</span>
+                  {isUrdu ? "تفصیلی وضاحت" : "Detailed Description"}{" "}
+                  {hasVoice ? (
+                    <span className="text-xs font-semibold text-emerald-600">
+                      ({isUrdu ? "اختیاری — وائس نوٹ منسلک ہے ✓" : "Optional — Voice note attached ✓"})
+                    </span>
+                  ) : hasText ? (
+                    <span className="text-xs font-semibold text-emerald-600">
+                      (✓ {isUrdu ? "مکمل ہے" : "Complete"})
+                    </span>
+                  ) : (
+                    <span className="text-xs font-bold text-amber-700">
+                      <span className="text-red-500">*</span>{" "}
+                      ({isUrdu ? "تفصیل یا وائس نوٹ درکار ہے" : "Text or voice note required"})
+                    </span>
+                  )}
                 </label>
                 <span className="text-xs text-slate-600 font-bold" suppressHydrationWarning>
                   {data.description.length} / 1000
@@ -250,7 +241,7 @@ export function Step2JobDetails({
         <div className="lg:col-span-5 bg-white rounded-2xl border border-slate-200 shadow-2xs p-4 sm:p-6 space-y-4">
           <div>
             <h2 className="text-base sm:text-lg font-extrabold text-[#123B5D]">
-              {isUrdu ? "تصاویر یا وائس نوٹ شامل کریں (اختیاری)" : "Add Media (Optional)"}
+              {isUrdu ? "تصاویر اور وائس نوٹ" : "Photos & Voice Note"}
             </h2>
             <p className="text-xs text-slate-500 font-medium mt-0.5">
               {isUrdu
@@ -291,7 +282,7 @@ export function Step2JobDetails({
                       {isUrdu ? "تصاویر اپلوڈ کریں" : "Upload Photos"}
                     </span>
                     <p className="text-[10px] sm:text-[11px] text-slate-600 font-medium">
-                      {isUrdu ? "زیادہ سے زیادہ 5 تصاویر" : "PNG, JPG up to 5 photos"}
+                      {isUrdu ? `اختیاری · زیادہ سے زیادہ ${MAX_PHOTOS} تصاویر` : `Optional · PNG, JPG up to ${MAX_PHOTOS} photos`}
                     </p>
                   </div>
                 </div>
@@ -299,9 +290,9 @@ export function Step2JobDetails({
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-bold text-slate-700">
-                      {isUrdu ? `منسلک تصاویر (${data.photos.length}/5)` : `Photos (${data.photos.length}/5)`}
+                      {isUrdu ? `منسلک تصاویر (اختیاری - ${data.photos.length}/${MAX_PHOTOS})` : `Photos (Optional - ${data.photos.length}/${MAX_PHOTOS})`}
                     </span>
-                    {data.photos.length < 5 && (
+                    {data.photos.length < MAX_PHOTOS && (
                       <button
                         type="button"
                         onClick={() => fileInputRef.current?.click()}
@@ -312,7 +303,7 @@ export function Step2JobDetails({
                       </button>
                     )}
                   </div>
-                  <div className="flex gap-1.5 overflow-x-auto pb-1">
+                  <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-none no-scrollbar">
                     {data.photos.map((url, index) => (
                       <div
                         key={index}
@@ -340,6 +331,24 @@ export function Step2JobDetails({
 
             {/* Voice Note Recorder */}
             <div className="rounded-2xl bg-slate-50 border border-slate-200 p-3 sm:p-4 min-h-[140px] flex flex-col justify-between">
+              <div className="flex items-center justify-between pb-2">
+                <span className="text-xs font-extrabold text-[#123B5D]">
+                  {isUrdu ? "وائس نوٹ" : "Voice Note"}
+                </span>
+                {hasVoice ? (
+                  <span className="text-[10.5px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-md">
+                    ✓ {isUrdu ? "منسلک ہے" : "Recorded"}
+                  </span>
+                ) : hasText ? (
+                  <span className="text-[10.5px] font-bold text-slate-500 bg-slate-100 border border-slate-200 px-2 py-0.5 rounded-md">
+                    {isUrdu ? "اختیاری (تفصیل درج ہے)" : "Optional (Text provided)"}
+                  </span>
+                ) : (
+                  <span className="text-[10.5px] font-bold text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-md">
+                    {isUrdu ? "تفصیل یا وائس نوٹ درکار ہے *" : "Voice or Text required *"}
+                  </span>
+                )}
+              </div>
               <VoiceNoteRecorder
                 voiceNoteUrl={data.voiceNoteUrl}
                 duration={data.voiceNoteDuration}

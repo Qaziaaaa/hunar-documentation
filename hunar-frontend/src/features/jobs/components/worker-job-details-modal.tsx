@@ -24,7 +24,6 @@ import {
   Play,
   Pause,
   Volume2,
-  ShieldCheck,
   Navigation,
   CheckCircle2,
   Star,
@@ -32,6 +31,7 @@ import {
   Sparkles,
   AlertTriangle,
   ExternalLink,
+  Zap,
 } from "lucide-react";
 
 interface WorkerJobDetailsModalProps {
@@ -125,7 +125,7 @@ export function WorkerJobDetailsModal({
               <span className="px-2.5 py-0.5 rounded-lg bg-[#0F8B8D]/10 text-[#0F8B8D] font-extrabold text-[11px] uppercase tracking-wider border border-[#0F8B8D]/20">
                 {job.category}
               </span>
-              {job.urgency === "emergency" && (
+              {!isCompleted && job.status !== "completed" && job.urgency === "emergency" && (
                 <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg bg-rose-50 text-rose-600 font-extrabold text-[11px] uppercase tracking-wider border border-rose-200">
                   <AlertTriangle className="size-3" />
                   <span>Emergency</span>
@@ -186,8 +186,12 @@ export function WorkerJobDetailsModal({
                           : "bg-slate-100 text-slate-700 border border-slate-200"
                       }`}
                     >
-                      <Calendar className="size-3" />
-                      <span>{job.preferredVisitWindow.date} ({job.preferredVisitWindow.timeSlot})</span>
+                      {job.preferredVisitWindow.timeSlot.includes("Immediate") || (job as any).isUrgent ? (
+                        <Zap className="size-3 fill-current text-amber-600" />
+                      ) : (
+                        <Calendar className="size-3" />
+                      )}
+                      <span>{job.preferredVisitWindow.date} ({job.preferredVisitWindow.timeSlot.replace(/^⚡\s*/, "")})</span>
                     </span>
                   </div>
                 </div>
@@ -259,11 +263,6 @@ export function WorkerJobDetailsModal({
                       <div className="text-xl sm:text-2xl font-black text-[#123B5D] mt-0.5">
                         {formatRs(isCompleted ? (job.workerNetEarnings ?? (agreedVisitCharge - Math.round(agreedVisitCharge * 0.1))) : agreedVisitCharge)}
                       </div>
-                    </div>
-
-                    <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#0F8B8D]/10 border border-[#0F8B8D]/20 shadow-2xs text-[11px] font-bold text-[#0F8B8D]">
-                      <ShieldCheck className="size-4 text-[#0F8B8D]" />
-                      <span>Guaranteed</span>
                     </div>
                   </div>
                   <p className="text-[11px] text-slate-500 font-medium leading-relaxed">

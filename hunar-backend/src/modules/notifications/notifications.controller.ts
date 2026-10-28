@@ -1,10 +1,11 @@
-import { Body, Controller, Get, Param, ParseUUIDPipe, Patch, Put, Query } from '@nestjs/common';
+import { Body, Controller, Get, Optional, Param, ParseUUIDPipe, Patch, Put, Query } from '@nestjs/common';
 import { Role } from '@prisma/client';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { JwtPayload } from '../../common/types/jwt-payload.interface';
 import { NotificationsService } from './notifications.service';
 import { NotificationListQueryDto } from './notification.validation';
+import { RedisService } from '../../common/redis/redis.service';
 
 /**
  * Notification inbox (Task 6 worker + Task 24 customer).
@@ -13,7 +14,10 @@ import { NotificationListQueryDto } from './notification.validation';
  */
 @Controller('notifications')
 export class NotificationsController {
-  constructor(private readonly notifications: NotificationsService) {}
+  constructor(
+    private readonly notifications: NotificationsService,
+    @Optional() private readonly redis?: RedisService,
+  ) {}
 
   /** Paginated inbox, newest first, with total + unread counts. */
   @Get()
@@ -56,26 +60,41 @@ export class NotificationsController {
   /** Notification preferences (GET /notifications/preferences) */
   @Get('preferences')
   @Roles(Role.WORKER, Role.CUSTOMER)
-  getPreferences(@CurrentUser() user: JwtPayload) {
-    return {
+  async getPreferences(@CurrentUser() user: JwtPayload) {
+    const defaultPrefs = {
       pushEnabled: true,
       smsEnabled: true,
       inAppEnabled: true,
       jobAlerts: true,
       chatAlerts: true,
     };
+    if (this.redis) {
+      const cached = await this.redis.get(`notif_prefs:${user.sub}`);
+      if (cached) {
+        try {
+          return { ...defaultPrefs, ...JSON.parse(cached) };
+        } catch {}
+      }
+    }
+    return defaultPrefs;
   }
 
   /** Update notification preferences (PUT /notifications/preferences) */
   @Put('preferences')
   @Roles(Role.WORKER, Role.CUSTOMER)
-  updatePreferences(@CurrentUser() user: JwtPayload, @Body() body: any) {
-    return {
-      pushEnabled: Boolean(body?.pushEnabled ?? true),
-      smsEnabled: Boolean(body?.smsEnabled ?? true),
-      inAppEnabled: Boolean(body?.inAppEnabled ?? true),
-      jobAlerts: Boolean(body?.jobAlerts ?? true),
-      chatAlerts: Boolean(body?.chatAlerts ?? true),
+  async updatePreferences(@CurrentUser() user: JwtPayload, @Body() body: any) {
+    const current = await this.getPreferences(user);
+    const updated = {
+      ...current,
+      pushEnabled: Boolean(body?.pushEnabled ?? current.pushEnabled),
+      smsEnabled: Boolean(body?.smsEnabled ?? current.smsEnabled),
+      inAppEnabled: Boolean(body?.inAppEnabled ?? current.inAppEnabled),
+      jobAlerts: Boolean(body?.jobAlerts ?? current.jobAlerts),
+      chatAlerts: Boolean(body?.chatAlerts ?? current.chatAlerts),
     };
+    if (this.redis) {
+      await this.redis.set(`notif_prefs:${user.sub}`, JSON.stringify(updated));
+    }
+    return updated;
   }
 }

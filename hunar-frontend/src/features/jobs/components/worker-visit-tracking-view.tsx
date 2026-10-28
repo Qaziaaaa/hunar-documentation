@@ -1018,7 +1018,7 @@ export function WorkerVisitTrackingView({
       {/* ======================================================== */}
       {/* 3B. DESKTOP SIDEBAR CONTROL PANEL (Shown only on lg+) */}
       {/* ======================================================== */}
-      <aside className="hidden lg:flex lg:w-[420px] xl:w-[460px] h-full bg-white border-l border-slate-200/90 flex-col justify-between p-6 z-30 shadow-xl overflow-y-auto">
+      <aside className="hidden lg:flex lg:w-[420px] xl:w-[460px] h-full bg-white border-l border-slate-200/90 flex-col justify-between p-6 z-30 shadow-xl overflow-y-auto scrollbar-none no-scrollbar">
         <div className="space-y-6">
           {/* Top Title Bar */}
           <div className="flex items-center justify-between border-b border-slate-100 pb-4">

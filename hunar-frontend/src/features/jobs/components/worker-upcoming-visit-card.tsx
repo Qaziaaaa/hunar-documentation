@@ -18,6 +18,7 @@ import {
   MapPin,
   Navigation,
   Eye,
+  Zap,
 } from "lucide-react";
 
 interface WorkerUpcomingVisitCardProps {
@@ -66,6 +67,11 @@ export function WorkerUpcomingVisitCard({
 
   const isToday =
     job.preferredVisitWindow.date.toLowerCase().includes("today");
+  const isImmediateSlot =
+    job.preferredVisitWindow.timeSlot.includes("Immediate") ||
+    Boolean((job as any).isUrgent) ||
+    job.urgency === "emergency" ||
+    job.urgency === "EMERGENCY";
 
   return (
     <>
@@ -88,9 +94,17 @@ export function WorkerUpcomingVisitCard({
                 <span>{job.preferredVisitWindow.date}</span>
               </span>
 
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] sm:text-[11px] font-bold bg-slate-100 text-slate-700">
-                <Clock className="size-3" />
-                <span className="truncate max-w-[130px] sm:max-w-none">{job.preferredVisitWindow.timeSlot}</span>
+              <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] sm:text-[11px] font-bold ${
+                isImmediateSlot
+                  ? "bg-amber-50 text-amber-700 border border-amber-200"
+                  : "bg-slate-100 text-slate-700"
+              }`}>
+                {isImmediateSlot ? (
+                  <Zap className="size-3 fill-current text-amber-600" />
+                ) : (
+                  <Clock className="size-3" />
+                )}
+                <span className="truncate max-w-[130px] sm:max-w-none">{job.preferredVisitWindow.timeSlot.replace(/^⚡\s*/, "")}</span>
               </span>
             </div>
 
@@ -105,7 +119,7 @@ export function WorkerUpcomingVisitCard({
               <span className="px-2 py-0.5 rounded-lg bg-[#0F8B8D]/10 text-[#0F8B8D] font-bold text-[10px] uppercase tracking-wider border border-[#0F8B8D]/20">
                 {job.category}
               </span>
-              {job.urgency === "emergency" && (
+              {job.status !== "completed" && job.urgency === "emergency" && (
                 <span className="px-2 py-0.5 rounded-lg bg-rose-50 text-rose-600 font-bold text-[10px] uppercase tracking-wider border border-rose-100">
                   {isUrdu ? "ارجنٹ" : "Priority"}
                 </span>

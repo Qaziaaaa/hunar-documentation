@@ -187,9 +187,15 @@ export function CustomerSignupFlow() {
         <button
           type="button"
           onClick={() => router.push(getSafeRedirect(redirectParam))}
-          className="mt-6 w-full py-3 px-4 rounded-xl bg-teal-700 text-white font-semibold text-sm hover:bg-teal-800 transition-colors shadow-xs"
+          className="mt-6 w-full py-3 px-4 rounded-xl bg-teal-700 text-white font-semibold text-sm hover:bg-teal-800 transition-colors shadow-xs cursor-pointer"
         >
-          {isUrdu ? "کسٹمر ڈیش بورڈ پر جائیں" : "Go to Customer Dashboard"}
+          {redirectParam && (redirectParam.includes("post-job") || redirectParam.includes("resume"))
+            ? isUrdu
+              ? "جاب پوسٹ مکمل کریں"
+              : "Continue Posting Job"
+            : isUrdu
+            ? "کسٹمر ڈیش بورڈ پر جائیں"
+            : "Go to Customer Dashboard"}
         </button>
       </div>
     );

@@ -28,7 +28,7 @@ export function LeftShowcase() {
     >
       <div className="flex h-full flex-col justify-between rounded-3xl border border-teal-200/50 bg-gradient-to-b from-[#0F8B8D]/10 via-[#0F8B8D]/5 to-transparent p-4 lg:p-5 xl:p-7 shadow-xs">
         <div>
-          {/* Header Branding and Escrow Badge */}
+          {/* Header Branding and Pro Badge */}
           <div className="mb-3.5 lg:mb-4 flex items-center justify-between gap-2">
             <div className="flex flex-col gap-0.5">
               <WorkerFixLogo variant="dark" size="sm" />
@@ -37,7 +37,7 @@ export function LeftShowcase() {
               </span>
             </div>
             <span className="inline-flex items-center rounded-full border border-teal/20 bg-teal/10 px-2.5 py-0.5 text-xs font-bold text-teal">
-              {t("badgeEscrow")}
+              {t("badgePro")}
             </span>
           </div>
 
@@ -132,7 +132,7 @@ export function LeftShowcase() {
           </span>
           <span className="inline-flex items-center gap-1.5 text-success">
             <ShieldCheck className="size-4 text-success" />
-            {t("escrowProtection")}
+            {t("payoutProtection")}
           </span>
         </div>
       </div>

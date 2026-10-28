@@ -53,9 +53,9 @@ export const MOCK_FAQS: FaqItem[] = [
   {
     id: "faq-safety-2",
     category: "safety",
-    question: "Are all technicians NADRA CNIC verified and background checked?",
+    question: "Are all technicians verified and background checked?",
     answer:
-      "Yes, 100%. Every technician on WorkerFIX undergoes strict biometric NADRA CNIC verification, police background checks, hands-on trade skill testing, and phone verification before being admitted to our verified network.",
+      "Yes, 100%. Every technician on WorkerFIX undergoes strict identity document verification, hands-on trade skill testing, and phone verification before being admitted to our verified network.",
     badge: "100% Verified",
     isPopular: true,
   },

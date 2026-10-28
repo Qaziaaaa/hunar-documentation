@@ -68,7 +68,7 @@ export function CustomerRepairQuoteModal({
           : "Repair quote accepted! The technician has been notified to proceed with the repair work."
       );
     } catch (err: any) {
-      console.error("[CustomerRepairQuoteModal] accept error:", err);
+      console.warn("[CustomerRepairQuoteModal] accept error:", err);
       setErrorMessage(
         err?.message ||
           (isUrdu
@@ -93,7 +93,7 @@ export function CustomerRepairQuoteModal({
           : "Repair quote declined. Only the diagnostic visit fee will be applicable upon visit completion."
       );
     } catch (err: any) {
-      console.error("[CustomerRepairQuoteModal] reject error:", err);
+      console.warn("[CustomerRepairQuoteModal] reject error:", err);
       setErrorMessage(
         err?.message ||
           (isUrdu
