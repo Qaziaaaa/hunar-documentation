@@ -37,7 +37,7 @@ export class VisitsService {
   private async assertVisitAccess(visitId: string, user: JwtPayload) {
     const include = {
       job: true,
-      worker: { select: { id: true, name: true, phone: true } },
+      worker: { select: { id: true, name: true, phone: true, avatarUrl: true } },
       offer: { select: { id: true, visitCharge: true, status: true } },
     };
     let visit = await this.prisma.visit.findUnique({

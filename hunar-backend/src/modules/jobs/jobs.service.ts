@@ -242,10 +242,27 @@ export class JobsService {
       await this.redis.delPattern('perf:jobs:available:*');
     }
 
-    const customer = await this.prisma.user.findUnique({
-      where: { id: customerId },
-      select: { id: true, name: true, avatarUrl: true },
-    });
+    const [customer, customerReviewStats, customerOrderCount] = await Promise.all([
+      this.prisma.user.findUnique({
+        where: { id: customerId },
+        select: { id: true, name: true, avatarUrl: true },
+      }),
+      this.prisma.review.aggregate({
+        where: { revieweeId: customerId },
+        _avg: { rating: true },
+        _count: { _all: true },
+      }),
+      this.prisma.serviceRequest.count({
+        where: { customerId, status: { in: ['COMPLETED', 'PAID', 'REVIEWED', 'VISIT_COMPLETED'] } },
+      }),
+    ]);
+
+    const reviewCount = customerReviewStats._count._all ?? 0;
+    const rating =
+      reviewCount > 0 && customerReviewStats._avg.rating != null
+        ? Number(customerReviewStats._avg.rating.toFixed(1))
+        : null;
+    const totalOrders = customerOrderCount ?? 0;
 
     const jobPayload = {
       jobId: job.id,
@@ -260,9 +277,9 @@ export class JobsService {
           id: customer?.id ?? customerId,
           name: customer?.name ?? 'Customer',
           avatarUrl: customer?.avatarUrl ?? '',
-          rating: 5.0,
-          reviewCount: 0,
-          totalOrders: 1,
+          rating,
+          reviewCount,
+          totalOrders,
         },
         address: job.address,
         area: job.area,
@@ -328,7 +345,6 @@ export class JobsService {
           JobStatus.COMPLETED,
           JobStatus.PAID,
           JobStatus.REVIEWED,
-          JobStatus.CANCELLED,
         ],
       };
     } else if (query.status) {
@@ -431,8 +447,7 @@ export class JobsService {
         s === JobStatus.VISIT_COMPLETED ||
         s === JobStatus.COMPLETED ||
         s === JobStatus.PAID ||
-        s === JobStatus.REVIEWED ||
-        s === JobStatus.CANCELLED
+        s === JobStatus.REVIEWED
       ) {
         completedCount += count;
       }
@@ -829,7 +844,7 @@ export class JobsService {
           0
         ) AS "customerReviewCount",
         COALESCE(
-          (SELECT COUNT(*)::int FROM "ServiceRequest" s_total WHERE s_total."customerId" = sr."customerId"),
+          (SELECT COUNT(*)::int FROM "ServiceRequest" s_total WHERE s_total."customerId" = sr."customerId" AND s_total."status" IN ('COMPLETED', 'PAID', 'REVIEWED', 'VISIT_COMPLETED')),
           0
         ) AS "customerTotalOrders",
         sr."latitude",
@@ -887,7 +902,7 @@ export class JobsService {
       selectedWorkerId: workerId,
       status: { in: ACTIVE_JOB_STATUSES },
     };
-    const [rows, total] = await this.prisma.$transaction([
+    const [rows, total, workerServiceAreas] = await this.prisma.$transaction([
       this.prisma.serviceRequest.findMany({
         where,
         skip,
@@ -911,8 +926,22 @@ export class JobsService {
         },
       }),
       this.prisma.serviceRequest.count({ where }),
+      this.prisma.serviceArea.findMany({
+        where: { userId: workerId },
+        select: { latitude: true, longitude: true },
+      }),
     ]);
     const items = rows.map((j) => {
+      let distanceKm: number | null = null;
+      if (j.latitude != null && j.longitude != null && workerServiceAreas.length > 0) {
+        const distances = workerServiceAreas.map((sa) =>
+          haversineKm(j.latitude, j.longitude, sa.latitude, sa.longitude),
+        );
+        const minDistance = Math.min(...distances);
+        if (Number.isFinite(minDistance) && minDistance > 0) {
+          distanceKm = Math.round(minDistance * 10) / 10;
+        }
+      }
       const repairCost =
         j.repairs?.[0]?.lockedAmount != null
           ? Number(j.repairs[0].lockedAmount)
@@ -945,6 +974,7 @@ export class JobsService {
         repairCharge: repairCost,
         customer: j.customer,
         offerCount: j._count?.offers ?? 0,
+        distanceKm,
         createdAt: j.createdAt,
       };
     });
@@ -958,7 +988,7 @@ export class JobsService {
       selectedWorkerId: workerId,
       status: { in: ['COMPLETED', 'PAID', 'REVIEWED', 'CANCELLED'] },
     };
-    const [rows, total] = await this.prisma.$transaction([
+    const [rows, total, workerServiceAreas] = await this.prisma.$transaction([
       this.prisma.serviceRequest.findMany({
         where,
         skip,
@@ -986,8 +1016,22 @@ export class JobsService {
         },
       }),
       this.prisma.serviceRequest.count({ where }),
+      this.prisma.serviceArea.findMany({
+        where: { userId: workerId },
+        select: { latitude: true, longitude: true },
+      }),
     ]);
     const items = rows.map((j) => {
+      let distanceKm: number | null = null;
+      if (j.latitude != null && j.longitude != null && workerServiceAreas.length > 0) {
+        const distances = workerServiceAreas.map((sa) =>
+          haversineKm(j.latitude, j.longitude, sa.latitude, sa.longitude),
+        );
+        const minDistance = Math.min(...distances);
+        if (Number.isFinite(minDistance) && minDistance > 0) {
+          distanceKm = Math.round(minDistance * 10) / 10;
+        }
+      }
       const repairCost =
         j.repairs?.[0]?.lockedAmount != null
           ? Number(j.repairs[0].lockedAmount)
@@ -1048,6 +1092,7 @@ export class JobsService {
             }
           : null,
         offerCount: j._count.offers,
+        distanceKm,
         createdAt: j.createdAt,
         completedAt: j.completedAt,
       };
@@ -1148,17 +1193,23 @@ export class JobsService {
 
     let distanceKm: number | null = null;
     if (lat != null && lng != null) {
-      if (job.latitude == null || job.longitude == null) {
-        distanceKm = 0;
-      } else {
-        const toRad = (deg: number) => (deg * Math.PI) / 180.0;
-        const sinHalfLat = Math.sin((toRad(job.latitude) - toRad(lat)) / 2);
-        const sinHalfLng = Math.sin((toRad(job.longitude) - toRad(lng)) / 2);
-        const h =
-          sinHalfLat * sinHalfLat +
-          Math.cos(toRad(job.latitude)) * Math.cos(toRad(lat)) * sinHalfLng * sinHalfLng;
-        const m = 3956 * 2 * Math.asin(Math.min(1, Math.sqrt(Math.max(0, h))));
-        distanceKm = m / 1000;
+      if (job.latitude != null && job.longitude != null) {
+        const dist = haversineKm(job.latitude, job.longitude, Number(lat), Number(lng));
+        distanceKm = Math.round(dist * 10) / 10;
+      }
+    } else if (user.role === Role.WORKER && job.latitude != null && job.longitude != null) {
+      const workerAreas = await this.prisma.serviceArea.findMany({
+        where: { userId: user.sub },
+        select: { latitude: true, longitude: true },
+      });
+      if (workerAreas.length > 0) {
+        const distances = workerAreas.map((sa) =>
+          haversineKm(job.latitude!, job.longitude!, sa.latitude, sa.longitude),
+        );
+        const minDistance = Math.min(...distances);
+        if (Number.isFinite(minDistance) && minDistance > 0) {
+          distanceKm = Math.round(minDistance * 10) / 10;
+        }
       }
     }
 
