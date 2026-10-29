@@ -153,6 +153,7 @@ export interface Job {
   customerReview?: {
     rating: number;
     comment: string;
+    tags?: string[];
     date: string;
   } | null;
 }
@@ -182,6 +183,7 @@ export interface JobRequest {
   customerReview?: {
     rating: number;
     comment: string;
+    tags?: string[];
     date: string;
   };
   visitCharge?: number;
