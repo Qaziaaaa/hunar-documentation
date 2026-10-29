@@ -13,6 +13,7 @@ export interface WorkerReview {
   rating: number;
   date: string;
   comment: string;
+  tags?: string[];
 }
 
 export interface WorkerWorkProject {
@@ -96,6 +97,7 @@ export interface CustomerJob {
     id?: string;
     rating: number;
     comment?: string;
+    tags?: string[];
     date?: string;
   } | null;
   cancelReason?: string;

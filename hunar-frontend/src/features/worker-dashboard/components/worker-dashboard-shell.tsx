@@ -5,6 +5,7 @@ import { useRouter, usePathname } from "@/i18n/navigation";
 import { useLocale } from "next-intl";
 import { Briefcase, WifiOff } from "lucide-react";
 import { ErrorState } from "@/components/shared/error-state";
+import { LoadingState } from "@/components/shared/loading-state";
 import { http, getAccessToken, getStoredUser, clearTokens, getRefreshToken } from "@/lib/api-client";
 import { connectSocket, disconnectSocket } from "@/lib/socket";
 import { timeAgo } from "@/lib/format";
@@ -216,6 +217,7 @@ export function WorkerDashboardShell({
   const pathname = usePathname();
   const locale = useLocale();
 
+  const [sessionReady, setSessionReady] = useState(false);
   const [profile, setProfile] = useState<WorkerDashboardProfile>(EMPTY_WORKER_PROFILE);
   const [isLoadingProfile, setIsLoadingProfile] = useState<boolean>(true);
   const [activeTab, setActiveTab] = useState<DashboardTab>(initialTab);
@@ -230,8 +232,25 @@ export function WorkerDashboardShell({
   const SHOW_RELEVANT_JOBS_KEY = "workerfix_show_relevant_jobs";
   const [showRelevantJobs, setShowRelevantJobs] = useState<boolean>(false);
 
-  // Sync profile & online status from client localStorage on mount to prevent hydration mismatch
+  // Enforce worker role and token authentication on worker routes
   useEffect(() => {
+    const token = getAccessToken("WORKER") || getRefreshToken("WORKER");
+    const user = getStoredUser("WORKER");
+    if (!token) {
+      router.replace("/worker/sign-in");
+      return;
+    }
+    if (user && user.role !== "WORKER") {
+      router.replace("/worker/sign-in");
+      return;
+    }
+    setSessionReady(true);
+  }, [router]);
+
+  // Sync profile & online status from client localStorage on mount once session is confirmed
+  useEffect(() => {
+    if (!sessionReady) return;
+
     const initial = loadInitialProfile();
     setProfile(initial.profile);
     setHasCachedProfile(initial.isLoaded);
@@ -247,7 +266,7 @@ export function WorkerDashboardShell({
         setShowRelevantJobs(val === "true");
       }
     } catch {}
-  }, []);
+  }, [sessionReady]);
 
   const handleToggleShowRelevantJobs = (enabled?: boolean) => {
     setShowRelevantJobs((prev) => {
@@ -277,7 +296,7 @@ export function WorkerDashboardShell({
       setActiveTab("reviews");
     } else if (pathname.includes("/worker/settings")) {
       setActiveTab("settings");
-    } else if (pathname.includes("/worker/dashboard") || pathname.endsWith("/worker")) {
+    } else if (pathname.includes("/worker/dashboard") || pathname.endsWith("/worker") || pathname.endsWith("/worker/")) {
       setActiveTab("dashboard");
     }
   }, [pathname]);
@@ -301,20 +320,6 @@ export function WorkerDashboardShell({
       router.push("/worker/settings");
     }
   };
-
-  // Enforce worker role and token authentication on worker routes
-  useEffect(() => {
-    const token = getAccessToken("WORKER") || getRefreshToken("WORKER");
-    const user = getStoredUser("WORKER");
-    if (!token) {
-      router.push("/worker/sign-in");
-      return;
-    }
-    if (user && user.role !== "WORKER") {
-      router.push("/worker/sign-in");
-      return;
-    }
-  }, [router]);
 
   // Sync profile & online status from live backend (fast: only profile & active jobs)
   const syncBackendProfile = useCallback(async (isRetry: boolean = false) => {
@@ -482,12 +487,13 @@ export function WorkerDashboardShell({
   }, []);
 
   useEffect(() => {
+    if (!sessionReady) return;
     const id = window.setTimeout(() => {
       void syncBackendProfile();
       void workerStore.hydrate();
     }, 0);
     return () => window.clearTimeout(id);
-  }, [syncBackendProfile]);
+  }, [sessionReady, syncBackendProfile]);
 
   const handleLogout = async () => {
     try {
@@ -501,20 +507,22 @@ export function WorkerDashboardShell({
         window.localStorage.removeItem(WORKER_PROFILE_CACHE_KEY);
       } catch {}
       disconnectSocket(true);
-      router.push("/worker/sign-in");
+      router.replace("/worker/sign-in");
     }
   };
 
   // Open the realtime socket (job matched / offer events) when running against the API
   useEffect(() => {
-    if (!getAccessToken()) return;
+    if (!sessionReady) return;
+    if (!getAccessToken("WORKER")) return;
     connectSocket();
     return () => disconnectSocket();
-  }, []);
+  }, [sessionReady]);
 
   // Load real notifications and keep them live over the socket
   useEffect(() => {
-    if (!getAccessToken()) return;
+    if (!sessionReady) return;
+    if (!getAccessToken("WORKER")) return;
     let cancelled = false;
     const fetchInbox = (retries = 1) => {
       getNotifications()
@@ -542,7 +550,7 @@ export function WorkerDashboardShell({
       cancelled = true;
       unsubscribe();
     };
-  }, []);
+  }, [sessionReady]);
 
   const handleToggleOnline = (targetStatus?: boolean) => {
     setProfile((prev) => {
@@ -633,6 +641,20 @@ export function WorkerDashboardShell({
       </div>
     );
   };
+
+  if (!sessionReady) {
+    return (
+      <div className="flex min-h-screen w-full items-center justify-center bg-white">
+        <LoadingState
+          label={
+            locale === "ur"
+              ? "ورکر سیشن کی تصدیق کی جا رہی ہے..."
+              : "Verifying worker session..."
+          }
+        />
+      </div>
+    );
+  }
 
   return (
     <div

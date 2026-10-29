@@ -506,7 +506,7 @@ export async function getCustomerJobVisitTracking(
         nameUr: workerObj.name || "ٹیکنیشن",
         businessName: workerObj.businessName || "Professional Technician",
         businessNameUr: workerObj.businessNameUr || "پیشہ ور کاریگر",
-        avatarUrl: workerObj.avatarUrl || workerObj.avatar || null,
+        avatarUrl: workerObj.avatarUrl || workerObj.avatar || (job as any)?.selectedWorker?.avatarUrl || null,
         phone: workerObj.phone || null,
         rating: Number(workerObj.rating || 0),
         totalReviews: Number(workerObj.totalReviews || 0),

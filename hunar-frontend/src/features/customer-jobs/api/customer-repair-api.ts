@@ -4,6 +4,7 @@ import type { JobCompletionData } from "../types";
 export interface ReviewSubmissionPayload {
   rating: number; // 1 to 5
   comment?: string;
+  tags?: string[];
   punctualityRating?: number;
   qualityRating?: number;
   behaviorRating?: number;
@@ -266,6 +267,9 @@ export async function submitJobReview(
   };
   if (payload.comment && payload.comment.trim().length > 0) {
     body.comment = payload.comment.trim();
+  }
+  if (Array.isArray(payload.tags) && payload.tags.length > 0) {
+    body.tags = payload.tags;
   }
   const res = await http.post<{ id?: string }>(`/jobs/${encodeURIComponent(cleanJobId)}/review`, body);
   return { success: true, reviewId: res?.id };

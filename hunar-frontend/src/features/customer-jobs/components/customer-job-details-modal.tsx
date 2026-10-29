@@ -25,6 +25,7 @@ import { useLocale } from "next-intl";
 import { useRouter } from "@/i18n/navigation";
 import { formatJobDate, formatPostedAt } from "@/lib/format";
 import { CustomerReviewModal } from "./customer-review-modal";
+import { VoicePlayer } from "@/features/worker-dashboard/components/voice-player";
 import type { CustomerJob } from "../types";
 
 interface CustomerJobDetailsModalProps {
@@ -46,10 +47,6 @@ export function CustomerJobDetailsModal({
   const locale = useLocale();
   const isUrdu = locale === "ur";
 
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-  const [isPlayingAudio, setIsPlayingAudio] = useState(false);
-  const [audioDuration, setAudioDuration] = useState<number | null>(null);
-  const [audioCurrentTime, setAudioCurrentTime] = useState<number>(0);
   const [previewPhoto, setPreviewPhoto] = useState<string | null>(null);
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
   const [currentJob, setCurrentJob] = useState<CustomerJob | null>(job);
@@ -57,19 +54,6 @@ export function CustomerJobDetailsModal({
   useEffect(() => {
     setCurrentJob(job);
   }, [job]);
-
-  // Reset audio state when job changes or modal closes
-  useEffect(() => {
-    if (!isOpen) {
-      if (audioRef.current) {
-        audioRef.current.pause();
-        audioRef.current.currentTime = 0;
-      }
-      setIsPlayingAudio(false);
-      setAudioCurrentTime(0);
-      setAudioDuration(null);
-    }
-  }, [isOpen, job?.voiceNoteUrl]);
 
   // Close on Escape key
   useEffect(() => {
@@ -93,65 +77,6 @@ export function CustomerJobDetailsModal({
       document.body.style.overflow = "";
     };
   }, [isOpen, onClose, previewPhoto]);
-
-  // Format seconds to mm:ss
-  const formatAudioDuration = (seconds?: number | null) => {
-    if (!seconds || isNaN(seconds) || !isFinite(seconds) || seconds <= 0) {
-      return job?.voiceNoteDuration ? `0:${String(job.voiceNoteDuration).padStart(2, "0")}` : "--:--";
-    }
-    const mins = Math.floor(seconds / 60);
-    const secs = Math.floor(seconds % 60);
-    return `${mins}:${String(secs).padStart(2, "0")}`;
-  };
-
-  const handleLoadedMetadata = () => {
-    const audio = audioRef.current;
-    if (!audio) return;
-
-    if (!isNaN(audio.duration) && isFinite(audio.duration) && audio.duration > 0) {
-      setAudioDuration(audio.duration);
-    } else if (audio.duration === Infinity) {
-      // Chrome MediaRecorder WebM bug: seeking near the end resolves true duration
-      const onSeeked = () => {
-        audio.removeEventListener("seeked", onSeeked);
-        if (!isNaN(audio.duration) && isFinite(audio.duration) && audio.duration > 0) {
-          setAudioDuration(audio.duration);
-        }
-        audio.currentTime = 0;
-      };
-      audio.addEventListener("seeked", onSeeked, { once: true });
-      audio.currentTime = 1e101;
-    }
-  };
-
-  const handleTimeUpdate = () => {
-    const audio = audioRef.current;
-    if (!audio) return;
-    setAudioCurrentTime(audio.currentTime);
-    if (!isNaN(audio.duration) && isFinite(audio.duration) && audio.duration > 0) {
-      setAudioDuration(audio.duration);
-    }
-  };
-
-  const handleAudioEnded = () => {
-    setIsPlayingAudio(false);
-    setAudioCurrentTime(0);
-  };
-
-  // Audio Playback Handler
-  const handleToggleAudio = () => {
-    if (!job?.voiceNoteUrl) return;
-    const audio = audioRef.current || (document.getElementById("job-modal-voice-player") as HTMLAudioElement | null);
-    if (!audio) return;
-
-    if (isPlayingAudio) {
-      audio.pause();
-      setIsPlayingAudio(false);
-    } else {
-      audio.play().catch(() => {});
-      setIsPlayingAudio(true);
-    }
-  };
 
   if (!isOpen || !job) return null;
 
@@ -179,6 +104,8 @@ export function CustomerJobDetailsModal({
                 <Wrench className="size-3.5" />
                 <span>{job.subCategory || job.category}</span>
               </span>
+
+
 
               {job.status === "receiving_offers" && (
                 <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-[#0F766E]/10 text-[#0F766E] border border-[#0F766E]/20">
@@ -253,7 +180,7 @@ export function CustomerJobDetailsModal({
             {/* Title & Created Timestamp */}
             <div className="space-y-1 min-w-0">
               <h2 className="text-lg sm:text-xl font-bold text-[#1A1A2E] leading-snug break-words [overflow-wrap:anywhere]">
-                {job.title}
+                {job.title || job.subCategory || job.category || (isUrdu ? "سروس کی درخواست" : "Service Request")}
               </h2>
               <p className="text-xs text-slate-500 font-medium">
                 {isUrdu ? `درخواست شائع کی گئی: ${formatPostedAt(job.createdAt)}` : `Posted: ${formatPostedAt(job.createdAt)}`}
@@ -303,58 +230,16 @@ export function CustomerJobDetailsModal({
 
             {/* Voice Note Audio */}
             {job.voiceNoteUrl && (
-              <div className="space-y-2">
-                <h3 className="text-xs uppercase font-bold tracking-wider text-slate-400">
-                  {isUrdu ? "وائس نوٹ" : "Voice Note"}
-                </h3>
-                <div className="p-3.5 bg-slate-50 border border-slate-100 rounded-2xl flex items-center gap-3">
-                  <audio
-                    ref={audioRef}
-                    id="job-modal-voice-player"
-                    src={job.voiceNoteUrl}
-                    preload="metadata"
-                    onLoadedMetadata={handleLoadedMetadata}
-                    onTimeUpdate={handleTimeUpdate}
-                    onEnded={handleAudioEnded}
-                    className="hidden"
-                  />
-                  <button
-                    type="button"
-                    onClick={handleToggleAudio}
-                    className="size-10 rounded-full bg-[#0F766E] text-white flex items-center justify-center shrink-0 shadow-xs hover:bg-[#115E59] cursor-pointer transition-all active:scale-95"
-                  >
-                    {isPlayingAudio ? (
-                      <Pause className="size-4" />
-                    ) : (
-                      <Play className="size-4 ml-0.5 rtl:ml-0 rtl:mr-0.5" />
-                    )}
-                  </button>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between text-xs font-semibold text-[#123B5D] mb-1">
-                      <span className="flex items-center gap-1">
-                        <Volume2 className="size-3.5 text-[#0F766E]" />
-                        <span>{isUrdu ? "وائس میسج چلائیں" : "Listen to Voice Note"}</span>
-                      </span>
-                      <span className="text-slate-400 text-[11px] font-mono">
-                        {isPlayingAudio
-                          ? `${formatAudioDuration(audioCurrentTime)} / ${formatAudioDuration(audioDuration || job.voiceNoteDuration)}`
-                          : formatAudioDuration(audioDuration || job.voiceNoteDuration)}
-                      </span>
-                    </div>
-                    <div className="h-1.5 bg-slate-200 rounded-full overflow-hidden">
-                      <div
-                        className="h-full bg-[#0F766E] rounded-full transition-all duration-150"
-                        style={{
-                          width: `${
-                            audioDuration && audioDuration > 0
-                              ? Math.min(100, Math.max(0, (audioCurrentTime / audioDuration) * 100))
-                              : isPlayingAudio ? 50 : 0
-                          }%`,
-                        }}
-                      />
-                    </div>
-                  </div>
-                </div>
+              <div className="space-y-1.5">
+                <VoicePlayer
+                  voiceNote={{
+                    audioUrl: job.voiceNoteUrl,
+                    durationSeconds: job.voiceNoteDuration,
+                    waveformPattern: [35, 65, 45, 80, 95, 70, 40, 75, 90, 85, 55, 75, 45, 65, 35],
+                  }}
+                  title={isUrdu ? "منسلک وائس نوٹ" : "Voice Note"}
+                  variant="full"
+                />
               </div>
             )}
 
@@ -390,7 +275,7 @@ export function CustomerJobDetailsModal({
                   {job.scheduleType === "asap" ? (
                     <span className="inline-flex items-center gap-1 font-bold text-amber-700">
                       <Zap className="size-3 text-amber-600 fill-current shrink-0" />
-                      <span>{isUrdu ? "فوری" : "Immediate"}</span>
+                      <span>{isUrdu ? "فوری وزٹ درکار ہے" : "Urgent / ASAP dispatch"}</span>
                     </span>
                   ) : (
                     <>
@@ -641,6 +526,19 @@ export function CustomerJobDetailsModal({
                       : "Payment has been settled and 5-Day Craftsmanship Warranty is active."}
                   </p>
 
+                  {currentJob?.customerReview?.tags && currentJob.customerReview.tags.length > 0 && (
+                    <div className="flex flex-wrap gap-1.5 pt-0.5">
+                      {currentJob.customerReview.tags.map((tag) => (
+                        <span
+                          key={tag}
+                          className="px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-100 text-emerald-800"
+                        >
+                          ✓ {tag}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+
                   {currentJob?.customerReview?.comment && (
                     <div className="p-2.5 rounded-xl bg-white/80 border border-emerald-100 text-[11px] text-slate-700 italic">
                       &ldquo;{currentJob.customerReview.comment}&rdquo;
@@ -820,6 +718,7 @@ export function CustomerJobDetailsModal({
                     customerReview: {
                       rating: review.rating,
                       comment: review.comment,
+                      tags: review.tags,
                       date: new Date().toISOString(),
                     },
                   }

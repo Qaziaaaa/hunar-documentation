@@ -54,15 +54,28 @@ export function ReviewCard({
             </time>
           </div>
         </div>
+        {review.tags && review.tags.length > 0 && (
+          <div className="flex flex-wrap gap-1.5 pt-0.5">
+            {review.tags.map((tag) => (
+              <span
+                key={tag}
+                className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-[#0F766E]/10 text-[#0F766E] border border-[#0F766E]/20"
+              >
+                <span>✓</span>
+                <span>{tag}</span>
+              </span>
+            ))}
+          </div>
+        )}
         {review.comment ? (
           <p className="text-sm leading-relaxed text-foreground break-words [overflow-wrap:anywhere] [word-break:break-word] whitespace-pre-wrap">
             {review.comment}
           </p>
-        ) : (
+        ) : !review.tags || review.tags.length === 0 ? (
           <p className="text-sm italic text-muted-foreground">
             {noCommentLabel}
           </p>
-        )}
+        ) : null}
       </CardContent>
     </Card>
   );

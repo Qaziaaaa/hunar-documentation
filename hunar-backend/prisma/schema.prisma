@@ -469,6 +469,7 @@ model Review {
   reviewee   User           @relation("RevieweeReviews", fields: [revieweeId], references: [id])
   rating     Int
   comment    String?
+  tags       String[]       @default([])
   isVisible  Boolean        @default(true)
   createdAt  DateTime       @default(now())
 

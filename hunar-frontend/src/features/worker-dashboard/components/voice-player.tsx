@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { Play, Pause, Volume2 } from "lucide-react";
 import type { VoiceNote } from "../types";
 
@@ -14,10 +14,12 @@ function formatSeconds(secs: number): string {
 export function VoicePlayer({
   voiceNote,
   variant = "compact",
+  title = "Customer Voice Note",
   className = "",
 }: {
   voiceNote: VoiceNote;
   variant?: "compact" | "full";
+  title?: string;
   className?: string;
 }) {
   const [isPlaying, setIsPlaying] = useState(false);
@@ -29,8 +31,84 @@ export function VoicePlayer({
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   const audioUrl = voiceNote?.audioUrl?.trim();
-  const defaultPattern = [30, 60, 45, 80, 95, 65, 40, 75, 90, 85, 50, 70, 40, 60, 30];
-  const waveform = voiceNote.waveformPattern || defaultPattern;
+  const defaultPattern = [
+    25, 45, 60, 40, 75, 90, 65, 50, 85, 100, 70, 45, 80, 95, 85, 60, 40, 70, 90, 75, 55, 80, 65, 45, 60, 40, 55, 70, 40, 25
+  ];
+  const waveform: number[] = useMemo(() => {
+    const raw = voiceNote?.waveformPattern && voiceNote.waveformPattern.length > 0
+      ? voiceNote.waveformPattern
+      : defaultPattern;
+    if (raw.length >= 25) return raw;
+    const result: number[] = [];
+    const targetCount = 30;
+    for (let i = 0; i < targetCount; i++) {
+      const idx = (i / targetCount) * raw.length;
+      const lower = Math.floor(idx);
+      const upper = Math.min(raw.length - 1, Math.ceil(idx));
+      const weight = idx - lower;
+      const val = Math.round((raw[lower] || 30) * (1 - weight) + (raw[upper] || 30) * weight);
+      result.push(val);
+    }
+    return result;
+  }, [voiceNote?.waveformPattern]);
+
+  // Sync state whenever audioUrl or voiceNote.durationSeconds changes
+  useEffect(() => {
+    setCurrentTime(0);
+    setProgress(0);
+    setIsPlaying(false);
+    if (voiceNote?.durationSeconds && voiceNote.durationSeconds > 0) {
+      setActualDuration(voiceNote.durationSeconds);
+    } else {
+      setActualDuration(0);
+    }
+  }, [audioUrl, voiceNote?.durationSeconds]);
+
+  // Decode audio duration via Web Audio API as an instant, foolproof duration resolver
+  // (Works seamlessly for WebM/Opus data URIs, blobs, and server URLs without duration headers)
+  useEffect(() => {
+    if (!audioUrl) return;
+    if (actualDuration > 0) return;
+
+    let cancelled = false;
+
+    const decodeAudioDuration = async () => {
+      try {
+        const AudioContextClass =
+          window.AudioContext ||
+          (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+        if (!AudioContextClass) return;
+
+        const res = await fetch(audioUrl);
+        const arrayBuffer = await res.arrayBuffer();
+        if (cancelled) return;
+
+        const ctx = new AudioContextClass();
+        const audioBuffer = await ctx.decodeAudioData(arrayBuffer);
+        ctx.close().catch(() => {});
+
+        if (!cancelled && audioBuffer && audioBuffer.duration > 0 && isFinite(audioBuffer.duration)) {
+          setActualDuration((prev) => (prev > 0 ? prev : audioBuffer.duration));
+        }
+      } catch {
+        // Fallback handled by HTML5 audio element
+      }
+    };
+
+    decodeAudioDuration();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [audioUrl, actualDuration]);
+
+  // Check if audio element already loaded metadata before React attached listeners
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (audio && audio.readyState >= 1) {
+      handleLoadedMetadata();
+    }
+  }, [audioUrl]);
 
   const currentFormatted = formatSeconds(currentTime);
   const totalSeconds = Math.round(actualDuration > 0 ? actualDuration : (voiceNote.durationSeconds || 0));
@@ -58,16 +136,24 @@ export function VoicePlayer({
     if (!isNaN(audio.duration) && isFinite(audio.duration) && audio.duration > 0) {
       setActualDuration(audio.duration);
     } else if (audio.duration === Infinity) {
-      // Chrome MediaRecorder WebM bug: seeking near the end resolves true duration
+      // Chrome MediaRecorder WebM bug: seeking near the end clamps currentTime to the true duration
       const onSeeked = () => {
         audio.removeEventListener("seeked", onSeeked);
-        if (!isNaN(audio.duration) && isFinite(audio.duration) && audio.duration > 0) {
-          setActualDuration(audio.duration);
+        const resolved =
+          !isNaN(audio.duration) && isFinite(audio.duration) && audio.duration > 0
+            ? audio.duration
+            : audio.currentTime;
+        if (!isNaN(resolved) && isFinite(resolved) && resolved > 0) {
+          setActualDuration(resolved);
         }
         audio.currentTime = 0;
       };
       audio.addEventListener("seeked", onSeeked, { once: true });
-      audio.currentTime = 1e101;
+      try {
+        audio.currentTime = 1e101;
+      } catch {
+        // Ignored; Web Audio API handles duration resolution
+      }
     }
   };
 
@@ -78,8 +164,14 @@ export function VoicePlayer({
     const ct = audio.currentTime;
     setCurrentTime(ct);
 
-    const dur = audio.duration;
-    if (!isNaN(dur) && isFinite(dur) && dur > 0) {
+    const dur =
+      actualDuration > 0
+        ? actualDuration
+        : !isNaN(audio.duration) && isFinite(audio.duration) && audio.duration > 0
+        ? audio.duration
+        : 0;
+
+    if (dur > 0) {
       if (actualDuration !== dur) {
         setActualDuration(dur);
       }
@@ -99,9 +191,10 @@ export function VoicePlayer({
     setCurrentTime(0);
     if (audioRef.current) {
       const finalTime = audioRef.current.currentTime;
-      if (finalTime > 0) {
+      if (finalTime > 0 && actualDuration <= 0) {
         setActualDuration(finalTime);
       }
+      audioRef.current.currentTime = 0;
     }
   };
 
@@ -141,8 +234,15 @@ export function VoicePlayer({
     const newProgress = Math.max(0, Math.min(100, (clickX / rect.width) * 100));
     setProgress(newProgress);
 
-    if (audioRef.current && !isNaN(audioRef.current.duration) && audioRef.current.duration > 0) {
-      const targetTime = (newProgress / 100) * audioRef.current.duration;
+    const dur =
+      actualDuration > 0
+        ? actualDuration
+        : audioRef.current && !isNaN(audioRef.current.duration) && isFinite(audioRef.current.duration)
+        ? audioRef.current.duration
+        : 0;
+
+    if (audioRef.current && dur > 0) {
+      const targetTime = (newProgress / 100) * dur;
       audioRef.current.currentTime = targetTime;
       setCurrentTime(targetTime);
     }
@@ -241,7 +341,7 @@ export function VoicePlayer({
       <div className="mb-2 flex items-center justify-between">
         <div className="flex items-center gap-1.5 text-xs font-bold text-navy">
           <Volume2 className="size-4 text-teal" />
-          <span>Customer Voice Note</span>
+          <span>{title}</span>
         </div>
         <div className="flex items-center gap-2">
           <button
@@ -274,7 +374,7 @@ export function VoicePlayer({
         {/* Full Waveform Scrubber */}
         <div
           onClick={handleScrub}
-          className="relative flex flex-1 cursor-pointer items-center gap-1 py-3 select-none"
+          className="relative flex flex-1 cursor-pointer items-center justify-between gap-0.5 sm:gap-1 py-3 select-none h-10"
           title="Click or drag to seek"
         >
           {waveform.map((barHeight, idx) => {
@@ -283,12 +383,12 @@ export function VoicePlayer({
             return (
               <span
                 key={idx}
-                style={{ height: `${Math.max(8, Math.round(barHeight * 0.32))}px` }}
-                className={`flex-1 rounded-full transition-all duration-150 ${
+                style={{ height: `${Math.max(6, Math.min(28, Math.round(barHeight * 0.28)))}px` }}
+                className={`flex-1 max-w-[3px] sm:max-w-[4px] min-w-[2px] rounded-full transition-all duration-150 ${
                   isFilled
-                    ? "bg-teal"
+                    ? "bg-[#0F8B8D]"
                     : isPlaying
-                    ? "bg-teal/35 animate-pulse"
+                    ? "bg-[#0F8B8D]/35 animate-pulse"
                     : "bg-slate-300"
                 }`}
               />

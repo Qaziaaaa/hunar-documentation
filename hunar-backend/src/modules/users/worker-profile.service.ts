@@ -402,6 +402,7 @@ export class WorkerProfileService {
         rating: rev.rating,
         date: new Date(rev.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
         comment: rev.comment || '',
+        tags: (rev as any).tags || [],
       })),
       ratingBreakdown,
     };

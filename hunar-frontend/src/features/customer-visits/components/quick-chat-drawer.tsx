@@ -366,13 +366,22 @@ export function QuickChatDrawer({ visit, isOpen, onClose }: QuickChatDrawerProps
         {/* Header */}
         <div className="p-3.5 sm:p-4 border-b border-slate-200/90 flex items-center justify-between bg-white text-slate-900 shadow-2xs">
           <div className="flex items-center gap-3 min-w-0">
-            <div className="relative size-10 rounded-full overflow-hidden border border-slate-200 bg-slate-100 shrink-0">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={visit.technician.avatarUrl}
-                alt={visit.technician.name}
-                className="w-full h-full object-cover"
-              />
+            <div className="relative size-10 rounded-full overflow-hidden border border-slate-200 bg-slate-100 shrink-0 flex items-center justify-center font-bold text-slate-700">
+              {visit.technician.avatarUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={visit.technician.avatarUrl}
+                  alt={visit.technician.name}
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    (e.currentTarget as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(visit.technician.name || "Tech")}&background=0F766E&color=fff`;
+                  }}
+                />
+              ) : (
+                <span className="text-xs font-bold text-[#0F766E]">
+                  {(visit.technician.name || "T").slice(0, 2).toUpperCase()}
+                </span>
+              )}
               <span className="absolute bottom-0 right-0 rtl:right-auto rtl:left-0 size-2.5 bg-emerald-500 rounded-full ring-2 ring-white" />
             </div>
             <div className="min-w-0">

@@ -1,4 +1,4 @@
-import { http, getAccessToken } from "@/lib/api-client";
+import { http, getAccessToken, getRefreshToken } from "@/lib/api-client";
 import type { Job, JobStatus, JobUrgency } from "@/types/job";
 
 const NEARBY_STATUSES = ["OPEN", "OFFERS_RECEIVED", "RECEIVING_OFFERS"];
@@ -8,6 +8,15 @@ const HISTORY_STATUSES = [
   "REVIEWED",
   "CANCELLED",
 ];
+
+function hasWorkerAuthSession(): boolean {
+  return Boolean(
+    getAccessToken("WORKER", true) ||
+    getAccessToken(undefined, true) ||
+    getRefreshToken("WORKER") ||
+    getRefreshToken()
+  );
+}
 
 export function isActiveJob(status: JobStatus | string): boolean {
   const upper = String(status).toUpperCase();
@@ -134,20 +143,24 @@ export interface GetWorkerJobsOptions {
 }
 
 export async function listWorkerJobs(options?: GetWorkerJobsOptions | unknown): Promise<Job[]> {
-  if (!getAccessToken()) {
+  if (!hasWorkerAuthSession()) {
     return [];
   }
   try {
     const params = new URLSearchParams();
+    let page = 1;
+    let limit = 50;
     if (typeof options === "object" && options !== null) {
       if ("page" in options && typeof (options as any).page === "number") {
-        params.set("page", String((options as any).page));
+        page = (options as any).page;
       }
       if ("limit" in options && typeof (options as any).limit === "number") {
-        params.set("limit", String((options as any).limit));
+        limit = (options as any).limit;
       }
     }
-    const queryStr = params.toString() ? `?${params.toString()}` : "";
+    params.set("page", String(page));
+    params.set("limit", String(limit));
+    const queryStr = `?${params.toString()}`;
     const res = await http.get<any>(`/workers/me/jobs/active${queryStr}`);
     const items: BackendJobRow[] = Array.isArray(res)
       ? res
@@ -160,20 +173,24 @@ export async function listWorkerJobs(options?: GetWorkerJobsOptions | unknown): 
 }
 
 export async function listWorkerHistoryJobs(options?: GetWorkerJobsOptions | unknown): Promise<Job[]> {
-  if (!getAccessToken()) {
+  if (!hasWorkerAuthSession()) {
     return [];
   }
   try {
     const params = new URLSearchParams();
+    let page = 1;
+    let limit = 50;
     if (typeof options === "object" && options !== null) {
       if ("page" in options && typeof (options as any).page === "number") {
-        params.set("page", String((options as any).page));
+        page = (options as any).page;
       }
       if ("limit" in options && typeof (options as any).limit === "number") {
-        params.set("limit", String((options as any).limit));
+        limit = (options as any).limit;
       }
     }
-    const queryStr = params.toString() ? `?${params.toString()}` : "";
+    params.set("page", String(page));
+    params.set("limit", String(limit));
+    const queryStr = `?${params.toString()}`;
     const res = await http.get<any>(`/workers/me/jobs/history${queryStr}`);
     const items: BackendJobRow[] = Array.isArray(res)
       ? res
@@ -191,7 +208,7 @@ export async function listNearbyJobs(location?: {
   radiusKm?: number;
   onlyRelevant?: boolean;
 }): Promise<Job[]> {
-  if (!getAccessToken()) {
+  if (!hasWorkerAuthSession()) {
     return [];
   }
   const resolved = location ?? { lat: 33.98, lng: 71.43, radiusKm: 25 };

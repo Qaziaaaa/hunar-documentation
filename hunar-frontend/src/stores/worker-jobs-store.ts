@@ -438,7 +438,7 @@ export const workerStore = {
 
   async syncActiveJobs() {
     try {
-      const activeJobs = await listWorkerJobs();
+      const activeJobs = await listWorkerJobs({ limit: 50 });
       if (!Array.isArray(activeJobs)) return;
 
       const activeMapped: JobRequest[] = [];
@@ -475,7 +475,7 @@ export const workerStore = {
       // Merge: replace active jobs with fresh server active jobs, keeping nearby/history that aren't in activeIds
       const nonActiveJobs = globalState.jobs.filter((j) => {
         const norm = j.id?.toLowerCase();
-        if (activeIds.has(norm)) return false;
+        if (norm && activeIds.has(norm)) return false;
         const isLocalActive =
           j.status === "accepted" ||
           j.status === "visit_in_progress" ||
@@ -489,6 +489,24 @@ export const workerStore = {
         return !isLocalActive;
       });
 
+      // If nonActiveJobs doesn't have any past jobs, also recover from initial cache so we never purge past jobs
+      const hasPastJobsInNonActive = nonActiveJobs.some((j) => {
+        const s = String(j.status || "").toLowerCase();
+        return s === "completed" || s === "paid" || s === "reviewed";
+      });
+      if (!hasPastJobsInNonActive) {
+        const cached = loadInitialWorkerJobs();
+        for (const pj of cached) {
+          const s = String(pj.status || "").toLowerCase();
+          const norm = pj.id?.toLowerCase();
+          if (norm && (s === "completed" || s === "paid" || s === "reviewed")) {
+            if (!nonActiveJobs.some((j) => j.id?.toLowerCase() === norm) && !activeIds.has(norm)) {
+              nonActiveJobs.push(pj);
+            }
+          }
+        }
+      }
+
       const updatedJobs = [...activeMapped, ...nonActiveJobs];
       patch({
         jobs: updatedJobs,
@@ -498,7 +516,13 @@ export const workerStore = {
 
       if (typeof window !== "undefined") {
         try {
-          sessionStorage.setItem(WORKER_JOBS_SESSION_KEY, JSON.stringify(updatedJobs.slice(0, 50)));
+          const hasPastInUpdated = updatedJobs.some((j) => {
+            const s = String(j.status || "").toLowerCase();
+            return s === "completed" || s === "paid" || s === "reviewed";
+          });
+          if (hasPastInUpdated || !sessionStorage.getItem(WORKER_JOBS_SESSION_KEY)) {
+            sessionStorage.setItem(WORKER_JOBS_SESSION_KEY, JSON.stringify(updatedJobs.slice(0, 50)));
+          }
         } catch {}
       }
     } catch (err) {
@@ -519,7 +543,12 @@ export const workerStore = {
     if (!isBackgroundSync && !globalState.hydrated) {
       patch({ status: "loading", error: null });
     }
-    const hasWorkerAuth = Boolean(getAccessToken("WORKER") || getRefreshToken("WORKER"));
+    const hasWorkerAuth = Boolean(
+      getAccessToken("WORKER", true) ||
+      getAccessToken(undefined, true) ||
+      getRefreshToken("WORKER") ||
+      getRefreshToken()
+    );
     if (!hasWorkerAuth) {
       patch({ hydrated: true, status: "ready" });
       return;
@@ -527,8 +556,8 @@ export const workerStore = {
     try {
       const settled = await Promise.allSettled([
         listNearbyJobs(),
-        listWorkerJobs(),
-        listWorkerHistoryJobs(),
+        listWorkerJobs({ limit: 50 }),
+        listWorkerHistoryJobs({ limit: 50 }),
         listMyOffers(),
         getWalletSummary(),
         getWorkerProfile(),
@@ -552,18 +581,21 @@ export const workerStore = {
       const seen = new Set<string>();
       const jobs: JobRequest[] = [];
       for (const job of [...nearby, ...active, ...history]) {
-        if (seen.has(job.id)) continue;
-        seen.add(job.id);
+        if (!job?.id) continue;
+        const norm = job.id.toLowerCase();
+        if (seen.has(norm)) continue;
+        seen.add(norm);
         const visitId =
           (job as any).nextVisit?.id ||
           (job as any).visits?.[0]?.id ||
           (job as any).visitId;
         if (visitId) {
           visitIdByJob.set(job.id, visitId);
+          visitIdByJob.set(norm, visitId);
         }
         const mapped = mapJobToRequest(job);
         const existing = globalState.jobs.find(
-          (j) => j.id?.toLowerCase() === job.id?.toLowerCase()
+          (j) => j.id?.toLowerCase() === norm
         );
         if (existing) {
           const existingRank = JOB_STATUS_RANK[existing.status] ?? 0;
@@ -581,8 +613,37 @@ export const workerStore = {
       // Only preserve un-synced in-flight jobs if the active jobs call failed
       if (activeRes.status === "rejected") {
         for (const existing of globalState.jobs) {
-          if (!seen.has(existing.id) && existing.status !== "completed" && existing.status !== "cancelled") {
-            seen.add(existing.id);
+          const norm = existing.id?.toLowerCase();
+          if (norm && !seen.has(norm) && existing.status !== "completed" && existing.status !== "cancelled") {
+            seen.add(norm);
+            jobs.push(existing);
+          }
+        }
+      }
+
+      // If history jobs call failed or was empty, preserve existing completed jobs from globalState or sessionStorage
+      if (
+        historyRes.status === "rejected" ||
+        (history.length === 0 &&
+          (globalState.jobs.some((j) => {
+            const s = String(j.status || "").toLowerCase();
+            return s === "completed" || s === "paid" || s === "reviewed";
+          }) ||
+            loadInitialWorkerJobs().some((j) => {
+              const s = String(j.status || "").toLowerCase();
+              return s === "completed" || s === "paid" || s === "reviewed";
+            })))
+      ) {
+        const sourceJobs = [...globalState.jobs, ...loadInitialWorkerJobs()];
+        for (const existing of sourceJobs) {
+          const s = String(existing.status || "").toLowerCase();
+          const norm = existing.id?.toLowerCase();
+          if (
+            norm &&
+            (s === "completed" || s === "paid" || s === "reviewed") &&
+            !seen.has(norm)
+          ) {
+            seen.add(norm);
             jobs.push(existing);
           }
         }

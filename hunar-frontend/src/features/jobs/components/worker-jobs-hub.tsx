@@ -24,10 +24,22 @@ export function WorkerJobsHub() {
 
   // Revalidate jobs immediately on mount so latest upcoming and past jobs appear instantly
   React.useEffect(() => {
-    if (!getAccessToken("WORKER") && !getRefreshToken("WORKER")) return;
-    void workerStore.syncActiveJobs();
-    void workerStore.hydrate();
+    const hasWorkerAuth = Boolean(
+      getAccessToken("WORKER", true) ||
+      getAccessToken(undefined, true) ||
+      getRefreshToken("WORKER") ||
+      getRefreshToken()
+    );
+    if (!hasWorkerAuth) return;
+    void workerStore.hydrate({ force: true });
   }, []);
+
+  const handleTabChange = (tab: "upcoming" | "past") => {
+    setActiveTab(tab);
+    if (tab === "past" && pastJobs.length === 0) {
+      void workerStore.hydrate({ force: true });
+    }
+  };
 
   // 1. Upcoming & Active Visits (all accepted visits or active visits ready to dispatch or in-progress)
   const upcomingVisits = jobs.filter(
@@ -44,7 +56,10 @@ export function WorkerJobsHub() {
   );
 
   // 2. Past Completed Jobs
-  const pastJobs = jobs.filter((j) => j.status === "completed");
+  const pastJobs = jobs.filter((j) => {
+    const s = String(j.status || "").toLowerCase();
+    return s === "completed" || s === "paid" || s === "reviewed";
+  });
   const INITIAL_PAST_LIMIT = 6;
   const [pastLimit, setPastLimit] = useState(INITIAL_PAST_LIMIT);
   const visiblePastJobs = pastJobs.slice(0, pastLimit);
@@ -74,7 +89,7 @@ export function WorkerJobsHub() {
           {/* Tab 1: Upcoming Jobs */}
           <button
             type="button"
-            onClick={() => setActiveTab("upcoming")}
+            onClick={() => handleTabChange("upcoming")}
             className={`flex-1 sm:flex-initial py-2.5 px-5 sm:px-6 rounded-xl text-xs sm:text-sm font-extrabold flex items-center justify-center gap-2 transition-all cursor-pointer ${
               activeTab === "upcoming"
                 ? "bg-[#123B5D] text-white shadow-sm"
@@ -97,7 +112,7 @@ export function WorkerJobsHub() {
           {/* Tab 2: Past Jobs */}
           <button
             type="button"
-            onClick={() => setActiveTab("past")}
+            onClick={() => handleTabChange("past")}
             className={`flex-1 sm:flex-initial py-2.5 px-5 sm:px-6 rounded-xl text-xs sm:text-sm font-extrabold flex items-center justify-center gap-2 transition-all cursor-pointer ${
               activeTab === "past"
                 ? "bg-[#123B5D] text-white shadow-sm"

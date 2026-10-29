@@ -158,6 +158,23 @@ export class OffersService {
       visitCharge: dto.visitCharge,
     });
 
+    const [workerReviews, completedJobsCount] = await Promise.all([
+      this.prisma.review.aggregate({
+        where: { revieweeId: workerId },
+        _avg: { rating: true },
+        _count: { _all: true },
+      }),
+      this.prisma.serviceRequest.count({
+        where: { selectedWorkerId: workerId, status: { in: ['COMPLETED', 'PAID', 'REVIEWED'] } },
+      }),
+    ]);
+
+    const totalReviews = workerReviews._count._all ?? 0;
+    const workerRating =
+      totalReviews > 0 && workerReviews._avg.rating != null
+        ? Number(workerReviews._avg.rating.toFixed(1))
+        : 0;
+
     const populatedOffer = {
       id: offer.id,
       jobId,
@@ -167,9 +184,9 @@ export class OffersService {
         name: offer.worker?.name ?? 'Verified Pro',
         avatarUrl: offer.worker?.avatarUrl ?? '',
         phone: offer.worker?.phone ?? '',
-        rating: 5.0,
-        totalReviews: 0,
-        completedJobsCount: 0,
+        rating: workerRating,
+        totalReviews,
+        completedJobsCount,
         skills: offer.worker?.workerProfile?.skills ?? [],
         experienceYears: offer.worker?.workerProfile?.experienceYears ?? 0,
         bio: offer.worker?.workerProfile?.bio ?? '',

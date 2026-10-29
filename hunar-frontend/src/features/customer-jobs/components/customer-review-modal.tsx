@@ -19,7 +19,7 @@ interface CustomerReviewModalProps {
   job: CustomerJob;
   isOpen: boolean;
   onClose: () => void;
-  onReviewSubmitted: (review: { rating: number; comment?: string }) => void;
+  onReviewSubmitted: (review: { rating: number; comment?: string; tags?: string[] }) => void;
 }
 
 const QUICK_TAGS_EN = [
@@ -82,20 +82,9 @@ export function CustomerReviewModal({
   };
 
   const handleToggleTag = (tag: string) => {
-    const isSelected = selectedTags.includes(tag);
-    const newTags = isSelected
-      ? selectedTags.filter((t) => t !== tag)
-      : [...selectedTags, tag];
-
-    setSelectedTags(newTags);
-
-    // If text area doesn't have custom long comment, auto-populate from tags
-    if (newTags.length > 0 && comment.trim().length < 30) {
-      const summaryPrefix = isUrdu
-        ? "کاریگر کے بارے میں تاثرات: "
-        : "Positive Highlights: ";
-      setComment(`${summaryPrefix}${newTags.join(", ")}.`);
-    }
+    setSelectedTags((prev) =>
+      prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]
+    );
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -117,6 +106,7 @@ export function CustomerReviewModal({
       await submitJobReview(job.id, {
         rating,
         comment: trimmedComment.length >= 10 ? trimmedComment : undefined,
+        tags: selectedTags.length > 0 ? selectedTags : undefined,
       });
 
       setIsSuccess(true);
@@ -124,6 +114,7 @@ export function CustomerReviewModal({
         onReviewSubmitted({
           rating,
           comment: trimmedComment.length >= 10 ? trimmedComment : undefined,
+          tags: selectedTags,
         });
         onClose();
       }, 1500);

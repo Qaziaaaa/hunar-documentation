@@ -118,10 +118,9 @@ export function DashboardSidebar({
     storedUser?.phone ||
     (isUrdu ? "ورکر پروفائل" : "Worker Profile");
   const avatarLetter = (displayName ? displayName[0] : "W").toUpperCase();
-  const ratingValue =
-    typeof profile.rating === "number" && !isNaN(profile.rating)
-      ? profile.rating
-      : 5.0;
+  const hasRating =
+    typeof profile.rating === "number" && !isNaN(profile.rating) && profile.rating > 0;
+  const ratingValue = hasRating ? profile.rating : null;
   const completedCount =
     typeof profile.completedJobsCount === "number" && !isNaN(profile.completedJobsCount)
       ? profile.completedJobsCount
@@ -264,10 +263,18 @@ export function DashboardSidebar({
                   </p>
 
                   <div className="flex items-center gap-1">
-                    <RatingStars rating={ratingValue} size="size-3" />
-                    <span suppressHydrationWarning className="text-[10px] font-bold text-[#123B5D]">
-                      {ratingValue.toFixed(1)}
-                    </span>
+                    {ratingValue !== null ? (
+                      <>
+                        <RatingStars rating={ratingValue} size="size-3" />
+                        <span suppressHydrationWarning className="text-[10px] font-bold text-[#123B5D]">
+                          {ratingValue.toFixed(1)}
+                        </span>
+                      </>
+                    ) : (
+                      <span suppressHydrationWarning className="text-[10px] font-bold text-slate-400">
+                        {isUrdu ? "نیا کاریگر" : "New Worker"}
+                      </span>
+                    )}
                   </div>
 
                   <p suppressHydrationWarning className="text-[10px] font-medium text-slate-500 truncate">

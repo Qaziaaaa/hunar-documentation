@@ -92,17 +92,22 @@ export function JobRequestModal({
   }, [job?.images]);
 
   const voiceNoteData = useMemo(() => {
-    if (job?.voiceNote?.audioUrl && !job.voiceNote.audioUrl.startsWith("blob:")) {
-      return job.voiceNote;
-    }
-    const url = (job as any)?.voiceNoteUrl;
-    if (url && typeof url === "string" && url.trim().length > 0 && !url.startsWith("blob:")) {
-      return {
-        audioUrl: url.trim(),
-        waveformPattern: [35, 60, 45, 80, 95, 65, 40, 75, 90, 85, 50, 70, 40, 60, 30],
-      };
-    }
-    return undefined;
+    const rawVoice = job?.voiceNote;
+    const fallbackUrl = (job as any)?.voiceNoteUrl;
+    const audioUrl = rawVoice?.audioUrl || (typeof fallbackUrl === "string" ? fallbackUrl.trim() : undefined);
+    if (!audioUrl || audioUrl.startsWith("blob:")) return undefined;
+
+    const durationSeconds =
+      rawVoice?.durationSeconds ||
+      (job as any)?.voiceNoteDuration ||
+      (job as any)?.durationSeconds ||
+      undefined;
+
+    return {
+      audioUrl,
+      durationSeconds,
+      waveformPattern: rawVoice?.waveformPattern || [35, 60, 45, 80, 95, 65, 40, 75, 90, 85, 50, 70, 40, 60, 30],
+    };
   }, [job]);
 
   const handleSendOffer = async () => {
@@ -252,25 +257,21 @@ export function JobRequestModal({
                     </h3>
                   </div>
                   <div className="mt-1 flex flex-wrap items-center gap-2 text-xs font-semibold text-slate-600">
-                    {job.customer.rating > 0 ? (
-                      <span className="flex items-center gap-1 text-[#F59E0B] font-bold">
-                        <Star className="size-3.5 fill-[#F59E0B] stroke-none" />
-                        {job.customer.rating.toFixed(1)}
-                        <span className="text-slate-400 font-normal">
-                          ({job.customer.reviewCount ?? 0} reviews)
-                        </span>
-                      </span>
-                    ) : (
-                      <span className="text-slate-400 font-medium">New Customer</span>
-                    )}
-                    {job.customer.totalOrders > 0 && (
+                    {job.customer.rating > 0 && (job.customer.reviewCount ?? 0) > 0 && (
                       <>
-                        {job.customer.rating > 0 && <span className="text-slate-300">·</span>}
-                        <span className="text-navy font-bold">
-                          {job.customer.totalOrders} Orders Completed
+                        <span className="flex items-center gap-1 text-[#F59E0B] font-bold">
+                          <Star className="size-3.5 fill-[#F59E0B] stroke-none" />
+                          {job.customer.rating.toFixed(1)}
+                          <span className="text-slate-400 font-normal">
+                            ({job.customer.reviewCount} {job.customer.reviewCount === 1 ? "review" : "reviews"})
+                          </span>
                         </span>
+                        <span className="text-slate-300">·</span>
                       </>
                     )}
+                    <span className="text-navy font-bold">
+                      {job.customer.totalOrders} {job.customer.totalOrders === 1 ? "Order" : "Orders"} Completed
+                    </span>
                     {job.customer.memberSince &&
                       job.customer.memberSince !== "—" &&
                       job.customer.memberSince !== "Member" && (

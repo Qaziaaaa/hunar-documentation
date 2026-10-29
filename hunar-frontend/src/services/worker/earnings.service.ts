@@ -1,6 +1,15 @@
-import { http, getAccessToken } from "@/lib/api-client";
+import { http, getAccessToken, getRefreshToken } from "@/lib/api-client";
 import { unwrapRows } from "@/lib/unwrap-rows";
 import type { WalletSummary, WalletTransaction } from "@/types/finance";
+
+function hasWorkerAuthSession(): boolean {
+  return Boolean(
+    getAccessToken("WORKER", true) ||
+    getAccessToken(undefined, true) ||
+    getRefreshToken("WORKER") ||
+    getRefreshToken()
+  );
+}
 
 interface BackendWalletSnapshot {
   userId: string;
@@ -62,7 +71,7 @@ function mapLedgerEntry(entry: BackendLedgerEntry): WalletTransaction {
  * Used to pre-check offer submission; the server remains the final authority.
  */
 export async function getWalletBalance(): Promise<number> {
-  if (!getAccessToken()) {
+  if (!hasWorkerAuthSession()) {
     throw new Error("Authentication required to view wallet balance");
   }
   const snapshot = await http.get<BackendWalletSnapshot>("/wallet/balance");
@@ -70,7 +79,7 @@ export async function getWalletBalance(): Promise<number> {
 }
 
 export async function getWalletSummary(): Promise<WalletSummary> {
-  if (!getAccessToken()) {
+  if (!hasWorkerAuthSession()) {
     throw new Error("Authentication required to view wallet summary");
   }
   const [snapshot, earnings] = await Promise.all([
@@ -86,7 +95,7 @@ export async function getWalletSummary(): Promise<WalletSummary> {
 }
 
 export async function getWalletTransactions(): Promise<WalletTransaction[]> {
-  if (!getAccessToken()) {
+  if (!hasWorkerAuthSession()) {
     return [];
   }
   try {
@@ -130,7 +139,7 @@ export interface WorkerEarningsData {
 }
 
 export async function getWorkerEarnings(): Promise<WorkerEarningsData> {
-  if (!getAccessToken()) {
+  if (!hasWorkerAuthSession()) {
     throw new Error("Authentication required to view worker earnings");
   }
   return await http.get<WorkerEarningsData>("/workers/me/earnings");

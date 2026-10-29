@@ -27,6 +27,7 @@ import { formatDateTime, formatJobDate } from "@/lib/format";
 import { WorkerOfferCard } from "./worker-offer-card";
 import { WorkerProfileModal } from "./worker-profile-modal";
 import { CustomerReviewModal } from "./customer-review-modal";
+import { VoicePlayer } from "@/features/worker-dashboard/components/voice-player";
 import { acceptWorkerOffer } from "../api/customer-jobs-api";
 import type { CustomerJob, WorkerOffer } from "../types";
 
@@ -47,10 +48,6 @@ export function CustomerJobDetailsView({ initialJob }: CustomerJobDetailsViewPro
 
   const [selectedOfferForProfile, setSelectedOfferForProfile] = useState<WorkerOffer | null>(null);
   const [confirmingOfferId, setConfirmingOfferId] = useState<string | null>(null);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-  const [isPlayingAudio, setIsPlayingAudio] = useState(false);
-  const [audioDuration, setAudioDuration] = useState<number | null>(null);
-  const [audioCurrentTime, setAudioCurrentTime] = useState<number>(0);
   const [previewPhoto, setPreviewPhoto] = useState<string | null>(null);
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
@@ -61,76 +58,6 @@ export function CustomerJobDetailsView({ initialJob }: CustomerJobDetailsViewPro
     setToastMessage(message);
     setToastTone(tone);
     setTimeout(() => setToastMessage(null), 4000);
-  };
-
-  // Reset audio state when job voice note changes
-  useEffect(() => {
-    if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current.currentTime = 0;
-    }
-    setIsPlayingAudio(false);
-    setAudioCurrentTime(0);
-    setAudioDuration(null);
-  }, [job?.voiceNoteUrl]);
-
-  // Format seconds to mm:ss
-  const formatAudioDuration = (seconds?: number | null) => {
-    if (!seconds || isNaN(seconds) || !isFinite(seconds) || seconds <= 0) {
-      return job?.voiceNoteDuration ? `0:${String(job.voiceNoteDuration).padStart(2, "0")}` : "--:--";
-    }
-    const mins = Math.floor(seconds / 60);
-    const secs = Math.floor(seconds % 60);
-    return `${mins}:${String(secs).padStart(2, "0")}`;
-  };
-
-  const handleLoadedMetadata = () => {
-    const audio = audioRef.current;
-    if (!audio) return;
-
-    if (!isNaN(audio.duration) && isFinite(audio.duration) && audio.duration > 0) {
-      setAudioDuration(audio.duration);
-    } else if (audio.duration === Infinity) {
-      // Chrome MediaRecorder WebM bug: seeking near the end resolves true duration
-      const onSeeked = () => {
-        audio.removeEventListener("seeked", onSeeked);
-        if (!isNaN(audio.duration) && isFinite(audio.duration) && audio.duration > 0) {
-          setAudioDuration(audio.duration);
-        }
-        audio.currentTime = 0;
-      };
-      audio.addEventListener("seeked", onSeeked, { once: true });
-      audio.currentTime = 1e101;
-    }
-  };
-
-  const handleTimeUpdate = () => {
-    const audio = audioRef.current;
-    if (!audio) return;
-    setAudioCurrentTime(audio.currentTime);
-    if (!isNaN(audio.duration) && isFinite(audio.duration) && audio.duration > 0) {
-      setAudioDuration(audio.duration);
-    }
-  };
-
-  const handleAudioEnded = () => {
-    setIsPlayingAudio(false);
-    setAudioCurrentTime(0);
-  };
-
-  // Audio Playback Handler
-  const handleToggleAudio = () => {
-    if (!job.voiceNoteUrl) return;
-    const audio = audioRef.current || (document.getElementById("job-details-voice-player") as HTMLAudioElement | null);
-    if (!audio) return;
-
-    if (isPlayingAudio) {
-      audio.pause();
-      setIsPlayingAudio(false);
-    } else {
-      audio.play().catch(() => {});
-      setIsPlayingAudio(true);
-    }
   };
 
   // Direct Booking Confirmation Handler
@@ -205,6 +132,8 @@ export function CustomerJobDetailsView({ initialJob }: CustomerJobDetailsViewPro
               {job.subCategory || (isUrdu ? "سروس درخواست" : "Service Request")}
             </span>
 
+            
+
             <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-600">
               <MapPin className="size-3 text-[#0F766E]" />
               {job.area || (isUrdu ? "آن لوکیشن" : "On Location")}
@@ -240,7 +169,7 @@ export function CustomerJobDetailsView({ initialJob }: CustomerJobDetailsViewPro
           </div>
 
           <h1 className="text-lg sm:text-2xl font-extrabold text-[#123B5D] leading-snug">
-            {job.title}
+            {job.title || job.subCategory || job.category || (isUrdu ? "سروس کی درخواست" : "Service Request")}
           </h1>
         </div>
 
@@ -362,53 +291,16 @@ export function CustomerJobDetailsView({ initialJob }: CustomerJobDetailsViewPro
 
             {/* Voice Note Audio Player */}
             {job.voiceNoteUrl && (
-              <div className="p-3 bg-slate-50 rounded-2xl flex items-center gap-3">
-                <audio
-                  ref={audioRef}
-                  id="job-details-voice-player"
-                  src={job.voiceNoteUrl}
-                  preload="metadata"
-                  onLoadedMetadata={handleLoadedMetadata}
-                  onTimeUpdate={handleTimeUpdate}
-                  onEnded={handleAudioEnded}
-                  className="hidden"
+              <div className="space-y-1.5">
+                <VoicePlayer
+                  voiceNote={{
+                    audioUrl: job.voiceNoteUrl,
+                    durationSeconds: job.voiceNoteDuration,
+                    waveformPattern: [35, 65, 45, 80, 95, 70, 40, 75, 90, 85, 55, 75, 45, 65, 35],
+                  }}
+                  title={isUrdu ? "منسلک وائس نوٹ" : "Voice Note"}
+                  variant="full"
                 />
-                <button
-                  type="button"
-                  onClick={handleToggleAudio}
-                  className="size-9 rounded-full bg-[#0F766E] text-white flex items-center justify-center shrink-0 shadow-xs hover:bg-[#115E59] cursor-pointer"
-                >
-                  {isPlayingAudio ? (
-                    <Pause className="size-4" />
-                  ) : (
-                    <Play className="size-4 ml-0.5 rtl:ml-0 rtl:mr-0.5" />
-                  )}
-                </button>
-                <div className="flex-1">
-                  <div className="flex items-center justify-between text-xs font-semibold text-[#123B5D] mb-1">
-                    <span className="flex items-center gap-1">
-                      <Volume2 className="size-3 text-[#0F766E]" />
-                      {isUrdu ? "وائس نوٹ" : "Voice Note"}
-                    </span>
-                    <span className="text-slate-400 text-[11px] font-mono">
-                      {isPlayingAudio
-                        ? `${formatAudioDuration(audioCurrentTime)} / ${formatAudioDuration(audioDuration || job.voiceNoteDuration)}`
-                        : formatAudioDuration(audioDuration || job.voiceNoteDuration)}
-                    </span>
-                  </div>
-                  <div className="h-1.5 bg-slate-200 rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-[#0F766E] rounded-full transition-all duration-150"
-                      style={{
-                        width: `${
-                          audioDuration && audioDuration > 0
-                            ? Math.min(100, Math.max(0, (audioCurrentTime / audioDuration) * 100))
-                            : isPlayingAudio ? 50 : 0
-                        }%`,
-                      }}
-                    />
-                  </div>
-                </div>
               </div>
             )}
           </div>
@@ -594,6 +486,19 @@ export function CustomerJobDetailsView({ initialJob }: CustomerJobDetailsViewPro
                       : "Payment has been settled. Please rate your technician's workmanship."}
                   </p>
 
+                  {job.customerReview?.tags && job.customerReview.tags.length > 0 && (
+                    <div className="flex flex-wrap gap-1.5 pt-0.5">
+                      {job.customerReview.tags.map((tag) => (
+                        <span
+                          key={tag}
+                          className="px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-100 text-emerald-800"
+                        >
+                          ✓ {tag}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+
                   {job.customerReview?.comment && (
                     <div className="p-2.5 rounded-xl bg-white/80 border border-emerald-100 text-[11px] text-slate-700 italic">
                       &ldquo;{job.customerReview.comment}&rdquo;
@@ -724,6 +629,7 @@ export function CustomerJobDetailsView({ initialJob }: CustomerJobDetailsViewPro
             customerReview: {
               rating: review.rating,
               comment: review.comment,
+              tags: review.tags,
               date: new Date().toISOString(),
             },
           }));
