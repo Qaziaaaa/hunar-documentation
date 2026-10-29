@@ -56,6 +56,7 @@ export class ReviewsService {
         revieweeId: job.selectedWorkerId,
         rating: dto.rating,
         comment: dto.comment,
+        ...(Array.isArray(dto.tags) && dto.tags.length > 0 ? { tags: dto.tags } : {}),
       },
     });
 
@@ -96,6 +97,7 @@ export class ReviewsService {
           reviewerId: true,
           rating: true,
           comment: true,
+          tags: true,
           createdAt: true,
           reviewer: { select: { name: true, avatarUrl: true } },
         },
@@ -121,6 +123,7 @@ export class ReviewsService {
           jobId: true,
           rating: true,
           comment: true,
+          tags: true,
           createdAt: true,
           reviewer: { select: { name: true, avatarUrl: true } },
         },
@@ -155,6 +158,7 @@ export class ReviewsService {
           jobId: true,
           rating: true,
           comment: true,
+          tags: true,
           createdAt: true,
           reviewee: {
             select: { id: true, name: true, avatarUrl: true },
