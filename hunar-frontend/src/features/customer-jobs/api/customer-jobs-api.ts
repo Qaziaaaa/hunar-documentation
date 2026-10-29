@@ -292,14 +292,27 @@ function transformBackendWorker(worker: any): WorkerProfile {
   );
 
   const rawReviews = Array.isArray(worker.reviews) ? worker.reviews : [];
-  const reviews: WorkerReview[] = rawReviews.map((r: any) => ({
-    id: r.id || String(Math.random()),
-    customerName: r.customerName || r.reviewer?.name || "Customer",
-    customerArea: r.customerArea || r.job?.area || r.job?.city || "",
-    rating: Number(r.rating || 0),
-    date: r.date || (r.createdAt ? new Date(r.createdAt).toLocaleDateString() : ""),
-    comment: r.comment || "",
-  }));
+  const reviews: WorkerReview[] = rawReviews.map((r: any) => {
+    let tags: string[] = Array.isArray(r.tags) ? r.tags : [];
+    let cleanComment = r.comment || "";
+    if (tags.length === 0 && cleanComment) {
+      const match = cleanComment.match(/(?:Positive Highlights|کاریگر کے بارے میں تاثرات):\s*([^.\n]+)/i);
+      if (match) {
+        tags = match[1].split(/,\s*/).map((s: string) => s.trim()).filter(Boolean);
+        const stripped = cleanComment.replace(/(?:Positive Highlights|کاریگر کے بارے میں تاثرات):\s*[^.\n]+\.?\s*/i, "").trim();
+        cleanComment = stripped;
+      }
+    }
+    return {
+      id: r.id || String(Math.random()),
+      customerName: r.customerName || r.reviewer?.name || "Customer",
+      customerArea: r.customerArea || r.job?.area || r.job?.city || "",
+      rating: Number(r.rating || 0),
+      date: r.date || (r.createdAt ? new Date(r.createdAt).toLocaleDateString() : ""),
+      comment: cleanComment,
+      tags,
+    };
+  });
 
   const ratingAvg =
     typeof worker.rating === "object" && worker.rating !== null

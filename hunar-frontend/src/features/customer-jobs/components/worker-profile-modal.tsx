@@ -186,10 +186,12 @@ export function WorkerProfileModal({
             <div className="text-center border-r rtl:border-r-0 rtl:border-l border-slate-100 pr-1 sm:pr-2 rtl:pr-0 rtl:pl-1 rtl:sm:pl-2">
               <div className="flex items-center justify-center text-[#F59E0B] font-bold text-sm sm:text-base">
                 <Star className="size-4 fill-[#F59E0B] mr-0.5 rtl:mr-0 rtl:ml-0.5" />
-                {worker.rating > 0 ? worker.rating.toFixed(1) : (isUrdu ? "نیا" : "New")}
+                {worker.rating > 0 && worker.totalReviews > 0 ? worker.rating.toFixed(1) : (isUrdu ? "نیا" : "New")}
               </div>
               <p className="text-[10.5px] text-slate-500 mt-0.5">
-                {isUrdu ? `${worker.totalReviews} ریویوز` : `${worker.totalReviews} reviews`}
+                {isUrdu
+                  ? `${worker.totalReviews} ریویوز`
+                  : `${worker.totalReviews} ${worker.totalReviews === 1 ? "review" : "reviews"}`}
               </p>
             </div>
 
@@ -371,9 +373,23 @@ export function WorkerProfileModal({
                             {rev.rating}
                           </div>
                         </div>
-                        <p className="text-xs text-slate-600 leading-relaxed">
-                          {rev.comment}
-                        </p>
+                        {rev.tags && rev.tags.length > 0 && (
+                          <div className="flex flex-wrap gap-1 pt-1 pb-0.5">
+                            {rev.tags.map((tag: string) => (
+                              <span
+                                key={tag}
+                                className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-[#0F766E]/10 text-[#0F766E] border border-[#0F766E]/20"
+                              >
+                                ✓ {tag}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                        {rev.comment && (
+                          <p className="text-xs text-slate-600 leading-relaxed">
+                            {rev.comment}
+                          </p>
+                        )}
                         <span className="text-[10px] text-slate-400 block pt-0.5">
                           {rev.date}
                         </span>
