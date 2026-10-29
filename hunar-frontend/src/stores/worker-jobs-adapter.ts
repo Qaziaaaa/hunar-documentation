@@ -188,6 +188,41 @@ export interface BackendJobExtras {
   offerId?: string | null;
 }
 
+function computeHaversineKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  const R = 6371;
+  const toRad = (deg: number) => (deg * Math.PI) / 180;
+  const dLat = toRad(lat2 - lat1);
+  const dLon = toRad(lon2 - lon1);
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return Math.round(R * c * 10) / 10;
+}
+
+function getStoredWorkerLocation(): { lat: number; lng: number } | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const cached = window.localStorage.getItem("hunar_worker_profile");
+    if (cached) {
+      const p = JSON.parse(cached);
+      const sa = p.serviceAreas?.[0];
+      if (sa?.latitude && sa?.longitude) {
+        return { lat: Number(sa.latitude), lng: Number(sa.longitude) };
+      }
+    }
+    const onboarding = window.localStorage.getItem("hunar_worker_onboarding");
+    if (onboarding) {
+      const o = JSON.parse(onboarding);
+      const sa = o.serviceAreas?.[0];
+      if (sa?.latitude && sa?.longitude) {
+        return { lat: Number(sa.latitude), lng: Number(sa.longitude) };
+      }
+    }
+  } catch {}
+  return null;
+}
+
 export function mapJobToRequest(
   job: Job,
   extras: BackendJobExtras = {},
@@ -207,7 +242,24 @@ export function mapJobToRequest(
     location: {
       area: job.area ?? job.city,
       city: job.city,
-      distanceKm: extras.distanceKm ?? 0,
+      distanceKm: (() => {
+        const explicit = typeof extras.distanceKm === "number" && extras.distanceKm > 0
+          ? extras.distanceKm
+          : typeof job.distanceKm === "number" && job.distanceKm > 0
+          ? job.distanceKm
+          : typeof (job as any).distance === "number" && (job as any).distance > 0
+          ? (job as any).distance
+          : null;
+        if (explicit !== null) return Math.round(explicit * 10) / 10;
+        if (job.latitude && job.longitude) {
+          const loc = getStoredWorkerLocation();
+          if (loc && loc.lat && loc.lng) {
+            const dist = computeHaversineKm(loc.lat, loc.lng, job.latitude, job.longitude);
+            if (dist > 0) return dist;
+          }
+        }
+        return 0;
+      })(),
       fullAddress: job.address,
       coordinates: {
         lat: job.latitude || 0,
