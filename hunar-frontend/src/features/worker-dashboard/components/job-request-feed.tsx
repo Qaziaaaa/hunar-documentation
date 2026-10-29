@@ -137,9 +137,10 @@ function toFeedJobRequest(job: Job): JobRequest {
     job.customer?.reviewCount;
   const rawOrders = (job as any).customer?.totalOrders ?? job.customer?.totalOrders;
 
-  const rating = rawRating && Number(rawRating) > 0 ? Number(rawRating) : 0;
   const reviewCount =
     rawReviews && Number(rawReviews) > 0 ? Number(rawReviews) : 0;
+  const rating =
+    reviewCount > 0 && rawRating && Number(rawRating) > 0 ? Number(rawRating) : 0;
   const totalOrders =
     rawOrders && Number(rawOrders) > 0 ? Number(rawOrders) : 0;
 
@@ -179,6 +180,11 @@ function toFeedJobRequest(job: Job): JobRequest {
       job.voiceNoteUrl && job.voiceNoteUrl.trim() !== "" && !job.voiceNoteUrl.startsWith("blob:")
         ? {
             audioUrl: job.voiceNoteUrl.trim(),
+            durationSeconds:
+              (job as any).voiceNoteDuration ||
+              (job as any).durationSeconds ||
+              (job as any).voiceNote?.durationSeconds ||
+              undefined,
             waveformPattern: [35, 60, 45, 80, 95, 65, 40, 75, 90, 85, 50, 70, 40, 60, 30],
           }
         : undefined,

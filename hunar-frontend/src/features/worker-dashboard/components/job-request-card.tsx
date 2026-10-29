@@ -257,36 +257,26 @@ export function JobRequestCard({
           </p>
 
           {/* Star Rating & Customer Review Count */}
-          {job.customer.rating > 0 ? (
+          {job.customer.rating > 0 && (job.customer.reviewCount ?? 0) > 0 && (
             <div
               className="mt-1 flex items-center justify-center gap-1 text-[11px] font-extrabold text-[#F59E0B]"
-              title={`${job.customer.rating.toFixed(1)} rating from ${job.customer.reviewCount ?? 0} customer reviews`}
+              title={`${job.customer.rating.toFixed(1)} rating from ${job.customer.reviewCount} customer ${job.customer.reviewCount === 1 ? "review" : "reviews"}`}
             >
               <Star className="size-3 fill-[#F59E0B] stroke-none shrink-0" />
               <span>{job.customer.rating.toFixed(1)}</span>
               <span className="text-[10px] font-semibold text-slate-400">
-                ({job.customer.reviewCount ?? 0})
+                ({job.customer.reviewCount})
               </span>
-            </div>
-          ) : (
-            <div className="mt-1 text-[10px] font-medium text-slate-400">
-              New Customer
             </div>
           )}
 
-          {/* Total Orders / Verification */}
-          {job.customer.totalOrders > 0 ? (
-            <p
-              className="mt-0.5 text-[9.5px] font-bold text-slate-500 truncate"
-              title={`${job.customer.totalOrders} total completed orders`}
-            >
-              {job.customer.totalOrders} orders
-            </p>
-          ) : job.customer.isVerified ? (
-            <span className="mt-0.5 inline-block text-[9px] font-bold text-emerald-600 bg-emerald-50 px-1.5 py-0.2 rounded-full border border-emerald-100">
-              Verified
-            </span>
-          ) : null}
+          {/* Total Orders */}
+          <p
+            className="mt-0.5 text-[9.5px] font-bold text-slate-500 truncate"
+            title={`${job.customer.totalOrders} total completed ${job.customer.totalOrders === 1 ? "order" : "orders"}`}
+          >
+            {job.customer.totalOrders} {job.customer.totalOrders === 1 ? "order" : "orders"}
+          </p>
 
           {/* Uploaded Time */}
           <span className="mt-0.5 block text-[9.5px] font-medium text-slate-400">
