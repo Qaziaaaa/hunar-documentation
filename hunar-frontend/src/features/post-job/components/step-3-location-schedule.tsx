@@ -916,9 +916,9 @@ export function Step3LocationSchedule({
         </div>
       )}
 
-          {/* FINAL STEP 3 SUMMARY (One compact summary card) */}
+          {/* FINAL STEP 3 SUMMARY (One compact summary card in original position) */}
           {hasValidLocation && (
-            <div className="p-3.5 sm:p-4 bg-slate-50 rounded-2xl border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 animate-in fade-in duration-150">
+            <div className="p-3.5 sm:p-4 bg-slate-50 rounded-2xl border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 animate-in fade-in duration-150 mb-8 sm:mb-10">
               <div className="space-y-1 min-w-0">
                 <div className="flex items-center gap-2 text-xs font-bold text-[#123B5D]">
                   <MapPin className="size-3.5 text-[#0F8B8D] shrink-0" />
