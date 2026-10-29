@@ -100,8 +100,8 @@ export function WorkerVisitTrackingView({
   const customerLng = job.location.coordinates?.lng || 0;
 
   // Worker live coordinates (continuously updated by device GPS)
-  const [workerLat, setWorkerLat] = useState<number>(() => customerLat || 0);
-  const [workerLng, setWorkerLng] = useState<number>(() => customerLng || 0);
+  const [workerLat, setWorkerLat] = useState<number>(0);
+  const [workerLng, setWorkerLng] = useState<number>(0);
   const [isGpsActive, setIsGpsActive] = useState<boolean>(false);
   const [workerProfileName, setWorkerProfileName] = useState<string>("Technician");
 
@@ -268,13 +268,13 @@ export function WorkerVisitTrackingView({
       ? job.etaMinutes
       : 0;
 
-  const isAtDoorstep = displayDistanceKm <= 0.05;
+  const isAtDoorstep = Boolean(isGpsActive && liveDistanceKm !== null && liveDistanceKm <= 0.05);
 
   const distanceText = isAtDoorstep
     ? isUrdu
-      ? "دہلیز پر موجود (0 km)"
-      : "At Doorstep (0 km)"
-    : `${displayDistanceKm} km`;
+      ? "دہلیز پر موجود"
+      : "At Doorstep"
+    : displayDistanceKm > 0 ? `${displayDistanceKm} km` : (isUrdu ? "قریب" : "Nearby");
 
   const etaText = isAtDoorstep
     ? isUrdu
@@ -799,7 +799,7 @@ export function WorkerVisitTrackingView({
             <span className="text-slate-300">|</span>
             <span className="text-[#0F8B8D]">
               {isAtDoorstep
-                ? (isUrdu ? "دہلیز پر موجود (0 km)" : "At Doorstep (0 km)")
+                ? (isUrdu ? "دہلیز پر موجود" : "At Doorstep")
                 : isGpsActive
                 ? `${etaText} (${distanceText})`
                 : (isUrdu ? "GPS سگنل کا انتظار..." : "Awaiting GPS Signal...")}

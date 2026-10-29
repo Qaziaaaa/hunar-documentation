@@ -24,17 +24,22 @@ import {
   Eye,
 } from "lucide-react";
 
+import { useLocale } from "next-intl";
+
 interface WorkerPastJobCardProps {
   job: JobRequest;
 }
 
 export function WorkerPastJobCard({ job }: WorkerPastJobCardProps) {
+  const locale = useLocale();
+  const isUrdu = locale === "ur";
   const [showInvoice, setShowInvoice] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
 
   const visitCharge = job.visitCharge ?? job.customerSuggestedPrice ?? 0;
   const repairCharge = job.repairCharge ?? 0;
-  const grossTotal = visitCharge + repairCharge;
+  const hasRepair = repairCharge > 0;
+  const grossTotal = hasRepair ? visitCharge + repairCharge : visitCharge;
   const platformCommission = job.platformCommission ?? Math.round(visitCharge * 0.1);
   const netEarnings = job.workerNetEarnings ?? (grossTotal - platformCommission);
   const cleanJobId = job.id?.replace(/^INV-/, "") || job.id;
@@ -106,9 +111,24 @@ export function WorkerPastJobCard({ job }: WorkerPastJobCardProps) {
           {/* Earnings Highlight Box */}
           <div className="bg-emerald-50/60 rounded-xl sm:rounded-2xl p-3 sm:p-3.5 border border-emerald-200/60 flex items-center justify-between gap-2">
             <div>
-              <span className="text-[9px] sm:text-[10px] uppercase font-bold text-emerald-800 tracking-wider block">
-                Total Earned &amp; Settled
-              </span>
+              <div className="flex items-center gap-1.5 flex-wrap mb-0.5">
+                <span className="text-[9px] sm:text-[10px] uppercase font-bold text-emerald-800 tracking-wider block">
+                  {hasRepair
+                    ? (isUrdu ? "وزٹ + مرمت" : "Visit + Repair")
+                    : (isUrdu ? "وزٹ چارجز" : "Visit Charge")}
+                </span>
+                <span
+                  className={`px-1.5 py-0.2 rounded-md text-[9px] font-extrabold uppercase tracking-wide border ${
+                    hasRepair
+                      ? "bg-emerald-100 text-emerald-800 border-emerald-200"
+                      : "bg-slate-100 text-slate-700 border-slate-200"
+                  }`}
+                >
+                  {hasRepair
+                    ? (isUrdu ? "مرمت مکمل" : "Repair Done")
+                    : (isUrdu ? "صرف وزٹ" : "Visit Only")}
+                </span>
+              </div>
               <span className="text-base sm:text-xl font-black text-emerald-900">
                 {formatRs(grossTotal)}
               </span>
@@ -136,6 +156,18 @@ export function WorkerPastJobCard({ job }: WorkerPastJobCardProps) {
                 </div>
                 <span className="text-[10px] text-slate-400 truncate max-w-[120px] sm:max-w-none">{job.customer.name}</span>
               </div>
+              {review.tags && review.tags.length > 0 && (
+                <div className="flex flex-wrap gap-1 pt-1 pb-0.5">
+                  {review.tags.map((tag: string) => (
+                    <span
+                      key={tag}
+                      className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-[#0F766E]/10 text-[#0F766E] border border-[#0F766E]/20"
+                    >
+                      ✓ {tag}
+                    </span>
+                  ))}
+                </div>
+              )}
               {review.comment ? (
                 <p className="text-[11px] sm:text-xs text-slate-600 italic line-clamp-2">
                   &quot;{review.comment}&quot;

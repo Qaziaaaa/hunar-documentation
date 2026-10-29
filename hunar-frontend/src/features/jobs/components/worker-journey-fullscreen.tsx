@@ -500,25 +500,27 @@ export function WorkerJourneyFullscreen({
             </div>
           </div>
 
-          {/* Quick Direct Call & Message */}
-          <div className="flex items-center gap-2 shrink-0">
-            <button
-              type="button"
-              onClick={() => setShowCallModal(true)}
-              className="size-9 sm:size-10 rounded-full bg-success/10 border border-success/20 text-success hover:bg-success hover:text-white hover:border-success shadow-2xs flex items-center justify-center transition-all active:scale-90 cursor-pointer"
-              title="Call Customer"
-            >
-              <Phone className="size-4 stroke-[2.2]" />
-            </button>
-            <button
-              type="button"
-              onClick={() => setShowChatModal(true)}
-              className="size-9 sm:size-10 rounded-full bg-teal/10 border border-teal/20 text-teal hover:bg-teal hover:text-white hover:border-teal shadow-2xs flex items-center justify-center transition-all active:scale-90 cursor-pointer"
-              title="Message Customer"
-            >
-              <MessageCircle className="size-4 stroke-[2.2]" />
-            </button>
-          </div>
+          {/* Quick Direct Call & Message (hidden when completed) */}
+          {!isCompleted && (
+            <div className="flex items-center gap-2 shrink-0">
+              <button
+                type="button"
+                onClick={() => setShowCallModal(true)}
+                className="size-9 sm:size-10 rounded-full bg-success/10 border border-success/20 text-success hover:bg-success hover:text-white hover:border-success shadow-2xs flex items-center justify-center transition-all active:scale-90 cursor-pointer"
+                title="Call Customer"
+              >
+                <Phone className="size-4 stroke-[2.2]" />
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowChatModal(true)}
+                className="size-9 sm:size-10 rounded-full bg-teal/10 border border-teal/20 text-teal hover:bg-teal hover:text-white hover:border-teal shadow-2xs flex items-center justify-center transition-all active:scale-90 cursor-pointer"
+                title="Message Customer"
+              >
+                <MessageCircle className="size-4 stroke-[2.2]" />
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Error Alert */}

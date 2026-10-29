@@ -124,7 +124,9 @@ export function JobCard({ job, workerOffer }: JobCardProps) {
             <span className="flex items-center gap-1 font-semibold text-slate-700">
               <MapPin className="w-3.5 h-3.5 text-[#0F8B8D]" />
               <span>{job.location.area}</span>
-              <span className="text-slate-500 font-normal">({job.location.distanceKm} km)</span>
+              {typeof job.location.distanceKm === "number" && job.location.distanceKm > 0 ? (
+                <span className="text-slate-500 font-normal">({job.location.distanceKm} km)</span>
+              ) : null}
             </span>
 
             {/* Media indicators */}

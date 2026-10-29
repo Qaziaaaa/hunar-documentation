@@ -131,7 +131,9 @@ export function WorkerInvoiceModal({ job, onClose }: WorkerInvoiceModalProps) {
             <div className="p-3 sm:p-4 flex justify-between items-center bg-emerald-50/80 text-emerald-900">
               <div className="flex items-center gap-1.5 sm:gap-2">
                 <CheckCircle2 className="size-4 text-emerald-600 shrink-0" />
-                <span className="font-black text-xs sm:text-sm">Total Earning</span>
+                <span className="font-black text-xs sm:text-sm">
+                  {repairCharge > 0 ? "Total Settled (Visit + Repair)" : "Total Settled (Visit Only)"}
+                </span>
               </div>
               <span className="font-black text-base sm:text-lg text-emerald-800">
                 {formatRs(grossTotal)}

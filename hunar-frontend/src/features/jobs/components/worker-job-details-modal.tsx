@@ -70,6 +70,7 @@ export function WorkerJobDetailsModal({
     ((job as any).voiceNoteUrl
       ? {
           url: (job as any).voiceNoteUrl,
+          durationSeconds: (job as any).voiceNoteDuration || (job as any).durationSeconds,
           waveform: [30, 60, 45, 90, 75, 40, 65, 80, 50, 70, 95, 40, 60, 30],
         }
       : undefined);
@@ -77,6 +78,8 @@ export function WorkerJobDetailsModal({
   if (!isOpen) return null;
 
   const isCompleted = job.status === "completed";
+  const repairCharge = job.repairCharge ?? 0;
+  const hasRepair = repairCharge > 0;
 
   const agreedVisitCharge =
     (isCompleted && job.visitCharge !== undefined)
@@ -88,6 +91,7 @@ export function WorkerJobDetailsModal({
          0);
 
   const isEnRoute = job.status === "visit_in_progress";
+  const grossSettlement = agreedVisitCharge + repairCharge;
 
   const handleStartDispatch = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -212,6 +216,7 @@ export function WorkerJobDetailsModal({
                     <VoicePlayer
                       voiceNote={{
                         audioUrl: voiceNoteData.url,
+                        durationSeconds: (voiceNoteData as any).durationSeconds,
                         waveformPattern: voiceNoteData.waveform,
                       }}
                       variant="full"
@@ -258,16 +263,34 @@ export function WorkerJobDetailsModal({
                   <div className="flex items-center justify-between gap-3">
                     <div>
                       <span className="text-[10px] uppercase font-bold text-slate-500 tracking-wider block">
-                        {isCompleted ? "Total Net Settlement" : "Agreed Doorstep Visit Fee"}
+                        {isCompleted
+                          ? hasRepair
+                            ? (isUrdu ? "کل ادائیگی (وزٹ + مرمت)" : "Total Settlement (Visit + Repair)")
+                            : (isUrdu ? "وزٹ فیس کی ادائیگی" : "Total Settlement (Visit Only)")
+                          : (isUrdu ? "طے شدہ وزٹ فیس" : "Agreed Doorstep Visit Fee")}
                       </span>
                       <div className="text-xl sm:text-2xl font-black text-[#123B5D] mt-0.5">
-                        {formatRs(isCompleted ? (job.workerNetEarnings ?? (agreedVisitCharge - Math.round(agreedVisitCharge * 0.1))) : agreedVisitCharge)}
+                        {formatRs(
+                          isCompleted
+                            ? grossSettlement
+                            : agreedVisitCharge
+                        )}
                       </div>
                     </div>
                   </div>
-                  <p className="text-[11px] text-slate-500 font-medium leading-relaxed">
-                    Locked visit fee. Payout is credited upon doorstep arrival and verification.
-                  </p>
+                  {isCompleted && hasRepair ? (
+                    <div className="flex items-center gap-2 pt-1 text-[11px] font-semibold text-slate-600 flex-wrap">
+                      <span>{isUrdu ? "وزٹ فیس:" : "Visit Fee:"} <strong className="text-slate-900">{formatRs(agreedVisitCharge)}</strong></span>
+                      <span>•</span>
+                      <span>{isUrdu ? "مرمت کا کام:" : "Repair Work:"} <strong className="text-[#0F8B8D]">{formatRs(repairCharge)}</strong></span>
+                    </div>
+                  ) : (
+                    <p className="text-[11px] text-slate-500 font-medium leading-relaxed">
+                      {isCompleted
+                        ? (isUrdu ? "صرف وزٹ اور تشخیصی فیس طے شدہ ہے۔" : "Doorstep diagnostic visit fee settled (no repair work).")
+                        : (isUrdu ? "طے شدہ وزٹ فیس۔ آمد اور تصدیق پر ادا کی جائے گی۔" : "Locked visit fee. Payout is credited upon doorstep arrival and verification.")}
+                    </p>
+                  )}
                 </div>
 
                 {/* Customer Profile & Instant Contact */}
@@ -303,55 +326,86 @@ export function WorkerJobDetailsModal({
                             </span>
                           )}
                         </div>
-                        <div className="flex items-center gap-1 text-xs text-slate-500 mt-0.5">
-                          <Star className="size-3 text-[#F59E0B] fill-[#F59E0B]" />
-                          <span className="font-bold text-slate-700">{job.customer.rating}</span>
-                          <span>({job.customer.totalReviews} reviews)</span>
-                        </div>
+                        {job.customer.rating > 0 && (job.customer.totalReviews ?? 0) > 0 ? (
+                          <div className="flex items-center gap-1 text-xs text-slate-500 mt-0.5">
+                            <Star className="size-3 text-[#F59E0B] fill-[#F59E0B]" />
+                            <span className="font-bold text-slate-700">{job.customer.rating}</span>
+                            <span>
+                              ({job.customer.totalReviews}{" "}
+                              {job.customer.totalReviews === 1
+                                ? isUrdu
+                                  ? "ریویو"
+                                  : "review"
+                                : isUrdu
+                                ? "ریویوز"
+                                : "reviews"}
+                              )
+                            </span>
+                          </div>
+                        ) : (job.customer as any)?.totalOrders && (job.customer as any).totalOrders > 0 ? (
+                          <div className="text-xs text-slate-500 font-semibold mt-0.5">
+                            {(job.customer as any).totalOrders}{" "}
+                            {((job.customer as any).totalOrders === 1)
+                              ? isUrdu
+                                ? "مکمل شدہ آرڈر"
+                                : "Order Completed"
+                              : isUrdu
+                              ? "مکمل شدہ آرڈرز"
+                              : "Orders Completed"}
+                          </div>
+                        ) : (
+                          <p className="text-xs text-slate-500 font-medium mt-0.5">
+                            {job.location.area ? `${job.location.area}, ` : ""}{job.location.city || "Peshawar"}
+                          </p>
+                        )}
                       </div>
                     </div>
 
-                    {/* Quick Call & Message CTAs */}
-                    <div className="flex items-center gap-2">
-                      {job.customer.phone && (
-                        <a
-                          href={`tel:${job.customer.phone}`}
-                          className="size-9 sm:size-10 rounded-xl bg-success/10 hover:bg-success text-success hover:text-white border border-success/20 flex items-center justify-center transition-all shadow-2xs cursor-pointer"
-                          title="Call Customer"
+                    {/* Quick Call & Message CTAs (only during active / scheduled job, hidden when completed) */}
+                    {!isCompleted && (
+                      <div className="flex items-center gap-2">
+                        {job.customer.phone && (
+                          <a
+                            href={`tel:${job.customer.phone}`}
+                            className="size-9 sm:size-10 rounded-xl bg-success/10 hover:bg-success text-success hover:text-white border border-success/20 flex items-center justify-center transition-all shadow-2xs cursor-pointer"
+                            title="Call Customer"
+                          >
+                            <Phone className="size-4" />
+                          </a>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => setShowChatModal(true)}
+                          className="size-9 sm:size-10 rounded-xl bg-teal/10 hover:bg-teal text-teal hover:text-white border border-teal/20 flex items-center justify-center transition-all shadow-2xs cursor-pointer"
+                          title="Message Customer"
                         >
-                          <Phone className="size-4" />
-                        </a>
-                      )}
-                      <button
-                        type="button"
-                        onClick={() => setShowChatModal(true)}
-                        className="size-9 sm:size-10 rounded-xl bg-teal/10 hover:bg-teal text-teal hover:text-white border border-teal/20 flex items-center justify-center transition-all shadow-2xs cursor-pointer"
-                        title="Message Customer"
-                      >
-                        <MessageSquare className="size-4" />
-                      </button>
-                    </div>
+                          <MessageSquare className="size-4" />
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </div>
 
-                {/* Customer Location & Address Details */}
-                <div className="bg-slate-50/80 rounded-2xl border border-slate-200/80 p-4 space-y-1.5">
-                  <div className="flex items-center justify-between text-xs text-slate-500 font-bold uppercase tracking-wider">
-                    <span className="flex items-center gap-1.5 text-[#0F8B8D]">
-                      <MapPin className="size-3.5" />
-                      <span>Customer Address</span>
-                    </span>
-                    <span className="text-slate-600 font-extrabold normal-case">
-                      {job.location.distanceKm} km away
-                    </span>
+                {/* Customer Location & Address Details - hidden once job is completed for customer privacy */}
+                {!isCompleted && (
+                  <div className="bg-slate-50/80 rounded-2xl border border-slate-200/80 p-4 space-y-1.5">
+                    <div className="flex items-center justify-between text-xs text-slate-500 font-bold uppercase tracking-wider">
+                      <span className="flex items-center gap-1.5 text-[#0F8B8D]">
+                        <MapPin className="size-3.5" />
+                        <span>Customer Address</span>
+                      </span>
+                      <span className="text-slate-600 font-extrabold normal-case">
+                        {typeof job.location.distanceKm === "number" && job.location.distanceKm > 0 ? `${job.location.distanceKm} km away` : "Nearby"}
+                      </span>
+                    </div>
+                    <p className="text-xs sm:text-sm font-extrabold text-slate-900 leading-snug">
+                      {job.location.fullAddress}
+                    </p>
+                    <p className="text-xs text-slate-500 font-medium">
+                      {job.location.area}, {job.location.city}
+                    </p>
                   </div>
-                  <p className="text-xs sm:text-sm font-extrabold text-slate-900 leading-snug">
-                    {job.location.fullAddress}
-                  </p>
-                  <p className="text-xs text-slate-500 font-medium">
-                    {job.location.area}, {job.location.city}
-                  </p>
-                </div>
+                )}
               </div>
             </div>
           </div>
