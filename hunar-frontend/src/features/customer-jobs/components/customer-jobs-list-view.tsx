@@ -68,7 +68,7 @@ export function CustomerJobsListView({ initialJobs, jobs: jobsProp, initialTab }
   const partitionJobs = (list: CustomerJob[]) => ({
     scheduled: list.filter((j) => j.status === "visit_scheduled" || j.status === "in_progress"),
     offers: list.filter((j) => j.status === "receiving_offers" || (j as any).status === "open"),
-    completed: list.filter((j) => j.status === "completed" || (j as any).status === "cancelled"),
+    completed: list.filter((j) => j.status === "completed"),
   });
 
   const determinedInitialFilter = (
@@ -1124,6 +1124,7 @@ export function CustomerJobsListView({ initialJobs, jobs: jobsProp, initialTab }
                       customerReview: {
                         rating: review.rating,
                         comment: review.comment,
+                        tags: review.tags,
                         date: new Date().toISOString(),
                       },
                     }
