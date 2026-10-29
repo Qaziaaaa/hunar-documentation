@@ -366,7 +366,12 @@ describe('AdminService.suspendCustomer (Task 12)', () => {
     });
     expect(update).toHaveBeenCalledWith({
       where: { id: 'c1' },
-      data: { isActive: false },
+      data: {
+        isActive: false,
+        suspendedUntil: null,
+        suspensionReason: 'Fraud report',
+        suspensionType: 'PERMANENT',
+      },
       select: expect.any(Object),
     });
     expect(record).toHaveBeenCalledWith(
@@ -377,7 +382,7 @@ describe('AdminService.suspendCustomer (Task 12)', () => {
         targetType: Role.CUSTOMER,
         targetId: 'c1',
         reason: 'Fraud report',
-        metadata: { phone: customerRow.phone, name: customerRow.name },
+        metadata: expect.objectContaining({ phone: customerRow.phone, name: customerRow.name }),
       },
       expect.anything(),
     );
@@ -449,7 +454,12 @@ describe('AdminService reactivate customer (Task 13) + worker suspend/reactivate
     });
     expect(update).toHaveBeenCalledWith({
       where: { id: 'u1' },
-      data: { isActive: true },
+      data: {
+        isActive: true,
+        suspendedUntil: null,
+        suspensionReason: null,
+        suspensionType: null,
+      },
       select: expect.any(Object),
     });
     expect(record).toHaveBeenCalledWith(
