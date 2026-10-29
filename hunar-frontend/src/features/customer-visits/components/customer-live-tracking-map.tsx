@@ -243,7 +243,7 @@ export function CustomerLiveTrackingMap({
 
   return (
     <div
-      className="relative rounded-2xl overflow-hidden border border-slate-200 shadow-xs bg-slate-100 w-full"
+      className="relative z-0 isolate rounded-2xl overflow-hidden border border-slate-200 shadow-xs bg-slate-100 w-full"
       style={{ minHeight: "340px", height: "auto" }}
     >
       {/* Map Canvas - Explicit dimensions prevent 0px collapse in all environments */}
@@ -260,10 +260,9 @@ export function CustomerLiveTrackingMap({
         }}
       />
 
-      {/* Top Floating Status Overlay - High z-index keeps it above Leaflet panes */}
+      {/* Top Floating Status Overlay - Scoped inside map container */}
       <div
-        className="absolute top-3 left-3 right-3 flex items-center justify-between gap-2 pointer-events-none"
-        style={{ zIndex: 500 }}
+        className="absolute top-3 left-3 right-3 flex items-center justify-between gap-2 pointer-events-none z-10"
       >
         <div className="bg-white/95 backdrop-blur-md px-3 py-1.5 rounded-xl shadow-md border border-slate-200/80 flex items-center gap-2 pointer-events-auto">
           {isLiveTripActive ? (
@@ -272,7 +271,7 @@ export function CustomerLiveTrackingMap({
               <span className="text-xs font-bold text-[#123B5D]">
                 {isUrdu ? "لائیو جی پی ایس فعال" : "Live GPS Active"}
               </span>
-              {directDistanceKm !== null && (
+              {directDistanceKm !== null && directDistanceKm > 0 && (
                 <>
                   <span className="text-slate-300">•</span>
                   <span className="text-xs font-extrabold text-[#0F766E]">
