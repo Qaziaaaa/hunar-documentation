@@ -44,6 +44,8 @@ export default function CategoriesPage() {
   const [uploadingImage, setUploadingImage] = useState(false);
   const [savingForm, setSavingForm] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+  const [formCommonIssues, setFormCommonIssues] = useState<string[]>([]);
+  const [issueInput, setIssueInput] = useState("");
   const imageInputRef = useRef<HTMLInputElement>(null);
 
   // Distance Charges Modal State
@@ -199,6 +201,8 @@ export default function CategoriesPage() {
     setFormNameUrdu("");
     setFormCharge("");
     setFormSortOrder("");
+    setFormCommonIssues([]);
+    setIssueInput("");
     setFormImageFile(null);
     setFormImagePreview(null);
     setFormError(null);
@@ -210,6 +214,8 @@ export default function CategoriesPage() {
     setFormMode("create");
     setFormCharge("500");
     setFormSortOrder(String(categories.length + 1));
+    setFormCommonIssues([]);
+    setIssueInput("");
   };
 
   const handleOpenEdit = (cat: ServiceCategory) => {
@@ -221,6 +227,32 @@ export default function CategoriesPage() {
     setFormCharge(cat.defaultVisitCharge != null ? String(cat.defaultVisitCharge) : "");
     setFormSortOrder(String(cat.sortOrder ?? 0));
     setFormImagePreview(cat.imageUrl ?? null);
+    setFormCommonIssues(
+      cat.commonIssues && cat.commonIssues.length > 0 ? [...cat.commonIssues] : [],
+    );
+    setIssueInput("");
+  };
+
+  const handleAddIssue = () => {
+    const trimmed = issueInput.trim();
+    if (!trimmed) return;
+    if (formCommonIssues.includes(trimmed)) {
+      setIssueInput("");
+      return;
+    }
+    setFormCommonIssues((prev) => [...prev, trimmed]);
+    setIssueInput("");
+  };
+
+  const handleRemoveIssue = (indexToRemove: number) => {
+    setFormCommonIssues((prev) => prev.filter((_, idx) => idx !== indexToRemove));
+  };
+
+  const handleIssueKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter" || e.key === ",") {
+      e.preventDefault();
+      handleAddIssue();
+    }
   };
 
   const handleFormImageSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -259,21 +291,46 @@ export default function CategoriesPage() {
   };
 
   const handleFormSubmit = async () => {
+    // 1. Cover Image Validation (Required)
+    if (!formImageFile && !formImagePreview) {
+      setFormError("Cover image is required. Please upload an image for the category.");
+      return;
+    }
+
+    // 2. Category Name Validation (Required)
     const name = formName.trim();
     if (!name) {
       setFormError("Category name is required.");
       return;
     }
+
+    // 3. Urdu Name Validation (Required)
+    const nameUrdu = formNameUrdu.trim();
+    if (!nameUrdu) {
+      setFormError("Urdu category name is required.");
+      return;
+    }
+
+    // 4. Default Visit Charge Validation (Required)
     const charge = Number(formCharge);
     if (formCharge === "" || Number.isNaN(charge) || charge < 0) {
       setFormError("Default visit charge is required (0 or more).");
       return;
     }
-    const sortOrder = formSortOrder === "" ? undefined : Number(formSortOrder);
-    if (sortOrder !== undefined && (Number.isNaN(sortOrder) || sortOrder < 0)) {
-      setFormError("Sort order must be 0 or more.");
+
+    // 5. Sort Order Validation (Required)
+    const sortOrder = Number(formSortOrder);
+    if (formSortOrder === "" || Number.isNaN(sortOrder) || sortOrder < 0) {
+      setFormError("Sort order is required (0 or more).");
       return;
     }
+
+    // 6. Common Issues Validation (Required)
+    if (formCommonIssues.length === 0) {
+      setFormError("At least one common issue is required for this category.");
+      return;
+    }
+
     setFormError(null);
     setSavingForm(true);
     try {
@@ -286,10 +343,11 @@ export default function CategoriesPage() {
       }
       const payload = {
         name,
-        nameUrdu: formNameUrdu.trim() || undefined,
+        nameUrdu,
         imageUrl,
         sortOrder,
         defaultVisitCharge: charge,
+        commonIssues: formCommonIssues,
       };
       if (formMode === "edit" && formCat) {
         const updated = await adminApi.updateCategory(formCat.id, payload);
@@ -301,6 +359,7 @@ export default function CategoriesPage() {
                   ...updated,
                   nameUrdu: updated.nameUrdu ?? null,
                   imageUrl: updated.imageUrl ?? null,
+                  commonIssues: updated.commonIssues ?? formCommonIssues,
                 }
               : c,
           ),
@@ -684,7 +743,7 @@ export default function CategoriesPage() {
                 {/* Cover image */}
                 <div>
                   <label className="mb-1.5 block text-[11px] font-extrabold uppercase tracking-wider text-slate-500">
-                    Cover Image
+                    Cover Image *
                   </label>
                   <input
                     ref={imageInputRef}
@@ -763,7 +822,7 @@ export default function CategoriesPage() {
                 {/* Urdu name */}
                 <div>
                   <label className="mb-1.5 block text-[11px] font-extrabold uppercase tracking-wider text-slate-500">
-                    Urdu Name
+                    Urdu Name *
                   </label>
                   <input
                     type="text"
@@ -796,7 +855,7 @@ export default function CategoriesPage() {
                   </div>
                   <div>
                     <label className="mb-1.5 block text-[11px] font-extrabold uppercase tracking-wider text-slate-500">
-                      Sort Order
+                      Sort Order *
                     </label>
                     <input
                       type="number"
@@ -810,6 +869,65 @@ export default function CategoriesPage() {
                       Position in the customer listing.
                     </p>
                   </div>
+                </div>
+
+                {/* Common Issues */}
+                <div>
+                  <div className="mb-1.5 flex items-center justify-between">
+                    <label className="block text-[11px] font-extrabold uppercase tracking-wider text-slate-500">
+                      Common Issues *
+                    </label>
+                    <span className="text-[10px] font-bold text-slate-400">
+                      {formCommonIssues.length} issue{formCommonIssues.length === 1 ? "" : "s"} added
+                    </span>
+                  </div>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={issueInput}
+                      onChange={(e) => setIssueInput(e.target.value)}
+                      onKeyDown={handleIssueKeyDown}
+                      placeholder="e.g. Pipe Leakage & Repair, Tap Replacement..."
+                      className="h-11 flex-1 rounded-xl border border-slate-200 px-3 text-xs font-medium outline-none transition focus:border-teal focus:ring-2 focus:ring-teal/15"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleAddIssue}
+                      disabled={!issueInput.trim()}
+                      className="inline-flex h-11 items-center gap-1.5 rounded-xl bg-teal/10 px-4 text-xs font-bold text-teal transition hover:bg-teal hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
+                    >
+                      <Plus className="size-3.5" />
+                      <span>Add</span>
+                    </button>
+                  </div>
+                  <p className="mt-1 text-[10px] font-semibold text-slate-400">
+                    Press Enter or click Add to add common problems for customers to select.
+                  </p>
+
+                  {formCommonIssues.length > 0 ? (
+                    <div className="mt-2.5 flex flex-wrap gap-1.5 max-h-28 overflow-y-auto rounded-xl border border-slate-100 bg-slate-50 p-2">
+                      {formCommonIssues.map((issue, idx) => (
+                        <span
+                          key={idx}
+                          className="inline-flex items-center gap-1.5 rounded-lg border border-teal/20 bg-white px-2.5 py-1 text-xs font-bold text-navy shadow-2xs"
+                        >
+                          <span>{issue}</span>
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveIssue(idx)}
+                            className="rounded-full p-0.5 text-slate-400 hover:bg-rose-50 hover:text-rose-600 transition-colors"
+                            title="Remove issue"
+                          >
+                            <X className="size-3" />
+                          </button>
+                        </span>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="mt-2 rounded-xl border border-amber-200 bg-amber-50/70 p-2.5 text-[11px] font-semibold text-amber-800">
+                      * Please add at least 1 common issue for this category.
+                    </div>
+                  )}
                 </div>
 
                 {formError ? (

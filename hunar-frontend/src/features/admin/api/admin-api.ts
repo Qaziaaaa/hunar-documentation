@@ -369,6 +369,7 @@ function toServiceCategory(c: any): ServiceCategory {
     // Real slabs only — categories without configured charges show an empty
     // state in the editor instead of invented Rs. 100–500 pricing.
     distanceSlabs: Array.isArray(c.distanceSlabs) ? c.distanceSlabs : [],
+    commonIssues: Array.isArray(c.commonIssues) ? c.commonIssues : [],
   };
 }
 

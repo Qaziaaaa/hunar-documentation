@@ -179,6 +179,7 @@ export interface ServiceCategory {
   sortOrder?: number;
   defaultVisitCharge?: number | null;
   distanceSlabs?: DistanceSlab[];
+  commonIssues?: string[];
 }
 
 export interface CategoryFormValues {
@@ -187,6 +188,7 @@ export interface CategoryFormValues {
   imageUrl?: string;
   sortOrder?: number;
   defaultVisitCharge?: number;
+  commonIssues?: string[];
 }
 
 export interface PlatformSettings {
