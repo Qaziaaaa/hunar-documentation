@@ -87,16 +87,31 @@ export async function getWorkerReviews(
       ? res.meta.total
       : rawReviews.length;
 
-  const items: Review[] = rawReviews.map((r: any) => ({
-    id: r.id || `rev-${Math.random()}`,
-    jobId: r.jobId || "",
-    job: r.job,
-    reviewerId: r.reviewerId || r.reviewer?.id || "",
-    reviewerName: r.reviewerName || r.reviewer?.name || "Customer",
-    rating: Number(r.rating) || 0,
-    comment: r.comment || undefined,
-    createdAt: r.createdAt ? new Date(r.createdAt).toISOString() : new Date().toISOString(),
-  }));
+  const items: Review[] = rawReviews.map((r: any) => {
+    let tags: string[] = Array.isArray(r.tags) ? r.tags : [];
+    let cleanComment = r.comment || undefined;
+
+    if (tags.length === 0 && cleanComment) {
+      const match = cleanComment.match(/(?:Positive Highlights|کاریگر کے بارے میں تاثرات):\s*([^.\n]+)/i);
+      if (match) {
+        tags = match[1].split(/,\s*/).map((s: string) => s.trim()).filter(Boolean);
+        const stripped = cleanComment.replace(/(?:Positive Highlights|کاریگر کے بارے میں تاثرات):\s*[^.\n]+\.?\s*/i, "").trim();
+        cleanComment = stripped || undefined;
+      }
+    }
+
+    return {
+      id: r.id || `rev-${Math.random()}`,
+      jobId: r.jobId || "",
+      job: r.job,
+      reviewerId: r.reviewerId || r.reviewer?.id || "",
+      reviewerName: r.reviewerName || r.reviewer?.name || "Customer",
+      rating: Number(r.rating) || 0,
+      comment: cleanComment,
+      tags,
+      createdAt: r.createdAt ? new Date(r.createdAt).toISOString() : new Date().toISOString(),
+    };
+  });
 
   return {
     items,
