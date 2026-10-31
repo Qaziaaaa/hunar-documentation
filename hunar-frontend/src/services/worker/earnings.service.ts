@@ -25,6 +25,7 @@ interface BackendLedgerEntry {
   balanceAfter: number;
   referenceType?: string | null;
   referenceId?: string | null;
+  idempotencyKey?: string | null;
   description?: string | null;
   note?: string | null;
   createdAt: string;
@@ -51,17 +52,27 @@ function mapLedgerEntry(entry: BackendLedgerEntry): WalletTransaction {
     hour12: true,
   }).format(date);
 
-  const isDeduction = amount < 0 || entry.type?.includes("DEDUCT") || entry.type?.includes("HELD");
+  const isHold = entry.type === "COMMISSION_HELD";
+  const isDeduction = amount < 0 || entry.type?.includes("DEDUCT") || isHold;
+
+  let cleanJobId = entry.referenceId ?? undefined;
+  if (entry.idempotencyKey && entry.idempotencyKey.includes(":")) {
+    const keyJob = entry.idempotencyKey.split(":")[1];
+    if (keyJob && (!cleanJobId || cleanJobId.length > 10)) {
+      cleanJobId = keyJob;
+    }
+  }
 
   return {
     id: entry.id,
     type: isDeduction ? "DEDUCTION" : "TOP_UP",
+    isHold,
     amount: Math.abs(amount),
     date: entry.createdAt,
     displayDate: formattedDate,
     displayTime: formattedTime,
-    jobId: entry.referenceId ?? undefined,
-    description: entry.description ?? entry.note ?? (isDeduction ? "Platform Commission" : "Admin Wallet Top-Up"),
+    jobId: cleanJobId,
+    description: entry.description ?? entry.note ?? (isHold ? "Commission Held" : isDeduction ? "Platform Commission" : "Admin Wallet Top-Up"),
     resultingBalance: Number(entry.balanceAfter),
   };
 }
@@ -101,7 +112,29 @@ export async function getWalletTransactions(): Promise<WalletTransaction[]> {
   try {
     const res = await http.get<BackendPage<BackendLedgerEntry> | BackendLedgerEntry[]>("/wallet/ledger");
     const items: BackendLedgerEntry[] = unwrapRows(res);
-    return (items ?? []).map(mapLedgerEntry);
+
+    // Safeguard deduplication: If a job has COMMISSION_DEDUCTED, omit redundant preliminary COMMISSION_HELD
+    const finalizedJobIds = new Set<string>();
+    for (const item of items ?? []) {
+      if (item.type === "COMMISSION_DEDUCTED") {
+        if (item.referenceId) finalizedJobIds.add(item.referenceId);
+        if (item.idempotencyKey && item.idempotencyKey.includes(":")) {
+          finalizedJobIds.add(item.idempotencyKey.split(":")[1]);
+        }
+      }
+    }
+
+    const filtered = (items ?? []).filter((item) => {
+      if (item.type === "COMMISSION_HELD") {
+        const keyJob = item.idempotencyKey?.includes(":") ? item.idempotencyKey.split(":")[1] : null;
+        if ((item.referenceId && finalizedJobIds.has(item.referenceId)) || (keyJob && finalizedJobIds.has(keyJob))) {
+          return false;
+        }
+      }
+      return true;
+    });
+
+    return filtered.map(mapLedgerEntry);
   } catch (err: any) {
     if (err?.status === 401) {
       return [];
