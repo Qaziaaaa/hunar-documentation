@@ -141,11 +141,10 @@ export function CustomerJobDetailsModal({
 
               {job.status === "cancelled" && (
                 <span
-                  className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${
-                    job.cancelReason === "EXPIRED_NO_WORKER_ACCEPTED"
+                  className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${job.cancelReason === "EXPIRED_NO_WORKER_ACCEPTED"
                       ? "bg-amber-50 text-amber-700 border border-amber-200"
                       : "bg-slate-100 text-slate-700 border border-slate-200"
-                  }`}
+                    }`}
                 >
                   {job.cancelReason === "EXPIRED_NO_WORKER_ACCEPTED" ? (
                     <>
@@ -523,7 +522,7 @@ export function CustomerJobDetailsModal({
                   <p className="text-[11px] text-emerald-700/90">
                     {isUrdu
                       ? "ادائیگی کی تصدیق ہو چکی ہے اور 5 روزہ وارنٹی فعال ہے۔"
-                      : "Payment has been settled and 5-Day Craftsmanship Warranty is active."}
+                      : "Payment has been settled "}
                   </p>
 
                   {currentJob?.customerReview?.tags && currentJob.customerReview.tags.length > 0 && (
@@ -563,11 +562,10 @@ export function CustomerJobDetailsModal({
 
             {job.status === "cancelled" && (
               <div
-                className={`p-4 rounded-2xl border text-xs sm:text-sm space-y-2 ${
-                  job.cancelReason === "EXPIRED_NO_WORKER_ACCEPTED"
+                className={`p-4 rounded-2xl border text-xs sm:text-sm space-y-2 ${job.cancelReason === "EXPIRED_NO_WORKER_ACCEPTED"
                     ? "bg-amber-50/80 border-amber-200 text-amber-900"
                     : "bg-slate-50 border-slate-200 text-slate-700"
-                }`}
+                  }`}
               >
                 <div className="flex items-center gap-2 font-bold">
                   {job.cancelReason === "EXPIRED_NO_WORKER_ACCEPTED" ? (
@@ -592,8 +590,8 @@ export function CustomerJobDetailsModal({
                       ? "مقررہ وقت (20 گھنٹے) کے دوران کسی دستیاب کاریگر نے آپ کی درخواست قبول نہیں کی۔ آپ اسے دوبارہ ایک کلک سے نئی درخواست کے طور پر شائع کر سکتے ہیں۔"
                       : "No available worker accepted your request within the 20-hour window. The request has expired, but you can easily repost it with the same details."
                     : isUrdu
-                    ? `منسوخی کی وجہ: ${job.cancelReason || "گاہک یا سسٹم کی طرف سے منسوخ"}`
-                    : `Cancellation reason: ${job.cancelReason || "Cancelled by user or system"}`}
+                      ? `منسوخی کی وجہ: ${job.cancelReason || "گاہک یا سسٹم کی طرف سے منسوخ"}`
+                      : `Cancellation reason: ${job.cancelReason || "Cancelled by user or system"}`}
                 </p>
               </div>
             )}
@@ -664,7 +662,7 @@ export function CustomerJobDetailsModal({
                           photos: job.photos || [],
                         })
                       );
-                    } catch {}
+                    } catch { }
                     router.push(
                       `/customer/post-job?category=${encodeURIComponent(job.category || "")}&subCategory=${encodeURIComponent(job.subCategory || "")}`
                     );
@@ -713,15 +711,15 @@ export function CustomerJobDetailsModal({
             setCurrentJob((prev) =>
               prev
                 ? {
-                    ...prev,
-                    hasReviewed: true,
-                    customerReview: {
-                      rating: review.rating,
-                      comment: review.comment,
-                      tags: review.tags,
-                      date: new Date().toISOString(),
-                    },
-                  }
+                  ...prev,
+                  hasReviewed: true,
+                  customerReview: {
+                    rating: review.rating,
+                    comment: review.comment,
+                    tags: review.tags,
+                    date: new Date().toISOString(),
+                  },
+                }
                 : null
             );
           }}

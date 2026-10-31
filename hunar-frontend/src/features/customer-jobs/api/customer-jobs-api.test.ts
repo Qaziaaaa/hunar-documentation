@@ -43,7 +43,7 @@ describe("customer list envelopes", () => {
 
     const jobs = await getCustomerJobs();
 
-    expect(mockedHttpGet).toHaveBeenCalledWith("/jobs/customer?limit=100");
+    expect(mockedHttpGet).toHaveBeenCalledWith("/jobs/customer?page=1&limit=20");
     expect(jobs).toHaveLength(1);
     expect(jobs[0].id).toBe("KQ9-06Q");
     expect(jobs[0].status).toBe("receiving_offers");
@@ -61,7 +61,8 @@ describe("customer list envelopes", () => {
   it("returns an empty list when the envelope has no rows", async () => {
     mockedHttpGet.mockResolvedValue({ data: [], meta: { page: 1, limit: 100, total: 0, totalPages: 0 } });
 
-    await expect(getCustomerJobs()).resolves.toEqual([]);
+    const jobs = await getCustomerJobs();
+    expect(jobs).toHaveLength(0);
   });
 
   it("unwraps the { data, meta } paginated envelope from /visits/my", async () => {

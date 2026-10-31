@@ -63,6 +63,7 @@ export interface WorkerOffer {
   createdAt: string;
   note?: string;
   isDeclined?: boolean;
+  status?: string;
 }
 
 export interface CustomerJob {
@@ -84,6 +85,7 @@ export interface CustomerJob {
   preferredDate: string;
   preferredTimeSlot: string;
   status: JobStatus;
+  rawStatus?: string;
   createdAt: string;
   offerCount?: number;
   offers: WorkerOffer[];

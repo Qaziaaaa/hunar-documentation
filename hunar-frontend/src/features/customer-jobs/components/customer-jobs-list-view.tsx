@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import {
@@ -43,7 +43,7 @@ const CustomerReviewModal = dynamic(
   () => import("./customer-review-modal").then((m) => m.CustomerReviewModal),
   { ssr: false }
 );
-import { acceptWorkerOffer, rejectWorkerOffer, getCustomerJobs, getJobDetail } from "../api/customer-jobs-api";
+import { acceptWorkerOffer, rejectWorkerOffer, getCustomerJobs, getJobDetail, transformBackendOffer } from "../api/customer-jobs-api";
 import { getSocket } from "@/lib/socket";
 
 interface CustomerJobsListViewProps {
@@ -65,19 +65,17 @@ export function CustomerJobsListView({ initialJobs, jobs: jobsProp, initialTab }
     initialCounts ?? null
   );
 
-  const partitionJobs = (list: CustomerJob[]) => ({
-    scheduled: list.filter((j) => j.status === "visit_scheduled" || j.status === "in_progress"),
-    offers: list.filter((j) => j.status === "receiving_offers" || (j as any).status === "open"),
-    completed: list.filter((j) => j.status === "completed"),
-  });
-
   const determinedInitialFilter = (
     tabParam === "offers" || tabParam === "completed" || tabParam === "scheduled"
       ? tabParam
       : initialTab === "offers" || initialTab === "completed" || initialTab === "scheduled"
       ? initialTab
-      : resolvedInitialJobs.some((j) => j.status === "receiving_offers" || (j as any).status === "open") &&
-        !resolvedInitialJobs.some((j) => j.status === "visit_scheduled" || j.status === "in_progress")
+      : resolvedInitialJobs.some(
+          (j) => j.status === "receiving_offers" || (j as any).status === "open"
+        ) &&
+        !resolvedInitialJobs.some(
+          (j) => j.status === "visit_scheduled" || j.status === "in_progress"
+        )
       ? "offers"
       : "scheduled"
   ) as "scheduled" | "offers" | "completed";
@@ -85,13 +83,33 @@ export function CustomerJobsListView({ initialJobs, jobs: jobsProp, initialTab }
   const [selectedFilter, setSelectedFilter] = useState<"scheduled" | "offers" | "completed">(determinedInitialFilter);
   const [searchQuery, setSearchQuery] = useState("");
 
+  const tabsContainerRef = useRef<HTMLDivElement>(null);
+  const scheduledTabRef = useRef<HTMLButtonElement>(null);
+  const offersTabRef = useRef<HTMLButtonElement>(null);
+  const completedTabRef = useRef<HTMLButtonElement>(null);
+
+  const scrollActiveTabIntoView = useCallback((tab: "scheduled" | "offers" | "completed", smooth: boolean = true) => {
+    const tabMap = {
+      scheduled: scheduledTabRef.current,
+      offers: offersTabRef.current,
+      completed: completedTabRef.current,
+    };
+    const targetEl = tabMap[tab];
+    if (targetEl) {
+      targetEl.scrollIntoView({
+        behavior: smooth ? "smooth" : "auto",
+        inline: "center",
+        block: "nearest",
+      });
+    }
+  }, []);
+
   const [tabJobsCache, setTabJobsCache] = useState<Record<string, CustomerJob[]>>(() => {
-    return partitionJobs(resolvedInitialJobs);
+    return { [determinedInitialFilter]: resolvedInitialJobs };
   });
 
   const [jobs, setJobs] = useState<CustomerJob[]>(() => {
-    const partitioned = partitionJobs(resolvedInitialJobs);
-    return partitioned[determinedInitialFilter] ?? resolvedInitialJobs;
+    return resolvedInitialJobs;
   });
 
   const [isTabLoading, setIsTabLoading] = useState(false);
@@ -99,12 +117,20 @@ export function CustomerJobsListView({ initialJobs, jobs: jobsProp, initialTab }
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(resolvedInitialJobs.length >= 20);
 
+  // Auto-scroll selected tab into view when selectedFilter changes or on mount
+  useEffect(() => {
+    scrollActiveTabIntoView(selectedFilter, false);
+    const timer = setTimeout(() => {
+      scrollActiveTabIntoView(selectedFilter, true);
+    }, 120);
+    return () => clearTimeout(timer);
+  }, [selectedFilter, scrollActiveTabIntoView]);
+
   // Sync state whenever fresh initialJobs arrive (e.g. background TanStack Query sync)
   useEffect(() => {
     if (!resolvedInitialJobs) return;
-    const partitioned = partitionJobs(resolvedInitialJobs);
-    setTabJobsCache(partitioned);
-    setJobs(partitioned[selectedFilter] ?? []);
+    setTabJobsCache((prev) => ({ ...prev, [selectedFilter]: resolvedInitialJobs }));
+    setJobs(resolvedInitialJobs);
     if ((resolvedInitialJobs as any).counts) {
       setTabCounts((resolvedInitialJobs as any).counts);
     }
@@ -114,14 +140,15 @@ export function CustomerJobsListView({ initialJobs, jobs: jobsProp, initialTab }
   // Instant 0ms Tab Switcher
   const handleSelectTab = (tab: "scheduled" | "offers" | "completed") => {
     setSelectedFilter(tab);
+    scrollActiveTabIntoView(tab, true);
     const cached = tabJobsCache[tab];
     if (cached !== undefined) {
       setJobs(cached);
       setCurrentPage(1);
       setHasMore(cached.length >= 20);
     } else {
-      const partitioned = partitionJobs(resolvedInitialJobs);
-      setJobs(partitioned[tab] ?? []);
+      setJobs([]);
+      setIsTabLoading(true);
     }
     if (typeof window !== "undefined") {
       const url = new URL(window.location.href);
@@ -153,7 +180,12 @@ export function CustomerJobsListView({ initialJobs, jobs: jobsProp, initialTab }
         setIsTabLoading(true);
       }
       try {
-        const data = await getCustomerJobs({ tab: selectedFilter, page: 1, limit: 20 });
+        const data = await getCustomerJobs({
+          tab: selectedFilter,
+          page: 1,
+          limit: 20,
+          scheduleType: selectedFilter === "completed" ? undefined : "scheduled",
+        });
         if (!isMounted) return;
         if ((data as any).counts) {
           setTabCounts((data as any).counts);
@@ -180,10 +212,73 @@ export function CustomerJobsListView({ initialJobs, jobs: jobsProp, initialTab }
       }
     };
 
+    const handleJobOfferEvent = (payload: any) => {
+      if (!isMounted) return;
+      if (payload?.offer && payload?.jobId) {
+        try {
+          const transformed = transformBackendOffer(payload.offer);
+          transformed.isDeclined = false;
+
+          setJobs((prev) =>
+            prev.map((j) => {
+              if (j.id === payload.jobId) {
+                const currentOffers = j.offers || [];
+                const exists = currentOffers.some(
+                  (o) => o.id === transformed.id || (o.worker?.id && o.worker.id === transformed.worker?.id)
+                );
+                const nextOffers = exists
+                  ? currentOffers.map((o) =>
+                      o.id === transformed.id || (o.worker?.id && o.worker.id === transformed.worker?.id)
+                        ? { ...transformed, isDeclined: false }
+                        : o
+                    )
+                  : [transformed, ...currentOffers];
+                return {
+                  ...j,
+                  status: "receiving_offers" as any,
+                  offerCount: exists ? (j.offerCount ?? currentOffers.length) : (j.offerCount ?? currentOffers.length) + 1,
+                  offers: nextOffers,
+                };
+              }
+              return j;
+            })
+          );
+
+          setSelectedJobForOffers((prev) => {
+            if (!prev || prev.id !== payload.jobId) return prev;
+            const currentOffers = prev.offers || [];
+            const exists = currentOffers.some(
+              (o) => o.id === transformed.id || (o.worker?.id && o.worker.id === transformed.worker?.id)
+            );
+            const nextOffers = exists
+              ? currentOffers.map((o) =>
+                  o.id === transformed.id || (o.worker?.id && o.worker.id === transformed.worker?.id)
+                    ? { ...transformed, isDeclined: false }
+                    : o
+                )
+              : [transformed, ...currentOffers];
+            return {
+              ...prev,
+              status: "receiving_offers" as any,
+              offerCount: exists ? (prev.offerCount ?? currentOffers.length) : (prev.offerCount ?? currentOffers.length) + 1,
+              offers: nextOffers,
+            };
+          });
+
+          setTabJobsCache({});
+        } catch (err) {
+          console.warn("[CustomerJobsListView] offer payload parse error:", err);
+        }
+      }
+      void fetchTab(true);
+    };
+
     if (socket) {
       if (!socket.connected) socket.connect();
-      socket.on("job:offer", handleLiveUpdate);
+      socket.on("job:offer", handleJobOfferEvent);
       socket.on("job:new", handleLiveUpdate);
+      socket.on("job:cancelled", handleLiveUpdate);
+      socket.on("job.cancelled", handleLiveUpdate);
       socket.on("job:statusChanged", handleLiveUpdate);
       socket.on("job:status:changed", handleLiveUpdate);
       socket.on("job:offer:accepted", handleLiveUpdate);
@@ -192,8 +287,10 @@ export function CustomerJobsListView({ initialJobs, jobs: jobsProp, initialTab }
     return () => {
       isMounted = false;
       if (socket) {
-        socket.off("job:offer", handleLiveUpdate);
+        socket.off("job:offer", handleJobOfferEvent);
         socket.off("job:new", handleLiveUpdate);
+        socket.off("job:cancelled", handleLiveUpdate);
+        socket.off("job.cancelled", handleLiveUpdate);
         socket.off("job:statusChanged", handleLiveUpdate);
         socket.off("job:status:changed", handleLiveUpdate);
         socket.off("job:offer:accepted", handleLiveUpdate);
@@ -206,7 +303,12 @@ export function CustomerJobsListView({ initialJobs, jobs: jobsProp, initialTab }
     setIsLoadingMore(true);
     try {
       const nextPage = currentPage + 1;
-      const moreJobs = await getCustomerJobs({ tab: selectedFilter, page: nextPage, limit: 20 });
+      const moreJobs = await getCustomerJobs({
+        tab: selectedFilter,
+        page: nextPage,
+        limit: 20,
+        scheduleType: selectedFilter === "completed" ? undefined : "scheduled",
+      });
       if (!moreJobs || moreJobs.length === 0) {
         setHasMore(false);
       } else {
@@ -259,14 +361,12 @@ export function CustomerJobsListView({ initialJobs, jobs: jobsProp, initialTab }
 
   const handleOpenOffersModal = async (job: CustomerJob) => {
     setSelectedJobForOffers(job);
-    if ((job.offerCount ?? 0) > 0 && (!job.offers[0]?.worker?.bio || !job.offers[0]?.worker?.rating)) {
-      try {
-        const fullJob = await getJobDetail(job.id);
-        setSelectedJobForOffers(fullJob);
-        setJobs((prev) => prev.map((j) => (j.id === fullJob.id ? fullJob : j)));
-      } catch (err) {
-        console.warn("Could not fetch full offers:", err);
-      }
+    try {
+      const fullJob = await getJobDetail(job.id);
+      setSelectedJobForOffers(fullJob);
+      setJobs((prev) => prev.map((j) => (j.id === fullJob.id ? fullJob : j)));
+    } catch (err) {
+      console.warn("Could not fetch full offers:", err);
     }
   };
 
@@ -415,6 +515,11 @@ export function CustomerJobsListView({ initialJobs, jobs: jobsProp, initialTab }
   };
 
   const filteredJobs = jobs.filter((job) => {
+    const isScheduledTab = selectedFilter === "offers" || selectedFilter === "scheduled";
+    if (isScheduledTab && job.scheduleType !== "scheduled") {
+      return false;
+    }
+
     const matchesFilter =
       (selectedFilter === "offers" && (job.status === "receiving_offers" || (job as any).status === "open")) ||
       (selectedFilter === "scheduled" && (job.status === "visit_scheduled" || job.status === "in_progress")) ||
@@ -432,10 +537,9 @@ export function CustomerJobsListView({ initialJobs, jobs: jobsProp, initialTab }
     return matchesFilter && matchesSearch;
   });
 
-  const partitioned = partitionJobs(resolvedInitialJobs);
-  const activeCount = tabCounts?.offers ?? partitioned.offers.length;
-  const scheduledCount = tabCounts?.scheduled ?? partitioned.scheduled.length;
-  const completedCount = tabCounts?.completed ?? partitioned.completed.length;
+  const scheduledCount = tabCounts?.scheduled ?? 0;
+  const activeCount = tabCounts?.offers ?? 0;
+  const completedCount = tabCounts?.completed ?? 0;
 
   return (
     <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-6 pb-24 lg:pb-8 animate-in fade-in-50 duration-300 text-[#123B5D]">
@@ -458,30 +562,24 @@ export function CustomerJobsListView({ initialJobs, jobs: jobsProp, initialTab }
       {/* 3 Proper Segmented Tabs Bar & Search */}
       <div className="w-full flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3.5">
         {/* Proper Tabs Segmented Control */}
-        <div className="w-full sm:w-auto bg-slate-100/90 p-1 sm:p-1.5 rounded-2xl grid grid-cols-3 sm:flex items-center gap-1 sm:gap-1.5 border border-slate-200/80 shadow-2xs">
-          {/* Tab 1: Scheduled Visits */}
+        <div
+          ref={tabsContainerRef}
+          className="w-full sm:w-auto bg-slate-100/90 p-1 sm:p-1.5 rounded-2xl flex items-center gap-1 sm:gap-1.5 border border-slate-200/80 shadow-2xs overflow-x-auto scrollbar-none scroll-smooth"
+        >
+          {/* Tab 1: Scheduled */}
           <button
+            ref={scheduledTabRef}
             type="button"
             onClick={() => handleSelectTab("scheduled")}
-            className={`w-full min-w-0 py-2 px-1 sm:px-4 sm:py-2.5 rounded-xl text-[11px] sm:text-sm font-semibold transition-all cursor-pointer flex items-center justify-center gap-1 sm:gap-2 ${
+            className={`flex-1 sm:flex-initial py-2 px-2.5 sm:px-5 sm:py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all cursor-pointer flex items-center justify-center gap-1 sm:gap-2 shrink-0 ${
               selectedFilter === "scheduled"
                 ? "bg-white text-[#123B5D] font-bold shadow-xs border border-slate-200/60"
                 : "text-slate-600 hover:text-[#123B5D] hover:bg-white/50"
             }`}
           >
             <Clock className={`size-3.5 sm:size-4 shrink-0 ${selectedFilter === "scheduled" ? "text-teal" : "text-slate-400"}`} />
-            <span className="truncate">
-              {isUrdu ? (
-                <>
-                  <span>شیڈول</span>
-                  <span className="hidden sm:inline"> وزٹس</span>
-                </>
-              ) : (
-                <>
-                  <span>Scheduled</span>
-                  <span className="hidden sm:inline"> Visits</span>
-                </>
-              )}
+            <span className="whitespace-nowrap font-bold">
+              {isUrdu ? "شیڈولڈ" : "Scheduled"}
             </span>
             <span
               className={`px-1.5 sm:px-2 py-0.5 rounded-full text-[10px] sm:text-[11px] font-extrabold shrink-0 ${
@@ -494,29 +592,20 @@ export function CustomerJobsListView({ initialJobs, jobs: jobsProp, initialTab }
             </span>
           </button>
 
-          {/* Tab 2: Offers to Review */}
+          {/* Tab 2: Offers */}
           <button
+            ref={offersTabRef}
             type="button"
             onClick={() => handleSelectTab("offers")}
-            className={`w-full min-w-0 py-2 px-1 sm:px-4 sm:py-2.5 rounded-xl text-[11px] sm:text-sm font-semibold transition-all cursor-pointer flex items-center justify-center gap-1 sm:gap-2 ${
+            className={`flex-1 sm:flex-initial py-2 px-2.5 sm:px-5 sm:py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all cursor-pointer flex items-center justify-center gap-1 sm:gap-2 shrink-0 ${
               selectedFilter === "offers"
                 ? "bg-white text-[#123B5D] font-bold shadow-xs border border-slate-200/60"
                 : "text-slate-600 hover:text-[#123B5D] hover:bg-white/50"
             }`}
           >
             <Tag className={`size-3.5 sm:size-4 shrink-0 ${selectedFilter === "offers" ? "text-teal" : "text-slate-400"}`} />
-            <span className="truncate">
-              {isUrdu ? (
-                <>
-                  <span>آفرز</span>
-                  <span className="hidden sm:inline"> موصولہ</span>
-                </>
-              ) : (
-                <>
-                  <span>Offers</span>
-                  <span className="hidden sm:inline"> to Review</span>
-                </>
-              )}
+            <span className="whitespace-nowrap font-bold">
+              {isUrdu ? "آفرز" : "Offers"}
             </span>
             {activeCount > 0 ? (
               <span
@@ -538,24 +627,18 @@ export function CustomerJobsListView({ initialJobs, jobs: jobsProp, initialTab }
 
           {/* Tab 3: Completed */}
           <button
+            ref={completedTabRef}
             type="button"
             onClick={() => handleSelectTab("completed")}
-            className={`w-full min-w-0 py-2 px-1 sm:px-4 sm:py-2.5 rounded-xl text-[11px] sm:text-sm font-semibold transition-all cursor-pointer flex items-center justify-center gap-1 sm:gap-2 ${
+            className={`flex-1 sm:flex-initial py-2 px-2.5 sm:px-5 sm:py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all cursor-pointer flex items-center justify-center gap-1 sm:gap-2 shrink-0 ${
               selectedFilter === "completed"
                 ? "bg-white text-[#123B5D] font-bold shadow-xs border border-slate-200/60"
                 : "text-slate-600 hover:text-[#123B5D] hover:bg-white/50"
             }`}
           >
             <CheckCircle2 className={`size-3.5 sm:size-4 shrink-0 ${selectedFilter === "completed" ? "text-teal" : "text-slate-400"}`} />
-            <span className="truncate">
-              {isUrdu ? (
-                <>
-                  <span>مکمل</span>
-                  <span className="hidden sm:inline"> شدہ</span>
-                </>
-              ) : (
-                <span>Completed</span>
-              )}
+            <span className="whitespace-nowrap font-bold">
+              {isUrdu ? "مکمل" : "Completed"}
             </span>
             <span
               className={`px-1.5 sm:px-2 py-0.5 rounded-full text-[10px] sm:text-[11px] font-extrabold shrink-0 ${
