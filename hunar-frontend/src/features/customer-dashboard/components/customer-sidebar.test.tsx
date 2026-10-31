@@ -28,6 +28,12 @@ jest.mock("@/i18n/navigation", () => ({
   ),
 }));
 
+jest.mock("@/lib/api-client", () => ({
+  getAccessToken: jest.fn(() => "mock-customer-token"),
+  getRefreshToken: jest.fn(() => "mock-customer-refresh"),
+  clearTokens: jest.fn(),
+}));
+
 jest.mock("@/components/shared/workerfix-logo", () => ({
   WorkerFixLogo: () => <div data-testid="logo">WorkerFIX</div>,
 }));

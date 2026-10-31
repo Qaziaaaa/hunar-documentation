@@ -48,7 +48,7 @@ export function CustomerBottomNav() {
               if (item.href === "/customer/jobs") {
                 void queryClient.prefetchQuery({
                   queryKey: ["customer", "jobs", "feed"],
-                  queryFn: () => getCustomerJobs({ limit: 50 }),
+                  queryFn: () => getCustomerJobs({ limit: 50, scheduleType: "scheduled" }),
                   staleTime: 60_000,
                 });
               }
@@ -57,7 +57,7 @@ export function CustomerBottomNav() {
               if (item.href === "/customer/jobs") {
                 void queryClient.prefetchQuery({
                   queryKey: ["customer", "jobs", "feed"],
-                  queryFn: () => getCustomerJobs({ limit: 50 }),
+                  queryFn: () => getCustomerJobs({ limit: 50, scheduleType: "scheduled" }),
                   staleTime: 60_000,
                 });
               }

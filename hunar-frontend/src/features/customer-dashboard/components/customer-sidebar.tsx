@@ -71,13 +71,15 @@ export function CustomerSidebar({ isOpen, onClose }: CustomerSidebarProps) {
 
   const { data: jobs = [] } = useQuery({
     queryKey: ["customer", "jobs", "sidebar"],
-    queryFn: getCustomerJobs,
+    queryFn: () => getCustomerJobs({ scheduleType: "scheduled" }),
     staleTime: 60_000,
     enabled: isCustomer,
   });
 
   const activeBookingsCount = jobs.filter(
-    (j) => j.status === "receiving_offers" || j.status === "visit_scheduled"
+    (j) =>
+      (j.status === "receiving_offers" || j.status === "visit_scheduled") &&
+      j.scheduleType !== "asap"
   ).length;
 
   const handleLogout = async () => {
@@ -186,7 +188,7 @@ export function CustomerSidebar({ isOpen, onClose }: CustomerSidebarProps) {
                     if (item.href === "/customer/jobs") {
                       void queryClient.prefetchQuery({
                         queryKey: ["customer", "jobs", "feed"],
-                        queryFn: () => getCustomerJobs({ limit: 50 }),
+                        queryFn: () => getCustomerJobs({ limit: 50, scheduleType: "scheduled" }),
                         staleTime: 60_000,
                       });
                     }
@@ -195,7 +197,7 @@ export function CustomerSidebar({ isOpen, onClose }: CustomerSidebarProps) {
                     if (item.href === "/customer/jobs") {
                       void queryClient.prefetchQuery({
                         queryKey: ["customer", "jobs", "feed"],
-                        queryFn: () => getCustomerJobs({ limit: 50 }),
+                        queryFn: () => getCustomerJobs({ limit: 50, scheduleType: "scheduled" }),
                         staleTime: 60_000,
                       });
                     }

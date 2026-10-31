@@ -18,7 +18,7 @@ export function CustomerDashboardView() {
     if (getAccessToken("CUSTOMER") || getRefreshToken("CUSTOMER")) {
       void queryClient.prefetchQuery({
         queryKey: ["customer", "jobs", "feed"],
-        queryFn: () => getCustomerJobs({ limit: 50 }),
+        queryFn: () => getCustomerJobs({ limit: 50, scheduleType: "scheduled" }),
         staleTime: 5 * 60_000,
       });
     }

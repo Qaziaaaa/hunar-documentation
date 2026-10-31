@@ -36,7 +36,7 @@ export function CustomerHelpView() {
 
   const { data: customerJobs = [] } = useQuery({
     queryKey: ["customer", "jobs"],
-    queryFn: getCustomerJobs,
+    queryFn: () => getCustomerJobs({ scheduleType: "scheduled" }),
     staleTime: 30_000,
     enabled: hasCustomerAuth,
   });
