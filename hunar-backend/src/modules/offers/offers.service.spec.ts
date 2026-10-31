@@ -44,6 +44,17 @@ function makeFakes(db: Db) {
       async findUnique({ where }: { where: { userId: string } }) {
         return db.workerProfiles.get(where.userId) ?? null;
       },
+      async updateMany({ where, data }: { where: any; data: any }) {
+        let count = 0;
+        for (const [id, prof] of db.workerProfiles.entries()) {
+          const matchUser = !where?.userId || prof.userId === where.userId || id === where.userId;
+          if (matchUser) {
+            Object.assign(prof, data);
+            count++;
+          }
+        }
+        return { count };
+      },
     },
     serviceArea: {
       async count({ where }: { where: { userId: string } }) {
@@ -222,6 +233,28 @@ describe('OffersService eligibility', () => {
     expect(db.jobOffers.size).toBe(0);
     expect(fakes.eventBus.emit).not.toHaveBeenCalled();
     expect(fakes.jobsService.transitionJobState).not.toHaveBeenCalled();
+  });
+
+  it('blocks a worker with negative wallet balance and sets them offline', async () => {
+    const db = new Db();
+    const fakes = makeFakes(db);
+    const service = new OffersService(
+      fakes.prisma,
+      fakes.eventBus,
+      fakes.jobsService,
+      fakes.realtime,
+      fakes.config,
+      fakes.wallet,
+    );
+    seedEligibleWorker(db, 'w1');
+    db.walletBalances.set('w1', -20);
+    db.workerProfiles.set('w1', { ...db.workerProfiles.get('w1'), isAvailable: true });
+    db.serviceRequests.set('job1', { id: 'job1', status: 'OPEN', customerId: 'c1' });
+
+    await expect(service.createOffer('w1', 'job1', { visitCharge: 500 })).rejects.toThrow(
+      /Your wallet balance is Rs. -20. Please top up your wallet to continue./,
+    );
+    expect(db.workerProfiles.get('w1').isAvailable).toBe(false);
   });
 
   it('emits offer.accepted on acceptance so the chat conversation is auto-created', async () => {

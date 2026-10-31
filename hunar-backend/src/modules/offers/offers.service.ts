@@ -16,7 +16,7 @@ import { JobsService } from '../jobs/jobs.service';
 import { WalletService } from '../payments/wallet.service';
 import { JwtPayload } from '../../common/types/jwt-payload.interface';
 import { RealtimeService } from '../realtime/realtime.service';
-import { JOB_EVENTS, userRoom, WORKERS_ROOM } from '../jobs/jobs.events';
+import { JOB_EVENTS, userRoom, jobRoom, WORKERS_ROOM } from '../jobs/jobs.events';
 import {
   CounterOfferDto,
   CreateOfferDto,
@@ -61,7 +61,55 @@ export class OffersService {
     );
   }
 
+  private async expireStaleUrgentOffers(workerId?: string) {
+    try {
+      const cutoff = new Date(Date.now() - 50000);
+      const staleOffers = await this.prisma.jobOffer.findMany({
+        where: {
+          ...(workerId ? { workerId } : {}),
+          status: { in: [OfferStatus.PENDING, OfferStatus.VIEWING] },
+          createdAt: { lt: cutoff },
+          job: {
+            urgency: { in: ['EMERGENCY', 'HIGH'] },
+          },
+        },
+        select: {
+          id: true,
+          jobId: true,
+          workerId: true,
+          job: { select: { customerId: true } },
+        },
+      });
+
+      if (staleOffers.length > 0) {
+        await this.prisma.jobOffer.updateMany({
+          where: { id: { in: staleOffers.map((o) => o.id) } },
+          data: { status: OfferStatus.WITHDRAWN },
+        });
+        for (const o of staleOffers) {
+          this.eventBus.emit('offer.rejected', { offerId: o.id, jobId: o.jobId, workerId: o.workerId });
+          if (o.job?.customerId) {
+            this.realtime.emitToRoom(userRoom(o.job.customerId), 'job:offer:withdrawn', {
+              jobId: o.jobId,
+              offerId: o.id,
+              workerId: o.workerId,
+            });
+          }
+          this.realtime.emitToRoom(jobRoom(o.jobId), 'job:offer:withdrawn', {
+            jobId: o.jobId,
+            offerId: o.id,
+            workerId: o.workerId,
+          });
+        }
+      }
+    } catch {
+      // Non-blocking background sweep
+    }
+  }
+
   async createOffer(workerId: string, jobId: string, dto: CreateOfferDto) {
+    await this.expireStaleUrgentOffers(workerId);
+
     // Concurrently verify worker eligibility, fetch job, and check for existing offer
     const [, job, existing] = await Promise.all([
       assertWorkerEligible(this.prisma, workerId, this.redis),
@@ -80,7 +128,9 @@ export class OffersService {
       );
     }
     if (existing) {
-      throw new ConflictException('OFFER_DUPLICATE: you already submitted an offer for this job');
+      if (['PENDING', 'VIEWING', 'COUNTERED', 'ACCEPTED'].includes(existing.status)) {
+        throw new ConflictException('OFFER_DUPLICATE: you already submitted an active offer for this job');
+      }
     }
 
     // Wallet guard: the authenticated worker's live balance is read from the
@@ -89,6 +139,15 @@ export class OffersService {
     // persisted. No amount is deducted here.
     const { balance } = await this.wallet.getBalance(workerId);
     if (balance <= 0 || balance < OFFER_SUBMISSION_FEE) {
+      if (balance < 0) {
+        await this.prisma.workerProfile.updateMany({
+          where: { userId: workerId, isAvailable: true },
+          data: { isAvailable: false },
+        });
+        throw new BadRequestException(
+          `Your wallet balance is Rs. ${balance}. Please top up your wallet to continue.`,
+        );
+      }
       throw new BadRequestException(OFFER_WALLET_INSUFFICIENT_MESSAGE);
     }
 
@@ -111,34 +170,53 @@ export class OffersService {
     }
 
     const message = dto.note ?? dto.message ?? null;
-    const offer = await this.prisma.jobOffer.create({
-      data: {
-        jobId,
-        workerId,
-        visitCharge: dto.visitCharge,
-        message,
-        status: 'PENDING',
-        negotiationRound: 0,
-        negotiationHistory: [],
-      },
-      include: {
-        worker: {
-          select: {
-            id: true,
-            name: true,
-            avatarUrl: true,
-            phone: true,
-            workerProfile: {
-              select: {
-                skills: true,
-                experienceYears: true,
-                bio: true,
-              },
+    const offerInclude = {
+      worker: {
+        select: {
+          id: true,
+          name: true,
+          avatarUrl: true,
+          phone: true,
+          workerProfile: {
+            select: {
+              skills: true,
+              experienceYears: true,
+              bio: true,
             },
           },
         },
       },
-    });
+    };
+
+    let offer;
+    if (existing && ['WITHDRAWN', 'REJECTED'].includes(existing.status)) {
+      offer = await this.prisma.jobOffer.update({
+        where: { id: existing.id },
+        data: {
+          visitCharge: dto.visitCharge,
+          message,
+          status: 'PENDING',
+          negotiationRound: 0,
+          negotiationHistory: [],
+          lockedAt: null,
+          createdAt: new Date(),
+        },
+        include: offerInclude,
+      });
+    } else {
+      offer = await this.prisma.jobOffer.create({
+        data: {
+          jobId,
+          workerId,
+          visitCharge: dto.visitCharge,
+          message,
+          status: 'PENDING',
+          negotiationRound: 0,
+          negotiationHistory: [],
+        },
+        include: offerInclude,
+      });
+    }
 
     if (job.status === 'OPEN') {
       await this.jobsService.transitionJobState(jobId, 'OFFERS_RECEIVED').catch(() => 0);
@@ -159,14 +237,18 @@ export class OffersService {
     });
 
     const [workerReviews, completedJobsCount] = await Promise.all([
-      this.prisma.review.aggregate({
-        where: { revieweeId: workerId },
-        _avg: { rating: true },
-        _count: { _all: true },
-      }),
-      this.prisma.serviceRequest.count({
-        where: { selectedWorkerId: workerId, status: { in: ['COMPLETED', 'PAID', 'REVIEWED'] } },
-      }),
+      this.prisma.review?.aggregate
+        ? this.prisma.review.aggregate({
+            where: { revieweeId: workerId },
+            _avg: { rating: true },
+            _count: { _all: true },
+          })
+        : Promise.resolve({ _count: { _all: 0 }, _avg: { rating: null } }),
+      this.prisma.serviceRequest?.count
+        ? this.prisma.serviceRequest.count({
+            where: { selectedWorkerId: workerId, status: { in: ['COMPLETED', 'PAID', 'REVIEWED'] } },
+          })
+        : Promise.resolve(0),
     ]);
 
     const totalReviews = workerReviews._count._all ?? 0;
@@ -207,11 +289,19 @@ export class OffersService {
       visitCharge: dto.visitCharge,
       offer: populatedOffer,
     });
+    this.realtime.emitToRoom(jobRoom(jobId), JOB_EVENTS.jobOffer, {
+      jobId,
+      offerId: offer.id,
+      workerId,
+      visitCharge: dto.visitCharge,
+      offer: populatedOffer,
+    });
 
     return offer;
   }
 
   async getJobOffers(jobId: string, user: JwtPayload) {
+    await this.expireStaleUrgentOffers();
     const job = await this.prisma.serviceRequest.findUnique({ where: { id: jobId } });
     if (!job) {
       throw new NotFoundException('Job not found');
@@ -237,7 +327,10 @@ export class OffersService {
         })
         .catch(() => 0);
     }
-    const where = user.role === Role.WORKER ? { jobId, workerId: user.sub } : { jobId };
+    const where =
+      user.role === Role.WORKER
+        ? { jobId, workerId: user.sub }
+        : { jobId, status: { notIn: [OfferStatus.WITHDRAWN, OfferStatus.REJECTED] } };
     const offers = await this.prisma.jobOffer.findMany({
       where,
       orderBy: { visitCharge: 'asc' },
@@ -359,6 +452,7 @@ export class OffersService {
   }
 
   async getMyOffers(workerId: string, query: OfferListQueryDto) {
+    await this.expireStaleUrgentOffers(workerId);
     // B5: frontend requests ?limit=100; default maxLimit=50 clipped the page.
     const { page, limit, skip } = normalizePage(query, 100);
     const where = {
@@ -550,6 +644,16 @@ export class OffersService {
       }
       // Only an approved + complete worker may negotiate (Task 3 eligibility).
       await assertWorkerEligible(this.prisma, offer.workerId, this.redis);
+      const { balance: workerBal } = await this.wallet.getBalance(offer.workerId);
+      if (workerBal < 0) {
+        await this.prisma.workerProfile.updateMany({
+          where: { userId: offer.workerId, isAvailable: true },
+          data: { isAvailable: false },
+        });
+        throw new BadRequestException(
+          `Your wallet balance is Rs. ${workerBal}. Please top up your wallet to continue.`,
+        );
+      }
       by = 'worker';
     } else {
       throw new ForbiddenException('Role not authorised to negotiate');
@@ -625,9 +729,23 @@ export class OffersService {
       data: { status: 'REJECTED' },
     });
     this.eventBus.emit('offer.rejected', { offerId, jobId, workerId: offer.workerId });
-    this.realtime.emitToRoom(userRoom(offer.workerId), JOB_EVENTS.jobClosed, { jobId });
+    const rejectPayload = { jobId, offerId, workerId: offer.workerId, status: 'REJECTED' };
+    this.realtime.emitToRoom(userRoom(offer.workerId), 'job:offer:rejected', rejectPayload);
+    this.realtime.emitToRoom(userRoom(offer.workerId), 'job:offerRejected', rejectPayload);
+    this.realtime.emitToRoom(userRoom(offer.workerId), 'job:offer:declined', rejectPayload);
+    this.realtime.emitToRoom(userRoom(offer.workerId), 'job:offerDeclined', rejectPayload);
+    this.realtime.emitToRoom(WORKERS_ROOM, 'job:offer:rejected', rejectPayload);
+    this.realtime.emitToRoom(WORKERS_ROOM, 'job:offerRejected', rejectPayload);
+    this.realtime.emitToRoom(userRoom(job.customerId), 'job:offer:rejected', rejectPayload);
+    this.realtime.emitToRoom(userRoom(job.customerId), 'job:offerRejected', rejectPayload);
+    this.realtime.emitToRoom(jobRoom(jobId), 'job:offer:rejected', rejectPayload);
+    this.realtime.emitToRoom(jobRoom(jobId), 'job:offerRejected', rejectPayload);
     if (this.redis) {
-      await this.redis.delPattern(`perf:jobs:customer:${job.customerId}:*`);
+      await Promise.all([
+        this.redis.delPattern(`perf:jobs:customer:${job.customerId}:*`),
+        this.redis.delPattern(`perf:job:detail:${jobId}:*`),
+        this.redis.delPattern(`perf:offers:my:${offer.workerId}:*`),
+      ]).catch(() => 0);
     }
     return updated;
   }
@@ -640,6 +758,22 @@ export class OffersService {
     if (offer.workerId !== user.sub) {
       throw new ForbiddenException('You can only withdraw your own offer');
     }
+    if (offer.status === 'WITHDRAWN') {
+      const job = await this.prisma.serviceRequest.findUnique({ where: { id: offer.jobId } });
+      if (job) {
+        this.realtime.emitToRoom(userRoom(job.customerId), 'job:offer:withdrawn', {
+          jobId: offer.jobId,
+          offerId,
+          workerId: offer.workerId,
+        });
+        this.realtime.emitToRoom(jobRoom(offer.jobId), 'job:offer:withdrawn', {
+          jobId: offer.jobId,
+          offerId,
+          workerId: offer.workerId,
+        });
+      }
+      return offer;
+    }
     if (!['PENDING', 'VIEWING', 'COUNTERED'].includes(offer.status)) {
       throw new BadRequestException(
         'OFFER_INVALID_STATE: offer cannot be withdrawn in its current state',
@@ -650,6 +784,21 @@ export class OffersService {
       data: { status: 'WITHDRAWN' },
     });
     this.eventBus.emit('offer.rejected', { offerId, jobId: offer.jobId, workerId: offer.workerId });
+
+    const job = await this.prisma.serviceRequest.findUnique({ where: { id: offer.jobId } });
+    if (job) {
+      this.realtime.emitToRoom(userRoom(job.customerId), 'job:offer:withdrawn', {
+        jobId: offer.jobId,
+        offerId,
+        workerId: offer.workerId,
+      });
+      this.realtime.emitToRoom(jobRoom(offer.jobId), 'job:offer:withdrawn', {
+        jobId: offer.jobId,
+        offerId,
+        workerId: offer.workerId,
+      });
+    }
+
     return updated;
   }
 }
