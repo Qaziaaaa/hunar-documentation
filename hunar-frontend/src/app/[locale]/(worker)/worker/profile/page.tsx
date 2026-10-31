@@ -38,7 +38,7 @@ import { RatingSummary } from "@/components/shared/rating-summary";
 import { ReviewCard } from "@/components/shared/review-card";
 import { VerifiedBadge } from "@/components/shared/verified-badge";
 import { WorkerDashboardShell } from "@/features/worker-dashboard";
-import { formatRs, sanitizePriceInput } from "@/lib/money";
+import { sanitizePriceInput } from "@/lib/money";
 import { http } from "@/lib/api-client";
 import {
   getWorkerProfile,
@@ -50,10 +50,6 @@ import {
   getWorkerReviews,
   queryKeys as reviewKeys,
 } from "@/services/worker/review.service";
-import {
-  getPrivacySettings,
-  queryKeys as settingsKeys,
-} from "@/services/worker/settings.service";
 import type { UpdateWorkerProfileInput, WorkerProfile } from "@/types/worker";
 
 const PESHAWAR_LOCATIONS = [
@@ -69,7 +65,7 @@ const PESHAWAR_LOCATIONS = [
   "Hashtnagri",
 ];
 
-function ProfileContent() {
+export function ProfileContent() {
   const locale = useLocale();
   const isUrdu = locale === "ur";
   const queryClient = useQueryClient();
@@ -81,12 +77,6 @@ function ProfileContent() {
   });
 
   const workerId = profileQuery.data?.id ?? "";
-
-  const privacyQuery = useQuery({
-    queryKey: settingsKeys.privacy,
-    queryFn: getPrivacySettings,
-    staleTime: 60_000,
-  });
 
   const ratingQuery = useQuery({
     queryKey: reviewKeys.rating(workerId),
@@ -131,11 +121,6 @@ function ProfileContent() {
       );
     },
   });
-
-  // Visit Fee backend-driven permission handling
-  const isVisitFeeLoading = privacyQuery.isLoading;
-  const isVisitFeeAllowed =
-    !privacyQuery.isError && privacyQuery.data?.showVisitCharge === true;
 
   if (profileQuery.isPending) {
     return <LoadingState label="Loading profile details..." />;
@@ -413,33 +398,13 @@ function ProfileContent() {
 
               </div>
 
-              {/* Quick Stats Grid */}
-              <div className="grid w-full grid-cols-2 gap-3 border-y border-border py-4 my-1 text-xs">
-                <div className="rounded-xl bg-slate-50 p-2.5">
+              {/* Quick Stats */}
+              <div className="w-full border-y border-border py-4 my-1 text-xs">
+                <div className="rounded-xl bg-slate-50 p-2.5 text-center">
                   <p className="text-slate-500 font-medium">{isUrdu ? "مکمل شدہ کام" : "Completed Orders"}</p>
                   <p className="text-base font-extrabold text-[#123B5D] mt-0.5">
                     {worker.completedJobs ?? 0} {isUrdu ? "جابز" : "Jobs"}
                   </p>
-                </div>
-
-                <div className="rounded-xl bg-slate-50 p-2.5">
-                  <p className="text-slate-500 font-medium">{isUrdu ? "طے شدہ وزٹ فیس" : "Default Visit Fee"}</p>
-                  <div className="mt-0.5">
-                    {isVisitFeeLoading ? (
-                      <div className="flex items-center gap-1 text-xs text-slate-400">
-                        <Loader2 className="size-3.5 animate-spin" />
-                        <span>{isUrdu ? "جانچ ہو رہی ہے..." : "Checking..."}</span>
-                      </div>
-                    ) : !isVisitFeeAllowed ? (
-                      <p className="text-xs font-bold text-slate-400">
-                        {isUrdu ? "غیر فعال (بیک اینڈ)" : "Disabled (Backend)"}
-                      </p>
-                    ) : (
-                      <p className="text-base font-extrabold text-emerald-600">
-                        {formatRs(editing ? (form.defaultVisitCharge ?? 300) : (worker.defaultVisitCharge ?? 300))}
-                      </p>
-                    )}
-                  </div>
                 </div>
               </div>
 
@@ -723,39 +688,21 @@ function ProfileContent() {
                     />
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="grid gap-1.5">
-                      <Label htmlFor="prof-exp" className="text-xs font-semibold text-[#123B5D]">
-                        {isUrdu ? "تجربہ (سالوں میں)" : "Years of Experience"}
-                      </Label>
-                      <Input
-                        id="prof-exp"
-                        type="number"
-                        min="0"
-                        value={form.yearsExperience ?? ""}
-                        onChange={(e) => {
-                          const cleaned = sanitizePriceInput(e.target.value);
-                          handleTextChange("yearsExperience", cleaned === "" ? "" : Number(cleaned));
-                        }}
-                        className="h-10 text-sm"
-                      />
-                    </div>
-
-                    <div className="grid gap-1.5">
-                      <Label htmlFor="prof-charge" className="text-xs font-semibold text-[#123B5D] flex items-center justify-between">
-                        <span>{isUrdu ? "بنیادی وزٹ فیس (روپے)" : "Default Visit Fee (PKR)"}</span>
-                        <span className="text-[10px] font-medium text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200">
-                          {isUrdu ? "قابل ترمیم نہیں" : "Not editable"}
-                        </span>
-                      </Label>
-                      <Input
-                        id="prof-charge"
-                        type="number"
-                        disabled
-                        value={worker.defaultVisitCharge ?? 300}
-                        className="h-10 text-sm bg-slate-100 text-slate-400 cursor-not-allowed border-slate-200"
-                      />
-                    </div>
+                  <div className="grid gap-1.5">
+                    <Label htmlFor="prof-exp" className="text-xs font-semibold text-[#123B5D]">
+                      {isUrdu ? "تجربہ (سالوں میں)" : "Years of Experience"}
+                    </Label>
+                    <Input
+                      id="prof-exp"
+                      type="number"
+                      min="0"
+                      value={form.yearsExperience ?? ""}
+                      onChange={(e) => {
+                        const cleaned = sanitizePriceInput(e.target.value);
+                        handleTextChange("yearsExperience", cleaned === "" ? "" : Number(cleaned));
+                      }}
+                      className="h-10 text-sm"
+                    />
                   </div>
 
                   <div className="flex items-center gap-3 pt-2">
@@ -798,29 +745,12 @@ function ProfileContent() {
                     </p>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4 pt-2 border-t border-slate-100">
+                  <div className="pt-2 border-t border-slate-100">
                     <div>
                       <p className="text-slate-500 font-medium">{isUrdu ? "تجربہ (سال)" : "Years of Experience"}</p>
                       <p className="text-sm font-bold text-[#123B5D] mt-0.5">
                         {worker.yearsExperience} {isUrdu ? "سال" : "Years"}
                       </p>
-                    </div>
-                    <div>
-                      <p className="text-slate-500 font-medium">{isUrdu ? "طے شدہ وزٹ فیس" : "Default Visit Fee"}</p>
-                      {isVisitFeeLoading ? (
-                        <div className="flex items-center gap-1.5 text-xs text-slate-400 mt-0.5">
-                          <Loader2 className="size-3 animate-spin" />
-                          <span>{isUrdu ? "جانچ ہو رہی ہے..." : "Checking..."}</span>
-                        </div>
-                      ) : !isVisitFeeAllowed ? (
-                        <p className="text-xs font-semibold text-slate-400 mt-0.5">
-                          {isUrdu ? "غیر فعال (بیک اینڈ)" : "Disabled (Backend)"}
-                        </p>
-                      ) : (
-                        <p className="text-sm font-bold text-emerald-600 mt-0.5">
-                          {formatRs(worker.defaultVisitCharge ?? 300)}
-                        </p>
-                      )}
                     </div>
                   </div>
                 </div>

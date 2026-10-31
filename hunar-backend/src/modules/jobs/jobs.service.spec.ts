@@ -9,6 +9,7 @@ function makeJob(id: string, status: string, workerId: string) {
     title: `Job ${id}`,
     description: null,
     status,
+    urgency: 'NORMAL',
     categoryId: 'cat1',
     category: { id: 'cat1', name: 'Plumbing' },
     address: 'Hayatabad',
@@ -40,6 +41,13 @@ function makeService(mode: 'active' | 'empty') {
     serviceRequest: {
       findMany: jest.fn(async () => rows.filter((j) => j.status !== 'COMPLETED')),
       count: jest.fn(async () => rows.filter((j) => j.status !== 'COMPLETED').length),
+      groupBy: jest.fn(async () => []),
+    },
+    serviceArea: {
+      findMany: jest.fn(async () => []),
+    },
+    review: {
+      groupBy: jest.fn(async () => []),
     },
     $transaction: jest.fn(async (queries: Promise<unknown>[]) => Promise.all(queries)),
   } as unknown as PrismaService;
@@ -58,6 +66,7 @@ describe('JobsService — getActiveJobs (Task 23)', () => {
     expect(result.items.map((j: { id: string }) => j.id)).toEqual(['j1', 'j2']);
     const first = result.items[0] as unknown as Record<string, unknown>;
     expect(first.categoryName).toBe('Plumbing');
+    expect(first.urgency).toBe('NORMAL');
     expect(first.lockedVisitCharge).toBe(1400);
     expect(first.offerCount).toBe(3);
     expect((first.nextVisit as { status: string }).status).toBe('SCHEDULED');
@@ -295,6 +304,12 @@ describe('JobsService — getJobDetail location privacy', () => {
       jobOffer: {
         findMany: jest.fn(async () => job.offers ?? []),
       },
+      serviceArea: {
+        findMany: jest.fn(async () => []),
+      },
+      review: {
+        groupBy: jest.fn(async () => []),
+      },
       // Fire-and-forget VIEWING-status update in getJobDetail
       $executeRaw: jest.fn(async () => 0),
     } as unknown as PrismaService;
@@ -339,5 +354,78 @@ describe('JobsService — getJobDetail location privacy', () => {
 
     expect(result.address).toBe(fullAddress);
     expect(result.customer?.phone).toBe('+923001234567');
+  });
+});
+
+
+describe('JobsService — getCustomerJobs scheduleType filter', () => {
+  it('filters out EMERGENCY jobs when scheduleType=scheduled', async () => {
+    let capturedWhere: any = null;
+    let capturedCountsWhere: any = null;
+    const prisma = {
+      serviceRequest: {
+        findMany: jest.fn(async (args) => {
+          capturedWhere = args?.where;
+          return [
+            {
+              id: 'sr-1',
+              title: 'Scheduled AC Service',
+              description: 'Routine check',
+              status: 'OPEN',
+              urgency: 'NORMAL',
+              categoryId: 'cat1',
+              category: { name: 'AC' },
+              address: 'Hayatabad',
+              city: 'Peshawar',
+              area: 'Phase 3',
+              latitude: 34.0,
+              longitude: 71.5,
+              suggestedVisitCharge: 1000,
+              preferredVisitTime: new Date('2026-11-01T10:00:00Z'),
+              _count: { offers: 1 },
+              images: [],
+              voiceNoteUrl: null,
+              createdAt: new Date(),
+              cancelReason: null,
+              cancelledAt: null,
+              selectedWorkerId: null,
+              lockedVisitCharge: null,
+              repairs: [],
+              reviews: [],
+              selectedWorker: null,
+              offers: [],
+            },
+          ];
+        }),
+        count: jest.fn(async () => 1),
+        groupBy: jest.fn(async (args) => {
+          capturedCountsWhere = args?.where;
+          return [
+            { status: 'OPEN', urgency: 'NORMAL', _count: { _all: 1 } },
+            { status: 'WORKER_ASSIGNED', urgency: 'EMERGENCY', _count: { _all: 1 } },
+          ];
+        }),
+      },
+      review: { groupBy: jest.fn(async () => []) },
+    } as unknown as PrismaService;
+
+    const eventBus = { emit: jest.fn() } as unknown as EventBusService;
+    const realtime = { emitToRoom: jest.fn() } as unknown as RealtimeService;
+    const service = new JobsService(prisma, eventBus, realtime);
+
+    const result = await service.getCustomerJobs('cust-1', {
+      tab: 'offers',
+      scheduleType: 'scheduled',
+      page: 1,
+      limit: 10,
+    });
+
+    expect(capturedWhere).toBeDefined();
+    expect(capturedWhere.urgency).toEqual({ not: 'EMERGENCY' });
+    expect(capturedCountsWhere).toBeDefined();
+    expect(capturedCountsWhere.customerId).toBe('cust-1');
+    expect(result.counts.offers).toBe(1);
+    expect(result.counts.scheduled).toBe(0);
+    expect(result.items[0].urgency).toBe('NORMAL');
   });
 });

@@ -87,6 +87,10 @@ export class CustomerJobsQueryDto {
   tab?: string;
 
   @IsOptional()
+  @IsString()
+  scheduleType?: string;
+
+  @IsOptional()
   @Type(() => Number)
   @IsInt()
   @Min(1)

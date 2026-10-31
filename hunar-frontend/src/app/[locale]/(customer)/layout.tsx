@@ -54,7 +54,26 @@ export default function CustomerLayout({
     if (current && current.status === "pending_otp") {
       setArrivalSession(current);
       setIsArrivalOtpOpen(true);
+
+      // Validate in background that the job is not cancelled/completed
+      void arrivalService.validateActiveSession().then((isValid) => {
+        if (!isValid) {
+          setIsArrivalOtpOpen(false);
+          setArrivalSession(null);
+        }
+      });
     }
+
+    // Also verify with backend /visits/my to clear stale session if cancelled or past arrival
+    void arrivalService.checkBackendPendingArrival().then((backendSession) => {
+      if (backendSession && backendSession.status === "pending_otp") {
+        setArrivalSession(backendSession);
+        setIsArrivalOtpOpen(true);
+      } else {
+        setIsArrivalOtpOpen(false);
+        setArrivalSession(null);
+      }
+    });
 
     const unsubscribeArrival = arrivalService.subscribe((session, eventType) => {
       if (eventType === "ARRIVAL_STARTED" && session && session.status === "pending_otp") {
@@ -97,6 +116,8 @@ export default function CustomerLayout({
 
   const handleOtpVerified = (msg: string) => {
     setIsArrivalOtpOpen(false);
+    setArrivalSession(null);
+    arrivalService.clearArrivalSession();
     setSuccessToast(msg);
     setTimeout(() => setSuccessToast(null), 6000);
   };
@@ -163,8 +184,12 @@ export default function CustomerLayout({
           <CustomerArrivalOtpModal
             isOpen={isArrivalOtpOpen}
             session={arrivalSession}
+            jobId={arrivalSession?.jobId}
             onSuccess={handleOtpVerified}
-            onClose={() => setIsArrivalOtpOpen(false)}
+            onClose={() => {
+              setIsArrivalOtpOpen(false);
+              setArrivalSession(null);
+            }}
             isUrdu={isUrdu}
           />
         )}

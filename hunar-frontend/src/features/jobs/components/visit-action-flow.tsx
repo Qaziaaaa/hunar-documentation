@@ -93,7 +93,7 @@ export function VisitActionFlow({ job, offer }: VisitActionFlowProps) {
       const res = await workerStore.arriveAtDoorstep(job.id);
       if (!res.success) {
         setWalletAlert(
-          res.error ?? `Insufficient wallet balance. Minimum ${formatRs(requiredHold)} required.`
+          res.error ?? "Failed to notify arrival"
         );
       }
     } catch (err: any) {
@@ -174,18 +174,18 @@ export function VisitActionFlow({ job, offer }: VisitActionFlowProps) {
           <div className="flex items-center gap-2">
             <ShieldAlert className="w-4 h-4 text-red-600 shrink-0" />
             <p className="text-xs font-semibold">
-              Insufficient balance. Please top up {formatRs(requiredHold)} to proceed.
+              Insufficient balance. Contact admin for top up to proceed.
             </p>
           </div>
           <button
             type="button"
             onClick={() => {
-              workerStore.setWalletBalance(walletBalance + 500);
-              setWalletAlert(null);
+              setWalletAlert("Contact admin for top up");
+
             }}
             className="px-3 py-1 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-bold shrink-0 transition-colors"
           >
-            Top-Up (+Rs. 500)
+            Top Up
           </button>
         </div>
       )}

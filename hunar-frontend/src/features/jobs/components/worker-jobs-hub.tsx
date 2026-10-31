@@ -41,18 +41,27 @@ export function WorkerJobsHub() {
     }
   };
 
-  // 1. Upcoming & Active Visits (all accepted visits or active visits ready to dispatch or in-progress)
+  const isImmediateJob = (j: any) =>
+    Boolean(j.isUrgent) ||
+    j.urgency === "emergency" ||
+    j.urgency === "EMERGENCY" ||
+    j.preferredVisitWindow?.timeSlot?.includes("Immediate");
+
+  // 1. Upcoming & Active Visits (strictly scheduled appointments - no immediate jobs)
   const upcomingVisits = jobs.filter(
     (j) =>
-      j.status === "accepted" ||
-      j.status === "visit_in_progress" ||
-      j.status === "visit_completed" ||
-      j.status === "inspecting" ||
-      j.status === "inspection_submitted" ||
-      j.status === "repair_negotiating" ||
-      j.status === "repair_approved" ||
-      j.status === "repair_in_progress" ||
-      j.status === "repair_declined"
+      !isImmediateJob(j) &&
+      (
+        j.status === "accepted" ||
+        j.status === "visit_in_progress" ||
+        j.status === "visit_completed" ||
+        j.status === "inspecting" ||
+        j.status === "inspection_submitted" ||
+        j.status === "repair_negotiating" ||
+        j.status === "repair_approved" ||
+        j.status === "repair_in_progress" ||
+        j.status === "repair_declined"
+      )
   );
 
   // 2. Past Completed Jobs

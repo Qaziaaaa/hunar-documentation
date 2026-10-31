@@ -18,6 +18,7 @@ import {
 interface CustomerArrivalOtpModalProps {
   isOpen: boolean;
   session: ArrivalSession | null;
+  jobId?: string;
   onSuccess: (message: string) => void;
   onClose: () => void;
   isUrdu?: boolean;
@@ -26,6 +27,7 @@ interface CustomerArrivalOtpModalProps {
 export function CustomerArrivalOtpModal({
   isOpen,
   session,
+  jobId: propJobId,
   onSuccess,
   onClose,
   isUrdu = false,
@@ -52,6 +54,8 @@ export function CustomerArrivalOtpModal({
   const activeSession: Partial<ArrivalSession> = session || {};
 
   const workerName = activeSession.workerName || (isUrdu ? "کاریگر" : "Technician");
+  const rawJobId = propJobId || activeSession.jobId;
+  const formattedJobId = rawJobId ? (rawJobId.startsWith("#") ? rawJobId : `#${rawJobId}`) : null;
 
   const handleDigitChange = (index: number, value: string) => {
     if (isVerifying) return;
@@ -148,6 +152,7 @@ export function CustomerArrivalOtpModal({
       }
 
       setIsVerifying(false);
+      arrivalService.clearArrivalSession();
       const successMsg = isUrdu ? SUCCESS_VERIFICATION_MESSAGE_UR : SUCCESS_VERIFICATION_MESSAGE;
       onSuccess(successMsg);
     } catch (err: any) {
@@ -185,6 +190,14 @@ export function CustomerArrivalOtpModal({
                   ? `${workerName} آپ کی دہلیز پر پہنچ گئے ہیں`
                   : `${workerName} has arrived at your doorstep`}
               </p>
+              {formattedJobId && (
+                <p className="text-[11px] font-semibold text-slate-600 mt-1 flex items-center gap-1">
+                  <span className="text-slate-400">{isUrdu ? "جاب آئی ڈی:" : "Job ID:"}</span>
+                  <span className="font-mono font-bold text-[#123B5D] bg-slate-100 border border-slate-200/80 px-1.5 py-0.5 rounded">
+                    {formattedJobId}
+                  </span>
+                </p>
+              )}
             </div>
           </div>
           <button

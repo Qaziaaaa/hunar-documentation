@@ -7,7 +7,8 @@ import { Briefcase, WifiOff } from "lucide-react";
 import { ErrorState } from "@/components/shared/error-state";
 import { LoadingState } from "@/components/shared/loading-state";
 import { http, getAccessToken, getStoredUser, clearTokens, getRefreshToken } from "@/lib/api-client";
-import { connectSocket, disconnectSocket } from "@/lib/socket";
+import { connectSocket, disconnectSocket, getSocket } from "@/lib/socket";
+import { WalletTopUpModal } from "@/components/shared/wallet-topup-modal";
 import { timeAgo } from "@/lib/format";
 import { logoutWorker } from "@/features/auth/api/auth-api";
 import {
@@ -20,6 +21,8 @@ import { DashboardHeader } from "./dashboard-header";
 import { DashboardSidebar } from "./dashboard-sidebar";
 import { MobileNavBar } from "./mobile-nav-bar";
 import { JobRequestFeed } from "./job-request-feed";
+import { WorkerOfferToast } from "./worker-offer-toast";
+import { showOfferToast } from "../stores/worker-offer-toast-store";
 import dynamic from "next/dynamic";
 
 const WorkerJobsHub = dynamic(
@@ -57,6 +60,48 @@ const WalletContent = dynamic(
     loading: () => (
       <div className="w-full h-64 bg-slate-50 border border-slate-200/60 rounded-3xl animate-pulse flex items-center justify-center text-slate-400 text-xs font-semibold">
         Loading wallet...
+      </div>
+    ),
+  }
+);
+const ProfileContent = dynamic(
+  () =>
+    import("@/app/[locale]/(worker)/worker/profile/page").then(
+      (m) => m.ProfileContent
+    ),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="flex min-h-[60vh] w-full items-center justify-center">
+        <LoadingState label="Loading profile details..." />
+      </div>
+    ),
+  }
+);
+const ReviewsContent = dynamic(
+  () =>
+    import("@/app/[locale]/(worker)/worker/reviews/page").then(
+      (m) => m.ReviewsContent
+    ),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="flex min-h-[60vh] w-full items-center justify-center">
+        <LoadingState label="Loading reviews..." />
+      </div>
+    ),
+  }
+);
+const SettingsContent = dynamic(
+  () =>
+    import("@/app/[locale]/(worker)/worker/settings/page").then(
+      (m) => m.SettingsContent
+    ),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="flex min-h-[60vh] w-full items-center justify-center">
+        <LoadingState label="Loading settings..." />
       </div>
     ),
   }
@@ -231,6 +276,8 @@ export function WorkerDashboardShell({
 
   const SHOW_RELEVANT_JOBS_KEY = "workerfix_show_relevant_jobs";
   const [showRelevantJobs, setShowRelevantJobs] = useState<boolean>(false);
+  const [isTopUpModalOpen, setIsTopUpModalOpen] = useState(false);
+  const [walletNotice, setWalletNotice] = useState<string | null>(null);
 
   // Enforce worker role and token authentication on worker routes
   useEffect(() => {
@@ -361,7 +408,13 @@ export function WorkerDashboardShell({
       const data = raw?.data ?? raw;
       const liveActiveJobs = Array.isArray(myActiveJobs) ? myActiveJobs.length : undefined;
       const liveUpcomingJobs = Array.isArray(myActiveJobs)
-        ? myActiveJobs.filter((j) => isUpcomingRawStatus(j.status)).length
+        ? myActiveJobs.filter(
+            (j) =>
+              isUpcomingRawStatus(j.status) &&
+              j.urgency !== "EMERGENCY" &&
+              j.urgency !== "emergency" &&
+              !Boolean((j as any).isUrgent)
+          ).length
         : undefined;
       if (liveUpcomingJobs !== undefined) {
         setUpcomingJobsCount(liveUpcomingJobs);
@@ -516,6 +569,28 @@ export function WorkerDashboardShell({
     if (!sessionReady) return;
     if (!getAccessToken("WORKER")) return;
     connectSocket();
+
+    const socket = getSocket();
+    if (socket) {
+      const onBalanceUpdated = (data: any) => {
+        const bal = Number(data?.balance ?? 0);
+        workerStore.setWalletBalance(bal);
+        setProfile((prev) => {
+          const isNowOnline = bal < 0 ? false : prev.isOnline;
+          if (bal < 0 && typeof window !== "undefined") {
+            try {
+              window.localStorage.setItem("hunar_worker_online", "false");
+            } catch {}
+          }
+          return { ...prev, walletBalance: bal, isOnline: isNowOnline };
+        });
+      };
+      socket.on("wallet:balanceUpdated", onBalanceUpdated);
+      return () => {
+        socket.off("wallet:balanceUpdated", onBalanceUpdated);
+        disconnectSocket();
+      };
+    }
     return () => disconnectSocket();
   }, [sessionReady]);
 
@@ -545,6 +620,10 @@ export function WorkerDashboardShell({
         mapAppNotification(notification as AppNotification),
         ...prev.filter((n) => n.id !== (notification as AppNotification).id),
       ]);
+      const notifType = (notification as AppNotification)?.type;
+      if (notifType === "offer_rejected") {
+        showOfferToast("declined");
+      }
     });
     return () => {
       cancelled = true;
@@ -553,9 +632,23 @@ export function WorkerDashboardShell({
   }, [sessionReady]);
 
   const handleToggleOnline = (targetStatus?: boolean) => {
-    setProfile((prev) => {
-      const nextStatus = typeof targetStatus === "boolean" ? targetStatus : !prev.isOnline;
+    const nextStatus = typeof targetStatus === "boolean" ? targetStatus : !profile.isOnline;
 
+    if (nextStatus) {
+      const currentBal = profile.walletBalance ?? workerStore.getState().walletBalance ?? 0;
+      if (currentBal < 0) {
+        const msg =
+          locale === "ur"
+            ? `آپ کا والیٹ بیلنس منفی (روپے ${currentBal}) ہے۔ ٹاپ اپ کے لیے ایڈمن سے رابطہ کریں۔`
+            : `Your wallet balance is Rs. ${currentBal}. Contact admin for top up.`;
+        setWalletNotice(msg);
+        setIsTopUpModalOpen(true);
+        return;
+      }
+    }
+
+    setWalletNotice(null);
+    setProfile((prev) => {
       if (typeof window !== "undefined") {
         try {
           window.localStorage.setItem("hunar_worker_online", String(nextStatus));
@@ -565,8 +658,23 @@ export function WorkerDashboardShell({
       }
 
       // Sync with server in background without breaking UI
-      http.put("/users/worker/availability", { isAvailable: nextStatus }).catch((err) => {
+      http.put("/users/worker/availability", { isAvailable: nextStatus }).catch((err: any) => {
         console.warn("[handleToggleOnline] Server sync notice:", err);
+        if (nextStatus) {
+          setProfile((p) => ({ ...p, isOnline: false }));
+          if (typeof window !== "undefined") {
+            try {
+              window.localStorage.setItem("hunar_worker_online", "false");
+            } catch {}
+          }
+          const serverMsg =
+            err?.message ||
+            (locale === "ur"
+              ? "ٹاپ اپ کے لیے ایڈمن سے رابطہ کریں۔"
+              : "Contact admin for top up.");
+          setWalletNotice(serverMsg);
+          setIsTopUpModalOpen(true);
+        }
       });
 
       return {
@@ -627,17 +735,27 @@ export function WorkerDashboardShell({
       return <WalletContent />;
     }
 
+    if (activeTab === "profile") {
+      return <ProfileContent />;
+    }
+
+    if (activeTab === "reviews") {
+      return <ReviewsContent />;
+    }
+
+    if (activeTab === "settings") {
+      return <SettingsContent />;
+    }
+
     return (
-      <div className="flex h-full min-h-[60vh] flex-col items-center justify-center rounded-3xl border border-teal/15 bg-white p-8 text-center shadow-xs">
-        <div className="flex size-14 items-center justify-center rounded-2xl bg-teal/10 text-teal">
-          <Briefcase className="size-7" />
-        </div>
-        <h2 className="mt-4 text-xl font-extrabold tracking-tight text-navy">
-          Worker Portal Section
-        </h2>
-        <p className="mt-1.5 max-w-sm text-sm text-muted-foreground leading-relaxed">
-          Select a tab from the sidebar navigation.
-        </p>
+      <div className="flex min-h-[60vh] w-full items-center justify-center">
+        <LoadingState
+          label={
+            locale === "ur"
+              ? "ورکر پورٹل لوڈ ہو رہا ہے..."
+              : "Loading worker portal..."
+          }
+        />
       </div>
     );
   };
@@ -717,9 +835,26 @@ export function WorkerDashboardShell({
               </button>
             </div>
           )}
+          {walletNotice && (
+            <div className="mb-4 max-w-7xl mx-auto w-full rounded-2xl border border-rose-200 bg-rose-50/95 p-3.5 text-xs text-rose-900 flex items-center justify-between gap-3 shadow-2xs animate-in fade-in">
+              <span className="font-semibold">{walletNotice}</span>
+              <button
+                type="button"
+                onClick={() => setIsTopUpModalOpen(true)}
+                className="shrink-0 px-3 py-1.5 bg-teal hover:bg-teal/90 text-white rounded-lg text-xs font-bold cursor-pointer"
+              >
+                {locale === "ur" ? "والیٹ ٹاپ اپ کریں" : "Top Up Now"}
+              </button>
+            </div>
+          )}
           {renderMainContent()}
         </main>
       </div>
+
+      <WalletTopUpModal open={isTopUpModalOpen} onOpenChange={setIsTopUpModalOpen} />
+
+      {/* Offer Status Notification Pill */}
+      <WorkerOfferToast />
 
       {/* Mobile Bottom Navigation Bar */}
       <MobileNavBar

@@ -88,30 +88,115 @@ class ArrivalVerificationService {
     const token = getAccessToken("CUSTOMER") || getAccessToken();
     if (!token) return this.getSession();
     try {
-      const visits = await http.get<any[]>("/visits/my?limit=5");
-      if (Array.isArray(visits)) {
-        const pendingVisit = visits.find(
+      const res = await http.get<any>("/visits/my?limit=5");
+      const visits: any[] = Array.isArray(res)
+        ? res
+        : Array.isArray(res?.items)
+        ? res.items
+        : Array.isArray(res?.data)
+        ? res.data
+        : [];
+
+      const current = this.getSession();
+
+      // If current session is already completed or past arrival on backend, clear it immediately
+      if (current) {
+        const matchingVisit = visits.find(
           (v: any) =>
-            v.isArrivalPending ||
-            v.arrivalPending ||
-            (v.arrivalOtp && v.status !== "COMPLETED" && v.job?.status !== "VISIT_COMPLETED")
+            v.jobId === current.jobId ||
+            v.job?.id === current.jobId ||
+            v.id === current.visitId
         );
-        if (pendingVisit) {
-          const session = this.startArrivalSession({
-            jobId: pendingVisit.jobId,
-            visitId: pendingVisit.id,
-            otp: pendingVisit.arrivalOtp || "",
-            workerName: pendingVisit.worker?.name || "Technician",
-            workerPhone: pendingVisit.worker?.phone,
-            customerName: pendingVisit.customer?.name,
-            customerAddress: pendingVisit.customerAddress || pendingVisit.job?.address,
-          });
-          return session;
+        if (matchingVisit) {
+          const isPastArrival =
+            matchingVisit.status === "COMPLETED" ||
+            matchingVisit.status === "CANCELLED" ||
+            [
+              "VISIT_COMPLETED",
+              "INSPECTION_DONE",
+              "REPAIR_NEGOTIATING",
+              "REPAIR_APPROVED",
+              "IN_PROGRESS",
+              "COMPLETED",
+              "PAID",
+              "REVIEWED",
+              "CANCELLED",
+            ].includes(matchingVisit.job?.status);
+
+          if (isPastArrival) {
+            this.clearArrivalSession();
+            return null;
+          }
         }
       }
-      return this.getSession();
+
+      const pendingVisit = visits.find((v: any) => {
+        const isJobPastArrival = [
+          "VISIT_COMPLETED",
+          "INSPECTION_DONE",
+          "REPAIR_NEGOTIATING",
+          "REPAIR_APPROVED",
+          "IN_PROGRESS",
+          "COMPLETED",
+          "PAID",
+          "REVIEWED",
+          "CANCELLED",
+        ].includes(v.job?.status);
+
+        if (v.status === "COMPLETED" || v.status === "CANCELLED" || isJobPastArrival) {
+          return false;
+        }
+
+        return Boolean(v.isArrivalPending || v.arrivalPending || v.arrivalOtp);
+      });
+
+      if (pendingVisit) {
+        const session = this.startArrivalSession({
+          jobId: pendingVisit.jobId || pendingVisit.job?.id || "",
+          visitId: pendingVisit.id,
+          otp: pendingVisit.arrivalOtp || "",
+          workerName: pendingVisit.worker?.name || "Technician",
+          workerPhone: pendingVisit.worker?.phone,
+          customerName: pendingVisit.customer?.name,
+          customerAddress: pendingVisit.customerAddress || pendingVisit.job?.address,
+        });
+        return session;
+      } else {
+        // If backend confirmed there are no pending arrivals, clear any stale stored session
+        if (current) {
+          this.clearArrivalSession();
+        }
+        return null;
+      }
     } catch {
       return this.getSession();
+    }
+  }
+
+  async validateActiveSession(): Promise<boolean> {
+    const session = this.getSession();
+    if (!session || !session.jobId) return false;
+    try {
+      const res = await http.get<any>(`/jobs/${session.jobId}`);
+      if (
+        res &&
+        (res.status === "CANCELLED" ||
+          res.status === "COMPLETED" ||
+          res.status === "PAID" ||
+          res.status === "REVIEWED" ||
+          res.status === "VISIT_COMPLETED" ||
+          res.status === "INSPECTION_DONE" ||
+          res.status === "REPAIR_NEGOTIATING" ||
+          res.status === "REPAIR_APPROVED" ||
+          res.status === "IN_PROGRESS" ||
+          res.cancelReason)
+      ) {
+        this.clearArrivalSession();
+        return false;
+      }
+      return true;
+    } catch {
+      return true;
     }
   }
 
@@ -170,6 +255,34 @@ class ArrivalVerificationService {
         const backendError =
           err?.response?.data?.message ||
           "Incorrect OTP. Please check the code provided by the worker and try again.";
+
+        // If backend reports OTP expired/not found, check if the job was already completed/verified
+        if (
+          String(backendError).includes("ARRIVAL_OTP_EXPIRED") ||
+          String(backendError).includes("No pending arrival OTP")
+        ) {
+          try {
+            const checkRes = await http.get<any>(`/jobs/${session.jobId}`);
+            if (
+              checkRes &&
+              [
+                "VISIT_COMPLETED",
+                "INSPECTION_DONE",
+                "REPAIR_NEGOTIATING",
+                "REPAIR_APPROVED",
+                "IN_PROGRESS",
+                "COMPLETED",
+              ].includes(checkRes.status)
+            ) {
+              this.clearArrivalSession();
+              return {
+                success: true,
+                session: { ...session, status: "otp_verified" },
+              };
+            }
+          } catch {}
+        }
+
         return {
           success: false,
           error: backendError,
@@ -192,12 +305,13 @@ class ArrivalVerificationService {
 
     if (typeof window !== "undefined") {
       try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedSession));
+        localStorage.removeItem(STORAGE_KEY);
       } catch (err) {
-        console.warn("Error updating arrival session:", err);
+        console.warn("Error removing arrival session:", err);
       }
 
       this.broadcast("OTP_VERIFIED", updatedSession);
+      this.broadcast("SESSION_CLEARED", null);
     }
 
     return {
@@ -216,12 +330,13 @@ class ArrivalVerificationService {
 
     if (typeof window !== "undefined") {
       try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedSession));
+        localStorage.removeItem(STORAGE_KEY);
       } catch (err) {
-        console.warn("Error updating arrival session:", err);
+        console.warn("Error removing arrival session:", err);
       }
 
       this.broadcast("OTP_VERIFIED", updatedSession);
+      this.broadcast("SESSION_CLEARED", null);
     }
   }
 

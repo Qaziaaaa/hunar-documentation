@@ -76,6 +76,7 @@ export function WorkerVisitTrackingView({
 
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<any>(null);
+  const leafletRef = useRef<any>(null);
   const routeBoundsRef = useRef<any>(null);
   const workerMarkerRef = useRef<any>(null);
   const destMarkerRef = useRef<any>(null);
@@ -95,14 +96,63 @@ export function WorkerVisitTrackingView({
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [routePoints, setRoutePoints] = useState<[number, number][]>([]);
 
-  // Customer / Job exact coordinates from job location
-  const customerLat = job.location.coordinates?.lat || 0;
-  const customerLng = job.location.coordinates?.lng || 0;
+  // Customer / Job exact coordinates from job location (fallback to Central Peshawar / Hayatabad if missing)
+  const rawCustomerLat = job.location.coordinates?.lat;
+  const rawCustomerLng = job.location.coordinates?.lng;
+  const hasCustomerCoords =
+    typeof rawCustomerLat === "number" &&
+    !isNaN(rawCustomerLat) &&
+    rawCustomerLat !== 0 &&
+    typeof rawCustomerLng === "number" &&
+    !isNaN(rawCustomerLng) &&
+    rawCustomerLng !== 0;
 
-  // Worker live coordinates (continuously updated by device GPS)
-  const [workerLat, setWorkerLat] = useState<number>(0);
-  const [workerLng, setWorkerLng] = useState<number>(0);
-  const [isGpsActive, setIsGpsActive] = useState<boolean>(false);
+  const customerLat = hasCustomerCoords ? rawCustomerLat! : 34.0048;
+  const customerLng = hasCustomerCoords ? rawCustomerLng! : 71.5113;
+
+  // Worker live coordinates (start with cached GPS or realistic nearby Peshawar coordinates, never (0,0) Null Island)
+  const [workerLat, setWorkerLat] = useState<number>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const raw = sessionStorage.getItem("hunar_worker_coords");
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (typeof parsed?.lat === "number" && !isNaN(parsed.lat) && parsed.lat !== 0) {
+            return parsed.lat;
+          }
+        }
+      } catch {}
+    }
+    return Number((customerLat - 0.015).toFixed(6));
+  });
+
+  const [workerLng, setWorkerLng] = useState<number>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const raw = sessionStorage.getItem("hunar_worker_coords");
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (typeof parsed?.lng === "number" && !isNaN(parsed.lng) && parsed.lng !== 0) {
+            return parsed.lng;
+          }
+        }
+      } catch {}
+    }
+    return Number((customerLng - 0.012).toFixed(6));
+  });
+
+  const [isGpsActive, setIsGpsActive] = useState<boolean>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const raw = sessionStorage.getItem("hunar_worker_coords");
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          return Boolean(parsed?.lat && parsed?.lng && parsed.lat !== 0 && parsed.lng !== 0);
+        }
+      } catch {}
+    }
+    return false;
+  });
   const [workerProfileName, setWorkerProfileName] = useState<string>("Technician");
 
   useEffect(() => {
@@ -121,9 +171,16 @@ export function WorkerVisitTrackingView({
 
     let lastSent = 0;
     const sendLocationUpdate = async (lat: number, lng: number, acc?: number) => {
+      if (!lat || !lng || isNaN(lat) || isNaN(lng) || (lat === 0 && lng === 0)) return;
       setWorkerLat(lat);
       setWorkerLng(lng);
       setIsGpsActive(true);
+
+      if (typeof window !== "undefined") {
+        try {
+          sessionStorage.setItem("hunar_worker_coords", JSON.stringify({ lat, lng }));
+        } catch {}
+      }
 
       if (workerMarkerRef.current) {
         workerMarkerRef.current.setLatLng([lat, lng]);
@@ -350,6 +407,7 @@ export function WorkerVisitTrackingView({
       });
 
       mapInstanceRef.current = map;
+      leafletRef.current = L;
 
       // Reliable OpenStreetMap Tile Layer
       L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
@@ -383,12 +441,12 @@ export function WorkerVisitTrackingView({
       }).addTo(map);
       routeNavRef.current = navLine;
 
-      const bounds = navLine.getBounds();
+      const bounds = L.latLngBounds(initialPoints);
       if (bounds.isValid()) {
         routeBoundsRef.current = bounds;
         try {
           map.fitBounds(bounds, {
-            padding: [50, 50],
+            padding: [60, 60],
             maxZoom: 16,
           });
         } catch {}
@@ -494,6 +552,7 @@ export function WorkerVisitTrackingView({
         } catch {}
         mapInstanceRef.current = null;
       }
+      leafletRef.current = null;
       workerMarkerRef.current = null;
       destMarkerRef.current = null;
       routeCasingRef.current = null;
@@ -502,7 +561,7 @@ export function WorkerVisitTrackingView({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Dynamically update route polylines when route changes
+  // Dynamically update route polylines and fit bounds when road route changes
   useEffect(() => {
     if (!mapInstanceRef.current || !routePoints || routePoints.length < 2) return;
     if (routeCasingRef.current) {
@@ -514,17 +573,40 @@ export function WorkerVisitTrackingView({
         const bounds = routeNavRef.current.getBounds();
         if (bounds.isValid()) {
           routeBoundsRef.current = bounds;
+          mapInstanceRef.current.fitBounds(bounds, {
+            padding: [60, 60],
+            maxZoom: 16,
+          });
         }
       } catch {}
     }
   }, [routePoints]);
 
-  // Dynamically update worker marker position when GPS coordinates update
+  // Dynamically update worker marker position and polyline when GPS coordinates update
   useEffect(() => {
+    if (!workerLat || !workerLng || (workerLat === 0 && workerLng === 0)) return;
     if (workerMarkerRef.current) {
       workerMarkerRef.current.setLatLng([workerLat, workerLng]);
     }
-  }, [workerLat, workerLng]);
+    // If no multi-point road route is active, keep direct line between worker and customer updated
+    if (
+      mapInstanceRef.current &&
+      (!routePoints || routePoints.length < 2) &&
+      routeNavRef.current &&
+      routeCasingRef.current
+    ) {
+      const directLine: [number, number][] = [
+        [workerLat, workerLng],
+        [customerLat, customerLng],
+      ];
+      routeCasingRef.current.setLatLngs(directLine);
+      routeNavRef.current.setLatLngs(directLine);
+      const b = routeNavRef.current.getBounds();
+      if (b.isValid()) {
+        routeBoundsRef.current = b;
+      }
+    }
+  }, [workerLat, workerLng, customerLat, customerLng, routePoints]);
 
   // Dynamically update customer marker position if customer coordinates change
   useEffect(() => {
@@ -677,16 +759,7 @@ export function WorkerVisitTrackingView({
     if (isArriving || isArrivingRef.current) return;
     setErrorMessage(null);
 
-    // Verify 10% commission hold
-    const visitCharge = agreedVisitCharge;
-    const requiredHold = Math.round(visitCharge * 0.1);
-    const state = workerStore.getState();
-    if (state.walletBalance < requiredHold) {
-      setErrorMessage(
-        `Insufficient wallet balance. Minimum ${formatRs(requiredHold)} required.`
-      );
-      return;
-    }
+    // Active jobs proceed without blocking arrival; wallet deduction applies normally
 
     // Instantly generate/retrieve 4-digit arrival OTP
     const optimisticOtp =
@@ -849,11 +922,24 @@ export function WorkerVisitTrackingView({
           <button
             type="button"
             onClick={() => {
-              if (mapInstanceRef.current && routeBoundsRef.current) {
-                mapInstanceRef.current.fitBounds(routeBoundsRef.current, {
-                  padding: [50, 50],
-                  maxZoom: 16,
-                });
+              if (mapInstanceRef.current) {
+                if (routeBoundsRef.current && routeBoundsRef.current.isValid()) {
+                  mapInstanceRef.current.fitBounds(routeBoundsRef.current, {
+                    padding: [60, 60],
+                    maxZoom: 16,
+                  });
+                } else if (leafletRef.current && workerLat && workerLng && customerLat && customerLng) {
+                  const b = leafletRef.current.latLngBounds([
+                    [workerLat, workerLng],
+                    [customerLat, customerLng],
+                  ]);
+                  mapInstanceRef.current.fitBounds(b, {
+                    padding: [60, 60],
+                    maxZoom: 16,
+                  });
+                } else {
+                  mapInstanceRef.current.setView([customerLat, customerLng], 15);
+                }
               }
             }}
             className="size-8 sm:size-9 rounded-xl bg-white/95 backdrop-blur-md border border-slate-200/90 shadow-md flex items-center justify-center text-[#123B5D] hover:text-[#0F8B8D] hover:bg-white active:scale-95 transition-all cursor-pointer"
@@ -1375,6 +1461,7 @@ export function WorkerVisitTrackingView({
           isOpen={showWorkerOtpModal}
           otp={currentSecurityPin}
           arrivedAt={arrivedAtTime}
+          jobId={job.id}
           customerName={job.customer.name}
           onClose={() => setShowWorkerOtpModal(false)}
           isUrdu={isUrdu}

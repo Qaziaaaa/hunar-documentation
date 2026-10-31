@@ -7,6 +7,7 @@ export interface GetCustomerJobsOptions {
   limit?: number;
   status?: string;
   tab?: string;
+  scheduleType?: "scheduled" | "asap" | string;
 }
 
 export interface CustomerJobsCounts {
@@ -28,13 +29,14 @@ export async function getCustomerJobs(options?: GetCustomerJobsOptions | unknown
   const isOptionsObject =
     typeof options === "object" &&
     options !== null &&
-    ("page" in options || "limit" in options || "status" in options || "tab" in options);
+    ("page" in options || "limit" in options || "status" in options || "tab" in options || "scheduleType" in options);
   const opts = isOptionsObject ? (options as GetCustomerJobsOptions) : undefined;
   const page = opts?.page ?? 1;
   const limit = opts?.limit ?? 20;
   const statusQuery = opts?.status ? `&status=${encodeURIComponent(opts.status)}` : "";
   const tabQuery = opts?.tab ? `&tab=${encodeURIComponent(opts.tab)}` : "";
-  const res = await http.get<any>(`/jobs/customer?page=${page}&limit=${limit}${statusQuery}${tabQuery}`);
+  const scheduleTypeQuery = opts?.scheduleType ? `&scheduleType=${encodeURIComponent(opts.scheduleType)}` : "";
+  const res = await http.get<any>(`/jobs/customer?page=${page}&limit=${limit}${statusQuery}${tabQuery}${scheduleTypeQuery}`);
   const rows: unknown[] = Array.isArray(res)
     ? res
     : res?.data ?? res?.items ?? [];
@@ -57,7 +59,7 @@ export async function getJobDetail(jobId: string): Promise<CustomerJob> {
   if (!res || !res.id) {
     throw new Error(`JOB_NOT_FOUND: ${jobId}`);
   }
-  const isAsap = res.urgency === "EMERGENCY" || res.urgency === "URGENT" || res.urgency === "HIGH";
+  const isAsap = res.urgency === "EMERGENCY" || res.urgency === "URGENT" || res.urgency === "HIGH" || (!res.preferredVisitTime && res.urgency !== "NORMAL");
   let offers: WorkerOffer[] = (res.offers || []).map(transformBackendOffer);
   if (offers.length === 0 && Number(res.offerCount ?? 0) > 0) {
     try {
@@ -84,6 +86,7 @@ export async function getJobDetail(jobId: string): Promise<CustomerJob> {
       res.timeSlot ||
       (isAsap ? "⚡ Immediate" : extractTimeSlotFromVisitTime(res.preferredVisitTime)),
     status: mapJobStatus(res.status),
+    rawStatus: res.status,
     createdAt: res.createdAt || new Date().toISOString(),
     offerCount: Number(res.offerCount ?? offers.length),
     offers,
@@ -210,12 +213,12 @@ function mapJobStatus(status?: string): JobStatus {
     case "VISIT_SCHEDULED":
       return "visit_scheduled";
     case "VISIT_IN_PROGRESS":
+    case "VISIT_COMPLETED":
     case "INSPECTION_DONE":
     case "REPAIR_NEGOTIATING":
     case "REPAIR_APPROVED":
     case "IN_PROGRESS":
       return "in_progress";
-    case "VISIT_COMPLETED":
     case "COMPLETED":
     case "PAID":
     case "REVIEWED":
@@ -230,7 +233,7 @@ function mapJobStatus(status?: string): JobStatus {
 }
 
 function transformListRow(row: any): CustomerJob {
-  const isAsap = row.urgency === "EMERGENCY" || row.urgency === "URGENT" || row.urgency === "HIGH";
+  const isAsap = row.urgency === "EMERGENCY" || row.urgency === "URGENT" || row.urgency === "HIGH" || (!row.preferredVisitTime && row.urgency !== "NORMAL");
   const offers: WorkerOffer[] = Array.isArray(row.offers)
     ? row.offers.map(transformBackendOffer)
     : [];
@@ -252,6 +255,7 @@ function transformListRow(row: any): CustomerJob {
       row.timeSlot ||
       (isAsap ? "⚡ Immediate" : extractTimeSlotFromVisitTime(row.preferredVisitTime)),
     status: mapJobStatus(row.status),
+    rawStatus: row.status,
     createdAt: row.createdAt || new Date().toISOString(),
     offerCount: Number(row.offerCount ?? offers.length),
     offers,
@@ -374,6 +378,11 @@ function transformBackendWorker(worker: any): WorkerProfile {
 }
 
 export function transformBackendOffer(offer: any): WorkerOffer {
+  const isDeclined =
+    offer.isDeclined === true ||
+    offer.status === "REJECTED" ||
+    offer.status === "WITHDRAWN";
+
   return {
     id: offer.id,
     jobId: offer.jobId,
@@ -383,5 +392,7 @@ export function transformBackendOffer(offer: any): WorkerOffer {
     distanceKm: Number(offer.distanceKm || 0),
     createdAt: offer.createdAt || new Date().toISOString(),
     note: offer.message,
+    status: offer.status,
+    isDeclined: offer.status === "PENDING" ? false : isDeclined,
   };
 }

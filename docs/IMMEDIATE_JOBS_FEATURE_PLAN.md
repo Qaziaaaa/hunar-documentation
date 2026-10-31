@@ -2,7 +2,7 @@
 
 ## Goal Description
 Enhance the immediate/urgent job flow for both **Workers** and **Customers** in WorkerFIX:
-1. **Worker Persona**: When a technician sends an offer for an urgent/immediate job, display a dedicated fixed screen for **50 seconds** featuring a smoothly reducing progress bar (with **no numeric timer**). If accepted by the customer during this window, the worker transitions directly to the accepted job/visit details; otherwise, it closes cleanly after 50 seconds.
+1. **Worker Persona**: When a technician sends an offer for an urgent/immediate job, display a dedicated fixed screen for **50 seconds** featuring a smoothly reducing progress bar (with **no numeric timer**). If accepted by the customer during this window, the worker transitions directly to the visit full screen im here page ; otherwise, it closes cleanly after 50 seconds.
 2. **Customer Persona**: When a customer posts an immediate job (`scheduleType === "asap"`), transition after Step 4 directly into a fixed **"Searching for Technician"** live matching screen. Incoming technician offers appear on this screen in real time with an instant **"Accept"** button.
 3. **Core Analysis**: Answer and verify the user's key question: *"will it disturb or change recent flow ????"*
 
@@ -20,7 +20,7 @@ Here is how both flows behave side-by-side:
 | :--- | :--- | :--- |
 | **Customer Step 4 Submission** | Shows existing `JobPostedSuccessModal` with link to `/customer/jobs`. **(100% Unchanged)** | Replaces static modal with live `ImmediateJobSearchingScreen`. Displays active radar + incoming technician offers in real time. |
 | **Customer Navigation** | Navigates to `/customer/jobs` to review bids at their leisure. | Can accept an offer immediately on-screen, or click *"View in My Jobs"* / *"Exit"* at any time to fallback to `/customer/jobs`. |
-| **Worker Submitting Offer** | Normal jobs in `JobRequestModal` submit offer and close modal in 250ms as before. **(100% Unchanged)** | Urgent jobs trigger `UrgentBidCountdownModal`: a 50s fixed waiting screen with a shrinking progress line (no numeric timer). |
+| **Worker Submitting Offer** | Normal jobs in `JobRequestModal` submit offer and close modal in 250ms as before. **(100% Unchanged)** | Urgent jobs trigger `UrgentBidCountdownModal`: a 50s fixed waiting screen with a shrinking progress line (no numeric timer). On customer acceptance, transitions directly to the visit full screen "I'm here" page (`/worker/jobs/${jobId}`); otherwise closes cleanly after 50s. |
 | **Backend & Database** | Uses existing `/jobs` and `/jobs/:jobId/offers` REST endpoints and Prisma models. | Uses identical endpoints and existing Socket.io events (`job:offer`, `job:offer:accepted`). Zero schema changes needed. |
 
 ---
@@ -30,7 +30,12 @@ Here is how both flows behave side-by-side:
 > [!IMPORTANT]
 > **50-Second Countdown Display**: As explicitly requested, **no numeric timer digits** (e.g. `49s`, `00:48`) will appear on the worker's screen. The remaining time will be represented solely by an elegant, smoothly diminishing horizontal progress line.
 >
-> **Exit & Dismissibility**: Both screens provide clear escape hatches (*"Minimize / View in My Jobs"* for customers, and *"Dismiss / Cancel"* for workers) so no user is ever locked in.
+> **Single Active Offer & 50s Expiration**:
+> - A worker can only send an offer to **one customer at a time**. While an urgent offer is pending (during the 50-second window), the worker cannot send an offer to another customer.
+> - If the offer is not accepted within 50 seconds, it **automatically expires** (withdrawn on the backend, removed from customer bids, and cleared from the worker's pending state).
+> - Once expired (or cancelled early), the worker is completely free to **send an offer again to the same person** or **bid on another customer**.
+>
+> **Exit & Dismissibility**: Both screens provide clear escape hatches (*"Minimize / View in My Jobs"* for customers, and *"Cancel Offer & View Feed"* for workers) so no user is ever locked in.
 >
 > **Real-Time Connectivity**: The screens will use a dual-sync strategy: **Socket.io events** for sub-second updates, paired with a lightweight **2.5s HTTP polling fallback** to ensure 100% reliability even if WebSockets reconnect.
 
@@ -67,7 +72,7 @@ hunar-frontend/src/
   - Job details chip: Category icon, area name, quoted visit charge (`Rs. {charge}`).
   - Live pulse animation (radar sweep rings).
   - Listens for Socket.io `JOB_EVENTS.jobOfferAccepted` + polls `offersService.getMyOffers()` or job status every 2.5s.
-  - If accepted: turns emerald green with success chime/icon and button to *"Open Job Details"*.
+  - If accepted: turns emerald green with success feedback and transitions directly to the visit full screen "I'm here" page (`/worker/jobs/${jobId}`).
   - If 50 seconds lapse without acceptance: notifies worker and automatically closes, returning worker to feed.
 
 ```tsx
@@ -165,7 +170,7 @@ npm run --prefix hunar-frontend build
    - **Verify there is NO numeric timer / countdown digits anywhere on the screen.**
    - Verify customer name, job category, and quoted fee are clearly displayed.
 5. Let the screen reach 50 seconds: verify it handles timeout cleanly and returns to dashboard.
-6. Submit another offer and have the customer accept it: verify the screen transitions to accepted status and navigates to the job.
+6. Submit another offer and have the customer accept it: verify the screen transitions directly to the visit full screen "I'm here" page (`/worker/jobs/${jobId}`).
 
 #### Flow 2: Customer Persona (Immediate Job Post)
 1. Sign in as a Customer and click **"Post a Job"**.

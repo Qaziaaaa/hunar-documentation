@@ -586,7 +586,7 @@ export class WalletService {
   }
 
   private async enforceOfflineRule(db: WalletDb, workerId: string, balance: number) {
-    if (balance < WALLET_MAX_NEGATIVE_BALANCE) {
+    if (balance < 0) {
       await db.workerProfile.updateMany({
         where: { userId: workerId },
         data: { isAvailable: false },

@@ -13,11 +13,16 @@ import { LogIn } from "lucide-react";
 export default function CustomerJobsPage() {
   const searchParams = useSearchParams();
   const rawTab = searchParams.get("tab");
-  const tab = rawTab === "offers" || rawTab === "completed" || rawTab === "scheduled" ? rawTab : undefined;
+  const tab = rawTab === "offers" || rawTab === "completed" || rawTab === "scheduled" ? rawTab : "scheduled";
 
   const { data, isPending, isError, error, refetch } = useQuery({
-    queryKey: ["customer", "jobs", "feed"],
-    queryFn: () => getCustomerJobs({ limit: 50 }),
+    queryKey: ["customer", "jobs", "feed", tab],
+    queryFn: () =>
+      getCustomerJobs({
+        limit: 50,
+        tab,
+        scheduleType: tab === "completed" ? undefined : "scheduled",
+      }),
     staleTime: 0,
     refetchOnMount: "always",
     retry: (failureCount, err) => {
