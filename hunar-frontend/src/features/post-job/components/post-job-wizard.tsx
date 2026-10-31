@@ -12,7 +12,11 @@ import {
   createCustomCategoryOption,
 } from "../data/categories";
 import type { PostJobData, PostJobStep, ServiceCategory } from "../types";
-import { createJob } from "../api/post-job-api";
+import {
+  createJob,
+  fetchServiceCategories,
+  type BackendCategory,
+} from "../api/post-job-api";
 import { buildPostJobSignInHref } from "../lib/return-url";
 import { ApiError, getAccessToken, getStoredUser } from "@/lib/api-client";
 import { toLocalDateString } from "@/lib/format";
@@ -139,8 +143,21 @@ export function PostJobWizard() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [postedJobId, setPostedJobId] = useState<string | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [backendCategories, setBackendCategories] = useState<BackendCategory[]>([]);
   const isHydratedRef = useRef(false);
   const isFirstMountRef = useRef(true);
+
+  useEffect(() => {
+    let mounted = true;
+    fetchServiceCategories().then((cats) => {
+      if (mounted && Array.isArray(cats)) {
+        setBackendCategories(cats);
+      }
+    });
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   // Restore active searching state if present in URL or session storage
   useEffect(() => {
@@ -505,6 +522,7 @@ export function PostJobWizard() {
               onChange={updateFormData}
               onNext={handleNextStep}
               onBack={handlePrevStep}
+              backendCategories={backendCategories}
             />
           )}
 
