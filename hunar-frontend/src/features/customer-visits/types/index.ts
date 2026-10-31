@@ -136,4 +136,11 @@ export interface CustomerVisitTrackingData {
     estimatedRepairTimeMin: number | null;
     submittedAt: string | null;
   } | null;
+  hasReviewed?: boolean;
+  customerReview?: {
+    rating: number;
+    comment?: string;
+    tags?: string[];
+    date?: string;
+  } | null;
 }

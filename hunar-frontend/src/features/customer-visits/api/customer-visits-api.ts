@@ -631,5 +631,7 @@ export async function getCustomerJobVisitTracking(
     isDoorstepPendingOtp: !isArrivalCompleted && (isPendingOtp || stageResult.currentStageId === "ARRIVED"),
     doorstepOtp: resolvedDoorstepOtp,
     inspection: inspectionData,
+    hasReviewed: Boolean((job as any).hasReviewed || (job as any).customerReview),
+    customerReview: (job as any).customerReview ?? null,
   };
 }
