@@ -308,7 +308,7 @@ export class JobsService {
 
   async getCustomerJobs(customerId: string, query: CustomerJobsQueryDto) {
     const { page, limit, skip } = normalizePage(query);
-    const cacheKey = `perf:jobs:customer:${customerId}:${page}:${limit}:${query.tab ?? query.status ?? 'all'}`;
+    const cacheKey = `perf:jobs:customer:${customerId}:${page}:${limit}:${query.tab ?? query.status ?? 'all'}:${query.scheduleType ?? 'all'}`;
     if (this.redis) {
       const cached = await this.redis.get(cacheKey);
       if (cached) {
@@ -351,9 +351,34 @@ export class JobsService {
       statusFilter = query.status;
     }
 
+    let urgencyWhere: Prisma.ServiceRequestWhereInput | undefined;
+    if (query.tab === 'scheduled' || query.tab === 'offers') {
+      urgencyWhere = { urgency: { not: Urgency.EMERGENCY } };
+    } else if (query.tab === 'completed') {
+      urgencyWhere = undefined;
+    } else if (query.scheduleType === 'scheduled') {
+      urgencyWhere = {
+        OR: [
+          { urgency: { not: Urgency.EMERGENCY } },
+          {
+            status: {
+              in: [
+                JobStatus.VISIT_COMPLETED,
+                JobStatus.COMPLETED,
+                JobStatus.PAID,
+                JobStatus.REVIEWED,
+                JobStatus.CANCELLED,
+              ],
+            },
+          },
+        ],
+      };
+    }
+
     const where: Prisma.ServiceRequestWhereInput = {
       customerId,
       ...(statusFilter ? { status: statusFilter } : {}),
+      ...(urgencyWhere ? urgencyWhere : {}),
     };
 
     const [rows, total, statusCounts] = await Promise.all([
@@ -417,10 +442,10 @@ export class JobsService {
       }),
       this.prisma.serviceRequest.count({ where }),
       (this.prisma.serviceRequest.groupBy as any)({
-        by: ['status'],
+        by: ['status', 'urgency'],
         where: { customerId },
         _count: { _all: true },
-      }) as Promise<Array<{ status: JobStatus; _count: { _all: number } }>>,
+      }) as Promise<Array<{ status: JobStatus; urgency?: Urgency; _count: { _all: number } }>>,
     ]);
 
     let offersCount = 0;
@@ -430,8 +455,9 @@ export class JobsService {
     for (const sc of statusCounts) {
       const s = sc.status;
       const count = sc._count._all;
+      const isEmergency = sc.urgency === Urgency.EMERGENCY || (sc as any).urgency === 'EMERGENCY';
       if (s === JobStatus.OPEN || s === JobStatus.OFFERS_RECEIVED) {
-        offersCount += count;
+        if (!isEmergency) offersCount += count;
       } else if (
         s === JobStatus.OFFER_ACCEPTED ||
         s === JobStatus.WORKER_ASSIGNED ||
@@ -442,7 +468,7 @@ export class JobsService {
         s === JobStatus.REPAIR_APPROVED ||
         s === JobStatus.IN_PROGRESS
       ) {
-        scheduledCount += count;
+        if (!isEmergency) scheduledCount += count;
       } else if (
         s === JobStatus.VISIT_COMPLETED ||
         s === JobStatus.COMPLETED ||
@@ -529,6 +555,7 @@ export class JobsService {
         title: j.title,
         description: j.description,
         status: j.status,
+        urgency: j.urgency,
         categoryId: j.categoryId,
         categoryName: j.category?.name ?? null,
         address: j.address,
@@ -956,6 +983,7 @@ export class JobsService {
         title: j.title,
         description: j.description,
         status: j.status,
+        urgency: j.urgency,
         categoryId: j.categoryId,
         categoryName: j.category?.name,
         address: j.address,
@@ -1406,7 +1434,22 @@ export class JobsService {
     if (!job) {
       throw new NotFoundException('Job not found');
     }
-    if (['CANCELLED', 'COMPLETED', 'PAID', 'REVIEWED', 'DISPUTED'].includes(job.status)) {
+    if (user.role === Role.CUSTOMER && job.customerId !== user.sub) {
+      throw new ForbiddenException('You are not the owner of this job');
+    }
+    if (user.role === Role.WORKER && job.selectedWorkerId !== user.sub) {
+      throw new ForbiddenException('You are not the assigned worker for this job');
+    }
+    if (user.role !== Role.CUSTOMER && user.role !== Role.WORKER && user.role !== Role.ADMIN) {
+      throw new ForbiddenException('Only the job owner or the assigned worker can cancel a job');
+    }
+
+    // Idempotent: If the job is already cancelled, treat it as successful cancellation
+    if (job.status === 'CANCELLED') {
+      return job;
+    }
+
+    if (['COMPLETED', 'PAID', 'REVIEWED', 'DISPUTED'].includes(job.status)) {
       throw new BadRequestException(
         'JOB_INVALID_STATE: job cannot be cancelled in its current state',
       );
@@ -1434,6 +1477,10 @@ export class JobsService {
             where: { jobId, status: 'REJECTED', NOT: { workerId: job.selectedWorkerId } },
             data: { status: 'PENDING' },
           });
+          await tx.visit.updateMany({
+            where: { jobId, workerId: job.selectedWorkerId, status: { not: 'CANCELLED' } },
+            data: { status: 'CANCELLED' },
+          });
           return j;
         });
         this.eventBus.emit('job.statusChanged', {
@@ -1458,9 +1505,16 @@ export class JobsService {
           throw new BadRequestException('A cancellation reason is required after arrival');
         }
         JobStateMachine.assertCanTransition(job.status, 'CANCELLED');
-        const updated = await this.prisma.serviceRequest.update({
-          where: { id: jobId },
-          data: { status: 'CANCELLED', cancelReason: dto.reason, cancelledAt: new Date() },
+        const updated = await this.prisma.$transaction(async (tx) => {
+          const j = await tx.serviceRequest.update({
+            where: { id: jobId },
+            data: { status: 'CANCELLED', cancelReason: dto.reason, cancelledAt: new Date() },
+          });
+          await tx.visit.updateMany({
+            where: { jobId, status: { not: 'CANCELLED' } },
+            data: { status: 'CANCELLED' },
+          });
+          return j;
         });
         this.eventBus.emit('job.cancelled', { jobId, reason: dto.reason });
         this.realtime.emitToRoom(userRoom(job.customerId), JOB_EVENTS.jobCancelled, { jobId });
@@ -1470,13 +1524,21 @@ export class JobsService {
     }
 
     if (user.role === Role.CUSTOMER) {
-      if (job.customerId !== user.sub) {
-        throw new ForbiddenException('You are not the owner of this job');
-      }
       JobStateMachine.assertCanTransition(job.status, 'CANCELLED');
-      const updated = await this.prisma.serviceRequest.update({
-        where: { id: jobId },
-        data: { status: 'CANCELLED', cancelReason: dto.reason, cancelledAt: new Date() },
+      const updated = await this.prisma.$transaction(async (tx) => {
+        const j = await tx.serviceRequest.update({
+          where: { id: jobId },
+          data: { status: 'CANCELLED', cancelReason: dto.reason, cancelledAt: new Date() },
+        });
+        await tx.jobOffer.updateMany({
+          where: { jobId, status: { in: ['PENDING', 'VIEWING', 'COUNTERED'] } },
+          data: { status: 'REJECTED' },
+        });
+        await tx.visit.updateMany({
+          where: { jobId, status: { not: 'CANCELLED' } },
+          data: { status: 'CANCELLED' },
+        });
+        return j;
       });
       this.eventBus.emit('job.cancelled', { jobId, reason: dto.reason });
       if (job.selectedWorkerId) {
