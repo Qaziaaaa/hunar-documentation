@@ -73,4 +73,7 @@ async function bootstrap(): Promise<void> {
   logger.log(`HUNAR backend listening on http://localhost:${port}/${apiPrefix}`);
 }
 
+process.on('unhandledRejection', (reason) => { console.warn('[UnhandledRejection]', reason); });
+process.on('uncaughtException', (err) => { console.error('[UncaughtException]', err); });
+
 bootstrap();
