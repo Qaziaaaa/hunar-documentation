@@ -653,6 +653,15 @@ export default function CategoriesPage() {
                           <Truck className="size-3" /> Delivery Charges
                         </span>
                       ) : null}
+                      {cat.commonIssues && cat.commonIssues.length > 0 ? (
+                        <span className="inline-flex items-center gap-1 rounded-md bg-teal/10 px-1.5 py-0.5 text-[10px] font-extrabold text-teal">
+                          <CheckCircle2 className="size-3" /> {cat.commonIssues.length} Issue{cat.commonIssues.length === 1 ? "" : "s"}
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 rounded-md bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold text-slate-500">
+                          No Issues Set
+                        </span>
+                      )}
                     </div>
                   </div>
                 </div>
