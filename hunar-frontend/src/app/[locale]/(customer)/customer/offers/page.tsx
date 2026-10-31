@@ -12,7 +12,7 @@ import { LogIn } from "lucide-react";
 export default function CustomerOffersPage() {
   const { data, isPending, isError, error, refetch } = useQuery({
     queryKey: ["customer", "jobs"],
-    queryFn: getCustomerJobs,
+    queryFn: () => getCustomerJobs({ scheduleType: "scheduled" }),
     staleTime: 30_000,
     retry: (failureCount, err) => {
       if (err instanceof ApiError && (err.status === 401 || err.status === 403)) {

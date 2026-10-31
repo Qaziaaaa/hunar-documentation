@@ -66,7 +66,16 @@ export function CustomerReviewOffersModal({
 
   if (!isOpen || !job) return null;
 
-  const offers = job.offers || [];
+  const isUrgentJob =
+    job.scheduleType === "asap" ||
+    (job as any).urgency === "EMERGENCY" ||
+    (job as any).urgency === "HIGH";
+  const nowMs = Date.now();
+  const offers = (job.offers || []).filter((o) => {
+    if (!isUrgentJob) return true;
+    const createdMs = o.createdAt ? new Date(o.createdAt).getTime() : 0;
+    return createdMs === 0 || nowMs - createdMs < 50000;
+  });
 
   const handleConfirmDecline = (offer: WorkerOffer) => {
     onRejectOffer(job, offer);

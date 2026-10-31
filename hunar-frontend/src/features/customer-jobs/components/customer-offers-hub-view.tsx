@@ -111,6 +111,19 @@ export function CustomerOffersHubView({ initialJobs }: CustomerOffersHubViewProp
         // Filter offers within this job
         let offers = [...job.offers];
 
+        // Filter expired urgent offers (>50s)
+        const isUrgentJob =
+          job.scheduleType === "asap" ||
+          (job as any).urgency === "EMERGENCY" ||
+          (job as any).urgency === "HIGH";
+        if (isUrgentJob && job.status === "receiving_offers") {
+          const nowMs = Date.now();
+          offers = offers.filter((o) => {
+            const createdMs = o.createdAt ? new Date(o.createdAt).getTime() : 0;
+            return createdMs === 0 || nowMs - createdMs < 50000;
+          });
+        }
+
         // Status filter
         if (statusFilter === "pending" && job.status !== "receiving_offers") {
           return null;
