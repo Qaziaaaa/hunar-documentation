@@ -1377,6 +1377,7 @@ export class AdminService {
           sortOrder: true,
           defaultVisitCharge: true,
           distanceSlabs: true,
+          commonIssues: true,
           createdAt: true,
           _count: { select: { jobs: true } },
         },
@@ -1404,6 +1405,7 @@ export class AdminService {
       // Real configured slabs only — null until the admin saves some
       // (the old injected Rs. 100–500 defaults were fake data).
       distanceSlabs: r.distanceSlabs ?? null,
+      commonIssues: (r as any).commonIssues ?? null,
     }));
 
     return toPageResult(items, total, page, limit);
@@ -1411,13 +1413,14 @@ export class AdminService {
 
   // Create a new category.
   async createCategory(dto: AdminCreateCategoryDto, actor: JwtPayload) {
-    const category = await this.prisma.serviceCategory.create({
+    const category = await (this.prisma.serviceCategory as any).create({
       data: {
         name: dto.name,
         nameUrdu: dto.nameUrdu,
         imageUrl: dto.imageUrl,
         sortOrder: dto.sortOrder ?? 0,
         defaultVisitCharge: dto.defaultVisitCharge != null ? dto.defaultVisitCharge : null,
+        commonIssues: dto.commonIssues ?? [],
       },
       select: {
         id: true,
@@ -1427,6 +1430,7 @@ export class AdminService {
         isActive: true,
         sortOrder: true,
         defaultVisitCharge: true,
+        commonIssues: true,
         createdAt: true,
       },
     });
@@ -1479,7 +1483,7 @@ export class AdminService {
       throw new NotFoundException('Category not found');
     }
 
-    const updated = await this.prisma.serviceCategory.update({
+    const updated = await (this.prisma.serviceCategory as any).update({
       where: { id },
       data: {
         ...(dto.name !== undefined ? { name: dto.name } : {}),
@@ -1488,6 +1492,7 @@ export class AdminService {
         ...(dto.sortOrder !== undefined ? { sortOrder: dto.sortOrder } : {}),
         ...(dto.defaultVisitCharge !== undefined ? { defaultVisitCharge: dto.defaultVisitCharge } : {}),
         ...(dto.distanceSlabs !== undefined ? { distanceSlabs: dto.distanceSlabs } : {}),
+        ...(dto.commonIssues !== undefined ? { commonIssues: dto.commonIssues } : {}),
         ...(dto.isActive !== undefined ? { isActive: dto.isActive } : {}),
       },
       select: {
@@ -1499,6 +1504,7 @@ export class AdminService {
         sortOrder: true,
         defaultVisitCharge: true,
         distanceSlabs: true,
+        commonIssues: true,
       },
     });
 
@@ -1624,6 +1630,50 @@ export class AdminService {
     await this.redis?.del('perf:categories:all').catch(() => {});
 
     return updated;
+  }
+
+  // Delete a category (checks for active/existing jobs first).
+  async deleteCategory(id: string, actor: JwtPayload) {
+    const existing = await this.prisma.serviceCategory.findUnique({
+      where: { id },
+      include: {
+        _count: {
+          select: { jobs: true },
+        },
+      },
+    });
+    if (!existing) {
+      throw new NotFoundException('Category not found');
+    }
+
+    if (existing._count?.jobs > 0) {
+      throw new BadRequestException(
+        `Cannot delete "${existing.name}" category because it has ${existing._count.jobs} associated job(s). Please deactivate it instead to protect existing records.`,
+      );
+    }
+
+    await this.prisma.serviceCategory.delete({ where: { id } });
+
+    await this.audit.record({
+      actorId: actor.sub,
+      actorRole: actor.role,
+      action: 'CATEGORY_DELETED',
+      targetType: 'SERVICE_CATEGORY',
+      targetId: id,
+      reason: null,
+      metadata: { name: existing.name },
+    });
+
+    this.realtime.emitToRoom(ADMIN_ROOM, ADMIN_EVENTS.categoryDeleted, {
+      categoryId: id,
+      name: existing.name,
+      deletedBy: actor.sub,
+      timestamp: new Date(),
+    });
+
+    await this.redis?.del('perf:categories:all').catch(() => {});
+
+    return { success: true, id };
   }
 
   // ----- City & Area Management -----

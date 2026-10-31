@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Script from "next/script";
 import { Bricolage_Grotesque, Hanken_Grotesk, Inter } from "next/font/google";
 import { hasLocale, NextIntlClientProvider } from "next-intl";
 import { getMessages, getTranslations, setRequestLocale } from "next-intl/server";
@@ -115,14 +114,14 @@ export default async function LocaleLayout({
         <link rel="icon" href="/workerfix-icon.png" type="image/png" />
         <link rel="shortcut icon" href="/workerfix-icon.png" type="image/png" />
         <link rel="apple-touch-icon" href="/workerfix-icon.png" />
+        {/* Pre-paint admin theme (prevents flash before hydration) */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var isAdmin=/\\/admin(\\/|$)/.test(location.pathname);var t=localStorage.getItem("workerfix.admin.theme")||"system";var dark=isAdmin&&(t==="dark"||(t!=="light"&&window.matchMedia("(prefers-color-scheme: dark)").matches));document.documentElement.setAttribute("data-theme",dark?"dark":"light");}catch(e){}})();`,
+          }}
+        />
       </head>
       <body suppressHydrationWarning className="min-h-screen w-full overflow-x-hidden flex flex-col scrollbar-none no-scrollbar">
-        {/* Pre-paint admin theme (prevents flash before hydration). Runs before interactive. */}
-        <Script
-          id="workerfix-admin-theme"
-          src="/admin-theme.js"
-          strategy="beforeInteractive"
-        />
         <NextIntlClientProvider messages={messages}>
           <QueryProvider>{children}</QueryProvider>
         </NextIntlClientProvider>

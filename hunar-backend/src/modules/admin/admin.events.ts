@@ -37,6 +37,7 @@ export const ADMIN_EVENTS = {
   categoryUpdated: 'admin:category:updated',
   categoryDeactivated: 'admin:category:deactivated',
   categoryActivated: 'admin:category:activated',
+  categoryDeleted: 'admin:category:deleted',
 
   // Settings events
   commissionRateChanged: 'admin:settings:commission_rate_changed',

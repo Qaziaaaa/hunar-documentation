@@ -671,7 +671,24 @@ html[data-theme="dark"] body:has(.admin-glow) {
 .wf-main {
   position: relative;
   padding: clamp(18px, 1.8vw, 36px) clamp(20px, 2.2vw, 44px) 48px;
+  overflow-y: scroll;
+  scrollbar-gutter: stable;
 }
+
+.wf-main::-webkit-scrollbar {
+  width: 8px;
+}
+.wf-main::-webkit-scrollbar-track {
+  background: transparent;
+}
+.wf-main::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.4);
+  border-radius: 9999px;
+}
+.wf-main::-webkit-scrollbar-thumb:hover {
+  background: rgba(100, 116, 139, 0.6);
+}
+
 
 /* Borderless utility cluster — absolute top-right of main, same line as the
    page title (sample: bell lives inside header.page actions; no topbar). */

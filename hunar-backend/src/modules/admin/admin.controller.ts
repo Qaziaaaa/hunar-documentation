@@ -255,6 +255,11 @@ export class AdminController {
     return this.adminService.deactivateCategory(id, actor);
   }
 
+  @Delete('categories/:id')
+  deleteCategory(@Param('id') id: string, @CurrentUser() actor: JwtPayload) {
+    return this.adminService.deleteCategory(id, actor);
+  }
+
   // ----- Cities & Areas Management -----
 
   @Get('cities')

@@ -369,6 +369,7 @@ function toServiceCategory(c: any): ServiceCategory {
     // Real slabs only — categories without configured charges show an empty
     // state in the editor instead of invented Rs. 100–500 pricing.
     distanceSlabs: Array.isArray(c.distanceSlabs) ? c.distanceSlabs : [],
+    commonIssues: Array.isArray(c.commonIssues) ? c.commonIssues : [],
   };
 }
 
@@ -809,6 +810,10 @@ export const adminApi = {
   async updateCategoryDistanceSlabs(id: string, distanceSlabs: any[]): Promise<ServiceCategory> {
     const updated = await http.put<any>(`/admin/categories/${id}`, { distanceSlabs });
     return toServiceCategory(updated);
+  },
+
+  async deleteCategory(id: string): Promise<{ success: boolean; id: string }> {
+    return http.delete<{ success: boolean; id: string }>(`/admin/categories/${id}`);
   },
 
   // Cities & Areas Management
