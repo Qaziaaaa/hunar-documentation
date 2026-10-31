@@ -17,6 +17,7 @@ import { buildPostJobSignInHref } from "../lib/return-url";
 import { ApiError, getAccessToken, getStoredUser } from "@/lib/api-client";
 import { toLocalDateString } from "@/lib/format";
 import { JobPostedSuccessModal } from "./job-posted-success-modal";
+import { ImmediateJobSearchingScreen } from "./immediate-job-searching-screen";
 import { Step2JobDetails } from "./step-2-job-details";
 import { Step3LocationSchedule } from "./step-3-location-schedule";
 import { Step4ReviewPost } from "./step-4-review-post";
@@ -141,6 +142,27 @@ export function PostJobWizard() {
   const isHydratedRef = useRef(false);
   const isFirstMountRef = useRef(true);
 
+  // Restore active searching state if present in URL or session storage
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      const urlSearchingId = searchParams.get("searchingJobId");
+      const storedSearchingId = sessionStorage.getItem("workerfix_active_asap_job_id");
+      // Only restore stored searching ID if user is not explicitly picking a different category
+      const activeId =
+        urlSearchingId ||
+        (!categoryParam && !categoryIdParam && !searchParam ? storedSearchingId : null);
+      if (activeId) {
+        setPostedJobId(activeId);
+        const savedData = sessionStorage.getItem("workerfix_active_asap_job_data");
+        if (savedData) {
+          const parsed = JSON.parse(savedData);
+          setFormData((prev) => ({ ...prev, ...parsed, scheduleType: "asap" }));
+        }
+      }
+    } catch {}
+  }, [searchParams, categoryParam, categoryIdParam, searchParam]);
+
   // Restore and merge draft from storage without losing any fields
   useEffect(() => {
     const saved = getStoredDraft();
@@ -207,12 +229,19 @@ export function PostJobWizard() {
   }, [shouldResumeReview, initialCategoryMatch?.id]);
 
   // If accessed directly without selecting a category, redirect to Step 1 on the dashboard.
-  // Skipped when resuming at Step 4 after authentication (draft restores the category).
+  // Skipped when resuming at Step 4 after authentication (draft restores the category)
+  // or when an active immediate job search is underway.
   useEffect(() => {
+    const storedSearchingId =
+      typeof window !== "undefined"
+        ? sessionStorage.getItem("workerfix_active_asap_job_id")
+        : null;
+    const searchingJobId = searchParams.get("searchingJobId") || storedSearchingId;
+    if (searchingJobId) return;
     if (initialCategoryMatch) return;
     if (shouldResumeReview && getStoredDraft()?.category) return;
     router.replace("/customer/dashboard");
-  }, [initialCategoryMatch, shouldResumeReview, router]);
+  }, [initialCategoryMatch, shouldResumeReview, router, searchParams]);
 
   // Persist form draft ONLY after hydration to prevent overwriting with initial state
   useEffect(() => {
@@ -374,6 +403,13 @@ export function PostJobWizard() {
       if (typeof window !== "undefined") {
         try {
           sessionStorage.removeItem("workerfix_draft_job");
+          if (formData.scheduleType === "asap") {
+            sessionStorage.setItem("workerfix_active_asap_job_id", res.id);
+            sessionStorage.setItem("workerfix_active_asap_job_data", JSON.stringify(formData));
+            const url = new URL(window.location.href);
+            url.searchParams.set("searchingJobId", res.id);
+            window.history.replaceState(null, "", url.toString());
+          }
         } catch {}
       }
       void queryClient.invalidateQueries({ queryKey: ["customer", "jobs"] });
@@ -414,6 +450,20 @@ export function PostJobWizard() {
     }
   };
   const handleSubmit = handleSubmitJob;
+
+  const handleExitSearching = () => {
+    if (typeof window !== "undefined") {
+      try {
+        sessionStorage.removeItem("workerfix_active_asap_job_id");
+        sessionStorage.removeItem("workerfix_active_asap_job_data");
+        const url = new URL(window.location.href);
+        url.searchParams.delete("searchingJobId");
+        window.history.replaceState(null, "", url.toString());
+      } catch {}
+    }
+    setPostedJobId(null);
+    router.push("/customer/jobs");
+  };
 
   return (
     <div className="min-h-screen bg-white text-[#1A1A2E] flex flex-col justify-between">
@@ -480,14 +530,21 @@ export function PostJobWizard() {
         </div>
       </main>
 
-      {/* Success Celebration Modal */}
-      {postedJobId && (
-        <JobPostedSuccessModal
-          data={formData}
-          jobId={postedJobId}
-          onClose={() => router.push("/customer/jobs")}
-        />
-      )}
+      {/* Success Celebration or Immediate Live Searching Screen */}
+      {postedJobId &&
+        (formData.scheduleType === "asap" ? (
+          <ImmediateJobSearchingScreen
+            jobId={postedJobId}
+            data={formData}
+            onExit={handleExitSearching}
+          />
+        ) : (
+          <JobPostedSuccessModal
+            data={formData}
+            jobId={postedJobId}
+            onClose={() => router.push("/customer/jobs")}
+          />
+        ))}
     </div>
   );
 }
