@@ -444,6 +444,14 @@ export function JobRequestFeed({
       }
     };
 
+    const onOfferRejected = (payload: any) => {
+      const rejectedJobId = payload?.jobId || payload?.id;
+      if (rejectedJobId) {
+        setSentOfferIds((prev) => prev.filter((id) => id !== rejectedJobId));
+      }
+      refreshLiveJobs(undefined, true);
+    };
+
     const onWindowJobClosed = (e: Event) => {
       const customEvent = e as CustomEvent<{ jobId?: string; id?: string }>;
       const id = customEvent.detail?.jobId || customEvent.detail?.id;
@@ -462,6 +470,10 @@ export function JobRequestFeed({
     socket?.on("job:cancelled", onJobClosed);
     socket?.on("job:status:changed", onJobStatusChanged);
     socket?.on("job:statusChanged", onJobStatusChanged);
+    socket?.on("job:offer:rejected", onOfferRejected);
+    socket?.on("job:offerRejected", onOfferRejected);
+    socket?.on("job:offer:declined", onOfferRejected);
+    socket?.on("job:offerDeclined", onOfferRejected);
     socket?.on("disconnect", syncFallbackPolling);
     socket?.on("connect_error", syncFallbackPolling);
     syncFallbackPolling();
@@ -480,6 +492,10 @@ export function JobRequestFeed({
       socket?.off("job:cancelled", onJobClosed);
       socket?.off("job:status:changed", onJobStatusChanged);
       socket?.off("job:statusChanged", onJobStatusChanged);
+      socket?.off("job:offer:rejected", onOfferRejected);
+      socket?.off("job:offerRejected", onOfferRejected);
+      socket?.off("job:offer:declined", onOfferRejected);
+      socket?.off("job:offerDeclined", onOfferRejected);
       socket?.off("disconnect", syncFallbackPolling);
       socket?.off("connect_error", syncFallbackPolling);
       if (fallbackInterval) {

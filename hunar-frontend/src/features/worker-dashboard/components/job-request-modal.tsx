@@ -22,9 +22,11 @@ import {
   Volume2,
 } from "lucide-react";
 import { VoicePlayer } from "./voice-player";
+import { UrgentBidCountdownModal } from "./urgent-bid-countdown-modal";
+import { WalletTopUpModal } from "@/components/shared/wallet-topup-modal";
 import { Button } from "@/components/ui/button";
 import { submitWorkerOffer } from "@/services/worker/offers.service";
-import { workerStore } from "@/stores/worker-jobs-store";
+import { workerStore, matchesJobId } from "@/stores/worker-jobs-store";
 import { getWalletBalance } from "@/services/worker/earnings.service";
 import { ApiError } from "@/lib/api-client";
 import { formatPreferredTiming } from "@/lib/format";
@@ -66,21 +68,32 @@ export function JobRequestModal({
   const [isSending, setIsSending] = useState(false);
   const [isSent, setIsSent] = useState(false);
   const [sendError, setSendError] = useState<string | null>(null);
+  const [isTopUpModalOpen, setIsTopUpModalOpen] = useState(false);
+  const [showTopUpButton, setShowTopUpButton] = useState(false);
+  const [showUrgentCountdown, setShowUrgentCountdown] = useState(false);
+  const [createdOfferId, setCreatedOfferId] = useState<string | null>(null);
 
   useEffect(() => {
-    if (job) {
+    if (isOpen && job?.id) {
       setSelectedImagePreview(null);
       setIsSending(false);
       setIsSent(false);
       setSendError(null);
+      setShowUrgentCountdown(false);
+      setCreatedOfferId(null);
     }
-  }, [job]);
+  }, [isOpen, job?.id]);
 
   const isUrgent =
     job?.status === "URGENT" ||
     (job as any)?.urgency === "EMERGENCY" ||
     (job as any)?.urgency === "HIGH" ||
     Boolean(job?.preferredTiming && /immediate|asap|جلد از جلد|30.?60/i.test(job.preferredTiming));
+
+  const activePendingOffer = workerStore.getActivePendingOffer();
+  const hasActiveOfferForOtherJob = Boolean(
+    activePendingOffer && (!job?.id || !matchesJobId(activePendingOffer.jobId, job.id))
+  );
 
   const visitCharge = job?.suggestedVisitCharge ?? 0;
 
@@ -111,7 +124,7 @@ export function JobRequestModal({
   }, [job]);
 
   const handleSendOffer = async () => {
-    if (!job || isSending || isSent) return;
+    if (!job || isSending || isSent || hasActiveOfferForOtherJob) return;
     setIsSending(true);
     setSendError(null);
     try {
@@ -119,7 +132,14 @@ export function JobRequestModal({
       const balance = await getWalletBalance();
       if (balance <= 0) {
         setIsSending(false);
-        setSendError(WALLET_INSUFFICIENT_OFFER_MESSAGE);
+        setShowTopUpButton(true);
+        const msg =
+          balance < 0
+            ? isUrdu
+              ? `آپ کا والیٹ بیلنس منفی (روپے ${balance}) ہے۔ مزید آفرز بھیجنے کے لیے برائے مہربانی اپنا والیٹ ٹاپ اپ کریں۔`
+              : `Your wallet balance is Rs. ${balance}. Please top up your wallet to continue.`
+            : WALLET_INSUFFICIENT_OFFER_MESSAGE;
+        setSendError(msg);
         return;
       }
     } catch (err) {
@@ -132,13 +152,18 @@ export function JobRequestModal({
     }
     try {
       const serverOffer = await submitWorkerOffer(job.id, visitCharge);
+      setCreatedOfferId(serverOffer?.id ?? null);
       workerStore.recordOfferSent(serverOffer as any, job.id);
       setIsSending(false);
       setIsSent(true);
       onOfferSent?.(job.id, visitCharge);
-      setTimeout(() => {
-        onClose();
-      }, 250);
+      if (isUrgent) {
+        setShowUrgentCountdown(true);
+      } else {
+        setTimeout(() => {
+          onClose();
+        }, 250);
+      }
     } catch (err) {
       setIsSending(false);
       if (err instanceof ApiError && err.status === 401) {
@@ -148,7 +173,11 @@ export function JobRequestModal({
       } else if (err instanceof ApiError && err.status === 409) {
         setSendError("You already sent an offer for this job.");
       } else if (err instanceof ApiError && err.status === 400) {
-        setSendError(err.message || WALLET_INSUFFICIENT_OFFER_MESSAGE);
+        const errorMsg = err.message || WALLET_INSUFFICIENT_OFFER_MESSAGE;
+        setSendError(errorMsg);
+        if (errorMsg.includes("balance") || errorMsg.includes("top up") || errorMsg.includes("والیٹ")) {
+          setShowTopUpButton(true);
+        }
       } else {
         setSendError("Could not send your offer. Please try again.");
       }
@@ -179,9 +208,27 @@ export function JobRequestModal({
 
   if (!isOpen || !job) return null;
 
+  if (showUrgentCountdown && job) {
+    return (
+      <UrgentBidCountdownModal
+        isOpen={showUrgentCountdown}
+        job={job}
+        visitCharge={visitCharge}
+        offerId={createdOfferId ?? undefined}
+        onClose={() => {
+          setShowUrgentCountdown(false);
+          setCreatedOfferId(null);
+          onClose();
+        }}
+      />
+    );
+  }
+
   const Icon = CATEGORY_ICONS[job.category] || Wrench;
 
   return (
+    <>
+    <WalletTopUpModal open={isTopUpModalOpen} onOpenChange={setIsTopUpModalOpen} />
     <div
       className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-navy/60 backdrop-blur-xs p-0 sm:p-4 overflow-y-auto overflow-x-hidden scrollbar-none no-scrollbar [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden animate-in fade-in duration-200"
       style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
@@ -417,13 +464,36 @@ export function JobRequestModal({
         {/* MODAL BOTTOM ACTION / FOOTER */}
         <div className="sticky bottom-0 z-20 bg-white/95 backdrop-blur-md px-4 sm:px-6 py-3.5 space-y-2">
           {sendError && (
+            <div className="space-y-2">
+              <p
+                className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs font-bold text-red-700"
+                role="alert"
+              >
+                {sendError}
+              </p>
+              {showTopUpButton && (
+                <Button
+                  type="button"
+                  onClick={() => setIsTopUpModalOpen(true)}
+                  className="w-full rounded-full bg-teal hover:bg-teal/90 text-white font-bold text-xs h-9 cursor-pointer"
+                >
+                  {isUrdu ? "والیٹ ٹاپ اپ کریں" : "Top Up Wallet"}
+                </Button>
+              )}
+            </div>
+          )}
+
+          {hasActiveOfferForOtherJob && (
             <p
-              className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs font-bold text-red-700"
+              className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-800 text-center"
               role="alert"
             >
-              {sendError}
+              {isUrdu
+                ? "آپ کی ایک پیشکش پہلے سے کسٹمر کے پاس زیر التواء ہے۔ آپ ایک وقت میں ایک ہی شخص کو پیشکش بھیج سکتے ہیں۔"
+                : "You already have an active pending offer. You cannot send offers to more than one customer at the same time."}
             </p>
           )}
+
           <div className="flex items-center justify-between gap-3">
             <Button
               type="button"
@@ -437,7 +507,7 @@ export function JobRequestModal({
             <Button
               type="button"
               onClick={handleSendOffer}
-              disabled={isSending || isSent}
+              disabled={isSending || isSent || hasActiveOfferForOtherJob}
               className={`rounded-full text-xs sm:text-sm font-bold px-6 h-10 shadow-md transition-all cursor-pointer flex items-center gap-1.5 ${
                 isSent
                   ? "bg-[#16A34A] hover:bg-[#16A34A] text-white"
@@ -498,5 +568,6 @@ export function JobRequestModal({
         )}
       </div>
     </div>
+    </>
   );
 }
