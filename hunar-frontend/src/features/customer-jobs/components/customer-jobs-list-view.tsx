@@ -44,6 +44,7 @@ const CustomerReviewModal = dynamic(
   { ssr: false }
 );
 import { acceptWorkerOffer, rejectWorkerOffer, getCustomerJobs, getJobDetail, transformBackendOffer } from "../api/customer-jobs-api";
+import { customerReviewService } from "../services/customer-review-service";
 import { getSocket } from "@/lib/socket";
 
 interface CustomerJobsListViewProps {
@@ -1078,7 +1079,7 @@ export function CustomerJobsListView({ initialJobs, jobs: jobsProp, initialTab }
                       ) : (
                         <button
                           type="button"
-                          onClick={() => setReviewingJob(job)}
+                          onClick={() => { customerReviewService.promptReview(job, { force: true }); setReviewingJob(job); }}
                           className="h-9 px-4 rounded-xl font-bold text-xs sm:text-sm text-slate-950 bg-amber-400 hover:bg-amber-500 transition-colors shadow-xs flex items-center justify-center gap-1.5 cursor-pointer active:scale-98"
                         >
                           <Star className="size-3.5 fill-slate-950" />
@@ -1191,7 +1192,7 @@ export function CustomerJobsListView({ initialJobs, jobs: jobsProp, initialTab }
         />
       )}
       {/* Customer Review Modal for Completed Jobs */}
-      {reviewingJob && (
+      {reviewingJob && !customerReviewService.isOpen() && (
         <CustomerReviewModal
           job={reviewingJob}
           isOpen={Boolean(reviewingJob)}

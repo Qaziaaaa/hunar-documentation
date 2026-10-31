@@ -27,6 +27,7 @@ import { formatDateTime, formatJobDate } from "@/lib/format";
 import { WorkerOfferCard } from "./worker-offer-card";
 import { WorkerProfileModal } from "./worker-profile-modal";
 import { CustomerReviewModal } from "./customer-review-modal";
+import { customerReviewService } from "../services/customer-review-service";
 import { VoicePlayer } from "@/features/worker-dashboard/components/voice-player";
 import { acceptWorkerOffer } from "../api/customer-jobs-api";
 import type { CustomerJob, WorkerOffer } from "../types";
@@ -53,6 +54,20 @@ export function CustomerJobDetailsView({ initialJob }: CustomerJobDetailsViewPro
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [toastTone, setToastTone] = useState<"success" | "error">("success");
   const queryClient = useQueryClient();
+
+  useEffect(() => {
+    const isCompleted =
+      job.status === "completed" ||
+      String(job.rawStatus || "").toUpperCase() === "COMPLETED";
+    if (
+      isCompleted &&
+      !job.hasReviewed &&
+      !customerReviewService.isReviewCompleted(job.id) &&
+      !customerReviewService.isDismissedInSession(job.id)
+    ) {
+      customerReviewService.promptReview(job);
+    }
+  }, [job]);
 
   const showToast = (message: string, tone: "success" | "error" = "success") => {
     setToastMessage(message);
@@ -508,7 +523,7 @@ export function CustomerJobDetailsView({ initialJob }: CustomerJobDetailsViewPro
                   {!job.hasReviewed && (
                     <button
                       type="button"
-                      onClick={() => setIsReviewModalOpen(true)}
+                      onClick={() => { customerReviewService.promptReview(job, { force: true }); setIsReviewModalOpen(true); }}
                       className="w-full py-2.5 px-4 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs sm:text-sm shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-98"
                     >
                       <Star className="size-4 fill-slate-950" />
@@ -618,6 +633,7 @@ export function CustomerJobDetailsView({ initialJob }: CustomerJobDetailsViewPro
         </div>
       )}
       {/* Review Modal for Completed Jobs */}
+      {isReviewModalOpen && !customerReviewService.isOpen() && (
       <CustomerReviewModal
         job={job}
         isOpen={isReviewModalOpen}
@@ -641,6 +657,7 @@ export function CustomerJobDetailsView({ initialJob }: CustomerJobDetailsViewPro
           );
         }}
       />
+      )}
     </div>
   );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useLocale } from "next-intl";
 import { CheckCircle2 } from "lucide-react";
 import { usePathname } from "@/i18n/navigation";
@@ -10,11 +10,21 @@ import { CustomerSidebar } from "@/features/customer-dashboard/components/custom
 import dynamic from "next/dynamic";
 
 import { CustomerArrivalOtpModal } from "@/features/customer-visits/components/customer-arrival-otp-modal";
+import { useQueryClient } from "@tanstack/react-query";
+import type { CustomerJob } from "@/features/customer-jobs/types";
+import { customerReviewService } from "@/features/customer-jobs/services/customer-review-service";
 const CustomerRepairQuoteModal = dynamic(
   () =>
     import(
       "@/features/customer-jobs/components/customer-repair-quote-modal"
     ).then((m) => m.CustomerRepairQuoteModal),
+  { ssr: false }
+);
+const CustomerReviewModal = dynamic(
+  () =>
+    import(
+      "@/features/customer-jobs/components/customer-review-modal"
+    ).then((m) => m.CustomerReviewModal),
   { ssr: false }
 );
 import {
@@ -43,10 +53,35 @@ export default function CustomerLayout({
   const [arrivalSession, setArrivalSession] = useState<ArrivalSession | null>(null);
   const [isArrivalOtpOpen, setIsArrivalOtpOpen] = useState(false);
   const [successToast, setSuccessToast] = useState<string | null>(null);
+  const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastToastRef = useRef<{ msg: string; time: number }>({ msg: "", time: 0 });
+
+  const showSuccessToast = (msg: string) => {
+    const now = Date.now();
+    // Guard against identical notification triggering twice within 3 seconds
+    if (lastToastRef.current.msg === msg && now - lastToastRef.current.time < 3000) {
+      return;
+    }
+    lastToastRef.current = { msg, time: now };
+
+    if (toastTimerRef.current) {
+      clearTimeout(toastTimerRef.current);
+    }
+    setSuccessToast(msg);
+    toastTimerRef.current = setTimeout(() => {
+      setSuccessToast(null);
+      toastTimerRef.current = null;
+    }, 6000);
+  };
 
   // Mandatory Repair Quote Modal state
   const [activeQuote, setActiveQuote] = useState<PendingRepairQuote | null>(null);
   const [isQuoteModalOpen, setIsQuoteModalOpen] = useState(false);
+
+  // Review & Rating Modal state for completed jobs
+  const queryClient = useQueryClient();
+  const [reviewJob, setReviewJob] = useState<CustomerJob | null>(null);
+  const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
 
   useEffect(() => {
     // Check if an arrival session is currently pending on mount
@@ -82,8 +117,7 @@ export default function CustomerLayout({
       } else if (eventType === "OTP_VERIFIED" || session?.status === "otp_verified") {
         setIsArrivalOtpOpen(false);
         const msg = isUrdu ? SUCCESS_VERIFICATION_MESSAGE_UR : SUCCESS_VERIFICATION_MESSAGE;
-        setSuccessToast(msg);
-        setTimeout(() => setSuccessToast(null), 6000);
+        showSuccessToast(msg);
       } else if (eventType === "SESSION_CLEARED") {
         setIsArrivalOtpOpen(false);
         setArrivalSession(null);
@@ -108,9 +142,25 @@ export default function CustomerLayout({
       }
     });
 
+    // Check if a review prompt is currently active
+    const currentReviewJob = customerReviewService.getActiveJob();
+    if (currentReviewJob && customerReviewService.isOpen()) {
+      setReviewJob(currentReviewJob);
+      setIsReviewModalOpen(true);
+    }
+
+    const unsubscribeReview = customerReviewService.subscribe((job, isOpen) => {
+      setReviewJob(job);
+      setIsReviewModalOpen(isOpen);
+    });
+
     return () => {
       unsubscribeArrival();
       unsubscribeQuote();
+      unsubscribeReview();
+      if (toastTimerRef.current) {
+        clearTimeout(toastTimerRef.current);
+      }
     };
   }, [isUrdu]);
 
@@ -118,15 +168,13 @@ export default function CustomerLayout({
     setIsArrivalOtpOpen(false);
     setArrivalSession(null);
     arrivalService.clearArrivalSession();
-    setSuccessToast(msg);
-    setTimeout(() => setSuccessToast(null), 6000);
+    showSuccessToast(msg);
   };
 
   const handleQuoteDecision = (decision: "ACCEPTED" | "REJECTED", msg: string) => {
     setIsQuoteModalOpen(false);
     setActiveQuote(null);
-    setSuccessToast(msg);
-    setTimeout(() => setSuccessToast(null), 6000);
+    showSuccessToast(msg);
   };
 
   // If in Post-a-Job wizard, display full-screen focused layout
@@ -201,6 +249,29 @@ export default function CustomerLayout({
             quote={activeQuote}
             onDecision={handleQuoteDecision}
             isUrdu={isUrdu}
+          />
+        )}
+
+        {/* Mandatory / Realtime Review & Rating Modal for Completed Jobs */}
+        {isReviewModalOpen && reviewJob && (
+          <CustomerReviewModal
+            job={reviewJob}
+            isOpen={isReviewModalOpen}
+            onClose={() => {
+              setIsReviewModalOpen(false);
+              customerReviewService.dismissReview(reviewJob.id);
+            }}
+            onReviewSubmitted={(review) => {
+              setIsReviewModalOpen(false);
+              customerReviewService.completeReview(reviewJob.id, review);
+              void queryClient.invalidateQueries({ queryKey: ["customer"] });
+              void queryClient.invalidateQueries({ queryKey: ["customer", "jobs"] });
+              void queryClient.invalidateQueries({ queryKey: ["customer", "job", reviewJob.id] });
+              const msg = isUrdu
+                ? "بہت شکریہ! آپ کا ریویو اور ریٹنگ کامیابی سے درج ہو گئی ہے۔"
+                : "Thank you! Your rating and review have been submitted successfully.";
+              showSuccessToast(msg);
+            }}
           />
         )}
       </div>

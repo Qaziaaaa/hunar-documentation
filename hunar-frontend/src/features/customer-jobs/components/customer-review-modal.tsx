@@ -60,8 +60,30 @@ export function CustomerReviewModal({
   if (!isOpen) return null;
 
   const quickTags = isUrdu ? QUICK_TAGS_UR : QUICK_TAGS_EN;
-  const worker = job.selectedOffer?.worker;
-  const workerName = worker?.name || (isUrdu ? "کاریگر" : "Technician");
+  const worker =
+    job.selectedOffer?.worker ||
+    (job as any).selectedWorker ||
+    (job as any).worker ||
+    (job as any).technician;
+  const workerName =
+    worker?.name ||
+    worker?.fullName ||
+    (job as any).workerName ||
+    (job as any).technicianName ||
+    (isUrdu ? "کاریگر" : "Technician");
+  const workerAvatar =
+    worker?.avatarUrl ||
+    worker?.avatar ||
+    (job as any).workerAvatar ||
+    (job as any).technicianAvatar ||
+    `https://ui-avatars.com/api/?name=${encodeURIComponent(
+      workerName
+    )}&background=0F766E&color=fff`;
+  const categoryDisplay =
+    job.category ||
+    (isUrdu ? (job as any).categoryUr : "") ||
+    (isUrdu ? "سروس" : "Service");
+  const jobTitleDisplay = job.title || (isUrdu ? "کام کی تفصیل" : "Job Request");
   const activeRating = hoverRating ?? rating;
 
   const getRatingLabel = (val: number) => {
@@ -190,12 +212,7 @@ export function CustomerReviewModal({
                 <div className="size-11 rounded-xl overflow-hidden bg-slate-200 shrink-0 border border-slate-200">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
-                    src={
-                      worker?.avatarUrl ||
-                      `https://ui-avatars.com/api/?name=${encodeURIComponent(
-                        workerName
-                      )}&background=0F766E&color=fff`
-                    }
+                    src={workerAvatar}
                     alt={workerName}
                     className="w-full h-full object-cover"
                   />
@@ -205,7 +222,7 @@ export function CustomerReviewModal({
                     {workerName}
                   </h4>
                   <p className="text-xs text-slate-500 truncate">
-                    {job.category} • {job.title}
+                    {categoryDisplay} • {jobTitleDisplay}
                   </p>
                 </div>
               </div>
