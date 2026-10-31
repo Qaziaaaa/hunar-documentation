@@ -23,6 +23,7 @@ import { getWorkerProfile } from "@/services/worker/profile.service";
 import { http, getStoredUser, getAccessToken, getRefreshToken } from "@/lib/api-client";
 import { parseDurationToMinutes } from "@/lib/duration";
 import { getMaxNegotiationRounds } from "@/lib/negotiation";
+import { showOfferToast } from "@/features/worker-dashboard/stores/worker-offer-toast-store";
 
 export interface WorkerState {
   jobs: JobRequest[];
@@ -229,6 +230,9 @@ function initWorkerSocketListeners() {
     if (!data?.jobId) return;
     const { jobId } = data;
     const existingOffer = getOfferForJob(globalState.offers, jobId);
+    if (existingOffer && existingOffer.status !== "accepted") {
+      showOfferToast("closed");
+    }
     patch({
       offers: existingOffer
         ? {
@@ -238,6 +242,24 @@ function initWorkerSocketListeners() {
         : globalState.offers,
       jobs: globalState.jobs.map((j) =>
         matchesJobId(jobId, j.id) ? { ...j, status: "closed_assigned" as const } : j
+      ),
+    });
+  };
+
+  const handleOfferRejected = (data: any) => {
+    if (!data?.jobId) return;
+    const { jobId } = data;
+    const existingOffer = getOfferForJob(globalState.offers, jobId);
+    showOfferToast("declined");
+    patch({
+      offers: existingOffer
+        ? {
+            ...globalState.offers,
+            [jobId]: { ...existingOffer, status: "rejected" },
+          }
+        : globalState.offers,
+      jobs: globalState.jobs.map((j) =>
+        matchesJobId(jobId, j.id) ? { ...j, status: "OPEN" as const } : j
       ),
     });
   };
@@ -304,6 +326,10 @@ function initWorkerSocketListeners() {
   socket.on("job:offer:accepted", handleOfferAccepted);
   socket.on("job:offerAccepted", handleOfferAccepted);
   socket.on("job:closed", handleJobClosed);
+  socket.on("job:offer:rejected", handleOfferRejected);
+  socket.on("job:offerRejected", handleOfferRejected);
+  socket.on("job:offer:declined", handleOfferRejected);
+  socket.on("job:offerDeclined", handleOfferRejected);
   socket.on("job:offer", handleJobOffer);
   socket.on("job:cancelled", handleJobCancelled);
   socket.on("job:new", handleJobNew);
@@ -650,7 +676,19 @@ export const workerStore = {
       }
 
       const offersMap: Record<string, VisitOffer> = {};
+      const now = Date.now();
       for (const offer of offers) {
+        // Skip stale pending offers older than 50 seconds (expired urgent offers)
+        const isPending =
+          offer.status === "sent" ||
+          offer.status === "viewing" ||
+          (offer.status as string) === "pending" ||
+          (offer.status as string) === "PENDING";
+        const createdMs = offer.createdAt ? new Date(offer.createdAt).getTime() : 0;
+        if (isPending && createdMs > 0 && now - createdMs > 50000) {
+          continue;
+        }
+
         offersMap[offer.jobId] = offer;
         if (offer.jobId && !visitIdByJob.get(offer.jobId)) {
           const offerVisitId = (offer as any).visitId || (offer as any).nextVisit?.id;
@@ -863,6 +901,49 @@ export const workerStore = {
     });
   },
 
+  expireOffer(jobId: string) {
+    const updatedOffers = { ...globalState.offers };
+    delete updatedOffers[jobId];
+    for (const key of Object.keys(updatedOffers)) {
+      if (matchesJobId(key, jobId)) {
+        delete updatedOffers[key];
+      }
+    }
+    patch({
+      offers: updatedOffers,
+      jobs: globalState.jobs.map((j) =>
+        matchesJobId(jobId, j.id)
+          ? {
+              ...j,
+              status: "OPEN" as const,
+            }
+          : j
+      ),
+    });
+  },
+
+  getActivePendingOffer(): VisitOffer | undefined {
+    const now = Date.now();
+    return Object.values(globalState.offers).find((o) => {
+      if (!o) return false;
+      const isPendingStatus =
+        o.status === "sent" ||
+        o.status === "viewing" ||
+        o.status === "counter_received" ||
+        (o.status as string) === "pending" ||
+        (o.status as string) === "PENDING" ||
+        (o.status as string) === "offer_sent";
+      if (!isPendingStatus) return false;
+
+      // An urgent offer is only active for 50 seconds; if >50s have passed, it is expired
+      const createdTime = o.createdAt ? new Date(o.createdAt).getTime() : 0;
+      if (createdTime > 0 && now - createdTime > 50000) {
+        return false;
+      }
+      return true;
+    });
+  },
+
   // Task 6: Accept customer's counter offer
   acceptCounterOffer(jobId: string): boolean {
     const offer = getOfferForJob(globalState.offers, jobId);
@@ -909,6 +990,12 @@ export const workerStore = {
     const offer = getOfferForJob(globalState.offers, jobId);
     if (!offer) return { success: false, error: "Offer not found" };
 
+    if (globalState.walletBalance < 0) {
+      return {
+        success: false,
+        error: `Your wallet balance is Rs. ${globalState.walletBalance}. Please top up your wallet to continue.`,
+      };
+    }
     if (offer.currentRound >= offer.maxRounds) {
       return {
         success: false,
@@ -1002,12 +1089,6 @@ export const workerStore = {
       0;
     const requiredHold = Math.round(visitCharge * 0.1);
 
-    if (globalState.walletBalance < requiredHold) {
-      return {
-        success: false,
-        error: `Insufficient wallet balance. Minimum Rs. ${requiredHold} commission hold required.`,
-      };
-    }
 
     try {
       const visitId =
