@@ -210,14 +210,17 @@ export function resolveVisitTrackingStage(params: {
   }
 
   // 3. Completed (Job completed, paid, or reviewed)
-  if (["COMPLETED", "PAID", "REVIEWED"].includes(normJobStatus)) {
+  if (
+    normJobStatus !== "VISIT_COMPLETED" &&
+    ["COMPLETED", "PAID", "REVIEWED"].includes(normJobStatus)
+  ) {
     return {
       currentStageId: "COMPLETED",
       stageHeadline: "Visit & Service Completed",
       stageHeadlineUr: "وزٹ اور سروس کامیابی سے مکمل ہو گئی ہے",
       stageExplanation: "The technician has completed the visit and service work.",
       stageExplanationUr: "کاریگر نے وزٹ اور سروس کا کام کامیابی سے مکمل کر دیا ہے۔",
-      nextStepText: "Thank you for using Orderworker. Please leave a review to support your technician.",
+      nextStepText: "Thank you for using WorkerFix. Please leave a review to support your technician.",
       nextStepTextUr: "آرڈر ورکر استعمال کرنے کا شکریہ۔ کاریگر کے کام کا ریویو ضرور دیں۔",
       timelineSteps: createTimelineSteps({
         activeStage: "COMPLETED",
@@ -228,7 +231,10 @@ export function resolveVisitTrackingStage(params: {
   }
 
   // 3b. Repair Approved / In Progress
-  if (normJobStatus === "REPAIR_APPROVED" || normJobStatus === "IN_PROGRESS") {
+  if (
+    normJobStatus === "REPAIR_APPROVED" ||
+    (normJobStatus === "IN_PROGRESS" && isInspectionSubmitted)
+  ) {
     return {
       currentStageId: "INSPECTION_DONE",
       stageHeadline: "Repair Work In Progress",
@@ -525,18 +531,40 @@ export async function getCustomerJobVisitTracking(
       }
     : null;
 
-  const rawJobStatus = (job as any).status || "";
+  const rawJobStatus =
+    (job as any)?.rawStatus ||
+    visit?.job?.status ||
+    (job as any)?.status ||
+    "";
   const rawVisitStatus = visit?.status || "";
   const hasInspectionSubmitted = Boolean(
     visit?.inspectionSubmittedAt || rawJobStatus === "INSPECTION_DONE"
   );
 
-  const isArrivalPendingFromVisit = Boolean(
-    visit?.isArrivalPending ||
-    visit?.arrivalPending ||
-    (visit?.arrivalOtp && rawVisitStatus !== "COMPLETED" && rawJobStatus !== "VISIT_COMPLETED")
-  );
-  const isPendingOtp = Boolean(options?.isDoorstepPendingOtp || isArrivalPendingFromVisit);
+  const isArrivalCompleted =
+    rawVisitStatus === "COMPLETED" ||
+    [
+      "VISIT_COMPLETED",
+      "INSPECTION_DONE",
+      "REPAIR_NEGOTIATING",
+      "REPAIR_APPROVED",
+      "IN_PROGRESS",
+      "COMPLETED",
+      "PAID",
+      "REVIEWED",
+      "CANCELLED",
+    ].includes(rawJobStatus);
+
+  const isArrivalPendingFromVisit =
+    !isArrivalCompleted &&
+    Boolean(
+      visit?.isArrivalPending ||
+      visit?.arrivalPending ||
+      visit?.arrivalOtp
+    );
+  const isPendingOtp =
+    !isArrivalCompleted &&
+    Boolean(options?.isDoorstepPendingOtp || isArrivalPendingFromVisit);
   const resolvedDoorstepOtp = options?.doorstepOtp || visit?.arrivalOtp || null;
 
   const stageResult = resolveVisitTrackingStage({
@@ -546,7 +574,10 @@ export async function getCustomerJobVisitTracking(
     hasInspectionSubmitted,
     scheduledDate: visit?.scheduledDate || (job as any).preferredDate || null,
     startedAt: visit?.actualDate || null,
-    arrivedAt: null,
+    arrivedAt:
+      rawVisitStatus === "COMPLETED" || rawJobStatus === "VISIT_COMPLETED"
+        ? (visit?.actualDate || visit?.updatedAt || null)
+        : null,
     inspectionSubmittedAt: visit?.inspectionSubmittedAt || null,
     completedAt: (job as any).completedAt || null,
     hasValidWorkerCoordinates: hasValidWorkerCoords && customerLat !== null && customerLng !== null,
@@ -597,7 +628,7 @@ export async function getCustomerJobVisitTracking(
     technician,
     workerLocation,
     isMapVisible: stageResult.isMapVisible,
-    isDoorstepPendingOtp: isPendingOtp || stageResult.currentStageId === "ARRIVED",
+    isDoorstepPendingOtp: !isArrivalCompleted && (isPendingOtp || stageResult.currentStageId === "ARRIVED"),
     doorstepOtp: resolvedDoorstepOtp,
     inspection: inspectionData,
   };

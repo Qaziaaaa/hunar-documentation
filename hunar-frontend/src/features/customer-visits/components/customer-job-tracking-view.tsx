@@ -105,11 +105,28 @@ export function CustomerJobTrackingView({ jobId }: CustomerJobTrackingViewProps)
         }
 
         // Auto-activate arrival session & auto-open OTP modal if worker has arrived
-        if (
-          (tracking.isDoorstepPendingOtp || tracking.currentStageId === "ARRIVED") &&
-          tracking.currentStageId !== "IN_PREMISES" &&
-          tracking.currentStageId !== "COMPLETED"
-        ) {
+        const normJobStatus = String((tracking as any).jobStatus || "").toUpperCase();
+        const normVisitStatus = String((tracking as any).visitStatus || "").toUpperCase();
+        const isPastArrival =
+          tracking.currentStageId === "IN_PREMISES" ||
+          tracking.currentStageId === "INSPECTION_DONE" ||
+          tracking.currentStageId === "COMPLETED" ||
+          tracking.currentStageId === "CANCELLED" ||
+          [
+            "VISIT_COMPLETED",
+            "INSPECTION_DONE",
+            "REPAIR_NEGOTIATING",
+            "REPAIR_APPROVED",
+            "IN_PROGRESS",
+            "COMPLETED",
+            "PAID",
+            "REVIEWED",
+            "CANCELLED",
+          ].includes(normJobStatus) ||
+          normVisitStatus === "COMPLETED" ||
+          normVisitStatus === "CANCELLED";
+
+        if (!isPastArrival && (tracking.isDoorstepPendingOtp || tracking.currentStageId === "ARRIVED")) {
           const resolvedOtp = tracking.doorstepOtp || session?.otp || "";
           const activeSession: ArrivalSession = {
             jobId,
@@ -126,6 +143,10 @@ export function CustomerJobTrackingView({ jobId }: CustomerJobTrackingViewProps)
           if (!userDismissedModal) {
             setIsOtpModalOpen(true);
           }
+        } else if (isPastArrival) {
+          setArrivalSession(null);
+          setIsOtpModalOpen(false);
+          arrivalService.clearArrivalSession();
         }
       } catch (err: any) {
         console.warn("Failed to load visit tracking:", err);
@@ -203,6 +224,11 @@ export function CustomerJobTrackingView({ jobId }: CustomerJobTrackingViewProps)
 
     // 1. Listen for arrival session changes from local service
     const unsubscribeArrival = arrivalService.subscribe((s, eventType) => {
+      if (eventType === "SESSION_CLEARED" || !s) {
+        setIsOtpModalOpen(false);
+        setArrivalSession(null);
+        return;
+      }
       if (s && (!s.jobId || s.jobId.toLowerCase() === jobId?.toLowerCase())) {
         setArrivalSession(s);
         if (eventType === "ARRIVAL_STARTED" || s.status === "pending_otp") {
@@ -211,6 +237,7 @@ export function CustomerJobTrackingView({ jobId }: CustomerJobTrackingViewProps)
           void fetchTrackingRef.current(true);
         } else if (eventType === "OTP_VERIFIED" || s.status === "otp_verified") {
           setIsOtpModalOpen(false);
+          setArrivalSession(null);
           void fetchTrackingRef.current(true);
         }
       }
@@ -245,7 +272,11 @@ export function CustomerJobTrackingView({ jobId }: CustomerJobTrackingViewProps)
           } else if (
             payload?.newStatus === "VISIT_COMPLETED" ||
             payload?.newStatus === "COMPLETED" ||
-            payload?.newStatus === "INSPECTION_DONE"
+            payload?.newStatus === "INSPECTION_DONE" ||
+            payload?.newStatus === "REPAIR_NEGOTIATING" ||
+            payload?.newStatus === "REPAIR_APPROVED" ||
+            payload?.newStatus === "IN_PROGRESS" ||
+            payload?.newStatus === "CANCELLED"
           ) {
             setArrivalSession(null);
             setIsOtpModalOpen(false);
@@ -985,9 +1016,12 @@ export function CustomerJobTrackingView({ jobId }: CustomerJobTrackingViewProps)
         <CustomerArrivalOtpModal
           isOpen={isOtpModalOpen}
           session={arrivalSession}
+          jobId={jobId || arrivalSession?.jobId}
           onSuccess={(msg) => {
             setIsOtpModalOpen(false);
-            setUserDismissedModal(false);
+            setArrivalSession(null);
+            arrivalService.clearArrivalSession();
+            setUserDismissedModal(true);
             setSuccessToast(msg);
             void fetchTracking(true);
             setTimeout(() => setSuccessToast(null), 5000);
