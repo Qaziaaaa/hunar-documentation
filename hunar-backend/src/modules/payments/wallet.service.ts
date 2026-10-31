@@ -129,7 +129,7 @@ export class WalletService {
 
     const grossEarnings = sumBy(WalletLedgerType.EARNINGS_CREDIT);
     const commissionsPaid = Math.abs(sumBy(WalletLedgerType.COMMISSION_DEDUCTED));
-    const commissionsHeld = Math.abs(sumBy(WalletLedgerType.COMMISSION_HELD));
+    const commissionsHeld = Number(wallet.heldBalance);
     const commissionsReversed = Math.abs(sumBy(WalletLedgerType.COMMISSION_RELEASED));
     const topupsCredited = sumBy(WalletLedgerType.TOPUP_CREDIT);
 
@@ -526,16 +526,32 @@ export class WalletService {
           where: { userId: workerId },
           data: { heldBalance: newHeld },
         });
-        await this.ledger.insert(tx, {
-          userId: workerId,
-          type: WalletLedgerType.COMMISSION_DEDUCTED,
-          amount: -amount,
-          balanceAfter: Number(wallet.balance),
-          referenceType: 'commission',
-          referenceId: commissionId,
-          note: PLATFORM_COMMISSION_NOTICE,
-          idempotencyKey: `confirm:${jobId}`,
+        const existingHold = await tx.walletLedger.findUnique({
+          where: { idempotencyKey: `hold:${jobId}` },
         });
+        if (existingHold) {
+          await tx.walletLedger.update({
+            where: { id: existingHold.id },
+            data: {
+              type: WalletLedgerType.COMMISSION_DEDUCTED,
+              referenceType: 'commission',
+              referenceId: jobId,
+              note: PLATFORM_COMMISSION_NOTICE,
+              idempotencyKey: `confirm:${jobId}`,
+            },
+          });
+        } else {
+          await this.ledger.insert(tx, {
+            userId: workerId,
+            type: WalletLedgerType.COMMISSION_DEDUCTED,
+            amount: -amount,
+            balanceAfter: Number(wallet.balance),
+            referenceType: 'commission',
+            referenceId: jobId,
+            note: PLATFORM_COMMISSION_NOTICE,
+            idempotencyKey: `confirm:${jobId}`,
+          });
+        }
         await tx.platformWallet.upsert({
           where: { id: PLATFORM_WALLET_ID },
           update: {
@@ -742,16 +758,32 @@ export class WalletService {
 
         // Platform Commission deduction ledger entry (10% of Visit Fee only)
         if (commissionAmount > 0) {
-          await this.ledger.insert(tx, {
-            userId: workerId,
-            type: WalletLedgerType.COMMISSION_DEDUCTED,
-            amount: -commissionAmount,
-            balanceAfter: finalBalance,
-            referenceType: 'commission',
-            referenceId: existingCommission?.id ?? jobId,
-            note: `Platform commission deduction (10% of visit fee): -Rs. ${commissionAmount}`,
-            idempotencyKey: `commission:${jobId}`,
+          const existingHold = await tx.walletLedger.findUnique({
+            where: { idempotencyKey: `hold:${jobId}` },
           });
+          if (existingHold) {
+            await tx.walletLedger.update({
+              where: { id: existingHold.id },
+              data: {
+                type: WalletLedgerType.COMMISSION_DEDUCTED,
+                referenceType: 'commission',
+                referenceId: jobId,
+                note: `Platform commission deduction (10% of visit fee): -Rs. ${commissionAmount}`,
+                idempotencyKey: `commission:${jobId}`,
+              },
+            });
+          } else {
+            await this.ledger.insert(tx, {
+              userId: workerId,
+              type: WalletLedgerType.COMMISSION_DEDUCTED,
+              amount: -commissionAmount,
+              balanceAfter: finalBalance,
+              referenceType: 'commission',
+              referenceId: jobId,
+              note: `Platform commission deduction (10% of visit fee): -Rs. ${commissionAmount}`,
+              idempotencyKey: `commission:${jobId}`,
+            });
+          }
 
           // Credit platform wallet
           await tx.platformWallet.upsert({
