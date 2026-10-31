@@ -13,6 +13,10 @@ const REFRESH_EVENTS = [
   SOCKET_EVENTS.jobOfferAccepted,
   "job:offer:accepted",
   "job.offer.accepted",
+  "job:offer:rejected",
+  "job:offerRejected",
+  "job:offer:declined",
+  "job:offerDeclined",
   SOCKET_EVENTS.jobClosed,
   "job:closed",
   SOCKET_EVENTS.jobCancelled,
@@ -61,9 +65,9 @@ export function CustomerRealtimeSync() {
     };
 
     const handleVisitArrived = (data: any) => {
-      if (data && (data.visitId || data.jobId)) {
+      if (data && (data.visitId || data.jobId || data.job?.id)) {
         arrivalService.startArrivalSession({
-          jobId: data.jobId,
+          jobId: data.jobId || data.job?.id,
           visitId: data.visitId,
           otp: data.otp || "",
           workerName: data.workerName || "Worker",
@@ -99,11 +103,7 @@ export function CustomerRealtimeSync() {
     };
 
     const handleOtpVerified = (data: any) => {
-      if (data?.jobId) {
-        arrivalService.verifyOtpSuccess({ jobId: data.jobId });
-      } else {
-        arrivalService.clearArrivalSession();
-      }
+      arrivalService.clearArrivalSession();
       refresh();
     };
 
@@ -112,10 +112,19 @@ export function CustomerRealtimeSync() {
       refresh();
     };
 
+    const handleJobCancelled = (data: any) => {
+      const current = arrivalService.getSession();
+      if (!data?.jobId || !current?.jobId || current.jobId === data.jobId || current.visitId === data?.visitId) {
+        arrivalService.clearArrivalSession();
+      }
+      customerQuoteService.clearQuoteSession();
+      refresh();
+    };
+
     const handleJobStatusChanged = (data: any) => {
       if (data?.arrivalPending) {
         arrivalService.startArrivalSession({
-          jobId: data.jobId,
+          jobId: data.jobId || data.job?.id,
           visitId: data.visitId,
           otp: data.otp || "",
           workerName: data.workerName || "Worker",
@@ -125,13 +134,15 @@ export function CustomerRealtimeSync() {
       } else if (
         data?.newStatus === "REPAIR_APPROVED" ||
         data?.newStatus === "REPAIR_DECLINED" ||
+        data?.newStatus === "REPAIR_NEGOTIATING" ||
+        data?.newStatus === "INSPECTION_DONE" ||
+        data?.newStatus === "IN_PROGRESS" ||
         data?.newStatus === "COMPLETED" ||
-        data?.newStatus === "VISIT_COMPLETED"
+        data?.newStatus === "VISIT_COMPLETED" ||
+        data?.newStatus === "CANCELLED"
       ) {
         customerQuoteService.clearQuoteSession();
-        if (data?.newStatus === "VISIT_COMPLETED" || data?.newStatus === "COMPLETED") {
-          arrivalService.clearArrivalSession();
-        }
+        arrivalService.clearArrivalSession();
       }
       refresh();
     };
@@ -144,19 +155,27 @@ export function CustomerRealtimeSync() {
       if (jobId && incomingOffer) {
         try {
           const transformed = transformBackendOffer(incomingOffer);
+          transformed.isDeclined = false;
 
           // 1. Immediately update specific job details cache ["customer", "job", jobId]
           queryClient.setQueryData(["customer", "job", jobId], (old: any) => {
             if (!old) return old;
             const currentOffers: any[] = old.offers || [];
-            if (currentOffers.some((o: any) => o.id === transformed.id)) {
-              return old;
-            }
+            const exists = currentOffers.some(
+              (o: any) => o.id === transformed.id || (o.worker?.id && o.worker.id === transformed.worker?.id)
+            );
+            const nextOffers = exists
+              ? currentOffers.map((o: any) =>
+                  o.id === transformed.id || (o.worker?.id && o.worker.id === transformed.worker?.id)
+                    ? { ...transformed, isDeclined: false }
+                    : o
+                )
+              : [transformed, ...currentOffers];
             return {
               ...old,
               status: "receiving_offers",
-              offerCount: (old.offerCount ?? currentOffers.length) + 1,
-              offers: [transformed, ...currentOffers],
+              offerCount: exists ? (old.offerCount ?? currentOffers.length) : (old.offerCount ?? currentOffers.length) + 1,
+              offers: nextOffers,
             };
           });
 
@@ -169,12 +188,21 @@ export function CustomerRealtimeSync() {
                 if (j.id === jobId) {
                   matchedJob = true;
                   const currentOffers: any[] = j.offers || [];
-                  const exists = currentOffers.some((o: any) => o.id === transformed.id);
+                  const exists = currentOffers.some(
+                    (o: any) => o.id === transformed.id || (o.worker?.id && o.worker.id === transformed.worker?.id)
+                  );
+                  const nextOffers = exists
+                    ? currentOffers.map((o: any) =>
+                        o.id === transformed.id || (o.worker?.id && o.worker.id === transformed.worker?.id)
+                          ? { ...transformed, isDeclined: false }
+                          : o
+                      )
+                    : [transformed, ...currentOffers];
                   return {
                     ...j,
                     status: "receiving_offers",
-                    offerCount: (j.offerCount ?? currentOffers.length) + (exists ? 0 : 1),
-                    offers: exists ? currentOffers : [transformed, ...currentOffers],
+                    offerCount: exists ? (j.offerCount ?? currentOffers.length) : (j.offerCount ?? currentOffers.length) + 1,
+                    offers: nextOffers,
                   };
                 }
                 return j;
@@ -188,10 +216,8 @@ export function CustomerRealtimeSync() {
             return old;
           });
 
-          // If this job was newly posted and not yet in the cached list, refetch the customer list immediately
-          if (!matchedJob) {
-            void queryClient.invalidateQueries({ queryKey: ["customer", "jobs"] });
-          }
+          // Invalidate to ensure background query consistency
+          refresh();
         } catch (err) {
           console.warn("[CustomerRealtimeSync] offer cache update failed:", err);
           refresh();
@@ -213,6 +239,10 @@ export function CustomerRealtimeSync() {
     }
     socket.on(SOCKET_EVENTS.jobStatusChanged, handleJobStatusChanged);
     socket.on("job:statusChanged", handleJobStatusChanged);
+    socket.on("job:cancelled", handleJobCancelled);
+    socket.on("job.cancelled", handleJobCancelled);
+    socket.on("visit:cancelled", handleJobCancelled);
+    socket.on("visit.cancelled", handleJobCancelled);
     socket.on("visit:arrived", handleVisitArrived);
     socket.on("visit.arrived", handleVisitArrived);
     socket.on("visit:otp:verified", handleOtpVerified);
@@ -233,6 +263,10 @@ export function CustomerRealtimeSync() {
       }
       socket.off(SOCKET_EVENTS.jobStatusChanged, handleJobStatusChanged);
       socket.off("job:statusChanged", handleJobStatusChanged);
+      socket.off("job:cancelled", handleJobCancelled);
+      socket.off("job.cancelled", handleJobCancelled);
+      socket.off("visit:cancelled", handleJobCancelled);
+      socket.off("visit.cancelled", handleJobCancelled);
       socket.off("visit:arrived", handleVisitArrived);
       socket.off("visit.arrived", handleVisitArrived);
       socket.off("visit:otp:verified", handleOtpVerified);
