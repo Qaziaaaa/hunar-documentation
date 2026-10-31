@@ -15,6 +15,7 @@ class Db {
   reviews: any[] = [];
   serviceRequests: any[] = [];
   rawCalls: string[] = [];
+  workerWallets = new Map<string, any>();
 
   constructor() {
     ['cat-electric', 'cat-plumber', 'cat-disabled'].forEach((id, i) => {
@@ -224,6 +225,12 @@ function makeDb(): any {
     jobOffer: {
       async findMany() {
         return [];
+      },
+    },
+
+    workerWallet: {
+      async findUnique({ where }: any) {
+        return db.workerWallets?.get(where.userId) ?? null;
       },
     },
 
@@ -684,6 +691,20 @@ describe('WorkerProfileService', () => {
 
       const on = await service.toggleAvailability('w1', { isAvailable: true });
       expect(on.isAvailable).toBe(true);
+      const off = await service.toggleAvailability('w1', { isAvailable: false });
+      expect(off.isAvailable).toBe(false);
+    });
+
+    it('rejects going online when wallet balance is negative', async () => {
+      const db = makeDb();
+      const service = makeService(db);
+      addWorker(db, 'w1');
+      db.workerWallets.set('w1', { userId: 'w1', balance: -20, heldBalance: 0 });
+
+      await expect(service.toggleAvailability('w1', { isAvailable: true })).rejects.toThrow(
+        BadRequestException,
+      );
+      // Going offline is always allowed
       const off = await service.toggleAvailability('w1', { isAvailable: false });
       expect(off.isAvailable).toBe(false);
     });

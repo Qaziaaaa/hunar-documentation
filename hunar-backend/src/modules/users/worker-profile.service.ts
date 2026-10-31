@@ -179,6 +179,15 @@ export class WorkerProfileService {
 
   async toggleAvailability(userId: string, dto: UpdateAvailabilityDto) {
     await this.requireUser(userId);
+    if (dto.isAvailable) {
+      const wallet = await this.prisma.workerWallet.findUnique({ where: { userId } });
+      const balance = Number(wallet?.balance ?? 0);
+      if (balance < 0) {
+        throw new BadRequestException(
+          `Your wallet balance is Rs. ${balance}. Please top up your wallet to go online.`,
+        );
+      }
+    }
     const updated = await this.prisma.workerProfile.update({
       where: { userId },
       data: { isAvailable: dto.isAvailable },

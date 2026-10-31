@@ -413,9 +413,8 @@ export class WalletService {
           where: { userId: workerId },
           data: { balance: newBalance, heldBalance: newHeld },
         });
-        // Offline rule: a worker parked at/below the floor cannot fund any
-        // further hold — stop dispatching new work until they top up.
-        if (newBalance <= floor) {
+        // Offline rule: a worker with negative balance cannot take/send new work until they top up.
+        if (newBalance < 0) {
           await tx.workerProfile.updateMany({
             where: { userId: workerId, isAvailable: true },
             data: { isAvailable: false },
@@ -733,6 +732,13 @@ export class WalletService {
           where: { userId: workerId },
           data: { balance: finalBalance, heldBalance: finalHeld },
         });
+
+        if (finalBalance < 0) {
+          await tx.workerProfile.updateMany({
+            where: { userId: workerId, isAvailable: true },
+            data: { isAvailable: false },
+          });
+        }
 
         // Platform Commission deduction ledger entry (10% of Visit Fee only)
         if (commissionAmount > 0) {
