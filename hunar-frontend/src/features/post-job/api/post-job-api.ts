@@ -271,6 +271,7 @@ export interface BackendCategory {
   imageUrl?: string | null;
   defaultVisitCharge?: number | null;
   suggestedFee?: number | null;
+  commonIssues?: string[] | null;
 }
 
 let cachedCategories: BackendCategory[] | null = null;

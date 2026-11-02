@@ -95,23 +95,37 @@ export class NotificationsListener {
   // Visit scheduled (job status → VISIT_SCHEDULED).
   @OnEvent('job.statusChanged')
   async handleJobStatusChanged(payload: { jobId: string; oldStatus: string; newStatus: string }) {
-    if (payload.newStatus !== 'VISIT_SCHEDULED') return;
-    await this.safe('job.statusChanged', async () => {
-      const job = await this.prisma.serviceRequest.findUnique({
-        where: { id: payload.jobId },
-        select: {
-          customerId: true,
-          title: true,
-          visits: { where: { status: 'SCHEDULED' }, orderBy: { scheduledDate: 'desc' }, take: 1 },
-        },
+    if (payload.newStatus === 'VISIT_SCHEDULED') {
+      await this.safe('job.statusChanged:VISIT_SCHEDULED', async () => {
+        const job = await this.prisma.serviceRequest.findUnique({
+          where: { id: payload.jobId },
+          select: {
+            customerId: true,
+            title: true,
+            visits: { where: { status: 'SCHEDULED' }, orderBy: { scheduledDate: 'desc' }, take: 1 },
+          },
+        });
+        if (!job) return;
+        await this.notifications.createNotification(job.customerId, 'VISIT_SCHEDULED', {
+          jobId: payload.jobId,
+          jobTitle: job.title,
+          scheduledAt: job.visits[0]?.scheduledDate?.toISOString(),
+        });
       });
-      if (!job) return;
-      await this.notifications.createNotification(job.customerId, 'VISIT_SCHEDULED', {
-        jobId: payload.jobId,
-        jobTitle: job.title,
-        scheduledAt: job.visits[0]?.scheduledDate?.toISOString(),
+      return;
+    }
+
+    if (payload.newStatus === 'COMPLETED') {
+      await this.safe('job.statusChanged:COMPLETED', async () => {
+        const job = await this.getJobCustomer(payload.jobId);
+        if (!job) return;
+        await this.notifications.createNotification(job.customerId, 'JOB_COMPLETED', {
+          jobId: payload.jobId,
+          jobTitle: job.title,
+        });
       });
-    });
+      return;
+    }
   }
 
   // Inspection submitted → customer can view the report.

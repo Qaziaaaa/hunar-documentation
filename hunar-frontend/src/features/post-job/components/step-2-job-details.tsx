@@ -1,13 +1,15 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowLeft,
   ArrowRight,
+  Check,
   Edit2,
   Image as ImageIcon,
   Layers,
   Plus,
+  Sparkles,
   Trash2,
   Upload,
 } from "lucide-react";
@@ -18,6 +20,11 @@ import {
   resolveCategoryOption,
 } from "../data/categories";
 import type { PostJobData } from "../types";
+import {
+  fetchServiceCategories,
+  type BackendCategory,
+  CATEGORY_ID_MAP,
+} from "../api/post-job-api";
 import { VoiceNoteRecorder } from "./voice-note-recorder";
 import { compressImage } from "@/lib/image-compression";
 
@@ -26,6 +33,7 @@ interface Step2JobDetailsProps {
   onChange: (updates: Partial<PostJobData>) => void;
   onNext: () => void;
   onBack: () => void;
+  backendCategories?: BackendCategory[];
 }
 
 const MAX_PHOTOS = 3;
@@ -35,6 +43,7 @@ export function Step2JobDetails({
   onChange,
   onNext,
   onBack,
+  backendCategories: propBackendCategories,
 }: Step2JobDetailsProps) {
   const locale = useLocale();
   const isUrdu = locale === "ur";
@@ -46,6 +55,26 @@ export function Step2JobDetails({
   const hasVoice = Boolean(data.voiceNoteUrl);
   const hasExplanation = hasText || hasVoice;
 
+  const [internalCategories, setInternalCategories] = useState<BackendCategory[]>([]);
+
+  useEffect(() => {
+    if (propBackendCategories !== undefined) return;
+    let mounted = true;
+    fetchServiceCategories().then((cats) => {
+      if (mounted && Array.isArray(cats)) {
+        setInternalCategories(cats);
+      }
+    });
+    return () => {
+      mounted = false;
+    };
+  }, [propBackendCategories]);
+
+  const backendCategories =
+    propBackendCategories && propBackendCategories.length > 0
+      ? propBackendCategories
+      : internalCategories;
+
   const selectedCategory =
     CATEGORY_OPTIONS.find((c) => c.id === data.category) ||
     resolveCategoryOption(data.category) ||
@@ -53,6 +82,35 @@ export function Step2JobDetails({
       ? createCustomCategoryOption(data.category, data.title || data.category)
       : undefined);
   const Icon = selectedCategory?.icon || Layers;
+
+  const liveCategory = useMemo(() => {
+    if (!backendCategories?.length || !data.category) return null;
+    const catId = data.category.toLowerCase().trim();
+    const mappedSeedId = CATEGORY_ID_MAP[catId]?.toLowerCase();
+
+    return (
+      backendCategories.find((b) => {
+        const bId = b.id.toLowerCase();
+        const bName = b.name.toLowerCase();
+        return (
+          bId === catId ||
+          (mappedSeedId && bId === mappedSeedId) ||
+          bName === catId ||
+          bName.replace(/[^a-z0-9]/g, "") === catId.replace(/[^a-z0-9]/g, "")
+        );
+      }) ?? null
+    );
+  }, [backendCategories, data.category]);
+
+  const commonIssues = useMemo(() => {
+    const raw = liveCategory?.commonIssues ?? selectedCategory?.commonIssues;
+    if (Array.isArray(raw)) {
+      return raw.filter(
+        (item): item is string => typeof item === "string" && item.trim().length > 0
+      );
+    }
+    return [];
+  }, [liveCategory, selectedCategory]);
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -159,16 +217,61 @@ export function Step2JobDetails({
 
           {/* Inputs */}
           <div className="space-y-4 pt-1">
+            {/* Common Issues from Admin Category */}
+            {commonIssues.length > 0 && (
+              <div className="space-y-2 pb-1">
+                <label className="text-xs sm:text-sm font-extrabold text-[#123B5D] flex items-center gap-1.5">
+                  <Sparkles className="size-3.5 text-[#0F8B8D]" />
+                  <span>
+                    {isUrdu ? "عام مسائل (عنوان منتخب کریں)" : "Common Issues (Select to fill title)"}
+                  </span>
+                </label>
+
+                {/* Single line slide track */}
+                <div className="flex items-center gap-2 overflow-x-auto pb-1.5 pt-0.5 scrollbar-none no-scrollbar scroll-smooth">
+                  {commonIssues.map((issue, idx) => {
+                    const isSelected =
+                      data.title.trim().toLowerCase() === issue.trim().toLowerCase();
+                    return (
+                      <button
+                        key={idx}
+                        type="button"
+                        onClick={() => {
+                          setError(null);
+                          onChange({ title: issue });
+                        }}
+                        className={`shrink-0 whitespace-nowrap px-3.5 py-1.5 rounded-xl text-xs font-bold border transition-all cursor-pointer flex items-center gap-1.5 select-none active:scale-95 ${
+                          isSelected
+                            ? "bg-[#0F8B8D] text-white border-[#0F8B8D] shadow-xs scale-[1.02]"
+                            : "bg-slate-50 hover:bg-teal-50/70 text-slate-700 hover:text-[#0F8B8D] border-slate-200 hover:border-[#0F8B8D]/40"
+                        }`}
+                      >
+                        {isSelected && <Check className="size-3.5 stroke-[3]" />}
+                        <span>{issue}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
             <div>
               <label
-                htmlFor="job-title"
+                htmlFor="job-title-field"
                 className="block text-sm sm:text-base font-extrabold text-[#123B5D] mb-1.5"
               >
                 {isUrdu ? "کام کا عنوان" : "Job Title"} <span className="text-red-500">*</span>
               </label>
               <input
-                id="job-title"
+                id="job-title-field"
+                name="jobTitle"
                 type="text"
+                autoComplete="off"
+                autoCorrect="off"
+                autoCapitalize="off"
+                spellCheck={false}
+                data-lpignore="true"
+                data-form-type="other"
                 value={data.title}
                 onChange={(e) => {
                   setError(null);

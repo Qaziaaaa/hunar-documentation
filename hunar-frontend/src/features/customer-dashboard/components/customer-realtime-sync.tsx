@@ -7,6 +7,7 @@ import { connectSocket, disconnectSocket } from "@/lib/socket";
 import { SOCKET_EVENTS } from "@/lib/socket-events";
 import { arrivalService } from "@/features/jobs/services/arrival-verification-service";
 import { customerQuoteService } from "@/features/customer-jobs/services/customer-quote-service";
+import { customerReviewService } from "@/features/customer-jobs/services/customer-review-service";
 import { transformBackendOffer } from "@/features/customer-jobs/api/customer-jobs-api";
 
 const REFRESH_EVENTS = [
@@ -50,9 +51,10 @@ export function CustomerRealtimeSync() {
     const socket = connectSocket();
     if (!socket) return;
 
-    // Check backend on mount for any pending repair quote or arrival session
+    // Check backend on mount for any pending repair quote, arrival session, or unreviewed completed job
     void customerQuoteService.checkBackendPendingQuote();
     void arrivalService.checkBackendPendingArrival();
+    void customerReviewService.checkPendingCompletedJobs();
 
     let refreshTimeout: ReturnType<typeof setTimeout> | null = null;
     const refresh = () => {
@@ -143,6 +145,26 @@ export function CustomerRealtimeSync() {
       ) {
         customerQuoteService.clearQuoteSession();
         arrivalService.clearArrivalSession();
+      }
+
+      // Worker completed the job -> prompt customer review popup
+      const normStatus = String(data?.newStatus || data?.status || "").toUpperCase();
+      if (normStatus === "COMPLETED") {
+        const targetJobId = data?.jobId || data?.id || data?.job?.id;
+        if (targetJobId) {
+          void customerReviewService.promptReviewByJobId(targetJobId, { force: true });
+        }
+      }
+
+      refresh();
+    };
+
+    const handleJobCompleted = (data: any) => {
+      const targetJobId = data?.jobId || data?.id || data?.job?.id;
+      if (targetJobId) {
+        customerQuoteService.clearQuoteSession();
+        arrivalService.clearArrivalSession();
+        void customerReviewService.promptReviewByJobId(targetJobId, { force: true });
       }
       refresh();
     };
@@ -239,6 +261,9 @@ export function CustomerRealtimeSync() {
     }
     socket.on(SOCKET_EVENTS.jobStatusChanged, handleJobStatusChanged);
     socket.on("job:statusChanged", handleJobStatusChanged);
+    socket.on("job:status:changed", handleJobStatusChanged);
+    socket.on("job:completed", handleJobCompleted);
+    socket.on("job.completed", handleJobCompleted);
     socket.on("job:cancelled", handleJobCancelled);
     socket.on("job.cancelled", handleJobCancelled);
     socket.on("visit:cancelled", handleJobCancelled);
@@ -263,6 +288,9 @@ export function CustomerRealtimeSync() {
       }
       socket.off(SOCKET_EVENTS.jobStatusChanged, handleJobStatusChanged);
       socket.off("job:statusChanged", handleJobStatusChanged);
+      socket.off("job:status:changed", handleJobStatusChanged);
+      socket.off("job:completed", handleJobCompleted);
+      socket.off("job.completed", handleJobCompleted);
       socket.off("job:cancelled", handleJobCancelled);
       socket.off("job.cancelled", handleJobCancelled);
       socket.off("visit:cancelled", handleJobCancelled);

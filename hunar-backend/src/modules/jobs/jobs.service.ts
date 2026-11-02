@@ -1628,6 +1628,13 @@ export class JobsService {
         oldStatus: job.status,
         newStatus: updated.status,
       });
+      if (updated.status === 'COMPLETED') {
+        this.realtime.emitToRoom(userRoom(userId), 'job:completed', {
+          jobId,
+          oldStatus: job.status,
+          newStatus: updated.status,
+        });
+      }
     }
     return { newStatus: updated.status };
   }

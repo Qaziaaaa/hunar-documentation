@@ -51,6 +51,7 @@ import {
   arrivalService,
   type ArrivalSession,
 } from "@/features/jobs/services/arrival-verification-service";
+import { customerReviewService } from "@/features/customer-jobs/services/customer-review-service";
 import type { CustomerVisitTrackingData, ScheduledVisit } from "../types";
 
 interface CustomerJobTrackingViewProps {
@@ -73,8 +74,19 @@ export function CustomerJobTrackingView({ jobId }: CustomerJobTrackingViewProps)
   });
   const [isOtpModalOpen, setIsOtpModalOpen] = useState(false);
   const [userDismissedModal, setUserDismissedModal] = useState(false);
-  const [successToast, setSuccessToast] = useState<string | null>(null);
   const [isChatOpen, setIsChatOpen] = useState(false);
+  const [hasReviewedLocally, setHasReviewedLocally] = useState<boolean>(() => {
+    return customerReviewService.isReviewCompleted(jobId);
+  });
+
+  useEffect(() => {
+    const unsub = customerReviewService.subscribe((_job, isOpen) => {
+      if (customerReviewService.isReviewCompleted(jobId)) {
+        setHasReviewedLocally(true);
+      }
+    });
+    return unsub;
+  }, [jobId]);
 
   // Live worker GPS coordinates (updated dynamically via Socket.IO)
   const [liveWorkerLat, setLiveWorkerLat] = useState<number | null>(null);
@@ -104,9 +116,30 @@ export function CustomerJobTrackingView({ jobId }: CustomerJobTrackingViewProps)
           setLiveWorkerLng(tracking.workerLocation.longitude);
         }
 
-        // Auto-activate arrival session & auto-open OTP modal if worker has arrived
         const normJobStatus = String((tracking as any).jobStatus || "").toUpperCase();
         const normVisitStatus = String((tracking as any).visitStatus || "").toUpperCase();
+
+        if (tracking.hasReviewed || customerReviewService.isReviewCompleted(jobId)) {
+          setHasReviewedLocally(true);
+        }
+
+        const isCompletedState =
+          tracking.currentStageId === "COMPLETED" ||
+          normJobStatus === "COMPLETED" ||
+          normJobStatus === "PAID" ||
+          normJobStatus === "REVIEWED";
+
+        if (
+          isCompletedState &&
+          !tracking.hasReviewed &&
+          normJobStatus !== "REVIEWED" &&
+          !customerReviewService.isReviewCompleted(jobId) &&
+          !customerReviewService.isDismissedInSession(jobId)
+        ) {
+          void customerReviewService.promptReviewByJobId(jobId);
+        }
+
+        // Auto-activate arrival session & auto-open OTP modal if worker has arrived
         const isPastArrival =
           tracking.currentStageId === "IN_PREMISES" ||
           tracking.currentStageId === "INSPECTION_DONE" ||
@@ -281,6 +314,9 @@ export function CustomerJobTrackingView({ jobId }: CustomerJobTrackingViewProps)
             setArrivalSession(null);
             setIsOtpModalOpen(false);
             arrivalService.clearArrivalSession();
+            if (payload?.newStatus === "COMPLETED") {
+              void customerReviewService.promptReviewByJobId(jobId, { force: true });
+            }
           }
           void fetchTrackingRef.current(true);
         }
@@ -468,14 +504,6 @@ export function CustomerJobTrackingView({ jobId }: CustomerJobTrackingViewProps)
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 sm:py-6 space-y-6 pb-20 text-[#123B5D]">
-      {/* Toast Notification */}
-      {successToast && (
-        <div className="fixed top-20 right-6 rtl:right-auto rtl:left-6 z-50 bg-[#0F766E] text-white px-5 py-3 rounded-2xl shadow-xl flex items-center gap-3 animate-in slide-in-from-top-4 duration-300">
-          <CheckCircle2 className="size-5 shrink-0" />
-          <span className="text-xs sm:text-sm font-semibold">{successToast}</span>
-        </div>
-      )}
-
       {/* A. PAGE HEADER */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-slate-200">
         <div className="space-y-1">
@@ -555,6 +583,73 @@ export function CustomerJobTrackingView({ jobId }: CustomerJobTrackingViewProps)
                   >
                     {isUrdu ? "دہلیز PIN درج کریں" : "Enter Doorstep PIN"}
                   </button>
+                </div>
+              )}
+
+              {/* Job Completed Rate & Review Callout */}
+              {(data.currentStageId === "COMPLETED" ||
+                String(data.jobStatus || "").toUpperCase() === "COMPLETED" ||
+                String(data.jobStatus || "").toUpperCase() === "REVIEWED") && (
+                <div
+                  className={`p-4.5 sm:p-5 rounded-2xl border shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 animate-in fade-in-50 duration-300 ${
+                    hasReviewedLocally || data.hasReviewed || String(data.jobStatus || "").toUpperCase() === "REVIEWED"
+                      ? "bg-emerald-50/80 border-emerald-200 text-emerald-950"
+                      : "bg-gradient-to-r from-amber-50 to-orange-50 border-amber-300 text-amber-950"
+                  }`}
+                >
+                  <div className="flex items-start gap-3.5">
+                    <div
+                      className={`size-11 rounded-2xl flex items-center justify-center shrink-0 shadow-xs ${
+                        hasReviewedLocally || data.hasReviewed || String(data.jobStatus || "").toUpperCase() === "REVIEWED"
+                          ? "bg-emerald-600 text-white"
+                          : "bg-amber-500 text-white"
+                      }`}
+                    >
+                      {hasReviewedLocally || data.hasReviewed || String(data.jobStatus || "").toUpperCase() === "REVIEWED" ? (
+                        <CheckCircle2 className="size-6" />
+                      ) : (
+                        <Star className="size-6 fill-white" />
+                      )}
+                    </div>
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <h4 className="text-sm font-extrabold text-[#123B5D]">
+                          {hasReviewedLocally || data.hasReviewed || String(data.jobStatus || "").toUpperCase() === "REVIEWED"
+                            ? isUrdu
+                              ? "آپ کا ریویو درج ہو چکا ہے!"
+                              : "Service Reviewed & Recorded!"
+                            : isUrdu
+                            ? "کام مکمل ہو گیا! کاریگر کو ریویو دیں"
+                            : "Job Completed! Rate & Review Technician"}
+                        </h4>
+                        <span className="px-2 py-0.5 rounded-full text-[10.5px] font-bold bg-white/80 border border-emerald-300 text-emerald-700">
+                          {isUrdu ? "مکمل سروس" : "Completed"}
+                        </span>
+                      </div>
+                      <p className="text-xs text-slate-600 leading-snug">
+                        {hasReviewedLocally || data.hasReviewed || String(data.jobStatus || "").toUpperCase() === "REVIEWED"
+                          ? isUrdu
+                            ? `آپ نے ${data.technician?.name || "کاریگر"} کی کارکردگی پر تصدیق شدہ رائے درج کر دی ہے۔ شکریہ!`
+                            : `You have submitted verified feedback for ${data.technician?.name || "the technician"}. Thank you!`
+                          : isUrdu
+                          ? `براہِ کرم ${data.technician?.name || "کاریگر"} کی مہارت، وقت کی پابندی اور کام کے معیار پر اپنی ریٹنگ درج کریں۔`
+                          : `Help others by rating ${data.technician?.name || "the technician"}'s skill, punctuality and service quality.`}
+                      </p>
+                    </div>
+                  </div>
+
+                  {!(hasReviewedLocally || data.hasReviewed || String(data.jobStatus || "").toUpperCase() === "REVIEWED") && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        void customerReviewService.promptReviewByJobId(jobId, { force: true });
+                      }}
+                      className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs sm:text-sm shadow-xs transition-all cursor-pointer shrink-0 active:scale-98 flex items-center justify-center gap-2"
+                    >
+                      <Star className="size-4 fill-slate-950" />
+                      <span>{isUrdu ? "ریٹنگ اور ریویو دیں" : "Rate & Review Now"}</span>
+                    </button>
+                  )}
                 </div>
               )}
 
@@ -1017,14 +1112,12 @@ export function CustomerJobTrackingView({ jobId }: CustomerJobTrackingViewProps)
           isOpen={isOtpModalOpen}
           session={arrivalSession}
           jobId={jobId || arrivalSession?.jobId}
-          onSuccess={(msg) => {
+          onSuccess={() => {
             setIsOtpModalOpen(false);
             setArrivalSession(null);
             arrivalService.clearArrivalSession();
             setUserDismissedModal(true);
-            setSuccessToast(msg);
             void fetchTracking(true);
-            setTimeout(() => setSuccessToast(null), 5000);
           }}
           onClose={() => {
             setIsOtpModalOpen(false);

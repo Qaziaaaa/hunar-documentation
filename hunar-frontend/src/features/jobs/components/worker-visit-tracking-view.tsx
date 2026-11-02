@@ -94,6 +94,19 @@ export function WorkerVisitTrackingView({
   const [showWorkerOtpModal, setShowWorkerOtpModal] = useState(false);
   const [arrivedAtTime, setArrivedAtTime] = useState<number>(Date.now());
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const hasHandledVerifiedRef = useRef(false);
+  const successToastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const showWorkerSuccessToast = (msg: string) => {
+    if (successToastTimerRef.current) {
+      clearTimeout(successToastTimerRef.current);
+    }
+    setSuccessMessage(msg);
+    successToastTimerRef.current = setTimeout(() => {
+      setSuccessMessage(null);
+      successToastTimerRef.current = null;
+    }, 5000);
+  };
   const [routePoints, setRoutePoints] = useState<[number, number][]>([]);
 
   // Customer / Job exact coordinates from job location (fallback to Central Peshawar / Hayatabad if missing)
@@ -644,11 +657,14 @@ export function WorkerVisitTrackingView({
         payloadJobId === normJobId ||
         (payloadVisitId && payloadVisitId === expectedVisitId)
       ) {
+        if (hasHandledVerifiedRef.current) return;
+        hasHandledVerifiedRef.current = true;
+
         arrivalService.verifyOtpSuccess({ jobId: job.id, ...payload });
         setShowWorkerOtpModal(false);
         setIsArriving(false);
         const successMsg = isUrdu ? SUCCESS_VERIFICATION_MESSAGE_UR : SUCCESS_VERIFICATION_MESSAGE;
-        setSuccessMessage(successMsg);
+        showWorkerSuccessToast(successMsg);
         workerStore.arriveAtSite(job.id);
         workerStore.startInspection(job.id);
         if (onArrived) {
@@ -705,10 +721,13 @@ export function WorkerVisitTrackingView({
           jobStatus === "INSPECTION_DONE" ||
           res.isArrivalPending === false
         ) {
+          if (hasHandledVerifiedRef.current) return;
+          hasHandledVerifiedRef.current = true;
+
           setShowWorkerOtpModal(false);
           setIsArriving(false);
           const successMsg = isUrdu ? SUCCESS_VERIFICATION_MESSAGE_UR : SUCCESS_VERIFICATION_MESSAGE;
-          setSuccessMessage(successMsg);
+          showWorkerSuccessToast(successMsg);
           arrivalService.verifyOtpSuccess({ jobId: job.id });
           workerStore.arriveAtSite(job.id);
           workerStore.startInspection(job.id);
@@ -738,10 +757,13 @@ export function WorkerVisitTrackingView({
         (!sessionJobId || sessionJobId === normJobId || session.otp === currentSecurityPin) &&
         (eventType === "OTP_VERIFIED" || session.status === "otp_verified")
       ) {
+        if (hasHandledVerifiedRef.current) return;
+        hasHandledVerifiedRef.current = true;
+
         setShowWorkerOtpModal(false);
         setIsArriving(false);
         const successMsg = isUrdu ? SUCCESS_VERIFICATION_MESSAGE_UR : SUCCESS_VERIFICATION_MESSAGE;
-        setSuccessMessage(successMsg);
+        showWorkerSuccessToast(successMsg);
 
         workerStore.arriveAtSite(job.id);
         workerStore.startInspection(job.id);
@@ -751,7 +773,12 @@ export function WorkerVisitTrackingView({
       }
     });
 
-    return () => unsubscribe();
+    return () => {
+      unsubscribe();
+      if (successToastTimerRef.current) {
+        clearTimeout(successToastTimerRef.current);
+      }
+    };
   }, [job.id, currentSecurityPin, isUrdu, onArrived]);
 
   // Handle "I'm here" / Reached Doorstep CTA

@@ -81,6 +81,7 @@ export class LedgerService {
         balanceAfter: Number(r.balanceAfter),
         referenceType: r.referenceType,
         referenceId: r.referenceId,
+        idempotencyKey: r.idempotencyKey,
         note: r.note,
         createdAt: r.createdAt,
       })),

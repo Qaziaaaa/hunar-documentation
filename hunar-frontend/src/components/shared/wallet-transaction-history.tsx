@@ -83,8 +83,17 @@ export function WalletTransactionHistory({
                     <div className="space-y-1">
                       <div className="flex items-center gap-2 flex-wrap">
                         <span className="text-sm font-bold text-navy">
-                          {isTopUp ? "Top Up" : "Deduction"}
+                          {isTopUp ? "Top Up" : tx.isHold ? "Commission Hold" : "Deduction"}
                         </span>
+
+                        {tx.isHold && (
+                          <Badge
+                            variant="outline"
+                            className="bg-amber-50 text-amber-700 border-amber-300 font-semibold text-[10px] px-2 py-0.5"
+                          >
+                            Pending Confirmation
+                          </Badge>
+                        )}
 
                         {/* Job ID Tag for Deductions */}
                         {tx.jobId ? (

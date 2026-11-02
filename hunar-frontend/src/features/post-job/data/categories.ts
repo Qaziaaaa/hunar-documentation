@@ -28,6 +28,7 @@ export interface CategoryOption {
   subCategories?: string[];
   suggestedFee: number;
   popular?: boolean;
+  commonIssues?: string[];
 }
 
 export const CATEGORY_OPTIONS: CategoryOption[] = [
@@ -291,7 +292,8 @@ export function createCustomCategoryOption(
   id: string,
   name: string,
   urduName?: string,
-  fee?: number
+  fee?: number,
+  commonIssues?: string[]
 ): CategoryOption {
   const cleanName = (name || id || "Custom Service").trim();
   return {
@@ -303,6 +305,7 @@ export function createCustomCategoryOption(
     iconColor: "text-[#0F8B8D]",
     iconBg: "bg-teal-50 border-teal-200/60",
     suggestedFee: fee || 500,
+    commonIssues: commonIssues ?? [],
   };
 }
 

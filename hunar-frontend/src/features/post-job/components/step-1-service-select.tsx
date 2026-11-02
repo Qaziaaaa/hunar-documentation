@@ -62,13 +62,13 @@ export function Step1ServiceSelect({
           cat.name.toLowerCase().includes(b.name.toLowerCase()) ||
           (CATEGORY_ID_MAP[cat.id.toLowerCase()] && CATEGORY_ID_MAP[cat.id.toLowerCase()] === b.id)
       );
-      if (live && live.defaultVisitCharge != null && live.defaultVisitCharge > 0) {
-        return {
-          ...cat,
-          suggestedFee: live.defaultVisitCharge,
-        };
-      }
-      return cat;
+      return {
+        ...cat,
+        ...(live && live.defaultVisitCharge != null && live.defaultVisitCharge > 0
+          ? { suggestedFee: live.defaultVisitCharge }
+          : {}),
+        commonIssues: Array.isArray(live?.commonIssues) ? live.commonIssues : [],
+      };
     });
 
     const seenNames = new Set(matchedPresets.map((p) => p.name.toLowerCase()));
@@ -79,7 +79,8 @@ export function Step1ServiceSelect({
           b.id,
           b.name,
           b.nameUrdu || undefined,
-          b.defaultVisitCharge || 500
+          b.defaultVisitCharge || 500,
+          Array.isArray(b.commonIssues) ? b.commonIssues : []
         )
       );
 
@@ -156,6 +157,10 @@ export function Step1ServiceSelect({
           <Search className="absolute left-3.5 rtl:left-auto rtl:right-3.5 size-4 text-slate-400 pointer-events-none" />
           <input
             type="text"
+            autoComplete="off"
+            autoCorrect="off"
+            autoCapitalize="off"
+            spellCheck={false}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder={

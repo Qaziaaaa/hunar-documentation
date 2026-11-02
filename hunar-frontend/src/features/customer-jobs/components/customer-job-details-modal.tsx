@@ -25,6 +25,7 @@ import { useLocale } from "next-intl";
 import { useRouter } from "@/i18n/navigation";
 import { formatJobDate, formatPostedAt } from "@/lib/format";
 import { CustomerReviewModal } from "./customer-review-modal";
+import { customerReviewService } from "../services/customer-review-service";
 import { VoicePlayer } from "@/features/worker-dashboard/components/voice-player";
 import type { CustomerJob } from "../types";
 
@@ -547,7 +548,7 @@ export function CustomerJobDetailsModal({
                   {!currentJob?.hasReviewed && (
                     <button
                       type="button"
-                      onClick={() => setIsReviewModalOpen(true)}
+                      onClick={() => { if (currentJob) customerReviewService.promptReview(currentJob, { force: true }); setIsReviewModalOpen(true); }}
                       className="w-full py-2.5 px-4 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs sm:text-sm shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-98"
                     >
                       <Star className="size-4 fill-slate-950" />
@@ -702,7 +703,7 @@ export function CustomerJobDetailsModal({
         </div>
       )}
       {/* Review Modal for Completed Jobs */}
-      {currentJob && (
+      {currentJob && isReviewModalOpen && !customerReviewService.isOpen() && (
         <CustomerReviewModal
           job={currentJob}
           isOpen={isReviewModalOpen}
