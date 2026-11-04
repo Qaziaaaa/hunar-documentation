@@ -7,7 +7,7 @@ import {
   Optional,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { OfferStatus, Role } from '@prisma/client';
+import { JobStatus, OfferStatus, Role } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { EventBusService } from '../../common/event-bus/event-bus.service';
 import { normalizePage, toPageResult } from '../../common/helpers/pagination.util';
@@ -49,8 +49,56 @@ export class OffersService {
     @Optional() private readonly settings?: SettingsService,
   ) {}
 
-  private get maxRounds(): number {
-    return this.config.get<number>('app.maxNegotiationRounds', 5);
+    /** Dynamic negotiation rules and visit fee floor for a service category (AUDIT-026). */
+  async getCategoryRulesForJob(jobId: string, categoryId?: string): Promise<{
+    maxNegotiationRounds: number;
+    minimumVisitFee: number;
+    categoryName?: string;
+  }> {
+    let category: any = null;
+    if (categoryId && this.prisma.serviceCategory?.findUnique) {
+      category = await this.prisma.serviceCategory.findUnique({ where: { id: categoryId } }).catch(() => null);
+    } else {
+      const job = await this.prisma.serviceRequest.findUnique({
+        where: { id: jobId },
+        include: { category: true },
+      }).catch(() => null);
+      category = (job as any)?.category;
+      if (!category && (job as any)?.categoryId && this.prisma.serviceCategory?.findUnique) {
+        category = await this.prisma.serviceCategory.findUnique({ where: { id: (job as any).categoryId } }).catch(() => null);
+      }
+    }
+
+    let slabs: any = category?.distanceSlabs;
+    if (typeof slabs === 'string') {
+      try {
+        slabs = JSON.parse(slabs);
+      } catch {
+        slabs = null;
+      }
+    }
+
+    let maxNegotiationRounds = 5;
+    if (typeof slabs?.maxNegotiationRounds === 'number' && slabs.maxNegotiationRounds > 0) {
+      maxNegotiationRounds = slabs.maxNegotiationRounds;
+    } else if (typeof (category as any)?.maxNegotiationRounds === 'number' && (category as any).maxNegotiationRounds > 0) {
+      maxNegotiationRounds = (category as any).maxNegotiationRounds;
+    } else if (this.settings?.getMaxNegotiationRounds) {
+      maxNegotiationRounds = await this.settings.getMaxNegotiationRounds();
+    } else {
+      maxNegotiationRounds = this.config.get<number>('app.maxNegotiationRounds', 5);
+    }
+
+    let minimumVisitFee = 0;
+    if (typeof slabs?.minimumVisitFee === 'number' && slabs.minimumVisitFee >= 0) {
+      minimumVisitFee = slabs.minimumVisitFee;
+    } else if (category?.defaultVisitCharge != null) {
+      minimumVisitFee = Number(category.defaultVisitCharge);
+    } else if (this.settings?.getMinimumVisitFee) {
+      minimumVisitFee = await this.settings.getMinimumVisitFee();
+    }
+
+    return { maxNegotiationRounds, minimumVisitFee, categoryName: category?.name };
   }
 
   /** Admin-configured cap on simultaneously active (unanswered) offers. */
@@ -87,7 +135,6 @@ export class OffersService {
           data: { status: OfferStatus.WITHDRAWN },
         });
         for (const o of staleOffers) {
-          this.eventBus.emit('offer.rejected', { offerId: o.id, jobId: o.jobId, workerId: o.workerId });
           if (o.job?.customerId) {
             this.realtime.emitToRoom(userRoom(o.job.customerId), 'job:offer:withdrawn', {
               jobId: o.jobId,
@@ -125,6 +172,13 @@ export class OffersService {
     if (!['OPEN', 'OFFERS_RECEIVED'].includes(job.status)) {
       throw new BadRequestException(
         'JOB_INVALID_STATE: offers are no longer accepted for this job',
+      );
+    }
+
+    const { minimumVisitFee, categoryName } = await this.getCategoryRulesForJob(jobId, job.categoryId);
+    if (minimumVisitFee > 0 && dto.visitCharge < minimumVisitFee) {
+      throw new BadRequestException(
+        `MINIMUM_VISIT_FEE_NOT_MET: Minimum visit charge for ${categoryName ?? 'this service'} is Rs. ${minimumVisitFee}`,
       );
     }
     if (existing) {
@@ -189,7 +243,7 @@ export class OffersService {
     };
 
     let offer;
-    if (existing && ['WITHDRAWN', 'REJECTED'].includes(existing.status)) {
+    if (existing && ['WITHDRAWN', 'REJECTED', 'ARCHIVED'].includes(existing.status)) {
       offer = await this.prisma.jobOffer.update({
         where: { id: existing.id },
         data: {
@@ -257,6 +311,16 @@ export class OffersService {
         ? Number(workerReviews._avg.rating.toFixed(1))
         : 0;
 
+    const isUrgentJob =
+      job.urgency === 'EMERGENCY' ||
+      job.urgency === 'HIGH' ||
+      !job.preferredVisitTime;
+    const offerCreatedAtDate = offer.createdAt ? new Date(offer.createdAt) : new Date();
+    const expiresAt = isUrgentJob
+      ? new Date(offerCreatedAtDate.getTime() + 50000).toISOString()
+      : undefined;
+    const serverTime = new Date().toISOString();
+
     const populatedOffer = {
       id: offer.id,
       jobId,
@@ -279,7 +343,17 @@ export class OffersService {
       note: offer.message,
       status: offer.status,
       negotiationRound: offer.negotiationRound,
-      createdAt: offer.createdAt,
+      createdAt: offer.createdAt ?? offerCreatedAtDate,
+      expiresAt,
+      serverTime,
+    };
+
+    const customerBroadcastOffer = {
+      ...populatedOffer,
+      worker: {
+        ...populatedOffer.worker,
+        phone: null, // AUDIT-021: Masked until offer acceptance
+      },
     };
 
     this.realtime.emitToRoom(userRoom(job.customerId), JOB_EVENTS.jobOffer, {
@@ -287,20 +361,25 @@ export class OffersService {
       offerId: offer.id,
       workerId,
       visitCharge: dto.visitCharge,
-      offer: populatedOffer,
+      offer: customerBroadcastOffer,
     });
     this.realtime.emitToRoom(jobRoom(jobId), JOB_EVENTS.jobOffer, {
       jobId,
       offerId: offer.id,
       workerId,
       visitCharge: dto.visitCharge,
-      offer: populatedOffer,
+      offer: customerBroadcastOffer,
     });
 
-    return offer;
+    return {
+      ...offer,
+      createdAt: offer.createdAt ?? offerCreatedAtDate,
+      expiresAt,
+      serverTime,
+    };
   }
 
-  async getJobOffers(jobId: string, user: JwtPayload) {
+  async getJobOffers(jobId: string, user: JwtPayload, query: OfferListQueryDto = {}) {
     await this.expireStaleUrgentOffers();
     const job = await this.prisma.serviceRequest.findUnique({ where: { id: jobId } });
     if (!job) {
@@ -330,10 +409,16 @@ export class OffersService {
     const where =
       user.role === Role.WORKER
         ? { jobId, workerId: user.sub }
-        : { jobId, status: { notIn: [OfferStatus.WITHDRAWN, OfferStatus.REJECTED] } };
-    const offers = await this.prisma.jobOffer.findMany({
-      where,
-      orderBy: { visitCharge: 'asc' },
+        : { jobId, status: { notIn: [OfferStatus.WITHDRAWN, OfferStatus.REJECTED, OfferStatus.ARCHIVED] } };
+    const { maxNegotiationRounds, minimumVisitFee } = await this.getCategoryRulesForJob(jobId, job.categoryId);
+    const { page, limit, skip } = normalizePage(query ?? {}, 50);
+
+    const [offers, total] = await Promise.all([
+      this.prisma.jobOffer.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy: { visitCharge: 'asc' },
       include: {
         worker: {
           select: {
@@ -362,7 +447,9 @@ export class OffersService {
           },
         },
       },
-    });
+    }),
+      this.prisma.jobOffer.count({ where }),
+    ]);
 
     const workerIds = [...new Set(offers.map((o) => o.workerId))];
 
@@ -398,7 +485,7 @@ export class OffersService {
     const ratingMap = new Map(ratingAgg.map((r) => [r.revieweeId, r]));
     const completedMap = new Map(completedAgg.map((c) => [c.selectedWorkerId!, c]));
 
-    return offers.map((o) => {
+    const items = offers.map((o) => {
       const w = o.worker;
       const r = ratingMap.get(o.workerId);
       const c = completedMap.get(o.workerId);
@@ -417,6 +504,11 @@ export class OffersService {
       else if (diffMins < 1440) responseTime = `${Math.floor(diffMins / 60)}h ${diffMins % 60}m`;
       else responseTime = `${Math.floor(diffMins / 1440)}d`;
 
+      const isOfferAccepted = o.status === OfferStatus.ACCEPTED || job.selectedWorkerId === o.workerId;
+      const isSelf = user.role === Role.WORKER && o.workerId === user.sub;
+      const isAdmin = user.role === Role.ADMIN;
+      const canSeePhone = isOfferAccepted || isSelf || isAdmin;
+
       return {
         id: o.id,
         jobId: o.jobId,
@@ -426,7 +518,7 @@ export class OffersService {
               id: w.id,
               name: w.name,
               avatarUrl: w.avatarUrl,
-              phone: w.phone,
+              phone: canSeePhone ? w.phone : null,
               avgRating: r?._avg.rating !== null && r?._avg.rating !== undefined ? Number(r._avg.rating.toFixed(1)) : 0,
               ratingCount: r?._count._all ?? 0,
               completedJobs: c?._count._all ?? 0,
@@ -445,10 +537,22 @@ export class OffersService {
         distanceKm,
         status: o.status,
         negotiationRound: o.negotiationRound,
+        maxNegotiationRounds,
+        minimumVisitFee,
         lockedAt: o.lockedAt,
         createdAt: o.createdAt,
+        expiresAt:
+          (job?.urgency === 'EMERGENCY' || job?.urgency === 'HIGH' || !job?.preferredVisitTime) && o.createdAt
+            ? new Date(new Date(o.createdAt).getTime() + 50000).toISOString()
+            : undefined,
+        serverTime: new Date().toISOString(),
       };
     });
+
+    if (query?.page != null || query?.limit != null) {
+      return toPageResult(items, total, page, limit);
+    }
+    return items;
   }
 
   async getMyOffers(workerId: string, query: OfferListQueryDto) {
@@ -477,6 +581,8 @@ export class OffersService {
               area: true,
               city: true,
               status: true,
+              urgency: true,
+              preferredVisitTime: true,
               createdAt: true,
               category: { select: { name: true } },
             },
@@ -495,6 +601,11 @@ export class OffersService {
         status: o.status,
         negotiationRound: o.negotiationRound,
         createdAt: o.createdAt,
+        expiresAt:
+          (o.job?.urgency === 'EMERGENCY' || o.job?.urgency === 'HIGH' || !o.job?.preferredVisitTime) && o.createdAt
+            ? new Date(new Date(o.createdAt).getTime() + 50000).toISOString()
+            : undefined,
+        serverTime: new Date().toISOString(),
       })),
       total,
       page,
@@ -518,11 +629,22 @@ export class OffersService {
     if (job.customerId !== user.sub) {
       throw new ForbiddenException('Only the job owner can accept an offer');
     }
+
+    // AUDIT-011 / AUDIT-012: Ensure job is in an acceptable bidding state and not already assigned/completed/cancelled
+    if (!([JobStatus.OPEN, JobStatus.OFFERS_RECEIVED] as string[]).includes(job.status)) {
+      throw new BadRequestException(
+        `JOB_INVALID_STATE: cannot accept offers on a job in status ${job.status}`,
+      );
+    }
+    if (job.selectedWorkerId) {
+      throw new ConflictException('Job already has an assigned technician');
+    }
+
     const offer = await this.prisma.jobOffer.findFirst({ where: { id: offerId, jobId } });
     if (!offer) {
       throw new NotFoundException('Offer not found for this job');
     }
-    if (!['PENDING', 'VIEWING', 'COUNTERED', 'REJECTED'].includes(offer.status)) {
+    if (!['PENDING', 'VIEWING', 'COUNTERED', 'REJECTED', 'ARCHIVED'].includes(offer.status)) {
       throw new BadRequestException(
         'OFFER_INVALID_STATE: offer cannot be accepted in its current state',
       );
@@ -538,40 +660,71 @@ export class OffersService {
 
     const acceptedWorkerId = offer.workerId;
     const { acceptedOffer, rejectedOffers } = await this.prisma.$transaction(async (tx) => {
-      const [acceptedOffer, rejectedOffers] = await Promise.all([
-        tx.jobOffer.update({
-          where: { id: offerId },
-          data: { status: 'ACCEPTED', lockedAt: new Date() },
-        }),
-        tx.jobOffer.findMany({
-          where: { jobId, NOT: { id: offerId }, status: { in: ['PENDING', 'VIEWING', 'COUNTERED'] } },
-          select: { id: true, workerId: true },
-        }),
-      ]);
+      // 1. Atomic Precondition (AUDIT-012 Concurrency Guard):
+      // Only assign if the job is still in an open state and no other worker has been assigned.
+      const jobAssignment = await tx.serviceRequest.updateMany({
+        where: {
+          id: jobId,
+          status: { in: [JobStatus.OPEN, JobStatus.OFFERS_RECEIVED] },
+          selectedWorkerId: null,
+        },
+        data: {
+          status: 'WORKER_ASSIGNED',
+          selectedWorkerId: acceptedWorkerId,
+          lockedVisitCharge: finalCharge,
+        },
+      });
 
-      await Promise.all([
-        tx.jobOffer.updateMany({
-          where: { jobId, NOT: { id: offerId }, status: { in: ['PENDING', 'VIEWING', 'COUNTERED'] } },
-          data: { status: 'REJECTED' },
-        }),
-        tx.serviceRequest.update({
-          where: { id: jobId },
-          data: {
-            status: 'WORKER_ASSIGNED',
-            selectedWorkerId: acceptedWorkerId,
-            lockedVisitCharge: finalCharge,
+      if (jobAssignment.count === 0) {
+        throw new ConflictException(
+          'This job has already been assigned to another technician or is no longer open for offers.',
+        );
+      }
+
+      // 2. Atomically accept the selected offer
+      const offerAcceptance = await tx.jobOffer.updateMany({
+        where: {
+          id: offerId,
+          jobId,
+          status: { in: ['PENDING', 'VIEWING', 'COUNTERED', 'REJECTED', 'ARCHIVED'] },
+        },
+        data: { status: 'ACCEPTED', lockedAt: new Date() },
+      });
+
+      if (offerAcceptance.count === 0) {
+        throw new ConflictException('This offer is no longer available to accept.');
+      }
+
+      // 3. Archive all other competitor offers for this job (AUDIT-013)
+      const rejectedOffers = await tx.jobOffer.findMany({
+        where: { jobId, NOT: { id: offerId }, status: { in: ['PENDING', 'VIEWING', 'COUNTERED'] } },
+        select: { id: true, workerId: true },
+      });
+
+      if (rejectedOffers.length > 0) {
+        await tx.jobOffer.updateMany({
+          where: {
+            id: { in: rejectedOffers.map((o) => o.id) },
           },
-        }),
-        tx.visit.create({
-          data: {
-            jobId,
-            workerId: acceptedWorkerId,
-            offerId,
-            scheduledDate: job.preferredVisitTime ?? new Date(),
-            status: 'SCHEDULED',
-          },
-        }),
-      ]);
+          data: { status: 'ARCHIVED' },
+        });
+      }
+
+      // 4. Create the scheduled visit
+      await tx.visit.create({
+        data: {
+          jobId,
+          workerId: acceptedWorkerId,
+          offerId,
+          scheduledDate: job.preferredVisitTime ?? new Date(),
+          status: 'SCHEDULED',
+        },
+      });
+
+      const acceptedOffer = await tx.jobOffer.findUnique({
+        where: { id: offerId },
+      });
+
       return { acceptedOffer, rejectedOffers };
     });
 
@@ -659,16 +812,43 @@ export class OffersService {
       throw new ForbiddenException('Role not authorised to negotiate');
     }
 
+    const { maxNegotiationRounds, minimumVisitFee, categoryName } = await this.getCategoryRulesForJob(jobId, job.categoryId);
+
     const nextRound = offer.negotiationRound + 1;
-    if (nextRound > this.maxRounds) {
+    if (nextRound > maxNegotiationRounds) {
       throw new BadRequestException(
-        `MAX_NEGOTIATION_ROUNDS_EXCEEDED: maximum ${this.maxRounds} counter rounds`,
+        `MAX_NEGOTIATION_ROUNDS_EXCEEDED: maximum ${maxNegotiationRounds} counter rounds`,
+      );
+    }
+
+    // Strict Turn Alternation (AUDIT-029):
+    // 1. Initial bid is created by the worker, so the first counter must come from the customer.
+    // 2. Subsequent counters must strictly alternate parties; consecutive counters by the same user are forbidden.
+    const historyEntries = Array.isArray(offer.negotiationHistory)
+      ? (offer.negotiationHistory as NegotiationEntry[])
+      : [];
+    const lastEntry = historyEntries.length > 0 ? historyEntries[historyEntries.length - 1] : null;
+
+    if (!lastEntry && by === 'worker') {
+      throw new BadRequestException(
+        'CONSECUTIVE_COUNTER_NOT_ALLOWED: You cannot counter your own initial offer. Awaiting customer response.',
+      );
+    }
+
+    if (lastEntry && lastEntry.by === by) {
+      throw new BadRequestException(
+        `CONSECUTIVE_COUNTER_NOT_ALLOWED: You cannot counter consecutively. Awaiting response from ${by === 'customer' ? 'worker' : 'customer'}.`,
       );
     }
 
     const visitCharge = dto.visitCharge ?? dto.counterAmount ?? dto.counterPrice;
     if (visitCharge == null || visitCharge < 0) {
       throw new BadRequestException('INVALID_COUNTER_PRICE: counter price must be a positive number');
+    }
+    if (minimumVisitFee > 0 && visitCharge < minimumVisitFee) {
+      throw new BadRequestException(
+        `MINIMUM_VISIT_FEE_NOT_MET: Minimum visit charge for ${categoryName ?? 'this service'} is Rs. ${minimumVisitFee}`,
+      );
     }
     const note = dto.note ?? dto.message ?? null;
 
@@ -783,7 +963,6 @@ export class OffersService {
       where: { id: offerId },
       data: { status: 'WITHDRAWN' },
     });
-    this.eventBus.emit('offer.rejected', { offerId, jobId: offer.jobId, workerId: offer.workerId });
 
     const job = await this.prisma.serviceRequest.findUnique({ where: { id: offer.jobId } });
     if (job) {
