@@ -7,6 +7,7 @@ import { formatRs } from "@/lib/design-tokens";
 import { sanitizePriceInput, parsePriceOrZero } from "@/lib/money";
 import { workerStore, useWorkerJobs } from "@/stores/worker-jobs-store";
 import { compressImage } from "@/lib/image-compression";
+import { http } from "@/lib/api-client";
 import {
   Navigation,
   MapPin,
@@ -39,33 +40,38 @@ export function VisitActionFlow({ job, offer }: VisitActionFlowProps) {
   const [formError, setFormError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
+
   const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
 
-    for (let i = 0; i < files.length; i++) {
-      const file = files[i];
-      if (!file.type.startsWith("image/")) continue;
-      try {
+    setIsUploadingPhoto(true);
+    setFormError(null);
+    try {
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        if (!file.type.startsWith("image/")) continue;
         const compressed = await compressImage(file, { maxWidth: 1280, maxHeight: 1280, quality: 0.8 });
-        const reader = new FileReader();
-        reader.onload = (event) => {
-          if (event.target?.result) {
-            setInspectionPhotos((prev) => [...prev, event.target!.result as string]);
+        const formData = new FormData();
+        formData.append("file", compressed || file);
+        try {
+          const res = await http.upload<{ url?: string; key?: string }>("/uploads/inspection-photo", formData);
+          const photoUrl = res?.url || (res?.key ? `/uploads/${res.key}` : null);
+          if (photoUrl) {
+            setInspectionPhotos((prev) => [...prev, photoUrl]);
+          } else {
+            setFormError("Photo upload did not return a valid URL. Please try again.");
           }
-        };
-        reader.readAsDataURL(compressed);
-      } catch {
-        const reader = new FileReader();
-        reader.onload = (event) => {
-          if (event.target?.result) {
-            setInspectionPhotos((prev) => [...prev, event.target!.result as string]);
-          }
-        };
-        reader.readAsDataURL(file);
+        } catch (uploadErr) {
+          console.error("Failed to upload inspection photo:", uploadErr);
+          setFormError("Failed to upload photo. Please check your connection and retry.");
+        }
       }
+    } finally {
+      setIsUploadingPhoto(false);
+      e.target.value = "";
     }
-    e.target.value = "";
   };
 
   // Wallet top-up warning
