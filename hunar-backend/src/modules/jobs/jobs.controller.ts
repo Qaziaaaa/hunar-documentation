@@ -23,6 +23,14 @@ export class JobsController {
     return this.jobsService.createJob(user.sub, dto);
   }
 
+  @Get()
+  getJobs(@CurrentUser() user: JwtPayload, @Query() query: any) {
+    if (user.role === Role.WORKER) {
+      return this.jobsService.getAvailableJobs(user, query);
+    }
+    return this.jobsService.getCustomerJobs(user.sub, query);
+  }
+
   @Get('available')
   @Roles(Role.WORKER)
   getAvailable(@CurrentUser() user: JwtPayload, @Query() query: AvailableJobsQueryDto) {
