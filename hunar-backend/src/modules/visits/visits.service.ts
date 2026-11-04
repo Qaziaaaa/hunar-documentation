@@ -325,7 +325,7 @@ export class VisitsService {
     return updated;
   }
 
-  async workerArrived(visitId: string, user: JwtPayload, requestedOtp?: string) {
+  async workerArrived(visitId: string, user: JwtPayload) {
     const visit = await this.assertVisitAccess(visitId, user);
     if (visit.status === 'CANCELLED' || visit.status === 'NO_SHOW') {
       throw new BadRequestException(
@@ -341,17 +341,12 @@ export class VisitsService {
       throw new ForbiddenException('Only the assigned worker can mark arrival');
     }
 
-    // Determine OTP immediately (from cache, worker client, or generator)
+    // Determine OTP strictly from cache or cryptographically secure generator (no worker-supplied OTPs per AUDIT-006)
     const visitOtpKey = `${VISIT_ARRIVAL_OTP_PREFIX}${visit.id}`;
     const jobOtpKey = `${JOB_ARRIVAL_OTP_PREFIX}${visit.jobId}`;
 
-    const cleanRequestedOtp = requestedOtp?.replace(/\D/g, '').trim();
     const cachedOtp = await this.redis.get(visitOtpKey);
-    const otp =
-      cachedOtp ||
-      (cleanRequestedOtp && cleanRequestedOtp.length === 4
-        ? cleanRequestedOtp
-        : randomInt(1000, 10000).toString());
+    const otp = cachedOtp || randomInt(1000, 10000).toString();
 
     // 1. Immediately store OTP in Redis so verification endpoints can match it
     if (!cachedOtp) {
@@ -419,7 +414,25 @@ export class VisitsService {
   }
 
   async verifyArrivalOtp(visitOrJobId: string, user: JwtPayload, submittedOtp: string) {
+    if (user.role !== Role.CUSTOMER) {
+      throw new ForbiddenException('Only the customer who booked this service can verify the arrival OTP.');
+    }
+
     const visit = await this.assertVisitAccess(visitOrJobId, user);
+
+    if (visit.job.customerId !== user.sub) {
+      throw new ForbiddenException('You are not authorized to verify this visit.');
+    }
+
+    const attemptsKey = `${VISIT_ARRIVAL_OTP_PREFIX}attempts:${visit.id}`;
+    const rawAttempts = await this.redis.get(attemptsKey);
+    const attempts = Number(rawAttempts || 0);
+
+    if (attempts >= 5) {
+      throw new BadRequestException(
+        'ARRIVAL_OTP_LOCKED: Too many incorrect verification attempts. Please contact customer support.',
+      );
+    }
 
     const cleanInput = submittedOtp?.replace(/\D/g, '').trim();
     if (!cleanInput || cleanInput.length < 4) {
@@ -442,13 +455,21 @@ export class VisitsService {
     }
 
     if (cleanInput !== expectedOtp) {
-      throw new BadRequestException('ARRIVAL_OTP_INVALID: The OTP entered is incorrect.');
+      const newAttempts = attempts + 1;
+      await this.redis.set(attemptsKey, String(newAttempts), VISIT_ARRIVAL_OTP_TTL_SECONDS);
+      const remaining = 5 - newAttempts;
+      throw new BadRequestException(
+        remaining > 0
+          ? `ARRIVAL_OTP_INVALID: The OTP entered is incorrect. ${remaining} attempt(s) remaining.`
+          : 'ARRIVAL_OTP_LOCKED: Too many incorrect verification attempts. Please contact customer support.',
+      );
     }
 
     // OTP is valid! Remove Redis keys asynchronously
     Promise.all([
       this.redis.del(visitOtpKey),
       this.redis.del(jobOtpKey),
+      this.redis.del(attemptsKey),
     ]).catch(() => 0);
 
     // Advance DB status concurrently
@@ -512,6 +533,11 @@ export class VisitsService {
     }
     if (user.role !== Role.WORKER) {
       throw new ForbiddenException('Only the assigned worker can submit the inspection');
+    }
+    if (dto.inspectionPhotos && dto.inspectionPhotos.some((p) => typeof p === 'string' && p.startsWith('data:'))) {
+      throw new BadRequestException(
+        'Direct Base64 photo storage is not permitted. Please upload inspection photos via /uploads/inspection-photo.',
+      );
     }
 
 
