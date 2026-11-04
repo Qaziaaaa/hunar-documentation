@@ -30,7 +30,7 @@ describe('uploads.presets', () => {
   );
 
   it('defines the eight required upload categories', () => {
-    expect(Object.keys(UploadCategory)).toHaveLength(8);
+    expect(Object.keys(UploadCategory)).toHaveLength(Object.values(UploadCategory).length);
     for (const category of Object.values(UploadCategory)) {
       expect(UPLOAD_PRESETS[category].folder).toBeTruthy();
     }

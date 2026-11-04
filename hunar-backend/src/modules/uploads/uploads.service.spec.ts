@@ -28,13 +28,18 @@ function makeProcessor(): jest.Mocked<ImageProcessor> {
 }
 
 function makeFile(overrides: Partial<Express.Multer.File> = {}): Express.Multer.File {
+  const buf = Buffer.alloc(400);
+  buf[0] = 0xff;
+  buf[1] = 0xd8;
+  buf[2] = 0xff;
+  buf[3] = 0xe0;
   return {
     fieldname: 'file',
     originalname: 'photo.jpg',
     encoding: '7bit',
     mimetype: 'image/jpeg',
     size: 400,
-    buffer: Buffer.alloc(400),
+    buffer: buf,
     ...overrides,
   } as Express.Multer.File;
 }
@@ -65,7 +70,8 @@ describe('UploadsService', () => {
       ['inspection photo', 'uploadInspectionPhoto', 'inspection-photos'],
       ['chat image', 'uploadChatImage', 'chat-images'],
     ])('stores a compressed %s under its folder', async (_name, method, folder) => {
-      const result = await (service as any)[method]('w1', makeFile());
+      const file = makeFile();
+      const result = await (service as any)[method]('w1', file);
 
       expect(result.mimeType).toBe('image/jpeg');
       expect(result.width).toBe(800);
@@ -85,7 +91,8 @@ describe('UploadsService', () => {
       ['worker document', 'uploadWorkerDocument', 'worker-documents'],
       ['CNIC document', 'uploadCnicDocument', 'cnic-documents'],
     ])('stores original + compressed for a %s', async (_name, method, folder) => {
-      const result = await (service as any)[method]('w1', makeFile());
+      const file = makeFile();
+      const result = await (service as any)[method]('w1', file);
 
       expect(isDocumentResult(result)).toBe(true);
       expect(result.original.key.startsWith(`${folder}/w1/`)).toBe(true);
@@ -98,14 +105,23 @@ describe('UploadsService', () => {
       expect(storage.put).toHaveBeenCalledTimes(2);
       const [originalCall, compressedCall] = storage.put.mock.calls;
       expect(originalCall[0]).toBe(result.original.key);
-      expect(originalCall[1]).toEqual(Buffer.alloc(400));
+      expect(originalCall[1]).toEqual(file.buffer);
       expect(compressedCall[0]).toBe(result.compressed.key);
     });
 
     it('keeps the uploaded file extension on the original variant', async () => {
+      const pngBuf = Buffer.alloc(400);
+      pngBuf[0] = 0x89;
+      pngBuf[1] = 0x50;
+      pngBuf[2] = 0x4e;
+      pngBuf[3] = 0x47;
+      pngBuf[4] = 0x0d;
+      pngBuf[5] = 0x0a;
+      pngBuf[6] = 0x1a;
+      pngBuf[7] = 0x0a;
       const result = await (service as any).uploadWorkerDocument(
         'w1',
-        makeFile({ mimetype: 'image/png' }),
+        makeFile({ mimetype: 'image/png', buffer: pngBuf }),
       );
       expect(result.original.key.endsWith('.png')).toBe(true);
       expect(result.original.mimeType).toBe('image/png');
@@ -174,4 +190,76 @@ describe('UploadsService', () => {
       expect(storage.delete).not.toHaveBeenCalled();
     });
   });
+
+    describe('magic byte signature validation (AUDIT-024)', () => {
+      it('rejects an upload when binary magic numbers do not match any recognized signature', async () => {
+        const fakeFile = makeFile({
+          originalname: 'malicious.php.jpg',
+          mimetype: 'image/jpeg',
+          buffer: Buffer.from('<?php echo "pwned"; ?>'),
+        });
+
+        await expect(service.uploadProfilePhoto('user-1', fakeFile)).rejects.toThrow(
+          /FILE_SIGNATURE_INVALID: file contents do not match any recognized binary signature/,
+        );
+      });
+
+      it('rejects an upload when magic bytes indicate a different unsupported MIME type for the category', async () => {
+        // Valid WebM audio buffer: 1A 45 DF A3
+        const webmAudio = Buffer.alloc(400);
+        webmAudio[0] = 0x1a;
+        webmAudio[1] = 0x45;
+        webmAudio[2] = 0xdf;
+        webmAudio[3] = 0xa3;
+
+        const mismatchedFile = makeFile({
+          originalname: 'audio-as-photo.jpg',
+          mimetype: 'image/jpeg',
+          buffer: webmAudio,
+        });
+
+        await expect(service.uploadProfilePhoto('user-1', mismatchedFile)).rejects.toThrow(
+          /FILE_SIGNATURE_MISMATCH: file signature detected as "audio\/webm"/,
+        );
+      });
+
+      it('successfully accepts valid PNG magic bytes', async () => {
+        const pngBuf = Buffer.alloc(400);
+        pngBuf[0] = 0x89;
+        pngBuf[1] = 0x50;
+        pngBuf[2] = 0x4e;
+        pngBuf[3] = 0x47;
+        pngBuf[4] = 0x0d;
+        pngBuf[5] = 0x0a;
+        pngBuf[6] = 0x1a;
+        pngBuf[7] = 0x0a;
+
+        const pngFile = makeFile({
+          originalname: 'valid.png',
+          mimetype: 'image/png',
+          buffer: pngBuf,
+        });
+
+        const res = await service.uploadJobPhoto('user-1', pngFile);
+        expect(res.key).toContain('job-photos/');
+      });
+
+      it('successfully accepts valid WebM magic bytes for voice notes', async () => {
+        const webmBuf = Buffer.alloc(400);
+        webmBuf[0] = 0x1a;
+        webmBuf[1] = 0x45;
+        webmBuf[2] = 0xdf;
+        webmBuf[3] = 0xa3;
+
+        const voiceFile = makeFile({
+          originalname: 'voice.webm',
+          mimetype: 'audio/webm',
+          buffer: webmBuf,
+        });
+
+        const res = await service.uploadVoiceNote('user-1', voiceFile);
+        expect(res.key).toContain('voice-notes/');
+      });
+    });
+
 });
