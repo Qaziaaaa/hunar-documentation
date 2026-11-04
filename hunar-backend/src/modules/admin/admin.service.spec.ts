@@ -1136,3 +1136,115 @@ describe('AdminService.getCommissionSnapshot (Task 29)', () => {
     expect(result.meta.totalPages).toBe(0);
   });
 });
+describe('AdminService.processWithdrawal (AUDIT-010)', () => {
+  const actor = { sub: 'admin-1', phone: '+923000000099', role: Role.ADMIN };
+
+  it('releases heldBalance upon approval without double-deducting available balance', async () => {
+    const withdrawal = {
+      id: 'w-req-1',
+      workerId: 'worker-101',
+      amount: 5000,
+      status: 'PENDING',
+    };
+
+    const wallet = {
+      userId: 'worker-101',
+      balance: 1000, // Available balance was already decremented at request time
+      heldBalance: 5000, // Amount was held at request time
+    };
+
+    const prismaMock: any = {
+      withdrawal: {
+        findUnique: jest.fn().mockResolvedValue(withdrawal),
+        update: jest.fn().mockImplementation(async ({ data }) => ({ ...withdrawal, ...data })),
+      },
+      workerWallet: {
+        findUnique: jest.fn().mockResolvedValue(wallet),
+        update: jest.fn().mockImplementation(async ({ data }) => ({ ...wallet, ...data })),
+      },
+      $transaction: jest.fn(async (callback) => callback(prismaMock)),
+    };
+    const auditMock = { record: jest.fn() } as unknown as AuditService;
+    const realtimeMock = { emitToRoom: jest.fn() } as any;
+    const service = new AdminService(prismaMock, auditMock, undefined, realtimeMock);
+
+    const result = await service.processWithdrawal('w-req-1', actor, 'approve', 'Approved by finance');
+
+    expect(result.status).toBe('PROCESSED');
+    // Verify heldBalance is reduced from 5000 to 0
+    expect(prismaMock.workerWallet.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { userId: 'worker-101' },
+        data: { heldBalance: expect.any(Object) },
+      }),
+    );
+    expect(auditMock.record).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: 'WITHDRAWAL_APPROVED',
+        targetId: 'w-req-1',
+      }),
+      expect.anything(),
+    );
+  });
+
+  it('refunds heldBalance back into available balance upon rejection', async () => {
+    const withdrawal = {
+      id: 'w-req-2',
+      workerId: 'worker-101',
+      amount: 5000,
+      status: 'PENDING',
+    };
+
+    const wallet = {
+      userId: 'worker-101',
+      balance: 0,
+      heldBalance: 5000,
+    };
+
+    const prismaMock: any = {
+      withdrawal: {
+        findUnique: jest.fn().mockResolvedValue(withdrawal),
+        update: jest.fn().mockImplementation(async ({ data }) => ({ ...withdrawal, ...data })),
+      },
+      workerWallet: {
+        findUnique: jest.fn().mockResolvedValue(wallet),
+        update: jest.fn().mockImplementation(async ({ data }) => ({ ...wallet, ...data })),
+      },
+      walletLedger: {
+        create: jest.fn().mockResolvedValue({ id: 'ledger-refund-1' }),
+      },
+      $transaction: jest.fn(async (callback) => callback(prismaMock)),
+    };
+    const auditMock = { record: jest.fn() } as unknown as AuditService;
+    const service = new AdminService(prismaMock, auditMock);
+
+    const result = await service.processWithdrawal('w-req-2', actor, 'reject', 'Invalid bank details');
+
+    expect(result.status).toBe('REJECTED');
+    // Verify balance is restored and heldBalance is released
+    expect(prismaMock.workerWallet.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { userId: 'worker-101' },
+        data: {
+          balance: expect.any(Object),
+          heldBalance: expect.any(Object),
+        },
+      }),
+    );
+    expect(prismaMock.walletLedger.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          type: 'WITHDRAWAL',
+          referenceType: 'withdrawal',
+          referenceId: 'w-req-2',
+        }),
+      }),
+    );
+    expect(auditMock.record).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: 'WITHDRAWAL_REJECTED',
+        targetId: 'w-req-2',
+      }),
+    );
+  });
+});
