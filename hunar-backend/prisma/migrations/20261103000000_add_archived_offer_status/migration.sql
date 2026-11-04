@@ -1,0 +1,3 @@
+-- AlterEnum
+ALTER TYPE "OfferStatus" ADD VALUE IF NOT EXISTS 'ARCHIVED';
+
