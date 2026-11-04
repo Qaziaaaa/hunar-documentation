@@ -100,7 +100,8 @@ export async function getWalletSummary(): Promise<WalletSummary> {
   return {
     currentBalance: Number(snapshot.balance),
     totalTopUps: Number(earnings.topupsCredited ?? 0),
-    totalDeductions: Number(earnings.commissionsPaid + earnings.commissionsHeld),
+    heldBalance: Number(snapshot.heldBalance ?? 0),
+    totalDeductions: Number(earnings.commissionsPaid),
     totalTransactions: earnings.records?.length ?? 0,
   };
 }
