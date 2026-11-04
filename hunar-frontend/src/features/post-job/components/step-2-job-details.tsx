@@ -23,7 +23,6 @@ import type { PostJobData } from "../types";
 import {
   fetchServiceCategories,
   type BackendCategory,
-  CATEGORY_ID_MAP,
 } from "../api/post-job-api";
 import { VoiceNoteRecorder } from "./voice-note-recorder";
 import { compressImage } from "@/lib/image-compression";
@@ -86,7 +85,6 @@ export function Step2JobDetails({
   const liveCategory = useMemo(() => {
     if (!backendCategories?.length || !data.category) return null;
     const catId = data.category.toLowerCase().trim();
-    const mappedSeedId = CATEGORY_ID_MAP[catId]?.toLowerCase();
 
     return (
       backendCategories.find((b) => {
@@ -94,7 +92,6 @@ export function Step2JobDetails({
         const bName = b.name.toLowerCase();
         return (
           bId === catId ||
-          (mappedSeedId && bId === mappedSeedId) ||
           bName === catId ||
           bName.replace(/[^a-z0-9]/g, "") === catId.replace(/[^a-z0-9]/g, "")
         );

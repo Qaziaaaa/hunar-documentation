@@ -30,22 +30,13 @@ import {
 } from "@/features/customer-jobs/api/customer-jobs-api";
 import type { WorkerOffer } from "@/features/customer-jobs/types";
 import { getSocket } from "@/lib/socket";
+import { getOfferRemainingSeconds, URGENT_OFFER_TTL_SECONDS } from "@/lib/urgent-offer";
 import type { PostJobData } from "../types";
 
 export interface ImmediateJobSearchingScreenProps {
   jobId: string;
   data: PostJobData;
   onExit?: () => void;
-}
-
-const URGENT_OFFER_TTL_SECONDS = 50;
-
-function getOfferRemainingSeconds(offer: WorkerOffer): number {
-  if (!offer.createdAt) return 0;
-  const createdMs = new Date(offer.createdAt).getTime();
-  if (isNaN(createdMs) || createdMs <= 0) return 0;
-  const elapsedSeconds = (Date.now() - createdMs) / 1000;
-  return Math.max(0, Math.ceil(URGENT_OFFER_TTL_SECONDS - elapsedSeconds));
 }
 
 export function ImmediateJobSearchingScreen({

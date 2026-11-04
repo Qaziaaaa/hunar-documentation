@@ -298,6 +298,46 @@ export function PostJobWizard() {
     }
   }, [categoryParam, searchParam, categoryIdParam, categoryNameParam, shouldResumeReview]);
 
+  // Dynamically resolve category slug to authentic database UUID when live categories load
+  useEffect(() => {
+    let mounted = true;
+    fetchServiceCategories().then((cats) => {
+      if (!mounted || !cats || cats.length === 0) return;
+
+      setFormData((prev) => {
+        if (!prev.category) return prev;
+        const currentCat = prev.category.toLowerCase().trim();
+        // Check if prev.category is already a valid backend category ID
+        const directMatch = cats.find((c) => c.id.toLowerCase() === currentCat);
+        if (directMatch) return prev; // already exact ID
+
+        // Match by slug or name
+        const cleanCurrent = currentCat.replace(/[^a-z0-9]/g, "");
+        const nameMatch = cats.find(
+          (c) =>
+            c.name.toLowerCase() === currentCat ||
+            c.name.toLowerCase().replace(/[^a-z0-9]/g, "") === cleanCurrent ||
+            (c.nameUrdu && c.nameUrdu.trim().toLowerCase() === currentCat)
+        );
+
+        if (nameMatch) {
+          return {
+            ...prev,
+            category: nameMatch.id,
+            suggestedVisitFee:
+              nameMatch.defaultVisitCharge != null && nameMatch.defaultVisitCharge > 0
+                ? nameMatch.defaultVisitCharge
+                : prev.suggestedVisitFee,
+          };
+        }
+        return prev;
+      });
+    });
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
   // Form Field Updaters
   const handleUpdateField = <K extends keyof PostJobData>(
     field: K,

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   AlertCircle,
   ArrowLeft,
@@ -18,6 +18,7 @@ import { useLocale } from "next-intl";
 import { formatJobDate } from "@/lib/format";
 import { Link } from "@/i18n/navigation";
 import { CATEGORY_OPTIONS } from "../data/categories";
+import { fetchServiceCategories, BackendCategory } from "../api/post-job-api";
 import type { PostJobData, PostJobStep } from "../types";
 import { buildPostJobSignInHref } from "../lib/return-url";
 import { VoiceNoteBubblePlayer } from "./voice-note-recorder";
@@ -41,9 +42,50 @@ export function Step4ReviewPost({
 }: Step4ReviewPostProps) {
   const locale = useLocale();
   const isUrdu = locale === "ur";
-  const selectedCategory = CATEGORY_OPTIONS.find(
-    (c) => c.id === data.category
-  );
+  const [backendCategories, setBackendCategories] = useState<BackendCategory[]>([]);
+
+  useEffect(() => {
+    let mounted = true;
+    fetchServiceCategories().then((cats) => {
+      if (mounted && cats.length > 0) setBackendCategories(cats);
+    });
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  const liveCategory = useMemo(() => {
+    if (!backendCategories.length || !data.category) return null;
+    const catId = data.category.toLowerCase().trim();
+    return (
+      backendCategories.find(
+        (b) =>
+          b.id.toLowerCase() === catId ||
+          b.name.toLowerCase() === catId ||
+          b.name.toLowerCase().replace(/[^a-z0-9]/g, "") === catId.replace(/[^a-z0-9]/g, "")
+      ) ?? null
+    );
+  }, [backendCategories, data.category]);
+
+  const selectedCategory = useMemo(() => {
+    const directMatch = CATEGORY_OPTIONS.find((c) => c.id === data.category);
+    if (directMatch) return directMatch;
+    if (liveCategory) {
+      const preset = CATEGORY_OPTIONS.find(
+        (c) => c.name.toLowerCase() === liveCategory.name.toLowerCase()
+      );
+      return {
+        ...(preset || {}),
+        id: liveCategory.id,
+        name: isUrdu && liveCategory.nameUrdu ? liveCategory.nameUrdu : liveCategory.name,
+        iconBg: preset?.iconBg || "bg-[#0F8B8D]/10",
+        iconColor: preset?.iconColor || "text-[#0F8B8D]",
+        icon: preset?.icon || Layers,
+      };
+    }
+    return undefined;
+  }, [data.category, liveCategory, isUrdu]);
+
   const Icon = selectedCategory?.icon || Layers;
 
   return (

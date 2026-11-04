@@ -132,9 +132,14 @@ export function Step3LocationSchedule({
   }, []);
 
   // Ensure default scheduleType exists (default to asap for immediate simplicity)
+  // and auto-reset stale past dates if restored from previous session
   useEffect(() => {
+    const todayStr = toLocalDateString();
     if (!data.scheduleType) {
       onChange({ scheduleType: "asap" });
+    }
+    if (data.preferredDate && data.preferredDate < todayStr) {
+      onChange({ preferredDate: todayStr });
     }
   }, []);
 
@@ -335,8 +340,18 @@ export function Step3LocationSchedule({
     setSelectedAddressId(null);
   };
 
-  // Validation
-  const hasValidLocation = Boolean(data.address?.trim() && data.area?.trim());
+  // Validation - exact coordinates are MANDATORY per AUDIT-005
+  const hasValidCoordinates =
+    typeof data.latitude === "number" &&
+    typeof data.longitude === "number" &&
+    !isNaN(data.latitude) &&
+    !isNaN(data.longitude) &&
+    data.latitude !== 0 &&
+    data.longitude !== 0;
+
+  const hasValidLocation = Boolean(
+    data.address?.trim() && data.area?.trim() && hasValidCoordinates
+  );
   const hasValidSchedule =
     data.scheduleType === "asap" ||
     (data.scheduleType === "scheduled" &&
@@ -362,9 +377,26 @@ export function Step3LocationSchedule({
       );
       return;
     }
+    if (!hasValidCoordinates) {
+      setError(
+        isUrdu
+          ? "کاریگر کی درست روانگی کے لیے درست لوکیشن کوآرڈینیٹس ضروری ہیں۔ براہ کرم 'موجودہ لوکیشن' استعمال کریں یا نیچے دیے گئے نقشے پر اپنی درست جگہ منتخب کریں۔"
+          : "Exact location coordinates are required for technician dispatch. Please use 'Use Current Location' (GPS) or select your location on the map."
+      );
+      return;
+    }
     if (data.scheduleType === "scheduled") {
+      const todayStr = toLocalDateString();
       if (!data.preferredDate) {
         setError(isUrdu ? "براہ کرم وزٹ کا دن چنیں۔" : "Please select a visit day.");
+        return;
+      }
+      if (data.preferredDate < todayStr) {
+        setError(
+          isUrdu
+            ? "منتخب کردہ تاریخ گزر چکی ہے۔ براہ کرم آج یا آئندہ تاریخ منتخب کریں۔"
+            : "Selected date is in the past. Please select today or an upcoming date."
+        );
         return;
       }
       if (!data.preferredTimeSlot) {
@@ -398,6 +430,22 @@ export function Step3LocationSchedule({
           );
           return;
         }
+        if (isSpecificTime) {
+          const [hStr, mStr] = (specificTimeInput || "").split(":");
+          const h = parseInt(hStr, 10);
+          const m = parseInt(mStr || "0", 10);
+          const now = new Date();
+          const targetTime = new Date();
+          targetTime.setHours(h, m, 0, 0);
+          if (targetTime.getTime() <= now.getTime()) {
+            setError(
+              isUrdu
+                ? "منتخب کردہ وقت گزر چکا ہے۔ براہ کرم آئندہ وقت درج کریں۔"
+                : "Selected time has already passed. Please select a future time."
+            );
+            return;
+          }
+        }
       }
     }
 
@@ -425,8 +473,8 @@ export function Step3LocationSchedule({
         area: data.area.trim(),
         city: data.city || "Peshawar",
         landmark: data.landmark?.trim() || "",
-        latitude: typeof data.latitude === "number" ? data.latitude : 34.0151,
-        longitude: typeof data.longitude === "number" ? data.longitude : 71.5249,
+        latitude: data.latitude as number,
+        longitude: data.longitude as number,
         isDefault: isFirst,
       };
 
@@ -899,6 +947,7 @@ export function Step3LocationSchedule({
                   </span>
                   <input
                     type="time"
+                    min={isSelectedDateToday ? `${String(new Date().getHours()).padStart(2, "0")}:${String(new Date().getMinutes()).padStart(2, "0")}` : undefined}
                     value={specificTimeInput}
                     onChange={(e) => handleSpecificTimeChange(e.target.value)}
                     className="px-3 py-1.5 bg-white border border-slate-300 rounded-xl text-xs font-bold text-[#123B5D] focus:outline-none focus:ring-2 focus:ring-[#0F8B8D]/30"
