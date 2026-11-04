@@ -170,11 +170,15 @@ export class UsersService {
     }
 
     let showVisitCharge = true;
+    let profileVisible = user.workerProfile ? user.workerProfile.isAvailable : true;
     if (user.workerProfile?.adminNote) {
       try {
         const parsed = JSON.parse(user.workerProfile.adminNote);
         if (typeof parsed.showVisitCharge === 'boolean') {
           showVisitCharge = parsed.showVisitCharge;
+        }
+        if (typeof parsed.profileVisible === 'boolean') {
+          profileVisible = parsed.profileVisible;
         }
       } catch {
         // Plain string admin note
@@ -182,7 +186,7 @@ export class UsersService {
     }
 
     return {
-      profileVisible: user.workerProfile ? user.workerProfile.isAvailable : true,
+      profileVisible,
       showVisitCharge,
     };
   }
@@ -212,9 +216,12 @@ export class UsersService {
       const updateData: any = {};
       if (dto.profileVisible !== undefined) {
         updateData.isAvailable = dto.profileVisible;
+        adminNoteObj.profileVisible = dto.profileVisible;
       }
       if (dto.showVisitCharge !== undefined) {
         adminNoteObj.showVisitCharge = dto.showVisitCharge;
+      }
+      if (Object.keys(adminNoteObj).length > 0) {
         updateData.adminNote = JSON.stringify(adminNoteObj);
       }
 

@@ -629,6 +629,47 @@ describe('WorkerProfileService', () => {
       const service = makeService(db);
       await expect(service.getPublicProfile('nobody')).rejects.toThrow();
     });
+
+    it('omits personal phone number on public profile (AUDIT-008)', async () => {
+      const db = makeDb();
+      const service = makeService(db);
+      addWorker(db, 'w-priv', { name: 'Zahid', phone: '+923001234567' });
+      await service.updateWorkerProfile('w-priv', { skills: ['cat-electric'] });
+
+      const card = await service.getPublicProfile('w-priv');
+      expect(card.phone).toBeNull();
+    });
+
+    it('throws NotFoundException when worker profile has profileVisible set to false (AUDIT-008)', async () => {
+      const db = makeDb();
+      const service = makeService(db);
+      addWorker(db, 'w-hidden', { name: 'Invisible Worker' });
+      await service.updateWorkerProfile('w-hidden', { skills: ['cat-electric'] });
+      db.workerProfiles.get('w-hidden').adminNote = JSON.stringify({ profileVisible: false });
+
+      await expect(service.getPublicProfile('w-hidden')).rejects.toThrow('Worker profile is not available');
+    });
+
+    it('fuzzes exact service area coordinates to 2 decimal places (AUDIT-008)', async () => {
+      const db = makeDb();
+      const service = makeService(db);
+      addWorker(db, 'w-geo', { name: 'Geo Worker' });
+      await service.updateWorkerProfile('w-geo', { skills: ['cat-electric'] });
+      await service.saveServiceAreas('w-geo', {
+        serviceAreas: [
+          {
+            label: 'Hayatabad Phase 3',
+            address: 'House 55, Street 12, Hayatabad',
+            latitude: 34.015234,
+            longitude: 71.524912,
+          },
+        ],
+      });
+
+      const card = await service.getPublicProfile('w-geo');
+      expect(card.serviceAreas[0].latitude).toBe(34.02);
+      expect(card.serviceAreas[0].longitude).toBe(71.52);
+    });
   });
 
   describe('toString helper: getWorkerProfileCompletion', () => {
