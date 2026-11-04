@@ -89,7 +89,7 @@ interface BackendPage<T> {
   limit: number;
 }
 
-function mapBackendJob(row: BackendJobRow): Job {
+export function mapBackendJob(row: BackendJobRow | any): Job {
   const createdAt = row.createdAt ?? row.postedTime ?? new Date().toISOString();
   return {
     id: row.id,
@@ -100,7 +100,12 @@ function mapBackendJob(row: BackendJobRow): Job {
       avatarUrl: row.customer.avatarUrl ?? undefined,
       rating: row.customer.rating != null ? Number(row.customer.rating) : undefined,
       reviewCount: row.customer.reviewCount != null ? Number(row.customer.reviewCount) : undefined,
-      totalOrders: row.customer.totalOrders != null ? Number(row.customer.totalOrders) : undefined,
+      totalOrders:
+        row.customer.totalOrders != null
+          ? Number(row.customer.totalOrders)
+          : (row as any).customerTotalOrders != null
+          ? Number((row as any).customerTotalOrders)
+          : undefined,
       isVerified: row.customer.isVerified ?? true,
     },
     categoryId: row.categoryId,
@@ -118,7 +123,8 @@ function mapBackendJob(row: BackendJobRow): Job {
     area: row.area ?? undefined,
     status: row.status as JobStatus,
     urgency: row.urgency as JobUrgency,
-    suggestedVisitCharge: row.suggestedVisitCharge ?? undefined,
+    suggestedVisitCharge:
+      row.suggestedVisitCharge != null ? Number(row.suggestedVisitCharge) : undefined,
     lockedVisitCharge: row.lockedVisitCharge ?? undefined,
     preferredVisitTime: row.preferredVisitTime ?? undefined,
     createdAt,

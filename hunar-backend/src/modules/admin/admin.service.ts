@@ -813,36 +813,24 @@ export class AdminService {
     if (action === 'approve') {
       const wallet = await this.prisma.workerWallet.findUnique({
         where: { userId: withdrawal.workerId },
-        select: { userId: true, balance: true },
+        select: { userId: true, balance: true, heldBalance: true },
       });
       if (!wallet) {
         throw new NotFoundException('Worker wallet not found');
       }
-      const balance = Number(wallet.balance);
       const amount = Number(withdrawal.amount);
-      if (balance < amount) {
-        throw new BadRequestException('Insufficient balance for withdrawal');
-      }
-      const balanceAfter = balance - amount;
+      const heldBalance = Number(wallet.heldBalance);
+      // Funds were already transferred from balance to heldBalance at withdrawal request time (AUDIT-010).
+      // On approval, release held money without deducting balance again.
+      const heldAfter = Math.max(0, Math.round((heldBalance - amount) * 100) / 100);
 
-      return this.prisma.$transaction(async (tx) => {
+      const updated = await this.prisma.$transaction(async (tx) => {
         await tx.workerWallet.update({
           where: { userId: wallet.userId },
-          data: { balance: new Prisma.Decimal(balanceAfter) },
+          data: { heldBalance: new Prisma.Decimal(heldAfter) },
         });
 
-        await tx.walletLedger.create({
-          data: {
-            user: { connect: { id: wallet.userId } },
-            type: 'WITHDRAWAL',
-            amount: new Prisma.Decimal(-amount),
-            balanceAfter: new Prisma.Decimal(balanceAfter),
-            note: 'Admin-approved withdrawal payout',
-            idempotencyKey: `withdrawal-${id}-${Date.now()}`,
-          },
-        });
-
-        const updated = await tx.withdrawal.update({
+        const res = await tx.withdrawal.update({
           where: { id },
           data: {
             status: 'PROCESSED',
@@ -874,40 +862,81 @@ export class AdminService {
           tx,
         );
 
-        return updated;
+        return res;
       });
+
+      this.emitWithdrawalAlert(
+        'approve',
+        id,
+        withdrawal.workerId,
+        Number(withdrawal.amount),
+        actor.sub,
+      );
+
+      return updated;
     }
 
-    this.emitWithdrawalAlert(
-      'approve',
-      id,
-      withdrawal.workerId,
-      Number(withdrawal.amount),
-      actor.sub,
-    );
-
-    const updated = await this.prisma.withdrawal.update({
-      where: { id },
-      data: { status: 'REJECTED', processedAt: new Date(), processedBy: actor.sub, note },
-      select: {
-        id: true,
-        workerId: true,
-        amount: true,
-        status: true,
-        processedAt: true,
-        processedBy: true,
-        note: true,
-      },
+    // On rejection, restore held money back to available balance (AUDIT-010)
+    const wallet = await this.prisma.workerWallet.findUnique({
+      where: { userId: withdrawal.workerId },
+      select: { userId: true, balance: true, heldBalance: true },
     });
+    const amount = Number(withdrawal.amount);
+    const balance = wallet ? Number(wallet.balance) : 0;
+    const heldBalance = wallet ? Number(wallet.heldBalance) : 0;
 
-    await this.audit.record({
-      actorId: actor.sub,
-      actorRole: actor.role,
-      action: 'WITHDRAWAL_REJECTED',
-      targetType: 'WITHDRAWAL',
-      targetId: id,
-      reason: note,
-      metadata: { workerId: withdrawal.workerId, amount: withdrawal.amount },
+    const balanceAfter = Math.round((balance + amount) * 100) / 100;
+    const heldAfter = Math.max(0, Math.round((heldBalance - amount) * 100) / 100);
+
+    const updated = await this.prisma.$transaction(async (tx) => {
+      if (wallet) {
+        await tx.workerWallet.update({
+          where: { userId: wallet.userId },
+          data: {
+            balance: new Prisma.Decimal(balanceAfter),
+            heldBalance: new Prisma.Decimal(heldAfter),
+          },
+        });
+
+        await tx.walletLedger.create({
+          data: {
+            user: { connect: { id: wallet.userId } },
+            type: 'WITHDRAWAL',
+            amount: new Prisma.Decimal(amount),
+            balanceAfter: new Prisma.Decimal(balanceAfter),
+            note: `Withdrawal request #${id} rejected by admin - funds refunded to balance`,
+            idempotencyKey: `withdrawal-refund-${id}`,
+            referenceType: 'withdrawal',
+            referenceId: id,
+          },
+        });
+      }
+
+      const res = await tx.withdrawal.update({
+        where: { id },
+        data: { status: 'REJECTED', processedAt: new Date(), processedBy: actor.sub, note },
+        select: {
+          id: true,
+          workerId: true,
+          amount: true,
+          status: true,
+          processedAt: true,
+          processedBy: true,
+          note: true,
+        },
+      });
+
+      await this.audit.record({
+        actorId: actor.sub,
+        actorRole: actor.role,
+        action: 'WITHDRAWAL_REJECTED',
+        targetType: 'WITHDRAWAL',
+        targetId: id,
+        reason: note,
+        metadata: { workerId: withdrawal.workerId, amount: withdrawal.amount },
+      });
+
+      return res;
     });
 
     this.emitWithdrawalAlert(
@@ -930,14 +959,14 @@ export class AdminService {
   ): void {
     const adminEvent =
       action === 'approve' ? ADMIN_EVENTS.withdrawalProcessed : ADMIN_EVENTS.withdrawalRejected;
-    this.realtime.emitToRoom(ADMIN_ROOM, adminEvent, {
+    this.realtime?.emitToRoom(ADMIN_ROOM, adminEvent, {
       withdrawalId,
       workerId,
       amount,
       processedBy: actorId,
       timestamp: new Date(),
     });
-    this.realtime.emitToRoom(ADMIN_ROOM, ADMIN_EVENTS.newAlert, {
+    this.realtime?.emitToRoom(ADMIN_ROOM, ADMIN_EVENTS.newAlert, {
       type: 'withdrawal',
       event: adminEvent,
       withdrawalId,
@@ -2509,6 +2538,7 @@ export class AdminService {
                   'VISIT_IN_PROGRESS',
                   'INSPECTION_DONE',
                   'REPAIR_NEGOTIATING',
+                  'REPAIR_DECLINED',
                   'REPAIR_APPROVED',
                   'IN_PROGRESS',
                 ],

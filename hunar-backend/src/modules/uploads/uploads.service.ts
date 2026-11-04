@@ -11,7 +11,7 @@ import { STORAGE } from './storage/storage.provider';
 import { StorageClient } from './storage/storage.interface';
 import { ImageProcessor } from './processors/image.processor';
 import { VoiceProcessor } from './processors/voice.processor';
-import { extensionFromMime, UploadCategory, UPLOAD_PRESETS } from './uploads.presets';
+import { detectMimeTypeFromMagicBytes, extensionFromMime, UploadCategory, UploadPreset, UPLOAD_PRESETS } from './uploads.presets';
 
 export interface UploadFileResult {
   key: string;
@@ -86,7 +86,7 @@ export class UploadsService {
   /** Task 27 — voice note upload (verbatim audio, no image compression). */
   async uploadVoiceNote(userId: string, file: Express.Multer.File): Promise<UploadAudioResult> {
     const preset = UPLOAD_PRESETS[UploadCategory.VOICE_NOTE];
-    const fileToStore = this.requireFile(file);
+    const fileToStore = this.validateFile(file, preset);
     const processed = this.voiceProcessor.process(fileToStore.buffer, fileToStore.mimetype);
     const key = `${preset.folder}/${userId}/${randomUUID()}.${extensionFromMime(fileToStore.mimetype)}`;
     await this.store(key, processed.mimeType, processed.data);
@@ -161,7 +161,8 @@ export class UploadsService {
     file: Express.Multer.File,
   ): Promise<UploadFileResult> {
     const preset = UPLOAD_PRESETS[category];
-    const compressed = await this.compress(this.requireFile(file).buffer, preset.compress);
+    const fileToStore = this.validateFile(file, preset);
+    const compressed = await this.compress(fileToStore.buffer, preset.compress);
     const key = `${preset.folder}/${userId}/${randomUUID()}.jpg`;
     await this.store(key, compressed.mimeType, compressed.data);
     return {
@@ -213,6 +214,32 @@ export class UploadsService {
         sizeBytes: compressed.sizeBytes,
       },
     };
+  }
+
+  private validateFile(
+    file: Express.Multer.File | undefined,
+    preset: UploadPreset,
+  ): Express.Multer.File {
+    if (!file || !file.buffer || file.buffer.length === 0) {
+      throw new HttpException('FILE_REQUIRED: no file uploaded', HttpStatus.BAD_REQUEST);
+    }
+
+    const detectedMime = detectMimeTypeFromMagicBytes(file.buffer);
+    if (!detectedMime) {
+      throw new HttpException(
+        'FILE_SIGNATURE_INVALID: file contents do not match any recognized binary signature (magic bytes)',
+        HttpStatus.UNSUPPORTED_MEDIA_TYPE,
+      );
+    }
+
+    if (!preset.allowedMimeTypes.includes(detectedMime)) {
+      throw new HttpException(
+        `FILE_SIGNATURE_MISMATCH: file signature detected as "${detectedMime}", but category "${preset.category}" requires one of: ${preset.allowedMimeTypes.join(', ')}`,
+        HttpStatus.UNSUPPORTED_MEDIA_TYPE,
+      );
+    }
+
+    return file;
   }
 
   private requireFile(file: Express.Multer.File | undefined): Express.Multer.File {

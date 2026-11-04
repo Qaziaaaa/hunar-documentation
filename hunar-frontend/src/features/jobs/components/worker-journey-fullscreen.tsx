@@ -150,26 +150,16 @@ export function WorkerJourneyFullscreen({
           if (photoUrl) {
             setPhotos((prev) => [...prev, photoUrl]);
             continue;
+          } else {
+            setErrorMsg("Photo upload did not return a valid URL. Please try again.");
           }
-        } catch {
-          // Fall back to compressed base64 if direct upload endpoint fails
+        } catch (uploadErr) {
+          console.error("Inspection photo upload failed:", uploadErr);
+          setErrorMsg("Failed to upload inspection photo. Please check your connection and retry.");
         }
-
-        const reader = new FileReader();
-        reader.onload = (event) => {
-          if (event.target?.result) {
-            setPhotos((prev) => [...prev, event.target!.result as string]);
-          }
-        };
-        reader.readAsDataURL(compressed);
-      } catch {
-        const reader = new FileReader();
-        reader.onload = (event) => {
-          if (event.target?.result) {
-            setPhotos((prev) => [...prev, event.target!.result as string]);
-          }
-        };
-        reader.readAsDataURL(file);
+      } catch (compressErr) {
+        console.error("Image processing error:", compressErr);
+        setErrorMsg("Failed to process image file. Please try another photo.");
       }
     }
     e.target.value = "";

@@ -4,7 +4,8 @@ export type OfferLifecycleStatus =
   | "counter_received"
   | "accepted"
   | "rejected"
-  | "closed_assigned";
+  | "closed_assigned"
+  | "archived";
 
 export interface CounterHistoryItem {
   round: number;
@@ -25,6 +26,8 @@ export interface VisitOffer {
   message?: string;
   status: OfferLifecycleStatus;
   createdAt: string;
+  expiresAt?: string;
+  serverTime?: string;
   currentRound: number;
   maxRounds: number; // default: HUNAR_CONFIG.defaultMaxNegotiationRounds
   counterHistory: CounterHistoryItem[];

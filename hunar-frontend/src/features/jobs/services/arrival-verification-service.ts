@@ -84,6 +84,34 @@ class ArrivalVerificationService {
     return session;
   }
 
+  triggerVerificationModal(params?: {
+    jobId?: string;
+    visitId?: string;
+    otp?: string;
+    workerName?: string;
+    workerAvatar?: string;
+    workerPhone?: string;
+    customerName?: string;
+    customerAddress?: string;
+  }): ArrivalSession {
+    let session = this.getSession();
+    if (!session || session.status !== "pending_otp") {
+      session = this.startArrivalSession({
+        jobId: params?.jobId || "unknown",
+        visitId: params?.visitId,
+        otp: params?.otp || "",
+        workerName: params?.workerName || "Technician",
+        workerAvatar: params?.workerAvatar,
+        workerPhone: params?.workerPhone,
+        customerName: params?.customerName || "Customer",
+        customerAddress: params?.customerAddress,
+      });
+    } else {
+      this.broadcast("ARRIVAL_STARTED", session);
+    }
+    return session;
+  }
+
   async checkBackendPendingArrival(): Promise<ArrivalSession | null> {
     const token = getAccessToken("CUSTOMER") || getAccessToken();
     if (!token) return this.getSession();

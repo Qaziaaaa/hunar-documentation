@@ -297,6 +297,20 @@ export class WorkerProfileService {
         throw new NotFoundException('Worker profile not found');
       }
     }
+
+    // AUDIT-008: Respect worker privacy settings (profileVisible)
+    let isProfileVisible = true;
+    if (profile?.adminNote) {
+      try {
+        const parsed = JSON.parse(profile.adminNote);
+        if (typeof parsed.profileVisible === 'boolean') {
+          isProfileVisible = parsed.profileVisible;
+        }
+      } catch {}
+    }
+    if (!isProfileVisible) {
+      throw new NotFoundException('Worker profile is not available');
+    }
     const serviceAreas = await this.listServiceAreas(workerId);
     const skillsArray = profile?.skills || [];
     const searchNames = expandSkillNames(skillsArray);
@@ -382,7 +396,7 @@ export class WorkerProfileService {
       id: user.id,
       name: user.name,
       avatarUrl: user.avatarUrl,
-      phone: user.phone,
+      phone: null, // AUDIT-008: Personal phone number omitted on public endpoint
       verified: isApproved,
       isCnicVerified: isApproved,
       isNadraCleared: isApproved,
@@ -393,8 +407,8 @@ export class WorkerProfileService {
       serviceAreas: serviceAreas.map((area) => ({
         label: area.label,
         address: area.address,
-        latitude: area.latitude,
-        longitude: area.longitude,
+        latitude: area.latitude != null ? Math.round(Number(area.latitude) * 100) / 100 : 0, // AUDIT-008: Obfuscate exact GPS to ~1.1km sector centroid
+        longitude: area.longitude != null ? Math.round(Number(area.longitude) * 100) / 100 : 0,
       })),
       primaryArea: serviceAreas[0]?.label || serviceAreas[0]?.address || '',
       rating: {

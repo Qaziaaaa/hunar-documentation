@@ -78,8 +78,9 @@ export class OffersController {
   getJobOffers(
     @CurrentUser() user: JwtPayload,
     @Param('jobId', ParseOrderCodePipe) jobId: string,
+    @Query() query?: OfferListQueryDto,
   ) {
-    return this.offersService.getJobOffers(jobId, user);
+    return this.offersService.getJobOffers(jobId, user, query);
   }
 
   @Get('offers/my')

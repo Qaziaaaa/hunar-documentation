@@ -146,6 +146,7 @@
         "VISIT_COMPLETED": "Visit completed",
         "INSPECTION_DONE": "Inspection done",
         "REPAIR_NEGOTIATING": "Repair negotiating",
+        "REPAIR_DECLINED": "Repair declined",
         "REPAIR_APPROVED": "Repair approved",
         "IN_PROGRESS": "Repair in progress",
         "COMPLETED": "Completed",

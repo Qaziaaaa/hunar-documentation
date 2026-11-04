@@ -22,7 +22,7 @@ import { normalizePage, toPageResult } from '../../common/helpers/pagination.uti
 import { expandSkillNames, getWorkerProfileCompletion } from '../../common/helpers/worker-profile.util';
 import { sanitizeToAreaOrSector } from '../../common/helpers/location.util';
 import { RealtimeService } from '../realtime/realtime.service';
-import { JOB_EVENTS, userRoom, WORKERS_ROOM } from './jobs.events';
+import { JOB_EVENTS, userRoom, jobRoom, WORKERS_ROOM } from './jobs.events';
 import { generateUniqueOrderCode } from '../../common/helpers/order-code.util';
 import { RedisService } from '../../common/redis/redis.service';
 import { haversineKm } from '../../common/helpers/geo.util';
@@ -137,6 +137,7 @@ const ACTIVE_JOB_STATUSES: JobStatus[] = [
   'VISIT_COMPLETED',
   'INSPECTION_DONE',
   'REPAIR_NEGOTIATING',
+  'REPAIR_DECLINED',
   'REPAIR_APPROVED',
   'IN_PROGRESS',
 ];
@@ -163,6 +164,16 @@ export class JobsService {
   }
 
   async createJob(customerId: string, dto: CreateJobDto) {
+    if (dto.images && dto.images.some((img) => typeof img === 'string' && img.startsWith('data:'))) {
+      throw new BadRequestException(
+        'Direct Base64 image storage is not permitted. Please upload files via /uploads/job-photo.',
+      );
+    }
+    if (dto.voiceNoteUrl && dto.voiceNoteUrl.startsWith('data:')) {
+      throw new BadRequestException(
+        'Direct Base64 audio storage is not permitted. Please upload voice notes via /uploads/voice-note.',
+      );
+    }
     const category = await this.prisma.serviceCategory.findFirst({
       where: { id: dto.categoryId, isActive: true },
     });
@@ -202,6 +213,14 @@ export class JobsService {
         throw new BadRequestException(
           `AREA_INACTIVE: "${dto.area}" is currently inactive and not accepting new job postings.`,
         );
+      }
+    }
+
+    if (dto.preferredVisitTime) {
+      const visitDate = new Date(dto.preferredVisitTime);
+      const gracePeriod = new Date(Date.now() - 5 * 60 * 1000);
+      if (visitDate < gracePeriod) {
+        throw new BadRequestException('Preferred visit time cannot be in the past');
       }
     }
 
@@ -272,6 +291,10 @@ export class JobsService {
         description: job.description,
         categoryId: category.id,
         categoryName: category.name,
+        category: {
+          id: category.id,
+          name: category.name,
+        },
         customerId: job.customerId,
         customer: {
           id: customer?.id ?? customerId,
@@ -334,6 +357,7 @@ export class JobsService {
           JobStatus.VISIT_IN_PROGRESS,
           JobStatus.INSPECTION_DONE,
           JobStatus.REPAIR_NEGOTIATING,
+          JobStatus.REPAIR_DECLINED,
           JobStatus.REPAIR_APPROVED,
           JobStatus.IN_PROGRESS,
         ],
@@ -465,6 +489,7 @@ export class JobsService {
         s === JobStatus.VISIT_IN_PROGRESS ||
         s === JobStatus.INSPECTION_DONE ||
         s === JobStatus.REPAIR_NEGOTIATING ||
+        s === JobStatus.REPAIR_DECLINED ||
         s === JobStatus.REPAIR_APPROVED ||
         s === JobStatus.IN_PROGRESS
       ) {
@@ -605,6 +630,7 @@ export class JobsService {
           const ow = o.worker;
           const rOffer = ow ? ratingMap.get(ow.id) : null;
           const compJobs = ow ? completedMap.get(ow.id) ?? 0 : 0;
+          const isAccepted = o.status === 'ACCEPTED' || j.selectedWorkerId === o.workerId;
           return {
             id: o.id,
             jobId: o.jobId,
@@ -618,7 +644,7 @@ export class JobsService {
                   id: ow.id,
                   name: ow.name,
                   avatarUrl: ow.avatarUrl,
-                  phone: ow.phone,
+                  phone: isAccepted ? ow.phone : null,
                   rating: rOffer ? rOffer.rating : 0,
                   avgRating: rOffer ? rOffer.rating : 0,
                   ratingCount: rOffer ? rOffer.count : 0,
@@ -1241,20 +1267,43 @@ export class JobsService {
       }
     }
 
-    const resolvedRepairCharge =
-      job.repairs?.[0]?.lockedAmount != null
-        ? Number(job.repairs[0].lockedAmount)
-        : job.repairs?.[0]?.amount != null
-        ? Number(job.repairs[0].amount)
-        : job.visits?.[0]?.repairEstimate != null
-        ? Number(job.visits[0].repairEstimate)
-        : null;
+    const latestRepair = job.repairs?.[0];
+    const isRepairRejected =
+      job.status === JobStatus.REPAIR_DECLINED ||
+      latestRepair?.status === 'REJECTED';
+    const resolvedRepairCharge = isRepairRejected
+      ? 0
+      : latestRepair?.lockedAmount != null
+      ? Number(latestRepair.lockedAmount)
+      : latestRepair?.amount != null
+      ? Number(latestRepair.amount)
+      : job.visits?.[0]?.repairEstimate != null
+      ? Number(job.visits[0].repairEstimate)
+      : null;
 
     const workerIds = [...new Set(job.offers.map((o) => o.workerId))];
     const isAssignedWorker = user.role === Role.WORKER && job.selectedWorkerId === user.sub;
     const isOwnerCustomer = user.role === Role.CUSTOMER && job.customerId === user.sub;
+    const hasWorkerOffer = user.role === Role.WORKER && job.offers.some((o) => o.workerId === user.sub);
+    const isOpenForBidding = ['OPEN', 'OFFERS_RECEIVED', 'POSTED', 'OFFERS_REQUESTED', 'MATCHING'].includes(job.status);
     const isAdmin = user.role === Role.ADMIN;
     const canSeeFullAddress = isAssignedWorker || isOwnerCustomer || isAdmin;
+
+    // IDOR Protection (AUDIT-018):
+    // 1. Customers can ONLY view their own jobs
+    if (user.role === Role.CUSTOMER && !isOwnerCustomer) {
+      throw new ForbiddenException('You do not have permission to view this job record');
+    }
+
+    // 2. Workers can only view jobs if assigned, holding an offer, or in open bidding
+    if (user.role === Role.WORKER && !isAssignedWorker && !hasWorkerOffer && !isOpenForBidding) {
+      throw new ForbiddenException('You do not have permission to view this job record');
+    }
+
+    // 3. Reject any unauthorized role
+    if (!isOwnerCustomer && user.role !== Role.WORKER && !isAdmin) {
+      throw new ForbiddenException('You do not have permission to view this job record');
+    }
 
     if (isOwnerCustomer) {
       // Fire-and-forget, non-blocking background update
@@ -1265,7 +1314,7 @@ export class JobsService {
         .catch(() => 0);
     }
 
-    const [ratingRows, completedRows] = await Promise.all([
+    const [ratingRows, completedRows, customerTotalOrders] = await Promise.all([
       workerIds.length > 0
         ? this.prisma.review.groupBy({
             by: ['revieweeId'],
@@ -1284,6 +1333,14 @@ export class JobsService {
             _count: { _all: true },
           })
         : Promise.resolve([]),
+      typeof this.prisma?.serviceRequest?.count === 'function'
+        ? this.prisma.serviceRequest.count({
+            where: {
+              customerId: job.customerId,
+              status: { in: ['VISIT_COMPLETED', 'COMPLETED', 'PAID', 'REVIEWED'] },
+            },
+          })
+        : Promise.resolve(0),
     ]);
 
     const ratingMap = new Map(
@@ -1320,6 +1377,10 @@ export class JobsService {
       else if (diffMins < 1440) responseTime = `${Math.floor(diffMins / 60)}h ${diffMins % 60}m`;
       else responseTime = `${Math.floor(diffMins / 1440)}d`;
 
+      const isOfferAccepted = o.status === 'ACCEPTED' || job.selectedWorkerId === o.workerId;
+      const isSelf = user.role === Role.WORKER && o.workerId === user.sub;
+      const canSeeWorkerPhone = isOfferAccepted || isSelf || isAdmin;
+
       return {
         id: o.id,
         jobId: o.jobId,
@@ -1329,7 +1390,7 @@ export class JobsService {
               id: w.id,
               name: w.name,
               avatarUrl: w.avatarUrl,
-              phone: canSeeFullAddress ? w.phone : null,
+              phone: canSeeWorkerPhone ? w.phone : null,
               avgRating: r?._avg.rating !== null && r?._avg.rating !== undefined ? Number(r._avg.rating.toFixed(1)) : 0,
               ratingCount: r?._count._all ?? 0,
               completedJobs: c?._count._all ?? 0,
@@ -1350,6 +1411,11 @@ export class JobsService {
         negotiationRound: o.negotiationRound,
         lockedAt: o.lockedAt,
         createdAt: o.createdAt,
+        expiresAt:
+          (job.urgency === 'EMERGENCY' || job.urgency === 'HIGH' || !job.preferredVisitTime) && o.createdAt
+            ? new Date(new Date(o.createdAt).getTime() + 50000).toISOString()
+            : undefined,
+        serverTime: new Date().toISOString(),
       };
     });
 
@@ -1368,6 +1434,7 @@ export class JobsService {
     const finalResult = !canSeeFullAddress
       ? {
           ...rest,
+          visits: [], // Restrict private visit diagnosis, inspection photos, and technician notes
           repairCharge: resolvedRepairCharge,
           repairEstimate: resolvedRepairCharge,
           address: sanitizeToAreaOrSector({
@@ -1386,7 +1453,9 @@ export class JobsService {
             ? {
                 id: job.customer.id,
                 name: job.customer.name,
+                avatarUrl: job.customer.avatarUrl,
                 phone: null,
+                totalOrders: customerTotalOrders,
               }
             : job.customer,
           distanceKm,
@@ -1405,6 +1474,13 @@ export class JobsService {
         }
       : {
           ...rest,
+          customer: job.customer
+            ? {
+                ...job.customer,
+                totalOrders: customerTotalOrders,
+              }
+            : job.customer,
+          repair: latestRepair ?? null,
           repairCharge: resolvedRepairCharge,
           repairEstimate: resolvedRepairCharge,
           distanceKm,
@@ -1470,11 +1546,12 @@ export class JobsService {
           });
           await tx.jobOffer.updateMany({
             where: { jobId, workerId: job.selectedWorkerId },
-            data: { status: 'REJECTED' },
+            data: { status: 'WITHDRAWN' },
           });
-          // Restore previously auto-rejected pending offers so they remain valid on the reopened job.
+          // Restore ONLY previously auto-archived competitor offers so they remain valid on the reopened job (AUDIT-013).
+          // Manually rejected offers (status: 'REJECTED') remain rejected!
           await tx.jobOffer.updateMany({
-            where: { jobId, status: 'REJECTED', NOT: { workerId: job.selectedWorkerId } },
+            where: { jobId, status: 'ARCHIVED' },
             data: { status: 'PENDING' },
           });
           await tx.visit.updateMany({
@@ -1541,11 +1618,44 @@ export class JobsService {
         return j;
       });
       this.eventBus.emit('job.cancelled', { jobId, reason: dto.reason });
+
+      // Notify all workers who submitted offers for this job (e.g. urgent offer bidders)
+      const offerWorkers = await this.prisma.jobOffer.findMany({
+        where: { jobId },
+        select: { workerId: true },
+      });
+      const workerIdsToNotify = new Set<string>();
       if (job.selectedWorkerId) {
-        this.realtime.emitToRoom(userRoom(job.selectedWorkerId), JOB_EVENTS.jobCancelled, {
+        workerIdsToNotify.add(job.selectedWorkerId);
+      }
+      for (const o of offerWorkers) {
+        if (o.workerId) workerIdsToNotify.add(o.workerId);
+      }
+      for (const wId of workerIdsToNotify) {
+        this.realtime.emitToRoom(userRoom(wId), JOB_EVENTS.jobCancelled, {
           jobId,
+          reason: dto.reason,
+        });
+        this.realtime.emitToRoom(userRoom(wId), JOB_EVENTS.jobStatusChanged, {
+          jobId,
+          oldStatus: job.status,
+          newStatus: 'CANCELLED',
         });
       }
+      this.realtime.emitToRoom(jobRoom(jobId), JOB_EVENTS.jobCancelled, {
+        jobId,
+        reason: dto.reason,
+      });
+      this.realtime.emitToRoom(jobRoom(jobId), JOB_EVENTS.jobStatusChanged, {
+        jobId,
+        oldStatus: job.status,
+        newStatus: 'CANCELLED',
+      });
+      this.realtime.emitToRoom(WORKERS_ROOM, JOB_EVENTS.jobClosed, {
+        jobId,
+        reason: 'Job cancelled by customer',
+      });
+
       return updated;
     }
 

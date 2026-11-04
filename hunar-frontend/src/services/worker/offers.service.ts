@@ -18,7 +18,11 @@ interface BackendOfferRow {
   message: string | null;
   status: string;
   negotiationRound: number;
+  maxNegotiationRounds?: number;
+  minimumVisitFee?: number;
   createdAt: string;
+  expiresAt?: string;
+  serverTime?: string;
 }
 
 function mapBackendOffer(w: BackendOfferRow): VisitOffer {
@@ -41,8 +45,10 @@ function mapBackendOffer(w: BackendOfferRow): VisitOffer {
           ? "counter_received"
           : "sent") as VisitOffer["status"],
     createdAt: w.createdAt,
+    expiresAt: w.expiresAt,
+    serverTime: w.serverTime,
     currentRound: w.negotiationRound + 1,
-    maxRounds: getMaxNegotiationRounds(),
+    maxRounds: w.maxNegotiationRounds ?? getMaxNegotiationRounds(),
     counterHistory: [
       {
         round: 1,

@@ -29,7 +29,7 @@ export function WorkerWalletHero({
               className="border-white/20 bg-white/10 text-white backdrop-blur-md px-3 py-1 font-medium text-xs"
             >
               <Wallet className="mr-1.5 size-3.5 text-teal" aria-hidden="true" />
-              WorkerFIX Worker Wallet
+              HUNAR Worker Wallet
             </Badge>
           </div>
 

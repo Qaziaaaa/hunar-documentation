@@ -126,6 +126,7 @@
         "VISIT_COMPLETED": "وزٹ مکمل",
         "INSPECTION_DONE": "معائنہ مکمل",
         "REPAIR_NEGOTIATING": "مرمت کی بات چیت",
+        "REPAIR_DECLINED": "مرمت مسترد",
         "REPAIR_APPROVED": "مرمت منظور",
         "IN_PROGRESS": "کام جاری ہے",
         "COMPLETED": "مکمل",

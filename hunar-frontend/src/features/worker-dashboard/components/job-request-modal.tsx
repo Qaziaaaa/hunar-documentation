@@ -26,6 +26,7 @@ import { UrgentBidCountdownModal } from "./urgent-bid-countdown-modal";
 import { WalletTopUpModal } from "@/components/shared/wallet-topup-modal";
 import { Button } from "@/components/ui/button";
 import { submitWorkerOffer } from "@/services/worker/offers.service";
+import type { VisitOffer } from "@/types/offer";
 import { workerStore, matchesJobId } from "@/stores/worker-jobs-store";
 import { getWalletBalance } from "@/services/worker/earnings.service";
 import { ApiError } from "@/lib/api-client";
@@ -72,6 +73,7 @@ export function JobRequestModal({
   const [showTopUpButton, setShowTopUpButton] = useState(false);
   const [showUrgentCountdown, setShowUrgentCountdown] = useState(false);
   const [createdOfferId, setCreatedOfferId] = useState<string | null>(null);
+  const [createdOffer, setCreatedOffer] = useState<VisitOffer | null>(null);
 
   useEffect(() => {
     if (isOpen && job?.id) {
@@ -81,6 +83,7 @@ export function JobRequestModal({
       setSendError(null);
       setShowUrgentCountdown(false);
       setCreatedOfferId(null);
+      setCreatedOffer(null);
     }
   }, [isOpen, job?.id]);
 
@@ -95,7 +98,7 @@ export function JobRequestModal({
     activePendingOffer && (!job?.id || !matchesJobId(activePendingOffer.jobId, job.id))
   );
 
-  const visitCharge = job?.suggestedVisitCharge ?? 0;
+  const visitCharge = Number(job?.suggestedVisitCharge ?? (job as any)?.lockedVisitCharge ?? 0) || 0;
 
   const validImages = useMemo(() => {
     if (!job?.images || !Array.isArray(job.images)) return [];
@@ -127,31 +130,25 @@ export function JobRequestModal({
     if (!job || isSending || isSent || hasActiveOfferForOtherJob) return;
     setIsSending(true);
     setSendError(null);
-    try {
-      // Pre-check the live wallet balance; the backend validates it again on submit.
-      const balance = await getWalletBalance();
-      if (balance <= 0) {
-        setIsSending(false);
-        setShowTopUpButton(true);
-        const msg =
-          balance < 0
-            ? isUrdu
-              ? `آپ کا والیٹ بیلنس منفی (روپے ${balance}) ہے۔ مزید آفرز بھیجنے کے لیے برائے مہربانی اپنا والیٹ ٹاپ اپ کریں۔`
-              : `Your wallet balance is Rs. ${balance}. Please top up your wallet to continue.`
-            : WALLET_INSUFFICIENT_OFFER_MESSAGE;
-        setSendError(msg);
-        return;
-      }
-    } catch (err) {
-      if (err instanceof ApiError && err.status === 401) {
-        setIsSending(false);
-        setSendError("Your session expired. Please sign in again to send an offer.");
-        return;
-      }
-      // Network/read failure: let the backend make the final call.
+
+    // Fast check cached wallet balance to avoid blocking network latency before submit
+    const cachedBalance = workerStore.getState().walletBalance;
+    if (typeof cachedBalance === "number" && cachedBalance <= 0) {
+      setIsSending(false);
+      setShowTopUpButton(true);
+      const msg =
+        cachedBalance < 0
+          ? isUrdu
+            ? `آپ کا والیٹ بیلنس منفی (روپے ${cachedBalance}) ہے۔ مزید آفرز بھیجنے کے لیے برائے مہربانی اپنا والیٹ ٹاپ اپ کریں۔`
+            : `Your wallet balance is Rs. ${cachedBalance}. Please top up your wallet to continue.`
+          : WALLET_INSUFFICIENT_OFFER_MESSAGE;
+      setSendError(msg);
+      return;
     }
+
     try {
       const serverOffer = await submitWorkerOffer(job.id, visitCharge);
+      setCreatedOffer(serverOffer);
       setCreatedOfferId(serverOffer?.id ?? null);
       workerStore.recordOfferSent(serverOffer as any, job.id);
       setIsSending(false);
@@ -214,9 +211,13 @@ export function JobRequestModal({
         isOpen={showUrgentCountdown}
         job={job}
         visitCharge={visitCharge}
-        offerId={createdOfferId ?? undefined}
+        offerId={createdOfferId ?? createdOffer?.id ?? undefined}
+        offerCreatedAt={createdOffer?.createdAt}
+        expiresAt={createdOffer?.expiresAt}
+        serverTime={createdOffer?.serverTime}
         onClose={() => {
           setShowUrgentCountdown(false);
+          setCreatedOffer(null);
           setCreatedOfferId(null);
           onClose();
         }}

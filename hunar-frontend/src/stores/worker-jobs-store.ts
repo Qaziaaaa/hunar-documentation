@@ -304,9 +304,17 @@ function initWorkerSocketListeners() {
 
   const handleJobCancelled = (data: any) => {
     if (!data?.jobId) return;
+    const { jobId } = data;
+    const existingOffer = getOfferForJob(globalState.offers, jobId);
     patch({
+      offers: existingOffer
+        ? {
+            ...globalState.offers,
+            [jobId]: { ...existingOffer, status: "cancelled" },
+          }
+        : globalState.offers,
       jobs: globalState.jobs.map((j) =>
-        matchesJobId(data.jobId, j.id) ? { ...j, status: "cancelled" as const } : j
+        matchesJobId(jobId, j.id) ? { ...j, status: "cancelled" as const } : j
       ),
     });
   };
@@ -705,7 +713,7 @@ export const workerStore = {
         jobs,
         offers: offersMap,
         walletBalance: wallet ? Math.max(wallet.currentBalance, 0) : globalState.walletBalance,
-        walletHold: wallet ? Math.max(wallet.totalDeductions, 0) : globalState.walletHold,
+        walletHold: wallet ? Math.max(wallet.heldBalance ?? 0, 0) : globalState.walletHold,
         workerSkills,
         workerArea,
         hydrated: true,
@@ -1103,7 +1111,7 @@ export const workerStore = {
         visitId: string;
         jobId: string;
         arrivedAt: number;
-      }>(`/visits/${targetId}/arrived`, clientOtp ? { otp: clientOtp } : undefined);
+      }>(`/visits/${targetId}/arrived`);
 
       const otp = (res as any)?.otp || (res as any)?.data?.otp;
       const visitIdRet = (res as any)?.visitId || (res as any)?.data?.visitId;
@@ -1372,7 +1380,7 @@ export const workerStore = {
         if (summary) {
           patch({
             walletBalance: summary.currentBalance,
-            walletHold: summary.totalDeductions,
+            walletHold: summary.heldBalance ?? 0,
           });
         }
       });

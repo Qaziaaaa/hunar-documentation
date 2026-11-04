@@ -26,6 +26,7 @@ const DISPLAY_STATUS: Record<string, JobRequest["status"]> = {
   VISIT_COMPLETED: "visit_completed",
   INSPECTION_DONE: "inspection_submitted",
   REPAIR_NEGOTIATING: "repair_negotiating",
+  REPAIR_DECLINED: "repair_declined",
   REPAIR_APPROVED: "repair_approved",
   IN_PROGRESS: "repair_in_progress",
   COMPLETED: "completed",
@@ -235,7 +236,13 @@ export function mapJobToRequest(
   return {
     id: job.id,
     title: job.title,
-    category: displayCategory(job.category?.name, job.title, job.description) as JobRequest["category"],
+    category: displayCategory(
+      job.category?.name ||
+        (typeof job.category === "string" ? job.category : undefined) ||
+        (job as any).categoryName,
+      job.title,
+      job.description
+    ) as JobRequest["category"],
     urgency: displayUrgency(job.urgency as unknown as string),
     problemSummary: job.description?.slice(0, 140) ?? job.title,
     description: job.description ?? job.title,

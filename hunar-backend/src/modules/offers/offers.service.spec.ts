@@ -14,6 +14,7 @@ class Db {
   serviceRequests = new Map<string, any>();
   jobOffers = new Map<string, any>();
   walletBalances = new Map<string, number>();
+  serviceCategories = new Map<string, any>();
 }
 
 function seedEligibleWorker(db: Db, id: string) {
@@ -75,16 +76,46 @@ function makeFakes(db: Db) {
         if (job) Object.assign(job, data);
         return job;
       },
+      async updateMany({ where, data }: { where: any; data: any }) {
+        const job = db.serviceRequests.get(where.id);
+        if (job) {
+          const statusMatch = !where?.status?.in || where.status.in.includes(job.status);
+          const workerMatch = where?.selectedWorkerId === null ? job.selectedWorkerId == null : true;
+          if (statusMatch && workerMatch) {
+            Object.assign(job, data);
+            return { count: 1 };
+          }
+        }
+        return { count: 0 };
+      },
+      async groupBy() {
+        return [];
+      },
+      async count() {
+        return 0;
+      },
+    },
+    serviceCategory: {
+      async findUnique({ where }: { where: { id: string } }) {
+        return db.serviceCategories.get(where.id) ?? null;
+      },
+    },
+    review: {
+      async groupBy() {
+        return [];
+      },
+      async aggregate() {
+        return { _count: { _all: 0 }, _avg: { rating: null } };
+      },
     },
     jobOffer: {
-      async findUnique({
-        where,
-      }: {
-        where: { jobId_workerId: { jobId: string; workerId: string } };
-      }) {
+      async findUnique({ where }: any) {
+        if (where?.id) {
+          return db.jobOffers.get(where.id) ?? null;
+        }
         const offer = Array.from(db.jobOffers.values()).find(
           (o) =>
-            o.jobId === where.jobId_workerId.jobId && o.workerId === where.jobId_workerId.workerId,
+            o.jobId === where?.jobId_workerId?.jobId && o.workerId === where?.jobId_workerId?.workerId,
         );
         return offer ?? null;
       },
@@ -106,18 +137,57 @@ function makeFakes(db: Db) {
         if (offer) Object.assign(offer, data);
         return offer;
       },
-      async updateMany(_: any) {
-        return { count: 0 };
+      async updateMany({ where, data }: any) {
+        let count = 0;
+        for (const offer of db.jobOffers.values()) {
+          const idMatch = !where?.id || (typeof where.id === 'object' && where.id.in ? where.id.in.includes(offer.id) : offer.id === where.id);
+          const notIdMatch = !where?.NOT?.id || offer.id !== where.NOT.id;
+          const statusMatch = !where?.status?.in || where.status.in.includes(offer.status);
+          const jobMatch = !where?.jobId || offer.jobId === where.jobId;
+          if (idMatch && notIdMatch && statusMatch && jobMatch) {
+            Object.assign(offer, data);
+            count++;
+          }
+        }
+        return { count };
       },
-      async findMany() {
-        return [];
+      async findMany({ where, include, skip, take }: any = {}) {
+        let rows = Array.from(db.jobOffers.values())
+          .filter((o) => {
+            const jobMatch = !where?.jobId || o.jobId === where.jobId;
+            const notIdMatch = !where?.NOT?.id || o.id !== where.NOT.id;
+            const statusMatch = !where?.status?.in || where.status.in.includes(o.status);
+            const notInMatch = !where?.status?.notIn || !where.status.notIn.includes(o.status);
+            const workerMatch = !where?.workerId || o.workerId === where.workerId;
+            const createdAtMatch = !where?.createdAt?.lt || (o.createdAt && o.createdAt < where.createdAt.lt);
+            return jobMatch && notIdMatch && statusMatch && notInMatch && workerMatch && createdAtMatch;
+          });
+        if (typeof skip === 'number') {
+          rows = rows.slice(skip);
+        }
+        if (typeof take === 'number') {
+          rows = rows.slice(0, take);
+        }
+        return rows.map((o) => {
+            if (include?.worker) {
+              const u = db.users.get(o.workerId);
+              return {
+                ...o,
+                worker: u ? { ...u, serviceAreas: [] } : null,
+              };
+            }
+            return o;
+          });
       },
-      async count({ where }: { where?: { workerId?: string; status?: { in?: string[] } } }) {
-        return Array.from(db.jobOffers.values()).filter(
-          (o) =>
-            (!where?.workerId || o.workerId === where.workerId) &&
-            (!where?.status?.in || where.status.in.includes(o.status)),
-        ).length;
+      async count({ where }: any = {}) {
+        return Array.from(db.jobOffers.values()).filter((o) => {
+          const jobMatch = !where?.jobId || o.jobId === where.jobId;
+          const notIdMatch = !where?.NOT?.id || o.id !== where.NOT.id;
+          const statusMatch = !where?.status?.in || where.status.in.includes(o.status);
+          const notInMatch = !where?.status?.notIn || !where.status.notIn.includes(o.status);
+          const workerMatch = !where?.workerId || o.workerId === where.workerId;
+          return jobMatch && notIdMatch && statusMatch && notInMatch && workerMatch;
+        }).length;
       },
     },
     visit: {
@@ -298,5 +368,456 @@ describe('OffersService eligibility', () => {
       lockedVisitCharge: 500,
     });
     expect(db.jobOffers.get('offer-1').status).toBe('ACCEPTED');
+  });
+
+  describe('Concurrency Race Condition & State Validation (AUDIT-011 / AUDIT-012)', () => {
+    it('throws ConflictException on concurrent double-acceptance race condition', async () => {
+      const db = new Db();
+      const fakes = makeFakes(db);
+      const service = new OffersService(
+        fakes.prisma,
+        fakes.eventBus,
+        fakes.jobsService,
+        fakes.realtime,
+        fakes.config,
+        fakes.wallet,
+      );
+      seedEligibleWorker(db, 'w1');
+      seedEligibleWorker(db, 'w2');
+
+      db.serviceRequests.set('job-race', {
+        id: 'job-race',
+        status: 'OPEN',
+        customerId: 'c-owner',
+        selectedWorkerId: null,
+      });
+
+      db.jobOffers.set('off-w1', {
+        id: 'off-w1',
+        jobId: 'job-race',
+        workerId: 'w1',
+        status: 'PENDING',
+        visitCharge: 500,
+      });
+
+      db.jobOffers.set('off-w2', {
+        id: 'off-w2',
+        jobId: 'job-race',
+        workerId: 'w2',
+        status: 'PENDING',
+        visitCharge: 600,
+      });
+
+      // 1. Worker 1 offer is accepted first
+      const res1 = await service.acceptOffer('job-race', 'off-w1', { sub: 'c-owner' } as never, {});
+      expect(res1.acceptedOffer.status).toBe('ACCEPTED');
+      expect(db.serviceRequests.get('job-race').selectedWorkerId).toBe('w1');
+
+      // 2. Concurrent Request attempting to accept Worker 2 must be rejected with ConflictException
+      await expect(
+        service.acceptOffer('job-race', 'off-w2', { sub: 'c-owner' } as never, {}),
+      ).rejects.toThrow();
+
+      // Ensure Worker 1 remains the sole assigned technician
+      expect(db.serviceRequests.get('job-race').selectedWorkerId).toBe('w1');
+    });
+
+    it('rejects accepting an offer when the job is already CANCELLED or COMPLETED (AUDIT-011)', async () => {
+      const db = new Db();
+      const fakes = makeFakes(db);
+      const service = new OffersService(
+        fakes.prisma,
+        fakes.eventBus,
+        fakes.jobsService,
+        fakes.realtime,
+        fakes.config,
+        fakes.wallet,
+      );
+      seedEligibleWorker(db, 'w1');
+
+      db.serviceRequests.set('job-cancelled', {
+        id: 'job-cancelled',
+        status: 'CANCELLED',
+        customerId: 'c-owner',
+        selectedWorkerId: null,
+      });
+
+      db.jobOffers.set('off-cancelled', {
+        id: 'off-cancelled',
+        jobId: 'job-cancelled',
+        workerId: 'w1',
+        status: 'PENDING',
+        visitCharge: 500,
+      });
+
+      await expect(
+        service.acceptOffer('job-cancelled', 'off-cancelled', { sub: 'c-owner' } as never, {}),
+      ).rejects.toThrow('JOB_INVALID_STATE: cannot accept offers on a job in status CANCELLED');
+    });
+
+    describe('Worker Phone Number Masking (AUDIT-021)', () => {
+      it('masks worker phone number to null for customers prior to offer acceptance', async () => {
+        const db = new Db();
+        const fakes = makeFakes(db);
+        const service = new OffersService(
+          fakes.prisma,
+          fakes.eventBus,
+          fakes.jobsService,
+          fakes.realtime,
+          fakes.config,
+          fakes.wallet,
+        );
+
+        db.users.set('w1', {
+          id: 'w1',
+          name: 'Worker Bilal',
+          phone: '+923001234567',
+          avatarUrl: 'a.jpg',
+          role: 'WORKER',
+        });
+
+        db.serviceRequests.set('job-audit-021', {
+          id: 'job-audit-021',
+          customerId: 'cust-1',
+          status: 'OPEN',
+          selectedWorkerId: null,
+        });
+
+        db.jobOffers.set('off-1', {
+          id: 'off-1',
+          jobId: 'job-audit-021',
+          workerId: 'w1',
+          status: 'PENDING',
+          visitCharge: 500,
+          createdAt: new Date(),
+        });
+
+        const customerOffers = await service.getJobOffers('job-audit-021', {
+          sub: 'cust-1',
+          role: 'CUSTOMER',
+        } as any);
+
+        expect(customerOffers).toHaveLength(1);
+        expect(customerOffers[0].worker.id).toBe('w1');
+        expect(customerOffers[0].worker.phone).toBeNull();
+      });
+
+      it('reveals worker phone number when offer is accepted, or viewer is worker themselves or admin', async () => {
+        const db = new Db();
+        const fakes = makeFakes(db);
+        const service = new OffersService(
+          fakes.prisma,
+          fakes.eventBus,
+          fakes.jobsService,
+          fakes.realtime,
+          fakes.config,
+          fakes.wallet,
+        );
+
+        db.users.set('w1', {
+          id: 'w1',
+          name: 'Worker Bilal',
+          phone: '+923001234567',
+          avatarUrl: 'a.jpg',
+          role: 'WORKER',
+        });
+
+        db.serviceRequests.set('job-audit-021-acc', {
+          id: 'job-audit-021-acc',
+          customerId: 'cust-1',
+          status: 'WORKER_ASSIGNED',
+          selectedWorkerId: 'w1',
+        });
+
+        db.jobOffers.set('off-acc', {
+          id: 'off-acc',
+          jobId: 'job-audit-021-acc',
+          workerId: 'w1',
+          status: 'ACCEPTED',
+          visitCharge: 500,
+          createdAt: new Date(),
+        });
+
+        // 1. Customer views accepted offer -> sees phone
+        const customerOffers = await service.getJobOffers('job-audit-021-acc', {
+          sub: 'cust-1',
+          role: 'CUSTOMER',
+        } as any);
+        expect(customerOffers[0].worker.phone).toBe('+923001234567');
+
+        // 2. Worker views own offer on open job -> sees own phone
+        db.serviceRequests.set('job-open', {
+          id: 'job-open',
+          customerId: 'cust-2',
+          status: 'OPEN',
+          selectedWorkerId: null,
+        });
+        db.jobOffers.set('off-open', {
+          id: 'off-open',
+          jobId: 'job-open',
+          workerId: 'w1',
+          status: 'PENDING',
+          visitCharge: 500,
+          createdAt: new Date(),
+        });
+
+        const workerSelfOffers = await service.getJobOffers('job-open', {
+          sub: 'w1',
+          role: 'WORKER',
+        } as any);
+        expect(workerSelfOffers[0].worker.phone).toBe('+923001234567');
+
+        // 3. Admin views unaccepted offer -> sees phone
+        const adminOffers = await service.getJobOffers('job-open', {
+          sub: 'admin-1',
+          role: 'ADMIN',
+        } as any);
+        expect(adminOffers[0].worker.phone).toBe('+923001234567');
+      });
+    });
+describe('Strict Turn Alternation on Counter-Offers (AUDIT-029)', () => {
+      it('prevents worker from countering their own initial bid before customer responds', async () => {
+        const db = new Db();
+        const fakes = makeFakes(db);
+        const service = new OffersService(
+          fakes.prisma,
+          fakes.eventBus,
+          fakes.jobsService,
+          fakes.realtime,
+          fakes.config,
+          fakes.wallet,
+        );
+        seedEligibleWorker(db, 'w-worker');
+
+        db.serviceRequests.set('job-counter-1', {
+          id: 'job-counter-1',
+          customerId: 'cust-1',
+          status: 'OPEN',
+        });
+
+        db.jobOffers.set('off-init', {
+          id: 'off-init',
+          jobId: 'job-counter-1',
+          workerId: 'w-worker',
+          visitCharge: 500,
+          status: 'PENDING',
+          negotiationRound: 0,
+          negotiationHistory: [],
+        });
+
+        const workerUser = { sub: 'w-worker', phone: '+923001111111', role: 'WORKER' as any };
+
+        await expect(
+          service.counterOffer('job-counter-1', 'off-init', workerUser, { visitCharge: 600 }),
+        ).rejects.toThrow('CONSECUTIVE_COUNTER_NOT_ALLOWED: You cannot counter your own initial offer. Awaiting customer response.');
+      });
+
+      it('strictly enforces alternating turns and prevents consecutive counters by the same party', async () => {
+        const db = new Db();
+        const fakes = makeFakes(db);
+        const service = new OffersService(
+          fakes.prisma,
+          fakes.eventBus,
+          fakes.jobsService,
+          fakes.realtime,
+          fakes.config,
+          fakes.wallet,
+        );
+        seedEligibleWorker(db, 'w-worker');
+
+        db.serviceRequests.set('job-turn-test', {
+          id: 'job-turn-test',
+          customerId: 'cust-1',
+          status: 'OPEN',
+        });
+
+        db.jobOffers.set('off-turn', {
+          id: 'off-turn',
+          jobId: 'job-turn-test',
+          workerId: 'w-worker',
+          visitCharge: 1000,
+          status: 'PENDING',
+          negotiationRound: 0,
+          negotiationHistory: [],
+        });
+
+        const customerUser = { sub: 'cust-1', phone: '+923000000001', role: 'CUSTOMER' as any };
+        const workerUser = { sub: 'w-worker', phone: '+923001111111', role: 'WORKER' as any };
+
+        // 1. Customer submits first counter (Round 1: 800) -> Allowed
+        const round1 = await service.counterOffer('job-turn-test', 'off-turn', customerUser, { visitCharge: 800 });
+        expect(round1.negotiationRound).toBe(1);
+        expect(round1.visitCharge).toBe(800);
+
+        // 2. Customer immediately attempts to counter again -> Rejected
+        await expect(
+          service.counterOffer('job-turn-test', 'off-turn', customerUser, { visitCharge: 750 }),
+        ).rejects.toThrow('CONSECUTIVE_COUNTER_NOT_ALLOWED: You cannot counter consecutively. Awaiting response from worker.');
+
+        // 3. Worker counters back (Round 2: 900) -> Allowed
+        const round2 = await service.counterOffer('job-turn-test', 'off-turn', workerUser, { visitCharge: 900 });
+        expect(round2.negotiationRound).toBe(2);
+        expect(round2.visitCharge).toBe(900);
+
+        // 4. Worker immediately attempts to counter again -> Rejected
+        await expect(
+          service.counterOffer('job-turn-test', 'off-turn', workerUser, { visitCharge: 950 }),
+        ).rejects.toThrow('CONSECUTIVE_COUNTER_NOT_ALLOWED: You cannot counter consecutively. Awaiting response from customer.');
+
+        // 5. Customer counters back (Round 3: 850) -> Allowed
+        const round3 = await service.counterOffer('job-turn-test', 'off-turn', customerUser, { visitCharge: 850 });
+        expect(round3.negotiationRound).toBe(3);
+        expect(round3.visitCharge).toBe(850);
+
+        // 6. Worker counters back (Round 4: 880) -> Allowed
+        const round4 = await service.counterOffer('job-turn-test', 'off-turn', workerUser, { visitCharge: 880 });
+        expect(round4.negotiationRound).toBe(4);
+        expect(round4.visitCharge).toBe(880);
+
+        // 7. Customer counters back (Round 5: 860) -> Allowed
+        const round5 = await service.counterOffer('job-turn-test', 'off-turn', customerUser, { visitCharge: 860 });
+        expect(round5.negotiationRound).toBe(5);
+        expect(round5.visitCharge).toBe(860);
+
+        // 8. 6th round exceeds maxNegotiationRounds (5) -> Rejected
+        await expect(
+          service.counterOffer('job-turn-test', 'off-turn', workerUser, { visitCharge: 870 }),
+        ).rejects.toThrow(/MAX_NEGOTIATION_ROUNDS_EXCEEDED/);
+      });
+    });
+describe('Dynamic Negotiation Rounds & Minimum Visit Fees (AUDIT-026)', () => {
+      it('rejects worker offer submission below category minimum visit fee floor', async () => {
+        const db = new Db();
+        const fakes = makeFakes(db);
+        const service = new OffersService(
+          fakes.prisma,
+          fakes.eventBus,
+          fakes.jobsService,
+          fakes.realtime,
+          fakes.config,
+          fakes.wallet,
+        );
+        seedEligibleWorker(db, 'w-worker');
+
+        db.serviceCategories.set('cat-plumbing', {
+          id: 'cat-plumbing',
+          name: 'Plumbing',
+          defaultVisitCharge: 600,
+        });
+
+        db.serviceRequests.set('job-plumbing-1', {
+          id: 'job-plumbing-1',
+          customerId: 'cust-1',
+          categoryId: 'cat-plumbing',
+          status: 'OPEN',
+        });
+
+        // Offer Rs. 500 when minimum is Rs. 600 -> Rejected
+        await expect(
+          service.createOffer('w-worker', 'job-plumbing-1', { visitCharge: 500 }),
+        ).rejects.toThrow(/MINIMUM_VISIT_FEE_NOT_MET/);
+
+        // Offer Rs. 600 -> Accepted
+        const validOffer = await service.createOffer('w-worker', 'job-plumbing-1', { visitCharge: 600 });
+        expect(validOffer.visitCharge).toBe(600);
+      });
+
+      it('enforces custom max negotiation rounds defined in category distanceSlabs metadata', async () => {
+        const db = new Db();
+        const fakes = makeFakes(db);
+        const service = new OffersService(
+          fakes.prisma,
+          fakes.eventBus,
+          fakes.jobsService,
+          fakes.realtime,
+          fakes.config,
+          fakes.wallet,
+        );
+        seedEligibleWorker(db, 'w-worker');
+
+        db.serviceCategories.set('cat-custom-rounds', {
+          id: 'cat-custom-rounds',
+          name: 'Emergency Gas Leak',
+          defaultVisitCharge: 500,
+          distanceSlabs: { maxNegotiationRounds: 2, minimumVisitFee: 500 },
+        });
+
+        db.serviceRequests.set('job-gas-leak', {
+          id: 'job-gas-leak',
+          customerId: 'cust-1',
+          categoryId: 'cat-custom-rounds',
+          status: 'OPEN',
+        });
+
+        db.jobOffers.set('off-gas', {
+          id: 'off-gas',
+          jobId: 'job-gas-leak',
+          workerId: 'w-worker',
+          visitCharge: 800,
+          status: 'PENDING',
+          negotiationRound: 0,
+          negotiationHistory: [],
+        });
+
+        const customerUser = { sub: 'cust-1', phone: '+923000000001', role: 'CUSTOMER' as any };
+        const workerUser = { sub: 'w-worker', phone: '+923001111111', role: 'WORKER' as any };
+
+        // Round 1 (Customer counter) -> Allowed
+        const r1 = await service.counterOffer('job-gas-leak', 'off-gas', customerUser, { visitCharge: 700 });
+        expect(r1.negotiationRound).toBe(1);
+
+        // Round 2 (Worker counter) -> Allowed
+        const r2 = await service.counterOffer('job-gas-leak', 'off-gas', workerUser, { visitCharge: 750 });
+        expect(r2.negotiationRound).toBe(2);
+
+        // Round 3 -> Rejected because category capped maxNegotiationRounds at 2
+        await expect(
+          service.counterOffer('job-gas-leak', 'off-gas', customerUser, { visitCharge: 720 }),
+        ).rejects.toThrow(/MAX_NEGOTIATION_ROUNDS_EXCEEDED: maximum 2 counter rounds/);
+      });
+    });
+
+    describe('Pagination on Job Offers Feed (AUDIT-023)', () => {
+      it('returns paginated toPageResult when pagination query is provided', async () => {
+        const db = new Db();
+        const fakes = makeFakes(db);
+        const service = new OffersService(
+          fakes.prisma,
+          fakes.eventBus,
+          fakes.jobsService,
+          fakes.realtime,
+          fakes.config,
+          fakes.wallet,
+        );
+
+        db.serviceRequests.set('job-page-test', {
+          id: 'job-page-test',
+          customerId: 'cust-1',
+          status: 'OPEN',
+        });
+
+        for (let i = 1; i <= 5; i++) {
+          db.users.set(`w${i}`, { id: `w${i}`, name: `Worker ${i}`, role: 'WORKER' });
+          db.jobOffers.set(`off-${i}`, {
+            id: `off-${i}`,
+            jobId: 'job-page-test',
+            workerId: `w${i}`,
+            visitCharge: 500 + i * 50,
+            status: 'PENDING',
+            createdAt: new Date(),
+          });
+        }
+
+        const customerUser = { sub: 'cust-1', phone: '+923000000001', role: 'CUSTOMER' as any };
+        const result = (await service.getJobOffers('job-page-test', customerUser, { page: 1, limit: 2 })) as any;
+
+        expect(result.items).toBeDefined();
+        expect(result.items).toHaveLength(2);
+        expect(result.meta.total).toBe(5);
+        expect(result.meta.totalPages).toBe(3);
+        expect(result.meta.page).toBe(1);
+        expect(result.meta.limit).toBe(2);
+      });
+    });
   });
 });

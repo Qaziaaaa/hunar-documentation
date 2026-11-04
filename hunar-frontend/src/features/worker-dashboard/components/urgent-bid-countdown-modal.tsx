@@ -1,13 +1,14 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
-import { CheckCircle2, Star, MapPin, Navigation, X } from "lucide-react";
+import { CheckCircle2, Star, MapPin, Navigation } from "lucide-react";
 import { useLocale } from "next-intl";
 import { useRouter } from "@/i18n/navigation";
 import { getSocket } from "@/lib/socket";
 import { getWorkerJob } from "@/services/worker/jobs.service";
 import { withdrawWorkerOffer } from "@/services/worker/offers.service";
 import { workerStore } from "@/stores/worker-jobs-store";
+import { getUrgentOfferTimer, URGENT_OFFER_TTL_SECONDS, clearOfferExpiryCache } from "@/lib/urgent-offer";
 import { showOfferToast } from "../stores/worker-offer-toast-store";
 import type { JobRequest } from "../types";
 
@@ -16,16 +17,22 @@ export interface UrgentBidCountdownModalProps {
   job: JobRequest | null;
   visitCharge: number;
   offerId?: string;
+  offerCreatedAt?: string | number | Date;
+  expiresAt?: string | number | Date;
+  serverTime?: string | number | Date;
   onClose: () => void;
 }
 
-const COUNTDOWN_SECONDS = 50;
+const COUNTDOWN_SECONDS = URGENT_OFFER_TTL_SECONDS;
 
 export function UrgentBidCountdownModal({
   isOpen,
   job,
   visitCharge,
   offerId,
+  offerCreatedAt,
+  expiresAt,
+  serverTime,
   onClose,
 }: UrgentBidCountdownModalProps) {
   const locale = useLocale();
@@ -33,21 +40,23 @@ export function UrgentBidCountdownModal({
   const router = useRouter();
 
   const [remainingProgress, setRemainingProgress] = useState(1);
+  const [remainingSeconds, setRemainingSeconds] = useState(COUNTDOWN_SECONDS);
   const [isAccepted, setIsAccepted] = useState(false);
-  const [isTimedOut, setIsTimedOut] = useState(false);
 
-  const startTimeRef = useRef<number | null>(null);
   const acceptedRef = useRef(false);
   const timeoutHandledRef = useRef(false);
   const declinedRef = useRef(false);
 
   // Format the actual visit fee clearly and safely
-  const displayCharge =
-    typeof visitCharge === "number" && !isNaN(visitCharge) && visitCharge > 0
-      ? visitCharge
-      : typeof job?.suggestedVisitCharge === "number" && !isNaN(job.suggestedVisitCharge) && job.suggestedVisitCharge > 0
-      ? job.suggestedVisitCharge
+  const rawCharge =
+    Number(visitCharge) > 0
+      ? Number(visitCharge)
+      : Number(job?.suggestedVisitCharge) > 0
+      ? Number(job?.suggestedVisitCharge)
+      : Number((job as any)?.lockedVisitCharge) > 0
+      ? Number((job as any)?.lockedVisitCharge)
       : 0;
+  const displayCharge = rawCharge;
 
   const formattedAmount =
     displayCharge > 0
@@ -76,14 +85,19 @@ export function UrgentBidCountdownModal({
     customerName.slice(0, 2).toUpperCase() ||
     "C";
 
-  const customerRating =
-    typeof customer?.rating === "number" && customer.rating > 0
-      ? customer.rating.toFixed(1)
-      : "0";
-  const customerReviews =
-    typeof customer?.reviewCount === "number"
-      ? customer.reviewCount
-      : (job as any)?.reviewCount ?? 0;
+  const rawRating = Number(
+    customer?.rating ??
+    (job as any)?.customerRating ??
+    (job as any)?.rating ??
+    0
+  );
+  const customerRating = rawRating > 0 ? rawRating.toFixed(1) : "0";
+  const customerOrdersCount = Number(
+    customer?.totalOrders ??
+    (job as any)?.customerTotalOrders ??
+    (job as any)?.totalOrders ??
+    0
+  );
 
   const areaText = job?.locationArea || (job as any)?.area || (job as any)?.city || "Location";
   const titleText = job?.title || (job as any)?.description || "Service Request";
@@ -99,6 +113,9 @@ export function UrgentBidCountdownModal({
     if (acceptedRef.current || declinedRef.current) return;
     acceptedRef.current = true;
     setIsAccepted(true);
+    if (offerId) {
+      clearOfferExpiryCache(offerId);
+    }
 
     // Briefly show the emerald confirmation, then navigate directly to the visit full screen
     setTimeout(() => {
@@ -111,8 +128,11 @@ export function UrgentBidCountdownModal({
 
   // Function called as soon as customer declines/rejects the offer: immediately closes and returns directly to feed
   const handleOfferDeclined = () => {
-    if (acceptedRef.current || declinedRef.current) return;
+    if (acceptedRef.current || declinedRef.current || timeoutHandledRef.current) return;
     declinedRef.current = true;
+    if (offerId) {
+      clearOfferExpiryCache(offerId);
+    }
 
     if (job?.id) {
       workerStore.expireOffer(job.id);
@@ -122,61 +142,84 @@ export function UrgentBidCountdownModal({
     onClose();
   };
 
-  // Timer & progress bar mechanics based on elapsed time: remainingProgress = max(0, 1 - elapsedTime / 50)
+  // Function called as soon as customer cancels the job request
+  const handleJobCancelled = () => {
+    if (acceptedRef.current || declinedRef.current || timeoutHandledRef.current) return;
+    declinedRef.current = true;
+    if (offerId) {
+      clearOfferExpiryCache(offerId);
+    }
+
+    if (job?.id) {
+      workerStore.expireOffer(job.id);
+    }
+
+    showOfferToast({
+      type: "closed",
+      customMessage: isUrdu ? "کسٹمر نے کام کی درخواست منسوخ کر دی" : "Job Cancelled by Customer",
+    });
+    onClose();
+  };
+
+  // Timer & progress bar mechanics synchronized with backend & customer
   useEffect(() => {
     if (!isOpen || !job) {
       setRemainingProgress(1);
+      setRemainingSeconds(COUNTDOWN_SECONDS);
       setIsAccepted(false);
-      setIsTimedOut(false);
       acceptedRef.current = false;
       timeoutHandledRef.current = false;
       declinedRef.current = false;
-      startTimeRef.current = null;
       return;
     }
 
-    // Set the start timestamp once when modal opens so re-renders do not reset it
-    if (startTimeRef.current === null) {
-      startTimeRef.current = Date.now();
-    }
     acceptedRef.current = false;
     timeoutHandledRef.current = false;
     declinedRef.current = false;
 
-    const interval = setInterval(() => {
-      if (acceptedRef.current || declinedRef.current) {
-        clearInterval(interval);
-        return;
-      }
+    // Resolve offer timestamps: passed props, or store offer, or Date.now()
+    const storeOffer = job?.id ? workerStore.getState().offers[job.id] : null;
+    const resolvedCreatedAt = offerCreatedAt || storeOffer?.createdAt || new Date();
+    const resolvedExpiresAt = expiresAt || storeOffer?.expiresAt;
+    const resolvedServerTime = serverTime || storeOffer?.serverTime;
 
-      if (!startTimeRef.current) return;
-      const elapsedSeconds = (Date.now() - startTimeRef.current) / 1000;
-      const progress = Math.max(0, 1 - elapsedSeconds / COUNTDOWN_SECONDS);
-      setRemainingProgress(progress);
+    const timeSource = {
+      id: offerId,
+      createdAt: resolvedCreatedAt,
+      expiresAt: resolvedExpiresAt,
+      serverTime: resolvedServerTime,
+    };
 
-      if (progress <= 0 && !timeoutHandledRef.current && !declinedRef.current) {
+    const updateTimer = () => {
+      if (acceptedRef.current || declinedRef.current || timeoutHandledRef.current) return;
+
+      const timer = getUrgentOfferTimer(timeSource, COUNTDOWN_SECONDS);
+      setRemainingProgress(timer.progress);
+      setRemainingSeconds(timer.remainingSeconds);
+
+      if (timer.isExpired && !timeoutHandledRef.current && !declinedRef.current && !acceptedRef.current) {
         timeoutHandledRef.current = true;
-        clearInterval(interval);
-        setIsTimedOut(true);
 
         // Expire the offer on backend and in local store
         if (offerId) {
+          clearOfferExpiryCache(offerId);
           void withdrawWorkerOffer(offerId).catch(() => 0);
         }
         if (job.id) {
           workerStore.expireOffer(job.id);
         }
 
-        // Allow the expired message to show briefly, then cleanly close and return to feed
-        setTimeout(() => {
-          showOfferToast("expired");
-          onClose();
-        }, 1400);
+        // Close immediately and show expired toast on the feed
+        showOfferToast("expired");
+        onClose();
       }
-    }, 50);
+    };
+
+    updateTimer();
+    const interval = setInterval(updateTimer, 50);
 
     return () => clearInterval(interval);
-  }, [isOpen, job?.id, offerId, onClose]);
+  }, [isOpen, job?.id, offerId, offerCreatedAt, expiresAt, serverTime, onClose]);
 
   // Real-time Socket.io listener
   useEffect(() => {
@@ -204,6 +247,13 @@ export function UrgentBidCountdownModal({
       }
     };
 
+    const onJobCancelledEvent = (data: any) => {
+      const incomingJobId = (data?.jobId || data?.id || "")?.toString().toLowerCase().trim();
+      if (incomingJobId === targetJobId) {
+        handleJobCancelled();
+      }
+    };
+
     const onJobStatusChangedEvent = (data: any) => {
       const incomingJobId = (data?.jobId || data?.id || "")?.toString().toLowerCase().trim();
       const status = (data?.newStatus || data?.status || "").toString().toUpperCase();
@@ -216,6 +266,12 @@ export function UrgentBidCountdownModal({
           status === "IN_PROGRESS"
         ) {
           handleOfferAccepted();
+        } else if (
+          status === "CANCELLED" ||
+          status === "CANCELED" ||
+          status === "CLOSED"
+        ) {
+          handleJobCancelled();
         } else if (
           status === "OFFER_REJECTED" ||
           status === "REJECTED" ||
@@ -233,6 +289,10 @@ export function UrgentBidCountdownModal({
       socket.on("job:offerRejected", onOfferRejectedEvent);
       socket.on("job:offer:declined", onOfferRejectedEvent);
       socket.on("job:offerDeclined", onOfferRejectedEvent);
+      socket.on("job:cancelled", onJobCancelledEvent);
+      socket.on("job:canceled", onJobCancelledEvent);
+      socket.on("jobCancelled", onJobCancelledEvent);
+      socket.on("job:closed", onJobCancelledEvent);
       socket.on("job:status:changed", onJobStatusChangedEvent);
       socket.on("job:statusChanged", onJobStatusChangedEvent);
     }
@@ -245,6 +305,10 @@ export function UrgentBidCountdownModal({
         socket.off("job:offerRejected", onOfferRejectedEvent);
         socket.off("job:offer:declined", onOfferRejectedEvent);
         socket.off("job:offerDeclined", onOfferRejectedEvent);
+        socket.off("job:cancelled", onJobCancelledEvent);
+        socket.off("job:canceled", onJobCancelledEvent);
+        socket.off("jobCancelled", onJobCancelledEvent);
+        socket.off("job:closed", onJobCancelledEvent);
         socket.off("job:status:changed", onJobStatusChangedEvent);
         socket.off("job:statusChanged", onJobStatusChangedEvent);
       }
@@ -279,6 +343,16 @@ export function UrgentBidCountdownModal({
             handleOfferDeclined();
             return;
           }
+          if (
+            offer.status === "cancelled" ||
+            offer.status === "CANCELLED" ||
+            offer.status === "closed" ||
+            offer.status === "CLOSED" ||
+            offer.status === "closed_assigned"
+          ) {
+            handleJobCancelled();
+            return;
+          }
         }
       }
 
@@ -286,19 +360,26 @@ export function UrgentBidCountdownModal({
       const foundJob = state.jobs.find(
         (j: any) => j.id?.toLowerCase().trim() === targetJobId
       );
-      if (
-        foundJob &&
-        (foundJob.status === "accepted" ||
-          foundJob.status === "visit_in_progress" ||
-          foundJob.status === "inspecting" ||
-          foundJob.status === "inspection_submitted" ||
-          (foundJob.status as string) === "on_the_way" ||
-          (foundJob.status as string) === "WORKER_ASSIGNED" ||
-          (foundJob.status as string) === "OFFER_ACCEPTED" ||
+      if (foundJob) {
+        const js = (foundJob.status as string)?.toUpperCase();
+        if (js === "CANCELLED" || js === "CANCELED" || js === "CLOSED") {
+          handleJobCancelled();
+          return;
+        }
+        if (
+          js === "ACCEPTED" ||
+          js === "VISIT_IN_PROGRESS" ||
+          js === "INSPECTING" ||
+          js === "INSPECTION_SUBMITTED" ||
+          js === "ON_THE_WAY" ||
+          js === "WORKER_ASSIGNED" ||
+          js === "OFFER_ACCEPTED" ||
           Boolean((foundJob as any).assignedWorkerId) ||
-          Boolean((foundJob as any).selectedWorkerId))
-      ) {
-        handleOfferAccepted();
+          Boolean((foundJob as any).selectedWorkerId)
+        ) {
+          handleOfferAccepted();
+          return;
+        }
       }
     });
 
@@ -330,10 +411,16 @@ export function UrgentBidCountdownModal({
         ) {
           handleOfferAccepted();
         } else if (
+          s === "CANCELLED" ||
+          s === "CANCELED" ||
+          s === "CLOSED"
+        ) {
+          handleJobCancelled();
+        } else if (
           (liveJob as any)?.myOffer?.status === "REJECTED" ||
-          (liveJob as any)?.myOffer?.status === "WITHDRAWN" ||
           (liveJob as any)?.myOffer?.status === "rejected" ||
-          s === "OFFER_REJECTED"
+          s === "OFFER_REJECTED" ||
+          s === "REJECTED"
         ) {
           handleOfferDeclined();
         }
@@ -353,16 +440,6 @@ export function UrgentBidCountdownModal({
       role="dialog"
       aria-modal="true"
     >
-      {/* Top Close Button */}
-      <button
-        type="button"
-        onClick={onClose}
-        className="absolute top-4 right-4 rtl:right-auto rtl:left-4 z-20 p-2.5 rounded-full bg-white/10 hover:bg-white/20 text-white/90 hover:text-white transition-colors cursor-pointer"
-        title={isUrdu ? "بند کریں" : "Close"}
-      >
-        <X className="size-5" />
-      </button>
-
       {/* Center Offer Status Message (Professional WorkerFix Wording) */}
       <div className="flex-1 flex flex-col items-center justify-center px-4 text-center pb-8 animate-in zoom-in-95 duration-200">
         {isAccepted ? (
@@ -384,17 +461,6 @@ export function UrgentBidCountdownModal({
                 : "Taking you to visit screen..."}
             </p>
           </div>
-        ) : isTimedOut ? (
-          <div className="space-y-1.5">
-            <h1 className="text-2xl sm:text-3xl font-black text-white drop-shadow-md">
-              {isUrdu ? "پیشکش کی مدت ختم ہو گئی" : "Offer Expired"}
-            </h1>
-            <p className="text-xs sm:text-sm text-white/80 font-medium">
-              {isUrdu
-                ? "50 سیکنڈ میں کسٹمر کا جواب موصول نہیں ہوا۔ فیڈ پر واپس جا رہے ہیں..."
-                : "No response within 50s. Returning to feed..."}
-            </p>
-          </div>
         ) : (
           <div className="space-y-1 text-center drop-shadow-[0_2px_12px_rgba(0,0,0,0.85)]">
             <h1 className="text-xl sm:text-2xl font-black text-white tracking-tight leading-snug">
@@ -406,7 +472,9 @@ export function UrgentBidCountdownModal({
               </p>
             )}
             <p className="text-xs sm:text-sm font-semibold text-white/90 tracking-tight">
-              {isUrdu ? "کسٹمر کے قبول کرنے کا انتظار ہے..." : "Waiting for customer response..."}
+              {isUrdu
+                ? "کسٹمر کے قبول کرنے کا انتظار ہے..."
+                : "Waiting for customer response..."}
             </p>
           </div>
         )}
@@ -453,10 +521,13 @@ export function UrgentBidCountdownModal({
               <span className="text-xs font-extrabold text-slate-900 mt-1 truncate max-w-full">
                 {customerFirstName}
               </span>
-              <span className="text-[10px] text-amber-600 font-bold flex items-center gap-0.5 mt-0.5">
+              <span
+                className="text-[10px] text-amber-600 font-bold flex items-center gap-0.5 mt-0.5"
+                title={`${customerRating} rating · ${customerOrdersCount} completed ${customerOrdersCount === 1 ? "order" : "orders"}`}
+              >
                 <Star className="size-2.5 fill-amber-500 text-amber-500 shrink-0" />
                 <span>{customerRating}</span>
-                <span className="text-slate-400 font-normal">({customerReviews})</span>
+                <span className="text-slate-400 font-normal">({customerOrdersCount})</span>
               </span>
             </div>
 

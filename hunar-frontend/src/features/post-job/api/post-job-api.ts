@@ -152,78 +152,40 @@ export function getLocallyCreatedJobs(): any[] {
  * Upload a job photo to the backend S3/MinIO bucket.
  */
 export async function uploadJobPhoto(file: File): Promise<{ key: string; url: string }> {
-  try {
-    const formData = new FormData();
-    formData.append("file", file);
-    return await http.upload<{ key: string; url: string }>("/uploads/job-photo", formData);
-  } catch (err) {
-    console.warn("Direct /uploads/job-photo upload failed, falling back to persistent data URI", err);
-    try {
-      const compressed = await compressImage(file, { maxWidth: 1280, maxHeight: 1280, quality: 0.8 });
-      const dataUri = await new Promise<string>((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          if (typeof reader.result === "string") resolve(reader.result);
-          else reject(new Error("Failed reading image data"));
-        };
-        reader.onerror = () => reject(new Error("File read error"));
-        reader.readAsDataURL(compressed);
-      });
-      return {
-        key: `photo-${Date.now()}`,
-        url: dataUri,
-      };
-    } catch (fallbackErr) {
-      console.error("Base64 image conversion failed:", fallbackErr);
-      throw new Error("Photo upload failed. Please check your image file and try again.");
-    }
-  }
+  const compressed = await compressImage(file, { maxWidth: 1280, maxHeight: 1280, quality: 0.8 });
+  const formData = new FormData();
+  formData.append("file", compressed || file);
+  return await http.upload<{ key: string; url: string }>("/uploads/job-photo", formData);
 }
 
 /**
- * Resolves a blob audio URL into a persistent backend URL (via /uploads/voice-note) or Base64 data URI.
+ * Resolves a blob audio URL into a persistent backend URL (via /uploads/voice-note).
+ * Direct Base64 database fallbacks are removed (AUDIT-003).
  */
 async function resolveAudioForSubmission(url?: string): Promise<string | undefined> {
-  if (!url || !url.startsWith("blob:")) return url;
+  if (!url || !url.startsWith("blob:")) return url?.startsWith("data:") ? undefined : url;
   try {
     const res = await fetch(url);
     const blob = await res.blob();
-
-    try {
-      const formData = new FormData();
-      const file = new File([blob], `job-voice-${Date.now()}.webm`, {
-        type: blob.type || "audio/webm",
-      });
-      formData.append("file", file);
-      const uploadRes = await http.upload<{ key: string; url: string }>("/uploads/voice-note", formData);
-      if (uploadRes?.url) {
-        return uploadRes.url;
-      }
-    } catch (uploadErr) {
-      console.warn("Direct upload to /uploads/voice-note failed, using base64 fallback:", uploadErr);
-    }
-
-    return await new Promise<string | undefined>((resolve) => {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const result = reader.result as string;
-        if (result && result.startsWith("data:")) {
-          resolve(result);
-        } else {
-          resolve(undefined);
-        }
-      };
-      reader.onerror = () => resolve(undefined);
-      reader.readAsDataURL(blob);
+    const formData = new FormData();
+    const file = new File([blob], `job-voice-${Date.now()}.webm`, {
+      type: blob.type || "audio/webm",
     });
+    formData.append("file", file);
+    const uploadRes = await http.upload<{ key: string; url: string }>("/uploads/voice-note", formData);
+    if (uploadRes?.url) {
+      return uploadRes.url;
+    }
+    return undefined;
   } catch (err) {
-    console.warn("Could not resolve blob audio URL:", err);
+    console.warn("Could not upload voice note to storage service:", err);
     return undefined;
   }
 }
 
 /**
- * Resolves blob image URLs into upload URLs or Base64 data URIs.
+ * Resolves blob image URLs into upload URLs via /uploads/job-photo.
+ * Direct Base64 database fallbacks are removed (AUDIT-003).
  */
 async function resolveImagesForSubmission(urls: string[]): Promise<string[]> {
   const resolved: string[] = [];
@@ -233,35 +195,23 @@ async function resolveImagesForSubmission(urls: string[]): Promise<string[]> {
         const res = await fetch(url);
         const rawBlob = await res.blob();
         const blob = await compressImage(rawBlob, { maxWidth: 1280, maxHeight: 1280, quality: 0.8 });
-        try {
-          const formData = new FormData();
-          const file = new File([blob], `job-photo-${Date.now()}.jpg`, {
-            type: blob.type || "image/jpeg",
-          });
-          formData.append("file", file);
-          const uploadRes = await http.upload<{ key: string; url: string }>("/uploads/job-photo", formData);
-          if (uploadRes?.url) {
-            resolved.push(uploadRes.url);
-            continue;
-          }
-        } catch {}
-        const dataUrl = await new Promise<string>((resolve) => {
-          const reader = new FileReader();
-          reader.onloadend = () => resolve(typeof reader.result === "string" ? reader.result : "");
-          reader.onerror = () => resolve("");
-          reader.readAsDataURL(blob);
+        const formData = new FormData();
+        const file = new File([blob], `job-photo-${Date.now()}.jpg`, {
+          type: blob.type || "image/jpeg",
         });
-        if (dataUrl && !dataUrl.startsWith("blob:")) {
-          resolved.push(dataUrl);
+        formData.append("file", file);
+        const uploadRes = await http.upload<{ key: string; url: string }>("/uploads/job-photo", formData);
+        if (uploadRes?.url) {
+          resolved.push(uploadRes.url);
         }
       } catch (err) {
-        console.warn("Could not resolve blob photo:", err);
+        console.warn("Could not upload job photo to storage service:", err);
       }
-    } else {
+    } else if (!url.startsWith("data:")) {
       resolved.push(url);
     }
   }
-  return resolved.filter((u) => !u.startsWith("blob:"));
+  return resolved.filter((u) => !u.startsWith("blob:") && !u.startsWith("data:"));
 }
 
 export interface BackendCategory {

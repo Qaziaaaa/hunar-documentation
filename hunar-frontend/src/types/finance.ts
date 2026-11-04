@@ -59,6 +59,7 @@ export interface WalletTransaction {
 
 export interface WalletSummary {
   currentBalance: number;
+  heldBalance?: number;
   totalTopUps: number;
   totalDeductions: number;
   totalTransactions: number;

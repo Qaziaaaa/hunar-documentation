@@ -61,9 +61,13 @@ export interface WorkerOffer {
   estimatedArrival: string; // e.g. "Today, 2:30 PM (25 mins)"
   distanceKm: number;
   createdAt: string;
+  expiresAt?: string;
+  serverTime?: string;
   note?: string;
   isDeclined?: boolean;
   status?: string;
+  maxNegotiationRounds?: number;
+  minimumVisitFee?: number;
 }
 
 export interface CustomerJob {
@@ -87,6 +91,8 @@ export interface CustomerJob {
   status: JobStatus;
   rawStatus?: string;
   createdAt: string;
+  expiresAt?: string;
+  serverTime?: string;
   offerCount?: number;
   offers: WorkerOffer[];
   selectedOffer?: WorkerOffer;
