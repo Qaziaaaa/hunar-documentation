@@ -339,4 +339,136 @@ describe('WalletService', () => {
       expect(summary.records[0].netAmount).toBe(1470);
     });
   });
+
+  describe('holdCommissionForJob & releaseCommissionHoldForJob (AUDIT-015)', () => {
+    it('holds commission by transferring amount from balance to heldBalance without double-deduction', async () => {
+      prisma.serviceRequest.findUnique.mockResolvedValue({
+        id: 'job_hold_1',
+        lockedVisitCharge: 500,
+        selectedWorkerId: 'worker_1',
+      });
+      prisma.commission.findUnique.mockResolvedValue(null);
+      prisma.walletLedger.findUnique.mockResolvedValue(null);
+      redis.getClient().set.mockResolvedValue('OK');
+      prisma.workerWallet.upsert.mockResolvedValue({
+        userId: 'worker_1',
+        balance: 1000,
+        heldBalance: 0,
+      });
+      prisma.commission.upsert.mockResolvedValue({
+        id: 'comm_1',
+        jobId: 'job_hold_1',
+        workerId: 'worker_1',
+        amount: 50,
+        status: 'PENDING',
+      });
+      prisma.workerWallet.update.mockResolvedValue({
+        userId: 'worker_1',
+        balance: 950,
+        heldBalance: 50,
+      });
+
+      const res = await service.holdCommissionForJob('worker_1', 'job_hold_1');
+
+      expect(res.held).toBe(true);
+      expect(res.amount).toBe(50);
+      expect(prisma.workerWallet.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { userId: 'worker_1' },
+          data: { balance: 950, heldBalance: 50 },
+        }),
+      );
+      expect(eventBus.emit).toHaveBeenCalledWith('commission.held', expect.objectContaining({
+        jobId: 'job_hold_1',
+        workerId: 'worker_1',
+        amount: 50,
+      }));
+    });
+
+    it('settles pre-held commission on job completion by clearing heldBalance without double-deducting balance', async () => {
+      prisma.serviceRequest.findUnique.mockResolvedValue({
+        id: 'job_complete_1',
+        lockedVisitCharge: 500,
+        selectedWorkerId: 'worker_1',
+        repairs: [],
+      });
+      // Commission was already held at arrival
+      prisma.commission.findUnique.mockResolvedValue({
+        id: 'comm_1',
+        jobId: 'job_complete_1',
+        amount: 50,
+        status: 'PENDING',
+      });
+      prisma.workerWallet.upsert.mockResolvedValue({
+        userId: 'worker_1',
+        balance: 950, // Already decremented at arrival
+        heldBalance: 50, // Held in quarantine
+      });
+      redis.getClient().set.mockResolvedValue('OK');
+      prisma.walletLedger.findUnique.mockImplementation(async (args: any) => {
+        if (args?.where?.idempotencyKey === 'hold:job_complete_1') {
+          return { id: 'ledger_hold_1', type: 'COMMISSION_HELD' };
+        }
+        return null;
+      });
+      prisma.walletLedger.update = jest.fn().mockResolvedValue({});
+      prisma.workerWallet.update.mockResolvedValue({
+        userId: 'worker_1',
+        balance: 950, // Stays 950 (no double deduction!)
+        heldBalance: 0, // Cleared
+      });
+
+      const res = await service.recordEarningsForJob('job_complete_1');
+
+      expect(res.credited).toBe(true);
+      expect(prisma.workerWallet.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { userId: 'worker_1' },
+          data: { balance: 950, heldBalance: 0 },
+        }),
+      );
+      // Confirms existing hold ledger entry is updated to COMMISSION_DEDUCTED
+      expect(prisma.walletLedger.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: 'ledger_hold_1' },
+          data: expect.objectContaining({
+            type: 'COMMISSION_DEDUCTED',
+          }),
+        }),
+      );
+    });
+
+    it('releases held commission back to available balance upon job cancellation', async () => {
+      prisma.commission.findUnique.mockResolvedValue({
+        id: 'comm_cancel_1',
+        jobId: 'job_cancel_1',
+        workerId: 'worker_1',
+        amount: 50,
+        status: 'PENDING',
+      });
+      prisma.workerWallet.upsert.mockResolvedValue({
+        userId: 'worker_1',
+        balance: 950,
+        heldBalance: 50,
+      });
+      prisma.workerWallet.update.mockResolvedValue({
+        userId: 'worker_1',
+        balance: 1000,
+        heldBalance: 0,
+      });
+      prisma.commission.delete = jest.fn().mockResolvedValue({});
+
+      const res = await service.reverseCommissionForJob('job_cancel_1');
+
+      expect(res.reversed).toBe(true);
+      expect(res.amount).toBe(50);
+      expect(prisma.workerWallet.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { userId: 'worker_1' },
+          data: { balance: 1000, heldBalance: 0 },
+        }),
+      );
+    });
+  });
+
 });

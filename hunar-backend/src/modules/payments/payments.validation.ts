@@ -147,3 +147,19 @@ export class TopupDecideDto {
   @MaxLength(500)
   reason?: string;
 }
+export class WithdrawDto {
+  @Type(() => Number)
+  @IsNumber()
+  @Min(100)
+  amount: number;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(100)
+  requestId?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(300)
+  note?: string;
+}

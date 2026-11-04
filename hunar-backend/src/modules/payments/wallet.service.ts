@@ -863,4 +863,66 @@ export class WalletService {
     const result = await client.set(key, '1', 'EX', WALLET_IDEMPOTENCY_TTL_SECONDS, 'NX');
     return result !== null;
   }
+
+  async withdraw(workerId: string, dto: { amount: number; note?: string; requestId?: string }) {
+    const amount = Math.round(Number(dto.amount) * 100) / 100;
+    if (amount < 100) {
+      throw new BadRequestException('WALLET_WITHDRAWAL_MIN: minimum withdrawal is Rs. 100');
+    }
+    const key = dto.requestId ? `${WALLET_IDEMPOTENCY_PREFIX}withdraw:${dto.requestId}` : null;
+    if (key && !(await this.claimIdempotencyKey(key))) {
+      return { status: 'ALREADY_PROCESSED', amount };
+    }
+
+    return this.prisma.$transaction(async (tx) => {
+      const wallet = await this.getOrCreateWallet(workerId);
+      const balance = Number(wallet.balance);
+      const held = Number(wallet.heldBalance);
+
+      if (balance < amount) {
+        throw new BadRequestException(
+          'WALLET_INSUFFICIENT_BALANCE: withdrawal exceeds available balance',
+        );
+      }
+
+      const balanceAfter = Math.round((balance - amount) * 100) / 100;
+      const heldAfter = Math.round((held + amount) * 100) / 100;
+
+      await tx.workerWallet.update({
+        where: { userId: workerId },
+        data: {
+          balance: balanceAfter,
+          heldBalance: heldAfter,
+        },
+      });
+
+      const withdrawal = await tx.withdrawal.create({
+        data: {
+          workerId,
+          amount,
+          status: 'PENDING',
+          note: dto.note ?? 'Self-service withdrawal request',
+        },
+      });
+
+      await this.ledger.insert(tx, {
+        userId: workerId,
+        type: WalletLedgerType.WITHDRAWAL,
+        amount: -amount,
+        balanceAfter,
+        referenceType: 'withdrawal',
+        referenceId: withdrawal.id,
+        note: `Self-service withdrawal request #${withdrawal.id} (held for payout)`,
+        idempotencyKey: key ?? undefined,
+      });
+
+      return {
+        id: withdrawal.id,
+        status: 'PENDING',
+        amount,
+        balanceAfter,
+        heldAfter,
+      };
+    });
+  }
 }

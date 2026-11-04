@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
 import { PrismaService } from '../../prisma/prisma.service';
 import { WalletService } from './wallet.service';
+import { PaymentsService } from './payments.service';
 
 // Subscribes the wallet to domain events outside the request lifecycle:
 //  - commission.statusChanged -> RECEIVED  => confirm (deduct) the held commission.
@@ -15,6 +16,7 @@ export class WalletListener {
   constructor(
     private readonly wallet: WalletService,
     private readonly prisma: PrismaService,
+    private readonly payments: PaymentsService,
   ) {}
 
   /** Commission RECEIVED (payment screenshot submitted) is the wallet "confirmation" step. */
@@ -47,6 +49,7 @@ export class WalletListener {
     });
     if (job?.status !== 'COMPLETED') return;
     await this.safe('record earnings', () => this.wallet.recordEarningsForJob(payload.jobId));
+    await this.safe('complete job payments', () => this.payments.completePaymentsForJob(payload.jobId));
   }
 
   @OnEvent('repair.completed')
