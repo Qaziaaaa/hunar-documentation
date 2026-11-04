@@ -10,6 +10,8 @@ export const SETTINGS_DEFAULTS = {
   serviceRadiusKm: 10,
   walletMaxNegativeBalance: -500,
   maxActiveOffersPerWorker: 1,
+  maxNegotiationRounds: 5,
+  minimumVisitFee: 0,
 } as const;
 
 /**
@@ -92,5 +94,27 @@ export class SettingsService {
       return Math.floor(parsed);
     }
     return SETTINGS_DEFAULTS.maxActiveOffersPerWorker;
+  }
+/** Maximum counter-offer negotiation rounds between customer and worker. */
+  async getMaxNegotiationRounds(): Promise<number> {
+    const all = await this.loadAll();
+    const raw = all.maxNegotiationRounds ?? all.max_negotiation_rounds;
+    const parsed = Number(raw);
+    if (raw !== undefined && Number.isFinite(parsed) && parsed >= 1) {
+      return Math.floor(parsed);
+    }
+    const cfg = this.config.get<number>('app.maxNegotiationRounds', 5);
+    return typeof cfg === 'number' && cfg >= 1 ? cfg : SETTINGS_DEFAULTS.maxNegotiationRounds;
+  }
+
+  /** Global minimum visit charge floor (Rs) across all services. */
+  async getMinimumVisitFee(): Promise<number> {
+    const all = await this.loadAll();
+    const raw = all.minimumVisitFee ?? all.minimum_visit_fee;
+    const parsed = Number(raw);
+    if (raw !== undefined && Number.isFinite(parsed) && parsed >= 0) {
+      return parsed;
+    }
+    return SETTINGS_DEFAULTS.minimumVisitFee;
   }
 }
