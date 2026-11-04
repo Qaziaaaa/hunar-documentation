@@ -11,7 +11,7 @@ export class ReviewsController {
   constructor(private readonly reviewsService: ReviewsService) {}
 
   @Post('jobs/:jobId/review')
-  @Roles(Role.CUSTOMER)
+  @Roles(Role.CUSTOMER, Role.WORKER)
   create(
     @CurrentUser() user: JwtPayload,
     @Param('jobId') jobId: string,
@@ -20,9 +20,9 @@ export class ReviewsController {
     return this.reviewsService.createReview(jobId, user.sub, dto);
   }
 
-  /** Task 19 — POST /reviews, job id in body (documented customer contract). */
+  /** Task 19 — POST /reviews, job id in body (allows both customer and worker reviews). */
   @Post('reviews')
-  @Roles(Role.CUSTOMER)
+  @Roles(Role.CUSTOMER, Role.WORKER)
   submit(@CurrentUser() user: JwtPayload, @Body() dto: SubmitReviewByJobDto) {
     return this.reviewsService.createReview(dto.jobId, user.sub, dto);
   }
@@ -54,5 +54,13 @@ export class ReviewsController {
     @Query() query: ReviewQueryDto,
   ) {
     return this.reviewsService.getWorkerReviews(workerId, query);
+  }
+
+  @Get('reviews/user/:userId')
+  getUserReviews(
+    @Param('userId', ParseUUIDPipe) userId: string,
+    @Query() query: ReviewQueryDto,
+  ) {
+    return this.reviewsService.getReviewsForUser(userId, query);
   }
 }
