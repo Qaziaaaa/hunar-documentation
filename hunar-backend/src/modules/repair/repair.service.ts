@@ -5,7 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { RepairStatus, Role } from '@prisma/client';
+import { JobStatus, RepairStatus, Role } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { EventBusService } from '../../common/event-bus/event-bus.service';
 import { normalizePage, toPageResult } from '../../common/helpers/pagination.util';
@@ -437,10 +437,16 @@ export class RepairService {
     if (!['PROPOSED', 'COUNTERED'].includes(repair.status)) {
       throw new BadRequestException('REPAIR_INVALID_STATE: repair is not in a pending state');
     }
-    const updated = await this.prisma.repair.update({
-      where: { id: repair.id },
-      data: { status: 'REJECTED' },
-    });
+    const [updated] = await Promise.all([
+      this.prisma.repair.update({
+        where: { id: repair.id },
+        data: { status: 'REJECTED' },
+      }),
+      this.prisma.serviceRequest.update({
+        where: { id: repair.jobId },
+        data: { status: JobStatus.REPAIR_DECLINED },
+      }),
+    ]);
 
     const visitCharge = Number(
       repair.job.lockedVisitCharge ?? repair.job.suggestedVisitCharge ?? 0,
@@ -455,17 +461,28 @@ export class RepairService {
       payableAmount: visitCharge,
     };
 
+    this.eventBus.emit('job.statusChanged', {
+      jobId: repair.jobId,
+      oldStatus: repair.job.status,
+      newStatus: JobStatus.REPAIR_DECLINED,
+    });
     this.eventBus.emit('repair.rejected', { repairId: repair.id, jobId: repair.jobId });
     this.realtime.emitToRoom(userRoom(repair.workerId), 'repair:rejected', rejectedPayload);
     this.realtime.emitToRoom(userRoom(repair.workerId), 'repair.rejected', rejectedPayload);
     this.realtime.emitToRoom(userRoom(repair.workerId), JOB_EVENTS.jobStatusChanged, {
       jobId: repair.jobId,
-      oldStatus: 'REPAIR_NEGOTIATING',
-      newStatus: 'REPAIR_DECLINED',
+      oldStatus: repair.job.status,
+      newStatus: JobStatus.REPAIR_DECLINED,
       repair: rejectedPayload,
     });
     this.realtime.emitToRoom(userRoom(repair.job.customerId), 'repair:rejected', rejectedPayload);
     this.realtime.emitToRoom(userRoom(repair.job.customerId), 'repair.rejected', rejectedPayload);
+    this.realtime.emitToRoom(userRoom(repair.job.customerId), JOB_EVENTS.jobStatusChanged, {
+      jobId: repair.jobId,
+      oldStatus: repair.job.status,
+      newStatus: JobStatus.REPAIR_DECLINED,
+      repair: rejectedPayload,
+    });
     return updated;
   }
 
