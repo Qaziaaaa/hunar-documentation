@@ -14,7 +14,7 @@ const JobRequestModal = dynamic(
 import { useLocale } from "next-intl";
 import { ApiError } from "@/lib/api-client";
 import { getSocket } from "@/lib/socket";
-import { listNearbyJobs, getWorkerJob } from "@/services/worker/jobs.service";
+import { listNearbyJobs, getWorkerJob, mapBackendJob } from "@/services/worker/jobs.service";
 import { subscribeToNotifications } from "@/services/worker/notification.service";
 import { timeAgo, formatDate, formatTime, formatDateSlot, isDateOnlyTimestamp, formatPreferredTiming } from "@/lib/format";
 import { isMockMode } from "@/lib/data-source";
@@ -23,17 +23,29 @@ import type { Job } from "@/types/job";
 
 const CATEGORY_LABELS: Record<string, JobRequestCategory> = {
   Plumbing: "Plumber",
+  Plumber: "Plumber",
   Electrical: "Electrician",
+  Electrician: "Electrician",
   "AC & Refrigeration": "AC Technician",
+  "AC Technician": "AC Technician",
   Carpentry: "Carpenter",
+  Carpenter: "Carpenter",
   Painting: "Painter",
+  Painter: "Painter",
   Cleaning: "Home Cleaner",
+  "Home Cleaner": "Home Cleaner",
+  "Cleaning & Sanitary": "Home Cleaner",
+  Cleaner: "Home Cleaner",
   Masonry: "Mason / Mistri",
+  "Mason / Mistri": "Mason / Mistri",
   "Pest Control": "Pest Control",
   "General Handyman": "Handyman",
+  Handyman: "Handyman",
   Mechanics: "Mechanic",
+  Mechanic: "Mechanic",
   "Solar Energy": "Solar Technician",
   "Solar & UPS": "Solar Technician",
+  "Solar Technician": "Solar Technician",
   "CCTV & Security": "CCTV & Security",
   Gardener: "Gardener",
   "Gardener (Mali)": "Gardener",
@@ -41,6 +53,26 @@ const CATEGORY_LABELS: Record<string, JobRequestCategory> = {
   "Movers & Packers": "Movers & Packers",
   "Appliance Repair": "Appliance Repair",
 };
+
+function inferCategoryFromText(text: string): JobRequestCategory | null {
+  const lower = text.toLowerCase();
+  if (/cctv|camera|dvr|nvr|video doorbell|intercom/.test(lower)) return "CCTV & Security";
+  if (/solar|inverter|battery|ups/.test(lower)) return "Solar Technician";
+  if (/pruning|grass|lawn|garden|plant|mali|fertilizer/.test(lower)) return "Gardener";
+  if (/welding|welder|iron gate|grill/.test(lower)) return "Welder";
+  if (/clean|maid|sweep|mop|sofa|carpet|vacuum|deep clean|tank clean/.test(lower)) return "Home Cleaner";
+  if (/tile|grouting|plaster|mistri|mason/.test(lower)) return "Mason / Mistri";
+  if (/pipe|leak|drain|faucet|tap|mixer|commode|sanitary|geyser|plumb/.test(lower)) return "Plumber";
+  if (/wiring|circuit|breaker|switchboard|light|fan|electric/.test(lower)) return "Electrician";
+  if (/ac |split|inverter ac|compressor|cooling|refriger/.test(lower)) return "AC Technician";
+  if (/paint|putty|primer|whitewash/.test(lower)) return "Painter";
+  if (/door|cabinet|drawer|wardrobe|furniture|wood|carpenter/.test(lower)) return "Carpenter";
+  if (/pest|termite|cockroach|fumigation|deemak/.test(lower)) return "Pest Control";
+  if (/mover|shifting|luggage|pickup/.test(lower)) return "Movers & Packers";
+  if (/appliance|fridge|refrigerator|washing machine|microwave|oven/.test(lower)) return "Appliance Repair";
+  if (/car|bike|motorcycle|mechanic|engine|brake/.test(lower)) return "Mechanic";
+  return null;
+}
 
 export function isCategoryMatched(
   jobCategory?: string,
@@ -105,9 +137,21 @@ function toFeedJobRequest(job: Job): JobRequest {
   const cleanName = rawFullName.replace(/\s*\((Customer|Worker)\)/gi, "").trim();
   const fullName = cleanName || "Customer";
   const firstName = fullName.split(/\s+/)[0] || fullName;
-  const rawCategory = typeof job.category === "object" ? job.category?.name?.trim() : String(job.category || "");
-  const category = (CATEGORY_LABELS[rawCategory] ??
-    (rawCategory || "Appliance Repair")) as JobRequestCategory;
+  const rawCategory =
+    (typeof job.category === "object" ? job.category?.name?.trim() : undefined) ||
+    (typeof (job as any).category === "string" && (job as any).category.trim() !== "" ? (job as any).category.trim() : undefined) ||
+    (typeof (job as any).categoryName === "string" ? (job as any).categoryName.trim() : undefined) ||
+    (typeof (job as any).rawCategory === "string" ? (job as any).rawCategory.trim() : undefined) ||
+    "";
+  let category: JobRequestCategory;
+  if (rawCategory && CATEGORY_LABELS[rawCategory]) {
+    category = CATEGORY_LABELS[rawCategory];
+  } else if (rawCategory) {
+    category = rawCategory as JobRequestCategory;
+  } else {
+    const inferred = inferCategoryFromText(`${job.title || ""} ${job.description || ""}`);
+    category = (inferred ? (CATEGORY_LABELS[inferred] || inferred) : "Handyman") as JobRequestCategory;
+  }
   const distance =
     typeof job.distanceKm === "number" && job.distanceKm > 0
       ? `${job.distanceKm.toFixed(1)} km`
@@ -130,19 +174,34 @@ function toFeedJobRequest(job: Job): JobRequest {
       ? rawAvatar.trim()
       : "";
 
-  const rawRating = (job as any).customer?.rating ?? job.customer?.rating;
+  const rawRating =
+    (job as any).customer?.rating ??
+    (job as any).customerRating ??
+    job.customer?.rating;
   const rawReviews =
     (job as any).customer?.reviewCount ??
+    (job as any).customerReviewCount ??
     (job as any).customer?.reviewsCount ??
     job.customer?.reviewCount;
-  const rawOrders = (job as any).customer?.totalOrders ?? job.customer?.totalOrders;
+  const rawOrders =
+    (job as any).customer?.totalOrders ??
+    (job as any).customerTotalOrders ??
+    (job as any).totalOrders ??
+    job.customer?.totalOrders;
 
   const reviewCount =
     rawReviews && Number(rawReviews) > 0 ? Number(rawReviews) : 0;
   const rating =
-    reviewCount > 0 && rawRating && Number(rawRating) > 0 ? Number(rawRating) : 0;
+    rawRating && Number(rawRating) > 0 ? Number(rawRating) : 0;
   const totalOrders =
-    rawOrders && Number(rawOrders) > 0 ? Number(rawOrders) : 0;
+    rawOrders != null && Number(rawOrders) >= 0 ? Number(rawOrders) : 0;
+
+  const suggestedVisitCharge =
+    job.suggestedVisitCharge != null && Number(job.suggestedVisitCharge) > 0
+      ? Number(job.suggestedVisitCharge)
+      : job.lockedVisitCharge != null && Number(job.lockedVisitCharge) > 0
+      ? Number(job.lockedVisitCharge)
+      : undefined;
 
   return {
     id: job.id,
@@ -155,7 +214,7 @@ function toFeedJobRequest(job: Job): JobRequest {
     locationArea,
     uploadedTime: timeAgo(job.createdAt),
     postedTimestamp: Date.parse(job.createdAt) || undefined,
-    suggestedVisitCharge: job.suggestedVisitCharge ?? job.lockedVisitCharge ?? undefined,
+    suggestedVisitCharge,
     preferredTiming: formatPreferredTiming(job.preferredVisitTime, false, isUrgent),
     status: isUrgent ? "URGENT" : "OPEN",
     customer: {
@@ -394,8 +453,9 @@ export function JobRequestFeed({
     };
     // inDrive-style instant card push: prepend incoming job directly to feed
     const onJobPush = (payload: any) => {
-      const incomingJob = payload?.job || (payload?.id ? payload : null);
-      if (incomingJob && incomingJob.id) {
+      const incomingRaw = payload?.job || (payload?.id ? payload : null);
+      if (incomingRaw && incomingRaw.id) {
+        const incomingJob = mapBackendJob(incomingRaw);
         setLiveJobs((prev) => {
           const existsIdx = prev.findIndex((j) => j.id === incomingJob.id);
           if (existsIdx !== -1) {
@@ -407,7 +467,7 @@ export function JobRequestFeed({
         });
 
         // Fail-safe: if customer details are missing on the push payload, fetch the complete job immediately
-        if (!incomingJob.customer?.name && !incomingJob.customerName) {
+        if (!incomingJob.customer?.name && !(incomingRaw as any).customerName) {
           getWorkerJob(incomingJob.id)
             .then((fullJob) => {
               if (fullJob && fullJob.customer) {
