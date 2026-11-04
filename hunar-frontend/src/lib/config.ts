@@ -5,7 +5,7 @@ export const HUNAR_CONFIG = {
   rawSupportPhone: "0915840000",
   whatsappNumber: "+92 314 0837519",
   rawWhatsapp: "923140837519",
-  platformAccountLabel: "WorkerFIX Platform Bank Account",
+  platformAccountLabel: "HUNAR Platform Bank Account",
   bankAccountDetailsPlaceholder: "Bank account details will appear here.",
   defaultMaxNegotiationRounds: 5,
   nonNegotiableLinks: ["/worker/settings"],
