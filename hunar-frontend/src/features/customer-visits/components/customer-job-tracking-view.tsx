@@ -91,6 +91,7 @@ export function CustomerJobTrackingView({ jobId }: CustomerJobTrackingViewProps)
   // Live worker GPS coordinates (updated dynamically via Socket.IO)
   const [liveWorkerLat, setLiveWorkerLat] = useState<number | null>(null);
   const [liveWorkerLng, setLiveWorkerLng] = useState<number | null>(null);
+  const [isSocketConnected, setIsSocketConnected] = useState(false);
   const isFetchingRef = useRef(false);
 
   const fetchTracking = useCallback(
@@ -210,16 +211,17 @@ export function CustomerJobTrackingView({ jobId }: CustomerJobTrackingViewProps)
   const fetchTrackingRef = useRef(fetchTracking);
   fetchTrackingRef.current = fetchTracking;
 
-  // Auto-refresh: Initial fetch + rapid background auto-polling (2.5s while active/arriving, 8s otherwise)
+  // Adaptive polling (AUDIT-001):
+  // WebSocket is the authoritative push carrier for live worker GPS coordinates (`location:update`)
+  // and real-time stage transitions (`job:status:changed`, `visit:arrived`, `visit:otp:verified`).
+  // Aggressive 2.5s triple-polling is eliminated in favor of an adaptive fallback heartbeat:
+  // - When WebSocket is connected: 30s background heartbeat to ensure eventual consistency.
+  // - When WebSocket is disconnected: 20s adaptive fallback polling.
+  // - When the browser tab is hidden: polling pauses completely.
   useEffect(() => {
     void fetchTracking(false);
 
-    const isPendingStage =
-      !data ||
-      data.currentStageId === "ARRIVED" ||
-      data.currentStageId === "EN_ROUTE" ||
-      isOtpModalOpen;
-    const intervalMs = isPendingStage ? 2500 : 8000;
+    const intervalMs = isSocketConnected ? 30000 : 20000;
 
     const interval = setInterval(() => {
       if (typeof document !== "undefined" && document.visibilityState === "hidden") {
@@ -240,7 +242,7 @@ export function CustomerJobTrackingView({ jobId }: CustomerJobTrackingViewProps)
       clearInterval(interval);
       document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
-  }, [fetchTracking, data?.currentStageId, isOtpModalOpen]);
+  }, [fetchTracking, isSocketConnected]);
 
   // Real-time Socket.IO and ArrivalService synchronization with stable listeners
   useEffect(() => {
@@ -279,13 +281,21 @@ export function CustomerJobTrackingView({ jobId }: CustomerJobTrackingViewProps)
     // 2. Real-time Socket.IO listeners
     const socket = connectSocket();
     if (socket) {
+      if (socket.connected) {
+        setIsSocketConnected(true);
+      }
       // Start listening to location & status updates for this job room
       socket.emit("location:track:start", { jobId });
 
       const onConnect = () => {
+        setIsSocketConnected(true);
         socket.emit("location:track:start", { jobId });
       };
+      const onDisconnect = () => {
+        setIsSocketConnected(false);
+      };
       socket.on("connect", onConnect);
+      socket.on("disconnect", onDisconnect);
 
       const handleJobStatusChanged = (payload: any) => {
         if (isMatchingJob(payload?.jobId, payload?.visitId)) {
@@ -368,6 +378,7 @@ export function CustomerJobTrackingView({ jobId }: CustomerJobTrackingViewProps)
       return () => {
         unsubscribeArrival();
         socket.off("connect", onConnect);
+        socket.off("disconnect", onDisconnect);
         socket.emit("location:track:stop", { jobId });
         socket.off("job:status:changed", handleJobStatusChanged);
         socket.off("job:statusChanged", handleJobStatusChanged);

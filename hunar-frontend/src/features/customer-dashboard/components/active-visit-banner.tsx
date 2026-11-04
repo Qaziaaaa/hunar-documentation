@@ -7,6 +7,7 @@ import {
   Navigation,
   Phone,
   MessageSquare,
+  ShieldCheck,
 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { Link, useRouter } from "@/i18n/navigation";
@@ -187,6 +188,17 @@ export function ActiveVisitBanner({ visit: propVisit }: ActiveVisitBannerProps =
     Boolean(liveVisit.remainingDistanceKm && liveVisit.remainingDistanceKm > 0);
   const showStatusDetail = isVisitVerified || hasEtaOrDistance;
 
+  const handleOpenVerificationModal = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    arrivalService.triggerVerificationModal({
+      jobId: liveVisit.jobId || liveVisit.id,
+      visitId: liveVisit.id,
+      workerName: technicianName,
+      workerPhone: technicianPhone,
+      customerAddress: area,
+    });
+  };
+
   return (
     <div
       onClick={handleCardClick}
@@ -287,25 +299,23 @@ export function ActiveVisitBanner({ visit: propVisit }: ActiveVisitBannerProps =
                 </span>
               </div>
             )}
-
-            {/* Doorstep Security PIN Callout if pending verification */}
-            {Boolean(liveVisit.securityPin && !isVisitVerified) && (
-              <>
-                <span className="text-slate-300 text-xs hidden sm:inline">•</span>
-                <div className="flex items-center gap-1.5 shrink-0">
-                  <span className="text-xs text-slate-500 font-semibold">
-                    {isUrdu ? "آمد PIN:" : "Doorstep PIN:"}
-                  </span>
-                  <span className="inline-flex items-center font-mono font-bold text-xs sm:text-sm tracking-wider text-orange bg-orange/10 px-2 py-0.5 rounded-lg border border-orange/20">
-                    {liveVisit.securityPin}
-                  </span>
-                </div>
-              </>
-            )}
           </div>
 
-          {/* Right: Contact Actions (Message & Call) */}
-          <div className="grid grid-cols-2 gap-2 sm:flex sm:items-center sm:gap-2.5 shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-100">
+          {/* Right: Contact Actions (Message, Call, and Doorstep Verification) */}
+          <div className="flex items-center gap-2 sm:gap-2.5 shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-100 flex-wrap">
+            {/* Doorstep OTP Verification Action Button - opens popup modal */}
+            {!isVisitVerified && (liveVisit.status === "arrived" || session?.status === "pending_otp") && (
+              <button
+                type="button"
+                role="button"
+                aria-label={isUrdu ? "دہلیز کی تصدیق کریں" : "Verify Arrival"}
+                onClick={handleOpenVerificationModal}
+                className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white border border-amber-600 text-xs sm:text-sm font-bold transition-all shadow-2xs active:scale-98 cursor-pointer"
+              >
+                <ShieldCheck className="size-4 shrink-0" />
+                <span>{isUrdu ? "آمد تصدیق کریں" : "Verify Arrival"}</span>
+              </button>
+            )}
             {/* Message Button */}
             <Link
               role="button"

@@ -20,6 +20,7 @@ import { formatPostedAt } from "@/lib/format";
 import { WorkerOfferCard } from "./worker-offer-card";
 import { WorkerProfileModal } from "./worker-profile-modal";
 import { acceptWorkerOffer } from "../api/customer-jobs-api";
+import { getOfferRemainingSeconds } from "@/lib/urgent-offer";
 import type { CustomerJob, WorkerOffer } from "../types";
 
 interface CustomerOffersHubViewProps {
@@ -117,11 +118,7 @@ export function CustomerOffersHubView({ initialJobs }: CustomerOffersHubViewProp
           (job as any).urgency === "EMERGENCY" ||
           (job as any).urgency === "HIGH";
         if (isUrgentJob && job.status === "receiving_offers") {
-          const nowMs = Date.now();
-          offers = offers.filter((o) => {
-            const createdMs = o.createdAt ? new Date(o.createdAt).getTime() : 0;
-            return createdMs === 0 || nowMs - createdMs < 50000;
-          });
+          offers = offers.filter((o) => getOfferRemainingSeconds(o) > 0);
         }
 
         // Status filter

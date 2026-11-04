@@ -116,12 +116,16 @@ export async function getJobDetail(jobId: string): Promise<CustomerJob> {
 /**
  * Fetch all bids/offers for a specific job
  */
-export async function getJobOffers(jobId: string): Promise<WorkerOffer[]> {
-  const res = await http.get<any[]>(`/jobs/${jobId}/offers`);
-  if (!Array.isArray(res)) {
-    return [];
-  }
-  return res.map(transformBackendOffer);
+export async function getJobOffers(
+  jobId: string,
+  options?: { page?: number; limit?: number },
+): Promise<WorkerOffer[]> {
+  const pageQuery = options?.page ? `?page=${options.page}&limit=${options.limit ?? 20}` : "";
+  const res = await http.get<any>(`/jobs/${jobId}/offers${pageQuery}`);
+  const rawList: unknown[] = Array.isArray(res)
+    ? res
+    : res?.items ?? res?.data ?? [];
+  return rawList.map(transformBackendOffer);
 }
 
 /**
@@ -391,8 +395,12 @@ export function transformBackendOffer(offer: any): WorkerOffer {
     estimatedArrival: offer.estimatedArrival || "",
     distanceKm: Number(offer.distanceKm || 0),
     createdAt: offer.createdAt || new Date().toISOString(),
+    expiresAt: offer.expiresAt,
+    serverTime: offer.serverTime,
     note: offer.message,
     status: offer.status,
     isDeclined: offer.status === "PENDING" ? false : isDeclined,
+    maxNegotiationRounds: offer.maxNegotiationRounds,
+    minimumVisitFee: offer.minimumVisitFee,
   };
 }

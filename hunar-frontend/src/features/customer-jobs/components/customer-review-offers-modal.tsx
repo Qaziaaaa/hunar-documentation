@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { useLocale } from "next-intl";
 import { formatJobDate } from "@/lib/format";
+import { getOfferRemainingSeconds } from "@/lib/urgent-offer";
 import type { CustomerJob, WorkerOffer } from "../types";
 
 interface CustomerReviewOffersModalProps {
@@ -70,11 +71,9 @@ export function CustomerReviewOffersModal({
     job.scheduleType === "asap" ||
     (job as any).urgency === "EMERGENCY" ||
     (job as any).urgency === "HIGH";
-  const nowMs = Date.now();
   const offers = (job.offers || []).filter((o) => {
     if (!isUrgentJob) return true;
-    const createdMs = o.createdAt ? new Date(o.createdAt).getTime() : 0;
-    return createdMs === 0 || nowMs - createdMs < 50000;
+    return getOfferRemainingSeconds(o) > 0;
   });
 
   const handleConfirmDecline = (offer: WorkerOffer) => {
