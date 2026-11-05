@@ -343,6 +343,8 @@ describe('JobsService — getJobDetail location privacy', () => {
 
     expect(result.address).toBe(fullAddress);
     expect(result.customer?.phone).toBe('+923001234567');
+    expect(result.customer?.rating).toBe(0);
+    expect(result.customer?.totalReviews).toBe(0);
     expect(result.latitude).toBe(34.015);
     expect(result.longitude).toBe(71.53);
   });
@@ -389,6 +391,8 @@ it('masks worker phone number in offers until offer acceptance (AUDIT-021)', asy
 
     expect(result.address).toBe(fullAddress);
     expect(result.customer?.phone).toBe('+923001234567');
+    expect(result.customer?.rating).toBe(0);
+    expect(result.customer?.totalReviews).toBe(0);
   });
 
   describe('IDOR Authorization Enforcement (AUDIT-018)', () => {

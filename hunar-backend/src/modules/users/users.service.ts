@@ -21,12 +21,25 @@ export class UsersService {
     if (user.role === Role.WORKER) {
       return this.workerProfileService.getWorkerOnboarding(userId);
     }
-    const completedJobsCount = await this.prisma.serviceRequest.count({
-      where: {
-        customerId: userId,
-        status: { in: [JobStatus.COMPLETED, JobStatus.PAID, JobStatus.REVIEWED] },
-      },
-    });
+    const [completedJobsCount, reviewAgg] = await Promise.all([
+      this.prisma.serviceRequest.count({
+        where: {
+          customerId: userId,
+          status: { in: [JobStatus.COMPLETED, JobStatus.PAID, JobStatus.REVIEWED] },
+        },
+      }),
+      this.prisma.review.aggregate({
+        where: { revieweeId: userId, isVisible: true },
+        _avg: { rating: true },
+        _count: { _all: true },
+      }),
+    ]);
+    const avgRating =
+      reviewAgg._avg.rating !== null && reviewAgg._avg.rating !== undefined
+        ? Number(reviewAgg._avg.rating.toFixed(1))
+        : 0;
+    const totalReviews = reviewAgg._count._all ?? 0;
+
     return {
       user: {
         id: user.id,
@@ -38,6 +51,9 @@ export class UsersService {
         isVerified: user.isVerified,
         createdAt: user.createdAt,
         completedJobsCount,
+        rating: avgRating,
+        avgRating,
+        totalReviews,
       },
     };
   }
