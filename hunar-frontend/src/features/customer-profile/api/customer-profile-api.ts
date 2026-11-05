@@ -87,6 +87,8 @@ export async function getCustomerProfile(): Promise<CustomerProfileData> {
     primaryCity: u.city || "",
     joinedDate,
     completedJobsCount,
+    rating: typeof u.rating === "number" ? u.rating : typeof u.avgRating === "number" ? u.avgRating : 0,
+    totalReviews: typeof u.totalReviews === "number" ? u.totalReviews : 0,
     isEmailVerified: Boolean(u.isEmailVerified || u.emailVerified),
     isPhoneVerified: Boolean(u.isPhoneVerified || u.phoneVerified || u.isVerified || u.phone),
   };

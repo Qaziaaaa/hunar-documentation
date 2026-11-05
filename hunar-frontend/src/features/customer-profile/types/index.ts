@@ -47,6 +47,7 @@ export interface CustomerProfileData {
   completedJobsCount: number;
   trustScore: string;
   rating: number;
+  totalReviews?: number;
   primaryCity: string;
   preferredLanguage: "en" | "ur";
   preferredServiceHours: "morning" | "evening" | "anytime";

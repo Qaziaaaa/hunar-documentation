@@ -612,7 +612,7 @@ export function CustomerProfileView() {
                 <Star className="size-3.5 fill-amber-400 text-amber-400" />
                 <span>
                   {profile.rating > 0
-                    ? profile.rating.toFixed(1)
+                    ? `${profile.rating.toFixed(1)}${profile.totalReviews ? ` (${profile.totalReviews})` : ""}`
                     : isUrdu
                     ? "نیا کسٹمر"
                     : "New"}

@@ -106,8 +106,9 @@ export async function getJobDetail(jobId: string): Promise<CustomerJob> {
     totalAmount:
       (res.selectedWorker ? Number(res.lockedVisitCharge ?? 0) : 0) +
       Number(res.repairCharge ?? res.repairEstimate ?? 0),
-    hasReviewed: Boolean(res.hasReviewed || res.customerReview || (Array.isArray(res.reviews) && res.reviews.length > 0)),
+    hasReviewed: Boolean(res.hasReviewed ?? (res.customerReview || (Array.isArray(res.reviews) && res.reviews.length > 0))),
     customerReview: res.customerReview ?? (Array.isArray(res.reviews) && res.reviews[0] ? res.reviews[0] : null),
+    workerReview: res.workerReview ?? null,
     cancelReason: res.cancelReason || undefined,
     cancelledAt: res.cancelledAt || undefined,
   };
@@ -277,8 +278,9 @@ function transformListRow(row: any): CustomerJob {
     totalAmount:
       (row.selectedWorker ? Number(row.lockedVisitCharge ?? 0) : 0) +
       Number(row.repairCharge ?? 0),
-    hasReviewed: Boolean(row.hasReviewed || row.customerReview || (Array.isArray(row.reviews) && row.reviews.length > 0)),
+    hasReviewed: Boolean(row.hasReviewed ?? (row.customerReview || (Array.isArray(row.reviews) && row.reviews.length > 0))),
     customerReview: row.customerReview ?? (Array.isArray(row.reviews) && row.reviews[0] ? row.reviews[0] : null),
+    workerReview: row.workerReview ?? null,
     cancelReason: row.cancelReason || undefined,
     cancelledAt: row.cancelledAt || undefined,
   };
