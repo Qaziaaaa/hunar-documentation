@@ -92,7 +92,18 @@ export function WorkerVisitTrackingView({
   const [isArriving, setIsArriving] = useState(false);
   const isArrivingRef = useRef(false);
   const [showWorkerOtpModal, setShowWorkerOtpModal] = useState(false);
-  const [arrivedAtTime, setArrivedAtTime] = useState<number>(Date.now());
+  const [arrivedAtTime, setArrivedAtTime] = useState<number>(() => {
+    const existingSession = arrivalService.getSession();
+    const normJobId = job.id?.toLowerCase();
+    if (
+      existingSession &&
+      (existingSession.jobId?.toLowerCase() === normJobId || (job as any)?.visitId === existingSession.visitId) &&
+      existingSession.arrivedAt
+    ) {
+      return existingSession.arrivedAt;
+    }
+    return (job as any)?.arrivedAt || Date.now();
+  });
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const hasHandledVerifiedRef = useRef(false);
   const successToastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -110,8 +121,8 @@ export function WorkerVisitTrackingView({
   const [routePoints, setRoutePoints] = useState<[number, number][]>([]);
 
   // Customer / Job exact coordinates from job location (fallback to Central Peshawar / Hayatabad if missing)
-  const rawCustomerLat = job.location.coordinates?.lat;
-  const rawCustomerLng = job.location.coordinates?.lng;
+  const rawCustomerLat = job.location?.coordinates?.lat ?? (job as any)?.latitude;
+  const rawCustomerLng = job.location?.coordinates?.lng ?? (job as any)?.longitude;
   const hasCustomerCoords =
     typeof rawCustomerLat === "number" &&
     !isNaN(rawCustomerLat) &&
@@ -245,8 +256,44 @@ export function WorkerVisitTrackingView({
     0;
 
   const commissionHold = Math.round(agreedVisitCharge * 0.1);
-  const [currentSecurityPin, setCurrentSecurityPin] = useState<string>(job.securityPin || "");
-  const customerFirstName = job.customer.name.split(" ")[0];
+  const [currentSecurityPin, setCurrentSecurityPin] = useState<string>(() => {
+    const existingSession = arrivalService.getSession();
+    const normJobId = job.id?.toLowerCase();
+    if (
+      existingSession &&
+      existingSession.status === "pending_otp" &&
+      (existingSession.jobId?.toLowerCase() === normJobId || (job as any)?.visitId === existingSession.visitId) &&
+      existingSession.otp
+    ) {
+      return existingSession.otp;
+    }
+    return job.securityPin || (job as any)?.activeArrivalOtp || "";
+  });
+  const customerName =
+    job.customer?.name ||
+    (job.customer as any)?.fullName ||
+    (job.customer as any)?.firstName ||
+    (job as any)?.customerName ||
+    "Customer";
+  const customerFirstName = customerName.split(" ")[0] || "Customer";
+  const customerAvatar = job.customer?.avatarUrl || (job.customer as any)?.avatar || "";
+  const customerRating = job.customer?.rating ?? 5.0;
+  const customerTotalReviews =
+    job.customer?.totalReviews ??
+    (job.customer as any)?.totalOrders ??
+    (job.customer as any)?.reviewCount ??
+    0;
+  const customerPhone = job.customer?.phone || (job as any)?.customerPhone || "";
+  const locationArea =
+    job.location?.area ||
+    (job as any)?.locationArea ||
+    (job as any)?.area ||
+    "Location";
+  const locationAddress =
+    job.location?.fullAddress ||
+    (job.location as any)?.address ||
+    (job as any)?.address ||
+    locationArea;
 
   // Live distance and ETA states computed dynamically from worker & customer coordinates
   const [liveDistanceKm, setLiveDistanceKm] = useState<number | null>(null);
@@ -786,57 +833,48 @@ export function WorkerVisitTrackingView({
     if (isArriving || isArrivingRef.current) return;
     setErrorMessage(null);
 
-    // Active jobs proceed without blocking arrival; wallet deduction applies normally
-
-    // Instantly generate/retrieve 4-digit arrival OTP
-    const optimisticOtp =
-      currentSecurityPin ||
-      (job as any)?.activeArrivalOtp ||
-      Math.floor(1000 + Math.random() * 9000).toString();
-    const now = Date.now();
-
-    // Instantly open OTP modal (0ms latency, zero button freeze)
-    setCurrentSecurityPin(optimisticOtp);
-    setArrivedAtTime(now);
-    setShowWorkerOtpModal(true);
-
-    arrivalService.startArrivalSession({
-      jobId: job.id,
-      visitId: (job as any)?.visitId || (job as any)?.nextVisit?.id,
-      otp: optimisticOtp,
-      workerName: workerProfileName || "Technician",
-      customerName: job.customer.name,
-      customerAddress: job.location.fullAddress || (job.location as any).address || job.location.area,
-    });
+    // If OTP is already known, simply reopen the modal without refetching
+    if (currentSecurityPin) {
+      setShowWorkerOtpModal(true);
+      return;
+    }
 
     try {
       isArrivingRef.current = true;
       setIsArriving(true);
-      const res = await workerStore.arriveAtDoorstep(job.id, optimisticOtp);
+
+      const res = await workerStore.arriveAtDoorstep(job.id);
       if (!res.success) {
-        setShowWorkerOtpModal(false);
         setErrorMessage(res.error || "Failed to notify arrival");
         return;
       }
 
-      const realOtp = res.otp || optimisticOtp;
-      if (realOtp !== optimisticOtp) {
-        setCurrentSecurityPin(realOtp);
+      const realOtp = res.otp;
+      if (!realOtp) {
+        setErrorMessage(
+          isUrdu
+            ? "او ٹی پی موصول نہیں ہوا۔ براہ کرم دوبارہ کوشش کریں۔"
+            : "Failed to retrieve OTP from server. Please try again."
+        );
+        return;
       }
-      if (res.arrivedAt) {
-        setArrivedAtTime(res.arrivedAt);
-      }
+
+      const arrivalTimestamp = res.arrivedAt || Date.now();
+      setCurrentSecurityPin(realOtp);
+      setArrivedAtTime(arrivalTimestamp);
 
       arrivalService.startArrivalSession({
         jobId: job.id,
         visitId: res.visitId,
         otp: realOtp,
         workerName: workerProfileName || "Technician",
-        customerName: job.customer.name,
-        customerAddress: job.location.fullAddress || (job.location as any).address || job.location.area,
+        customerName: customerName,
+        customerAddress: locationAddress,
       });
+
+      // Show modal only after authoritative OTP is received from backend
+      setShowWorkerOtpModal(true);
     } catch (err: any) {
-      setShowWorkerOtpModal(false);
       setErrorMessage(err?.message || "Failed to notify arrival");
     } finally {
       isArrivingRef.current = false;
@@ -1010,11 +1048,11 @@ export function WorkerVisitTrackingView({
           {/* Left Column: Avatar + First Name + Rating */}
           <div className="flex flex-col items-center shrink-0 w-14 text-center">
             <div className="size-12 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-sm font-extrabold text-[#123B5D] overflow-hidden shadow-2xs">
-              {job.customer.avatarUrl ? (
+              {customerAvatar ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
-                  src={job.customer.avatarUrl}
-                  alt={job.customer.name}
+                  src={customerAvatar}
+                  alt={customerName}
                   loading="lazy"
                   decoding="async"
                   className="size-full object-cover"
@@ -1023,15 +1061,15 @@ export function WorkerVisitTrackingView({
                   }}
                 />
               ) : null}
-              {(!job.customer.avatarUrl) && (
-                job.customer.name.slice(0, 2).toUpperCase()
+              {(!customerAvatar) && (
+                customerName.slice(0, 2).toUpperCase()
               )}
             </div>
             <span className="text-xs font-extrabold text-slate-900 mt-1 truncate max-w-full">
               {customerFirstName}
             </span>
             <span className="text-[10px] text-amber-600 font-bold flex items-center gap-0.5 mt-0.5">
-              ⭐ {job.customer.rating} <span className="text-slate-400 font-normal">({job.customer.totalReviews})</span>
+              ⭐ {customerRating} <span className="text-slate-400 font-normal">({customerTotalReviews})</span>
             </span>
           </div>
 
@@ -1043,10 +1081,10 @@ export function WorkerVisitTrackingView({
               </div>
               <div className="min-w-0 flex-1">
                 <p className="text-xs font-extrabold text-slate-900 truncate">
-                  {job.location.area}
+                  {locationArea}
                 </p>
                 <p className="text-[11px] text-slate-500 line-clamp-2 leading-tight mt-0.5">
-                  {job.location.fullAddress}
+                  {locationAddress}
                 </p>
               </div>
             </div>
@@ -1154,11 +1192,11 @@ export function WorkerVisitTrackingView({
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3 min-w-0">
                 <div className="size-12 rounded-2xl bg-white border border-slate-200 flex items-center justify-center text-sm font-extrabold text-[#123B5D] overflow-hidden shadow-2xs shrink-0">
-                  {job.customer.avatarUrl ? (
+                  {customerAvatar ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
-                      src={job.customer.avatarUrl}
-                      alt={job.customer.name}
+                      src={customerAvatar}
+                      alt={customerName}
                       loading="lazy"
                       decoding="async"
                       className="size-full object-cover"
@@ -1167,19 +1205,19 @@ export function WorkerVisitTrackingView({
                       }}
                     />
                   ) : null}
-                  {(!job.customer.avatarUrl) && (
-                    job.customer.name.slice(0, 2).toUpperCase()
+                  {(!customerAvatar) && (
+                    customerName.slice(0, 2).toUpperCase()
                   )}
                 </div>
                 <div className="min-w-0 leading-tight">
                   <div className="flex items-center gap-1.5">
                     <span className="text-sm font-black text-slate-900 truncate">
-                      {job.customer.name}
+                      {customerName}
                     </span>
                     <ShieldCheck className="size-4 text-emerald-600 shrink-0" />
                   </div>
                   <p className="text-xs text-slate-500 font-medium mt-0.5">
-                    ⭐ {job.customer.rating} ({job.customer.totalReviews} reviews)
+                    ⭐ {customerRating} ({customerTotalReviews} reviews)
                   </p>
                 </div>
               </div>
@@ -1217,12 +1255,12 @@ export function WorkerVisitTrackingView({
                   {isUrdu ? "کسٹمر کا پتہ" : "Destination Doorstep"}
                 </span>
                 <p className="text-sm font-extrabold text-slate-900 mt-0.5">
-                  {job.location.area}
+                  {locationArea}
                 </p>
                 <p className="text-xs text-slate-600 leading-relaxed mt-1">
-                  {job.location.fullAddress}
+                  {locationAddress}
                 </p>
-                {job.location.landmark && (
+                {job.location?.landmark && (
                   <p className="text-xs text-slate-500 font-medium mt-1">
                     Landmark: {job.location.landmark}
                   </p>
@@ -1321,9 +1359,9 @@ export function WorkerVisitTrackingView({
               </div>
               <div className="min-w-0 flex-1">
                 <h3 className="font-bold text-slate-900 text-base truncate">
-                  Contact {job.customer.name}
+                  Contact {customerName}
                 </h3>
-                <p className="text-xs text-slate-500">{job.location.area}</p>
+                <p className="text-xs text-slate-500">{locationArea}</p>
               </div>
             </div>
 
@@ -1332,7 +1370,7 @@ export function WorkerVisitTrackingView({
                 Direct Phone Line
               </span>
               <p className="text-lg font-mono font-bold text-[#123B5D]">
-                {job.customer.phone}
+                {customerPhone || "N/A"}
               </p>
             </div>
 
@@ -1345,7 +1383,7 @@ export function WorkerVisitTrackingView({
                 Close
               </button>
               <a
-                href={`tel:${job.customer.phone}`}
+                href={customerPhone ? `tel:${customerPhone}` : "#"}
                 className="flex-1 py-2.5 rounded-xl bg-[#0F8B8D] text-white text-xs font-bold text-center hover:bg-[#0B7F74] transition-colors"
               >
                 Dial Now
@@ -1374,7 +1412,7 @@ export function WorkerVisitTrackingView({
             </div>
 
             <p className="text-xs text-slate-600">
-              Are you sure you want to cancel this visit to {job.customer.name}?
+              Are you sure you want to cancel this visit to {customerName}?
             </p>
 
             <textarea
@@ -1439,7 +1477,7 @@ export function WorkerVisitTrackingView({
               </div>
               <div className="flex items-center justify-between border-t border-slate-200/60 pt-2">
                 <span className="text-xs text-slate-500 font-medium">Customer</span>
-                <span className="text-xs font-bold text-slate-800">{job.customer.name}</span>
+                <span className="text-xs font-bold text-slate-800">{customerName}</span>
               </div>
             </div>
 
@@ -1489,7 +1527,7 @@ export function WorkerVisitTrackingView({
           otp={currentSecurityPin}
           arrivedAt={arrivedAtTime}
           jobId={job.id}
-          customerName={job.customer.name}
+          customerName={customerName}
           onClose={() => setShowWorkerOtpModal(false)}
           isUrdu={isUrdu}
         />

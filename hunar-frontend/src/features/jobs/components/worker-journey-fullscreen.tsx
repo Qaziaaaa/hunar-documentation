@@ -47,6 +47,7 @@ import {
   Upload,
   Plus,
   Trash2,
+  Loader2,
 } from "lucide-react";
 
 interface WorkerJourneyFullscreenProps {
@@ -79,6 +80,11 @@ export function WorkerJourneyFullscreen({
   const [showSupportModal, setShowSupportModal] = useState(false);
   const [customerRating, setCustomerRating] = useState(5);
   const [selectedReviewTags, setSelectedReviewTags] = useState<string[]>([]);
+  const [customerComment, setCustomerComment] = useState("");
+  const [isSubmittingReview, setIsSubmittingReview] = useState(false);
+  const [reviewSubmitted, setReviewSubmitted] = useState(() =>
+    Boolean((activeJob as any)?.workerReview || (job as any)?.workerReview || (job as any)?.hasReviewed)
+  );
   const [cancelReason, setCancelReason] = useState("");
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
@@ -222,8 +228,36 @@ export function WorkerJourneyFullscreen({
     workerStore.completeJob(job.id, 0);
   };
 
-  // 5. Handle Exit back to jobs hub
-  const handleFinishAndExit = () => {
+  // 5. Handle Exit back to jobs hub (submitting customer rating if pending)
+  const handleFinishAndExit = async () => {
+    if (isSubmittingReview) return;
+
+    if (!reviewSubmitted && customerRating > 0) {
+      try {
+        setIsSubmittingReview(true);
+        const trimmedComment = customerComment.trim();
+        const fallbackComment =
+          selectedReviewTags.length > 0 ? selectedReviewTags.join(", ") : undefined;
+        const finalComment =
+          trimmedComment.length >= 10
+            ? trimmedComment
+            : fallbackComment && fallbackComment.length >= 10
+            ? fallbackComment
+            : undefined;
+
+        await http.post(`/jobs/${encodeURIComponent(job.id)}/review`, {
+          rating: customerRating,
+          tags: selectedReviewTags.length > 0 ? selectedReviewTags : undefined,
+          ...(finalComment ? { comment: finalComment } : {}),
+        });
+        setReviewSubmitted(true);
+      } catch (err: any) {
+        console.warn("[WorkerJourney] Failed to submit customer review:", err?.message || err);
+      } finally {
+        setIsSubmittingReview(false);
+      }
+    }
+
     router.push("/worker/jobs");
   };
 
@@ -261,8 +295,7 @@ export function WorkerJourneyFullscreen({
   const isEnRoute =
     !isCompleted &&
     !isDecisionOrExecution &&
-    !isInspecting &&
-    (activeJob.status === "accepted" || activeJob.status === "visit_in_progress");
+    !isInspecting;
 
   const isAwaitingDecision =
     activeJob.status === "inspection_submitted" || activeJob.status === "repair_negotiating";
@@ -392,6 +425,37 @@ export function WorkerJourneyFullscreen({
       ? activeJob.workerNetEarnings
       : grossJobValue - platformCommission;
 
+  const customerName =
+    activeJob.customer?.name ||
+    (activeJob.customer as any)?.fullName ||
+    (activeJob.customer as any)?.firstName ||
+    (activeJob as any)?.customerName ||
+    (job.customer as any)?.name ||
+    (job.customer as any)?.fullName ||
+    (job.customer as any)?.firstName ||
+    "Customer";
+  const customerAvatar =
+    activeJob.customer?.avatarUrl ||
+    (activeJob.customer as any)?.avatar ||
+    job.customer?.avatarUrl ||
+    "";
+  const customerPhone =
+    activeJob.customer?.phone ||
+    (activeJob as any)?.customerPhone ||
+    job.customer?.phone ||
+    "";
+  const locationArea =
+    activeJob.location?.area ||
+    (activeJob as any)?.locationArea ||
+    (activeJob as any)?.area ||
+    job.location?.area ||
+    "Location";
+  const locationCity =
+    activeJob.location?.city ||
+    (activeJob as any)?.city ||
+    job.location?.city ||
+    "Peshawar";
+
   return (
     <div className="min-h-screen bg-slate-50/60 lg:bg-slate-100/70 text-slate-900 font-sans antialiased select-none flex flex-col w-full">
       <div className="w-full max-w-3xl sm:max-w-4xl lg:max-w-6xl xl:max-w-7xl mx-auto bg-white lg:my-6 lg:rounded-3xl lg:border lg:border-slate-200/90 lg:shadow-xl relative flex flex-col flex-1 overflow-hidden">
@@ -460,11 +524,11 @@ export function WorkerJourneyFullscreen({
         <div className="bg-white border-b border-slate-200/80 px-4 sm:px-6 lg:px-8 py-3.5 flex items-center justify-between gap-3 shadow-2xs">
           <div className="flex items-center gap-3 min-w-0">
             <div className="size-10 sm:size-11 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-xs font-black text-[#123B5D] overflow-hidden shrink-0">
-              {job.customer.avatarUrl ? (
+              {customerAvatar ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
-                  src={job.customer.avatarUrl}
-                  alt={job.customer.name}
+                  src={customerAvatar}
+                  alt={customerName}
                   loading="lazy"
                   decoding="async"
                   className="size-full object-cover"
@@ -473,19 +537,19 @@ export function WorkerJourneyFullscreen({
                   }}
                 />
               ) : null}
-              {(!job.customer.avatarUrl) && (
-                job.customer.name.slice(0, 2).toUpperCase()
+              {(!customerAvatar) && (
+                customerName.slice(0, 2).toUpperCase()
               )}
             </div>
             <div className="min-w-0 leading-tight">
               <div className="flex items-center gap-1.5">
                 <span className="text-xs sm:text-sm font-extrabold text-slate-900 truncate">
-                  {job.customer.name}
+                  {customerName}
                 </span>
                 <BadgeCheck className="size-4 text-emerald-600 shrink-0" />
               </div>
               <p className="text-[11px] sm:text-xs text-slate-500 truncate mt-0.5">
-                {job.location.area} · {job.location.city || "Peshawar"}
+                {locationArea} · {locationCity}
               </p>
             </div>
           </div>
@@ -571,33 +635,52 @@ export function WorkerJourneyFullscreen({
                 {/* Right Column: Customer Rating & Return */}
                 <div className="lg:col-span-5 space-y-5">
                   <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-xs space-y-4">
-                    <div className="bg-slate-50 p-5 rounded-2xl border border-slate-200/90 space-y-3 text-center">
-                      <span className="text-xs sm:text-sm font-bold text-slate-800 block">
-                        Rate your experience with {job.customer.name}
-                      </span>
-                      <div className="flex justify-center gap-2 pt-1">
-                        {[1, 2, 3, 4, 5].map((star) => (
-                          <button
-                            key={star}
-                            type="button"
-                            onClick={() => setCustomerRating(star)}
-                            className="p-1 hover:scale-110 transition-transform cursor-pointer"
-                          >
-                            <Star
-                              className={`size-7 ${
-                                star <= customerRating
-                                  ? "fill-amber-400 text-amber-400"
-                                  : "text-slate-300"
-                              }`}
-                            />
-                          </button>
-                        ))}
+                    {reviewSubmitted ? (
+                      <div className="p-5 rounded-2xl bg-emerald-50 border border-emerald-200 text-center space-y-2">
+                        <CheckCircle2 className="size-8 text-emerald-600 mx-auto" />
+                        <h4 className="text-sm font-extrabold text-emerald-950">
+                          {isUrdu ? "کسٹمر کا ریویو محفوظ ہو گیا!" : "Customer Reviewed Successfully!"}
+                        </h4>
+                        <p className="text-xs text-emerald-700">
+                          {isUrdu
+                            ? "کسٹمر کو آپ کی ریٹنگ اور فیڈ بیک موصول ہو چکی ہے۔"
+                            : "Your feedback and rating have been recorded."}
+                        </p>
                       </div>
+                    ) : (
+                      <div className="bg-slate-50 p-5 rounded-2xl border border-slate-200/90 space-y-3 text-center">
+                        <span className="text-xs sm:text-sm font-bold text-slate-800 block">
+                          {isUrdu
+                            ? `${customerName} کے ساتھ اپنے تجربے کی درجہ بندی کریں`
+                            : `Rate your experience with ${customerName}`}
+                        </span>
+                        <div className="flex justify-center gap-2 pt-1">
+                          {[1, 2, 3, 4, 5].map((star) => (
+                            <button
+                              key={star}
+                              type="button"
+                              onClick={() => setCustomerRating(star)}
+                              className="p-1 hover:scale-110 transition-transform cursor-pointer"
+                            >
+                              <Star
+                                className={`size-7 ${
+                                  star <= customerRating
+                                    ? "fill-amber-400 text-amber-400"
+                                    : "text-slate-300"
+                                }`}
+                              />
+                            </button>
+                          ))}
+                        </div>
 
-                      {/* Review Tags */}
-                      <div className="flex flex-wrap justify-center gap-1.5 pt-2">
-                        {["Polite & Cooperative", "Fast Payment", "Clear Directions", "Safe Environment"].map(
-                          (tag) => (
+                        {/* Review Tags */}
+                        <div className="flex flex-wrap justify-center gap-1.5 pt-2">
+                          {[
+                            "Polite & Cooperative",
+                            "Fast Payment",
+                            "Clear Directions",
+                            "Safe Environment",
+                          ].map((tag) => (
                             <button
                               key={tag}
                               type="button"
@@ -610,20 +693,60 @@ export function WorkerJourneyFullscreen({
                             >
                               {tag}
                             </button>
-                          )
-                        )}
+                          ))}
+                        </div>
+
+                        {/* Optional Comment / Note */}
+                        <div className="pt-2">
+                          <textarea
+                            value={customerComment}
+                            onChange={(e) => setCustomerComment(e.target.value)}
+                            placeholder={
+                              isUrdu
+                                ? "کوئی تبصرہ یا نوٹ لکھیں (اختیاری)..."
+                                : "Write a note or comment (optional)..."
+                            }
+                            className="w-full text-xs p-3 rounded-xl border border-slate-200 bg-white text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-[#0F8B8D] resize-none"
+                            rows={2}
+                          />
+                        </div>
                       </div>
-                    </div>
+                    )}
 
                     {/* Return CTA */}
                     <button
                       type="button"
+                      disabled={isSubmittingReview}
                       onClick={handleFinishAndExit}
-                      className="w-full py-4 rounded-2xl bg-gradient-to-r from-[#123B5D] to-[#0F8B8D] hover:opacity-95 active:scale-[0.99] text-white font-extrabold text-base shadow-lg shadow-[#0F8B8D]/25 transition-all flex items-center justify-center gap-2 cursor-pointer"
+                      className="w-full py-4 rounded-2xl bg-gradient-to-r from-[#123B5D] to-[#0F8B8D] hover:opacity-95 active:scale-[0.99] text-white font-extrabold text-base shadow-lg shadow-[#0F8B8D]/25 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60"
                     >
-                      <span>{isUrdu ? "جابز ہب پر واپس جائیں" : "Return to Jobs Hub"}</span>
-                      <ArrowRight className="size-4" />
+                      {isSubmittingReview ? (
+                        <>
+                          <Loader2 className="size-4 animate-spin" />
+                          <span>{isUrdu ? "فیڈ بیک محفوظ ہو رہا ہے..." : "Saving Feedback..."}</span>
+                        </>
+                      ) : reviewSubmitted ? (
+                        <>
+                          <span>{isUrdu ? "جابز ہب پر واپس جائیں" : "Return to Jobs Hub"}</span>
+                          <ArrowRight className="size-4" />
+                        </>
+                      ) : (
+                        <>
+                          <span>{isUrdu ? "فیڈ بیک جمع کریں اور واپس جائیں" : "Submit Rating & Return"}</span>
+                          <ArrowRight className="size-4" />
+                        </>
+                      )}
                     </button>
+
+                    {!reviewSubmitted && (
+                      <button
+                        type="button"
+                        onClick={() => router.push("/worker/jobs")}
+                        className="w-full text-center text-xs font-semibold text-slate-400 hover:text-slate-600 transition-colors pt-0.5 cursor-pointer"
+                      >
+                        {isUrdu ? "ریویو کے بغیر واپس جائیں" : "Skip review and return"}
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>
@@ -1041,7 +1164,7 @@ export function WorkerJourneyFullscreen({
               </div>
               <div className="flex items-center justify-between border-t border-slate-200/60 pt-2">
                 <span className="text-xs text-slate-500 font-medium">Customer</span>
-                <span className="text-xs font-bold text-slate-800">{job.customer.name}</span>
+                <span className="text-xs font-bold text-slate-800">{customerName}</span>
               </div>
             </div>
 
@@ -1086,9 +1209,9 @@ export function WorkerJourneyFullscreen({
               </div>
               <div className="min-w-0 flex-1">
                 <h3 className="font-bold text-slate-900 text-base truncate">
-                  Contact {job.customer.name}
+                  Contact {customerName}
                 </h3>
-                <p className="text-xs text-slate-500">{job.location.area}</p>
+                <p className="text-xs text-slate-500">{locationArea}</p>
               </div>
             </div>
 
@@ -1097,7 +1220,7 @@ export function WorkerJourneyFullscreen({
                 Direct Phone Line
               </span>
               <p className="text-lg font-mono font-bold text-[#123B5D]">
-                {job.customer.phone}
+                {customerPhone || "N/A"}
               </p>
             </div>
 
@@ -1110,7 +1233,7 @@ export function WorkerJourneyFullscreen({
                 Close
               </button>
               <a
-                href={`tel:${job.customer.phone}`}
+                href={customerPhone ? `tel:${customerPhone}` : "#"}
                 className="flex-1 py-2.5 rounded-xl bg-[#0F8B8D] text-white text-xs font-bold text-center hover:bg-[#0B7F74] transition-colors"
               >
                 Dial Now
@@ -1139,7 +1262,7 @@ export function WorkerJourneyFullscreen({
             </div>
 
             <p className="text-xs text-slate-600">
-              Are you sure you want to cancel this visit with {job.customer.name}?
+              Are you sure you want to cancel this visit with {customerName}?
             </p>
 
             <textarea
