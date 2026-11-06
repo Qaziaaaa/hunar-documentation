@@ -1,7 +1,12 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { adminApi, SuspendUserPayload } from "@/features/admin/api/admin-api";
+import {
+  useDebouncedValue,
+  useIncrementalDirectory,
+  useLoadMoreOnVisible,
+} from "@/features/admin/hooks/use-incremental-directory";
 import { AdminAvatar } from "@/features/admin/components/admin-avatar";
 import type { WorkerUser } from "@/types/admin";
 import { TableRowsSkeleton } from "@/features/admin/components/table-skeleton";
@@ -19,7 +24,6 @@ import {
   Filter,
   Plus,
   Search,
-  ShieldCheck,
   Star,
   Trophy,
   UserCheck,
@@ -28,12 +32,9 @@ import {
 } from "lucide-react";
 
 export default function WorkersPage() {
-  const [workers, setWorkers] = useState<WorkerUser[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
-  const [reloadKey, setReloadKey] = useState(0);
   const [search, setSearch] = useState("");
+  const debouncedSearch = useDebouncedValue(search, 300);
   const [statusFilter, setStatusFilter] = useState<"ALL" | "SUSPENDED">("ALL");
   const [selectedWorker, setSelectedWorker] = useState<WorkerUser | null>(null);
   const [actionWorker, setActionWorker] = useState<WorkerUser | null>(null);
@@ -47,31 +48,30 @@ export default function WorkersPage() {
   const [topUpError, setTopUpError] = useState<string | null>(null);
   const [topUpSuccess, setTopUpSuccess] = useState<string | null>(null);
 
-  useEffect(() => {
-    adminApi
-      .listWorkers({ limit: 50 })
-      .then((res) => setWorkers(res.items))
-      .catch((err) =>
-        setError(err instanceof Error ? err.message : "Failed to load workers"),
-      )
-      .finally(() => setLoading(false));
-  }, [reloadKey]);
-
-  const filtered = useMemo(
-    () =>
-      workers.filter((w) => {
-        const matchesSearch =
-          w.name.toLowerCase().includes(search.toLowerCase()) ||
-          w.phone.includes(search) ||
-          w.skills.some((s) => s.toLowerCase().includes(search.toLowerCase()));
-
-        let matchesStatus = true;
-        if (statusFilter === "SUSPENDED") matchesStatus = w.status === "SUSPENDED";
-
-        return matchesSearch && matchesStatus;
+  // First page (10 rows) paints immediately; the rest stream in on scroll.
+  const directory = useIncrementalDirectory<WorkerUser>({
+    queryKey: ["admin", "workers", debouncedSearch, statusFilter],
+    fetchPage: (query) =>
+      adminApi.listWorkers({
+        ...query,
+        search: debouncedSearch,
+        status: statusFilter === "SUSPENDED" ? "suspended" : undefined,
       }),
-    [workers, search, statusFilter],
+  });
+  const workers = directory.items;
+  const loading = directory.loading;
+  const error = directory.error;
+
+  const loadMoreRef = useRef<HTMLTableRowElement | null>(null);
+  useLoadMoreOnVisible(
+    loadMoreRef,
+    directory.hasNextPage,
+    directory.isFetchingNextPage,
+    directory.fetchNextPage,
   );
+
+  // Filtering happens in the query (server-side), so every loaded row matches.
+  const filtered = workers;
 
   const topWorker = useMemo(() => {
     if (!workers || workers.length === 0) return null;
@@ -108,7 +108,7 @@ export default function WorkersPage() {
     setActionError(null);
     try {
       await adminApi.suspendWorker(actionWorker.id, payload);
-      setWorkers((prev) =>
+      directory.updateItems((prev) =>
         prev.map((w) => {
           if (w.id === actionWorker.id) {
             return {
@@ -122,6 +122,7 @@ export default function WorkersPage() {
           return w;
         })
       );
+      void directory.refetch();
       setActionWorker(null);
     } catch (err) {
       setActionError(
@@ -138,7 +139,7 @@ export default function WorkersPage() {
     setActionError(null);
     try {
       await adminApi.reactivateWorker(actionWorker.id);
-      setWorkers((prev) =>
+      directory.updateItems((prev) =>
         prev.map((w) => {
           if (w.id === actionWorker.id) {
             return {
@@ -152,6 +153,7 @@ export default function WorkersPage() {
           return w;
         })
       );
+      void directory.refetch();
       setActionWorker(null);
     } catch (err) {
       setActionError(
@@ -179,7 +181,7 @@ export default function WorkersPage() {
         amountNum,
         topUpNote.trim() || undefined,
       );
-      setWorkers((prev) =>
+      directory.updateItems((prev) =>
         prev.map((w) =>
           w.id === topUpWorker.id
             ? { ...w, walletBalance: res.balance ?? w.walletBalance + amountNum }
@@ -218,8 +220,7 @@ export default function WorkersPage() {
             <button
               type="button"
               onClick={() => {
-                setError(null);
-                setReloadKey((k) => k + 1);
+                void directory.refetch();
               }}
               className="rounded-xl bg-red-600 px-3 py-1.5 text-xs font-bold text-white transition hover:bg-red-700"
             >
@@ -275,7 +276,9 @@ export default function WorkersPage() {
                     : "text-slate-600 hover:text-navy"
                 }`}
               >
-                All ({workers.length})
+                {statusFilter === "ALL"
+                  ? `All (${directory.meta?.total ?? workers.length})`
+                  : "All"}
               </button>
               <button
                 type="button"
@@ -456,6 +459,29 @@ export default function WorkersPage() {
                   </tr>
                   );
                 })}
+                {!loading && workers.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="px-4 py-10 text-center text-slate-400">
+                      No workers match these filters.
+                    </td>
+                  </tr>
+                ) : null}
+                {directory.hasNextPage ? (
+                  <tr ref={loadMoreRef}>
+                    <td colSpan={6} className="px-4 py-4 text-center">
+                      <button
+                        type="button"
+                        onClick={() => void directory.fetchNextPage()}
+                        disabled={directory.isFetchingNextPage}
+                        className="rounded-xl border border-slate-200 px-4 py-2 text-[11px] font-bold text-slate-600 transition hover:bg-slate-50 disabled:opacity-60"
+                      >
+                        {directory.isFetchingNextPage
+                          ? "Loading more…"
+                          : `Load more (${workers.length} of ${directory.meta?.total ?? workers.length})`}
+                      </button>
+                    </td>
+                  </tr>
+                ) : null}
               </tbody>
             </table>
           </div>

@@ -37,7 +37,7 @@ export default function JobsPage() {
       return res.items;
     },
     refetchInterval: 10_000,
-    refetchIntervalInBackground: true,
+    refetchIntervalInBackground: false,
     refetchOnWindowFocus: true,
     placeholderData: keepPreviousData,
   });

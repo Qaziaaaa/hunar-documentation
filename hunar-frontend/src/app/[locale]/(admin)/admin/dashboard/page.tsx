@@ -46,7 +46,7 @@ export default function AdminDashboardPage() {
     queryKey: adminKeys.overview,
     queryFn: fetchDashboardOverview,
     refetchInterval: 15_000,
-    refetchIntervalInBackground: true,
+    refetchIntervalInBackground: false,
     refetchOnWindowFocus: true,
     placeholderData: keepPreviousData,
   });
@@ -54,7 +54,7 @@ export default function AdminDashboardPage() {
     queryKey: adminKeys.transactions,
     queryFn: fetchRecentTransactions,
     refetchInterval: 60_000,
-    refetchIntervalInBackground: true,
+    refetchIntervalInBackground: false,
     refetchOnWindowFocus: true,
     placeholderData: keepPreviousData,
   });
@@ -69,7 +69,7 @@ export default function AdminDashboardPage() {
     queryKey: adminKeys.jobsStream,
     queryFn: fetchLiveJobsStream,
     refetchInterval: 15_000,
-    refetchIntervalInBackground: true,
+    refetchIntervalInBackground: false,
     refetchOnWindowFocus: true,
     placeholderData: keepPreviousData,
   });
@@ -79,7 +79,7 @@ export default function AdminDashboardPage() {
     queryKey: adminKeys.activity,
     queryFn: fetchDashboardActivity,
     refetchInterval: 60_000,
-    refetchIntervalInBackground: true,
+    refetchIntervalInBackground: false,
     refetchOnWindowFocus: true,
     placeholderData: keepPreviousData,
   });
