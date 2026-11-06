@@ -61,6 +61,7 @@ describe('AdminService.listCustomers (M2 step 1)', () => {
     expect(where.OR).toEqual([
       { name: { contains: 'ali', mode: 'insensitive' } },
       { phone: { contains: 'ali' } },
+      { email: { contains: 'ali', mode: 'insensitive' } },
     ]);
   });
 

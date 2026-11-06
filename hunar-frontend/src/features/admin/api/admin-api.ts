@@ -1,5 +1,10 @@
 import { apiClient, http } from "@/lib/api-client";
-import type { PageMeta, PageResult, PaginationQuery } from "@/types/pagination";
+import type {
+  DirectoryQuery,
+  PageMeta,
+  PageResult,
+  PaginationQuery,
+} from "@/types/pagination";
 import type {
   AdminKpiStats,
   AdminNotification,
@@ -547,11 +552,13 @@ export const adminApi = {
     return http.put(`/admin/jobs/${jobId}/cancel`, { reason });
   },
 
-  async listWorkers(query: PaginationQuery = {}): Promise<PageResult<WorkerUser>> {
+  async listWorkers(query: DirectoryQuery = {}): Promise<PageResult<WorkerUser>> {
     const params = new URLSearchParams({
       page: String(query.page ?? 1),
       limit: String(Math.min(query.limit ?? 50, 50)),
     });
+    if (query.search?.trim()) params.set("search", query.search.trim());
+    if (query.status) params.set("status", query.status);
     const res = await http.get<{ data: BackendUserRow[]; meta: PageMeta }>(
       `/admin/workers?${params.toString()}`,
     );
@@ -563,11 +570,13 @@ export const adminApi = {
     return { items, meta };
   },
 
-  async listCustomers(query: PaginationQuery = {}): Promise<PageResult<CustomerUser>> {
+  async listCustomers(query: DirectoryQuery = {}): Promise<PageResult<CustomerUser>> {
     const params = new URLSearchParams({
       page: String(query.page ?? 1),
       limit: String(Math.min(query.limit ?? 50, 50)),
     });
+    if (query.search?.trim()) params.set("search", query.search.trim());
+    if (query.status) params.set("status", query.status);
     const res = await http.get<{ data: BackendUserRow[]; meta: PageMeta }>(
       `/admin/customers?${params.toString()}`,
     );

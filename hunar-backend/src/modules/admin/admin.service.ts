@@ -80,7 +80,6 @@ const LIST_USER_SELECT = {
   suspensionType: true,
   createdAt: true,
   wallet: { select: { balance: true } },
-  commissions: { select: { amount: true, visitCharge: true } },
   workerProfile: {
     select: {
       verificationStatus: true,
@@ -3119,6 +3118,17 @@ export class AdminService {
   ) {
     const { page, limit, skip } = normalizePage(query);
 
+    // Worker skills are stored as category IDs, so a free-text skill search has
+    // to be resolved to category IDs first. Only runs when a search is present.
+    let matchingSkillIds: string[] = [];
+    if (role === Role.WORKER && query.search) {
+      const matched = await this.prisma.serviceCategory.findMany({
+        where: { name: { contains: query.search, mode: 'insensitive' } },
+        select: { id: true },
+      });
+      matchingSkillIds = matched.map((c) => c.id);
+    }
+
     const where: Prisma.UserWhereInput = {
       role,
       // Workers directory lists verified workers only; unverified/pending
@@ -3130,6 +3140,12 @@ export class AdminService {
             OR: [
               { name: { contains: query.search, mode: 'insensitive' } },
               { phone: { contains: query.search } },
+              ...(role === Role.CUSTOMER
+                ? [{ email: { contains: query.search, mode: 'insensitive' as const } }]
+                : []),
+              ...(matchingSkillIds.length
+                ? [{ workerProfile: { is: { skills: { hasSome: matchingSkillIds } } } }]
+                : []),
             ],
           }
         : {}),
@@ -3166,6 +3182,7 @@ export class AdminService {
     let totalSpentByCustomer = new Map<string, number>();
     let ratingGivenByCustomer = new Map<string, number>();
     let ratingByWorker = new Map<string, number>();
+    let totalEarnedByWorker = new Map<string, number>();
     if (role === Role.CUSTOMER && users.length > 0) {
       const ids = users.map((u) => u.id);
       const [spendRows, ratingRows] = await Promise.all([
@@ -3188,13 +3205,27 @@ export class AdminService {
       );
     } else if (role === Role.WORKER && users.length > 0) {
       const ids = users.map((u) => u.id);
-      const ratingRows = await this.prisma.review.groupBy({
-        by: ['revieweeId'],
-        where: { revieweeId: { in: ids } },
-        _avg: { rating: true },
-      });
+      // Earnings and ratings are aggregated for the whole page in two queries.
+      // Previously the page select shipped every commission row per worker
+      // just to sum visitCharge on the server, which grew unbounded with job
+      // history and dominated the list latency.
+      const [ratingRows, earningRows] = await Promise.all([
+        this.prisma.review.groupBy({
+          by: ['revieweeId'],
+          where: { revieweeId: { in: ids } },
+          _avg: { rating: true },
+        }),
+        this.prisma.commission.groupBy({
+          by: ['workerId'],
+          where: { workerId: { in: ids } },
+          _sum: { visitCharge: true },
+        }),
+      ]);
       ratingByWorker = new Map(
         ratingRows.map((r) => [r.revieweeId, Math.round(Number(r._avg.rating ?? 0) * 10) / 10]),
+      );
+      totalEarnedByWorker = new Map(
+        earningRows.map((r) => [r.workerId, Number(r._sum.visitCharge ?? 0)]),
       );
     }
 
@@ -3221,11 +3252,7 @@ export class AdminService {
     }
 
     const items = users.map((user: AdminUserRow) => {
-      const comms = (user as any).commissions || [];
-      const totalEarned = comms.reduce(
-        (acc: number, c: any) => acc + Number(c.visitCharge || 0),
-        0,
-      );
+      const totalEarned = totalEarnedByWorker.get(user.id) ?? 0;
       const balance = (user as any).wallet?.balance ? Number((user as any).wallet.balance) : 0;
 
       return {

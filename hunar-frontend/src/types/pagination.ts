@@ -14,3 +14,9 @@ export interface PaginationQuery {
   page?: number;
   limit?: number;
 }
+
+/** Pagination plus the directory filters the admin list endpoints accept. */
+export interface DirectoryQuery extends PaginationQuery {
+  search?: string;
+  status?: "active" | "suspended";
+}

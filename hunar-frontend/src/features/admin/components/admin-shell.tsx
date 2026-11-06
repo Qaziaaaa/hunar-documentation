@@ -509,7 +509,9 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
       });
     };
     tick();
-    const id = setInterval(tick, 60000);
+    const id = setInterval(() => {
+      if (!document.hidden) tick();
+    }, 60000);
     return () => {
       alive = false;
       clearInterval(id);

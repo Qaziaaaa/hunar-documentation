@@ -1,7 +1,12 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { adminApi, SuspendUserPayload } from "@/features/admin/api/admin-api";
+import {
+  useDebouncedValue,
+  useIncrementalDirectory,
+  useLoadMoreOnVisible,
+} from "@/features/admin/hooks/use-incremental-directory";
 import { AdminAvatar } from "@/features/admin/components/admin-avatar";
 import type { CustomerUser } from "@/types/admin";
 import { TableRowsSkeleton } from "@/features/admin/components/table-skeleton";
@@ -23,40 +28,43 @@ import {
 } from "lucide-react";
 
 export default function CustomersPage() {
-  const [customers, setCustomers] = useState<CustomerUser[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
-  const [reloadKey, setReloadKey] = useState(0);
   const [search, setSearch] = useState("");
+  const debouncedSearch = useDebouncedValue(search, 300);
   const [statusFilter, setStatusFilter] = useState<"ALL" | "ACTIVE" | "SUSPENDED">("ALL");
   const [selectedCustomer, setSelectedCustomer] = useState<CustomerUser | null>(null);
   const [actionCustomer, setActionCustomer] = useState<CustomerUser | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  useEffect(() => {
-    adminApi
-      .listCustomers({ limit: 50 })
-      .then((res) => setCustomers(res.items))
-      .catch((err) =>
-        setError(err instanceof Error ? err.message : "Failed to load customers"),
-      )
-      .finally(() => setLoading(false));
-  }, [reloadKey]);
-
-  const filtered = useMemo(
-    () =>
-      customers.filter((c) => {
-        const matchesSearch =
-          c.name.toLowerCase().includes(search.toLowerCase()) ||
-          c.phone.includes(search) ||
-          c.email.toLowerCase().includes(search.toLowerCase());
-        const matchesStatus =
-          statusFilter === "ALL" ? true : c.status === statusFilter;
-        return matchesSearch && matchesStatus;
+  // First page (10 rows) paints immediately; the rest stream in on scroll.
+  const directory = useIncrementalDirectory<CustomerUser>({
+    queryKey: ["admin", "customers", debouncedSearch, statusFilter],
+    fetchPage: (query) =>
+      adminApi.listCustomers({
+        ...query,
+        search: debouncedSearch,
+        status:
+          statusFilter === "ACTIVE"
+            ? "active"
+            : statusFilter === "SUSPENDED"
+              ? "suspended"
+              : undefined,
       }),
-    [customers, search, statusFilter],
+  });
+  const customers = directory.items;
+  const loading = directory.loading;
+  const error = directory.error;
+
+  const loadMoreRef = useRef<HTMLTableRowElement | null>(null);
+  useLoadMoreOnVisible(
+    loadMoreRef,
+    directory.hasNextPage,
+    directory.isFetchingNextPage,
+    directory.fetchNextPage,
   );
+
+  // Filtering happens in the query (server-side), so every loaded row matches.
+  const filtered = customers;
 
   const modalCustomer: SuspendModalUser | null = useMemo(() => {
     if (!actionCustomer) return null;
@@ -78,7 +86,7 @@ export default function CustomersPage() {
     setActionError(null);
     try {
       await adminApi.suspendCustomer(actionCustomer.id, payload);
-      setCustomers((prev) =>
+      directory.updateItems((prev) =>
         prev.map((c) => {
           if (c.id === actionCustomer.id) {
             return {
@@ -93,6 +101,7 @@ export default function CustomersPage() {
           return c;
         })
       );
+      void directory.refetch();
       setActionCustomer(null);
     } catch (err) {
       setActionError(
@@ -109,7 +118,7 @@ export default function CustomersPage() {
     setActionError(null);
     try {
       await adminApi.reactivateCustomer(actionCustomer.id);
-      setCustomers((prev) =>
+      directory.updateItems((prev) =>
         prev.map((c) => {
           if (c.id === actionCustomer.id) {
             return {
@@ -123,6 +132,7 @@ export default function CustomersPage() {
           return c;
         })
       );
+      void directory.refetch();
       setActionCustomer(null);
     } catch (err) {
       setActionError(
@@ -145,8 +155,7 @@ export default function CustomersPage() {
             <button
               type="button"
               onClick={() => {
-                setError(null);
-                setReloadKey((k) => k + 1);
+                void directory.refetch();
               }}
               className="rounded-xl bg-red-600 px-3 py-1.5 text-xs font-bold text-white transition hover:bg-red-700"
             >
@@ -202,7 +211,9 @@ export default function CustomersPage() {
                     : "text-slate-600 hover:text-navy"
                 }`}
               >
-                All ({customers.length})
+                {statusFilter === "ALL"
+                  ? `All (${directory.meta?.total ?? customers.length})`
+                  : "All"}
               </button>
               <button
                 type="button"
@@ -357,6 +368,29 @@ export default function CustomersPage() {
                     </td>
                   </tr>
                 ))}
+                {!loading && customers.length === 0 ? (
+                  <tr>
+                    <td colSpan={8} className="px-4 py-10 text-center text-slate-400">
+                      No customers match these filters.
+                    </td>
+                  </tr>
+                ) : null}
+                {directory.hasNextPage ? (
+                  <tr ref={loadMoreRef}>
+                    <td colSpan={8} className="px-4 py-4 text-center">
+                      <button
+                        type="button"
+                        onClick={() => void directory.fetchNextPage()}
+                        disabled={directory.isFetchingNextPage}
+                        className="rounded-xl border border-slate-200 px-4 py-2 text-[11px] font-bold text-slate-600 transition hover:bg-slate-50 disabled:opacity-60"
+                      >
+                        {directory.isFetchingNextPage
+                          ? "Loading more…"
+                          : `Load more (${customers.length} of ${directory.meta?.total ?? customers.length})`}
+                      </button>
+                    </td>
+                  </tr>
+                ) : null}
               </tbody>
             </table>
           </div>
