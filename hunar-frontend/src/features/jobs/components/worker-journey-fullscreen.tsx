@@ -463,16 +463,8 @@ export function WorkerJourneyFullscreen({
         {/* 1. TOP HEADER (Cancel visit on left, Headphone Support on right) */}
         {/* ======================================================== */}
         <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200/80 px-4 sm:px-6 lg:px-8 py-3.5 flex items-center justify-between shadow-2xs">
-          {/* Left: Cancel visit Button (only before completion; once completed show Back to Jobs) */}
-          {!isCompleted ? (
-            <button
-              type="button"
-              onClick={() => setShowCancelModal(true)}
-              className="text-xs sm:text-sm font-bold text-slate-800 hover:text-red-600 bg-slate-50 hover:bg-red-50 px-3.5 py-1.5 rounded-full border border-slate-200 shadow-2xs transition-colors cursor-pointer"
-            >
-              {isUrdu ? "وزٹ منسوخ کریں" : "Cancel visit"}
-            </button>
-          ) : (
+          {/* Left: Back to Jobs (if completed), Empty spacer (if step 3 Decision & Execution), or Cancel visit (if earlier steps) */}
+          {isCompleted ? (
             <button
               type="button"
               onClick={handleFinishAndExit}
@@ -480,6 +472,16 @@ export function WorkerJourneyFullscreen({
             >
               <span>←</span>
               <span>{isUrdu ? "جابز پر واپس جائیں" : "Back to Jobs"}</span>
+            </button>
+          ) : stepInfo.step === 3 ? (
+            <div className="size-9 shrink-0" aria-hidden="true" />
+          ) : (
+            <button
+              type="button"
+              onClick={() => setShowCancelModal(true)}
+              className="text-xs sm:text-sm font-bold text-slate-800 hover:text-red-600 bg-slate-50 hover:bg-red-50 px-3.5 py-1.5 rounded-full border border-slate-200 shadow-2xs transition-colors cursor-pointer"
+            >
+              {isUrdu ? "وزٹ منسوخ کریں" : "Cancel visit"}
             </button>
           )}
 
