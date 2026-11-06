@@ -17,6 +17,32 @@ export class VerifyOtpDto {
   otp: string;
 }
 
+export class SendWorkerEmailOtpDto {
+  @IsString()
+  @IsPakistaniPhone()
+  phone: string;
+
+  @IsEmail()
+  email: string;
+}
+
+export class VerifyWorkerEmailOtpDto {
+  @IsString()
+  @IsPakistaniPhone()
+  phone: string;
+
+  @IsEmail()
+  email: string;
+
+  @IsString()
+  @Matches(/^\d{6}$/, { message: 'OTP must be exactly 6 digits' })
+  otp: string;
+
+  @IsString()
+  @IsNotEmpty()
+  requestId: string;
+}
+
 export class RegisterWorkerDto {
   @IsString()
   @IsPakistaniPhone()

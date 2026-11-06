@@ -8,7 +8,9 @@ import {
   RefreshTokenDto,
   RegisterWorkerDto,
   SendOtpDto,
+  SendWorkerEmailOtpDto,
   VerifyOtpDto,
+  VerifyWorkerEmailOtpDto,
 } from './auth.validation';
 import { Public } from '../../common/decorators/public.decorator';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
@@ -31,6 +33,20 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   verifyOtp(@Body() dto: VerifyOtpDto) {
     return this.authService.verifyOtp(dto.phone, dto.otp);
+  }
+
+  @Public()
+  @Post('worker/otp/send')
+  @HttpCode(HttpStatus.OK)
+  sendWorkerEmailOtp(@Body() dto: SendWorkerEmailOtpDto) {
+    return this.authService.sendWorkerEmailOtp(dto.phone, dto.email);
+  }
+
+  @Public()
+  @Post('worker/otp/verify')
+  @HttpCode(HttpStatus.OK)
+  verifyWorkerEmailOtp(@Body() dto: VerifyWorkerEmailOtpDto) {
+    return this.authService.verifyWorkerEmailOtp(dto.phone, dto.email, dto.otp, dto.requestId);
   }
 
   @Public()

@@ -8,6 +8,15 @@ export const OTP_RATE_PREFIX = 'rate:otp:';
 export const OTP_VERIFY_RATE_PREFIX = 'rate:verify:';
 export const LOGIN_RATE_PREFIX = 'rate:login:';
 
+// Worker registration email OTP constants
+export const WORKER_EMAIL_OTP_PREFIX = 'worker:email:otp:';
+export const WORKER_EMAIL_OTP_ACTIVE_PREFIX = 'worker:email:otp:active:';
+export const WORKER_EMAIL_OTP_ATTEMPTS_PREFIX = 'worker:email:otp:attempts:';
+export const WORKER_EMAIL_OTP_COOLDOWN_PREFIX = 'worker:email:otp:cooldown:';
+export const WORKER_EMAIL_OTP_RATE_PREFIX = 'rate:worker-email-otp:';
+export const WORKER_EMAIL_OTP_VERIFY_RATE_PREFIX = 'rate:worker-email-verify:';
+export const WORKER_EMAIL_VERIFIED_PREFIX = 'worker:email:verified:';
+
 // Wallet-specific Redis constants
 export const WALLET_OTP_PREFIX = 'wallet:otp:';
 export const WALLET_OTP_ATTEMPTS_PREFIX = 'wallet:otp:attempts:';

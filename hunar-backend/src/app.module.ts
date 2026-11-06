@@ -9,6 +9,7 @@ import jwtConfig from './config/jwt.config';
 import redisConfig from './config/redis.config';
 import mapboxConfig from './config/mapbox.config';
 import s3Config from './config/s3.config';
+import brevoConfig from './config/brevo.config';
 
 import { PrismaModule } from './prisma/prisma.module';
 import { RedisModule } from './common/redis/redis.module';
@@ -38,7 +39,7 @@ import { LocationModule } from './modules/location/location.module';
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      load: [appConfig, jwtConfig, redisConfig, mapboxConfig, s3Config],
+      load: [appConfig, jwtConfig, redisConfig, mapboxConfig, s3Config, brevoConfig],
     }),
     EventEmitterModule.forRoot({ wildcard: true }),
     ScheduleModule.forRoot(),

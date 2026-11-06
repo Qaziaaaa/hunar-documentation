@@ -1,5 +1,13 @@
 export function getApiUrl(): string {
-  const envUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api/v1";
+  const envUrl = process.env.NEXT_PUBLIC_API_URL;
+  if (!envUrl) {
+    // No explicit API origin: use the Next.js `/api/v1` rewrite so browser
+    // requests stay same-origin (avoids blocked cross-host/port and mixed
+    // content failures when the app is opened via LAN IP or a tunnel).
+    return typeof window === "undefined"
+      ? "http://localhost:4000/api/v1"
+      : "/api/v1";
+  }
   if (typeof window === "undefined") {
     return envUrl;
   }
@@ -611,6 +619,7 @@ export async function apiClient<T>(
     path.includes("/auth/customer/signup/complete") ||
     path.includes("/auth/otp/") ||
     path.includes("/auth/customer/otp/") ||
+    path.includes("/auth/worker/otp/") ||
     path.includes("/auth/refresh");
 
   let token = getAccessToken(roleHint);

@@ -6,9 +6,10 @@ jest.mock("@/i18n/navigation", () => ({
 }));
 
 describe("WorkerSignupFlow", () => {
-  it("renders phone step initially", () => {
+  it("renders phone and email fields initially", () => {
     render(<WorkerSignupFlow />);
     expect(screen.getByLabelText(/phone/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/email address/i)).toBeInTheDocument();
   });
 
   it("shows worker badge and sign in link", () => {
@@ -16,10 +17,12 @@ describe("WorkerSignupFlow", () => {
     expect(screen.getByText(/worker badge/i)).toBeInTheDocument();
   });
 
-  it("progresses to OTP step after valid phone submission", async () => {
+  it("progresses to OTP step after valid phone and email submission", async () => {
     render(<WorkerSignupFlow />);
     const phoneInput = screen.getByLabelText(/phone/i);
+    const emailInput = screen.getByLabelText(/email address/i);
     fireEvent.change(phoneInput, { target: { value: "03001234567" } });
+    fireEvent.change(emailInput, { target: { value: "worker@example.com" } });
     const submitButton = screen.getByRole("button", { name: /get otp/i });
     fireEvent.click(submitButton);
     await waitFor(() => {
