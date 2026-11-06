@@ -4,6 +4,7 @@ import { RedisService } from '../../common/redis/redis.service';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { SmsService } from './sms.service';
+import { EmailService } from './email.service';
 import { Role } from '@prisma/client';
 import * as bcrypt from 'bcryptjs';
 import { createHash } from 'crypto';
@@ -67,10 +68,13 @@ describe('AuthService', () => {
   let service: AuthService;
   let redis: MemoryRedis;
   let sms: SmsService;
+  let emailService: EmailService;
   let sentCodes: string[];
+  let sentEmails: Array<{ email: string; code: string }>;
   let users: Array<{
     id: string;
     phone: string;
+    email?: string | null;
     passwordHash: string | null;
     role: Role;
     isActive: boolean;
@@ -100,19 +104,31 @@ describe('AuthService', () => {
   beforeEach(() => {
     redis = new MemoryRedis();
     sentCodes = [];
+    sentEmails = [];
     users = [];
 
     const prisma = {
       user: {
-        findUnique: jest.fn(({ where }: { where: { phone?: string; id?: string } }) => {
-          const key = where.phone ?? where.id;
-          return Promise.resolve(users.find((u) => u.phone === key || u.id === key) ?? null);
-        }),
+        findUnique: jest.fn(
+          ({ where }: { where: { phone?: string; id?: string; email?: string } }) => {
+            const key = where.phone ?? where.id ?? where.email;
+            return Promise.resolve(
+              users.find(
+                (u) => u.phone === key || u.id === key || u.email === key,
+              ) ?? null,
+            );
+          },
+        ),
         create: jest.fn(
-          ({ data }: { data: { phone: string; passwordHash: string; role: Role } }) => {
+          ({
+            data,
+          }: {
+            data: { phone: string; email?: string; passwordHash: string; role: Role };
+          }) => {
             const user = {
               id: 'u-created',
               phone: data.phone,
+              email: data.email ?? null,
               passwordHash: data.passwordHash,
               name: null,
               avatarUrl: null,
@@ -135,6 +151,14 @@ describe('AuthService', () => {
         return Promise.resolve();
       }),
     } as unknown as SmsService;
+
+    emailService = {
+      sendWorkerOtp: jest.fn((email: string, code: string) => {
+        sentEmails.push({ email, code });
+        sentCodes.push(code);
+        return Promise.resolve();
+      }),
+    } as unknown as EmailService;
 
     const jwt = {
       signAsync: jest.fn(
@@ -163,7 +187,14 @@ describe('AuthService', () => {
       }),
     } as unknown as ConfigService;
 
-    service = new AuthService(prisma, jwt, redis as unknown as RedisService, config, sms);
+    service = new AuthService(
+      prisma,
+      jwt,
+      redis as unknown as RedisService,
+      config,
+      sms,
+      emailService,
+    );
   });
 
   describe('sendOtp', () => {
@@ -254,22 +285,128 @@ describe('AuthService', () => {
     });
   });
 
+  describe('worker email OTP', () => {
+    const email = 'worker@example.com';
+
+    it('sends a real six-digit code to the provided email without returning it', async () => {
+      const result = await service.sendWorkerEmailOtp('03123456789', email);
+
+      expect(result.requestId).toMatch(/^[0-9a-f-]{36}$/);
+      expect(result.expiresInSeconds).toBe(300);
+      expect(result).not.toHaveProperty('devOtp');
+      expect(result).not.toHaveProperty('otp');
+      expect(sentEmails).toEqual([
+        { email, code: expect.stringMatching(/^\d{6}$/) },
+      ]);
+      const raw = await redis.get(`worker:email:otp:${result.requestId}`);
+      expect(JSON.parse(raw as string)).toEqual({
+        hash: expect.stringMatching(/^[a-f0-9]{64}$/),
+        phone: '03123456789',
+        email,
+      });
+    });
+
+    it('rejects an already registered email address', async () => {
+      givenUser({ email });
+      await expect(service.sendWorkerEmailOtp('03123456789', email)).rejects.toThrow(
+        'email address is already registered',
+      );
+    });
+
+    it('does not mark the email verified when delivery fails', async () => {
+      (emailService.sendWorkerOtp as jest.Mock).mockRejectedValueOnce(
+        new Error('Brevo unavailable'),
+      );
+
+      await expect(service.sendWorkerEmailOtp('03123456789', email)).rejects.toThrow(
+        'Brevo unavailable',
+      );
+      expect(await redis.get('worker:email:otp:active:03123456789:' + email)).toBeNull();
+      expect(sentEmails).toHaveLength(0);
+    });
+
+    it('verifies the correct OTP and invalidates it for reuse', async () => {
+      const request = await service.sendWorkerEmailOtp('03123456789', email);
+      const code = sentEmails[0].code;
+
+      const verified = await service.verifyWorkerEmailOtp(
+        '03123456789',
+        email,
+        code,
+        request.requestId,
+      );
+      expect(verified.email).toBe(email);
+      expect(verified.verificationToken).toMatch(/^[0-9a-f-]{36}$/);
+      expect(await redis.get(`worker:email:otp:${request.requestId}`)).toBeNull();
+
+      await expect(
+        service.verifyWorkerEmailOtp('03123456789', email, code, request.requestId),
+      ).rejects.toThrow('expired or was never requested');
+    });
+
+    it('rejects an OTP bound to a different email or phone', async () => {
+      const request = await service.sendWorkerEmailOtp('03123456789', email);
+      const code = sentEmails[0].code;
+
+      await expect(
+        service.verifyWorkerEmailOtp(
+          '03123456789',
+          'other@example.com',
+          code,
+          request.requestId,
+        ),
+      ).rejects.toThrow('expired or was never requested');
+      await expect(
+        service.verifyWorkerEmailOtp(
+          '03129999999',
+          email,
+          code,
+          request.requestId,
+        ),
+      ).rejects.toThrow('expired or was never requested');
+    });
+
+    it('invalidates the previous request when a new code is issued', async () => {
+      const first = await service.sendWorkerEmailOtp('03123456789', email);
+      const firstCode = sentEmails[0].code;
+      await redis.del(`worker:email:otp:cooldown:03123456789:${email}`);
+
+      const second = await service.sendWorkerEmailOtp('03123456789', email);
+      const secondCode = sentEmails[1].code;
+
+      await expect(
+        service.verifyWorkerEmailOtp('03123456789', email, firstCode, first.requestId),
+      ).rejects.toThrow('expired or was never requested');
+      await expect(
+        service.verifyWorkerEmailOtp('03123456789', email, secondCode, second.requestId),
+      ).resolves.toMatchObject({ email });
+    });
+  });
+
   describe('registerWorker', () => {
+    const email = 'worker@example.com';
     const verifiedOtp = async (phone: string) => {
-      await service.sendOtp(phone);
-      const verified = await service.verifyOtp(phone, sentCodes[sentCodes.length - 1]);
+      const request = await service.sendWorkerEmailOtp(phone, email);
+      const verified = await service.verifyWorkerEmailOtp(
+        phone,
+        email,
+        sentEmails[sentEmails.length - 1].code,
+        request.requestId,
+      );
       return verified.verificationToken;
     };
 
-    it('creates a WORKER account with a bcrypt password hash', async () => {
+    it('creates a WORKER account with the verified email and a bcrypt password hash', async () => {
       const phone = '03123456789';
       const token = await verifiedOtp(phone);
       const result = await service.registerWorker(phone, 'secret123', token);
 
       expect(result.user.phone).toBe(phone);
+      expect(result.user.email).toBe(email);
       expect(result.user.role).toBe(Role.WORKER);
       expect(result.user.isVerified).toBe(false);
       const created = users.find((u) => u.phone === phone);
+      expect(created?.email).toBe(email);
       expect(created?.passwordHash).toBeTruthy();
       expect(created?.passwordHash).not.toBe('secret123');
       expect(validatePassword(created?.passwordHash as string, 'secret123')).toBe(true);
@@ -277,18 +414,36 @@ describe('AuthService', () => {
       expect(JSON.stringify(result)).not.toContain('passwordHash');
     });
 
-    it('rejects registration without a valid verification token', async () => {
+    it('rejects registration without email verification', async () => {
       await expect(
         service.registerWorker('03123456789', 'secret123', 'invalid-token'),
-      ).rejects.toThrow('OTP verification is required');
+      ).rejects.toThrow('Email verification is required');
     });
 
     it('rejects registration when the phone is already registered', async () => {
       givenUser();
       const hash = createHash('sha256').update('vt').digest('hex');
-      await redis.set('otp:verify:03120000001', JSON.stringify({ hash }), 600);
+      await redis.set(
+        'worker:email:verified:03120000001',
+        JSON.stringify({ hash, email }),
+        600,
+      );
       await expect(service.registerWorker('03120000001', 'secret123', 'vt')).rejects.toThrow(
         'already registered',
+      );
+    });
+
+    it('rejects registration when the email is already registered', async () => {
+      givenUser({ phone: '03120000002', email });
+      const phone = '03123456789';
+      const hash = createHash('sha256').update('vt').digest('hex');
+      await redis.set(
+        `worker:email:verified:${phone}`,
+        JSON.stringify({ hash, email }),
+        600,
+      );
+      await expect(service.registerWorker(phone, 'secret123', 'vt')).rejects.toThrow(
+        'email address is already registered',
       );
     });
 

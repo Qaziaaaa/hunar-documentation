@@ -85,6 +85,61 @@ export async function verifyWorkerOtp(
   throw new Error("Invalid verification code. Please check and try again.");
 }
 
+export async function requestWorkerEmailOtp(
+  phone: string,
+  email: string,
+): Promise<OtpRequestResponse> {
+  const res = await http.post<{
+    message?: string;
+    requestId?: string;
+    expiresInSeconds?: number;
+    cooldownSeconds?: number;
+    devOtp?: string;
+  }>("/auth/worker/otp/send", { phone, email });
+  if (!res?.requestId) {
+    throw new Error("Verification code could not be sent. Please try again.");
+  }
+  return {
+    requestId: res.requestId,
+    phone,
+    expiresInMs: (res.expiresInSeconds ?? 300) * 1000,
+    resendAfterMs: (res.cooldownSeconds ?? 900) * 1000,
+    maxAttempts: OTP_RULES.maxAttempts,
+    devOtp: res.devOtp,
+  };
+}
+
+export async function resendWorkerEmailOtp(
+  phone: string,
+  email: string,
+): Promise<OtpRequestResponse> {
+  return requestWorkerEmailOtp(phone, email);
+}
+
+export async function verifyWorkerEmailOtp(
+  requestId: string,
+  code: string,
+  phone: string,
+  email: string,
+): Promise<OtpVerifyResponse> {
+  const res = await http.post<{ verificationToken: string }>(
+    "/auth/worker/otp/verify",
+    {
+      phone,
+      email,
+      otp: code,
+      requestId,
+    },
+  );
+  if (res?.verificationToken) {
+    return {
+      verificationId: res.verificationToken,
+      attemptsLeft: 3,
+    };
+  }
+  throw new Error("Invalid verification code. Please check and try again.");
+}
+
 export async function completeWorkerSignup(params: {
   phone: string;
   verificationId: string;

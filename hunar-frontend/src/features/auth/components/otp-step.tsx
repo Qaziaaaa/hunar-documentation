@@ -26,6 +26,7 @@ export function OtpStep({
   submitting,
   submitError,
   devOtp,
+  emailMode = false,
   onEdit,
   onResend,
   onSubmit,
@@ -38,6 +39,7 @@ export function OtpStep({
   submitError: string | null;
   /** Live OTP handed back by the API while no SMS gateway is connected. */
   devOtp?: string | null;
+  emailMode?: boolean;
   onEdit: () => void;
   onResend: (channel: "sms" | "whatsapp") => void;
   onSubmit: (values: OtpFormValues) => void;
@@ -63,7 +65,7 @@ export function OtpStep({
     <div className="flex flex-1 flex-col">
       <section className="text-center">
         <h1 className="text-2xl font-bold tracking-tight text-navy">
-          {t("verifyTitle")}
+          {emailMode ? t("verifyEmailTitle") : t("verifyTitle")}
         </h1>
         <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">
           {t("verifySubtitle")}
@@ -146,7 +148,7 @@ export function OtpStep({
                 disabled={submitting}
                 className="font-semibold text-teal hover:underline disabled:opacity-50"
               >
-                {t("resendSms")}
+                {emailMode ? t("resendCode") : t("resendSms")}
               </button>
               <span className="text-slate-300">•</span>
               <button
@@ -156,7 +158,7 @@ export function OtpStep({
                 className="inline-flex items-center gap-1 font-semibold text-teal hover:underline disabled:opacity-50"
               >
                 <MessageCircle className="size-3.5" />
-                {t("resendWhatsapp")}
+                {emailMode ? t("resendEmail") : t("resendWhatsapp")}
               </button>
             </div>
           )}

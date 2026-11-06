@@ -22,11 +22,19 @@ import {
   OTP_VERIFY_PREFIX,
   OTP_VERIFY_RATE_PREFIX,
   REFRESH_TOKEN_PREFIX,
+  WORKER_EMAIL_OTP_ACTIVE_PREFIX,
+  WORKER_EMAIL_OTP_ATTEMPTS_PREFIX,
+  WORKER_EMAIL_OTP_COOLDOWN_PREFIX,
+  WORKER_EMAIL_OTP_PREFIX,
+  WORKER_EMAIL_OTP_RATE_PREFIX,
+  WORKER_EMAIL_OTP_VERIFY_RATE_PREFIX,
+  WORKER_EMAIL_VERIFIED_PREFIX,
 } from '../../common/redis/redis.constants';
 import { normalizePakistaniPhone } from '../../common/helpers/phone.util';
 import { generateOtp } from '../../common/helpers/otp.generator';
 import { JwtPayload } from '../../common/types/jwt-payload.interface';
 import { SmsService } from './sms.service';
+import { EmailService } from './email.service';
 
 const OTP_TTL_SECONDS = 5 * 60;
 const OTP_MAX_ATTEMPTS = 3;
@@ -80,6 +88,22 @@ export interface OtpVerifyResult {
   expiresInSeconds: number;
 }
 
+export interface WorkerEmailOtpSendResult {
+  message: string;
+  requestId: string;
+  expiresInSeconds: number;
+  cooldownSeconds: number;
+  /**
+   * Returned only while the email provider is not configured (OTP_DEBUG !==
+   * 'false'). Lets a real user read their code on screen so signup can finish.
+   */
+  devOtp?: string;
+}
+
+export interface WorkerEmailOtpVerifyResult extends OtpVerifyResult {
+  email: string;
+}
+
 @Injectable()
 export class AuthService {
   constructor(
@@ -88,6 +112,7 @@ export class AuthService {
     private readonly redis: RedisService,
     private readonly config: ConfigService,
     private readonly sms: SmsService,
+    private readonly email: EmailService,
   ) {}
 
   async sendOtp(rawPhone: string): Promise<OtpSendResult> {
@@ -136,6 +161,181 @@ export class AuthService {
    */
   private returnOtpInResponse(): boolean {
     return process.env.OTP_DEBUG !== 'false';
+  }
+
+  async sendWorkerEmailOtp(rawPhone: string, rawEmail: string): Promise<WorkerEmailOtpSendResult> {
+    const phone = this.requireValidPhone(rawPhone);
+    const email = this.requireValidEmail(rawEmail);
+
+    const existingPhone = await this.prisma.user.findUnique({ where: { phone } });
+    if (existingPhone) {
+      throw new ConflictException('This phone number is already registered');
+    }
+
+    const existingEmail = await this.prisma.user.findUnique({ where: { email } });
+    if (existingEmail) {
+      throw new ConflictException('This email address is already registered');
+    }
+
+    const cooldownKey = `${WORKER_EMAIL_OTP_COOLDOWN_PREFIX}${phone}:${email}`;
+    if (await this.redis.exists(cooldownKey)) {
+      throw new HttpException(
+        'An OTP can only be re-requested once every 15 minutes',
+        HttpStatus.TOO_MANY_REQUESTS,
+      );
+    }
+
+    await this.enforceRateLimit(
+      `${WORKER_EMAIL_OTP_RATE_PREFIX}${phone}`,
+      OTP_SEND_RATE_MAX,
+      OTP_SEND_RATE_WINDOW_SECONDS,
+      'Too many OTP requests. Please try again later.',
+    );
+
+    const requestId = randomUUID();
+    const otp = generateOtp();
+    const activeKey = `${WORKER_EMAIL_OTP_ACTIVE_PREFIX}${phone}:${email}`;
+    const otpKey = `${WORKER_EMAIL_OTP_PREFIX}${requestId}`;
+
+    const previousRequestId = await this.redis.get(activeKey);
+
+    await this.redis.set(
+      otpKey,
+      JSON.stringify({ hash: this.hashValue(otp), phone, email }),
+      OTP_TTL_SECONDS,
+    );
+
+    let emailDelivered = true;
+    try {
+      const delivered = await this.email.sendWorkerOtp(email, otp);
+      if (delivered === false) {
+        emailDelivered = false;
+      }
+    } catch (error) {
+      await this.redis.del(otpKey);
+      throw error;
+    }
+
+    if (previousRequestId) {
+      await this.redis.del(`${WORKER_EMAIL_OTP_PREFIX}${previousRequestId}`);
+      await this.redis.del(`${WORKER_EMAIL_OTP_ATTEMPTS_PREFIX}${previousRequestId}`);
+    }
+    await this.redis.set(activeKey, requestId, OTP_TTL_SECONDS);
+    await this.redis.set(cooldownKey, '1', OTP_COOLDOWN_SECONDS);
+
+    return {
+      message: 'OTP sent to your email',
+      requestId,
+      expiresInSeconds: OTP_TTL_SECONDS,
+      cooldownSeconds: OTP_COOLDOWN_SECONDS,
+      ...(this.returnEmailOtpInResponse(emailDelivered) ? { devOtp: otp } : {}),
+    };
+  }
+
+  /**
+   * Only expose the code when it could not be delivered by email (provider not
+   * configured or delivery failed) and OTP_DEBUG is enabled. When delivery
+   * succeeds, the code is never returned to the client.
+   */
+  private returnEmailOtpInResponse(emailDelivered = true): boolean {
+    const configured =
+      typeof this.email.isConfigured === 'function'
+        ? this.email.isConfigured()
+        : true;
+    return (!configured || !emailDelivered) && this.returnOtpInResponse();
+  }
+
+  async verifyWorkerEmailOtp(
+    rawPhone: string,
+    rawEmail: string,
+    otp: string,
+    requestId: string,
+  ): Promise<WorkerEmailOtpVerifyResult> {
+    const phone = this.requireValidPhone(rawPhone);
+    const email = this.requireValidEmail(rawEmail);
+
+    await this.enforceRateLimit(
+      `${WORKER_EMAIL_OTP_VERIFY_RATE_PREFIX}${requestId}`,
+      OTP_VERIFY_RATE_MAX,
+      OTP_VERIFY_RATE_WINDOW_SECONDS,
+      'Too many verification attempts. Please try again later.',
+    );
+
+    const activeKey = `${WORKER_EMAIL_OTP_ACTIVE_PREFIX}${phone}:${email}`;
+    const otpKey = `${WORKER_EMAIL_OTP_PREFIX}${requestId}`;
+    const attemptsKey = `${WORKER_EMAIL_OTP_ATTEMPTS_PREFIX}${requestId}`;
+
+    const activeRequestId = await this.redis.get(activeKey);
+    if (!activeRequestId || activeRequestId !== requestId) {
+      throw new BadRequestException(
+        'OTP is expired or was never requested. Please request a new OTP.',
+      );
+    }
+
+    const storedRaw = await this.redis.get(otpKey);
+    if (!storedRaw) {
+      await this.redis.del(activeKey);
+      throw new BadRequestException(
+        'OTP is expired or was never requested. Please request a new OTP.',
+      );
+    }
+
+    const ttl = await this.redis.ttl(otpKey);
+    const attempts = await this.redis.incr(attemptsKey);
+    await this.redis.expire(attemptsKey, Math.max(ttl, 1));
+
+    if (attempts > OTP_MAX_ATTEMPTS) {
+      await this.redis.del(otpKey);
+      await this.redis.del(attemptsKey);
+      await this.redis.del(activeKey);
+      throw new BadRequestException('Too many failed attempts. Please request a new OTP.');
+    }
+
+    let stored: { hash: string; phone: string; email: string };
+    try {
+      stored = JSON.parse(storedRaw) as { hash: string; phone: string; email: string };
+    } catch {
+      await this.redis.del(otpKey);
+      await this.redis.del(activeKey);
+      throw new BadRequestException('Invalid OTP record. Please request a new OTP.');
+    }
+
+    if (stored.phone !== phone || stored.email !== email) {
+      throw new BadRequestException(
+        'OTP does not belong to this registration attempt. Please request a new OTP.',
+      );
+    }
+
+    if (!this.matchesHash(otp, stored.hash)) {
+      if (attempts >= OTP_MAX_ATTEMPTS) {
+        await this.redis.del(otpKey);
+        await this.redis.del(attemptsKey);
+        await this.redis.del(activeKey);
+        throw new BadRequestException(
+          'Too many failed attempts. OTP invalidated. Please request a new OTP.',
+        );
+      }
+      throw new BadRequestException(
+        `Invalid OTP. ${OTP_MAX_ATTEMPTS - attempts} attempts remaining.`,
+      );
+    }
+
+    await this.redis.del(otpKey);
+    await this.redis.del(attemptsKey);
+    await this.redis.del(activeKey);
+
+    const verificationToken = randomUUID();
+    await this.redis.set(
+      `${WORKER_EMAIL_VERIFIED_PREFIX}${phone}`,
+      JSON.stringify({ hash: this.hashValue(verificationToken), email }),
+      OTP_VERIFY_TTL_SECONDS,
+    );
+
+    return {
+      verificationToken,
+      expiresInSeconds: OTP_VERIFY_TTL_SECONDS,
+      email,
+    };
   }
 
   async verifyOtp(rawPhone: string, otp: string): Promise<OtpVerifyResult> {
@@ -209,16 +409,16 @@ export class AuthService {
   ): Promise<AuthResult> {
     const phone = this.requireValidPhone(rawPhone);
 
-    const verifyRaw = await this.redis.get(`${OTP_VERIFY_PREFIX}${phone}`);
+    const verifyRaw = await this.redis.get(`${WORKER_EMAIL_VERIFIED_PREFIX}${phone}`);
     if (!verifyRaw) {
       throw new UnauthorizedException(
-        'OTP verification is required before completing registration',
+        'Email verification is required before completing registration',
       );
     }
 
-    let stored: { hash: string };
+    let stored: { hash: string; email?: string };
     try {
-      stored = JSON.parse(verifyRaw) as { hash: string };
+      stored = JSON.parse(verifyRaw) as { hash: string; email?: string };
     } catch {
       stored = { hash: '' };
     }
@@ -226,17 +426,26 @@ export class AuthService {
       throw new UnauthorizedException('Invalid verification token. Please verify the OTP again.');
     }
 
+    const email = this.requireValidEmail(stored.email ?? '');
+
     const existing = await this.prisma.user.findUnique({ where: { phone } });
     if (existing) {
       throw new ConflictException('This phone number is already registered');
     }
 
+    const existingEmail = await this.prisma.user.findUnique({ where: { email } });
+    if (existingEmail) {
+      throw new ConflictException('This email address is already registered');
+    }
+
     const passwordHash = await bcrypt.hash(password, BCRYPT_ROUNDS);
     const user = await this.prisma.user.create({
-      data: { phone, passwordHash, role: Role.WORKER },
+      data: { phone, email, passwordHash, role: Role.WORKER },
     });
 
-    await this.redis.del(`${OTP_VERIFY_PREFIX}${phone}`);
+    await this.redis.del(`${WORKER_EMAIL_VERIFIED_PREFIX}${phone}`);
+    await this.redis.del(`${WORKER_EMAIL_OTP_COOLDOWN_PREFIX}${phone}:${email}`);
+    await this.redis.del(`${WORKER_EMAIL_OTP_ACTIVE_PREFIX}${phone}:${email}`);
     await this.redis.del(`${OTP_COOLDOWN_PREFIX}${phone}`);
 
     const tokens = await this.issueTokens(user);
@@ -524,6 +733,14 @@ export class AuthService {
       throw new BadRequestException('Invalid Pakistani phone number');
     }
     return phone;
+  }
+
+  private requireValidEmail(rawEmail: string): string {
+    const email = typeof rawEmail === 'string' ? rawEmail.trim().toLowerCase() : '';
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      throw new BadRequestException('Invalid email address');
+    }
+    return email;
   }
 
   private hashValue(value: string): string {
