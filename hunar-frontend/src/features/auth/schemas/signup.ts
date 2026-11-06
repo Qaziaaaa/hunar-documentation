@@ -8,6 +8,11 @@ export const phoneSchema = z
     message: "Enter a valid Pakistani mobile number, e.g. 03xx-xxxxxxx",
   });
 
+export const emailSchema = z
+  .string()
+  .min(1, "Enter your email address")
+  .email("Enter a valid email address");
+
 export const otpSchema = z
   .string()
   .regex(/^\d{6}$/, "Enter the 6-digit code");
@@ -23,6 +28,15 @@ export const phoneFormSchema = z.object({
 });
 
 export type PhoneFormValues = z.infer<typeof phoneFormSchema>;
+
+export const workerPhoneFormSchema = z.object({
+  phone: phoneSchema,
+  email: emailSchema,
+});
+
+export type WorkerPhoneFormValues = z.infer<typeof workerPhoneFormSchema>;
+
+export type PhoneStepValues = PhoneFormValues & Partial<WorkerPhoneFormValues>;
 
 export const otpFormSchema = z.object({
   code: otpSchema,

@@ -1,15 +1,16 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { AlertCircle, Home, Loader2, Phone, Send, Wrench } from "lucide-react";
+import { AlertCircle, Home, Loader2, Mail, Phone, Send, Wrench } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useForm } from "react-hook-form";
+import { useForm, type Resolver } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Link } from "@/i18n/navigation";
 import {
   phoneFormSchema,
-  type PhoneFormValues,
+  workerPhoneFormSchema,
+  type PhoneStepValues,
 } from "../schemas/signup";
 
 export function PhoneStep({
@@ -18,12 +19,14 @@ export function PhoneStep({
   submitError,
   role = "worker",
   redirectTo,
+  requireEmail = false,
 }: {
-  onSubmit: (values: PhoneFormValues) => void;
+  onSubmit: (values: PhoneStepValues) => void;
   submitting: boolean;
   submitError: string | null;
   role?: "customer" | "worker";
   redirectTo?: string | null;
+  requireEmail?: boolean;
 }) {
   const t = useTranslations("Auth");
   const isCustomer = role === "customer";
@@ -32,13 +35,14 @@ export function PhoneStep({
     ? `${signInHref}?redirect=${encodeURIComponent(redirectTo)}`
     : signInHref;
 
+  const schema = requireEmail ? workerPhoneFormSchema : phoneFormSchema;
   const {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm<PhoneFormValues>({
-    resolver: zodResolver(phoneFormSchema),
-    defaultValues: { phone: "" },
+  } = useForm<PhoneStepValues>({
+    resolver: zodResolver(schema) as Resolver<PhoneStepValues>,
+    defaultValues: { phone: "", email: "" },
     mode: "onTouched",
   });
 
@@ -117,6 +121,40 @@ export function PhoneStep({
           <p className="ml-1 text-xs text-muted-foreground">{t("phoneHint")}</p>
         )}
       </div>
+
+      {requireEmail ? (
+        <div className="mt-4 space-y-1.5">
+          <label
+            htmlFor="email"
+            className="ml-1 block text-xs font-semibold text-navy"
+          >
+            {t("emailLabel")}
+          </label>
+          <div className="relative">
+            <Mail className="absolute left-4 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
+            <Input
+              {...register("email")}
+              id="email"
+              type="email"
+              inputMode="email"
+              autoComplete="email"
+              placeholder={t("emailPlaceholder")}
+              aria-invalid={errors.email ? true : undefined}
+              className="pl-11"
+            />
+          </div>
+          {errors.email ? (
+            <p className="ml-1 flex items-center gap-1 text-xs font-medium text-error">
+              <AlertCircle className="size-3.5 shrink-0" />
+              {errors.email.message}
+            </p>
+          ) : (
+            <p className="ml-1 text-xs text-muted-foreground">
+              {t("emailHint")}
+            </p>
+          )}
+        </div>
+      ) : null}
 
       <div className="mt-4 rounded-2xl border border-orange/20 bg-orange/10 p-3">
         <div className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wide text-[#B45309]">

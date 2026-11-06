@@ -6,9 +6,9 @@ import { setTokens } from "@/lib/api-client";
 import {
   OTP_RULES,
   completeWorkerSignup,
-  requestWorkerOtp,
-  resendWorkerOtp,
-  verifyWorkerOtp,
+  requestWorkerEmailOtp,
+  resendWorkerEmailOtp,
+  verifyWorkerEmailOtp,
   type OtpRequestResponse,
 } from "../api/auth-api";
 import { getApiErrorPayload, getErrorMessage } from "../lib/error";
@@ -16,7 +16,7 @@ import { formatPkPhone, normalizePkPhone } from "../lib/phone";
 import type {
   OtpFormValues,
   PasswordFormValues,
-  PhoneFormValues,
+  PhoneStepValues,
 } from "../schemas/signup";
 import { OtpStep } from "./otp-step";
 import { PasswordStep } from "./password-step";
@@ -29,6 +29,7 @@ export function WorkerSignupFlow() {
   const router = useRouter();
   const [step, setStep] = useState<Step>("phone");
   const [phone, setPhone] = useState("");
+  const [email, setEmail] = useState("");
   const [requestId, setRequestId] = useState("");
   const [verificationId, setVerificationId] = useState("");
   const [expiresAt, setExpiresAt] = useState<number | null>(null);
@@ -52,14 +53,16 @@ export function WorkerSignupFlow() {
     [],
   );
 
-  const handlePhoneSubmit = async (values: PhoneFormValues) => {
+  const handlePhoneSubmit = async (values: PhoneStepValues) => {
     const normalized = normalizePkPhone(values.phone);
-    if (!normalized) return;
+    const normalizedEmail = values.email?.trim().toLowerCase() ?? "";
+    if (!normalized || !normalizedEmail) return;
 
     setSubmitting(true);
     setSubmitError(null);
     try {
-      const response = await requestWorkerOtp(normalized);
+      const response = await requestWorkerEmailOtp(normalized, normalizedEmail);
+      setEmail(normalizedEmail);
       applyOtpRequest(
         { ...response, phone: response.phone ?? normalized },
         normalized,
@@ -72,13 +75,13 @@ export function WorkerSignupFlow() {
     }
   };
 
-  const handleResend = async (channel: "sms" | "whatsapp") => {
-    if (!phone) return;
+  const handleResend = async () => {
+    if (!phone || !email) return;
 
     setSubmitting(true);
     setSubmitError(null);
     try {
-      const response = await resendWorkerOtp(phone, channel);
+      const response = await resendWorkerEmailOtp(phone, email);
       applyOtpRequest(response, phone);
     } catch (error) {
       setSubmitError(getErrorMessage(error));
@@ -91,7 +94,12 @@ export function WorkerSignupFlow() {
     setSubmitting(true);
     setSubmitError(null);
     try {
-      const response = await verifyWorkerOtp(requestId, values.code, phone);
+      const response = await verifyWorkerEmailOtp(
+        requestId,
+        values.code,
+        phone,
+        email,
+      );
       setVerificationId(response.verificationId);
       if (typeof response.attemptsLeft === "number") {
         setAttemptsLeft(response.attemptsLeft);
@@ -134,13 +142,14 @@ export function WorkerSignupFlow() {
   if (step === "otp") {
     return (
       <OtpStep
-        phone={formatPkPhone(phone)}
+        phone={email || formatPkPhone(phone)}
         expiresAt={expiresAt}
         resendAt={resendAt}
         attemptsLeft={attemptsLeft}
         submitting={submitting}
         submitError={submitError}
         devOtp={devOtp}
+        emailMode
         onEdit={() => {
           setStep("phone");
           setSubmitError(null);
@@ -169,6 +178,7 @@ export function WorkerSignupFlow() {
     <PhoneStep
       submitting={submitting}
       submitError={submitError}
+      requireEmail
       onSubmit={handlePhoneSubmit}
     />
   );
