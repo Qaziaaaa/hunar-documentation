@@ -1,7 +1,8 @@
-import { Body, Controller, Get, Param, ParseUUIDPipe, Post, Put, Query, Res } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, ParseUUIDPipe, Post, Put, Query, Res } from '@nestjs/common';
 import type { Response } from 'express';
 import { Role } from '@prisma/client';
 import { AdminService } from './admin.service';
+import { ParseOrderCodePipe } from '../../common/helpers/order-code.util';
 import {
   AdminCommissionListQueryDto,
   AdminJobListQueryDto,
@@ -12,18 +13,25 @@ import {
   AdminWithdrawalListQueryDto,
   AdminProcessWithdrawalDto,
   AdminFreezeWalletDto,
+  AdminTopUpWalletDto,
   AdminDisputeListQueryDto,
   AdminResolveDisputeDto,
   AdminDisputeNoteDto,
   AdminCategoryListQueryDto,
   AdminCreateCategoryDto,
   AdminUpdateCategoryDto,
+  AdminCreateCityDto,
+  AdminUpdateCityDto,
+  AdminCreateAreaDto,
+  AdminUpdateAreaDto,
   AdminUpdateCommissionRateDto,
   AdminUpdateSettingsDto,
   AdminReportQueryDto,
   AdminAuditListQueryDto,
   AdminNotificationListQueryDto,
   AdminMarkNotificationsReadDto,
+  AdminVisitListQueryDto,
+  AdminReviewListQueryDto,
   ForceCancelJobDto,
   SuspendUserDto,
 } from './admin.validation';
@@ -56,7 +64,7 @@ export class AdminController {
     @Body() dto: SuspendUserDto,
     @CurrentUser() actor: JwtPayload,
   ) {
-    return this.adminService.suspendCustomer(id, actor, dto.reason);
+    return this.adminService.suspendCustomer(id, actor, dto);
   }
 
   @Put('customers/:id/reactivate')
@@ -82,7 +90,7 @@ export class AdminController {
     @Body() dto: SuspendUserDto,
     @CurrentUser() actor: JwtPayload,
   ) {
-    return this.adminService.suspendWorker(id, actor, dto.reason);
+    return this.adminService.suspendWorker(id, actor, dto);
   }
 
   @Put('workers/:id/reactivate')
@@ -98,13 +106,13 @@ export class AdminController {
   }
 
   @Get('jobs/:id')
-  getJob(@Param('id', ParseUUIDPipe) id: string) {
+  getJob(@Param('id', ParseOrderCodePipe) id: string) {
     return this.adminService.getJobDetail(id);
   }
 
   @Put('jobs/:id/cancel')
   forceCancelJob(
-    @Param('id', ParseUUIDPipe) id: string,
+    @Param('id', ParseOrderCodePipe) id: string,
     @Body() dto: ForceCancelJobDto,
     @CurrentUser() actor: JwtPayload,
   ) {
@@ -163,6 +171,15 @@ export class AdminController {
     return this.adminService.unfreezeWallet(workerId, actor);
   }
 
+  @Put('wallet/:workerId/topup')
+  topUpWorkerWallet(
+    @Param('workerId', ParseUUIDPipe) workerId: string,
+    @Body() dto: AdminTopUpWalletDto,
+    @CurrentUser() actor: JwtPayload,
+  ) {
+    return this.adminService.topUpWorkerWallet(workerId, actor, dto);
+  }
+
   // ----- Disputes -----
 
   @Get('disputes')
@@ -216,16 +233,101 @@ export class AdminController {
 
   @Put('categories/:id')
   updateCategory(
-    @Param('id', ParseUUIDPipe) id: string,
+    @Param('id') id: string,
     @Body() dto: AdminUpdateCategoryDto,
     @CurrentUser() actor: JwtPayload,
   ) {
     return this.adminService.updateCategory(id, dto, actor);
   }
 
+  @Put('categories/:id/activate')
+  activateCategory(@Param('id') id: string, @CurrentUser() actor: JwtPayload) {
+    return this.adminService.activateCategory(id, actor);
+  }
+
+  @Put('categories/:id/reactivate')
+  reactivateCategory(@Param('id') id: string, @CurrentUser() actor: JwtPayload) {
+    return this.adminService.activateCategory(id, actor);
+  }
+
   @Put('categories/:id/deactivate')
-  deactivateCategory(@Param('id', ParseUUIDPipe) id: string, @CurrentUser() actor: JwtPayload) {
+  deactivateCategory(@Param('id') id: string, @CurrentUser() actor: JwtPayload) {
     return this.adminService.deactivateCategory(id, actor);
+  }
+
+  @Delete('categories/:id')
+  deleteCategory(@Param('id') id: string, @CurrentUser() actor: JwtPayload) {
+    return this.adminService.deleteCategory(id, actor);
+  }
+
+  // ----- Cities & Areas Management -----
+
+  @Get('cities')
+  listCities() {
+    return this.adminService.listCities();
+  }
+
+  @Post('cities')
+  createCity(@Body() dto: AdminCreateCityDto, @CurrentUser() actor: JwtPayload) {
+    return this.adminService.createCity(dto, actor);
+  }
+
+  @Put('cities/:id')
+  updateCity(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: AdminUpdateCityDto,
+    @CurrentUser() actor: JwtPayload,
+  ) {
+    return this.adminService.updateCity(id, dto, actor);
+  }
+
+  @Put('cities/:id/activate')
+  activateCity(@Param('id', ParseUUIDPipe) id: string, @CurrentUser() actor: JwtPayload) {
+    return this.adminService.toggleCity(id, true, actor);
+  }
+
+  @Put('cities/:id/deactivate')
+  deactivateCity(@Param('id', ParseUUIDPipe) id: string, @CurrentUser() actor: JwtPayload) {
+    return this.adminService.toggleCity(id, false, actor);
+  }
+
+  @Delete('cities/:id')
+  deleteCity(@Param('id', ParseUUIDPipe) id: string, @CurrentUser() actor: JwtPayload) {
+    return this.adminService.deleteCity(id, actor);
+  }
+
+  @Get('areas')
+  listAreas(@Query('cityId') cityId?: string) {
+    return this.adminService.listAreas(cityId);
+  }
+
+  @Post('areas')
+  createArea(@Body() dto: AdminCreateAreaDto, @CurrentUser() actor: JwtPayload) {
+    return this.adminService.createArea(dto, actor);
+  }
+
+  @Put('areas/:id')
+  updateArea(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: AdminUpdateAreaDto,
+    @CurrentUser() actor: JwtPayload,
+  ) {
+    return this.adminService.updateArea(id, dto, actor);
+  }
+
+  @Put('areas/:id/activate')
+  activateArea(@Param('id', ParseUUIDPipe) id: string, @CurrentUser() actor: JwtPayload) {
+    return this.adminService.toggleArea(id, true, actor);
+  }
+
+  @Put('areas/:id/deactivate')
+  deactivateArea(@Param('id', ParseUUIDPipe) id: string, @CurrentUser() actor: JwtPayload) {
+    return this.adminService.toggleArea(id, false, actor);
+  }
+
+  @Delete('areas/:id')
+  deleteArea(@Param('id', ParseUUIDPipe) id: string, @CurrentUser() actor: JwtPayload) {
+    return this.adminService.deleteArea(id, actor);
   }
 
   // ----- Platform Settings -----
@@ -253,6 +355,18 @@ export class AdminController {
   @Get('kpis')
   getKpis() {
     return this.adminService.getKpis();
+  }
+
+  // ----- Dashboard (live overview polled by the admin dashboard page) -----
+
+  @Get('dashboard/overview')
+  getDashboardOverview() {
+    return this.adminService.getDashboardOverview();
+  }
+
+  @Get('dashboard/activity')
+  getDashboardActivity() {
+    return this.adminService.getDashboardActivity();
   }
 
   // ----- Reports -----
@@ -291,5 +405,33 @@ export class AdminController {
     @CurrentUser() actor: JwtPayload,
   ) {
     return this.adminService.markNotificationsRead(dto, actor);
+  }
+
+  // ----- Visits -----
+
+  @Get('visits')
+  listVisits(@Query() query: AdminVisitListQueryDto) {
+    return this.adminService.listVisits(query);
+  }
+
+  @Get('visits/:id')
+  getVisitDetail(@Param('id', ParseUUIDPipe) id: string) {
+    return this.adminService.getVisitDetail(id);
+  }
+
+  // ----- Reviews -----
+
+  @Get('reviews')
+  listReviews(@Query() query: AdminReviewListQueryDto) {
+    return this.adminService.listReviews(query);
+  }
+
+  @Put('reviews/:id/visibility')
+  toggleReviewVisibility(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body('isVisible') isVisible?: boolean,
+    @CurrentUser() actor?: JwtPayload,
+  ) {
+    return this.adminService.toggleReviewVisibility(id, isVisible, actor);
   }
 }

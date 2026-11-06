@@ -1,36 +1,47 @@
-import { http } from "@/lib/api-client";
-import { isMockMode, simulateLatency } from "@/lib/data-source";
+import { http, getAccessToken, getRefreshToken } from "@/lib/api-client";
 import type { Job, JobStatus, JobUrgency } from "@/types/job";
-import { mockJobs } from "@/mocks/jobs.mock";
 
-const NEARBY_STATUSES: JobStatus[] = ["OPEN", "OFFERS_RECEIVED"];
-const HISTORY_STATUSES: JobStatus[] = [
+const NEARBY_STATUSES = ["OPEN", "OFFERS_RECEIVED", "RECEIVING_OFFERS"];
+const HISTORY_STATUSES = [
   "COMPLETED",
   "PAID",
   "REVIEWED",
   "CANCELLED",
 ];
 
-export function isActiveJob(status: JobStatus): boolean {
-  return !HISTORY_STATUSES.includes(status) && status !== "DISPUTED";
+function hasWorkerAuthSession(): boolean {
+  return Boolean(
+    getAccessToken("WORKER", true) ||
+    getAccessToken(undefined, true) ||
+    getRefreshToken("WORKER") ||
+    getRefreshToken()
+  );
 }
 
-export function isHistoryJob(status: JobStatus): boolean {
-  return HISTORY_STATUSES.includes(status);
+export function isActiveJob(status: JobStatus | string): boolean {
+  const upper = String(status).toUpperCase();
+  return !HISTORY_STATUSES.includes(upper) && upper !== "DISPUTED";
 }
 
-export function isNearbyJob(status: JobStatus): boolean {
-  return NEARBY_STATUSES.includes(status);
+export function isHistoryJob(status: JobStatus | string): boolean {
+  return HISTORY_STATUSES.includes(String(status).toUpperCase());
+}
+
+export function isNearbyJob(status: JobStatus | string): boolean {
+  const upper = String(status).toUpperCase();
+  return NEARBY_STATUSES.includes(upper);
 }
 
 interface BackendJobRow {
   id: string;
-  customerId: string;
+  customerId?: string;
   categoryId: string;
   category?: { id: string; name: string } | null;
+  categoryName?: string;
   title: string;
   description?: string | null;
   images?: string[];
+  voiceNoteUrl?: string | null;
   latitude?: number;
   longitude?: number;
   address?: string | null;
@@ -41,9 +52,34 @@ interface BackendJobRow {
   suggestedVisitCharge?: number | null;
   lockedVisitCharge?: number | null;
   preferredVisitTime?: string | null;
-  createdAt: string;
+  createdAt?: string;
+  postedTime?: string;
   updatedAt?: string;
-  customer?: { id: string; name?: string | null; phone?: string | null };
+  distanceKm?: number;
+  offerCount?: number;
+  repairEstimate?: number | null;
+  repairCharge?: number | null;
+  nextVisit?: { id: string; status?: string | null; scheduledDate?: string | null } | null;
+  visits?: { id: string; status?: string | null }[];
+  customer?: {
+    id: string;
+    name?: string | null;
+    phone?: string | null;
+    avatarUrl?: string | null;
+    rating?: number | null;
+    reviewCount?: number | null;
+    totalOrders?: number | null;
+    isVerified?: boolean | null;
+  };
+  completedAt?: string | null;
+  customerReview?: {
+    rating: number;
+    comment: string;
+    date: string;
+  } | null;
+  visitCharge?: number | null;
+  platformCommission?: number | null;
+  workerNetEarnings?: number | null;
 }
 
 interface BackendPage<T> {
@@ -53,19 +89,33 @@ interface BackendPage<T> {
   limit: number;
 }
 
-function mapBackendJob(row: BackendJobRow): Job {
+export function mapBackendJob(row: BackendJobRow | any): Job {
+  const createdAt = row.createdAt ?? row.postedTime ?? new Date().toISOString();
   return {
     id: row.id,
-    customerId: row.customerId,
+    customerId: row.customerId ?? row.customer?.id ?? "",
     customer: row.customer && {
       id: row.customer.id,
       name: row.customer.name ?? undefined,
+      avatarUrl: row.customer.avatarUrl ?? undefined,
+      rating: row.customer.rating != null ? Number(row.customer.rating) : undefined,
+      reviewCount: row.customer.reviewCount != null ? Number(row.customer.reviewCount) : undefined,
+      totalOrders:
+        row.customer.totalOrders != null
+          ? Number(row.customer.totalOrders)
+          : (row as any).customerTotalOrders != null
+          ? Number((row as any).customerTotalOrders)
+          : undefined,
+      isVerified: row.customer.isVerified ?? true,
     },
     categoryId: row.categoryId,
-    category: row.category ?? undefined,
+    category:
+      row.category ??
+      (row.categoryName ? { id: row.categoryId, name: row.categoryName } : undefined),
     title: row.title,
     description: row.description ?? undefined,
     images: row.images ?? [],
+    voiceNoteUrl: row.voiceNoteUrl ?? undefined,
     latitude: row.latitude ?? 0,
     longitude: row.longitude ?? 0,
     address: row.address ?? "",
@@ -73,51 +123,118 @@ function mapBackendJob(row: BackendJobRow): Job {
     area: row.area ?? undefined,
     status: row.status as JobStatus,
     urgency: row.urgency as JobUrgency,
-    suggestedVisitCharge: row.suggestedVisitCharge ?? undefined,
+    suggestedVisitCharge:
+      row.suggestedVisitCharge != null ? Number(row.suggestedVisitCharge) : undefined,
     lockedVisitCharge: row.lockedVisitCharge ?? undefined,
     preferredVisitTime: row.preferredVisitTime ?? undefined,
-    createdAt: row.createdAt,
-    updatedAt: row.updatedAt ?? row.createdAt,
+    createdAt,
+    updatedAt: row.updatedAt ?? createdAt,
+    completedAt: row.completedAt ?? undefined,
+    customerReview: row.customerReview ?? undefined,
+    distanceKm: row.distanceKm,
+    offerCount: row.offerCount,
+    repairEstimate: row.repairEstimate != null ? Number(row.repairEstimate) : undefined,
+    repairCharge: row.repairCharge != null ? Number(row.repairCharge) : (row.repairEstimate != null ? Number(row.repairEstimate) : undefined),
+    visitCharge: row.visitCharge != null ? Number(row.visitCharge) : (row.lockedVisitCharge != null ? Number(row.lockedVisitCharge) : (row.suggestedVisitCharge != null ? Number(row.suggestedVisitCharge) : undefined)),
+    platformCommission: row.platformCommission != null ? Number(row.platformCommission) : undefined,
+    workerNetEarnings: row.workerNetEarnings != null ? Number(row.workerNetEarnings) : undefined,
+    nextVisit: row.nextVisit ?? row.visits?.[0] ?? undefined,
+    visitId: row.nextVisit?.id ?? row.visits?.[0]?.id ?? undefined,
   };
 }
 
-export async function listWorkerJobs(): Promise<Job[]> {
-  if (isMockMode()) {
-    return simulateLatency([...mockJobs]);
+export interface GetWorkerJobsOptions {
+  page?: number;
+  limit?: number;
+}
+
+export async function listWorkerJobs(options?: GetWorkerJobsOptions | unknown): Promise<Job[]> {
+  if (!hasWorkerAuthSession()) {
+    return [];
   }
-  const res = await http.get<BackendPage<BackendJobRow> | BackendJobRow[]>("/workers/me/jobs/active");
-  const items = Array.isArray(res) ? res : res.items;
-  return (items ?? []).map(mapBackendJob);
+  try {
+    const params = new URLSearchParams();
+    let page = 1;
+    let limit = 50;
+    if (typeof options === "object" && options !== null) {
+      if ("page" in options && typeof (options as any).page === "number") {
+        page = (options as any).page;
+      }
+      if ("limit" in options && typeof (options as any).limit === "number") {
+        limit = (options as any).limit;
+      }
+    }
+    params.set("page", String(page));
+    params.set("limit", String(limit));
+    const queryStr = `?${params.toString()}`;
+    const res = await http.get<any>(`/workers/me/jobs/active${queryStr}`);
+    const items: BackendJobRow[] = Array.isArray(res)
+      ? res
+      : (res as any)?.data ?? (res as any)?.items ?? [];
+    return items.map(mapBackendJob);
+  } catch (err: any) {
+    if (err?.status === 401) return [];
+    throw err;
+  }
+}
+
+export async function listWorkerHistoryJobs(options?: GetWorkerJobsOptions | unknown): Promise<Job[]> {
+  if (!hasWorkerAuthSession()) {
+    return [];
+  }
+  try {
+    const params = new URLSearchParams();
+    let page = 1;
+    let limit = 50;
+    if (typeof options === "object" && options !== null) {
+      if ("page" in options && typeof (options as any).page === "number") {
+        page = (options as any).page;
+      }
+      if ("limit" in options && typeof (options as any).limit === "number") {
+        limit = (options as any).limit;
+      }
+    }
+    params.set("page", String(page));
+    params.set("limit", String(limit));
+    const queryStr = `?${params.toString()}`;
+    const res = await http.get<any>(`/workers/me/jobs/history${queryStr}`);
+    const items: BackendJobRow[] = Array.isArray(res)
+      ? res
+      : (res as any)?.data ?? (res as any)?.items ?? [];
+    return items.map(mapBackendJob);
+  } catch (err: any) {
+    if (err?.status === 401) return [];
+    throw err;
+  }
 }
 
 export async function listNearbyJobs(location?: {
   lat: number;
   lng: number;
   radiusKm?: number;
+  onlyRelevant?: boolean;
 }): Promise<Job[]> {
-  if (isMockMode()) {
-    return simulateLatency(
-      mockJobs.filter((job) => isNearbyJob(job.status)),
-    );
+  if (!hasWorkerAuthSession()) {
+    return [];
   }
   const resolved = location ?? { lat: 33.98, lng: 71.43, radiusKm: 25 };
   const params = new URLSearchParams();
   params.set("lat", String(resolved.lat));
   params.set("lng", String(resolved.lng));
   params.set("radiusKm", String(resolved.radiusKm ?? 25));
+  if (typeof resolved.onlyRelevant === "boolean") {
+    params.set("onlyRelevant", String(resolved.onlyRelevant));
+  }
   const res = await http.get<BackendPage<BackendJobRow> | BackendJobRow[]>(
     `/jobs/available?${params.toString()}`,
   );
-  const items = Array.isArray(res) ? res : res.items;
+  const items: BackendJobRow[] = Array.isArray(res)
+    ? res
+    : (res as any)?.items ?? (res as any)?.data ?? [];
   return (items ?? []).map(mapBackendJob);
 }
 
 export async function getWorkerJob(jobId: string): Promise<Job> {
-  if (isMockMode()) {
-    const job = mockJobs.find((j) => j.id === jobId);
-    if (!job) throw new Error(`JOB_NOT_FOUND:${jobId}`);
-    return simulateLatency({ ...job });
-  }
   return mapBackendJob(await http.get<BackendJobRow>(`/jobs/${jobId}`));
 }
 

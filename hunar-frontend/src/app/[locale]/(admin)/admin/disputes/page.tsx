@@ -1,10 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { AdminShell } from "@/features/admin/components/admin-shell";
 import { Link } from "@/i18n/navigation";
+import { formatDate } from "@/lib/format";
 import { adminApi } from "@/features/admin/api/admin-api";
 import type { DisputeReport } from "@/types/admin";
+import { TableRowsSkeleton } from "@/features/admin/components/table-skeleton";
 import { AlertTriangle, Eye, ShieldAlert } from "lucide-react";
 
 export default function DisputesPage() {
@@ -20,8 +21,7 @@ export default function DisputesPage() {
   }, []);
 
   return (
-    <AdminShell>
-      <div className="space-y-6">
+<div className="space-y-6">
         <div>
           <div className="flex items-center gap-2">
             <span className="inline-flex items-center gap-1.5 rounded-full border border-orange/20 bg-orange/10 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-orange">
@@ -51,7 +51,7 @@ export default function DisputesPage() {
             </thead>
             <tbody className="divide-y divide-slate-100 font-medium">
               {loading ? (
-                <tr><td colSpan={7} className="py-6 px-4 text-center text-slate-500">Loading disputes...</td></tr>
+                <TableRowsSkeleton colSpan={7} label="Loading disputes" />
               ) : disputes.length === 0 ? (
                 <tr><td colSpan={7} className="py-6 px-4 text-center text-slate-500">No disputes reported yet.</td></tr>
               ) : (
@@ -63,7 +63,7 @@ export default function DisputesPage() {
                   </td>
                   <td className="py-4 px-4 font-semibold text-slate-700">{d.targetName}</td>
                   <td className="py-4 px-4 font-bold text-orange">{d.issueCategory}</td>
-                  <td className="py-4 px-4 text-slate-500">{new Date(d.createdAt).toLocaleDateString()}</td>
+                  <td className="py-4 px-4 text-slate-500">{formatDate(d.createdAt)}</td>
                   <td className="py-4 px-4">
                     <span className="rounded-full bg-orange/10 px-2.5 py-0.5 text-[10px] font-extrabold text-orange">
                       {d.status}
@@ -83,6 +83,5 @@ export default function DisputesPage() {
           </table>
         </div>
       </div>
-    </AdminShell>
-  );
+);
 }

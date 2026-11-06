@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useMemo } from "react";
 import Image from "next/image";
 import {
   MapPin,
@@ -14,6 +14,7 @@ import {
   Flame,
   Sparkles,
   EyeOff,
+  Volume2,
 } from "lucide-react";
 import type { JobRequest } from "../types";
 
@@ -33,15 +34,31 @@ export function JobRequestCard({
   job,
   onClick,
   onHide,
+  isMatchedCategory = false,
 }: {
   job: JobRequest;
   onClick: (job: JobRequest) => void;
   onHide?: (jobId: string) => void;
+  isMatchedCategory?: boolean;
 }) {
   const locale = useLocale();
   const isUrdu = locale === "ur";
   const Icon = CATEGORY_ICONS[job.category] || Wrench;
   const isUrgent = job.status === "URGENT";
+
+  const validImages = useMemo(() => {
+    if (!job.images || !Array.isArray(job.images)) return [];
+    return job.images.filter(
+      (src) => typeof src === "string" && src.trim().length > 0
+    );
+  }, [job.images]);
+
+  const hasVoiceNote = Boolean(
+    (job.voiceNote?.audioUrl && !job.voiceNote.audioUrl.startsWith("blob:")) ||
+    (typeof (job as any).voiceNoteUrl === "string" &&
+      (job as any).voiceNoteUrl.trim() !== "" &&
+      !(job as any).voiceNoteUrl.startsWith("blob:"))
+  );
 
   const [offsetX, setOffsetX] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
@@ -49,6 +66,13 @@ export function JobRequestCard({
   const dragStartX = useRef(0);
   const dragStartY = useRef(0);
   const isSwipingHorizontal = useRef(false);
+  const rafId = useRef<number | null>(null);
+
+  React.useEffect(() => {
+    return () => {
+      if (rafId.current !== null) cancelAnimationFrame(rafId.current);
+    };
+  }, []);
 
   // Trigger dismissal animation and removal
   const triggerDismiss = () => {
@@ -84,16 +108,16 @@ export function JobRequestCard({
     }
 
     if (isSwipingHorizontal.current) {
-      // Only allow dragging to the right (positive deltaX)
-      if (deltaX > 0) {
-        setOffsetX(deltaX);
-      } else {
-        setOffsetX(0);
-      }
+      if (rafId.current !== null) cancelAnimationFrame(rafId.current);
+      rafId.current = requestAnimationFrame(() => {
+        // Only allow dragging to the right (positive deltaX)
+        setOffsetX(deltaX > 0 ? deltaX : 0);
+      });
     }
   };
 
   const handleTouchEnd = () => {
+    if (rafId.current !== null) cancelAnimationFrame(rafId.current);
     setIsDragging(false);
     if (offsetX > 90) {
       triggerDismiss();
@@ -117,11 +141,15 @@ export function JobRequestCard({
     const deltaX = e.clientX - dragStartX.current;
     if (deltaX > 5) {
       isSwipingHorizontal.current = true;
-      setOffsetX(deltaX);
+      if (rafId.current !== null) cancelAnimationFrame(rafId.current);
+      rafId.current = requestAnimationFrame(() => {
+        setOffsetX(deltaX);
+      });
     }
   };
 
   const handleMouseUp = () => {
+    if (rafId.current !== null) cancelAnimationFrame(rafId.current);
     if (!isDragging) return;
     setIsDragging(false);
     if (offsetX > 90) {
@@ -184,21 +212,43 @@ export function JobRequestCard({
         style={{
           transform: `translateX(${offsetX}px)`,
           transition: isDragging ? "none" : "transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1)",
+          willChange: "transform",
+          touchAction: "pan-y",
         }}
         className="group relative flex w-full cursor-pointer select-none gap-2.5 sm:gap-3.5 bg-white p-3 sm:p-4 border-b-2 border-slate-300 last:border-b-0 transition-all hover:bg-slate-50/80 active:scale-[0.995]"
         data-purpose="job-request-card"
       >
         {/* LEFT SIDE — Customer Profile */}
-        <div className="flex w-18 sm:w-20 shrink-0 flex-col items-center border-r border-slate-100/80 pr-2 sm:pr-2.5 text-center pointer-events-none">
-          {/* Customer Profile Image */}
-          <div className="relative mb-1 size-11 sm:size-12 overflow-hidden rounded-full border border-slate-200 bg-slate-100 group-hover:border-teal transition-colors">
-            <Image
-              src={job.customer.avatarUrl}
-              alt={job.customer.firstName}
-              fill
-              className="object-cover"
-              sizes="48px"
-            />
+        <div
+          className={`flex w-18 sm:w-20 shrink-0 flex-col items-center pr-2 sm:pr-2.5 text-center pointer-events-none transition-colors ${
+            isMatchedCategory
+              ? "border-r-2 border-[#0F8B8D]"
+              : "border-r border-slate-100/80"
+          }`}
+        >
+          {/* Customer Profile Image or First Letter Initial */}
+          <div className="relative mb-1 size-11 sm:size-12 overflow-hidden rounded-full border border-[#123B5D]/20 bg-[#123B5D]/10 text-[#123B5D] flex items-center justify-center group-hover:border-[#0F8B8D] transition-colors shadow-2xs select-none">
+            {job.customer.avatarUrl ? (
+              <img
+                src={job.customer.avatarUrl}
+                alt={job.customer.firstName || "Customer"}
+                loading="lazy"
+                decoding="async"
+                className="size-full object-cover rounded-full"
+                onError={(e) => {
+                  (e.currentTarget as HTMLElement).style.display = "none";
+                  const fallback = e.currentTarget.parentElement?.querySelector("span");
+                  if (fallback) fallback.classList.remove("sr-only");
+                }}
+              />
+            ) : null}
+            <span
+              className={`text-sm sm:text-base font-black text-[#123B5D] uppercase ${
+                job.customer.avatarUrl ? "sr-only" : ""
+              }`}
+            >
+              {(job.customer.firstName || job.customer.fullName || "C").trim().charAt(0).toUpperCase()}
+            </span>
           </div>
 
           {/* First Name Only */}
@@ -206,15 +256,26 @@ export function JobRequestCard({
             {job.customer.firstName}
           </p>
 
-          {/* Star Rating */}
-          <div className="mt-0.5 flex items-center justify-center gap-0.5 text-[11px] font-extrabold text-[#F59E0B]">
-            <Star className="size-3 fill-[#F59E0B] stroke-none" />
-            <span>{job.customer.rating.toFixed(1)}</span>
-          </div>
+          {/* Star Rating & Customer Review Count */}
+          {job.customer.rating > 0 && (job.customer.reviewCount ?? 0) > 0 && (
+            <div
+              className="mt-1 flex items-center justify-center gap-1 text-[11px] font-extrabold text-[#F59E0B]"
+              title={`${job.customer.rating.toFixed(1)} rating from ${job.customer.reviewCount} customer ${job.customer.reviewCount === 1 ? "review" : "reviews"}`}
+            >
+              <Star className="size-3 fill-[#F59E0B] stroke-none shrink-0" />
+              <span>{job.customer.rating.toFixed(1)}</span>
+              <span className="text-[10px] font-semibold text-slate-400">
+                ({job.customer.reviewCount})
+              </span>
+            </div>
+          )}
 
-          {/* Total Orders Number Only */}
-          <p className="mt-0.5 text-[10px] font-semibold text-slate-500" title={`${job.customer.totalOrders} total completed orders`}>
-            {job.customer.totalOrders}
+          {/* Total Orders */}
+          <p
+            className="mt-0.5 text-[9.5px] font-bold text-slate-500 truncate"
+            title={`${job.customer.totalOrders} total completed ${job.customer.totalOrders === 1 ? "order" : "orders"}`}
+          >
+            {job.customer.totalOrders} {job.customer.totalOrders === 1 ? "order" : "orders"}
           </p>
 
           {/* Uploaded Time */}
@@ -239,6 +300,12 @@ export function JobRequestCard({
               </div>
 
               <div className="flex items-center gap-1 shrink-0">
+                {isUrgent && (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/15 px-2 py-0.5 text-[10.5px] font-extrabold text-amber-700 border border-amber-500/30">
+                    <Zap className="size-3 fill-current text-amber-600" />
+                    <span>{isUrdu ? "فوری" : "Immediate"}</span>
+                  </span>
+                )}
                 <span className="inline-flex items-center gap-1 rounded-full bg-slate-100/80 px-2 py-0.5 text-[10.5px] font-bold text-[#123B5D]">
                   <Icon className="size-3 text-[#0F8B8D]" />
                   {job.category}
@@ -246,27 +313,38 @@ export function JobRequestCard({
               </div>
             </div>
 
-            {/* Job Description */}
-            <p className="line-clamp-2 sm:line-clamp-3 text-xs sm:text-[13px] font-normal leading-relaxed text-slate-800">
-              {job.description}
-            </p>
+            {/* Job Title */}
+            <h3 className="line-clamp-2 text-[13px] sm:text-sm font-bold leading-snug text-[#123B5D]">
+              {job.title}
+            </h3>
+
+            {/* Voice Note & Media Badges */}
+            {hasVoiceNote && (
+              <div className="mt-1.5 flex items-center gap-1.5">
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-teal/10 text-teal text-[10.5px] font-bold border border-teal/20">
+                  <Volume2 className="size-3" />
+                  <span>{isUrdu ? "وائس نوٹ منسلک ہے" : "Voice Note Attached"}</span>
+                </span>
+              </div>
+            )}
           </div>
 
           {/* Bottom Row: Media Row (2 Image Thumbnails) — Mobile Only */}
-          {job.images && job.images.length > 0 && (
+          {validImages.length > 0 && (
             <div className="mt-2 flex sm:hidden flex-wrap items-center gap-2 pt-1.5 border-t border-slate-100/80">
               <div className="flex items-center gap-1.5 shrink-0">
-                {job.images.slice(0, 2).map((imgUrl, idx) => (
+                {validImages.slice(0, 2).map((imgUrl, idx) => (
                   <div
                     key={idx}
                     className="relative size-10 sm:size-11 overflow-hidden rounded-lg border border-slate-100 bg-slate-100 hover:opacity-90 transition-opacity"
                   >
-                    <Image
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
                       src={imgUrl}
                       alt={`Job preview ${idx + 1}`}
-                      fill
-                      className="object-cover"
-                      sizes="44px"
+                      className="size-full object-cover"
+                      loading="lazy"
+                      decoding="async"
                     />
                   </div>
                 ))}
@@ -276,35 +354,45 @@ export function JobRequestCard({
         </div>
 
         {/* RIGHT-MOST SECTION (DESKTOP ONLY) — 40% Width 2-Image Grid Area */}
-        {job.images && job.images.length > 0 && (
+        {validImages.length > 0 && (
           <div className="hidden sm:flex sm:w-[36%] md:w-[40%] shrink-0 items-center justify-end pointer-events-none pl-2 sm:pl-3">
-            {job.images.length === 1 ? (
-              <div className="relative w-full h-24 sm:h-26 md:h-28 overflow-hidden rounded-lg border border-slate-200/80 bg-slate-100 shadow-2xs group-hover:border-teal/40 transition-colors">
-                <Image
-                  src={job.images[0]}
+            {validImages.length === 1 ? (
+              <div className="relative w-[calc(50%-4px)] h-24 sm:h-26 md:h-28 overflow-hidden rounded-lg border border-slate-200/80 bg-slate-100 shadow-2xs group-hover:border-teal/40 transition-colors">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={validImages[0]}
                   alt={job.category || "Job photo"}
-                  fill
-                  className="object-cover group-hover:scale-105 transition-transform duration-300"
-                  sizes="(min-width: 640px) 30vw, 200px"
+                  className="size-full object-cover group-hover:scale-105 transition-transform duration-300"
+                  loading="lazy"
+                  decoding="async"
+                  onError={(e) => {
+                    const parent = e.currentTarget.parentElement;
+                    if (parent) parent.style.display = "none";
+                  }}
                 />
               </div>
             ) : (
               <div className="grid grid-cols-2 gap-2 w-full h-24 sm:h-26 md:h-28">
-                {job.images.slice(0, 2).map((imgUrl, idx) => (
+                {validImages.slice(0, 2).map((imgUrl, idx) => (
                   <div
                     key={idx}
                     className="relative h-full w-full overflow-hidden rounded-lg border border-slate-200/80 bg-slate-100 shadow-2xs group-hover:border-teal/40 transition-colors"
                   >
-                    <Image
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
                       src={imgUrl}
                       alt={`Job photo ${idx + 1}`}
-                      fill
-                      className="object-cover group-hover:scale-105 transition-transform duration-300"
-                      sizes="(min-width: 640px) 15vw, 120px"
+                      className="size-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      loading="lazy"
+                      decoding="async"
+                      onError={(e) => {
+                        const parent = e.currentTarget.parentElement;
+                        if (parent) parent.style.display = "none";
+                      }}
                     />
-                    {idx === 1 && job.images.length > 2 && (
+                    {idx === 1 && validImages.length > 2 && (
                       <span className="absolute bottom-1 right-1 rounded-md bg-black/65 px-1.5 py-0.5 text-[9.5px] font-extrabold text-white backdrop-blur-xs">
-                        +{job.images.length - 2}
+                        +{validImages.length - 2}
                       </span>
                     )}
                   </div>

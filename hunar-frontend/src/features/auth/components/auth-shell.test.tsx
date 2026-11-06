@@ -1,6 +1,18 @@
 import { render, screen } from "@testing-library/react";
 import { AuthShell } from "./auth-shell";
 
+jest.mock("next-intl", () => ({
+  useTranslations: () => (key: string) => {
+    const translations: Record<string, string> = {
+      trustCnic: "Verified",
+      trustSecure: "Secure Payments",
+      copyright: "© 2026 WorkerFIX Services Inc.",
+    };
+    return translations[key] || key;
+  },
+  useLocale: () => "en",
+}));
+
 jest.mock("@/i18n/navigation", () => ({
   usePathname: () => "/",
   useRouter: () => ({ push: jest.fn(), back: jest.fn() }),
@@ -9,8 +21,8 @@ jest.mock("@/i18n/navigation", () => ({
   ),
 }));
 
-jest.mock("@/components/shared/orderworker-logo", () => ({
-  OrderworkerLogo: () => <div data-testid="logo">Logo</div>,
+jest.mock("@/components/shared/workerfix-logo", () => ({
+  WorkerFixLogo: () => <div data-testid="logo">Logo</div>,
 }));
 
 describe("AuthShell", () => {
@@ -39,5 +51,17 @@ describe("AuthShell", () => {
     const main = screen.getByRole("main");
     expect(main).toHaveClass("lg:grid");
     expect(main).toHaveClass("lg:grid-cols-12");
+  });
+
+  it("applies customer desktop layout by default", () => {
+    render(<AuthShell role="customer"><div>Customer Content</div></AuthShell>);
+    expect(screen.getByText("Customer Portal")).toBeInTheDocument();
+    expect(screen.getByText("Customer Content")).toBeInTheDocument();
+  });
+
+  it("applies worker desktop layout when role is worker", () => {
+    render(<AuthShell role="worker"><div>Worker Content</div></AuthShell>);
+    expect(screen.getByText("Worker & Pro Portal")).toBeInTheDocument();
+    expect(screen.getByText("Worker Content")).toBeInTheDocument();
   });
 });

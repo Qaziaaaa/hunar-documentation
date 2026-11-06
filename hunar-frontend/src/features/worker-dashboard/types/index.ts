@@ -3,8 +3,11 @@ export type DashboardTab =
   | "jobs"
   | "earnings"
   | "wallet"
+  | "notifications"
   | "chat"
-  | "profile";
+  | "profile"
+  | "reviews"
+  | "settings";
 
 export interface WorkerDashboardProfile {
   id: string;
@@ -41,8 +44,8 @@ export interface CustomerBrief {
 }
 
 export interface VoiceNote {
-  durationFormatted: string;
-  durationSeconds: number;
+  durationFormatted?: string;
+  durationSeconds?: number;
   waveformPattern?: number[];
   audioUrl?: string;
 }
@@ -53,21 +56,29 @@ export type JobRequestCategory =
   | "AC Technician"
   | "Carpenter"
   | "Painter"
+  | "Home Cleaner"
+  | "Mason / Mistri"
+  | "Pest Control"
+  | "Handyman"
   | "Solar Technician"
   | "Appliance Repair"
-  | "Mason"
+  | "Mechanic"
   | "Welder"
-  | "Mechanic";
+  | "CCTV & Security"
+  | "Gardener"
+  | "Movers & Packers"
+  | (string & {});
 
 export interface JobRequest {
   id: string;
   category: JobRequestCategory;
+  categoryId?: string;
+  rawCategory?: string;
   subCategory?: string;
   title: string;
   description: string;
   distance: string;
   locationArea: string;
-  fullAddress?: string;
   uploadedTime: string;
   postedTimestamp?: number;
   suggestedVisitCharge?: number;

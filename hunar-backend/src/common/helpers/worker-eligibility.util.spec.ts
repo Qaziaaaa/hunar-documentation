@@ -34,6 +34,18 @@ function seedCompleteVerified(db: any, status = 'APPROVED') {
 }
 
 describe('assertWorkerEligible', () => {
+  const originalTestMode = process.env.ALLOW_WORKER_JOB_TEST_MODE;
+  beforeEach(() => {
+    delete process.env.ALLOW_WORKER_JOB_TEST_MODE;
+  });
+  afterEach(() => {
+    if (originalTestMode !== undefined) {
+      process.env.ALLOW_WORKER_JOB_TEST_MODE = originalTestMode;
+    } else {
+      delete process.env.ALLOW_WORKER_JOB_TEST_MODE;
+    }
+  });
+
   it('allows an approved worker with a complete profile to work', async () => {
     const { db, prisma } = makeDb();
     seedCompleteVerified(db);

@@ -17,6 +17,8 @@ interface ChatInputBarProps {
   onSendMessage: (text: string) => void;
   onSendVoiceNote: (audioUrl: string, durationSeconds: number) => void;
   onSendImage?: (file: File) => void;
+  onTyping?: () => void;
+  onStopTyping?: () => void;
   quickSuggestions?: string[];
   disabled?: boolean;
 }
@@ -25,6 +27,8 @@ export function ChatInputBar({
   onSendMessage,
   onSendVoiceNote,
   onSendImage,
+  onTyping,
+  onStopTyping,
   quickSuggestions,
   disabled = false,
 }: ChatInputBarProps) {
@@ -36,8 +40,10 @@ export function ChatInputBar({
   const [recordingSeconds, setRecordingSeconds] = useState(0);
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const typingTimerRef = useRef<NodeJS.Timeout | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const defaultSuggestions = isUrdu
@@ -59,6 +65,11 @@ export function ChatInputBar({
   useEffect(() => {
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
+      if (typingTimerRef.current) clearTimeout(typingTimerRef.current);
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach((track) => track.stop());
+        streamRef.current = null;
+      }
       if (
         mediaRecorderRef.current &&
         mediaRecorderRef.current.state !== "inactive"
@@ -74,23 +85,17 @@ export function ChatInputBar({
         const stream = await navigator.mediaDevices.getUserMedia({
           audio: true,
         });
+        streamRef.current = stream;
         const mediaRecorder = new MediaRecorder(stream);
         mediaRecorderRef.current = mediaRecorder;
         audioChunksRef.current = [];
 
         mediaRecorder.ondataavailable = (e) => {
-          if (e.data.size > 0) audioChunksRef.current.push(e.data);
+          if (e.data && e.data.size > 0) audioChunksRef.current.push(e.data);
         };
 
-        mediaRecorder.onstop = () => {
-          const audioBlob = new Blob(audioChunksRef.current, {
-            type: "audio/webm",
-          });
-          const url = URL.createObjectURL(audioBlob);
-          stream.getTracks().forEach((track) => track.stop());
-        };
-
-        mediaRecorder.start();
+        // 100ms slices guarantee ondataavailable delivers audio packets reliably
+        mediaRecorder.start(100);
       }
     } catch {
       console.warn("Microphone access simulated / fallback mode");
@@ -105,45 +110,83 @@ export function ChatInputBar({
 
   const cancelRecording = () => {
     if (timerRef.current) clearInterval(timerRef.current);
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((track) => track.stop());
+      streamRef.current = null;
+    }
     if (
       mediaRecorderRef.current &&
       mediaRecorderRef.current.state !== "inactive"
     ) {
       mediaRecorderRef.current.stop();
     }
+    audioChunksRef.current = [];
     setIsRecording(false);
     setRecordingSeconds(0);
   };
 
   const finishAndSendRecording = () => {
     if (timerRef.current) clearInterval(timerRef.current);
-    const duration = recordingSeconds || 1;
+    const duration = Math.max(1, recordingSeconds);
+
+    const deliverBlob = (blob: Blob) => {
+      const url = URL.createObjectURL(blob);
+      onSendVoiceNote(url, duration);
+    };
 
     if (
       mediaRecorderRef.current &&
       mediaRecorderRef.current.state !== "inactive"
     ) {
       mediaRecorderRef.current.onstop = () => {
-        const audioBlob = new Blob(audioChunksRef.current, {
-          type: "audio/webm",
+        if (streamRef.current) {
+          streamRef.current.getTracks().forEach((track) => track.stop());
+          streamRef.current = null;
+        }
+
+        let totalBytes = 0;
+        audioChunksRef.current.forEach((c) => {
+          totalBytes += c.size;
         });
-        const url = URL.createObjectURL(audioBlob);
-        onSendVoiceNote(url, duration);
+
+        if (audioChunksRef.current.length > 0 && totalBytes > 100) {
+          const audioBlob = new Blob(audioChunksRef.current, {
+            type: mediaRecorderRef.current?.mimeType || "audio/webm",
+          });
+          deliverBlob(audioBlob);
+        } else {
+          console.warn("[ChatInputBar] Recording too short or empty; no audio delivered.");
+        }
       };
       mediaRecorderRef.current.stop();
     } else {
-      // Fallback simulated voice note
-      const fallbackUrl = `simulated-voice-${Date.now()}`;
-      onSendVoiceNote(fallbackUrl, duration);
+      console.warn("[ChatInputBar] MediaRecorder was inactive; no audio recorded.");
     }
 
     setIsRecording(false);
     setRecordingSeconds(0);
   };
 
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    setText(val);
+    if (onTyping && val.trim().length > 0) {
+      onTyping();
+      if (typingTimerRef.current) clearTimeout(typingTimerRef.current);
+      typingTimerRef.current = setTimeout(() => {
+        onStopTyping?.();
+      }, 2500);
+    } else if (val.trim().length === 0) {
+      if (typingTimerRef.current) clearTimeout(typingTimerRef.current);
+      onStopTyping?.();
+    }
+  };
+
   const handleSendText = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     if (!text.trim() || disabled) return;
+    if (typingTimerRef.current) clearTimeout(typingTimerRef.current);
+    onStopTyping?.();
     onSendMessage(text.trim());
     setText("");
   };
@@ -170,7 +213,7 @@ export function ChatInputBar({
       {/* Quick Suggestion Chips */}
       {!isRecording && (
         <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
-          <div className="flex items-center gap-1 text-[11px] font-bold text-[#0F766E] shrink-0">
+          <div className="flex items-center gap-1 text-[11px] font-bold text-[#0F8B8D] shrink-0">
             <Sparkles className="size-3" />
             <span>{isUrdu ? "فوری جواب:" : "Quick Reply:"}</span>
           </div>
@@ -179,7 +222,7 @@ export function ChatInputBar({
               key={idx}
               type="button"
               onClick={() => handleSuggestionClick(s)}
-              className="px-2.5 py-1 rounded-full text-xs font-medium bg-slate-50 hover:bg-[#0F766E]/10 hover:text-[#0F766E] border border-slate-200 text-slate-700 transition-colors shrink-0 cursor-pointer"
+              className="px-2.5 py-1 rounded-full text-xs font-medium bg-slate-50 hover:bg-[#0F8B8D]/10 hover:text-[#0F8B8D] border border-slate-200 text-slate-700 transition-colors shrink-0 cursor-pointer"
             >
               {s}
             </button>
@@ -216,7 +259,7 @@ export function ChatInputBar({
             <button
               type="button"
               onClick={finishAndSendRecording}
-              className="h-9 px-4 rounded-xl bg-[#0F766E] hover:bg-[#115E59] text-white text-xs font-bold flex items-center gap-1.5 transition-all shadow-xs cursor-pointer active:scale-95"
+              className="h-9 px-4 rounded-xl bg-[#0F8B8D] hover:bg-[#123B5D] text-white text-xs font-bold flex items-center gap-1.5 transition-all shadow-xs cursor-pointer active:scale-95"
             >
               <Send className="size-3.5 rtl:rotate-180" />
               <span>{isUrdu ? "بھیجیں" : "Send Voice"}</span>
@@ -242,7 +285,7 @@ export function ChatInputBar({
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
-                className="size-10 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-500 hover:text-[#0F766E] flex items-center justify-center transition-colors cursor-pointer shrink-0"
+                className="size-10 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-500 hover:text-[#0F8B8D] flex items-center justify-center transition-colors cursor-pointer shrink-0"
                 title={isUrdu ? "تصویر منسلک کریں" : "Attach Image"}
               >
                 <ImageIcon className="size-4.5" />
@@ -255,14 +298,14 @@ export function ChatInputBar({
             <input
               type="text"
               value={text}
-              onChange={(e) => setText(e.target.value)}
+              onChange={handleInputChange}
               disabled={disabled}
               placeholder={
                 isUrdu
                   ? "پیغام لکھیں..."
                   : "Type a message..."
               }
-              className="w-full py-2.5 px-4 rounded-xl border border-slate-200 text-xs sm:text-sm text-[#123B5D] focus:outline-none focus:ring-2 focus:ring-[#0F766E]/20 bg-slate-50 focus:bg-white transition-all rtl:text-right"
+              className="w-full py-2.5 px-4 rounded-xl border border-slate-200 text-xs sm:text-sm text-[#123B5D] focus:outline-none focus:ring-2 focus:ring-[#0F8B8D]/20 bg-slate-50 focus:bg-white transition-all rtl:text-right"
             />
           </div>
 
@@ -271,7 +314,7 @@ export function ChatInputBar({
             type="button"
             onClick={startVoiceRecording}
             disabled={disabled}
-            className="size-10 rounded-xl bg-[#0F766E]/10 hover:bg-[#0F766E] text-[#0F766E] hover:text-white border border-[#0F766E]/20 flex items-center justify-center transition-all cursor-pointer shadow-2xs active:scale-95 shrink-0"
+            className="size-10 rounded-xl bg-[#0F8B8D]/10 hover:bg-[#0F8B8D] text-[#0F8B8D] hover:text-white border border-[#0F8B8D]/20 flex items-center justify-center transition-all cursor-pointer shadow-2xs active:scale-95 shrink-0"
             title={isUrdu ? "وائس میسج ریکارڈ کریں" : "Record Voice Note"}
           >
             <Mic className="size-4.5" />
@@ -281,7 +324,7 @@ export function ChatInputBar({
           <button
             type="submit"
             disabled={!text.trim() || disabled}
-            className="size-10 rounded-xl bg-[#0F766E] hover:bg-[#115E59] disabled:opacity-40 disabled:hover:bg-[#0F766E] text-white flex items-center justify-center transition-all cursor-pointer shadow-xs active:scale-95 shrink-0"
+            className="size-10 rounded-xl bg-[#0F8B8D] hover:bg-[#123B5D] disabled:opacity-40 disabled:hover:bg-[#0F8B8D] text-white flex items-center justify-center transition-all cursor-pointer shadow-xs active:scale-95 shrink-0"
             title={isUrdu ? "پیغام بھیجیں" : "Send Message"}
           >
             <Send className="size-4 rtl:rotate-180" />

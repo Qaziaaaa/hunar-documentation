@@ -1,4 +1,4 @@
-﻿import { Type } from 'class-transformer';
+import { Type } from 'class-transformer';
 import {
   IsEnum,
   IsIn,
@@ -13,12 +13,14 @@ import {
   ValidateIf,
 } from 'class-validator';
 import { PaymentGateway, PaymentMethod } from '@prisma/client';
+import { IsOrderCode } from '../../common/helpers/order-code.util';
 
-/** Customer initiates a Payment for a completed job (Module 3 ΓÇö Payments Backend). */
+/** Customer initiates a Payment for a completed job (Module 3 — Payments Backend). */
 export class CreatePaymentDto {
   /** Job this payment settles. The service derives customer/worker/visitCharge from it. */
   @IsNotEmpty()
   @IsString()
+  @IsOrderCode()
   jobId: string;
 
   @IsEnum(PaymentMethod)
@@ -132,6 +134,7 @@ export class WalletLedgerQueryDto {
 export class JobActionDto {
   @IsString()
   @IsNotEmpty()
+  @IsOrderCode()
   jobId: string;
 }
 
@@ -143,4 +146,20 @@ export class TopupDecideDto {
   @IsString()
   @MaxLength(500)
   reason?: string;
+}
+export class WithdrawDto {
+  @Type(() => Number)
+  @IsNumber()
+  @Min(100)
+  amount: number;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(100)
+  requestId?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(300)
+  note?: string;
 }

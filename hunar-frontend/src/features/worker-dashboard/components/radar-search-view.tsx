@@ -1,50 +1,43 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { Navigation } from "lucide-react";
+import { useLocale } from "next-intl";
 
 interface RadarSearchViewProps {
   city?: string;
   workerName?: string;
   onViewFeed?: () => void;
+  geoStatus?: "requesting" | "granted" | "denied" | "unavailable" | "idle";
+  geoCoords?: { lat: number; lng: number } | null;
+  onRequestGps?: () => void;
 }
 
-const NEARBY_SIGNALS = [
-  { id: 1, top: "28%", left: "68%" },
-  { id: 2, top: "72%", left: "34%" },
-  { id: 3, top: "35%", left: "26%" },
-  { id: 4, top: "65%", left: "75%" },
+const RADAR_DOTS = [
+  // Dot 1: On 3rd ring (75% diameter / 37.5% radius) at top-right
+  { id: 1, top: "23.5%", left: "76.5%", delay: "0s", size: "size-2.5" },
+  // Dot 2: On 2nd ring (50% diameter / 25% radius) at bottom-left
+  { id: 2, top: "62.5%", left: "28.35%", delay: "1.0s", size: "size-2.5" },
+  // Dot 3: On 3rd ring (75% diameter / 37.5% radius) at bottom
+  { id: 3, top: "86.2%", left: "40.3%", delay: "1.8s", size: "size-2.5" },
+  // Dot 4: On 2nd ring (50% diameter / 25% radius) at middle-right
+  { id: 4, top: "60.6%", left: "72.7%", delay: "2.6s", size: "size-2.5" },
 ];
 
 export function RadarSearchView({
   city = "Peshawar",
   onViewFeed,
+  geoStatus = "idle",
+  geoCoords,
+  onRequestGps,
 }: RadarSearchViewProps) {
-  const [activeSignalIndex, setActiveSignalIndex] = useState(0);
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setActiveSignalIndex((prev) => (prev + 1) % NEARBY_SIGNALS.length);
-    }, 3000);
-    return () => clearInterval(timer);
-  }, []);
+  const locale = useLocale();
+  const isUrdu = locale === "ur";
 
   return (
     <div
       className="flex flex-1 flex-col items-center justify-center min-h-[calc(100vh-140px)] w-full bg-white px-4 py-8 text-center select-none animate-in fade-in duration-300"
       data-purpose="radar-searching-screen"
     >
-      {/* STATUS BADGE */}
-      <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-teal/20 bg-teal/5 px-4 py-1.5 shadow-2xs">
-        <span className="relative flex size-2.5">
-          <span className="absolute inline-flex size-full animate-ping rounded-full bg-teal opacity-75" />
-          <span className="relative inline-flex size-2.5 rounded-full bg-teal" />
-        </span>
-        <span className="text-xs font-extrabold uppercase tracking-wider text-navy">
-          Live Radar Active · 5 km Radius
-        </span>
-      </div>
-
       {/* RADAR CONTAINER */}
       <div className="relative flex size-72 sm:size-96 items-center justify-center">
         {/* Concentric Radar Rings */}
@@ -66,46 +59,39 @@ export function RadarSearchView({
           }}
         />
 
-        {/* Floating Nearby Blip Signals */}
-        {NEARBY_SIGNALS.map((signal, idx) => {
-          const isActive = idx === activeSignalIndex;
-          return (
-            <div
-              key={signal.id}
-              className="absolute z-10 -translate-x-1/2 -translate-y-1/2 transition-transform duration-500"
-              style={{ top: signal.top, left: signal.left }}
-            >
-              <div className="relative flex items-center justify-center">
-                <span
-                  className={`absolute size-4 rounded-full transition-all duration-300 ${
-                    isActive ? "bg-teal/40 animate-ping" : "bg-teal/20"
-                  }`}
-                />
-                <span
-                  className={`size-2.5 rounded-full transition-all duration-300 ${
-                    isActive
-                      ? "bg-teal ring-2 ring-white scale-125 shadow-sm shadow-teal"
-                      : "bg-slate-300 opacity-60"
-                  }`}
-                />
-              </div>
+        {/* Round Circle Dots (Radar Signals) */}
+        {RADAR_DOTS.map((dot) => (
+          <div
+            key={dot.id}
+            className="absolute z-10 -translate-x-1/2 -translate-y-1/2 pointer-events-none"
+            style={{ top: dot.top, left: dot.left }}
+          >
+            <div className="relative flex items-center justify-center">
+              <span
+                className="absolute size-4 rounded-full bg-teal/35 animate-ping"
+                style={{ animationDelay: dot.delay, animationDuration: "2.8s" }}
+              />
+              <span
+                className={`relative ${dot.size} rounded-full bg-teal ring-2 ring-white shadow-sm shadow-teal/50`}
+              />
             </div>
-          );
-        })}
+          </div>
+        ))}
 
-        {/* Center Radar Beacon / Navigation Node (Replaces broken image) */}
+        {/* Center Radar Beacon / Navigation Node */}
         <div className="relative z-20 flex size-12 sm:size-14 items-center justify-center rounded-full bg-teal text-white shadow-lg shadow-teal/30 ring-4 ring-teal/20">
           <Navigation className="size-5 sm:size-6 fill-white -rotate-45" />
           <span className="absolute -inset-1 rounded-full border border-teal/40 animate-ping opacity-75" />
         </div>
       </div>
 
-      {/* TEXT HEADING */}
-      <div className="mt-8 max-w-md space-y-2">
+      {/* TEXT HEADING ONLY */}
+      <div className="mt-8 max-w-md">
         <h2 className="text-xl sm:text-2xl font-extrabold tracking-tight text-navy">
-          Searching for new jobs around you...
+          {isUrdu ? "نئی جابز کی تلاش جاری ہے..." : "Searching for new jobs..."}
         </h2>
       </div>
     </div>
   );
 }
+

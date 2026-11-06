@@ -1,7 +1,9 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import {
+  AlertTriangle,
   ArrowRight,
   CheckCircle2,
   Lightbulb,
@@ -14,10 +16,11 @@ import {
 } from "lucide-react";
 import { Link } from "@/i18n/navigation";
 import { useLocale } from "next-intl";
+import { formatPostedAt } from "@/lib/format";
 import { WorkerOfferCard } from "./worker-offer-card";
 import { WorkerProfileModal } from "./worker-profile-modal";
-import { SelectWorkerModal } from "./select-worker-modal";
 import { acceptWorkerOffer } from "../api/customer-jobs-api";
+import { getOfferRemainingSeconds } from "@/lib/urgent-offer";
 import type { CustomerJob, WorkerOffer } from "../types";
 
 interface CustomerOffersHubViewProps {
@@ -28,15 +31,30 @@ export function CustomerOffersHubView({ initialJobs }: CustomerOffersHubViewProp
   const locale = useLocale();
   const isUrdu = locale === "ur";
   const [jobs, setJobs] = useState<CustomerJob[]>(initialJobs);
-  const [statusFilter, setStatusFilter] = useState<"all" | "pending" | "accepted">("all");
+
+  useEffect(() => {
+    if (initialJobs) {
+      setJobs(initialJobs);
+    }
+  }, [initialJobs]);
+
+  const [statusFilter, setStatusFilter] = useState<"all" | "pending" | "accepted">("pending");
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [sortBy, setSortBy] = useState<"lowest_fee" | "highest_rating" | "fastest_arrival">("lowest_fee");
 
   // Modals state
   const [selectedOfferForProfile, setSelectedOfferForProfile] = useState<WorkerOffer | null>(null);
-  const [selectedOfferForBooking, setSelectedOfferForBooking] = useState<{ job: CustomerJob; offer: WorkerOffer } | null>(null);
+  const [confirmingOfferId, setConfirmingOfferId] = useState<string | null>(null);
   const [successToast, setSuccessToast] = useState<string | null>(null);
+  const [toastTone, setToastTone] = useState<"success" | "error">("success");
+  const queryClient = useQueryClient();
+
+  const showToast = (message: string, tone: "success" | "error" = "success") => {
+    setSuccessToast(message);
+    setToastTone(tone);
+    setTimeout(() => setSuccessToast(null), 5000);
+  };
 
   // Compute total offers & stats
   const allOffers = useMemo(() => {
@@ -45,16 +63,25 @@ export function CustomerOffersHubView({ initialJobs }: CustomerOffersHubViewProp
 
   const activeOffersCount = allOffers.length;
   const lowestFee = useMemo(() => {
-    if (allOffers.length === 0) return 300;
+    if (allOffers.length === 0) return 0;
     return Math.min(...allOffers.map((o) => o.visitFee));
   }, [allOffers]);
 
   // Handle direct booking confirmation
   const handleConfirmBooking = async (offer: WorkerOffer) => {
+    setConfirmingOfferId(offer.id);
     try {
       await acceptWorkerOffer(offer.jobId, offer.id);
     } catch (err) {
       console.warn("acceptWorkerOffer error:", err);
+      showToast(
+        isUrdu
+          ? "بکنگ نہیں ہو سکی، براہِ کرم دوبارہ کوشش کریں۔"
+          : "Booking failed — the visit was not scheduled. Please try again.",
+        "error"
+      );
+      setConfirmingOfferId(null);
+      return;
     }
     setJobs((prevJobs) =>
       prevJobs.map((job) => {
@@ -68,13 +95,14 @@ export function CustomerOffersHubView({ initialJobs }: CustomerOffersHubViewProp
         return job;
       })
     );
-    setSelectedOfferForBooking(null);
-    setSuccessToast(
+    setSelectedOfferForProfile(null);
+    setConfirmingOfferId(null);
+    void queryClient.invalidateQueries({ queryKey: ["customer", "jobs"] });
+    showToast(
       isUrdu
         ? `${offer.worker.name} کی بکنگ کامیابی سے ہو گئی! سیکیورٹی PIN فعال ہے۔`
         : `Successfully booked ${offer.worker.name}! Security PIN activated.`
     );
-    setTimeout(() => setSuccessToast(null), 5000);
   };
 
   // Filter jobs and their offers
@@ -83,6 +111,15 @@ export function CustomerOffersHubView({ initialJobs }: CustomerOffersHubViewProp
       .map((job) => {
         // Filter offers within this job
         let offers = [...job.offers];
+
+        // Filter expired urgent offers (>50s)
+        const isUrgentJob =
+          job.scheduleType === "asap" ||
+          (job as any).urgency === "EMERGENCY" ||
+          (job as any).urgency === "HIGH";
+        if (isUrgentJob && job.status === "receiving_offers") {
+          offers = offers.filter((o) => getOfferRemainingSeconds(o) > 0);
+        }
 
         // Status filter
         if (statusFilter === "pending" && job.status !== "receiving_offers") {
@@ -93,8 +130,19 @@ export function CustomerOffersHubView({ initialJobs }: CustomerOffersHubViewProp
         }
 
         // Category filter
-        if (categoryFilter !== "all" && job.category !== categoryFilter) {
-          return null;
+        if (categoryFilter !== "all") {
+          const filterLower = categoryFilter.toLowerCase();
+          const jobCatLower = (job.category || "").toLowerCase();
+          const jobSubCatLower = (job.subCategory || "").toLowerCase();
+          const matches =
+            jobCatLower.includes(filterLower) ||
+            jobSubCatLower.includes(filterLower) ||
+            (filterLower.includes("plumb") && jobCatLower.includes("plumb")) ||
+            (filterLower.includes("electr") && jobCatLower.includes("electr")) ||
+            (filterLower.includes("ac") && (jobCatLower.includes("ac") || jobCatLower.includes("refriger")));
+          if (!matches) {
+            return null;
+          }
         }
 
         // Search filter (matches job title, worker name, or trade tags)
@@ -141,8 +189,16 @@ export function CustomerOffersHubView({ initialJobs }: CustomerOffersHubViewProp
     <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-6 pb-16 animate-in fade-in-50 duration-300 text-[#123B5D]">
       {/* Toast Notification */}
       {successToast && (
-        <div className="fixed top-20 right-6 rtl:right-auto rtl:left-6 z-50 bg-[#0F766E] text-white px-5 py-3 rounded-2xl shadow-lg flex items-center gap-3 animate-in slide-in-from-top-4 duration-300">
-          <CheckCircle2 className="size-5 shrink-0" />
+        <div
+          className={`fixed top-20 right-6 rtl:right-auto rtl:left-6 z-50 text-white px-5 py-3 rounded-2xl shadow-lg flex items-center gap-3 animate-in slide-in-from-top-4 duration-300 ${
+            toastTone === "error" ? "bg-rose-600" : "bg-[#0F766E]"
+          }`}
+        >
+          {toastTone === "error" ? (
+            <AlertTriangle className="size-5 shrink-0" />
+          ) : (
+            <CheckCircle2 className="size-5 shrink-0" />
+          )}
           <span className="text-xs sm:text-sm font-semibold">{successToast}</span>
         </div>
       )}
@@ -164,8 +220,8 @@ export function CustomerOffersHubView({ initialJobs }: CustomerOffersHubViewProp
           </h1>
           <p className="text-xs sm:text-sm text-slate-500 max-w-2xl">
             {isUrdu
-              ? "تصدیق شدہ کاریگروں کے ریٹس کا موازنہ کریں، نادرا اسناد دیکھیں اور WorkerFIX تحفظ کے ساتھ وزٹ بک کریں۔"
-              : "Compare verified technician quotes, inspect NADRA credentials, and confirm bookings with WorkerFIX verified protection."}
+              ? "تصدیق شدہ کاریگروں کے ریٹس کا موازنہ کریں، تصدیق شدہ اسناد دیکھیں اور WorkerFIX تحفظ کے ساتھ وزٹ بک کریں۔"
+              : "Compare verified technician quotes, inspect verified credentials, and confirm bookings with WorkerFIX verified protection."}
           </p>
         </div>
 
@@ -337,7 +393,7 @@ export function CustomerOffersHubView({ initialJobs }: CustomerOffersHubViewProp
                         </span>
                       )}
                       <span className="text-xs text-slate-400">
-                        • {isUrdu ? `پوسٹ کی گئی: ${job.createdAt}` : `Posted ${job.createdAt}`}
+                        • {isUrdu ? `پوسٹ کی گئی: ${formatPostedAt(job.createdAt)}` : `Posted ${formatPostedAt(job.createdAt)}`}
                       </span>
                       <span className="text-xs font-mono font-bold text-slate-400">
                         {job.id}
@@ -378,8 +434,9 @@ export function CustomerOffersHubView({ initialJobs }: CustomerOffersHubViewProp
                       <WorkerOfferCard
                         key={offer.id}
                         offer={offer}
+                        isConfirming={confirmingOfferId === offer.id}
                         onViewProfile={(off) => setSelectedOfferForProfile(off)}
-                        onSelectWorker={(off) => setSelectedOfferForBooking({ job, offer: off })}
+                        onSelectWorker={(off) => handleConfirmBooking(off)}
                       />
                     ))}
                   </div>
@@ -400,23 +457,42 @@ export function CustomerOffersHubView({ initialJobs }: CustomerOffersHubViewProp
             ))
           ) : (
             <div className="bg-white rounded-3xl p-12 text-center space-y-4 shadow-sm border border-slate-100">
-              <div className="size-16 rounded-3xl bg-slate-50 text-slate-300 flex items-center justify-center mx-auto">
-                <Tag className="size-8" />
+              <div className="size-16 rounded-3xl bg-teal/10 text-teal flex items-center justify-center mx-auto">
+                <CheckCircle2 className="size-8" />
               </div>
-              <div className="space-y-1">
+              <div className="space-y-1.5">
                 <h3 className="text-base font-bold text-[#123B5D]">
-                  {isUrdu ? "کوئی آفر موجود نہیں ہے" : "No offers found"}
+                  {statusFilter === "pending"
+                    ? isUrdu
+                      ? "تمام زیر غور آفرز نمٹ چکی ہیں!"
+                      : "All Caught Up! No Pending Offers"
+                    : isUrdu
+                    ? "کوئی آفر موجود نہیں ہے"
+                    : "No offers found"}
                 </h3>
                 <p className="text-xs text-slate-500 max-w-sm mx-auto">
-                  {isUrdu
+                  {statusFilter === "pending"
+                    ? isUrdu
+                      ? "آپ کی تمام تصدیق شدہ جابز شیڈول ہو چکی ہیں۔ اپنے آنے والے وزٹس اور لائیو ٹریکنگ دیکھنے کے لیے وزٹس پر جائیں۔"
+                      : "All your active bookings are confirmed and scheduled. You can track technicians live and view appointments in Visits."
+                    : isUrdu
                     ? "آپ کے منتخب کردہ فلٹرز کے مطابق کوئی موصولہ آفر نہیں ملی۔"
                     : "You do not have any incoming technician offers matching the active filters."}
                 </p>
               </div>
-              <div className="pt-2">
+              <div className="pt-2 flex items-center justify-center gap-3 flex-wrap">
+                {statusFilter === "pending" && (
+                  <Link
+                    href="/customer/jobs"
+                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#0F8B8D] hover:bg-[#0F8B8D]/90 text-white text-xs font-bold shadow-xs transition-all"
+                  >
+                    <span>{isUrdu ? "شیڈول وزٹس دیکھیں" : "View Scheduled Visits"}</span>
+                    <ArrowRight className="size-4 rtl:rotate-180" />
+                  </Link>
+                )}
                 <Link
-                  href="/customer/post-job"
-                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#0F766E] hover:bg-[#115E59] text-white text-xs font-bold shadow-xs transition-all"
+                  href="/customer/dashboard"
+                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-all"
                 >
                   <Plus className="size-4" />
                   <span>{isUrdu ? "نئی جاب پوسٹ کریں" : "Post a New Job"}</span>
@@ -436,10 +512,10 @@ export function CustomerOffersHubView({ initialJobs }: CustomerOffersHubViewProp
               </div>
               <div>
                 <h4 className="text-base font-bold text-[#123B5D]">
-                  {isUrdu ? "WorkerFIX تصدیق شدہ کوالٹی" : "WorkerFIX Verified Quality"}
+                  {isUrdu ? "WorkerFIX تصدیق شدہ سروس" : "WorkerFIX Verified Service"}
                 </h4>
                 <span className="text-xs font-semibold text-[#0F766E]">
-                  {isUrdu ? "100% گارنٹی شدہ تحفظ" : "100% Guaranteed Protection"}
+                  {isUrdu ? "محفوظ اور شفاف" : "Safe & Transparent"}
                 </span>
               </div>
             </div>
@@ -447,11 +523,11 @@ export function CustomerOffersHubView({ initialJobs }: CustomerOffersHubViewProp
             <p className="text-xs text-slate-600 leading-relaxed">
               {isUrdu ? (
                 <>
-                  آپ کی سروس <strong className="text-[#123B5D]">WorkerFIX ویریفائیڈ گارنٹی</strong> کے تحت محفوظ ہے۔ تمام کاریگر نادرا سی این آئی سی سے تصدیق شدہ ہیں اور موقع پر شفاف معائنہ فراہم کرتے ہیں۔
+                  آپ کی سروس <strong className="text-[#123B5D]">WorkerFIX تحفظ</strong> کے تحت محفوظ ہے۔ تمام کاریگر تصدیق شدہ ہیں اور موقع پر شفاف معائنہ فراہم کرتے ہیں۔
                 </>
               ) : (
                 <>
-                  Your service is protected by <strong className="text-[#123B5D]">WorkerFIX Verified Guarantee</strong>. Technicians are NADRA CNIC verified and provide transparent diagnosis directly on site.
+                  Your service is protected by <strong className="text-[#123B5D]">WorkerFIX Protection</strong>. Technicians are verified and provide transparent diagnosis directly on site.
                 </>
               )}
             </p>
@@ -477,20 +553,10 @@ export function CustomerOffersHubView({ initialJobs }: CustomerOffersHubViewProp
                 <CheckCircle2 className="size-4 text-[#0F766E] shrink-0 mt-0.5" />
                 <span>
                   {isUrdu
-                    ? "100% نادرا شناختی کارڈ اور پولیس کلیئرڈ ماہرین"
-                    : "100% NADRA CNIC & Police Background Checked Pros"}
+                    ? "100% تصدیق شدہ ماہرین"
+                    : "100% Verified Pros"}
                 </span>
               </div>
-            </div>
-
-            <div className="bg-slate-50 p-3 rounded-2xl flex items-center justify-between border border-slate-100">
-              <div className="flex items-center gap-2 text-xs font-bold text-[#123B5D]">
-                <ShieldCheck className="size-4 text-amber-500" />
-                <span>{isUrdu ? "تحفظ کی مہر" : "Protection Seal"}</span>
-              </div>
-              <span className="text-[11px] font-mono font-bold text-[#0F766E]">
-                PK-VERIFIED-2026
-              </span>
             </div>
           </div>
 
@@ -503,17 +569,17 @@ export function CustomerOffersHubView({ initialJobs }: CustomerOffersHubViewProp
             <p className="text-xs text-slate-500 leading-relaxed">
               {isUrdu ? (
                 <>
-                  انتخاب کرنے سے پہلے کاریگر کے سابقہ کام کی اصل تصاویر، کسٹمر ریٹنگز اور نادرا تصدیقی بیج دیکھنے کے لیے <strong className="text-[#123B5D]">پروفائل دیکھیں</strong> پر کلک کریں۔
+                  انتخاب کرنے سے پہلے کاریگر کے سابقہ کام کی اصل تصاویر، کسٹمر ریٹنگز اور تصدیقی بیج دیکھنے کے لیے <strong className="text-[#123B5D]">پروفائل دیکھیں</strong> پر کلک کریں۔
                 </>
               ) : (
                 <>
-                  Click <strong className="text-[#123B5D]">View Profile</strong> on any offer card to inspect the technician&apos;s real photos of past completed jobs, customer ratings, and NADRA verification badge before choosing.
+                  Click <strong className="text-[#123B5D]">View Profile</strong> on any offer card to inspect the technician&apos;s real photos of past completed jobs, customer ratings, and verification badge before choosing.
                 </>
               )}
             </p>
             <div className="pt-2">
               <Link
-                href="/customer/post-job"
+                href="/customer/dashboard"
                 className="inline-flex items-center gap-1.5 text-xs font-bold text-[#0F766E] hover:underline"
               >
                 <span>
@@ -533,21 +599,9 @@ export function CustomerOffersHubView({ initialJobs }: CustomerOffersHubViewProp
           isOpen={true}
           onClose={() => setSelectedOfferForProfile(null)}
           onSelectWorker={(offer: WorkerOffer) => {
-            const job = jobs.find((j) => j.id === offer.jobId) || jobs[0];
             setSelectedOfferForProfile(null);
-            setSelectedOfferForBooking({ job, offer });
+            handleConfirmBooking(offer);
           }}
-        />
-      )}
-
-      {/* Worker Direct Booking Modal */}
-      {selectedOfferForBooking && (
-        <SelectWorkerModal
-          job={selectedOfferForBooking.job}
-          offer={selectedOfferForBooking.offer}
-          isOpen={true}
-          onClose={() => setSelectedOfferForBooking(null)}
-          onConfirmBooking={handleConfirmBooking}
         />
       )}
     </div>

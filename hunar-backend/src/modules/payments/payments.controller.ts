@@ -11,6 +11,7 @@ import {
   TopupDto,
   TopupQueryDto,
   WalletLedgerQueryDto,
+  WithdrawDto,
 } from './payments.validation';
 import { PaymentsService } from './payments.service';
 import { WalletService } from './wallet.service';
@@ -41,12 +42,27 @@ export class PaymentsController {
     return this.payments.getCustomerPayments(user.sub, query);
   }
 
+  @Post('payments/:id/complete')
+  @Roles(Role.CUSTOMER, Role.WORKER, Role.ADMIN)
+  completePayment(
+    @CurrentUser() user: JwtPayload,
+    @Param('id', ParseUUIDPipe) id: string,
+  ) {
+    return this.payments.completePayment(id, user);
+  }
+
   // ----- Wallet balance & ledger -----
 
   @Get('wallet/balance')
   @Roles(Role.WORKER)
   balance(@CurrentUser() user: JwtPayload) {
     return this.wallet.getBalance(user.sub);
+  }
+
+  @Post('wallet/withdraw')
+  @Roles(Role.WORKER)
+  withdraw(@CurrentUser() user: JwtPayload, @Body() dto: WithdrawDto) {
+    return this.wallet.withdraw(user.sub, dto);
   }
 
   @Get('wallet/ledger')

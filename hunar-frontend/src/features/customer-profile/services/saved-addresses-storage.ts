@@ -1,13 +1,13 @@
 "use client";
 
-import { MOCK_CUSTOMER_PROFILE } from "../data/mock-profile-data";
-import type { SavedAddress } from "../types";
+import type { NotificationPreferences, SavedAddress } from "../types";
 
 const STORAGE_KEY = "hunar_customer_saved_addresses";
+const PREFS_STORAGE_KEY = "hunar_customer_notification_preferences";
 
 export function getSavedAddresses(): SavedAddress[] {
   if (typeof window === "undefined") {
-    return MOCK_CUSTOMER_PROFILE.savedAddresses || [];
+    return [];
   }
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY);
@@ -20,7 +20,7 @@ export function getSavedAddresses(): SavedAddress[] {
   } catch (err) {
     console.warn("[SavedAddressesStorage] Error reading addresses:", err);
   }
-  return MOCK_CUSTOMER_PROFILE.savedAddresses || [];
+  return [];
 }
 
 export function saveSavedAddresses(addresses: SavedAddress[]): void {
@@ -81,4 +81,28 @@ export function deleteSavedAddress(id: string): SavedAddress[] {
   }
   saveSavedAddresses(updated);
   return updated;
+}
+
+export function getSavedNotificationPreferences(): NotificationPreferences | null {
+  if (typeof window === "undefined") {
+    return null;
+  }
+  try {
+    const raw = window.localStorage.getItem(PREFS_STORAGE_KEY);
+    if (raw) {
+      return JSON.parse(raw);
+    }
+  } catch (err) {
+    console.warn("[SavedAddressesStorage] Error reading notification prefs:", err);
+  }
+  return null;
+}
+
+export function saveNotificationPreferences(prefs: NotificationPreferences): void {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(PREFS_STORAGE_KEY, JSON.stringify(prefs));
+  } catch (err) {
+    console.warn("[SavedAddressesStorage] Error saving notification prefs:", err);
+  }
 }

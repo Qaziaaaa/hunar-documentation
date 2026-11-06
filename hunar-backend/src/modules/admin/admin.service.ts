@@ -1,10 +1,12 @@
 import {
   BadRequestException,
+  ConflictException,
   ForbiddenException,
   Injectable,
   NotFoundException,
   Optional,
 } from '@nestjs/common';
+import { Cron } from '@nestjs/schedule';
 import type { Response as ExpressResponse } from 'express';
 import {
   CommissionStatus,
@@ -13,18 +15,20 @@ import {
   JobStatus,
   Prisma,
   Role,
-  WalletLedgerType,
   WithdrawalStatus,
 } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { normalizePage, toPageResult } from '../../common/helpers/pagination.util';
 import { EventBusService } from '../../common/event-bus/event-bus.service';
+import { RedisService } from '../../common/redis/redis.service';
 import { RealtimeService } from '../realtime/realtime.service';
+import { AdminVerificationService } from './admin-verification.service';
 import { JOB_EVENTS, userRoom } from '../jobs/jobs.events';
 import { ADMIN_EVENTS, ADMIN_ROOM } from './admin.events';
 import { JobStateMachine } from '../jobs/jobs.state-machine';
 import { JwtPayload } from '../../common/types/jwt-payload.interface';
 import { AUDIT_ACTIONS, AuditService } from './audit.service';
+import { SettingsService } from '../../common/settings/settings.service';
 import {
   AdminUserListQueryDto,
   AdminJobListQueryDto,
@@ -34,11 +38,16 @@ import {
   AdminCommissionListQueryDto,
   AdminWithdrawalListQueryDto,
   AdminFreezeWalletDto,
+  AdminTopUpWalletDto,
   AdminDisputeListQueryDto,
   AdminResolveDisputeDto,
   AdminCategoryListQueryDto,
   AdminCreateCategoryDto,
   AdminUpdateCategoryDto,
+  AdminCreateCityDto,
+  AdminUpdateCityDto,
+  AdminCreateAreaDto,
+  AdminUpdateAreaDto,
   AdminUpdateCommissionRateDto,
   AdminUpdateSettingsDto,
   AdminReportQueryDto,
@@ -46,6 +55,12 @@ import {
   AdminNotificationListQueryDto,
   AdminMarkNotificationsReadDto,
   AdminKpiStatsDto,
+  AdminVisitListQueryDto,
+  AdminReviewListQueryDto,
+  SuspendUserDto,
+  SuspensionType,
+  SuspensionDuration,
+  computeSuspendedUntil,
 } from './admin.validation';
 
 // Job states that mean the customer has paid for the (locked) visit charge.
@@ -55,10 +70,17 @@ const LIST_USER_SELECT = {
   id: true,
   phone: true,
   name: true,
+  email: true,
+  serviceAreas: { select: { label: true }, orderBy: { createdAt: 'asc' } },
   avatarUrl: true,
   isActive: true,
   isVerified: true,
+  suspendedUntil: true,
+  suspensionReason: true,
+  suspensionType: true,
   createdAt: true,
+  wallet: { select: { balance: true } },
+  commissions: { select: { amount: true, visitCharge: true } },
   workerProfile: {
     select: {
       verificationStatus: true,
@@ -167,7 +189,10 @@ export class AdminService {
     private readonly audit: AuditService,
     @Optional() private readonly eventBus?: EventBusService,
     @Optional() private readonly realtime?: RealtimeService,
-  ) { }
+    @Optional() private readonly settings?: SettingsService,
+    @Optional() private readonly redis?: RedisService,
+    @Optional() private readonly verifications?: AdminVerificationService,
+  ) {}
 
   // ----- Customers -----
 
@@ -185,6 +210,9 @@ export class AdminService {
         avatarUrl: true,
         isActive: true,
         isVerified: true,
+        suspendedUntil: true,
+        suspensionReason: true,
+        suspensionType: true,
         createdAt: true,
         updatedAt: true,
         _count: { select: { customerJobs: true } },
@@ -192,6 +220,18 @@ export class AdminService {
     });
     if (!user) {
       throw new NotFoundException('Customer not found');
+    }
+
+    // Auto-reactivate if temporary suspension duration has passed
+    if (!user.isActive && user.suspendedUntil && user.suspendedUntil <= new Date()) {
+      user.isActive = true;
+      user.suspendedUntil = null;
+      user.suspensionReason = null;
+      user.suspensionType = null;
+      await this.prisma.user.update({
+        where: { id: user.id },
+        data: { isActive: true, suspendedUntil: null, suspensionReason: null, suspensionType: null },
+      });
     }
 
     const [jobs, reviews] = await Promise.all([
@@ -248,6 +288,9 @@ export class AdminService {
         avatarUrl: user.avatarUrl,
         isActive: user.isActive,
         isVerified: user.isVerified,
+        suspendedUntil: user.suspendedUntil,
+        suspensionReason: user.suspensionReason,
+        suspensionType: user.suspensionType,
         createdAt: user.createdAt,
       },
       stats: {
@@ -264,7 +307,7 @@ export class AdminService {
     };
   }
 
-  suspendCustomer(id: string, actor: JwtPayload, reason: string) {
+  suspendCustomer(id: string, actor: JwtPayload, reason: string | SuspendUserDto) {
     return this.setUserStatus(Role.CUSTOMER, id, false, actor, reason);
   }
 
@@ -288,6 +331,9 @@ export class AdminService {
         avatarUrl: true,
         isActive: true,
         isVerified: true,
+        suspendedUntil: true,
+        suspensionReason: true,
+        suspensionType: true,
         createdAt: true,
         updatedAt: true,
         workerProfile: true,
@@ -299,13 +345,49 @@ export class AdminService {
       throw new NotFoundException('Worker not found');
     }
 
+    // Auto-reactivate if temporary suspension duration has passed
+    if (!user.isActive && user.suspendedUntil && user.suspendedUntil <= new Date()) {
+      user.isActive = true;
+      user.suspendedUntil = null;
+      user.suspensionReason = null;
+      user.suspensionType = null;
+      await this.prisma.user.update({
+        where: { id: user.id },
+        data: { isActive: true, suspendedUntil: null, suspensionReason: null, suspensionType: null },
+      });
+    }
+
     const skillIds = user.workerProfile?.skills ?? [];
     const [skills, jobs, earningsAggregate, commissions, reviews] = await Promise.all([
       skillIds.length
-        ? this.prisma.serviceCategory.findMany({
-          where: { id: { in: skillIds } },
-          select: { id: true, name: true, nameUrdu: true },
-        })
+        ? (async () => {
+            // WorkerProfile.skills may hold category IDs (current writers) or
+            // raw category names (legacy rows). Resolve both so the detail
+            // endpoint never silently drops skills the list endpoint shows.
+            const byId = await this.prisma.serviceCategory.findMany({
+              where: { id: { in: skillIds } },
+              select: { id: true, name: true, nameUrdu: true },
+            });
+            const byIdMap = new Map(byId.map((c) => [c.id, c]));
+            const unresolved = [...new Set(skillIds.filter((s) => !byIdMap.has(s)))];
+            const byName = unresolved.length
+              ? await this.prisma.serviceCategory.findMany({
+                  where: { name: { in: unresolved } },
+                  select: { id: true, name: true, nameUrdu: true },
+                })
+              : [];
+            const byNameMap = new Map(byName.map((c) => [c.name, c]));
+            const seen = new Set<string>();
+            const resolved: Array<{ id: string; name: string; nameUrdu: string | null }> = [];
+            for (const raw of skillIds) {
+              const cat = byIdMap.get(raw) ?? byNameMap.get(raw);
+              const key = cat?.id ?? raw;
+              if (seen.has(key)) continue;
+              seen.add(key);
+              resolved.push(cat ?? { id: raw, name: raw, nameUrdu: null });
+            }
+            return resolved;
+          })()
         : Promise.resolve([]),
       this.prisma.serviceRequest.findMany({
         where: { OR: [{ selectedWorkerId: id }, { offers: { some: { workerId: id } } }] },
@@ -370,6 +452,9 @@ export class AdminService {
         avatarUrl: user.avatarUrl,
         isActive: user.isActive,
         isVerified: user.isVerified,
+        suspendedUntil: user.suspendedUntil,
+        suspensionReason: user.suspensionReason,
+        suspensionType: user.suspensionType,
         createdAt: user.createdAt,
         skills,
         experienceYears: user.workerProfile?.experienceYears ?? null,
@@ -399,7 +484,7 @@ export class AdminService {
     };
   }
 
-  suspendWorker(id: string, actor: JwtPayload, reason: string) {
+  suspendWorker(id: string, actor: JwtPayload, reason: string | SuspendUserDto) {
     return this.setUserStatus(Role.WORKER, id, false, actor, reason);
   }
 
@@ -418,22 +503,24 @@ export class AdminService {
       ...(query.categoryId ? { categoryId: query.categoryId } : {}),
       ...(query.city ? { city: query.city } : {}),
       ...(query.area ? { area: query.area } : {}),
-      ...(query.from || query.to
+      ...(query.from || query.to || query.since
         ? {
-          createdAt: {
-            ...(query.from ? { gte: new Date(query.from) } : {}),
-            ...(query.to ? { lte: new Date(query.to) } : {}),
-          },
-        }
+            createdAt: {
+              ...(query.from ? { gte: new Date(query.from) } : {}),
+              ...(query.to ? { lte: new Date(query.to) } : {}),
+              ...(query.since ? { gt: new Date(query.since) } : {}),
+            },
+          }
         : {}),
       ...(query.search
         ? {
-          OR: [
-            { title: { contains: query.search, mode: 'insensitive' } },
-            { customer: { is: { name: { contains: query.search, mode: 'insensitive' } } } },
-            { customer: { is: { phone: { contains: query.search } } } },
-          ],
-        }
+            OR: [
+              { id: { contains: query.search.trim(), mode: 'insensitive' } },
+              { title: { contains: query.search, mode: 'insensitive' } },
+              { customer: { is: { name: { contains: query.search, mode: 'insensitive' } } } },
+              { customer: { is: { phone: { contains: query.search } } } },
+            ],
+          }
         : {}),
     };
 
@@ -480,23 +567,23 @@ export class AdminService {
       ...(query.type ? { type: query.type } : {}),
       ...(query.from || query.to
         ? {
-          createdAt: {
-            ...(query.from ? { gte: new Date(query.from) } : {}),
-            ...(query.to ? { lte: new Date(query.to) } : {}),
-          },
-        }
+            createdAt: {
+              ...(query.from ? { gte: new Date(query.from) } : {}),
+              ...(query.to ? { lte: new Date(query.to) } : {}),
+            },
+          }
         : {}),
       ...(query.search
         ? {
-          user: {
-            is: {
-              OR: [
-                { name: { contains: query.search, mode: 'insensitive' } },
-                { phone: { contains: query.search } },
-              ],
+            user: {
+              is: {
+                OR: [
+                  { name: { contains: query.search, mode: 'insensitive' } },
+                  { phone: { contains: query.search } },
+                ],
+              },
             },
-          },
-        }
+          }
         : {}),
     };
 
@@ -538,21 +625,21 @@ export class AdminService {
       ...(query.area ? { area: query.area } : {}),
       ...(query.from || query.to
         ? {
-          completedAt: {
-            ...(query.from ? { gte: new Date(query.from) } : {}),
-            ...(query.to ? { lte: new Date(query.to) } : {}),
-          },
-        }
+            completedAt: {
+              ...(query.from ? { gte: new Date(query.from) } : {}),
+              ...(query.to ? { lte: new Date(query.to) } : {}),
+            },
+          }
         : {}),
       ...(query.search
         ? {
-          OR: [
-            { title: { contains: query.search, mode: 'insensitive' } },
-            { customer: { is: { name: { contains: query.search, mode: 'insensitive' } } } },
-            { customer: { is: { phone: { contains: query.search } } } },
-            { selectedWorker: { is: { name: { contains: query.search, mode: 'insensitive' } } } },
-          ],
-        }
+            OR: [
+              { title: { contains: query.search, mode: 'insensitive' } },
+              { customer: { is: { name: { contains: query.search, mode: 'insensitive' } } } },
+              { customer: { is: { phone: { contains: query.search } } } },
+              { selectedWorker: { is: { name: { contains: query.search, mode: 'insensitive' } } } },
+            ],
+          }
         : {}),
     };
 
@@ -592,20 +679,20 @@ export class AdminService {
       ...(query.status ? { status: query.status } : {}),
       ...(query.from || query.to
         ? {
-          createdAt: {
-            ...(query.from ? { gte: new Date(query.from) } : {}),
-            ...(query.to ? { lte: new Date(query.to) } : {}),
-          },
-        }
+            createdAt: {
+              ...(query.from ? { gte: new Date(query.from) } : {}),
+              ...(query.to ? { lte: new Date(query.to) } : {}),
+            },
+          }
         : {}),
       ...(query.search
         ? {
-          OR: [
-            { job: { is: { title: { contains: query.search, mode: 'insensitive' } } } },
-            { worker: { is: { name: { contains: query.search, mode: 'insensitive' } } } },
-            { worker: { is: { phone: { contains: query.search } } } },
-          ],
-        }
+            OR: [
+              { job: { is: { title: { contains: query.search, mode: 'insensitive' } } } },
+              { worker: { is: { name: { contains: query.search, mode: 'insensitive' } } } },
+              { worker: { is: { phone: { contains: query.search } } } },
+            ],
+          }
         : {}),
     };
 
@@ -654,51 +741,54 @@ export class AdminService {
   // status (pending/processed/failed/rejected), filters, and pagination.
   async listWithdrawals(query: AdminWithdrawalListQueryDto) {
     const { page, limit, skip } = normalizePage(query);
+    try {
+      const where: Prisma.WithdrawalWhereInput = {
+        ...(query.status ? { status: query.status } : {}),
+        ...(query.from || query.to
+          ? {
+              requestedAt: {
+                ...(query.from ? { gte: new Date(query.from) } : {}),
+                ...(query.to ? { lte: new Date(query.to) } : {}),
+              },
+            }
+          : {}),
+        ...(query.search
+          ? {
+              OR: [
+                { worker: { is: { name: { contains: query.search, mode: 'insensitive' } } } },
+                { worker: { is: { phone: { contains: query.search } } } },
+              ],
+            }
+          : {}),
+      };
 
-    const where: Prisma.WithdrawalWhereInput = {
-      ...(query.status ? { status: query.status } : {}),
-      ...(query.from || query.to
-        ? {
-          requestedAt: {
-            ...(query.from ? { gte: new Date(query.from) } : {}),
-            ...(query.to ? { lte: new Date(query.to) } : {}),
-          },
-        }
-        : {}),
-      ...(query.search
-        ? {
-          OR: [
-            { worker: { is: { name: { contains: query.search, mode: 'insensitive' } } } },
-            { worker: { is: { phone: { contains: query.search } } } },
-          ],
-        }
-        : {}),
-    };
+      const [rows, total] = await Promise.all([
+        this.prisma.withdrawal.findMany({
+          where,
+          orderBy: { requestedAt: 'desc' },
+          skip,
+          take: limit,
+          select: WITHDRAWAL_SELECT,
+        }),
+        this.prisma.withdrawal.count({ where }),
+      ]);
 
-    const [rows, total] = await Promise.all([
-      this.prisma.withdrawal.findMany({
-        where,
-        orderBy: { requestedAt: 'desc' },
-        skip,
-        take: limit,
-        select: WITHDRAWAL_SELECT,
-      }),
-      this.prisma.withdrawal.count({ where }),
-    ]);
+      const items = rows.map((row: AdminWithdrawalRow) => ({
+        id: row.id,
+        workerId: row.workerId,
+        worker: row.worker,
+        amount: row.amount,
+        status: row.status,
+        note: row.note,
+        requestedAt: row.requestedAt,
+        processedAt: row.processedAt,
+        processedBy: row.processedBy,
+      }));
 
-    const items = rows.map((row: AdminWithdrawalRow) => ({
-      id: row.id,
-      workerId: row.workerId,
-      worker: row.worker,
-      amount: row.amount,
-      status: row.status,
-      note: row.note,
-      requestedAt: row.requestedAt,
-      processedAt: row.processedAt,
-      processedBy: row.processedBy,
-    }));
-
-    return toPageResult(items, total, page, limit);
+      return toPageResult(items, total, page, limit);
+    } catch (e) {
+      return toPageResult([], 0, page, limit);
+    }
   }
 
   // Admin processes a withdrawal request (approve/reject). On approve, moves money and
@@ -723,36 +813,24 @@ export class AdminService {
     if (action === 'approve') {
       const wallet = await this.prisma.workerWallet.findUnique({
         where: { userId: withdrawal.workerId },
-        select: { userId: true, balance: true },
+        select: { userId: true, balance: true, heldBalance: true },
       });
       if (!wallet) {
         throw new NotFoundException('Worker wallet not found');
       }
-      const balance = Number(wallet.balance);
       const amount = Number(withdrawal.amount);
-      if (balance < amount) {
-        throw new BadRequestException('Insufficient balance for withdrawal');
-      }
-      const balanceAfter = balance - amount;
+      const heldBalance = Number(wallet.heldBalance);
+      // Funds were already transferred from balance to heldBalance at withdrawal request time (AUDIT-010).
+      // On approval, release held money without deducting balance again.
+      const heldAfter = Math.max(0, Math.round((heldBalance - amount) * 100) / 100);
 
-      return this.prisma.$transaction(async (tx) => {
+      const updated = await this.prisma.$transaction(async (tx) => {
         await tx.workerWallet.update({
           where: { userId: wallet.userId },
-          data: { balance: new Prisma.Decimal(balanceAfter) },
+          data: { heldBalance: new Prisma.Decimal(heldAfter) },
         });
 
-        await tx.walletLedger.create({
-          data: {
-            user: { connect: { id: wallet.userId } },
-            type: 'WITHDRAWAL',
-            amount: new Prisma.Decimal(-amount),
-            balanceAfter: new Prisma.Decimal(balanceAfter),
-            note: 'Admin-approved withdrawal payout',
-            idempotencyKey: `withdrawal-${id}-${Date.now()}`,
-          },
-        });
-
-        const updated = await tx.withdrawal.update({
+        const res = await tx.withdrawal.update({
           where: { id },
           data: {
             status: 'PROCESSED',
@@ -784,40 +862,81 @@ export class AdminService {
           tx,
         );
 
-        return updated;
+        return res;
       });
+
+      this.emitWithdrawalAlert(
+        'approve',
+        id,
+        withdrawal.workerId,
+        Number(withdrawal.amount),
+        actor.sub,
+      );
+
+      return updated;
     }
 
-    this.emitWithdrawalAlert(
-      'approve',
-      id,
-      withdrawal.workerId,
-      Number(withdrawal.amount),
-      actor.sub,
-    );
-
-    const updated = await this.prisma.withdrawal.update({
-      where: { id },
-      data: { status: 'REJECTED', processedAt: new Date(), processedBy: actor.sub, note },
-      select: {
-        id: true,
-        workerId: true,
-        amount: true,
-        status: true,
-        processedAt: true,
-        processedBy: true,
-        note: true,
-      },
+    // On rejection, restore held money back to available balance (AUDIT-010)
+    const wallet = await this.prisma.workerWallet.findUnique({
+      where: { userId: withdrawal.workerId },
+      select: { userId: true, balance: true, heldBalance: true },
     });
+    const amount = Number(withdrawal.amount);
+    const balance = wallet ? Number(wallet.balance) : 0;
+    const heldBalance = wallet ? Number(wallet.heldBalance) : 0;
 
-    await this.audit.record({
-      actorId: actor.sub,
-      actorRole: actor.role,
-      action: 'WITHDRAWAL_REJECTED',
-      targetType: 'WITHDRAWAL',
-      targetId: id,
-      reason: note,
-      metadata: { workerId: withdrawal.workerId, amount: withdrawal.amount },
+    const balanceAfter = Math.round((balance + amount) * 100) / 100;
+    const heldAfter = Math.max(0, Math.round((heldBalance - amount) * 100) / 100);
+
+    const updated = await this.prisma.$transaction(async (tx) => {
+      if (wallet) {
+        await tx.workerWallet.update({
+          where: { userId: wallet.userId },
+          data: {
+            balance: new Prisma.Decimal(balanceAfter),
+            heldBalance: new Prisma.Decimal(heldAfter),
+          },
+        });
+
+        await tx.walletLedger.create({
+          data: {
+            user: { connect: { id: wallet.userId } },
+            type: 'WITHDRAWAL',
+            amount: new Prisma.Decimal(amount),
+            balanceAfter: new Prisma.Decimal(balanceAfter),
+            note: `Withdrawal request #${id} rejected by admin - funds refunded to balance`,
+            idempotencyKey: `withdrawal-refund-${id}`,
+            referenceType: 'withdrawal',
+            referenceId: id,
+          },
+        });
+      }
+
+      const res = await tx.withdrawal.update({
+        where: { id },
+        data: { status: 'REJECTED', processedAt: new Date(), processedBy: actor.sub, note },
+        select: {
+          id: true,
+          workerId: true,
+          amount: true,
+          status: true,
+          processedAt: true,
+          processedBy: true,
+          note: true,
+        },
+      });
+
+      await this.audit.record({
+        actorId: actor.sub,
+        actorRole: actor.role,
+        action: 'WITHDRAWAL_REJECTED',
+        targetType: 'WITHDRAWAL',
+        targetId: id,
+        reason: note,
+        metadata: { workerId: withdrawal.workerId, amount: withdrawal.amount },
+      });
+
+      return res;
     });
 
     this.emitWithdrawalAlert(
@@ -840,14 +959,14 @@ export class AdminService {
   ): void {
     const adminEvent =
       action === 'approve' ? ADMIN_EVENTS.withdrawalProcessed : ADMIN_EVENTS.withdrawalRejected;
-    this.realtime.emitToRoom(ADMIN_ROOM, adminEvent, {
+    this.realtime?.emitToRoom(ADMIN_ROOM, adminEvent, {
       withdrawalId,
       workerId,
       amount,
       processedBy: actorId,
       timestamp: new Date(),
     });
-    this.realtime.emitToRoom(ADMIN_ROOM, ADMIN_EVENTS.newAlert, {
+    this.realtime?.emitToRoom(ADMIN_ROOM, ADMIN_EVENTS.newAlert, {
       type: 'withdrawal',
       event: adminEvent,
       withdrawalId,
@@ -954,69 +1073,152 @@ export class AdminService {
     return updated;
   }
 
+  // Admin manually tops up / credits a worker's wallet
+  async topUpWorkerWallet(workerId: string, actor: JwtPayload, dto: AdminTopUpWalletDto) {
+    const worker = await this.prisma.user.findFirst({
+      where: { id: workerId, role: Role.WORKER },
+      select: { id: true, name: true, phone: true },
+    });
+    if (!worker) {
+      throw new NotFoundException('Worker not found');
+    }
+
+    const amount = Number(dto.amount);
+    if (!amount || amount <= 0) {
+      throw new BadRequestException('Amount must be greater than 0');
+    }
+
+    return this.prisma.$transaction(async (tx) => {
+      const currentWallet = await tx.workerWallet.upsert({
+        where: { userId: workerId },
+        update: {},
+        create: { userId: workerId, balance: 0, heldBalance: 0, isFrozen: false },
+      });
+
+      const currentBalance = Number(currentWallet.balance);
+      const newBalance = Math.round((currentBalance + amount) * 100) / 100;
+
+      const updatedWallet = await tx.workerWallet.update({
+        where: { userId: workerId },
+        data: { balance: newBalance },
+      });
+
+      const idemKey = `admin_topup_${workerId}_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+      await tx.walletLedger.create({
+        data: {
+          userId: workerId,
+          type: 'TOPUP_CREDIT',
+          amount: amount,
+          balanceAfter: newBalance,
+          referenceType: 'admin_topup',
+          referenceId: actor.sub,
+          note: dto.note || `Admin wallet top-up of Rs. ${amount}`,
+          idempotencyKey: idemKey,
+        },
+      });
+
+      await this.audit.record({
+        actorId: actor.sub,
+        actorRole: actor.role,
+        action: 'WALLET_TOPUP',
+        targetType: 'WORKER_WALLET',
+        targetId: workerId,
+        reason: dto.note || 'Admin wallet top-up',
+        metadata: {
+          amount,
+          previousBalance: currentBalance,
+          newBalance,
+        },
+      });
+
+      this.realtime.emitToRoom(ADMIN_ROOM, ADMIN_EVENTS.newAlert, {
+        type: 'wallet',
+        event: 'admin:wallet:topup',
+        workerId,
+        amount,
+        newBalance,
+        timestamp: new Date(),
+      });
+
+      return {
+        success: true,
+        workerId,
+        workerName: worker.name,
+        amount,
+        previousBalance: currentBalance,
+        balance: newBalance,
+      };
+    });
+  }
+
   // Dispute queue (Admin flow §10). List disputes with filters and pagination.
   async listDisputes(query: AdminDisputeListQueryDto) {
     const { page, limit, skip } = normalizePage(query);
+    try {
+      const where: Prisma.DisputeWhereInput = {
+        ...(query.status ? { status: query.status } : {}),
+        ...(query.type ? { type: query.type } : {}),
+        ...(query.from || query.to
+          ? {
+              createdAt: {
+                ...(query.from ? { gte: new Date(query.from) } : {}),
+                ...(query.to ? { lte: new Date(query.to) } : {}),
+              },
+            }
+          : {}),
+        ...(query.search
+          ? {
+              OR: [
+                { job: { is: { title: { contains: query.search, mode: 'insensitive' } } } },
+                { reporter: { is: { name: { contains: query.search, mode: 'insensitive' } } } },
+                { respondent: { is: { name: { contains: query.search, mode: 'insensitive' } } } },
+              ],
+            }
+          : {}),
+      };
 
-    const where: Prisma.DisputeWhereInput = {
-      ...(query.status ? { status: query.status } : {}),
-      ...(query.type ? { type: query.type } : {}),
-      ...(query.from || query.to
-        ? {
-          createdAt: {
-            ...(query.from ? { gte: new Date(query.from) } : {}),
-            ...(query.to ? { lte: new Date(query.to) } : {}),
+      const [rows, total] = await Promise.all([
+        this.prisma.dispute.findMany({
+          where,
+          orderBy: { createdAt: 'desc' },
+          skip,
+          take: limit,
+          select: {
+            id: true,
+            jobId: true,
+            type: true,
+            description: true,
+            status: true,
+            createdAt: true,
+            updatedAt: true,
+            reporter: { select: { id: true, name: true, phone: true, role: true } },
+            respondent: { select: { id: true, name: true, phone: true, role: true } },
+            job: { select: { id: true, title: true, status: true } },
           },
-        }
-        : {}),
-      ...(query.search
-        ? {
-          OR: [
-            { job: { is: { title: { contains: query.search, mode: 'insensitive' } } } },
-            { reporter: { is: { name: { contains: query.search, mode: 'insensitive' } } } },
-            { respondent: { is: { name: { contains: query.search, mode: 'insensitive' } } } },
-          ],
-        }
-        : {}),
-    };
+        }),
+        this.prisma.dispute.count({ where }),
+      ]);
 
-    const [rows, total] = await Promise.all([
-      this.prisma.dispute.findMany({
-        where,
-        orderBy: { createdAt: 'desc' },
-        skip,
-        take: limit,
-        select: {
-          id: true,
-          jobId: true,
-          type: true,
-          description: true,
-          status: true,
-          createdAt: true,
-          updatedAt: true,
-          reporter: { select: { id: true, name: true, phone: true } },
-          respondent: { select: { id: true, name: true, phone: true } },
-          job: { select: { id: true, title: true, status: true } },
-        },
-      }),
-      this.prisma.dispute.count({ where }),
-    ]);
+      const items = rows.map((row) => ({
+        id: row.id,
+        jobId: row.jobId,
+        jobTitle: row.job?.title ?? '—',
+        jobStatus: row.job?.status ?? '—',
+        type: row.type,
+        description: row.description,
+        status: row.status,
+        reporter: row.reporter,
+        reporterRole: row.reporter?.role,
+        respondent: row.respondent,
+        respondentRole: row.respondent?.role,
+        createdAt: row.createdAt,
+        updatedAt: row.updatedAt,
+      }));
 
-    const items = rows.map((row) => ({
-      id: row.id,
-      jobId: row.jobId,
-      jobTitle: row.job.title,
-      jobStatus: row.job.status,
-      type: row.type,
-      description: row.description,
-      status: row.status,
-      reporter: row.reporter,
-      respondent: row.respondent,
-      createdAt: row.createdAt,
-      updatedAt: row.updatedAt,
-    }));
-
-    return toPageResult(items, total, page, limit);
+      return toPageResult(items, total, page, limit);
+    } catch (e) {
+      return toPageResult([], 0, page, limit);
+    }
   }
 
   // Dispute detail (Admin flow §10). Full dispute with job evidence trail.
@@ -1181,11 +1383,11 @@ export class AdminService {
       ...(query.isActive !== undefined ? { isActive: query.isActive === 'true' } : {}),
       ...(query.search
         ? {
-          OR: [
-            { name: { contains: query.search, mode: 'insensitive' } },
-            { nameUrdu: { contains: query.search, mode: 'insensitive' } },
-          ],
-        }
+            OR: [
+              { name: { contains: query.search, mode: 'insensitive' } },
+              { nameUrdu: { contains: query.search, mode: 'insensitive' } },
+            ],
+          }
         : {}),
     };
 
@@ -1199,31 +1401,65 @@ export class AdminService {
           id: true,
           name: true,
           nameUrdu: true,
+          imageUrl: true,
           isActive: true,
           sortOrder: true,
+          defaultVisitCharge: true,
+          distanceSlabs: true,
+          commonIssues: true,
           createdAt: true,
+          _count: { select: { jobs: true } },
         },
       }),
       this.prisma.serviceCategory.count({ where }),
     ]);
 
-    return toPageResult(rows, total, page, limit);
+    // Skills are stored as category IDs on worker profiles — aggregate active workers per category.
+    const profiles = await this.prisma.workerProfile.findMany({
+      where: { user: { isActive: true, role: Role.WORKER } },
+      select: { skills: true },
+    });
+    const workerCounts = new Map<string, number>();
+    for (const p of profiles) {
+      for (const skillId of p.skills) {
+        workerCounts.set(skillId, (workerCounts.get(skillId) ?? 0) + 1);
+      }
+    }
+
+    const items = rows.map((r) => ({
+      ...r,
+      activeWorkersCount: workerCounts.get(r.id) ?? 0,
+      totalJobsCount: r._count?.jobs ?? 0,
+      defaultVisitCharge: r.defaultVisitCharge != null ? Number(r.defaultVisitCharge) : null,
+      // Real configured slabs only — null until the admin saves some
+      // (the old injected Rs. 100–500 defaults were fake data).
+      distanceSlabs: r.distanceSlabs ?? null,
+      commonIssues: (r as any).commonIssues ?? null,
+    }));
+
+    return toPageResult(items, total, page, limit);
   }
 
   // Create a new category.
   async createCategory(dto: AdminCreateCategoryDto, actor: JwtPayload) {
-    const category = await this.prisma.serviceCategory.create({
+    const category = await (this.prisma.serviceCategory as any).create({
       data: {
         name: dto.name,
         nameUrdu: dto.nameUrdu,
+        imageUrl: dto.imageUrl,
         sortOrder: dto.sortOrder ?? 0,
+        defaultVisitCharge: dto.defaultVisitCharge != null ? dto.defaultVisitCharge : null,
+        commonIssues: dto.commonIssues ?? [],
       },
       select: {
         id: true,
         name: true,
         nameUrdu: true,
+        imageUrl: true,
         isActive: true,
         sortOrder: true,
+        defaultVisitCharge: true,
+        commonIssues: true,
         createdAt: true,
       },
     });
@@ -1253,6 +1489,8 @@ export class AdminService {
       timestamp: new Date(),
     });
 
+    await this.redis?.del('perf:categories:all').catch(() => {});
+
     return category;
   }
 
@@ -1260,20 +1498,43 @@ export class AdminService {
   async updateCategory(id: string, dto: AdminUpdateCategoryDto, actor: JwtPayload) {
     const existing = await this.prisma.serviceCategory.findUnique({
       where: { id },
-      select: { id: true, name: true, nameUrdu: true, isActive: true, sortOrder: true },
+      select: {
+        id: true,
+        name: true,
+        nameUrdu: true,
+        isActive: true,
+        sortOrder: true,
+        defaultVisitCharge: true,
+        distanceSlabs: true,
+      },
     });
     if (!existing) {
       throw new NotFoundException('Category not found');
     }
 
-    const updated = await this.prisma.serviceCategory.update({
+    const updated = await (this.prisma.serviceCategory as any).update({
       where: { id },
       data: {
         ...(dto.name !== undefined ? { name: dto.name } : {}),
         ...(dto.nameUrdu !== undefined ? { nameUrdu: dto.nameUrdu } : {}),
+        ...(dto.imageUrl !== undefined ? { imageUrl: dto.imageUrl } : {}),
         ...(dto.sortOrder !== undefined ? { sortOrder: dto.sortOrder } : {}),
+        ...(dto.defaultVisitCharge !== undefined ? { defaultVisitCharge: dto.defaultVisitCharge } : {}),
+        ...(dto.distanceSlabs !== undefined ? { distanceSlabs: dto.distanceSlabs } : {}),
+        ...(dto.commonIssues !== undefined ? { commonIssues: dto.commonIssues } : {}),
+        ...(dto.isActive !== undefined ? { isActive: dto.isActive } : {}),
       },
-      select: { id: true, name: true, nameUrdu: true, isActive: true, sortOrder: true },
+      select: {
+        id: true,
+        name: true,
+        nameUrdu: true,
+        imageUrl: true,
+        isActive: true,
+        sortOrder: true,
+        defaultVisitCharge: true,
+        distanceSlabs: true,
+        commonIssues: true,
+      },
     });
 
     await this.audit.record({
@@ -1298,6 +1559,56 @@ export class AdminService {
       categoryId: id,
       timestamp: new Date(),
     });
+
+    await this.redis?.del('perf:categories:all').catch(() => {});
+
+    return updated;
+  }
+
+  // Activate / reactivate a category.
+  async activateCategory(id: string, actor: JwtPayload) {
+    const existing = await this.prisma.serviceCategory.findUnique({
+      where: { id },
+      select: { id: true, name: true, isActive: true },
+    });
+    if (!existing) {
+      throw new NotFoundException('Category not found');
+    }
+    if (existing.isActive) {
+      throw new BadRequestException('Category is already active');
+    }
+
+    const updated = await this.prisma.serviceCategory.update({
+      where: { id },
+      data: { isActive: true },
+      select: { id: true, name: true, isActive: true },
+    });
+
+    await this.audit.record({
+      actorId: actor.sub,
+      actorRole: actor.role,
+      action: 'CATEGORY_ACTIVATED',
+      targetType: 'SERVICE_CATEGORY',
+      targetId: id,
+      reason: null,
+      metadata: { name: existing.name },
+    });
+
+    this.realtime.emitToRoom(ADMIN_ROOM, ADMIN_EVENTS.categoryActivated, {
+      categoryId: id,
+      name: existing.name,
+      activatedBy: actor.sub,
+      timestamp: new Date(),
+    });
+    this.realtime.emitToRoom(ADMIN_ROOM, ADMIN_EVENTS.newAlert, {
+      type: 'category',
+      event: ADMIN_EVENTS.categoryActivated,
+      categoryId: id,
+      name: existing.name,
+      timestamp: new Date(),
+    });
+
+    await this.redis?.del('perf:categories:all').catch(() => {});
 
     return updated;
   }
@@ -1345,7 +1656,519 @@ export class AdminService {
       timestamp: new Date(),
     });
 
+    await this.redis?.del('perf:categories:all').catch(() => {});
+
     return updated;
+  }
+
+  // Delete a category (checks for active/existing jobs first).
+  async deleteCategory(id: string, actor: JwtPayload) {
+    const existing = await this.prisma.serviceCategory.findUnique({
+      where: { id },
+      include: {
+        _count: {
+          select: { jobs: true },
+        },
+      },
+    });
+    if (!existing) {
+      throw new NotFoundException('Category not found');
+    }
+
+    if (existing._count?.jobs > 0) {
+      throw new BadRequestException(
+        `Cannot delete "${existing.name}" category because it has ${existing._count.jobs} associated job(s). Please deactivate it instead to protect existing records.`,
+      );
+    }
+
+    await this.prisma.serviceCategory.delete({ where: { id } });
+
+    await this.audit.record({
+      actorId: actor.sub,
+      actorRole: actor.role,
+      action: 'CATEGORY_DELETED',
+      targetType: 'SERVICE_CATEGORY',
+      targetId: id,
+      reason: null,
+      metadata: { name: existing.name },
+    });
+
+    this.realtime.emitToRoom(ADMIN_ROOM, ADMIN_EVENTS.categoryDeleted, {
+      categoryId: id,
+      name: existing.name,
+      deletedBy: actor.sub,
+      timestamp: new Date(),
+    });
+
+    await this.redis?.del('perf:categories:all').catch(() => {});
+
+    return { success: true, id };
+  }
+
+  // ----- City & Area Management -----
+
+  async listCities() {
+    const cities = await this.prisma.city.findMany({
+      orderBy: { name: 'asc' },
+      include: {
+        areas: {
+          select: { id: true, name: true, nameUrdu: true, isActive: true },
+          orderBy: { name: 'asc' },
+        },
+      },
+    });
+
+    const [workerServiceAreas, distinctRequests] = await Promise.all([
+      this.prisma.serviceArea.findMany({
+        where: { user: { isActive: true, role: Role.WORKER } },
+        select: { userId: true, label: true, address: true },
+      }),
+      this.prisma.serviceRequest.findMany({
+        select: { city: true },
+      }),
+    ]);
+
+    const orderCountMap = new Map<string, number>();
+    for (const req of distinctRequests) {
+      if (req.city) {
+        const key = req.city.trim().toLowerCase();
+        orderCountMap.set(key, (orderCountMap.get(key) ?? 0) + 1);
+      }
+    }
+
+    return cities.map((city) => {
+      const cityKey = city.name.trim().toLowerCase();
+      const areaNames = city.areas.map((a) => a.name.trim().toLowerCase());
+
+      const workerIds = new Set<string>();
+      for (const sa of workerServiceAreas) {
+        const lbl = (sa.label || '').trim().toLowerCase();
+        const addr = (sa.address || '').trim().toLowerCase();
+        if (
+          addr.includes(cityKey) ||
+          lbl.includes(cityKey) ||
+          areaNames.some((an) => lbl.includes(an) || addr.includes(an))
+        ) {
+          workerIds.add(sa.userId);
+        }
+      }
+
+      return {
+        id: city.id,
+        name: city.name,
+        nameUrdu: city.nameUrdu,
+        isActive: city.isActive,
+        createdAt: city.createdAt,
+        updatedAt: city.updatedAt,
+        areasCount: city.areas.length,
+        workersCount: workerIds.size,
+        ordersCount: orderCountMap.get(cityKey) ?? 0,
+        areas: city.areas,
+      };
+    });
+  }
+
+  async createCity(dto: AdminCreateCityDto, actor: JwtPayload) {
+    const trimmedName = dto.name.trim();
+    const existing = await this.prisma.city.findFirst({
+      where: { name: { equals: trimmedName, mode: 'insensitive' } },
+    });
+    if (existing) {
+      throw new ConflictException(`City with name "${trimmedName}" already exists`);
+    }
+
+    const city = await this.prisma.city.create({
+      data: {
+        name: trimmedName,
+        nameUrdu: dto.nameUrdu?.trim() || null,
+        isActive: dto.isActive !== undefined ? dto.isActive : true,
+      },
+    });
+
+    await this.audit.record({
+      actorId: actor.sub,
+      actorRole: actor.role,
+      action: 'CITY_CREATED',
+      targetType: 'CITY',
+      targetId: city.id,
+      reason: null,
+      metadata: { name: city.name },
+    });
+
+    return city;
+  }
+
+  async updateCity(id: string, dto: AdminUpdateCityDto, actor: JwtPayload) {
+    const existing = await this.prisma.city.findUnique({ where: { id } });
+    if (!existing) {
+      throw new NotFoundException('City not found');
+    }
+
+    if (dto.name) {
+      const trimmedName = dto.name.trim();
+      const duplicate = await this.prisma.city.findFirst({
+        where: {
+          name: { equals: trimmedName, mode: 'insensitive' },
+          id: { not: id },
+        },
+      });
+      if (duplicate) {
+        throw new ConflictException(`City with name "${trimmedName}" already exists`);
+      }
+    }
+
+    const updated = await this.prisma.city.update({
+      where: { id },
+      data: {
+        name: dto.name ? dto.name.trim() : undefined,
+        nameUrdu: dto.nameUrdu !== undefined ? dto.nameUrdu?.trim() || null : undefined,
+        isActive: dto.isActive !== undefined ? dto.isActive : undefined,
+      },
+    });
+
+    if (dto.isActive === false) {
+      await this.prisma.area.updateMany({
+        where: { cityId: id },
+        data: { isActive: false },
+      });
+    }
+
+    await this.audit.record({
+      actorId: actor.sub,
+      actorRole: actor.role,
+      action: 'CITY_UPDATED',
+      targetType: 'CITY',
+      targetId: id,
+      reason: null,
+      metadata: { name: updated.name },
+    });
+
+    return updated;
+  }
+
+  async toggleCity(id: string, active: boolean, actor: JwtPayload) {
+    const existing = await this.prisma.city.findUnique({ where: { id } });
+    if (!existing) {
+      throw new NotFoundException('City not found');
+    }
+
+    const updated = await this.prisma.city.update({
+      where: { id },
+      data: { isActive: active },
+    });
+
+    // When a city is deactivated (turned off), automatically deactivate all areas in that city
+    if (!active) {
+      await this.prisma.area.updateMany({
+        where: { cityId: id },
+        data: { isActive: false },
+      });
+    }
+
+    await this.audit.record({
+      actorId: actor.sub,
+      actorRole: actor.role,
+      action: active ? 'CITY_ACTIVATED' : 'CITY_DEACTIVATED',
+      targetType: 'CITY',
+      targetId: id,
+      reason: null,
+      metadata: { name: updated.name, isActive: active },
+    });
+
+    return updated;
+  }
+
+  async deleteCity(id: string, actor: JwtPayload) {
+    const existing = await this.prisma.city.findUnique({
+      where: { id },
+      include: { _count: { select: { areas: true } } },
+    });
+    if (!existing) {
+      throw new NotFoundException('City not found');
+    }
+
+    await this.prisma.city.delete({ where: { id } });
+
+    await this.audit.record({
+      actorId: actor.sub,
+      actorRole: actor.role,
+      action: 'CITY_DELETED',
+      targetType: 'CITY',
+      targetId: id,
+      reason: null,
+      metadata: { name: existing.name },
+    });
+
+    return { success: true, id };
+  }
+
+  async listAreas(cityId?: string) {
+    const areas = await this.prisma.area.findMany({
+      where: cityId ? { cityId } : undefined,
+      orderBy: [{ city: { name: 'asc' } }, { name: 'asc' }],
+      include: {
+        city: {
+          select: { id: true, name: true, nameUrdu: true, isActive: true },
+        },
+      },
+    });
+
+    const [workerServiceAreas, allRequests] = await Promise.all([
+      this.prisma.serviceArea.findMany({
+        where: { user: { isActive: true, role: Role.WORKER } },
+        select: { userId: true, label: true, address: true },
+      }),
+      this.prisma.serviceRequest.findMany({
+        select: { city: true, area: true },
+      }),
+    ]);
+
+    return areas.map((area) => {
+      const areaKey = area.name.trim().toLowerCase();
+      const cityKey = area.city?.name?.trim().toLowerCase() || '';
+
+      const workerIds = new Set<string>();
+      for (const sa of workerServiceAreas) {
+        const lbl = (sa.label || '').trim().toLowerCase();
+        const addr = (sa.address || '').trim().toLowerCase();
+        if (lbl.includes(areaKey) || addr.includes(areaKey)) {
+          workerIds.add(sa.userId);
+        }
+      }
+
+      let ordersCount = 0;
+      for (const req of allRequests) {
+        const reqArea = (req.area || '').trim().toLowerCase();
+        const reqCity = (req.city || '').trim().toLowerCase();
+        if (reqArea && (reqArea.includes(areaKey) || areaKey.includes(reqArea))) {
+          if (!cityKey || reqCity === cityKey || reqCity.includes(cityKey) || cityKey.includes(reqCity)) {
+            ordersCount++;
+          }
+        }
+      }
+
+      const isParentCityActive = area.city ? area.city.isActive : true;
+      const effectiveActive = isParentCityActive ? area.isActive : false;
+
+      return {
+        id: area.id,
+        name: area.name,
+        nameUrdu: area.nameUrdu,
+        cityId: area.cityId,
+        cityName: area.city?.name ?? '',
+        city: area.city,
+        isActive: effectiveActive,
+        createdAt: area.createdAt,
+        updatedAt: area.updatedAt,
+        workersCount: workerIds.size,
+        ordersCount,
+      };
+    });
+  }
+
+  async createArea(dto: AdminCreateAreaDto, actor: JwtPayload) {
+    const city = await this.prisma.city.findUnique({ where: { id: dto.cityId } });
+    if (!city) {
+      throw new NotFoundException('Selected city not found');
+    }
+
+    const trimmedName = dto.name.trim();
+    const existing = await this.prisma.area.findUnique({
+      where: {
+        cityId_name: {
+          cityId: dto.cityId,
+          name: trimmedName,
+        },
+      },
+    });
+    if (existing) {
+      throw new ConflictException(`Area "${trimmedName}" already exists in ${city.name}`);
+    }
+
+    const area = await this.prisma.area.create({
+      data: {
+        name: trimmedName,
+        cityId: dto.cityId,
+        nameUrdu: dto.nameUrdu?.trim() || null,
+        isActive: city.isActive ? (dto.isActive !== undefined ? dto.isActive : true) : false,
+      },
+      include: {
+        city: { select: { id: true, name: true, nameUrdu: true, isActive: true } },
+      },
+    });
+
+    await this.audit.record({
+      actorId: actor.sub,
+      actorRole: actor.role,
+      action: 'AREA_CREATED',
+      targetType: 'AREA',
+      targetId: area.id,
+      reason: null,
+      metadata: { name: area.name, cityId: area.cityId, cityName: city.name },
+    });
+
+    return {
+      ...area,
+      cityName: city.name,
+      workersCount: 0,
+      ordersCount: 0,
+    };
+  }
+
+  async updateArea(id: string, dto: AdminUpdateAreaDto, actor: JwtPayload) {
+    const existing = await this.prisma.area.findUnique({
+      where: { id },
+      include: { city: true },
+    });
+    if (!existing) {
+      throw new NotFoundException('Area not found');
+    }
+
+    const targetCityId = dto.cityId || existing.cityId;
+    const targetName = dto.name ? dto.name.trim() : existing.name;
+
+    if (dto.isActive === true) {
+      const parentCity = await this.prisma.city.findUnique({ where: { id: targetCityId } });
+      if (parentCity && !parentCity.isActive) {
+        throw new BadRequestException(
+          `Cannot activate area "${targetName}" because its parent city "${parentCity.name}" is deactivated. Please activate ${parentCity.name} first.`,
+        );
+      }
+    }
+
+    if (dto.name || dto.cityId) {
+      const duplicate = await this.prisma.area.findFirst({
+        where: {
+          cityId: targetCityId,
+          name: { equals: targetName, mode: 'insensitive' },
+          id: { not: id },
+        },
+      });
+      if (duplicate) {
+        throw new ConflictException(`Area "${targetName}" already exists in this city`);
+      }
+    }
+
+    const updated = await this.prisma.area.update({
+      where: { id },
+      data: {
+        name: dto.name ? dto.name.trim() : undefined,
+        cityId: dto.cityId || undefined,
+        nameUrdu: dto.nameUrdu !== undefined ? dto.nameUrdu?.trim() || null : undefined,
+        isActive: dto.isActive !== undefined ? dto.isActive : undefined,
+      },
+      include: {
+        city: { select: { id: true, name: true, nameUrdu: true, isActive: true } },
+      },
+    });
+
+    await this.audit.record({
+      actorId: actor.sub,
+      actorRole: actor.role,
+      action: 'AREA_UPDATED',
+      targetType: 'AREA',
+      targetId: id,
+      reason: null,
+      metadata: { name: updated.name, cityId: updated.cityId },
+    });
+
+    return {
+      ...updated,
+      cityName: updated.city?.name ?? '',
+    };
+  }
+
+  async toggleArea(id: string, active: boolean, actor: JwtPayload) {
+    const existing = await this.prisma.area.findUnique({
+      where: { id },
+      include: { city: true },
+    });
+    if (!existing) {
+      throw new NotFoundException('Area not found');
+    }
+
+    if (active && existing.city && !existing.city.isActive) {
+      throw new BadRequestException(
+        `Cannot activate area "${existing.name}" because its parent city "${existing.city.name}" is deactivated. Please activate ${existing.city.name} first.`,
+      );
+    }
+
+    const updated = await this.prisma.area.update({
+      where: { id },
+      data: { isActive: active },
+      include: { city: { select: { id: true, name: true, nameUrdu: true } } },
+    });
+
+    await this.audit.record({
+      actorId: actor.sub,
+      actorRole: actor.role,
+      action: active ? 'AREA_ACTIVATED' : 'AREA_DEACTIVATED',
+      targetType: 'AREA',
+      targetId: id,
+      reason: null,
+      metadata: { name: updated.name, isActive: active },
+    });
+
+    return updated;
+  }
+
+  async deleteArea(id: string, actor: JwtPayload) {
+    const existing = await this.prisma.area.findUnique({ where: { id } });
+    if (!existing) {
+      throw new NotFoundException('Area not found');
+    }
+
+    await this.prisma.area.delete({ where: { id } });
+
+    await this.audit.record({
+      actorId: actor.sub,
+      actorRole: actor.role,
+      action: 'AREA_DELETED',
+      targetType: 'AREA',
+      targetId: id,
+      reason: null,
+      metadata: { name: existing.name },
+    });
+
+    return { success: true, id };
+  }
+
+  // Public / client helper methods
+  async getActiveCitiesWithAreas() {
+    return this.prisma.city.findMany({
+      where: { isActive: true },
+      orderBy: { name: 'asc' },
+      select: {
+        id: true,
+        name: true,
+        nameUrdu: true,
+        areas: {
+          where: { isActive: true },
+          orderBy: { name: 'asc' },
+          select: { id: true, name: true, nameUrdu: true },
+        },
+      },
+    });
+  }
+
+  async getActiveAreas(city?: string) {
+    return this.prisma.area.findMany({
+      where: {
+        isActive: true,
+        city: {
+          isActive: true,
+          ...(city ? { name: { equals: city, mode: 'insensitive' } } : {}),
+        },
+      },
+      orderBy: { name: 'asc' },
+      select: {
+        id: true,
+        name: true,
+        nameUrdu: true,
+        cityId: true,
+        city: { select: { id: true, name: true, nameUrdu: true } },
+      },
+    });
   }
 
   // Platform settings (Admin flow §12). Get all platform settings.
@@ -1373,30 +2196,57 @@ export class AdminService {
     totalPaymentsProcessed: number;
     activeNowCount: number;
   }> {
-    const [totalJobs, openJobs, activeJobs, completedJobs, cancelledJobs] = await Promise.all([
+    // One wave: all 14 counts are independent (no value feeds another), so
+    // running them together is ~1 DB RTT instead of the previous 5 waves
+    // (sequential `pendingWorkers`/`suspendedWorkers` awaits were the worst).
+    const [
+      totalJobs,
+      openJobs,
+      activeJobs,
+      completedJobs,
+      cancelledJobs,
+      totalCustomers,
+      newCustomersThisWeek,
+      totalWorkers,
+      verifiedWorkers,
+      pendingWorkersCount,
+      suspendedWorkersCount,
+      totalRevenueRaw,
+      totalLedgerVolume,
+      activeNowCount,
+    ] = await Promise.all([
       this.prisma.serviceRequest.count({}),
       this.prisma.serviceRequest.count({ where: { status: 'OPEN' } }),
       this.prisma.serviceRequest.count({ where: { status: 'IN_PROGRESS' } }),
       this.prisma.serviceRequest.count({ where: { status: 'COMPLETED' } }),
       this.prisma.serviceRequest.count({ where: { status: 'CANCELLED' } }),
-    ]);
-
-    const [totalCustomers, newCustomersThisWeek, totalWorkers, verifiedWorkers] = await Promise.all([
       this.prisma.user.count({ where: { role: 'CUSTOMER' } }),
-      this.prisma.user.count({ where: { role: 'CUSTOMER', createdAt: { gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) } } }),
+      this.prisma.user.count({
+        where: {
+          role: 'CUSTOMER',
+          createdAt: { gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) },
+        },
+      }),
       this.prisma.user.count({ where: { role: 'WORKER' } }),
       this.prisma.user.count({ where: { role: 'WORKER', isVerified: true } }),
-    ]);
-
-    // Pending/suspended workers are determined by isActive and verification status
-    const pendingWorkersCount = await this.prisma.user.count({ where: { role: 'WORKER', isVerified: false, isActive: true } });
-    const suspendedWorkersCount = await this.prisma.user.count({ where: { role: 'WORKER', isActive: false } });
-
-    const [totalRevenue, totalPaymentsProcessed, activeNowCount] = await Promise.all([
-      this.prisma.commission.aggregate({ _sum: { amount: true } }).then((r) => r._sum.amount ?? 0),
-      this.prisma.walletLedger.count({ where: { type: WalletLedgerType.COMMISSION_RELEASED } }),
+      // Pending/suspended workers are determined by isActive and verification status
+      this.prisma.user.count({ where: { role: 'WORKER', isVerified: false, isActive: true } }),
+      this.prisma.user.count({ where: { role: 'WORKER', isActive: false } }),
+      this.prisma.commission
+        .aggregate({ _sum: { amount: true } })
+        .then((r) => Math.abs(Number(r._sum.amount ?? 0))),
+      this.prisma.walletLedger
+        .aggregate({ _sum: { amount: true } })
+        .then((r) => Math.abs(Number(r._sum.amount ?? 0))),
       this.prisma.user.count({ where: { role: 'WORKER', isActive: true } }),
     ]);
+
+    const totalRevenue = Number(totalRevenueRaw.toFixed(2));
+    // B3: the previous ternary (`ledger > revenue ? ledger : revenue * 10`) was
+    // discontinuous — a ledger at 99% of revenue rendered 10× the revenue, then
+    // snapped down to the ledger the moment it crossed 100%. Math.max keeps the
+    // seeded/revenue floor while remaining monotonic in real ledger volume.
+    const processedVolume = Number(Math.max(totalLedgerVolume, totalRevenue * 10).toFixed(2));
 
     return {
       totalJobs,
@@ -1410,9 +2260,156 @@ export class AdminService {
       verifiedWorkers,
       pendingWorkers: pendingWorkersCount,
       suspendedWorkers: suspendedWorkersCount,
-      totalRevenue: Number(totalRevenue.toFixed(2)),
-      totalPaymentsProcessed: totalPaymentsProcessed,
-      activeNowCount: activeNowCount,
+      totalRevenue,
+      totalPaymentsProcessed: processedVolume,
+      activeNowCount,
+    };
+  }
+
+  // ----- Dashboard (live admin dashboard — KPIs + workforce, short-TTL cached) -----
+
+  private static readonly DASHBOARD_OVERVIEW_CACHE_KEY = 'admin:dashboard:overview:v1';
+  private static readonly DASHBOARD_OVERVIEW_CACHE_TTL_SECONDS = 15;
+
+  // One round trip for the dashboard hero + mid cards: KPIs (14 counts) plus a
+  // lean workforce snapshot. Cached briefly — KPI churn only matters at ~15s
+  // freshness, and every refetch otherwise costs a full multi-count wave.
+  async getDashboardOverview() {
+    if (this.redis) {
+      const cached = await this.redis.get(AdminService.DASHBOARD_OVERVIEW_CACHE_KEY);
+      if (cached) {
+        try {
+          return JSON.parse(cached) as {
+            kpis: Awaited<ReturnType<AdminService['getKpis']>>;
+            workers: unknown[];
+          };
+        } catch {
+          // fall through to a fresh compute
+        }
+      }
+    }
+
+    const [kpis, workers] = await Promise.all([this.getKpis(), this.getDashboardWorkers()]);
+    const payload = { kpis, workers };
+
+    if (this.redis) {
+      await this.redis.set(
+        AdminService.DASHBOARD_OVERVIEW_CACHE_KEY,
+        JSON.stringify(payload),
+        AdminService.DASHBOARD_OVERVIEW_CACHE_TTL_SECONDS,
+      );
+    }
+    return payload;
+  }
+
+  // Lean worker rows for the dashboard toplist + demand/supply cards. Same
+  // shape the worker directory ships (flattened profile fields) minus the
+  // per-worker commissions array; ratings and earnings come from two groupBy
+  // aggregates instead of row fan-out, and skills resolve to display names.
+  private async getDashboardWorkers() {
+    const users = await this.prisma.user.findMany({
+      where: { role: Role.WORKER },
+      orderBy: { createdAt: 'desc' },
+      take: 50,
+      select: {
+        id: true,
+        phone: true,
+        name: true,
+        email: true,
+        avatarUrl: true,
+        isActive: true,
+        isVerified: true,
+        createdAt: true,
+        serviceAreas: { select: { label: true }, orderBy: { createdAt: 'asc' } },
+        wallet: { select: { balance: true } },
+        workerProfile: {
+          select: {
+            verificationStatus: true,
+            experienceYears: true,
+            skills: true,
+            isAvailable: true,
+          },
+        },
+      },
+    });
+    if (users.length === 0) {
+      return [];
+    }
+
+    const ids = users.map((u) => u.id);
+    const skillIds = [...new Set(users.flatMap((u) => u.workerProfile?.skills ?? []))];
+    const [categories, ratingRows, earningRows] = await Promise.all([
+      skillIds.length
+        ? this.prisma.serviceCategory.findMany({
+            where: { id: { in: skillIds } },
+            select: { id: true, name: true },
+          })
+        : Promise.resolve([] as Array<{ id: string; name: string }>),
+      this.prisma.review.groupBy({
+        by: ['revieweeId'],
+        where: { revieweeId: { in: ids } },
+        _avg: { rating: true },
+      }),
+      this.prisma.commission.groupBy({
+        by: ['workerId'],
+        where: { workerId: { in: ids } },
+        _sum: { visitCharge: true },
+      }),
+    ]);
+
+    const skillNames = new Map(categories.map((c) => [c.id, c.name]));
+    const ratings = new Map(
+      ratingRows.map((r) => [r.revieweeId, Math.round(Number(r._avg.rating ?? 0) * 10) / 10]),
+    );
+    const earnings = new Map(
+      earningRows.map((r) => [r.workerId, Number(r._sum.visitCharge ?? 0)]),
+    );
+
+    return users.map((user) => ({
+      id: user.id,
+      phone: user.phone,
+      name: user.name,
+      email: user.email ?? null,
+      serviceAreas: (user.serviceAreas ?? []).map((a) => a.label),
+      avatarUrl: user.avatarUrl,
+      isActive: user.isActive,
+      isVerified: user.isVerified,
+      createdAt: user.createdAt,
+      verificationStatus: user.workerProfile?.verificationStatus ?? null,
+      experienceYears: user.workerProfile?.experienceYears ?? null,
+      skills: (user.workerProfile?.skills ?? []).map((id) => skillNames.get(id) ?? id),
+      isAvailable: user.workerProfile?.isAvailable ?? false,
+      walletBalance: user.wallet ? Number(user.wallet.balance) : 0,
+      totalEarnings: earnings.get(user.id) ?? 0,
+      rating: ratings.get(user.id) ?? 0,
+    }));
+  }
+
+  // Recent-activity feeds for the dashboard table (small limits — the table
+  // shows a merged ~25-row window; the dedicated queue pages keep their full
+  // lists and are served by their own endpoints, untouched).
+  async getDashboardActivity() {
+    const [withdrawals, disputes, auditLogs, pending] = await Promise.all([
+      this.listWithdrawals({ page: 1, limit: 10 }),
+      this.listDisputes({ page: 1, limit: 10 }),
+      this.listAuditLogs({ page: 1, limit: 10 }),
+      this.verifications ? this.verifications.listPending() : Promise.resolve([]),
+    ]);
+
+    // Activity means *recently submitted* — newest first, unlike the FIFO queue.
+    const verifications = pending
+      .slice()
+      .sort(
+        (a, b) =>
+          new Date(b.submittedAt ?? 0).getTime() - new Date(a.submittedAt ?? 0).getTime(),
+      )
+      .slice(0, 10);
+
+    return {
+      withdrawals: withdrawals.items,
+      disputes: disputes.items,
+      auditLogs: auditLogs.items,
+      verifications,
     };
   }
 
@@ -1495,6 +2492,25 @@ export class AdminService {
       }
     }
 
+    // Drop the SettingsService cache so the new values apply immediately.
+    await this.settings?.invalidate();
+
+    // A raised negative-balance floor takes effect right away: workers already
+    // below it are pushed offline instead of waiting for their next hold.
+    if (dto.walletMaxNegativeBalance !== undefined) {
+      const floor = dto.walletMaxNegativeBalance;
+      const belowFloor = await this.prisma.workerWallet.findMany({
+        where: { balance: { lt: floor } },
+        select: { userId: true },
+      });
+      if (belowFloor.length > 0) {
+        await this.prisma.workerProfile.updateMany({
+          where: { userId: { in: belowFloor.map((w) => w.userId) }, isAvailable: true },
+          data: { isAvailable: false },
+        });
+      }
+    }
+
     return results;
   }
 
@@ -1522,6 +2538,7 @@ export class AdminService {
                   'VISIT_IN_PROGRESS',
                   'INSPECTION_DONE',
                   'REPAIR_NEGOTIATING',
+                  'REPAIR_DECLINED',
                   'REPAIR_APPROVED',
                   'IN_PROGRESS',
                 ],
@@ -1657,11 +2674,11 @@ export class AdminService {
       ...(query.actorId ? { actorId: query.actorId } : {}),
       ...(query.from || query.to
         ? {
-          createdAt: {
-            ...(query.from ? { gte: new Date(query.from) } : {}),
-            ...(query.to ? { lte: new Date(query.to) } : {}),
-          },
-        }
+            createdAt: {
+              ...(query.from ? { gte: new Date(query.from) } : {}),
+              ...(query.to ? { lte: new Date(query.to) } : {}),
+            },
+          }
         : {}),
     };
 
@@ -1697,11 +2714,11 @@ export class AdminService {
       ...(query.isRead !== undefined ? { isRead: query.isRead === 'true' } : {}),
       ...(query.from || query.to
         ? {
-          createdAt: {
-            ...(query.from ? { gte: new Date(query.from) } : {}),
-            ...(query.to ? { lte: new Date(query.to) } : {}),
-          },
-        }
+            createdAt: {
+              ...(query.from ? { gte: new Date(query.from) } : {}),
+              ...(query.to ? { lte: new Date(query.to) } : {}),
+            },
+          }
         : {}),
     };
 
@@ -1993,13 +3010,13 @@ export class AdminService {
 
     const payments = PAID_JOB_STATUSES.includes(job.status)
       ? [
-        {
-          jobId: job.id,
-          amount: job.lockedVisitCharge ?? job.suggestedVisitCharge ?? null,
-          status: job.status,
-          paidAt: job.completedAt ?? job.createdAt,
-        },
-      ]
+          {
+            jobId: job.id,
+            amount: job.lockedVisitCharge ?? job.suggestedVisitCharge ?? null,
+            status: job.status,
+            paidAt: job.completedAt ?? job.createdAt,
+          },
+        ]
       : [];
 
     return {
@@ -2104,14 +3121,17 @@ export class AdminService {
 
     const where: Prisma.UserWhereInput = {
       role,
+      // Workers directory lists verified workers only; unverified/pending
+      // accounts live in the verifications queue instead.
+      ...(role === Role.WORKER ? { isVerified: true } : {}),
       ...(query.status ? { isActive: query.status === 'active' } : {}),
       ...(query.search
         ? {
-          OR: [
-            { name: { contains: query.search, mode: 'insensitive' } },
-            { phone: { contains: query.search } },
-          ],
-        }
+            OR: [
+              { name: { contains: query.search, mode: 'insensitive' } },
+              { phone: { contains: query.search } },
+            ],
+          }
         : {}),
       ...(verificationStatus ? { workerProfile: { is: { verificationStatus } } } : {}),
     };
@@ -2127,35 +3147,198 @@ export class AdminService {
       this.prisma.user.count({ where }),
     ]);
 
-    const items = users.map((user: AdminUserRow) => ({
-      id: user.id,
-      phone: user.phone,
-      name: user.name,
-      avatarUrl: user.avatarUrl,
-      isActive: user.isActive,
-      isVerified: user.isVerified,
-      createdAt: user.createdAt,
-      jobsCount: role === Role.WORKER ? user._count.offers : user._count.customerJobs,
-      verificationStatus: user.workerProfile?.verificationStatus ?? null,
-      experienceYears: user.workerProfile?.experienceYears ?? null,
-      skills: user.workerProfile?.skills ?? [],
-      isAvailable: user.workerProfile?.isAvailable ?? false,
-    }));
+    // WorkerProfile.skills stores category IDs — resolve them to display names.
+    const skillIds = [
+      ...new Set(users.flatMap((u) => u.workerProfile?.skills ?? [])),
+    ];
+    const categories = skillIds.length
+      ? await this.prisma.serviceCategory.findMany({
+          where: { id: { in: skillIds } },
+          select: { id: true, name: true },
+        })
+      : [];
+    const skillNames = new Map(categories.map((c) => [c.id, c.name]));
+
+    // Customer rows ship real spend + rating-given aggregates (the admin UI
+    // previously hardcoded 0 / 5.0 on the client). Worker rows ship their
+    // rating average (reviewee side) so the client no longer fetches up to
+    // 3×100 reviews just to sort a directory.
+    let totalSpentByCustomer = new Map<string, number>();
+    let ratingGivenByCustomer = new Map<string, number>();
+    let ratingByWorker = new Map<string, number>();
+    if (role === Role.CUSTOMER && users.length > 0) {
+      const ids = users.map((u) => u.id);
+      const [spendRows, ratingRows] = await Promise.all([
+        this.prisma.payment.groupBy({
+          by: ['customerId'],
+          where: { customerId: { in: ids }, status: 'COMPLETED' },
+          _sum: { amount: true },
+        }),
+        this.prisma.review.groupBy({
+          by: ['reviewerId'],
+          where: { reviewerId: { in: ids } },
+          _avg: { rating: true },
+        }),
+      ]);
+      totalSpentByCustomer = new Map(
+        spendRows.map((r) => [r.customerId, Number(r._sum.amount ?? 0)]),
+      );
+      ratingGivenByCustomer = new Map(
+        ratingRows.map((r) => [r.reviewerId, Number(r._avg.rating ?? 0)]),
+      );
+    } else if (role === Role.WORKER && users.length > 0) {
+      const ids = users.map((u) => u.id);
+      const ratingRows = await this.prisma.review.groupBy({
+        by: ['revieweeId'],
+        where: { revieweeId: { in: ids } },
+        _avg: { rating: true },
+      });
+      ratingByWorker = new Map(
+        ratingRows.map((r) => [r.revieweeId, Math.round(Number(r._avg.rating ?? 0) * 10) / 10]),
+      );
+    }
+
+    const now = new Date();
+    // On-the-fly auto-reactivate any user whose temporary suspension duration has passed
+    for (const u of users) {
+      if (!u.isActive && u.suspendedUntil && u.suspendedUntil <= now) {
+        u.isActive = true;
+        u.suspendedUntil = null;
+        u.suspensionReason = null;
+        u.suspensionType = null;
+        this.prisma.user
+          .update({
+            where: { id: u.id },
+            data: {
+              isActive: true,
+              suspendedUntil: null,
+              suspensionReason: null,
+              suspensionType: null,
+            },
+          })
+          .catch(() => {});
+      }
+    }
+
+    const items = users.map((user: AdminUserRow) => {
+      const comms = (user as any).commissions || [];
+      const totalEarned = comms.reduce(
+        (acc: number, c: any) => acc + Number(c.visitCharge || 0),
+        0,
+      );
+      const balance = (user as any).wallet?.balance ? Number((user as any).wallet.balance) : 0;
+
+      return {
+        id: user.id,
+        phone: user.phone,
+        name: user.name,
+        email: user.email ?? null,
+        serviceAreas: (user.serviceAreas ?? []).map((a) => a.label),
+        avatarUrl: user.avatarUrl,
+        isActive: user.isActive,
+        isVerified: user.isVerified,
+        suspendedUntil: user.suspendedUntil ?? null,
+        suspensionReason: user.suspensionReason ?? null,
+        suspensionType: user.suspensionType ?? null,
+        createdAt: user.createdAt,
+        jobsCount: role === Role.WORKER ? user._count.offers : user._count.customerJobs,
+        verificationStatus: user.workerProfile?.verificationStatus ?? null,
+        experienceYears: user.workerProfile?.experienceYears ?? null,
+        skills: (user.workerProfile?.skills ?? []).map((id) => skillNames.get(id) ?? id),
+        isAvailable: user.workerProfile?.isAvailable ?? false,
+        walletBalance: balance,
+        totalEarnings: totalEarned,
+        ...(role === Role.CUSTOMER
+          ? {
+              totalSpent: totalSpentByCustomer.get(user.id) ?? 0,
+              ratingGiven: ratingGivenByCustomer.get(user.id) ?? 0,
+            }
+          : {}),
+        ...(role === Role.WORKER
+          ? {
+              rating: ratingByWorker.get(user.id) ?? 0,
+            }
+          : {}),
+      };
+    });
 
     return toPageResult(items, total, page, limit);
   }
 
+  // Scheduled job: automatically reactivate accounts when their temporary suspension expires
+  @Cron('*/5 * * * *')
+  async autoReactivateExpiredSuspensions() {
+    try {
+      const now = new Date();
+      const expiredUsers = await this.prisma.user.findMany({
+        where: {
+          isActive: false,
+          suspendedUntil: { lte: now },
+        },
+        select: {
+          id: true,
+          role: true,
+          phone: true,
+          name: true,
+          suspensionReason: true,
+          suspensionType: true,
+        },
+      });
+
+      if (expiredUsers.length === 0) return;
+
+      for (const u of expiredUsers) {
+        await this.prisma.user.update({
+          where: { id: u.id },
+          data: {
+            isActive: true,
+            suspendedUntil: null,
+            suspensionReason: null,
+            suspensionType: null,
+          },
+        });
+
+        await this.audit.record({
+          actorId: 'system',
+          actorRole: Role.SUPER_ADMIN,
+          action: AUDIT_ACTIONS.USER_REACTIVATED,
+          targetType: u.role,
+          targetId: u.id,
+          reason: 'Temporary suspension duration expired (automatically reactivated)',
+          metadata: {
+            phone: u.phone,
+            name: u.name,
+            autoReactivated: true,
+            previousReason: u.suspensionReason,
+          },
+        });
+      }
+    } catch (err) {
+      // Don't crash scheduled task
+      console.error('[AdminService] autoReactivateExpiredSuspensions error:', err);
+    }
+  }
+
   // Suspend/reactivate a user in a specific role. Suspension always states a reason and is audit-logged.
+  // Supports Permanent & Temporary suspension per Section 5 specification.
   private async setUserStatus(
     role: Role,
     id: string,
     activate: boolean,
     actor: JwtPayload,
-    reason?: string,
+    suspendInput?: SuspendUserDto | string,
   ) {
     const user = await this.prisma.user.findFirst({
       where: { id, role },
-      select: { id: true, phone: true, name: true, isActive: true },
+      select: {
+        id: true,
+        phone: true,
+        name: true,
+        isActive: true,
+        suspendedUntil: true,
+        suspensionReason: true,
+        suspensionType: true,
+      },
     });
     if (!user) {
       throw new NotFoundException(
@@ -2169,10 +3352,81 @@ export class AdminService {
     }
 
     return this.prisma.$transaction(async (tx) => {
+      let suspendedUntil: Date | null = null;
+      let suspensionReason: string | null = null;
+      let suspensionType: string | null = null;
+      let reasonSummary: string | null = null;
+      let auditMetadata: Record<string, any> = { phone: user.phone, name: user.name };
+
+      if (!activate) {
+        if (typeof suspendInput === 'string') {
+          suspensionType = SuspensionType.PERMANENT;
+          suspensionReason = suspendInput.trim();
+          reasonSummary = suspendInput.trim();
+          auditMetadata = {
+            ...auditMetadata,
+            suspensionType: SuspensionType.PERMANENT,
+            reason: suspendInput.trim(),
+            description: suspendInput.trim(),
+          };
+        } else if (suspendInput) {
+          const type = suspendInput.type || SuspensionType.PERMANENT;
+          suspensionType = type;
+          const mainReason = suspendInput.reason || 'Account suspended by admin';
+          const violationType = suspendInput.violationType;
+          const description = (suspendInput.description || mainReason).trim();
+          const duration = suspendInput.duration;
+
+          if (type === SuspensionType.TEMPORARY && duration) {
+            suspendedUntil = computeSuspendedUntil(duration);
+          }
+
+          let fullReason = `[${type}] ${mainReason}`;
+          if (violationType) {
+            fullReason += ` (${violationType})`;
+          }
+          if (description && description !== mainReason) {
+            fullReason += `: ${description}`;
+          }
+          if (duration) {
+            fullReason += ` [Duration: ${duration}]`;
+          }
+
+          suspensionReason = fullReason;
+          reasonSummary = fullReason;
+
+          auditMetadata = {
+            ...auditMetadata,
+            suspensionType: type,
+            reason: mainReason,
+            violationType: violationType || null,
+            description,
+            duration: duration || null,
+            suspendedUntil: suspendedUntil ? suspendedUntil.toISOString() : null,
+          };
+        } else {
+          suspensionType = SuspensionType.PERMANENT;
+          suspensionReason = 'Account suspended by admin';
+          reasonSummary = 'Account suspended by admin';
+        }
+      }
+
       const updated = await tx.user.update({
         where: { id },
-        data: { isActive: activate },
-        select: { id: true, isActive: true, updatedAt: true },
+        data: {
+          isActive: activate,
+          suspendedUntil: activate ? null : suspendedUntil,
+          suspensionReason: activate ? null : suspensionReason,
+          suspensionType: activate ? null : suspensionType,
+        },
+        select: {
+          id: true,
+          isActive: true,
+          suspendedUntil: true,
+          suspensionReason: true,
+          suspensionType: true,
+          updatedAt: true,
+        },
       });
 
       await this.audit.record(
@@ -2182,13 +3436,21 @@ export class AdminService {
           action: activate ? AUDIT_ACTIONS.USER_REACTIVATED : AUDIT_ACTIONS.USER_SUSPENDED,
           targetType: role,
           targetId: id,
-          reason: activate ? null : (reason ?? null),
-          metadata: { phone: user.phone, name: user.name },
+          reason: activate ? null : reasonSummary,
+          metadata: auditMetadata,
         },
         tx,
       );
 
-      return { id: updated.id, role, isActive: updated.isActive, updatedAt: updated.updatedAt };
+      return {
+        id: updated.id,
+        role,
+        isActive: updated.isActive,
+        suspendedUntil: updated.suspendedUntil,
+        suspensionReason: updated.suspensionReason,
+        suspensionType: updated.suspensionType,
+        updatedAt: updated.updatedAt,
+      };
     });
   }
 
@@ -2348,5 +3610,257 @@ export class AdminService {
     }
 
     return events.sort((a, b) => a.at.getTime() - b.at.getTime());
+  }
+
+  // Admin Visits Monitoring (Section 6)
+  async listVisits(query: AdminVisitListQueryDto) {
+    const { page, limit, skip } = normalizePage(query);
+
+    const where: Prisma.VisitWhereInput = {
+      ...(query.status ? { status: query.status } : {}),
+      ...(query.from || query.to
+        ? {
+            scheduledDate: {
+              ...(query.from ? { gte: new Date(query.from) } : {}),
+              ...(query.to ? { lte: new Date(query.to) } : {}),
+            },
+          }
+        : {}),
+      ...(query.search
+        ? {
+            OR: [
+              { job: { is: { title: { contains: query.search, mode: 'insensitive' } } } },
+              { worker: { is: { name: { contains: query.search, mode: 'insensitive' } } } },
+              { worker: { is: { phone: { contains: query.search } } } },
+              {
+                job: {
+                  is: {
+                    customer: { is: { name: { contains: query.search, mode: 'insensitive' } } },
+                  },
+                },
+              },
+            ],
+          }
+        : {}),
+    };
+
+    const [rows, total] = await Promise.all([
+      this.prisma.visit.findMany({
+        where,
+        orderBy: { scheduledDate: 'desc' },
+        skip,
+        take: limit,
+        select: {
+          id: true,
+          jobId: true,
+          workerId: true,
+          offerId: true,
+          scheduledDate: true,
+          actualDate: true,
+          status: true,
+          diagnosis: true,
+          repairPlan: true,
+          repairEstimate: true,
+          estimatedRepairTimeMin: true,
+          inspectionSubmittedAt: true,
+          createdAt: true,
+          updatedAt: true,
+          job: {
+            select: {
+              id: true,
+              title: true,
+              address: true,
+              city: true,
+              area: true,
+              status: true,
+              lockedVisitCharge: true,
+              suggestedVisitCharge: true,
+              customer: { select: { id: true, name: true, phone: true } },
+            },
+          },
+          worker: { select: { id: true, name: true, phone: true } },
+          repairs: {
+            select: {
+              id: true,
+              description: true,
+              amount: true,
+              status: true,
+            },
+          },
+        },
+      }),
+      this.prisma.visit.count({ where }),
+    ]);
+
+    const items = rows.map((v) => ({
+      id: v.id,
+      jobId: v.jobId,
+      jobTitle: v.job.title,
+      scheduledDate: v.scheduledDate,
+      actualDate: v.actualDate,
+      status: v.status,
+      diagnosis: v.diagnosis,
+      repairPlan: v.repairPlan,
+      repairEstimate: v.repairEstimate ? Number(v.repairEstimate) : null,
+      visitCharge: Number(v.job.lockedVisitCharge ?? v.job.suggestedVisitCharge ?? 0),
+      customer: v.job.customer,
+      worker: v.worker,
+      repairs: v.repairs,
+      createdAt: v.createdAt,
+    }));
+
+    return toPageResult(items, total, page, limit);
+  }
+
+  async getVisitDetail(id: string) {
+    const visit = await this.prisma.visit.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        jobId: true,
+        workerId: true,
+        offerId: true,
+        scheduledDate: true,
+        actualDate: true,
+        status: true,
+        diagnosis: true,
+        repairPlan: true,
+        repairEstimate: true,
+        inspectionPhotos: true,
+        estimatedRepairTimeMin: true,
+        inspectionSubmittedAt: true,
+        createdAt: true,
+        updatedAt: true,
+        job: {
+          select: {
+            id: true,
+            title: true,
+            description: true,
+            address: true,
+            city: true,
+            area: true,
+            status: true,
+            lockedVisitCharge: true,
+            suggestedVisitCharge: true,
+            customer: { select: { id: true, name: true, phone: true, email: true } },
+          },
+        },
+        worker: { select: { id: true, name: true, phone: true, email: true } },
+        repairs: {
+          select: {
+            id: true,
+            description: true,
+            amount: true,
+            status: true,
+            itemsBreakdown: true,
+          },
+        },
+      },
+    });
+
+    if (!visit) {
+      throw new NotFoundException('Visit not found');
+    }
+
+    return {
+      ...visit,
+      repairEstimate: visit.repairEstimate ? Number(visit.repairEstimate) : null,
+      visitCharge: Number(visit.job.lockedVisitCharge ?? visit.job.suggestedVisitCharge ?? 0),
+    };
+  }
+
+  // Admin Reviews Moderation (Section 8)
+  async listReviews(query: AdminReviewListQueryDto) {
+    const { page, limit, skip } = normalizePage(query);
+
+    const where: Prisma.ReviewWhereInput = {
+      ...(query.rating ? { rating: query.rating } : {}),
+      ...(query.isVisible !== undefined ? { isVisible: query.isVisible === 'true' } : {}),
+      ...(query.from || query.to
+        ? {
+            createdAt: {
+              ...(query.from ? { gte: new Date(query.from) } : {}),
+              ...(query.to ? { lte: new Date(query.to) } : {}),
+            },
+          }
+        : {}),
+      ...(query.search
+        ? {
+            OR: [
+              { comment: { contains: query.search, mode: 'insensitive' } },
+              { reviewer: { is: { name: { contains: query.search, mode: 'insensitive' } } } },
+              { reviewee: { is: { name: { contains: query.search, mode: 'insensitive' } } } },
+              { job: { is: { title: { contains: query.search, mode: 'insensitive' } } } },
+            ],
+          }
+        : {}),
+    };
+
+    const [rows, total] = await Promise.all([
+      this.prisma.review.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limit,
+        select: {
+          id: true,
+          jobId: true,
+          reviewerId: true,
+          revieweeId: true,
+          rating: true,
+          comment: true,
+          isVisible: true,
+          createdAt: true,
+          job: { select: { id: true, title: true } },
+          reviewer: { select: { id: true, name: true, phone: true, role: true } },
+          reviewee: { select: { id: true, name: true, phone: true, role: true } },
+        },
+      }),
+      this.prisma.review.count({ where }),
+    ]);
+
+    const items = rows.map((r) => ({
+      id: r.id,
+      jobId: r.jobId,
+      jobTitle: r.job.title,
+      rating: r.rating,
+      comment: r.comment,
+      isVisible: r.isVisible,
+      reviewer: r.reviewer,
+      reviewee: r.reviewee,
+      createdAt: r.createdAt,
+    }));
+
+    return toPageResult(items, total, page, limit);
+  }
+
+  async toggleReviewVisibility(id: string, isVisible?: boolean, actor?: JwtPayload) {
+    const review = await this.prisma.review.findUnique({
+      where: { id },
+      select: { id: true, isVisible: true },
+    });
+    if (!review) {
+      throw new NotFoundException('Review not found');
+    }
+
+    const nextState = isVisible !== undefined ? isVisible : !review.isVisible;
+    const updated = await this.prisma.review.update({
+      where: { id },
+      data: { isVisible: nextState },
+      select: { id: true, isVisible: true },
+    });
+
+    if (actor) {
+      await this.audit.record({
+        actorId: actor.sub,
+        actorRole: actor.role,
+        action: nextState ? 'REVIEW_RESTORED' : 'REVIEW_HIDDEN',
+        targetType: 'REVIEW',
+        targetId: id,
+        reason: null,
+      });
+    }
+
+    return updated;
   }
 }

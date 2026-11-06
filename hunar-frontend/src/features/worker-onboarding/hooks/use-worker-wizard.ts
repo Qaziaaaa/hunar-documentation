@@ -2,9 +2,11 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
-import { getStoredUser } from "@/lib/api-client";
+import { clearTokens, getAccessToken, getStoredUser } from "@/lib/api-client";
+import { useRouter } from "@/i18n/navigation";
 import type { WizardStep, WorkerProfileFormData } from "../types";
 import { fetchWorkerOnboardingProfile, submitWorkerProfile } from "../api/onboarding-api";
+import { PESHAWAR_AREAS } from "../components/step4-service-areas";
 
 const STORAGE_KEY = "hunar.worker_onboarding_draft";
 
@@ -30,27 +32,106 @@ const cleanDefaultFormData: WorkerProfileFormData = {
   cnicNumber: "",
 };
 
+export function isPlaceholderOrDummyDoc(url?: string | null): boolean {
+  if (!url || typeof url !== "string") return true;
+  const trimmed = url.trim().toLowerCase();
+  return (
+    trimmed === "" ||
+    trimmed.startsWith("data:") ||
+    trimmed.includes("placehold.co") ||
+    trimmed.includes("unsplash.com") ||
+    trimmed.includes("placeholder") ||
+    trimmed.includes("text=cnic") ||
+    trimmed.includes("mock") ||
+    trimmed.includes("dummy")
+  );
+}
+
 export function useWorkerWizard() {
   const tVal = useTranslations("WorkerOnboarding.Validation");
+  const router = useRouter();
   const [currentStep, setCurrentStep] = useState<WizardStep>(1);
   const [formData, setFormData] = useState<WorkerProfileFormData>(cleanDefaultFormData);
   const [stepError, setStepError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
 
   // Initialize from storage and sync with server draft
   useEffect(() => {
+    const token = getAccessToken();
+    if (!token) {
+      router.replace("/worker/sign-up");
+      return;
+    }
+
     const storedUser = getStoredUser();
     const savedDraft = typeof window !== "undefined" ? window.localStorage.getItem(STORAGE_KEY) : null;
+    const validAreaNames = new Set<string>(PESHAWAR_AREAS);
 
     if (savedDraft) {
       try {
         const parsed = JSON.parse(savedDraft);
-        setFormData((prev) => ({
-          ...prev,
+        // Sanitize skills: preserve valid strings and clean out seed/phantom test keys
+        let sanitizedSkills: string[] = [];
+        if (Array.isArray(parsed.skills)) {
+          sanitizedSkills = parsed.skills.filter(
+            (s: string) => typeof s === "string" && s.trim().length > 0 && !s.startsWith("seed-category-"),
+          );
+        }
+
+        // Sanitize service areas: keep valid area strings; ignore empty/phantom seed entries
+        let sanitizedAreas: string[] = [];
+        if (Array.isArray(parsed.serviceAreas)) {
+          const filtered = parsed.serviceAreas.filter(
+            (a: string) => typeof a === "string" && a.trim().length > 0 && !a.startsWith("seed-area-") && !a.startsWith("seed-category-"),
+          );
+          if (filtered.length > 0) {
+            sanitizedAreas = filtered;
+          }
+        }
+
+        const cleanDraftName = typeof parsed.fullName === "string" ? parsed.fullName : "";
+
+        // Ensure face portrait is not pre-filled by default: only keep if explicitly uploaded with a fileName
+        const cleanDraftPhoto =
+          parsed.profilePhoto && !parsed.profilePhotoName
+            ? ""
+            : parsed.profilePhoto?.startsWith("data:")
+            ? ""
+            : isPlaceholderOrDummyDoc(parsed.profilePhoto)
+            ? ""
+            : parsed.profilePhoto || "";
+
+        // Ensure CNIC documents are not pre-filled with seed placeholder images
+        const cleanCnicFront = isPlaceholderOrDummyDoc(parsed.cnicFront) ? "" : parsed.cnicFront;
+        const cleanCnicFrontName = cleanCnicFront ? parsed.cnicFrontName || "" : "";
+        const cleanCnicBack = isPlaceholderOrDummyDoc(parsed.cnicBack) ? "" : parsed.cnicBack;
+        const cleanCnicBackName = cleanCnicBack ? parsed.cnicBackName || "" : "";
+        const cleanCert = isPlaceholderOrDummyDoc(parsed.certificateFile) ? "" : parsed.certificateFile;
+        const cleanCertName = cleanCert ? parsed.certificateName || "" : "";
+
+        const nextData = {
+          ...cleanDefaultFormData,
           ...parsed,
-          phone: storedUser?.phone || parsed.phone || prev.phone,
-          fullName: parsed.fullName || storedUser?.name || prev.fullName,
-        }));
+          skills: sanitizedSkills,
+          serviceAreas: sanitizedAreas,
+          profilePhoto: cleanDraftPhoto,
+          cnicFront: cleanCnicFront,
+          cnicFrontName: cleanCnicFrontName,
+          cnicBack: cleanCnicBack,
+          cnicBackName: cleanCnicBackName,
+          certificateFile: cleanCert,
+          certificateName: cleanCertName,
+          phone: storedUser?.phone || parsed.phone || cleanDefaultFormData.phone,
+          fullName: cleanDraftName,
+        };
+
+        setFormData(nextData);
+
+        // Update localStorage if skills, photo, areas or fullName had test values
+        if (typeof window !== "undefined") {
+          window.localStorage.setItem(STORAGE_KEY, JSON.stringify(nextData));
+        }
       } catch {
         // use defaults
       }
@@ -58,38 +139,133 @@ export function useWorkerWizard() {
       setFormData((prev) => ({
         ...prev,
         phone: storedUser.phone,
-        fullName: storedUser.name || prev.fullName,
+        fullName: "",
+        profilePhoto: "",
+        skills: [],
+        serviceAreas: [],
+        cnicFront: "",
+        cnicFrontName: "",
+        cnicBack: "",
+        cnicBackName: "",
+        certificateFile: "",
+        certificateName: "",
       }));
     }
 
-    // Server profile sync
+    // Server profile sync & route guard
     fetchWorkerOnboardingProfile().then((serverData) => {
-      if (!serverData) return;
+      if (!serverData) {
+        setIsCheckingAuth(false);
+        return;
+      }
+
+      const vStatus = serverData.workerProfile?.verificationStatus;
+
+      // Guard 1: Already APPROVED workers must NOT re-run onboarding (protects profile & jobs)
+      if (vStatus === "APPROVED") {
+        router.replace("/worker/dashboard");
+        return;
+      }
+
+      // Guard 2: Workers who completed all 5 steps and are waiting for admin review belong on status page
+      if (vStatus === "PENDING" && serverData.progress?.complete === true) {
+        router.replace("/worker/verification-status");
+        return;
+      }
+
+      setIsCheckingAuth(false);
+
       setFormData((prev) => {
         const cnicFrontDoc = serverData.documents?.find((d) => d.type === "CNIC_FRONT");
         const cnicBackDoc = serverData.documents?.find((d) => d.type === "CNIC_BACK");
         const certDoc = serverData.documents?.find((d) => d.type === "CERTIFICATE");
         const areaLabels = serverData.serviceAreas?.map((a) => a.label) || [];
 
-        return {
+        // Clean server skills: filter out phantom or seed-categories
+        let serverSkills: string[] = [];
+        if (Array.isArray(serverData.workerProfile?.skills)) {
+          serverSkills = serverData.workerProfile.skills.filter(
+            (s: string) => typeof s === "string" && s.trim().length > 0 && !s.startsWith("seed-category-"),
+          );
+        }
+
+        const activeSkills =
+          prev.skills && prev.skills.length > 0
+            ? prev.skills
+            : serverSkills;
+
+        // Validate server service areas
+        let serverAreas: string[] = [];
+        if (Array.isArray(areaLabels)) {
+          const filtered = areaLabels.filter(
+            (a: string) => typeof a === "string" && a.trim().length > 0 && !a.startsWith("seed-area-"),
+          );
+          if (filtered.length > 0) {
+            serverAreas = filtered;
+          }
+        }
+
+        // Service areas must strictly be 0 selected unless worker previously chose an explicit subset
+        const activeAreas =
+          prev.serviceAreas && prev.serviceAreas.length > 0
+            ? prev.serviceAreas.filter((a) => typeof a === "string" && a.trim().length > 0)
+            : serverAreas;
+
+        const cleanServerName = serverData.user?.name || "";
+
+        // Clean out seed placeholder CNIC documents from server
+        const cleanServerFront = isPlaceholderOrDummyDoc(cnicFrontDoc?.url) ? "" : cnicFrontDoc!.url;
+        const cleanServerBack = isPlaceholderOrDummyDoc(cnicBackDoc?.url) ? "" : cnicBackDoc!.url;
+        const cleanServerCert = isPlaceholderOrDummyDoc(certDoc?.url) ? "" : certDoc!.url;
+
+        const activeFront = cleanServerFront || (isPlaceholderOrDummyDoc(prev.cnicFront) ? "" : prev.cnicFront);
+        const activeFrontName = activeFront
+          ? (cleanServerFront ? (cnicFrontDoc?.fileName || "") : prev.cnicFrontName)
+          : "";
+
+        const activeBack = cleanServerBack || (isPlaceholderOrDummyDoc(prev.cnicBack) ? "" : prev.cnicBack);
+        const activeBackName = activeBack
+          ? (cleanServerBack ? (cnicBackDoc?.fileName || "") : prev.cnicBackName)
+          : "";
+
+        const activeCert = cleanServerCert || (isPlaceholderOrDummyDoc(prev.certificateFile) ? "" : prev.certificateFile);
+        const activeCertName = activeCert
+          ? (cleanServerCert ? (certDoc?.fileName || "") : prev.certificateName)
+          : "";
+
+        const nextSyncedData = {
           ...prev,
-          fullName: serverData.user?.name || prev.fullName,
+          fullName: prev.fullName || cleanServerName || "",
           phone: serverData.user?.phone || prev.phone,
-          profilePhoto: serverData.user?.avatarUrl || prev.profilePhoto,
-          skills: serverData.workerProfile?.skills?.length ? serverData.workerProfile.skills : prev.skills,
+          profilePhoto: isPlaceholderOrDummyDoc(prev.profilePhoto) ? "" : prev.profilePhoto,
+          skills: activeSkills,
           experienceYears: serverData.workerProfile?.experienceYears ? String(serverData.workerProfile.experienceYears) : prev.experienceYears,
           bio: serverData.workerProfile?.bio || prev.bio,
-          serviceAreas: areaLabels.length ? areaLabels : prev.serviceAreas,
-          cnicFront: cnicFrontDoc?.url || prev.cnicFront,
-          cnicFrontName: cnicFrontDoc?.fileName || prev.cnicFrontName,
-          cnicBack: cnicBackDoc?.url || prev.cnicBack,
-          cnicBackName: cnicBackDoc?.fileName || prev.cnicBackName,
-          certificateFile: certDoc?.url || prev.certificateFile,
-          certificateName: certDoc?.fileName || prev.certificateName,
+          serviceAreas: activeAreas,
+          cnicFront: activeFront,
+          cnicFrontName: activeFrontName,
+          cnicBack: activeBack,
+          cnicBackName: activeBackName,
+          certificateFile: activeCert,
+          certificateName: activeCertName,
         };
+
+        if (typeof window !== "undefined") {
+          try {
+            window.localStorage.setItem(STORAGE_KEY, JSON.stringify(nextSyncedData));
+          } catch {
+            // ignore storage quota issues
+          }
+        }
+
+        return nextSyncedData;
       });
+    }).catch((err) => {
+      setIsCheckingAuth(false);
+      // Sync is best-effort: local draft stays authoritative if the server is unreachable
+      console.warn("[useWorkerWizard] server profile sync skipped:", err);
     });
-  }, []);
+  }, [router]);
 
   const updateFormData = useCallback((partial: Partial<WorkerProfileFormData>) => {
     setFormData((prev) => {
@@ -161,11 +337,11 @@ export function useWorkerWizard() {
           return false;
         }
       } else if (step === 5) {
-        if (!formData.cnicFront || formData.cnicFront.trim() === "") {
+        if (!formData.cnicFront || formData.cnicFront.trim() === "" || isPlaceholderOrDummyDoc(formData.cnicFront)) {
           setStepError(tVal("cnicFrontRequired"));
           return false;
         }
-        if (!formData.cnicBack || formData.cnicBack.trim() === "") {
+        if (!formData.cnicBack || formData.cnicBack.trim() === "" || isPlaceholderOrDummyDoc(formData.cnicBack)) {
           setStepError(tVal("cnicBackRequired"));
           return false;
         }
@@ -223,11 +399,22 @@ export function useWorkerWizard() {
     }
   }, [formData, goToStep]);
 
+  const logoutAndSwitchWorker = useCallback(() => {
+    clearTokens("WORKER");
+    if (typeof window !== "undefined") {
+      window.localStorage.removeItem(STORAGE_KEY);
+    }
+    router.replace("/worker/sign-up");
+  }, [router]);
+
+
   return {
     currentStep,
     formData,
     stepError,
     isSubmitting,
+    isCheckingAuth,
+    logoutAndSwitchWorker,
     updateFormData,
     goToStep,
     nextStep,
@@ -235,3 +422,4 @@ export function useWorkerWizard() {
     submitFinalProfile,
   };
 }
+

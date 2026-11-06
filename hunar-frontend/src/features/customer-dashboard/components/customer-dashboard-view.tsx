@@ -1,7 +1,10 @@
 "use client";
 
+import { useEffect } from "react";
 import { useLocale } from "next-intl";
-import { getStoredUser } from "@/lib/api-client";
+import { useQueryClient } from "@tanstack/react-query";
+import { getCustomerJobs } from "@/features/customer-jobs/api/customer-jobs-api";
+import { getAccessToken, getRefreshToken } from "@/lib/api-client";
 import { ActiveVisitBanner } from "./active-visit-banner";
 import { WorkerFixBrandBanner } from "./hunar-brand-banner";
 import { ServicesGrid } from "./services-grid";
@@ -9,12 +12,20 @@ import { ServicesGrid } from "./services-grid";
 export function CustomerDashboardView() {
   const locale = useLocale();
   const isUrdu = locale === "ur";
-  const storedUser = getStoredUser();
-  const customerName =
-    storedUser?.name || storedUser?.phone || (isUrdu ? "کسٹمر" : "Customer");
+  const queryClient = useQueryClient();
+
+  useEffect(() => {
+    if (getAccessToken("CUSTOMER") || getRefreshToken("CUSTOMER")) {
+      void queryClient.prefetchQuery({
+        queryKey: ["customer", "jobs", "feed"],
+        queryFn: () => getCustomerJobs({ limit: 50, scheduleType: "scheduled" }),
+        staleTime: 5 * 60_000,
+      });
+    }
+  }, [queryClient]);
 
   return (
-    <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-0 pb-4 sm:pb-6 flex flex-col gap-4 sm:gap-6 flex-1">
+    <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-0 pb-4 sm:pb-6 flex flex-col gap-4 sm:gap-6 flex-1 min-h-[calc(100dvh-180px)] lg:min-h-[calc(100vh-140px)]">
       {/* Top Greeting Header */}
       <div className="flex flex-col">
         <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-[#123B5D]">
@@ -25,11 +36,13 @@ export function CustomerDashboardView() {
       {/* Active Visit & Doorstep OTP PIN Banner */}
       <ActiveVisitBanner />
 
-      {/* Small Service Cards (3 in 1 line, max 3 lines with Show All button) */}
+      {/* Small Service Cards (2 in 1 line on mobile, 4 in 1 line on desktop) */}
       <ServicesGrid />
 
-      {/* WorkerFIX Branding Banner below service grid */}
-      <WorkerFixBrandBanner />
+      {/* WorkerFIX Branding Banner below service grid - hidden on mobile view */}
+      <div className="mt-auto pt-2 sm:pt-4 hidden sm:block">
+        <WorkerFixBrandBanner />
+      </div>
     </div>
   );
 }

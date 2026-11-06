@@ -7,7 +7,7 @@ import {
   Check,
   ChevronDown,
   CreditCard,
-  HelpCircle,
+  CircleHelp,
   Search,
   Shield,
   Sparkles,
@@ -40,13 +40,13 @@ export function FaqAccordion({
   const categories: {
     id: FaqCategory;
     label: string;
-    icon: typeof HelpCircle;
+    icon: typeof CircleHelp;
     count: number;
   }[] = [
     {
       id: "all",
       label: isUrdu ? "تمام سوالات" : "All Questions",
-      icon: HelpCircle,
+      icon: CircleHelp,
       count: faqs.length,
     },
     {
@@ -186,7 +186,7 @@ export function FaqAccordion({
       <div className="flex flex-col gap-3">
         {filteredFaqs.length === 0 ? (
           <div className="p-8 text-center bg-slate-50 rounded-xl border border-dashed border-slate-200 flex flex-col items-center gap-2">
-            <HelpCircle className="size-8 text-slate-300" />
+            <CircleHelp className="size-8 text-slate-300" />
             <p className="text-xs font-bold text-slate-700">
               {isUrdu ? "کوئی مماثل سوال نہیں ملا" : "No matching questions found"}
             </p>

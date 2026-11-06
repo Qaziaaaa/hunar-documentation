@@ -10,6 +10,7 @@ export enum UploadCategory {
   CNIC_DOCUMENT = 'cnic-document',
   WALLET_SCREENSHOT = 'wallet-screenshot',
   VOICE_NOTE = 'voice-note',
+  CATEGORY_IMAGE = 'category-image',
 }
 
 export interface CompressOptions {
@@ -104,6 +105,14 @@ export const UPLOAD_PRESETS: Record<UploadCategory, UploadPreset> = {
     allowedMimeTypes: AUDIO_MIME_TYPES,
     maxBytes: 10 * MB,
   },
+  [UploadCategory.CATEGORY_IMAGE]: {
+    category: UploadCategory.CATEGORY_IMAGE,
+    folder: 'category-images',
+    isDocument: false,
+    allowedMimeTypes: IMAGE_MIME_TYPES,
+    maxBytes: 5 * MB,
+    compress: { maxSizePx: 1024, quality: 80 },
+  },
 };
 
 export interface MulterUploadOptions {
@@ -122,7 +131,11 @@ export function multerOptions(category: UploadCategory): MulterUploadOptions {
     storage: memoryStorage(),
     limits: { fileSize: preset.maxBytes, files: 1 },
     fileFilter: (_req, file, cb) => {
-      if (!preset.allowedMimeTypes.includes(file.mimetype)) {
+      const baseMime = (file.mimetype || '').split(';')[0].trim().toLowerCase();
+      if (
+        !preset.allowedMimeTypes.includes(file.mimetype) &&
+        !preset.allowedMimeTypes.includes(baseMime)
+      ) {
         return cb(
           new HttpException(
             `UNSUPPORTED_FILE_TYPE: this endpoint accepts ${preset.allowedMimeTypes.join(', ')}`,
@@ -162,7 +175,8 @@ export function multerGenericOptions(): MulterUploadOptions {
 }
 
 export function extensionFromMime(mimeType: string): string {
-  switch (mimeType) {
+  const base = (mimeType || '').split(';')[0].trim().toLowerCase();
+  switch (base) {
     case 'image/jpeg':
       return 'jpg';
     case 'image/png':
@@ -185,4 +199,85 @@ export function extensionFromMime(mimeType: string): string {
     default:
       return 'bin';
   }
+}
+
+/**
+ * Inspects binary magic numbers (file signatures) to detect the genuine file type,
+ * protecting against client-spoofed Content-Type headers (AUDIT-024).
+ */
+export function detectMimeTypeFromMagicBytes(buffer: Buffer): string | null {
+  if (!buffer || buffer.length < 4) return null;
+
+  // JPEG: FF D8 FF
+  if (buffer[0] === 0xff && buffer[1] === 0xd8 && buffer[2] === 0xff) {
+    return 'image/jpeg';
+  }
+
+  // PNG: 89 50 4E 47 0D 0A 1A 0A
+  if (
+    buffer.length >= 8 &&
+    buffer[0] === 0x89 &&
+    buffer[1] === 0x50 &&
+    buffer[2] === 0x4e &&
+    buffer[3] === 0x47 &&
+    buffer[4] === 0x0d &&
+    buffer[5] === 0x0a &&
+    buffer[6] === 0x1a &&
+    buffer[7] === 0x0a
+  ) {
+    return 'image/png';
+  }
+
+  // WebP: RIFF .... WEBP
+  if (
+    buffer.length >= 12 &&
+    buffer.toString('ascii', 0, 4) === 'RIFF' &&
+    buffer.toString('ascii', 8, 12) === 'WEBP'
+  ) {
+    return 'image/webp';
+  }
+
+  // WAV: RIFF .... WAVE
+  if (
+    buffer.length >= 12 &&
+    buffer.toString('ascii', 0, 4) === 'RIFF' &&
+    buffer.toString('ascii', 8, 12) === 'WAVE'
+  ) {
+    return 'audio/wav';
+  }
+
+  // OGG: 4F 67 67 53 ('OggS')
+  if (buffer.length >= 4 && buffer.toString('ascii', 0, 4) === 'OggS') {
+    return 'audio/ogg';
+  }
+
+  // WebM / EBML / Matroska: 1A 45 DF A3
+  if (
+    buffer[0] === 0x1a &&
+    buffer[1] === 0x45 &&
+    buffer[2] === 0xdf &&
+    buffer[3] === 0xa3
+  ) {
+    return 'audio/webm';
+  }
+
+  // MP3 with ID3 header: 49 44 33 ('ID3')
+  if (buffer.length >= 3 && buffer.toString('ascii', 0, 3) === 'ID3') {
+    return 'audio/mpeg';
+  }
+
+  // MP3 sync bytes without ID3: FF FB, FF F3, FF F2
+  if (
+    buffer[0] === 0xff &&
+    (buffer[1] & 0xe0) === 0xe0
+  ) {
+    return 'audio/mpeg';
+  }
+
+  // MP4 / M4A: .... ftyp
+  if (buffer.length >= 8 && buffer.toString('ascii', 4, 8) === 'ftyp') {
+    return 'audio/mp4';
+  }
+
+  return null;
 }

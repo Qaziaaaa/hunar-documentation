@@ -1,50 +1,72 @@
 import { http } from "@/lib/api-client";
-import { isMockMode } from "@/lib/data-source";
-import { MOCK_CUSTOMER_JOBS, MOCK_WORKER_PROFILES } from "../data/mock-customer-jobs";
-import type { CustomerJob, JobStatus, WorkerOffer, WorkerProfile } from "../types";
+import { extractTimeSlotFromVisitTime } from "@/lib/format";
+import type { CustomerJob, JobStatus, WorkerOffer, WorkerProfile, WorkerReview } from "../types";
+
+export interface GetCustomerJobsOptions {
+  page?: number;
+  limit?: number;
+  status?: string;
+  tab?: string;
+  scheduleType?: "scheduled" | "asap" | string;
+}
+
+export interface CustomerJobsCounts {
+  offers: number;
+  scheduled: number;
+  completed: number;
+  all: number;
+}
+
+export type CustomerJobsArray = CustomerJob[] & {
+  counts?: CustomerJobsCounts;
+  total?: number;
+};
 
 /**
- * Fetch all jobs for the logged-in customer, enriched with offers & selected worker.
+ * Fetch jobs for the logged-in customer incrementally, enriched on-demand with worker/offers.
  */
-export async function getCustomerJobs(): Promise<CustomerJob[]> {
-  if (isMockMode()) {
-    return MOCK_CUSTOMER_JOBS;
+export async function getCustomerJobs(options?: GetCustomerJobsOptions | unknown): Promise<CustomerJobsArray> {
+  const isOptionsObject =
+    typeof options === "object" &&
+    options !== null &&
+    ("page" in options || "limit" in options || "status" in options || "tab" in options || "scheduleType" in options);
+  const opts = isOptionsObject ? (options as GetCustomerJobsOptions) : undefined;
+  const page = opts?.page ?? 1;
+  const limit = opts?.limit ?? 20;
+  const statusQuery = opts?.status ? `&status=${encodeURIComponent(opts.status)}` : "";
+  const tabQuery = opts?.tab ? `&tab=${encodeURIComponent(opts.tab)}` : "";
+  const scheduleTypeQuery = opts?.scheduleType ? `&scheduleType=${encodeURIComponent(opts.scheduleType)}` : "";
+  const res = await http.get<any>(`/jobs/customer?page=${page}&limit=${limit}${statusQuery}${tabQuery}${scheduleTypeQuery}`);
+  const rows: unknown[] = Array.isArray(res)
+    ? res
+    : res?.data ?? res?.items ?? [];
+
+  const list: CustomerJobsArray = rows.map(transformListRow);
+  if (res && typeof res === "object") {
+    const rawCounts = (res as any).counts ?? (res as any).meta?.counts;
+    if (rawCounts) list.counts = rawCounts;
+    const rawTotal = (res as any).total ?? (res as any).meta?.total;
+    if (rawTotal != null) list.total = Number(rawTotal);
   }
-  const res = await http.get<{ items: any[]; meta?: unknown }>(
-    "/jobs/customer?limit=100"
-  );
-  const rows = res?.items ?? [];
-  const jobs = rows.map(transformListRow);
-
-  await Promise.allSettled(
-    jobs.map(async (job) => {
-      try {
-        const detail = await getJobDetail(job.id);
-        Object.assign(job, detail);
-      } catch (err) {
-        console.warn(`[getCustomerJobs] Detail fetch failed for ${job.id}:`, err);
-      }
-    })
-  );
-
-  return jobs;
+  return list;
 }
 
 /**
  * Fetch detailed job information (including status, worker, location, and offers)
  */
 export async function getJobDetail(jobId: string): Promise<CustomerJob> {
-  if (isMockMode()) {
-    const mock =
-      MOCK_CUSTOMER_JOBS.find((job) => job.id === jobId) ?? MOCK_CUSTOMER_JOBS[0];
-    if (!mock) {
-      throw new Error(`JOB_NOT_FOUND: ${jobId}`);
-    }
-    return mock;
-  }
   const res = await http.get<any>(`/jobs/${jobId}`);
   if (!res || !res.id) {
     throw new Error(`JOB_NOT_FOUND: ${jobId}`);
+  }
+  const isAsap = res.urgency === "EMERGENCY" || res.urgency === "URGENT" || res.urgency === "HIGH" || (!res.preferredVisitTime && res.urgency !== "NORMAL");
+  let offers: WorkerOffer[] = (res.offers || []).map(transformBackendOffer);
+  if (offers.length === 0 && Number(res.offerCount ?? 0) > 0) {
+    try {
+      offers = await getJobOffers(jobId);
+    } catch (err) {
+      console.warn(`[getJobDetail] Offers fetch failed for ${jobId}:`, err);
+    }
   }
   return {
     id: res.id,
@@ -55,42 +77,56 @@ export async function getJobDetail(jobId: string): Promise<CustomerJob> {
     photos: res.images || [],
     voiceNoteUrl: res.voiceNoteUrl,
     address: res.address,
-    area: res.area || "Peshawar",
-    city: res.city || "Peshawar",
-    scheduleType: res.urgency === "URGENT" ? "asap" : "scheduled",
+    area: res.area || "",
+    city: res.city || "",
+    scheduleType: isAsap ? "asap" : "scheduled",
     preferredDate: res.preferredVisitTime || res.createdAt || new Date().toISOString(),
-    preferredTimeSlot: "9:00 AM - 1:00 PM",
+    preferredTimeSlot:
+      res.preferredTimeSlot ||
+      res.timeSlot ||
+      (isAsap ? "⚡ Immediate" : extractTimeSlotFromVisitTime(res.preferredVisitTime)),
     status: mapJobStatus(res.status),
+    rawStatus: res.status,
     createdAt: res.createdAt || new Date().toISOString(),
-    offers: (res.offers || []).map(transformBackendOffer),
+    offerCount: Number(res.offerCount ?? offers.length),
+    offers,
     selectedOffer: res.selectedWorker
       ? transformBackendOffer({
           id: res.selectedWorkerId,
           jobId: res.id,
           worker: res.selectedWorker,
-          visitCharge: Number(res.lockedVisitCharge ?? 350),
+          visitCharge: Number(res.lockedVisitCharge ?? 0),
           message: res.offerMessage,
           createdAt: res.createdAt,
         })
       : undefined,
     securityPin: res.securityPin,
+    suggestedVisitCharge: res.suggestedVisitCharge != null ? Number(res.suggestedVisitCharge) : undefined,
+    repairCharge: Number(res.repairCharge ?? res.repairEstimate ?? 0),
+    totalAmount:
+      (res.selectedWorker ? Number(res.lockedVisitCharge ?? 0) : 0) +
+      Number(res.repairCharge ?? res.repairEstimate ?? 0),
+    hasReviewed: Boolean(res.hasReviewed ?? (res.customerReview || (Array.isArray(res.reviews) && res.reviews.length > 0))),
+    customerReview: res.customerReview ?? (Array.isArray(res.reviews) && res.reviews[0] ? res.reviews[0] : null),
+    workerReview: res.workerReview ?? null,
+    cancelReason: res.cancelReason || undefined,
+    cancelledAt: res.cancelledAt || undefined,
   };
 }
 
 /**
  * Fetch all bids/offers for a specific job
  */
-export async function getJobOffers(jobId: string): Promise<WorkerOffer[]> {
-  if (isMockMode()) {
-    const mock =
-      MOCK_CUSTOMER_JOBS.find((job) => job.id === jobId) ?? MOCK_CUSTOMER_JOBS[0];
-    return mock?.offers ?? [];
-  }
-  const res = await http.get<any[]>(`/jobs/${jobId}/offers`);
-  if (!Array.isArray(res)) {
-    throw new Error(`INVALID_OFFERS_RESPONSE: ${jobId}`);
-  }
-  return res.map(transformBackendOffer);
+export async function getJobOffers(
+  jobId: string,
+  options?: { page?: number; limit?: number },
+): Promise<WorkerOffer[]> {
+  const pageQuery = options?.page ? `?page=${options.page}&limit=${options.limit ?? 20}` : "";
+  const res = await http.get<any>(`/jobs/${jobId}/offers${pageQuery}`);
+  const rawList: unknown[] = Array.isArray(res)
+    ? res
+    : res?.items ?? res?.data ?? [];
+  return rawList.map(transformBackendOffer);
 }
 
 /**
@@ -100,9 +136,6 @@ export async function acceptWorkerOffer(
   jobId: string,
   offerId: string
 ): Promise<{ success: boolean; visitId?: string }> {
-  if (isMockMode()) {
-    return { success: true, visitId: "VST-98214" };
-  }
   const res = await http.put<{ id?: string; visit?: { id: string } }>(
     `/jobs/${jobId}/offers/${offerId}/accept`,
     { scheduledTime: new Date().toISOString() }
@@ -117,9 +150,6 @@ export async function rejectWorkerOffer(
   jobId: string,
   offerId: string
 ): Promise<{ success: boolean }> {
-  if (isMockMode()) {
-    return { success: true };
-  }
   await http.put(`/jobs/${jobId}/offers/${offerId}/reject`);
   return { success: true };
 }
@@ -133,9 +163,6 @@ export async function counterWorkerOffer(
   counterPrice: number,
   message?: string
 ): Promise<{ success: boolean }> {
-  if (isMockMode()) {
-    return { success: true };
-  }
   await http.put(`/jobs/${jobId}/offers/${offerId}/counter`, {
     counterPrice,
     message,
@@ -150,9 +177,6 @@ export async function cancelCustomerJob(
   jobId: string,
   reason?: string
 ): Promise<{ success: boolean }> {
-  if (isMockMode()) {
-    return { success: true };
-  }
   await http.put(`/jobs/${jobId}/cancel`, { reason });
   return { success: true };
 }
@@ -163,11 +187,18 @@ export async function cancelCustomerJob(
 export async function getWorkerPublicProfile(
   workerId: string
 ): Promise<WorkerProfile | null> {
-  if (isMockMode()) {
-    return MOCK_WORKER_PROFILES[workerId] ?? MOCK_WORKER_PROFILES["worker-1"] ?? null;
+  try {
+    const res = await http.get<any>(`/workers/${workerId}`);
+    return res ? transformBackendWorker(res) : null;
+  } catch {
+    try {
+      const res = await http.get<any>(`/users/worker/${workerId}`);
+      return res ? transformBackendWorker(res) : null;
+    } catch (err) {
+      console.warn(`[getWorkerPublicProfile] Failed for ${workerId}:`, err);
+      return null;
+    }
   }
-  const res = await http.get<any>(`/users/worker/${workerId}`);
-  return res ? transformBackendWorker(res) : null;
 }
 
 // ---------------------------------------------------------------------------
@@ -179,8 +210,11 @@ function mapJobStatus(status?: string): JobStatus {
     case "OPEN":
     case "OFFERS_RECEIVED":
       return "receiving_offers";
+    case "OFFER_ACCEPTED":
     case "WORKER_ASSIGNED":
-      return "worker_selected";
+      // Backend auto-creates a SCHEDULED visit row when the offer is accepted,
+      // so from the customer's perspective the visit is already scheduled.
+      return "visit_scheduled";
     case "VISIT_SCHEDULED":
       return "visit_scheduled";
     case "VISIT_IN_PROGRESS":
@@ -204,52 +238,141 @@ function mapJobStatus(status?: string): JobStatus {
 }
 
 function transformListRow(row: any): CustomerJob {
+  const isAsap = row.urgency === "EMERGENCY" || row.urgency === "URGENT" || row.urgency === "HIGH" || (!row.preferredVisitTime && row.urgency !== "NORMAL");
+  const offers: WorkerOffer[] = Array.isArray(row.offers)
+    ? row.offers.map(transformBackendOffer)
+    : [];
   return {
     id: row.id,
     title: row.title,
-    category: row.categoryName || "General Service",
-    subCategory: row.categoryName || "General Service",
-    description: "",
+    category: row.categoryName || row.category?.name || "General Service",
+    subCategory: row.categoryName || row.category?.name || "General Service",
+    description: row.description || "",
     photos: row.images || [],
     voiceNoteUrl: row.voiceNoteUrl,
     address: row.address,
-    area: row.area || "Peshawar",
-    city: row.city || "Peshawar",
-    scheduleType: "scheduled",
+    area: row.area || "",
+    city: row.city || "",
+    scheduleType: isAsap ? "asap" : "scheduled",
     preferredDate: row.preferredVisitTime || row.createdAt || new Date().toISOString(),
-    preferredTimeSlot: "9:00 AM - 1:00 PM",
+    preferredTimeSlot:
+      row.preferredTimeSlot ||
+      row.timeSlot ||
+      (isAsap ? "⚡ Immediate" : extractTimeSlotFromVisitTime(row.preferredVisitTime)),
     status: mapJobStatus(row.status),
+    rawStatus: row.status,
     createdAt: row.createdAt || new Date().toISOString(),
-    offers: [],
+    offerCount: Number(row.offerCount ?? offers.length),
+    offers,
+    selectedOffer: row.selectedWorker
+      ? transformBackendOffer({
+          id: row.selectedWorkerId,
+          jobId: row.id,
+          worker: row.selectedWorker,
+          visitCharge: Number(row.lockedVisitCharge ?? 0),
+          createdAt: row.createdAt,
+        })
+      : undefined,
+    suggestedVisitCharge: row.suggestedVisitCharge != null ? Number(row.suggestedVisitCharge) : undefined,
+    repairCharge: Number(row.repairCharge ?? 0),
+    totalAmount:
+      (row.selectedWorker ? Number(row.lockedVisitCharge ?? 0) : 0) +
+      Number(row.repairCharge ?? 0),
+    hasReviewed: Boolean(row.hasReviewed ?? (row.customerReview || (Array.isArray(row.reviews) && row.reviews.length > 0))),
+    customerReview: row.customerReview ?? (Array.isArray(row.reviews) && row.reviews[0] ? row.reviews[0] : null),
+    workerReview: row.workerReview ?? null,
+    cancelReason: row.cancelReason || undefined,
+    cancelledAt: row.cancelledAt || undefined,
   };
 }
 
 function transformBackendWorker(worker: any): WorkerProfile {
+  const rawSkills: string[] = Array.isArray(worker.skillNames) && worker.skillNames.length > 0
+    ? worker.skillNames
+    : Array.isArray(worker.skills)
+    ? worker.skills
+        .map((s: any) => (typeof s === "string" ? s : s.name || s.nameUrdu || ""))
+        .filter(Boolean)
+    : Array.isArray(worker.expertiseTags)
+    ? worker.expertiseTags
+    : [];
+
+  const skillsList: string[] = rawSkills.filter(
+    (s) => !s.startsWith("seed-category-") && !/^[0-9a-f]{8}-[0-9a-f]{4}-/i.test(s)
+  );
+
+  const rawReviews = Array.isArray(worker.reviews) ? worker.reviews : [];
+  const reviews: WorkerReview[] = rawReviews.map((r: any) => {
+    let tags: string[] = Array.isArray(r.tags) ? r.tags : [];
+    let cleanComment = r.comment || "";
+    if (tags.length === 0 && cleanComment) {
+      const match = cleanComment.match(/(?:Positive Highlights|کاریگر کے بارے میں تاثرات):\s*([^.\n]+)/i);
+      if (match) {
+        tags = match[1].split(/,\s*/).map((s: string) => s.trim()).filter(Boolean);
+        const stripped = cleanComment.replace(/(?:Positive Highlights|کاریگر کے بارے میں تاثرات):\s*[^.\n]+\.?\s*/i, "").trim();
+        cleanComment = stripped;
+      }
+    }
+    return {
+      id: r.id || String(Math.random()),
+      customerName: r.customerName || r.reviewer?.name || "Customer",
+      customerArea: r.customerArea || r.job?.area || r.job?.city || "",
+      rating: Number(r.rating || 0),
+      date: r.date || (r.createdAt ? new Date(r.createdAt).toLocaleDateString() : ""),
+      comment: cleanComment,
+      tags,
+    };
+  });
+
+  const ratingAvg =
+    typeof worker.rating === "object" && worker.rating !== null
+      ? Number(worker.rating.average ?? 0)
+      : Number(worker.rating ?? worker.avgRating ?? 0);
+
+  const totalReviewsCount =
+    typeof worker.rating === "object" && worker.rating !== null
+      ? Number(worker.rating.count ?? 0)
+      : Number(worker.totalReviews ?? worker.reviewCount ?? worker.ratingCount ?? 0);
+
+  const completedCount = Number(
+    worker.completedJobsCount ?? worker.completedJobs ?? 0
+  );
+
+  const primaryArea =
+    worker.serviceArea ||
+    worker.primaryArea ||
+    (Array.isArray(worker.serviceAreas) && worker.serviceAreas[0]?.label) ||
+    (Array.isArray(worker.serviceAreas) && worker.serviceAreas[0]?.address) ||
+    "";
+
   return {
-    id: worker.id || "worker-unknown",
-    name: worker.name || worker.fullName || "Worker",
+    id: worker.id || "",
+    name: worker.name || worker.fullName || "",
     businessName: worker.businessName,
-    avatarUrl:
-      worker.avatarUrl ||
-      worker.avatar ||
-      "https://images.unsplash.com/photo-1540569014015-19a7be504e3a?w=150&auto=format&fit=crop&q=80",
+    avatarUrl: worker.avatarUrl || worker.avatar || "",
     phone: worker.phone || worker.mobile || "",
-    rating: Number(worker.rating || 0),
-    totalReviews: Number(worker.totalReviews || worker.reviewCount || 0),
-    jobSuccessRate: Number(worker.jobSuccessRate || 0),
-    completedJobsCount: Number(worker.completedJobsCount || 0),
-    responseTime: worker.responseTime || "< 15m",
-    tradeCategory: worker.tradeCategory || worker.category?.name || "Technician",
-    serviceArea: worker.serviceArea || worker.area || "Peshawar",
+    rating: ratingAvg,
+    totalReviews: totalReviewsCount,
+    jobSuccessRate: worker.jobSuccessRate != null ? Number(worker.jobSuccessRate) : null,
+    completedJobsCount: completedCount,
+    responseTime: worker.responseTime || "",
+    tradeCategory:
+      worker.tradeCategory ||
+      worker.category?.name ||
+      (skillsList[0] || ""),
+    serviceArea: primaryArea,
     experienceYears: Number(worker.experienceYears || worker.yearsOfExperience || 0),
     bio: worker.bio || worker.about || "",
-    isCnicVerified: !!worker.isCnicVerified,
-    isNadraCleared: !!worker.isNadraCleared,
-    isPoliceCleared: !!worker.isPoliceCleared,
-    hunarBadgeId: "#OW-" + (worker.hunarBadgeNumber || worker.userNumber || "0000"),
-    expertiseTags: worker.skills || worker.expertiseTags || [],
-    workProjects: [],
-    reviews: [],
+    isCnicVerified: Boolean(worker.isCnicVerified),
+    isNadraCleared: Boolean(worker.isNadraCleared),
+    hunarBadgeId: worker.hunarBadgeNumber
+      ? `#OW-${worker.hunarBadgeNumber}`
+      : worker.id
+      ? `#OW-${worker.id.slice(0, 4).toUpperCase()}`
+      : "",
+    expertiseTags: skillsList,
+    workProjects: Array.isArray(worker.workProjects) ? worker.workProjects : [],
+    reviews,
     ratingBreakdown: worker.ratingBreakdown || {
       fiveStar: 0,
       fourStar: 0,
@@ -260,15 +383,26 @@ function transformBackendWorker(worker: any): WorkerProfile {
   };
 }
 
-function transformBackendOffer(offer: any): WorkerOffer {
+export function transformBackendOffer(offer: any): WorkerOffer {
+  const isDeclined =
+    offer.isDeclined === true ||
+    offer.status === "REJECTED" ||
+    offer.status === "WITHDRAWN";
+
   return {
     id: offer.id,
     jobId: offer.jobId,
     worker: transformBackendWorker(offer.worker || {}),
     visitFee: Number(offer.visitCharge || offer.counterPrice || 0),
-    estimatedArrival: "Today",
+    estimatedArrival: offer.estimatedArrival || "",
     distanceKm: Number(offer.distanceKm || 0),
     createdAt: offer.createdAt || new Date().toISOString(),
+    expiresAt: offer.expiresAt,
+    serverTime: offer.serverTime,
     note: offer.message,
+    status: offer.status,
+    isDeclined: offer.status === "PENDING" ? false : isDeclined,
+    maxNegotiationRounds: offer.maxNegotiationRounds,
+    minimumVisitFee: offer.minimumVisitFee,
   };
 }

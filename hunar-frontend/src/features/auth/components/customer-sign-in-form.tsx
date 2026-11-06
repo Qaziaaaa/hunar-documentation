@@ -15,6 +15,7 @@ import {
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
+import { useSearchParams } from "next/navigation";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,10 +24,8 @@ import { setTokens } from "@/lib/api-client";
 import { customerLogin } from "../api/auth-api";
 import { getErrorMessage } from "../lib/error";
 import { normalizePkPhone } from "../lib/phone";
+import { getSafeRedirect } from "../lib/redirect";
 import { phoneSchema } from "../schemas/signup";
-// import { isMockMode } from "@/lib/data-source";
-import { isMockMode } from "@/lib/data-source";
-// test
 
 const signInSchema = z.object({
   phone: phoneSchema,
@@ -38,9 +37,15 @@ type SignInValues = z.infer<typeof signInSchema>;
 export function CustomerSignInForm() {
   const t = useTranslations("Auth");
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirectParam = searchParams.get("redirect");
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
+
+  const signUpHref = redirectParam
+    ? `/customer/sign-up?redirect=${encodeURIComponent(redirectParam)}`
+    : "/customer/sign-up";
 
   const {
     register,
@@ -61,7 +66,7 @@ export function CustomerSignInForm() {
     try {
       const response = await customerLogin(normalized, values.password);
       setTokens(response.accessToken, response.refreshToken, response.user);
-      router.push("/customer/dashboard");
+      router.push(getSafeRedirect(redirectParam));
     } catch (error) {
       setSubmitError(getErrorMessage(error));
     } finally {
@@ -92,7 +97,7 @@ export function CustomerSignInForm() {
             {t("signIn")}
           </span>
           <Link
-            href="/customer/sign-up"
+            href={signUpHref}
             className="flex-1 rounded-full py-1.5 text-center text-xs font-semibold text-navy transition"
           >
             {t("register")}
@@ -130,12 +135,20 @@ export function CustomerSignInForm() {
         </div>
 
         <div className="space-y-1.5">
-          <label
-            htmlFor="cust-signin-password"
-            className="ml-1 block text-xs font-semibold text-navy"
-          >
-            {t("passwordLabel")}
-          </label>
+          <div className="flex items-center justify-between">
+            <label
+              htmlFor="cust-signin-password"
+              className="ml-1 block text-xs font-semibold text-navy"
+            >
+              {t("passwordLabel")}
+            </label>
+            <Link
+              href="/customer/forgot-password"
+              className="text-xs font-semibold text-teal hover:underline"
+            >
+              Forgot password?
+            </Link>
+          </div>
           <div className="relative">
             <Lock className="absolute left-4 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
             <Input
@@ -175,16 +188,6 @@ export function CustomerSignInForm() {
           </p>
         ) : null}
 
-        {/* Test credentials hint for development */}
-        {isMockMode() && (
-          <div className="flex items-start gap-1.5 rounded-xl bg-teal-100 px-3 py-2 text-xs font-medium text-teal-800">
-            <span className="mt-0.5 size-3.5 shrink-0">🧪</span>
-            <span>
-              <strong>Test login: </strong>any phone + password (6+ chars)
-            </span>
-          </div>
-        )}
-
         <div className="flex items-center gap-1.5 rounded-xl bg-slate-50 px-3 py-2 text-[11px] text-muted-foreground">
           <ShieldCheck className="size-3.5 text-teal shrink-0" />
           <span>{t("sessionNote")}</span>
@@ -207,26 +210,15 @@ export function CustomerSignInForm() {
             </>
           )}
         </Button>
-        <div className="mt-3 flex flex-col items-center gap-1.5 text-center text-sm text-muted-foreground">
-          <p>
-            {t("noAccount")}{" "}
-            <Link
-              href="/customer/sign-up"
-              className="font-semibold text-teal hover:underline"
-            >
-              {t("createOne")}
-            </Link>
-          </p>
-          <p className="text-xs">
-            Are you a skilled technician?{" "}
-            <Link
-              href="/worker/sign-in"
-              className="font-medium text-navy hover:underline"
-            >
-              Worker Sign In →
-            </Link>
-          </p>
-        </div>
+        <p className="mt-3 text-center text-sm text-muted-foreground">
+          {t("noAccount")}{" "}
+          <Link
+            href={signUpHref}
+            className="font-semibold text-teal hover:underline"
+          >
+            {t("createOne")}
+          </Link>
+        </p>
       </div>
     </form>
   );

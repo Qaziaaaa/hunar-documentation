@@ -27,8 +27,9 @@ import {
   updateNotificationPreferences,
 } from "@/services/worker/notification.service";
 import type { NotificationChannelType } from "@/types/settings";
+import { WorkerDashboardShell } from "@/features/worker-dashboard";
 
-export default function SettingsPage() {
+export function SettingsContent() {
   const t = useTranslations("Worker");
   const router = useRouter();
   const client = useQueryClient();
@@ -97,4 +98,12 @@ function PasswordField({ id, label, value, onChange }: { id: string; label: stri
 
 function PrivacyRow({ title, description, checked, onChange }: { title: string; description: string; checked: boolean; onChange: (checked: boolean) => void }) {
   return <div className="flex items-center justify-between gap-4 py-4"><div><p className="text-sm font-medium text-navy">{title}</p><p className="mt-1 text-xs text-muted-foreground">{description}</p></div><Switch checked={checked} onCheckedChange={onChange} aria-label={title} /></div>;
+}
+
+export default function SettingsPage() {
+  return (
+    <WorkerDashboardShell initialTab="settings">
+      <SettingsContent />
+    </WorkerDashboardShell>
+  );
 }

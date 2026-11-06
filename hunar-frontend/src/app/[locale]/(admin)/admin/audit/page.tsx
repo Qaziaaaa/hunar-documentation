@@ -1,26 +1,32 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { AdminShell } from "@/features/admin/components/admin-shell";
 import { adminApi } from "@/features/admin/api/admin-api";
 import type { AuditLogEntry } from "@/types/admin";
-import { ShieldCheck } from "lucide-react";
+import { TableRowsSkeleton } from "@/features/admin/components/table-skeleton";
+import { AlertCircle, RefreshCw, ShieldCheck } from "lucide-react";
 
 export default function AuditTrailPage() {
   const [logs, setLogs] = useState<AuditLogEntry[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
+    setLoading(true);
+    setError(null);
     adminApi
       .listAuditLogs()
       .then(setLogs)
-      .catch(() => setLogs([]))
+      .catch((err: unknown) => {
+        setLogs([]);
+        setError(err instanceof Error ? err.message : "Failed to load the audit log.");
+      })
       .finally(() => setLoading(false));
-  }, []);
+  }, [reloadKey]);
 
   return (
-    <AdminShell>
-      <div className="space-y-6">
+<div className="space-y-6">
         <div>
           <div className="flex items-center gap-2">
             <span className="inline-flex items-center gap-1.5 rounded-full border border-teal/20 bg-teal/10 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-teal">
@@ -34,6 +40,22 @@ export default function AuditTrailPage() {
             Audit history tracking every administrative action, user suspension, and verification decision
           </p>
         </div>
+
+        {error && (
+          <div className="flex items-center justify-between gap-3 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-xs font-semibold text-red-700">
+            <span className="flex items-center gap-2">
+              <AlertCircle className="size-4 shrink-0" />
+              {error}
+            </span>
+            <button
+              type="button"
+              onClick={() => setReloadKey((k) => k + 1)}
+              className="inline-flex items-center gap-1 rounded-lg border border-red-200 bg-white px-3 py-1.5 font-bold text-red-700 transition hover:bg-red-100"
+            >
+              <RefreshCw className="size-3.5" /> Retry
+            </button>
+          </div>
+        )}
 
         <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
           <table className="w-full text-left text-xs">
@@ -49,9 +71,9 @@ export default function AuditTrailPage() {
             </thead>
             <tbody className="divide-y divide-slate-100 font-medium">
               {loading ? (
-                <tr><td colSpan={6} className="py-6 px-4 text-center text-slate-500">Loading audit log...</td></tr>
+                <TableRowsSkeleton colSpan={6} label="Loading audit log" />
               ) : logs.length === 0 ? (
-                <tr><td colSpan={6} className="py-6 px-4 text-center text-slate-500">No audit entries recorded yet.</td></tr>
+                <tr><td colSpan={6} className="py-6 px-4 text-center text-slate-500">{error ? "Audit log unavailable." : "No audit entries recorded yet."}</td></tr>
               ) : (
               logs.map((log) => (
                 <tr key={log.id} className="transition hover:bg-slate-50">
@@ -69,6 +91,5 @@ export default function AuditTrailPage() {
           </table>
         </div>
       </div>
-    </AdminShell>
-  );
+);
 }

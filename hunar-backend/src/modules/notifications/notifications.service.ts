@@ -1,13 +1,15 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Optional } from '@nestjs/common';
 import { NotificationType, Prisma, WorkerVerificationStatus } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { RealtimeService } from '../realtime/realtime.service';
 import { NOTIFICATION_EVENTS, VISIT_WINDOW_AHEAD_MINUTES } from './notifications.events';
+import { SettingsService } from '../../common/settings/settings.service';
 import {
   buildNotificationTemplate,
   notificationTemplates,
   NotificationData,
 } from './notification.templates';
+import { haversineKm } from '../../common/helpers/geo.util';
 
 // Notification type identifiers mirror the tracked NotificationType.prisma enum 1:1 so the
 // listener can pass plain string literals. Keys are proven by notification.templates.ts.
@@ -32,6 +34,7 @@ export class NotificationsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly realtime: RealtimeService,
+    @Optional() private readonly settings?: SettingsService,
   ) {}
 
   /** Create + persist + realtime-push a notification for one worker. */
@@ -69,18 +72,27 @@ export class NotificationsService {
     latitude: number,
     longitude: number,
   ): Promise<string[]> {
+    // Match skills stored as category IDs (onboarding) or display names
+    // (hand-seeded profiles) — otherwise a legacy worker never gets JOB_MATCHED.
+    const category = await this.prisma.serviceCategory.findUnique({
+      where: { id: categoryId },
+      select: { name: true },
+    });
+    const skillKeys = category?.name ? [categoryId, category.name] : [categoryId];
     const candidates = await this.prisma.workerProfile.findMany({
       where: {
         verificationStatus: WorkerVerificationStatus.APPROVED,
         isAvailable: true,
-        skills: { has: categoryId },
+        skills: { hasSome: skillKeys },
       },
       select: { userId: true, serviceRadiusKm: true },
     });
     if (candidates.length === 0) return [];
 
     const userIds = candidates.map((c) => c.userId);
-    const radiusByUser = new Map(candidates.map((c) => [c.userId, c.serviceRadiusKm ?? 10]));
+    // Per-worker radius falls back to the admin-configured platform default.
+    const defaultRadiusKm = (await this.settings?.getServiceRadiusKm()) ?? 10;
+    const radiusByUser = new Map(candidates.map((c) => [c.userId, c.serviceRadiusKm ?? defaultRadiusKm]));
     const areas = await this.prisma.serviceArea.findMany({
       where: { userId: { in: userIds } },
       select: { userId: true, latitude: true, longitude: true },
@@ -149,6 +161,7 @@ export class NotificationsService {
       type: NotificationTypeId;
       title: string;
       body: string;
+      data: Prisma.JsonValue | null;
       isRead: boolean;
       readAt: Date | null;
       createdAt: Date;
@@ -171,6 +184,7 @@ export class NotificationsService {
           type: true,
           title: true,
           body: true,
+          data: true,
           isRead: true,
           readAt: true,
           createdAt: true,
@@ -216,16 +230,4 @@ export class NotificationsService {
     });
     return { count: updated.count };
   }
-}
-
-/** Great-circle distance in kilometres (matcher used by findMatchingWorkerIds). */
-function haversineKm(lat1: number, lng1: number, lat2: number, lng2: number): number {
-  const R = 6371;
-  const toRad = (deg: number) => (deg * Math.PI) / 180;
-  const dLat = toRad(lat2 - lat1);
-  const dLng = toRad(lng2 - lng1);
-  const a =
-    Math.sin(dLat / 2) ** 2 +
-    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
-  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }

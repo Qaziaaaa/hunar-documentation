@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { AdminShell } from "@/features/admin/components/admin-shell";
 import { Link, useRouter } from "@/i18n/navigation";
 import { adminApi } from "@/features/admin/api/admin-api";
 import type { DisputeReport } from "@/types/admin";
@@ -24,6 +23,8 @@ export default function DisputeDetailPage({
   const [dispute, setDispute] = useState<DisputeReport | null>(null);
   const [loading, setLoading] = useState(true);
   const [resolutionNotes, setResolutionNotes] = useState("");
+  const [actionError, setActionError] = useState<string | null>(null);
+  const [acting, setActing] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -47,65 +48,95 @@ export default function DisputeDetailPage({
 
   if (loading) {
     return (
-      <AdminShell>
-        <div className="p-8 text-center">
+<div className="p-8 text-center">
           <p className="text-base font-bold text-navy">Loading dispute report...</p>
         </div>
-      </AdminShell>
-    );
+);
   }
 
   if (!dispute) {
     return (
-      <AdminShell>
+      
         <div className="p-8 text-center">
           <p className="text-base font-bold text-navy">Dispute Report Not Found</p>
           <Link href="/admin/disputes" className="mt-4 inline-flex items-center gap-2 text-xs font-bold text-teal">
             <ArrowLeft className="size-4" /> Back to Disputes
           </Link>
         </div>
-      </AdminShell>
+      
     );
   }
 
-  const handleResolve = () => {
-    void adminApi.resolveDispute(dispute.id, "RESOLVED", resolutionNotes || "Resolved: Refund released to customer.")
-      .then(() =>
-        setDispute((prev) =>
-          prev
-            ? {
-                ...prev,
-                status: "RESOLVED",
-                resolutionNotes: resolutionNotes || "Resolved: Refund released to customer.",
-              }
-            : prev
-        )
+  const handleResolve = async () => {
+    setActionError(null);
+    const notes = resolutionNotes.trim();
+    if (!notes) {
+      setActionError("Resolution notes are required.");
+      return;
+    }
+    setActing(true);
+    try {
+      await adminApi.resolveDispute(dispute.id, "RESOLVED", notes);
+      setDispute((prev) =>
+        prev
+          ? {
+              ...prev,
+              status: "RESOLVED",
+              resolutionNotes: notes,
+            }
+          : prev
       );
-    setTimeout(() => router.push("/admin/disputes"), 1000);
+      setTimeout(() => router.push("/admin/disputes"), 1000);
+    } catch (err) {
+      setActionError(
+        err instanceof Error ? err.message : "Failed to resolve dispute",
+      );
+    } finally {
+      setActing(false);
+    }
   };
 
-  const handleDismiss = () => {
-    void adminApi.resolveDispute(dispute.id, "DISMISSED", resolutionNotes || "Dispute report dismissed after review.")
-      .then(() =>
-        setDispute((prev) =>
-          prev
-            ? {
-                ...prev,
-                status: "DISMISSED",
-                resolutionNotes: resolutionNotes || "Dispute report dismissed after review.",
-              }
-            : prev
-        )
+  const handleDismiss = async () => {
+    setActionError(null);
+    const notes = resolutionNotes.trim();
+    if (!notes) {
+      setActionError("Resolution notes are required.");
+      return;
+    }
+    setActing(true);
+    try {
+      await adminApi.resolveDispute(dispute.id, "DISMISSED", notes);
+      setDispute((prev) =>
+        prev
+          ? {
+              ...prev,
+              status: "DISMISSED",
+              resolutionNotes: notes,
+            }
+          : prev
       );
-    setTimeout(() => router.push("/admin/disputes"), 1000);
+      setTimeout(() => router.push("/admin/disputes"), 1000);
+    } catch (err) {
+      setActionError(
+        err instanceof Error ? err.message : "Failed to dismiss dispute",
+      );
+    } finally {
+      setActing(false);
+    }
   };
 
   return (
-    <AdminShell>
+    
       <div className="mx-auto max-w-4xl space-y-6">
         <Link href="/admin/disputes" className="inline-flex items-center gap-2 text-xs font-bold text-slate-500 hover:text-navy">
           <ArrowLeft className="size-4" /> Back to Disputes Queue
         </Link>
+
+        {actionError && (
+          <div className="rounded-2xl border border-red-200 bg-red-50 p-4 text-sm font-bold text-red-700">
+            Action failed: {actionError}
+          </div>
+        )}
 
         {/* Header */}
         <div className="flex flex-col justify-between gap-4 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm md:flex-row md:items-center">
@@ -127,18 +158,37 @@ export default function DisputeDetailPage({
             <button
               type="button"
               onClick={handleDismiss}
-              className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-2 text-xs font-bold text-slate-700 hover:bg-slate-100"
+              disabled={acting || !resolutionNotes.trim()}
+              className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-2 text-xs font-bold text-slate-700 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60"
             >
               Dismiss Report
             </button>
             <button
               type="button"
               onClick={handleResolve}
-              className="flex items-center gap-1.5 rounded-xl bg-teal px-5 py-2 text-xs font-bold text-white shadow-md hover:bg-teal-600"
+              disabled={acting || !resolutionNotes.trim()}
+              className="flex items-center gap-1.5 rounded-xl bg-teal px-5 py-2 text-xs font-bold text-white shadow-md hover:bg-teal-600 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              <CheckCircle2 className="size-4" /> Resolve & Refund
+              <CheckCircle2 className="size-4" /> {acting ? "Working..." : "Resolve & Refund"}
             </button>
           </div>
+        </div>
+
+        {/* Resolution Notes — required before either action can run (no invented text). */}
+        <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+          <h3 className="text-sm font-extrabold text-navy">
+            Resolution Notes <span className="text-red-500">*</span>
+          </h3>
+          <p className="mt-1 text-xs text-slate-500">
+            Both Resolve and Dismiss require your written notes — they are stored with
+            the dispute record.
+          </p>
+          <textarea
+            value={resolutionNotes}
+            onChange={(e) => setResolutionNotes(e.target.value)}
+            placeholder="Describe the outcome, refund decision, or why this report is being dismissed..."
+            className="mt-3 h-24 w-full rounded-xl border border-slate-200 p-3 text-xs outline-none focus:border-teal"
+          />
         </div>
 
         {/* Evidence & Parties Info */}
@@ -181,6 +231,6 @@ export default function DisputeDetailPage({
           </div>
         </div>
       </div>
-    </AdminShell>
+    
   );
 }

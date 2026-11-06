@@ -11,7 +11,9 @@ export type ServiceCategory =
   | "mason-mistry"
   | "gardener"
   | "pest-control"
-  | "movers";
+  | "movers"
+  | "handyman"
+  | (string & {});
 
 export interface SubCategoryItem {
   id: string;

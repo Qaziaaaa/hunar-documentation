@@ -70,7 +70,7 @@ function Select({
       <SelectPrimitive.Portal>
         <SelectPrimitive.Positioner sideOffset={4} className="z-50">
           <SelectPrimitive.Popup className="min-w-(--anchor-width) overflow-hidden rounded-lg border border-border bg-popover p-1 text-popover-foreground shadow-lg">
-            <SelectPrimitive.List className="max-h-64 overflow-y-auto" />
+            <SelectPrimitive.List className="max-h-64 overflow-y-auto scrollbar-none no-scrollbar" />
           </SelectPrimitive.Popup>
         </SelectPrimitive.Positioner>
       </SelectPrimitive.Portal>

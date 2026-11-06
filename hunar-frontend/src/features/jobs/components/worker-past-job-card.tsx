@@ -3,38 +3,72 @@
 import React, { useState } from "react";
 import { JobRequest } from "@/types/job";
 import { formatRs } from "@/lib/design-tokens";
-import { WorkerInvoiceModal } from "./worker-invoice-modal";
-import { WorkerJobDetailsModal } from "./worker-job-details-modal";
+import { formatDate } from "@/lib/format";
+import dynamic from "next/dynamic";
+
+const WorkerInvoiceModal = dynamic(
+  () => import("./worker-invoice-modal").then((mod) => mod.WorkerInvoiceModal),
+  { ssr: false }
+);
+
+const WorkerJobDetailsModal = dynamic(
+  () => import("./worker-job-details-modal").then((mod) => mod.WorkerJobDetailsModal),
+  { ssr: false }
+);
 import {
   CheckCircle2,
   Calendar,
   Star,
-  ShieldCheck,
   FileText,
   MapPin,
   Eye,
 } from "lucide-react";
+
+import { useLocale } from "next-intl";
 
 interface WorkerPastJobCardProps {
   job: JobRequest;
 }
 
 export function WorkerPastJobCard({ job }: WorkerPastJobCardProps) {
+  const locale = useLocale();
+  const isUrdu = locale === "ur";
   const [showInvoice, setShowInvoice] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
 
-  const visitCharge = job.visitCharge ?? 500;
-  const repairCharge = job.repairCharge ?? 1500;
-  const grossTotal = visitCharge + repairCharge;
-  const netEarnings = grossTotal;
-  const warrantyDays = job.warrantyDays || 30;
-  const invoiceNumber = job.invoiceNumber || `INV-2026-${job.id.slice(-4)}`;
+  const visitCharge = job.visitCharge ?? job.customerSuggestedPrice ?? 0;
+  const repairCharge = job.repairCharge ?? 0;
+  const hasRepair = repairCharge > 0;
+  const grossTotal = hasRepair ? visitCharge + repairCharge : visitCharge;
+  const platformCommission = job.platformCommission ?? Math.round(visitCharge * 0.1);
+  const netEarnings = job.workerNetEarnings ?? (grossTotal - platformCommission);
+  const cleanJobId = job.id?.replace(/^INV-/, "") || job.id;
 
-  const review = job.customerReview || {
-    rating: 5,
-    comment: "Excellent service and high professionalism! Solved the problem quickly.",
-    date: "Completed recently",
-  };
+  const review = job.customerReview;
+
+  // Format real completed date
+  const completedDateRaw = job.completedAt || (job as any).updatedAt || job.postedAt;
+  const completedDateText = (() => {
+    if (!completedDateRaw) return "Completed";
+    const d = new Date(completedDateRaw);
+    if (isNaN(d.getTime())) return formatDate(completedDateRaw);
+    const now = new Date();
+    const isToday =
+      d.getFullYear() === now.getFullYear() &&
+      d.getMonth() === now.getMonth() &&
+      d.getDate() === now.getDate();
+    if (isToday) return "Today";
+
+    const yesterday = new Date(now);
+    yesterday.setDate(now.getDate() - 1);
+    const isYesterday =
+      d.getFullYear() === yesterday.getFullYear() &&
+      d.getMonth() === yesterday.getMonth() &&
+      d.getDate() === yesterday.getDate();
+    if (isYesterday) return "Yesterday";
+
+    return formatDate(completedDateRaw);
+  })();
 
   return (
     <>
@@ -52,13 +86,13 @@ export function WorkerPastJobCard({ job }: WorkerPastJobCardProps) {
               </span>
 
               <span className="font-mono text-[10.5px] sm:text-xs font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md">
-                {invoiceNumber}
+                #{cleanJobId}
               </span>
             </div>
 
             <div className="flex items-center gap-1 text-[11px] text-slate-400">
               <Calendar className="size-3" />
-              <span>{job.preferredVisitWindow.date}</span>
+              <span>{completedDateText}</span>
             </div>
           </div>
 
@@ -77,23 +111,32 @@ export function WorkerPastJobCard({ job }: WorkerPastJobCardProps) {
           {/* Earnings Highlight Box */}
           <div className="bg-emerald-50/60 rounded-xl sm:rounded-2xl p-3 sm:p-3.5 border border-emerald-200/60 flex items-center justify-between gap-2">
             <div>
-              <span className="text-[9px] sm:text-[10px] uppercase font-bold text-emerald-800 tracking-wider block">
-                Total Earned &amp; Settled
-              </span>
+              <div className="flex items-center gap-1.5 flex-wrap mb-0.5">
+                <span className="text-[9px] sm:text-[10px] uppercase font-bold text-emerald-800 tracking-wider block">
+                  {hasRepair
+                    ? (isUrdu ? "وزٹ + مرمت" : "Visit + Repair")
+                    : (isUrdu ? "وزٹ چارجز" : "Visit Charge")}
+                </span>
+                <span
+                  className={`px-1.5 py-0.2 rounded-md text-[9px] font-extrabold uppercase tracking-wide border ${
+                    hasRepair
+                      ? "bg-emerald-100 text-emerald-800 border-emerald-200"
+                      : "bg-slate-100 text-slate-700 border-slate-200"
+                  }`}
+                >
+                  {hasRepair
+                    ? (isUrdu ? "مرمت مکمل" : "Repair Done")
+                    : (isUrdu ? "صرف وزٹ" : "Visit Only")}
+                </span>
+              </div>
               <span className="text-base sm:text-xl font-black text-emerald-900">
-                {formatRs(netEarnings)}
-              </span>
-            </div>
-
-            <div className="text-right text-[10px] sm:text-[11px] text-emerald-700 font-bold shrink-0">
-              <span className="px-2.5 py-1 rounded-full bg-emerald-100/80 text-emerald-800 text-[10px]">
-                Paid to Wallet
+                {formatRs(grossTotal)}
               </span>
             </div>
           </div>
 
           {/* Customer Review Snippet */}
-          {review && (
+          {review && review.rating ? (
             <div className="bg-slate-50 rounded-xl sm:rounded-2xl p-3 sm:p-3.5 border border-slate-100 space-y-1">
               <div className="flex items-center justify-between gap-1">
                 <div className="flex items-center gap-0.5">
@@ -113,17 +156,26 @@ export function WorkerPastJobCard({ job }: WorkerPastJobCardProps) {
                 </div>
                 <span className="text-[10px] text-slate-400 truncate max-w-[120px] sm:max-w-none">{job.customer.name}</span>
               </div>
-              <p className="text-[11px] sm:text-xs text-slate-600 italic line-clamp-2">
-                &quot;{review.comment}&quot;
-              </p>
+              {review.tags && review.tags.length > 0 && (
+                <div className="flex flex-wrap gap-1 pt-1 pb-0.5">
+                  {review.tags.map((tag: string) => (
+                    <span
+                      key={tag}
+                      className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-[#0F766E]/10 text-[#0F766E] border border-[#0F766E]/20"
+                    >
+                      ✓ {tag}
+                    </span>
+                  ))}
+                </div>
+              )}
+              {review.comment ? (
+                <p className="text-[11px] sm:text-xs text-slate-600 italic line-clamp-2">
+                  &quot;{review.comment}&quot;
+                </p>
+              ) : null}
             </div>
-          )}
+          ) : null}
 
-          {/* Warranty Badge */}
-          <div className="flex items-center gap-1.5 text-[10.5px] sm:text-[11px] font-semibold text-teal-700">
-            <ShieldCheck className="size-3.5 text-[#0F8B8D] shrink-0" />
-            <span>{warrantyDays}-Day Customer Guarantee Active</span>
-          </div>
         </div>
 
         {/* Footer Actions */}

@@ -1,5 +1,6 @@
 import {
   BrickWall,
+  Briefcase,
   Bug,
   Cctv,
   Droplets,
@@ -12,6 +13,7 @@ import {
   Sprout,
   Sun,
   Truck,
+  Wrench,
 } from "lucide-react";
 import type { ServiceCategory } from "../types";
 
@@ -23,11 +25,10 @@ export interface CategoryOption {
   icon: React.ElementType;
   iconColor: string;
   iconBg: string;
-  subCategories: string[];
+  subCategories?: string[];
   suggestedFee: number;
   popular?: boolean;
-  defaultTitle?: string;
-  defaultDescription?: string;
+  commonIssues?: string[];
 }
 
 export const CATEGORY_OPTIONS: CategoryOption[] = [
@@ -39,18 +40,8 @@ export const CATEGORY_OPTIONS: CategoryOption[] = [
     icon: Droplets,
     iconColor: "text-blue-600",
     iconBg: "bg-blue-50 border-blue-200/60",
-    subCategories: [
-      "Pipe Leakage & Repair",
-      "Sanitary & Commode Installation",
-      "Water Tank & Motor Repair",
-      "Geyser Installation (Gas/Electric)",
-      "Tap & Mixer Replacement",
-      "Drainage Blockage Unclogging",
-    ],
-    suggestedFee: 800,
+    suggestedFee: 500,
     popular: true,
-    defaultTitle: "Kitchen pipe leakage under sink",
-    defaultDescription: "Water is constantly dripping under the kitchen sink and needs urgent pipe inspection and washer replacement.",
   },
   {
     id: "electrician",
@@ -60,18 +51,8 @@ export const CATEGORY_OPTIONS: CategoryOption[] = [
     icon: PlugZap,
     iconColor: "text-amber-600",
     iconBg: "bg-amber-50 border-amber-200/60",
-    subCategories: [
-      "Main DB Breaker Tripping",
-      "Ceiling Fan & Lights Fitting",
-      "Short Circuit Diagnostics",
-      "UPS & Battery Wiring",
-      "Switch Board Replacement",
-      "Complete House Wiring",
-    ],
-    suggestedFee: 1000,
+    suggestedFee: 500,
     popular: true,
-    defaultTitle: "Main DB breaker tripping repeatedly",
-    defaultDescription: "The main distribution board circuit breaker trips when running appliances. Need diagnosis for possible short circuit.",
   },
   {
     id: "ac-technician",
@@ -81,18 +62,8 @@ export const CATEGORY_OPTIONS: CategoryOption[] = [
     icon: Snowflake,
     iconColor: "text-[#0F8B8D]",
     iconBg: "bg-teal-50 border-teal-200/60",
-    subCategories: [
-      "DC Inverter General Service",
-      "Gas Leak & R410A / R32 Gas Refill",
-      "AC Not Cooling / Weak Airflow",
-      "Water Dripping from Indoor Unit",
-      "AC Dismantling & Installation",
-      "PCB Card Repair & Error Codes",
-    ],
-    suggestedFee: 1500,
+    suggestedFee: 500,
     popular: true,
-    defaultTitle: "Split AC indoor unit leaking water and not cooling",
-    defaultDescription: "The split AC unit turns on and blows warm air with water dripping from the front grill. Needs immediate inspection and filter deep cleaning.",
   },
   {
     id: "carpenter",
@@ -102,18 +73,8 @@ export const CATEGORY_OPTIONS: CategoryOption[] = [
     icon: Hammer,
     iconColor: "text-orange-600",
     iconBg: "bg-orange-50 border-orange-200/60",
-    subCategories: [
-      "Door Lock & Handle Replacement",
-      "Kitchen Cabinet Repair",
-      "Wardrobe & Drawer Channels",
-      "Bed & Sofa Repair",
-      "Wooden Polish & Touch-up",
-      "Custom Wood Fabrication",
-    ],
-    suggestedFee: 1200,
+    suggestedFee: 500,
     popular: true,
-    defaultTitle: "Main door lock and handle replacement",
-    defaultDescription: "Door handle is loose and key cylinder gets stuck. Needs replacement with new mortise lock.",
   },
   {
     id: "painter",
@@ -123,17 +84,7 @@ export const CATEGORY_OPTIONS: CategoryOption[] = [
     icon: PaintRoller,
     iconColor: "text-purple-600",
     iconBg: "bg-purple-50 border-purple-200/60",
-    subCategories: [
-      "Single Room Paint / Refresh",
-      "Complete Home Paint (Interior/Exterior)",
-      "Wall Putty & Primer Finishing",
-      "Water Seepage & Dampness Treatment",
-      "Door & Window Polish / Enamel",
-      "Texture & Wallpaper Installation",
-    ],
-    suggestedFee: 1500,
-    defaultTitle: "Single bedroom wall putty and paint refresh",
-    defaultDescription: "Need one master bedroom repainted with weather-resistant paint and putty repair on moisture patches.",
+    suggestedFee: 500,
   },
   {
     id: "cleaner",
@@ -143,16 +94,7 @@ export const CATEGORY_OPTIONS: CategoryOption[] = [
     icon: Sparkles,
     iconColor: "text-emerald-600",
     iconBg: "bg-emerald-50 border-emerald-200/60",
-    subCategories: [
-      "Full House Deep Cleaning",
-      "Sofa & Carpet Vacuum Washing",
-      "Kitchen & Bathroom Sterilization",
-      "Water Tank Deep Cleaning",
-      "Post-Construction Scrubbing",
-    ],
-    suggestedFee: 1500,
-    defaultTitle: "Sofa set vacuum deep cleaning and washing",
-    defaultDescription: "7-seater fabric sofa requires deep foam wash and stain extraction.",
+    suggestedFee: 500,
   },
   {
     id: "solar-technician",
@@ -162,16 +104,7 @@ export const CATEGORY_OPTIONS: CategoryOption[] = [
     icon: Sun,
     iconColor: "text-yellow-600",
     iconBg: "bg-yellow-50 border-yellow-200/60",
-    subCategories: [
-      "Solar Inverter Settings & Error Codes",
-      "Solar Panel Structure & Angle Fix",
-      "Lithium / Tubular Battery Wiring",
-      "Net Metering Setup Inspection",
-      "Panel Cleaning & Output Testing",
-    ],
-    suggestedFee: 1800,
-    defaultTitle: "Solar inverter error code 09 and battery check",
-    defaultDescription: "Hybrid inverter showing error code and not charging batteries properly during peak sunlight.",
+    suggestedFee: 500,
   },
   {
     id: "welder",
@@ -181,15 +114,7 @@ export const CATEGORY_OPTIONS: CategoryOption[] = [
     icon: Flame,
     iconColor: "text-red-600",
     iconBg: "bg-red-50 border-red-200/60",
-    subCategories: [
-      "Main Gate Hinge & Lock Welding",
-      "Window Security Grills Repair",
-      "Metal Staircase & Railing",
-      "Rooftop Shed Frame Welding",
-    ],
-    suggestedFee: 1200,
-    defaultTitle: "Main iron gate hinge welding repair",
-    defaultDescription: "Main driveway gate hinge has come loose from the pillar and needs welding reinforcement.",
+    suggestedFee: 500,
   },
   {
     id: "cctv-security",
@@ -199,15 +124,7 @@ export const CATEGORY_OPTIONS: CategoryOption[] = [
     icon: Cctv,
     iconColor: "text-indigo-600",
     iconBg: "bg-indigo-50 border-indigo-200/60",
-    subCategories: [
-      "IP / HD Camera Installation",
-      "DVR / NVR Storage & Mobile Setup",
-      "No Video / Blurry Camera Fix",
-      "Video Doorbell & Intercom",
-    ],
-    suggestedFee: 1500,
-    defaultTitle: "4 CCTV camera installation with DVR setup",
-    defaultDescription: "Need 4 HD outdoor security cameras installed with mobile phone remote viewing configuration.",
+    suggestedFee: 500,
   },
   {
     id: "mason-mistry",
@@ -217,14 +134,7 @@ export const CATEGORY_OPTIONS: CategoryOption[] = [
     icon: BrickWall,
     iconColor: "text-stone-600",
     iconBg: "bg-stone-50 border-stone-200/60",
-    subCategories: [
-      "Floor & Bathroom Tile Fixing",
-      "Wall Crack & Plaster Repair",
-      "Floor Leveling & Concrete Work",
-    ],
-    suggestedFee: 1500,
-    defaultTitle: "Bathroom floor tile replacement and grouting",
-    defaultDescription: "Few cracked floor tiles need replacement and waterproof grouting in guest bathroom.",
+    suggestedFee: 500,
   },
   {
     id: "gardener",
@@ -234,14 +144,7 @@ export const CATEGORY_OPTIONS: CategoryOption[] = [
     icon: Sprout,
     iconColor: "text-lime-600",
     iconBg: "bg-lime-50 border-lime-200/60",
-    subCategories: [
-      "Lawn Grass Mowing & Trimming",
-      "Plant Pruning & Fertilizer",
-      "New Plants & Flower Beds",
-    ],
-    suggestedFee: 800,
-    defaultTitle: "Lawn mowing and hedge trimming",
-    defaultDescription: "Front yard lawn grass needs mowing, edge trimming, and fertilizer application.",
+    suggestedFee: 500,
   },
   {
     id: "pest-control",
@@ -251,14 +154,7 @@ export const CATEGORY_OPTIONS: CategoryOption[] = [
     icon: Bug,
     iconColor: "text-rose-600",
     iconBg: "bg-rose-50 border-rose-200/60",
-    subCategories: [
-      "Anti-Termite Treatment (Deemak)",
-      "Bedbug & Cockroach Fumigation",
-      "Rodent & Mosquito Spray",
-    ],
-    suggestedFee: 2000,
-    defaultTitle: "Anti-termite treatment for wooden door frames",
-    defaultDescription: "Signs of termite activity on wooden door frames and baseboards. Requires chemical treatment.",
+    suggestedFee: 500,
   },
   {
     id: "movers",
@@ -268,23 +164,26 @@ export const CATEGORY_OPTIONS: CategoryOption[] = [
     icon: Truck,
     iconColor: "text-sky-600",
     iconBg: "bg-sky-50 border-sky-200/60",
-    subCategories: [
-      "Complete House Luggage Shifting",
-      "Furniture Dismantling & Loading",
-      "Suzuki Pickup / Shehzore Transport",
-    ],
-    suggestedFee: 2500,
-    defaultTitle: "House furniture shifting from Hayatabad to Town",
-    defaultDescription: "Bed, wardrobe, refrigerator, and 10 boxes need loading, transport, and unloading.",
+    suggestedFee: 500,
+  },
+  {
+    id: "handyman",
+    name: "General Handyman",
+    urduName: "عمومی مہارت",
+    subtitle: "Drilling, Hangings & Small Repairs",
+    icon: Wrench,
+    iconColor: "text-teal-600",
+    iconBg: "bg-teal-50 border-teal-200/60",
+    suggestedFee: 500,
   },
 ];
 
 export const POPULAR_SEARCH_TAGS = [
-  { label: "⚡ Emergency AC Leak", urduLabel: "⚡ اے سی لیکج مرمت", category: "ac-technician", subCategory: "Water Dripping from Indoor Unit" },
-  { label: "🔧 Geyser Installation", urduLabel: "🔧 گیزر انسٹالیشن", category: "plumber", subCategory: "Geyser Installation (Gas/Electric)" },
-  { label: "💡 Short Circuit Repair", urduLabel: "💡 شارٹ سرکٹ مرمت", category: "electrician", subCategory: "Short Circuit Diagnostics" },
-  { label: "🪑 Door Lock Fix", urduLabel: "🪑 دروازے کا تالا", category: "carpenter", subCategory: "Door Lock & Handle Replacement" },
-  { label: "☀️ Inverter Setting", urduLabel: "☀️ سولر انورٹر سیٹنگ", category: "solar-technician", subCategory: "Solar Inverter Settings & Error Codes" },
+  { label: "⚡ AC Service", urduLabel: "⚡ اے سی سروس", category: "ac-technician" },
+  { label: "🔧 Plumbing Repair", urduLabel: "🔧 پلمبنگ مرمت", category: "plumber" },
+  { label: "💡 Electrician Visit", urduLabel: "💡 الیکٹریشن وزٹ", category: "electrician" },
+  { label: "🪑 Carpenter Service", urduLabel: "🪑 بڑھئی سروس", category: "carpenter" },
+  { label: "☀️ Solar & UPS", urduLabel: "☀️ سولر اور یو پی ایس", category: "solar-technician" },
 ];
 
 export const PESHAWAR_AREAS = [
@@ -298,15 +197,15 @@ export const PESHAWAR_AREAS = [
   "Ring Road Belt",
   "DHA Phase 1",
   "Model Town",
-  "Blue Area / Commercial Zone",
-  "F-6 / F-7 Sector",
-  "Gulberg / Canal Bank",
-  "Bahria Town Sector",
+  "Kohat Road Belt",
+  "Dalazak Road",
+  "Charsadda Road",
+  "Board Bazaar",
 ];
 
 export const SERVICE_AREAS = PESHAWAR_AREAS;
 
-const CATEGORY_ALIASES: Record<string, ServiceCategory> = {
+export const CATEGORY_ALIASES: Record<string, ServiceCategory> = {
   cleaning: "cleaner",
   clean: "cleaner",
   "deep-cleaning": "cleaner",
@@ -361,7 +260,54 @@ const CATEGORY_ALIASES: Record<string, ServiceCategory> = {
   mover: "movers",
   shifting: "movers",
   transport: "movers",
+  "movers & packers": "movers",
+  "movers-packers": "movers",
+  "solar & ups": "solar-technician",
+  "solar-ups": "solar-technician",
+  "ac & refrigeration": "ac-technician",
+  "ac-refrigeration": "ac-technician",
+  "gardener (mali)": "gardener",
+  "gardener-mali": "gardener",
+  handyman: "handyman",
+  "general handyman": "handyman",
+  "general-handyman": "handyman",
+  general: "handyman",
+  "seed-category-1": "plumber",
+  "seed-category-2": "electrician",
+  "seed-category-3": "ac-technician",
+  "seed-category-4": "carpenter",
+  "seed-category-5": "painter",
+  "seed-category-6": "cleaner",
+  "seed-category-7": "mason-mistry",
+  "seed-category-8": "pest-control",
+  "seed-category-9": "handyman",
+  "seed-category-10": "solar-technician",
+  "seed-category-11": "cctv-security",
+  "seed-category-12": "welder",
+  "seed-category-13": "gardener",
+  "seed-category-14": "movers",
 };
+
+export function createCustomCategoryOption(
+  id: string,
+  name: string,
+  urduName?: string,
+  fee?: number,
+  commonIssues?: string[]
+): CategoryOption {
+  const cleanName = (name || id || "Custom Service").trim();
+  return {
+    id: id as ServiceCategory,
+    name: cleanName,
+    urduName: urduName || cleanName,
+    subtitle: `${cleanName} Services & Repair`,
+    icon: Briefcase,
+    iconColor: "text-[#0F8B8D]",
+    iconBg: "bg-teal-50 border-teal-200/60",
+    suggestedFee: fee || 500,
+    commonIssues: commonIssues ?? [],
+  };
+}
 
 export function resolveCategoryOption(
   query: string | null | undefined
@@ -382,12 +328,11 @@ export function resolveCategoryOption(
     if (found) return found;
   }
 
-  // 3. Substring match against name, Urdu name, subtitle, or subcategories
+  // 3. Substring match against name, Urdu name, or subtitle
   return CATEGORY_OPTIONS.find(
     (cat) =>
       cat.name.toLowerCase().includes(normalized) ||
       cat.urduName.includes(normalized) ||
-      cat.subtitle.toLowerCase().includes(normalized) ||
-      cat.subCategories.some((sub) => sub.toLowerCase().includes(normalized))
+      cat.subtitle.toLowerCase().includes(normalized)
   );
 }

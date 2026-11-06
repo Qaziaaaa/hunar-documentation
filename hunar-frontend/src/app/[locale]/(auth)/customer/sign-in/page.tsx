@@ -1,6 +1,8 @@
+import { Suspense } from "react";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { AuthShell } from "@/features/auth/components/auth-shell";
 import { CustomerSignInForm } from "@/features/auth/components/customer-sign-in-form";
+import { LoadingState } from "@/components/shared/loading-state";
 
 export async function generateMetadata({
   params,
@@ -9,7 +11,7 @@ export async function generateMetadata({
 }) {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: "Auth" });
-  return { title: "Customer Sign In — WorkerFIX" };
+  return { title: "Customer Sign In — HUNAR" };
 }
 
 export default async function CustomerSignInPage({
@@ -21,8 +23,10 @@ export default async function CustomerSignInPage({
   setRequestLocale(locale);
 
   return (
-    <AuthShell>
-      <CustomerSignInForm />
+    <AuthShell role="customer">
+      <Suspense fallback={<LoadingState label="Loading sign in..." />}>
+        <CustomerSignInForm />
+      </Suspense>
     </AuthShell>
   );
 }

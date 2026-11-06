@@ -10,9 +10,9 @@ export const MOCK_FAQS: FaqItem[] = [
   {
     id: "faq-price-1",
     category: "pricing",
-    question: "How does the Rs. 300 doorstep visit fee work?",
+    question: "How does the doorstep visit fee work?",
     answer:
-      "Every booking includes a standard Rs. 300 doorstep visit & diagnostic charge. Once the verified technician arrives and inspects the site, they provide an exact quote based on necessary labor and spare parts. If you proceed with the repair, the quotation is transparently finalized before work begins.",
+      "Every booking includes an agreed doorstep visit & diagnostic charge based on category baseline. Once the verified technician arrives and inspects the site, they provide an exact quote based on necessary labor and spare parts. If you proceed with the repair, the quotation is transparently finalized before work begins.",
     badge: "Transparent Rates",
     isPopular: true,
   },
@@ -53,9 +53,9 @@ export const MOCK_FAQS: FaqItem[] = [
   {
     id: "faq-safety-2",
     category: "safety",
-    question: "Are all technicians NADRA CNIC verified and background checked?",
+    question: "Are all technicians verified and background checked?",
     answer:
-      "Yes, 100%. Every technician on WorkerFIX undergoes strict biometric NADRA CNIC verification, police background checks, hands-on trade skill testing, and phone verification before being admitted to our verified network.",
+      "Yes, 100%. Every technician on WorkerFIX undergoes strict identity document verification, hands-on trade skill testing, and phone verification before being admitted to our verified network.",
     badge: "100% Verified",
     isPopular: true,
   },
@@ -127,8 +127,8 @@ export const MOCK_FAQS: FaqItem[] = [
 
 export const MOCK_CUSTOMER_JOBS: CustomerJobReferenceOption[] = [
   {
-    id: "job-1",
-    jobNumber: "#JOB-4821",
+    id: "AW3-90W",
+    jobNumber: "#AW3-90W",
     title: "Main DB Breaker & Wiring Inspection",
     workerName: "Tariq Shah (Master Electrician)",
     category: "Electrician",
@@ -137,8 +137,8 @@ export const MOCK_CUSTOMER_JOBS: CustomerJobReferenceOption[] = [
     amount: 1200,
   },
   {
-    id: "job-2",
-    jobNumber: "#JOB-4790",
+    id: "BK7-21M",
+    jobNumber: "#BK7-21M",
     title: "Split AC Gas Refill & Cooling Service",
     workerName: "Farhan Khattak (HVAC Pro)",
     category: "HVAC",
@@ -147,8 +147,8 @@ export const MOCK_CUSTOMER_JOBS: CustomerJobReferenceOption[] = [
     amount: 3500,
   },
   {
-    id: "job-3",
-    jobNumber: "#JOB-4620",
+    id: "ZT4-83Q",
+    jobNumber: "#ZT4-83Q",
     title: "Sanitary Bathroom Leak & Seal Fix",
     workerName: "Rashid Ali (Plumber)",
     category: "Plumbing",
@@ -157,8 +157,8 @@ export const MOCK_CUSTOMER_JOBS: CustomerJobReferenceOption[] = [
     amount: 2000,
   },
   {
-    id: "job-4",
-    jobNumber: "#JOB-4510",
+    id: "HD9-05X",
+    jobNumber: "#HD9-05X",
     title: "Ceiling Fan Bearing Replacement",
     workerName: "Kamran Khan (Electrician)",
     category: "Electrician",
@@ -171,7 +171,7 @@ export const MOCK_CUSTOMER_JOBS: CustomerJobReferenceOption[] = [
 export const MOCK_ACTIVE_TICKET: SupportTicket = {
   id: "ticket-4491",
   caseNumber: "CASE-4491",
-  jobReference: "#JOB-4620",
+  jobReference: "#ZT4-83Q",
   serviceTitle: "Sanitary Bathroom Leak & Seal Fix",
   workerName: "Rashid Ali (Plumber)",
   location: "Sector 3, Main Residency",

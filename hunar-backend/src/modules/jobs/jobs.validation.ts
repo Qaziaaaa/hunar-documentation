@@ -10,10 +10,38 @@ import {
   IsOptional,
   IsString,
   IsUUID,
+  Max,
   MaxLength,
   Min,
+  registerDecorator,
+  ValidationArguments,
+  ValidationOptions,
 } from 'class-validator';
 import { JobStatus, Urgency } from '@prisma/client';
+
+export function IsFutureOrPresentDate(validationOptions?: ValidationOptions) {
+  return function (object: Object, propertyName: string) {
+    registerDecorator({
+      name: 'isFutureOrPresentDate',
+      target: object.constructor,
+      propertyName: propertyName,
+      options: {
+        message: `${propertyName} must not be in the past`,
+        ...validationOptions,
+      },
+      validator: {
+        validate(value: any, _args: ValidationArguments) {
+          if (!value) return true;
+          const date = new Date(value);
+          if (isNaN(date.getTime())) return false;
+          // Allow 5 minutes clock-skew grace period
+          const nowWithGrace = new Date(Date.now() - 5 * 60 * 1000);
+          return date >= nowWithGrace;
+        },
+      },
+    });
+  };
+}
 
 export class CreateJobDto {
   @IsString()
@@ -39,9 +67,13 @@ export class CreateJobDto {
   voiceNoteUrl?: string;
 
   @IsNumber()
+  @Min(-90)
+  @Max(90)
   latitude: number;
 
   @IsNumber()
+  @Min(-180)
+  @Max(180)
   longitude: number;
 
   @IsString()
@@ -68,6 +100,7 @@ export class CreateJobDto {
 
   @IsOptional()
   @IsDateString()
+  @IsFutureOrPresentDate()
   preferredVisitTime?: string;
 }
 
@@ -81,6 +114,14 @@ export class CustomerJobsQueryDto {
   @IsOptional()
   @IsEnum(JobStatus)
   status?: JobStatus;
+
+  @IsOptional()
+  @IsString()
+  tab?: string;
+
+  @IsOptional()
+  @IsString()
+  scheduleType?: string;
 
   @IsOptional()
   @Type(() => Number)
@@ -151,6 +192,12 @@ export class AvailableJobsQueryDto {
   @Type(() => Boolean)
   @IsBoolean()
   hasNoOffers?: boolean;
+
+  /** Filter by worker relevance (categories/skills). When false, returns all categories. */
+  @IsOptional()
+  @Type(() => Boolean)
+  @IsBoolean()
+  onlyRelevant?: boolean;
 
   @IsOptional()
   @Type(() => Number)

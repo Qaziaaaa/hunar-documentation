@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, ParseUUIDPipe, Post, Put, Query } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Put, Query } from '@nestjs/common';
 import { Role } from '@prisma/client';
 import { RepairService } from './repair.service';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
@@ -11,6 +11,7 @@ import {
   RepairQueryDto,
   RepairRevisionDto,
 } from './repair.validation';
+import { ParseOrderCodePipe } from '../../common/helpers/order-code.util';
 
 @Controller()
 export class RepairController {
@@ -21,8 +22,14 @@ export class RepairController {
     return this.repairService.getMyRepairs(user, query);
   }
 
+  @Get('repairs/pending')
+  @Roles(Role.CUSTOMER)
+  getPendingRepair(@CurrentUser() user: JwtPayload) {
+    return this.repairService.getPendingRepairForCustomer(user);
+  }
+
   @Get('repairs/:id')
-  getRepair(@CurrentUser() user: JwtPayload, @Param('id', ParseUUIDPipe) id: string) {
+  getRepair(@CurrentUser() user: JwtPayload, @Param('id') id: string) {
     return this.repairService.getRepairDetail(id, user);
   }
 
@@ -30,16 +37,26 @@ export class RepairController {
   @Roles(Role.WORKER)
   estimate(
     @CurrentUser() user: JwtPayload,
-    @Param('visitId', ParseUUIDPipe) visitId: string,
+    @Param('visitId') visitId: string,
     @Body() dto: RepairEstimateDto,
   ) {
     return this.repairService.createEstimate(visitId, user, dto);
   }
 
+  @Post('jobs/:jobId/estimate')
+  @Roles(Role.WORKER)
+  estimateByJob(
+    @CurrentUser() user: JwtPayload,
+    @Param('jobId', ParseOrderCodePipe) jobId: string,
+    @Body() dto: RepairEstimateDto,
+  ) {
+    return this.repairService.createEstimate(jobId, user, dto);
+  }
+
   @Put('repairs/:id/counter')
   counter(
     @CurrentUser() user: JwtPayload,
-    @Param('id', ParseUUIDPipe) id: string,
+    @Param('id') id: string,
     @Body() dto: RepairCounterDto,
   ) {
     return this.repairService.counterRepair(id, user, dto);
@@ -49,7 +66,7 @@ export class RepairController {
   @Roles(Role.CUSTOMER)
   accept(
     @CurrentUser() user: JwtPayload,
-    @Param('id', ParseUUIDPipe) id: string,
+    @Param('id') id: string,
     @Body() dto: RepairAcceptDto,
   ) {
     return this.repairService.acceptRepair(id, user, dto);
@@ -60,7 +77,7 @@ export class RepairController {
   @Roles(Role.CUSTOMER)
   approveForJob(
     @CurrentUser() user: JwtPayload,
-    @Param('jobId', ParseUUIDPipe) jobId: string,
+    @Param('jobId', ParseOrderCodePipe) jobId: string,
     @Body() dto: RepairAcceptDto,
   ) {
     return this.repairService.approveRepairForJob(jobId, user, dto);
@@ -68,19 +85,28 @@ export class RepairController {
 
   @Put('repairs/:id/reject')
   @Roles(Role.CUSTOMER)
-  reject(@CurrentUser() user: JwtPayload, @Param('id', ParseUUIDPipe) id: string) {
+  reject(@CurrentUser() user: JwtPayload, @Param('id') id: string) {
     return this.repairService.rejectRepair(id, user);
+  }
+
+  @Put('jobs/:jobId/repair/reject')
+  @Roles(Role.CUSTOMER)
+  rejectForJob(
+    @CurrentUser() user: JwtPayload,
+    @Param('jobId', ParseOrderCodePipe) jobId: string,
+  ) {
+    return this.repairService.rejectRepairForJob(jobId, user);
   }
 
   @Put('repairs/:id/start')
   @Roles(Role.WORKER)
-  start(@CurrentUser() user: JwtPayload, @Param('id', ParseUUIDPipe) id: string) {
+  start(@CurrentUser() user: JwtPayload, @Param('id') id: string) {
     return this.repairService.startRepair(id, user);
   }
 
   @Put('repairs/:id/complete')
   @Roles(Role.WORKER)
-  complete(@CurrentUser() user: JwtPayload, @Param('id', ParseUUIDPipe) id: string) {
+  complete(@CurrentUser() user: JwtPayload, @Param('id') id: string) {
     return this.repairService.completeRepair(id, user);
   }
 
@@ -88,7 +114,7 @@ export class RepairController {
   @Roles(Role.WORKER)
   requestRevision(
     @CurrentUser() user: JwtPayload,
-    @Param('id', ParseUUIDPipe) id: string,
+    @Param('id') id: string,
     @Body() dto: RepairRevisionDto,
   ) {
     return this.repairService.requestRevision(id, user, dto);
@@ -97,8 +123,8 @@ export class RepairController {
   @Put('repairs/:id/revision/:revisionId')
   decideRevision(
     @CurrentUser() user: JwtPayload,
-    @Param('id', ParseUUIDPipe) id: string,
-    @Param('revisionId', ParseUUIDPipe) revisionId: string,
+    @Param('id') id: string,
+    @Param('revisionId') revisionId: string,
     @Body() dto: { action: 'approve' | 'reject' },
   ) {
     return this.repairService.decideRevision(id, revisionId, user, dto.action);

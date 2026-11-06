@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { Play, Pause, Volume2, Mic } from "lucide-react";
+import { audioManager } from "../lib/audio-manager";
 
 interface VoiceMessageBubbleProps {
   audioUrl?: string;
@@ -16,14 +17,15 @@ export function VoiceMessageBubble({
   isSender = true,
   variant = "navy",
 }: VoiceMessageBubbleProps) {
+  if (!audioUrl) return null;
+
   const [isPlaying, setIsPlaying] = useState(false);
   const [progress, setProgress] = useState(0);
   const [speed, setSpeed] = useState<1 | 1.5 | 2>(1);
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
-  const totalSec = durationSeconds || 12;
-  const currentSec = Math.floor((progress / 100) * totalSec);
+  const totalSec = Math.max(1, durationSeconds || 1);
+  const currentSec = Math.min(totalSec, Math.floor((progress / 100) * totalSec));
   const formattedTime = `0:${currentSec < 10 ? "0" : ""}${currentSec}`;
   const totalFormatted = `0:${totalSec < 10 ? "0" : ""}${totalSec}`;
 
@@ -32,66 +34,61 @@ export function VoiceMessageBubble({
 
   useEffect(() => {
     if (audioUrl) {
-      audioRef.current = new Audio(audioUrl);
-      audioRef.current.playbackRate = speed;
-      audioRef.current.onended = () => {
+      const audio = new Audio(audioUrl);
+      audio.playbackRate = speed;
+      audio.onended = () => {
         setIsPlaying(false);
         setProgress(0);
+        audioManager.stop(audio);
       };
-      audioRef.current.ontimeupdate = () => {
-        if (audioRef.current && audioRef.current.duration) {
-          setProgress(
-            (audioRef.current.currentTime / audioRef.current.duration) * 100
-          );
+      audio.ontimeupdate = () => {
+        if (audio.duration && !isNaN(audio.duration) && audio.duration > 0) {
+          setProgress((audio.currentTime / audio.duration) * 100);
         }
       };
+      audio.onerror = (e) => {
+        console.warn("[VoiceMessageBubble] Audio loading/playback error:", e);
+        setIsPlaying(false);
+        audioManager.stop(audio);
+      };
+      audioRef.current = audio;
+    } else {
+      audioRef.current = null;
     }
     return () => {
       if (audioRef.current) {
+        audioManager.stop(audioRef.current);
         audioRef.current.pause();
+        audioRef.current = null;
       }
-      if (timerRef.current) clearInterval(timerRef.current);
+      setIsPlaying(false);
     };
   }, [audioUrl, speed]);
 
   const togglePlay = () => {
-    if (audioRef.current) {
-      if (isPlaying) {
-        audioRef.current.pause();
-        setIsPlaying(false);
-      } else {
-        audioRef.current.playbackRate = speed;
-        audioRef.current.play().catch(() => {
-          simulatePlayback();
-        });
-        setIsPlaying(true);
-      }
-    } else {
-      simulatePlayback();
-    }
-  };
+    if (!audioRef.current) return;
 
-  const simulatePlayback = () => {
     if (isPlaying) {
-      if (timerRef.current) clearInterval(timerRef.current);
+      audioRef.current.pause();
+      audioManager.stop(audioRef.current);
       setIsPlaying(false);
-    } else {
-      setIsPlaying(true);
-      const stepMs = 100;
-      const totalSteps = (totalSec * 1000) / (stepMs * speed);
-      const increment = 100 / totalSteps;
-
-      timerRef.current = setInterval(() => {
-        setProgress((prev) => {
-          if (prev >= 100) {
-            if (timerRef.current) clearInterval(timerRef.current);
-            setIsPlaying(false);
-            return 0;
-          }
-          return Math.min(100, prev + increment);
-        });
-      }, stepMs);
+      return;
     }
+
+    audioRef.current.playbackRate = speed;
+    audioManager.play(audioRef.current, () => {
+      setIsPlaying(false);
+    });
+    audioRef.current
+      .play()
+      .then(() => {
+        setIsPlaying(true);
+      })
+      .catch((err) => {
+        console.warn("[VoiceMessageBubble] Audio play blocked/failed:", err);
+        setIsPlaying(false);
+        if (audioRef.current) audioManager.stop(audioRef.current);
+      });
   };
 
   const toggleSpeed = (e: React.MouseEvent) => {

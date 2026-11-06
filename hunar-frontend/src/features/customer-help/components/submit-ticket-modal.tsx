@@ -2,6 +2,7 @@
 
 import { useLocale } from "next-intl";
 import { useState } from "react";
+import { http } from "@/lib/api-client";
 import {
   AlertTriangle,
   Camera,
@@ -43,18 +44,33 @@ export function SubmitTicketModal({
   const isUrdu = locale === "ur";
 
   const [selectedJobId, setSelectedJobId] = useState<string>(
-    jobOptions[0]?.id || "general"
+    jobOptions[0]?.id || ""
   );
   const [issueType, setIssueType] = useState<TicketIssueType>("incomplete");
   const [priority, setPriority] = useState<TicketPriority>("normal");
   const [description, setDescription] = useState("");
   const [resolutionPref, setResolutionPref] =
     useState<TicketResolutionPreference>("rework");
-  const [attachedFiles, setAttachedFiles] = useState<string[]>([
-    "bathroom_leak_photo_1.jpg",
-  ]);
+  const [attachedFiles, setAttachedFiles] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submittedCaseNum, setSubmittedCaseNum] = useState<string | null>(null);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+
+  const mapIssueTypeToBackendType = (type: string): string => {
+    switch (type) {
+      case "pricing":
+        return "PRICE_CHANGE";
+      case "quality":
+      case "incomplete":
+        return "SERVICE_QUALITY";
+      case "noshow":
+        return "NO_SHOW";
+      case "payment":
+        return "PAYMENT";
+      default:
+        return "OTHER";
+    }
+  };
 
   if (!isOpen) return null;
 
@@ -147,35 +163,63 @@ export function SubmitTicketModal({
     setAttachedFiles((prev) => prev.filter((f) => f !== fileName));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!description.trim()) return;
 
+    if (!selectedJobId || selectedJobId === "general") {
+      setSubmitError(
+        isUrdu
+          ? "سرکاری تنازعہ درج کرنے کے لیے براہ کرم متعلقہ جاب منتخب کریں۔"
+          : "Please select an existing job reference to open an official dispute."
+      );
+      return;
+    }
+
+    setSubmitError(null);
     setIsSubmitting(true);
+    try {
+      const res = await http.post<{
+        success: boolean;
+        id: string;
+        caseNumber?: string;
+        dispute?: any;
+      }>("/disputes", {
+        jobId: selectedJobId,
+        type: mapIssueTypeToBackendType(issueType),
+        description: description.trim(),
+        evidence: attachedFiles,
+      });
 
-    const randomDigits = Math.floor(1000 + Math.random() * 9000);
-    const newCaseNumber = `CASE-${randomDigits}`;
-
-    setTimeout(() => {
-      setIsSubmitting(false);
-      setSubmittedCaseNum(newCaseNumber);
+      const caseId =
+        res?.caseNumber ||
+        (res?.id ? `CASE-${res.id.slice(0, 8).toUpperCase()}` : null);
+      if (!caseId || !res?.id) {
+        throw new Error(
+          isUrdu
+            ? "سرور سے غیر متوقع جواب موصول ہوا"
+            : "Received unexpected response from server"
+        );
+      }
+      setSubmittedCaseNum(caseId);
 
       const matchedJob = jobOptions.find((j) => j.id === selectedJobId);
 
       const createdTicket: SupportTicket = {
-        id: `ticket-${randomDigits}`,
-        caseNumber: newCaseNumber,
-        jobReference: matchedJob ? matchedJob.jobNumber : "#GENERAL",
+        id: res.id,
+        caseNumber: caseId,
+        jobReference: matchedJob ? matchedJob.jobNumber : `#${selectedJobId}`,
         serviceTitle: matchedJob
           ? matchedJob.title
-          : (isUrdu ? "عمومی سپورٹ درخواست" : "General Support Inquiry"),
+          : (isUrdu ? "سروس سپورٹ درخواست" : "Service Support Inquiry"),
         workerName: matchedJob
           ? matchedJob.workerName
           : (isUrdu ? "سپورٹ ڈیسک" : "Support Desk"),
         location: isUrdu ? "کسٹمر پراپرٹی" : "Customer Property",
         issueType,
         issueTitle:
-          issueCategories.find((c) => c.id === issueType)?.label || (isUrdu ? "کسٹمر ٹکٹ" : "Customer Ticket"),
+          issueCategories.find((c) => c.id === issueType)?.label ||
+          (isUrdu ? "کسٹمر ٹکٹ" : "Customer Ticket"),
         priority,
         description,
         resolutionPreference: resolutionPref,
@@ -207,7 +251,7 @@ export function SubmitTicketModal({
             ]
           : [
               {
-                title: "Claim Submitted",
+                title: "Claim Submitted to Database",
                 timestamp: "Just now",
                 status: "completed",
                 iconName: "check",
@@ -230,7 +274,18 @@ export function SubmitTicketModal({
       };
 
       onSubmitSuccess(createdTicket);
-    }, 1000);
+    } catch (err: any) {
+      console.error("Dispute ticket creation error:", err);
+      setSubmitError(
+        err?.response?.data?.message ||
+          err?.message ||
+          (isUrdu
+            ? "ٹکٹ درج کرنے میں مسئلہ پیش آیا۔ براہ کرم دوبارہ کوشش کریں۔"
+            : "Failed to submit dispute ticket to the server. Please try again.")
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleFinish = () => {
@@ -243,7 +298,7 @@ export function SubmitTicketModal({
     <div
       role="dialog"
       aria-modal="true"
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 overflow-y-auto"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 overflow-y-auto scrollbar-none no-scrollbar"
     >
       <div className="bg-white w-full max-w-2xl rounded-2xl border border-slate-200 shadow-2xl overflow-hidden my-6 animate-in fade-in zoom-in-95 duration-200 rtl:text-right">
         {submittedCaseNum ? (
@@ -326,7 +381,14 @@ export function SubmitTicketModal({
             </div>
 
             {/* Modal Body / Form */}
-            <form onSubmit={handleSubmit} className="p-6 flex flex-col gap-5 max-h-[75vh] overflow-y-auto">
+            <form onSubmit={handleSubmit} className="p-6 flex flex-col gap-5 max-h-[75vh] overflow-y-auto scrollbar-none no-scrollbar">
+              {submitError && (
+                <div className="flex items-center gap-2.5 p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs">
+                  <AlertTriangle className="size-4 shrink-0 text-red-500" />
+                  <span className="flex-1 font-medium">{submitError}</span>
+                </div>
+              )}
+
               {/* 1. Job Reference Selector */}
               <div className="flex flex-col gap-1.5">
                 <label className="text-xs font-bold text-[#123B5D] flex items-center justify-between">

@@ -1,192 +1,512 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo, useEffect } from "react";
 import Image from "next/image";
 import {
   ArrowRight,
+  Briefcase,
+  Car,
   ChevronDown,
   ChevronUp,
+  Cpu,
+  Flame,
   Grid,
+  SearchX,
+  Truck,
+  Tv,
+  Wrench,
+  type LucideIcon,
 } from "lucide-react";
 import { Link } from "@/i18n/navigation";
 import { useLocale } from "next-intl";
+import { useCustomerSearch } from "./customer-search-context";
+import {
+  fetchServiceCategories,
+  type BackendCategory,
+} from "@/features/post-job/api/post-job-api";
 
 export interface ServiceItem {
   id: string;
+  categoryId?: string;
   title: string;
   titleUr: string;
-  image: string;
+  image?: string | null;
+  icon?: LucideIcon;
+  gradient?: string;
   subCategory?: string;
   href?: string;
+  jobCount?: number;
+  defaultVisitCharge?: number | null;
 }
 
-export const ALL_SERVICES: ServiceItem[] = [
-  // Line 1 (3 items)
-  {
-    id: "plumber",
-    title: "Plumber",
-    titleUr: "پلمبر",
-    image: "/services/plumber.jpg",
-  },
-  {
-    id: "electrician",
-    title: "Electrician",
-    titleUr: "الیکٹریشن",
-    image: "/services/electrician.jpg",
-  },
-  {
-    id: "ac-technician",
-    title: "AC Technician",
-    titleUr: "اے سی ٹیکنیشن",
-    image: "/services/AC.jpg",
-  },
+export interface CategoryAsset {
+  image?: string;
+  icon?: LucideIcon;
+  gradient?: string;
+}
 
-  // Line 2 (3 items)
-  {
-    id: "carpenter",
-    title: "Carpenter",
-    titleUr: "کارپینٹر",
-    image: "/services/carpenter.jpg",
-  },
-  {
-    id: "painter",
-    title: "Painter",
-    titleUr: "پینٹر",
-    image: "/services/painter.jpg",
-  },
-  {
-    id: "mason-mistry",
-    title: "Mason / Mistri",
-    titleUr: "مستری",
-    image: "/services/mason.jpg",
-  },
+export interface ServicesGridProps {
+  services?: any[];
+}
 
-  // Line 3 (3 items)
-  {
-    id: "solar-technician",
-    title: "Solar Panel Setup",
-    titleUr: "سولر پینل",
-    image: "/services/solar setup.jpg",
-  },
-  {
-    id: "gardener",
-    title: "Gardener",
-    titleUr: "مالی / باغبانی",
-    image: "/services/gardner.jpg",
-  },
+/**
+ * Intelligent asset & icon picker for admin-created or database categories.
+ * Maps known trade keywords to high-res 3D photographic assets or trade icons,
+ * and falls back to a clean, branded neutral placeholder for unclassified custom trades.
+ */
+export function pickCategoryAsset(categoryName: string): CategoryAsset {
+  const norm = categoryName.toLowerCase().trim();
 
+  // 1. Photographic Image Picker (matches name to known high-res 3D photographic assets)
+  if (
+    norm.includes("plumb") ||
+    norm.includes("tap") ||
+    norm.includes("leak") ||
+    norm.includes("pipe") ||
+    norm.includes("sanitary") ||
+    norm.includes("پلمبر")
+  ) {
+    return { image: "/services/plumber.jpg" };
+  }
+  if (
+    norm.includes("electr") ||
+    norm.includes("wire") ||
+    norm.includes("light") ||
+    norm.includes("switch") ||
+    norm.includes("الیکٹریشن") ||
+    norm.includes("الیکٹریکل")
+  ) {
+    return { image: "/services/electrician.jpg" };
+  }
+  if (
+    norm.includes("ac") ||
+    norm.includes("air") ||
+    norm.includes("cool") ||
+    norm.includes("hvac") ||
+    norm.includes("refriger") ||
+    norm.includes("اے سی")
+  ) {
+    return { image: "/services/AC.jpg" };
+  }
+  if (
+    norm.includes("carpent") ||
+    norm.includes("wood") ||
+    norm.includes("furniture") ||
+    norm.includes("door") ||
+    norm.includes("کارپینٹر") ||
+    norm.includes("لکڑ")
+  ) {
+    return { image: "/services/carpenter.jpg" };
+  }
+  if (
+    norm.includes("paint") ||
+    norm.includes("polish") ||
+    norm.includes("whitewash") ||
+    norm.includes("پینٹر") ||
+    norm.includes("پینٹنگ")
+  ) {
+    return { image: "/services/painter.jpg" };
+  }
+  if (
+    norm.includes("mason") ||
+    norm.includes("mistri") ||
+    norm.includes("mistry") ||
+    norm.includes("brick") ||
+    norm.includes("cement") ||
+    norm.includes("مستری") ||
+    norm.includes("دھاتی")
+  ) {
+    return { image: "/services/mason.jpg" };
+  }
+  if (
+    norm.includes("solar") ||
+    norm.includes("inverter") ||
+    norm.includes("panel") ||
+    norm.includes("ups") ||
+    norm.includes("سولر")
+  ) {
+    return { image: "/services/solar setup.jpg" };
+  }
+  if (
+    norm.includes("garden") ||
+    norm.includes("lawn") ||
+    norm.includes("plant") ||
+    norm.includes("mali") ||
+    norm.includes("مالی") ||
+    norm.includes("باغبان")
+  ) {
+    return { image: "/services/gardner.jpg" };
+  }
+  if (
+    norm.includes("pest") ||
+    norm.includes("termite") ||
+    norm.includes("fumigat") ||
+    norm.includes("spray") ||
+    norm.includes("کیڑے")
+  ) {
+    return { image: "/services/pest.jpg" };
+  }
+  if (
+    norm.includes("clean") ||
+    norm.includes("wash") ||
+    norm.includes("maid") ||
+    norm.includes("janitor") ||
+    norm.includes("صفائی")
+  ) {
+    return { image: "/services/cleaning.jpg" };
+  }
+  if (
+    norm.includes("cctv") ||
+    norm.includes("camera") ||
+    norm.includes("secur") ||
+    norm.includes("surveillance") ||
+    norm.includes("سیکیورٹی") ||
+    norm.includes("کیمرے")
+  ) {
+    return { image: "/services/CCTV.jpg" };
+  }
+  if (
+    norm.includes("geyser") ||
+    norm.includes("heater") ||
+    norm.includes("boiler") ||
+    norm.includes("گیزر")
+  ) {
+    return { image: "/services/geyser.jpg" };
+  }
+  if (
+    norm.includes("tank") ||
+    norm.includes("reservoir") ||
+    norm.includes("ٹینک")
+  ) {
+    return { image: "/services/water tank.jpg" };
+  }
 
-  // Extra hidden rows (Expanded on "Show All")
-  {
-    id: "pest-control",
-    title: "Pest Control",
-    titleUr: "کیڑے مار اسپرے",
-    image: "/services/pest.jpg",
-  },
-  {
-    id: "cleaner",
-    title: "Deep Cleaning",
-    titleUr: "صفائی و کلیننگ",
-    image: "/services/cleaning.jpg",
-  },
-  {
-    id: "cctv-security",
-    title: "CCTV & Security",
-    titleUr: "سی سی ٹی وی",
-    image: "/services/CCTV.jpg",
-  },
-  {
-    id: "plumber",
-    title: "Geyser & Heating",
-    titleUr: "گیزر و ہیٹنگ",
-    image: "/services/geyser.jpg",
-    subCategory: "Geyser Installation (Gas/Electric)",
-    href: "/customer/post-job?category=plumber&subCategory=Geyser+Installation+(Gas/Electric)",
-  },
-  {
-    id: "cleaner",
-    title: "Water Tank Clean",
-    titleUr: "واٹر ٹینک صفائی",
-    image: "/services/water tank.jpg",
-    subCategory: "Water Tank Deep Cleaning",
-    href: "/customer/post-job?category=cleaner&subCategory=Water+Tank+Deep+Cleaning",
-  },
+  // 2. Icon Picker for known vector trade categories
+  if (
+    norm.includes("weld") ||
+    norm.includes("ویلڈر")
+  ) {
+    return {
+      icon: Flame,
+      gradient: "from-orange-500/15 via-amber-500/5 to-slate-50",
+    };
+  }
+  if (
+    norm.includes("handyman") ||
+    norm.includes("عمومی") ||
+    norm.includes("fixture") ||
+    norm.includes("drill")
+  ) {
+    return {
+      icon: Wrench,
+      gradient: "from-[#0F8B8D]/15 via-teal-500/5 to-slate-50",
+    };
+  }
+  if (
+    norm.includes("mover") ||
+    norm.includes("shift") ||
+    norm.includes("transport") ||
+    norm.includes("pack") ||
+    norm.includes("truck") ||
+    norm.includes("شفٹنگ") ||
+    norm.includes("گاڑی")
+  ) {
+    return {
+      icon: Truck,
+      gradient: "from-amber-500/15 via-orange-500/5 to-slate-50",
+    };
+  }
+  if (
+    norm.includes("tech") ||
+    norm.includes("it") ||
+    norm.includes("computer") ||
+    norm.includes("network") ||
+    norm.includes("software")
+  ) {
+    return {
+      icon: Cpu,
+      gradient: "from-blue-500/15 via-indigo-500/5 to-slate-50",
+    };
+  }
+  if (
+    norm.includes("car") ||
+    norm.includes("auto") ||
+    norm.includes("bike") ||
+    norm.includes("motor") ||
+    norm.includes("mechanic")
+  ) {
+    return {
+      icon: Car,
+      gradient: "from-rose-500/15 via-red-500/5 to-slate-50",
+    };
+  }
+  if (
+    norm.includes("appliance") ||
+    norm.includes("tv") ||
+    norm.includes("oven") ||
+    norm.includes("microwave")
+  ) {
+    return {
+      icon: Tv,
+      gradient: "from-purple-500/15 via-violet-500/5 to-slate-50",
+    };
+  }
 
-];
+  // 3. Neutral Branded Placeholder for unclassified / admin custom services
+  return {
+    icon: Briefcase,
+    gradient: "from-[#0F8B8D]/15 via-slate-100 to-[#123B5D]/5",
+  };
+}
 
-export function ServicesGrid() {
-  const [showAll, setShowAll] = useState(false);
-  const locale = useLocale();
+function ServiceCardMedia({
+  service,
+  displayTitle,
+  priority,
+}: {
+  service: ServiceItem;
+  displayTitle: string;
+  priority: boolean;
+}) {
+  const [hasError, setHasError] = useState(false);
 
-  // Default sliced count: 12 items (3 rows of 4 on desktop, 4 rows of 3 on mobile)
-  const displayedServices = showAll ? ALL_SERVICES : ALL_SERVICES.slice(0, 12);
+  if (service.image && !hasError) {
+    return (
+      <div className="relative w-full h-28 sm:h-36 rounded-xl sm:rounded-2xl overflow-hidden bg-[#F9FAFC] shrink-0">
+        <Image
+          src={service.image}
+          alt={displayTitle}
+          fill
+          priority={priority}
+          onError={() => setHasError(true)}
+          className="object-cover group-hover:scale-105 transition-transform duration-300"
+          sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+        />
+      </div>
+    );
+  }
+
+  const IconComponent = service.icon || Briefcase;
 
   return (
-    <section className="flex flex-col gap-3 w-full">
-      {/* Top Header with "Show All Services" Button on the Right */}
+    <div
+      className={`relative w-full h-28 sm:h-36 rounded-xl sm:rounded-2xl overflow-hidden shrink-0 flex items-center justify-center p-3 select-none bg-gradient-to-br ${
+        service.gradient || "from-[#0F8B8D]/15 via-slate-100 to-[#123B5D]/5"
+      } border border-slate-200/70 transition-all duration-300 group-hover:border-[#0F8B8D]/40 group-hover:shadow-inner`}
+    >
+      {/* Decorative ambient glows */}
+      <div className="absolute -top-6 -right-6 size-20 rounded-full bg-[#0F8B8D]/10 blur-xl pointer-events-none" />
+      <div className="absolute -bottom-6 -left-6 size-20 rounded-full bg-[#123B5D]/10 blur-xl pointer-events-none" />
+
+      {/* Centered Floating Icon Badge */}
+      <div className="relative z-10 size-12 sm:size-14 rounded-2xl bg-white shadow-xs border border-slate-200/80 flex items-center justify-center text-[#0F8B8D] group-hover:text-[#123B5D] group-hover:scale-110 group-hover:shadow-sm transition-all duration-300">
+        <IconComponent className="size-6 sm:size-7 stroke-[1.75]" />
+      </div>
+    </div>
+  );
+}
+
+/** Legacy array export kept for any external test harness */
+export const ALL_SERVICES: ServiceItem[] = [];
+
+export function ServicesGrid({ services: propServices }: ServicesGridProps = {}) {
+  const [showAll, setShowAll] = useState(false);
+  const locale = useLocale();
+  const isUrdu = locale === "ur";
+  const { searchQuery } = useCustomerSearch();
+  const [backendCategories, setBackendCategories] = useState<BackendCategory[] | null>(null);
+  const [isLoading, setIsLoading] = useState(!propServices);
+
+  useEffect(() => {
+    if (propServices) return;
+    let mounted = true;
+
+    const loadCategories = () => {
+      fetchServiceCategories()
+        .then((cats) => {
+          if (mounted && Array.isArray(cats)) {
+            setBackendCategories(cats);
+          }
+        })
+        .catch((err) => {
+          console.warn("[services-grid] Failed to fetch service categories:", err);
+        })
+        .finally(() => {
+          if (mounted) setIsLoading(false);
+        });
+    };
+
+    loadCategories();
+
+    // Re-fetch on focus and poll periodically so admin category changes reflect dynamically
+    window.addEventListener("focus", loadCategories);
+    const interval = setInterval(loadCategories, 5000);
+    return () => {
+      mounted = false;
+      window.removeEventListener("focus", loadCategories);
+      clearInterval(interval);
+    };
+  }, [propServices]);
+
+  // Derive active service items directly from the database API (isActive = true)
+  const activeServices = useMemo<ServiceItem[]>(() => {
+    if (propServices && Array.isArray(propServices)) {
+      return propServices.map((p) => {
+        const nameStr = p.name || p.title || "Service";
+        const asset = pickCategoryAsset(nameStr);
+        return {
+          id: p.id || String(Math.random()),
+          title: nameStr,
+          titleUr: p.nameUrdu || p.urduTitle || nameStr,
+          image: p.image || p.imageUrl || asset.image,
+          icon: p.icon || asset.icon,
+          gradient: p.gradient || asset.gradient,
+          jobCount: p.jobCount,
+          href: p.href || `/customer/post-job?category=${encodeURIComponent(p.id || "")}`,
+        };
+      });
+    }
+
+    if (!backendCategories) return [];
+
+    return backendCategories.map((cat) => {
+      const asset = pickCategoryAsset(cat.name);
+      return {
+        id: cat.id,
+        title: cat.name,
+        titleUr: cat.nameUrdu || cat.name,
+        image: cat.imageUrl || asset.image,
+        icon: asset.icon,
+        gradient: asset.gradient,
+        defaultVisitCharge: cat.defaultVisitCharge,
+        jobCount: (cat as any).totalJobsCount || (cat as any).jobCount,
+        href: `/customer/post-job?category=${encodeURIComponent(cat.id)}&categoryId=${encodeURIComponent(cat.id)}&categoryName=${encodeURIComponent(cat.name)}${cat.nameUrdu ? `&categoryNameUrdu=${encodeURIComponent(cat.nameUrdu)}` : ""}`,
+      };
+    });
+  }, [propServices, backendCategories]);
+
+  const normalizedQuery = searchQuery.trim().toLowerCase();
+
+  // Live-filter services by search term (case-insensitive, English or Urdu)
+  const displayedServices = useMemo(() => {
+    if (!normalizedQuery) {
+      return showAll ? activeServices : activeServices.slice(0, 12);
+    }
+
+    return activeServices.filter((service) => {
+      const matchesTitle = service.title.toLowerCase().includes(normalizedQuery);
+      const matchesTitleUr = service.titleUr.includes(searchQuery.trim());
+      return matchesTitle || matchesTitleUr;
+    });
+  }, [normalizedQuery, searchQuery, showAll, activeServices]);
+
+  const isSearching = normalizedQuery.length > 0;
+  const hasMoreThan12 = activeServices.length > 12;
+
+  return (
+    <section className="flex flex-col gap-3 w-full flex-1 min-h-[320px] sm:min-h-[440px]">
+      {/* Top Header with "Show All Services" Button */}
       <div className="flex items-center justify-between">
         <span className="text-xs sm:text-sm font-bold text-[#123B5D]">
-          {locale === "ur" ? "سروس منتخب کریں" : "Select Service"}
+          {isUrdu ? "سروس منتخب کریں" : "Select Service"}
         </span>
-        <button
-          type="button"
-          onClick={() => setShowAll((prev) => !prev)}
-          className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-slate-50 border border-slate-200 text-[#0F8B8D] hover:bg-[#0F8B8D]/10 hover:border-[#0F8B8D]/30 text-xs font-bold transition-all cursor-pointer shadow-2xs"
-        >
-          <Grid className="size-3" />
-          <span>
-            {showAll
-              ? locale === "ur"
-                ? "کم دکھائیں"
-                : "Show Less"
-              : locale === "ur"
-              ? "تمام سروسز دیکھیں"
-              : "Show All Services"}
-          </span>
-          {showAll ? (
-            <ChevronUp className="size-3.5" />
-          ) : (
-            <ChevronDown className="size-3.5" />
-          )}
-        </button>
+
+        {hasMoreThan12 && !isSearching && (
+          <button
+            type="button"
+            onClick={() => setShowAll((prev) => !prev)}
+            className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-slate-50 border border-slate-200 text-[#0F8B8D] hover:bg-[#0F8B8D]/10 hover:border-[#0F8B8D]/30 text-xs font-bold transition-all cursor-pointer shadow-2xs"
+          >
+            <Grid className="size-3" />
+            <span>
+              {showAll
+                ? isUrdu
+                  ? "کم دکھائیں"
+                  : "Show Less"
+                : isUrdu
+                ? "تمام سروسز دیکھیں"
+                : "Show All Services"}
+            </span>
+            {showAll ? (
+              <ChevronUp className="size-3.5" />
+            ) : (
+              <ChevronDown className="size-3.5" />
+            )}
+          </button>
+        )}
       </div>
 
-      {/* 3 in 1 line on Mobile, 4 in 1 line on Desktop */}
-      <div className="grid grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4 w-full">
-        {displayedServices.map((service, index) => {
-          const displayTitle = locale === "ur" ? service.titleUr : service.title;
-          const serviceHref =
-            service.href || `/customer/post-job?category=${service.id}`;
-
-          return (
-            <Link
-              key={`${service.id}-${service.title}`}
-              href={serviceHref}
-              className="group flex flex-col justify-between p-2 sm:p-3 rounded-2xl sm:rounded-3xl border border-slate-200 bg-[#F9FAFC] hover:border-[#0F8B8D] shadow-2xs hover:shadow-md transition-all duration-300 cursor-pointer active:scale-95 h-full"
+      {/* Loading Skeleton */}
+      {isLoading && activeServices.length === 0 ? (
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4 w-full">
+          {Array.from({ length: 8 }).map((_, i) => (
+            <div
+              key={i}
+              className="flex flex-col p-2 sm:p-3 rounded-2xl sm:rounded-3xl border border-slate-200 bg-[#F9FAFC] animate-pulse"
             >
-              {/* Inner Image Container - Fixed identical height & full width */}
-              <div className="relative w-full h-24 sm:h-36 rounded-xl sm:rounded-2xl overflow-hidden bg-[#F9FAFC] shrink-0">
-                <Image
-                  src={service.image}
-                  alt={displayTitle}
-                  fill
-                  priority={index < 4}
-                  className="object-cover group-hover:scale-105 transition-transform duration-300"
-                  sizes="(max-width: 640px) 33vw, 25vw"
-                />
+              <div className="w-full h-28 sm:h-36 rounded-xl sm:rounded-2xl bg-slate-200" />
+              <div className="flex items-center justify-between px-1 pt-3 pb-1">
+                <div className="h-4 w-24 bg-slate-200 rounded" />
+                <div className="size-4 bg-slate-200 rounded-full" />
               </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        /* 2 cards per row on Mobile, 4 per row on Desktop */
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4 w-full content-start">
+          {displayedServices.map((service, index) => {
+            const displayTitle = isUrdu ? service.titleUr : service.title;
+            const serviceHref =
+              service.href || `/customer/post-job?category=${service.categoryId || service.id}`;
 
-              {/* Service Title & Arrow */}
-              <div className="flex items-center justify-between px-1 pt-2 pb-0.5 gap-1.5 min-h-[38px] sm:min-h-[44px]">
-                <span className="text-xs sm:text-sm font-bold text-[#123B5D] group-hover:text-[#0F8B8D] transition-colors leading-snug line-clamp-2 text-left rtl:text-right">
-                  {displayTitle}
-                </span>
-                <ArrowRight className="size-3.5 sm:size-4 text-slate-400 group-hover:text-[#0F8B8D] group-hover:translate-x-0.5 transition-all shrink-0 rtl:rotate-180 mb-0.5" />
-              </div>
-            </Link>
-          );
-        })}
-      </div>
+            return (
+              <Link
+                key={service.id}
+                href={serviceHref}
+                className="group flex flex-col justify-between p-2 sm:p-3 rounded-2xl sm:rounded-3xl border border-slate-200 bg-[#F9FAFC] hover:border-[#0F8B8D] shadow-2xs hover:shadow-md transition-all duration-300 cursor-pointer active:scale-95 h-full"
+              >
+                {/* Inner Media Container - Image or Dynamic Neutral Placeholder */}
+                <ServiceCardMedia
+                  service={service}
+                  displayTitle={displayTitle}
+                  priority={index < 4}
+                />
+
+                {/* Service Title & Optional Job Count */}
+                <div className="flex flex-col px-1 pt-2 pb-0.5 gap-0.5 min-h-[38px] sm:min-h-[44px]">
+                  <div className="flex items-center justify-between gap-1.5">
+                    <span className="text-xs sm:text-sm font-bold text-[#123B5D] group-hover:text-[#0F8B8D] transition-colors leading-snug line-clamp-2 text-left rtl:text-right">
+                      {displayTitle}
+                    </span>
+                    <ArrowRight className="size-3.5 sm:size-4 text-slate-400 group-hover:text-[#0F8B8D] group-hover:translate-x-0.5 transition-all shrink-0 rtl:rotate-180 mb-0.5" />
+                  </div>
+                  {service.jobCount != null && (
+                    <span className="text-[11px] text-slate-400 font-medium text-left rtl:text-right">
+                      {service.jobCount} jobs
+                    </span>
+                  )}
+                </div>
+              </Link>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Empty search results state */}
+      {isSearching && displayedServices.length === 0 && (
+        <div className="flex flex-col items-center justify-center flex-1 py-16 gap-2 text-center animate-in fade-in duration-200">
+          <SearchX className="size-8 text-slate-300" />
+          <p className="text-sm font-bold text-slate-500">
+            {isUrdu ? "کوئی نتیجہ نہیں ملا" : "No results found"}
+          </p>
+          <p className="text-xs text-slate-400 font-medium">
+            {isUrdu
+              ? "کوئی اور لفظ آزمائیں"
+              : "Try a different search term"}
+          </p>
+        </div>
+      )}
     </section>
   );
 }

@@ -4,7 +4,10 @@ import React, { useState } from "react";
 import { JobRequest } from "@/types/job";
 import { VisitOffer } from "@/types/offer";
 import { formatRs } from "@/lib/design-tokens";
+import { sanitizePriceInput, parsePriceOrZero } from "@/lib/money";
 import { workerStore, useWorkerJobs } from "@/stores/worker-jobs-store";
+import { compressImage } from "@/lib/image-compression";
+import { http } from "@/lib/api-client";
 import {
   Navigation,
   MapPin,
@@ -28,40 +31,59 @@ export function VisitActionFlow({ job, offer }: VisitActionFlowProps) {
   // Form states for Submit Inspection (Task 8d)
   const [diagnosis, setDiagnosis] = useState("");
   const [repairPlan, setRepairPlan] = useState("");
-  const [repairPriceEstimate, setRepairPriceEstimate] = useState<number>(1500);
-  const [estimatedRepairTime, setEstimatedRepairTime] = useState("1.5 hours");
-  const [inspectionPhotos, setInspectionPhotos] = useState<string[]>([
-    "https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=800&q=80",
-  ]);
+  const [repairPriceEstimate, setRepairPriceEstimate] = useState<number | string>("");
+  const [estimatedRepairTime, setEstimatedRepairTime] = useState("");
+
+  const numRepairEstimate = parsePriceOrZero(repairPriceEstimate);
+  const [inspectionPhotos, setInspectionPhotos] = useState<string[]>([]);
   const fileInputRef = React.useRef<HTMLInputElement | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
+
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
 
-    Array.from(files).forEach((file) => {
-      if (!file.type.startsWith("image/")) return;
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        if (event.target?.result) {
-          setInspectionPhotos((prev) => [...prev, event.target!.result as string]);
+    setIsUploadingPhoto(true);
+    setFormError(null);
+    try {
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        if (!file.type.startsWith("image/")) continue;
+        const compressed = await compressImage(file, { maxWidth: 1280, maxHeight: 1280, quality: 0.8 });
+        const formData = new FormData();
+        formData.append("file", compressed || file);
+        try {
+          const res = await http.upload<{ url?: string; key?: string }>("/uploads/inspection-photo", formData);
+          const photoUrl = res?.url || (res?.key ? `/uploads/${res.key}` : null);
+          if (photoUrl) {
+            setInspectionPhotos((prev) => [...prev, photoUrl]);
+          } else {
+            setFormError("Photo upload did not return a valid URL. Please try again.");
+          }
+        } catch (uploadErr) {
+          console.error("Failed to upload inspection photo:", uploadErr);
+          setFormError("Failed to upload photo. Please check your connection and retry.");
         }
-      };
-      reader.readAsDataURL(file);
-    });
-    e.target.value = "";
+      }
+    } finally {
+      setIsUploadingPhoto(false);
+      e.target.value = "";
+    }
   };
 
   // Wallet top-up warning
   const [walletAlert, setWalletAlert] = useState<string | null>(null);
+  const [isArriving, setIsArriving] = useState(false);
 
   const agreedPrice =
     offer?.agreedVisitCharge ??
     offer?.visitCharge ??
+    job.visitCharge ??
     job.customerSuggestedPrice ??
-    500;
+    0;
   const requiredHold = Math.round(agreedPrice * 0.1);
 
   // 8a. Handle Start Visit
@@ -69,15 +91,21 @@ export function VisitActionFlow({ job, offer }: VisitActionFlowProps) {
     workerStore.startVisit(job.id);
   };
 
-  // 8b. Handle I've Arrived with Wallet Commission Hold Check
-  const handleArrive = () => {
-    const res = workerStore.arriveAtSite(job.id);
-    if (!res.success) {
-      setWalletAlert(
-        res.error ?? `Insufficient wallet balance. Minimum ${formatRs(requiredHold)} required.`
-      );
-    } else {
-      setWalletAlert(null);
+  // 8b. Handle I've Arrived with Wallet Commission Hold Check & Real Backend Dispatch
+  const handleArrive = async () => {
+    setIsArriving(true);
+    setWalletAlert(null);
+    try {
+      const res = await workerStore.arriveAtDoorstep(job.id);
+      if (!res.success) {
+        setWalletAlert(
+          res.error ?? "Failed to notify arrival"
+        );
+      }
+    } catch (err: any) {
+      setWalletAlert(err?.message || "Failed to notify arrival");
+    } finally {
+      setIsArriving(false);
     }
   };
 
@@ -87,7 +115,7 @@ export function VisitActionFlow({ job, offer }: VisitActionFlowProps) {
   };
 
   // 8d. Handle Submit Inspection Form
-  const handleSubmitInspection = (e: React.FormEvent) => {
+  const handleSubmitInspection = async (e: React.FormEvent) => {
     e.preventDefault();
     setFormError(null);
 
@@ -99,7 +127,7 @@ export function VisitActionFlow({ job, offer }: VisitActionFlowProps) {
       setFormError("Repair plan is required.");
       return;
     }
-    if (!repairPriceEstimate || repairPriceEstimate <= 0) {
+    if (!repairPriceEstimate || numRepairEstimate <= 0) {
       setFormError("Valid repair price is required.");
       return;
     }
@@ -112,18 +140,21 @@ export function VisitActionFlow({ job, offer }: VisitActionFlowProps) {
       return;
     }
 
-    setIsSubmitting(true);
-    const res = workerStore.submitInspection(job.id, {
-      diagnosis: diagnosis.trim(),
-      repairPlan: repairPlan.trim(),
-      repairPriceEstimate,
-      photos: inspectionPhotos,
-      estimatedRepairTime: estimatedRepairTime.trim(),
-    });
+    try {
+      setIsSubmitting(true);
+      const res = await workerStore.submitInspection(job.id, {
+        diagnosis: diagnosis.trim(),
+        repairPlan: repairPlan.trim(),
+        repairPriceEstimate: numRepairEstimate,
+        photos: inspectionPhotos,
+        estimatedRepairTime: estimatedRepairTime.trim(),
+      });
 
-    setIsSubmitting(false);
-    if (!res.success) {
-      setFormError(res.error ?? "Failed to submit.");
+      if (!res.success) {
+        setFormError(res.error ?? "Failed to submit.");
+      }
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -149,18 +180,18 @@ export function VisitActionFlow({ job, offer }: VisitActionFlowProps) {
           <div className="flex items-center gap-2">
             <ShieldAlert className="w-4 h-4 text-red-600 shrink-0" />
             <p className="text-xs font-semibold">
-              Insufficient balance. Please top up {formatRs(requiredHold)} to proceed.
+              Insufficient balance. Contact admin for top up to proceed.
             </p>
           </div>
           <button
             type="button"
             onClick={() => {
-              workerStore.setWalletBalance(walletBalance + 500);
-              setWalletAlert(null);
+              setWalletAlert("Contact admin for top up");
+
             }}
             className="px-3 py-1 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-bold shrink-0 transition-colors"
           >
-            Top-Up (+Rs. 500)
+            Top Up
           </button>
         </div>
       )}
@@ -196,10 +227,11 @@ export function VisitActionFlow({ job, offer }: VisitActionFlowProps) {
           <button
             type="button"
             onClick={handleArrive}
-            className="w-full py-3 px-5 rounded-2xl bg-[#123B5D] hover:bg-[#1a4a75] text-white font-bold text-xs sm:text-sm shadow-sm flex items-center justify-center gap-2 transition-all"
+            disabled={isArriving}
+            className="w-full py-3 px-5 rounded-2xl bg-[#123B5D] hover:bg-[#1a4a75] disabled:opacity-60 text-white font-bold text-xs sm:text-sm shadow-sm flex items-center justify-center gap-2 transition-all cursor-pointer disabled:cursor-not-allowed"
           >
             <MapPin className="w-4 h-4 text-emerald-400" />
-            <span>I&apos;ve Arrived</span>
+            <span>{isArriving ? "Marking Arrival..." : "I've Arrived"}</span>
           </button>
         </div>
       )}
@@ -279,7 +311,7 @@ export function VisitActionFlow({ job, offer }: VisitActionFlowProps) {
                   step="50"
                   required
                   value={repairPriceEstimate}
-                  onChange={(e) => setRepairPriceEstimate(Number(e.target.value))}
+                  onChange={(e) => setRepairPriceEstimate(sanitizePriceInput(e.target.value))}
                   className="w-full pl-9 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 font-bold text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#0F8B8D]/20 focus:border-[#0F8B8D]"
                 />
               </div>
@@ -325,6 +357,8 @@ export function VisitActionFlow({ job, offer }: VisitActionFlowProps) {
                   <img
                     src={url}
                     alt={`Photo ${i + 1}`}
+                    loading="lazy"
+                    decoding="async"
                     className="w-full h-full object-cover"
                   />
                   <button
@@ -371,7 +405,9 @@ export function VisitActionFlow({ job, offer }: VisitActionFlowProps) {
           </div>
           <div className="flex justify-between pt-1 font-semibold">
             <span>Repair Estimate:</span>
-            <span className="text-slate-900 font-bold">{formatRs(repairPriceEstimate)}</span>
+            <span className="text-slate-900 font-bold">
+              {formatRs(job.repairCharge && job.repairCharge > 0 ? job.repairCharge : numRepairEstimate)}
+            </span>
           </div>
           <p className="text-[11px] text-slate-500">
             Waiting for customer approval to begin repair work.

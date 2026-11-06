@@ -13,6 +13,7 @@ export interface WorkerReview {
   rating: number;
   date: string;
   comment: string;
+  tags?: string[];
 }
 
 export interface WorkerWorkProject {
@@ -30,7 +31,7 @@ export interface WorkerProfile {
   phone: string;
   rating: number;
   totalReviews: number;
-  jobSuccessRate: number; // e.g. 98%
+  jobSuccessRate?: number | null;
   completedJobsCount: number;
   responseTime: string; // e.g. "< 15m"
   tradeCategory: string;
@@ -39,7 +40,6 @@ export interface WorkerProfile {
   bio: string;
   isCnicVerified: boolean;
   isNadraCleared: boolean;
-  isPoliceCleared: boolean;
   hunarBadgeId: string; // e.g. "#HN-4821"
   expertiseTags: string[];
   workProjects: WorkerWorkProject[];
@@ -61,7 +61,13 @@ export interface WorkerOffer {
   estimatedArrival: string; // e.g. "Today, 2:30 PM (25 mins)"
   distanceKm: number;
   createdAt: string;
+  expiresAt?: string;
+  serverTime?: string;
   note?: string;
+  isDeclined?: boolean;
+  status?: string;
+  maxNegotiationRounds?: number;
+  minimumVisitFee?: number;
 }
 
 export interface CustomerJob {
@@ -83,10 +89,34 @@ export interface CustomerJob {
   preferredDate: string;
   preferredTimeSlot: string;
   status: JobStatus;
+  rawStatus?: string;
   createdAt: string;
+  expiresAt?: string;
+  serverTime?: string;
+  offerCount?: number;
   offers: WorkerOffer[];
   selectedOffer?: WorkerOffer;
   securityPin?: string; // 4-digit doorstep code, e.g. "6492"
+  suggestedVisitCharge?: number;
+  repairCharge?: number;
+  totalAmount?: number;
+  hasReviewed?: boolean;
+  customerReview?: {
+    id?: string;
+    rating: number;
+    comment?: string;
+    tags?: string[];
+    date?: string;
+  } | null;
+  workerReview?: {
+    id?: string;
+    rating: number;
+    comment?: string;
+    tags?: string[];
+    date?: string;
+  } | null;
+  cancelReason?: string;
+  cancelledAt?: string;
 }
 
 export interface JobEvidencePhoto {

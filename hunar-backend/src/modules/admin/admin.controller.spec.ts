@@ -45,7 +45,9 @@ describe('AdminController HTTP — GET /admin/customers', () => {
             user: { findMany, count, findFirst, update: updateUser },
             serviceRequest: { findMany: findManyJobs, count, findFirst, findUnique: findUniqueJob },
             walletLedger: { findMany: findManyTransactions, count },
-            review: { findMany: findManyReviews },
+            // Customer list aggregates spend (payment.groupBy) + rating given (review.groupBy).
+            payment: { groupBy: jest.fn().mockResolvedValue([]) },
+            review: { findMany: findManyReviews, groupBy: jest.fn().mockResolvedValue([]) },
             jobOffer: { findMany: findManyOffers },
             visit: { findMany: findManyVisits },
             repair: { findMany: findManyRepairs },
@@ -263,9 +265,9 @@ describe('AdminController HTTP — GET /admin/customers', () => {
   });
 
   describe('GET /admin/jobs/:id (Task 25)', () => {
-    const validUuid = 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11';
+    const validJobCode = 'AW3-90W';
     const jobRow = {
-      id: validUuid,
+      id: validJobCode,
       title: 'Fix AC',
       description: 'Not cooling',
       images: ['img1'],
@@ -288,15 +290,15 @@ describe('AdminController HTTP — GET /admin/customers', () => {
       selectedWorker: { id: 'w1', name: 'Worker Khan', phone: '03120000003' },
     };
 
-    it('rejects a non-UUID job ID with 400', async () => {
-      await request(app.getHttpServer()).get('/api/v1/admin/jobs/not-a-uuid').expect(400);
+    it('rejects an invalid Order Code job ID with 400', async () => {
+      await request(app.getHttpServer()).get('/api/v1/admin/jobs/invalid-code').expect(400);
     });
 
     it('returns 404 when the job does not exist', async () => {
       findFirst.mockResolvedValue(null);
 
       const res = await request(app.getHttpServer())
-        .get(`/api/v1/admin/jobs/${validUuid}`)
+        .get(`/api/v1/admin/jobs/${validJobCode}`)
         .expect(404);
 
       expect(res.body.message).toBe('Job not found');
@@ -391,11 +393,11 @@ describe('AdminController HTTP — GET /admin/customers', () => {
       ]);
 
       const res = await request(app.getHttpServer())
-        .get(`/api/v1/admin/jobs/${validUuid}`)
+        .get(`/api/v1/admin/jobs/${validJobCode}`)
         .expect(200);
 
       expect(res.body.job).toMatchObject({
-        id: validUuid,
+        id: validJobCode,
         title: 'Fix AC',
         status: 'COMPLETED',
         category: { id: 'cat-1' },
@@ -409,7 +411,7 @@ describe('AdminController HTTP — GET /admin/customers', () => {
       expect(res.body.reviews).toHaveLength(1);
       expect(res.body.payments).toEqual([
         {
-          jobId: validUuid,
+          jobId: validJobCode,
           amount: 600,
           status: 'COMPLETED',
           paidAt: jobRow.completedAt.toISOString(),
@@ -421,27 +423,27 @@ describe('AdminController HTTP — GET /admin/customers', () => {
   });
 
   describe('PUT /admin/jobs/:id/cancel (Task 26)', () => {
-    const validUuid = 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11';
+    const validJobCode = 'AW3-90W';
 
     function mockCancellableJob(status: string) {
       findUniqueJob.mockResolvedValue({
-        id: validUuid,
+        id: validJobCode,
         customerId: 'c1',
         selectedWorkerId: 'w1',
         status,
         title: 'Fix AC',
       });
       updateJob.mockResolvedValue({
-        id: validUuid,
+        id: validJobCode,
         status: 'CANCELLED',
         cancelReason: 'Admin decision',
         cancelledAt: new Date('2026-09-06T00:00:00Z'),
       });
     }
 
-    it('rejects a non-UUID job ID with 400', async () => {
+    it('rejects an invalid Order Code job ID with 400', async () => {
       await request(app.getHttpServer())
-        .put('/api/v1/admin/jobs/not-a-uuid/cancel')
+        .put('/api/v1/admin/jobs/not-an-order-code/cancel')
         .send({ reason: 'Admin decision' })
         .expect(400);
     });
@@ -450,7 +452,7 @@ describe('AdminController HTTP — GET /admin/customers', () => {
       mockCancellableJob('REPAIR_APPROVED');
 
       await request(app.getHttpServer())
-        .put(`/api/v1/admin/jobs/${validUuid}/cancel`)
+        .put(`/api/v1/admin/jobs/${validJobCode}/cancel`)
         .send({})
         .expect(400);
     });
@@ -459,7 +461,7 @@ describe('AdminController HTTP — GET /admin/customers', () => {
       findUniqueJob.mockResolvedValue(null);
 
       const res = await request(app.getHttpServer())
-        .put(`/api/v1/admin/jobs/${validUuid}/cancel`)
+        .put(`/api/v1/admin/jobs/${validJobCode}/cancel`)
         .send({ reason: 'Admin decision' })
         .expect(404);
 
@@ -470,7 +472,7 @@ describe('AdminController HTTP — GET /admin/customers', () => {
       mockCancellableJob('CANCELLED');
 
       await request(app.getHttpServer())
-        .put(`/api/v1/admin/jobs/${validUuid}/cancel`)
+        .put(`/api/v1/admin/jobs/${validJobCode}/cancel`)
         .send({ reason: 'Admin decision' })
         .expect(400);
     });
@@ -479,27 +481,27 @@ describe('AdminController HTTP — GET /admin/customers', () => {
       mockCancellableJob('REPAIR_APPROVED');
 
       const res = await request(app.getHttpServer())
-        .put(`/api/v1/admin/jobs/${validUuid}/cancel`)
+        .put(`/api/v1/admin/jobs/${validJobCode}/cancel`)
         .send({ reason: 'Admin decision' })
         .expect(200);
 
       expect(res.body).toMatchObject({
-        id: validUuid,
+        id: validJobCode,
         status: 'CANCELLED',
         cancelReason: 'Admin decision',
       });
       expect(updateJob).toHaveBeenCalledWith(
         expect.objectContaining({
-          where: { id: validUuid },
+          where: { id: validJobCode },
           data: expect.objectContaining({ status: 'CANCELLED', cancelReason: 'Admin decision' }),
         }),
       );
       expect(emitDomainEvent).toHaveBeenCalledWith('job.cancelled', {
-        jobId: validUuid,
+        jobId: validJobCode,
         reason: 'Admin decision',
       });
-      expect(emitToRoom).toHaveBeenCalledWith('user:c1', 'job:cancelled', { jobId: validUuid });
-      expect(emitToRoom).toHaveBeenCalledWith('user:w1', 'job:cancelled', { jobId: validUuid });
+      expect(emitToRoom).toHaveBeenCalledWith('user:c1', 'job:cancelled', { jobId: validJobCode });
+      expect(emitToRoom).toHaveBeenCalledWith('user:w1', 'job:cancelled', { jobId: validJobCode });
     });
   });
 

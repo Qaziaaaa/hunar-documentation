@@ -13,7 +13,8 @@ import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { RealtimeService } from './realtime.service';
 import { JwtPayload } from '../../common/types/jwt-payload.interface';
-import { jobRoom, LOCATION_EVENTS } from '../jobs/jobs.events';
+import { jobRoom, LOCATION_EVENTS, WORKERS_ROOM } from '../jobs/jobs.events';
+import { PrismaService } from '../../prisma/prisma.service';
 
 @WebSocketGateway()
 export class RealtimeGateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
@@ -25,6 +26,7 @@ export class RealtimeGateway implements OnGatewayInit, OnGatewayConnection, OnGa
   constructor(
     private readonly realtimeService: RealtimeService,
     private readonly moduleRef: ModuleRef,
+    private readonly prisma: PrismaService,
   ) {}
 
   afterInit(): void {
@@ -55,6 +57,10 @@ export class RealtimeGateway implements OnGatewayInit, OnGatewayConnection, OnGa
       return;
     }
     this.realtimeService.register(client, payload.sub);
+    // Marketplace fan-out: job:new goes to every connected worker feed.
+    if (payload.role === 'WORKER') {
+      this.realtimeService.joinRoom(client, WORKERS_ROOM);
+    }
     this.logger.debug(`Client connected: ${client.id} (user: ${payload.sub})`);
   }
 
@@ -67,9 +73,41 @@ export class RealtimeGateway implements OnGatewayInit, OnGatewayConnection, OnGa
   }
 
   @SubscribeMessage(LOCATION_EVENTS.locationTrackStart)
-  handleTrackStart(client: Socket, payload: { jobId: string }): void {
-    if (payload?.jobId) {
+  async handleTrackStart(client: Socket, payload: { jobId: string }): Promise<void> {
+    const user: JwtPayload | undefined = client.data?.user;
+    if (!user || !payload?.jobId) {
+      return;
+    }
+
+    try {
+      const job = await this.prisma.serviceRequest.findUnique({
+        where: { id: payload.jobId },
+        select: { customerId: true, selectedWorkerId: true },
+      });
+
+      if (!job) {
+        this.logger.warn(`User ${user.sub} attempted to track non-existent job ${payload.jobId}`);
+        client.emit('error', { message: 'Job not found' });
+        return;
+      }
+
+      const isCustomer = user.role === 'CUSTOMER' && job.customerId === user.sub;
+      const isAssignedWorker = user.role === 'WORKER' && job.selectedWorkerId === user.sub;
+      const isAdmin = user.role === 'ADMIN';
+
+      if (!isCustomer && !isAssignedWorker && !isAdmin) {
+        this.logger.warn(
+          `Unauthorized tracking attempt: user ${user.sub} (${user.role}) attempted to join jobRoom ${payload.jobId}`,
+        );
+        client.emit('error', { message: 'Unauthorized room subscription' });
+        return;
+      }
+
       this.realtimeService.joinRoom(client, jobRoom(payload.jobId));
+      this.logger.debug(`User ${user.sub} joined room ${jobRoom(payload.jobId)}`);
+    } catch (err: any) {
+      this.logger.error(`Error authorizing room subscription: ${err?.message}`);
+      client.emit('error', { message: 'Failed to authorize room subscription' });
     }
   }
 

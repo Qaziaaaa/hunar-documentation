@@ -16,29 +16,121 @@ export function VoiceNotePlayer({
 }: VoiceNotePlayerProps) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
+  const [actualDuration, setActualDuration] = useState<number>(durationSeconds || 0);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  // Sync actualDuration when durationSeconds or url prop updates
+  useEffect(() => {
+    setCurrentTime(0);
+    setIsPlaying(false);
+    if (durationSeconds && durationSeconds > 0) {
+      setActualDuration(durationSeconds);
+    } else {
+      setActualDuration(0);
+    }
+  }, [url, durationSeconds]);
+
+  // Decode audio duration via Web Audio API as an instant fallback for WebM/Opus data URIs / blobs
+  useEffect(() => {
+    if (!url) return;
+    if (actualDuration > 0) return;
+
+    let cancelled = false;
+
+    const decodeAudioDuration = async () => {
+      try {
+        const AudioContextClass =
+          window.AudioContext ||
+          (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+        if (!AudioContextClass) return;
+
+        const res = await fetch(url);
+        const arrayBuffer = await res.arrayBuffer();
+        if (cancelled) return;
+
+        const ctx = new AudioContextClass();
+        const audioBuffer = await ctx.decodeAudioData(arrayBuffer);
+        ctx.close().catch(() => {});
+
+        if (!cancelled && audioBuffer && audioBuffer.duration > 0 && isFinite(audioBuffer.duration)) {
+          setActualDuration((prev) => (prev > 0 ? prev : audioBuffer.duration));
+        }
+      } catch {
+        // Fallback handled by HTML5 audio element
+      }
+    };
+
+    decodeAudioDuration();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [url, actualDuration]);
 
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio) return;
 
+    const handleLoadedMetadata = () => {
+      if (!isNaN(audio.duration) && isFinite(audio.duration) && audio.duration > 0) {
+        setActualDuration(audio.duration);
+      } else if (audio.duration === Infinity) {
+        // Chrome MediaRecorder WebM bug: seeking near the end clamps currentTime to the true duration
+        const onSeeked = () => {
+          audio.removeEventListener("seeked", onSeeked);
+          const resolved =
+            !isNaN(audio.duration) && isFinite(audio.duration) && audio.duration > 0
+              ? audio.duration
+              : audio.currentTime;
+          if (!isNaN(resolved) && isFinite(resolved) && resolved > 0) {
+            setActualDuration(resolved);
+          }
+          audio.currentTime = 0;
+        };
+        audio.addEventListener("seeked", onSeeked, { once: true });
+        try {
+          audio.currentTime = 1e101;
+        } catch {
+          // Ignored
+        }
+      }
+    };
+
     const handleTimeUpdate = () => {
       setCurrentTime(audio.currentTime);
+      if (!isNaN(audio.duration) && isFinite(audio.duration) && audio.duration > 0) {
+        if (actualDuration !== audio.duration) {
+          setActualDuration(audio.duration);
+        }
+      } else if (audio.currentTime > 0) {
+        setActualDuration((prev) => Math.max(prev, audio.currentTime));
+      }
     };
 
     const handleEnded = () => {
       setIsPlaying(false);
       setCurrentTime(0);
+      if (audio.currentTime > 0) {
+        setActualDuration(audio.currentTime);
+      }
     };
 
+    audio.addEventListener("loadedmetadata", handleLoadedMetadata);
     audio.addEventListener("timeupdate", handleTimeUpdate);
     audio.addEventListener("ended", handleEnded);
 
+    if (audio.readyState >= 1) {
+      handleLoadedMetadata();
+    }
+
     return () => {
+      audio.removeEventListener("loadedmetadata", handleLoadedMetadata);
       audio.removeEventListener("timeupdate", handleTimeUpdate);
       audio.removeEventListener("ended", handleEnded);
     };
-  }, []);
+  }, [url]);
+
+  const effectiveDuration = Math.round(actualDuration > 0 ? actualDuration : (durationSeconds || 0));
 
   const togglePlay = () => {
     const audio = audioRef.current;
@@ -55,7 +147,7 @@ export function VoiceNotePlayer({
           setIsPlaying(true);
           const interval = setInterval(() => {
             setCurrentTime((prev) => {
-              if (prev >= durationSeconds) {
+              if (prev >= effectiveDuration) {
                 clearInterval(interval);
                 setIsPlaying(false);
                 return 0;
@@ -67,7 +159,7 @@ export function VoiceNotePlayer({
     }
   };
 
-  const progressPercent = durationSeconds > 0 ? (currentTime / durationSeconds) * 100 : 0;
+  const progressPercent = effectiveDuration > 0 ? (currentTime / effectiveDuration) * 100 : 0;
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -118,7 +210,7 @@ export function VoiceNotePlayer({
             <span>Voice Note</span>
           </span>
           <span>
-            {formatTime(currentTime)} / {formatTime(durationSeconds)}
+            {formatTime(currentTime)} / {formatTime(effectiveDuration)}
           </span>
         </div>
       </div>

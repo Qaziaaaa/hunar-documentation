@@ -1,6 +1,7 @@
 import { Type } from 'class-transformer';
 import {
   IsArray,
+  IsBoolean,
   IsDateString,
   IsEnum,
   IsIn,
@@ -13,12 +14,14 @@ import {
   Max,
   MaxLength,
   Min,
+  ValidateIf,
 } from 'class-validator';
 import {
   CommissionStatus,
   DisputeStatus,
   DisputeType,
   JobStatus,
+  VisitStatus,
   WalletLedgerType,
   WorkerVerificationStatus,
   WithdrawalStatus,
@@ -100,6 +103,13 @@ export class AdminJobListQueryDto {
   @IsDateString()
   to?: string;
 
+  // Delta polling: return only jobs created after this ISO timestamp (newer
+  // than everything the client already has). Optional — callers without it
+  // see the unchanged newest-first list.
+  @IsOptional()
+  @IsDateString()
+  since?: string;
+
   @IsOptional()
   @Type(() => Number)
   @IsInt()
@@ -114,12 +124,82 @@ export class AdminJobListQueryDto {
   limit?: number;
 }
 
+export enum SuspensionType {
+  PERMANENT = 'PERMANENT',
+  TEMPORARY = 'TEMPORARY',
+}
+
+export enum SuspensionDuration {
+  TWO_HOURS = '2_HOURS',
+  SIX_HOURS = '6_HOURS',
+  TWELVE_HOURS = '12_HOURS',
+  ONE_DAY = '1_DAY',
+  THREE_DAYS = '3_DAYS',
+  ONE_WEEK = '1_WEEK',
+  TWO_WEEKS = '2_WEEKS',
+  ONE_MONTH = '1_MONTH',
+}
+
+export function computeSuspendedUntil(duration: string, now: Date = new Date()): Date {
+  const until = new Date(now.getTime());
+  switch (duration) {
+    case '2_HOURS':
+      until.setHours(until.getHours() + 2);
+      break;
+    case '6_HOURS':
+      until.setHours(until.getHours() + 6);
+      break;
+    case '12_HOURS':
+      until.setHours(until.getHours() + 12);
+      break;
+    case '1_DAY':
+      until.setDate(until.getDate() + 1);
+      break;
+    case '3_DAYS':
+      until.setDate(until.getDate() + 3);
+      break;
+    case '1_WEEK':
+      until.setDate(until.getDate() + 7);
+      break;
+    case '2_WEEKS':
+      until.setDate(until.getDate() + 14);
+      break;
+    case '1_MONTH':
+      until.setMonth(until.getMonth() + 1);
+      break;
+    default:
+      until.setDate(until.getDate() + 1);
+      break;
+  }
+  return until;
+}
+
 // Suspend is a sensitive action — the admin must always state why (stored in the audit trail).
+// Supports Permanent and Temporary suspensions per Section 5 specification.
 export class SuspendUserDto {
+  @IsOptional()
+  @IsEnum(SuspensionType)
+  type?: SuspensionType;
+
   @IsString()
   @IsNotEmpty()
-  @MaxLength(1000)
+  @MaxLength(500)
   reason!: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(500)
+  violationType?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(2000)
+  description?: string;
+
+  @ValidateIf((o) => o.type === SuspensionType.TEMPORARY)
+  @IsOptional()
+  @IsEnum(SuspensionDuration)
+  duration?: SuspensionDuration;
 }
 
 // Force-cancel is a sensitive action — the admin must always state why (stored in the audit trail).
@@ -290,6 +370,20 @@ export class AdminFreezeWalletDto {
   reason: string;
 }
 
+// Manual wallet top-up by admin
+export class AdminTopUpWalletDto {
+  @Type(() => Number)
+  @IsNumber()
+  @Min(1)
+  @Max(1000000)
+  amount: number;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(500)
+  note?: string;
+}
+
 // Dispute queue (Admin flow §10). Admin dispute resolution.
 export class AdminDisputeListQueryDto {
   @IsOptional()
@@ -385,16 +479,30 @@ export class AdminCreateCategoryDto {
   @MaxLength(100)
   name: string;
 
-  @IsOptional()
   @IsString()
+  @IsNotEmpty()
   @MaxLength(100)
-  nameUrdu?: string;
+  nameUrdu: string;
 
-  @IsOptional()
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(1000)
+  imageUrl: string;
+
   @Type(() => Number)
   @IsInt()
   @Min(0)
-  sortOrder?: number;
+  sortOrder: number;
+
+  @Type(() => Number)
+  @IsNumber()
+  @Min(0)
+  defaultVisitCharge: number;
+
+  @IsArray()
+  @IsString({ each: true })
+  @IsNotEmpty({ each: true })
+  commonIssues: string[];
 }
 
 export class AdminUpdateCategoryDto {
@@ -409,10 +517,33 @@ export class AdminUpdateCategoryDto {
   nameUrdu?: string;
 
   @IsOptional()
+  @IsString()
+  @MaxLength(1000)
+  imageUrl?: string;
+
+  @IsOptional()
   @Type(() => Number)
   @IsInt()
   @Min(0)
   sortOrder?: number;
+
+  @IsOptional()
+  distanceSlabs?: any;
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  commonIssues?: string[];
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  @Min(0)
+  defaultVisitCharge?: number;
+
+  @IsOptional()
+  @IsBoolean()
+  isActive?: boolean;
 }
 
 // Platform settings (Admin flow §12). Admin views and updates platform settings.
@@ -451,6 +582,23 @@ export class AdminUpdateSettingsDto {
   @IsOptional()
   @IsString()
   announcement?: string;
+
+  // Wallet rules — enforced by payments/wallet.service (hold gate + offline rule).
+  // 0 = workers may never go negative; more negative = larger allowed debt.
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(-100000)
+  @Max(0)
+  walletMaxNegativeBalance?: number;
+
+  // Worker controls — enforced by offers.service (createOffer cap).
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(100)
+  maxActiveOffersPerWorker?: number;
 }
 
 // Reports (Admin flow §13). Analytics reports with export.
@@ -584,4 +732,149 @@ export class AdminKpiStatsDto {
 
   @IsInt()
   activeNowCount: number;
+}
+
+export class AdminVisitListQueryDto {
+  @IsOptional()
+  @IsString()
+  @MaxLength(200)
+  search?: string;
+
+  @IsOptional()
+  @IsEnum(VisitStatus)
+  status?: VisitStatus;
+
+  @IsOptional()
+  @IsDateString()
+  from?: string;
+
+  @IsOptional()
+  @IsDateString()
+  to?: string;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  page?: number;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(100)
+  limit?: number;
+}
+
+export class AdminReviewListQueryDto {
+  @IsOptional()
+  @IsString()
+  @MaxLength(200)
+  search?: string;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(5)
+  rating?: number;
+
+  @IsOptional()
+  @IsIn(['true', 'false'])
+  isVisible?: string;
+
+  @IsOptional()
+  @IsDateString()
+  from?: string;
+
+  @IsOptional()
+  @IsDateString()
+  to?: string;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  page?: number;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(100)
+  limit?: number;
+}
+
+// City & Area Management
+export class AdminCreateCityDto {
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(100)
+  name!: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(100)
+  nameUrdu?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  isActive?: boolean;
+}
+
+export class AdminUpdateCityDto {
+  @IsOptional()
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(100)
+  name?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(100)
+  nameUrdu?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  isActive?: boolean;
+}
+
+export class AdminCreateAreaDto {
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(100)
+  name!: string;
+
+  @IsUUID()
+  cityId!: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(100)
+  nameUrdu?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  isActive?: boolean;
+}
+
+export class AdminUpdateAreaDto {
+  @IsOptional()
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(100)
+  name?: string;
+
+  @IsOptional()
+  @IsUUID()
+  cityId?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(100)
+  nameUrdu?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  isActive?: boolean;
 }

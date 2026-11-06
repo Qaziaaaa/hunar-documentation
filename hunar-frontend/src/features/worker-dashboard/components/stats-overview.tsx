@@ -87,7 +87,7 @@ export function StatsOverview({
 
         <div className="mt-3 flex items-center gap-1 text-[11px] font-bold text-teal">
           <TrendingUp className="size-3 text-success" />
-          <span>{isUrdu ? "کمیشن تفصیلات (10%)" : "Commission details (10%)"}</span>
+          <span>{isUrdu ? "آمدنی کا جائزہ" : "View earnings breakdown"}</span>
           <ArrowUpRight className="size-3 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5 rtl:group-hover:-translate-x-0.5" />
         </div>
       </div>
@@ -104,16 +104,22 @@ export function StatsOverview({
             </p>
             <div className="flex items-baseline gap-1.5">
               <span className="text-2xl sm:text-3xl font-extrabold text-navy">
-                {profile.rating.toFixed(1)}
+                {profile.reviewCount > 0 ? profile.rating.toFixed(1) : "—"}
               </span>
-              <div className="flex items-center text-orange">
-                <Star className="size-4 fill-orange" />
-              </div>
+              {profile.reviewCount > 0 && (
+                <div className="flex items-center text-orange">
+                  <Star className="size-4 fill-orange" />
+                </div>
+              )}
             </div>
             <p className="text-[11px] text-slate-500">
-              {isUrdu
-                ? `${profile.reviewCount} کسٹمر جائزہ کی بنیاد پر`
-                : `Based on ${profile.reviewCount} customer reviews`}
+              {profile.reviewCount > 0
+                ? isUrdu
+                  ? `${profile.reviewCount} کسٹمر جائزہ کی بنیاد پر`
+                  : `Based on ${profile.reviewCount} customer reviews`
+                : isUrdu
+                ? "ابھی تک کوئی جائزہ موجود نہیں"
+                : "No customer reviews yet"}
             </p>
           </div>
 
@@ -123,7 +129,15 @@ export function StatsOverview({
         </div>
 
         <div className="mt-3 flex items-center gap-1 text-[11px] font-bold text-orange">
-          <span>{isUrdu ? "اعلی ترین ریٹنگ کا حامل ماہر" : "Top Rated Verified Pro"}</span>
+          <span>
+            {profile.isVerified
+              ? isUrdu
+                ? "تصدیق شدہ کاریگر"
+                : "Verified Pro"
+              : isUrdu
+              ? "پروفائل کا جائزہ لیں"
+              : "View profile & reviews"}
+          </span>
           <ArrowUpRight className="size-3 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5 rtl:group-hover:-translate-x-0.5" />
         </div>
       </div>

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import Script from "next/script";
+import { Bricolage_Grotesque, Hanken_Grotesk, Inter } from "next/font/google";
 import { hasLocale, NextIntlClientProvider } from "next-intl";
 import { getMessages, getTranslations, setRequestLocale } from "next-intl/server";
 import { notFound } from "next/navigation";
@@ -9,6 +10,20 @@ import "../globals.css";
 
 const inter = Inter({
   variable: "--font-inter",
+  subsets: ["latin"],
+  display: "swap",
+});
+
+/** Wharf body font — applied only on `.admin-glow` so other surfaces keep Inter. */
+const hanken = Hanken_Grotesk({
+  variable: "--font-hanken",
+  subsets: ["latin"],
+  display: "swap",
+});
+
+/** Wharf display font — page titles / hero numbers on the admin dashboard. */
+const bricolage = Bricolage_Grotesque({
+  variable: "--font-bricolage",
   subsets: ["latin"],
   display: "swap",
 });
@@ -87,7 +102,8 @@ export default async function LocaleLayout({
     <html
       lang={locale}
       dir={dir}
-      className={`${inter.variable} h-full antialiased`}
+      suppressHydrationWarning
+      className={`${inter.variable} ${hanken.variable} ${bricolage.variable} h-full antialiased scrollbar-none no-scrollbar`}
     >
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -100,7 +116,15 @@ export default async function LocaleLayout({
         <link rel="shortcut icon" href="/workerfix-icon.png" type="image/png" />
         <link rel="apple-touch-icon" href="/workerfix-icon.png" />
       </head>
-      <body className="min-h-screen w-full overflow-x-hidden flex flex-col">
+      <body suppressHydrationWarning className="min-h-screen w-full overflow-x-hidden flex flex-col scrollbar-none no-scrollbar">
+        {/* Pre-paint admin theme (prevents flash before hydration) */}
+        <Script
+          id="workerfix-admin-theme"
+          strategy="beforeInteractive"
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var isAdmin=/\\/admin(\\/|$)/.test(location.pathname);var t=localStorage.getItem("workerfix.admin.theme")||"system";var dark=isAdmin&&(t==="dark"||(t!=="light"&&window.matchMedia("(prefers-color-scheme: dark)").matches));document.documentElement.setAttribute("data-theme",dark?"dark":"light");}catch(e){}})();`,
+          }}
+        />
         <NextIntlClientProvider messages={messages}>
           <QueryProvider>{children}</QueryProvider>
         </NextIntlClientProvider>

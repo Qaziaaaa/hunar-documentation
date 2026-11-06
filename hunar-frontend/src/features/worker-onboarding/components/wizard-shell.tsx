@@ -17,12 +17,21 @@ export function WizardShell() {
     formData,
     stepError,
     isSubmitting,
+    isCheckingAuth,
     updateFormData,
     goToStep,
     nextStep,
     prevStep,
     submitFinalProfile,
   } = useWorkerWizard();
+
+  if (isCheckingAuth) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-white">
+        <div className="size-8 animate-spin rounded-full border-4 border-teal border-t-transparent" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen min-h-[100dvh] w-full bg-white text-navy flex flex-col antialiased">
@@ -35,19 +44,25 @@ export function WizardShell() {
 
         {/* Right Interactive Form Container (Seamless Workspace) */}
         <section
-          className="flex flex-1 flex-col justify-between bg-white px-4 py-5 sm:px-8 sm:py-8 lg:px-12 lg:py-10 lg:col-span-7 xl:col-span-7 min-h-screen min-h-[100dvh]"
+          className={`flex flex-1 flex-col justify-between bg-white px-4 sm:px-8 lg:col-span-7 xl:col-span-7 min-h-screen min-h-[100dvh] ${
+            currentStep === "success"
+              ? "py-4 sm:py-6 lg:py-6 justify-center"
+              : "py-4 sm:py-6 lg:px-12 lg:py-8"
+          }`}
           data-purpose="worker-registration-form"
         >
           <div
-            className="mx-auto flex w-full max-w-[540px] flex-1 flex-col justify-between"
+            className={`mx-auto flex w-full max-w-[540px] flex-1 flex-col ${
+              currentStep === "success" ? "justify-center" : "justify-between"
+            }`}
             id="wizard-container"
           >
-            <div className="flex-1 flex flex-col justify-between">
+            <div className={`flex-1 flex flex-col ${currentStep === "success" ? "justify-center" : "justify-between"}`}>
               {/* Stepper Progress Header */}
               <StepProgressHeader currentStep={currentStep} />
 
               {/* Step Forms */}
-              <div className="flex-1 flex flex-col justify-between pt-1 pb-2">
+              <div className={`flex-1 flex flex-col ${currentStep === "success" ? "justify-center py-0" : "justify-between pt-1 pb-2"}`}>
                 {currentStep === 1 && (
                   <Step1PersonalDetails
                     formData={formData}

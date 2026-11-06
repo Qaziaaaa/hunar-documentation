@@ -1,10 +1,15 @@
-import { http } from "@/lib/api-client";
-import { isMockMode, simulateLatency } from "@/lib/data-source";
+import { http, getAccessToken, getRefreshToken } from "@/lib/api-client";
+import { unwrapRows } from "@/lib/unwrap-rows";
 import type { WalletSummary, WalletTransaction } from "@/types/finance";
-import {
-  mockWalletSummary,
-  mockWalletTransactions,
-} from "@/mocks/earnings.mock";
+
+function hasWorkerAuthSession(): boolean {
+  return Boolean(
+    getAccessToken("WORKER", true) ||
+    getAccessToken(undefined, true) ||
+    getRefreshToken("WORKER") ||
+    getRefreshToken()
+  );
+}
 
 interface BackendWalletSnapshot {
   userId: string;
@@ -20,7 +25,9 @@ interface BackendLedgerEntry {
   balanceAfter: number;
   referenceType?: string | null;
   referenceId?: string | null;
+  idempotencyKey?: string | null;
   description?: string | null;
+  note?: string | null;
   createdAt: string;
 }
 
@@ -39,47 +46,141 @@ function mapLedgerEntry(entry: BackendLedgerEntry): WalletTransaction {
     month: "short",
     year: "numeric",
   }).format(date);
-  const formattedTime = new Intl.DateTimeFormat("en-GB", {
-    hour: "2-digit",
+  const formattedTime = new Intl.DateTimeFormat("en-US", {
+    hour: "numeric",
     minute: "2-digit",
+    hour12: true,
   }).format(date);
+
+  const isHold = entry.type === "COMMISSION_HELD";
+  const isDeduction = amount < 0 || entry.type?.includes("DEDUCT") || isHold;
+
+  let cleanJobId = entry.referenceId ?? undefined;
+  if (entry.idempotencyKey && entry.idempotencyKey.includes(":")) {
+    const keyJob = entry.idempotencyKey.split(":")[1];
+    if (keyJob && (!cleanJobId || cleanJobId.length > 10)) {
+      cleanJobId = keyJob;
+    }
+  }
 
   return {
     id: entry.id,
-    type: amount >= 0 ? "TOP_UP" : "DEDUCTION",
+    type: isDeduction ? "DEDUCTION" : "TOP_UP",
+    isHold,
     amount: Math.abs(amount),
     date: entry.createdAt,
     displayDate: formattedDate,
     displayTime: formattedTime,
-    jobId: entry.referenceId ?? undefined,
-    description: entry.description ?? undefined,
+    jobId: cleanJobId,
+    description: entry.description ?? entry.note ?? (isHold ? "Commission Held" : isDeduction ? "Platform Commission" : "Admin Wallet Top-Up"),
     resultingBalance: Number(entry.balanceAfter),
   };
 }
 
-export async function getWalletSummary(): Promise<WalletSummary> {
-  if (isMockMode()) {
-    return { ...mockWalletSummary };
+/**
+ * Live worker wallet balance straight from the backend (never client-supplied).
+ * Used to pre-check offer submission; the server remains the final authority.
+ */
+export async function getWalletBalance(): Promise<number> {
+  if (!hasWorkerAuthSession()) {
+    throw new Error("Authentication required to view wallet balance");
   }
   const snapshot = await http.get<BackendWalletSnapshot>("/wallet/balance");
+  return Number(snapshot.balance);
+}
+
+export async function getWalletSummary(): Promise<WalletSummary> {
+  if (!hasWorkerAuthSession()) {
+    throw new Error("Authentication required to view wallet summary");
+  }
+  const [snapshot, earnings] = await Promise.all([
+    http.get<BackendWalletSnapshot>("/wallet/balance"),
+    http.get<WorkerEarningsData>("/workers/me/earnings"),
+  ]);
   return {
-    currentBalance: Number(snapshot.totalBalance),
-    totalTopUps: Number(snapshot.balance),
-    totalDeductions: Number(snapshot.heldBalance),
-    totalTransactions: 0,
+    currentBalance: Number(snapshot.balance),
+    totalTopUps: Number(earnings.topupsCredited ?? 0),
+    heldBalance: Number(snapshot.heldBalance ?? 0),
+    totalDeductions: Number(earnings.commissionsPaid),
+    totalTransactions: earnings.records?.length ?? 0,
   };
 }
 
 export async function getWalletTransactions(): Promise<WalletTransaction[]> {
-  if (isMockMode()) {
-    return [...mockWalletTransactions];
+  if (!hasWorkerAuthSession()) {
+    return [];
   }
-  const res = await http.get<BackendPage<BackendLedgerEntry> | BackendLedgerEntry[]>("/wallet/ledger");
-  const items = Array.isArray(res) ? res : res.items;
-  return (items ?? []).map(mapLedgerEntry);
+  try {
+    const res = await http.get<BackendPage<BackendLedgerEntry> | BackendLedgerEntry[]>("/wallet/ledger");
+    const items: BackendLedgerEntry[] = unwrapRows(res);
+
+    // Safeguard deduplication: If a job has COMMISSION_DEDUCTED, omit redundant preliminary COMMISSION_HELD
+    const finalizedJobIds = new Set<string>();
+    for (const item of items ?? []) {
+      if (item.type === "COMMISSION_DEDUCTED") {
+        if (item.referenceId) finalizedJobIds.add(item.referenceId);
+        if (item.idempotencyKey && item.idempotencyKey.includes(":")) {
+          finalizedJobIds.add(item.idempotencyKey.split(":")[1]);
+        }
+      }
+    }
+
+    const filtered = (items ?? []).filter((item) => {
+      if (item.type === "COMMISSION_HELD") {
+        const keyJob = item.idempotencyKey?.includes(":") ? item.idempotencyKey.split(":")[1] : null;
+        if ((item.referenceId && finalizedJobIds.has(item.referenceId)) || (keyJob && finalizedJobIds.has(keyJob))) {
+          return false;
+        }
+      }
+      return true;
+    });
+
+    return filtered.map(mapLedgerEntry);
+  } catch (err: any) {
+    if (err?.status === 401) {
+      return [];
+    }
+    throw err;
+  }
+}
+
+export interface WorkerEarningRecordDto {
+  id: string;
+  jobId: string;
+  jobTitle: string;
+  category: string;
+  categoryUrdu?: string;
+  amount: number;
+  grossAmount?: number;
+  commission?: number;
+  netAmount?: number;
+  date: string;
+  status: string;
+}
+
+export interface WorkerEarningsData {
+  grossEarnings: number;
+  commissionsPaid: number;
+  commissionsHeld: number;
+  commissionsReversed: number;
+  netEarnings: number;
+  topupsCredited: number;
+  balance: number;
+  heldBalance: number;
+  totalBalance: number;
+  completedJobsCount: number;
+  records: WorkerEarningRecordDto[];
+}
+
+export async function getWorkerEarnings(): Promise<WorkerEarningsData> {
+  if (!hasWorkerAuthSession()) {
+    throw new Error("Authentication required to view worker earnings");
+  }
+  return await http.get<WorkerEarningsData>("/workers/me/earnings");
 }
 
 export const queryKeys = {
   summary: ["worker", "wallet", "summary"] as const,
   transactions: ["worker", "wallet", "transactions"] as const,
+  earnings: ["worker", "earnings"] as const,
 };

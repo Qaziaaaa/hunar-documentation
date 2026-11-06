@@ -6,13 +6,19 @@ import { JobRequest } from "@/types/job";
 import { VisitOffer } from "@/types/offer";
 import { formatRs } from "@/lib/design-tokens";
 import { workerStore } from "@/stores/worker-jobs-store";
-import { WorkerJobDetailsModal } from "./worker-job-details-modal";
+import dynamic from "next/dynamic";
+
+const WorkerJobDetailsModal = dynamic(
+  () => import("./worker-job-details-modal").then((mod) => mod.WorkerJobDetailsModal),
+  { ssr: false }
+);
 import {
   Calendar,
   Clock,
   MapPin,
   Navigation,
   Eye,
+  Zap,
 } from "lucide-react";
 
 interface WorkerUpcomingVisitCardProps {
@@ -40,21 +46,32 @@ export function WorkerUpcomingVisitCard({
     offer?.visitCharge ??
     job.visitCharge ??
     job.customerSuggestedPrice ??
-    600;
+    (job as any).lockedVisitCharge ??
+    (job as any).suggestedVisitCharge ??
+    0;
+
+  const isEnRoute = job.status === "visit_in_progress";
 
   const handleStartDispatch = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     setIsStarting(true);
-    workerStore.startVisit(job.id);
-    if (onStartVisit) {
-      onStartVisit(job.id);
+    if (!isEnRoute) {
+      workerStore.startVisit(job.id);
+      if (onStartVisit) {
+        onStartVisit(job.id);
+      }
     }
     router.push(`/worker/jobs/${job.id}`);
   };
 
   const isToday =
     job.preferredVisitWindow.date.toLowerCase().includes("today");
+  const isImmediateSlot =
+    job.preferredVisitWindow.timeSlot.includes("Immediate") ||
+    Boolean((job as any).isUrgent) ||
+    job.urgency === "emergency" ||
+    job.urgency === "EMERGENCY";
 
   return (
     <>
@@ -77,9 +94,17 @@ export function WorkerUpcomingVisitCard({
                 <span>{job.preferredVisitWindow.date}</span>
               </span>
 
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] sm:text-[11px] font-bold bg-slate-100 text-slate-700">
-                <Clock className="size-3" />
-                <span className="truncate max-w-[130px] sm:max-w-none">{job.preferredVisitWindow.timeSlot}</span>
+              <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] sm:text-[11px] font-bold ${
+                isImmediateSlot
+                  ? "bg-amber-50 text-amber-700 border border-amber-200"
+                  : "bg-slate-100 text-slate-700"
+              }`}>
+                {isImmediateSlot ? (
+                  <Zap className="size-3 fill-current text-amber-600" />
+                ) : (
+                  <Clock className="size-3" />
+                )}
+                <span className="truncate max-w-[130px] sm:max-w-none">{job.preferredVisitWindow.timeSlot.replace(/^⚡\s*/, "")}</span>
               </span>
             </div>
 
@@ -94,7 +119,7 @@ export function WorkerUpcomingVisitCard({
               <span className="px-2 py-0.5 rounded-lg bg-[#0F8B8D]/10 text-[#0F8B8D] font-bold text-[10px] uppercase tracking-wider border border-[#0F8B8D]/20">
                 {job.category}
               </span>
-              {job.urgency === "emergency" && (
+              {job.status !== "completed" && job.urgency === "emergency" && (
                 <span className="px-2 py-0.5 rounded-lg bg-rose-50 text-rose-600 font-bold text-[10px] uppercase tracking-wider border border-rose-100">
                   {isUrdu ? "ارجنٹ" : "Priority"}
                 </span>
@@ -114,9 +139,15 @@ export function WorkerUpcomingVisitCard({
                   <img
                     src={job.customer.avatarUrl}
                     alt={job.customer.name}
+                    loading="lazy"
+                    decoding="async"
                     className="size-full object-cover"
+                    onError={(e) => {
+                      (e.currentTarget as HTMLElement).style.display = "none";
+                    }}
                   />
-                ) : (
+                ) : null}
+                {(!job.customer.avatarUrl) && (
                   job.customer.name.slice(0, 2).toUpperCase()
                 )}
               </div>
@@ -150,7 +181,15 @@ export function WorkerUpcomingVisitCard({
             className="w-full sm:w-auto py-2 sm:py-2.5 px-4 rounded-xl bg-[#0F8B8D] hover:bg-[#123B5D] text-white text-xs font-extrabold shadow-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer active:scale-98"
           >
             <Navigation className="size-3.5 shrink-0" />
-            <span className="truncate">{isUrdu ? "وزٹ اور راستے کا آغاز کریں" : "Start Visit & En Route"}</span>
+            <span className="truncate">
+              {isEnRoute
+                ? isUrdu
+                  ? "راستے میں ہیں / جاب دیکھیں"
+                  : "En Route / View Job"
+                : isUrdu
+                ? "وزٹ اور راستے کا آغاز کریں"
+                : "Start Visit & En Route"}
+            </span>
           </button>
         </div>
       </div>

@@ -7,6 +7,7 @@ import {
   ArrowRight,
   Camera,
   Check,
+  Lock,
   Plus,
   Trash2,
   User,
@@ -14,9 +15,13 @@ import {
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { uploadWorkerDocument } from "../api/onboarding-api";
+import { compressImage } from "@/lib/image-compression";
+import {
+  ALL_PAKISTAN_CITIES,
+  MAJOR_PAKISTAN_CITIES,
+} from "../data/pakistan-cities";
 import type { WorkerProfileFormData } from "../types";
-
-const CITIES = ["Peshawar", "Mardan", "Charsadda", "Nowshera", "Swabi"] as const;
 
 export function Step1PersonalDetails({
   formData,
@@ -33,26 +38,59 @@ export function Step1PersonalDetails({
   const tCities = useTranslations("WorkerOnboarding.Cities");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [photoMessage, setPhotoMessage] = useState<string | null>(null);
+  const [isPhotoUploading, setIsPhotoUploading] = useState(false);
 
-  const handlePhotoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Normalize display phone (e.g. "+923010000000" -> "03010000000")
+  const displayPhone = formData.phone
+    ? formData.phone.startsWith("+92")
+      ? formData.phone.slice(3).startsWith("0")
+        ? formData.phone.slice(3)
+        : `0${formData.phone.slice(3)}`
+      : formData.phone
+    : "";
+
+  const getCityName = (city: string) => {
+    return tCities.has(city) ? tCities(city) : city;
+  };
+
+  const handlePhotoSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     if (file.size > 10 * 1024 * 1024) {
       setPhotoMessage(t("photoSizeError"));
+      e.target.value = "";
       return;
     }
 
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const result = event.target?.result as string;
+    setIsPhotoUploading(true);
+    setPhotoMessage(null);
+    try {
+      let fileToUpload = file;
+      if (file.type.startsWith("image/")) {
+        const compressedBlob = await compressImage(file, {
+          maxWidth: 800,
+          maxHeight: 800,
+          quality: 0.85,
+        });
+        fileToUpload = new File([compressedBlob], file.name, {
+          type: compressedBlob.type || file.type,
+        });
+      }
+
+      const result = await uploadWorkerDocument(fileToUpload, "avatar");
       updateFormData({
-        profilePhoto: result,
+        profilePhoto: result.url,
         profilePhotoName: file.name,
       });
-      setPhotoMessage(null);
-    };
-    reader.readAsDataURL(file);
+    } catch (error) {
+      setPhotoMessage(error instanceof Error ? error.message : t("photoUploadError"));
+    } finally {
+      setIsPhotoUploading(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+    }
   };
 
   const removePhoto = () => {
@@ -89,6 +127,7 @@ export function Step1PersonalDetails({
               ref={fileInputRef}
               accept="image/*"
               className="hidden"
+              disabled={isPhotoUploading}
               onChange={handlePhotoSelect}
             />
 
@@ -96,6 +135,7 @@ export function Step1PersonalDetails({
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
+              disabled={isPhotoUploading}
               className="group relative size-20 sm:size-22 shrink-0 rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-teal focus-visible:ring-offset-2"
               title={formData.profilePhoto ? t("portraitLabel") : t("portraitLabel")}
             >
@@ -105,6 +145,7 @@ export function Step1PersonalDetails({
                     src={formData.profilePhoto}
                     alt={formData.fullName || "Worker Avatar"}
                     fill
+                    unoptimized
                     className="object-cover object-top"
                     sizes="88px"
                   />
@@ -120,9 +161,8 @@ export function Step1PersonalDetails({
 
               {/* + Icon Badge or Checkmark */}
               <div
-                className={`absolute -bottom-0.5 -end-0.5 flex size-6 sm:size-7 items-center justify-center rounded-full border-2 border-white text-white shadow-xs transition-transform group-hover:scale-110 ${
-                  formData.profilePhoto ? "bg-teal" : "bg-teal"
-                }`}
+                className={`absolute -bottom-0.5 -end-0.5 flex size-6 sm:size-7 items-center justify-center rounded-full border-2 border-white text-white shadow-xs transition-transform group-hover:scale-110 ${formData.profilePhoto ? "bg-teal" : "bg-teal"
+                  }`}
               >
                 {formData.profilePhoto ? (
                   <Camera className="size-3.5 sm:size-4" />
@@ -139,11 +179,10 @@ export function Step1PersonalDetails({
                   {t("portraitLabel")} <span className="text-error">*</span>
                 </span>
                 <span
-                  className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${
-                    formData.profilePhoto
+                  className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${formData.profilePhoto
                       ? "border border-success/30 bg-success/10 text-success"
                       : "border border-teal/20 bg-teal/10 text-teal"
-                  }`}
+                    }`}
                 >
                   {formData.profilePhoto ? t("attached") : t("required")}
                 </span>
@@ -152,6 +191,12 @@ export function Step1PersonalDetails({
               <p className="text-xs text-muted-foreground leading-relaxed">
                 {t("portraitHint")}
               </p>
+
+              {isPhotoUploading && (
+                <p className="text-xs font-medium text-teal" aria-live="polite">
+                  {t("photoUploading")}
+                </p>
+              )}
 
               {formData.profilePhoto && (
                 <div className="pt-1">
@@ -196,27 +241,40 @@ export function Step1PersonalDetails({
             </div>
           </div>
 
-          {/* Phone Number */}
+          {/* Phone Number (Disabled - comes from registration) */}
           <div className="space-y-1.5">
-            <label
-              htmlFor="phone"
-              className="ml-1 block text-xs font-bold uppercase tracking-wider text-navy"
-            >
-              {t("phone")} <span className="text-error">*</span>
-            </label>
+            <div className="flex items-center justify-between">
+              <label
+                htmlFor="phone"
+                className="ml-1 block text-xs font-bold uppercase tracking-wider text-navy"
+              >
+                {t("phone")} <span className="text-error">*</span>
+              </label>
+              <span className="text-[11px] font-semibold text-teal inline-flex items-center gap-1">
+                <Check className="size-3 text-teal stroke-[3]" />
+                <span>{t("phoneVerified")}</span>
+              </span>
+            </div>
             <div className="relative">
-              <span className="absolute left-3.5 top-1/2 -translate-y-1/2 select-none border-r border-slate-300 pr-2 text-sm font-bold text-slate-700">
+              <span className="absolute left-3.5 top-1/2 -translate-y-1/2 select-none border-r border-slate-300 pr-2 text-sm font-bold text-slate-500">
                 +92
               </span>
               <Input
                 id="phone"
                 type="tel"
-                value={formData.phone}
-                onChange={(e) => updateFormData({ phone: e.target.value })}
+                value={displayPhone}
+                disabled
+                readOnly
+                aria-disabled="true"
+                tabIndex={-1}
                 placeholder="03xx-xxxxxxx"
-                className="h-11 sm:h-12 rounded-full pl-16 text-sm sm:text-base font-medium text-slate-800 shadow-2xs focus:border-teal"
+                className="h-11 sm:h-12 rounded-full pl-16 pr-10 text-sm sm:text-base font-semibold text-slate-700 bg-slate-100/90 border-slate-200 cursor-not-allowed select-none shadow-none"
               />
+              <Lock className="absolute right-3.5 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
             </div>
+            <p className="ml-1 text-[11px] text-muted-foreground">
+              {t("phoneRegistrationNote")}
+            </p>
           </div>
 
           {/* City & Email 2-col */}
@@ -234,11 +292,20 @@ export function Step1PersonalDetails({
                 onChange={(e) => updateFormData({ city: e.target.value })}
                 className="h-11 sm:h-12 w-full rounded-full border border-slate-200 bg-white px-3.5 text-sm sm:text-base font-medium text-slate-800 shadow-2xs focus:border-teal focus:outline-none focus:ring-2 focus:ring-teal/20"
               >
-                {CITIES.map((city) => (
-                  <option key={city} value={city}>
-                    {tCities(city)}
-                  </option>
-                ))}
+                <optgroup label={t("majorCitiesGroup")}>
+                  {MAJOR_PAKISTAN_CITIES.map((city) => (
+                    <option key={`major-${city}`} value={city}>
+                      {getCityName(city)}
+                    </option>
+                  ))}
+                </optgroup>
+                <optgroup label={t("allCitiesGroup")}>
+                  {ALL_PAKISTAN_CITIES.map((city) => (
+                    <option key={`all-${city}`} value={city}>
+                      {getCityName(city)}
+                    </option>
+                  ))}
+                </optgroup>
               </select>
             </div>
 
@@ -275,6 +342,7 @@ export function Step1PersonalDetails({
           type="button"
           size="lg"
           onClick={onNext}
+          disabled={isPhotoUploading}
           className="h-12 sm:h-13 w-full rounded-full bg-teal text-base font-bold text-white shadow-md shadow-teal/20 hover:bg-teal/90 transition-all"
         >
           <span>{t("continueBtn")}</span>

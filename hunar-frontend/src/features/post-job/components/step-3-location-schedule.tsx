@@ -16,7 +16,21 @@ import {
   Users,
   Zap,
 } from "lucide-react";
-import { PeshawarMapPicker, PESHAWAR_HOTSPOTS, getHotspotArea } from "./peshawar-map-picker";
+import dynamic from "next/dynamic";
+import { PESHAWAR_HOTSPOTS, getHotspotArea } from "./peshawar-map-data";
+
+const PeshawarMapPicker = dynamic(
+  () => import("./peshawar-map-picker").then((mod) => mod.PeshawarMapPicker),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="w-full h-48 sm:h-64 rounded-2xl bg-slate-50 border border-slate-200/80 animate-pulse flex flex-col items-center justify-center gap-2 text-slate-400">
+        <MapPin className="w-7 h-7 text-[#0F8B8D]/40 animate-bounce" />
+        <span className="text-xs font-semibold text-slate-500">Loading Map...</span>
+      </div>
+    ),
+  }
+);
 import { SERVICE_AREAS } from "../data/categories";
 import type { PostJobData, TimeWindowOption } from "../types";
 import {
@@ -25,6 +39,8 @@ import {
 } from "@/features/customer-profile/services/saved-addresses-storage";
 import type { SavedAddress } from "@/features/customer-profile/types";
 import { useLocale } from "next-intl";
+import { toLocalDateString } from "@/lib/format";
+import { http } from "@/lib/api-client";
 
 interface Step3LocationScheduleProps {
   data: PostJobData;
@@ -42,30 +58,31 @@ export function Step3LocationSchedule({
   const locale = useLocale();
   const isUrdu = locale === "ur";
 
-  const [savedAddresses, setSavedAddresses] = useState<SavedAddress[]>(() => {
-    if (typeof window !== "undefined") {
-      return getSavedAddresses();
-    }
-    return [];
-  });
+  const [savedAddresses, setSavedAddresses] = useState<SavedAddress[]>([]);
   const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
-  const [showCustomLocation, setShowCustomLocation] = useState<boolean>(() => {
-    if (typeof window !== "undefined") {
-      const list = getSavedAddresses();
-      if (list.length === 0) return true;
-      if (!data.address?.trim()) return false;
-      const matched = list.some(
-        (a) =>
-          a.fullAddress.toLowerCase().trim() === data.address.toLowerCase().trim() &&
-          (!data.area?.trim() || a.area.toLowerCase().trim() === data.area.toLowerCase().trim())
-      );
-      return !matched;
-    }
-    return false;
-  });
+  const [showCustomLocation, setShowCustomLocation] = useState<boolean>(false);
 
   const [specificTimeInput, setSpecificTimeInput] = useState("10:00");
   const [error, setError] = useState<string | null>(null);
+
+  // Dynamic active areas from backend database
+  const [availableAreas, setAvailableAreas] = useState<string[]>(SERVICE_AREAS);
+
+  useEffect(() => {
+    let alive = true;
+    http.get<any[]>("/locations/areas")
+      .then((res) => {
+        if (!alive) return;
+        const list = Array.isArray(res) ? res : ((res as any)?.data ?? []);
+        if (list && list.length > 0) {
+          setAvailableAreas(list.map((a: any) => a.name));
+        }
+      })
+      .catch(() => {});
+    return () => {
+      alive = false;
+    };
+  }, []);
 
   // Initialize saved-address logic on mount:
   // - First time (no saved address): show map/location selection UI directly
@@ -105,7 +122,7 @@ export function Step3LocationSchedule({
         onChange({
           address: defaultAddr.fullAddress,
           area: defaultAddr.area,
-          city: defaultAddr.city || "Pakistan",
+          city: defaultAddr.city || "Peshawar",
           landmark: defaultAddr.landmark || "",
           latitude: defaultAddr.latitude,
           longitude: defaultAddr.longitude,
@@ -115,9 +132,14 @@ export function Step3LocationSchedule({
   }, []);
 
   // Ensure default scheduleType exists (default to asap for immediate simplicity)
+  // and auto-reset stale past dates if restored from previous session
   useEffect(() => {
+    const todayStr = toLocalDateString();
     if (!data.scheduleType) {
       onChange({ scheduleType: "asap" });
+    }
+    if (data.preferredDate && data.preferredDate < todayStr) {
+      onChange({ preferredDate: todayStr });
     }
   }, []);
 
@@ -128,7 +150,7 @@ export function Step3LocationSchedule({
     onChange({
       address: addr.fullAddress,
       area: addr.area,
-      city: addr.city || "Pakistan",
+      city: addr.city || "Peshawar",
       landmark: addr.landmark,
       latitude: addr.latitude,
       longitude: addr.longitude,
@@ -192,6 +214,25 @@ export function Step3LocationSchedule({
     !isAfternoon &&
     !isEvening;
 
+  const currentHour = new Date().getHours();
+  const isSelectedDateToday = data.preferredDate === toLocalDateString();
+
+  const isSlotPassed = (slotId: TimeWindowOption): boolean => {
+    if (!isSelectedDateToday) return false;
+    if (slotId === "morning") return currentHour >= 12;
+    if (slotId === "afternoon") return currentHour >= 16;
+    if (slotId === "evening") return currentHour >= 20;
+    if (slotId === "specific") {
+      const [hStr] = (specificTimeInput || "").split(":");
+      const h = parseInt(hStr, 10);
+      if (!isNaN(h)) {
+        return h <= currentHour;
+      }
+      return currentHour >= 20;
+    }
+    return false;
+  };
+
   const handleSpecificTimeChange = (t24: string) => {
     if (!t24) return;
     setSpecificTimeInput(t24);
@@ -205,7 +246,7 @@ export function Step3LocationSchedule({
     const d = new Date();
     d.setDate(today.getDate() + i);
     return {
-      dateString: d.toISOString().split("T")[0],
+      dateString: toLocalDateString(d),
       dayName: d.toLocaleDateString(isUrdu ? "ur-PK" : "en-US", { weekday: "short" }),
       dayNumber: d.getDate(),
       monthName: d.toLocaleDateString(isUrdu ? "ur-PK" : "en-US", { month: "short" }),
@@ -216,10 +257,10 @@ export function Step3LocationSchedule({
 
   const formattedSelectedDate = (() => {
     if (!data.preferredDate) return isUrdu ? "آج" : "Today";
-    const todayStr = new Date().toISOString().split("T")[0];
+    const todayStr = toLocalDateString();
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
-    const tomorrowStr = tomorrow.toISOString().split("T")[0];
+    const tomorrowStr = toLocalDateString(tomorrow);
 
     if (data.preferredDate === todayStr) {
       return isUrdu ? "آج" : "Today";
@@ -256,20 +297,20 @@ export function Step3LocationSchedule({
             latitude: lat,
             longitude: lng,
             area: getHotspotArea(closest),
-            landmark: "",
-            city: "Pakistan",
-            address: "",
+            landmark: data.landmark || "",
+            city: "Peshawar",
+            address: data.address || "",
           });
           setSelectedAddressId(null);
         },
         () => {
           onChange({
             area: "Central District",
-            address: "",
-            landmark: "",
-            city: "Pakistan",
-            latitude: 33.7215,
-            longitude: 73.0577,
+            address: data.address || "",
+            landmark: data.landmark || "",
+            city: "Peshawar",
+            latitude: 34.0151,
+            longitude: 71.5249,
           });
           setSelectedAddressId(null);
         },
@@ -291,16 +332,26 @@ export function Step3LocationSchedule({
         area: selectedArea,
         latitude: match.lat,
         longitude: match.lng,
-        city: "Pakistan",
+        city: "Peshawar",
       });
     } else {
-      onChange({ area: selectedArea, city: "Pakistan" });
+      onChange({ area: selectedArea, city: "Peshawar" });
     }
     setSelectedAddressId(null);
   };
 
-  // Validation
-  const hasValidLocation = Boolean(data.address?.trim() && data.area?.trim());
+  // Validation - exact coordinates are MANDATORY per AUDIT-005
+  const hasValidCoordinates =
+    typeof data.latitude === "number" &&
+    typeof data.longitude === "number" &&
+    !isNaN(data.latitude) &&
+    !isNaN(data.longitude) &&
+    data.latitude !== 0 &&
+    data.longitude !== 0;
+
+  const hasValidLocation = Boolean(
+    data.address?.trim() && data.area?.trim() && hasValidCoordinates
+  );
   const hasValidSchedule =
     data.scheduleType === "asap" ||
     (data.scheduleType === "scheduled" &&
@@ -326,9 +377,26 @@ export function Step3LocationSchedule({
       );
       return;
     }
+    if (!hasValidCoordinates) {
+      setError(
+        isUrdu
+          ? "کاریگر کی درست روانگی کے لیے درست لوکیشن کوآرڈینیٹس ضروری ہیں۔ براہ کرم 'موجودہ لوکیشن' استعمال کریں یا نیچے دیے گئے نقشے پر اپنی درست جگہ منتخب کریں۔"
+          : "Exact location coordinates are required for technician dispatch. Please use 'Use Current Location' (GPS) or select your location on the map."
+      );
+      return;
+    }
     if (data.scheduleType === "scheduled") {
+      const todayStr = toLocalDateString();
       if (!data.preferredDate) {
         setError(isUrdu ? "براہ کرم وزٹ کا دن چنیں۔" : "Please select a visit day.");
+        return;
+      }
+      if (data.preferredDate < todayStr) {
+        setError(
+          isUrdu
+            ? "منتخب کردہ تاریخ گزر چکی ہے۔ براہ کرم آج یا آئندہ تاریخ منتخب کریں۔"
+            : "Selected date is in the past. Please select today or an upcoming date."
+        );
         return;
       }
       if (!data.preferredTimeSlot) {
@@ -336,6 +404,48 @@ export function Step3LocationSchedule({
           isUrdu ? "براہ کرم آمد کا وقت چنیں۔" : "Please select an arrival time."
         );
         return;
+      }
+      if (isSelectedDateToday) {
+        if (isMorning && currentHour >= 12) {
+          setError(
+            isUrdu
+              ? "صبح کا وقت گزر چکا ہے۔ براہ کرم دوپہر یا شام کا وقت منتخب کریں۔"
+              : "Morning slot has already passed for today. Please choose Afternoon or Evening."
+          );
+          return;
+        }
+        if (isAfternoon && currentHour >= 16) {
+          setError(
+            isUrdu
+              ? "دوپہر کا وقت گزر چکا ہے۔ براہ کرم شام کا وقت منتخب کریں۔"
+              : "Afternoon slot has already passed for today. Please choose Evening or select Tomorrow."
+          );
+          return;
+        }
+        if (isEvening && currentHour >= 20) {
+          setError(
+            isUrdu
+              ? "آج کے تمام اوقات گزر چکے ہیں۔ براہ کرم کل کے لیے شیڈول کریں۔"
+              : "All slots for today have passed. Please select Tomorrow or choose ASAP."
+          );
+          return;
+        }
+        if (isSpecificTime) {
+          const [hStr, mStr] = (specificTimeInput || "").split(":");
+          const h = parseInt(hStr, 10);
+          const m = parseInt(mStr || "0", 10);
+          const now = new Date();
+          const targetTime = new Date();
+          targetTime.setHours(h, m, 0, 0);
+          if (targetTime.getTime() <= now.getTime()) {
+            setError(
+              isUrdu
+                ? "منتخب کردہ وقت گزر چکا ہے۔ براہ کرم آئندہ وقت درج کریں۔"
+                : "Selected time has already passed. Please select a future time."
+            );
+            return;
+          }
+        }
       }
     }
 
@@ -361,10 +471,10 @@ export function Step3LocationSchedule({
         tag: isFirst ? "home" : "other",
         fullAddress: data.address.trim(),
         area: data.area.trim(),
-        city: data.city || "Pakistan",
+        city: data.city || "Peshawar",
         landmark: data.landmark?.trim() || "",
-        latitude: typeof data.latitude === "number" ? data.latitude : 34.0151,
-        longitude: typeof data.longitude === "number" ? data.longitude : 71.5249,
+        latitude: data.latitude as number,
+        longitude: data.longitude as number,
         isDefault: isFirst,
       };
 
@@ -540,12 +650,12 @@ export function Step3LocationSchedule({
                   className="w-full h-10 px-3 rounded-xl text-xs sm:text-sm text-[#1A1A2E] bg-white border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#0F8B8D]/20 font-medium"
                 >
                   <option value="">{isUrdu ? "علاقہ منتخب کریں" : "Select Area"}</option>
-                  {SERVICE_AREAS.map((area) => (
+                  {availableAreas.map((area) => (
                     <option key={area} value={area}>
                       {area}
                     </option>
                   ))}
-                  {data.area && !SERVICE_AREAS.includes(data.area) && (
+                  {data.area && !availableAreas.includes(data.area) && (
                     <option key={data.area} value={data.area}>
                       {data.area}
                     </option>
@@ -661,13 +771,31 @@ export function Step3LocationSchedule({
           <button
             type="button"
             onClick={() => {
-              onChange({ scheduleType: "scheduled" });
-              if (!data.preferredDate) {
-                onChange({ preferredDate: calendarDays[0].dateString });
+              const currentH = new Date().getHours();
+              let initialDate = data.preferredDate || calendarDays[0].dateString;
+              let initialSlot = data.preferredTimeSlot;
+
+              if (initialDate === toLocalDateString()) {
+                if (currentH >= 20) {
+                  // After 8 PM, all slots today are passed; auto-select Tomorrow Morning
+                  initialDate = calendarDays[1]?.dateString || initialDate;
+                  initialSlot = "8:00 AM – 12:00 PM";
+                } else if (currentH >= 16) {
+                  initialSlot = "4:00 PM – 8:00 PM";
+                } else if (currentH >= 12) {
+                  initialSlot = "12:00 PM – 4:00 PM";
+                } else {
+                  initialSlot = "8:00 AM – 12:00 PM";
+                }
+              } else if (!initialSlot) {
+                initialSlot = "8:00 AM – 12:00 PM";
               }
-              if (!data.preferredTimeSlot) {
-                onChange({ preferredTimeSlot: "8:00 AM – 12:00 PM" });
-              }
+
+              onChange({
+                scheduleType: "scheduled",
+                preferredDate: initialDate,
+                preferredTimeSlot: initialSlot,
+              });
               setError(null);
             }}
             className={`p-3.5 rounded-2xl border text-start flex flex-col justify-between gap-2.5 transition-all cursor-pointer relative ${
@@ -768,30 +896,39 @@ export function Step3LocationSchedule({
               </label>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                 {timeWindows.map((slot) => {
+                  const passed = isSlotPassed(slot.id);
                   const isSelected =
-                    (slot.id === "morning" && isMorning) ||
+                    !passed &&
+                    ((slot.id === "morning" && isMorning) ||
                     (slot.id === "afternoon" && isAfternoon) ||
                     (slot.id === "evening" && isEvening) ||
-                    (slot.id === "specific" && isSpecificTime);
+                    (slot.id === "specific" && isSpecificTime));
 
                   return (
                     <button
                       key={slot.id}
                       type="button"
+                      disabled={passed}
                       onClick={() => {
+                        if (passed) return;
+                        setError(null);
                         if (slot.id === "specific") {
                           handleSpecificTimeChange(specificTimeInput);
                         } else {
                           onChange({ preferredTimeSlot: slot.time });
                         }
                       }}
-                      className={`p-3 rounded-2xl border text-center transition-all cursor-pointer flex flex-col items-center justify-center gap-0.5 ${
-                        isSelected
-                          ? "border-[#0F8B8D] bg-[#0F8B8D]/10 ring-1 ring-[#0F8B8D] text-[#0F8B8D]"
-                          : "border-slate-200 bg-white hover:bg-slate-50 text-slate-700"
+                      className={`p-3 rounded-2xl border text-center transition-all flex flex-col items-center justify-center gap-0.5 ${
+                        passed
+                          ? "border-slate-200 bg-slate-50 text-slate-400 opacity-40 cursor-not-allowed"
+                          : isSelected
+                          ? "border-[#0F8B8D] bg-[#0F8B8D]/10 ring-1 ring-[#0F8B8D] text-[#0F8B8D] cursor-pointer"
+                          : "border-slate-200 bg-white hover:bg-slate-50 text-slate-700 cursor-pointer"
                       }`}
                     >
-                      <span className="text-xs font-bold">{slot.label}</span>
+                      <span className="text-xs font-bold">
+                        {slot.label} {passed ? (isUrdu ? "(گزر چکا)" : "(Passed)") : ""}
+                      </span>
                       <span className="text-[10.5px] text-slate-500 font-medium">
                         {slot.id === "specific" && isSpecificTime
                           ? data.preferredTimeSlot
@@ -810,6 +947,7 @@ export function Step3LocationSchedule({
                   </span>
                   <input
                     type="time"
+                    min={isSelectedDateToday ? `${String(new Date().getHours()).padStart(2, "0")}:${String(new Date().getMinutes()).padStart(2, "0")}` : undefined}
                     value={specificTimeInput}
                     onChange={(e) => handleSpecificTimeChange(e.target.value)}
                     className="px-3 py-1.5 bg-white border border-slate-300 rounded-xl text-xs font-bold text-[#123B5D] focus:outline-none focus:ring-2 focus:ring-[#0F8B8D]/30"
@@ -827,9 +965,9 @@ export function Step3LocationSchedule({
         </div>
       )}
 
-          {/* FINAL STEP 3 SUMMARY (One compact summary card) */}
+          {/* FINAL STEP 3 SUMMARY (One compact summary card in original position) */}
           {hasValidLocation && (
-            <div className="p-3.5 sm:p-4 bg-slate-50 rounded-2xl border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 animate-in fade-in duration-150">
+            <div className="p-3.5 sm:p-4 bg-slate-50 rounded-2xl border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 animate-in fade-in duration-150 mb-8 sm:mb-10">
               <div className="space-y-1 min-w-0">
                 <div className="flex items-center gap-2 text-xs font-bold text-[#123B5D]">
                   <MapPin className="size-3.5 text-[#0F8B8D] shrink-0" />
@@ -878,11 +1016,10 @@ export function Step3LocationSchedule({
           <button
             type="button"
             onClick={handleProceed}
-            disabled={!canProceed}
-            className={`px-6 py-2.5 rounded-full transition-all duration-200 flex items-center gap-2 text-xs sm:text-sm font-bold cursor-pointer ${
+            className={`px-6 py-2.5 rounded-full transition-all duration-200 flex items-center gap-2 text-xs sm:text-sm font-bold cursor-pointer active:scale-[0.99] ${
               canProceed
-                ? "bg-[#0F8B8D] hover:bg-[#0D7A7C] text-white shadow-sm active:scale-[0.99]"
-                : "bg-slate-200 text-slate-400 cursor-not-allowed"
+                ? "bg-[#0F8B8D] hover:bg-[#0D7A7C] text-white shadow-sm"
+                : "bg-[#0F8B8D]/80 hover:bg-[#0F8B8D] text-white shadow-xs"
             }`}
           >
             <span>{isUrdu ? "جائزہ پر جائیں" : "Continue to Review"}</span>

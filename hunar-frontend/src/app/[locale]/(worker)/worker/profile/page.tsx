@@ -3,19 +3,30 @@
 import { useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
+  AlertCircle,
   Camera,
   CheckCircle2,
   Landmark,
+  Loader2,
   MapPin,
   Pencil,
   Save,
   ShieldCheck,
+  Star,
   User,
+  X,
 } from "lucide-react";
+import { useLocale } from "next-intl";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -23,14 +34,22 @@ import { ErrorState } from "@/components/shared/error-state";
 import { LoadingState } from "@/components/shared/loading-state";
 import { PageHeader } from "@/components/shared/page-header";
 import { RatingStars } from "@/components/shared/rating-stars";
+import { RatingSummary } from "@/components/shared/rating-summary";
+import { ReviewCard } from "@/components/shared/review-card";
 import { VerifiedBadge } from "@/components/shared/verified-badge";
 import { WorkerDashboardShell } from "@/features/worker-dashboard";
-import { formatRs } from "@/lib/money";
+import { sanitizePriceInput } from "@/lib/money";
+import { http } from "@/lib/api-client";
 import {
   getWorkerProfile,
   queryKeys,
   updateWorkerProfile,
 } from "@/services/worker/profile.service";
+import {
+  getRatingSummary,
+  getWorkerReviews,
+  queryKeys as reviewKeys,
+} from "@/services/worker/review.service";
 import type { UpdateWorkerProfileInput, WorkerProfile } from "@/types/worker";
 
 const PESHAWAR_LOCATIONS = [
@@ -46,9 +65,7 @@ const PESHAWAR_LOCATIONS = [
   "Hashtnagri",
 ];
 
-import { useLocale } from "next-intl";
-
-function ProfileContent() {
+export function ProfileContent() {
   const locale = useLocale();
   const isUrdu = locale === "ur";
   const queryClient = useQueryClient();
@@ -59,19 +76,49 @@ function ProfileContent() {
     queryFn: getWorkerProfile,
   });
 
+  const workerId = profileQuery.data?.id ?? "";
+
+  const ratingQuery = useQuery({
+    queryKey: reviewKeys.rating(workerId),
+    queryFn: () => getRatingSummary(workerId),
+    enabled: Boolean(workerId),
+  });
+
+  const reviewsQuery = useQuery({
+    queryKey: reviewKeys.reviews(workerId, 1),
+    queryFn: () => getWorkerReviews(workerId, 1, 10),
+    enabled: Boolean(workerId),
+  });
+
+  const [mobileReviewsOpen, setMobileReviewsOpen] = useState(false);
+  const [desktopReviewsOpen, setDesktopReviewsOpen] = useState(false);
   const [editing, setEditing] = useState(false);
   const [formState, setFormState] = useState<UpdateWorkerProfileInput | null>(
     null
   );
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
 
   const updateMutation = useMutation({
     mutationFn: updateWorkerProfile,
     onSuccess: (data) => {
       queryClient.setQueryData(queryKeys.profile(), data);
+      setFormState(null);
       setEditing(false);
       setSaveSuccess(true);
+      setSaveError(null);
       setTimeout(() => setSaveSuccess(false), 3000);
+      queryClient.invalidateQueries({ queryKey: queryKeys.profile() });
+    },
+    onError: (err: any) => {
+      setSaveSuccess(false);
+      setSaveError(
+        err?.message ||
+          (isUrdu
+            ? "پروفائل محفوظ کرنے میں خرابی پیش آگئی۔"
+            : "Failed to update profile. Please try again.")
+      );
     },
   });
 
@@ -91,23 +138,41 @@ function ProfileContent() {
 
   const worker: WorkerProfile = profileQuery.data;
 
-  // Active form data
+  // Active form data: initialized strictly from latest saved worker profile
   const form = formState ?? {
-    name: worker.name,
-    phone: worker.phone ?? "+92 300 1234567",
-    email: worker.email ?? "faizan.ahmed@hunar.pk",
+    name: worker.name ?? "",
+    phone: worker.phone ?? "",
+    email: worker.email ?? "",
     avatarUrl: worker.avatarUrl ?? "",
     bio: worker.bio ?? "",
     skills: worker.skills ?? [],
-    yearsExperience: worker.yearsExperience ?? 3,
-    workshopLocation:
-      worker.workshopLocation ?? "Shop #14, Main Saddar Road, Peshawar Cantt",
-    serviceAreas: worker.serviceAreas ?? [
-      "University Town",
-      "Hayatabad",
-      "Saddar",
-    ],
+    yearsExperience: worker.yearsExperience ?? 0,
+    workshopLocation: worker.workshopLocation ?? "",
+    serviceAreas: worker.serviceAreas ?? [],
     defaultVisitCharge: worker.defaultVisitCharge ?? 300,
+  };
+
+  const handleStartEditing = () => {
+    setSaveError(null);
+    setFormState({
+      name: worker.name ?? "",
+      phone: worker.phone ?? "",
+      email: worker.email ?? "",
+      avatarUrl: worker.avatarUrl ?? "",
+      bio: worker.bio ?? "",
+      skills: worker.skills ?? [],
+      yearsExperience: worker.yearsExperience ?? 0,
+      workshopLocation: worker.workshopLocation ?? "",
+      serviceAreas: worker.serviceAreas ?? [],
+      defaultVisitCharge: worker.defaultVisitCharge ?? 300,
+    });
+    setEditing(true);
+  };
+
+  const handleCancel = () => {
+    setEditing(false);
+    setFormState(null);
+    setSaveError(null);
   };
 
   const handleTextChange = (
@@ -134,15 +199,50 @@ function ProfileContent() {
     }));
   };
 
-  const handleAvatarSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleAvatarSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      const fakeUrl = URL.createObjectURL(file);
-      handleTextChange("avatarUrl", fakeUrl);
+    if (!file) return;
+
+    const previousAvatarUrl = form.avatarUrl ?? "";
+
+    // Ephemeral local preview only; never persisted if the upload fails.
+    const previewUrl = URL.createObjectURL(file);
+    handleTextChange("avatarUrl", previewUrl);
+
+    try {
+      setUploadingAvatar(true);
+      setSaveError(null);
+      const formData = new FormData();
+      formData.append("file", file);
+      const raw = await http.upload<any>("/uploads/profile-photo", formData);
+      const res = raw?.data ?? raw;
+      if (res?.url) {
+        handleTextChange("avatarUrl", res.url);
+      } else {
+        handleTextChange("avatarUrl", previousAvatarUrl);
+        setSaveError(
+          isUrdu
+            ? "تصویر اپ لوڈ کرنے میں خرابی پیش آئی۔"
+            : "Failed to upload avatar. Please try again."
+        );
+      }
+    } catch (err) {
+      console.warn("Avatar upload failed:", err);
+      handleTextChange("avatarUrl", previousAvatarUrl);
+      setSaveError(
+        isUrdu
+          ? "تصویر اپ لوڈ کرنے میں خرابی پیش آئی۔"
+          : "Failed to upload avatar. Please try again."
+      );
+    } finally {
+      setUploadingAvatar(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      URL.revokeObjectURL(previewUrl);
     }
   };
 
   const handleSave = () => {
+    setSaveError(null);
     updateMutation.mutate(form);
   };
 
@@ -151,13 +251,13 @@ function ProfileContent() {
       {/* Top Header */}
       <PageHeader
         title={isUrdu ? "ورکر پروفائل اور ترتیبات" : "Worker Profile & Settings"}
-        description={
-          isUrdu
-            ? "اپنی ذاتی معلومات، ورکشاپ کے مقام اور سروس ایریا کا انتظام کریں۔"
-            : "Manage your personal information, shop workshop location, and service coverage areas."
-        }
+        // description={
+        //   isUrdu
+        //     ? "اپنی ذاتی معلومات، ورکشاپ کے مقام اور سروس ایریا کا انتظام کریں۔"
+        //     : "Manage your personal information, shop workshop location, and service coverage areas."
+        // }
         actions={
-          <div className="flex items-center gap-2">
+          <div className="hidden md:flex items-center gap-2">
             {saveSuccess ? (
               <span className="flex items-center gap-1.5 text-xs font-bold text-emerald-600 bg-emerald-50 px-3 py-2 rounded-xl border border-emerald-200 animate-in fade-in">
                 <CheckCircle2 className="size-4" /> {isUrdu ? "پروفائل اپ ڈیٹ ہو گئی!" : "Profile Updated!"}
@@ -168,121 +268,226 @@ function ProfileContent() {
               className={editing ? "" : "bg-[#0F8B8D] hover:bg-[#0F8B8D]/90 text-white font-semibold"}
               onClick={() => {
                 if (editing) {
-                  setEditing(false);
-                  setFormState(null);
+                  handleCancel();
                 } else {
-                  setEditing(true);
-                  setFormState({
-                    name: worker.name,
-                    phone: worker.phone ?? "+92 300 1234567",
-                    email: worker.email ?? "faizan.ahmed@hunar.pk",
-                    avatarUrl: worker.avatarUrl ?? "",
-                    bio: worker.bio ?? "",
-                    skills: worker.skills ?? [],
-                    yearsExperience: worker.yearsExperience ?? 3,
-                    workshopLocation:
-                      worker.workshopLocation ??
-                      "Shop #14, Main Saddar Road, Peshawar Cantt",
-                    serviceAreas: worker.serviceAreas ?? [
-                      "University Town",
-                      "Hayatabad",
-                      "Saddar",
-                    ],
-                    defaultVisitCharge: worker.defaultVisitCharge ?? 300,
-                  });
+                  handleStartEditing();
                 }
               }}
             >
-              <Pencil className="mr-1.5 size-4" aria-hidden="true" />
-              {editing ? (isUrdu ? "منسوخی" : "Cancel Editing") : (isUrdu ? "پروفائل میں ترمیم کریں" : "Edit Profile")}
+              {editing ? (
+                <>
+                  <X className="mr-1.5 size-4" aria-hidden="true" />
+                  {isUrdu ? "منسوخی" : "Cancel Editing"}
+                </>
+              ) : (
+                <>
+                  <Pencil className="mr-1.5 size-4" aria-hidden="true" />
+                  {isUrdu ? "پروفائل میں ترمیم کریں" : "Edit Profile"}
+                </>
+              )}
             </Button>
           </div>
         }
       />
 
-      <div className="grid gap-6 lg:grid-cols-[0.8fr_1.2fr]">
-        {/* Left Card: Summary & Avatar */}
-        <Card className="border-border shadow-xs">
-          <CardContent className="flex flex-col items-center gap-4 text-center p-6">
-            <div className="relative">
-              <Avatar className="size-28 border-2 border-[#0F8B8D]/30 shadow-md">
-                {form.avatarUrl || worker.avatarUrl ? (
-                  <AvatarImage
-                    src={form.avatarUrl || worker.avatarUrl}
-                    alt={worker.name}
-                  />
-                ) : null}
-                <AvatarFallback className="bg-[#0F8B8D]/10 text-3xl font-bold text-[#0F8B8D]">
-                  {worker.name ? worker.name[0].toUpperCase() : "W"}
-                </AvatarFallback>
-              </Avatar>
+      {saveError ? (
+        <div className="flex items-center gap-2 p-3.5 text-xs font-semibold text-rose-700 bg-rose-50 border border-rose-200 rounded-xl">
+          <AlertCircle className="size-4 shrink-0 text-rose-600" />
+          <span>{saveError}</span>
+        </div>
+      ) : null}
 
-              {editing ? (
-                <>
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={handleAvatarSelect}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => fileInputRef.current?.click()}
-                    className="absolute bottom-0 right-0 flex size-9 items-center justify-center rounded-full bg-[#0F8B8D] text-white shadow-md hover:bg-[#0F8B8D]/90 transition-transform active:scale-95 cursor-pointer"
-                    title={isUrdu ? "پروفائل فوٹو تبدیل کریں" : "Change Profile Photo"}
-                  >
-                    <Camera className="size-4.5" />
-                  </button>
-                </>
-              ) : null}
-            </div>
-
-            <div className="space-y-1">
-              <div className="flex items-center justify-center gap-2">
-                <h2 className="text-xl font-extrabold text-[#123B5D]">
-                  {editing ? form.name : worker.name}
-                </h2>
-                {worker.isVerified ? <VerifiedBadge title={isUrdu ? "تصدیق شدہ ہنرمند" : "Verified Pro"} /> : null}
-              </div>
-
-              <div className="flex items-center justify-center gap-2 pt-0.5">
-                <RatingStars rating={worker.rating} size="size-4" />
-                <span className="text-xs font-bold text-[#123B5D]">
-                  {worker.rating.toFixed(1)} / 5.0 ({worker.reviewsCount} {isUrdu ? "جائزے" : "reviews"})
+      <div className="grid gap-6 lg:grid-cols-[0.8fr_1.2fr] lg:items-stretch">
+        {/* Left Column: Summary Card + Desktop Reviews */}
+        <div className="flex flex-col gap-6">
+          {/* Main Worker Profile Card */}
+          <Card className="relative border-border shadow-xs">
+            {/* Edit / Cancel button — top-right of card, mobile only */}
+            <div className="md:hidden absolute top-3 right-3 flex items-center gap-2 z-10">
+              {saveSuccess ? (
+                <span className="hidden sm:flex items-center gap-1 text-[11px] font-bold text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200 animate-in fade-in">
+                  <CheckCircle2 className="size-3.5" />
+                  {isUrdu ? "اپ ڈیٹ ہو گئی!" : "Saved!"}
                 </span>
-              </div>
+              ) : null}
+              <Button
+                size="sm"
+                variant={editing ? "outline" : "default"}
+                className={editing ? "h-8 px-3 text-xs" : "h-8 px-3 text-xs bg-[#0F8B8D] hover:bg-[#0F8B8D]/90 text-white font-semibold"}
+                onClick={() => {
+                  if (editing) {
+                    handleCancel();
+                  } else {
+                    handleStartEditing();
+                  }
+                }}
+              >
+                {editing ? (
+                  <>
+                    <X className="mr-1 size-3.5" aria-hidden="true" />
+                    {isUrdu ? "منسوخی" : "Cancel"}
+                  </>
+                ) : (
+                  <>
+                    <Pencil className="mr-1 size-3.5" aria-hidden="true" />
+                    {isUrdu ? "ترمیم" : "Edit Profile"}
+                  </>
+                )}
+              </Button>
             </div>
+            <CardContent className="flex flex-col items-center gap-4 text-center p-6 pt-12">
+              <div className="relative">
+                <Avatar className="size-28 border-2 border-[#0F8B8D]/30 shadow-md">
+                  {form.avatarUrl || worker.avatarUrl ? (
+                    <AvatarImage
+                      src={form.avatarUrl || worker.avatarUrl}
+                      alt={worker.name}
+                    />
+                  ) : null}
+                  <AvatarFallback className="bg-[#0F8B8D]/10 text-3xl font-bold text-[#0F8B8D]">
+                    {worker.name ? worker.name[0].toUpperCase() : "W"}
+                  </AvatarFallback>
+                </Avatar>
 
-            {/* Quick Stats Grid */}
-            <div className="grid w-full grid-cols-2 gap-3 border-y border-border py-4 my-1 text-xs">
-              <div className="rounded-xl bg-slate-50 p-2.5">
-                <p className="text-slate-500 font-medium">{isUrdu ? "مکمل شدہ کام" : "Completed Orders"}</p>
-                <p className="text-base font-extrabold text-[#123B5D] mt-0.5">
-                  {worker.completedJobs} {isUrdu ? "جابز" : "Jobs"}
-                </p>
+                {editing ? (
+                  <>
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={handleAvatarSelect}
+                    />
+                    <button
+                      type="button"
+                      disabled={uploadingAvatar}
+                      onClick={() => fileInputRef.current?.click()}
+                      className="absolute bottom-0 right-0 flex size-9 items-center justify-center rounded-full bg-[#0F8B8D] text-white shadow-md hover:bg-[#0F8B8D]/90 transition-transform active:scale-95 cursor-pointer disabled:opacity-75"
+                      title={isUrdu ? "پروفائل فوٹو تبدیل کریں" : "Change Profile Photo"}
+                    >
+                      {uploadingAvatar ? (
+                        <Loader2 className="size-4.5 animate-spin" />
+                      ) : (
+                        <Camera className="size-4.5" />
+                      )}
+                    </button>
+                  </>
+                ) : null}
               </div>
 
-              <div className="rounded-xl bg-slate-50 p-2.5">
-                <p className="text-slate-500 font-medium">{isUrdu ? "طے شدہ وزٹ فیس" : "Default Visit Fee"}</p>
-                <p className="text-base font-extrabold text-emerald-600 mt-0.5">
-                  {formatRs(form.defaultVisitCharge ?? 300)}
-                </p>
-              </div>
-            </div>
+              <div className="space-y-1 w-full">
+                <div className="flex items-center justify-center gap-2">
+                  <h2 className="text-xl font-extrabold text-[#123B5D]">
+                    {editing ? form.name : worker.name}
+                  </h2>
+                  {worker.isVerified ? <VerifiedBadge title={isUrdu ? "تصدیق شدہ ہنرمند" : "Verified Pro"} /> : null}
+                </div>
 
-            <div className="w-full text-left space-y-2 text-xs">
-              <div className="flex items-center gap-2 text-slate-600">
-                <User className="size-4 text-[#0F8B8D] shrink-0" />
-                <span className="truncate">{editing ? form.email : (worker.email ?? "faizan.ahmed@hunar.pk")}</span>
+                <button
+                  type="button"
+                  onClick={() => setMobileReviewsOpen(true)}
+                  className="w-full flex items-center justify-center gap-1.5 pt-0.5 cursor-pointer hover:opacity-80 transition-opacity"
+                  title={isUrdu ? "جائزے دیکھیں" : "View reviews"}
+                >
+                  <RatingStars rating={worker.rating ?? 5} size="size-4" />
+                  <span className="text-xs font-bold text-[#123B5D]">
+                    {(worker.rating ?? 5).toFixed(1)}
+                  </span>
+                </button>
+
+
               </div>
-              <div className="flex items-center gap-2 text-slate-600">
-                <Landmark className="size-4 text-[#0F8B8D] shrink-0" />
-                <span className="truncate">{editing ? form.phone : (worker.phone ?? "+92 300 1234567")}</span>
+
+              {/* Quick Stats */}
+              <div className="w-full border-y border-border py-4 my-1 text-xs">
+                <div className="rounded-xl bg-slate-50 p-2.5 text-center">
+                  <p className="text-slate-500 font-medium">{isUrdu ? "مکمل شدہ کام" : "Completed Orders"}</p>
+                  <p className="text-base font-extrabold text-[#123B5D] mt-0.5">
+                    {worker.completedJobs ?? 0} {isUrdu ? "جابز" : "Jobs"}
+                  </p>
+                </div>
               </div>
-            </div>
-          </CardContent>
-        </Card>
+
+              <div className="w-full text-left space-y-2 text-xs">
+                <div className="flex items-center gap-2 text-slate-600">
+                  <User className="size-4 text-[#0F8B8D] shrink-0" />
+                  <span className="truncate">{editing ? form.email : (worker.email || (isUrdu ? "درج نہیں" : "Not provided"))}</span>
+                </div>
+                <div className="flex items-center gap-2 text-slate-600">
+                  <Landmark className="size-4 text-[#0F8B8D] shrink-0" />
+                  <span className="truncate">{editing ? form.phone : (worker.phone || (isUrdu ? "درج نہیں" : "Not provided"))}</span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Desktop Only: Reviews Section — fills remaining column height */}
+          <div className="hidden lg:flex flex-col flex-1">
+            <Card className="border-border shadow-xs flex flex-col flex-1">
+              <CardHeader className="pb-3 border-b border-slate-100 flex flex-row items-center justify-between shrink-0">
+                <CardTitle className="text-base font-bold text-[#123B5D] flex items-center gap-2">
+                  <Star className="size-4.5 text-amber-500 fill-amber-500" />
+                  {isUrdu ? "گاہکوں کے جائزے" : "Customer Reviews"}
+                </CardTitle>
+                {ratingQuery.data?.totalReviews ? (
+                  <Badge variant="outline" className="text-xs font-semibold text-[#0F8B8D] border-[#0F8B8D]/30">
+                    {ratingQuery.data.totalReviews} {isUrdu ? "جائزے" : "Reviews"}
+                  </Badge>
+                ) : null}
+              </CardHeader>
+              <CardContent className="p-5 space-y-4 flex flex-col flex-1 min-w-0 overflow-x-hidden">
+                {ratingQuery.isPending || reviewsQuery.isPending ? (
+                  <LoadingState label={isUrdu ? "جائزے لوڈ ہو رہے ہیں..." : "Loading reviews..."} />
+                ) : ratingQuery.isError || reviewsQuery.isError ? (
+                  <p className="text-xs text-rose-500 text-center py-2">
+                    {isUrdu ? "جائزے لوڈ کرنے میں خرابی پیش آگئی" : "Unable to load reviews."}
+                  </p>
+                ) : (
+                  <>
+                    {ratingQuery.data && (
+                      <RatingSummary
+                        summary={ratingQuery.data}
+                        title={isUrdu ? "ریٹنگ کی تفصیل" : "Rating Breakdown"}
+                        reviewLabel={isUrdu ? "کل جائزے" : "Total Reviews"}
+                        starLabel={isUrdu ? "ستارے" : "Stars"}
+                      />
+                    )}
+
+                    <div className="space-y-3 pt-2 min-w-0 overflow-x-hidden">
+                      {!reviewsQuery.data?.items || reviewsQuery.data.items.length === 0 ? (
+                        <div className="text-center py-6 text-slate-400 text-xs">
+                          {isUrdu ? "ابھی تک کوئی جائزہ موجود نہیں ہے۔" : "No customer reviews yet."}
+                        </div>
+                      ) : (
+                        <>
+                          {reviewsQuery.data.items.slice(0, 2).map((review) => (
+                            <ReviewCard
+                              key={review.id}
+                              review={review}
+                              jobLabel={isUrdu ? "جاب حوالہ" : "Job Reference"}
+                              noCommentLabel={isUrdu ? "کوئی تبصرہ درج نہیں" : "No review comment provided"}
+                            />
+                          ))}
+                          {reviewsQuery.data.items.length > 2 && (
+                            <button
+                              type="button"
+                              onClick={() => setDesktopReviewsOpen(true)}
+                              className="w-full mt-1 py-2 text-xs font-semibold text-[#0F8B8D] hover:text-[#0F8B8D]/80 border border-[#0F8B8D]/30 hover:bg-[#0F8B8D]/5 rounded-lg transition-colors cursor-pointer"
+                            >
+                              {isUrdu
+                                ? `سبھی ${reviewsQuery.data.items.length} جائزے دیکھیں →`
+                                : `See all ${ratingQuery.data?.totalReviews ?? reviewsQuery.data.items.length} reviews →`}
+                            </button>
+                          )}
+                        </>
+                      )}
+                    </div>
+                  </>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        </div>
 
         {/* Right Section: Editable Cards */}
         <div className="space-y-6">
@@ -344,11 +549,11 @@ function ProfileContent() {
                   </div>
                   <div className="rounded-xl bg-slate-50 p-3">
                     <dt className="text-slate-500 font-medium">{isUrdu ? "موبائل نمبر" : "Phone Number"}</dt>
-                    <dd className="text-sm font-bold text-[#123B5D] mt-0.5">{worker.phone ?? "+92 300 1234567"}</dd>
+                    <dd className="text-sm font-bold text-[#123B5D] mt-0.5">{worker.phone || (isUrdu ? "درج نہیں" : "Not provided")}</dd>
                   </div>
                   <div className="rounded-xl bg-slate-50 p-3 sm:col-span-2">
                     <dt className="text-slate-500 font-medium">{isUrdu ? "ای میل ایڈریس" : "Email Address"}</dt>
-                    <dd className="text-sm font-bold text-[#123B5D] mt-0.5">{worker.email ?? "faizan.ahmed@hunar.pk"}</dd>
+                    <dd className="text-sm font-bold text-[#123B5D] mt-0.5">{worker.email || (isUrdu ? "درج نہیں" : "Not provided")}</dd>
                   </div>
                 </dl>
               )}
@@ -391,8 +596,8 @@ function ProfileContent() {
                   </div>
                 ) : (
                   <p className="text-sm font-bold text-[#123B5D] pt-0.5">
-                    {worker.workshopLocation ??
-                      "Shop #14, Main Commercial Avenue"}
+                    {worker.workshopLocation ||
+                      (isUrdu ? "کوئی پتہ درج نہیں" : "No workshop address provided")}
                   </p>
                 )}
               </div>
@@ -433,17 +638,27 @@ function ProfileContent() {
                     })}
                   </div>
                 ) : (
-                  <div className="flex flex-wrap gap-2 pt-1">
-                    {(worker.serviceAreas ?? []).map((area) => (
-                      <Badge
-                        key={area}
-                        variant="secondary"
-                        className="bg-white text-[#123B5D] border border-emerald-300 px-3 py-1 text-xs font-semibold"
-                      >
-                        📍 {area}
-                      </Badge>
-                    ))}
-                  </div>
+                  (worker.serviceAreas ?? []).length > 0 ? (
+                    <div className="flex flex-wrap gap-2 pt-1">
+                      {worker.serviceAreas.map((area: any) => {
+                        const areaName = typeof area === "string" ? area : (area?.label || area?.address || "");
+                        if (!areaName) return null;
+                        return (
+                          <Badge
+                            key={areaName}
+                            variant="secondary"
+                            className="bg-white text-[#123B5D] border border-emerald-300 px-3 py-1 text-xs font-semibold"
+                          >
+                            📍 {areaName}
+                          </Badge>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <p className="text-xs text-slate-500 pt-1">
+                      {isUrdu ? "کوئی سروس ایریا منتخب نہیں" : "No coverage areas selected"}
+                    </p>
+                  )
                 )}
               </div>
             </CardContent>
@@ -473,57 +688,53 @@ function ProfileContent() {
                     />
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="grid gap-1.5">
-                      <Label htmlFor="prof-exp" className="text-xs font-semibold text-[#123B5D]">
-                        {isUrdu ? "تجربہ (سالوں میں)" : "Years of Experience"}
-                      </Label>
-                      <Input
-                        id="prof-exp"
-                        type="number"
-                        min="0"
-                        value={form.yearsExperience ?? 0}
-                        onChange={(e) =>
-                          handleTextChange("yearsExperience", Number(e.target.value))
-                        }
-                        className="h-10 text-sm"
-                      />
-                    </div>
-
-                    <div className="grid gap-1.5">
-                      <Label htmlFor="prof-charge" className="text-xs font-semibold text-[#123B5D]">
-                        {isUrdu ? "بنیادی وزٹ فیس (روپے)" : "Default Visit Fee (PKR)"}
-                      </Label>
-                      <Input
-                        id="prof-charge"
-                        type="number"
-                        min="0"
-                        value={form.defaultVisitCharge ?? 300}
-                        onChange={(e) =>
-                          handleTextChange(
-                            "defaultVisitCharge",
-                            Number(e.target.value)
-                          )
-                        }
-                        className="h-10 text-sm"
-                      />
-                    </div>
+                  <div className="grid gap-1.5">
+                    <Label htmlFor="prof-exp" className="text-xs font-semibold text-[#123B5D]">
+                      {isUrdu ? "تجربہ (سالوں میں)" : "Years of Experience"}
+                    </Label>
+                    <Input
+                      id="prof-exp"
+                      type="number"
+                      min="0"
+                      value={form.yearsExperience ?? ""}
+                      onChange={(e) => {
+                        const cleaned = sanitizePriceInput(e.target.value);
+                        handleTextChange("yearsExperience", cleaned === "" ? "" : Number(cleaned));
+                      }}
+                      className="h-10 text-sm"
+                    />
                   </div>
 
-                  <Button
-                    onClick={handleSave}
-                    disabled={updateMutation.isPending}
-                    className="w-full bg-[#0F8B8D] hover:bg-[#0F8B8D]/90 text-white font-bold h-11 shadow-sm mt-2"
-                  >
-                    <Save className="mr-2 size-4" />
-                    {updateMutation.isPending
-                      ? isUrdu
-                        ? "محفوظ کیا جا رہا ہے..."
-                        : "Saving Profile..."
-                      : isUrdu
-                        ? "پروفائل کی تبدیلیاں محفوظ کریں"
-                        : "Save Profile Changes"}
-                  </Button>
+                  <div className="flex items-center gap-3 pt-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={handleCancel}
+                      disabled={updateMutation.isPending}
+                      className="flex-1 border-slate-300 text-slate-700 font-semibold h-11"
+                    >
+                      <X className="mr-2 size-4" />
+                      {isUrdu ? "منسوخ کریں" : "Cancel"}
+                    </Button>
+                    <Button
+                      type="button"
+                      onClick={handleSave}
+                      disabled={updateMutation.isPending}
+                      className="flex-1 bg-[#0F8B8D] hover:bg-[#0F8B8D]/90 text-white font-bold h-11 shadow-sm"
+                    >
+                      {updateMutation.isPending ? (
+                        <>
+                          <Loader2 className="mr-2 size-4 animate-spin" />
+                          {isUrdu ? "محفوظ کیا جا رہا ہے..." : "Saving Profile..."}
+                        </>
+                      ) : (
+                        <>
+                          <Save className="mr-2 size-4" />
+                          {isUrdu ? "پروفائل محفوظ کریں" : "Save Profile"}
+                        </>
+                      )}
+                    </Button>
+                  </div>
                 </>
               ) : (
                 <div className="space-y-4 text-xs">
@@ -534,17 +745,11 @@ function ProfileContent() {
                     </p>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4 pt-2 border-t border-slate-100">
+                  <div className="pt-2 border-t border-slate-100">
                     <div>
                       <p className="text-slate-500 font-medium">{isUrdu ? "تجربہ (سال)" : "Years of Experience"}</p>
                       <p className="text-sm font-bold text-[#123B5D] mt-0.5">
                         {worker.yearsExperience} {isUrdu ? "سال" : "Years"}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-slate-500 font-medium">{isUrdu ? "طے شدہ وزٹ فیس" : "Default Visit Fee"}</p>
-                      <p className="text-sm font-bold text-emerald-600 mt-0.5">
-                        {formatRs(worker.defaultVisitCharge ?? 300)}
                       </p>
                     </div>
                   </div>
@@ -554,6 +759,98 @@ function ProfileContent() {
           </Card>
         </div>
       </div>
+
+      {/* Mobile Only: Reviews Dialog Modal */}
+      <Dialog open={mobileReviewsOpen} onOpenChange={setMobileReviewsOpen}>
+        <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto overflow-x-hidden p-5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <DialogHeader className="pb-3 border-b border-slate-100">
+            <DialogTitle className="text-base font-bold text-[#123B5D] flex items-center gap-2">
+              <Star className="size-4.5 text-amber-500 fill-amber-500" />
+              {isUrdu ? "گاہکوں کے جائزے" : "Customer Reviews"}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 pt-2 min-w-0 overflow-x-hidden">
+            {ratingQuery.isPending || reviewsQuery.isPending ? (
+              <LoadingState label={isUrdu ? "جائزے لوڈ ہو رہے ہیں..." : "Loading reviews..."} />
+            ) : ratingQuery.isError || reviewsQuery.isError ? (
+              <p className="text-xs text-rose-500 text-center py-4">
+                {isUrdu ? "جائزے لوڈ کرنے میں خرابی پیش آگئی" : "Unable to load reviews."}
+              </p>
+            ) : (
+              <>
+                {ratingQuery.data && (
+                  <RatingSummary
+                    summary={ratingQuery.data}
+                    title={isUrdu ? "ریٹنگ کی تفصیل" : "Rating Breakdown"}
+                    reviewLabel={isUrdu ? "کل جائزے" : "Total Reviews"}
+                    starLabel={isUrdu ? "ستارے" : "Stars"}
+                  />
+                )}
+
+                <div className="space-y-3 pt-2 min-w-0 overflow-x-hidden">
+                  {!reviewsQuery.data?.items || reviewsQuery.data.items.length === 0 ? (
+                    <div className="text-center py-6 text-slate-400 text-xs">
+                      {isUrdu ? "ابھی تک کوئی جائزہ موجود نہیں ہے۔" : "No customer reviews yet."}
+                    </div>
+                  ) : (
+                    reviewsQuery.data.items.map((review) => (
+                      <ReviewCard
+                        key={review.id}
+                        review={review}
+                        jobLabel={isUrdu ? "جاب حوالہ" : "Job Reference"}
+                        noCommentLabel={isUrdu ? "کوئی تبصرہ درج نہیں" : "No review comment provided"}
+                      />
+                    ))
+                  )}
+                </div>
+              </>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Desktop: All Reviews Dialog */}
+      <Dialog open={desktopReviewsOpen} onOpenChange={setDesktopReviewsOpen}>
+        <DialogContent className="max-w-xl max-h-[85vh] overflow-y-auto overflow-x-hidden p-5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <DialogHeader className="pb-3 border-b border-slate-100">
+            <DialogTitle className="text-base font-bold text-[#123B5D] flex items-center gap-2">
+              <Star className="size-4.5 text-amber-500 fill-amber-500" />
+              {isUrdu ? "گاہکوں کے جائزے" : "All Customer Reviews"}
+              {ratingQuery.data?.totalReviews ? (
+                <Badge variant="outline" className="ml-auto text-xs font-semibold text-[#0F8B8D] border-[#0F8B8D]/30">
+                  {ratingQuery.data.totalReviews} {isUrdu ? "جائزے" : "Reviews"}
+                </Badge>
+              ) : null}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 pt-2 min-w-0 overflow-x-hidden">
+            {ratingQuery.data && (
+              <RatingSummary
+                summary={ratingQuery.data}
+                title={isUrdu ? "ریٹنگ کی تفصیل" : "Rating Breakdown"}
+                reviewLabel={isUrdu ? "کل جائزے" : "Total Reviews"}
+                starLabel={isUrdu ? "ستارے" : "Stars"}
+              />
+            )}
+            <div className="space-y-3 pt-1 min-w-0 overflow-x-hidden">
+              {!reviewsQuery.data?.items || reviewsQuery.data.items.length === 0 ? (
+                <div className="text-center py-6 text-slate-400 text-xs">
+                  {isUrdu ? "ابھی تک کوئی جائزہ موجود نہیں ہے۔" : "No customer reviews yet."}
+                </div>
+              ) : (
+                reviewsQuery.data.items.map((review) => (
+                  <ReviewCard
+                    key={review.id}
+                    review={review}
+                    jobLabel={isUrdu ? "جاب حوالہ" : "Job Reference"}
+                    noCommentLabel={isUrdu ? "کوئی تبصرہ درج نہیں" : "No review comment provided"}
+                  />
+                ))
+              )}
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

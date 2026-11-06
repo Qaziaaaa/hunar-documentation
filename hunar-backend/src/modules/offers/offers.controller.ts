@@ -4,7 +4,6 @@ import {
   Get,
   NotFoundException,
   Param,
-  ParseUUIDPipe,
   Post,
   Put,
   Query,
@@ -20,6 +19,7 @@ import {
   OfferListQueryDto,
   RespondOfferDto,
 } from './offers.validation';
+import { ParseOrderCodePipe } from '../../common/helpers/order-code.util';
 
 @Controller()
 export class OffersController {
@@ -39,7 +39,7 @@ export class OffersController {
   @Roles(Role.CUSTOMER)
   async acceptAlias(
     @CurrentUser() user: JwtPayload,
-    @Param('offerId', ParseUUIDPipe) offerId: string,
+    @Param('offerId') offerId: string,
     @Body() dto: RespondOfferDto,
   ) {
     return this.offersService.acceptOffer(await this.resolveJobId(offerId), offerId, user, dto);
@@ -49,7 +49,7 @@ export class OffersController {
   @Roles(Role.CUSTOMER)
   async rejectAlias(
     @CurrentUser() user: JwtPayload,
-    @Param('offerId', ParseUUIDPipe) offerId: string,
+    @Param('offerId') offerId: string,
   ) {
     return this.offersService.rejectOffer(await this.resolveJobId(offerId), offerId, user);
   }
@@ -58,7 +58,7 @@ export class OffersController {
   @Roles(Role.CUSTOMER)
   async counterAlias(
     @CurrentUser() user: JwtPayload,
-    @Param('offerId', ParseUUIDPipe) offerId: string,
+    @Param('offerId') offerId: string,
     @Body() dto: CounterOfferDto,
   ) {
     return this.offersService.counterOffer(await this.resolveJobId(offerId), offerId, user, dto);
@@ -68,15 +68,19 @@ export class OffersController {
   @Roles(Role.WORKER)
   create(
     @CurrentUser() user: JwtPayload,
-    @Param('jobId', ParseUUIDPipe) jobId: string,
+    @Param('jobId', ParseOrderCodePipe) jobId: string,
     @Body() dto: CreateOfferDto,
   ) {
     return this.offersService.createOffer(user.sub, jobId, dto);
   }
 
   @Get('jobs/:jobId/offers')
-  getJobOffers(@CurrentUser() user: JwtPayload, @Param('jobId', ParseUUIDPipe) jobId: string) {
-    return this.offersService.getJobOffers(jobId, user);
+  getJobOffers(
+    @CurrentUser() user: JwtPayload,
+    @Param('jobId', ParseOrderCodePipe) jobId: string,
+    @Query() query?: OfferListQueryDto,
+  ) {
+    return this.offersService.getJobOffers(jobId, user, query);
   }
 
   @Get('offers/my')
@@ -89,8 +93,8 @@ export class OffersController {
   @Roles(Role.CUSTOMER)
   accept(
     @CurrentUser() user: JwtPayload,
-    @Param('jobId', ParseUUIDPipe) jobId: string,
-    @Param('offerId', ParseUUIDPipe) offerId: string,
+    @Param('jobId', ParseOrderCodePipe) jobId: string,
+    @Param('offerId') offerId: string,
     @Body() dto: RespondOfferDto,
   ) {
     return this.offersService.acceptOffer(jobId, offerId, user, dto);
@@ -100,8 +104,8 @@ export class OffersController {
   @Roles(Role.CUSTOMER)
   reject(
     @CurrentUser() user: JwtPayload,
-    @Param('jobId', ParseUUIDPipe) jobId: string,
-    @Param('offerId', ParseUUIDPipe) offerId: string,
+    @Param('jobId', ParseOrderCodePipe) jobId: string,
+    @Param('offerId') offerId: string,
   ) {
     return this.offersService.rejectOffer(jobId, offerId, user);
   }
@@ -109,8 +113,8 @@ export class OffersController {
   @Put('jobs/:jobId/offers/:offerId/counter')
   counter(
     @CurrentUser() user: JwtPayload,
-    @Param('jobId', ParseUUIDPipe) jobId: string,
-    @Param('offerId', ParseUUIDPipe) offerId: string,
+    @Param('jobId', ParseOrderCodePipe) jobId: string,
+    @Param('offerId') offerId: string,
     @Body() dto: CounterOfferDto,
   ) {
     return this.offersService.counterOffer(jobId, offerId, user, dto);
@@ -118,7 +122,7 @@ export class OffersController {
 
   @Put('offers/:offerId/withdraw')
   @Roles(Role.WORKER)
-  withdraw(@CurrentUser() user: JwtPayload, @Param('offerId', ParseUUIDPipe) offerId: string) {
+  withdraw(@CurrentUser() user: JwtPayload, @Param('offerId') offerId: string) {
     return this.offersService.withdrawOffer(offerId, user);
   }
 }

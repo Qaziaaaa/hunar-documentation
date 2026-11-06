@@ -5,9 +5,11 @@ import { useWorkerJobs, workerStore } from "@/stores/worker-jobs-store";
 import { JobCard } from "./job-card";
 import { JobFiltersBar } from "./job-filters-bar";
 import { Inbox, Compass, Sparkles } from "lucide-react";
+import { ErrorState } from "@/components/shared/error-state";
+import { LoadingState } from "@/components/shared/loading-state";
 
 export function NearbyJobsFeed() {
-  const { jobs, offers, filters, workerOnline } = useWorkerJobs();
+  const { jobs, offers, filters, workerOnline, status, error } = useWorkerJobs();
 
   // Combine All 5 Filters Synchronously
   const filteredJobs = useMemo(() => {
@@ -63,6 +65,22 @@ export function NearbyJobsFeed() {
         return new Date(b.postedAt).getTime() - new Date(a.postedAt).getTime();
       });
   }, [jobs, filters]);
+
+  if (status === "loading" && jobs.length === 0) {
+    return <LoadingState label="Loading nearby jobs..." />;
+  }
+
+  if (status === "error") {
+    return (
+      <ErrorState
+        title="Unable to load nearby jobs"
+        description={
+          error ?? "Please check your network connection and try again."
+        }
+        onRetry={() => void workerStore.hydrate({ force: true })}
+      />
+    );
+  }
 
   return (
     <div className="space-y-5">

@@ -1,13 +1,19 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { AdminShell } from "@/features/admin/components/admin-shell";
-import { adminApi } from "@/features/admin/api/admin-api";
+import { adminApi, SuspendUserPayload } from "@/features/admin/api/admin-api";
+import { AdminAvatar } from "@/features/admin/components/admin-avatar";
 import type { CustomerUser } from "@/types/admin";
+import { TableRowsSkeleton } from "@/features/admin/components/table-skeleton";
+import {
+  SuspendUserModal,
+  SuspendModalUser,
+} from "@/features/admin/components/suspend-user-modal";
 import {
   AlertCircle,
   Ban,
   CheckCircle2,
+  Clock,
   Eye,
   Filter,
   Search,
@@ -19,19 +25,24 @@ import {
 export default function CustomersPage() {
   const [customers, setCustomers] = useState<CustomerUser[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<"ALL" | "ACTIVE" | "SUSPENDED">("ALL");
   const [selectedCustomer, setSelectedCustomer] = useState<CustomerUser | null>(null);
   const [actionCustomer, setActionCustomer] = useState<CustomerUser | null>(null);
-  const [suspendReason, setSuspendReason] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     adminApi
-      .listCustomers({ limit: 100 })
+      .listCustomers({ limit: 50 })
       .then((res) => setCustomers(res.items))
-      .catch(() => setCustomers([]))
+      .catch((err) =>
+        setError(err instanceof Error ? err.message : "Failed to load customers"),
+      )
       .finally(() => setLoading(false));
-  }, []);
+  }, [reloadKey]);
 
   const filtered = useMemo(
     () =>
@@ -47,39 +58,107 @@ export default function CustomersPage() {
     [customers, search, statusFilter],
   );
 
-  const handleToggleStatus = () => {
+  const modalCustomer: SuspendModalUser | null = useMemo(() => {
+    if (!actionCustomer) return null;
+    return {
+      id: actionCustomer.id,
+      name: actionCustomer.name,
+      phone: actionCustomer.phone,
+      role: "CUSTOMER",
+      status: actionCustomer.status,
+      suspendedUntil: actionCustomer.suspendedUntil,
+      suspensionReason: actionCustomer.suspensionReason,
+      suspensionType: actionCustomer.suspensionType,
+    };
+  }, [actionCustomer]);
+
+  const handleConfirmSuspend = async (payload: SuspendUserPayload) => {
     if (!actionCustomer) return;
+    setIsSubmitting(true);
+    setActionError(null);
+    try {
+      await adminApi.suspendCustomer(actionCustomer.id, payload);
+      setCustomers((prev) =>
+        prev.map((c) => {
+          if (c.id === actionCustomer.id) {
+            return {
+              ...c,
+              status: "SUSPENDED",
+              suspensionReason: payload.description || payload.reason,
+              suspensionType: payload.type,
+              suspendedUntil: payload.duration ? payload.duration : null,
+              internalNotes: `Suspended [${payload.type}]: ${payload.reason}`,
+            };
+          }
+          return c;
+        })
+      );
+      setActionCustomer(null);
+    } catch (err) {
+      setActionError(
+        err instanceof Error ? err.message : "Failed to suspend customer account",
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
-    const suspending = actionCustomer.status === "ACTIVE";
-    void (suspending
-      ? adminApi.suspendCustomer(actionCustomer.id, suspendReason)
-      : adminApi.reactivateCustomer(actionCustomer.id)
-    ).catch(() => undefined);
-
-    setCustomers((prev) =>
-      prev.map((c) => {
-        if (c.id === actionCustomer.id) {
-          const newStatus = c.status === "ACTIVE" ? "SUSPENDED" : "ACTIVE";
-          return {
-            ...c,
-            status: newStatus,
-            internalNotes:
-              newStatus === "SUSPENDED"
-                ? `Suspended by admin: ${suspendReason || "No reason given"}`
-                : c.internalNotes,
-          };
-        }
-        return c;
-      })
-    );
-
-    setActionCustomer(null);
-    setSuspendReason("");
+  const handleConfirmReactivate = async () => {
+    if (!actionCustomer) return;
+    setIsSubmitting(true);
+    setActionError(null);
+    try {
+      await adminApi.reactivateCustomer(actionCustomer.id);
+      setCustomers((prev) =>
+        prev.map((c) => {
+          if (c.id === actionCustomer.id) {
+            return {
+              ...c,
+              status: "ACTIVE",
+              suspendedUntil: null,
+              suspensionReason: null,
+              suspensionType: null,
+            };
+          }
+          return c;
+        })
+      );
+      setActionCustomer(null);
+    } catch (err) {
+      setActionError(
+        err instanceof Error ? err.message : "Failed to reactivate customer account",
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
-    <AdminShell>
-      <div className="space-y-6">
+<div className="space-y-6">
+        {error && (
+          <div className="flex items-center justify-between gap-3 rounded-2xl border border-red-200 bg-red-50 p-4">
+            <div className="flex items-center gap-2">
+              <AlertCircle className="size-4 shrink-0 text-red-500" />
+              <span className="text-sm font-bold text-red-700">Customers failed to load</span>
+              <span className="text-xs font-medium text-red-600">{error}</span>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                setError(null);
+                setReloadKey((k) => k + 1);
+              }}
+              className="rounded-xl bg-red-600 px-3 py-1.5 text-xs font-bold text-white transition hover:bg-red-700"
+            >
+              Retry
+            </button>
+          </div>
+        )}
+        {actionError && (
+          <div className="rounded-2xl border border-red-200 bg-red-50 p-4 text-sm font-bold text-red-700">
+            Action failed: {actionError}
+          </div>
+        )}
         {/* Header */}
         <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
           <div>
@@ -168,13 +247,17 @@ export default function CustomersPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 font-medium">
-                {filtered.map((customer) => (
+                {loading ? (
+                  <TableRowsSkeleton colSpan={8} label="Loading customers" />
+                ) : filtered.map((customer) => (
                   <tr key={customer.id} className="transition hover:bg-slate-50">
                     <td className="py-4 px-4">
                       <div className="flex items-center gap-3">
-                        <div className="flex size-10 items-center justify-center rounded-xl bg-navy text-xs font-bold text-white shadow-sm">
-                          {customer.name.charAt(0)}
-                        </div>
+                        <AdminAvatar
+                          src={customer.avatarUrl}
+                          name={customer.name}
+                          className="size-10 rounded-xl"
+                        />
                         <div>
                           <p className="font-extrabold text-navy">{customer.name}</p>
                           <p className="text-[10px] text-slate-400">ID: {customer.id}</p>
@@ -197,25 +280,54 @@ export default function CustomersPage() {
                     <td className="py-4 px-4">
                       <div className="flex items-center gap-1 font-bold text-navy">
                         <Star className="size-3.5 fill-amber-400 text-amber-400" />
-                        <span>{customer.ratingGiven}</span>
+                        <span>
+                          {customer.ratingGiven > 0
+                            ? customer.ratingGiven.toFixed(1)
+                            : "—"}
+                        </span>
                       </div>
                     </td>
                     <td className="py-4 px-4">
-                      <span
-                        className={`inline-flex rounded-full border px-2.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wide ${
-                          customer.status === "ACTIVE"
-                            ? "border-teal/20 bg-teal/10 text-teal"
-                            : "border-red-200 bg-red-100 text-red-700"
-                        }`}
-                      >
-                        {customer.status}
-                      </span>
+                      {customer.status === "ACTIVE" ? (
+                        <span className="inline-flex rounded-full border border-teal/20 bg-teal/10 px-2.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wide text-teal">
+                          ACTIVE
+                        </span>
+                      ) : (
+                        <div className="flex flex-col items-start gap-0.5">
+                          <span className="inline-flex items-center gap-1 rounded-full border border-red-200 bg-red-100 px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wide text-red-700">
+                            {customer.suspensionType === "TEMPORARY" ? (
+                              <>
+                                <Clock className="size-3" />
+                                Temporary
+                              </>
+                            ) : (
+                              <>
+                                <Ban className="size-3" />
+                                Suspended
+                              </>
+                            )}
+                          </span>
+                          {customer.suspensionReason && (
+                            <span
+                              className="max-w-[140px] truncate text-[10px] text-slate-500"
+                              title={customer.suspensionReason}
+                            >
+                              {customer.suspensionReason}
+                            </span>
+                          )}
+                        </div>
+                      )}
                     </td>
                     <td className="py-4 px-4 text-right">
                       <div className="flex items-center justify-end gap-2">
                         <button
                           type="button"
-                          onClick={() => setSelectedCustomer(customer)}
+                          onClick={() => {
+                            setSelectedCustomer(customer);
+                            void adminApi.getCustomerDetail(customer.id).then((full) => {
+                              setSelectedCustomer((prev) => (prev ? { ...prev, ...full } : full));
+                            }).catch(() => undefined);
+                          }}
                           className="flex size-8 items-center justify-center rounded-lg border border-slate-200 text-slate-600 transition hover:bg-slate-100"
                           title="View Profile Details"
                         >
@@ -269,9 +381,11 @@ export default function CustomersPage() {
 
               <div className="mt-5 space-y-4 text-xs">
                 <div className="flex items-center gap-4 rounded-2xl bg-slate-50 p-4">
-                  <div className="flex size-14 items-center justify-center rounded-2xl bg-navy text-xl font-bold text-white">
-                    {selectedCustomer.name.charAt(0)}
-                  </div>
+                  <AdminAvatar
+                    src={selectedCustomer.avatarUrl}
+                    name={selectedCustomer.name}
+                    className="size-14 rounded-2xl text-xl"
+                  />
                   <div>
                     <h4 className="text-base font-extrabold text-navy">
                       {selectedCustomer.name}
@@ -325,65 +439,15 @@ export default function CustomersPage() {
           </div>
         ) : null}
 
-        {/* Suspend / Reactivate Confirmation Modal */}
-        {actionCustomer ? (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-navy/60 p-4 backdrop-blur-sm">
-            <div className="w-full max-w-md rounded-3xl border border-slate-200 bg-white p-6 shadow-2xl">
-              <div className="flex items-center gap-3 text-error">
-                <AlertCircle className="size-6 shrink-0" />
-                <h3 className="text-lg font-extrabold text-navy">
-                  Confirm Account Action
-                </h3>
-              </div>
-
-              <p className="mt-3 text-xs leading-relaxed text-slate-600">
-                Are you sure you want to{" "}
-                <strong className="text-navy">
-                  {actionCustomer.status === "ACTIVE"
-                    ? "SUSPEND"
-                    : "REACTIVATE"}
-                </strong>{" "}
-                the account for <strong className="text-navy">{actionCustomer.name}</strong>?
-              </p>
-
-              {actionCustomer.status === "ACTIVE" ? (
-                <div className="mt-4 space-y-1.5">
-                  <label className="block text-xs font-semibold text-navy">
-                    Reason for Suspension (Required)
-                  </label>
-                  <textarea
-                    value={suspendReason}
-                    onChange={(e) => setSuspendReason(e.target.value)}
-                    placeholder="Enter reason for suspending this customer account..."
-                    className="h-20 w-full rounded-xl border border-slate-200 p-3 text-xs outline-none focus:border-teal"
-                  />
-                </div>
-              ) : null}
-
-              <div className="mt-6 flex items-center justify-end gap-3">
-                <button
-                  type="button"
-                  onClick={() => setActionCustomer(null)}
-                  className="rounded-xl border border-slate-200 px-4 py-2.5 text-xs font-bold text-slate-600 hover:bg-slate-100"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  onClick={handleToggleStatus}
-                  className={`rounded-xl px-5 py-2.5 text-xs font-bold text-white shadow-md ${
-                    actionCustomer.status === "ACTIVE"
-                      ? "bg-red-600 hover:bg-red-700"
-                      : "bg-teal hover:bg-teal-600"
-                  }`}
-                >
-                  Confirm Action
-                </button>
-              </div>
-            </div>
-          </div>
-        ) : null}
+        {/* Section 5: Suspend / Reactivate Modal */}
+        <SuspendUserModal
+          isOpen={!!actionCustomer}
+          user={modalCustomer}
+          onClose={() => setActionCustomer(null)}
+          onConfirmSuspend={handleConfirmSuspend}
+          onConfirmReactivate={handleConfirmReactivate}
+          isSubmitting={isSubmitting}
+        />
       </div>
-    </AdminShell>
   );
 }

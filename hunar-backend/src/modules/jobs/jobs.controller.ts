@@ -1,4 +1,5 @@
-import { Body, Controller, Get, Param, ParseUUIDPipe, Post, Put, Query } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Put, Query } from '@nestjs/common';
+import { ParseOrderCodePipe } from '../../common/helpers/order-code.util';
 import { JobsService } from './jobs.service';
 import {
   AvailableJobsQueryDto,
@@ -8,6 +9,7 @@ import {
 } from './jobs.validation';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Roles } from '../../common/decorators/roles.decorator';
+import { Public } from '../../common/decorators/public.decorator';
 import { JwtPayload } from '../../common/types/jwt-payload.interface';
 import { Role } from '@prisma/client';
 
@@ -19,6 +21,14 @@ export class JobsController {
   @Roles(Role.CUSTOMER)
   create(@CurrentUser() user: JwtPayload, @Body() dto: CreateJobDto) {
     return this.jobsService.createJob(user.sub, dto);
+  }
+
+  @Get()
+  getJobs(@CurrentUser() user: JwtPayload, @Query() query: any) {
+    if (user.role === Role.WORKER) {
+      return this.jobsService.getAvailableJobs(user, query);
+    }
+    return this.jobsService.getCustomerJobs(user.sub, query);
   }
 
   @Get('available')
@@ -36,7 +46,7 @@ export class JobsController {
   @Get(':id')
   getDetail(
     @CurrentUser() user: JwtPayload,
-    @Param('id', ParseUUIDPipe) id: string,
+    @Param('id', ParseOrderCodePipe) id: string,
     @Query('lat') lat?: number,
     @Query('lng') lng?: number,
   ) {
@@ -46,10 +56,16 @@ export class JobsController {
   @Put(':id/cancel')
   cancel(
     @CurrentUser() user: JwtPayload,
-    @Param('id', ParseUUIDPipe) id: string,
+    @Param('id', ParseOrderCodePipe) id: string,
     @Body() dto: CancelJobDto,
   ) {
     return this.jobsService.cancelJob(id, user, dto);
+  }
+
+  @Put(':id/complete')
+  @Roles(Role.WORKER, Role.ADMIN)
+  complete(@CurrentUser() user: JwtPayload, @Param('id', ParseOrderCodePipe) id: string) {
+    return this.jobsService.completeJob(id, user);
   }
 }
 
@@ -63,4 +79,41 @@ export class WorkerJobsController {
   getActive(@CurrentUser() user: JwtPayload, @Query() query: CustomerJobsQueryDto) {
     return this.jobsService.getActiveJobs(user.sub, query);
   }
+
+  @Get('history')
+  @Roles(Role.WORKER)
+  getHistory(@CurrentUser() user: JwtPayload, @Query() query: CustomerJobsQueryDto) {
+    return this.jobsService.getHistoryJobs(user.sub, query);
+  }
 }
+
+/** Public service categories directory */
+@Controller('categories')
+export class CategoriesController {
+  constructor(private readonly jobsService: JobsService) {}
+
+  @Public()
+  @Get()
+  getCategories() {
+    return this.jobsService.getCategories();
+  }
+}
+
+/** Customer and Worker disputes & support tickets */
+@Controller('disputes')
+export class DisputesController {
+  constructor(private readonly jobsService: JobsService) {}
+
+  @Post()
+  @Roles(Role.CUSTOMER, Role.WORKER)
+  create(@CurrentUser() user: JwtPayload, @Body() dto: any) {
+    return this.jobsService.createDispute(user.sub, dto);
+  }
+
+  @Get('my')
+  @Roles(Role.CUSTOMER, Role.WORKER)
+  getMyDisputes(@CurrentUser() user: JwtPayload) {
+    return this.jobsService.getMyDisputes(user.sub);
+  }
+}
+

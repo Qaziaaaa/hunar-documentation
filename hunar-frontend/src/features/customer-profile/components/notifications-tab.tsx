@@ -1,7 +1,7 @@
 "use client";
 
 import { useLocale } from "next-intl";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Bell,
   Check,
@@ -30,6 +30,12 @@ export function NotificationsTab({
   const isUrdu = locale === "ur";
 
   const [prefs, setPrefs] = useState<NotificationPreferences>(preferences);
+
+  useEffect(() => {
+    if (preferences) {
+      setPrefs(preferences);
+    }
+  }, [preferences]);
 
   const handleToggle = (key: keyof NotificationPreferences) => {
     const next = { ...prefs, [key]: !prefs[key] };

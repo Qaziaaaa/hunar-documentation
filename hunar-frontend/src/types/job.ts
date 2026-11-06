@@ -8,6 +8,7 @@ export type JobStatus =
   | "VISIT_COMPLETED"
   | "INSPECTION_DONE"
   | "REPAIR_NEGOTIATING"
+  | "REPAIR_DECLINED"
   | "REPAIR_APPROVED"
   | "IN_PROGRESS"
   | "COMPLETED"
@@ -47,7 +48,17 @@ export type JobCategoryName =
   | "Carpenter"
   | "Painter"
   | "Mechanic"
-  | "Cleaning & Sanitary";
+  | "Cleaning & Sanitary"
+  | "Home Cleaner"
+  | "Mason (Mistri)"
+  | "Pest Control"
+  | "Solar & UPS"
+  | "CCTV & Security"
+  | "Gardener"
+  | "Welder"
+  | "Movers & Packers"
+  | "Handyman"
+  | (string & {});
 
 export type JobUrgency = "emergency" | "standard" | "flexible" | "LOW" | "NORMAL" | "HIGH" | "EMERGENCY";
 
@@ -68,6 +79,13 @@ export interface JobCustomer {
   id: string;
   name?: string;
   avatarUrl?: string;
+  rating?: number;
+  reviewCount?: number;
+  reviewsCount?: number;
+  totalOrders?: number;
+  isVerified?: boolean;
+  memberSince?: string;
+  user?: { avatarUrl?: string };
 }
 
 export interface CustomerSummary {
@@ -92,6 +110,7 @@ export interface JobLocation {
   city: string;
   distanceKm: number;
   fullAddress: string;
+  landmark?: string;
   coordinates: {
     lat: number;
     lng: number;
@@ -107,6 +126,7 @@ export interface Job {
   title: string;
   description?: string;
   images: string[];
+  voiceNoteUrl?: string | null;
   latitude: number;
   longitude: number;
   address: string;
@@ -122,6 +142,21 @@ export interface Job {
   completedAt?: string;
   createdAt: string;
   updatedAt: string;
+  distanceKm?: number;
+  offerCount?: number;
+  repairEstimate?: number;
+  repairCharge?: number;
+  visitCharge?: number;
+  platformCommission?: number;
+  workerNetEarnings?: number;
+  nextVisit?: { id: string; status?: string | null; scheduledDate?: string | null } | null;
+  visitId?: string;
+  customerReview?: {
+    rating: number;
+    comment: string;
+    tags?: string[];
+    date: string;
+  } | null;
 }
 
 export interface JobRequest {
@@ -149,6 +184,7 @@ export interface JobRequest {
   customerReview?: {
     rating: number;
     comment: string;
+    tags?: string[];
     date: string;
   };
   visitCharge?: number;
@@ -158,6 +194,8 @@ export interface JobRequest {
   warrantyDays?: number;
   securityPin?: string;
   etaMinutes?: number;
+  nextVisit?: { id: string; status?: string | null; scheduledDate?: string | null } | null;
+  visitId?: string;
 }
 
 export interface Visit {

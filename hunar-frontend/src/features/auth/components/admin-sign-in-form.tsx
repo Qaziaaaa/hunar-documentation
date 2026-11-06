@@ -54,6 +54,7 @@ export function AdminSignInForm() {
           id: res.user.id,
           phone: "",
           name: res.user.name ?? "Admin",
+          email: res.user.email ?? "",
           role: "ADMIN",
         });
       }

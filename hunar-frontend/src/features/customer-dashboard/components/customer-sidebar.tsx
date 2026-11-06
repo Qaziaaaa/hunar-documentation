@@ -1,5 +1,7 @@
 "use client";
 
+import { useState, useEffect } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Calendar,
   ChevronRight,
@@ -18,7 +20,11 @@ import { useLocale, useTranslations } from "next-intl";
 import { Link, usePathname, useRouter } from "@/i18n/navigation";
 import { logoutCustomer } from "@/features/auth/api/auth-api";
 import { WorkerFixLogo } from "@/components/shared/workerfix-logo";
-import { getStoredUser } from "@/lib/api-client";
+import { useStoredUser } from "@/lib/use-stored-user";
+import { getCustomerJobs } from "@/features/customer-jobs/api/customer-jobs-api";
+import { getCustomerProfile } from "@/features/customer-profile/api/customer-profile-api";
+import { getAccessToken, getRefreshToken } from "@/lib/api-client";
+import { resolveAvatarUrl } from "@/lib/avatar";
 
 interface CustomerSidebarProps {
   isOpen?: boolean;
@@ -30,9 +36,51 @@ export function CustomerSidebar({ isOpen, onClose }: CustomerSidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
   const locale = useLocale();
-  const storedUser = getStoredUser();
-  const customerName = storedUser?.name || storedUser?.phone || "Customer";
-  const customerInitial = customerName.charAt(0).toUpperCase() || "C";
+  const queryClient = useQueryClient();
+  const storedUser = useStoredUser();
+  const hasCustomerAuth = Boolean(getAccessToken("CUSTOMER") || getRefreshToken("CUSTOMER"));
+  const isCustomer = storedUser?.role === "CUSTOMER" && hasCustomerAuth;
+  const guestLabel = locale === "ur" ? "مہمان" : "Guest";
+
+  const { data: customerProfile } = useQuery({
+    queryKey: ["customer", "profile"],
+    queryFn: getCustomerProfile,
+    staleTime: 60_000,
+    enabled: isCustomer,
+  });
+
+  const activeAvatarUrl = customerProfile?.avatarUrl || storedUser?.avatarUrl;
+  const fullCustomerName = isCustomer
+    ? customerProfile?.fullName || storedUser?.name || storedUser?.phone || (locale === "ur" ? "کسٹمر" : "Customer")
+    : guestLabel;
+
+  // Show only the first name in the sidebar profile card
+  const customerFirstName = isCustomer && fullCustomerName
+    ? fullCustomerName.trim().split(/\s+/)[0]
+    : fullCustomerName;
+
+  const customerInitial = isCustomer
+    ? customerProfile?.avatarInitials || fullCustomerName.charAt(0).toUpperCase() || "C"
+    : "G";
+
+  const [imageError, setImageError] = useState(false);
+
+  useEffect(() => {
+    setImageError(false);
+  }, [activeAvatarUrl]);
+
+  const { data: jobs = [] } = useQuery({
+    queryKey: ["customer", "jobs", "sidebar"],
+    queryFn: () => getCustomerJobs({ scheduleType: "scheduled" }),
+    staleTime: 60_000,
+    enabled: isCustomer,
+  });
+
+  const activeBookingsCount = jobs.filter(
+    (j) =>
+      (j.status === "receiving_offers" || j.status === "visit_scheduled") &&
+      j.scheduleType !== "asap"
+  ).length;
 
   const handleLogout = async () => {
     await logoutCustomer();
@@ -50,28 +98,26 @@ export function CustomerSidebar({ isOpen, onClose }: CustomerSidebarProps) {
       href: "/customer/dashboard",
       icon: Grid,
       badge: null,
-      isActive: pathname === "/customer/dashboard" || pathname.includes("/customer/dashboard"),
+      isActive:
+        pathname === "/customer" ||
+        pathname === "/customer/dashboard" ||
+        pathname.includes("/customer/dashboard"),
     },
     {
-      label: t("myJobs"),
+      label: locale === "ur" ? "میری بکنگز" : "My Bookings",
       href: "/customer/jobs",
       icon: Package,
-      badge: { text: "2", bg: "bg-slate-100 text-slate-800" },
+      badge: activeBookingsCount > 0
+        ? { text: locale === "ur" ? `${activeBookingsCount} فعال` : `${activeBookingsCount} Active`, bg: "bg-teal/10 text-teal font-bold" }
+        : null,
       isActive: pathname.includes("/customer/jobs"),
     },
     {
-      label: t("offers"),
-      href: "/customer/offers",
-      icon: Tag,
-      badge: { text: "3", bg: "bg-amber-100 text-amber-700" },
-      isActive: pathname.includes("/customer/offers"),
-    },
-    {
-      label: t("visits"),
-      href: "/customer/visits",
-      icon: Calendar,
+      label: locale === "ur" ? "چیٹ و پیغامات" : "Messages",
+      href: "/customer/chat",
+      icon: MessageSquare,
       badge: null,
-      isActive: pathname.includes("/customer/visits"),
+      isActive: pathname.includes("/customer/chat"),
     },
     {
       label: t("help"),
@@ -94,7 +140,7 @@ export function CustomerSidebar({ isOpen, onClose }: CustomerSidebarProps) {
 
       {/* Full-Height Fixed Desktop Sidebar / Slide-over Mobile Drawer (z-50) */}
       <aside
-        className={`fixed top-0 start-0 z-50 h-screen w-64 lg:w-[260px] shrink-0 flex flex-col justify-between border-e border-slate-200 bg-white transition-transform duration-300 overflow-y-auto ${
+        className={`fixed top-0 start-0 z-50 h-screen w-64 lg:w-[260px] shrink-0 flex flex-col justify-between border-e border-slate-200 bg-white transition-transform duration-300 overflow-y-auto scrollbar-none no-scrollbar ${
           isOpen
             ? "translate-x-0 shadow-2xl flex"
             : "-translate-x-full rtl:translate-x-full lg:translate-x-0 lg:rtl:translate-x-0 lg:transform-none hidden lg:flex"
@@ -138,6 +184,24 @@ export function CustomerSidebar({ isOpen, onClose }: CustomerSidebarProps) {
                   key={item.href}
                   href={item.href}
                   onClick={onClose}
+                  onMouseEnter={() => {
+                    if (item.href === "/customer/jobs") {
+                      void queryClient.prefetchQuery({
+                        queryKey: ["customer", "jobs", "feed"],
+                        queryFn: () => getCustomerJobs({ limit: 50, scheduleType: "scheduled" }),
+                        staleTime: 60_000,
+                      });
+                    }
+                  }}
+                  onTouchStart={() => {
+                    if (item.href === "/customer/jobs") {
+                      void queryClient.prefetchQuery({
+                        queryKey: ["customer", "jobs", "feed"],
+                        queryFn: () => getCustomerJobs({ limit: 50, scheduleType: "scheduled" }),
+                        staleTime: 60_000,
+                      });
+                    }
+                  }}
                   className={`flex items-center justify-between px-3 py-2.5 rounded-lg text-xs font-semibold transition-colors ${
                     item.isActive
                       ? "bg-[#0F8B8D] text-white shadow-xs"
@@ -173,11 +237,6 @@ export function CustomerSidebar({ isOpen, onClose }: CustomerSidebarProps) {
             <p className="text-[11px] leading-snug text-slate-300">
               {t("verifiedDesc")}
             </p>
-            <div className="pt-1">
-              <span className="inline-flex items-center justify-center py-1 px-2.5 bg-[#0F8B8D] text-white text-[10px] font-bold rounded-md hover:bg-[#0F8B8D]/90 transition-colors">
-                {t("qualityGuarantee")}
-              </span>
-            </div>
           </div>
 
           {/* Language Switcher */}
@@ -198,10 +257,26 @@ export function CustomerSidebar({ isOpen, onClose }: CustomerSidebarProps) {
           {/* Customer Profile Section at Bottom */}
           <div className="flex items-center gap-2 pt-1">
             <Link
-              href="/customer/profile"
+              href={isCustomer ? "/customer/profile" : "/customer/sign-in"}
               onClick={onClose}
-              aria-label={locale === "ur" ? "کسٹمر پروفائل" : "Customer Profile"}
-              title={locale === "ur" ? "پروفائل دیکھیں" : "View Profile"}
+              aria-label={
+                isCustomer
+                  ? locale === "ur"
+                    ? "کسٹمر پروفائل"
+                    : "Customer Profile"
+                  : locale === "ur"
+                  ? "لاگ ان کریں"
+                  : "Sign In"
+              }
+              title={
+                isCustomer
+                  ? locale === "ur"
+                    ? "پروفائل دیکھیں"
+                    : "View Profile"
+                  : locale === "ur"
+                  ? "اکاؤنٹ میں لاگ ان کریں"
+                  : "Sign In to Account"
+              }
               className={`group flex-1 flex items-center justify-between gap-2.5 p-2 rounded-xl border transition-all cursor-pointer ${
                 pathname.includes("/customer/profile")
                   ? "border-[#0F8B8D]/40 bg-[#0F8B8D]/10"
@@ -209,29 +284,47 @@ export function CustomerSidebar({ isOpen, onClose }: CustomerSidebarProps) {
               }`}
             >
               <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                <div className="w-8 h-8 rounded-full bg-[#123B5D] flex items-center justify-center text-white font-bold text-xs shrink-0">
-                  {customerInitial}
+                <div className="w-8 h-8 rounded-full bg-[#123B5D] flex items-center justify-center text-white font-bold text-xs shrink-0 overflow-hidden ring-1 ring-slate-200">
+                  {isCustomer && activeAvatarUrl && !imageError ? (
+                    <img
+                      src={resolveAvatarUrl(activeAvatarUrl)}
+                      alt={customerFirstName}
+                      className="size-full object-cover"
+                      onError={() => setImageError(true)}
+                    />
+                  ) : (
+                    customerInitial
+                  )}
                 </div>
                 <div className="flex flex-col min-w-0 flex-1">
                   <span className="text-xs font-semibold text-slate-900 truncate">
-                    {customerName}
+                    {customerFirstName}
                   </span>
                   <span className="text-[10px] font-medium text-slate-500 truncate">
-                    {locale === "ur" ? "کسٹمر پروفائل" : "Customer Profile"}
+                    {isCustomer
+                      ? locale === "ur"
+                        ? "کسٹمر پروفائل"
+                        : "Customer Profile"
+                      : locale === "ur"
+                      ? "لاگ ان کریں"
+                      : "Sign In"}
                   </span>
                 </div>
               </div>
               <ChevronRight className="size-4 text-slate-400 group-hover:text-[#0F8B8D] shrink-0 transition-colors" />
             </Link>
 
-            <button
-              onClick={handleLogout}
-              className="size-9 rounded-xl border border-slate-200 bg-slate-50/80 hover:bg-red-50 hover:border-red-200 text-slate-400 hover:text-red-600 transition-colors flex items-center justify-center shrink-0 cursor-pointer"
-              title={locale === "ur" ? "لاگ آؤٹ" : "Sign Out"}
-              aria-label={locale === "ur" ? "لاگ آؤٹ" : "Sign Out"}
-            >
-              <LogOut className="size-4" />
-            </button>
+            {isCustomer && (
+              <button
+                type="button"
+                onClick={handleLogout}
+                className="size-9 rounded-xl border border-slate-200 bg-slate-50/80 hover:bg-red-50 hover:border-red-200 text-slate-400 hover:text-red-600 transition-colors flex items-center justify-center shrink-0 cursor-pointer"
+                title={locale === "ur" ? "لاگ آؤٹ" : "Sign Out"}
+                aria-label={locale === "ur" ? "لاگ آؤٹ" : "Sign Out"}
+              >
+                <LogOut className="size-4" />
+              </button>
+            )}
           </div>
         </div>
       </aside>

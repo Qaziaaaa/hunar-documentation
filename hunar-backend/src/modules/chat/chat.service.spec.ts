@@ -28,7 +28,13 @@ function seedJob(
   db.serviceRequests.set(id, { id, customerId, selectedWorkerId, status, title: `Job ${id}` });
 }
 
-function seedConversation(db: Db, id: string, jobId: string, customerId: string, workerId: string) {
+function seedConversation(
+  db: Db,
+  id: string,
+  jobId: string,
+  customerId: string,
+  workerId: string | null,
+) {
   db.conversations.set(id, {
     id,
     jobId,
@@ -67,6 +73,18 @@ function makeFakes(db: Db) {
           };
         }
         return found;
+      },
+      async findFirst({ where }: { where: { OR?: Array<{ id?: string; jobId?: string }> } }) {
+        const conditions = where?.OR ?? [];
+        return (
+          Array.from(db.conversations.values()).find((c) =>
+            conditions.some(
+              (cond) =>
+                (cond.id !== undefined && c.id === cond.id) ||
+                (cond.jobId !== undefined && c.jobId === cond.jobId),
+            ),
+          ) ?? null
+        );
       },
       async upsert({ where, create }: { where: { jobId: string }; create: any }) {
         const existing = Array.from(db.conversations.values()).find((c) => c.jobId === where.jobId);
@@ -160,11 +178,29 @@ function makeFakes(db: Db) {
         ).length;
       },
     },
+    // listConversations batches its relation loads (perf sprint) instead of
+    // using include — the fakes need the batched findMany shapes.
+    serviceRequest: {
+      async findMany({ where }: { where: { id: { in: string[] } } }) {
+        return (where?.id?.in ?? []).map((id) => db.serviceRequests.get(id)).filter(Boolean);
+      },
+      async findUnique({ where }: { where: { id: string } }) {
+        return db.serviceRequests.get(where.id) ?? null;
+      },
+    },
+    user: {
+      async findMany({ where }: { where: { id: { in: string[] } } }) {
+        return (where?.id?.in ?? []).map((id) => db.users.get(id)).filter(Boolean);
+      },
+    },
   };
   const uploads = {
     getUrl: jest.fn((key: string) => `http://localhost:9000/hunar-uploads/${key}`),
   } as unknown as UploadsService;
-  const realtime = { emitToRoom: jest.fn() } as unknown as RealtimeService;
+  const realtime = {
+    emitToRoom: jest.fn(),
+    emitToUsers: jest.fn(),
+  } as unknown as RealtimeService;
 
   return { prisma, uploads, realtime };
 }
@@ -403,6 +439,11 @@ describe('ChatService', () => {
       const db = new Db();
       const { prisma } = makeFakes(db);
       setupActiveConversation(db);
+      // No accepted worker on the job AND no worker linked to the conversation.
+      db.conversations.set('conv-unassigned', {
+        ...db.conversations.get('conv-unassigned')!,
+        workerId: null,
+      });
       const service = new ChatService(
         prisma,
         {} as UploadsService,
@@ -410,7 +451,7 @@ describe('ChatService', () => {
         makeEventBus(),
       );
 
-      await expect(service.sendMessage('conv-unassigned', 'w1', { text: 'hi' })).rejects.toThrow(
+      await expect(service.sendMessage('conv-unassigned', 'c1', { text: 'hi' })).rejects.toThrow(
         /CHAT_JOB_NOT_ACCEPTED/,
       );
     });

@@ -69,3 +69,78 @@ export interface ScheduledVisit {
   photos?: string[];
   warrantyDays?: number;
 }
+
+export type TrackingStageId =
+  | "UNASSIGNED"
+  | "SCHEDULED"
+  | "EN_ROUTE"
+  | "ARRIVED"
+  | "IN_PREMISES"
+  | "INSPECTION_DONE"
+  | "COMPLETED"
+  | "CANCELLED"
+  | "UNKNOWN";
+
+export interface TimelineStepInfo {
+  id: string;
+  label: string;
+  labelUr: string;
+  description: string;
+  descriptionUr: string;
+  status: "completed" | "current" | "upcoming";
+  timestamp?: string | null;
+}
+
+export interface CustomerVisitTrackingData {
+  jobId: string;
+  jobTitle: string;
+  jobTitleUr?: string;
+  description?: string;
+  category: string;
+  categoryUr?: string;
+  jobStatus: string;
+  visitStatus?: string;
+  urgency?: string;
+  currentStageId: TrackingStageId;
+  stageHeadline: string;
+  stageHeadlineUr: string;
+  stageExplanation: string;
+  stageExplanationUr: string;
+  nextStepText: string;
+  nextStepTextUr: string;
+  timelineSteps: TimelineStepInfo[];
+  scheduledDate: string | null;
+  scheduledTimeSlot: string | null;
+  actualDate: string | null;
+  visitCharges: number | null;
+  customerAddress: string;
+  customerArea: string;
+  customerAreaUr?: string;
+  customerCity?: string;
+  customerLat: number | null;
+  customerLng: number | null;
+  technician: TechnicianInfo | null;
+  workerLocation: {
+    latitude: number;
+    longitude: number;
+    recordedAt?: string;
+  } | null;
+  isMapVisible: boolean;
+  isDoorstepPendingOtp: boolean;
+  doorstepOtp?: string | null;
+  inspection: {
+    diagnosis: string | null;
+    repairPlan: string | null;
+    repairEstimate: number | null;
+    inspectionPhotos: string[];
+    estimatedRepairTimeMin: number | null;
+    submittedAt: string | null;
+  } | null;
+  hasReviewed?: boolean;
+  customerReview?: {
+    rating: number;
+    comment?: string;
+    tags?: string[];
+    date?: string;
+  } | null;
+}

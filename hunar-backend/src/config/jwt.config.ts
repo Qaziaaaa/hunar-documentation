@@ -8,7 +8,7 @@ export interface JwtConfig {
 export default () => {
   const jwtConfig: JwtConfig = {
     secret: process.env.JWT_SECRET ?? 'hunar-dev-secret-change-me',
-    accessTokenTtl: process.env.JWT_ACCESS_TOKEN_TTL ?? '900s',
+    accessTokenTtl: process.env.JWT_ACCESS_TOKEN_TTL ?? '7d',
     refreshTokenTtl: process.env.JWT_REFRESH_TOKEN_TTL ?? '2592000s',
     refreshTokenTtlSeconds: parseInt(process.env.JWT_REFRESH_TOKEN_TTL ?? '2592000', 10),
   };

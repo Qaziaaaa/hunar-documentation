@@ -1,11 +1,13 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import {
   Briefcase,
   Calendar,
   ChevronLeft,
   ChevronRight,
+  Loader2,
   TrendingUp,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -13,6 +15,15 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { WorkerDashboardShell } from "@/features/worker-dashboard";
 import { formatRsExact } from "@/lib/money";
+import { ErrorState } from "@/components/shared/error-state";
+import { LoadingState } from "@/components/shared/loading-state";
+import { getSocket } from "@/lib/socket";
+import {
+  getWorkerEarnings,
+  queryKeys,
+  type WorkerEarningRecordDto,
+} from "@/services/worker/earnings.service";
+import { useLocale } from "next-intl";
 
 export type PeriodType = "day" | "week" | "month";
 
@@ -22,96 +33,16 @@ export interface JobEarningRecord {
   jobTitle: string;
   category: string;
   amount: number;
+  grossAmount?: number;
+  commission?: number;
+  netAmount?: number;
   date: Date; // JavaScript Date object
 }
 
-// Realistic mock job earnings data
-const MOCK_EARNINGS_RECORDS: JobEarningRecord[] = [
-  {
-    id: "earn-101",
-    jobId: "JOB-1024",
-    jobTitle: "Kitchen Sink & Pipe Leak Repair",
-    category: "Plumbing Repair",
-    amount: 1200,
-    date: new Date(2026, 8, 23, 14, 30), // 23 Sep 2026
-  },
-  {
-    id: "earn-102",
-    jobId: "JOB-1025",
-    jobTitle: "AC Master Service & Gas Refill",
-    category: "AC Servicing",
-    amount: 850,
-    date: new Date(2026, 8, 23, 16, 45), // 23 Sep 2026
-  },
-  {
-    id: "earn-103",
-    jobId: "JOB-1019",
-    jobTitle: "Overhead Water Tank Repair",
-    category: "Water Tank Repair",
-    amount: 800,
-    date: new Date(2026, 8, 22, 11, 15), // 22 Sep 2026
-  },
-  {
-    id: "earn-104",
-    jobId: "JOB-1020",
-    jobTitle: "Main Switchboard Rewiring",
-    category: "Electrician",
-    amount: 650,
-    date: new Date(2026, 8, 22, 15, 0), // 22 Sep 2026
-  },
-  {
-    id: "earn-105",
-    jobId: "JOB-1015",
-    jobTitle: "Ceiling Fan Installation & Balance",
-    category: "Electrician",
-    amount: 1100,
-    date: new Date(2026, 8, 20, 10, 20), // 20 Sep 2026
-  },
-  {
-    id: "earn-106",
-    jobId: "JOB-1012",
-    jobTitle: "Bathroom Faucet & Shower Mixer Fix",
-    category: "Plumbing",
-    amount: 950,
-    date: new Date(2026, 8, 18, 13, 10), // 18 Sep 2026
-  },
-  {
-    id: "earn-107",
-    jobId: "JOB-1008",
-    jobTitle: "Wooden Door Lock Replacement",
-    category: "Carpentry",
-    amount: 1400,
-    date: new Date(2026, 8, 15, 17, 30), // 15 Sep 2026
-  },
-  {
-    id: "earn-108",
-    jobId: "JOB-0995",
-    jobTitle: "UPS Battery & Inverter Repair",
-    category: "Electrician",
-    amount: 1750,
-    date: new Date(2026, 8, 10, 12, 0), // 10 Sep 2026
-  },
-  {
-    id: "earn-109",
-    jobId: "JOB-0988",
-    jobTitle: "Main Line Circuit Breaker Fix",
-    category: "Electrician",
-    amount: 1500,
-    date: new Date(2026, 7, 28, 11, 0), // 28 Aug 2026
-  },
-  {
-    id: "earn-110",
-    jobId: "JOB-0975",
-    jobTitle: "Water Pump Servicing & Bearing",
-    category: "Mechanic",
-    amount: 2100,
-    date: new Date(2026, 7, 15, 14, 20), // 15 Aug 2026
-  },
-];
-
 // Helper to format date label & filter range
 function getPeriodDetails(period: PeriodType, offset: number) {
-  const baseDate = new Date(2026, 8, 23); // Reference date: 23 Sep 2026
+  const now = new Date();
+  const baseDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
   if (period === "day") {
     const targetDate = new Date(baseDate);
@@ -164,8 +95,7 @@ function getPeriodDetails(period: PeriodType, offset: number) {
   }
 
   // Month
-  const targetDate = new Date(baseDate);
-  targetDate.setMonth(baseDate.getMonth() + offset);
+  const targetDate = new Date(baseDate.getFullYear(), baseDate.getMonth() + offset, 1);
 
   const label = targetDate.toLocaleDateString("en-GB", {
     month: "long",
@@ -188,13 +118,32 @@ function getPeriodDetails(period: PeriodType, offset: number) {
   return { label, start, end };
 }
 
-import { useLocale } from "next-intl";
-
 export function WorkerEarningsContent() {
   const locale = useLocale();
   const isUrdu = locale === "ur";
   const [period, setPeriod] = useState<PeriodType>("day");
   const [offset, setOffset] = useState<number>(0);
+
+  const earningsQuery = useQuery({
+    queryKey: queryKeys.earnings,
+    queryFn: getWorkerEarnings,
+  });
+
+  useEffect(() => {
+    const socket = getSocket();
+    if (!socket) return;
+    const handleUpdate = () => {
+      void earningsQuery.refetch();
+    };
+    socket.on("wallet:earnings:recorded", handleUpdate);
+    socket.on("job:statusChanged", handleUpdate);
+    socket.on("job:status:changed", handleUpdate);
+    return () => {
+      socket.off("wallet:earnings:recorded", handleUpdate);
+      socket.off("job:statusChanged", handleUpdate);
+      socket.off("job:status:changed", handleUpdate);
+    };
+  }, [earningsQuery]);
 
   // Compute period range & filter jobs
   const { label: periodLabel, start, end } = useMemo(() => {
@@ -203,7 +152,8 @@ export function WorkerEarningsContent() {
 
   // Active date formatted as YYYY-MM-DD for date input
   const activeDateIso = useMemo(() => {
-    const baseDate = new Date(2026, 8, 23);
+    const now = new Date();
+    const baseDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     const targetDate = new Date(baseDate);
     if (period === "day") {
       targetDate.setDate(baseDate.getDate() + offset);
@@ -227,9 +177,10 @@ export function WorkerEarningsContent() {
       const month = parseInt(parts[1], 10) - 1;
       const day = parseInt(parts[2], 10);
       const chosenDate = new Date(year, month, day);
-      const baseDate = new Date(2026, 8, 23);
+      const now = new Date();
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
-      const diffTime = chosenDate.getTime() - baseDate.getTime();
+      const diffTime = chosenDate.getTime() - today.getTime();
       const diffDays = Math.round(diffTime / (1000 * 3600 * 24));
 
       setPeriod("day");
@@ -237,13 +188,28 @@ export function WorkerEarningsContent() {
     }
   };
 
+  const allRecords: JobEarningRecord[] = useMemo(() => {
+    const raw = earningsQuery.data?.records ?? [];
+    return raw.map((r: WorkerEarningRecordDto) => ({
+      id: r.id,
+      jobId: r.jobId,
+      jobTitle: r.jobTitle,
+      category: isUrdu && r.categoryUrdu ? r.categoryUrdu : r.category,
+      amount: r.grossAmount ?? r.amount,
+      grossAmount: r.grossAmount ?? r.amount,
+      commission: r.commission,
+      netAmount: r.netAmount,
+      date: new Date(r.date),
+    }));
+  }, [earningsQuery.data?.records, isUrdu]);
+
   // Filter records in selected period
   const filteredRecords = useMemo(() => {
-    return MOCK_EARNINGS_RECORDS.filter((rec) => {
+    return allRecords.filter((rec) => {
       const time = rec.date.getTime();
       return time >= start.getTime() && time <= end.getTime();
     });
-  }, [start, end]);
+  }, [allRecords, start, end]);
 
   // Calculate total income for period
   const totalIncome = useMemo(() => {
@@ -264,6 +230,26 @@ export function WorkerEarningsContent() {
       setOffset((prev) => prev + 1);
     }
   };
+
+  if (earningsQuery.isLoading) {
+    return <LoadingState label={isUrdu ? "آمدنی لوڈ کی جا رہی ہے..." : "Loading earnings statement..."} />;
+  }
+
+  if (earningsQuery.isError) {
+    return (
+      <ErrorState
+        title={isUrdu ? "آمدنی لوڈ کرنے میں ناکامی" : "Unable to load earnings"}
+        description={
+          isUrdu
+            ? "براہ کرم اپنا نیٹ ورک کنکشن چیک کریں اور دوبارہ کوشش کریں۔"
+            : "Please check your network connection and try again."
+        }
+        onRetry={() => {
+          void earningsQuery.refetch();
+        }}
+      />
+    );
+  }
 
   return (
     <div className="w-full">
@@ -424,9 +410,6 @@ export function WorkerEarningsContent() {
                       <div className="shrink-0 text-right">
                         <span className="text-base sm:text-lg font-extrabold text-emerald-600 block">
                           + {formatRsExact(amountForWorker(item.amount))}
-                        </span>
-                        <span className="text-[10px] text-slate-400 font-medium">
-                          {isUrdu ? "خالص آمدنی" : "Net Income"}
                         </span>
                       </div>
                     </div>
@@ -598,7 +581,7 @@ export function WorkerEarningsContent() {
               </p>
             </div>
           ) : (
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto scrollbar-none no-scrollbar">
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="bg-slate-100/80 border-b border-slate-200 text-[11.5px] uppercase tracking-wider text-slate-600 font-extrabold">
@@ -653,14 +636,9 @@ export function WorkerEarningsContent() {
 
                       {/* Amount Earned */}
                       <td className="py-4 px-6 text-right whitespace-nowrap">
-                        <div className="inline-flex flex-col items-end">
-                          <span className="text-base font-extrabold text-emerald-600">
-                            + {formatRsExact(amountForWorker(item.amount))}
-                          </span>
-                          <span className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">
-                            {isUrdu ? "خالص درآمد" : "Net Payout"}
-                          </span>
-                        </div>
+                        <span className="text-base font-extrabold text-emerald-600">
+                          + {formatRsExact(amountForWorker(item.amount))}
+                        </span>
                       </td>
                     </tr>
                   ))}

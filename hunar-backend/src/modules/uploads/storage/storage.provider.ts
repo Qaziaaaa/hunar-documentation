@@ -5,6 +5,7 @@ import { StorageClient } from './storage.interface';
 import { S3Storage } from './s3.storage';
 import { MinioStorage } from './minio.storage';
 import { LocalStorage } from './local.storage';
+import { CloudinaryStorage } from './cloudinary.storage';
 
 export const STORAGE = Symbol('STORAGE');
 
@@ -17,6 +18,9 @@ export function createStorage(config: StorageConfig): StorageClient {
   }
   if (config.driver === 'local') {
     return new LocalStorage(config);
+  }
+  if (config.driver === 'cloudinary') {
+    return new CloudinaryStorage(config);
   }
   throw new Error(`Unsupported storage driver: ${String(config.driver)}`);
 }

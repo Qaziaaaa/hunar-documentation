@@ -2,13 +2,16 @@ import {
   BadRequestException,
   ForbiddenException,
   Injectable,
+  Logger,
   NotFoundException,
+  Optional,
 } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
 import { PrismaService } from '../../prisma/prisma.service';
 import { UploadsService } from '../uploads/uploads.service';
 import { RealtimeService } from '../realtime/realtime.service';
 import { EventBusService } from '../../common/event-bus/event-bus.service';
+import { RedisService } from '../../common/redis/redis.service';
 import { normalizePage, toPageResult } from '../../common/helpers/pagination.util';
 import { chatRoom, CHAT_EVENTS } from './chat.events';
 import { MessageListQueryDto, SendMessageDto } from './chat.validation';
@@ -20,11 +23,14 @@ const CHAT_IMAGE_FOLDER = 'chat-images/';
 
 @Injectable()
 export class ChatService {
+  private readonly logger = new Logger(ChatService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly uploads: UploadsService,
     private readonly realtime: RealtimeService,
     private readonly eventBus: EventBusService,
+    @Optional() private readonly redis?: RedisService,
   ) {}
 
   // Conversation is created automatically when a worker's offer is accepted (Module 9).
@@ -44,18 +50,77 @@ export class ChatService {
         customerId: payload.customerId,
       },
     });
+
+    if (this.redis) {
+      await Promise.all([
+        this.redis.del(`perf:chat:conversations:${payload.customerId}`),
+        this.redis.del(`perf:chat:conversations:${payload.workerId}`),
+      ]);
+    }
   }
 
   async listConversations(userId: string) {
-    return this.prisma.conversation.findMany({
+    const cacheKey = `perf:chat:conversations:${userId}`;
+    if (this.redis) {
+      const cached = await this.redis.get(cacheKey);
+      if (cached) {
+        try {
+          return JSON.parse(cached);
+        } catch {}
+      }
+    }
+
+    const rows = await this.prisma.conversation.findMany({
       where: { OR: [{ customerId: userId }, { workerId: userId }] },
-      include: {
-        job: { select: { id: true, title: true, status: true } },
-        customer: { select: { id: true, name: true, avatarUrl: true } },
-        worker: { select: { id: true, name: true, avatarUrl: true } },
-      },
       orderBy: { lastMessageAt: 'desc' },
     });
+    if (rows.length === 0) return [];
+
+    const conversationIds = rows.map((r) => r.id);
+    const jobIds = [...new Set(rows.map((r) => r.jobId))];
+    const customerIds = [...new Set(rows.map((r) => r.customerId))];
+    const workerIds = [...new Set(rows.map((r) => r.workerId))];
+    const [jobs, customers, workers, unreadGroups] = await Promise.all([
+      this.prisma.serviceRequest.findMany({
+        where: { id: { in: jobIds } },
+        select: { id: true, title: true, status: true },
+      }),
+      this.prisma.user.findMany({
+        where: { id: { in: customerIds } },
+        select: { id: true, name: true, avatarUrl: true },
+      }),
+      this.prisma.user.findMany({
+        where: { id: { in: workerIds } },
+        select: { id: true, name: true, avatarUrl: true },
+      }),
+      this.prisma.message.groupBy({
+        by: ['conversationId'],
+        where: {
+          conversationId: { in: conversationIds },
+          senderId: { not: userId },
+          isRead: false,
+        },
+        _count: { id: true },
+      }),
+    ]);
+    const jobMap = new Map(jobs.map((j) => [j.id, j]));
+    const customerMap = new Map(customers.map((c) => [c.id, c]));
+    const workerMap = new Map(workers.map((w) => [w.id, w]));
+    const unreadMap = new Map(unreadGroups.map((u) => [u.conversationId, u._count.id]));
+
+    const result = rows.map((r) => ({
+      ...r,
+      unreadCount: unreadMap.get(r.id) ?? 0,
+      job: jobMap.get(r.jobId) ?? null,
+      customer: customerMap.get(r.customerId) ?? null,
+      worker: workerMap.get(r.workerId) ?? null,
+    }));
+
+    if (this.redis) {
+      await this.redis.set(cacheKey, JSON.stringify(result), 15);
+    }
+
+    return result;
   }
 
   /**
@@ -63,8 +128,25 @@ export class ChatService {
    * unique jobId and created when the offer is accepted), then return its messages.
    */
   async getMessagesByJob(jobId: string, userId: string, query: MessageListQueryDto = {}) {
+    const { page, limit } = normalizePage(query);
+    const cacheKey = `perf:chat:msgs:${jobId}:${page}:${limit}`;
+
+    if (this.redis) {
+      const cached = await this.redis.get(cacheKey);
+      if (cached) {
+        try {
+          return JSON.parse(cached);
+        } catch {}
+      }
+    }
+
     const conversation = await this.getConversationByJob(jobId, userId);
-    return this.getMessages(conversation.id, userId, query);
+    const result = await this.getMessagesForConversation(conversation, query);
+
+    if (this.redis) {
+      await this.redis.set(cacheKey, JSON.stringify(result), 30);
+    }
+    return result;
   }
 
   /**
@@ -73,11 +155,36 @@ export class ChatService {
    */
   async sendMessageByJob(jobId: string, userId: string, dto: SendMessageDto) {
     const conversation = await this.getConversationByJob(jobId, userId);
-    return this.sendMessage(conversation.id, userId, dto);
+    return this.sendMessage(conversation, userId, dto);
   }
 
   async getConversationByJob(jobId: string, userId: string) {
-    const conversation = await this.prisma.conversation.findUnique({ where: { jobId } });
+    let conversation = await this.prisma.conversation.findUnique({ where: { jobId } });
+    if (!conversation) {
+      const job = await this.prisma.serviceRequest.findUnique({ where: { id: jobId } });
+      if (job) {
+        let workerId = job.selectedWorkerId || (userId === job.customerId ? null : userId);
+        if (!workerId) {
+          const acceptedOffer = await this.prisma.jobOffer.findFirst({
+            where: { jobId: job.id, status: 'ACCEPTED' },
+          });
+          if (acceptedOffer) {
+            workerId = acceptedOffer.workerId;
+          }
+        }
+        if (workerId && (job.customerId === userId || workerId === userId)) {
+          conversation = await this.prisma.conversation.upsert({
+            where: { jobId: job.id },
+            update: {},
+            create: {
+              jobId: job.id,
+              customerId: job.customerId,
+              workerId,
+            },
+          });
+        }
+      }
+    }
     if (!conversation) {
       throw new NotFoundException('CONVERSATION_NOT_FOUND');
     }
@@ -90,68 +197,239 @@ export class ChatService {
   }
 
   async getMessages(conversationId: string, userId: string, query: MessageListQueryDto = {}) {
-    await this.ensureParticipant(conversationId, userId);
-    const { page, limit, skip } = normalizePage(query);
-    const where = { conversationId };
-    const [items, total] = await Promise.all([
-      this.prisma.message.findMany({
-        where,
-        orderBy: { createdAt: 'desc' },
-        skip,
-        take: limit,
-      }),
-      this.prisma.message.count({ where }),
-    ]);
-    return toPageResult(items, total, page, limit);
+    const { page, limit } = normalizePage(query);
+    const cacheKey = `perf:chat:msgs:${conversationId}:${page}:${limit}`;
+
+    if (this.redis) {
+      const cached = await this.redis.get(cacheKey);
+      if (cached) {
+        try {
+          return JSON.parse(cached);
+        } catch {}
+      }
+    }
+
+    const conversation = await this.ensureParticipant(conversationId, userId);
+    const result = await this.getMessagesForConversation(conversation, query);
+
+    if (this.redis) {
+      await this.redis.set(cacheKey, JSON.stringify(result), 30);
+    }
+    return result;
   }
 
-  async sendMessage(conversationId: string, userId: string, dto: SendMessageDto) {
-    const conversation = await this.getConversationWithActiveJob(conversationId, userId);
+  async getMessagesForConversation(conversation: any, query: MessageListQueryDto = {}) {
+    const { page, limit, skip } = normalizePage(query);
+    const where = { conversationId: conversation.id };
+
+    // Fast path: Fetch messages. If page 1 and items < limit, total = items.length (saves a remote count roundtrip)
+    const items = await this.prisma.message.findMany({
+      where,
+      orderBy: { createdAt: 'desc' },
+      skip,
+      take: limit,
+    });
+
+    let total = items.length;
+    if (page > 1 || items.length === limit) {
+      total = await this.prisma.message.count({ where });
+    }
+
+    const itemsWithJob = items.map((item) => ({
+      ...item,
+      jobId: conversation.jobId,
+    }));
+    return toPageResult(itemsWithJob, total, page, limit);
+  }
+
+  async sendMessage(conversationOrId: string | any, userId: string, dto: SendMessageDto) {
+    const conversation =
+      typeof conversationOrId === 'object' && conversationOrId?.id
+        ? conversationOrId
+        : await this.getConversationWithActiveJob(conversationOrId, userId);
     const { text, imageUrl } = this.resolveContent(dto);
 
-    const message = await this.prisma.message.create({
-      data: { conversationId, senderId: userId, text, imageUrl },
+    const created = await this.prisma.message.create({
+      data: { conversationId: conversation.id, senderId: userId, text, imageUrl },
     });
-    await this.prisma.conversation.update({
-      where: { id: conversation.id },
-      data: {
-        lastMessage: text ?? (imageUrl ? '[Image]' : undefined),
-        lastMessageAt: message.createdAt,
-      },
-    });
+    const message = {
+      ...created,
+      jobId: conversation.jobId,
+    };
 
-    // Real-time delivery to everyone joined to the conversation room (incl. sender).
-    this.realtime.emitToRoom(chatRoom(conversation.id), CHAT_EVENTS.message, {
+    const realtimePayload = {
       conversationId: conversation.id,
+      jobId: conversation.jobId,
       message,
-    });
+    };
 
-    // Domain event for the notifications module ("new message" to the worker).
-    this.eventBus.emit('chat.message', {
-      messageId: message.id,
-      conversationId: conversation.id,
-      senderId: userId,
-      customerId: conversation.customerId,
-      workerId: conversation.workerId,
-      text: text ?? undefined,
-      imageUrl: imageUrl ?? undefined,
-    });
+    // Fast-path deduplicated real-time delivery across rooms and user sockets
+    this.realtime.emitToRooms(
+      [
+        chatRoom(conversation.id),
+        chatRoom(conversation.jobId),
+        `job:${conversation.jobId}`,
+        `chat:${conversation.jobId}`,
+        `user:${conversation.customerId}`,
+        `user:${conversation.workerId}`,
+      ],
+      CHAT_EVENTS.message,
+      realtimePayload,
+    );
+
+    // Asynchronously update conversation lastMessage and dispatch notifications in background
+    void (async () => {
+      try {
+        await this.prisma.conversation.update({
+          where: { id: conversation.id },
+          data: {
+            lastMessage: text ?? (imageUrl ? '[Image]' : undefined),
+            lastMessageAt: message.createdAt,
+          },
+        });
+      } catch (err: any) {
+        this.logger.warn(`Failed to update conversation lastMessage: ${err?.message}`);
+      }
+
+      if (this.redis) {
+        await Promise.all([
+          this.redis.del(`perf:chat:conversations:${conversation.customerId}`),
+          this.redis.del(`perf:chat:conversations:${conversation.workerId}`),
+          this.redis.del(`perf:chat:msgs:${conversation.jobId}:1:30`),
+          this.redis.del(`perf:chat:msgs:${conversation.id}:1:30`),
+        ]).catch(() => {});
+      }
+
+      if (userId === conversation.workerId) {
+        this.realtime.emitToUser(conversation.customerId, 'notification:new', {
+          type: 'NEW_MESSAGE',
+          title: 'New message from technician',
+          body: text ?? (dto.imageKey ? 'Photo' : 'Voice note'),
+          data: realtimePayload,
+        });
+      }
+
+      this.eventBus.emit('chat.message', {
+        messageId: message.id,
+        conversationId: conversation.id,
+        senderId: userId,
+        customerId: conversation.customerId,
+        workerId: conversation.workerId,
+        text: text ?? undefined,
+        imageUrl: imageUrl ?? undefined,
+      });
+    })();
 
     return message;
   }
 
-  // Socket join guard — verifies the socket user belongs to the conversation.
-  async ensureParticipant(conversationId: string, userId: string) {
-    const conversation = await this.prisma.conversation.findUnique({
-      where: { id: conversationId },
+  /**
+   * Mark all unread messages in a conversation as read by the other party.
+   */
+  async markAsRead(targetId: string, userId: string) {
+    const conversation = await this.ensureParticipant(targetId, userId);
+    const updated = await this.prisma.message.updateMany({
+      where: {
+        conversationId: conversation.id,
+        senderId: { not: userId },
+        isRead: false,
+      },
+      data: {
+        isRead: true,
+      },
     });
+
+    if (this.redis) {
+      await Promise.all([
+        this.redis.del(`perf:chat:conversations:${conversation.customerId}`),
+        this.redis.del(`perf:chat:conversations:${conversation.workerId}`),
+        this.redis.del(`perf:chat:msgs:${conversation.jobId}:1:30`),
+        this.redis.del(`perf:chat:msgs:${conversation.id}:1:30`),
+      ]).catch(() => {});
+    }
+
+    const readPayload = {
+      conversationId: conversation.id,
+      jobId: conversation.jobId,
+      readerId: userId,
+      count: updated.count,
+      readAt: new Date().toISOString(),
+    };
+
+    // Emit read receipt event deduplicated across conversation rooms and user rooms
+    this.realtime.emitToRooms(
+      [
+        chatRoom(conversation.id),
+        chatRoom(conversation.jobId),
+        `job:${conversation.jobId}`,
+        `chat:${conversation.jobId}`,
+        `user:${conversation.customerId}`,
+        `user:${conversation.workerId}`,
+      ],
+      CHAT_EVENTS.read,
+      readPayload,
+    );
+
+    return { success: true, count: updated.count, conversationId: conversation.id };
+  }
+
+  // Socket join guard — verifies the socket user belongs to the conversation.
+  async ensureParticipant(conversationOrJobId: string, userId: string) {
+    let conversation = await this.prisma.conversation.findFirst({
+      where: {
+        OR: [{ id: conversationOrJobId }, { jobId: conversationOrJobId }],
+      },
+    });
+
+    if (!conversation) {
+      const job = await this.prisma.serviceRequest.findUnique({
+        where: { id: conversationOrJobId },
+      });
+      if (job) {
+        let workerId = job.selectedWorkerId || (userId === job.customerId ? null : userId);
+        if (!workerId) {
+          const acceptedOffer = await this.prisma.jobOffer.findFirst({
+            where: { jobId: job.id, status: 'ACCEPTED' },
+          });
+          if (acceptedOffer) {
+            workerId = acceptedOffer.workerId;
+          }
+        }
+        if (workerId && (job.customerId === userId || workerId === userId)) {
+          conversation = await this.prisma.conversation.upsert({
+            where: { jobId: job.id },
+            update: {},
+            create: {
+              jobId: job.id,
+              customerId: job.customerId,
+              workerId,
+            },
+          });
+        }
+      }
+    }
+
     if (!conversation) {
       throw new NotFoundException('CONVERSATION_NOT_FOUND');
     }
     if (conversation.customerId !== userId && conversation.workerId !== userId) {
-      throw new ForbiddenException(
-        'CONVERSATION_ACCESS_FORBIDDEN: you are not part of this conversation',
-      );
+      if (!conversation.workerId && conversation.jobId) {
+        const job = await this.prisma.serviceRequest.findUnique({
+          where: { id: conversation.jobId },
+        });
+        const workerId = job?.selectedWorkerId || (userId === job?.customerId ? null : userId);
+        if (workerId) {
+          conversation = await this.prisma.conversation.update({
+            where: { id: conversation.id },
+            data: { workerId },
+          });
+        }
+      }
+      if (conversation.customerId !== userId && conversation.workerId !== userId) {
+        throw new ForbiddenException(
+          'CONVERSATION_ACCESS_FORBIDDEN: you are not part of this conversation',
+        );
+      }
     }
     return conversation;
   }
@@ -169,12 +447,12 @@ export class ChatService {
         'CONVERSATION_ACCESS_FORBIDDEN: you are not part of this conversation',
       );
     }
-    if (!conversation.job.selectedWorkerId) {
+    if (!conversation.job?.selectedWorkerId && !conversation.workerId) {
       throw new BadRequestException(
         'CHAT_JOB_NOT_ACCEPTED: chat is only available after a worker is accepted',
       );
     }
-    if (JOB_STATUS_BLOCKED_FOR_CHAT.has(conversation.job.status)) {
+    if (conversation.job && JOB_STATUS_BLOCKED_FOR_CHAT.has(conversation.job.status)) {
       throw new BadRequestException(
         'CHAT_JOB_CLOSED: the job is no longer active, messages are disabled',
       );

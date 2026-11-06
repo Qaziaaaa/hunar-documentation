@@ -1,19 +1,21 @@
 "use client";
 
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import Image from "next/image";
 import {
   AlertCircle,
   ArrowLeft,
   ArrowRight,
   CreditCard,
-  ShieldCheck,
+  FileText,
   Trash2,
   Upload,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { uploadWorkerDocument } from "../api/onboarding-api";
+import { compressImage } from "@/lib/image-compression";
 import type { WorkerProfileFormData } from "../types";
 
 export function Step5Documents({
@@ -33,29 +35,63 @@ export function Step5Documents({
   const frontInputRef = useRef<HTMLInputElement>(null);
   const backInputRef = useRef<HTMLInputElement>(null);
 
-  const handleCnicUpload = (
+  const [isUploadingFront, setIsUploadingFront] = useState(false);
+  const [isUploadingBack, setIsUploadingBack] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+
+  const handleCnicUpload = async (
     e: React.ChangeEvent<HTMLInputElement>,
     side: "front" | "back",
   ) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const result = event.target?.result as string;
+    if (file.size > 10 * 1024 * 1024) {
+      setUploadError(t("maxSize"));
+      e.target.value = "";
+      return;
+    }
+
+    setUploadError(null);
+    if (side === "front") setIsUploadingFront(true);
+    else setIsUploadingBack(true);
+
+    try {
+      let fileToUpload = file;
+      if (file.type.startsWith("image/")) {
+        const compressedBlob = await compressImage(file, {
+          maxWidth: 1600,
+          maxHeight: 1600,
+          quality: 0.85,
+        });
+        fileToUpload = new File([compressedBlob], file.name, {
+          type: compressedBlob.type || file.type,
+        });
+      }
+
+      const result = await uploadWorkerDocument(
+        fileToUpload,
+        side === "front" ? "cnic_front" : "cnic_back",
+      );
       if (side === "front") {
         updateFormData({
-          cnicFront: result,
+          cnicFront: result.url,
           cnicFrontName: file.name,
         });
       } else {
         updateFormData({
-          cnicBack: result,
+          cnicBack: result.url,
           cnicBackName: file.name,
         });
       }
-    };
-    reader.readAsDataURL(file);
+    } catch (err: any) {
+      setUploadError(err?.message || "Failed to upload document.");
+    } finally {
+      if (side === "front") setIsUploadingFront(false);
+      else setIsUploadingBack(false);
+      if (side === "front" && frontInputRef.current) frontInputRef.current.value = "";
+      if (side === "back" && backInputRef.current) backInputRef.current.value = "";
+    }
   };
 
   const removeCnic = (side: "front" | "back") => {
@@ -72,33 +108,15 @@ export function Step5Documents({
     <div className="flex flex-col justify-between flex-1 space-y-5 sm:space-y-6">
       <div className="space-y-4">
         <div>
-          <div className="mb-1 flex items-center justify-between gap-2">
-            <div>
-              <span className="block text-xs font-bold uppercase tracking-wider text-teal mb-1">
-                {t("badge")}
-              </span>
-              <h2 className="text-2xl font-extrabold tracking-tight text-navy sm:text-3xl leading-snug">
-                {t("title")}
-              </h2>
-            </div>
-            <span className="shrink-0 self-start rounded-full border border-teal/20 bg-teal/10 px-3 py-1 text-xs font-bold text-teal">
-              {t("protectedBadge")}
-            </span>
-          </div>
-          <p className="mt-2 text-sm sm:text-base text-muted-foreground leading-relaxed">
+          <h2 className="text-2xl font-extrabold tracking-tight text-navy sm:text-3xl leading-snug">
+            {t("title")}
+          </h2>
+          <p className="mt-1 text-sm sm:text-base text-muted-foreground leading-relaxed">
             {t("subtitle")}
           </p>
         </div>
 
-        {/* NADRA Security Banner */}
-        <div className="flex items-center gap-3 rounded-2xl border border-teal-200 bg-teal/10 p-3.5 text-xs sm:text-sm text-navy">
-          <ShieldCheck className="size-5.5 shrink-0 text-teal" />
-          <span className="leading-relaxed text-muted-foreground">
-            <strong className="text-navy font-bold">{t("encryptionTitle")}</strong> {t("encryptionDesc")}
-          </span>
-        </div>
-
-        {/* 13-Digit CNIC Number Input */}
+        {/* CNIC Number Input */}
         <div className="space-y-1.5">
           <label
             htmlFor="cnic-number"
@@ -125,7 +143,7 @@ export function Step5Documents({
           <div className="rounded-2xl bg-white p-1.5">
             <div className="mb-2 flex items-center justify-between">
               <span className="text-sm font-bold text-navy">
-                🪪 {t("cnicFront")} <span className="text-error">*</span>
+                {t("cnicFront")} <span className="text-error">*</span>
               </span>
               <span className="rounded-full border border-teal/20 bg-teal/10 px-2 py-0.5 text-xs font-bold text-teal">
                 {formData.cnicFront ? t("attached") : t("required")}
@@ -142,17 +160,25 @@ export function Step5Documents({
 
             {formData.cnicFront ? (
               <div className="space-y-2">
-                <div className="relative h-28 sm:h-32 w-full overflow-hidden rounded-xl border border-teal/30 bg-slate-100">
-                  <Image
-                    src={formData.cnicFront}
-                    alt="CNIC Front"
-                    fill
-                    className="object-cover"
-                  />
+                <div className="relative h-28 sm:h-32 w-full overflow-hidden rounded-xl border border-teal/30 bg-slate-100 flex items-center justify-center">
+                  {(formData.cnicFrontName || "").toLowerCase().endsWith(".pdf") ? (
+                    <div className="flex flex-col items-center justify-center p-2 text-teal">
+                      <FileText className="size-8" />
+                      <span className="text-xs font-semibold mt-1">PDF Document</span>
+                    </div>
+                  ) : (
+                    <Image
+                      src={formData.cnicFront}
+                      alt="CNIC Front"
+                      fill
+                      unoptimized
+                      className="object-cover"
+                    />
+                  )}
                 </div>
                 <div className="flex items-center justify-between gap-1">
                   <span className="truncate text-xs font-medium text-navy">
-                    {formData.cnicFrontName || "cnic_front.jpg"}
+                    {formData.cnicFrontName || t("cnicFront")}
                   </span>
                   <div className="flex items-center gap-1">
                     <Button
@@ -186,6 +212,9 @@ export function Step5Documents({
                   <span className="text-teal underline">{t("uploadFront")}</span>
                 </p>
                 <p className="text-xs text-muted-foreground mt-0.5">{t("maxSize")}</p>
+                {isUploadingFront && (
+                  <p className="text-xs font-semibold text-teal mt-1">Uploading...</p>
+                )}
               </div>
             )}
           </div>
@@ -194,7 +223,7 @@ export function Step5Documents({
           <div className="rounded-2xl bg-white p-1.5">
             <div className="mb-2 flex items-center justify-between">
               <span className="text-sm font-bold text-navy">
-                🪪 {t("cnicBack")} <span className="text-error">*</span>
+                {t("cnicBack")} <span className="text-error">*</span>
               </span>
               <span className="rounded-full border border-teal/20 bg-teal/10 px-2 py-0.5 text-xs font-bold text-teal">
                 {formData.cnicBack ? t("attached") : t("required")}
@@ -211,17 +240,25 @@ export function Step5Documents({
 
             {formData.cnicBack ? (
               <div className="space-y-2">
-                <div className="relative h-28 sm:h-32 w-full overflow-hidden rounded-xl border border-teal/30 bg-slate-100">
-                  <Image
-                    src={formData.cnicBack}
-                    alt="CNIC Back"
-                    fill
-                    className="object-cover"
-                  />
+                <div className="relative h-28 sm:h-32 w-full overflow-hidden rounded-xl border border-teal/30 bg-slate-100 flex items-center justify-center">
+                  {(formData.cnicBackName || "").toLowerCase().endsWith(".pdf") ? (
+                    <div className="flex flex-col items-center justify-center p-2 text-teal">
+                      <FileText className="size-8" />
+                      <span className="text-xs font-semibold mt-1">PDF Document</span>
+                    </div>
+                  ) : (
+                    <Image
+                      src={formData.cnicBack}
+                      alt="CNIC Back"
+                      fill
+                      unoptimized
+                      className="object-cover"
+                    />
+                  )}
                 </div>
                 <div className="flex items-center justify-between gap-1">
                   <span className="truncate text-xs font-medium text-navy">
-                    {formData.cnicBackName || "cnic_back.jpg"}
+                    {formData.cnicBackName || t("cnicBack")}
                   </span>
                   <div className="flex items-center gap-1">
                     <Button
@@ -255,17 +292,20 @@ export function Step5Documents({
                   <span className="text-teal underline">{t("uploadBack")}</span>
                 </p>
                 <p className="text-xs text-muted-foreground mt-0.5">{t("maxSize")}</p>
+                {isUploadingBack && (
+                  <p className="text-xs font-semibold text-teal mt-1">Uploading...</p>
+                )}
               </div>
             )}
           </div>
         </div>
 
-        {/* Guidelines (1 line) */}
-        <div className="rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-xs sm:text-sm text-muted-foreground flex items-center justify-between">
-          <span className="text-teal font-semibold">{t("guideCorners")}</span>
-          <span className="text-teal font-semibold">{t("guideGlare")}</span>
-          <span className="text-teal font-semibold">{t("guideSmart")}</span>
-        </div>
+        {uploadError && (
+          <div className="flex items-center gap-2 rounded-xl bg-error/10 p-2.5 text-sm font-medium text-error">
+            <AlertCircle className="size-4 shrink-0" />
+            <span>{uploadError}</span>
+          </div>
+        )}
 
         {stepError && (
           <div className="flex items-center gap-2 rounded-xl bg-error/10 p-2.5 text-sm font-medium text-error">
@@ -282,6 +322,7 @@ export function Step5Documents({
           variant="outline"
           size="lg"
           onClick={onPrev}
+          disabled={isUploadingFront || isUploadingBack}
           className="h-12 sm:h-13 w-1/3 rounded-full border-2 border-navy text-sm sm:text-base font-bold text-navy hover:bg-slate-50"
         >
           <ArrowLeft className="mr-1.5 size-4 rtl:rotate-180" />
@@ -291,6 +332,7 @@ export function Step5Documents({
           type="button"
           size="lg"
           onClick={onNext}
+          disabled={isUploadingFront || isUploadingBack}
           className="h-12 sm:h-13 flex-1 rounded-full bg-teal text-sm sm:text-base font-bold text-white shadow-md shadow-teal/20 hover:bg-teal/90 transition-all"
         >
           <span>{t("continueBtn")}</span>

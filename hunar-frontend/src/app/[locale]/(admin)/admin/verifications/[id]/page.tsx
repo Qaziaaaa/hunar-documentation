@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { AdminShell } from "@/features/admin/components/admin-shell";
 import { Link, useRouter } from "@/i18n/navigation";
 import { adminApi } from "@/features/admin/api/admin-api";
+import { AdminAvatar } from "@/features/admin/components/admin-avatar";
+import { resolveAvatarUrl } from "@/lib/avatar";
 import type { VerificationRequest } from "@/types/admin";
 import {
   AlertCircle,
@@ -29,6 +30,8 @@ export default function VerificationDetailPage({
   const [showRejectModal, setShowRejectModal] = useState(false);
   const [showChangesModal, setShowChangesModal] = useState(false);
   const [reasonInput, setReasonInput] = useState("");
+  const [actionError, setActionError] = useState<string | null>(null);
+  const [acting, setActing] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -52,17 +55,15 @@ export default function VerificationDetailPage({
 
   if (loading) {
     return (
-      <AdminShell>
-        <div className="p-8 text-center">
+<div className="p-8 text-center">
           <p className="text-base font-bold text-navy">Loading verification request...</p>
         </div>
-      </AdminShell>
-    );
+);
   }
 
   if (!request) {
     return (
-      <AdminShell>
+      
         <div className="p-8 text-center">
           <p className="text-base font-bold text-navy">Verification Request Not Found</p>
           <Link
@@ -72,55 +73,96 @@ export default function VerificationDetailPage({
             <ArrowLeft className="size-4" /> Back to Verification Queue
           </Link>
         </div>
-      </AdminShell>
+      
     );
   }
 
-  const handleApprove = () => {
-    void adminApi
-      .decideVerification(request.id, "APPROVE")
-      .then(() => setRequest((prev) => (prev ? { ...prev, status: "VERIFIED" } : prev)));
-    setTimeout(() => {
-      router.push("/admin/verifications");
-    }, 1000);
+  const handleApprove = async () => {
+    setActionError(null);
+    setActing(true);
+    try {
+      await adminApi.decideVerification(request.id, "APPROVED");
+      setRequest((prev) => (prev ? { ...prev, status: "VERIFIED" } : prev));
+      setTimeout(() => {
+        router.push("/admin/verifications");
+      }, 1000);
+    } catch (err) {
+      setActionError(
+        err instanceof Error ? err.message : "Failed to approve verification",
+      );
+    } finally {
+      setActing(false);
+    }
   };
 
-  const handleRejectConfirm = () => {
-    void adminApi
-      .decideVerification(request.id, "REJECT", reasonInput || "Identity documents failed verification rules.")
-      .then(() =>
-        setRequest((prev) =>
-          prev
-            ? {
-                ...prev,
-                status: "REJECTED",
-                rejectionReason: reasonInput || "Identity documents failed verification rules.",
-              }
-            : prev
-        )
+  const handleRejectConfirm = async () => {
+    setActionError(null);
+    const reason = reasonInput.trim();
+    if (!reason) {
+      setActionError("A rejection reason is required.");
+      return;
+    }
+    setActing(true);
+    try {
+      await adminApi.decideVerification(request.id, "REJECTED", reason);
+      setRequest((prev) =>
+        prev
+          ? {
+              ...prev,
+              status: "REJECTED",
+              rejectionReason: reason,
+            }
+          : prev
       );
-    setShowRejectModal(false);
+      setShowRejectModal(false);
+      setReasonInput("");
+      setTimeout(() => {
+        router.push("/admin/verifications");
+      }, 1000);
+    } catch (err) {
+      setActionError(
+        err instanceof Error ? err.message : "Failed to reject verification",
+      );
+    } finally {
+      setActing(false);
+    }
   };
 
-  const handleChangesConfirm = () => {
-    void adminApi
-      .decideVerification(request.id, "REQUEST_CHANGES", reasonInput || "Please re-upload clearer photos of your CNIC.")
-      .then(() =>
-        setRequest((prev) =>
-          prev
-            ? {
-                ...prev,
-                status: "CHANGES_REQUESTED",
-                rejectionReason: reasonInput || "Please re-upload clearer photos of your CNIC.",
-              }
-            : prev
-        )
+  const handleChangesConfirm = async () => {
+    setActionError(null);
+    const reason = reasonInput.trim();
+    if (!reason) {
+      setActionError("Describe what needs to be updated.");
+      return;
+    }
+    setActing(true);
+    try {
+      await adminApi.decideVerification(request.id, "REQUEST_CHANGES", reason);
+      setRequest((prev) =>
+        prev
+          ? {
+              ...prev,
+              status: "CHANGES_REQUESTED",
+              rejectionReason: reason,
+            }
+          : prev
       );
-    setShowChangesModal(false);
+      setShowChangesModal(false);
+      setReasonInput("");
+      setTimeout(() => {
+        router.push("/admin/verifications");
+      }, 1000);
+    } catch (err) {
+      setActionError(
+        err instanceof Error ? err.message : "Failed to request changes",
+      );
+    } finally {
+      setActing(false);
+    }
   };
 
   return (
-    <AdminShell>
+    
       <div className="mx-auto max-w-5xl space-y-6">
         {/* Back Link */}
         <Link
@@ -130,12 +172,20 @@ export default function VerificationDetailPage({
           <ArrowLeft className="size-4" /> Back to Verification Queue
         </Link>
 
+        {actionError && !showRejectModal && !showChangesModal && (
+          <div className="rounded-2xl border border-red-200 bg-red-50 p-4 text-sm font-bold text-red-700">
+            Action failed: {actionError}
+          </div>
+        )}
+
         {/* Header */}
         <div className="flex flex-col justify-between gap-4 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm md:flex-row md:items-center">
           <div className="flex items-center gap-4">
-            <div className="flex size-14 items-center justify-center rounded-2xl bg-navy text-2xl font-bold text-white shadow-md shadow-navy/20">
-              {request.workerName.charAt(0)}
-            </div>
+            <AdminAvatar
+              src={request.workerAvatar}
+              name={request.workerName}
+              className="size-14 rounded-2xl text-2xl shadow-md shadow-navy/20"
+            />
             <div>
               <div className="flex items-center gap-2">
                 <h1 className="text-2xl font-black tracking-tight text-navy">
@@ -164,7 +214,11 @@ export default function VerificationDetailPage({
           <div className="flex items-center gap-3">
             <button
               type="button"
-              onClick={() => setShowChangesModal(true)}
+              onClick={() => {
+                setActionError(null);
+                setReasonInput("");
+                setShowChangesModal(true);
+              }}
               className="inline-flex items-center gap-1.5 rounded-xl border border-orange/30 bg-orange/10 px-4 py-2.5 text-xs font-bold text-orange transition hover:bg-orange/20"
             >
               <AlertCircle className="size-4" />
@@ -173,7 +227,11 @@ export default function VerificationDetailPage({
 
             <button
               type="button"
-              onClick={() => setShowRejectModal(true)}
+              onClick={() => {
+                setActionError(null);
+                setReasonInput("");
+                setShowRejectModal(true);
+              }}
               className="inline-flex items-center gap-1.5 rounded-xl border border-red-200 bg-red-50 px-4 py-2.5 text-xs font-bold text-red-600 transition hover:bg-red-100"
             >
               <XCircle className="size-4" />
@@ -183,10 +241,11 @@ export default function VerificationDetailPage({
             <button
               type="button"
               onClick={handleApprove}
-              className="inline-flex items-center gap-1.5 rounded-xl bg-teal px-5 py-2.5 text-xs font-bold text-white shadow-md shadow-teal/25 transition hover:bg-teal-600"
+              disabled={acting}
+              className="inline-flex items-center gap-1.5 rounded-xl bg-teal px-5 py-2.5 text-xs font-bold text-white shadow-md shadow-teal/25 transition hover:bg-teal-600 disabled:cursor-not-allowed disabled:opacity-60"
             >
               <CheckCircle2 className="size-4" />
-              <span>Approve & Grant Badge</span>
+              <span>{acting ? "Working..." : "Approve & Grant Badge"}</span>
             </button>
           </div>
         </div>
@@ -264,7 +323,9 @@ export default function VerificationDetailPage({
                   Date Submitted
                 </p>
                 <p className="font-semibold text-slate-700">
-                  {new Date(request.submittedAt).toLocaleString()}
+                  {request.submittedAt
+                    ? new Date(request.submittedAt).toLocaleString()
+                    : "Not on file"}
                 </p>
               </div>
               <div>
@@ -293,11 +354,18 @@ export default function VerificationDetailPage({
                 CNIC Front Side Photo
               </p>
               <div className="overflow-hidden rounded-2xl border border-slate-200 bg-slate-100 p-2">
-                <img
-                  src={request.cnicFrontUrl}
-                  alt="CNIC Front Document"
-                  className="h-64 w-full object-cover rounded-xl shadow-inner"
-                />
+                {resolveAvatarUrl(request.cnicFrontUrl) ? (
+                  // eslint-disable-next-line @next/next/no-img-element -- document photos may be relative /uploads paths
+                  <img
+                    src={resolveAvatarUrl(request.cnicFrontUrl)}
+                    alt="CNIC Front Document"
+                    className="h-64 w-full object-cover rounded-xl shadow-inner"
+                  />
+                ) : (
+                  <div className="flex h-64 w-full items-center justify-center rounded-xl bg-slate-200 text-xs font-semibold text-slate-500">
+                    No CNIC front photo on file
+                  </div>
+                )}
               </div>
             </div>
 
@@ -307,11 +375,18 @@ export default function VerificationDetailPage({
                 CNIC Back Side Photo
               </p>
               <div className="overflow-hidden rounded-2xl border border-slate-200 bg-slate-100 p-2">
-                <img
-                  src={request.cnicBackUrl}
-                  alt="CNIC Back Document"
-                  className="h-64 w-full object-cover rounded-xl shadow-inner"
-                />
+                {resolveAvatarUrl(request.cnicBackUrl) ? (
+                  // eslint-disable-next-line @next/next/no-img-element -- document photos may be relative /uploads paths
+                  <img
+                    src={resolveAvatarUrl(request.cnicBackUrl)}
+                    alt="CNIC Back Document"
+                    className="h-64 w-full object-cover rounded-xl shadow-inner"
+                  />
+                ) : (
+                  <div className="flex h-64 w-full items-center justify-center rounded-xl bg-slate-200 text-xs font-semibold text-slate-500">
+                    No CNIC back photo on file
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -335,6 +410,12 @@ export default function VerificationDetailPage({
                 className="mt-4 h-24 w-full rounded-xl border border-slate-200 p-3 text-xs outline-none focus:border-teal"
               />
 
+              {actionError && (
+                <p className="mt-3 rounded-xl border border-red-200 bg-red-50 p-3 text-xs font-bold text-red-700">
+                  {actionError}
+                </p>
+              )}
+
               <div className="mt-6 flex justify-end gap-3">
                 <button
                   type="button"
@@ -346,9 +427,10 @@ export default function VerificationDetailPage({
                 <button
                   type="button"
                   onClick={handleRejectConfirm}
-                  className="rounded-xl bg-red-600 px-5 py-2 text-xs font-bold text-white shadow-md"
+                  disabled={acting || !reasonInput.trim()}
+                  className="rounded-xl bg-red-600 px-5 py-2 text-xs font-bold text-white shadow-md disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                  Confirm Reject
+                  {acting ? "Rejecting..." : "Confirm Reject"}
                 </button>
               </div>
             </div>
@@ -373,6 +455,12 @@ export default function VerificationDetailPage({
                 className="mt-4 h-24 w-full rounded-xl border border-slate-200 p-3 text-xs outline-none focus:border-teal"
               />
 
+              {actionError && (
+                <p className="mt-3 rounded-xl border border-red-200 bg-red-50 p-3 text-xs font-bold text-red-700">
+                  {actionError}
+                </p>
+              )}
+
               <div className="mt-6 flex justify-end gap-3">
                 <button
                   type="button"
@@ -384,15 +472,16 @@ export default function VerificationDetailPage({
                 <button
                   type="button"
                   onClick={handleChangesConfirm}
-                  className="rounded-xl bg-orange px-5 py-2 text-xs font-bold text-white shadow-md"
+                  disabled={acting || !reasonInput.trim()}
+                  className="rounded-xl bg-orange px-5 py-2 text-xs font-bold text-white shadow-md disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                  Send Change Request
+                  {acting ? "Sending..." : "Send Change Request"}
                 </button>
               </div>
             </div>
           </div>
         ) : null}
       </div>
-    </AdminShell>
+    
   );
 }

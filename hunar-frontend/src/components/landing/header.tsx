@@ -1,4 +1,4 @@
-import { ChevronDownIcon, GridIcon, SearchIcon } from "./icons";
+import { ChevronDownIcon, GridIcon } from "./icons";
 import { Link } from "@/i18n/navigation";
 import { WorkerFixLogo } from "@/components/shared/workerfix-logo";
 
@@ -41,13 +41,6 @@ export function Header() {
           </a>
         </nav>
         <div className="flex items-center space-x-5">
-          <a
-            aria-label="Search"
-            href="#services"
-            className="text-slate-200 hover:text-white transition p-1"
-          >
-            <SearchIcon className="w-5 h-5" strokeWidth={2} />
-          </a>
           <Link
             href="/customer/dashboard"
             className="bg-white hover:bg-slate-100 text-brand-hero text-xs sm:text-sm font-bold px-5 py-2.5 rounded-full shadow transition-all duration-200 inline-flex items-center justify-center"

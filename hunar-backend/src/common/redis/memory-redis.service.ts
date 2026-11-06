@@ -1,9 +1,16 @@
 import { Injectable, OnModuleDestroy } from '@nestjs/common';
 
 export interface RedisClient {
-  set(key: string, value: string, mode?: string, ttlSeconds?: number, nx?: string): Promise<'OK' | null>;
+  set(
+    key: string,
+    value: string,
+    mode?: string,
+    ttlSeconds?: number,
+    nx?: string,
+  ): Promise<'OK' | null>;
   get(key: string): Promise<string | null>;
   del(key: string): Promise<number>;
+  delPattern?(pattern: string): Promise<number>;
   exists(key: string): Promise<number>;
   incr(key: string): Promise<number>;
   expire(key: string, ttlSeconds: number): Promise<number>;
@@ -16,7 +23,13 @@ export interface RedisClient {
 export class MemoryRedisService implements RedisClient, OnModuleDestroy {
   private readonly store = new Map<string, { value: string; expiresAt?: number }>();
 
-  async set(key: string, value: string, mode?: string, ttlSeconds?: number, nx?: string): Promise<'OK' | null> {
+  async set(
+    key: string,
+    value: string,
+    mode?: string,
+    ttlSeconds?: number,
+    nx?: string,
+  ): Promise<'OK' | null> {
     if (nx === 'NX') {
       const existing = this.store.get(key);
       if (existing && (!existing.expiresAt || Date.now() <= existing.expiresAt)) {
@@ -42,6 +55,18 @@ export class MemoryRedisService implements RedisClient, OnModuleDestroy {
     return this.store.delete(key) ? 1 : 0;
   }
 
+  async delPattern(pattern: string): Promise<number> {
+    const regex = new RegExp('^' + pattern.replace(/\*/g, '.*') + '$');
+    let count = 0;
+    for (const key of this.store.keys()) {
+      if (regex.test(key)) {
+        this.store.delete(key);
+        count++;
+      }
+    }
+    return count;
+  }
+
   async exists(key: string): Promise<number> {
     const entry = this.store.get(key);
     if (!entry) return 0;
@@ -53,9 +78,10 @@ export class MemoryRedisService implements RedisClient, OnModuleDestroy {
   }
 
   async incr(key: string): Promise<number> {
-    const current = parseInt(await this.get(key) || '0', 10);
+    const current = parseInt((await this.get(key)) || '0', 10);
     const next = current + 1;
-    await this.set(key, next.toString());
+    const expiresAt = this.store.get(key)?.expiresAt;
+    this.store.set(key, { value: next.toString(), expiresAt });
     return next;
   }
 

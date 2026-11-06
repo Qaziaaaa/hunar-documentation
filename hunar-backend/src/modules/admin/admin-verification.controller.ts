@@ -61,9 +61,10 @@ export class AdminVerificationController {
     @Body() dto: RejectVerificationDto,
     @CurrentUser() actor: JwtPayload,
   ) {
+    const reason = dto.reason || dto.note || '';
     return this.verificationService.decide(
       userId,
-      { decision: WorkerVerificationStatus.REJECTED, reason: dto.reason },
+      { decision: WorkerVerificationStatus.REJECTED, reason },
       actor,
     );
   }
@@ -74,9 +75,10 @@ export class AdminVerificationController {
     @Body() dto: RequestChangesDto,
     @CurrentUser() actor: JwtPayload,
   ) {
+    const adminNote = dto.adminNote || dto.note || dto.reason || '';
     return this.verificationService.decide(
       userId,
-      { decision: WorkerVerificationStatus.REQUEST_CHANGES, adminNote: dto.adminNote },
+      { decision: WorkerVerificationStatus.REQUEST_CHANGES, adminNote },
       actor,
     );
   }

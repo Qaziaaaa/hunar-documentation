@@ -10,6 +10,7 @@ jest.mock("@/lib/api-client", () => ({
   http: {
     get: jest.fn(),
     put: jest.fn(),
+    patch: jest.fn(),
   },
 }));
 
@@ -24,6 +25,7 @@ jest.mock("@/lib/data-source", () => ({
 
 const mockedHttpGet = http.get as jest.MockedFunction<typeof http.get>;
 const mockedHttpPut = http.put as jest.MockedFunction<typeof http.put>;
+const mockedHttpPatch = http.patch as jest.MockedFunction<typeof http.patch>;
 const mockedGetSocket = getSocket as jest.MockedFunction<typeof getSocket>;
 const mockedIsMockMode = isMockMode as jest.MockedFunction<typeof isMockMode>;
 const mockedSimulateLatency = simulateLatency as jest.MockedFunction<typeof simulateLatency>;
@@ -124,11 +126,11 @@ describe("notification.service", () => {
 
     it("calls API in non-mock mode", async () => {
       mockedIsMockMode.mockReturnValue(false);
-      mockedHttpPut.mockResolvedValue(undefined);
+      mockedHttpPatch.mockResolvedValue(undefined as any);
 
       await notificationService.markNotificationRead(notificationId);
 
-      expect(mockedHttpPut).toHaveBeenCalledWith(`/notifications/${notificationId}/read`);
+      expect(mockedHttpPatch).toHaveBeenCalledWith(`/notifications/${notificationId}/read`);
     });
   });
 
@@ -148,11 +150,11 @@ describe("notification.service", () => {
 
     it("calls API in non-mock mode", async () => {
       mockedIsMockMode.mockReturnValue(false);
-      mockedHttpPut.mockResolvedValue(undefined);
+      mockedHttpPut.mockResolvedValue(undefined as any);
 
       await notificationService.markAllNotificationsRead();
 
-      expect(mockedHttpPut).toHaveBeenCalledWith("/notifications/read-all");
+      expect(mockedHttpPut).toHaveBeenCalledWith("/notifications/read");
     });
   });
 
@@ -197,6 +199,13 @@ describe("notification.service", () => {
         earnings_recorded: true,
         new_review: false,
         verification_result: true,
+        new_offer: true,
+        visit_scheduled: true,
+        inspection_submitted: true,
+        repair_estimate_ready: true,
+        repair_approved: true,
+        payment_confirmed: true,
+        job_completed: true,
       },
     };
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -20,10 +20,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { formatDateTime } from "@/lib/format";
-import { formatRs } from "@/lib/money";
+import { formatRs, sanitizePriceInput } from "@/lib/money";
 import { negotiationStatusTone } from "@/lib/status-meta";
 import { getNegotiationContext, acceptCounterOffer, rejectCounterOffer, requestScopeChange, sendCounterOffer, submitEstimate, queryKeys } from "@/services/worker/negotiation.service";
 import { getWorkerJob, queryKeys as jobKeys } from "@/services/worker/jobs.service";
+import { subscribeToNotifications } from "@/services/worker/notification.service";
+import { getSocket } from "@/lib/socket";
 import { ToneBadge } from "@/components/shared/tone-badge";
 
 export default function NegotiationPage() {
@@ -41,6 +43,44 @@ export default function NegotiationPage() {
   const [estimateDescription, setEstimateDescription] = useState("");
 
   const refresh = () => queryClient.invalidateQueries({ queryKey: queryKeys.negotiation(jobId) });
+
+  useEffect(() => {
+    const unsubscribe = subscribeToNotifications((notification) => {
+      const type = String(notification.type || "");
+      if (
+        type === "counter_offer" ||
+        type === "counter_accepted" ||
+        type === "offer_accepted" ||
+        type === "offer_rejected"
+      ) {
+        void refresh();
+      }
+    });
+
+    const socket = getSocket();
+    const handleSocketUpdate = (payload?: { jobId?: string; repairId?: string }) => {
+      if (!payload?.jobId || payload.jobId === jobId) {
+        void refresh();
+      }
+    };
+
+    if (socket) {
+      socket.on("negotiation:updated", handleSocketUpdate);
+      socket.on("negotiation_updated", handleSocketUpdate);
+      socket.on("repair:updated", handleSocketUpdate);
+      socket.on("offer:counter", handleSocketUpdate);
+    }
+
+    return () => {
+      unsubscribe();
+      if (socket) {
+        socket.off("negotiation:updated", handleSocketUpdate);
+        socket.off("negotiation_updated", handleSocketUpdate);
+        socket.off("repair:updated", handleSocketUpdate);
+        socket.off("offer:counter", handleSocketUpdate);
+      }
+    };
+  }, [jobId]);
   const accept = useMutation({ mutationFn: () => acceptCounterOffer(context.data!.repair.id, context.data!.repair.amount), onSuccess: refresh });
   const reject = useMutation({ mutationFn: () => rejectCounterOffer(context.data!.repair.id), onSuccess: refresh });
   const counter = useMutation({
@@ -64,7 +104,7 @@ export default function NegotiationPage() {
   const canSubmitCounter = Number(counterAmount) > 0 && Number.isFinite(Number(counterAmount));
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 max-w-6xl xl:max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
       <PageHeader title={t("negotiation.title")} description={t("negotiation.subtitle")} />
       <div className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
         <div className="space-y-6">
@@ -105,7 +145,7 @@ export default function NegotiationPage() {
               <CardHeader><CardTitle>{t("negotiation.estimateTitle")}</CardTitle></CardHeader>
               <CardContent className="space-y-4">
                 <p className="text-sm text-muted-foreground">{t("negotiation.estimateDescription")}</p>
-                <div className="grid gap-2"><Label htmlFor="estimate-amount">{t("negotiation.estimatePrice")}</Label><Input id="estimate-amount" type="number" min="1" value={estimateAmount} onChange={(event) => setEstimateAmount(event.target.value)} /></div>
+                <div className="grid gap-2"><Label htmlFor="estimate-amount">{t("negotiation.estimatePrice")}</Label><Input id="estimate-amount" type="number" min="1" value={estimateAmount} onChange={(event) => setEstimateAmount(sanitizePriceInput(event.target.value))} /></div>
                 <div className="grid gap-2"><Label htmlFor="estimate-description">{t("negotiation.estimateDescriptionLabel")}</Label><Textarea id="estimate-description" placeholder={t("negotiation.estimateDescriptionPlaceholder")} value={estimateDescription} onChange={(event) => setEstimateDescription(event.target.value)} /></div>
                 <Button className="bg-teal hover:bg-teal/85" disabled={!estimateAmount || !estimateDescription.trim() || estimate.isPending} onClick={() => estimate.mutate()}>{estimate.isPending ? t("common.submitting") : t("negotiation.submitEstimate")}</Button>
               </CardContent>
@@ -152,7 +192,7 @@ export default function NegotiationPage() {
         <Card className="fixed inset-x-4 bottom-4 z-40 mx-auto max-w-lg border-teal shadow-xl sm:inset-x-auto sm:right-6">
           <CardHeader><CardTitle>{t("negotiation.counterTitle")}</CardTitle></CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid gap-2"><Label htmlFor="counter-amount">{t("negotiation.counterAmount")}</Label><Input id="counter-amount" type="number" min="1" value={counterAmount} onChange={(event) => setCounterAmount(event.target.value)} /></div>
+            <div className="grid gap-2"><Label htmlFor="counter-amount">{t("negotiation.counterAmount")}</Label><Input id="counter-amount" type="number" min="1" value={counterAmount} onChange={(event) => setCounterAmount(sanitizePriceInput(event.target.value))} /></div>
             <div className="grid gap-2"><Label htmlFor="counter-note">{t("negotiation.counterNote")}</Label><Textarea id="counter-note" placeholder={t("negotiation.counterNotePlaceholder")} value={counterNote} onChange={(event) => setCounterNote(event.target.value)} /></div>
             <div className="flex justify-end gap-2"><Button variant="outline" onClick={() => setCounterOpen(false)}>{t("common.cancel")}</Button><Button className="bg-teal hover:bg-teal/85" disabled={!canSubmitCounter || counter.isPending} onClick={() => counter.mutate()}>{counter.isPending ? <Loader2 className="size-4 animate-spin" aria-hidden="true" /> : null}{counter.isPending ? t("common.submitting") : t("negotiation.counter")}</Button></div>
           </CardContent>

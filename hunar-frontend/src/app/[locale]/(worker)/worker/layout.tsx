@@ -16,5 +16,9 @@ export default function WorkerLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return <>{children}</>;
+  return (
+    <div data-portal="worker" className="min-h-screen w-full scrollbar-none no-scrollbar">
+      {children}
+    </div>
+  );
 }

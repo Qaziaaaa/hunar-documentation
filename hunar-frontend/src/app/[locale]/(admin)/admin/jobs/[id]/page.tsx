@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { AdminShell } from "@/features/admin/components/admin-shell";
 import { adminApi } from "@/features/admin/api/admin-api";
 import { Link } from "@/i18n/navigation";
 import type { JobDetailItem } from "@/types/admin";
@@ -26,6 +25,8 @@ export default function JobDetailPage({
   const [loading, setLoading] = useState(true);
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [cancelReason, setCancelReason] = useState("");
+  const [cancelling, setCancelling] = useState(false);
+  const [cancelError, setCancelError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -52,45 +53,58 @@ export default function JobDetailPage({
 
   if (loading) {
     return (
-      <AdminShell>
-        <div className="p-8 text-center">
+<div className="p-8 text-center">
           <p className="text-base font-bold text-navy">Loading job audit record...</p>
         </div>
-      </AdminShell>
-    );
+);
   }
 
   if (!job) {
     return (
-      <AdminShell>
+      
         <div className="p-8 text-center">
           <p className="text-base font-bold text-navy">Job Audit Record Not Found</p>
           <Link href="/admin/jobs" className="mt-4 inline-flex items-center gap-2 text-xs font-bold text-teal">
             <ArrowLeft className="size-4" /> Back to Jobs
           </Link>
         </div>
-      </AdminShell>
+      
     );
   }
 
-  const handleForceCancel = () => {
-    setJob((prev) =>
-      prev
-        ? {
-            ...prev,
-            status: "CANCELLED",
-            cancelReason: cancelReason || "Cancelled by Admin intervention",
-          }
-        : prev
-    );
-    if (resolvedParams) {
-      void adminApi.cancelJob(resolvedParams.id, cancelReason).catch(() => undefined);
+  const handleForceCancel = async () => {
+    if (!resolvedParams) {
+      setCancelError("Job id unavailable — reload the page and try again.");
+      return;
     }
-    setShowCancelModal(false);
+    setCancelError(null);
+    const reason = cancelReason.trim();
+    if (!reason) {
+      setCancelError("A cancellation reason is required.");
+      return;
+    }
+    setCancelling(true);
+    try {
+      await adminApi.cancelJob(resolvedParams.id, reason);
+      setJob((prev) =>
+        prev
+          ? {
+              ...prev,
+              status: "CANCELLED",
+              cancelReason: reason,
+            }
+          : prev
+      );
+      setShowCancelModal(false);
+    } catch (err) {
+      setCancelError(err instanceof Error ? err.message : "Failed to cancel job");
+    } finally {
+      setCancelling(false);
+    }
   };
 
   return (
-    <AdminShell>
+    
       <div className="mx-auto max-w-4xl space-y-6">
         <Link href="/admin/jobs" className="inline-flex items-center gap-2 text-xs font-bold text-slate-500 hover:text-navy">
           <ArrowLeft className="size-4" /> Back to Jobs Monitoring
@@ -170,6 +184,11 @@ export default function JobDetailPage({
           </h3>
 
           <div className="relative pl-6 border-l-2 border-slate-200 space-y-6">
+            {job.auditTrail.length === 0 && (
+              <p className="text-xs font-semibold text-slate-400">
+                No audit events recorded for this job yet.
+              </p>
+            )}
             {job.auditTrail.map((step, idx) => (
               <div key={idx} className="relative">
                 <span className="absolute -left-[31px] top-0.5 flex size-4 items-center justify-center rounded-full bg-teal text-white ring-4 ring-white">
@@ -207,18 +226,28 @@ export default function JobDetailPage({
                 placeholder="Enter cancellation reason..."
                 className="mt-4 h-24 w-full rounded-xl border border-slate-200 p-3 text-xs outline-none focus:border-teal"
               />
+              {cancelError && (
+                <p className="mt-3 rounded-xl border border-red-200 bg-red-50 p-3 text-xs font-bold text-red-700">
+                  {cancelError}
+                </p>
+              )}
               <div className="mt-6 flex justify-end gap-3">
                 <button type="button" onClick={() => setShowCancelModal(false)} className="rounded-xl border border-slate-200 px-4 py-2 text-xs font-bold text-slate-600">
                   Cancel
                 </button>
-                <button type="button" onClick={handleForceCancel} className="rounded-xl bg-red-600 px-5 py-2 text-xs font-bold text-white shadow-md">
-                  Confirm Cancellation
+                <button
+                  type="button"
+                  onClick={handleForceCancel}
+                  disabled={cancelling || !cancelReason.trim()}
+                  className="rounded-xl bg-red-600 px-5 py-2 text-xs font-bold text-white shadow-md disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {cancelling ? "Cancelling..." : "Confirm Cancellation"}
                 </button>
               </div>
             </div>
           </div>
         ) : null}
       </div>
-    </AdminShell>
+    
   );
 }

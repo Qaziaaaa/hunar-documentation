@@ -17,3 +17,8 @@ export const WALLET_IDEM_COMMISSION_REVERSE = 'wallet:idem:commission:reverse:';
 export const WALLET_IDEM_EARNINGS_CREDIT = 'wallet:idem:earnings:credit:';
 export const WALLET_IDEM_TOPUP_CREDIT = 'wallet:idem:topup:credit:';
 export const WALLET_IDEM_WITHDRAWAL = 'wallet:idem:withdrawal:';
+
+// Visit Arrival Doorstep OTP constants
+export const VISIT_ARRIVAL_OTP_PREFIX = 'visit:arrival:otp:';
+export const JOB_ARRIVAL_OTP_PREFIX = 'job:arrival:otp:';
+export const VISIT_ARRIVAL_OTP_TTL_SECONDS = 15 * 60;

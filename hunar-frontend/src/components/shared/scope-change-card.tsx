@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { formatRs } from "@/lib/money";
+import { formatRs, sanitizePriceInput } from "@/lib/money";
 import type { RepairRevision } from "@/types/repair";
 
 export function ScopeChangeCard({
@@ -89,7 +89,7 @@ export function ScopeChangeCard({
           type="number"
           min={0}
           value={amount}
-          onChange={(e) => setAmount(e.target.value)}
+          onChange={(e) => setAmount(sanitizePriceInput(e.target.value))}
           disabled={disabled || submitting}
           placeholder="0"
         />

@@ -1,5 +1,4 @@
 import { clearTokens, http, type StoredUser } from "@/lib/api-client";
-import { isMockMode } from "@/lib/data-source";
 
 export const OTP_RULES = {
   expiresInMs: 5 * 60 * 1000,
@@ -29,6 +28,7 @@ export interface AuthResponse {
     id: string;
     phone: string;
     name?: string;
+    avatarUrl?: string;
     role: "WORKER" | "CUSTOMER" | "ADMIN";
     isVerified?: boolean;
   };
@@ -42,29 +42,18 @@ export type CustomerAuthResponse = AuthResponse;
 // ==========================================
 
 export async function requestWorkerOtp(phone: string): Promise<OtpRequestResponse> {
-  try {
-    const res = await http.post<{ message?: string; expiresInSeconds?: number; cooldownSeconds?: number; devOtp?: string }>(
-      "/auth/otp/send",
-      { phone }
-    );
-    return {
-      requestId: `otp-req-${Date.now()}`,
-      phone,
-      expiresInMs: (res?.expiresInSeconds ?? 300) * 1000,
-      resendAfterMs: (res?.cooldownSeconds ?? 900) * 1000,
-      maxAttempts: OTP_RULES.maxAttempts,
-      devOtp: res?.devOtp,
-    };
-  } catch (err) {
-    console.warn("[requestWorkerOtp] Backend OTP endpoint fallback:", err);
-    return {
-      requestId: `worker-req-${Date.now()}`,
-      phone,
-      expiresInMs: OTP_RULES.expiresInMs,
-      resendAfterMs: OTP_RULES.resendAfterMs,
-      maxAttempts: OTP_RULES.maxAttempts,
-    };
-  }
+  const res = await http.post<{ message?: string; expiresInSeconds?: number; cooldownSeconds?: number; devOtp?: string }>(
+    "/auth/otp/send",
+    { phone }
+  );
+  return {
+    requestId: `otp-req-${Date.now()}`,
+    phone,
+    expiresInMs: (res?.expiresInSeconds ?? 300) * 1000,
+    resendAfterMs: (res?.cooldownSeconds ?? 900) * 1000,
+    maxAttempts: OTP_RULES.maxAttempts,
+    devOtp: res?.devOtp,
+  };
 }
 
 export async function resendWorkerOtp(
@@ -80,26 +69,16 @@ export async function verifyWorkerOtp(
   phone?: string,
 ): Promise<OtpVerifyResponse> {
   const targetPhone = phone || (requestIdOrPhone.startsWith("03") || requestIdOrPhone.startsWith("+92") ? requestIdOrPhone : undefined);
-  if (targetPhone) {
-    try {
-      const res = await http.post<{ verificationToken: string }>("/auth/otp/verify", {
-        phone: targetPhone,
-        otp: code,
-      });
-      if (res?.verificationToken) {
-        return {
-          verificationId: res.verificationToken,
-          attemptsLeft: 3,
-        };
-      }
-    } catch (err) {
-      console.warn("[verifyWorkerOtp] Backend verify error, evaluating fallback:", err);
-    }
+  if (!targetPhone) {
+    throw new Error("Phone number is required for OTP verification.");
   }
-
-  if (code.length === 6) {
+  const res = await http.post<{ verificationToken: string }>("/auth/otp/verify", {
+    phone: targetPhone,
+    otp: code,
+  });
+  if (res?.verificationToken) {
     return {
-      verificationId: `worker-ver-${Date.now()}`,
+      verificationId: res.verificationToken,
       attemptsLeft: 3,
     };
   }
@@ -111,32 +90,13 @@ export async function completeWorkerSignup(params: {
   verificationId: string;
   password: string;
 }): Promise<WorkerAuthResponse> {
-  try {
-    const res = await http.post<any>("/auth/register", {
-      phone: params.phone,
-      password: params.password,
-      verificationToken: params.verificationId,
-    });
-    if (res?.accessToken) {
-      return res;
-    }
-  } catch (err) {
-    console.warn("[completeWorkerSignup] Backend register error:", err);
-    if (!isMockMode()) throw err;
-  }
-
-  if (isMockMode()) {
-    return {
-      accessToken: `mock-worker-jwt-${Date.now()}`,
-      refreshToken: `mock-worker-refresh-${Date.now()}`,
-      user: {
-        id: "worker-new-101",
-        phone: params.phone,
-        name: "Tariq Mehmood",
-        role: "WORKER",
-        isVerified: false,
-      },
-    };
+  const res = await http.post<any>("/auth/register", {
+    phone: params.phone,
+    password: params.password,
+    verificationToken: params.verificationId,
+  });
+  if (res?.accessToken) {
+    return res;
   }
   throw new Error("Registration failed. Please try again.");
 }
@@ -145,28 +105,9 @@ export async function workerLogin(
   phone: string,
   password: string,
 ): Promise<WorkerAuthResponse> {
-  try {
-    const res = await http.post<any>("/auth/login", { phone, password });
-    if (res?.accessToken) {
-      return res;
-    }
-  } catch (err) {
-    console.warn("[workerLogin] Backend login error:", err);
-    if (!isMockMode()) throw err;
-  }
-
-  if (isMockMode() && password.length >= 6) {
-    return {
-      accessToken: `mock-worker-jwt-${Date.now()}`,
-      refreshToken: `mock-worker-refresh-${Date.now()}`,
-      user: {
-        id: "worker-demo-101",
-        phone,
-        name: "Kashif Afridi",
-        role: "WORKER",
-        isVerified: true,
-      },
-    };
+  const res = await http.post<any>("/auth/login", { phone, password });
+  if (res?.accessToken) {
+    return res;
   }
   throw new Error("Invalid phone or password. Please try again.");
 }
@@ -182,29 +123,18 @@ export function refreshWorkerToken(refreshToken: string) {
 // ==========================================
 
 export async function requestCustomerOtp(phone: string): Promise<OtpRequestResponse> {
-  try {
-    const res = await http.post<{ message?: string; expiresInSeconds?: number; cooldownSeconds?: number; devOtp?: string }>(
-      "/auth/customer/otp/request",
-      { phone }
-    );
-    return {
-      requestId: `cust-req-${Date.now()}`,
-      phone,
-      expiresInMs: (res?.expiresInSeconds ?? 300) * 1000,
-      resendAfterMs: (res?.cooldownSeconds ?? 900) * 1000,
-      maxAttempts: OTP_RULES.maxAttempts,
-      devOtp: res?.devOtp,
-    };
-  } catch (err) {
-    console.warn("[requestCustomerOtp] Backend OTP send fallback:", err);
-    return {
-      requestId: `cust-req-${Date.now()}`,
-      phone,
-      expiresInMs: OTP_RULES.expiresInMs,
-      resendAfterMs: OTP_RULES.resendAfterMs,
-      maxAttempts: OTP_RULES.maxAttempts,
-    };
-  }
+  const res = await http.post<{ message?: string; expiresInSeconds?: number; cooldownSeconds?: number; devOtp?: string }>(
+    "/auth/customer/otp/request",
+    { phone }
+  );
+  return {
+    requestId: `cust-req-${Date.now()}`,
+    phone,
+    expiresInMs: (res?.expiresInSeconds ?? 300) * 1000,
+    resendAfterMs: (res?.cooldownSeconds ?? 900) * 1000,
+    maxAttempts: OTP_RULES.maxAttempts,
+    devOtp: res?.devOtp,
+  };
 }
 
 export async function resendCustomerOtp(
@@ -220,26 +150,16 @@ export async function verifyCustomerOtp(
   phone?: string,
 ): Promise<OtpVerifyResponse> {
   const targetPhone = phone || (requestIdOrPhone.startsWith("03") || requestIdOrPhone.startsWith("+92") ? requestIdOrPhone : undefined);
-  if (targetPhone) {
-    try {
-      const res = await http.post<{ verificationToken: string }>("/auth/customer/otp/verify", {
-        phone: targetPhone,
-        otp: code,
-      });
-      if (res?.verificationToken) {
-        return {
-          verificationId: res.verificationToken,
-          attemptsLeft: 3,
-        };
-      }
-    } catch (err) {
-      console.warn("[verifyCustomerOtp] Backend verify fallback:", err);
-    }
+  if (!targetPhone) {
+    throw new Error("Phone number is required for OTP verification.");
   }
-
-  if (code.length === 6) {
+  const res = await http.post<{ verificationToken: string }>("/auth/customer/otp/verify", {
+    phone: targetPhone,
+    otp: code,
+  });
+  if (res?.verificationToken) {
     return {
-      verificationId: `cust-ver-${Date.now()}`,
+      verificationId: res.verificationToken,
       attemptsLeft: 3,
     };
   }
@@ -251,31 +171,13 @@ export async function completeCustomerSignup(params: {
   verificationId: string;
   password: string;
 }): Promise<CustomerAuthResponse> {
-  try {
-    const res = await http.post<any>("/auth/customer/signup/complete", {
-      phone: params.phone,
-      password: params.password,
-      verificationToken: params.verificationId,
-    });
-    if (res?.accessToken) {
-      return res;
-    }
-  } catch (err) {
-    console.warn("[completeCustomerSignup] Backend register error:", err);
-    if (!isMockMode()) throw err;
-  }
-
-  if (isMockMode()) {
-    return {
-      accessToken: `mock-access-token-cust-${Date.now()}`,
-      refreshToken: `mock-refresh-token-cust-${Date.now()}`,
-      user: {
-        id: "cust-user-101",
-        phone: params.phone,
-        name: "Abdullah Khan",
-        role: "CUSTOMER",
-      },
-    };
+  const res = await http.post<any>("/auth/customer/signup/complete", {
+    phone: params.phone,
+    password: params.password,
+    verificationToken: params.verificationId,
+  });
+  if (res?.accessToken) {
+    return res;
   }
   throw new Error("Registration failed. Please try again.");
 }
@@ -284,30 +186,12 @@ export async function customerLogin(
   phone: string,
   password: string,
 ): Promise<CustomerAuthResponse> {
-  try {
-    const res = await http.post<any>("/auth/customer/login", {
-      phone,
-      password,
-    });
-    if (res?.accessToken) {
-      return res;
-    }
-  } catch (err) {
-    console.warn("[customerLogin] Backend login error:", err);
-    if (!isMockMode()) throw err;
-  }
-
-  if (isMockMode() && password.length >= 6) {
-    return {
-      accessToken: `mock-access-token-cust-${Date.now()}`,
-      refreshToken: `mock-refresh-token-cust-${Date.now()}`,
-      user: {
-        id: "cust-user-101",
-        phone,
-        name: "Abdullah Khan",
-        role: "CUSTOMER",
-      },
-    };
+  const res = await http.post<any>("/auth/customer/login", {
+    phone,
+    password,
+  });
+  if (res?.accessToken) {
+    return res;
   }
   throw new Error("Invalid phone or password. Please try again.");
 }
@@ -320,15 +204,15 @@ export function getWorkerMe() {
   return getMe();
 }
 
-export async function logout(): Promise<void> {
+export async function logout(role?: "WORKER" | "CUSTOMER" | "ADMIN"): Promise<void> {
   try {
     await http.post("/auth/logout");
   } catch {
     // Ignore server logout errors on local cleanup
   } finally {
-    clearTokens();
+    clearTokens(role);
   }
 }
 
-export const logoutWorker = logout;
-export const logoutCustomer = logout;
+export const logoutWorker = () => logout("WORKER");
+export const logoutCustomer = () => logout("CUSTOMER");

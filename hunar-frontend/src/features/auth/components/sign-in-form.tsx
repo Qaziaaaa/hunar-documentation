@@ -20,6 +20,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Link, useRouter } from "@/i18n/navigation";
 import { setTokens } from "@/lib/api-client";
+import { fetchWorkerOnboardingProfile } from "@/features/worker-onboarding/api/onboarding-api";
 import { workerLogin } from "../api/auth-api";
 import { getErrorMessage } from "../lib/error";
 import { normalizePkPhone } from "../lib/phone";
@@ -58,7 +59,27 @@ export function SignInForm() {
     try {
       const response = await workerLogin(normalized, values.password);
       setTokens(response.accessToken, response.refreshToken, response.user);
-      router.push("/worker/dashboard");
+
+      try {
+        const onboardingData = await fetchWorkerOnboardingProfile();
+        const vStatus = onboardingData?.workerProfile?.verificationStatus;
+        const isComplete = onboardingData?.progress?.complete;
+
+        if (
+          !onboardingData ||
+          !onboardingData.workerProfile ||
+          vStatus === "NOT_SUBMITTED" ||
+          !isComplete
+        ) {
+          router.push("/worker/onboarding");
+        } else if (vStatus === "APPROVED") {
+          router.push("/worker/dashboard");
+        } else {
+          router.push("/worker/verification-status");
+        }
+      } catch {
+        router.push("/worker/onboarding");
+      }
     } catch (error) {
       setSubmitError(getErrorMessage(error));
     } finally {
@@ -127,12 +148,20 @@ export function SignInForm() {
         </div>
 
         <div className="space-y-1.5">
-          <label
-            htmlFor="signin-password"
-            className="ml-1 block text-xs font-semibold text-navy"
-          >
-            {t("passwordLabel")}
-          </label>
+          <div className="flex items-center justify-between">
+            <label
+              htmlFor="signin-password"
+              className="ml-1 block text-xs font-semibold text-navy"
+            >
+              {t("passwordLabel")}
+            </label>
+            <Link
+              href="/worker/forgot-password"
+              className="text-xs font-semibold text-teal hover:underline"
+            >
+              Forgot password?
+            </Link>
+          </div>
           <div className="relative">
             <Lock className="absolute left-4 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
             <Input

@@ -262,28 +262,51 @@ export class WalletService {
         return { status: 'ALREADY_PROCESSED', amount };
       }
     }
+    // Atomic deduction into heldBalance (AUDIT-010):
+    // Deducts requested amount from available balance immediately into heldBalance to prevent concurrent double-withdrawals.
     return this.prisma.$transaction(async (tx) => {
       const wallet = await this.getOrCreateWalletWith(tx, workerId);
       const balance = this.toNumber(wallet.balance);
+      const held = this.toNumber(wallet.heldBalance);
       if (balance < amount) {
         throw new BadRequestException(
           'WALLET_INSUFFICIENT_BALANCE: withdrawal exceeds available balance',
         );
       }
       const balanceAfter = roundMoney(balance - amount);
+      const heldAfter = roundMoney(held + amount);
       await tx.workerWallet.update({
         where: { userId: wallet.userId },
-        data: { balance: new Prisma.Decimal(balanceAfter) },
+        data: {
+          balance: new Prisma.Decimal(balanceAfter),
+          heldBalance: new Prisma.Decimal(heldAfter),
+        },
       });
-      await this.addLedgerEntry(tx, wallet.userId, 'WITHDRAWAL', amount, balanceAfter, {
-        note: 'Self-service withdrawal payout',
+      const withdrawal = await tx.withdrawal.create({
+        data: {
+          workerId: wallet.userId,
+          amount: new Prisma.Decimal(amount),
+          status: 'PENDING',
+          note: 'Self-service withdrawal request',
+        },
+      });
+      await this.addLedgerEntry(tx, wallet.userId, 'WITHDRAWAL', -amount, balanceAfter, {
+        note: `Self-service withdrawal request #${withdrawal.id} (held for payout)`,
         idempotencyKey: idemKey ?? undefined,
+        referenceType: 'withdrawal',
+        referenceId: withdrawal.id,
       });
       await this.enforceOfflineRule(tx, workerId, balanceAfter);
       if (idemKey) {
         await this.markIdempotent(idemKey);
       }
-      return { status: 'PROCESSED', amount, balanceAfter };
+      return {
+        id: withdrawal.id,
+        status: 'PENDING',
+        amount,
+        balanceAfter,
+        heldAfter,
+      };
     });
   }
 
@@ -313,21 +336,8 @@ export class WalletService {
       if (existingCredit) {
         return;
       }
-      await this.prisma.$transaction(async (tx) => {
-        const wallet = await this.getOrCreateWalletWith(tx, workerId);
-        const balanceAfter = roundMoney(this.toNumber(wallet.balance) + amount);
-        await tx.workerWallet.update({
-          where: { userId: wallet.userId },
-          data: { balance: new Prisma.Decimal(balanceAfter) },
-        });
-        await this.addLedgerEntry(tx, wallet.userId, 'EARNINGS_CREDIT', amount, balanceAfter, {
-          referenceType: 'job',
-          referenceId: jobId,
-          idempotencyKey: `${WALLET_IDEM_EARNINGS_CREDIT}${jobId}`,
-        });
-        await this.enforceOfflineRule(tx, workerId, balanceAfter);
-      });
-      await this.markIdempotent(`${WALLET_IDEM_EARNINGS_CREDIT}${jobId}`);
+      // Job earnings do NOT top up or increase the worker wallet balance.
+      // Wallet balance increases exclusively via admin top-up.
       this.eventBus.emit('earnings.recorded', { jobId, workerId, amount });
 
       // The platform sends the completion OTP to the customer (Section 12.3).
@@ -414,7 +424,10 @@ export class WalletService {
     });
     await db.workerWallet.update({
       where: { userId: wallet.userId },
-      data: { balance: new Prisma.Decimal(balanceAfter) },
+      data: {
+        balance: new Prisma.Decimal(balanceAfter),
+        heldBalance: { increment: new Prisma.Decimal(amount) },
+      },
     });
     await this.addLedgerEntry(db, wallet.userId, 'COMMISSION_HELD', amount, balanceAfter, {
       referenceType: 'commission',
@@ -472,6 +485,12 @@ export class WalletService {
     const updated = await db.commission.update({
       where: { id: commission.id },
       data: { status: 'RECEIVED', verifiedAt: new Date() },
+    });
+    const held = this.toNumber(wallet.heldBalance);
+    const heldAfter = Math.max(0, roundMoney(held - amount));
+    await db.workerWallet.update({
+      where: { userId: workerId },
+      data: { heldBalance: new Prisma.Decimal(heldAfter) },
     });
     await db.platformWallet.upsert({
       where: { id: PLATFORM_WALLET_ID },
@@ -532,9 +551,14 @@ export class WalletService {
       throw new NotFoundException('WALLET_NOT_FOUND');
     }
     const balanceAfter = roundMoney(this.toNumber(wallet.balance) + amount);
+    const held = this.toNumber(wallet.heldBalance);
+    const heldAfter = Math.max(0, roundMoney(held - amount));
     await db.workerWallet.update({
       where: { userId: wallet.userId },
-      data: { balance: new Prisma.Decimal(balanceAfter) },
+      data: {
+        balance: new Prisma.Decimal(balanceAfter),
+        heldBalance: new Prisma.Decimal(heldAfter),
+      },
     });
     await this.addLedgerEntry(db, wallet.userId, 'COMMISSION_RELEASED', amount, balanceAfter, {
       referenceType: 'commission',
@@ -599,7 +623,7 @@ export class WalletService {
   }
 
   private async enforceOfflineRule(db: WalletDb, workerId: string, balance: number) {
-    if (balance < WALLET_MAX_NEGATIVE_BALANCE) {
+    if (balance < 0) {
       await db.workerProfile.updateMany({
         where: { userId: workerId },
         data: { isAvailable: false },

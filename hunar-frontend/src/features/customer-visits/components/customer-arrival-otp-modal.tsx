@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import {
   AlertCircle,
   CheckCircle2,
+  Loader2,
   ShieldCheck,
   X,
 } from "lucide-react";
@@ -17,6 +18,7 @@ import {
 interface CustomerArrivalOtpModalProps {
   isOpen: boolean;
   session: ArrivalSession | null;
+  jobId?: string;
   onSuccess: (message: string) => void;
   onClose: () => void;
   isUrdu?: boolean;
@@ -25,6 +27,7 @@ interface CustomerArrivalOtpModalProps {
 export function CustomerArrivalOtpModal({
   isOpen,
   session,
+  jobId: propJobId,
   onSuccess,
   onClose,
   isUrdu = false,
@@ -46,11 +49,16 @@ export function CustomerArrivalOtpModal({
     }
   }, [isOpen]);
 
-  if (!isOpen || !session) return null;
+  if (!isOpen) return null;
 
-  const workerName = session.workerName || "Worker";
+  const activeSession: Partial<ArrivalSession> = session || {};
+
+  const workerName = activeSession.workerName || (isUrdu ? "کاریگر" : "Technician");
+  const rawJobId = propJobId || activeSession.jobId;
+  const formattedJobId = rawJobId ? (rawJobId.startsWith("#") ? rawJobId : `#${rawJobId}`) : null;
 
   const handleDigitChange = (index: number, value: string) => {
+    if (isVerifying) return;
     setError(null);
     const cleaned = value.replace(/\D/g, "");
     if (!cleaned) {
@@ -72,13 +80,14 @@ export function CustomerArrivalOtpModal({
       const full = next.join("");
       if (full.length === 4) {
         setTimeout(() => {
-          verifyFullOtp(full);
+          void verifyFullOtp(full);
         }, 150);
       }
     }
   };
 
   const handleKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (isVerifying) return;
     if (e.key === "Backspace" && !digits[index] && index > 0) {
       inputRefs.current[index - 1]?.focus();
     }
@@ -89,11 +98,12 @@ export function CustomerArrivalOtpModal({
       inputRefs.current[index + 1]?.focus();
     }
     if (e.key === "Enter") {
-      verifyFullOtp(digits.join(""));
+      void verifyFullOtp(digits.join(""));
     }
   };
 
   const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+    if (isVerifying) return;
     e.preventDefault();
     const pasted = e.clipboardData.getData("text").replace(/\D/g, "").slice(0, 4);
     if (!pasted) return;
@@ -108,12 +118,13 @@ export function CustomerArrivalOtpModal({
 
     if (pasted.length === 4) {
       setTimeout(() => {
-        verifyFullOtp(pasted);
+        void verifyFullOtp(pasted);
       }, 150);
     }
   };
 
-  const verifyFullOtp = (fullOtp: string) => {
+  const verifyFullOtp = async (fullOtp: string) => {
+    if (isVerifying) return;
     if (fullOtp.length < 4) {
       setError(
         isUrdu
@@ -126,26 +137,36 @@ export function CustomerArrivalOtpModal({
     setIsVerifying(true);
     setError(null);
 
-    const result = arrivalService.verifyOtp(fullOtp);
+    try {
+      const result = await arrivalService.verifyOtp(fullOtp, activeSession);
 
-    if (!result.success) {
+      if (!result.success) {
+        setIsVerifying(false);
+        setError(
+          result.error ||
+            (isUrdu
+              ? "درج کردہ OTP غلط ہے۔ براہ کرم کاریگر سے تصدیق کر کے دوبارہ کوشش کریں۔"
+              : "Incorrect OTP. Please check the code provided by the worker and try again.")
+        );
+        return;
+      }
+
+      setIsVerifying(false);
+      arrivalService.clearArrivalSession();
+      const successMsg = isUrdu ? SUCCESS_VERIFICATION_MESSAGE_UR : SUCCESS_VERIFICATION_MESSAGE;
+      onSuccess(successMsg);
+    } catch (err: any) {
       setIsVerifying(false);
       setError(
-        result.error ||
-          (isUrdu
-            ? "درج کردہ OTP غلط ہے۔ براہ کرم کاریگر سے تصدیق کر کے دوبارہ کوشش کریں۔"
-            : "Incorrect OTP. Please check the code provided by the worker and try again.")
+        err?.message ||
+          (isUrdu ? "OTP کی تصدیق ناکام ہو گئی۔" : "Failed to verify OTP. Please try again.")
       );
-      return;
     }
-
-    setIsVerifying(false);
-    const successMsg = isUrdu ? SUCCESS_VERIFICATION_MESSAGE_UR : SUCCESS_VERIFICATION_MESSAGE;
-    onSuccess(successMsg);
   };
 
   const handleConfirm = () => {
-    verifyFullOtp(digits.join(""));
+    if (isVerifying) return;
+    void verifyFullOtp(digits.join(""));
   };
 
   return (
@@ -169,6 +190,14 @@ export function CustomerArrivalOtpModal({
                   ? `${workerName} آپ کی دہلیز پر پہنچ گئے ہیں`
                   : `${workerName} has arrived at your doorstep`}
               </p>
+              {formattedJobId && (
+                <p className="text-[11px] font-semibold text-slate-600 mt-1 flex items-center gap-1">
+                  <span className="text-slate-400">{isUrdu ? "جاب آئی ڈی:" : "Job ID:"}</span>
+                  <span className="font-mono font-bold text-[#123B5D] bg-slate-100 border border-slate-200/80 px-1.5 py-0.5 rounded">
+                    {formattedJobId}
+                  </span>
+                </p>
+              )}
             </div>
           </div>
           <button
@@ -209,10 +238,13 @@ export function CustomerArrivalOtpModal({
                 inputMode="numeric"
                 pattern="[0-9]*"
                 maxLength={1}
+                disabled={isVerifying}
                 value={digit}
                 onChange={(e) => handleDigitChange(idx, e.target.value)}
                 onKeyDown={(e) => handleKeyDown(idx, e)}
                 className={`size-12 sm:size-14 rounded-xl bg-white border shadow-sm flex items-center justify-center font-mono font-black text-2xl sm:text-3xl text-[#123B5D] text-center transition-all focus:outline-none ${
+                  isVerifying ? "opacity-60 cursor-not-allowed bg-slate-50" : ""
+                } ${
                   error
                     ? "border-red-400 ring-2 ring-red-400/20"
                     : digit
@@ -248,14 +280,25 @@ export function CustomerArrivalOtpModal({
             type="button"
             onClick={handleConfirm}
             disabled={isVerifying || digits.join("").length < 4}
-            className={`w-full py-3.5 px-4 rounded-xl text-xs sm:text-sm font-bold border transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-98 ${
-              digits.join("").length === 4
-                ? "bg-[#0F8B8D] hover:bg-[#0D7A7C] text-white border-[#0F8B8D] shadow-sm shadow-[#0F8B8D]/25"
+            className={`w-full py-3.5 px-4 rounded-xl text-xs sm:text-sm font-bold border transition-all flex items-center justify-center gap-2 select-none ${
+              isVerifying
+                ? "bg-[#0F8B8D]/85 text-white border-[#0F8B8D] cursor-wait shadow-none"
+                : digits.join("").length === 4
+                ? "bg-[#0F8B8D] hover:bg-[#0D7A7C] text-white border-[#0F8B8D] shadow-sm shadow-[#0F8B8D]/25 cursor-pointer active:scale-98"
                 : "bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed"
             }`}
           >
-            <CheckCircle2 className="size-4" />
-            <span>{isUrdu ? "OTP کی تصدیق کریں" : "Confirm OTP"}</span>
+            {isVerifying ? (
+              <>
+                <Loader2 className="size-4 animate-spin text-white" />
+                <span>{isUrdu ? "تصدیق کی جا رہی ہے..." : "Verifying OTP..."}</span>
+              </>
+            ) : (
+              <>
+                <CheckCircle2 className="size-4" />
+                <span>{isUrdu ? "OTP کی تصدیق کریں" : "Confirm OTP"}</span>
+              </>
+            )}
           </button>
         </div>
       </div>

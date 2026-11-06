@@ -1,13 +1,12 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import Image from "next/image";
 import {
   X,
   MapPin,
   Star,
   Calendar,
-  ShieldCheck,
   Zap,
   Wrench,
   AirVent,
@@ -20,10 +19,22 @@ import {
   Send,
   CheckCircle2,
   Loader2,
+  Volume2,
 } from "lucide-react";
 import { VoicePlayer } from "./voice-player";
+import { UrgentBidCountdownModal } from "./urgent-bid-countdown-modal";
+import { WalletTopUpModal } from "@/components/shared/wallet-topup-modal";
 import { Button } from "@/components/ui/button";
+import { submitWorkerOffer } from "@/services/worker/offers.service";
+import type { VisitOffer } from "@/types/offer";
+import { workerStore, matchesJobId } from "@/stores/worker-jobs-store";
+import { getWalletBalance } from "@/services/worker/earnings.service";
+import { ApiError } from "@/lib/api-client";
+import { formatPreferredTiming } from "@/lib/format";
 import type { JobRequest } from "../types";
+
+const WALLET_INSUFFICIENT_OFFER_MESSAGE =
+  "Your wallet balance is insufficient to submit an offer. Please top up your wallet to continue.";
 
 const CATEGORY_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
   Electrician: Zap,
@@ -33,6 +44,10 @@ const CATEGORY_ICONS: Record<string, React.ComponentType<{ className?: string }>
   Carpenter: Hammer,
   Painter: Paintbrush,
   Welder: Flame,
+  "Home Cleaner": Sparkles,
+  "Mason / Mistri": Hammer,
+  "Pest Control": Flame,
+  Handyman: Wrench,
 };
 
 import { useLocale } from "next-intl";
@@ -53,28 +68,117 @@ export function JobRequestModal({
   const [selectedImagePreview, setSelectedImagePreview] = useState<string | null>(null);
   const [isSending, setIsSending] = useState(false);
   const [isSent, setIsSent] = useState(false);
+  const [sendError, setSendError] = useState<string | null>(null);
+  const [isTopUpModalOpen, setIsTopUpModalOpen] = useState(false);
+  const [showTopUpButton, setShowTopUpButton] = useState(false);
+  const [showUrgentCountdown, setShowUrgentCountdown] = useState(false);
+  const [createdOfferId, setCreatedOfferId] = useState<string | null>(null);
+  const [createdOffer, setCreatedOffer] = useState<VisitOffer | null>(null);
 
   useEffect(() => {
-    if (job) {
+    if (isOpen && job?.id) {
       setSelectedImagePreview(null);
       setIsSending(false);
       setIsSent(false);
+      setSendError(null);
+      setShowUrgentCountdown(false);
+      setCreatedOfferId(null);
+      setCreatedOffer(null);
     }
+  }, [isOpen, job?.id]);
+
+  const isUrgent =
+    job?.status === "URGENT" ||
+    (job as any)?.urgency === "EMERGENCY" ||
+    (job as any)?.urgency === "HIGH" ||
+    Boolean(job?.preferredTiming && /immediate|asap|جلد از جلد|30.?60/i.test(job.preferredTiming));
+
+  const activePendingOffer = workerStore.getActivePendingOffer();
+  const hasActiveOfferForOtherJob = Boolean(
+    activePendingOffer && (!job?.id || !matchesJobId(activePendingOffer.jobId, job.id))
+  );
+
+  const visitCharge = Number(job?.suggestedVisitCharge ?? (job as any)?.lockedVisitCharge ?? 0) || 0;
+
+  const validImages = useMemo(() => {
+    if (!job?.images || !Array.isArray(job.images)) return [];
+    return job.images.filter(
+      (src) => typeof src === "string" && src.trim().length > 0
+    );
+  }, [job?.images]);
+
+  const voiceNoteData = useMemo(() => {
+    const rawVoice = job?.voiceNote;
+    const fallbackUrl = (job as any)?.voiceNoteUrl;
+    const audioUrl = rawVoice?.audioUrl || (typeof fallbackUrl === "string" ? fallbackUrl.trim() : undefined);
+    if (!audioUrl || audioUrl.startsWith("blob:")) return undefined;
+
+    const durationSeconds =
+      rawVoice?.durationSeconds ||
+      (job as any)?.voiceNoteDuration ||
+      (job as any)?.durationSeconds ||
+      undefined;
+
+    return {
+      audioUrl,
+      durationSeconds,
+      waveformPattern: rawVoice?.waveformPattern || [35, 60, 45, 80, 95, 65, 40, 75, 90, 85, 50, 70, 40, 60, 30],
+    };
   }, [job]);
 
-  const handleSendOffer300 = () => {
-    if (!job || isSending || isSent) return;
+  const handleSendOffer = async () => {
+    if (!job || isSending || isSent || hasActiveOfferForOtherJob) return;
     setIsSending(true);
-    setTimeout(() => {
+    setSendError(null);
+
+    // Fast check cached wallet balance to avoid blocking network latency before submit
+    const cachedBalance = workerStore.getState().walletBalance;
+    if (typeof cachedBalance === "number" && cachedBalance <= 0) {
+      setIsSending(false);
+      setShowTopUpButton(true);
+      const msg =
+        cachedBalance < 0
+          ? isUrdu
+            ? `آپ کا والیٹ بیلنس منفی (روپے ${cachedBalance}) ہے۔ مزید آفرز بھیجنے کے لیے برائے مہربانی اپنا والیٹ ٹاپ اپ کریں۔`
+            : `Your wallet balance is Rs. ${cachedBalance}. Please top up your wallet to continue.`
+          : WALLET_INSUFFICIENT_OFFER_MESSAGE;
+      setSendError(msg);
+      return;
+    }
+
+    try {
+      const serverOffer = await submitWorkerOffer(job.id, visitCharge);
+      setCreatedOffer(serverOffer);
+      setCreatedOfferId(serverOffer?.id ?? null);
+      workerStore.recordOfferSent(serverOffer as any, job.id);
       setIsSending(false);
       setIsSent(true);
-      if (onOfferSent) {
-        onOfferSent(job.id, 300);
+      onOfferSent?.(job.id, visitCharge);
+      if (isUrgent) {
+        setShowUrgentCountdown(true);
+      } else {
+        setTimeout(() => {
+          onClose();
+        }, 250);
       }
-      setTimeout(() => {
-        onClose();
-      }, 1000);
-    }, 450);
+    } catch (err) {
+      setIsSending(false);
+      if (err instanceof ApiError && err.status === 401) {
+        setSendError("Your session expired. Please sign in again to send an offer.");
+      } else if (err instanceof ApiError && err.status === 403) {
+        setSendError("Sign in with a worker account to send offers.");
+      } else if (err instanceof ApiError && err.status === 409) {
+        setSendError("You already sent an offer for this job.");
+      } else if (err instanceof ApiError && err.status === 400) {
+        const errorMsg = err.message || WALLET_INSUFFICIENT_OFFER_MESSAGE;
+        setSendError(errorMsg);
+        if (errorMsg.includes("balance") || errorMsg.includes("top up") || errorMsg.includes("والیٹ")) {
+          setShowTopUpButton(true);
+        }
+      } else {
+        setSendError("Could not send your offer. Please try again.");
+      }
+    }
   };
 
   useEffect(() => {
@@ -101,11 +205,34 @@ export function JobRequestModal({
 
   if (!isOpen || !job) return null;
 
+  if (showUrgentCountdown && job) {
+    return (
+      <UrgentBidCountdownModal
+        isOpen={showUrgentCountdown}
+        job={job}
+        visitCharge={visitCharge}
+        offerId={createdOfferId ?? createdOffer?.id ?? undefined}
+        offerCreatedAt={createdOffer?.createdAt}
+        expiresAt={createdOffer?.expiresAt}
+        serverTime={createdOffer?.serverTime}
+        onClose={() => {
+          setShowUrgentCountdown(false);
+          setCreatedOffer(null);
+          setCreatedOfferId(null);
+          onClose();
+        }}
+      />
+    );
+  }
+
   const Icon = CATEGORY_ICONS[job.category] || Wrench;
 
   return (
+    <>
+    <WalletTopUpModal open={isTopUpModalOpen} onOpenChange={setIsTopUpModalOpen} />
     <div
-      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-navy/60 backdrop-blur-xs p-0 sm:p-4 overflow-y-auto animate-in fade-in duration-200"
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-navy/60 backdrop-blur-xs p-0 sm:p-4 overflow-y-auto overflow-x-hidden scrollbar-none no-scrollbar [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden animate-in fade-in duration-200"
+      style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
       onClick={onClose}
       data-purpose="job-request-details-modal"
     >
@@ -139,45 +266,63 @@ export function JobRequestModal({
           </button>
         </div>
 
-        {/* MODAL BODY (Scrollable) */}
-        <div className="flex-1 overflow-y-auto px-4 sm:px-6 pb-6 space-y-5">
+        {/* MODAL BODY (Scrollable without visible scrollbars) */}
+        <div
+          className="flex-1 overflow-y-auto overflow-x-hidden scrollbar-none no-scrollbar [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden px-4 sm:px-6 pb-6 space-y-5"
+          style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+        >
           {/* SECTION 1: Customer Profile Header Card */}
           <div className="rounded-2xl bg-slate-50/70 p-4">
             <div className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-3.5 min-w-0">
-                <div className="relative size-14 shrink-0 overflow-hidden rounded-full border border-teal/20 bg-white shadow-xs">
-                  <Image
-                    src={job.customer.avatarUrl}
-                    alt={job.customer.firstName}
-                    fill
-                    className="object-cover"
-                    sizes="56px"
-                  />
+                <div className="relative size-14 shrink-0 overflow-hidden rounded-full border border-[#123B5D]/20 bg-[#123B5D]/10 text-[#123B5D] flex items-center justify-center shadow-xs select-none">
+                  {job.customer.avatarUrl ? (
+                    <img
+                      src={job.customer.avatarUrl}
+                      alt={job.customer.firstName || "Customer"}
+                      loading="lazy"
+                      decoding="async"
+                      className="size-full object-cover rounded-full"
+                      onError={(e) => {
+                        (e.currentTarget as HTMLElement).style.display = "none";
+                        const fallback = e.currentTarget.parentElement?.querySelector("span");
+                        if (fallback) fallback.classList.remove("sr-only");
+                      }}
+                    />
+                  ) : null}
+                  <span
+                    className={`text-xl font-black text-[#123B5D] uppercase ${
+                      job.customer.avatarUrl ? "sr-only" : ""
+                    }`}
+                  >
+                    {(job.customer.firstName || job.customer.fullName || "C").trim().charAt(0).toUpperCase()}
+                  </span>
                 </div>
                 <div className="min-w-0 leading-tight">
                   <div className="flex items-center gap-1.5">
                     <h3 className="text-base font-extrabold text-navy truncate">
                       {job.customer.fullName || job.customer.firstName}
                     </h3>
-                    {job.customer.isVerified && (
-                      <span className="inline-flex items-center text-teal" title="NADRA Phone Verified Customer">
-                        <ShieldCheck className="size-4" />
-                      </span>
-                    )}
                   </div>
                   <div className="mt-1 flex flex-wrap items-center gap-2 text-xs font-semibold text-slate-600">
-                    <span className="flex items-center gap-1 text-[#F59E0B] font-bold">
-                      <Star className="size-3.5 fill-[#F59E0B] stroke-none" />
-                      {job.customer.rating.toFixed(1)}
-                      <span className="text-slate-400 font-normal">
-                        ({job.customer.reviewCount || 15})
-                      </span>
-                    </span>
-                    <span className="text-slate-300">·</span>
+                    {job.customer.rating > 0 && (job.customer.reviewCount ?? 0) > 0 && (
+                      <>
+                        <span className="flex items-center gap-1 text-[#F59E0B] font-bold">
+                          <Star className="size-3.5 fill-[#F59E0B] stroke-none" />
+                          {job.customer.rating.toFixed(1)}
+                          <span className="text-slate-400 font-normal">
+                            ({job.customer.reviewCount} {job.customer.reviewCount === 1 ? "review" : "reviews"})
+                          </span>
+                        </span>
+                        <span className="text-slate-300">·</span>
+                      </>
+                    )}
                     <span className="text-navy font-bold">
-                      {job.customer.totalOrders} Orders Completed
+                      {job.customer.totalOrders} {job.customer.totalOrders === 1 ? "Order" : "Orders"} Completed
                     </span>
-                    {job.customer.memberSince && (
+                    {job.customer.memberSince &&
+                      job.customer.memberSince !== "—" &&
+                      job.customer.memberSince !== "Member" && (
                       <>
                         <span className="text-slate-300 hidden sm:inline">·</span>
                         <span className="text-slate-400 text-[11px] hidden sm:inline">
@@ -198,37 +343,51 @@ export function JobRequestModal({
           </div>
 
           {/* SECTION 2: Key Job Specifications & Location */}
-          <div className="space-y-3 pt-1">
-            <h2 className="text-xl sm:text-2xl font-black tracking-tight text-navy leading-tight">
+          <div className="space-y-3 pt-1 min-w-0 max-w-full">
+            <h2 className="text-xl sm:text-2xl font-black tracking-tight text-navy leading-tight break-words [overflow-wrap:anywhere] [word-break:break-word]">
               {job.title}
             </h2>
 
             {/* Quick Metadata Matrix Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs pt-1">
-              <div className="flex items-start gap-3">
+              <div className="flex items-start gap-3 min-w-0">
                 <div className="flex size-9 items-center justify-center rounded-xl bg-teal/15 text-teal shrink-0 mt-0.5 shadow-2xs">
                   <MapPin className="size-4.5" />
                 </div>
-                <div className="min-w-0">
+                <div className="min-w-0 flex-1">
                   <span className="text-xs font-extrabold uppercase tracking-wider text-slate-600 block mb-0.5">
-                    {isUrdu ? "مقام" : "Location"} ({job.distance})
+                    {isUrdu ? "علاقہ / سیکٹر" : "Area / Sector"} ({job.distance})
                   </span>
-                  <p className="font-extrabold text-navy text-sm sm:text-base leading-snug">
-                    {job.fullAddress || job.locationArea}
+                  <p className="font-extrabold text-navy text-sm sm:text-base leading-snug break-words [overflow-wrap:anywhere]">
+                    {job.locationArea}
                   </p>
                 </div>
               </div>
 
-              <div className="flex items-start gap-3">
-                <div className="flex size-9 items-center justify-center rounded-xl bg-orange/15 text-orange shrink-0 mt-0.5 shadow-2xs">
-                  <Calendar className="size-4.5" />
+              <div className="flex items-start gap-3 min-w-0">
+                <div
+                  className={`flex size-9 items-center justify-center rounded-xl shrink-0 mt-0.5 shadow-2xs ${
+                    isUrgent
+                      ? "bg-amber-100 text-amber-700 border border-amber-200"
+                      : "bg-orange/15 text-orange"
+                  }`}
+                >
+                  {isUrgent ? (
+                    <Zap className="size-4.5 fill-current text-amber-600" />
+                  ) : (
+                    <Calendar className="size-4.5" />
+                  )}
                 </div>
-                <div className="min-w-0">
+                <div className="min-w-0 flex-1">
                   <span className="text-xs font-extrabold uppercase tracking-wider text-slate-600 block mb-0.5">
                     {isUrdu ? "ترجیحی وقت" : "Preferred Visit Window"}
                   </span>
-                  <p className="font-extrabold text-navy text-sm sm:text-base leading-snug">
-                    {job.preferredTiming || (isUrdu ? "کسی بھی وقت" : "Flexible Timing")}
+                  <p
+                    className={`font-extrabold text-sm sm:text-base leading-snug break-words [overflow-wrap:anywhere] ${
+                      isUrgent ? "text-amber-800" : "text-navy"
+                    }`}
+                  >
+                    {formatPreferredTiming(job.preferredTiming, isUrdu, isUrgent)}
                   </p>
                 </div>
               </div>
@@ -236,37 +395,54 @@ export function JobRequestModal({
           </div>
 
           {/* SECTION 3: Complete Problem Description */}
-          <div className="space-y-2 pt-2">
+          <div className="space-y-2 pt-2 min-w-0 max-w-full">
             <h4 className="text-sm sm:text-base font-extrabold text-navy">
               {isUrdu ? "تفصیلی وضاحت" : "Detailed Description"}
             </h4>
-            <p className="text-sm sm:text-[15px] font-normal leading-relaxed text-slate-900">
+            <p className="text-sm sm:text-[15px] font-normal leading-relaxed text-slate-900 break-words [overflow-wrap:anywhere] [word-break:break-word] whitespace-pre-wrap min-w-0 max-w-full">
               {job.description}
             </p>
           </div>
 
           {/* SECTION 4: Attached Media (Images + Voice Note) */}
-          {(job.images?.length > 0 || job.voiceNote) && (
-            <div className="space-y-2.5 pt-2">
-              <h4 className="text-sm sm:text-base font-extrabold text-navy">
-                {isUrdu ? "منسلک تصویر اور وائس نوٹ" : "Attached Media & Voice Note"}
-              </h4>
+          {(validImages.length > 0 || voiceNoteData) && (
+            <div className="space-y-3 pt-2">
+              <div className="flex items-center justify-between">
+                <h4 className="text-sm sm:text-base font-extrabold text-navy">
+                  {isUrdu ? "منسلک تصویر اور وائس نوٹ" : "Attached Media & Voice Note"}
+                </h4>
+                <div className="flex items-center gap-2 text-xs font-semibold text-slate-500">
+                  {validImages.length > 0 && (
+                    <span>
+                      {validImages.length} {validImages.length === 1 ? (isUrdu ? "تصویر" : "Photo") : (isUrdu ? "تصاویر" : "Photos")}
+                    </span>
+                  )}
+                  {validImages.length > 0 && voiceNoteData && <span>•</span>}
+                  {voiceNoteData && (
+                    <span className="text-teal font-bold flex items-center gap-1">
+                      <Volume2 className="size-3.5" />
+                      <span>{isUrdu ? "وائس نوٹ" : "Voice Note"}</span>
+                    </span>
+                  )}
+                </div>
+              </div>
 
               {/* Photos Gallery */}
-              {job.images && job.images.length > 0 && (
+              {validImages.length > 0 && (
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
-                  {job.images.map((imgUrl, idx) => (
+                  {validImages.map((imgUrl, idx) => (
                     <div
                       key={idx}
                       onClick={() => setSelectedImagePreview(imgUrl)}
-                      className="group relative h-28 sm:h-32 cursor-pointer overflow-hidden rounded-xl bg-slate-100 hover:opacity-95 transition-opacity"
+                      className="group relative h-28 sm:h-32 cursor-pointer overflow-hidden rounded-xl bg-slate-100 hover:opacity-95 transition-opacity border border-slate-200/80"
                     >
-                      <Image
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
                         src={imgUrl}
                         alt={`Attachment ${idx + 1}`}
-                        fill
-                        className="object-cover group-hover:scale-105 transition-transform duration-200"
-                        sizes="(max-width: 640px) 50vw, 200px"
+                        className="size-full object-cover group-hover:scale-105 transition-transform duration-200"
+                        loading="lazy"
+                        decoding="async"
                       />
                       <div className="absolute inset-0 flex items-center justify-center bg-navy/30 opacity-0 group-hover:opacity-100 transition-opacity">
                         <Maximize2 className="size-5 text-white" />
@@ -276,53 +452,95 @@ export function JobRequestModal({
                 </div>
               )}
 
-              {/* Voice Message Player (Full variant) */}
-              {job.voiceNote && (
-                <VoicePlayer voiceNote={job.voiceNote} variant="full" />
+              {/* Voice Message Player (Full variant with real audio playback) */}
+              {voiceNoteData && (
+                <VoicePlayer voiceNote={voiceNoteData} variant="full" />
               )}
             </div>
           )}
 
+
         </div>
 
         {/* MODAL BOTTOM ACTION / FOOTER */}
-        <div className="sticky bottom-0 z-20 bg-white/95 backdrop-blur-md px-4 sm:px-6 py-3.5 flex items-center justify-between gap-3">
-          <Button
-            type="button"
-            variant="ghost"
-            onClick={onClose}
-            className="rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-bold px-5 h-10 cursor-pointer"
-          >
-            {isUrdu ? "بند کریں" : "Close"}
-          </Button>
+        <div className="sticky bottom-0 z-20 bg-white/95 backdrop-blur-md px-4 sm:px-6 py-3.5 space-y-2">
+          {sendError && (
+            <div className="space-y-2">
+              <p
+                className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs font-bold text-red-700"
+                role="alert"
+              >
+                {sendError}
+              </p>
+              {showTopUpButton && (
+                <Button
+                  type="button"
+                  onClick={() => setIsTopUpModalOpen(true)}
+                  className="w-full rounded-full bg-teal hover:bg-teal/90 text-white font-bold text-xs h-9 cursor-pointer"
+                >
+                  {isUrdu ? "والیٹ ٹاپ اپ کریں" : "Top Up Wallet"}
+                </Button>
+              )}
+            </div>
+          )}
 
-          <Button
-            type="button"
-            onClick={handleSendOffer300}
-            disabled={isSending || isSent}
-            className={`rounded-full text-xs sm:text-sm font-bold px-6 h-10 shadow-md transition-all cursor-pointer flex items-center gap-1.5 ${
-              isSent
-                ? "bg-[#16A34A] hover:bg-[#16A34A] text-white"
-                : "bg-teal hover:bg-teal/90 text-white shadow-teal/20"
-            }`}
-          >
-            {isSending ? (
-              <>
-                <Loader2 className="size-4 animate-spin" />
-                <span>{isUrdu ? "آفر بھیجی جا رہی ہے..." : "Sending Offer..."}</span>
-              </>
-            ) : isSent ? (
-              <>
-                <CheckCircle2 className="size-4" />
-                <span>{isUrdu ? "آفر بھیج دی گئی (روپے 300)" : "Offer Sent (Rs. 300)"}</span>
-              </>
-            ) : (
-              <>
-                <Send className="size-4" />
-                <span>{isUrdu ? "روپے 300 میں آفر بھیجیں" : "Send Offer for Rs. 300"}</span>
-              </>
-            )}
-          </Button>
+          {hasActiveOfferForOtherJob && (
+            <p
+              className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-800 text-center"
+              role="alert"
+            >
+              {isUrdu
+                ? "آپ کی ایک پیشکش پہلے سے کسٹمر کے پاس زیر التواء ہے۔ آپ ایک وقت میں ایک ہی شخص کو پیشکش بھیج سکتے ہیں۔"
+                : "You already have an active pending offer. You cannot send offers to more than one customer at the same time."}
+            </p>
+          )}
+
+          <div className="flex items-center justify-between gap-3">
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={onClose}
+              className="rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-bold px-5 h-10 cursor-pointer"
+            >
+              {isUrdu ? "بند کریں" : "Close"}
+            </Button>
+
+            <Button
+              type="button"
+              onClick={handleSendOffer}
+              disabled={isSending || isSent || hasActiveOfferForOtherJob}
+              className={`rounded-full text-xs sm:text-sm font-bold px-6 h-10 shadow-md transition-all cursor-pointer flex items-center gap-1.5 ${
+                isSent
+                  ? "bg-[#16A34A] hover:bg-[#16A34A] text-white"
+                  : "bg-teal hover:bg-teal/90 text-white shadow-teal/20"
+              }`}
+            >
+              {isSending ? (
+                <>
+                  <Loader2 className="size-4 animate-spin" />
+                  <span>{isUrdu ? "آفر بھیجی جا رہی ہے..." : "Sending Offer..."}</span>
+                </>
+              ) : isSent ? (
+                <>
+                  <CheckCircle2 className="size-4" />
+                  <span>
+                    {isUrdu
+                      ? `آفر بھیج دی گئی (روپے ${visitCharge})`
+                      : `Offer Sent (Rs. ${visitCharge})`}
+                  </span>
+                </>
+              ) : (
+                <>
+                  <Send className="size-4" />
+                  <span>
+                    {isUrdu
+                      ? `روپے ${visitCharge} میں آفر بھیجیں`
+                      : `Send Offer for Rs. ${visitCharge}`}
+                  </span>
+                </>
+              )}
+            </Button>
+          </div>
         </div>
 
         {/* IMAGE ZOOM OVERLAY (If clicked thumbnail) */}
@@ -338,17 +556,19 @@ export function JobRequestModal({
             >
               <X className="size-6" />
             </button>
-            <div className="relative max-h-[85vh] max-w-[90vw] aspect-4/3 w-[600px] overflow-hidden rounded-2xl">
-              <Image
+            <div className="relative max-h-[85vh] max-w-[90vw] flex items-center justify-center overflow-hidden rounded-2xl">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
                 src={selectedImagePreview}
                 alt="Enlarged attachment"
-                fill
-                className="object-contain"
+                decoding="async"
+                className="max-h-[85vh] max-w-[90vw] object-contain rounded-2xl shadow-2xl"
               />
             </div>
           </div>
         )}
       </div>
     </div>
+    </>
   );
 }

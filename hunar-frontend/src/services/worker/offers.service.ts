@@ -1,7 +1,6 @@
 import { http } from "@/lib/api-client";
-import { isMockMode, simulateLatency } from "@/lib/data-source";
+import { getMaxNegotiationRounds } from "@/lib/negotiation";
 import type { VisitOffer } from "@/types/offer";
-import { mockOffers } from "@/mocks/jobs.mock";
 
 interface BackendOfferRow {
   id: string;
@@ -19,7 +18,11 @@ interface BackendOfferRow {
   message: string | null;
   status: string;
   negotiationRound: number;
+  maxNegotiationRounds?: number;
+  minimumVisitFee?: number;
   createdAt: string;
+  expiresAt?: string;
+  serverTime?: string;
 }
 
 function mapBackendOffer(w: BackendOfferRow): VisitOffer {
@@ -42,8 +45,10 @@ function mapBackendOffer(w: BackendOfferRow): VisitOffer {
           ? "counter_received"
           : "sent") as VisitOffer["status"],
     createdAt: w.createdAt,
+    expiresAt: w.expiresAt,
+    serverTime: w.serverTime,
     currentRound: w.negotiationRound + 1,
-    maxRounds: 3,
+    maxRounds: w.maxNegotiationRounds ?? getMaxNegotiationRounds(),
     counterHistory: [
       {
         round: 1,
@@ -58,9 +63,6 @@ function mapBackendOffer(w: BackendOfferRow): VisitOffer {
 }
 
 export async function listMyOffers(): Promise<VisitOffer[]> {
-  if (isMockMode()) {
-    return simulateLatency([...mockOffers]);
-  }
   const res = await http.get<{ data: BackendOfferRow[] }>("/offers/my?limit=100");
   return (res.data ?? []).map(mapBackendOffer);
 }
@@ -73,6 +75,7 @@ export async function submitWorkerOffer(
   const created = await http.post<BackendOfferRow>(`/jobs/${jobId}/offers`, {
     visitCharge,
     message,
+    note: message,
   });
   return mapBackendOffer(created);
 }
@@ -84,8 +87,11 @@ export async function sendWorkerCounterOffer(
   message?: string,
 ): Promise<void> {
   await http.put(`/jobs/${jobId}/offers/${offerId}/counter`, {
+    visitCharge: counterAmount,
     counterAmount,
+    counterPrice: counterAmount,
     message,
+    note: message,
   });
 }
 

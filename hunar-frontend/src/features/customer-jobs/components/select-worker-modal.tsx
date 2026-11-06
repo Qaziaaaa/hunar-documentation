@@ -9,6 +9,7 @@ import {
   X,
 } from "lucide-react";
 import { useLocale } from "next-intl";
+import { formatJobDate } from "@/lib/format";
 import type { CustomerJob, WorkerOffer } from "../types";
 
 interface SelectWorkerModalProps {
@@ -43,7 +44,7 @@ export function SelectWorkerModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in-50 duration-200">
+    <div className="fixed inset-0 z-50 overflow-y-auto scrollbar-none no-scrollbar bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in-50 duration-200">
       <div className="bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden animate-in zoom-in-95 duration-200 text-[#123B5D]">
         {/* Modal Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-white">
@@ -79,7 +80,12 @@ export function SelectWorkerModal({
                 <img
                   src={worker.avatarUrl}
                   alt={worker.name}
+                  loading="lazy"
+                  decoding="async"
                   className="w-full h-full object-cover"
+                  onError={(e) => {
+                    (e.currentTarget as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(worker.name || "Worker")}&background=0F766E&color=fff`;
+                  }}
                 />
               </div>
               <div>
@@ -124,7 +130,9 @@ export function SelectWorkerModal({
                   {isUrdu ? "پسندیدہ وقت: " : "Preferred Timing: "}
                 </span>
                 <span>
-                  {job.preferredDate || (isUrdu ? "آج" : "Today")} • {job.preferredTimeSlot || (isUrdu ? "صبح کا وقت" : "Morning")}
+                  {job.scheduleType === "asap"
+                    ? (isUrdu ? "⚡ فوری" : "⚡ Immediate")
+                    : `${formatJobDate(job.preferredDate) || (isUrdu ? "آج" : "Today")} • ${job.preferredTimeSlot || (isUrdu ? "مناسب وقت" : "Flexible Timing")}`}
                 </span>
               </div>
             </div>

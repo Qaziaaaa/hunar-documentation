@@ -1,25 +1,34 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import {
+  AlertTriangle,
   ArrowLeft,
+  ArrowRight,
   Calendar,
   CheckCircle2,
   Clock,
   Lock,
   MapPin,
+  MessageSquare,
   Pause,
+  Phone,
   Play,
   Radio,
   ShieldCheck,
   Volume2,
   Wrench,
+  Star,
 } from "lucide-react";
 import { Link } from "@/i18n/navigation";
 import { useLocale } from "next-intl";
+import { formatDateTime, formatJobDate } from "@/lib/format";
 import { WorkerOfferCard } from "./worker-offer-card";
 import { WorkerProfileModal } from "./worker-profile-modal";
-import { SelectWorkerModal } from "./select-worker-modal";
+import { CustomerReviewModal } from "./customer-review-modal";
+import { customerReviewService } from "../services/customer-review-service";
+import { VoicePlayer } from "@/features/worker-dashboard/components/voice-player";
 import { acceptWorkerOffer } from "../api/customer-jobs-api";
 import type { CustomerJob, WorkerOffer } from "../types";
 
@@ -31,44 +40,89 @@ export function CustomerJobDetailsView({ initialJob }: CustomerJobDetailsViewPro
   const locale = useLocale();
   const isUrdu = locale === "ur";
   const [job, setJob] = useState<CustomerJob>(initialJob);
-  const [selectedOfferForProfile, setSelectedOfferForProfile] = useState<WorkerOffer | null>(null);
-  const [selectedOfferForBooking, setSelectedOfferForBooking] = useState<WorkerOffer | null>(null);
-  const [isPlayingAudio, setIsPlayingAudio] = useState(false);
-  const [previewPhoto, setPreviewPhoto] = useState<string | null>(null);
 
-  // Audio Playback Handler
-  const handleToggleAudio = () => {
-    if (!job.voiceNoteUrl) return;
-    const audio = document.getElementById("job-details-voice-player") as HTMLAudioElement | null;
-    if (!audio) return;
-
-    if (isPlayingAudio) {
-      audio.pause();
-      setIsPlayingAudio(false);
-    } else {
-      audio.play().catch(() => {});
-      setIsPlayingAudio(true);
-      audio.onended = () => setIsPlayingAudio(false);
+  useEffect(() => {
+    if (initialJob) {
+      setJob(initialJob);
     }
+  }, [initialJob]);
+
+  const [selectedOfferForProfile, setSelectedOfferForProfile] = useState<WorkerOffer | null>(null);
+  const [confirmingOfferId, setConfirmingOfferId] = useState<string | null>(null);
+  const [previewPhoto, setPreviewPhoto] = useState<string | null>(null);
+  const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [toastTone, setToastTone] = useState<"success" | "error">("success");
+  const queryClient = useQueryClient();
+
+  useEffect(() => {
+    const isCompleted =
+      job.status === "completed" ||
+      String(job.rawStatus || "").toUpperCase() === "COMPLETED";
+    if (
+      isCompleted &&
+      !job.hasReviewed &&
+      !customerReviewService.isReviewCompleted(job.id) &&
+      !customerReviewService.isDismissedInSession(job.id)
+    ) {
+      customerReviewService.promptReview(job);
+    }
+  }, [job]);
+
+  const showToast = (message: string, tone: "success" | "error" = "success") => {
+    setToastMessage(message);
+    setToastTone(tone);
+    setTimeout(() => setToastMessage(null), 4000);
   };
 
   // Direct Booking Confirmation Handler
   const handleConfirmBooking = async (offer: WorkerOffer) => {
+    setConfirmingOfferId(offer.id);
     try {
       await acceptWorkerOffer(job.id, offer.id);
     } catch (err) {
       console.warn("acceptWorkerOffer error:", err);
+      showToast(
+        isUrdu
+          ? "بکنگ نہیں ہو سکی، براہِ کرم دوبارہ کوشش کریں۔"
+          : "Booking failed — the visit was not scheduled. Please try again.",
+        "error"
+      );
+      setConfirmingOfferId(null);
+      return;
     }
     setJob((prev) => ({
       ...prev,
       status: "visit_scheduled",
       selectedOffer: offer,
     }));
-    setSelectedOfferForBooking(null);
+    setSelectedOfferForProfile(null);
+    setConfirmingOfferId(null);
+    void queryClient.invalidateQueries({ queryKey: ["customer", "jobs"] });
+    showToast(
+      isUrdu
+        ? `${offer.worker.name} کی بکنگ کامیابی سے ہو گئی! سیکیورٹی PIN فعال ہے۔`
+        : `Successfully booked ${offer.worker.name}! Security PIN activated.`
+    );
   };
 
   return (
     <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-6 pb-16 animate-in fade-in-50 duration-300 text-[#123B5D]">
+      {/* Toast Notification */}
+      {toastMessage && (
+        <div
+          className={`fixed top-20 right-6 rtl:right-auto rtl:left-6 z-60 text-white px-5 py-3 rounded-2xl shadow-xl flex items-center gap-3 animate-in slide-in-from-top-4 duration-300 ${
+            toastTone === "error" ? "bg-rose-600" : "bg-[#0F766E]"
+          }`}
+        >
+          {toastTone === "error" ? (
+            <AlertTriangle className="size-5 shrink-0" />
+          ) : (
+            <CheckCircle2 className="size-5 shrink-0" />
+          )}
+          <span className="text-xs sm:text-sm font-semibold">{toastMessage}</span>
+        </div>
+      )}
       {/* Top Breadcrumb / Back Bar */}
       <div className="flex items-center justify-between">
         <Link
@@ -93,6 +147,8 @@ export function CustomerJobDetailsView({ initialJob }: CustomerJobDetailsViewPro
               {job.subCategory || (isUrdu ? "سروس درخواست" : "Service Request")}
             </span>
 
+            
+
             <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-600">
               <MapPin className="size-3 text-[#0F766E]" />
               {job.area || (isUrdu ? "آن لوکیشن" : "On Location")}
@@ -105,16 +161,30 @@ export function CustomerJobDetailsView({ initialJob }: CustomerJobDetailsViewPro
                   ? `آفرز موصول ہو رہی ہیں (${job.offers.length} کاریگر)`
                   : `Receiving Offers (${job.offers.length} pros)`}
               </span>
-            ) : (
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-[#0F766E]/15 text-[#0F766E]">
+            ) : job.status === "in_progress" ? (
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/10 text-emerald-700 border border-emerald-500/20">
+                <span className="size-2 rounded-full bg-emerald-600 animate-pulse" />
+                {isUrdu ? "کام جاری ہے" : "Service In Progress"}
+              </span>
+            ) : job.status === "completed" ? (
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
                 <CheckCircle2 className="size-3.5" />
-                {isUrdu ? "وزٹ شیڈول ہو گیا" : "Visit Scheduled"}
+                {isUrdu ? "مکمل اور تصدیق شدہ" : "Completed & Verified"}
+              </span>
+            ) : job.status === "cancelled" ? (
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-slate-100 text-slate-700 border border-slate-200">
+                {isUrdu ? "منسوخ شدہ" : "Cancelled"}
+              </span>
+            ) : (
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-[#F59E0B]/10 text-[#F59E0B] border border-[#F59E0B]/20">
+                <span className="size-2 rounded-full bg-[#F59E0B]" />
+                {isUrdu ? "وزٹ شیڈول اور PIN فعال ہے" : "Visit Scheduled & PIN Active"}
               </span>
             )}
           </div>
 
           <h1 className="text-lg sm:text-2xl font-extrabold text-[#123B5D] leading-snug">
-            {job.title}
+            {job.title || job.subCategory || job.category || (isUrdu ? "سروس کی درخواست" : "Service Request")}
           </h1>
         </div>
 
@@ -123,7 +193,7 @@ export function CustomerJobDetailsView({ initialJob }: CustomerJobDetailsViewPro
             {isUrdu ? "پوسٹ کرنے کی تاریخ" : "Posted On"}
           </span>
           <span className="text-xs sm:text-sm font-bold text-[#123B5D]">
-            {job.createdAt}
+            {formatDateTime(job.createdAt)}
           </span>
         </div>
       </div>
@@ -145,7 +215,7 @@ export function CustomerJobDetailsView({ initialJob }: CustomerJobDetailsViewPro
                 <p className="text-xs font-bold text-[#123B5D]">
                   {isUrdu ? "جاب شائع کی گئی" : "Job Published"}
                 </p>
-                <p className="text-[11px] text-slate-400">{job.createdAt}</p>
+                <p className="text-[11px] text-slate-400">{formatDateTime(job.createdAt)}</p>
               </div>
 
               {/* Step 2: Receiving Offers */}
@@ -236,41 +306,16 @@ export function CustomerJobDetailsView({ initialJob }: CustomerJobDetailsViewPro
 
             {/* Voice Note Audio Player */}
             {job.voiceNoteUrl && (
-              <div className="p-3 bg-slate-50 rounded-2xl flex items-center gap-3">
-                <audio
-                  id="job-details-voice-player"
-                  src={job.voiceNoteUrl}
-                  className="hidden"
+              <div className="space-y-1.5">
+                <VoicePlayer
+                  voiceNote={{
+                    audioUrl: job.voiceNoteUrl,
+                    durationSeconds: job.voiceNoteDuration,
+                    waveformPattern: [35, 65, 45, 80, 95, 70, 40, 75, 90, 85, 55, 75, 45, 65, 35],
+                  }}
+                  title={isUrdu ? "منسلک وائس نوٹ" : "Voice Note"}
+                  variant="full"
                 />
-                <button
-                  type="button"
-                  onClick={handleToggleAudio}
-                  className="size-9 rounded-full bg-[#0F766E] text-white flex items-center justify-center shrink-0 shadow-xs hover:bg-[#115E59] cursor-pointer"
-                >
-                  {isPlayingAudio ? (
-                    <Pause className="size-4" />
-                  ) : (
-                    <Play className="size-4 ml-0.5 rtl:ml-0 rtl:mr-0.5" />
-                  )}
-                </button>
-                <div className="flex-1">
-                  <div className="flex items-center justify-between text-xs font-semibold text-[#123B5D] mb-1">
-                    <span className="flex items-center gap-1">
-                      <Volume2 className="size-3 text-[#0F766E]" />
-                      {isUrdu ? "وائس نوٹ" : "Voice Note"}
-                    </span>
-                    <span className="text-slate-400 text-[11px]">
-                      0:{job.voiceNoteDuration || 15}
-                    </span>
-                  </div>
-                  <div className="h-1.5 bg-slate-200 rounded-full overflow-hidden">
-                    <div
-                      className={`h-full bg-[#0F766E] rounded-full transition-all ${
-                        isPlayingAudio ? "w-3/4" : "w-1/3"
-                      }`}
-                    />
-                  </div>
-                </div>
               </div>
             )}
           </div>
@@ -296,9 +341,9 @@ export function CustomerJobDetailsView({ initialJob }: CustomerJobDetailsViewPro
                 <Clock className="size-4 text-[#0F766E] shrink-0" />
                 <p className="text-slate-600">
                   <span className="font-bold text-[#123B5D]">
-                    {job.preferredDate || (isUrdu ? "آج" : "Today")}
+                    {formatJobDate(job.preferredDate) || (isUrdu ? "آج" : "Today")}
                   </span>{" "}
-                  • {job.preferredTimeSlot || (isUrdu ? "فوری / ابھی" : "Immediate / ASAP")}
+                  • {job.preferredTimeSlot || (job.scheduleType === "asap" ? (isUrdu ? "⚡ فوری" : "⚡ Immediate") : (isUrdu ? "مناسب وقت" : "Flexible Timing"))}
                 </p>
               </div>
             </div>
@@ -351,26 +396,144 @@ export function CustomerJobDetailsView({ initialJob }: CustomerJobDetailsViewPro
 
                 <div className="text-right rtl:text-left">
                   <span className="text-[11px] text-slate-400 block font-medium">
-                    {isUrdu ? "طے شدہ وزٹ فیس" : "Agreed Visit Fee"}
+                    {job.status === "completed"
+                      ? (isUrdu ? "کل ادا شدہ رقم" : "Total Paid")
+                      : (isUrdu ? "طے شدہ وزٹ فیس" : "Agreed Visit Fee")}
                   </span>
                   <span className="text-lg font-extrabold text-[#0F766E]">
-                    Rs. {job.selectedOffer.visitFee.toLocaleString()}
+                    Rs.{" "}
+                    {(
+                      job.status === "completed"
+                        ? ((job.totalAmount && job.totalAmount > 0)
+                            ? job.totalAmount
+                            : (job.selectedOffer.visitFee + (job.repairCharge ?? 0)))
+                        : job.selectedOffer.visitFee
+                    ).toLocaleString()}
                   </span>
+                  {job.status === "completed" && Boolean(job.repairCharge && job.repairCharge > 0) && (
+                    <span className="text-[10px] text-slate-500 block">
+                      {isUrdu
+                        ? `وزٹ Rs. ${job.selectedOffer.visitFee} + مرمت Rs. ${job.repairCharge}`
+                        : `Visit Rs. ${job.selectedOffer.visitFee} + Repair Rs. ${job.repairCharge}`}
+                    </span>
+                  )}
                 </div>
               </div>
 
+              {/* Doorstep Security Code Callout */}
+              {job.securityPin && (
+                <div className="p-3 bg-white rounded-2xl border border-amber-200/80 flex items-center justify-between">
+                  <div>
+                    <span className="text-[11px] text-slate-400 block font-medium">
+                      {isUrdu ? "دہلیز داخلہ PIN" : "Doorstep Entry PIN"}
+                    </span>
+                    <span className="text-xs text-slate-600">
+                      {isUrdu ? "کاریگر کی آمد پر یہ PIN تصدیق کریں" : "Technician shares this code at door to verify identity"}
+                    </span>
+                  </div>
+                  <span className="font-mono text-base font-bold tracking-widest text-[#0F766E] bg-[#0F766E]/10 px-3 py-1 rounded-lg">
+                    {job.securityPin}
+                  </span>
+                </div>
+              )}
 
-              {/* Completion & Review Direct Action */}
-              <Link
-                href={`/customer/job/${job.id}/complete`}
-                className="w-full flex items-center justify-center gap-2 py-3 bg-[#0F766E] hover:bg-[#115E59] text-white text-xs font-bold rounded-xl shadow-xs transition-all"
-              >
-                <span>
-                  {isUrdu
-                    ? "مکمل شدہ کام کا جائزہ لیں اور ادائیگی منظور کریں ←"
-                    : "Inspect Completed Work & Authorize Payment →"}
-                </span>
-              </Link>
+              {/* Action Buttons for Active Job */}
+              {job.status !== "completed" && (
+                <div className="space-y-2.5">
+                  <Link
+                    href={`/customer/job/${job.id}/tracking`}
+                    className="w-full flex items-center justify-center gap-2 py-3 bg-[#0F766E] hover:bg-[#115E59] text-white text-xs sm:text-sm font-bold rounded-xl shadow-xs transition-all cursor-pointer active:scale-98"
+                  >
+                    <Clock className="size-4" />
+                    <span>
+                      {isUrdu
+                        ? "لائیو آمد اور دہلیز PIN ٹریک کریں ←"
+                        : "Track Live Arrival & Doorstep PIN →"}
+                    </span>
+                  </Link>
+
+                  <div className="flex items-center gap-2.5">
+                    {job.selectedOffer.worker.phone && (
+                      <a
+                        href={`tel:${job.selectedOffer.worker.phone}`}
+                        className="flex-1 py-2.5 px-3 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-700 font-semibold text-xs border border-slate-200 flex items-center justify-center gap-1.5 transition-colors"
+                      >
+                        <Phone className="size-3.5 text-success" />
+                        <span>{isUrdu ? "کاریگر کو کال کریں" : "Call Pro"}</span>
+                      </a>
+                    )}
+                    <Link
+                      href={`/customer/chat?jobId=${job.id}`}
+                      className="flex-1 py-2.5 px-3 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-700 font-semibold text-xs border border-slate-200 flex items-center justify-center gap-1.5 transition-colors"
+                    >
+                      <MessageSquare className="size-3.5 text-teal" />
+                      <span>{isUrdu ? "پیغام بھیجیں" : "Message"}</span>
+                    </Link>
+                  </div>
+                </div>
+              )}
+
+              {/* Rate & Review Card for Completed Job */}
+              {job.status === "completed" && (
+                <div className="p-4 rounded-2xl bg-emerald-50/70 border border-emerald-200 text-xs text-emerald-800 space-y-3">
+                  <div className="flex items-center justify-between flex-wrap gap-2">
+                    <div className="flex items-center gap-1.5 font-bold">
+                      <CheckCircle2 className="size-4 text-emerald-600" />
+                      <span>
+                        {isUrdu
+                          ? "سروس کامیابی سے مکمل ہو چکی ہے"
+                          : "Service Successfully Completed"}
+                      </span>
+                    </div>
+                    {job.hasReviewed ? (
+                      <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-200/70 text-emerald-950 flex items-center gap-1">
+                        <Star className="size-3 fill-emerald-800 text-emerald-800" />
+                        <span>
+                          {job.customerReview?.rating ?? 5}/5 {isUrdu ? "ریویو درج ہے" : "Reviewed"}
+                        </span>
+                      </span>
+                    ) : null}
+                  </div>
+
+                  <p className="text-[11px] text-emerald-700/90">
+                    {isUrdu
+                      ? "ادائیگی کی تصدیق ہو چکی ہے۔ کاریگر کی حوصلہ افزائی کے لیے اپنا ریویو درج کریں۔"
+                      : "Payment has been settled. Please rate your technician's workmanship."}
+                  </p>
+
+                  {job.customerReview?.tags && job.customerReview.tags.length > 0 && (
+                    <div className="flex flex-wrap gap-1.5 pt-0.5">
+                      {job.customerReview.tags.map((tag) => (
+                        <span
+                          key={tag}
+                          className="px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-100 text-emerald-800"
+                        >
+                          ✓ {tag}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+
+                  {job.customerReview?.comment && (
+                    <div className="p-2.5 rounded-xl bg-white/80 border border-emerald-100 text-[11px] text-slate-700 italic">
+                      &ldquo;{job.customerReview.comment}&rdquo;
+                    </div>
+                  )}
+
+                  {!job.hasReviewed && (
+                    <button
+                      type="button"
+                      onClick={() => { customerReviewService.promptReview(job, { force: true }); setIsReviewModalOpen(true); }}
+                      className="w-full py-2.5 px-4 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs sm:text-sm shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-98"
+                    >
+                      <Star className="size-4 fill-slate-950" />
+                      <span>
+                        {isUrdu ? "کاریگر کو ریویو دیں اور ریٹنگ درج کریں" : "Rate & Review Technician"}
+                      </span>
+                    </button>
+                  )}
+                </div>
+              )}
             </div>
           ) : (
             <>
@@ -396,8 +559,9 @@ export function CustomerJobDetailsView({ initialJob }: CustomerJobDetailsViewPro
                     <WorkerOfferCard
                       key={offer.id}
                       offer={offer}
+                      isConfirming={confirmingOfferId === offer.id}
                       onViewProfile={(off) => setSelectedOfferForProfile(off)}
-                      onSelectWorker={(off) => setSelectedOfferForBooking(off)}
+                      onSelectWorker={(off) => handleConfirmBooking(off)}
                     />
                   ))}
                 </div>
@@ -426,13 +590,13 @@ export function CustomerJobDetailsView({ initialJob }: CustomerJobDetailsViewPro
               <div>
                 <h4 className="text-xs font-bold text-[#123B5D]">
                   {isUrdu
-                    ? "WorkerFIX 100% تصدیق شدہ کوالٹی کی ضمانت"
-                    : "WorkerFIX 100% Verified Quality Guarantee"}
+                    ? "WorkerFIX تصدیق شدہ سروس"
+                    : "WorkerFIX Verified Service"}
                 </h4>
                 <p className="text-[11px] text-slate-500">
                   {isUrdu
-                    ? "تمام کاریگر نادرا سی این آئی سی سے تصدیق شدہ ہیں، ڈور سٹیپ او ٹی پی پن اور فکسڈ وزٹ فیس کے ساتھ۔"
-                    : "NADRA CNIC verified technician with doorstep OTP PIN confirmation and transparent visit pricing."}
+                    ? "تمام کاریگر تصدیق شدہ ہیں، ڈور سٹیپ او ٹی پی پن اور فکسڈ وزٹ فیس کے ساتھ۔"
+                    : "Verified technician with doorstep OTP PIN confirmation and transparent visit pricing."}
                 </p>
               </div>
             </div>
@@ -448,17 +612,8 @@ export function CustomerJobDetailsView({ initialJob }: CustomerJobDetailsViewPro
         onClose={() => setSelectedOfferForProfile(null)}
         onSelectWorker={(off) => {
           setSelectedOfferForProfile(null);
-          setSelectedOfferForBooking(off);
+          handleConfirmBooking(off);
         }}
-      />
-
-      {/* Select Worker & Confirm Booking Dialog */}
-      <SelectWorkerModal
-        job={job}
-        offer={selectedOfferForBooking}
-        isOpen={Boolean(selectedOfferForBooking)}
-        onClose={() => setSelectedOfferForBooking(null)}
-        onConfirmBooking={handleConfirmBooking}
       />
 
       {/* Photo Lightbox Modal */}
@@ -476,6 +631,32 @@ export function CustomerJobDetailsView({ initialJob }: CustomerJobDetailsViewPro
             />
           </div>
         </div>
+      )}
+      {/* Review Modal for Completed Jobs */}
+      {isReviewModalOpen && !customerReviewService.isOpen() && (
+      <CustomerReviewModal
+        job={job}
+        isOpen={isReviewModalOpen}
+        onClose={() => setIsReviewModalOpen(false)}
+        onReviewSubmitted={(review) => {
+          setJob((prev) => ({
+            ...prev,
+            hasReviewed: true,
+            customerReview: {
+              rating: review.rating,
+              comment: review.comment,
+              tags: review.tags,
+              date: new Date().toISOString(),
+            },
+          }));
+          void queryClient.invalidateQueries({ queryKey: ["customer", "jobs"] });
+          showToast(
+            isUrdu
+              ? "آپ کا ریویو کامیابی سے جمع کر لیا گیا ہے!"
+              : "Your review has been successfully submitted!"
+          );
+        }}
+      />
       )}
     </div>
   );

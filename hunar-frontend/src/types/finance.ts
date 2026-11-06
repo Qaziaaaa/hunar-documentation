@@ -46,6 +46,7 @@ export type WalletTransactionType = "TOP_UP" | "DEDUCTION";
 export interface WalletTransaction {
   id: string;
   type: WalletTransactionType;
+  isHold?: boolean;
   amount: number;
   date: string;
   displayDate: string;
@@ -58,6 +59,7 @@ export interface WalletTransaction {
 
 export interface WalletSummary {
   currentBalance: number;
+  heldBalance?: number;
   totalTopUps: number;
   totalDeductions: number;
   totalTransactions: number;

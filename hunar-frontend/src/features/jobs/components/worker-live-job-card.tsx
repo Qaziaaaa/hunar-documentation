@@ -43,12 +43,11 @@ export function WorkerLiveJobCard({
     offer?.visitCharge ??
     job.visitCharge ??
     job.customerSuggestedPrice ??
-    800;
-
+    0;
   const commissionHold = Math.round(agreedVisitCharge * 0.1);
   const netEarnings = agreedVisitCharge - commissionHold;
 
-  const etaMinutes = job.etaMinutes || 12;
+  const etaMinutes = job.etaMinutes;
 
   const getStatusDetails = () => {
     switch (job.status) {
@@ -57,7 +56,9 @@ export function WorkerLiveJobCard({
           stepIndex: 2,
           label: "En Route to Site",
           badgeBg: "bg-amber-500/10 text-amber-600 border-amber-500/20",
-          desc: `Heading to ${job.location.area}. Estimated arrival in ~${etaMinutes} mins.`,
+          desc: etaMinutes
+            ? `Heading to ${job.location.area}. Estimated arrival in ~${etaMinutes} mins.`
+            : `Heading to ${job.location.area}. En route to site.`,
           nextActionLabel: "I've Arrived at Site",
           actionType: "arrive",
         };
@@ -105,7 +106,7 @@ export function WorkerLiveJobCard({
 
   const statusInfo = getStatusDetails();
 
-  const handleQuickAdvance = (e: React.MouseEvent) => {
+  const handleQuickAdvance = async (e: React.MouseEvent) => {
     e.preventDefault();
     setActionError(null);
     setIsUpdatingStatus(true);
@@ -114,7 +115,7 @@ export function WorkerLiveJobCard({
       if (statusInfo.actionType === "start") {
         workerStore.startVisit(job.id);
       } else if (statusInfo.actionType === "arrive") {
-        const res = workerStore.arriveAtSite(job.id);
+        const res = await workerStore.arriveAtDoorstep(job.id);
         if (!res.success) {
           setActionError(res.error || "Wallet hold failed");
         }
@@ -173,9 +174,6 @@ export function WorkerLiveJobCard({
             </div>
             <div className="text-base sm:text-xl font-black text-[#123B5D]">
               {formatRs(agreedVisitCharge)}
-            </div>
-            <div className="text-[10px] text-emerald-600 font-semibold hidden sm:block">
-              Net: {formatRs(netEarnings)} <span className="text-slate-400">(−{formatRs(commissionHold)})</span>
             </div>
           </div>
         </div>
@@ -251,9 +249,15 @@ export function WorkerLiveJobCard({
                   <img
                     src={job.customer.avatarUrl}
                     alt={job.customer.name}
+                    loading="lazy"
+                    decoding="async"
                     className="size-full object-cover"
+                    onError={(e) => {
+                      (e.currentTarget as HTMLElement).style.display = "none";
+                    }}
                   />
-                ) : (
+                ) : null}
+                {(!job.customer.avatarUrl) && (
                   job.customer.name.slice(0, 2).toUpperCase()
                 )}
               </div>
@@ -276,7 +280,7 @@ export function WorkerLiveJobCard({
                 onClick={() => setShowCallModal(true)}
                 className="flex-1 py-2 px-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-[11px] sm:text-xs font-bold transition-colors flex items-center justify-center gap-1.5"
               >
-                <Phone className="size-3.5 text-[#0F8B8D]" />
+                <Phone className="size-3.5 text-success" />
                 <span>Call</span>
               </button>
 
@@ -295,10 +299,11 @@ export function WorkerLiveJobCard({
             <div className="space-y-1.5 sm:space-y-2">
               <div className="flex items-center justify-between">
                 <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">
-                  Peshawar Destination
+                  {job.location.city ? `${job.location.city} Destination` : "Destination"}
                 </span>
                 <span className="text-[11px] font-bold text-[#0F8B8D]">
-                  {job.location.distanceKm} km (~{etaMinutes} min)
+                  {job.location.distanceKm ? `${job.location.distanceKm} km` : ""}
+                  {etaMinutes ? ` (~${etaMinutes} min)` : ""}
                 </span>
               </div>
 

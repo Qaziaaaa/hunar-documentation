@@ -38,35 +38,19 @@ export function Step6Review({
   const tRadii = useTranslations("WorkerOnboarding.Radii");
 
   const getTranslatedSkill = (skillId: string) => {
-    try {
-      return tSkills(skillId);
-    } catch {
-      return skillId;
-    }
+    return tSkills.has(skillId) ? tSkills(skillId) : skillId;
   };
 
   const getTranslatedCity = (city: string) => {
-    try {
-      return tCities(city);
-    } catch {
-      return city;
-    }
+    return tCities.has(city) ? tCities(city) : city;
   };
 
   const getTranslatedArea = (area: string) => {
-    try {
-      return tAreas(area);
-    } catch {
-      return area;
-    }
+    return tAreas.has(area) ? tAreas(area) : area;
   };
 
   const getTranslatedRadius = (radius: string) => {
-    try {
-      return tRadii(radius);
-    } catch {
-      return radius;
-    }
+    return tRadii.has(radius) ? tRadii(radius) : radius;
   };
 
   return (
@@ -91,7 +75,7 @@ export function Step6Review({
           </p>
         </div>
 
-        <div className="max-h-[380px] sm:max-h-[440px] space-y-3 overflow-y-auto pr-1 text-xs sm:text-sm">
+        <div className="max-h-[380px] sm:max-h-[440px] space-y-3 overflow-y-auto pr-1 text-xs sm:text-sm scrollbar-none no-scrollbar">
           {/* 1. Personal Information & Photo Card */}
           <div className="rounded-2xl bg-white p-3 shadow-2xs border border-slate-100">
             <div className="mb-2 flex items-center justify-between">
@@ -113,6 +97,7 @@ export function Step6Review({
                     src={formData.profilePhoto}
                     alt={formData.fullName || "Worker Avatar"}
                     fill
+                    unoptimized
                     className="object-cover object-top"
                   />
                 </div>

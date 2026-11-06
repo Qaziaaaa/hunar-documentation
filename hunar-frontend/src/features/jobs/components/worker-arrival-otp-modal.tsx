@@ -13,11 +13,13 @@ import {
   X,
 } from "lucide-react";
 import { arrivalService } from "../services/arrival-verification-service";
+import { HUNAR_CONFIG } from "@/lib/config";
 
 interface WorkerArrivalOtpModalProps {
   isOpen: boolean;
   otp: string;
   arrivedAt: number;
+  jobId?: string;
   customerName?: string;
   onClose: () => void;
   isUrdu?: boolean;
@@ -27,10 +29,12 @@ export function WorkerArrivalOtpModal({
   isOpen,
   otp,
   arrivedAt,
+  jobId,
   customerName = "Customer",
   onClose,
   isUrdu = false,
 }: WorkerArrivalOtpModalProps) {
+  const formattedJobId = jobId ? (jobId.startsWith("#") ? jobId : `#${jobId}`) : null;
   const [copied, setCopied] = useState(false);
   const [secondsRemaining, setSecondsRemaining] = useState<number>(() => {
     const elapsed = Math.floor((Date.now() - (arrivedAt || Date.now())) / 1000);
@@ -94,6 +98,14 @@ export function WorkerArrivalOtpModal({
                   ? `${customerName} کی دہلیز پر آمد ریکارڈ ہو گئی`
                   : `Arrived at ${customerName}'s doorstep`}
               </p>
+              {formattedJobId && (
+                <p className="text-[11px] font-semibold text-slate-600 mt-1 flex items-center gap-1">
+                  <span className="text-slate-400">{isUrdu ? "جاب آئی ڈی:" : "Job ID:"}</span>
+                  <span className="font-mono font-bold text-[#123B5D] bg-slate-100 border border-slate-200/80 px-1.5 py-0.5 rounded">
+                    {formattedJobId}
+                  </span>
+                </p>
+              )}
             </div>
           </div>
           <button
@@ -175,11 +187,11 @@ export function WorkerArrivalOtpModal({
             </div>
             <div className="flex items-center gap-2 pt-1">
               <a
-                href="tel:0911234567"
+                href={`tel:${HUNAR_CONFIG.rawSupportPhone}`}
                 className="flex-1 py-1.5 rounded-lg bg-[#123B5D] text-white text-center font-bold text-[11px] flex items-center justify-center gap-1.5"
               >
                 <Phone className="size-3" />
-                <span>{isUrdu ? "سپورٹ ہیلپ لائن" : "Call Support"}</span>
+                <span>{isUrdu ? "سپورٹ ہیلپ لائن" : `Call Support (${HUNAR_CONFIG.supportPhone})`}</span>
               </a>
             </div>
           </div>

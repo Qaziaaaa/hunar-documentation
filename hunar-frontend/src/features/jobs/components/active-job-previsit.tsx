@@ -34,8 +34,11 @@ export function ActiveJobPreVisit({ job, offer }: ActiveJobPreVisitProps) {
   const agreedVisitCharge =
     offer?.agreedVisitCharge ??
     offer?.visitCharge ??
+    job.visitCharge ??
     job.customerSuggestedPrice ??
-    800;
+    (job as any).lockedVisitCharge ??
+    (job as any).suggestedVisitCharge ??
+    0;
 
   const getTimelineStepIndex = (status: JobRequest["status"]) => {
     switch (status) {
@@ -153,7 +156,12 @@ export function ActiveJobPreVisit({ job, offer }: ActiveJobPreVisitProps) {
                     <img
                       src={job.customer.avatarUrl}
                       alt={job.customer.name}
+                      loading="lazy"
+                      decoding="async"
                       className="w-full h-full object-cover"
+                      onError={(e) => {
+                        (e.currentTarget as HTMLElement).style.display = "none";
+                      }}
                     />
                   ) : (
                     <User className="w-5 h-5 text-[#0F8B8D]" />
@@ -181,7 +189,7 @@ export function ActiveJobPreVisit({ job, offer }: ActiveJobPreVisitProps) {
                   onClick={() => setShowCallModal(true)}
                   className="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold flex items-center gap-1 transition-colors"
                 >
-                  <Phone className="w-3.5 h-3.5 text-[#0F8B8D]" />
+                  <Phone className="w-3.5 h-3.5 text-success" />
                   <span>Call</span>
                 </button>
 

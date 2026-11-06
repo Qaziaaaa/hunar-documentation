@@ -75,6 +75,14 @@ export class UploadsController {
     return this.uploadsService.uploadVoiceNote(user.sub, file);
   }
 
+  /** Admin category cover image (category management, Admin flow §11). */
+  @Post('category-image')
+  @Roles(Role.ADMIN, Role.SUPER_ADMIN)
+  @UseInterceptors(FileInterceptor('file', multerOptions(UploadCategory.CATEGORY_IMAGE)))
+  uploadCategoryImage(@CurrentUser() user: JwtPayload, @UploadedFile() file: Express.Multer.File) {
+    return this.uploadsService.uploadCategoryImage(user.sub, file);
+  }
+
   /** Task 27 — generic POST /uploads (category passed as a multipart field). */
   @Post()
   @Roles(Role.WORKER, Role.CUSTOMER)

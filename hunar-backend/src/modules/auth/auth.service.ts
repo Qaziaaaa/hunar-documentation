@@ -9,7 +9,7 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { Role, User } from '@prisma/client';
-import * as bcrypt from 'bcrypt';
+import * as bcrypt from 'bcryptjs';
 import { createHash, randomUUID, timingSafeEqual } from 'crypto';
 import { PrismaService } from '../../prisma/prisma.service';
 import { RedisService } from '../../common/redis/redis.service';
@@ -38,7 +38,7 @@ const OTP_VERIFY_RATE_MAX = 5;
 const OTP_VERIFY_RATE_WINDOW_SECONDS = 5 * 60;
 const LOGIN_RATE_MAX = 5;
 const LOGIN_RATE_WINDOW_SECONDS = 5 * 60;
-const ACCESS_TOKEN_TTL = '900s';
+const ACCESS_TOKEN_TTL = '7d';
 const REFRESH_TOKEN_TTL = '2592000s';
 const REFRESH_TOKEN_TTL_SECONDS = 30 * 24 * 60 * 60;
 const BCRYPT_ROUNDS = 10;
@@ -55,7 +55,9 @@ export interface AuthResult extends AuthTokens {
 export interface SafeUser {
   id: string;
   phone: string;
-  name: string;
+  name?: string | null;
+  avatarUrl?: string | null;
+  email: string;
   role: Role;
   isActive: boolean;
   isVerified: boolean;
@@ -303,7 +305,27 @@ export class AuthService {
     }
 
     if (!user.isActive) {
-      throw new UnauthorizedException('Account is deactivated');
+      if (user.suspendedUntil && user.suspendedUntil <= new Date()) {
+        await this.prisma.user.update({
+          where: { id: user.id },
+          data: {
+            isActive: true,
+            suspendedUntil: null,
+            suspensionReason: null,
+            suspensionType: null,
+          },
+        });
+        user.isActive = true;
+      } else {
+        if (user.suspendedUntil) {
+          throw new UnauthorizedException(
+            `Account is temporarily suspended until ${user.suspendedUntil.toLocaleString()}. Reason: ${user.suspensionReason || 'Terms violation'}`,
+          );
+        }
+        throw new UnauthorizedException(
+          `Account is permanently suspended. Reason: ${user.suspensionReason || 'Account suspended by admin'}`,
+        );
+      }
     }
 
     if (user.role !== Role.WORKER) {
@@ -335,7 +357,27 @@ export class AuthService {
     }
 
     if (!user.isActive) {
-      throw new UnauthorizedException('Account is deactivated');
+      if (user.suspendedUntil && user.suspendedUntil <= new Date()) {
+        await this.prisma.user.update({
+          where: { id: user.id },
+          data: {
+            isActive: true,
+            suspendedUntil: null,
+            suspensionReason: null,
+            suspensionType: null,
+          },
+        });
+        user.isActive = true;
+      } else {
+        if (user.suspendedUntil) {
+          throw new UnauthorizedException(
+            `Account is temporarily suspended until ${user.suspendedUntil.toLocaleString()}. Reason: ${user.suspensionReason || 'Terms violation'}`,
+          );
+        }
+        throw new UnauthorizedException(
+          `Account is permanently suspended. Reason: ${user.suspensionReason || 'Account suspended by admin'}`,
+        );
+      }
     }
 
     if (user.role !== Role.CUSTOMER) {
@@ -514,6 +556,8 @@ export class AuthService {
       id: user.id,
       phone: user.phone,
       name: user.name ?? '',
+      avatarUrl: user.avatarUrl ?? null,
+      email: user.email ?? '',
       role: user.role,
       isActive: user.isActive,
       isVerified: user.isVerified,

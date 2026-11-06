@@ -70,6 +70,7 @@ export function OfferStatusBadge({ status, className = "" }: OfferStatusBadgePro
       );
 
     case "closed_assigned":
+    case "archived":
       return (
         <span
           className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 border border-slate-300 text-slate-700 font-bold text-xs ${className}`}

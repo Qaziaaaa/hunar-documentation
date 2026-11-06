@@ -6,9 +6,22 @@ import { useParams } from "next/navigation";
 import { JobRequest } from "@/types/job";
 import { VisitOffer } from "@/types/offer";
 import { formatRs } from "@/lib/design-tokens";
+import { connectSocket } from "@/lib/socket";
+import { http } from "@/lib/api-client";
+import { getWorkerProfile } from "@/services/worker/profile.service";
 import { workerStore } from "@/stores/worker-jobs-store";
-import { WorkerChatModal } from "./worker-chat-modal";
-import { WorkerArrivalOtpModal } from "./worker-arrival-otp-modal";
+import { HUNAR_CONFIG } from "@/lib/config";
+import dynamic from "next/dynamic";
+
+const WorkerChatModal = dynamic(
+  () => import("./worker-chat-modal").then((mod) => mod.WorkerChatModal),
+  { ssr: false }
+);
+
+const WorkerArrivalOtpModal = dynamic(
+  () => import("./worker-arrival-otp-modal").then((mod) => mod.WorkerArrivalOtpModal),
+  { ssr: false }
+);
 import {
   arrivalService,
   SUCCESS_VERIFICATION_MESSAGE,
@@ -27,6 +40,7 @@ import {
   ShieldCheck,
   MapPin,
   Clock,
+  Loader2,
 } from "lucide-react";
 import "leaflet/dist/leaflet.css";
 
@@ -36,21 +50,19 @@ interface WorkerVisitTrackingViewProps {
   onArrived?: () => void;
 }
 
-// Peshawar high-detail road route points
-const PESHAWAR_ROAD_POINTS: [number, number][] = [
-  [34.004869, 71.511284],
-  [34.005201, 71.514086],
-  [34.006157, 71.51861],
-  [34.006888, 71.524865],
-  [34.007397, 71.527823],
-  [34.008288, 71.531717],
-  [34.008853, 71.534727],
-  [34.009398, 71.535448],
-  [34.010809, 71.536774],
-  [34.011449, 71.536697],
-  [34.0145, 71.5358],
-  [34.015, 71.535],
-];
+function calculateHaversineKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  const R = 6371; // km
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLon = ((lon2 - lon1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+}
 
 export function WorkerVisitTrackingView({
   job,
@@ -64,7 +76,12 @@ export function WorkerVisitTrackingView({
 
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<any>(null);
+  const leafletRef = useRef<any>(null);
   const routeBoundsRef = useRef<any>(null);
+  const workerMarkerRef = useRef<any>(null);
+  const destMarkerRef = useRef<any>(null);
+  const routeCasingRef = useRef<any>(null);
+  const routeNavRef = useRef<any>(null);
 
   const [showCallModal, setShowCallModal] = useState(false);
   const [showChatModal, setShowChatModal] = useState(false);
@@ -73,54 +90,277 @@ export function WorkerVisitTrackingView({
   const [cancelReason, setCancelReason] = useState("");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isArriving, setIsArriving] = useState(false);
+  const isArrivingRef = useRef(false);
   const [showWorkerOtpModal, setShowWorkerOtpModal] = useState(false);
-  const [arrivedAtTime, setArrivedAtTime] = useState<number>(Date.now());
+  const [arrivedAtTime, setArrivedAtTime] = useState<number>(() => {
+    const existingSession = arrivalService.getSession();
+    const normJobId = job.id?.toLowerCase();
+    if (
+      existingSession &&
+      (existingSession.jobId?.toLowerCase() === normJobId || (job as any)?.visitId === existingSession.visitId) &&
+      existingSession.arrivedAt
+    ) {
+      return existingSession.arrivedAt;
+    }
+    return (job as any)?.arrivedAt || Date.now();
+  });
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
-  const [routePoints, setRoutePoints] = useState<[number, number][]>(
-    PESHAWAR_ROAD_POINTS
-  );
+  const hasHandledVerifiedRef = useRef(false);
+  const successToastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Customer / Job coordinates
-  const customerLat = job.location.coordinates?.lat || 34.015;
-  const customerLng = job.location.coordinates?.lng || 71.535;
+  const showWorkerSuccessToast = (msg: string) => {
+    if (successToastTimerRef.current) {
+      clearTimeout(successToastTimerRef.current);
+    }
+    setSuccessMessage(msg);
+    successToastTimerRef.current = setTimeout(() => {
+      setSuccessMessage(null);
+      successToastTimerRef.current = null;
+    }, 5000);
+  };
+  const [routePoints, setRoutePoints] = useState<[number, number][]>([]);
 
-  // Worker live starting coordinates
-  const workerLat = 34.004869;
-  const workerLng = 71.511284;
+  // Customer / Job exact coordinates from job location (fallback to Central Peshawar / Hayatabad if missing)
+  const rawCustomerLat = job.location?.coordinates?.lat ?? (job as any)?.latitude;
+  const rawCustomerLng = job.location?.coordinates?.lng ?? (job as any)?.longitude;
+  const hasCustomerCoords =
+    typeof rawCustomerLat === "number" &&
+    !isNaN(rawCustomerLat) &&
+    rawCustomerLat !== 0 &&
+    typeof rawCustomerLng === "number" &&
+    !isNaN(rawCustomerLng) &&
+    rawCustomerLng !== 0;
+
+  const customerLat = hasCustomerCoords ? rawCustomerLat! : 34.0048;
+  const customerLng = hasCustomerCoords ? rawCustomerLng! : 71.5113;
+
+  // Worker live coordinates (start with cached GPS or realistic nearby Peshawar coordinates, never (0,0) Null Island)
+  const [workerLat, setWorkerLat] = useState<number>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const raw = sessionStorage.getItem("hunar_worker_coords");
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (typeof parsed?.lat === "number" && !isNaN(parsed.lat) && parsed.lat !== 0) {
+            return parsed.lat;
+          }
+        }
+      } catch {}
+    }
+    return Number((customerLat - 0.015).toFixed(6));
+  });
+
+  const [workerLng, setWorkerLng] = useState<number>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const raw = sessionStorage.getItem("hunar_worker_coords");
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (typeof parsed?.lng === "number" && !isNaN(parsed.lng) && parsed.lng !== 0) {
+            return parsed.lng;
+          }
+        }
+      } catch {}
+    }
+    return Number((customerLng - 0.012).toFixed(6));
+  });
+
+  const [isGpsActive, setIsGpsActive] = useState<boolean>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const raw = sessionStorage.getItem("hunar_worker_coords");
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          return Boolean(parsed?.lat && parsed?.lng && parsed.lat !== 0 && parsed.lng !== 0);
+        }
+      } catch {}
+    }
+    return false;
+  });
+  const [workerProfileName, setWorkerProfileName] = useState<string>("Technician");
+
+  useEffect(() => {
+    getWorkerProfile()
+      .then((p) => {
+        if (p?.name || (p as any)?.fullName) {
+          setWorkerProfileName(p.name || (p as any).fullName);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  // Real-time GPS Tracker for Worker
+  useEffect(() => {
+    if (typeof window === "undefined" || !("geolocation" in navigator)) return;
+
+    let lastSent = 0;
+    const sendLocationUpdate = async (lat: number, lng: number, acc?: number) => {
+      if (!lat || !lng || isNaN(lat) || isNaN(lng) || (lat === 0 && lng === 0)) return;
+      setWorkerLat(lat);
+      setWorkerLng(lng);
+      setIsGpsActive(true);
+
+      if (typeof window !== "undefined") {
+        try {
+          sessionStorage.setItem("hunar_worker_coords", JSON.stringify({ lat, lng }));
+        } catch {}
+      }
+
+      if (workerMarkerRef.current) {
+        workerMarkerRef.current.setLatLng([lat, lng]);
+      }
+
+      // Throttled transmission to backend every 4 seconds
+      const now = Date.now();
+      if (now - lastSent > 4000 && job?.id) {
+        lastSent = now;
+        try {
+          await http.post(`/location/track?jobId=${job.id}`, {
+            latitude: lat,
+            longitude: lng,
+            accuracy: acc ?? 10,
+          });
+        } catch (err) {
+          console.warn("[Worker GPS] Failed sending location update:", err);
+        }
+      }
+    };
+
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        sendLocationUpdate(pos.coords.latitude, pos.coords.longitude, pos.coords.accuracy);
+      },
+      (err) => console.warn("[Worker GPS] Initial position error:", err),
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+    );
+
+    const watchId = navigator.geolocation.watchPosition(
+      (pos) => {
+        sendLocationUpdate(pos.coords.latitude, pos.coords.longitude, pos.coords.accuracy);
+      },
+      (err) => console.warn("[Worker GPS] Watch error:", err),
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 3000 }
+    );
+
+    return () => {
+      navigator.geolocation.clearWatch(watchId);
+    };
+  }, [job?.id]);
 
   const agreedVisitCharge =
     offer?.agreedVisitCharge ??
     offer?.visitCharge ??
     job.visitCharge ??
     job.customerSuggestedPrice ??
-    800;
+    (job as any).suggestedVisitCharge ??
+    0;
 
   const commissionHold = Math.round(agreedVisitCharge * 0.1);
-  const securityPin = job.securityPin || "7294";
-  const customerFirstName = job.customer.name.split(" ")[0];
+  const [currentSecurityPin, setCurrentSecurityPin] = useState<string>(() => {
+    const existingSession = arrivalService.getSession();
+    const normJobId = job.id?.toLowerCase();
+    if (
+      existingSession &&
+      existingSession.status === "pending_otp" &&
+      (existingSession.jobId?.toLowerCase() === normJobId || (job as any)?.visitId === existingSession.visitId) &&
+      existingSession.otp
+    ) {
+      return existingSession.otp;
+    }
+    return job.securityPin || (job as any)?.activeArrivalOtp || "";
+  });
+  const customerName =
+    job.customer?.name ||
+    (job.customer as any)?.fullName ||
+    (job.customer as any)?.firstName ||
+    (job as any)?.customerName ||
+    "Customer";
+  const customerFirstName = customerName.split(" ")[0] || "Customer";
+  const customerAvatar = job.customer?.avatarUrl || (job.customer as any)?.avatar || "";
+  const customerRating = job.customer?.rating ?? 5.0;
+  const customerTotalReviews =
+    job.customer?.totalReviews ??
+    (job.customer as any)?.totalOrders ??
+    (job.customer as any)?.reviewCount ??
+    0;
+  const customerPhone = job.customer?.phone || (job as any)?.customerPhone || "";
+  const locationArea =
+    job.location?.area ||
+    (job as any)?.locationArea ||
+    (job as any)?.area ||
+    "Location";
+  const locationAddress =
+    job.location?.fullAddress ||
+    (job.location as any)?.address ||
+    (job as any)?.address ||
+    locationArea;
 
-  // Dynamic OSRM Road Route Fetching with Fallback
+  // Live distance and ETA states computed dynamically from worker & customer coordinates
+  const [liveDistanceKm, setLiveDistanceKm] = useState<number | null>(null);
+  const [liveEtaMinutes, setLiveEtaMinutes] = useState<number | null>(null);
+
+  // Dynamic OSRM Road Route Fetching with Fallback & Real Distance/ETA Extraction
   useEffect(() => {
     let isCancelled = false;
 
     async function fetchRoadRoute() {
+      // Guard against unassigned / privacy-sanitized (0,0) coordinates
+      if (
+        !customerLat ||
+        !customerLng ||
+        (customerLat === 0 && customerLng === 0) ||
+        !workerLat ||
+        !workerLng ||
+        (workerLat === 0 && workerLng === 0)
+      ) {
+        setLiveDistanceKm(null);
+        setLiveEtaMinutes(null);
+        return;
+      }
+
+      // Calculate direct Haversine distance in km as baseline
+      const directKm = calculateHaversineKm(workerLat, workerLng, customerLat, customerLng);
+
       try {
         const res = await fetch(
           `https://router.project-osrm.org/route/v1/driving/${workerLng},${workerLat};${customerLng},${customerLat}?overview=full&geometries=geojson`
         );
         const data = await res.json();
-        if (!isCancelled && data?.routes?.[0]?.geometry?.coordinates) {
-          const pts = data.routes[0].geometry.coordinates.map(
-            ([lng, lat]: [number, number]) => [lat, lng] as [number, number]
-          );
-          if (pts.length > 1) {
-            setRoutePoints(pts);
+        if (!isCancelled && data?.routes?.[0]) {
+          const route = data.routes[0];
+          if (route.geometry?.coordinates) {
+            const pts = route.geometry.coordinates.map(
+              ([lng, lat]: [number, number]) => [lat, lng] as [number, number]
+            );
+            if (pts.length > 1) {
+              setRoutePoints(pts);
+            }
+          }
+          if (typeof route.distance === "number") {
+            const km = Number((route.distance / 1000).toFixed(1));
+            setLiveDistanceKm(km);
+            const mins = km <= 0.05 ? 0 : Math.max(1, Math.round(route.duration / 60));
+            setLiveEtaMinutes(mins);
+            return;
           }
         }
       } catch {
         if (!isCancelled) {
-          setRoutePoints(PESHAWAR_ROAD_POINTS);
+          // No road route available: fall back to a straight line between the
+          // actual worker and customer coordinates (never a fabricated route).
+          setRoutePoints([
+            [workerLat, workerLng],
+            [customerLat, customerLng],
+          ]);
         }
+      }
+
+      // Fallback: Haversine distance
+      if (!isCancelled) {
+        const km = Number(directKm.toFixed(1));
+        setLiveDistanceKm(km);
+        const mins = km <= 0.05 ? 0 : Math.max(1, Math.round((km / 25) * 60));
+        setLiveEtaMinutes(mins);
       }
     }
 
@@ -130,24 +370,61 @@ export function WorkerVisitTrackingView({
     };
   }, [customerLat, customerLng, workerLat, workerLng]);
 
-  // Initialize Map with HUNAR Palette
+  // Derived user-facing distance and arrival status
+  const displayDistanceKm =
+    liveDistanceKm !== null
+      ? liveDistanceKm
+      : typeof job.location.distanceKm === "number"
+      ? job.location.distanceKm
+      : 0;
+
+  const displayEtaMinutes =
+    liveEtaMinutes !== null
+      ? liveEtaMinutes
+      : typeof job.etaMinutes === "number"
+      ? job.etaMinutes
+      : 0;
+
+  const isAtDoorstep = Boolean(isGpsActive && liveDistanceKm !== null && liveDistanceKm <= 0.05);
+
+  const distanceText = isAtDoorstep
+    ? isUrdu
+      ? "دہلیز پر موجود"
+      : "At Doorstep"
+    : displayDistanceKm > 0 ? `${displayDistanceKm} km` : (isUrdu ? "قریب" : "Nearby");
+
+  const etaText = isAtDoorstep
+    ? isUrdu
+      ? "پہنچ چکے ہیں"
+      : "Arrived"
+    : displayEtaMinutes <= 1
+    ? isUrdu
+      ? "~1 منٹ"
+      : "~1 min away"
+    : isUrdu
+    ? `~${displayEtaMinutes} منٹ`
+    : `~${displayEtaMinutes} mins away`;
+
+  // Initialize Map with HUNAR Palette (Mounts once)
   useEffect(() => {
     if (typeof window === "undefined" || !mapContainerRef.current) return;
 
     let isMounted = true;
     let resizeObserver: ResizeObserver | null = null;
+    let timer1: any = null;
+    let timer2: any = null;
 
     async function initMap() {
       const L = (await import("leaflet")).default;
       if (!isMounted || !mapContainerRef.current) return;
 
-      // Patch Leaflet DomUtil.getPosition to prevent '_leaflet_pos' TypeError when unmounting or accessing detached DOM elements
+      // 1. Monkeypatch Leaflet DomUtil.getPosition to prevent '_leaflet_pos' TypeError when unmounting or accessing detached DOM elements
       if (L && L.DomUtil && L.DomUtil.getPosition && !(L.DomUtil as any)._patchedPosition) {
         const origGetPos = L.DomUtil.getPosition;
         L.DomUtil.getPosition = function (el: any) {
           if (!el) return new L.Point(0, 0);
           try {
-            return origGetPos.call(L.DomUtil, el);
+            return origGetPos.call(L.DomUtil, el) || new L.Point(0, 0);
           } catch {
             return new L.Point(0, 0);
           }
@@ -155,8 +432,23 @@ export function WorkerVisitTrackingView({
         (L.DomUtil as any)._patchedPosition = true;
       }
 
+      // 2. Monkeypatch Leaflet Map.prototype._getMapPanePos to prevent '_leaflet_pos' error when _mapPane is detached
+      if (L && L.Map && L.Map.prototype && !(L.Map.prototype as any)._patchedPanePos) {
+        const origPanePos = (L.Map.prototype as any)._getMapPanePos;
+        (L.Map.prototype as any)._getMapPanePos = function (this: any) {
+          if (!this?._mapPane) return new L.Point(0, 0);
+          try {
+            return origPanePos.call(this) || new L.Point(0, 0);
+          } catch {
+            return new L.Point(0, 0);
+          }
+        };
+        (L.Map.prototype as any)._patchedPanePos = true;
+      }
+
       if (mapInstanceRef.current) {
         try {
+          mapInstanceRef.current.stop();
           mapInstanceRef.current.off();
           mapInstanceRef.current.remove();
         } catch {}
@@ -175,6 +467,7 @@ export function WorkerVisitTrackingView({
       });
 
       mapInstanceRef.current = map;
+      leafletRef.current = L;
 
       // Reliable OpenStreetMap Tile Layer
       L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
@@ -183,33 +476,40 @@ export function WorkerVisitTrackingView({
       }).addTo(map);
 
       // HUNAR Brand Teal & Navy Route Path
-      if (routePoints && routePoints.length > 1) {
-        // High contrast navy casing
-        L.polyline(routePoints, {
-          color: "#123B5D",
-          weight: 7,
-          opacity: 0.85,
-          lineCap: "round",
-          lineJoin: "round",
-        }).addTo(map);
+      const initialPoints =
+        routePoints && routePoints.length > 1
+          ? routePoints
+          : ([[workerLat, workerLng], [customerLat, customerLng]] as [number, number][]);
 
-        // Vibrant brand teal navigation line
-        const navLine = L.polyline(routePoints, {
-          color: "#0F8B8D",
-          weight: 4.5,
-          opacity: 1,
-          lineCap: "round",
-          lineJoin: "round",
-        }).addTo(map);
+      // High contrast navy casing
+      const casing = L.polyline(initialPoints, {
+        color: "#123B5D",
+        weight: 7,
+        opacity: 0.85,
+        lineCap: "round",
+        lineJoin: "round",
+      }).addTo(map);
+      routeCasingRef.current = casing;
 
-        const bounds = navLine.getBounds();
-        if (bounds.isValid()) {
-          routeBoundsRef.current = bounds;
+      // Vibrant brand teal navigation line
+      const navLine = L.polyline(initialPoints, {
+        color: "#0F8B8D",
+        weight: 4.5,
+        opacity: 1,
+        lineCap: "round",
+        lineJoin: "round",
+      }).addTo(map);
+      routeNavRef.current = navLine;
+
+      const bounds = L.latLngBounds(initialPoints);
+      if (bounds.isValid()) {
+        routeBoundsRef.current = bounds;
+        try {
           map.fitBounds(bounds, {
-            padding: [50, 50],
+            padding: [60, 60],
             maxZoom: 16,
           });
-        }
+        } catch {}
       }
 
       // 1. Live Technician / Worker Marker (White circle with Navy/Teal badge, worker icon & live pulsating radar ring)
@@ -234,7 +534,7 @@ export function WorkerVisitTrackingView({
         iconAnchor: [22, 22],
       });
 
-      L.marker([workerLat, workerLng], { icon: workerIcon }).addTo(map);
+      workerMarkerRef.current = L.marker([workerLat, workerLng], { icon: workerIcon }).addTo(map);
 
       // 2. Destination Doorstep Pin Marker
       const destIcon = L.divIcon({
@@ -256,10 +556,10 @@ export function WorkerVisitTrackingView({
         iconAnchor: [19, 36],
       });
 
-      L.marker([customerLat, customerLng], { icon: destIcon }).addTo(map);
+      destMarkerRef.current = L.marker([customerLat, customerLng], { icon: destIcon }).addTo(map);
 
       // Force recalculation of map tile dimensions after DOM settle
-      setTimeout(() => {
+      timer1 = setTimeout(() => {
         if (isMounted && mapInstanceRef.current) {
           try {
             mapInstanceRef.current.invalidateSize();
@@ -275,7 +575,7 @@ export function WorkerVisitTrackingView({
         }
       }, 200);
 
-      setTimeout(() => {
+      timer2 = setTimeout(() => {
         if (isMounted && mapInstanceRef.current) {
           try {
             mapInstanceRef.current.invalidateSize();
@@ -299,75 +599,287 @@ export function WorkerVisitTrackingView({
 
     return () => {
       isMounted = false;
+      if (timer1) clearTimeout(timer1);
+      if (timer2) clearTimeout(timer2);
       if (resizeObserver) {
         resizeObserver.disconnect();
       }
       if (mapInstanceRef.current) {
         try {
+          mapInstanceRef.current.stop();
           mapInstanceRef.current.off();
           mapInstanceRef.current.remove();
         } catch {}
         mapInstanceRef.current = null;
       }
+      leafletRef.current = null;
+      workerMarkerRef.current = null;
+      destMarkerRef.current = null;
+      routeCasingRef.current = null;
+      routeNavRef.current = null;
     };
-  }, [customerLat, customerLng, workerLat, workerLng, routePoints, customerFirstName]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
+  // Dynamically update route polylines and fit bounds when road route changes
+  useEffect(() => {
+    if (!mapInstanceRef.current || !routePoints || routePoints.length < 2) return;
+    if (routeCasingRef.current) {
+      routeCasingRef.current.setLatLngs(routePoints);
+    }
+    if (routeNavRef.current) {
+      routeNavRef.current.setLatLngs(routePoints);
+      try {
+        const bounds = routeNavRef.current.getBounds();
+        if (bounds.isValid()) {
+          routeBoundsRef.current = bounds;
+          mapInstanceRef.current.fitBounds(bounds, {
+            padding: [60, 60],
+            maxZoom: 16,
+          });
+        }
+      } catch {}
+    }
+  }, [routePoints]);
+
+  // Dynamically update worker marker position and polyline when GPS coordinates update
+  useEffect(() => {
+    if (!workerLat || !workerLng || (workerLat === 0 && workerLng === 0)) return;
+    if (workerMarkerRef.current) {
+      workerMarkerRef.current.setLatLng([workerLat, workerLng]);
+    }
+    // If no multi-point road route is active, keep direct line between worker and customer updated
+    if (
+      mapInstanceRef.current &&
+      (!routePoints || routePoints.length < 2) &&
+      routeNavRef.current &&
+      routeCasingRef.current
+    ) {
+      const directLine: [number, number][] = [
+        [workerLat, workerLng],
+        [customerLat, customerLng],
+      ];
+      routeCasingRef.current.setLatLngs(directLine);
+      routeNavRef.current.setLatLngs(directLine);
+      const b = routeNavRef.current.getBounds();
+      if (b.isValid()) {
+        routeBoundsRef.current = b;
+      }
+    }
+  }, [workerLat, workerLng, customerLat, customerLng, routePoints]);
+
+  // Dynamically update customer marker position if customer coordinates change
+  useEffect(() => {
+    if (destMarkerRef.current) {
+      destMarkerRef.current.setLatLng([customerLat, customerLng]);
+    }
+  }, [customerLat, customerLng]);
+
+
+  // Real-time socket listener for customer OTP verification across devices/browsers
+  useEffect(() => {
+    const socket = connectSocket();
+    if (!socket) return;
+
+    // Join job room so worker also receives broadcasts sent to jobRoom(job.id)
+    if (job?.id) {
+      socket.emit("location:track:start", { jobId: job.id });
+    }
+
+    const onConnect = () => {
+      if (job?.id) {
+        socket.emit("location:track:start", { jobId: job.id });
+      }
+    };
+    socket.on("connect", onConnect);
+
+    const handleOtpVerified = (payload: any) => {
+      const normJobId = job.id?.toLowerCase();
+      const payloadJobId = payload?.jobId?.toLowerCase();
+      const payloadVisitId = payload?.visitId;
+      const expectedVisitId = (job as any)?.visitId || (job as any)?.nextVisit?.id;
+
+      if (
+        !payloadJobId ||
+        payloadJobId === normJobId ||
+        (payloadVisitId && payloadVisitId === expectedVisitId)
+      ) {
+        if (hasHandledVerifiedRef.current) return;
+        hasHandledVerifiedRef.current = true;
+
+        arrivalService.verifyOtpSuccess({ jobId: job.id, ...payload });
+        setShowWorkerOtpModal(false);
+        setIsArriving(false);
+        const successMsg = isUrdu ? SUCCESS_VERIFICATION_MESSAGE_UR : SUCCESS_VERIFICATION_MESSAGE;
+        showWorkerSuccessToast(successMsg);
+        workerStore.arriveAtSite(job.id);
+        workerStore.startInspection(job.id);
+        if (onArrived) {
+          onArrived();
+        }
+      }
+    };
+
+    const handleJobStatusChanged = (payload: any) => {
+      const normJobId = job.id?.toLowerCase();
+      const payloadJobId = payload?.jobId?.toLowerCase();
+      if (
+        payload &&
+        (!payloadJobId || payloadJobId === normJobId) &&
+        (payload.newStatus === "VISIT_COMPLETED" ||
+          payload.newStatus === "IN_PREMISES" ||
+          payload.newStatus === "INSPECTION_DONE")
+      ) {
+        handleOtpVerified(payload);
+      }
+    };
+
+    socket.on("visit:otp:verified", handleOtpVerified);
+    socket.on("visit.otp.verified", handleOtpVerified);
+    socket.on("job:statusChanged", handleJobStatusChanged);
+    socket.on("job:status:changed", handleJobStatusChanged);
+
+    return () => {
+      socket.off("connect", onConnect);
+      socket.off("visit:otp:verified", handleOtpVerified);
+      socket.off("visit.otp.verified", handleOtpVerified);
+      socket.off("job:statusChanged", handleJobStatusChanged);
+      socket.off("job:status:changed", handleJobStatusChanged);
+    };
+  }, [job.id, onArrived, isUrdu]);
+
+  // Safety net polling: while worker OTP modal is open, poll visit status every 2 seconds
+  useEffect(() => {
+    if (!showWorkerOtpModal && !isArriving) return;
+
+    let isMounted = true;
+    const interval = setInterval(async () => {
+      try {
+        const visitId = (job as any)?.visitId || (job as any)?.nextVisit?.id || job.id;
+        const res: any = await http.get(`/visits/${visitId}`).catch(() => null);
+        if (!res || !isMounted) return;
+
+        const visitStatus = (res.status || res.visitStatus || "").toUpperCase();
+        const jobStatus = (res.job?.status || res.jobStatus || "").toUpperCase();
+
+        if (
+          visitStatus === "COMPLETED" ||
+          jobStatus === "VISIT_COMPLETED" ||
+          jobStatus === "INSPECTION_DONE" ||
+          res.isArrivalPending === false
+        ) {
+          if (hasHandledVerifiedRef.current) return;
+          hasHandledVerifiedRef.current = true;
+
+          setShowWorkerOtpModal(false);
+          setIsArriving(false);
+          const successMsg = isUrdu ? SUCCESS_VERIFICATION_MESSAGE_UR : SUCCESS_VERIFICATION_MESSAGE;
+          showWorkerSuccessToast(successMsg);
+          arrivalService.verifyOtpSuccess({ jobId: job.id });
+          workerStore.arriveAtSite(job.id);
+          workerStore.startInspection(job.id);
+          if (onArrived) {
+            onArrived();
+          }
+        }
+      } catch {
+        // ignore background poll errors
+      }
+    }, 5000);
+
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
+  }, [showWorkerOtpModal, isArriving, job.id, isUrdu, onArrived]);
 
   // Subscribe to real-time arrival OTP verification
   useEffect(() => {
     const unsubscribe = arrivalService.subscribe((session, eventType) => {
+      const normJobId = job.id?.toLowerCase();
+      const sessionJobId = session?.jobId?.toLowerCase();
+
       if (
         session &&
-        (session.jobId === job.id || session.otp === securityPin) &&
+        (!sessionJobId || sessionJobId === normJobId || session.otp === currentSecurityPin) &&
         (eventType === "OTP_VERIFIED" || session.status === "otp_verified")
       ) {
+        if (hasHandledVerifiedRef.current) return;
+        hasHandledVerifiedRef.current = true;
+
         setShowWorkerOtpModal(false);
         setIsArriving(false);
         const successMsg = isUrdu ? SUCCESS_VERIFICATION_MESSAGE_UR : SUCCESS_VERIFICATION_MESSAGE;
-        setSuccessMessage(successMsg);
+        showWorkerSuccessToast(successMsg);
 
-        // Update state to arrived and entering premises for inspection
         workerStore.arriveAtSite(job.id);
         workerStore.startInspection(job.id);
-
-        setTimeout(() => {
-          if (onArrived) {
-            onArrived();
-          }
-        }, 2200);
+        if (onArrived) {
+          onArrived();
+        }
       }
     });
 
-    return () => unsubscribe();
-  }, [job.id, securityPin, isUrdu, onArrived]);
+    return () => {
+      unsubscribe();
+      if (successToastTimerRef.current) {
+        clearTimeout(successToastTimerRef.current);
+      }
+    };
+  }, [job.id, currentSecurityPin, isUrdu, onArrived]);
 
   // Handle "I'm here" / Reached Doorstep CTA
-  const handleReachedDoorstep = () => {
+  const handleReachedDoorstep = async () => {
+    if (isArriving || isArrivingRef.current) return;
     setErrorMessage(null);
 
-    // Verify 10% commission hold
-    const visitCharge = agreedVisitCharge;
-    const requiredHold = Math.round(visitCharge * 0.1);
-    const state = workerStore.getState();
-    if (state.walletBalance < requiredHold) {
-      setErrorMessage(
-        `Insufficient wallet balance. Minimum ${formatRs(requiredHold)} commission hold required.`
-      );
+    // If OTP is already known, simply reopen the modal without refetching
+    if (currentSecurityPin) {
+      setShowWorkerOtpModal(true);
       return;
     }
 
-    const now = Date.now();
-    setArrivedAtTime(now);
+    try {
+      isArrivingRef.current = true;
+      setIsArriving(true);
 
-    arrivalService.startArrivalSession({
-      jobId: job.id,
-      otp: securityPin,
-      workerName: "Ali Khan",
-      customerName: job.customer.name,
-      customerAddress: job.location.fullAddress || (job.location as any).address || job.location.area,
-    });
+      const res = await workerStore.arriveAtDoorstep(job.id);
+      if (!res.success) {
+        setErrorMessage(res.error || "Failed to notify arrival");
+        return;
+      }
 
-    setShowWorkerOtpModal(true);
+      const realOtp = res.otp;
+      if (!realOtp) {
+        setErrorMessage(
+          isUrdu
+            ? "او ٹی پی موصول نہیں ہوا۔ براہ کرم دوبارہ کوشش کریں۔"
+            : "Failed to retrieve OTP from server. Please try again."
+        );
+        return;
+      }
+
+      const arrivalTimestamp = res.arrivedAt || Date.now();
+      setCurrentSecurityPin(realOtp);
+      setArrivedAtTime(arrivalTimestamp);
+
+      arrivalService.startArrivalSession({
+        jobId: job.id,
+        visitId: res.visitId,
+        otp: realOtp,
+        workerName: workerProfileName || "Technician",
+        customerName: customerName,
+        customerAddress: locationAddress,
+      });
+
+      // Show modal only after authoritative OTP is received from backend
+      setShowWorkerOtpModal(true);
+    } catch (err: any) {
+      setErrorMessage(err?.message || "Failed to notify arrival");
+    } finally {
+      isArrivingRef.current = false;
+      setIsArriving(false);
+    }
   };
 
   const handleCancelSubmit = (e: React.FormEvent) => {
@@ -378,11 +890,11 @@ export function WorkerVisitTrackingView({
   };
 
   return (
-    <div className="fixed inset-0 z-40 flex flex-col bg-white text-slate-900 font-sans antialiased select-none overflow-hidden w-full max-w-3xl sm:max-w-4xl mx-auto shadow-2xl">
+    <div className="fixed inset-0 z-40 flex flex-col lg:flex-row bg-slate-100 text-slate-900 font-sans antialiased select-none overflow-hidden w-full">
       {/* ======================================================== */}
-      {/* 1. TOP HEADER (Cancel visit on left, Headphone Support on right) */}
+      {/* 1. MOBILE TOP HEADER (Cancel visit on left, Headphone Support on right) */}
       {/* ======================================================== */}
-      <header className="absolute top-0 inset-x-0 z-30 flex items-center justify-between px-4 py-3 pointer-events-auto">
+      <header className="absolute top-0 inset-x-0 z-30 flex lg:hidden items-center justify-between px-4 py-3 pointer-events-auto">
         <button
           type="button"
           onClick={() => setShowCancelModal(true)}
@@ -403,14 +915,51 @@ export function WorkerVisitTrackingView({
       </header>
 
       {/* ======================================================== */}
-      {/* 2. MAP AREA (UPPER SECTION) */}
+      {/* 2. MAP AREA (Full height on desktop, upper half on mobile) */}
       {/* ======================================================== */}
-      <div className="relative w-full flex-1 min-h-[300px] bg-slate-100 overflow-hidden isolate">
+      <div className="relative w-full lg:flex-1 h-full min-h-[300px] lg:min-h-0 bg-slate-100 overflow-hidden isolate flex flex-col">
+        {/* Desktop Top Floating Header Bar */}
+        <div className="hidden lg:flex absolute top-5 inset-x-6 z-30 items-center justify-between pointer-events-auto">
+          <button
+            type="button"
+            onClick={() => setShowCancelModal(true)}
+            className="text-xs font-bold text-slate-700 hover:text-red-600 bg-white/95 backdrop-blur-md px-4 py-2 rounded-full border border-slate-200/90 shadow-sm transition-all hover:bg-red-50 cursor-pointer flex items-center gap-1.5"
+          >
+            <span>{isUrdu ? "وزٹ منسوخ کریں" : "Cancel visit"}</span>
+          </button>
+
+          {/* Status Badge */}
+          <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-white/95 backdrop-blur-md border border-slate-200 shadow-sm text-xs font-extrabold text-[#123B5D]">
+            <span className="size-2 rounded-full bg-[#0F8B8D] animate-ping" />
+            <span>
+              {isUrdu ? "راستے میں · کسٹمر کی دہلیز روانگی" : "Live Navigation · En Route to Customer"}
+            </span>
+            <span className="text-slate-300">|</span>
+            <span className="text-[#0F8B8D]">
+              {isAtDoorstep
+                ? (isUrdu ? "دہلیز پر موجود" : "At Doorstep")
+                : isGpsActive
+                ? `${etaText} (${distanceText})`
+                : (isUrdu ? "GPS سگنل کا انتظار..." : "Awaiting GPS Signal...")}
+            </span>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setShowSupportModal(true)}
+            className="h-9 px-3.5 rounded-full bg-white/95 backdrop-blur-md border border-slate-200/90 shadow-sm flex items-center gap-2 text-xs font-bold text-[#123B5D] hover:text-[#0F8B8D] hover:bg-white active:scale-95 transition-all cursor-pointer"
+            title={isUrdu ? "WorkerFIX سپورٹ" : "WorkerFIX 24/7 Support"}
+          >
+            <Headphones className="size-4" />
+            <span>{isUrdu ? "مدد / سپورٹ" : "24/7 Support"}</span>
+          </button>
+        </div>
+
         {/* Leaflet Map Canvas */}
         <div ref={mapContainerRef} className="absolute inset-0 w-full h-full z-0" />
 
         {/* Top Right on Map: Recenter & Zoom Controls */}
-        <div className="absolute top-16 right-4 z-20 flex flex-col gap-1.5 pointer-events-auto">
+        <div className="absolute top-16 lg:top-20 right-4 z-20 flex flex-col gap-1.5 pointer-events-auto">
           <button
             type="button"
             onClick={() => {
@@ -418,7 +967,7 @@ export function WorkerVisitTrackingView({
                 mapInstanceRef.current.zoomIn();
               }
             }}
-            className="size-8 rounded-xl bg-white/95 backdrop-blur-md border border-slate-200/90 shadow-md flex items-center justify-center text-slate-800 font-black text-sm hover:bg-white active:scale-95 transition-all cursor-pointer"
+            className="size-8 sm:size-9 rounded-xl bg-white/95 backdrop-blur-md border border-slate-200/90 shadow-md flex items-center justify-center text-slate-800 font-black text-sm hover:bg-white active:scale-95 transition-all cursor-pointer"
             title="Zoom In"
           >
             +
@@ -430,7 +979,7 @@ export function WorkerVisitTrackingView({
                 mapInstanceRef.current.zoomOut();
               }
             }}
-            className="size-8 rounded-xl bg-white/95 backdrop-blur-md border border-slate-200/90 shadow-md flex items-center justify-center text-slate-800 font-black text-sm hover:bg-white active:scale-95 transition-all cursor-pointer"
+            className="size-8 sm:size-9 rounded-xl bg-white/95 backdrop-blur-md border border-slate-200/90 shadow-md flex items-center justify-center text-slate-800 font-black text-sm hover:bg-white active:scale-95 transition-all cursor-pointer"
             title="Zoom Out"
           >
             −
@@ -438,14 +987,27 @@ export function WorkerVisitTrackingView({
           <button
             type="button"
             onClick={() => {
-              if (mapInstanceRef.current && routeBoundsRef.current) {
-                mapInstanceRef.current.fitBounds(routeBoundsRef.current, {
-                  padding: [50, 50],
-                  maxZoom: 16,
-                });
+              if (mapInstanceRef.current) {
+                if (routeBoundsRef.current && routeBoundsRef.current.isValid()) {
+                  mapInstanceRef.current.fitBounds(routeBoundsRef.current, {
+                    padding: [60, 60],
+                    maxZoom: 16,
+                  });
+                } else if (leafletRef.current && workerLat && workerLng && customerLat && customerLng) {
+                  const b = leafletRef.current.latLngBounds([
+                    [workerLat, workerLng],
+                    [customerLat, customerLng],
+                  ]);
+                  mapInstanceRef.current.fitBounds(b, {
+                    padding: [60, 60],
+                    maxZoom: 16,
+                  });
+                } else {
+                  mapInstanceRef.current.setView([customerLat, customerLng], 15);
+                }
               }
             }}
-            className="size-8 rounded-xl bg-white/95 backdrop-blur-md border border-slate-200/90 shadow-md flex items-center justify-center text-[#123B5D] hover:text-[#0F8B8D] hover:bg-white active:scale-95 transition-all cursor-pointer"
+            className="size-8 sm:size-9 rounded-xl bg-white/95 backdrop-blur-md border border-slate-200/90 shadow-md flex items-center justify-center text-[#123B5D] hover:text-[#0F8B8D] hover:bg-white active:scale-95 transition-all cursor-pointer"
             title={isUrdu ? "راستہ دوبارہ مرکوز کریں" : "Recenter Route"}
           >
             <MapPin className="size-4 text-[#0F8B8D]" />
@@ -455,23 +1017,21 @@ export function WorkerVisitTrackingView({
         {/* Bottom Left on Map: "▲ Navigate" Button */}
         <div className="absolute bottom-6 left-4 z-20 pointer-events-auto">
           <a
-            href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-              job.location.fullAddress
-            )}`}
+            href={`https://www.google.com/maps/dir/?api=1&origin=${workerLat},${workerLng}&destination=${customerLat},${customerLng}`}
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-2 px-4 py-2.5 rounded-full bg-[#123B5D] hover:bg-[#0E2E49] text-white text-xs font-extrabold shadow-lg transition-all active:scale-95 cursor-pointer"
           >
             <NavigationIcon className="size-4 fill-white rotate-45" />
-            <span>{isUrdu ? "نیویگیٹ کریں" : "Navigate"}</span>
+            <span>{isUrdu ? "گوگل میپس میں کھولیں" : "Navigate in Google Maps"}</span>
           </a>
         </div>
       </div>
 
       {/* ======================================================== */}
-      {/* 3. LOWER HALF — BOTTOM SHEET (Polished, Customer Address Only) */}
+      {/* 3A. MOBILE BOTTOM SHEET (Untouched for mobile < lg) */}
       {/* ======================================================== */}
-      <div className="relative w-full bg-white rounded-t-[28px] -mt-4 z-30 border-t border-slate-200/90 shadow-[0_-8px_30px_rgba(0,0,0,0.12)] p-4 sm:p-5 flex flex-col justify-between space-y-3.5">
+      <div className="relative w-full bg-white rounded-t-[28px] -mt-4 z-30 border-t border-slate-200/90 shadow-[0_-8px_30px_rgba(0,0,0,0.12)] p-4 sm:p-5 flex flex-col justify-between space-y-3.5 lg:hidden">
         {/* Drag Handle */}
         <div className="w-10 h-1 rounded-full bg-slate-300 mx-auto -mt-1 shrink-0" />
 
@@ -488,22 +1048,28 @@ export function WorkerVisitTrackingView({
           {/* Left Column: Avatar + First Name + Rating */}
           <div className="flex flex-col items-center shrink-0 w-14 text-center">
             <div className="size-12 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-sm font-extrabold text-[#123B5D] overflow-hidden shadow-2xs">
-              {job.customer.avatarUrl ? (
+              {customerAvatar ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
-                  src={job.customer.avatarUrl}
-                  alt={job.customer.name}
+                  src={customerAvatar}
+                  alt={customerName}
+                  loading="lazy"
+                  decoding="async"
                   className="size-full object-cover"
+                  onError={(e) => {
+                    (e.currentTarget as HTMLElement).style.display = "none";
+                  }}
                 />
-              ) : (
-                job.customer.name.slice(0, 2).toUpperCase()
+              ) : null}
+              {(!customerAvatar) && (
+                customerName.slice(0, 2).toUpperCase()
               )}
             </div>
             <span className="text-xs font-extrabold text-slate-900 mt-1 truncate max-w-full">
               {customerFirstName}
             </span>
             <span className="text-[10px] text-amber-600 font-bold flex items-center gap-0.5 mt-0.5">
-              ⭐ {job.customer.rating} <span className="text-slate-400 font-normal">({job.customer.totalReviews})</span>
+              ⭐ {customerRating} <span className="text-slate-400 font-normal">({customerTotalReviews})</span>
             </span>
           </div>
 
@@ -515,10 +1081,10 @@ export function WorkerVisitTrackingView({
               </div>
               <div className="min-w-0 flex-1">
                 <p className="text-xs font-extrabold text-slate-900 truncate">
-                  {job.location.area}
+                  {locationArea}
                 </p>
                 <p className="text-[11px] text-slate-500 line-clamp-2 leading-tight mt-0.5">
-                  {job.location.fullAddress}
+                  {locationAddress}
                 </p>
               </div>
             </div>
@@ -527,11 +1093,11 @@ export function WorkerVisitTrackingView({
             <div className="flex items-center gap-2 pt-0.5 text-[10.5px] text-slate-500 font-bold pl-8">
               <span className="inline-flex items-center gap-1 text-[#0F8B8D]">
                 <NavigationIcon className="size-3 rotate-45 fill-current" />
-                {job.location.distanceKm || 2.1} km
+                {distanceText}
               </span>
               <span>·</span>
               <span className="text-slate-600">
-                ~{job.etaMinutes || 12} mins away
+                {etaText}
               </span>
             </div>
           </div>
@@ -542,7 +1108,7 @@ export function WorkerVisitTrackingView({
             <button
               type="button"
               onClick={() => setShowCallModal(true)}
-              className="size-10.5 rounded-full bg-emerald-500 hover:bg-emerald-600 text-white shadow-md shadow-emerald-500/20 flex items-center justify-center transition-all active:scale-90 cursor-pointer"
+              className="size-10.5 rounded-full bg-success hover:bg-success/90 text-white shadow-md shadow-success/20 flex items-center justify-center transition-all active:scale-90 cursor-pointer"
               title="Call Customer"
             >
               <Phone className="size-4.5 stroke-[2.2]" />
@@ -552,7 +1118,7 @@ export function WorkerVisitTrackingView({
             <button
               type="button"
               onClick={() => setShowChatModal(true)}
-              className="size-10.5 rounded-full bg-[#123B5D] hover:bg-[#0E2E49] text-white shadow-md shadow-[#123B5D]/20 flex items-center justify-center transition-all active:scale-90 cursor-pointer"
+              className="size-10.5 rounded-full bg-teal hover:bg-teal/90 text-white shadow-md shadow-teal/20 flex items-center justify-center transition-all active:scale-90 cursor-pointer"
               title="Chat with Customer"
             >
               <MessageCircle className="size-4.5 stroke-[2.2]" />
@@ -579,28 +1145,209 @@ export function WorkerVisitTrackingView({
             type="button"
             onClick={handleReachedDoorstep}
             disabled={isArriving}
-            className="w-full py-3.5 sm:py-4 rounded-2xl bg-gradient-to-r from-[#123B5D] to-[#0F8B8D] hover:opacity-95 active:scale-[0.99] text-white font-extrabold text-base sm:text-lg shadow-lg shadow-[#0F8B8D]/25 transition-all flex items-center justify-center gap-2 cursor-pointer"
+            className={`w-full py-3.5 sm:py-4 rounded-2xl bg-gradient-to-r from-[#123B5D] to-[#0F8B8D] text-white font-extrabold text-base sm:text-lg shadow-lg shadow-[#0F8B8D]/25 transition-all flex items-center justify-center gap-2 ${
+              isArriving
+                ? "opacity-80 cursor-wait pointer-events-none"
+                : "hover:opacity-95 active:scale-[0.99] cursor-pointer"
+            }`}
           >
-            <CheckCircle2 className="size-5 text-teal-200" />
-            <span>{isUrdu ? "میں دہلیز پر پہنچ گیا ہوں" : "I'm here (Doorstep)"}</span>
+            {isArriving ? (
+              <>
+                <Loader2 className="size-5 text-teal-200 animate-spin" />
+                <span>{isUrdu ? "اطلاع دی جا رہی ہے..." : "Notifying Customer..."}</span>
+              </>
+            ) : (
+              <>
+                <CheckCircle2 className="size-5 text-teal-200" />
+                <span>{isUrdu ? "میں دہلیز پر پہنچ گیا ہوں" : "I'm here (Doorstep)"}</span>
+              </>
+            )}
           </button>
         </div>
       </div>
+
+      {/* ======================================================== */}
+      {/* 3B. DESKTOP SIDEBAR CONTROL PANEL (Shown only on lg+) */}
+      {/* ======================================================== */}
+      <aside className="hidden lg:flex lg:w-[420px] xl:w-[460px] h-full bg-white border-l border-slate-200/90 flex-col justify-between p-6 z-30 shadow-xl overflow-y-auto scrollbar-none no-scrollbar">
+        <div className="space-y-6">
+          {/* Top Title Bar */}
+          <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+            <div>
+              <span className="text-[11px] font-bold text-[#0F8B8D] uppercase tracking-wider block">
+                {isUrdu ? "لائیو وزٹ کنٹرول" : "Live Visit Control"}
+              </span>
+              <h2 className="text-lg font-black text-[#123B5D]">
+                {job.title}
+              </h2>
+            </div>
+            <span className="px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 text-xs font-black border border-emerald-200 flex items-center gap-1.5">
+              <span className="size-2 rounded-full bg-emerald-500 animate-pulse" />
+              <span>ACTIVE</span>
+            </span>
+          </div>
+
+          {/* Customer Profile Card */}
+          <div className="bg-slate-50 rounded-2xl border border-slate-200/80 p-4 space-y-3.5">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="size-12 rounded-2xl bg-white border border-slate-200 flex items-center justify-center text-sm font-extrabold text-[#123B5D] overflow-hidden shadow-2xs shrink-0">
+                  {customerAvatar ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={customerAvatar}
+                      alt={customerName}
+                      loading="lazy"
+                      decoding="async"
+                      className="size-full object-cover"
+                      onError={(e) => {
+                        (e.currentTarget as HTMLElement).style.display = "none";
+                      }}
+                    />
+                  ) : null}
+                  {(!customerAvatar) && (
+                    customerName.slice(0, 2).toUpperCase()
+                  )}
+                </div>
+                <div className="min-w-0 leading-tight">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-sm font-black text-slate-900 truncate">
+                      {customerName}
+                    </span>
+                    <ShieldCheck className="size-4 text-emerald-600 shrink-0" />
+                  </div>
+                  <p className="text-xs text-slate-500 font-medium mt-0.5">
+                    ⭐ {customerRating} ({customerTotalReviews} reviews)
+                  </p>
+                </div>
+              </div>
+
+              {/* Direct Communication Quick Buttons */}
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setShowCallModal(true)}
+                  className="size-10 rounded-xl bg-success/10 text-success hover:bg-success hover:text-white border border-success/20 flex items-center justify-center transition-all cursor-pointer shadow-2xs"
+                  title="Call Customer"
+                >
+                  <Phone className="size-4 stroke-[2.2]" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowChatModal(true)}
+                  className="size-10 rounded-xl bg-teal/10 text-teal hover:bg-teal hover:text-white border border-teal/20 flex items-center justify-center transition-all cursor-pointer shadow-2xs"
+                  title="Chat with Customer"
+                >
+                  <MessageCircle className="size-4 stroke-[2.2]" />
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Destination & Route Card */}
+          <div className="bg-white rounded-2xl border border-slate-200 p-4 space-y-3 shadow-2xs">
+            <div className="flex items-start gap-2.5">
+              <div className="size-8 rounded-xl bg-teal-50 text-[#0F8B8D] border border-teal-200 flex items-center justify-center shrink-0 mt-0.5">
+                <MapPin className="size-4" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
+                  {isUrdu ? "کسٹمر کا پتہ" : "Destination Doorstep"}
+                </span>
+                <p className="text-sm font-extrabold text-slate-900 mt-0.5">
+                  {locationArea}
+                </p>
+                <p className="text-xs text-slate-600 leading-relaxed mt-1">
+                  {locationAddress}
+                </p>
+                {job.location?.landmark && (
+                  <p className="text-xs text-slate-500 font-medium mt-1">
+                    Landmark: {job.location.landmark}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            {/* Route ETA pill */}
+            <div className="bg-slate-50 rounded-xl p-3 flex items-center justify-between text-xs font-bold border border-slate-200/80">
+              <span className="text-slate-600 flex items-center gap-1.5">
+                <NavigationIcon className="size-3.5 rotate-45 text-[#0F8B8D]" />
+                <span>{distanceText}</span>
+              </span>
+              <span className="text-[#0F8B8D] flex items-center gap-1">
+                <Clock className="size-3.5" />
+                <span>{etaText}</span>
+              </span>
+            </div>
+          </div>
+
+          {/* Agreed Visit Fee Summary */}
+          <div className="bg-slate-50 rounded-2xl border border-slate-200/80 p-4 space-y-2.5 text-xs">
+            <div className="flex justify-between items-center text-slate-600">
+              <span>Agreed Visit Charge</span>
+              <span className="font-extrabold text-slate-900 text-sm">
+                {formatRs(agreedVisitCharge)}
+              </span>
+            </div>
+          </div>
+
+          {/* Error Message */}
+          {errorMessage && (
+            <div className="p-3 bg-red-50 border border-red-200 text-red-700 text-xs rounded-xl flex items-center gap-2">
+              <AlertTriangle className="size-4 shrink-0" />
+              <span>{errorMessage}</span>
+            </div>
+          )}
+        </div>
+
+        {/* Desktop Bottom Action Button */}
+        <div className="pt-4 border-t border-slate-100 space-y-2">
+          <button
+            type="button"
+            onClick={handleReachedDoorstep}
+            disabled={isArriving}
+            className={`w-full py-4 rounded-2xl bg-gradient-to-r from-[#123B5D] to-[#0F8B8D] text-white font-extrabold text-base shadow-lg shadow-[#0F8B8D]/25 transition-all flex items-center justify-center gap-2.5 ${
+              isArriving
+                ? "opacity-80 cursor-wait pointer-events-none"
+                : "hover:opacity-95 active:scale-[0.99] cursor-pointer"
+            }`}
+          >
+            {isArriving ? (
+              <>
+                <Loader2 className="size-5 text-teal-200 animate-spin" />
+                <span>{isUrdu ? "اطلاع دی جا رہی ہے..." : "Notifying Customer..."}</span>
+              </>
+            ) : (
+              <>
+                <CheckCircle2 className="size-5 text-teal-200" />
+                <span>{isUrdu ? "میں دہلیز پر پہنچ گیا ہوں" : "I'm here (Doorstep)"}</span>
+              </>
+            )}
+          </button>
+          <p className="text-[11px] text-center text-slate-400">
+            {isUrdu
+              ? "پہنچنے کے بعد کسٹمر 4 ہندسوں کا سیکیورٹی پن فراہم کرے گا۔"
+              : "Customer will provide the 4-digit security PIN on arrival."}
+          </p>
+        </div>
+      </aside>
 
       {/* ======================================================== */}
       {/* 4. MODALS (Chat, Call Direct, Cancel, Support) */}
       {/* ======================================================== */}
 
       {/* Customer-Matched Worker Chat Modal */}
-      <WorkerChatModal
-        job={job}
-        isOpen={showChatModal}
-        onClose={() => setShowChatModal(false)}
-        onCallCustomer={() => {
-          setShowChatModal(false);
-          setShowCallModal(true);
-        }}
-      />
+      {showChatModal && (
+        <WorkerChatModal
+          job={job}
+          isOpen={showChatModal}
+          onClose={() => setShowChatModal(false)}
+          onCallCustomer={() => {
+            setShowChatModal(false);
+            setShowCallModal(true);
+          }}
+        />
+      )}
 
       {/* Call Customer Direct Modal */}
       {showCallModal && (
@@ -612,9 +1359,9 @@ export function WorkerVisitTrackingView({
               </div>
               <div className="min-w-0 flex-1">
                 <h3 className="font-bold text-slate-900 text-base truncate">
-                  Contact {job.customer.name}
+                  Contact {customerName}
                 </h3>
-                <p className="text-xs text-slate-500">{job.location.area}</p>
+                <p className="text-xs text-slate-500">{locationArea}</p>
               </div>
             </div>
 
@@ -623,7 +1370,7 @@ export function WorkerVisitTrackingView({
                 Direct Phone Line
               </span>
               <p className="text-lg font-mono font-bold text-[#123B5D]">
-                {job.customer.phone}
+                {customerPhone || "N/A"}
               </p>
             </div>
 
@@ -636,7 +1383,7 @@ export function WorkerVisitTrackingView({
                 Close
               </button>
               <a
-                href={`tel:${job.customer.phone}`}
+                href={customerPhone ? `tel:${customerPhone}` : "#"}
                 className="flex-1 py-2.5 rounded-xl bg-[#0F8B8D] text-white text-xs font-bold text-center hover:bg-[#0B7F74] transition-colors"
               >
                 Dial Now
@@ -665,7 +1412,7 @@ export function WorkerVisitTrackingView({
             </div>
 
             <p className="text-xs text-slate-600">
-              Are you sure you want to cancel this visit to {job.customer.name}?
+              Are you sure you want to cancel this visit to {customerName}?
             </p>
 
             <textarea
@@ -730,21 +1477,21 @@ export function WorkerVisitTrackingView({
               </div>
               <div className="flex items-center justify-between border-t border-slate-200/60 pt-2">
                 <span className="text-xs text-slate-500 font-medium">Customer</span>
-                <span className="text-xs font-bold text-slate-800">{job.customer.name}</span>
+                <span className="text-xs font-bold text-slate-800">{customerName}</span>
               </div>
             </div>
 
             <div className="space-y-2">
               <a
-                href="tel:0800-WORKERFIX"
+                href={`tel:${HUNAR_CONFIG.rawSupportPhone}`}
                 className="w-full py-3 px-4 rounded-xl bg-[#0F8B8D] hover:bg-[#0B7F74] text-white text-xs font-extrabold flex items-center justify-center gap-2 shadow-sm transition-all"
               >
                 <PhoneCall className="size-4" />
-                <span>{isUrdu ? "ہیلپ لائن پر کال کریں" : "Call Helpline (0800-WORKERFIX)"}</span>
+                <span>{isUrdu ? "ہیلپ لائن پر کال کریں" : `Call Helpline (${HUNAR_CONFIG.supportPhone})`}</span>
               </a>
 
               <a
-                href="https://wa.me/923000000000?text=Salam%20Hunar%20Support%2C%20I%20am%20a%20technician%20on%20job%20"
+                href={`https://wa.me/${HUNAR_CONFIG.rawWhatsapp}?text=Salam%20WorkerFIX%20Support%2C%20I%20am%20a%20technician%20on%20job%20`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-full py-3 px-4 rounded-xl bg-[#123B5D] hover:bg-[#0E2E49] text-white text-xs font-extrabold flex items-center justify-center gap-2 shadow-sm transition-all"
@@ -774,14 +1521,17 @@ export function WorkerVisitTrackingView({
       )}
 
       {/* Worker Doorstep OTP Modal */}
-      <WorkerArrivalOtpModal
-        isOpen={showWorkerOtpModal}
-        otp={securityPin}
-        arrivedAt={arrivedAtTime}
-        customerName={job.customer.name}
-        onClose={() => setShowWorkerOtpModal(false)}
-        isUrdu={isUrdu}
-      />
+      {showWorkerOtpModal && (
+        <WorkerArrivalOtpModal
+          isOpen={showWorkerOtpModal}
+          otp={currentSecurityPin}
+          arrivedAt={arrivedAtTime}
+          jobId={job.id}
+          customerName={customerName}
+          onClose={() => setShowWorkerOtpModal(false)}
+          isUrdu={isUrdu}
+        />
+      )}
     </div>
   );
 }

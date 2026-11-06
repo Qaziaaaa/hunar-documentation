@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import {
   AlertCircle,
   ArrowLeft,
@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
+import { uploadWorkerDocument } from "../api/onboarding-api";
 import type { WorkerProfileFormData } from "../types";
 
 const EXP_OPTIONS = [
@@ -41,6 +42,20 @@ const EXP_OPTIONS = [
   },
 ];
 
+function isExpOptionSelected(selectedVal: string | undefined, optRawValue: string): boolean {
+  if (!selectedVal) return false;
+  if (selectedVal === optRawValue) return true;
+
+  const num = parseInt(selectedVal, 10);
+  if (!isNaN(num)) {
+    if (optRawValue.startsWith("< 1") && num < 1) return true;
+    if (optRawValue.startsWith("1 - 3") && num >= 1 && num <= 3) return true;
+    if (optRawValue.startsWith("4 - 7") && num >= 4 && num <= 7) return true;
+    if (optRawValue.startsWith("8+") && num >= 8) return true;
+  }
+  return false;
+}
+
 export function Step3Experience({
   formData,
   updateFormData,
@@ -57,18 +72,35 @@ export function Step3Experience({
   const t = useTranslations("WorkerOnboarding.Step3");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleCertUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const [isCertUploading, setIsCertUploading] = useState(false);
+  const [certError, setCertError] = useState<string | null>(null);
+
+  const handleCertUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    const reader = new FileReader();
-    reader.onload = (event) => {
+    if (file.size > 10 * 1024 * 1024) {
+      setCertError(t("certificateHint"));
+      e.target.value = "";
+      return;
+    }
+
+    setIsCertUploading(true);
+    setCertError(null);
+    try {
+      const result = await uploadWorkerDocument(file, "certificate");
       updateFormData({
-        certificateFile: event.target?.result as string,
+        certificateFile: result.url,
         certificateName: file.name,
       });
-    };
-    reader.readAsDataURL(file);
+    } catch (err: any) {
+      setCertError(err?.message || "Failed to upload certificate.");
+    } finally {
+      setIsCertUploading(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+    }
   };
 
   const removeCertificate = () => {
@@ -110,9 +142,7 @@ export function Step3Experience({
           </label>
           <div className="grid grid-cols-4 gap-2 text-center">
             {EXP_OPTIONS.map((opt) => {
-              const isSelected =
-                formData.experienceYears === opt.rawValue ||
-                formData.experienceYears?.includes(opt.rawValue.split(" ")[0]);
+              const isSelected = isExpOptionSelected(formData.experienceYears, opt.rawValue);
               return (
                 <button
                   key={opt.key}
@@ -239,6 +269,16 @@ export function Step3Experience({
               <p className="text-xs text-muted-foreground">{t("fileLimits")}</p>
             </div>
           )}
+          {isCertUploading && (
+            <p className="mt-2 text-xs font-medium text-teal">
+              Uploading certificate...
+            </p>
+          )}
+          {certError && (
+            <p className="mt-2 text-xs font-medium text-error">
+              {certError}
+            </p>
+          )}
         </div>
 
         {stepError && (
@@ -256,6 +296,7 @@ export function Step3Experience({
           variant="outline"
           size="lg"
           onClick={onPrev}
+          disabled={isCertUploading}
           className="h-12 sm:h-13 w-1/3 rounded-full border-2 border-navy text-sm sm:text-base font-bold text-navy hover:bg-slate-50"
         >
           <ArrowLeft className="mr-1.5 size-4 rtl:rotate-180" />
@@ -265,6 +306,7 @@ export function Step3Experience({
           type="button"
           size="lg"
           onClick={onNext}
+          disabled={isCertUploading}
           className="h-12 sm:h-13 flex-1 rounded-full bg-teal text-sm sm:text-base font-bold text-white shadow-md shadow-teal/20 hover:bg-teal/90 transition-all"
         >
           <span>{t("continueBtn")}</span>

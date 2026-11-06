@@ -15,6 +15,7 @@ class Db {
   reviews: any[] = [];
   serviceRequests: any[] = [];
   rawCalls: string[] = [];
+  workerWallets = new Map<string, any>();
 
   constructor() {
     ['cat-electric', 'cat-plumber', 'cat-disabled'].forEach((id, i) => {
@@ -100,7 +101,11 @@ function makeDb(): any {
     serviceCategory: {
       async findMany({ where, select }: any) {
         let rows = Array.from(db.serviceCategories.values());
-        if (where?.id?.in) {
+        if (where?.OR) {
+          const ids = where.OR.find((cond: any) => cond?.id?.in)?.id?.in ?? [];
+          const names = where.OR.find((cond: any) => cond?.name?.in)?.name?.in ?? [];
+          rows = rows.filter((c) => ids.includes(c.id) || names.includes(c.name));
+        } else if (where?.id?.in) {
           rows = rows.filter((c) => where.id.in.includes(c.id));
         }
         if (where?.isActive !== undefined) {
@@ -197,13 +202,35 @@ function makeDb(): any {
           _count: { rating: _count?.rating ? rows.length : 0 },
         };
       },
+      async findMany({ where }: any) {
+        let rows = db.reviews.filter((r) => r.revieweeId === where?.revieweeId);
+        if (where?.isVisible !== undefined) {
+          rows = rows.filter((r) => r.isVisible === where.isVisible);
+        }
+        return rows;
+      },
     },
 
     serviceRequest: {
       async count({ where }: any) {
-        return db.serviceRequests.filter(
-          (j) => j.selectedWorkerId === where?.selectedWorkerId && j.status === where?.status,
-        ).length;
+        return db.serviceRequests.filter((j) => {
+          if (where?.selectedWorkerId && j.selectedWorkerId !== where.selectedWorkerId) return false;
+          if (where?.status?.in) return where.status.in.includes(j.status);
+          if (where?.status && j.status !== where.status) return false;
+          return true;
+        }).length;
+      },
+    },
+
+    jobOffer: {
+      async findMany() {
+        return [];
+      },
+    },
+
+    workerWallet: {
+      async findUnique({ where }: any) {
+        return db.workerWallets?.get(where.userId) ?? null;
       },
     },
 
@@ -301,7 +328,7 @@ describe('WorkerProfileService', () => {
   });
 
   describe('Step 4: saveServiceAreas', () => {
-    it('stores provided coordinates and syncs PostGIS geometry', async () => {
+    it('stores provided coordinates without a raw PostGIS sync (no location column)', async () => {
       const db = makeDb();
       const raw = jest.fn(() => Promise.resolve(1)) as any;
       db.$executeRaw = raw;
@@ -315,11 +342,9 @@ describe('WorkerProfileService', () => {
       expect(result).toHaveLength(1);
       expect(result[0].latitude).toBe(34.0);
       expect(result[0].longitude).toBe(71.5);
-      expect(raw).toHaveBeenCalled();
-      const [strings, ...values] = raw.mock.calls[0] as [TemplateStringsArray, ...number[]];
-      expect(strings.raw.join(' ')).toContain('ST_SetSRID');
-      expect(values).toContain(71.5);
-      expect(values).toContain(34);
+      // saveServiceAreas deliberately skips the PostGIS geometry update: the
+      // ServiceArea table has no `location` column, so raw ST_ updates would 500.
+      expect(raw).not.toHaveBeenCalled();
     });
 
     it('geocodes an address via Mapbox when coordinates are not supplied', async () => {
@@ -604,6 +629,47 @@ describe('WorkerProfileService', () => {
       const service = makeService(db);
       await expect(service.getPublicProfile('nobody')).rejects.toThrow();
     });
+
+    it('omits personal phone number on public profile (AUDIT-008)', async () => {
+      const db = makeDb();
+      const service = makeService(db);
+      addWorker(db, 'w-priv', { name: 'Zahid', phone: '+923001234567' });
+      await service.updateWorkerProfile('w-priv', { skills: ['cat-electric'] });
+
+      const card = await service.getPublicProfile('w-priv');
+      expect(card.phone).toBeNull();
+    });
+
+    it('throws NotFoundException when worker profile has profileVisible set to false (AUDIT-008)', async () => {
+      const db = makeDb();
+      const service = makeService(db);
+      addWorker(db, 'w-hidden', { name: 'Invisible Worker' });
+      await service.updateWorkerProfile('w-hidden', { skills: ['cat-electric'] });
+      db.workerProfiles.get('w-hidden').adminNote = JSON.stringify({ profileVisible: false });
+
+      await expect(service.getPublicProfile('w-hidden')).rejects.toThrow('Worker profile is not available');
+    });
+
+    it('fuzzes exact service area coordinates to 2 decimal places (AUDIT-008)', async () => {
+      const db = makeDb();
+      const service = makeService(db);
+      addWorker(db, 'w-geo', { name: 'Geo Worker' });
+      await service.updateWorkerProfile('w-geo', { skills: ['cat-electric'] });
+      await service.saveServiceAreas('w-geo', {
+        serviceAreas: [
+          {
+            label: 'Hayatabad Phase 3',
+            address: 'House 55, Street 12, Hayatabad',
+            latitude: 34.015234,
+            longitude: 71.524912,
+          },
+        ],
+      });
+
+      const card = await service.getPublicProfile('w-geo');
+      expect(card.serviceAreas[0].latitude).toBe(34.02);
+      expect(card.serviceAreas[0].longitude).toBe(71.52);
+    });
   });
 
   describe('toString helper: getWorkerProfileCompletion', () => {
@@ -666,6 +732,20 @@ describe('WorkerProfileService', () => {
 
       const on = await service.toggleAvailability('w1', { isAvailable: true });
       expect(on.isAvailable).toBe(true);
+      const off = await service.toggleAvailability('w1', { isAvailable: false });
+      expect(off.isAvailable).toBe(false);
+    });
+
+    it('rejects going online when wallet balance is negative', async () => {
+      const db = makeDb();
+      const service = makeService(db);
+      addWorker(db, 'w1');
+      db.workerWallets.set('w1', { userId: 'w1', balance: -20, heldBalance: 0 });
+
+      await expect(service.toggleAvailability('w1', { isAvailable: true })).rejects.toThrow(
+        BadRequestException,
+      );
+      // Going offline is always allowed
       const off = await service.toggleAvailability('w1', { isAvailable: false });
       expect(off.isAvailable).toBe(false);
     });

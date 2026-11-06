@@ -8,6 +8,7 @@ jest.mock("@/lib/api-client", () => ({
   http: {
     get: jest.fn(),
   },
+  getAccessToken: jest.fn(() => "test-token"),
 }));
 
 jest.mock("@/lib/data-source", () => ({
@@ -43,13 +44,25 @@ describe("earnings.service", () => {
 
     it("fetches and maps wallet summary from API in non-mock mode", async () => {
       mockedIsMockMode.mockReturnValue(false);
-      mockedHttpGet.mockResolvedValue(mockBackendSnapshot);
+      mockedHttpGet.mockImplementation(async (url: string) => {
+        if (url === "/wallet/balance") return mockBackendSnapshot;
+        if (url === "/workers/me/earnings") {
+          return {
+            topupsCredited: 5000,
+            commissionsPaid: 1000,
+            commissionsHeld: 1000,
+            records: [],
+          };
+        }
+        return {};
+      });
 
       const result = await earningsService.getWalletSummary();
 
       expect(mockedHttpGet).toHaveBeenCalledWith("/wallet/balance");
       expect(result).toEqual({
-        currentBalance: 6000,
+        currentBalance: 5000,
+        heldBalance: 1000,
         totalTopUps: 5000,
         totalDeductions: 1000,
         totalTransactions: 0,

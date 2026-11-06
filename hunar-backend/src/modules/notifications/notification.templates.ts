@@ -32,7 +32,7 @@ function fmtTime(value: string | Date | undefined): string {
   if (!value) return 'scheduled time';
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return String(value);
-  return date.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+  return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
 }
 
 // Template resolved from a notification type + the domain-event payload.
@@ -190,5 +190,10 @@ export const notificationTemplates: Record<string, (d: NotificationData) => Noti
     JOB_COMPLETED: (d) => ({
       title: 'Job completed',
       body: `The job "${d.jobTitle ?? 'the job'}" has been completed. Please leave a review.`,
+    }),
+
+    JOB_EXPIRED_NO_WORKER: (d) => ({
+      title: 'Job Request Expired',
+      body: `No available worker accepted your request for "${d.jobTitle ?? 'the job'}" within 20 hours. The request has expired, but you can repost it anytime.`,
     }),
   };

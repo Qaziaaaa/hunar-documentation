@@ -110,32 +110,67 @@ export class PaymentsService {
 
     const visitCharge = Number(job.lockedVisitCharge ?? job.suggestedVisitCharge ?? 0);
 
+    // Look for an accepted repair quote. If repair is not accepted or rejected, repair cost is 0.
+    const acceptedRepair = await this.prisma.repair.findFirst({
+      where: { jobId: job.id, status: 'ACCEPTED' },
+      orderBy: { createdAt: 'desc' },
+      select: { lockedAmount: true, amount: true },
+    });
+    const approvedRepairCost = acceptedRepair
+      ? Number(acceptedRepair.lockedAmount ?? acceptedRepair.amount ?? 0)
+      : 0;
+    const finalJobAmount = visitCharge + approvedRepairCost;
+    const paymentAmount =
+      dto.amount != null ? (approvedRepairCost > 0 ? dto.amount : visitCharge) : finalJobAmount;
+
+    const isJobAlreadyCompleted = job.status === 'COMPLETED';
+    const initialStatus = isJobAlreadyCompleted ? PaymentStatus.COMPLETED : PaymentStatus.INITIATED;
+    const now = new Date();
+
     const payment = await this.prisma.payment.create({
       data: {
         jobId: job.id,
         customerId,
         workerId: job.selectedWorkerId!,
         visitCharge,
-        amount: dto.amount ?? visitCharge,
+        amount: paymentAmount,
         method,
-        status: PaymentStatus.INITIATED,
+        status: initialStatus,
         ...(gateway ? { gateway } : {}),
         note: dto.note,
+        paidAt: isJobAlreadyCompleted ? now : null,
+        verifiedAt: isJobAlreadyCompleted ? now : null,
       },
     });
 
-    await this.eventBus.emit(PAYMENT_EVENTS.paymentInitiated, {
-      paymentId: payment.id,
-      jobId: job.id,
-      customerId,
-      workerId: job.selectedWorkerId!,
-      amount: Number(payment.amount),
-    });
-    await this.realtime?.emitToUsers?.([customerId, job.selectedWorkerId!], 'payment:initiated', {
-      paymentId: payment.id,
-      jobId: job.id,
-      amount: Number(payment.amount),
-    });
+    if (isJobAlreadyCompleted) {
+      await this.eventBus.emit(PAYMENT_EVENTS.paymentCompleted, {
+        paymentId: payment.id,
+        jobId: job.id,
+        customerId,
+        workerId: job.selectedWorkerId!,
+        amount: Number(payment.amount),
+      });
+      await this.realtime?.emitToUsers?.([customerId, job.selectedWorkerId!], 'payment:completed', {
+        paymentId: payment.id,
+        jobId: job.id,
+        amount: Number(payment.amount),
+        status: PaymentStatus.COMPLETED,
+      });
+    } else {
+      await this.eventBus.emit(PAYMENT_EVENTS.paymentInitiated, {
+        paymentId: payment.id,
+        jobId: job.id,
+        customerId,
+        workerId: job.selectedWorkerId!,
+        amount: Number(payment.amount),
+      });
+      await this.realtime?.emitToUsers?.([customerId, job.selectedWorkerId!], 'payment:initiated', {
+        paymentId: payment.id,
+        jobId: job.id,
+        amount: Number(payment.amount),
+      });
+    }
 
     return { paymentId: payment.id, status: payment.status, idempotent: false };
   }
@@ -189,5 +224,90 @@ export class PaymentsService {
       page,
       limit,
     );
+  }
+
+  async completePayment(paymentId: string, user?: JwtPayload): Promise<unknown> {
+    const payment = await this.prisma.payment.findUnique({
+      where: { id: paymentId },
+    });
+    if (!payment) {
+      throw new NotFoundException('Payment not found');
+    }
+    if (
+      user &&
+      user.role !== 'ADMIN' &&
+      payment.customerId !== user.sub &&
+      payment.workerId !== user.sub
+    ) {
+      throw new ForbiddenException('Not authorized to complete this payment');
+    }
+    if (payment.status === PaymentStatus.COMPLETED) {
+      return { paymentId: payment.id, status: payment.status, idempotent: true };
+    }
+
+    const now = new Date();
+    const updated = await this.prisma.payment.update({
+      where: { id: paymentId },
+      data: {
+        status: PaymentStatus.COMPLETED,
+        paidAt: payment.paidAt ?? now,
+        verifiedAt: payment.verifiedAt ?? now,
+      },
+    });
+
+    await this.eventBus.emit(PAYMENT_EVENTS.paymentCompleted, {
+      paymentId: updated.id,
+      jobId: updated.jobId,
+      customerId: updated.customerId,
+      workerId: updated.workerId,
+      amount: Number(updated.amount),
+    });
+
+    await this.realtime?.emitToUsers?.([updated.customerId, updated.workerId], 'payment:completed', {
+      paymentId: updated.id,
+      jobId: updated.jobId,
+      amount: Number(updated.amount),
+      status: PaymentStatus.COMPLETED,
+    });
+
+    return { paymentId: updated.id, status: updated.status, idempotent: false };
+  }
+
+  async completePaymentsForJob(jobId: string): Promise<number> {
+    const pendingPayments = await this.prisma.payment.findMany({
+      where: {
+        jobId,
+        status: { in: [PaymentStatus.INITIATED, PaymentStatus.PROCESSING] },
+      },
+    });
+
+    const now = new Date();
+    for (const payment of pendingPayments) {
+      await this.prisma.payment.update({
+        where: { id: payment.id },
+        data: {
+          status: PaymentStatus.COMPLETED,
+          paidAt: payment.paidAt ?? now,
+          verifiedAt: payment.verifiedAt ?? now,
+        },
+      });
+
+      await this.eventBus.emit(PAYMENT_EVENTS.paymentCompleted, {
+        paymentId: payment.id,
+        jobId,
+        customerId: payment.customerId,
+        workerId: payment.workerId,
+        amount: Number(payment.amount),
+      });
+
+      await this.realtime?.emitToUsers?.([payment.customerId, payment.workerId], 'payment:completed', {
+        paymentId: payment.id,
+        jobId,
+        amount: Number(payment.amount),
+        status: PaymentStatus.COMPLETED,
+      });
+    }
+
+    return pendingPayments.length;
   }
 }

@@ -81,8 +81,9 @@ export class AdminVerificationService {
           AUDIT_ACTIONS.VERIFICATION_APPROVED,
           actor,
         );
-      case WorkerVerificationStatus.REJECTED:
-        if (!dto.reason) {
+      case WorkerVerificationStatus.REJECTED: {
+        const rejectionReason = dto.reason || dto.note;
+        if (!rejectionReason) {
           throw new BadRequestException(
             'REJECTION_REASON_REQUIRED: a reason is required when rejecting a worker',
           );
@@ -91,17 +92,19 @@ export class AdminVerificationService {
           userId,
           {
             verificationStatus: WorkerVerificationStatus.REJECTED,
-            rejectionReason: dto.reason,
+            rejectionReason,
             adminNote: null,
             verifiedAt: null,
             isVerified: false,
           },
           AUDIT_ACTIONS.VERIFICATION_REJECTED,
           actor,
-          dto.reason,
+          rejectionReason,
         );
-      case WorkerVerificationStatus.REQUEST_CHANGES:
-        if (!dto.adminNote) {
+      }
+      case WorkerVerificationStatus.REQUEST_CHANGES: {
+        const note = dto.adminNote || dto.note;
+        if (!note) {
           throw new BadRequestException(
             'ADMIN_NOTE_REQUIRED: an admin note is required when requesting changes',
           );
@@ -111,14 +114,15 @@ export class AdminVerificationService {
           {
             verificationStatus: WorkerVerificationStatus.REQUEST_CHANGES,
             rejectionReason: null,
-            adminNote: dto.adminNote,
+            adminNote: note,
             verifiedAt: null,
             isVerified: false,
           },
           AUDIT_ACTIONS.VERIFICATION_CHANGES_REQUESTED,
           actor,
-          dto.adminNote,
+          note,
         );
+      }
       default:
         throw new BadRequestException('INVALID_DECISION');
     }

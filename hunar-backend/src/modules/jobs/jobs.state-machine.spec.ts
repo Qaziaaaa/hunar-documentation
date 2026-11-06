@@ -14,6 +14,7 @@ describe('JobStateMachine', () => {
       'VISIT_COMPLETED',
       'INSPECTION_DONE',
       'REPAIR_NEGOTIATING',
+      'REPAIR_DECLINED',
       'REPAIR_APPROVED',
       'IN_PROGRESS',
       'COMPLETED',
@@ -66,5 +67,12 @@ describe('JobStateMachine', () => {
 
   it('allows worker pre-visit cancellation (VISIT_SCHEDULED → OPEN)', () => {
     expect(() => JobStateMachine.assertCanTransition('VISIT_SCHEDULED', 'OPEN')).not.toThrow();
+  });
+
+  it('allows repair decline path (REPAIR_NEGOTIATING → REPAIR_DECLINED → COMPLETED)', () => {
+    expect(() => JobStateMachine.assertCanTransition('REPAIR_NEGOTIATING', 'REPAIR_DECLINED')).not.toThrow();
+    expect(() => JobStateMachine.assertCanTransition('REPAIR_DECLINED', 'COMPLETED')).not.toThrow();
+    expect(() => JobStateMachine.assertCanTransition('REPAIR_DECLINED', 'CANCELLED')).not.toThrow();
+    expect(() => JobStateMachine.assertCanTransition('REPAIR_DECLINED', 'IN_PROGRESS')).toThrow(BadRequestException);
   });
 });

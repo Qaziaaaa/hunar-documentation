@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { AlertCircle, Loader2, Phone, Send, Wrench } from "lucide-react";
+import { AlertCircle, Home, Loader2, Phone, Send, Wrench } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
@@ -16,12 +16,22 @@ export function PhoneStep({
   onSubmit,
   submitting,
   submitError,
+  role = "worker",
+  redirectTo,
 }: {
   onSubmit: (values: PhoneFormValues) => void;
   submitting: boolean;
   submitError: string | null;
+  role?: "customer" | "worker";
+  redirectTo?: string | null;
 }) {
   const t = useTranslations("Auth");
+  const isCustomer = role === "customer";
+  const signInHref = isCustomer ? "/customer/sign-in" : "/worker/sign-in";
+  const signInLink = redirectTo
+    ? `${signInHref}?redirect=${encodeURIComponent(redirectTo)}`
+    : signInHref;
+
   const {
     register,
     handleSubmit,
@@ -40,16 +50,25 @@ export function PhoneStep({
     >
       <div className="text-center">
         <span className="inline-flex items-center gap-1.5 rounded-full border border-teal/20 bg-teal/10 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-teal">
-          <Wrench className="size-3.5" />
-          {t("workerBadge")}
+          {isCustomer ? (
+            <>
+              <Home className="size-3.5" />
+              Customer Portal
+            </>
+          ) : (
+            <>
+              <Wrench className="size-3.5" />
+              {t("workerBadge")}
+            </>
+          )}
         </span>
         <h1 className="mt-3 text-2xl font-extrabold tracking-tight text-navy">
-          {t("createTitle")}
+          {isCustomer ? "Create Customer Account" : t("createTitle")}
         </h1>
         <p className="mt-1 text-sm font-medium text-muted-foreground">
-          {t("alreadyAccount")}{" "}
+          {isCustomer ? "Already have an account?" : t("alreadyAccount")}{" "}
           <Link
-            href="/worker/sign-in"
+            href={signInLink}
             className="font-semibold text-teal hover:underline"
           >
             {t("signIn")}
@@ -58,7 +77,7 @@ export function PhoneStep({
 
         <div className="mx-auto mt-4 flex max-w-[280px] items-center rounded-full bg-slate-200 p-1 shadow-inner">
           <Link
-            href="/worker/sign-in"
+            href={signInLink}
             className="flex-1 rounded-full py-1.5 text-center text-xs font-semibold text-navy transition"
           >
             {t("signIn")}

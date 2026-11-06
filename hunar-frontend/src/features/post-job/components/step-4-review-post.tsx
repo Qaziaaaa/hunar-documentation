@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
+  AlertCircle,
   ArrowLeft,
   ArrowRight,
   Calendar,
@@ -10,14 +11,17 @@ import {
   Edit2,
   Layers,
   MapPin,
-  Pause,
-  Play,
   ShieldCheck,
   Volume2,
 } from "lucide-react";
 import { useLocale } from "next-intl";
+import { formatJobDate } from "@/lib/format";
+import { Link } from "@/i18n/navigation";
 import { CATEGORY_OPTIONS } from "../data/categories";
+import { fetchServiceCategories, BackendCategory } from "../api/post-job-api";
 import type { PostJobData, PostJobStep } from "../types";
+import { buildPostJobSignInHref } from "../lib/return-url";
+import { VoiceNoteBubblePlayer } from "./voice-note-recorder";
 
 interface Step4ReviewPostProps {
   data: PostJobData;
@@ -25,6 +29,7 @@ interface Step4ReviewPostProps {
   onGoToStep: (step: PostJobStep) => void;
   onSubmit: () => void;
   isSubmitting?: boolean;
+  submitError?: string | null;
 }
 
 export function Step4ReviewPost({
@@ -33,30 +38,55 @@ export function Step4ReviewPost({
   onGoToStep,
   onSubmit,
   isSubmitting = false,
+  submitError = null,
 }: Step4ReviewPostProps) {
   const locale = useLocale();
   const isUrdu = locale === "ur";
-  const [isPlayingAudio, setIsPlayingAudio] = useState(false);
+  const [backendCategories, setBackendCategories] = useState<BackendCategory[]>([]);
 
-  const selectedCategory = CATEGORY_OPTIONS.find(
-    (c) => c.id === data.category
-  );
-  const Icon = selectedCategory?.icon || Layers;
+  useEffect(() => {
+    let mounted = true;
+    fetchServiceCategories().then((cats) => {
+      if (mounted && cats.length > 0) setBackendCategories(cats);
+    });
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
-  const handleToggleAudio = () => {
-    if (!data.voiceNoteUrl) return;
-    const audio = document.getElementById("review-audio-player") as HTMLAudioElement | null;
-    if (!audio) return;
+  const liveCategory = useMemo(() => {
+    if (!backendCategories.length || !data.category) return null;
+    const catId = data.category.toLowerCase().trim();
+    return (
+      backendCategories.find(
+        (b) =>
+          b.id.toLowerCase() === catId ||
+          b.name.toLowerCase() === catId ||
+          b.name.toLowerCase().replace(/[^a-z0-9]/g, "") === catId.replace(/[^a-z0-9]/g, "")
+      ) ?? null
+    );
+  }, [backendCategories, data.category]);
 
-    if (isPlayingAudio) {
-      audio.pause();
-      setIsPlayingAudio(false);
-    } else {
-      audio.play().catch(() => {});
-      setIsPlayingAudio(true);
-      audio.onended = () => setIsPlayingAudio(false);
+  const selectedCategory = useMemo(() => {
+    const directMatch = CATEGORY_OPTIONS.find((c) => c.id === data.category);
+    if (directMatch) return directMatch;
+    if (liveCategory) {
+      const preset = CATEGORY_OPTIONS.find(
+        (c) => c.name.toLowerCase() === liveCategory.name.toLowerCase()
+      );
+      return {
+        ...(preset || {}),
+        id: liveCategory.id,
+        name: isUrdu && liveCategory.nameUrdu ? liveCategory.nameUrdu : liveCategory.name,
+        iconBg: preset?.iconBg || "bg-[#0F8B8D]/10",
+        iconColor: preset?.iconColor || "text-[#0F8B8D]",
+        icon: preset?.icon || Layers,
+      };
     }
-  };
+    return undefined;
+  }, [data.category, liveCategory, isUrdu]);
+
+  const Icon = selectedCategory?.icon || Layers;
 
   return (
     <div className="w-full max-w-3xl lg:max-w-5xl xl:max-w-6xl mx-auto space-y-4 lg:space-y-5 animate-in fade-in-50 duration-300 pb-24">
@@ -101,11 +131,6 @@ export function Step4ReviewPost({
                   <span className="inline-block px-2.5 py-0.5 bg-[#0F8B8D]/10 text-[#0F8B8D] rounded-full text-[11px] font-bold">
                     {selectedCategory?.name || (isUrdu ? "سروس" : "Service")}
                   </span>
-                  {data.subCategory && (
-                    <span className="text-[11px] font-bold text-slate-600">
-                      • {data.subCategory}
-                    </span>
-                  )}
                 </div>
                 <h2 className="text-sm sm:text-base font-bold text-[#123B5D]">
                   {data.title || (isUrdu ? "بغیر عنوان جاب درخواست" : "Untitled Job Request")}
@@ -161,40 +186,13 @@ export function Step4ReviewPost({
 
             {/* Voice Note Preview if recorded */}
             {data.voiceNoteUrl ? (
-              <div className="p-2.5 bg-slate-50 border border-slate-200/70 rounded-xl flex items-center gap-2 mt-2">
-                <audio
-                  id="review-audio-player"
-                  src={data.voiceNoteUrl}
-                  className="hidden"
+              <div className="mt-2">
+                <VoiceNoteBubblePlayer
+                  audioUrl={data.voiceNoteUrl}
+                  durationSeconds={data.voiceNoteDuration || 0}
+                  onReRecord={() => onGoToStep(2)}
+                  readOnly={false}
                 />
-                <button
-                  type="button"
-                  onClick={handleToggleAudio}
-                  className="size-8 rounded-full bg-[#0F8B8D] text-white flex items-center justify-center shrink-0 shadow-xs hover:bg-[#0D7A7C] cursor-pointer"
-                >
-                  {isPlayingAudio ? (
-                    <Pause className="size-4" />
-                  ) : (
-                    <Play className="size-4 ml-0.5 rtl:ml-0 rtl:mr-0.5" />
-                  )}
-                </button>
-                <div className="flex-1">
-                  <div className="flex items-center justify-between text-[11px] font-bold text-[#123B5D] mb-1">
-                    <span>{isUrdu ? "وائس نوٹ کی تفصیل" : "Voice Description"}</span>
-                    <span className="text-slate-600 font-semibold">
-                      {data.voiceNoteDuration
-                        ? `${Math.floor(data.voiceNoteDuration / 60)}:${(data.voiceNoteDuration % 60).toString().padStart(2, "0")}`
-                        : "0:15"}
-                    </span>
-                  </div>
-                  <div className="h-1.5 bg-slate-200 rounded-full overflow-hidden">
-                    <div
-                      className={`h-full bg-[#0F8B8D] rounded-full transition-all ${
-                        isPlayingAudio ? "w-3/4" : "w-1/3"
-                      }`}
-                    />
-                  </div>
-                </div>
               </div>
             ) : (
               <span className="text-[11px] text-slate-500 font-medium mt-2 block">
@@ -247,7 +245,7 @@ export function Step4ReviewPost({
                 <div className="flex flex-wrap gap-1.5">
                   <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-slate-50 border border-slate-200/60 rounded-lg text-xs font-bold text-[#123B5D]">
                     <Calendar className="size-3 text-[#0F8B8D]" />
-                    {data.preferredDate || (isUrdu ? "آج" : "Today")}
+                    {formatJobDate(data.preferredDate) || (isUrdu ? "آج" : "Today")}
                   </span>
                   <span className="inline-flex items-center px-2.5 py-1 bg-slate-50 border border-slate-200/60 rounded-lg text-xs font-bold text-[#123B5D]">
                     {data.scheduleType === "asap"
@@ -277,13 +275,13 @@ export function Step4ReviewPost({
               <div>
                 <h4 className="text-xs font-bold text-[#123B5D]">
                   {isUrdu
-                    ? "WorkerFIX 100% تصدیق شدہ کوالٹی اور تسلی بخش کام کی ضمانت"
-                    : "WorkerFIX 100% Verified Quality Guaranteed"}
+                    ? "WorkerFIX تصدیق شدہ سروس"
+                    : "WorkerFIX Verified Service"}
                 </h4>
                 <p className="text-[11px] text-slate-600 font-medium">
                   {isUrdu
-                    ? "تمام کاریگر نادرا سی این آئی سی سے تصدیق شدہ ہیں، ڈور سٹیپ او ٹی پی پن اور فکسڈ 300 روپے وزٹ چارجز کے ساتھ۔"
-                    : "All technicians are NADRA CNIC verified with doorstep OTP PIN confirmation and transparent pricing."}
+                    ? "تمام کاریگر تصدیق شدہ ہیں، ڈور سٹیپ او ٹی پی پن اور شفاف تصدیق شدہ وزٹ فیس کے ساتھ۔"
+                    : "All technicians are verified with doorstep OTP PIN confirmation and transparent pricing."}
                 </p>
               </div>
             </div>
@@ -291,6 +289,28 @@ export function Step4ReviewPost({
           </div>
         </div>
       </div>
+
+      {/* Submit Error */}
+      {submitError && (
+        <div className="mt-3 flex flex-col items-center justify-center gap-2 rounded-xl bg-red-50 border border-red-200 p-3.5 text-center text-xs font-medium text-red-700">
+          <div className="flex items-center gap-1.5">
+            <AlertCircle className="size-4 shrink-0 text-red-600" />
+            <span>{submitError}</span>
+          </div>
+          {(submitError.toLowerCase().includes("sign in") ||
+            submitError.toLowerCase().includes("customer") ||
+            submitError.toLowerCase().includes("لاگ ان") ||
+            submitError.toLowerCase().includes("کسٹمر")) && (
+            <Link
+              href={buildPostJobSignInHref(data)}
+              className="inline-flex items-center gap-1 font-bold text-teal hover:underline text-xs bg-white px-3 py-1.5 rounded-lg border border-teal/20 shadow-xs transition"
+            >
+              <span>{isUrdu ? "کسٹمر اکاؤنٹ میں لاگ ان کریں" : "Sign In as Customer"}</span>
+              <ArrowRight className="size-3.5 rtl:rotate-180" />
+            </Link>
+          )}
+        </div>
+      )}
 
       {/* Fixed Bottom Actions Bar */}
       <div className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200 py-3 sm:py-3.5 shadow-[0_-4px_20px_rgba(0,0,0,0.08)]">

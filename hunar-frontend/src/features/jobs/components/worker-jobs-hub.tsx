@@ -2,31 +2,93 @@
 
 import React, { useState } from "react";
 import { useParams } from "next/navigation";
-import { useWorkerJobs } from "@/stores/worker-jobs-store";
+import { useWorkerJobs, workerStore } from "@/stores/worker-jobs-store";
 import { WorkerUpcomingVisitCard } from "./worker-upcoming-visit-card";
 import { WorkerPastJobCard } from "./worker-past-job-card";
+import { ErrorState } from "@/components/shared/error-state";
+import { LoadingState } from "@/components/shared/loading-state";
+import { getAccessToken, getRefreshToken } from "@/lib/api-client";
 import {
   Calendar,
   CheckCircle2,
-  Clock,
 } from "lucide-react";
 
 export function WorkerJobsHub() {
   const params = useParams();
   const locale = (params?.locale as string) || "en";
   const isUrdu = locale === "ur";
-  const { jobs, offers } = useWorkerJobs();
+  const { jobs, offers, status, hydrated, error } = useWorkerJobs();
 
   // Tab State: "upcoming" | "past"
   const [activeTab, setActiveTab] = useState<"upcoming" | "past">("upcoming");
 
-  // 1. Upcoming Scheduled Visits (all accepted visits or active visits ready to dispatch)
+  // Revalidate jobs immediately on mount so latest upcoming and past jobs appear instantly
+  React.useEffect(() => {
+    const hasWorkerAuth = Boolean(
+      getAccessToken("WORKER", true) ||
+      getAccessToken(undefined, true) ||
+      getRefreshToken("WORKER") ||
+      getRefreshToken()
+    );
+    if (!hasWorkerAuth) return;
+    void workerStore.hydrate({ force: true });
+  }, []);
+
+  const handleTabChange = (tab: "upcoming" | "past") => {
+    setActiveTab(tab);
+    if (tab === "past" && pastJobs.length === 0) {
+      void workerStore.hydrate({ force: true });
+    }
+  };
+
+  const isImmediateJob = (j: any) =>
+    Boolean(j.isUrgent) ||
+    j.urgency === "emergency" ||
+    j.urgency === "EMERGENCY" ||
+    j.preferredVisitWindow?.timeSlot?.includes("Immediate");
+
+  // 1. Upcoming & Active Visits (strictly scheduled appointments - no immediate jobs)
   const upcomingVisits = jobs.filter(
-    (j) => j.status === "accepted" || j.status === "visit_in_progress"
+    (j) =>
+      !isImmediateJob(j) &&
+      (
+        j.status === "accepted" ||
+        j.status === "visit_in_progress" ||
+        j.status === "visit_completed" ||
+        j.status === "inspecting" ||
+        j.status === "inspection_submitted" ||
+        j.status === "repair_negotiating" ||
+        j.status === "repair_approved" ||
+        j.status === "repair_in_progress" ||
+        j.status === "repair_declined"
+      )
   );
 
   // 2. Past Completed Jobs
-  const pastJobs = jobs.filter((j) => j.status === "completed");
+  const pastJobs = jobs.filter((j) => {
+    const s = String(j.status || "").toLowerCase();
+    return s === "completed" || s === "paid" || s === "reviewed";
+  });
+  const INITIAL_PAST_LIMIT = 6;
+  const [pastLimit, setPastLimit] = useState(INITIAL_PAST_LIMIT);
+  const visiblePastJobs = pastJobs.slice(0, pastLimit);
+
+  // Prevent flashing "No Upcoming Visits" before initial store hydration finishes
+  if ((!hydrated || status === "loading") && jobs.length === 0) {
+    return <LoadingState label={isUrdu ? "جابز لوڈ کی جا رہی ہیں..." : "Loading your jobs..."} />;
+  }
+
+  if (status === "error" && jobs.length === 0) {
+    return (
+      <ErrorState
+        title="Unable to load your jobs"
+        description={
+          error ?? "Please check your network connection and try again."
+        }
+        onRetry={() => void workerStore.hydrate({ force: true })}
+      />
+    );
+  }
 
   return (
     <div className="space-y-6 max-w-5xl mx-auto pb-10 w-full overflow-x-hidden animate-in fade-in">
@@ -36,7 +98,7 @@ export function WorkerJobsHub() {
           {/* Tab 1: Upcoming Jobs */}
           <button
             type="button"
-            onClick={() => setActiveTab("upcoming")}
+            onClick={() => handleTabChange("upcoming")}
             className={`flex-1 sm:flex-initial py-2.5 px-5 sm:px-6 rounded-xl text-xs sm:text-sm font-extrabold flex items-center justify-center gap-2 transition-all cursor-pointer ${
               activeTab === "upcoming"
                 ? "bg-[#123B5D] text-white shadow-sm"
@@ -59,7 +121,7 @@ export function WorkerJobsHub() {
           {/* Tab 2: Past Jobs */}
           <button
             type="button"
-            onClick={() => setActiveTab("past")}
+            onClick={() => handleTabChange("past")}
             className={`flex-1 sm:flex-initial py-2.5 px-5 sm:px-6 rounded-xl text-xs sm:text-sm font-extrabold flex items-center justify-center gap-2 transition-all cursor-pointer ${
               activeTab === "past"
                 ? "bg-[#123B5D] text-white shadow-sm"
@@ -79,19 +141,8 @@ export function WorkerJobsHub() {
             </span>
           </button>
         </div>
-
-        <span className="text-xs text-slate-500 font-medium hidden sm:block">
-          {activeTab === "upcoming"
-            ? isUrdu
-              ? `${upcomingVisits.length} شیڈول شدہ وزٹس`
-              : `${upcomingVisits.length} scheduled visit${upcomingVisits.length === 1 ? "" : "s"}`
-            : isUrdu
-              ? `${pastJobs.length} مکمل شدہ جابز`
-              : `${pastJobs.length} settled & completed job${pastJobs.length === 1 ? "" : "s"}`}
-        </span>
       </div>
-
-      {/* TAB CONTENT 1: UPCOMING JOBS */}
+      {/* TAB CONTENT 2: UPCOMING JOBS */}
       {activeTab === "upcoming" && (
         <section className="space-y-4 animate-in fade-in" aria-label="Upcoming Scheduled Visits">
           {upcomingVisits.length > 0 ? (
@@ -124,10 +175,25 @@ export function WorkerJobsHub() {
       {activeTab === "past" && (
         <section className="space-y-4 animate-in fade-in" aria-label="Past Completed Jobs">
           {pastJobs.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 sm:gap-4">
-              {pastJobs.map((job) => (
-                <WorkerPastJobCard key={job.id} job={job} />
-              ))}
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 sm:gap-4">
+                {visiblePastJobs.map((job) => (
+                  <WorkerPastJobCard key={job.id} job={job} />
+                ))}
+              </div>
+              {pastJobs.length > pastLimit && (
+                <div className="flex justify-center pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setPastLimit((prev) => prev + INITIAL_PAST_LIMIT)}
+                    className="py-2.5 px-6 rounded-xl bg-white border border-slate-200 text-[#123B5D] hover:bg-slate-50 text-xs sm:text-sm font-bold shadow-2xs transition-all cursor-pointer hover:border-[#0F8B8D]"
+                  >
+                    {isUrdu
+                      ? `مزید مکمل شدہ جابز دیکھیں (${pastJobs.length - pastLimit} باقی)`
+                      : `Load More Completed Jobs (${pastJobs.length - pastLimit} remaining)`}
+                  </button>
+                </div>
+              )}
             </div>
           ) : (
             <div className="bg-white rounded-3xl border border-slate-200/80 p-10 text-center space-y-2">

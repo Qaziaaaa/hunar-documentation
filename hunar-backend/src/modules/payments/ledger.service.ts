@@ -1,4 +1,4 @@
-﻿import { Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { PaymentStatus, Prisma, WalletLedgerType } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { normalizePage, toPageResult } from '../../common/helpers/pagination.util';
@@ -41,8 +41,10 @@ export class LedgerService {
 
   /** Insert a ledger row inside the caller's interactive transaction. */
   async insert(tx: Prisma.TransactionClient, entry: LedgerEntry) {
-    return tx.walletLedger.create({
-      data: {
+    return tx.walletLedger.upsert({
+      where: { idempotencyKey: entry.idempotencyKey },
+      update: {},
+      create: {
         userId: entry.userId,
         type: entry.type,
         amount: entry.amount,
@@ -79,6 +81,7 @@ export class LedgerService {
         balanceAfter: Number(r.balanceAfter),
         referenceType: r.referenceType,
         referenceId: r.referenceId,
+        idempotencyKey: r.idempotencyKey,
         note: r.note,
         createdAt: r.createdAt,
       })),

@@ -12,7 +12,7 @@ export type JobStatus =
 
 export type DisputeStatus = "OPEN" | "UNDER_REVIEW" | "RESOLVED" | "DISMISSED" | "ESCALATED";
 
-export type WithdrawalStatus = "PENDING" | "PROCESSED" | "FAILED";
+export type WithdrawalStatus = "PENDING" | "PROCESSED" | "FAILED" | "REJECTED";
 
 export interface AdminKpiStats {
   totalJobs: number;
@@ -43,6 +43,9 @@ export interface CustomerUser {
   ratingGiven: number;
   status: UserStatus;
   internalNotes?: string;
+  suspendedUntil?: string | null;
+  suspensionReason?: string | null;
+  suspensionType?: "PERMANENT" | "TEMPORARY" | null;
 }
 
 export interface WorkerUser {
@@ -64,6 +67,9 @@ export interface WorkerUser {
   experienceYears: number;
   bio?: string;
   serviceCity: string;
+  suspendedUntil?: string | null;
+  suspensionReason?: string | null;
+  suspensionType?: "PERMANENT" | "TEMPORARY" | null;
 }
 
 export interface VerificationRequest {
@@ -139,9 +145,12 @@ export interface WithdrawalRequest {
 export interface DisputeReport {
   id: string;
   jobId: string;
+  reporterId?: string;
   reporterName: string;
   reporterRole: "CUSTOMER" | "WORKER";
   targetName: string;
+  respondentId?: string;
+  respondentRole?: "CUSTOMER" | "WORKER";
   issueCategory: string;
   description: string;
   evidenceUrls: string[];
@@ -150,21 +159,43 @@ export interface DisputeReport {
   resolutionNotes?: string;
 }
 
+export interface DistanceSlab {
+  minKm: number;
+  maxKm: number | null;
+  charge: number | null;
+  label: string;
+  requiresApproval?: boolean;
+}
+
 export interface ServiceCategory {
   id: string;
   name: string;
+  nameUrdu?: string | null;
+  imageUrl?: string | null;
   iconName: string;
   activeWorkersCount: number;
   totalJobsCount: number;
   isActive: boolean;
+  sortOrder?: number;
+  defaultVisitCharge?: number | null;
+  distanceSlabs?: DistanceSlab[];
+  commonIssues?: string[];
+}
+
+export interface CategoryFormValues {
+  name: string;
+  nameUrdu?: string;
+  imageUrl?: string;
+  sortOrder?: number;
+  defaultVisitCharge?: number;
+  commonIssues?: string[];
 }
 
 export interface PlatformSettings {
   commissionRate: number;
   defaultSearchRadiusKm: number;
   maxActiveOffersPerWorker: number;
-  requireManualVerification: boolean;
-  maintenanceMode: boolean;
+  walletMaxNegativeBalance: number;
 }
 
 export interface AuditLogEntry {
@@ -175,3 +206,55 @@ export interface AuditLogEntry {
   details: string;
   timestamp: string;
 }
+
+export interface AdminNotification {
+  id: string;
+  type: string;
+  title: string;
+  body: string;
+  data?: Record<string, unknown> | null;
+  isRead: boolean;
+  readAt?: string | null;
+  createdAt: string;
+}
+
+export interface JobsFunnelReport {
+  type: string;
+  period: { from: string; to: string };
+  data: {
+    posted: number;
+    offersReceived: number;
+    accepted: number;
+    completed: number;
+    cancelled: number;
+    conversionRate: string;
+  };
+}
+
+export interface CityItem {
+  id: string;
+  name: string;
+  nameUrdu?: string | null;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+  areasCount: number;
+  workersCount: number;
+  ordersCount: number;
+  areas?: Array<{ id: string; name: string; nameUrdu?: string | null; isActive: boolean }>;
+}
+
+export interface AreaItem {
+  id: string;
+  name: string;
+  nameUrdu?: string | null;
+  cityId: string;
+  cityName: string;
+  city?: { id: string; name: string; nameUrdu?: string | null; isActive: boolean };
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+  workersCount: number;
+  ordersCount: number;
+}
+

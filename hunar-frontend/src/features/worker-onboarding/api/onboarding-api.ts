@@ -49,18 +49,49 @@ export interface WorkerOnboardingApiResponse {
   };
 }
 
+export interface BackendCategory {
+  id: string;
+  name: string;
+  nameUrdu?: string | null;
+  isActive: boolean;
+  sortOrder?: number;
+  defaultVisitCharge?: number | null;
+}
+
+let cachedCategories: BackendCategory[] | null = null;
+
 /**
- * Fetch existing worker onboarding progress & saved draft from backend
+ * Fetch active service categories from GET /categories (backed by PostgreSQL ServiceCategory table)
+ */
+export async function fetchCategories(): Promise<BackendCategory[]> {
+  if (cachedCategories && cachedCategories.length > 0) {
+    return cachedCategories;
+  }
+  try {
+    const raw = await http.get<any>("/categories");
+    const items: BackendCategory[] = Array.isArray(raw) ? raw : raw?.data ?? [];
+    if (items.length > 0) {
+      cachedCategories = items.filter((c) => c.isActive !== false);
+      return cachedCategories;
+    }
+    return [];
+  } catch (err) {
+    console.warn("[onboarding-api] Failed to fetch service categories from DB:", err);
+    return cachedCategories ?? [];
+  }
+}
+
+/**
+ * Fetch existing worker onboarding progress & saved draft from backend.
+ * Returns null only for a successful response without a saved profile; API
+ * errors propagate so callers decide whether to skip the sync (perf sprint:
+ * no more silent catch-to-null on server failures).
  */
 export async function fetchWorkerOnboardingProfile(): Promise<WorkerOnboardingApiResponse | null> {
-  try {
-    const raw = await http.get<any>("/users/worker/me");
-    const data = raw?.data ?? raw;
-    if (data?.user) {
-      return data as WorkerOnboardingApiResponse;
-    }
-  } catch (err) {
-    console.warn("[fetchWorkerOnboardingProfile] Server not reached or unauthenticated:", err);
+  const raw = await http.get<any>("/users/worker/me");
+  const data = raw?.data ?? raw;
+  if (data?.user) {
+    return data as WorkerOnboardingApiResponse;
   }
   return null;
 }
@@ -85,27 +116,17 @@ export async function uploadWorkerDocument(
   try {
     const raw = await http.upload<any>(endpoint, formData);
     const res = raw?.data ?? raw;
-    if (res?.url) {
+    if (typeof res?.url === "string" && res.url.length <= 500) {
       return {
         url: res.url,
         filename: file.name,
       };
     }
+    throw new Error("Upload response did not contain a valid profile photo URL.");
   } catch (err) {
-    console.warn(`[uploadWorkerDocument] Backend upload failed for ${type}, using local preview fallback:`, err);
+    console.warn(`[uploadWorkerDocument] Backend upload failed for ${type}:`, err);
+    throw err;
   }
-
-  // Fallback: convert file to local Data URL for seamless client preview if offline
-  return new Promise((resolve) => {
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      resolve({
-        url: e.target?.result as string,
-        filename: file.name,
-      });
-    };
-    reader.readAsDataURL(file);
-  });
 }
 
 /**
@@ -123,7 +144,16 @@ export async function saveWorkerBasicProfile(data: {
   if (data.profilePhoto?.trim()) payload.avatarUrl = data.profilePhoto.trim();
   if (Array.isArray(data.skills)) payload.skills = data.skills;
   if (data.experienceYears !== undefined && data.experienceYears !== "") {
-    payload.experienceYears = Number(data.experienceYears) || 0;
+    if (typeof data.experienceYears === "number") {
+      payload.experienceYears = data.experienceYears;
+    } else {
+      const str = String(data.experienceYears);
+      if (str.startsWith("< 1")) payload.experienceYears = 0;
+      else if (str.startsWith("1 - 3")) payload.experienceYears = 2;
+      else if (str.startsWith("4 - 7")) payload.experienceYears = 5;
+      else if (str.startsWith("8+")) payload.experienceYears = 8;
+      else payload.experienceYears = Number(str) || 0;
+    }
   }
   if (data.bio?.trim()) payload.bio = data.bio.trim();
 
@@ -158,13 +188,17 @@ export async function saveWorkerDocuments(docs: {
   const payload: Record<string, unknown> = {
     cnicFront: {
       url: docs.cnicFrontUrl,
-      fileName: docs.cnicFrontName || "cnic_front.jpg",
-      mimeType: "image/jpeg",
+      fileName: docs.cnicFrontName || "cnic-front.jpg",
+      mimeType: (docs.cnicFrontName || "").toLowerCase().endsWith(".pdf")
+        ? "application/pdf"
+        : "image/jpeg",
     },
     cnicBack: {
       url: docs.cnicBackUrl,
-      fileName: docs.cnicBackName || "cnic_back.jpg",
-      mimeType: "image/jpeg",
+      fileName: docs.cnicBackName || "cnic-back.jpg",
+      mimeType: (docs.cnicBackName || "").toLowerCase().endsWith(".pdf")
+        ? "application/pdf"
+        : "image/jpeg",
     },
   };
 
@@ -172,7 +206,9 @@ export async function saveWorkerDocuments(docs: {
     payload.certificate = {
       url: docs.certificateUrl,
       fileName: docs.certificateName || "certificate.pdf",
-      mimeType: "application/pdf",
+      mimeType: (docs.certificateName || "").toLowerCase().endsWith(".pdf")
+        ? "application/pdf"
+        : "image/jpeg",
     };
   }
 

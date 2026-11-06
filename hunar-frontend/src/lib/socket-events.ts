@@ -26,6 +26,8 @@ export const CHAT_EVENT = {
   send: "chat:send",
   receive: "chat:message",
   read: "chat:read",
+  typing: "chat:typing",
+  stopTyping: "chat:stopTyping",
 } as const;
 
 export const NOTIFICATION_EVENT = {

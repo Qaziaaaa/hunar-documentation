@@ -1,6 +1,6 @@
 "use client";
 
-import { CheckCircle2, Lock, ShieldCheck } from "lucide-react";
+import { Lock, ShieldCheck } from "lucide-react";
 import { useLocale } from "next-intl";
 
 import { WorkerFixLogo } from "@/components/shared/workerfix-logo";
@@ -23,27 +23,22 @@ export function WorkerFixBrandBanner() {
             </span>
             <p className="text-[11px] sm:text-xs text-slate-300 line-clamp-1">
               {locale === "ur"
-                ? "100% تصدیق شدہ ماہر کاریگر، ڈور سٹیپ سیکیورٹی پن اور تسلی بخش کام کی گارنٹی"
-                : "Guaranteed tradesperson protection & locked-price assurance across all service areas"}
+                ? "100% تصدیق شدہ ماہر کاریگر اور ڈور سٹیپ سیکیورٹی پن تحفظ"
+                : "Tradesperson protection & transparent pricing assurance across all service areas"}
             </p>
           </div>
         </div>
 
-        {/* 3 Compact Trust Pills */}
+        {/* Compact Trust Pills */}
         <div className="flex items-center gap-2 sm:gap-3 flex-wrap shrink-0">
           <div className="flex items-center gap-1 bg-white/10 backdrop-blur-xs px-2.5 py-1 rounded-lg border border-white/10 text-[10px] sm:text-[11px] font-semibold text-slate-200">
             <ShieldCheck className="size-3.5 text-[#0F8B8D] shrink-0" />
-            <span>{locale === "ur" ? "نادرا تصدیق شدہ" : "NADRA Verified"}</span>
+            <span>{locale === "ur" ? "تصدیق شدہ" : "Verified"}</span>
           </div>
 
           <div className="flex items-center gap-1 bg-white/10 backdrop-blur-xs px-2.5 py-1 rounded-lg border border-white/10 text-[10px] sm:text-[11px] font-semibold text-slate-200">
             <Lock className="size-3.5 text-[#F59E0B] shrink-0" />
             <span>{locale === "ur" ? "ڈور سٹیپ OTP پن" : "Doorstep OTP PIN"}</span>
-          </div>
-
-          <div className="hidden md:flex items-center gap-1 bg-white/10 backdrop-blur-xs px-2.5 py-1 rounded-lg border border-white/10 text-[10px] sm:text-[11px] font-semibold text-slate-200">
-            <CheckCircle2 className="size-3.5 text-[#16A34A] shrink-0" />
-            <span>{locale === "ur" ? "100% گارنٹی" : "100% Guaranteed"}</span>
           </div>
         </div>
       </div>
