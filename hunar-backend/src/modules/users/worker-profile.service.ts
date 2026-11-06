@@ -222,7 +222,7 @@ export class WorkerProfileService {
 
     const [completedJobs, ratingAgg] = await Promise.all([
       this.prisma.serviceRequest.count({
-        where: { selectedWorkerId: userId, status: 'COMPLETED' },
+        where: { selectedWorkerId: userId, status: { in: ['COMPLETED', 'PAID', 'REVIEWED'] } },
       }),
       this.prisma.review.aggregate({
         where: { revieweeId: userId, isVisible: true },

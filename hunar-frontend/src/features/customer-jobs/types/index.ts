@@ -108,6 +108,13 @@ export interface CustomerJob {
     tags?: string[];
     date?: string;
   } | null;
+  workerReview?: {
+    id?: string;
+    rating: number;
+    comment?: string;
+    tags?: string[];
+    date?: string;
+  } | null;
   cancelReason?: string;
   cancelledAt?: string;
 }

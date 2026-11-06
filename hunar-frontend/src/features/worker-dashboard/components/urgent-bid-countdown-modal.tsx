@@ -7,7 +7,7 @@ import { useRouter } from "@/i18n/navigation";
 import { getSocket } from "@/lib/socket";
 import { getWorkerJob } from "@/services/worker/jobs.service";
 import { withdrawWorkerOffer } from "@/services/worker/offers.service";
-import { workerStore } from "@/stores/worker-jobs-store";
+import { workerStore, matchesJobId } from "@/stores/worker-jobs-store";
 import { getUrgentOfferTimer, URGENT_OFFER_TTL_SECONDS, clearOfferExpiryCache } from "@/lib/urgent-offer";
 import { showOfferToast } from "../stores/worker-offer-toast-store";
 import type { JobRequest } from "../types";
@@ -115,6 +115,46 @@ export function UrgentBidCountdownModal({
     setIsAccepted(true);
     if (offerId) {
       clearOfferExpiryCache(offerId);
+    }
+
+    // Immediately mark job as accepted in worker store so navigation opens En Route screen with 0ms delay
+    if (job?.id) {
+      const existing = workerStore.getState().jobs.find((j) => matchesJobId(job.id, j.id));
+      const customerObj = (job as any).customer || {};
+      const resolvedCustomerName =
+        customerObj.name ||
+        customerObj.fullName ||
+        customerObj.firstName ||
+        (job as any).customerName ||
+        "Customer";
+
+      const normalizedJob: any = {
+        ...(existing || {}),
+        ...job,
+        status: "accepted",
+        visitCharge: displayCharge || (job as any)?.visitCharge,
+        customer: {
+          ...(existing?.customer || {}),
+          ...customerObj,
+          name: resolvedCustomerName,
+          phone: customerObj.phone || (job as any).customerPhone || existing?.customer?.phone || "",
+          rating: customerObj.rating ?? existing?.customer?.rating ?? 5.0,
+          totalReviews: customerObj.totalReviews ?? customerObj.totalOrders ?? customerObj.reviewCount ?? 0,
+          avatarUrl: customerObj.avatarUrl || existing?.customer?.avatarUrl || "",
+          area: (job as any).locationArea || (job as any).area || existing?.customer?.area || "Location",
+          isVerified: Boolean(customerObj.isVerified ?? existing?.customer?.isVerified),
+        },
+        location: {
+          area: (job as any).location?.area || (job as any).locationArea || (job as any).area || "Location",
+          city: (job as any).location?.city || (job as any).city || "Peshawar",
+          latitude: (job as any).location?.latitude ?? (job as any).latitude ?? 0,
+          longitude: (job as any).location?.longitude ?? (job as any).longitude ?? 0,
+          address: (job as any).location?.address || (job as any).location?.fullAddress || (job as any).address || "",
+        },
+      };
+
+      workerStore.upsertJob(normalizedJob);
+      workerStore.updateJobStatus(job.id, "accepted", displayCharge);
     }
 
     // Briefly show the emerald confirmation, then navigate directly to the visit full screen

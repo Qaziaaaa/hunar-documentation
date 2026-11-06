@@ -984,6 +984,26 @@ export class JobsService {
         select: { latitude: true, longitude: true },
       }),
     ]);
+    const customerIds = [...new Set(rows.map((j) => j.customerId).filter(Boolean))];
+    const customerRatingRows =
+      customerIds.length > 0 && typeof this.prisma?.review?.groupBy === 'function'
+        ? await this.prisma.review.groupBy({
+            by: ['revieweeId'],
+            where: { revieweeId: { in: customerIds }, isVisible: true },
+            _avg: { rating: true },
+            _count: { _all: true },
+          })
+        : [];
+    const customerRatingMap = new Map(
+      (
+        customerRatingRows as Array<{
+          revieweeId: string;
+          _avg: { rating: number | null };
+          _count: { _all: number };
+        }>
+      ).map((r) => [r.revieweeId, r]),
+    );
+
     const items = rows.map((j) => {
       let distanceKm: number | null = null;
       if (j.latitude != null && j.longitude != null && workerServiceAreas.length > 0) {
@@ -1026,7 +1046,16 @@ export class JobsService {
         nextVisit: j.visits?.[0] ?? null,
         repairEstimate: repairCost,
         repairCharge: repairCost,
-        customer: j.customer,
+        customer: j.customer
+          ? {
+              ...j.customer,
+              rating:
+                customerRatingMap.get(j.customerId)?._avg?.rating != null
+                  ? Number(customerRatingMap.get(j.customerId)!._avg.rating!.toFixed(1))
+                  : 0,
+              totalReviews: customerRatingMap.get(j.customerId)?._count?._all ?? 0,
+            }
+          : j.customer,
         offerCount: j._count?.offers ?? 0,
         distanceKm,
         createdAt: j.createdAt,
@@ -1075,6 +1104,26 @@ export class JobsService {
         select: { latitude: true, longitude: true },
       }),
     ]);
+    const customerIds = [...new Set(rows.map((j) => j.customerId).filter(Boolean))];
+    const customerRatingRows =
+      customerIds.length > 0 && typeof this.prisma?.review?.groupBy === 'function'
+        ? await this.prisma.review.groupBy({
+            by: ['revieweeId'],
+            where: { revieweeId: { in: customerIds }, isVisible: true },
+            _avg: { rating: true },
+            _count: { _all: true },
+          })
+        : [];
+    const customerRatingMap = new Map(
+      (
+        customerRatingRows as Array<{
+          revieweeId: string;
+          _avg: { rating: number | null };
+          _count: { _all: number };
+        }>
+      ).map((r) => [r.revieweeId, r]),
+    );
+
     const items = rows.map((j) => {
       let distanceKm: number | null = null;
       if (j.latitude != null && j.longitude != null && workerServiceAreas.length > 0) {
@@ -1137,7 +1186,16 @@ export class JobsService {
         preferredVisitTime: j.preferredVisitTime,
         images: j.images,
         voiceNoteUrl: j.voiceNoteUrl,
-        customer: j.customer,
+        customer: j.customer
+          ? {
+              ...j.customer,
+              rating:
+                customerRatingMap.get(j.customerId)?._avg?.rating != null
+                  ? Number(customerRatingMap.get(j.customerId)!._avg.rating!.toFixed(1))
+                  : 0,
+              totalReviews: customerRatingMap.get(j.customerId)?._count?._all ?? 0,
+            }
+          : j.customer,
         customerReview: j.reviews?.[0]
           ? {
               rating: j.reviews[0].rating,
@@ -1190,8 +1248,15 @@ export class JobsService {
         },
         reviews: {
           where: { isVisible: true },
-          select: { id: true, rating: true, comment: true, createdAt: true },
-          take: 1,
+          select: {
+            id: true,
+            rating: true,
+            comment: true,
+            tags: true,
+            reviewerId: true,
+            revieweeId: true,
+            createdAt: true,
+          },
         },
         selectedWorker: {
           select: {
@@ -1314,7 +1379,7 @@ export class JobsService {
         .catch(() => 0);
     }
 
-    const [ratingRows, completedRows, customerTotalOrders] = await Promise.all([
+    const [ratingRows, completedRows, customerTotalOrders, customerReviewAgg] = await Promise.all([
       workerIds.length > 0
         ? this.prisma.review.groupBy({
             by: ['revieweeId'],
@@ -1341,7 +1406,20 @@ export class JobsService {
             },
           })
         : Promise.resolve(0),
+      typeof this.prisma?.review?.aggregate === 'function'
+        ? this.prisma.review.aggregate({
+            where: { revieweeId: job.customerId, isVisible: true },
+            _avg: { rating: true },
+            _count: { _all: true },
+          })
+        : Promise.resolve({ _avg: { rating: null }, _count: { _all: 0 } }),
     ]);
+
+    const customerAvgRating =
+      customerReviewAgg?._avg?.rating != null
+        ? Number(customerReviewAgg._avg.rating.toFixed(1))
+        : 0;
+    const customerTotalReviews = customerReviewAgg?._count?._all ?? 0;
 
     const ratingMap = new Map(
       (
@@ -1431,6 +1509,11 @@ export class JobsService {
         ? mappedOffers
         : mappedOffers.filter((o) => o.workerId === user.sub);
 
+    const custReview = job.reviews?.find((r) => r.reviewerId === job.customerId);
+    const wrkReview = job.reviews?.find((r) => r.reviewerId === job.selectedWorkerId);
+    const currentUserReview = job.reviews?.find((r) => r.reviewerId === user.sub);
+    const hasReviewed = Boolean(currentUserReview);
+
     const finalResult = !canSeeFullAddress
       ? {
           ...rest,
@@ -1456,19 +1539,31 @@ export class JobsService {
                 avatarUrl: job.customer.avatarUrl,
                 phone: null,
                 totalOrders: customerTotalOrders,
+                rating: customerAvgRating,
+                totalReviews: customerTotalReviews,
               }
             : job.customer,
           distanceKm,
           offerCount: job.offers.length,
           myOffer,
           offers: visibleOffers,
-          hasReviewed: Boolean(job.reviews && job.reviews.length > 0),
-          customerReview: job.reviews?.[0]
+          hasReviewed,
+          customerReview: custReview
             ? {
-                id: job.reviews[0].id,
-                rating: job.reviews[0].rating,
-                comment: job.reviews[0].comment ?? '',
-                date: job.reviews[0].createdAt,
+                id: custReview.id,
+                rating: custReview.rating,
+                comment: custReview.comment ?? '',
+                tags: custReview.tags ?? [],
+                date: custReview.createdAt,
+              }
+            : null,
+          workerReview: wrkReview
+            ? {
+                id: wrkReview.id,
+                rating: wrkReview.rating,
+                comment: wrkReview.comment ?? '',
+                tags: wrkReview.tags ?? [],
+                date: wrkReview.createdAt,
               }
             : null,
         }
@@ -1478,6 +1573,8 @@ export class JobsService {
             ? {
                 ...job.customer,
                 totalOrders: customerTotalOrders,
+                rating: customerAvgRating,
+                totalReviews: customerTotalReviews,
               }
             : job.customer,
           repair: latestRepair ?? null,
@@ -1487,13 +1584,23 @@ export class JobsService {
           offerCount: job.offers.length,
           myOffer,
           offers: visibleOffers,
-          hasReviewed: Boolean(job.reviews && job.reviews.length > 0),
-          customerReview: job.reviews?.[0]
+          hasReviewed,
+          customerReview: custReview
             ? {
-                id: job.reviews[0].id,
-                rating: job.reviews[0].rating,
-                comment: job.reviews[0].comment ?? '',
-                date: job.reviews[0].createdAt,
+                id: custReview.id,
+                rating: custReview.rating,
+                comment: custReview.comment ?? '',
+                tags: custReview.tags ?? [],
+                date: custReview.createdAt,
+              }
+            : null,
+          workerReview: wrkReview
+            ? {
+                id: wrkReview.id,
+                rating: wrkReview.rating,
+                comment: wrkReview.comment ?? '',
+                tags: wrkReview.tags ?? [],
+                date: wrkReview.createdAt,
               }
             : null,
         };

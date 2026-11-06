@@ -1,7 +1,7 @@
 export const DESIGN_TOKENS = {
   colors: {
     navy: "#123B5D",
-    teal: "#0F8B8D",
+    teal: "#0F766E",
     orange: "#F59E0B",
     background: "#F8FAFC",
     card: "#FFFFFF",
@@ -12,8 +12,8 @@ export const DESIGN_TOKENS = {
   },
   status: {
     pending: "#F59E0B",
-    accepted: "#0F8B8D",
-    active: "#0F8B8D",
+    accepted: "#0F766E",
+    active: "#0F766E",
     inProgress: "#123B5D",
     completed: "#16A34A",
     paid: "#16A34A",

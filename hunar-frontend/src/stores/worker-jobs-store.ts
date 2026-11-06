@@ -230,7 +230,23 @@ function initWorkerSocketListeners() {
     if (!data?.jobId) return;
     const { jobId } = data;
     const existingOffer = getOfferForJob(globalState.offers, jobId);
-    if (existingOffer && existingOffer.status !== "accepted") {
+    const existingJob = globalState.jobs.find((j) => matchesJobId(jobId, j.id));
+
+    // If this worker was assigned to this job, do not mark it as closed for this worker
+    if (
+      (existingOffer as any)?.status === "accepted" ||
+      existingJob?.status === "accepted" ||
+      existingJob?.status === "visit_in_progress" ||
+      existingJob?.status === "visit_completed" ||
+      existingJob?.status === "inspecting" ||
+      existingJob?.status === "inspection_submitted" ||
+      existingJob?.status?.startsWith("repair_") ||
+      existingJob?.status === "completed"
+    ) {
+      return;
+    }
+
+    if (existingOffer && (existingOffer as any)?.status !== "accepted") {
       showOfferToast("closed");
     }
     patch({
@@ -1139,6 +1155,7 @@ export const workerStore = {
                       : ("visit_in_progress" as const),
                   arrivedAt: arrivedAtRet,
                   activeArrivalOtp: otp,
+                  securityPin: otp,
                 }
               : j
           ),
