@@ -10,7 +10,7 @@ import { TableRowsSkeleton } from "@/features/admin/components/table-skeleton";
 import { AlertCircle, Briefcase, Eye, Filter, Search } from "lucide-react";
 
 export default function JobsPage() {
-  // Paged browse: 25 per Load More, always refetched on mount (matches the
+  // Paged browse: 10 per Load More, always refetched on mount (matches the
   // old load-once hook but keeps already-seen pages on screen while it does).
   const jobsQuery = useInfiniteQuery({
     queryKey: adminKeys.jobsList,

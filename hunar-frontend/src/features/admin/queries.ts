@@ -15,7 +15,7 @@ export const adminKeys = {
   reviews: ["admin", "reviews"],
 } as const;
 
-export const JOBS_PAGE_SIZE = 25;
+export const JOBS_PAGE_SIZE = 10;
 
 export function fetchJobsPage(pageParam: number) {
   return adminApi.listJobs({ page: pageParam, limit: JOBS_PAGE_SIZE });
