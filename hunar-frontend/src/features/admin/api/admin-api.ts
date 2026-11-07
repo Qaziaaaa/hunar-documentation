@@ -1053,7 +1053,7 @@ export async function resolveDispute(
 }
 
 export async function fetchLiveJobsStream(): Promise<LiveJobItem[]> {
-  const res = await adminApi.listJobs({ limit: 50 });
+  const res = await adminApi.listJobs({ limit: 10 });
   return res.items;
 }
 
